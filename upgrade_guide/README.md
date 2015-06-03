@@ -5,30 +5,126 @@ versions of the Java driver.
 
 ### 2.2.0
 
-#### User API Changes
+This version brings parity with Cassandra 2.2. We've also seized the
+opportunity to clean up the API.
 
-1. Custom payloads (JAVA-779). The methods listed below were added to the public API:
+1.  All methods that took the protocol version as an `int` or assumed a
+    default version have been removed (they were already deprecated in
+    2.1):
+    * `AbstractGettableData(int)`
+    * `Cluster.Builder#withProtocolVersion(int)`
+    * in `DataType`:
+      * `serialize(Object, int)`
+      * `serialize(Object)`
+      * `deserialize(ByteBuffer)`
+      * `serializeValue(Object, int)`
+      * `serializeValue(Object)`
+    * in `ProtocolOptions`:
+      * `NEWEST_SUPPORTED_PROTOCOL_VERSION` (replaced by
+        `ProtocolVersion#NEWEST_SUPPORTED`)
+      * `int getProtocolVersion()`
+    * in `RegularStatement`:
+      * `getValues(int)`
+      * `getValues()`
 
-   * ``Statement#getOutgoingPayload()``
-   * ``Statement#setOutgoingPayload(Map<String,ByteBuffer>)``
-   * ``PreparedStatement#getIncomingPayload()``
-   * ``PreparedStatement#getOutgoingPayload()``
-   * ``PreparedStatement#setOutgoingPayload(Map<String,ByteBuffer>)``
-   * ``ExecutionInfo#getIncomingPayload()``
-   * ``AbstractSession#prepareAsync(String, Map<String,ByteBuffer>)``
-   
-   Binary compatibility: 
-   
-   * ``Statement``, ``DefaultPreparedStatement`` and ``ExecutionInfo`` 
-   remain binary-compatible in spite of API changes;
-   * ``PreparedStatement`` and ``AbstractSession`` _break binary compatibility_;
-   if you have custom implementations you will have to adapt them accordingly.
-   
-   Note that custom payloads can only
-   be used with protocol versions >= 4; trying to set a payload under lower protocol
-   versions will result in an ``UnsupportedFeatureException``.
-   
-   
+    There are now variants of these methods using the `ProtocolVersion`
+    enum. In addition, `ProtocolOptions#getProtocolVersionEnum` has been
+    renamed to `ProtocolOptions#getProtocolVersion`.
+
+2.  All methods related to the "suspected" host state have been removed
+    (they had been deprecated in 2.1.6 when the suspicion mechanism was
+    removed):
+    * `Host.StateListener#onSuspected()` (was inherited by
+      `LoadBalancingPolicy`)
+    * `Host#getInitialReconnectionAttemptFuture()`
+
+3.  `PoolingOptions#setMinSimultaneousRequestsPerConnectionThreshold(HostDistance,
+    int)` has been removed. The new connection pool resizing algorithm introduced by
+    [JAVA-419](https://datastax-oss.atlassian.net/browse/JAVA-419) does not need this
+    threshold anymore.
+
+4.  `AddressTranslater` has been renamed to `AddressTranslator`. All
+    related methods and classes have also been renamed.
+
+    In addition, the `close()` method has been pulled up into
+    `AddressTranslator`, and `CloseableAddressTranslator` has been removed.
+    Existing third-party `AddressTranslator` implementations only need
+    to add an empty `close()` method.
+
+5.  The `close()` method has been pulled up into `LoadBalancingPolicy`,
+    and `CloseableLoadBalancingPolicy` has been removed. Existing third-party
+    `LoadBalancingPolicy` implementations only need to add an empty
+    `close()` method.
+
+6.  All pluggable components now have callbacks to detect when they get
+    associated with a `Cluster` instance:
+    * `ReconnectionPolicy`, `RetryPolicy`, `AddressTranslator`,
+      and `TimestampGenerator`:
+      * `init(Cluster)`
+      * `close()`
+    * `Host.StateListener` and `LatencyTracker`:
+      * `onRegister(Cluster)`
+      * `onUnregister(Cluster)`
+
+    This gives these components the opportunity to perform
+    initialization / cleanup tasks. Existing third-party implementations
+    only need to add empty methods.
+
+7.  `LoadBalancingPolicy` does not extend `Host.StateListener` anymore:
+    callback methods (`onUp`, `onDown`, etc.) have been duplicated. This
+    is unlikely to affect clients.
+
+8.  [Client-side timestamp generation](../features/query_timestamps/) is
+    now the default (provided that [native
+    protocol](../features/native_protocol) v3 or higher is in use). The
+    generator used is `AtomicMonotonicTimestampGenerator`.
+
+9.  If a DNS name resolves to multiple A-records,
+    `Cluster.Builder#addContactPoint(String)` will now use all of these
+    addresses as contact points. This gives you the possibility of
+    maintaining contact points in DNS configuration, and having a single,
+    static contact point in your Java code.
+
+10. The following methods were added for [Custom payloads](../features/custom_payloads):
+    * in `PreparedStatement`: `getIncomingPayload()`,
+      `getOutgoingPayload()` and
+      `setOutgoingPayload(Map<String,ByteBuffer>)`
+    * `AbstractSession#prepareAsync(String, Map<String,ByteBuffer>)`
+
+    Also, not that `AbstractSession#prepareAsync(Statement)` does not
+    call `AbstractSession#prepareAsync(String)` anymore, they now both
+    delegate to a private method.
+
+    This breaks binary compatibility for these two classes; if you have
+    custom implementations, you will have to adapt them accordingly.
+
+11. Getters and setters have been added to "data-container" classes for
+    new CQL types:
+    * `getByte`/`setByte` for the `TINYINT` type
+    * `getShort`/`setShort` for the `SMALLINT` type
+    * `getTime`/`setTime` for the `TIME` type
+    * `getDate`/`setDate` for the `DATE` type
+
+    The methods for the `TIMESTAMP` CQL type have been renamed to
+    `getTimestamp` and `setTimestamp`.
+
+    This affects `Row`, `BoundStatement`, `TupleValue` and `UDTValue`.
+
+12. New exception types have been added to handle additional server-side
+    errors introduced in Cassandra 2.2:
+    * `ReadFailureException`
+    * `WriteFailureException`
+    * `FunctionExecutionException`
+
+    This is not a breaking change since all driver exceptions are
+    unchecked; but clients might decide to handle these errors in a specific
+    way.
+
+    In addition, `QueryTimeoutException` has been renamed to
+    `QueryExecutionException` (this is an intermediary class in our
+    exception hierarchy, it now has new child classes that are not
+    related to timeouts).
+
 ### 2.1.2
 
 2.1.2 brings important internal changes with native protocol v3 support, but
@@ -340,8 +436,8 @@ exhaustive list of new features in 2.0.
     of data. In general paging should be transparent for the application (as in
     the example above), but the implementation provides a number of knobs to
     fine tune the behavior of that paging:
-
-   * the size of each "page" can be set per-query (`Statement#setFetchSize()`)
-   * the `ResultSet` object provides 2 methods to check the state of paging
-     (`ResultSet#getAvailableWithoutFetching` and `ResultSet#isFullyFetched`)
-     as well as a mean to force the pre-fetching of the next page (`ResultSet#fetchMoreResults`).
+    * the size of each "page" can be set per-query (`Statement#setFetchSize()`)
+    * the `ResultSet` object provides 2 methods to check the state of paging
+      (`ResultSet#getAvailableWithoutFetching` and
+      `ResultSet#isFullyFetched`) as well as a mean to force the pre-fetching
+      of the next page (`ResultSet#fetchMoreResults`).
