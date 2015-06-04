@@ -45,7 +45,7 @@ import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
  * FIXME enable these tests once CASSANDRA-9515 is fixed
  * @see "https://issues.apache.org/jira/browse/CASSANDRA-9515"
  */
-@CassandraVersion(major = 2.2)
+@CassandraVersion(major = 2.2, minor=1)
 @Test(enabled = false)
 public class CustomPayloadTest extends CCMBridge.PerClassSingleNodeCluster {
 
