@@ -113,11 +113,13 @@ public class QueryBuilderTest {
 
         Date date = new Date();
         date.setTime(1234325);
-        query = "SELECT * FROM foo where d=1234325";
+        query = "SELECT * FROM foo WHERE d=1234325;";
         select = select().all().from("foo").where(eq("d", date));
+        assertEquals(select.toString(), query);
 
-        query = "SELECT * FROM foo where b=0xCAFEBABE";
+        query = "SELECT * FROM foo WHERE b=0xcafebabe;";
         select = select().all().from("foo").where(eq("b", Bytes.fromHexString("0xCAFEBABE")));
+        assertEquals(select.toString(), query);
 
         try {
             select = select().countAll().from("foo").orderBy(asc("a"), desc("b")).orderBy(asc("a"), desc("b"));
