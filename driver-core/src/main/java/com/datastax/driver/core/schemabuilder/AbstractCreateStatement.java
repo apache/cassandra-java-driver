@@ -68,7 +68,7 @@ public abstract class AbstractCreateStatement<T extends AbstractCreateStatement<
         validateNotEmpty(columnName, "Column name");
         validateNotNull(dataType, "Column type");
         validateNotKeyWord(columnName, String.format("The column name '%s' is not allowed because it is a reserved keyword", columnName));
-        simpleColumns.put(columnName, new ColumnType.NativeColumnType(dataType));
+        simpleColumns.put(columnName, new NativeColumnType(dataType));
         return self;
     }
 
