@@ -6,6 +6,7 @@
 - [improvement] Suppress unnecessary warning at shutdown (JAVA-710)
 - [improvement] Allow DNS name with multiple A-records as contact point (#340)
 - [bug] Allow tracing across multiple result pages (JAVA-794)
+- [bug] DowngradingConsistencyRetryPolicy ignores write timeouts (JAVA-737)
 
 Merged from 2.0.10_fixes branch:
 
