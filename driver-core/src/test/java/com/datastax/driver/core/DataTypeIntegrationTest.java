@@ -38,6 +38,7 @@ import com.datastax.driver.core.utils.CassandraVersion;
  */
 public class DataTypeIntegrationTest extends CCMBridge.PerClassSingleNodeCluster {
     private static final Logger logger = LoggerFactory.getLogger(DataTypeIntegrationTest.class);
+    private CodecRegistry codecRegistry = CodecRegistry.DEFAULT_INSTANCE;
 
     List<TestTable> tables = allTables();
     VersionNumber cassandraVersion;
@@ -82,9 +83,10 @@ public class DataTypeIntegrationTest extends CCMBridge.PerClassSingleNodeCluster
             if (cassandraVersion.compareTo(table.minCassandraVersion) < 0)
                 continue;
 
+            TypeCodec<Object> codec = codecRegistry.codecFor(table.testColumnType);
             switch (statementType) {
                 case RAW_STRING:
-                    session.execute(table.insertStatement.replace("?", table.testColumnType.format(table.sampleValue)));
+                    session.execute(table.insertStatement.replace("?", codec.format(table.sampleValue)));
                     break;
                 case SIMPLE_WITH_PARAM:
                     session.execute(table.insertStatement, table.sampleValue);
@@ -98,7 +100,7 @@ public class DataTypeIntegrationTest extends CCMBridge.PerClassSingleNodeCluster
             }
 
             Row row = session.execute(table.selectStatement).one();
-            Object queriedValue = table.testColumnType.deserialize(row.getBytesUnsafe("v"));
+            Object queriedValue = codec.deserialize(row.getBytesUnsafe("v"));
 
             assertThat(queriedValue)
                 .as("Test failure on %s statement with table:%n%s;%n" +
@@ -226,11 +228,13 @@ public class DataTypeIntegrationTest extends CCMBridge.PerClassSingleNodeCluster
             case VARINT:
                 return bs.getVarint(0);
             case LIST:
-                return bs.getList(0, dataType.getTypeArguments().get(0).asJavaClass());
+                return bs.getList(0, codecRegistry.codecFor(dataType.getTypeArguments().get(0)).getJavaType().getRawType());
             case SET:
-                return bs.getSet(0, dataType.getTypeArguments().get(0).asJavaClass());
+                return bs.getSet(0, codecRegistry.codecFor(dataType.getTypeArguments().get(0)).getJavaType().getRawType());
             case MAP:
-                return bs.getMap(0, dataType.getTypeArguments().get(0).asJavaClass(), dataType.getTypeArguments().get(1).asJavaClass());
+                return bs.getMap(0,
+                    codecRegistry.codecFor(dataType.getTypeArguments().get(0)).getJavaType().getRawType(),
+                    codecRegistry.codecFor(dataType.getTypeArguments().get(1)).getJavaType().getRawType());
             case CUSTOM:
             case COUNTER:
             default:

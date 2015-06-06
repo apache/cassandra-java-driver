@@ -19,7 +19,6 @@ import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
 import java.util.List;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -213,7 +212,7 @@ public abstract class Token implements Comparable<Token> {
 
             @Override
             Token deserialize(ByteBuffer buffer) {
-                return new M3PToken((Long) getTokenType().deserialize(buffer));
+                return new M3PToken(TypeCodec.BigintCodec.instance.deserialize(buffer));
             }
 
             @Override
@@ -532,7 +531,7 @@ public abstract class Token implements Comparable<Token> {
 
             @Override
             Token deserialize(ByteBuffer buffer) {
-                return new RPToken((BigInteger)getTokenType().deserialize(buffer));
+                return new RPToken(TypeCodec.VarintCodec.instance.deserialize(buffer));
             }
 
             @Override

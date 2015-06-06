@@ -421,8 +421,10 @@ class Responses {
                             sb.append(" | ");
                             if (metadata.columns == null)
                                 sb.append(Bytes.toHexString(v));
-                            else
-                                sb.append(metadata.columns.getType(i).deserialize(v));
+                            else {
+                                // using default codec registry as this is only intended for debugging purposes
+                                sb.append(CodecRegistry.DEFAULT_INSTANCE.codecFor(metadata.columns.getType(i)).deserialize(v));
+                            }
                         }
                     }
                     sb.append('\n');

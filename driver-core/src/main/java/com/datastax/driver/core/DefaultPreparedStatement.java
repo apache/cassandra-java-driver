@@ -26,6 +26,7 @@ public class DefaultPreparedStatement implements PreparedStatement{
 
     final String query;
     final String queryKeyspace;
+    private final Cluster cluster;
 
     volatile ByteBuffer routingKey;
 
@@ -34,23 +35,24 @@ public class DefaultPreparedStatement implements PreparedStatement{
     volatile boolean traceQuery;
     volatile RetryPolicy retryPolicy;
 
-    private DefaultPreparedStatement(PreparedId id, String query, String queryKeyspace) {
+    private DefaultPreparedStatement(PreparedId id, String query, String queryKeyspace, Cluster cluster) {
         this.preparedId = id;
         this.query = query;
         this.queryKeyspace = queryKeyspace;
+        this.cluster = cluster;
     }
 
-    static DefaultPreparedStatement fromMessage(Responses.Result.Prepared msg, Metadata clusterMetadata, String query, String queryKeyspace) {
+    static DefaultPreparedStatement fromMessage(Responses.Result.Prepared msg, Cluster cluster, String query, String queryKeyspace) {
         assert msg.metadata.columns != null;
 
         ColumnDefinitions defs = msg.metadata.columns;
 
         if (defs.size() == 0)
-            return new DefaultPreparedStatement(new PreparedId(msg.statementId, defs, msg.resultMetadata.columns, null), query, queryKeyspace);
+            return new DefaultPreparedStatement(new PreparedId(msg.statementId, defs, msg.resultMetadata.columns, null), query, queryKeyspace, cluster);
 
         List<ColumnMetadata> partitionKeyColumns = null;
         int[] pkIndexes = null;
-        KeyspaceMetadata km = clusterMetadata.getKeyspace(Metadata.quote(defs.getKeyspace(0)));
+        KeyspaceMetadata km = cluster.getMetadata().getKeyspace(Metadata.quote(defs.getKeyspace(0)));
         if (km != null) {
             TableMetadata tm = km.getTable(Metadata.quote(defs.getTable(0)));
             if (tm != null) {
@@ -67,7 +69,7 @@ public class DefaultPreparedStatement implements PreparedStatement{
 
         PreparedId prepId = new PreparedId(msg.statementId, defs, msg.resultMetadata.columns, allSet(pkIndexes) ? pkIndexes : null);
 
-        return new DefaultPreparedStatement(prepId, query, queryKeyspace);
+        return new DefaultPreparedStatement(prepId, query, queryKeyspace, cluster);
     }
 
     private static void maybeGetIndex(String name, int j, List<ColumnMetadata> pkColumns, int[] pkIndexes) {
@@ -99,12 +101,12 @@ public class DefaultPreparedStatement implements PreparedStatement{
     }
 
     public BoundStatement bind(Object... values) {
-        BoundStatement bs = new BoundStatement(this);
+        BoundStatement bs = new BoundStatement(this, cluster);
         return bs.bind(values);
     }
 
     public BoundStatement bind() {
-        return new BoundStatement(this);
+        return new BoundStatement(this, cluster);
     }
 
     public PreparedStatement setRoutingKey(ByteBuffer routingKey) {
@@ -113,7 +115,7 @@ public class DefaultPreparedStatement implements PreparedStatement{
     }
 
     public PreparedStatement setRoutingKey(ByteBuffer... routingKeyComponents) {
-        this.routingKey = SimpleStatement.compose(routingKeyComponents);
+        this.routingKey = CodecUtils.compose(routingKeyComponents);
         return this;
     }
 
@@ -175,4 +177,5 @@ public class DefaultPreparedStatement implements PreparedStatement{
     public PreparedId getPreparedId() {
         return preparedId;
     }
+
 }

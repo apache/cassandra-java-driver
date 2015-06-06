@@ -720,6 +720,8 @@ public abstract class QueryLogger implements LatencyTracker {
         } else {
             DataType type = definition.getType();
             int maxParameterValueLength = this.maxParameterValueLength;
+            CodecRegistry codecRegistry = cluster.getConfiguration().getCodecRegistry();
+            TypeCodec<Object> codec = codecRegistry.codecFor(type);
             if (type.equals(DataType.blob()) && maxParameterValueLength != -1) {
                 // prevent large blobs from being converted to strings
                 int maxBufferLength = Math.max(2, (maxParameterValueLength - 2) / 2);
@@ -727,14 +729,14 @@ public abstract class QueryLogger implements LatencyTracker {
                 if (bufferTooLarge) {
                     raw = (ByteBuffer)raw.duplicate().limit(maxBufferLength);
                 }
-                Object value = type.deserialize(raw);
-                valueStr = type.format(value);
+                Object value = codec.deserialize(raw);
+                valueStr = codec.format(value);
                 if (bufferTooLarge) {
                     valueStr = valueStr + TRUNCATED_OUTPUT;
                 }
             } else {
-                Object value = type.deserialize(raw);
-                valueStr = type.format(value);
+                Object value = codec.deserialize(raw);
+                valueStr = codec.format(value);
                 if (maxParameterValueLength != -1 && valueStr.length() > maxParameterValueLength) {
                     valueStr = valueStr.substring(0, maxParameterValueLength) + TRUNCATED_OUTPUT;
                 }

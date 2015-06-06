@@ -28,201 +28,221 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.regex.Pattern;
 
+import com.google.common.base.Objects;
+import com.google.common.reflect.TypeToken;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import static com.datastax.driver.core.CodecUtils.listOf;
+import static com.datastax.driver.core.CodecUtils.mapOf;
+import static com.datastax.driver.core.CodecUtils.setOf;
+import static com.datastax.driver.core.DataType.*;
+
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 import com.datastax.driver.core.utils.Bytes;
 
-abstract class TypeCodec<T> {
+/**
+ * A Codec that can serialize and deserialize to and from a given
+ * {@link #getCqlType() CQL type} and a given {@link #getJavaType() Java Type}.
+ * <p>
+ * <h3>Serializing and deserializing</h3>
+ * <p>
+ * Two methods handle the serialization and deserialization of Java types into
+ * CQL types according to the native protocol specifications:
+ * <ol>
+ *     <li>{@link #serialize(Object)}: used to serialize from the codec's Java type to a
+ *     {@link ByteBuffer} instance corresponding to the codec's CQL type;</li>
+ *     <li>{@link #deserialize(ByteBuffer)}}: used to deserialize a {@link ByteBuffer} instance
+ *     corresponding to the codec's CQL type to the codec's Java type.</li>
+ * </ol>
+ * <h3>Formatting and parsing</h3>
+ * <p>
+ * Two methods handle the formatting and parsing of Java types into
+ * CQL strings:
+ * <ol>
+ *     <li>{@link #format(Object)}: formats the Java type handled by the codec as a CQL string;</li>
+ *     <li>{@link #parse(String)}; parses a CQL string into the Java type handled by the codec.</li>
+ * </ol>
+ * <h3>Inspection</h3>
+ * <p>
+ * Codecs also have the following inspection methods:
+ *
+ * <ol>
+ *     <li>{@link #accepts(DataType)}}}: returns true if the codec can deserialize the given CQL type;</li>
+ *     <li>{@link #accepts(TypeToken)}}: returns true if the codec can serialize the given Java type;</li>
+ *     <li>{@link #accepts(Object)}}; returns true if the codec can serialize the given object.</li>
+ * </ol>
+ *
+ * @param <T> The codec's Java type
+ */
+public abstract class TypeCodec<T> {
 
-    private static final Map<DataType.Name, TypeCodec<?>> primitiveCodecs = new EnumMap<DataType.Name, TypeCodec<?>>(DataType.Name.class);
-    static {
-        primitiveCodecs.put(DataType.Name.ASCII,     StringCodec.asciiInstance);
-        primitiveCodecs.put(DataType.Name.BIGINT,    LongCodec.instance);
-        primitiveCodecs.put(DataType.Name.BLOB,      BytesCodec.instance);
-        primitiveCodecs.put(DataType.Name.BOOLEAN,   BooleanCodec.instance);
-        primitiveCodecs.put(DataType.Name.COUNTER,   LongCodec.instance);
-        primitiveCodecs.put(DataType.Name.DECIMAL,   DecimalCodec.instance);
-        primitiveCodecs.put(DataType.Name.DOUBLE,    DoubleCodec.instance);
-        primitiveCodecs.put(DataType.Name.FLOAT,     FloatCodec.instance);
-        primitiveCodecs.put(DataType.Name.INET,      InetCodec.instance);
-        primitiveCodecs.put(DataType.Name.INT,       IntCodec.instance);
-        primitiveCodecs.put(DataType.Name.TEXT,      StringCodec.utf8Instance);
-        primitiveCodecs.put(DataType.Name.TIMESTAMP, DateCodec.instance);
-        primitiveCodecs.put(DataType.Name.UUID,      UUIDCodec.instance);
-        primitiveCodecs.put(DataType.Name.VARCHAR,   StringCodec.utf8Instance);
-        primitiveCodecs.put(DataType.Name.VARINT,    BigIntegerCodec.instance);
-        primitiveCodecs.put(DataType.Name.TIMEUUID,  TimeUUIDCodec.instance);
-        primitiveCodecs.put(DataType.Name.CUSTOM,    BytesCodec.instance);
-    }
+    protected final TypeToken<T> javaType;
+    
+    protected final DataType cqlType;
 
-    private static final Map<DataType.Name, TypeCodec<List<?>>> primitiveListsCodecs = new EnumMap<DataType.Name, TypeCodec<List<?>>>(DataType.Name.class);
-    private static final Map<DataType.Name, TypeCodec<Set<?>>> primitiveSetsCodecs = new EnumMap<DataType.Name, TypeCodec<Set<?>>>(DataType.Name.class);
-    private static final Map<DataType.Name, Map<DataType.Name, TypeCodec<Map<?, ?>>>> primitiveMapsCodecs = new EnumMap<DataType.Name, Map<DataType.Name, TypeCodec<Map<?, ?>>>>(DataType.Name.class);
-    static {
-        populatePrimitiveCollectionCodecs();
-    }
-
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    private static void populatePrimitiveCollectionCodecs()
-    {
-        for (Map.Entry<DataType.Name, TypeCodec<?>> entry : primitiveCodecs.entrySet()) {
-            DataType.Name type = entry.getKey();
-            TypeCodec<?> codec = entry.getValue();
-            primitiveListsCodecs.put(type, new ListCodec(codec));
-            primitiveSetsCodecs.put(type, new SetCodec(codec));
-            Map<DataType.Name, TypeCodec<Map<?, ?>>> valueMap = new EnumMap<DataType.Name, TypeCodec<Map<?, ?>>>(DataType.Name.class);
-            for (Map.Entry<DataType.Name, TypeCodec<?>> valueEntry : primitiveCodecs.entrySet())
-                valueMap.put(valueEntry.getKey(), new MapCodec(codec, valueEntry.getValue()));
-            primitiveMapsCodecs.put(type, valueMap);
-        }
-    }
-
-    private TypeCodec() {}
-
-    public abstract T parse(String value);
-    public abstract String format(T value);
-
-    public abstract ByteBuffer serialize(T value);
-    public abstract T deserialize(ByteBuffer bytes);
-
-    @SuppressWarnings("unchecked")
-    static <T> TypeCodec<T> createFor(DataType.Name name) {
-        assert !name.isCollection();
-        return (TypeCodec<T>)primitiveCodecs.get(name);
-    }
-
-    @SuppressWarnings("unchecked")
-    static <T> TypeCodec<List<T>> listOf(DataType arg) {
-        TypeCodec<List<?>> codec = primitiveListsCodecs.get(arg.getName());
-        return codec != null
-             ? (TypeCodec)codec
-             : new ListCodec<T>(TypeCodec.<T>createFor(arg.getName()));
-    }
-
-    @SuppressWarnings("unchecked")
-    static <T> TypeCodec<Set<T>> setOf(DataType arg) {
-        TypeCodec<Set<?>> codec = primitiveSetsCodecs.get(arg.getName());
-        return codec != null
-             ? (TypeCodec)codec
-             : new SetCodec<T>(TypeCodec.<T>createFor(arg.getName()));
-    }
-
-    @SuppressWarnings("unchecked")
-    static <K, V> TypeCodec<Map<K, V>> mapOf(DataType keys, DataType values) {
-        Map<DataType.Name, TypeCodec<Map<?, ?>>> valueCodecs = primitiveMapsCodecs.get(keys.getName());
-        TypeCodec<Map<?, ?>> codec = valueCodecs == null ? null : valueCodecs.get(values.getName());
-        return codec != null
-             ? (TypeCodec)codec
-             : new MapCodec<K, V>(TypeCodec.<K>createFor(keys.getName()), TypeCodec.<V>createFor(values.getName()));
-    }
-
-    /* This is ugly, but not sure how we can do much better/faster
-     * Returns if it's doesn't correspond to a known type.
+    /**
+     * This constructor can only be used for non parameterized types.
+     * For parameterized ones, please use {@link #TypeCodec(DataType, TypeToken)} instead.
      *
-     * Also, note that this only a dataType that is fit for the value,
-     * but for instance, for a UUID, this will return DataType.uuid() but
-     * never DataType.timeuuid(). Also, provided an empty list, this will return
-     * DataType.list(DataType.blob()), which is semi-random. This is ok if all
-     * we want is serialize the value, but that's probably all we should do with
-     * the return of this method.
+     * @param javaClass The Java class this codec serializes from and deserializes to.
      */
-    static DataType getDataTypeFor(Object value) {
-        // Starts with ByteBuffer, so that if already serialized value are provided, we don't have the
-        // cost of testing a bunch of other types first
-        if (value instanceof ByteBuffer)
-            return DataType.blob();
-
-        if (value instanceof Number) {
-            if (value instanceof Integer)
-                return DataType.cint();
-            if (value instanceof Long)
-                return DataType.bigint();
-            if (value instanceof Float)
-                return DataType.cfloat();
-            if (value instanceof Double)
-                return DataType.cdouble();
-            if (value instanceof BigDecimal)
-                return DataType.decimal();
-            if (value instanceof BigInteger)
-                return DataType.varint();
-            return null;
-        }
-
-        if (value instanceof String)
-            return DataType.text();
-
-        if (value instanceof Boolean)
-            return DataType.cboolean();
-
-        if (value instanceof InetAddress)
-            return DataType.inet();
-
-        if (value instanceof Date)
-            return DataType.timestamp();
-
-        if (value instanceof UUID)
-            return DataType.uuid();
-
-        if (value instanceof List) {
-            List<?> l = (List<?>)value;
-            if (l.isEmpty())
-                return DataType.list(DataType.blob());
-            DataType eltType = getDataTypeFor(l.get(0));
-            return eltType == null ? null : DataType.list(eltType);
-        }
-
-        if (value instanceof Set) {
-            Set<?> s = (Set<?>)value;
-            if (s.isEmpty())
-                return DataType.set(DataType.blob());
-            DataType eltType = getDataTypeFor(s.iterator().next());
-            return eltType == null ? null : DataType.set(eltType);
-        }
-
-        if (value instanceof Map) {
-            Map<?, ?> m = (Map<?, ?>)value;
-            if (m.isEmpty())
-                return DataType.map(DataType.blob(), DataType.blob());
-            Map.Entry<?, ?> e = m.entrySet().iterator().next();
-            DataType keyType = getDataTypeFor(e.getKey());
-            DataType valueType = getDataTypeFor(e.getValue());
-            return keyType == null || valueType == null
-                 ? null
-                 : DataType.map(keyType, valueType);
-        }
-
-        return null;
+    protected TypeCodec(DataType cqlType, Class<T> javaClass) {
+        this(cqlType, TypeToken.of(javaClass));
     }
 
-    // Utility method for collections
-    private static ByteBuffer pack(List<ByteBuffer> buffers, int elements, int size) {
-        if (elements > 65535)
-            throw new IllegalArgumentException("Native protocol version 2 supports up to 65535 elements in any collection - but collection contains " + elements + " elements");
-        ByteBuffer result = ByteBuffer.allocate(2 + size);
-        result.putShort((short)elements);
-        for (ByteBuffer bb : buffers) {
-            int elemSize = bb.remaining();
-            if (elemSize > 65535)
-                throw new IllegalArgumentException("Native protocol version 2 supports only elements with size up to 65535 bytes - but element size is " + elemSize + " bytes");
-            result.putShort((short)elemSize);
-            result.put(bb.duplicate());
-        }
-        return (ByteBuffer)result.flip();
+    protected TypeCodec(DataType cqlType, TypeToken<T> javaType) {
+        this.cqlType = cqlType;
+        this.javaType = javaType;
     }
 
-    // Utility method for collections
-    private static int getUnsignedShort(ByteBuffer bb) {
-        int length = (bb.get() & 0xFF) << 8;
-        return length | (bb.get() & 0xFF);
+    /**
+     * Return the Java type that this codec deserializes to and serializes from.
+     * @return The Java type this codec deserializes to and serializes from.
+     */
+    public TypeToken<T> getJavaType() {
+        return javaType;
     }
 
-    static class StringCodec extends TypeCodec<String> {
+    /**
+     * Return the CQL type that this codec deserializes from and serializes to.
+     * @return The Java type this codec deserializes from and serializes to.
+     */
+    public DataType getCqlType() {
+        return cqlType;
+    }
 
-        static final StringCodec utf8Instance = new StringCodec(Charset.forName("UTF-8"));
-        static final StringCodec asciiInstance = new StringCodec(Charset.forName("US-ASCII"));
+    /**
+     * Serialize the given value according to the CQL type
+     * handled by this codec.
+     * @param value An instance of T
+     * @return A {@link ByteBuffer} instance containing the serialized form of T
+     * @throws InvalidTypeException if the given value does not have the expected type
+     * @throws NullPointerException if {@code value} is {@code null}, of for collections,
+     * if a collection element is {@code null}
+     */
+    public abstract ByteBuffer serialize(T value) throws InvalidTypeException;
+
+    /**
+     * Deserialize the given {@link ByteBuffer} instance according to the CQL type
+     * handled by this codec.
+     * Implementation note: codecs for CQL collection types should avoid returning {@code null};
+     * they should rather return empty collections instead.
+     * @param bytes A {@link ByteBuffer} instance containing the serialized form of T
+     * @return An instance of T
+     * @throws InvalidTypeException if the given {@link ByteBuffer} instance cannot be deserialized
+     * @throws NullPointerException if {@code bytes} is {@code null}
+     */
+    public abstract T deserialize(ByteBuffer bytes) throws InvalidTypeException;
+
+    /**
+     * Parse the given CQL string into an instance of the Java type
+     * handled by this codec.
+     * @param value CQL string
+     * @return An instance of T
+     * @throws InvalidTypeException if the given value cannot be parsed into the expected type
+     * @throws NullPointerException if {@code value} is {@code null}
+     */
+    public abstract T parse(String value) throws InvalidTypeException;
+
+    /**
+     * Format the given value as a valid CQL string according
+     * to the CQL type handled by this codec.
+     * @param value An instance of T
+     * @return CQL string
+     * @throws InvalidTypeException if the given value does not have the expected type
+     * @throws NullPointerException if {@code value} is {@code null}
+     */
+    public abstract String format(T value) throws InvalidTypeException;
+
+    /**
+     * Return {@code true} if this codec is capable of serializing
+     * the given {@code javaType}.
+     *
+     * @param javaType The Java type this codec should serialize from and deserialize to; cannot be {@code null}.
+     * @return {@code true} if the codec is capable of serializing
+     * the given {@code javaType}, and {@code false} otherwise.
+     * @throws NullPointerException if {@code javaType} is {@code null}.
+     */
+    public final boolean accepts(TypeToken javaType) {
+        checkNotNull(javaType);
+        return this.javaType.isAssignableFrom(javaType);
+    }
+
+    /**
+     * Return {@code true} if this codec is capable of deserializing
+     * the given {@code cqlType}.
+     *
+     * @param cqlType The CQL type this codec should deserialize from and serialize to; cannot be {@code null}.
+     * @return {@code true} if the codec is capable of deserializing
+     * the given {@code cqlType}, and {@code false} otherwise.
+     * @throws NullPointerException if {@code javaType} is {@code null}.
+     */
+    protected final boolean accepts(DataType cqlType) {
+        checkNotNull(cqlType);
+        // text is merely an alias vor varchar
+        if(cqlType == text()) cqlType = varchar();
+        return this.cqlType.equals(cqlType);
+    }
+
+    /**
+     * Return {@code true} if this codec is capable of serializing
+     * the given object. Note that the object's Java type is inferred
+     * from the object' runtime (raw) type, contrary
+     * to {@link #accepts(TypeToken)} which is capable of
+     * handling generic types.
+     * <p>
+     * This method is intended mostly to be used by the QueryBuilder
+     * when no type information is available when the codec is used.
+     * <p>
+     * Implementation notes:
+     *
+     * <ol>
+     * <li>The implementation provided here can only handle non-parameterized types;
+     * codecs handling parameterized types, such as collection types, must override
+     * this method and perform some sort of "manual"
+     * inspection of the actual type parameters, because
+     * this information is lost at runtime by type erasure and cannot
+     * be retrieved from a simple Object parameter.</li>
+     * </ol>
+     *
+     * @param value The Java type this codec should serialize from and deserialize to; cannot be {@code null}.
+     * @return {@code true} if the codec is capable of serializing
+     * the given {@code javaType}, and {@code false} otherwise.
+     * @throws NullPointerException if {@code javaType} is {@code null}.
+     */
+    public boolean accepts(Object value) {
+        checkNotNull(value);
+        return accepts(TypeToken.of(value.getClass()));
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (!(o instanceof TypeCodec))
+            return false;
+        TypeCodec<?> typeCodec = (TypeCodec<?>)o;
+        return Objects.equal(javaType, typeCodec.javaType) && Objects.equal(cqlType, typeCodec.cqlType);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(javaType, cqlType);
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%s [%s <-> %s]", this.getClass().getSimpleName(), cqlType, javaType);
+    }
+
+    public static abstract class StringCodec extends TypeCodec<String> {
 
         private final Charset charset;
 
-        private StringCodec(Charset charset) {
+        public StringCodec(DataType cqlType, Charset charset) {
+            super(cqlType, String.class);
             this.charset = charset;
         }
 
@@ -238,7 +258,7 @@ abstract class TypeCodec<T> {
 
         // Simple method to replace a single character. String.replace is a bit too
         // inefficient (see JAVA-67)
-        static String replace(String text, char search, String replacement) {
+        public static String replace(String text, char search, String replacement) {
             if (text == null || text.isEmpty())
                 return text;
 
@@ -279,11 +299,41 @@ abstract class TypeCodec<T> {
         }
     }
 
-    static class LongCodec extends TypeCodec<Long> {
+    public static class VarcharCodec extends StringCodec {
 
-        public static final LongCodec instance = new LongCodec();
+        public static final VarcharCodec instance = new VarcharCodec();
 
-        private LongCodec() {}
+        private VarcharCodec() {
+            super(varchar(), Charset.forName("UTF-8"));
+        }
+
+    }
+
+    public static class AsciiCodec extends StringCodec {
+
+        public static final AsciiCodec instance = new AsciiCodec();
+
+        private static final Pattern ASCII_PATTERN = Pattern.compile("^\\p{ASCII}*$");
+
+        private AsciiCodec() {
+            super(ascii(), Charset.forName("US-ASCII"));
+        }
+
+        @Override
+        public boolean accepts(Object value) {
+            if(value instanceof String){
+                return ASCII_PATTERN.matcher((String) value).matches();
+            }
+            return false;
+        }
+
+    }
+
+    public abstract static class LongCodec extends TypeCodec<Long> {
+
+        public LongCodec(DataType cqlType) {
+            super(cqlType,  Long.class);
+        }
 
         @Override
         public Long parse(String value) {
@@ -323,11 +373,34 @@ abstract class TypeCodec<T> {
         }
     }
 
-    static class BytesCodec extends TypeCodec<ByteBuffer> {
 
-        public static final BytesCodec instance = new BytesCodec();
+    public static class BigintCodec extends LongCodec {
 
-        private BytesCodec() {}
+        public static final BigintCodec instance = new BigintCodec();
+
+        private BigintCodec() {
+            super(bigint());
+        }
+
+    }
+
+    public static class CounterCodec extends LongCodec {
+
+        public static final CounterCodec instance = new CounterCodec();
+
+        private CounterCodec() {
+            super(counter());
+        }
+
+    }
+
+    public static class BlobCodec extends TypeCodec<ByteBuffer> {
+
+        public static final BlobCodec instance = new BlobCodec();
+
+        private BlobCodec() {
+            super(blob(), ByteBuffer.class);
+        }
 
         @Override
         public ByteBuffer parse(String value) {
@@ -350,14 +423,44 @@ abstract class TypeCodec<T> {
         }
     }
 
-    static class BooleanCodec extends TypeCodec<Boolean> {
+    public static class CustomCodec extends TypeCodec<ByteBuffer> {
+
+        public CustomCodec(DataType custom) {
+            super(custom, ByteBuffer.class);
+            assert custom.getName() == Name.CUSTOM;
+        }
+
+        @Override
+        public ByteBuffer parse(String value) {
+            return Bytes.fromHexString(value);
+        }
+
+        @Override
+        public String format(ByteBuffer value) {
+            return Bytes.toHexString(value);
+        }
+
+        @Override
+        public ByteBuffer serialize(ByteBuffer value) {
+            return value.duplicate();
+        }
+
+        @Override
+        public ByteBuffer deserialize(ByteBuffer bytes) {
+            return bytes.duplicate();
+        }
+    }
+
+    public static class BooleanCodec extends TypeCodec<Boolean> {
 
         private static final ByteBuffer TRUE = ByteBuffer.wrap(new byte[] {1});
         private static final ByteBuffer FALSE = ByteBuffer.wrap(new byte[] {0});
 
         public static final BooleanCodec instance = new BooleanCodec();
 
-        private BooleanCodec() {}
+        private BooleanCodec() {
+            super(cboolean(), Boolean.class);
+        }
 
         @Override
         public Boolean parse(String value) {
@@ -396,11 +499,13 @@ abstract class TypeCodec<T> {
         }
     }
 
-    static class DecimalCodec extends TypeCodec<BigDecimal> {
+    public static class DecimalCodec extends TypeCodec<BigDecimal> {
 
         public static final DecimalCodec instance = new DecimalCodec();
 
-        private DecimalCodec() {}
+        private DecimalCodec() {
+            super(decimal(), BigDecimal.class);
+        }
 
         @Override
         public BigDecimal parse(String value) {
@@ -444,11 +549,13 @@ abstract class TypeCodec<T> {
         }
     }
 
-    static class DoubleCodec extends TypeCodec<Double> {
+    public static class DoubleCodec extends TypeCodec<Double> {
 
         public static final DoubleCodec instance = new DoubleCodec();
 
-        private DoubleCodec() {}
+        private DoubleCodec() {
+            super(cdouble(), Double.class);
+        }
 
         @Override
         public Double parse(String value) {
@@ -488,11 +595,13 @@ abstract class TypeCodec<T> {
         }
     }
 
-    static class FloatCodec extends TypeCodec<Float> {
+    public static class FloatCodec extends TypeCodec<Float> {
 
         public static final FloatCodec instance = new FloatCodec();
 
-        private FloatCodec() {}
+        private FloatCodec() {
+            super(cfloat(), Float.class);
+        }
 
         @Override
         public Float parse(String value) {
@@ -532,11 +641,13 @@ abstract class TypeCodec<T> {
         }
     }
 
-    static class InetCodec extends TypeCodec<InetAddress> {
+    public static class InetCodec extends TypeCodec<InetAddress> {
 
         public static final InetCodec instance = new InetCodec();
 
-        private InetCodec() {}
+        private InetCodec() {
+            super(inet(), InetAddress.class);
+        }
 
         @Override
         public InetAddress parse(String value) {
@@ -567,11 +678,13 @@ abstract class TypeCodec<T> {
         }
     }
 
-    static class IntCodec extends TypeCodec<Integer> {
+    public static class IntCodec extends TypeCodec<Integer> {
 
         public static final IntCodec instance = new IntCodec();
 
-        private IntCodec() {}
+        private IntCodec() {
+            super(cint(), Integer.class);
+        }
 
         @Override
         public Integer parse(String value) {
@@ -611,7 +724,7 @@ abstract class TypeCodec<T> {
         }
     }
 
-    static class DateCodec extends TypeCodec<Date> {
+    public static class TimestampCodec extends TypeCodec<Date> {
 
         private static final String[] iso8601Patterns = new String[] {
             "yyyy-MM-dd HH:mm",
@@ -630,10 +743,12 @@ abstract class TypeCodec<T> {
             "yyyy-MM-ddZ"
         };
 
-        public static final DateCodec instance = new DateCodec();
+        public static final TimestampCodec instance = new TimestampCodec();
         private static final Pattern IS_LONG_PATTERN = Pattern.compile("^-?\\d+$");
 
-        private DateCodec() {}
+        private TimestampCodec() {
+            super(timestamp(), Date.class);
+        }
 
         /*
          * Copied and adapted from apache commons DateUtils.parseStrictly method (that is used Cassandra side
@@ -684,20 +799,20 @@ abstract class TypeCodec<T> {
 
         @Override
         public ByteBuffer serialize(Date value) {
-            return LongCodec.instance.serializeNoBoxing(value.getTime());
+            return BigintCodec.instance.serializeNoBoxing(value.getTime());
         }
 
         @Override
         public Date deserialize(ByteBuffer bytes) {
-            return new Date(LongCodec.instance.deserializeNoBoxing(bytes));
+            return new Date(BigintCodec.instance.deserializeNoBoxing(bytes));
         }
     }
 
-    static class UUIDCodec extends TypeCodec<UUID> {
+    public static abstract class AbstractUUIDCodec extends TypeCodec<UUID> {
 
-        public static final UUIDCodec instance = new UUIDCodec();
-
-        protected UUIDCodec() {}
+        private AbstractUUIDCodec(DataType cqlType) {
+            super(cqlType, UUID.class);
+        }
 
         @Override
         public UUID parse(String value) {
@@ -727,34 +842,33 @@ abstract class TypeCodec<T> {
         }
     }
 
-    static class TimeUUIDCodec extends UUIDCodec {
+    public static class UUIDCodec extends AbstractUUIDCodec {
+
+        public static final UUIDCodec instance = new UUIDCodec();
+
+        private UUIDCodec() {
+            super(uuid());
+        }
+
+    }
+
+    public static class TimeUUIDCodec extends AbstractUUIDCodec {
 
         public static final TimeUUIDCodec instance = new TimeUUIDCodec();
 
-        private TimeUUIDCodec() {}
-
-        @Override
-        public UUID parse(String value) {
-            UUID id = super.parse(value);
-            if (id.version() != 1)
-                throw new InvalidTypeException(String.format("Cannot parse type 1 UUID value from \"%s\": represents a type %d UUID", value, id.version()));
-            return id;
+        private TimeUUIDCodec() {
+            super(timeuuid());
         }
 
-        @Override
-        public UUID deserialize(ByteBuffer bytes) {
-            UUID id = super.deserialize(bytes);
-            if (id.version() != 1)
-                throw new InvalidTypeException(String.format("Error deserializing type 1 UUID: deserialized value %s represents a type %d UUID", id, id.version()));
-            return id;
-        }
     }
 
-    static class BigIntegerCodec extends TypeCodec<BigInteger> {
+    public static class VarintCodec extends TypeCodec<BigInteger> {
 
-        public static final BigIntegerCodec instance = new BigIntegerCodec();
+        public static final VarintCodec instance = new VarintCodec();
 
-        private BigIntegerCodec() {}
+        private VarintCodec() {
+            super(varint(), BigInteger.class);
+        }
 
         @Override
         public BigInteger parse(String value) {
@@ -781,131 +895,162 @@ abstract class TypeCodec<T> {
         }
     }
 
-    static class ListCodec<T> extends TypeCodec<List<T>> {
+    public abstract static class CollectionCodec<E, C extends Collection<E>> extends TypeCodec<C> {
 
-        private final TypeCodec<T> eltCodec;
+        protected final TypeCodec<E> eltCodec;
 
-        public ListCodec(TypeCodec<T> eltCodec) {
+        public CollectionCodec(DataType cqlType, TypeToken<C> javaType, TypeCodec<E> eltCodec) {
+            super(cqlType, javaType);
+            checkArgument(cqlType.isCollection(), "Argument cqlType is not a valid CQL collection type: %s", cqlType);
             this.eltCodec = eltCodec;
         }
 
         @Override
-        public List<T> parse(String value) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public String format(List<T> value) {
-            StringBuilder sb = new StringBuilder();
-            sb.append("[");
-            for (int i = 0; i < value.size(); i++) {
-                if (i != 0)
-                    sb.append(", ");
-                sb.append(eltCodec.format(value.get(i)));
-            }
-            sb.append("]");
-            return sb.toString();
-        }
-
-        @Override
-        public ByteBuffer serialize(List<T> value) {
+        public ByteBuffer serialize(C value) {
             List<ByteBuffer> bbs = new ArrayList<ByteBuffer>(value.size());
             int size = 0;
-            for (T elt : value) {
-                ByteBuffer bb = eltCodec.serialize(elt);
+            for (E elt : value) {
+                if(elt == null) {
+                    throw new NullPointerException("Collection elements cannot be null");
+                }
+                ByteBuffer bb;
+                try {
+                    bb = eltCodec.serialize(elt);
+                } catch (ClassCastException e) {
+                    throw new InvalidTypeException(
+                        String.format("Invalid type for %s element, expecting %s but got %s",
+                            cqlType, eltCodec.getJavaType(), elt.getClass()), e);
+                }
                 bbs.add(bb);
                 size += 2 + bb.remaining();
             }
-            return pack(bbs, value.size(), size);
+            return CodecUtils.pack(bbs, value.size(), size);
         }
 
         @Override
-        public List<T> deserialize(ByteBuffer bytes) {
+        public C deserialize(ByteBuffer bytes) {
             try {
                 ByteBuffer input = bytes.duplicate();
-                int n = getUnsignedShort(input);
-                List<T> l = new ArrayList<T>(n);
+                int n = CodecUtils.getUnsignedShort(input);
+                C coll = newInstance(n);
                 for (int i = 0; i < n; i++) {
-                    int s = getUnsignedShort(input);
+                    int s = CodecUtils.getUnsignedShort(input);
                     byte[] data = new byte[s];
                     input.get(data);
                     ByteBuffer databb = ByteBuffer.wrap(data);
-                    l.add(eltCodec.deserialize(databb));
+                    coll.add(eltCodec.deserialize(databb));
                 }
-                return l;
+                return coll;
             } catch (BufferUnderflowException e) {
                 throw new InvalidTypeException("Not enough bytes to deserialize list");
             }
         }
-    }
-
-    static class SetCodec<T> extends TypeCodec<Set<T>> {
-
-        private final TypeCodec<T> eltCodec;
-
-        public SetCodec(TypeCodec<T> eltCodec) {
-            this.eltCodec = eltCodec;
-        }
 
         @Override
-        public Set<T> parse(String value) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public String format(Set<T> value) {
+        public String format(C value) {
             StringBuilder sb = new StringBuilder();
-            sb.append("{");
+            sb.append(getOpeningChar());
             int i = 0;
-            for (T v : value) {
+            for (E v : value) {
                 if (i++ != 0)
-                    sb.append(", ");
+                    sb.append(",");
                 sb.append(eltCodec.format(v));
             }
-            sb.append("}");
+            sb.append(getClosingChar());
             return sb.toString();
         }
 
         @Override
-        public ByteBuffer serialize(Set<T> value) {
-            List<ByteBuffer> bbs = new ArrayList<ByteBuffer>(value.size());
-            int size = 0;
-            for (T elt : value) {
-                ByteBuffer bb = eltCodec.serialize(elt);
-                bbs.add(bb);
-                size += 2 + bb.remaining();
-            }
-            return pack(bbs, value.size(), size);
+        public C parse(String value) {
+            throw new UnsupportedOperationException();
         }
 
         @Override
-        public Set<T> deserialize(ByteBuffer bytes) {
-            try {
-                ByteBuffer input = bytes.duplicate();
-                int n = getUnsignedShort(input);
-                Set<T> l = new LinkedHashSet<T>(n);
-                for (int i = 0; i < n; i++) {
-                    int s = getUnsignedShort(input);
-                    byte[] data = new byte[s];
-                    input.get(data);
-                    ByteBuffer databb = ByteBuffer.wrap(data);
-                    l.add(eltCodec.deserialize(databb));
-                }
-                return l;
-            } catch (BufferUnderflowException e) {
-                throw new InvalidTypeException("Not enough bytes to deserialize a set");
+        public boolean accepts(Object value) {
+            if(getJavaType().getRawType().isAssignableFrom(value.getClass())) {
+                // runtime type ok, now check element type
+                Collection<?> list = (Collection<?>)value;
+                if(list.isEmpty())
+                    return true;
+                Object elt = list.iterator().next();
+                return eltCodec.accepts(elt);
             }
+            return false;
+        }
+
+        protected abstract C newInstance(int capacity);
+
+        protected abstract char getOpeningChar();
+
+        protected abstract char getClosingChar();
+
+    }
+
+    public static class ListCodec<T> extends CollectionCodec<T, List<T>> {
+
+        public ListCodec(TypeCodec<T> eltCodec) {
+            super(list(eltCodec.getCqlType()), listOf(eltCodec.getJavaType()), eltCodec);
+        }
+
+        @Override
+        protected List<T> newInstance(int capacity) {
+            return new ArrayList<T>(capacity);
+        }
+
+        @Override
+        protected char getOpeningChar() {
+            return '[';
+        }
+
+        @Override
+        protected char getClosingChar() {
+            return ']';
+        }
+
+    }
+
+    public static class SetCodec<T> extends CollectionCodec<T, Set<T>> {
+
+        public SetCodec(TypeCodec<T> eltCodec) {
+            super(set(eltCodec.cqlType), setOf(eltCodec.getJavaType()), eltCodec);
+        }
+
+        protected Set<T> newInstance(int capacity) {
+            return new LinkedHashSet<T>(capacity);
+        }
+
+        protected char getOpeningChar() {
+            return '{';
+        }
+
+        protected char getClosingChar() {
+            return '}';
         }
     }
 
-    static class MapCodec<K, V> extends TypeCodec<Map<K, V>> {
+    public static class MapCodec<K, V> extends TypeCodec<Map<K, V>> {
 
         private final TypeCodec<K> keyCodec;
+
         private final TypeCodec<V> valueCodec;
 
         public MapCodec(TypeCodec<K> keyCodec, TypeCodec<V> valueCodec) {
+            super(map(keyCodec.getCqlType(), valueCodec.getCqlType()), mapOf(keyCodec.getJavaType(), valueCodec.getJavaType()));
             this.keyCodec = keyCodec;
             this.valueCodec = valueCodec;
+        }
+
+        @Override
+        public boolean accepts(Object value) {
+            if(value instanceof Map) {
+                // runtime type ok, now check key and value types
+                Map<?,?> map = (Map<?,?>)value;
+                if(map.isEmpty())
+                    return true;
+                Map.Entry<?, ?> entry = map.entrySet().iterator().next();
+                return keyCodec.accepts(entry.getKey()) && valueCodec.accepts(entry.getValue());
+            }
+            return false;
         }
 
         @Override
@@ -920,7 +1065,7 @@ abstract class TypeCodec<T> {
             int i = 0;
             for (Map.Entry<K, V> e : value.entrySet()) {
                 if (i++ != 0)
-                    sb.append(", ");
+                    sb.append(",");
                 sb.append(keyCodec.format(e.getKey()));
                 sb.append(":");
                 sb.append(valueCodec.format(e.getValue()));
@@ -934,28 +1079,46 @@ abstract class TypeCodec<T> {
             List<ByteBuffer> bbs = new ArrayList<ByteBuffer>(2 * value.size());
             int size = 0;
             for (Map.Entry<K, V> entry : value.entrySet()) {
-                ByteBuffer bbk = keyCodec.serialize(entry.getKey());
-                ByteBuffer bbv = valueCodec.serialize(entry.getValue());
+                ByteBuffer bbk;
+                K key = entry.getKey();
+                if(key == null) {
+                    throw new NullPointerException("Map keys cannot be null");
+                }
+                try {
+                    bbk = keyCodec.serialize(key);
+                } catch (ClassCastException e) {
+                    throw new InvalidTypeException(String.format("Invalid type for map key, expecting % but got %s", keyCodec.getJavaType(), key.getClass()), e);
+                }
+                ByteBuffer bbv;
+                V v = entry.getValue();
+                if(v == null) {
+                    throw new NullPointerException("Map values cannot be null");
+                }
+                try {
+                    bbv = valueCodec.serialize(v);
+                } catch (ClassCastException e) {
+                    throw new InvalidTypeException(String.format("Invalid type for map value, expecting % but got %s", valueCodec.getJavaType(), v.getClass()), e);
+                }
                 bbs.add(bbk);
                 bbs.add(bbv);
                 size += 4 + bbk.remaining() + bbv.remaining();
             }
-            return pack(bbs, value.size(), size);
+            return CodecUtils.pack(bbs, value.size(), size);
         }
 
         @Override
         public Map<K, V> deserialize(ByteBuffer bytes) {
             try {
                 ByteBuffer input = bytes.duplicate();
-                int n = getUnsignedShort(input);
+                int n = CodecUtils.getUnsignedShort(input);
                 Map<K, V> m = new LinkedHashMap<K, V>(n);
                 for (int i = 0; i < n; i++) {
-                    int sk = getUnsignedShort(input);
+                    int sk = CodecUtils.getUnsignedShort(input);
                     byte[] datak = new byte[sk];
                     input.get(datak);
                     ByteBuffer kbb = ByteBuffer.wrap(datak);
 
-                    int sv = getUnsignedShort(input);
+                    int sv = CodecUtils.getUnsignedShort(input);
                     byte[] datav = new byte[sv];
                     input.get(datav);
                     ByteBuffer vbb = ByteBuffer.wrap(datav);
@@ -967,5 +1130,74 @@ abstract class TypeCodec<T> {
                 throw new InvalidTypeException("Not enough bytes to deserialize a map");
             }
         }
+    }
+
+    public static class DelegatingCodec<T> extends TypeCodec<T> {
+
+        private final TypeCodec<T> codec;
+
+        public DelegatingCodec(TypeCodec<T> codec) {
+            super(codec.getCqlType(), codec.getJavaType());
+            this.codec = codec;
+        }
+
+        @Override
+        public ByteBuffer serialize(T value) throws InvalidTypeException {
+            return codec.serialize(value);
+        }
+
+        @Override
+        public T deserialize(ByteBuffer bytes) throws InvalidTypeException {
+            return codec.deserialize(bytes);
+        }
+
+        @Override
+        public T parse(String value) throws InvalidTypeException {
+            return codec.parse(value);
+        }
+
+        @Override
+        public String format(T value) throws InvalidTypeException {
+            return codec.format(value);
+        }
+
+    }
+
+    /**
+     * An abstract TypeCodec that actually stores objects as serialized strings.
+     * This can serve as a base for codecs dealing with XML or JSON formats.
+     *
+     * @param <T> The Java type this codec serializes from and deserializes to.
+     */
+    public abstract static class ParsingTypeCodec<T> extends TypeCodec<T> {
+
+        private final StringCodec codec;
+
+        public ParsingTypeCodec(Class<T> javaType) {
+            this(TypeToken.of(javaType));
+        }
+
+        public ParsingTypeCodec(TypeToken<T> javaType) {
+            this(VarcharCodec.instance, javaType);
+        }
+
+        public ParsingTypeCodec(StringCodec codec, Class<T> javaType) {
+            this(codec, TypeToken.of(javaType));
+        }
+
+        public ParsingTypeCodec(StringCodec codec, TypeToken<T> javaType) {
+            super(codec.getCqlType(), javaType);
+            this.codec = codec;
+        }
+        @Override
+        public ByteBuffer serialize(T value) throws InvalidTypeException {
+            return codec.serialize(format(value));
+        }
+
+        @Override
+        public T deserialize(ByteBuffer bytes) throws InvalidTypeException {
+            return parse(codec.deserialize(bytes));
+        }
+
     }
 }

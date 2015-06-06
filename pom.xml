@@ -49,8 +49,12 @@
     <!--
       We use an old version of Guava to be compatible with Spark 1.1.
       Check with the spark-cassandra-connector team before upgrading this.
+      Warning: since JAVA-721, Guava version MUST be >= 16.0.1
+      https://code.google.com/p/guava-libraries/issues/detail?id=1635
+      https://code.google.com/p/guava-libraries/issues/detail?id=1637
+      https://bugs.openjdk.java.net/browse/JDK-8031984
     -->
-    <guava.version>14.0.1</guava.version>
+    <guava.version>16.0.1</guava.version>
     <netty.version>4.0.27.Final</netty.version>
     <metrics.version>3.0.2</metrics.version>
     <snappy.version>1.0.5</snappy.version>

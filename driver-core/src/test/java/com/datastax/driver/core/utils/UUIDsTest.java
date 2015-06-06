@@ -23,10 +23,11 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 import org.testng.annotations.Test;
+
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
-import com.datastax.driver.core.DataType;
+import com.datastax.driver.core.TypeCodec;
 
 public class UUIDsTest {
 
@@ -111,9 +112,10 @@ public class UUIDsTest {
     }
 
     private static void assertWithin(UUID uuid, UUID lowerBound, UUID upperBound) {
-        ByteBuffer uuidBytes = DataType.uuid().serialize(uuid);
-        ByteBuffer lb = DataType.uuid().serialize(lowerBound);
-        ByteBuffer ub = DataType.uuid().serialize(upperBound);
+        TypeCodec.UUIDCodec codec = TypeCodec.UUIDCodec.instance;
+        ByteBuffer uuidBytes = codec.serialize(uuid);
+        ByteBuffer lb = codec.serialize(lowerBound);
+        ByteBuffer ub = codec.serialize(upperBound);
         assertTrue(compareTimestampBytes(lb, uuidBytes) <= 0);
         assertTrue(compareTimestampBytes(ub, uuidBytes) >= 0);
     }

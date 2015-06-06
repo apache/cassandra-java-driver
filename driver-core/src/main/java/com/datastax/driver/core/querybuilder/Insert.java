@@ -15,11 +15,11 @@
  */
 package com.datastax.driver.core.querybuilder;
 
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import com.datastax.driver.core.CodecRegistry;
 import com.datastax.driver.core.TableMetadata;
 
 /**
@@ -46,7 +46,7 @@ public class Insert extends BuiltStatement {
     }
 
     @Override
-    StringBuilder buildQueryString(List<ByteBuffer> variables) {
+    StringBuilder buildQueryString(List<Object> variables, CodecRegistry codecRegistry) {
         StringBuilder builder = new StringBuilder();
 
         builder.append("INSERT INTO ");
@@ -54,9 +54,9 @@ public class Insert extends BuiltStatement {
             Utils.appendName(keyspace, builder).append('.');
         Utils.appendName(table, builder);
         builder.append('(');
-        Utils.joinAndAppendNames(builder, ",", names);
+        Utils.joinAndAppendNames(builder, codecRegistry, ",", names);
         builder.append(") VALUES (");
-        Utils.joinAndAppendValues(builder, ",", values, variables);
+        Utils.joinAndAppendValues(builder, codecRegistry, ",", values, variables);
         builder.append(')');
 
         if (ifNotExists)
@@ -64,7 +64,7 @@ public class Insert extends BuiltStatement {
 
         if (!usings.usings.isEmpty()) {
             builder.append(" USING ");
-            Utils.joinAndAppend(builder, " AND ", usings.usings, variables);
+            Utils.joinAndAppend(builder, codecRegistry, " AND ", usings.usings, variables);
         }
         return builder;
     }

@@ -158,7 +158,7 @@ public abstract class Statement {
     }
 
     /**
-     * Returns the routing key (in binary raw form) to use for token aware 
+     * Returns the routing key (in binary raw form) to use for token aware
      * routing of this query.
      * <p>
      * The routing key is optional in that implementers are free to

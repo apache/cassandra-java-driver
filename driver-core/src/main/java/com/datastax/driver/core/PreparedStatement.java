@@ -268,4 +268,5 @@ public interface PreparedStatement {
      * @return the PreparedId corresponding to this statement.
      */
     public PreparedId getPreparedId();
+
 }

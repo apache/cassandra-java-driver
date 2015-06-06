@@ -23,6 +23,9 @@ import java.util.regex.Pattern;
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.policies.RetryPolicy;
 
+import static com.datastax.driver.core.CodecUtils.compose;
+import static com.datastax.driver.core.CodecUtils.convert;
+
 /**
  * Common ancestor to the query builder built statements.
  */
@@ -36,7 +39,7 @@ public abstract class BuiltStatement extends RegularStatement {
 
     private boolean dirty;
     private String cache;
-    private ByteBuffer[] values;
+    private List<Object> values;
 
     Boolean isCounterOp;
     boolean hasNonIdempotentOps;
@@ -64,14 +67,33 @@ public abstract class BuiltStatement extends RegularStatement {
         return lowercaseId.matcher(ident).matches() ? ident : Metadata.quote(ident);
     }
 
-
+     /**
+     * Returns the query string for this statement.
+     *
+     * @deprecated for {@link BuiltStatement}s, use {@link #getQueryString(CodecRegistry)}
+     * instead.
+     * @return a valid CQL query string.
+     */
     @Override
+    @Deprecated
     public String getQueryString() {
-        maybeRebuildCache();
+        return getQueryString(CodecRegistry.DEFAULT_INSTANCE);
+    }
+
+    /**
+     * Returns the query string for this statement.
+     * If there are any values to be included in the resulting
+     * string, these will be formatted using the given {@link CodecRegistry}.
+     *
+     * @param codecRegistry The {@link CodecRegistry} instance to use.
+     * @return a valid CQL query string.
+     */
+    public String getQueryString(CodecRegistry codecRegistry) {
+        maybeRebuildCache(codecRegistry);
         return cache;
     }
 
-    private void maybeRebuildCache() {
+    private void maybeRebuildCache(CodecRegistry codecRegistry) {
         if (!dirty && cache != null)
             return;
 
@@ -79,16 +101,16 @@ public abstract class BuiltStatement extends RegularStatement {
         values = null;
 
         if (hasBindMarkers || forceNoValues) {
-            sb = buildQueryString(null);
+            sb = buildQueryString(null, codecRegistry);
         } else {
-            List<ByteBuffer> l = new ArrayList<ByteBuffer>();
-            sb = buildQueryString(l);
+            values = new ArrayList<Object>();
+            sb = buildQueryString(values, codecRegistry);
 
-            if (l.size() > 65535)
+            if (values.size() > 65535)
                 throw new IllegalArgumentException("Too many values for built statement, the maximum allowed is 65535");
 
-            if (!l.isEmpty())
-                values = l.toArray(new ByteBuffer[l.size()]);
+            if (values.isEmpty())
+                values = null;
         }
 
         maybeAddSemicolon(sb);
@@ -111,7 +133,7 @@ public abstract class BuiltStatement extends RegularStatement {
         return sb;
     }
 
-    abstract StringBuilder buildQueryString(List<ByteBuffer> variables);
+    abstract StringBuilder buildQueryString(List<Object> variables, CodecRegistry codecRegistry);
 
     boolean isCounterOp() {
         return isCounterOp == null ? false : isCounterOp;
@@ -141,14 +163,15 @@ public abstract class BuiltStatement extends RegularStatement {
             hasBindMarkers = true;
     }
 
-    // TODO: Correctly document the InvalidTypeException
     void maybeAddRoutingKey(String name, Object value) {
         if (routingKey == null || name == null || value == null || value instanceof BindMarker)
             return;
 
+        // Always use default CodecRegistry instance for routing keys
+        CodecRegistry codecRegistry = CodecRegistry.DEFAULT_INSTANCE;
         for (int i = 0; i < partitionKey.size(); i++) {
             if (name.equals(partitionKey.get(i).getName()) && Utils.isRawValue(value)) {
-                routingKey[i] = partitionKey.get(i).getType().parse(Utils.toRawString(value));
+                routingKey[i] = codecRegistry.codecFor(partitionKey.get(i).getType()).serialize(value);
                 return;
             }
         }
@@ -175,8 +198,13 @@ public abstract class BuiltStatement extends RegularStatement {
 
     @Override
     public ByteBuffer[] getValues() {
-        maybeRebuildCache();
-        return values;
+        return getValues(CodecRegistry.DEFAULT_INSTANCE);
+    }
+
+    @Override
+    public ByteBuffer[] getValues(CodecRegistry codecRegistry) {
+        maybeRebuildCache(codecRegistry);
+        return values == null ? null : convert(values.toArray(), codecRegistry);
     }
 
     @Override
@@ -192,9 +220,9 @@ public abstract class BuiltStatement extends RegularStatement {
     @Override
     public String toString() {
         if (forceNoValues)
-            return getQueryString();
+            return getQueryString(CodecRegistry.DEFAULT_INSTANCE);
 
-        return maybeAddSemicolon(buildQueryString(null)).toString();
+        return maybeAddSemicolon(buildQueryString(null, CodecRegistry.DEFAULT_INSTANCE)).toString();
     }
 
     /**
@@ -231,29 +259,6 @@ public abstract class BuiltStatement extends RegularStatement {
         return this;
     }
 
-    // This is a duplicate of the one in SimpleStatement, but I don't want to expose this publicly so...
-    static ByteBuffer compose(ByteBuffer... buffers) {
-        int totalLength = 0;
-        for (ByteBuffer bb : buffers)
-            totalLength += 2 + bb.remaining() + 1;
-
-        ByteBuffer out = ByteBuffer.allocate(totalLength);
-        for (ByteBuffer buffer : buffers)
-        {
-            ByteBuffer bb = buffer.duplicate();
-            putShortLength(out, bb.remaining());
-            out.put(bb);
-            out.put((byte) 0);
-        }
-        out.flip();
-        return out;
-    }
-
-    private static void putShortLength(ByteBuffer bb, int length) {
-        bb.put((byte) ((length >> 8) & 0xFF));
-        bb.put((byte) (length & 0xFF));
-    }
-
     /**
      * An utility class to create a BuiltStatement that encapsulate another one.
      */
@@ -266,14 +271,15 @@ public abstract class BuiltStatement extends RegularStatement {
             this.statement = statement;
         }
 
+        @SuppressWarnings("deprecation")
         @Override
         public String getQueryString() {
             return statement.getQueryString();
         }
 
         @Override
-        StringBuilder buildQueryString(List<ByteBuffer> values) {
-            return statement.buildQueryString(values);
+        StringBuilder buildQueryString(List<Object> values, CodecRegistry codecRegistry) {
+            return statement.buildQueryString(values, codecRegistry);
         }
 
         @Override
@@ -344,6 +350,11 @@ public abstract class BuiltStatement extends RegularStatement {
         @Override
         public ByteBuffer[] getValues() {
             return statement.getValues();
+        }
+
+        @Override
+        public ByteBuffer[] getValues(CodecRegistry codecRegistry) {
+            return statement.getValues(codecRegistry);
         }
 
         @Override

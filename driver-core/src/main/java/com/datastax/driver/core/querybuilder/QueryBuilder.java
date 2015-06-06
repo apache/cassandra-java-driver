@@ -17,6 +17,7 @@ package com.datastax.driver.core.querybuilder;
 
 import java.util.*;
 
+import com.datastax.driver.core.CodecRegistry;
 import com.datastax.driver.core.RegularStatement;
 import com.datastax.driver.core.TableMetadata;
 
@@ -258,7 +259,9 @@ public final class QueryBuilder {
     public static String token(String... columnNames) {
         StringBuilder sb = new StringBuilder();
         sb.append("token(");
-        Utils.joinAndAppendNames(sb, ",", Arrays.asList((Object[])columnNames));
+        // FIXME use configured CodecRegistry
+        CodecRegistry codecRegistry = CodecRegistry.DEFAULT_INSTANCE;
+        Utils.joinAndAppendNames(sb, codecRegistry, ",", Arrays.asList((Object[])columnNames));
         sb.append(')');
         return sb.toString();
     }

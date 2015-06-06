@@ -91,7 +91,7 @@ public class MailboxImpl implements MailboxService {
 
     @Override public Collection<MailboxMessage> getMessages(String recipient) throws MailboxException {
         try {
-            BoundStatement statement = new BoundStatement(retrieveStatement);
+            BoundStatement statement = new BoundStatement(retrieveStatement, session.getCluster());
             statement.setString(0, recipient);
             ResultSet result = session.execute(statement);
 
@@ -113,7 +113,7 @@ public class MailboxImpl implements MailboxService {
         try {
             UUID time = UUIDs.startOf(message.getDate().getTime());
 
-            BoundStatement statement = new BoundStatement(insertStatement);
+            BoundStatement statement = new BoundStatement(insertStatement, session.getCluster());
             statement.setString(0, message.getRecipient());
             statement.setUUID(1, time);
             statement.setString(2, message.getSender());
@@ -128,7 +128,7 @@ public class MailboxImpl implements MailboxService {
 
     @Override public void clearMailbox(String recipient) throws MailboxException {
         try {
-            BoundStatement statement = new BoundStatement(deleteStatement);
+            BoundStatement statement = new BoundStatement(deleteStatement, session.getCluster());
             statement.setString(0, recipient);
             session.execute(statement);
         } catch(Exception e) {

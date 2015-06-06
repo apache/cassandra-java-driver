@@ -40,13 +40,16 @@ abstract class ArrayBackedResultSet implements ResultSet {
     private static final Queue<List<ByteBuffer>> EMPTY_QUEUE = new ArrayDeque<List<ByteBuffer>>(0);
 
     protected final ColumnDefinitions metadata;
+    protected final CodecRegistry codecRegistry;
     protected final Token.Factory tokenFactory;
     private final boolean wasApplied;
 
-    private ArrayBackedResultSet(ColumnDefinitions metadata, Token.Factory tokenFactory, List<ByteBuffer> firstRow) {
+    private ArrayBackedResultSet(ColumnDefinitions metadata, CodecRegistry codecRegistry, Token.Factory tokenFactory, List<ByteBuffer> firstRow) {
         this.metadata = metadata;
+        this.codecRegistry = codecRegistry;
         this.tokenFactory = tokenFactory;
         this.wasApplied = checkWasApplied(firstRow, metadata);
+
     }
 
     static ArrayBackedResultSet fromMessage(Responses.Result msg, SessionManager session, ExecutionInfo info, Statement statement) {
@@ -73,9 +76,12 @@ abstract class ArrayBackedResultSet implements ResultSet {
                 // info can be null only for internal calls, but we don't page those. We assert
                 // this explicitly because MultiPage implementation don't support info == null.
                 assert r.metadata.pagingState == null || info != null;
+                CodecRegistry codecRegistry = session == null ?
+                    CodecRegistry.DEFAULT_INSTANCE :
+                    session.getCluster().getConfiguration().getCodecRegistry();
                 return r.metadata.pagingState == null
-                    ? new SinglePage(columnDefs, tokenFactory, r.data, info)
-                    : new MultiPage(columnDefs, tokenFactory, r.data, info, r.metadata.pagingState, session, statement);
+                    ? new SinglePage(columnDefs, codecRegistry, tokenFactory, r.data, info)
+                    : new MultiPage(columnDefs, codecRegistry, tokenFactory, r.data, info, r.metadata.pagingState, session, statement);
 
             case SET_KEYSPACE:
             case SCHEMA_CHANGE:
@@ -94,7 +100,7 @@ abstract class ArrayBackedResultSet implements ResultSet {
     }
 
     private static ArrayBackedResultSet empty(ExecutionInfo info) {
-        return new SinglePage(ColumnDefinitions.EMPTY, null, EMPTY_QUEUE, info);
+        return new SinglePage(ColumnDefinitions.EMPTY, CodecRegistry.DEFAULT_INSTANCE, null, EMPTY_QUEUE, info);
     }
 
     public ColumnDefinitions getColumnDefinitions() {
@@ -153,10 +159,11 @@ abstract class ArrayBackedResultSet implements ResultSet {
         private final ExecutionInfo info;
 
         private SinglePage(ColumnDefinitions metadata,
+                           CodecRegistry codecRegistry,
                            Token.Factory tokenFactory,
                            Queue<List<ByteBuffer>> rows,
                            ExecutionInfo info) {
-            super(metadata, tokenFactory, rows.peek());
+            super(metadata, codecRegistry, tokenFactory, rows.peek());
             this.info = info;
             this.rows = rows;
         }
@@ -166,7 +173,7 @@ abstract class ArrayBackedResultSet implements ResultSet {
         }
 
         public Row one() {
-            return ArrayBackedRow.fromData(metadata, tokenFactory, rows.poll());
+            return ArrayBackedRow.fromData(metadata, codecRegistry, tokenFactory, rows.poll());
         }
 
         public int getAvailableWithoutFetching() {
@@ -216,6 +223,7 @@ abstract class ArrayBackedResultSet implements ResultSet {
         private final Statement statement;
 
         private MultiPage(ColumnDefinitions metadata,
+                          CodecRegistry codecRegistry,
                           Token.Factory tokenFactory,
                           Queue<List<ByteBuffer>> rows,
                           ExecutionInfo info,
@@ -226,7 +234,7 @@ abstract class ArrayBackedResultSet implements ResultSet {
             // Note: as of Cassandra 2.1.0, it turns out that the result of a CAS update is never paged, so
             // we could hard-code the result of wasApplied in this class to "true". However, we can not be sure
             // that this will never change, so apply the generic check by peeking at the first row.
-            super(metadata, tokenFactory, rows.peek());
+            super(metadata, codecRegistry, tokenFactory, rows.peek());
             this.currentPage = rows;
             this.infos.offer(info.withPagingState(pagingState).withStatement(statement));
 
@@ -242,7 +250,7 @@ abstract class ArrayBackedResultSet implements ResultSet {
 
         public Row one() {
             prepareNextRow();
-            return ArrayBackedRow.fromData(metadata, tokenFactory, currentPage.poll());
+            return ArrayBackedRow.fromData(metadata, codecRegistry, tokenFactory, currentPage.poll());
         }
 
         public int getAvailableWithoutFetching() {

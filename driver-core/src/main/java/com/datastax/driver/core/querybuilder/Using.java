@@ -15,8 +15,9 @@
  */
 package com.datastax.driver.core.querybuilder;
 
-import java.nio.ByteBuffer;
 import java.util.List;
+
+import com.datastax.driver.core.CodecRegistry;
 
 public abstract class Using extends Utils.Appendeable {
 
@@ -35,7 +36,7 @@ public abstract class Using extends Utils.Appendeable {
         }
 
         @Override
-        void appendTo(StringBuilder sb, List<ByteBuffer> variables) {
+        void appendTo(StringBuilder sb, List<Object> variables, CodecRegistry codecRegistry) {
             sb.append(optionName).append(' ').append(value);
         }
 
@@ -54,7 +55,7 @@ public abstract class Using extends Utils.Appendeable {
         }
 
         @Override
-        void appendTo(StringBuilder sb, List<ByteBuffer> variables) {
+        void appendTo(StringBuilder sb, List<Object> variables, CodecRegistry codecRegistry) {
             sb.append(optionName).append(' ').append(marker);
         }
 

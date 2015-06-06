@@ -15,10 +15,10 @@
  */
 package com.datastax.driver.core.querybuilder;
 
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.datastax.driver.core.CodecRegistry;
 import com.datastax.driver.core.TableMetadata;
 
 /**
@@ -52,12 +52,12 @@ public class Delete extends BuiltStatement {
     }
 
     @Override
-    StringBuilder buildQueryString(List<ByteBuffer> variables) {
+    StringBuilder buildQueryString(List<Object> variables, CodecRegistry codecRegistry) {
         StringBuilder builder = new StringBuilder();
 
         builder.append("DELETE");
         if (columnNames != null)
-            Utils.joinAndAppendNames(builder.append(" "), ",", columnNames);
+            Utils.joinAndAppendNames(builder.append(" "), codecRegistry, ",", columnNames);
 
         builder.append(" FROM ");
         if (keyspace != null)
@@ -65,12 +65,12 @@ public class Delete extends BuiltStatement {
         Utils.appendName(table, builder);
         if (!usings.usings.isEmpty()) {
             builder.append(" USING ");
-            Utils.joinAndAppend(builder, " AND ", usings.usings, variables);
+            Utils.joinAndAppend(builder, codecRegistry, " AND ", usings.usings, variables);
         }
 
         if (!where.clauses.isEmpty()) {
             builder.append(" WHERE ");
-            Utils.joinAndAppend(builder, " AND ", where.clauses, variables);
+            Utils.joinAndAppend(builder, codecRegistry, " AND ", where.clauses, variables);
         }
 
         if (ifExists) {
@@ -79,7 +79,7 @@ public class Delete extends BuiltStatement {
 
         if (!conditions.conditions.isEmpty()) {
             builder.append(" IF ");
-            Utils.joinAndAppend(builder, " AND ", conditions.conditions, variables);
+            Utils.joinAndAppend(builder, codecRegistry, " AND ", conditions.conditions, variables);
         }
 
         return builder;
@@ -320,7 +320,7 @@ public class Delete extends BuiltStatement {
             if (columnNames != null)
                 throw new IllegalStateException(String.format("Some columns (%s) have already been selected.", columnNames));
 
-            return (Builder)this;
+            return this;
         }
 
         /**
@@ -361,7 +361,9 @@ public class Delete extends BuiltStatement {
             StringBuilder sb = new StringBuilder();
             Utils.appendName(columnName, sb);
             sb.append('[');
-            Utils.appendFlatValue(key, sb);
+            // FIXME use configured CodecRegistry
+            CodecRegistry codecRegistry = CodecRegistry.DEFAULT_INSTANCE;
+            Utils.appendValue(key, codecRegistry, sb);
             return column(sb.append(']').toString());
         }
     }

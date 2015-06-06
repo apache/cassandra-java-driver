@@ -41,6 +41,7 @@ public class Configuration {
     private final MetricsOptions metricsOptions;
     private final QueryOptions queryOptions;
     private final NettyOptions nettyOptions;
+    private final CodecRegistry codecRegistry;
 
     /*
      * Creates a configuration object.
@@ -52,7 +53,9 @@ public class Configuration {
              new SocketOptions(),
              new MetricsOptions(),
              new QueryOptions(),
-             NettyOptions.DEFAULT_INSTANCE);
+             NettyOptions.DEFAULT_INSTANCE,
+             CodecRegistry.DEFAULT_INSTANCE
+        );
     }
 
     /**
@@ -65,6 +68,7 @@ public class Configuration {
      * @param metricsOptions the metrics options, or null to disable metrics.
      * @param queryOptions defaults related to queries.
      * @param nettyOptions the {@link NettyOptions} instance to use
+     * @param codecRegistry the {@link CodecRegistry} instance to use
      */
     public Configuration(Policies policies,
                          ProtocolOptions protocolOptions,
@@ -72,7 +76,8 @@ public class Configuration {
                          SocketOptions socketOptions,
                          MetricsOptions metricsOptions,
                          QueryOptions queryOptions,
-                         NettyOptions nettyOptions) {
+                         NettyOptions nettyOptions,
+                         CodecRegistry codecRegistry) {
         this.policies = policies;
         this.protocolOptions = protocolOptions;
         this.poolingOptions = poolingOptions;
@@ -80,6 +85,7 @@ public class Configuration {
         this.metricsOptions = metricsOptions;
         this.queryOptions = queryOptions;
         this.nettyOptions = nettyOptions;
+        this.codecRegistry = codecRegistry;
     }
 
     void register(Cluster.Manager manager) {
@@ -152,4 +158,13 @@ public class Configuration {
     public NettyOptions getNettyOptions() {
         return nettyOptions;
     }
+
+    /**
+     * Returns the {@link CodecRegistry} instance for this configuration.
+     * @return the {@link CodecRegistry} instance for this configuration.
+     */
+    public CodecRegistry getCodecRegistry() {
+        return codecRegistry;
+    }
+
 }
