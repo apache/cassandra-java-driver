@@ -1333,6 +1333,8 @@ public class Cluster implements Closeable {
                         listener.onDown(host);
                 }
 
+                configuration.getPoolingOptions().setProtocolVersion(protocolVersion());
+
                 for (Host host : metadata.allHosts()) {
                     // If the host is down at this stage, it's a contact point that the control connection failed to reach.
                     // Reconnection attempts are already scheduled, and the LBP and listeners have been notified above.

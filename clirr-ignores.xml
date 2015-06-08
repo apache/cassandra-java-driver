@@ -23,4 +23,10 @@
     <justification>This class was accidentally exposed, it was meant to be package-private</justification>
   </difference>
 
+  <difference>
+    <differenceType>1001</differenceType> <!-- decreased visibility -->
+    <className>com/datastax/driver/core/HostConnectionPool$Phase</className>
+    <justification>False positive: HostConnectionPool is not exposed to clients</justification>
+  </difference>
+
 </differences>

@@ -17,71 +17,82 @@ package com.datastax.driver.core;
 
 import org.testng.annotations.Test;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.concurrent.*;
-
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.fail;
 
-public class PoolingOptionsTest extends CCMBridge.PerClassSingleNodeCluster {
-    @Override
-    protected Collection<String> getTableDefinitions() {
-        return Collections.emptyList();
+import static com.datastax.driver.core.HostDistance.LOCAL;
+import static com.datastax.driver.core.HostDistance.REMOTE;
+
+public class PoolingOptionsTest {
+
+    @Test(groups = "unit")
+    public void should_initialize_to_v2_defaults_if_v2_or_below() {
+        PoolingOptions options = new PoolingOptions();
+        options.setProtocolVersion(ProtocolVersion.V1);
+
+        assertThat(options.getCoreConnectionsPerHost(LOCAL)).isEqualTo(2);
+        assertThat(options.getMaxConnectionsPerHost(LOCAL)).isEqualTo(8);
+        assertThat(options.getCoreConnectionsPerHost(REMOTE)).isEqualTo(1);
+        assertThat(options.getMaxConnectionsPerHost(REMOTE)).isEqualTo(2);
+        assertThat(options.getNewConnectionThreshold(LOCAL)).isEqualTo(100);
+        assertThat(options.getNewConnectionThreshold(REMOTE)).isEqualTo(100);
+        assertThat(options.getMaxRequestsPerConnection(LOCAL)).isEqualTo(128);
+        assertThat(options.getMaxRequestsPerConnection(REMOTE)).isEqualTo(128);
     }
 
-    /**
-     * <p>
-     * Validates that if a custom executor is provided via {@link PoolingOptions#setInitializationExecutor} that it
-     * is used to create and tear down connections.
-     * </p>
-     *
-     * @test_category connection:connection_pool
-     * @expected_result executor is used and successfully able to connect and tear down connections.
-     * @jira_ticket JAVA-692
-     * @since 2.0.10, 2.1.6
-     */
-    @Test(groups = "short")
-    public void should_be_able_to_use_custom_initialization_executor() {
-        ThreadPoolExecutor executor = spy(new ThreadPoolExecutor(1, 1, 60, TimeUnit.SECONDS,
-                new LinkedBlockingQueue<Runnable>()));
+    @Test(groups = "unit")
+    public void should_initialize_to_v3_defaults_if_v3_or_above() {
+        PoolingOptions options = new PoolingOptions();
+        options.setProtocolVersion(ProtocolVersion.V3);
 
-        PoolingOptions poolingOptions = new PoolingOptions();
-        poolingOptions.setInitializationExecutor(executor);
+        assertThat(options.getCoreConnectionsPerHost(LOCAL)).isEqualTo(1);
+        assertThat(options.getMaxConnectionsPerHost(LOCAL)).isEqualTo(1);
+        assertThat(options.getCoreConnectionsPerHost(REMOTE)).isEqualTo(1);
+        assertThat(options.getMaxConnectionsPerHost(REMOTE)).isEqualTo(1);
+        assertThat(options.getNewConnectionThreshold(LOCAL)).isEqualTo(800);
+        assertThat(options.getNewConnectionThreshold(REMOTE)).isEqualTo(200);
+        assertThat(options.getMaxRequestsPerConnection(LOCAL)).isEqualTo(1024);
+        assertThat(options.getMaxRequestsPerConnection(REMOTE)).isEqualTo(256);
+    }
 
-        Cluster cluster = Cluster.builder()
-                .addContactPointsWithPorts(Collections.singletonList(hostAddress))
-                .withPoolingOptions(poolingOptions).build();
+    @Test(groups = "unit")
+    public void should_enforce_invariants_once_protocol_version_known() {
+        // OK for v2 (default max = 8)
+        PoolingOptions options = new PoolingOptions().setCoreConnectionsPerHost(LOCAL, 3);
+        options.setCoreConnectionsPerHost(LOCAL, 3);
+        options.setProtocolVersion(ProtocolVersion.V2);
+        assertThat(options.getCoreConnectionsPerHost(LOCAL)).isEqualTo(3);
+        assertThat(options.getMaxConnectionsPerHost(LOCAL)).isEqualTo(8);
+
+        // KO for v3 (default max = 1)
+        options = new PoolingOptions().setCoreConnectionsPerHost(LOCAL, 3);
         try {
-            cluster.init();
-            // Ensure executor used.
-            verify(executor, atLeastOnce()).execute(any(Runnable.class));
+            options.setProtocolVersion(ProtocolVersion.V3);
+            fail("Expected an IllegalArgumentException");
+        } catch (IllegalArgumentException e) {/*expected*/}
 
-            // Reset invocation count.
-            reset();
+        // OK for v3 (up to 32K stream ids)
+        options = new PoolingOptions().setMaxRequestsPerConnection(LOCAL, 5000);
+        options.setProtocolVersion(ProtocolVersion.V3);
+        assertThat(options.getMaxRequestsPerConnection(LOCAL)).isEqualTo(5000);
 
-            Session session = cluster.connect();
+        // KO for v2 (up to 128)
+        options = new PoolingOptions().setMaxRequestsPerConnection(LOCAL, 5000);
+        try {
+            options.setProtocolVersion(ProtocolVersion.V2);
+            fail("Expected an IllegalArgumentException");
+        } catch (IllegalArgumentException e) {/*expected*/}
+    }
 
-            // Ensure executor used again to establish core connections.
-            verify(executor, atLeastOnce()).execute(any(Runnable.class));
+    @Test(groups = "unit")
+    public void should_set_core_and_max_connections_simultaneously() {
+        PoolingOptions options = new PoolingOptions();
+        options.setProtocolVersion(ProtocolVersion.V2);
 
-            // Expect core connections + control connection.
-            assertThat(cluster.getMetrics().getOpenConnections().getValue()).isEqualTo(
-                    TestUtils.numberOfLocalCoreConnections(cluster) + 1);
+        options.setConnectionsPerHost(LOCAL, 10, 15);
 
-            reset();
-
-            session.close();
-
-            // Executor should have been used to close connections associated with the session.
-            verify(executor, atLeastOnce()).execute(any(Runnable.class));
-
-            // Only the control connection should remain.
-            assertThat(cluster.getMetrics().getOpenConnections().getValue()).isEqualTo(1);
-        } finally {
-            cluster.close();
-            executor.shutdown();
-        }
+        assertThat(options.getCoreConnectionsPerHost(LOCAL)).isEqualTo(10);
+        assertThat(options.getMaxConnectionsPerHost(LOCAL)).isEqualTo(15);
     }
 }
+

@@ -65,7 +65,7 @@ public class NettyOptionsTest {
             cluster = Cluster.builder()
                 .addContactPoint(ipOfNode(1))
                 .withPoolingOptions(new PoolingOptions()
-                    .setCoreConnectionsPerHost(HostDistance.LOCAL, coreConnections)
+                    .setConnectionsPerHost(HostDistance.LOCAL, coreConnections, coreConnections)
                 )
                 .withNettyOptions(nettyOptions)
                 .build();

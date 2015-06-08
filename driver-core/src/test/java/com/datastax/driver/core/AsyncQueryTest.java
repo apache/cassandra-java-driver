@@ -21,7 +21,8 @@ import java.util.concurrent.TimeUnit;
 import com.google.common.collect.Lists;
 import org.testng.annotations.Test;
 
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 public class AsyncQueryTest extends CCMBridge.PerClassSingleNodeCluster {
 
@@ -42,14 +43,8 @@ public class AsyncQueryTest extends CCMBridge.PerClassSingleNodeCluster {
         TimeUnit.MILLISECONDS.sleep(100);
 
         HostConnectionPool pool = getPool(session);
-        if (pool instanceof DynamicConnectionPool) {
-            DynamicConnectionPool p = (DynamicConnectionPool)pool;
-            for (Connection connection : p.connections) {
-                assertEquals(connection.inFlight.get(), 0);
-            }
-        } else if (pool instanceof SingleConnectionPool){
-            SingleConnectionPool p = (SingleConnectionPool)pool;
-            assertEquals(p.connectionRef.get().inFlight.get(), 0);
+        for (Connection connection : pool.connections) {
+            assertEquals(connection.inFlight.get(), 0);
         }
     }
 

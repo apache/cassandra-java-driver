@@ -78,7 +78,7 @@ public class TimeoutStressTest {
                 new InetSocketAddress(CCMBridge.IP_PREFIX + '3', 9042)
         );
 
-        PoolingOptions poolingOptions = new PoolingOptions().setCoreConnectionsPerHost(HostDistance.LOCAL, 8);
+        PoolingOptions poolingOptions = new PoolingOptions().setConnectionsPerHost(HostDistance.LOCAL, 8, 8);
 
         cluster = Cluster.builder()
                 .addContactPointsWithPorts(nodes)
