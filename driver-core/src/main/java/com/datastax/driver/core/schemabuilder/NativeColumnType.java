@@ -18,12 +18,16 @@ package com.datastax.driver.core.schemabuilder;
 import com.datastax.driver.core.DataType;
 
 /**
- * Wrapper around UDT and non-UDT types.
- * <p>
- * The reason for this interface is that the core API doesn't let us build {@link com.datastax.driver.core.DataType}s representing UDTs, we have to obtain
- * them from the cluster metadata. Since we want to use SchemaBuilder without a Cluster instance, UDT types will be provided via
- * {@link UDTType} instances.
+ * Represents a native CQL type in a SchemaBuilder statement.
  */
-interface ColumnType {
-    String asCQLString();
+class NativeColumnType implements ColumnType {
+    private final String asCQLString;
+
+    NativeColumnType(DataType nativeType) {
+        asCQLString = nativeType.toString();
+    }
+
+    @Override public String asCQLString() {
+        return asCQLString;
+    }
 }

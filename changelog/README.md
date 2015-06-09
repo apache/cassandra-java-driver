@@ -2,6 +2,7 @@
 
 ### 2.1.7 (in progress)
 
+- [improvement] Make NativeColumnType a top-level class (JAVA-715)
 - [improvement] Unify "Target" enum for schema elements (JAVA-782)
 
 
