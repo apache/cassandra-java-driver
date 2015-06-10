@@ -38,7 +38,7 @@ links:
 
 versions:
   - name: 2.2.0-rc1
-    ref: '2.2'
+    ref: '2.2.0-rc1'
   - name: 2.1.6
     ref: '2.1.6'
   - name: 2.1.5
