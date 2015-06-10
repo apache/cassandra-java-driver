@@ -5,8 +5,8 @@
 Before starting to work on something, please comment in JIRA or ask on the mailing list
 to make sure nobody else is working on it.
 
-If a fix applies both to 2.0 and 2.1, work on the 2.0 branch, your commit will eventually
-get merged in 2.1.
+If a fix applies to 2.0, 2.1 and 2.2, work on the 2.0 branch, your commit will eventually
+get merged in 2.1 then in 2.2.
 
 Before you send your pull request, make sure that:
 

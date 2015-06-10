@@ -1,6 +1,6 @@
 ## Changelog
 
-### 2.2.0-rc1 (in progress)
+### 2.2.0-rc1
 
 - [new feature] Protocol V4 enum support (JAVA-783)
 - [new feature] Use PK columns in protocol v4 PREPARED response (JAVA-776)

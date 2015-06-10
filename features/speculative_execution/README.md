@@ -79,7 +79,7 @@ about what the query actually does. Therefore:
 
 * **`Statement#isIdempotent()` is only computed automatically for
   statements built with [QueryBuilder][QueryBuilder]**. Note that there
-  is a known issue in 2.1.6 where calls to `now()` or `uuid()` are not
+  is a known issue in 2.2.0-rc1 where calls to `now()` or `uuid()` are not
   taken into account (see
   [JAVA-733](https://datastax-oss.atlassian.net/browse/JAVA-733)). If
   you're using these CQL functions with built statements, force

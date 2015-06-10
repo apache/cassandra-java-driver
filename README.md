@@ -1,6 +1,6 @@
 # Datastax Java Driver for Apache Cassandra
 
-[![Build Status](https://travis-ci.org/datastax/java-driver.svg?branch=2.1)](https://travis-ci.org/datastax/java-driver)
+[![Build Status](https://travis-ci.org/datastax/java-driver.svg?branch=2.2)](https://travis-ci.org/datastax/java-driver)
 
 *If you're reading this on github.com, please note that this is the readme
 for the development version and that some features described here might
@@ -8,7 +8,7 @@ not yet have been released. You can find the documentation for latest
 version through [Java driver
 docs](http://datastax.github.io/java-driver/) or via the release tags,
 [e.g.
-2.1.6](https://github.com/datastax/java-driver/tree/2.1.6).*
+2.2.0-rc1](https://github.com/datastax/java-driver/tree/2.2.0-rc1).*
 
 A modern, [feature-rich](features/) and highly tunable Java client
 library for Apache Cassandra (1.2+) and DataStax Enterprise (3.1+) using
@@ -59,8 +59,8 @@ Please refer to the README of each module for more information.
 - MAILING LIST: https://groups.google.com/a/lists.datastax.com/forum/#!forum/java-driver-user
 - IRC: #datastax-drivers on [irc.freenode.net](http://freenode.net)
 - TWITTER: Follow the latest news about DataStax Drivers - [@olim7t](http://twitter.com/olim7t), [@mfiguiere](http://twitter.com/mfiguiere)
-- DOCS: http://www.datastax.com/documentation/developer/java-driver/2.1/index.html
-- API: http://www.datastax.com/drivers/java/2.1
+- DOCS: http://www.datastax.com/documentation/developer/java-driver/2.2/index.html
+- API: http://www.datastax.com/drivers/java/2.2
 
 **Feeback requested:** help us focus our efforts, provide your input on the [Platform and Runtime Survey](http://goo.gl/forms/qwUE6qnL7U) (we kept it short).
 
@@ -74,7 +74,7 @@ it in your application using the following Maven dependency:
 <dependency>
   <groupId>com.datastax.cassandra</groupId>
   <artifactId>cassandra-driver-core</artifactId>
-  <version>2.1.6</version>
+  <version>2.2.0-rc1</version>
 </dependency>
 ```
 
@@ -84,7 +84,7 @@ Note that the object mapper is published as a separate artifact:
 <dependency>
   <groupId>com.datastax.cassandra</groupId>
   <artifactId>cassandra-driver-mapping</artifactId>
-  <version>2.1.6</version>
+  <version>2.2.0-rc1</version>
 </dependency>
 ```
 
@@ -93,8 +93,8 @@ to avoid the explicit dependency to Netty.
 
 ## Compatibility
 
-The Java client driver 2.1 ([branch 2.1](https://github.com/datastax/java-driver/tree/2.1)) is compatible with Apache
-Cassandra 1.2, 2.0 and 2.1.
+The Java client driver 2.2 ([branch 2.2](https://github.com/datastax/java-driver/tree/2.2)) is compatible with Apache
+Cassandra 1.2, 2.0, 2.1 and 2.2.
 
 UDT and tuple support is available only when using Apache Cassandra 2.1 (see [CQL improvements in Cassandra 2.1](http://www.datastax.com/dev/blog/cql-in-2-1)).
 
