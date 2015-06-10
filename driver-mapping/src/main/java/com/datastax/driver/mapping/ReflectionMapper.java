@@ -17,23 +17,27 @@ package com.datastax.driver.mapping;
 
 import java.beans.IntrospectionException;
 import java.beans.PropertyDescriptor;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.lang.reflect.Method;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
-import com.datastax.driver.core.*;
+import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.core.DataType;
+import com.datastax.driver.core.UDTValue;
 
 /**
- * An {@link EntityMapper} implementation that use reflection to read and write fields
- * of an entity.
+ * An {@link EntityMapper} implementation that use reflection to read and write fields of an entity.
  */
 class ReflectionMapper<T> extends EntityMapper<T> {
 
     private static ReflectionFactory factory = new ReflectionFactory();
 
-    private ReflectionMapper(Class<T> entityClass, String keyspace, String table, ConsistencyLevel writeConsistency, ConsistencyLevel readConsistency) {
+    private ReflectionMapper(Class<T> entityClass, String keyspace, String table, ConsistencyLevel writeConsistency,
+            ConsistencyLevel readConsistency) {
         super(entityClass, keyspace, table, writeConsistency, readConsistency);
     }
 
@@ -72,18 +76,30 @@ class ReflectionMapper<T> extends EntityMapper<T> {
             } catch (IllegalArgumentException e) {
                 throw new IllegalArgumentException("Could not get field '" + fieldName + "'");
             } catch (Exception e) {
-                throw new IllegalStateException("Unable to access getter for '" + fieldName + "' in " + entity.getClass().getName(), e);
+                throw new IllegalStateException(
+                        "Unable to access getter for '" + fieldName + "' in " + entity.getClass().getName(), e);
             }
         }
 
         @Override
         public void setValue(Object entity, Object value) {
             try {
+                // Customization: Attempt to use sub-class conversion
+                Class<?> writeParam = writeMethod.getParameterTypes()[0];
+                if (!writeParam.isPrimitive() && value != null && !writeParam.isAssignableFrom(value.getClass())
+                        && writeParam.getSuperclass() != null
+                        && writeParam.getSuperclass().isAssignableFrom(value.getClass())) {
+
+                    Constructor<?> convertingConstructor = writeParam.getConstructor(value.getClass());
+                    value = convertingConstructor.newInstance(value);
+                }
+
                 writeMethod.invoke(entity, value);
             } catch (IllegalArgumentException e) {
                 throw new IllegalArgumentException("Could not set field '" + fieldName + "' to value '" + value + "'");
             } catch (Exception e) {
-                throw new IllegalStateException("Unable to access setter for '" + fieldName + "' in " + entity.getClass().getName(), e);
+                throw new IllegalStateException(
+                        "Unable to access setter for '" + fieldName + "' in " + entity.getClass().getName(), e);
             }
         }
     }
@@ -108,14 +124,14 @@ class ReflectionMapper<T> extends EntityMapper<T> {
         }
 
         @SuppressWarnings("rawtypes")
-		@Override
+        @Override
         public Object getValue(T entity) {
             Object value = super.getValue(entity);
             switch (enumType) {
-                case STRING:
-                    return (value == null) ? null : value.toString();
-                case ORDINAL:
-                    return (value == null) ? null : ((Enum)value).ordinal();
+            case STRING:
+                return (value == null) ? null : value.toString();
+            case ORDINAL:
+                return (value == null) ? null : ((Enum) value).ordinal();
             }
             throw new AssertionError();
         }
@@ -124,12 +140,12 @@ class ReflectionMapper<T> extends EntityMapper<T> {
         public void setValue(Object entity, Object value) {
             Object converted = null;
             switch (enumType) {
-                case STRING:
-                    converted = fromString.get(value.toString().toLowerCase());
-                    break;
-                case ORDINAL:
-                    converted = javaType.getEnumConstants()[(Integer)value];
-                    break;
+            case STRING:
+                converted = fromString.get(value.toString().toLowerCase());
+                break;
+            case ORDINAL:
+                converted = javaType.getEnumConstants()[(Integer) value];
+                break;
             }
             super.setValue(entity, converted);
         }
@@ -172,7 +188,7 @@ class ReflectionMapper<T> extends EntityMapper<T> {
         @SuppressWarnings("unchecked")
         public Object getValue(T entity) {
             Object valueWithEntities = super.getValue(entity);
-            return (T)UDTMapper.convertEntitiesToUDTs(valueWithEntities, inferredCQLType);
+            return (T) UDTMapper.convertEntitiesToUDTs(valueWithEntities, inferredCQLType);
         }
 
         @Override
@@ -184,22 +200,24 @@ class ReflectionMapper<T> extends EntityMapper<T> {
     static DataType extractSimpleType(Field f) {
         Type type = f.getGenericType();
 
-        assert !(type instanceof ParameterizedType);
+        assert!(type instanceof ParameterizedType);
 
         if (!(type instanceof Class))
             throw new IllegalArgumentException(String.format("Cannot map class %s for field %s", type, f.getName()));
 
-        return TypeMappings.getSimpleType((Class<?>)type, f.getName());
+        return TypeMappings.getSimpleType((Class<?>) type, f.getName());
     }
 
     private static class ReflectionFactory implements Factory {
 
-        public <T> EntityMapper<T> create(Class<T> entityClass, String keyspace, String table, ConsistencyLevel writeConsistency, ConsistencyLevel readConsistency) {
+        public <T> EntityMapper<T> create(Class<T> entityClass, String keyspace, String table,
+                ConsistencyLevel writeConsistency, ConsistencyLevel readConsistency) {
             return new ReflectionMapper<T>(entityClass, keyspace, table, writeConsistency, readConsistency);
         }
 
         @SuppressWarnings({ "unchecked", "rawtypes" })
-        public <T> ColumnMapper<T> createColumnMapper(Class<T> entityClass, Field field, int position, MappingManager mappingManager) {
+        public <T> ColumnMapper<T> createColumnMapper(Class<T> entityClass, Field field, int position,
+                MappingManager mappingManager) {
             String fieldName = field.getName();
             try {
                 PropertyDescriptor pd = new PropertyDescriptor(fieldName, field.getDeclaringClass());
@@ -217,7 +235,7 @@ class ReflectionMapper<T> extends EntityMapper<T> {
                     InferredCQLType inferredCQLType = InferredCQLType.from(field, mappingManager);
                     if (inferredCQLType.containsMappedUDT) {
                         // We need a specialized mapper to convert UDT instances in the hierarchy.
-                        return (ColumnMapper<T>)new NestedUDTMapper(field, position, pd, inferredCQLType);
+                        return (ColumnMapper<T>) new NestedUDTMapper(field, position, pd, inferredCQLType);
                     } else {
                         // The default codecs will know how to handle the extracted datatype.
                         return new LiteralMapper<T>(field, inferredCQLType.dataType, position, pd);
@@ -227,7 +245,8 @@ class ReflectionMapper<T> extends EntityMapper<T> {
                 return new LiteralMapper<T>(field, position, pd);
 
             } catch (IntrospectionException e) {
-                throw new IllegalArgumentException("Cannot find matching getter and setter for field '" + fieldName + "'");
+                throw new IllegalArgumentException(
+                        "Cannot find matching getter and setter for field '" + fieldName + "'");
             }
         }
     }
