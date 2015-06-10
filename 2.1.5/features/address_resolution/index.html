@@ -43,6 +43,9 @@
               <a href="../">Features</a>
             </li>
             
+            
+            
+            
           </ul>
           <form class="navbar-form form-search navbar-right dropdown visible-lg-block" ng-class="{open: hasResults}" role="search" ng-submit="submit()">
             <div class="form-group has-feedback">
@@ -70,7 +73,9 @@
                   </button>
                   <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
                   
-                    <li><a href="../../../features/address_resolution/">2.1.6</a></li>
+                    <li><a href="../../../features/address_resolution/">2.2.0-rc1</a></li>
+                  
+                    <li><a href="../../../2.1.6/features/address_resolution/">2.1.6</a></li>
                   
                     <li class="disabled"><a href="./">2.1.5</a></li>
                   
@@ -118,7 +123,7 @@ reachable directly by the driver, or should not be the preferred address to use
 (for instance, it might be a private IP, but some clients  may have to use a public IP, or
 go through a router).</p>
 
-<h3 id="the-addresstranslater-interface">The <code>AddressTranslater</code> interface<a class="anchor" href="#the-addresstranslater-interface" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h3 id="the-address-translater-interface">The <code>AddressTranslater</code> interface<a class="anchor" href="#the-address-translater-interface" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h3>
 
 <p>This interface allows you to deal with such cases, by transforming the address sent by a
@@ -171,7 +176,7 @@ private/public switch automatically based on location.</p>
 
         </div>
         <div class="col-md-3">
-          <div id="navigation" class="panel-group side-nav" data-spy="affix" data-offset-top="60" data-offset-bottom="54" role="tablist" aria-multiselectable="true">
+          <div id="navigation" class="panel-group side-nav" data-spy="affix" data-offset-top="60" data-offset-bottom="80" role="tablist" aria-multiselectable="true">
             <div id="table-of-contents-panel" class="panel panel-default">
               <div id="table-of-contents-heading" class="panel-heading" role="tab">
                 <h4 class="panel-title">
@@ -185,7 +190,7 @@ private/public switch automatically based on location.</p>
                   <ol class="nav nav-pills nav-stacked toc"><li>
 <a href="#address-resolution">Address resolution
 </a><ol class="nav nav-pills nav-stacked">
-<li><a href="#the-addresstranslater-interface">The AddressTranslater interface
+<li><a href="#the-address-translater-interface">The AddressTranslater interface
 </a></li>
 <li><a href="#ec2-multi-region">EC2 multi-region
 </a></li>

@@ -43,6 +43,9 @@
               <a href="../">Features</a>
             </li>
             
+            
+            
+            
           </ul>
           <form class="navbar-form form-search navbar-right dropdown visible-lg-block" ng-class="{open: hasResults}" role="search" ng-submit="submit()">
             <div class="form-group has-feedback">
@@ -70,7 +73,9 @@
                   </button>
                   <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
                   
-                    <li><a href="../../../features/speculative_execution/">2.1.6</a></li>
+                    <li><a href="../../../features/speculative_execution/">2.2.0-rc1</a></li>
+                  
+                    <li><a href="../../../2.1.6/features/speculative_execution/">2.1.6</a></li>
                   
                     <li><a href="../../../2.1.5/">2.1.5</a></li>
                   
@@ -183,8 +188,8 @@ speculative execution will be triggered.</p>
 
 <p>Two implementations are provided with the driver:</p>
 
-<h4 id="constantspeculativeexecutionpolicy">
-<a href="http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/policies/ConstantSpeculativeExecutionPolicy.html">ConstantSpeculativeExecutionPolicy</a><a class="anchor" href="#constantspeculativeexecutionpolicy" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h4 id="constant-speculative-execution-policy">
+<a href="http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/policies/ConstantSpeculativeExecutionPolicy.html">ConstantSpeculativeExecutionPolicy</a><a class="anchor" href="#constant-speculative-execution-policy" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h4>
 
 <p>This simple policy uses a constant threshold:</p>
@@ -208,8 +213,8 @@ speculative execution on another node;</li>
 another speculative execution on a third node.</li>
 </ul>
 
-<h4 id="percentilespeculativeexecutionpolicy">
-<a href="http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/policies/PercentileSpeculativeExecutionPolicy.html">PercentileSpeculativeExecutionPolicy</a><a class="anchor" href="#percentilespeculativeexecutionpolicy" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h4 id="percentile-speculative-execution-policy">
+<a href="http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/policies/PercentileSpeculativeExecutionPolicy.html">PercentileSpeculativeExecutionPolicy</a><a class="anchor" href="#percentile-speculative-execution-policy" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h4>
 
 <p>This policy sets the threshold at a given latency percentile for the
@@ -357,7 +362,7 @@ for more information.</p>
 
         </div>
         <div class="col-md-3">
-          <div id="navigation" class="panel-group side-nav" data-spy="affix" data-offset-top="60" data-offset-bottom="54" role="tablist" aria-multiselectable="true">
+          <div id="navigation" class="panel-group side-nav" data-spy="affix" data-offset-top="60" data-offset-bottom="80" role="tablist" aria-multiselectable="true">
             <div id="table-of-contents-panel" class="panel panel-default">
               <div id="table-of-contents-heading" class="panel-heading" role="tab">
                 <h4 class="panel-title">
@@ -376,10 +381,10 @@ for more information.</p>
 <li>
 <a href="#enabling-speculative-executions">Enabling speculative executions
 </a><ol class="nav nav-pills nav-stacked">
-<li><a href="#constantspeculativeexecutionpolicy">
+<li><a href="#constant-speculative-execution-policy">
 ConstantSpeculativeExecutionPolicy
 </a></li>
-<li><a href="#percentilespeculativeexecutionpolicy">
+<li><a href="#percentile-speculative-execution-policy">
 PercentileSpeculativeExecutionPolicy
 </a></li>
 <li><a href="#using-your-own">Using your own

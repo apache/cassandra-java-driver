@@ -43,10 +43,25 @@
               <a href="../">Features</a>
             </li>
             
+            
+            <li>
+              <a href="../../changelog/">Changelog</a>
+            </li>
+            
+            
+            <li>
+              <a href="../../upgrade_guide/">Upgrading</a>
+            </li>
+            
+            
+            <li>
+              <a href="../../faq/">FAQ</a>
+            </li>
+            
           </ul>
           <form class="navbar-form form-search navbar-right dropdown visible-lg-block" ng-class="{open: hasResults}" role="search" ng-submit="submit()">
             <div class="form-group has-feedback">
-              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.1.6')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.2.0-rc1')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
             </div>
             <ul class="dropdown-menu" role="menu">
               <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
@@ -65,12 +80,14 @@
               <li>
                 <div class="dropdown">
                   <button id="current-version" class="btn btn-default btn-sm" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    2.1.6
+                    2.2.0-rc1
                     <span class="caret"></span>
                   </button>
                   <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
                   
-                    <li class="disabled"><a href="./">2.1.6</a></li>
+                    <li class="disabled"><a href="./">2.2.0-rc1</a></li>
+                  
+                    <li><a href="../../2.1.6/features/pooling/">2.1.6</a></li>
                   
                     <li><a href="../../2.1.5/">2.1.5</a></li>
                   
@@ -121,7 +138,7 @@ unique identifier for the current connection;</li>
 <li>the driver writes a request containing the stream id and the query on
 the connection, and then proceeds without waiting for the response (if
 you’re using the asynchronous API, this is when the driver will send you
-back a <a href="http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/ResultSetFuture.html">ResultSetFuture</a>).
+back a <a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/ResultSetFuture.html">ResultSetFuture</a>).
 Once the request has been written to the
 connection, we say that it is <em>in flight</em>;</li>
 <li>at some point, Cassandra will send back a response on the connection.
@@ -149,7 +166,7 @@ described in the next section).</li>
 <h3 id="configuring-the-connection-pool">Configuring the connection pool<a class="anchor" href="#configuring-the-connection-pool" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h3>
 
-<p>Connections pools are configured with a <a href="http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/PoolingOptions.html">PoolingOptions</a> object, which 
+<p>Connections pools are configured with a <a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/PoolingOptions.html">PoolingOptions</a> object, which 
 is global to a <code>Cluster</code> instance. You can pass that object when
 building the cluster:</p>
 <pre class="highlight"><code><span class="n">PoolingOptions</span> <span class="n">poolingOptions</span> <span class="o">=</span> <span class="k">new</span> <span class="n">PoolingOptions</span><span class="o">();</span>
@@ -172,7 +189,7 @@ reference to the <code>PoolingOptions</code> instance, here’s how you can get 
 depending on the current load. There will always be at least a <em>core</em>
 number of connections, and at most a <em>max</em> number. These values can be
 configured independently by host <em>distance</em> (the distance is determined
-by your <a href="http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/policies/LoadBalancingPolicy.html">LoadBalancingPolicy</a>, and will generally indicate whether a
+by your <a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/policies/LoadBalancingPolicy.html">LoadBalancingPolicy</a>, and will generally indicate whether a
 host is in the same datacenter or not).</p>
 <pre class="highlight"><code><span class="n">poolingOptions</span>
     <span class="o">.</span><span class="na">setCoreConnectionsPerHost</span><span class="o">(</span><span class="n">HostDistance</span><span class="o">.</span><span class="na">LOCAL</span><span class="o">,</span>  <span class="mi">4</span><span class="o">)</span>
@@ -185,7 +202,7 @@ when you try to set both values at once.
 <a href="https://datastax-oss.atlassian.net/browse/JAVA-662">JAVA-662</a> will
 address this issue.</p>
 
-<p><a href="http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/PoolingOptions.html#setMaxSimultaneousRequestsPerConnectionThreshold(com.datastax.driver.core.HostDistance,%20int)">PoolingOptions.setMaxSimultaneousRequestsPerConnectionThreshold</a>
+<p><a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/PoolingOptions.html#setMaxSimultaneousRequestsPerConnectionThreshold(com.datastax.driver.core.HostDistance,%20int)">PoolingOptions.setMaxSimultaneousRequestsPerConnectionThreshold</a>
 has a slightly misleading name: it does not limit the number of requests per
 connection, but only determines the threshold that triggers the creation
 of a new connection when the pool is not at its maximum capacity. In
@@ -196,7 +213,7 @@ general, you shouldn’t have to change its default value.</p>
 
 <p>Protocol v3 uses a single connection per host. While the number of
 simultaneous requests can go up to 32768, it is limited by
-<a href="http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/PoolingOptions.html#setMaxSimultaneousRequestsPerHostThreshold(com.datastax.driver.core.HostDistance,%20int)">PoolingOptions.setMaxSimultaneousRequestsPerHostThreshold</a>. The
+<a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/PoolingOptions.html#setMaxSimultaneousRequestsPerHostThreshold(com.datastax.driver.core.HostDistance,%20int)">PoolingOptions.setMaxSimultaneousRequestsPerHostThreshold</a>. The
 goal of this option is to throttle the load that each client can
 generate on the server. By default, it is set to 1024 for local hosts,
 and 256 for remote hosts (this was chosen to match the capacity of a v2
@@ -229,7 +246,7 @@ seconds, it can be customized with the following method:</p>
 use the new interval. Most users will want to do this at startup.</p>
 
 <p>The heartbeat interval should be set higher than
-<a href="http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/SocketOptions.html#getReadTimeoutMillis()">SocketOptions.readTimeoutMillis</a>:
+<a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/SocketOptions.html#getReadTimeoutMillis()">SocketOptions.readTimeoutMillis</a>:
 the read timeout is the maximum time that the driver waits for a regular
 query to complete, therefore the connection should not be considered
 idle before it has elapsed.</p>
@@ -248,22 +265,22 @@ acquire a connection from this host’s pool. If the pool is busy (i.e.
 all connections are already handling their maximum number of in flight
 requests), the client thread will block for a while, until a connection
 becomes available (note that this will block even if you’re using the
-asynchronous API, like <a href="http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/Session.html#executeAsync(com.datastax.driver.core.Statement)">Session.executeAsync</a>).</p>
+asynchronous API, like <a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/Session.html#executeAsync(com.datastax.driver.core.Statement)">Session.executeAsync</a>).</p>
 
 <p>The time that the driver blocks is controlled by
-<a href="http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/PoolingOptions.html#setPoolTimeoutMillis(int)">PoolingOptions.setPoolTimeoutMillis</a>. If there is still no connection
+<a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/PoolingOptions.html#setPoolTimeoutMillis(int)">PoolingOptions.setPoolTimeoutMillis</a>. If there is still no connection
 available after this timeout, the driver will try the next host.</p>
 
 <p>For some applications, blocking is not acceptable, and it is preferable
 to fail fast if the request cannot be fulfilled. If that’s your case,
 set the pool timeout to 0. If all hosts are busy, you will get a
-<a href="http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/exceptions/NoHostAvailableException.html">NoHostAvailableException</a> (if you look at the exception’s details, you
+<a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/exceptions/NoHostAvailableException.html">NoHostAvailableException</a> (if you look at the exception’s details, you
 will see a <code>java.util.concurrent.TimeoutException</code> for each host).</p>
 
 <h3 id="monitoring-and-tuning-the-pool">Monitoring and tuning the pool<a class="anchor" href="#monitoring-and-tuning-the-pool" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h3>
 
-<p>The easiest way to monitor pool usage is with <a href="http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/Session.html#getState()">Session.getState</a>. Here’s
+<p>The easiest way to monitor pool usage is with <a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/Session.html#getState()">Session.getState</a>. Here’s
 a simple example that will print the number of open connections, active
 requests, and maximum capacity for each host, every 5 seconds:</p>
 <pre class="highlight"><code><span class="kd">final</span> <span class="n">LoadBalancingPolicy</span> <span class="n">loadBalancingPolicy</span> <span class="o">=</span>
@@ -317,7 +334,7 @@ connections.</p>
 
         </div>
         <div class="col-md-3">
-          <div id="navigation" class="panel-group side-nav" data-spy="affix" data-offset-top="60" data-offset-bottom="54" role="tablist" aria-multiselectable="true">
+          <div id="navigation" class="panel-group side-nav" data-spy="affix" data-offset-top="60" data-offset-bottom="80" role="tablist" aria-multiselectable="true">
             <div id="table-of-contents-panel" class="panel panel-default">
               <div id="table-of-contents-heading" class="panel-heading" role="tab">
                 <h4 class="panel-title">

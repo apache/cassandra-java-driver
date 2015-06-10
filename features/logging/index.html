@@ -43,10 +43,25 @@
               <a href="../">Features</a>
             </li>
             
+            
+            <li>
+              <a href="../../changelog/">Changelog</a>
+            </li>
+            
+            
+            <li>
+              <a href="../../upgrade_guide/">Upgrading</a>
+            </li>
+            
+            
+            <li>
+              <a href="../../faq/">FAQ</a>
+            </li>
+            
           </ul>
           <form class="navbar-form form-search navbar-right dropdown visible-lg-block" ng-class="{open: hasResults}" role="search" ng-submit="submit()">
             <div class="form-group has-feedback">
-              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.1.6')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.2.0-rc1')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
             </div>
             <ul class="dropdown-menu" role="menu">
               <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
@@ -65,12 +80,14 @@
               <li>
                 <div class="dropdown">
                   <button id="current-version" class="btn btn-default btn-sm" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    2.1.6
+                    2.2.0-rc1
                     <span class="caret"></span>
                   </button>
                   <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
                   
-                    <li class="disabled"><a href="./">2.1.6</a></li>
+                    <li class="disabled"><a href="./">2.2.0-rc1</a></li>
+                  
+                    <li><a href="../../2.1.6/features/logging/">2.1.6</a></li>
                   
                     <li><a href="../../2.1.5/">2.1.5</a></li>
                   
@@ -297,6 +314,18 @@ and provide hints about what’s going wrong.</p>
 </li>
 </ul>
 </li>
+<li>
+<code>com.datastax.driver.core.Message</code>
+
+<ul>
+<li>TRACE
+
+<ul>
+<li>Custom payloads</li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 
 <h3 id="logging-query-latencies">Logging query latencies<a class="anchor" href="#logging-query-latencies" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
@@ -318,7 +347,7 @@ threshold in milliseconds.</p>
 <p>Note that <code>QueryLogger</code> instances are thread-safe and can be shared cluster-wide. 
 Besides, you can adjust several parameters such as the maximum query string length to be printed, 
 the maximum number of parameters to print, etc. Refer to the 
-<code>QueryLogger</code> <a href="http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/QueryLogger.html">API docs</a> for more information.</p>
+<code>QueryLogger</code> <a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/QueryLogger.html">API docs</a> for more information.</p>
 
 <p>Secondly, you need to adjust your logging framework to accept log messages from the <code>QueryLogger</code>. The <code>QueryLogger</code>
 uses 3 different loggers:</p>
@@ -352,7 +381,7 @@ to TRACE instead, e.g. with Log4J:</p>
 <pre><code>TRACE [cluster1] [/127.0.0.1:9042] Query too slow, took 329 ms: SELECT * FROM users WHERE user_id=? [user_id=42];
 </code></pre>
 <p>Be careful when logging large query strings (specially batches) and/or queries with considerable amounts of parameters. 
-See the <code>QueryLogger</code> <a href="http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/QueryLogger.html">API docs</a> for examples of how to truncate the printed message when necessary.</p>
+See the <code>QueryLogger</code> <a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/QueryLogger.html">API docs</a> for examples of how to truncate the printed message when necessary.</p>
 
 <h4 id="constant-vs-dynamic-thresholds">Constant vs Dynamic thresholds<a class="anchor" href="#constant-vs-dynamic-thresholds" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h4>
@@ -361,11 +390,11 @@ See the <code>QueryLogger</code> <a href="http://docs.datastax.com/en/drivers/ja
 a constant threshold in milliseconds (which is the default behavior), or 
 a dynamic threshold based on per-host latency percentiles, as computed by <code>PerHostPercentileTracker</code>.</p>
 
-<p><strong>Dynamic thresholds are still a beta feature as of version 2.1.6: they
+<p><strong>Dynamic thresholds are still a beta feature as of version 2.2.0-rc1: they
 haven’t been extensively tested yet, and the API is still subject to
 change.</strong></p>
 
-<p>Refer to the <code>QueryLogger</code> <a href="http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/QueryLogger.html">API docs</a> for an example of usage.</p>
+<p>Refer to the <code>QueryLogger</code> <a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/QueryLogger.html">API docs</a> for an example of usage.</p>
 
 <h3 id="performance-tips">Performance Tips<a class="anchor" href="#performance-tips" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h3>
@@ -486,7 +515,7 @@ By default, only messages with ERROR level or higher are logged.</p>
 
         </div>
         <div class="col-md-3">
-          <div id="navigation" class="panel-group side-nav" data-spy="affix" data-offset-top="60" data-offset-bottom="54" role="tablist" aria-multiselectable="true">
+          <div id="navigation" class="panel-group side-nav" data-spy="affix" data-offset-top="60" data-offset-bottom="80" role="tablist" aria-multiselectable="true">
             <div id="table-of-contents-panel" class="panel panel-default">
               <div id="table-of-contents-heading" class="panel-heading" role="tab">
                 <h4 class="panel-title">
