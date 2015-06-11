@@ -59,9 +59,12 @@ abstract class Utils {
         return sb;
     }
 
-    // Returns null if it's not really serializable (function call, bind markers, ...)
+    // Returns false if it's not really serializable (function call, bind markers, ...)
     static boolean isSerializable(Object value) {
         if (value instanceof BindMarker || value instanceof FCall || value instanceof CName)
+            return false;
+
+        if (value instanceof RawString)
             return false;
 
         // We also don't serialize fixed size number types. The reason is that if we do it, we will
