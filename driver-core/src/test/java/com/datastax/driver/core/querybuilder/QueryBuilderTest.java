@@ -123,35 +123,35 @@ public class QueryBuilderTest {
         assertEquals(select.toString(), query);
 
         try {
-            select = select().countAll().from("foo").orderBy(asc("a"), desc("b")).orderBy(asc("a"), desc("b"));
+            select().countAll().from("foo").orderBy(asc("a"), desc("b")).orderBy(asc("a"), desc("b"));
             fail();
         } catch (IllegalStateException e) {
             assertEquals(e.getMessage(), "An ORDER BY clause has already been provided");
         }
 
         try {
-            select = select().column("a").all().from("foo");
+            select().column("a").all().from("foo");
             fail();
         } catch (IllegalStateException e) {
             assertEquals(e.getMessage(), "Some columns ([a]) have already been selected.");
         }
 
         try {
-            select = select().column("a").countAll().from("foo");
+            select().column("a").countAll().from("foo");
             fail();
         } catch (IllegalStateException e) {
             assertEquals(e.getMessage(), "Some columns ([a]) have already been selected.");
         }
 
         try {
-            select = select().all().from("foo").limit(-42);
+            select().all().from("foo").limit(-42);
             fail();
         } catch (IllegalArgumentException e) {
             assertEquals(e.getMessage(), "Invalid LIMIT value, must be strictly positive");
         }
 
         try {
-            select = select().all().from("foo").limit(42).limit(42);
+            select().all().from("foo").limit(42).limit(42);
             fail();
         } catch (IllegalStateException e) {
             assertEquals(e.getMessage(), "A LIMIT value has already been provided");
@@ -227,7 +227,7 @@ public class QueryBuilderTest {
         assertEquals(insert.toString(), query);
 
         try {
-            insert = insertInto("foo").values(new String[]{ "a", "b" }, new Object[]{ 1, 2, 3 });
+            insertInto("foo").values(new String[]{ "a", "b" }, new Object[]{ 1, 2, 3 });
             fail();
         } catch (IllegalArgumentException e) {
             assertEquals(e.getMessage(), "Got 2 names but 3 values");
@@ -310,7 +310,7 @@ public class QueryBuilderTest {
         assertEquals(update.toString(), query);
 
         try {
-            update = update("foo").using(ttl(-400));
+            update("foo").using(ttl(-400));
             fail();
         } catch (IllegalArgumentException e) {
             assertEquals(e.getMessage(), "Invalid ttl, must be positive");
@@ -356,14 +356,14 @@ public class QueryBuilderTest {
         assertEquals(delete.toString(), query);
 
         try {
-            delete = delete().column("a").all().from("foo");
+            delete().column("a").all().from("foo");
             fail();
         } catch (IllegalStateException e) {
             assertEquals(e.getMessage(), "Some columns ([a]) have already been selected.");
         }
 
         try {
-            delete = delete().from("foo").using(timestamp(-1240003134L));
+            delete().from("foo").using(timestamp(-1240003134L));
             fail();
         } catch (IllegalArgumentException e) {
             assertEquals(e.getMessage(), "Invalid timestamp, must be positive");
@@ -487,10 +487,7 @@ public class QueryBuilderTest {
 
     @Test(groups = "unit", expectedExceptions = { IllegalArgumentException.class })
     public void batchMixedCounterTest() throws Exception {
-        String query;
-        Statement batch;
-
-        batch = batch()
+        batch()
             .add(update("foo").with(incr("a", 1)))
             .add(update("foo").with(set("b", 2)))
             .add(update("foo").with(incr("c", 3)))
@@ -692,6 +689,7 @@ public class QueryBuilderTest {
     public void rejectUnknownValueTest() throws Exception {
 
         try {
+            //noinspection ResultOfMethodCallIgnored
             update("foo").with(set("a", new byte[13])).where(eq("k", 2)).toString();
             fail("Byte arrays should not be valid, ByteBuffer should be used instead");
         } catch (IllegalArgumentException e) {
@@ -811,5 +809,12 @@ public class QueryBuilderTest {
         Statement statement = select().from("foo").where(eq(quote("foo.bar"), 1));
 
         assertThat(statement.toString()).isEqualTo(query);
+    }
+
+    @Test(groups = "unit")
+    public void should_not_serialize_raw_query_values() {
+        RegularStatement select = select().from("test").where(gt("i", raw("1")));
+        assertThat(select.getQueryString()).doesNotContain("?");
+        assertThat(select.getValues(ProtocolVersion.V3)).isNull();
     }
 }
