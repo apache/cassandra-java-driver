@@ -5,6 +5,9 @@
 - [improvement] Make NativeColumnType a top-level class (JAVA-715)
 - [improvement] Unify "Target" enum for schema elements (JAVA-782)
 
+Merged from 2.0 branch:
+
+- [bug] Fix SpeculativeExecutionPolicy.init() and close() are never called (JAVA-796)
 
 ### 2.1.6
 
