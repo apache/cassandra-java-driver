@@ -19,6 +19,7 @@ import java.util.*;
 
 import com.datastax.driver.core.RegularStatement;
 import com.datastax.driver.core.TableMetadata;
+import com.datastax.driver.core.exceptions.InvalidQueryException;
 
 /**
  * Static methods to build a CQL3 query.
@@ -592,12 +593,16 @@ public final class QueryBuilder {
      * This will generate: {@code name = [ value ] + name}.
      *
      * @param name the column name (must be of type list).
-     * @param value the value to prepend
+     * @param value the value to prepend. Using a BindMarker here is not supported.
+     *              To use a BindMarker use {@code QueryBuilder#addAll} with a
+     *              singleton list.
      * @return the correspond assignment (to use in an update query)
      */
     public static Assignment prepend(String name, Object value) {
-        Object v = value instanceof BindMarker ? value : Collections.singletonList(value);
-        return new Assignment.ListPrependAssignment(name, v);
+        if (value instanceof BindMarker) {
+            throw new InvalidQueryException("binding a value in prepend() is not supported, use prependAll() and bind a singleton list");
+        }
+        return new Assignment.ListPrependAssignment(name, Collections.singletonList(value));
     }
 
     /**
@@ -632,12 +637,16 @@ public final class QueryBuilder {
      * This will generate: {@code name = name + [value]}.
      *
      * @param name the column name (must be of type list).
-     * @param value the value to append
+     * @param value the value to append. Using a BindMarker here is not supported.
+     *              To use a BindMarker use {@code QueryBuilder#addAll} with a
+     *              singleton list.
      * @return the correspond assignment (to use in an update query)
      */
     public static Assignment append(String name, Object value) {
-        Object v = value instanceof BindMarker ? value : Collections.singletonList(value);
-        return new Assignment.CollectionAssignment(name, v, true, false);
+        if (value instanceof BindMarker) {
+            throw new InvalidQueryException("Binding a value in append() is not supported, use appendAll() and bind a singleton list");
+        }
+        return new Assignment.CollectionAssignment(name, Collections.singletonList(value), true, false);
     }
 
     /**
@@ -726,12 +735,16 @@ public final class QueryBuilder {
      * This will generate: {@code name = name + {value}}.
      *
      * @param name the column name (must be of type set).
-     * @param value the value to add
+     * @param value the value to add. Using a BindMarker here is not supported.
+     *              To use a BindMarker use {@code QueryBuilder#addAll} with a
+     *              singleton list.
      * @return the correspond assignment (to use in an update query)
      */
     public static Assignment add(String name, Object value) {
-        Object v = value instanceof BindMarker ? value : Collections.singleton(value);
-        return new Assignment.CollectionAssignment(name, v, true);
+        if (value instanceof BindMarker){
+            throw new InvalidQueryException("Binding a value in add() is not supported, use addAll() and bind a singleton list");
+        }
+        return new Assignment.CollectionAssignment(name, Collections.singleton(value), true);
     }
 
     /**
