@@ -18,6 +18,7 @@ package com.datastax.driver.core.querybuilder;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
+import java.nio.ByteBuffer;
 import java.util.*;
 
 import com.google.common.collect.ImmutableList;
@@ -768,5 +769,12 @@ public class QueryBuilderTest {
         query = "UPDATE foo SET l=[[1],[2]]+l WHERE k=1;";
         statement = update("foo").with(prependAll("l", list)).where(eq("k", 1));
         assertThat(statement.toString()).isEqualTo(query);
+    }
+
+    @Test(groups = "unit")
+    public void should_not_serialize_raw_query_values() {
+        RegularStatement select = select().from("test").where(gt("i", raw("1")));
+        assertThat(select.getQueryString()).doesNotContain("?");
+        assertThat(select.getValues(ProtocolVersion.V3)).isNull();
     }
 }
