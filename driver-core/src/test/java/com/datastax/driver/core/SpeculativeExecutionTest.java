@@ -16,17 +16,14 @@
 package com.datastax.driver.core;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentSkipListSet;
 
 import com.datastax.driver.core.policies.SpeculativeExecutionPolicy;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.primitives.UnsignedBytes;
 import org.scassandra.http.client.PrimingRequest;
 import org.testng.annotations.*;
 
 import com.datastax.driver.core.policies.ConstantSpeculativeExecutionPolicy;
-import com.datastax.driver.core.policies.LoadBalancingPolicy;
 import com.datastax.driver.core.policies.RetryPolicy;
 
 import static com.datastax.driver.core.Assertions.assertThat;
@@ -216,63 +213,6 @@ public class SpeculativeExecutionTest {
     public void afterClass() {
         if (scassandras != null)
             scassandras.stop();
-    }
-
-    /**
-     * A load balancing policy that sorts hosts on the last byte of the address,
-     * so that the query plan is always [host1, host2, host3].
-     */
-    static class SortingLoadBalancingPolicy implements LoadBalancingPolicy {
-
-        private final SortedSet<Host> hosts = new ConcurrentSkipListSet<Host>(new Comparator<Host>() {
-            @Override
-            public int compare(Host host1, Host host2) {
-                byte[] address1 = host1.getAddress().getAddress();
-                byte[] address2 = host2.getAddress().getAddress();
-                return UnsignedBytes.compare(
-                    address1[address1.length - 1],
-                    address2[address2.length - 1]);
-            }
-        });
-
-        @Override
-        public void init(Cluster cluster, Collection<Host> hosts) {
-            this.hosts.addAll(hosts);
-        }
-
-        @Override
-        public HostDistance distance(Host host) {
-            return HostDistance.LOCAL;
-        }
-
-        @Override
-        public Iterator<Host> newQueryPlan(String loggedKeyspace, Statement statement) {
-            return hosts.iterator();
-        }
-
-        @Override
-        public void onAdd(Host host) {
-            onUp(host);
-        }
-
-        @Override
-        public void onUp(Host host) {
-            hosts.add(host);
-        }
-
-        @Override
-        public void onDown(Host host) {
-            hosts.remove(host);
-        }
-
-        @Override
-        public void onRemove(Host host) {
-            onDown(host);
-        }
-
-        @Override
-        public void onSuspected(Host host) {
-        }
     }
 
     /**

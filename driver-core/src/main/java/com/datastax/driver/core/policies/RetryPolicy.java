@@ -42,18 +42,20 @@ public interface RetryPolicy {
      *   exception will return an empty result set.</li>
      * </ul>
      */
-    public static class RetryDecision {
+    class RetryDecision {
         /**
          * The type of retry decisions.
          */
-        public static enum Type { RETRY, RETHROW, IGNORE };
+        public enum Type { RETRY, RETHROW, IGNORE };
 
         private final Type type;
         private final ConsistencyLevel retryCL;
+        private final boolean retryCurrent;
 
-        private RetryDecision(Type type, ConsistencyLevel retryCL) {
+        private RetryDecision(Type type, ConsistencyLevel retryCL, boolean retryCurrent){
             this.type = type;
             this.retryCL = retryCL;
+            this.retryCurrent = retryCurrent;
         }
 
         /**
@@ -76,12 +78,21 @@ public interface RetryPolicy {
         }
 
         /**
+         * Whether the retry policy uses the same host for retry decision.
+         *
+         * @return the retry on next host boolean. Default is false.
+         */
+        public boolean isRetryCurrent() {
+            return retryCurrent;
+        }
+
+        /**
          * Creates a RETHROW retry decision.
          *
          * @return a RETHROW retry decision.
          */
         public static RetryDecision rethrow() {
-            return new RetryDecision(Type.RETHROW, null);
+            return new RetryDecision(Type.RETHROW, null, true);
         }
 
         /**
@@ -91,7 +102,7 @@ public interface RetryPolicy {
          * @return a RETRY with consistency level {@code consistency} retry decision.
          */
         public static RetryDecision retry(ConsistencyLevel consistency) {
-            return new RetryDecision(Type.RETRY, consistency);
+            return new RetryDecision(Type.RETRY, consistency, true);
         }
 
         /**
@@ -100,15 +111,25 @@ public interface RetryPolicy {
          * @return an IGNORE retry decision.
          */
         public static RetryDecision ignore() {
-            return new RetryDecision(Type.IGNORE, null);
+            return new RetryDecision(Type.IGNORE, null, true);
+        }
+
+        /**
+         * Creates a RETRY retry decision and indicates to retry on another host
+         * using the provided consistency level.
+         *
+         * @return a RETRY retry decision.
+         */
+        public static RetryDecision tryNextHost(ConsistencyLevel retryCL) {
+            return new RetryDecision(Type.RETRY, retryCL, false);
         }
 
         @Override
         public String toString() {
             switch (type) {
-                case RETRY:   return "Retry at " + retryCL;
-                case RETHROW: return "Rethrow";
-                case IGNORE:  return "Ignore";
+                case RETRY:         return "Retry at " + retryCL + " on " + (retryCurrent ? "same " : "next ") + "host.";
+                case RETHROW:       return "Rethrow";
+                case IGNORE:        return "Ignore";
             }
             throw new AssertionError();
         }

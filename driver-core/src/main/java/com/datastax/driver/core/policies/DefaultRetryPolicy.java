@@ -24,7 +24,7 @@ import com.datastax.driver.core.WriteType;
  * <p>
  * This policy retries queries in only two cases:
  * <ul>
- *   <li>On a read timeout, if enough replica replied but data was not retrieved.</li>
+ *   <li>On a read timeout, if enough replicas replied but data was not retrieved.</li>
  *   <li>On a write timeout, if we timeout while writing the distributed log used by batch statements.</li>
  * </ul>
  * <p>
@@ -44,13 +44,13 @@ public class DefaultRetryPolicy implements RetryPolicy {
      * Defines whether to retry and at which consistency level on a read timeout.
      * <p>
      * This method triggers a maximum of one retry, and only if enough
-     * replica had responded to the read request but data was not retrieved
+     * replicas had responded to the read request but data was not retrieved
      * amongst those. Indeed, that case usually means that enough replica
      * are alive to satisfy the consistency but the coordinator picked a
      * dead one for data retrieval, not having detected that replica as dead
      * yet. The reasoning for retrying then is that by the time we get the
      * timeout the dead replica will likely have been detected as dead and
-     * the retry has a high change of success.
+     * the retry has a high chance of success.
      *
      * @param statement the original query that timed out.
      * @param cl the original consistency level of the read that timed out.
@@ -60,7 +60,7 @@ public class DefaultRetryPolicy implements RetryPolicy {
      * by the time the timeout exception was raised.
      * @param dataRetrieved whether actual data (by opposition to data checksum)
      * was present in the received responses.
-     * @param nbRetry the number of retry already performed for this operation.
+     * @param nbRetry the number of retries already performed for this operation.
      * @return {@code RetryDecision.retry(cl)} if no retry attempt has yet been tried and
      * {@code receivedResponses >= requiredResponses && !dataRetrieved}, {@code RetryDecision.rethrow()} otherwise.
      */
@@ -78,7 +78,7 @@ public class DefaultRetryPolicy implements RetryPolicy {
      * This method triggers a maximum of one retry, and only in the case of
      * a {@code WriteType.BATCH_LOG} write. The reasoning for the retry in
      * that case is that write to the distributed batch log is tried by the
-     * coordinator of the write against a small subset of all the node alive
+     * coordinator of the write against a small subset of all the nodes alive
      * in the local datacenter. Hence, a timeout usually means that none of
      * the nodes in that subset were alive but the coordinator hasn't
      * detected them as dead. By the time we get the timeout the dead
@@ -109,8 +109,14 @@ public class DefaultRetryPolicy implements RetryPolicy {
      * Defines whether to retry and at which consistency level on an
      * unavailable exception.
      * <p>
-     * This method never retries as a retry on an unavailable exception
-     * using the same consistency level has almost no change of success.
+     * This method triggers a retry iff no retry has been executed before
+     * (nbRetry == 0), with {@link RetryDecision#tryNextHost}, otherwise it
+     * throws an exception. The retry will be processed on the next host
+     * in the query plan according to the current Load Balancing Policy.
+     * Where retrying on the same host in the event of an Unavailable exception
+     * has almost no chance of success, if the first replica tried happens to
+     * be "network" isolated from all the other nodes but can still answer to
+     * the client, it makes sense to retry the query on another node.
      *
      * @param statement the original query for which the consistency level cannot
      * be achieved.
@@ -124,6 +130,8 @@ public class DefaultRetryPolicy implements RetryPolicy {
      */
     @Override
     public RetryDecision onUnavailable(Statement statement, ConsistencyLevel cl, int requiredReplica, int aliveReplica, int nbRetry) {
-        return RetryDecision.rethrow();
+        return (nbRetry == 0)
+            ? RetryDecision.tryNextHost(cl)
+            : RetryDecision.rethrow();
     }
 }
