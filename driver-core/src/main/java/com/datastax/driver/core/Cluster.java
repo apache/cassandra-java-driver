@@ -1243,6 +1243,8 @@ public class Cluster implements Closeable {
                         // Now that the control connection is ready, we have all the information we need about the nodes (datacenter,
                         // rack...) to initialize the load balancing policy
                         loadBalancingPolicy().init(Cluster.this, contactPointHosts);
+                        speculativeRetryPolicy().init(Cluster.this);
+
                         for (Host host : downContactPointHosts) {
                             loadBalancingPolicy().onDown(host);
                             for (Host.StateListener listener : listeners)
@@ -1378,6 +1380,8 @@ public class Cluster implements Closeable {
                 LoadBalancingPolicy loadBalancingPolicy = loadBalancingPolicy();
                 if (loadBalancingPolicy instanceof CloseableLoadBalancingPolicy)
                     ((CloseableLoadBalancingPolicy)loadBalancingPolicy).close();
+
+                speculativeRetryPolicy().close();
 
                 AddressTranslater translater = configuration.getPolicies().getAddressTranslater();
                 if (translater instanceof CloseableAddressTranslater)
