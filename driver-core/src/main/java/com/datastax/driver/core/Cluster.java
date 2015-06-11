@@ -281,14 +281,16 @@ public class Cluster implements Closeable {
         long timeout = getConfiguration().getSocketOptions().getConnectTimeoutMillis();
         Session session = connect();
         try {
-            ResultSetFuture future = session.executeAsync("USE " + keyspace);
-            // Note: using the connection timeout isn't perfectly correct, we should probably change that someday
-            Uninterruptibles.getUninterruptibly(future, timeout, TimeUnit.MILLISECONDS);
-            return session;
-        } catch (TimeoutException e) {
-            throw new DriverInternalError(String.format("No responses after %d milliseconds while setting current keyspace. This should not happen, unless you have setup a very low connection timeout.", timeout));
-        } catch (ExecutionException e) {
-            throw DefaultResultSetFuture.extractCauseFromExecutionException(e);
+            try {
+                ResultSetFuture future = session.executeAsync("USE " + keyspace);
+                // Note: using the connection timeout isn't perfectly correct, we should probably change that someday
+                Uninterruptibles.getUninterruptibly(future, timeout, TimeUnit.MILLISECONDS);
+                return session;
+            } catch (TimeoutException e) {
+                throw new DriverInternalError(String.format("No responses after %d milliseconds while setting current keyspace. This should not happen, unless you have setup a very low connection timeout.", timeout));
+            } catch (ExecutionException e) {
+                throw DefaultResultSetFuture.extractCauseFromExecutionException(e);
+            }
         } catch (RuntimeException e) {
             session.close();
             throw e;
