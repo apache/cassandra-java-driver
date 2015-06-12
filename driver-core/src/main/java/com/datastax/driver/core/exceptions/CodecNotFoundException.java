@@ -15,20 +15,32 @@
  */
 package com.datastax.driver.core.exceptions;
 
-public class InvalidTypeException extends DriverException {
+import com.google.common.reflect.TypeToken;
 
-    private static final long serialVersionUID = 0;
+import com.datastax.driver.core.DataType;
 
-    public InvalidTypeException(String msg) {
+/**
+ * Thrown when a suitable {@link com.datastax.driver.core.TypeCodec} cannot be found by
+ * {@link com.datastax.driver.core.CodecRegistry} instances.
+ */
+@SuppressWarnings("serial")
+public class CodecNotFoundException extends DriverException {
+
+    private final DataType cqlType;
+
+    private final TypeToken<?> javaType;
+
+    public CodecNotFoundException(String msg, DataType cqlType, TypeToken<?> javaType) {
         super(msg);
+        this.cqlType = cqlType;
+        this.javaType = javaType;
     }
 
-    public InvalidTypeException(String msg, Throwable cause) {
-        super(msg, cause);
+    public DataType getCqlType() {
+        return cqlType;
     }
 
-    @Override
-    public DriverException copy() {
-        return new InvalidTypeException(getMessage(), this);
+    public TypeToken<?> getJavaType() {
+        return javaType;
     }
 }

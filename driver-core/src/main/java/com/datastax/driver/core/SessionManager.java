@@ -34,6 +34,7 @@ import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
 import com.datastax.driver.core.policies.LoadBalancingPolicy;
 import com.datastax.driver.core.policies.ReconnectionPolicy;
 import com.datastax.driver.core.policies.SpeculativeExecutionPolicy;
+import com.datastax.driver.core.querybuilder.BuiltStatement;
 import com.datastax.driver.core.utils.MoreFutures;
 
 /**
@@ -143,7 +144,7 @@ class SessionManager extends AbstractSession {
                         switch (rm.kind) {
                             case PREPARED:
                                 Responses.Result.Prepared pmsg = (Responses.Result.Prepared)rm;
-                                PreparedStatement stmt = DefaultPreparedStatement.fromMessage(pmsg, cluster.getMetadata(), query, poolsState.keyspace);
+                                PreparedStatement stmt = DefaultPreparedStatement.fromMessage(pmsg, cluster, query, poolsState.keyspace);
                                 stmt = cluster.manager.addPrepared(stmt);
                                 try {
                                     // All Sessions are connected to the same nodes so it's enough to prepare only the nodes of this session.
@@ -497,13 +498,14 @@ class SessionManager extends AbstractSession {
             if (protoVersion == 1 && rs instanceof com.datastax.driver.core.querybuilder.BuiltStatement)
                 ((com.datastax.driver.core.querybuilder.BuiltStatement)rs).setForceNoValues(true);
 
-            ByteBuffer[] rawValues = rs.getValues();
+            CodecRegistry codecRegistry = cluster.getConfiguration().getCodecRegistry();
+            ByteBuffer[] rawValues = rs.getValues(codecRegistry);
 
             if (protoVersion == 1 && rawValues != null)
                 throw new UnsupportedFeatureException("Binary values are not supported");
 
             List<ByteBuffer> values = rawValues == null ? Collections.<ByteBuffer>emptyList() : Arrays.asList(rawValues);
-            String qString = rs.getQueryString();
+            String qString = rs.getQueryString(codecRegistry);
             Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(cl, values, false, fetchSize, usedPagingState, scl);
             return new Requests.Query(qString, options);
         } else if (statement instanceof BoundStatement) {
@@ -523,7 +525,7 @@ class SessionManager extends AbstractSession {
                 throw new UnsupportedFeatureException("Protocol level batching is not supported");
 
             BatchStatement bs = (BatchStatement)statement;
-            BatchStatement.IdAndValues idAndVals = bs.getIdAndValues();
+            BatchStatement.IdAndValues idAndVals = bs.getIdAndValues(cluster.getConfiguration().getCodecRegistry());
             return new Requests.Batch(bs.batchType, idAndVals.ids, idAndVals.values, cl);
         }
     }

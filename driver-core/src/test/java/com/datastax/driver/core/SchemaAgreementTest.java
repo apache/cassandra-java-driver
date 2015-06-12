@@ -102,7 +102,7 @@ public class SchemaAgreementTest {
 
     private static void forceSchemaVersion(Session session, InetAddress peerAddress, UUID schemaVersion) {
         session.execute(String.format("UPDATE system.peers SET schema_version = %s WHERE peer = %s",
-            DataType.uuid().format(schemaVersion), DataType.inet().format(peerAddress)));
+            TypeCodec.UUIDCodec.instance.format(schemaVersion), TypeCodec.InetCodec.instance.format(peerAddress)));
     }
 
     @AfterMethod(groups = "short")

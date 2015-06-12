@@ -87,6 +87,8 @@ public class QueryLoggerTest extends CCMBridge.PerClassSingleNodeCluster {
         )
     );
 
+    private CodecRegistry codecRegistry = CodecRegistry.DEFAULT_INSTANCE;
+
     private Logger normal = Logger.getLogger(NORMAL_LOGGER.getName());
     private Logger slow = Logger.getLogger(SLOW_LOGGER.getName());
     private Logger error = Logger.getLogger(ERROR_LOGGER.getName());
@@ -491,7 +493,7 @@ public class QueryLoggerTest extends CCMBridge.PerClassSingleNodeCluster {
             .contains(ipOfNode(1))
             .contains(query);
         for (DataType type : dataTypes) {
-            assertThat(line).contains(type.format(getFixedValue(type)));
+            assertThat(line).contains(codecRegistry.codecFor(type).format((getFixedValue(type))));
         }
     }
 

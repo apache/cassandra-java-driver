@@ -28,17 +28,17 @@ class ArrayBackedRow extends AbstractGettableData implements Row {
     private final Token.Factory tokenFactory;
     private final List<ByteBuffer> data;
 
-    private ArrayBackedRow(ColumnDefinitions metadata, Token.Factory tokenFactory, List<ByteBuffer> data) {
-        super(metadata);
+    private ArrayBackedRow(ColumnDefinitions metadata, CodecRegistry codecRegistry, Token.Factory tokenFactory, List<ByteBuffer> data) {
+        super(metadata, codecRegistry);
         this.tokenFactory = tokenFactory;
         this.data = data;
     }
 
-    static Row fromData(ColumnDefinitions metadata, Token.Factory tokenFactory, List<ByteBuffer> data) {
+    static Row fromData(ColumnDefinitions metadata, CodecRegistry codecRegistry, Token.Factory tokenFactory, List<ByteBuffer> data) {
         if (data == null)
             return null;
 
-        return new ArrayBackedRow(metadata, tokenFactory, data);
+        return new ArrayBackedRow(metadata, codecRegistry, tokenFactory, data);
     }
 
     public ColumnDefinitions getColumnDefinitions() {
@@ -88,9 +88,10 @@ class ArrayBackedRow extends AbstractGettableData implements Row {
             if (bb == null)
                 sb.append("NULL");
             else
-                sb.append(metadata.getType(i).codec().deserialize(bb).toString());
+                sb.append(getCodecRegistry().codecFor(metadata.getType(i)).deserialize(bb).toString());
         }
         sb.append(']');
         return sb.toString();
     }
+
 }

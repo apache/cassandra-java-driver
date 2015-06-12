@@ -30,4 +30,9 @@ public class Assertions extends org.assertj.core.api.Assertions{
     public static TokenRangeAssert assertThat(TokenRange range) {
         return new TokenRangeAssert(range);
     }
+
+    public static TypeCodecAssert assertThat(TypeCodec codec) {
+        return new TypeCodecAssert(codec);
+    }
+
 }

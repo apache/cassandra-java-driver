@@ -21,9 +21,15 @@ import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
 
-import com.google.common.collect.Lists;
+import com.google.common.reflect.TypeToken;
 
 import com.datastax.driver.core.exceptions.InvalidTypeException;
+
+import static com.datastax.driver.core.CodecUtils.listOf;
+import static com.datastax.driver.core.CodecUtils.mapOf;
+import static com.datastax.driver.core.CodecUtils.setOf;
+import static com.datastax.driver.core.DataType.*;
+import static com.datastax.driver.core.DataType.Name.*;
 
 /**
  * A prepared statement with values bound to the bind variables.
@@ -49,6 +55,7 @@ public class BoundStatement extends Statement implements GettableData {
 
     final PreparedStatement statement;
     final ByteBuffer[] values;
+    private final Cluster cluster;
     private ByteBuffer routingKey;
 
     private DataWrapper wrapper;
@@ -56,10 +63,25 @@ public class BoundStatement extends Statement implements GettableData {
     /**
      * Creates a new {@code BoundStatement} from the provided prepared
      * statement.
+     *
+     * @deprecated use {@link #BoundStatement(PreparedStatement, Cluster)} instead.
      * @param statement the prepared statement from which to create a {@code BoundStatement}.
      */
-    public BoundStatement(PreparedStatement statement) {
+    @Deprecated
+    public BoundStatement(PreparedStatement statement){
+        this(statement, null);
+    }
+
+    /**
+     * Creates a new {@code BoundStatement} from the provided prepared
+     * statement and using the provided cluster.
+     *
+     * @param statement the prepared statement from which to create a {@code BoundStatement}.
+     * @param cluster the {@link Cluster} instance to use.
+     */
+    public BoundStatement(PreparedStatement statement, Cluster cluster) {
         this.statement = statement;
+        this.cluster = cluster;
         this.values = new ByteBuffer[statement.getVariables().size()];
 
         // We want to reuse code from AbstractGettableData, but this class already extends Statement,
@@ -135,79 +157,22 @@ public class BoundStatement extends Statement implements GettableData {
      * (List, Set or Map) containing a null value. Nulls are not supported in
      * collections by CQL.
      */
+    @SuppressWarnings("unchecked")
     public BoundStatement bind(Object... values) {
 
         if (values.length > statement.getVariables().size())
             throw new IllegalArgumentException(String.format("Prepared statement has only %d variables, %d values provided", statement.getVariables().size(), values.length));
 
-        for (int i = 0; i < values.length; i++)
-        {
-            Object toSet = values[i];
-
-            if (toSet == null) {
+        for (int i = 0; i < values.length; i++) {
+            Object value = values[i];
+            if (value == null) {
                 setValue(i, null);
-                continue;
+            } else {
+                if (value instanceof Token)
+                    value = ((Token)value).getValue();
+                // use runtime inspection as the Java type is not known
+                setValue(i, wrapper.codecFor(i, value).serialize(value));
             }
-
-            DataType columnType = statement.getVariables().getType(i);
-            switch (columnType.getName()) {
-                case LIST:
-                    if (!(toSet instanceof List))
-                        throw new InvalidTypeException(String.format("Invalid type for value %d, column is a list but %s provided", i, toSet.getClass()));
-
-                    List<?> l = (List<?>)toSet;
-                    // If the list is empty, it will never fail validation, but otherwise we should check the list given if of the right type
-                    if (!l.isEmpty()) {
-                        // Ugly? Yes
-                        Class<?> providedClass = l.get(0).getClass();
-                        Class<?> expectedClass = columnType.getTypeArguments().get(0).asJavaClass();
-                        if (!expectedClass.isAssignableFrom(providedClass))
-                            throw new InvalidTypeException(String.format("Invalid type for value %d of CQL type %s, expecting list of %s but provided list of %s", i, columnType, expectedClass, providedClass));
-                    }
-                    break;
-                case SET:
-                    if (!(toSet instanceof Set))
-                        throw new InvalidTypeException(String.format("Invalid type for value %d, column is a set but %s provided", i, toSet.getClass()));
-
-                    Set<?> s = (Set<?>)toSet;
-                    // If the list is empty, it will never fail validation, but otherwise we should check the list given if of the right type
-                    if (!s.isEmpty()) {
-                        // Ugly? Yes
-                        Class<?> providedClass = s.iterator().next().getClass();
-                        Class<?> expectedClass = columnType.getTypeArguments().get(0).getName().javaType;
-                        if (!expectedClass.isAssignableFrom(providedClass))
-                            throw new InvalidTypeException(String.format("Invalid type for value %d of CQL type %s, expecting set of %s but provided set of %s", i, columnType, expectedClass, providedClass));
-                    }
-                    break;
-                case MAP:
-                    if (!(toSet instanceof Map))
-                        throw new InvalidTypeException(String.format("Invalid type for value %d, column is a map but %s provided", i, toSet.getClass()));
-
-                    Map<?, ?> m = (Map<?, ?>)toSet;
-                    // If the list is empty, it will never fail validation, but otherwise we should check the list given if of the right type
-                    if (!m.isEmpty()) {
-                        // Ugly? Yes
-                        Map.Entry<?, ?> entry = m.entrySet().iterator().next();
-                        Class<?> providedKeysClass = entry.getKey().getClass();
-                        Class<?> providedValuesClass = entry.getValue().getClass();
-
-                        Class<?> expectedKeysClass = columnType.getTypeArguments().get(0).getName().javaType;
-                        Class<?> expectedValuesClass = columnType.getTypeArguments().get(1).getName().javaType;
-                        if (!expectedKeysClass.isAssignableFrom(providedKeysClass) || !expectedValuesClass.isAssignableFrom(providedValuesClass))
-                            throw new InvalidTypeException(String.format("Invalid type for value %d of CQL type %s, expecting map of %s->%s but provided set of %s->%s", i, columnType, expectedKeysClass, expectedValuesClass, providedKeysClass, providedValuesClass));
-                    }
-                    break;
-                default:
-                    if (toSet instanceof Token)
-                        toSet = ((Token)toSet).getValue();
-
-                    Class<?> providedClass = toSet.getClass();
-                    Class<?> expectedClass = columnType.getName().javaType;
-                    if (!expectedClass.isAssignableFrom(providedClass))
-                        throw new InvalidTypeException(String.format("Invalid type for value %d of CQL type %s, expecting %s but %s provided", i, columnType, expectedClass, providedClass));
-                    break;
-            }
-            setValue(i, columnType.codec().serialize(toSet));
         }
         return this;
     }
@@ -271,7 +236,7 @@ public class BoundStatement extends Statement implements GettableData {
                         return null;
                     components[i] = value;
                 }
-                return SimpleStatement.compose(components);
+                return CodecUtils.compose(components);
             }
         }
         return null;
@@ -306,8 +271,8 @@ public class BoundStatement extends Statement implements GettableData {
      * @throws InvalidTypeException if column {@code i} is not of type BOOLEAN.
      */
     public BoundStatement setBool(int i, boolean v) {
-        metadata().checkType(i, DataType.Name.BOOLEAN);
-        return setValue(i, TypeCodec.BooleanCodec.instance.serializeNoBoxing(v));
+        metadata().checkType(i, BOOLEAN);
+        return setValue(i, wrapper.codecFor(i, Boolean.class).serialize(v));
     }
 
     /**
@@ -325,9 +290,9 @@ public class BoundStatement extends Statement implements GettableData {
      */
     public BoundStatement setBool(String name, boolean v) {
         int[] indexes = metadata().getAllIdx(name);
-        ByteBuffer value = TypeCodec.BooleanCodec.instance.serializeNoBoxing(v);
         for (int i = 0; i < indexes.length; i++) {
-            metadata().checkType(indexes[i], DataType.Name.BOOLEAN);
+            metadata().checkType(indexes[i], BOOLEAN);
+            ByteBuffer value = wrapper.codecFor(i, Boolean.class).serialize(v);
             setValue(indexes[i], value);
         }
         return this;
@@ -344,8 +309,8 @@ public class BoundStatement extends Statement implements GettableData {
      * @throws InvalidTypeException if column {@code i} is not of type INT.
      */
     public BoundStatement setInt(int i, int v) {
-        metadata().checkType(i, DataType.Name.INT);
-        return setValue(i, TypeCodec.IntCodec.instance.serializeNoBoxing(v));
+        metadata().checkType(i, INT);
+        return setValue(i, wrapper.codecFor(i, Integer.class).serialize(v));
     }
 
     /**
@@ -363,10 +328,8 @@ public class BoundStatement extends Statement implements GettableData {
      */
     public BoundStatement setInt(String name, int v) {
         int[] indexes = metadata().getAllIdx(name);
-        ByteBuffer value = TypeCodec.IntCodec.instance.serializeNoBoxing(v);
         for (int i = 0; i < indexes.length; i++) {
-            metadata().checkType(indexes[i], DataType.Name.INT);
-            setValue(indexes[i], value);
+            setInt(indexes[i], v);
         }
         return this;
     }
@@ -382,8 +345,8 @@ public class BoundStatement extends Statement implements GettableData {
      * @throws InvalidTypeException if column {@code i} is not of type BIGINT or COUNTER.
      */
     public BoundStatement setLong(int i, long v) {
-        metadata().checkType(i, DataType.Name.BIGINT, DataType.Name.COUNTER);
-        return setValue(i, TypeCodec.LongCodec.instance.serializeNoBoxing(v));
+        metadata().checkType(i, BIGINT, COUNTER);
+        return setValue(i, wrapper.codecFor(i, Long.class).serialize(v));
     }
 
     /**
@@ -402,10 +365,8 @@ public class BoundStatement extends Statement implements GettableData {
      */
     public BoundStatement setLong(String name, long v) {
         int[] indexes = metadata().getAllIdx(name);
-        ByteBuffer value = TypeCodec.LongCodec.instance.serializeNoBoxing(v);
         for (int i = 0; i < indexes.length; i++) {
-            metadata().checkType(indexes[i], DataType.Name.BIGINT, DataType.Name.COUNTER);
-            setValue(indexes[i], value);
+            setLong(indexes[i], v);
         }
         return this;
     }
@@ -421,8 +382,8 @@ public class BoundStatement extends Statement implements GettableData {
      * @throws InvalidTypeException if column {@code i} is not of type TIMESTAMP.
      */
     public BoundStatement setDate(int i, Date v) {
-        metadata().checkType(i, DataType.Name.TIMESTAMP);
-        return setValue(i, v == null ? null : TypeCodec.DateCodec.instance.serialize(v));
+        metadata().checkType(i, TIMESTAMP);
+        return setValue(i, v == null ? null : wrapper.codecFor(i, Date.class).serialize(v));
     }
 
     /**
@@ -441,10 +402,8 @@ public class BoundStatement extends Statement implements GettableData {
      */
     public BoundStatement setDate(String name, Date v) {
         int[] indexes = metadata().getAllIdx(name);
-        ByteBuffer value = v == null ? null : TypeCodec.DateCodec.instance.serialize(v);
         for (int i = 0; i < indexes.length; i++) {
-            metadata().checkType(indexes[i], DataType.Name.TIMESTAMP);
-            setValue(indexes[i], value);
+            setDate(indexes[i], v);
         }
         return this;
     }
@@ -460,8 +419,8 @@ public class BoundStatement extends Statement implements GettableData {
      * @throws InvalidTypeException if column {@code i} is not of type FLOAT.
      */
     public BoundStatement setFloat(int i, float v) {
-        metadata().checkType(i, DataType.Name.FLOAT);
-        return setValue(i, TypeCodec.FloatCodec.instance.serializeNoBoxing(v));
+        metadata().checkType(i, FLOAT);
+        return setValue(i, wrapper.codecFor(i, Float.class).serialize(v));
     }
 
     /**
@@ -480,10 +439,8 @@ public class BoundStatement extends Statement implements GettableData {
      */
     public BoundStatement setFloat(String name, float v) {
         int[] indexes = metadata().getAllIdx(name);
-        ByteBuffer value = TypeCodec.FloatCodec.instance.serializeNoBoxing(v);
         for (int i = 0; i < indexes.length; i++) {
-            metadata().checkType(indexes[i], DataType.Name.FLOAT);
-            setValue(indexes[i], value);
+            setFloat(indexes[i], v);
         }
         return this;
     }
@@ -499,8 +456,8 @@ public class BoundStatement extends Statement implements GettableData {
      * @throws InvalidTypeException if column {@code i} is not of type DOUBLE.
      */
     public BoundStatement setDouble(int i, double v) {
-        metadata().checkType(i, DataType.Name.DOUBLE);
-        return setValue(i, TypeCodec.DoubleCodec.instance.serializeNoBoxing(v));
+        metadata().checkType(i, DOUBLE);
+        return setValue(i, wrapper.codecFor(i, Double.class).serialize(v));
     }
 
     /**
@@ -519,10 +476,8 @@ public class BoundStatement extends Statement implements GettableData {
      */
     public BoundStatement setDouble(String name, double v) {
         int[] indexes = metadata().getAllIdx(name);
-        ByteBuffer value = TypeCodec.DoubleCodec.instance.serializeNoBoxing(v);
         for (int i = 0; i < indexes.length; i++) {
-            metadata().checkType(indexes[i], DataType.Name.DOUBLE);
-            setValue(indexes[i], value);
+            setDouble(indexes[i], v);
         }
         return this;
     }
@@ -539,18 +494,8 @@ public class BoundStatement extends Statement implements GettableData {
      * following types: VARCHAR, TEXT or ASCII.
      */
     public BoundStatement setString(int i, String v) {
-        DataType.Name type = metadata().checkType(i, DataType.Name.VARCHAR,
-            DataType.Name.TEXT,
-            DataType.Name.ASCII);
-        switch (type) {
-            case ASCII:
-                return setValue(i, v == null ? null : TypeCodec.StringCodec.asciiInstance.serialize(v));
-            case TEXT:
-            case VARCHAR:
-                return setValue(i, v == null ? null : TypeCodec.StringCodec.utf8Instance.serialize(v));
-            default:
-                throw new AssertionError();
-        }
+        metadata().checkType(i, VARCHAR, TEXT, ASCII);
+        return setValue(i, v == null ? null : wrapper.codecFor(i, String.class).serialize(v));
     }
 
     /**
@@ -589,8 +534,8 @@ public class BoundStatement extends Statement implements GettableData {
      * @throws InvalidTypeException if column {@code i} is not of type BLOB.
      */
     public BoundStatement setBytes(int i, ByteBuffer v) {
-        metadata().checkType(i, DataType.Name.BLOB);
-        return setBytesUnsafe(i, v);
+        metadata().checkType(i, BLOB);
+        return setValue(i, v == null ? null : wrapper.codecFor(i, ByteBuffer.class).serialize(v));
     }
 
     /**
@@ -612,10 +557,8 @@ public class BoundStatement extends Statement implements GettableData {
      */
     public BoundStatement setBytes(String name, ByteBuffer v) {
         int[] indexes = metadata().getAllIdx(name);
-        ByteBuffer value = v == null ? null : v.duplicate();
         for (int i = 0; i < indexes.length; i++) {
-            metadata().checkType(indexes[i], DataType.Name.BLOB);
-            setValue(indexes[i], value);
+            setBytes(indexes[i], v);
         }
         return this;
     }
@@ -674,8 +617,8 @@ public class BoundStatement extends Statement implements GettableData {
      * @throws InvalidTypeException if column {@code i} is not of type VARINT.
      */
     public BoundStatement setVarint(int i, BigInteger v) {
-        metadata().checkType(i, DataType.Name.VARINT);
-        return setValue(i, v == null ? null : TypeCodec.BigIntegerCodec.instance.serialize(v));
+        metadata().checkType(i, VARINT);
+        return setValue(i, v == null ? null : wrapper.codecFor(i, BigInteger.class).serialize(v));
     }
 
     /**
@@ -694,10 +637,8 @@ public class BoundStatement extends Statement implements GettableData {
      */
     public BoundStatement setVarint(String name, BigInteger v) {
         int[] indexes = metadata().getAllIdx(name);
-        ByteBuffer value = v == null ? null : TypeCodec.BigIntegerCodec.instance.serialize(v);
         for (int i = 0; i < indexes.length; i++) {
-            metadata().checkType(indexes[i], DataType.Name.VARINT);
-            setValue(indexes[i], value);
+            setVarint(indexes[i], v);
         }
         return this;
     }
@@ -713,8 +654,8 @@ public class BoundStatement extends Statement implements GettableData {
      * @throws InvalidTypeException if column {@code i} is not of type DECIMAL.
      */
     public BoundStatement setDecimal(int i, BigDecimal v) {
-        metadata().checkType(i, DataType.Name.DECIMAL);
-        return setValue(i, v == null ? null : TypeCodec.DecimalCodec.instance.serialize(v));
+        metadata().checkType(i, DECIMAL);
+        return setValue(i, v == null ? null : wrapper.codecFor(i, BigDecimal.class).serialize(v));
     }
 
     /**
@@ -733,10 +674,8 @@ public class BoundStatement extends Statement implements GettableData {
      */
     public BoundStatement setDecimal(String name, BigDecimal v) {
         int[] indexes = metadata().getAllIdx(name);
-        ByteBuffer value = v == null ? null : TypeCodec.DecimalCodec.instance.serialize(v);
         for (int i = 0; i < indexes.length; i++) {
-            metadata().checkType(indexes[i], DataType.Name.DECIMAL);
-            setValue(indexes[i], value);
+            setDecimal(indexes[i], v);
         }
         return this;
     }
@@ -754,18 +693,15 @@ public class BoundStatement extends Statement implements GettableData {
      * not a type 1 UUID.
      */
     public BoundStatement setUUID(int i, UUID v) {
-        DataType.Name type = metadata().checkType(i, DataType.Name.UUID,
-            DataType.Name.TIMEUUID);
+        Name type = metadata().checkType(i, UUID, TIMEUUID);
 
         if (v == null)
             return setValue(i, null);
 
-        if (type == DataType.Name.TIMEUUID && v.version() != 1)
+        if (type == TIMEUUID && v.version() != 1)
             throw new InvalidTypeException(String.format("%s is not a Type 1 (time-based) UUID", v));
 
-        return type == DataType.Name.UUID
-             ? setValue(i, TypeCodec.UUIDCodec.instance.serialize(v))
-             : setValue(i, TypeCodec.TimeUUIDCodec.instance.serialize(v));
+        return setValue(i, wrapper.codecFor(i, UUID.class).serialize(v));
     }
 
     /**
@@ -785,12 +721,8 @@ public class BoundStatement extends Statement implements GettableData {
      */
     public BoundStatement setUUID(String name, UUID v) {
         int[] indexes = metadata().getAllIdx(name);
-        ByteBuffer value = v == null ? null : TypeCodec.UUIDCodec.instance.serialize(v);
         for (int i = 0; i < indexes.length; i++) {
-            DataType.Name type = metadata().checkType(indexes[i], DataType.Name.UUID, DataType.Name.TIMEUUID);
-            if (v != null && type == DataType.Name.TIMEUUID && v.version() != 1)
-                throw new InvalidTypeException(String.format("%s is not a Type 1 (time-based) UUID", v));
-            setValue(indexes[i], value);
+            setUUID(indexes[i], v);
         }
         return this;
     }
@@ -806,8 +738,8 @@ public class BoundStatement extends Statement implements GettableData {
      * @throws InvalidTypeException if column {@code i} is not of type INET.
      */
     public BoundStatement setInet(int i, InetAddress v) {
-        metadata().checkType(i, DataType.Name.INET);
-        return setValue(i, v == null ? null : TypeCodec.InetCodec.instance.serialize(v));
+        metadata().checkType(i, INET);
+        return setValue(i, v == null ? null : wrapper.codecFor(i, InetAddress.class).serialize(v));
     }
 
     /**
@@ -826,10 +758,8 @@ public class BoundStatement extends Statement implements GettableData {
      */
     public BoundStatement setInet(String name, InetAddress v) {
         int[] indexes = metadata().getAllIdx(name);
-        ByteBuffer value = v == null ? null : TypeCodec.InetCodec.instance.serialize(v);
         for (int i = 0; i < indexes.length; i++) {
-            metadata().checkType(indexes[i], DataType.Name.INET);
-            setValue(indexes[i], value);
+            setInet(indexes[i], v);
         }
         return this;
     }
@@ -847,9 +777,10 @@ public class BoundStatement extends Statement implements GettableData {
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
      * @throws InvalidTypeException if column {@code i} is not of the type of the token's value.
      */
+    @SuppressWarnings("unchecked")
     public BoundStatement setToken(int i, Token v) {
         metadata().checkType(i, v.getType().getName());
-        return setValue(i, v.getType().serialize(v.getValue()));
+        return setValue(i, getCodecRegistry().codecFor(v.getType(), v.getValue()).serialize(v.getValue()));
     }
 
     /**
@@ -937,24 +868,12 @@ public class BoundStatement extends Statement implements GettableData {
      * by CQL.
      */
     public <T> BoundStatement setList(int i, List<T> v) {
-        DataType type = metadata().getType(i);
-        if (type.getName() != DataType.Name.LIST)
-            throw new InvalidTypeException(String.format("Column %s is of type %s, cannot set to a list", metadata().getName(i), type));
+        metadata().checkType(i, LIST);
 
         if (v == null)
             return setValue(i, null);
 
-        // If the list is empty, it will never fail validation, but otherwise we should check the list given if of the right type
-        if (!v.isEmpty()) {
-            // Ugly? Yes
-            Class<?> providedClass = v.get(0).getClass();
-            Class<?> expectedClass = type.getTypeArguments().get(0).asJavaClass();
-
-            if (!expectedClass.isAssignableFrom(providedClass))
-                throw new InvalidTypeException(String.format("Invalid value for column %s of CQL type %s, expecting list of %s but provided list of %s", metadata().getName(i), type, expectedClass, providedClass));
-        }
-
-        return setValue(i, type.codec().serialize(v));
+        return setValue(i, wrapper.codecFor(i, v).serialize(v));
     }
 
     /**
@@ -1003,26 +922,12 @@ public class BoundStatement extends Statement implements GettableData {
      * by CQL.
      */
     public <K, V> BoundStatement setMap(int i, Map<K, V> v) {
-        DataType type = metadata().getType(i);
-        if (type.getName() != DataType.Name.MAP)
-            throw new InvalidTypeException(String.format("Column %s is of type %s, cannot set to a map", metadata().getName(i), type));
+        metadata().checkType(i, MAP);
 
         if (v == null)
             return setValue(i, null);
 
-        if (!v.isEmpty()) {
-            // Ugly? Yes
-            Map.Entry<K, V> entry = v.entrySet().iterator().next();
-            Class<?> providedKeysClass = entry.getKey().getClass();
-            Class<?> providedValuesClass = entry.getValue().getClass();
-
-            Class<?> expectedKeysClass = type.getTypeArguments().get(0).getName().javaType;
-            Class<?> expectedValuesClass = type.getTypeArguments().get(1).getName().javaType;
-            if (!expectedKeysClass.isAssignableFrom(providedKeysClass) || !expectedValuesClass.isAssignableFrom(providedValuesClass))
-                throw new InvalidTypeException(String.format("Invalid value for column %s of CQL type %s, expecting map of %s->%s but provided map of %s->%s", metadata().getName(i), type, expectedKeysClass, expectedValuesClass, providedKeysClass, providedValuesClass));
-        }
-
-        return setValue(i, type.codec().serialize(v));
+        return setValue(i, wrapper.codecFor(i, v).serialize(v));
     }
 
     /**
@@ -1071,23 +976,12 @@ public class BoundStatement extends Statement implements GettableData {
      * by CQL.
      */
     public <T> BoundStatement setSet(int i, Set<T> v) {
-        DataType type = metadata().getType(i);
-        if (type.getName() != DataType.Name.SET)
-            throw new InvalidTypeException(String.format("Column %s is of type %s, cannot set to a set", metadata().getName(i), type));
+        metadata().checkType(i, SET);
 
         if (v == null)
             return setValue(i, null);
 
-        if (!v.isEmpty()) {
-            // Ugly? Yes
-            Class<?> providedClass = v.iterator().next().getClass();
-            Class<?> expectedClass = type.getTypeArguments().get(0).getName().javaType;
-
-            if (!expectedClass.isAssignableFrom(providedClass))
-                throw new InvalidTypeException(String.format("Invalid value for column %s of CQL type %s, expecting set of %s but provided set of %s", metadata().getName(i), type, expectedClass, providedClass));
-        }
-
-        return setValue(i, type.codec().serialize(v));
+        return setValue(i, wrapper.codecFor(i, v).serialize(v));
     }
 
     /**
@@ -1112,8 +1006,44 @@ public class BoundStatement extends Statement implements GettableData {
      */
     public <T> BoundStatement setSet(String name, Set<T> v) {
         int[] indexes = metadata().getAllIdx(name);
-        for (int i = 0; i < indexes.length; i++)
-            setSet(indexes[i], v);
+        for (int index : indexes)
+            setSet(index, v);
+        return this;
+    }
+
+    public <T> BoundStatement setObject(int i, T value) {
+        if(value == null) {
+            setValue(i, null);
+            return this;
+        }
+        TypeCodec<T> codec = wrapper.codecFor(i, value);
+        return setValue(i, codec.serialize(value));
+    }
+
+    public <T> BoundStatement setObject(int i, T value, Class<T> targetClass) {
+        return setObject(i, value, TypeToken.of(targetClass));
+    }
+
+    public <T> BoundStatement setObject(String name, T value, Class<T> targetClass) {
+        int[] indexes = metadata().getAllIdx(name);
+        for (int index : indexes)
+            setObject(index, value,TypeToken.of(targetClass));
+        return this;
+    }
+
+    public <T> BoundStatement setObject(int i, T value, TypeToken<T> targetType) {
+        if(value == null) {
+            setValue(i, null);
+            return this;
+        }
+        TypeCodec<T> codec = wrapper.codecFor(i, targetType);
+        return setValue(i, codec.serialize(value));
+    }
+
+    public <T> BoundStatement setObject(String name, T value, TypeToken<T> targetType) {
+        int[] indexes = metadata().getAllIdx(name);
+        for (int index : indexes)
+            setObject(index, value, targetType);
         return this;
     }
 
@@ -1297,6 +1227,26 @@ public class BoundStatement extends Statement implements GettableData {
         return wrapper.getObject(name);
     }
 
+    @Override
+    public <T> T getObject(int i, Class<T> targetClass) {
+        return wrapper.getObject(i, targetClass);
+    }
+
+    @Override
+    public <T> T getObject(int i, TypeToken<T> targetType) {
+        return wrapper.getObject(i, targetType);
+    }
+
+    @Override
+    public <T> T getObject(String name, Class<T> targetClass) {
+        return wrapper.getObject(name, targetClass);
+    }
+
+    @Override
+    public <T> T getObject(String name, TypeToken<T> targetType) {
+        return wrapper.getObject(name, targetType);
+    }
+
     private ColumnDefinitions metadata() {
         return statement.getVariables();
     }
@@ -1306,11 +1256,15 @@ public class BoundStatement extends Statement implements GettableData {
         return this;
     }
 
-    static class DataWrapper extends AbstractGettableData {
+    private CodecRegistry getCodecRegistry() {
+        return cluster.getConfiguration().getCodecRegistry();
+    }
+
+    class DataWrapper extends AbstractGettableData {
         final ByteBuffer[] values;
 
         DataWrapper(BoundStatement wrapped) {
-            super(wrapped.metadata());
+            super(wrapped.metadata(), wrapped.getCodecRegistry());
             values = wrapped.values;
         }
 
@@ -1318,5 +1272,6 @@ public class BoundStatement extends Statement implements GettableData {
         protected ByteBuffer getValue(int i) {
             return values[i];
         }
+
     }
 }

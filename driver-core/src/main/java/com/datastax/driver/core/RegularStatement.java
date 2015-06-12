@@ -35,9 +35,21 @@ public abstract class RegularStatement extends Statement {
     /**
      * Returns the query string for this statement.
      *
+     * @deprecated Use {@link #getQueryString(CodecRegistry)} instead.
      * @return a valid CQL query string.
      */
+    @Deprecated
     public abstract String getQueryString();
+
+    /**
+     * Returns the query string for this statement.
+     * If there are values that need to be inserted
+     * in the string, these will be formatted
+     * with the given {@link CodecRegistry} instance.
+     *
+     * @return a valid CQL query string.
+     */
+    public abstract String getQueryString(CodecRegistry codecRegistry);
 
     /**
      * The values to use for this statement.
@@ -49,15 +61,37 @@ public abstract class RegularStatement extends Statement {
      * 1 through {@link Cluster.Builder#withProtocolVersion} or you use
      * Cassandra 1.2).
      *
+     * @deprecated Use {@link #getValues(CodecRegistry)} instead.
      * @return the values to use for this statement or {@code null} if there is
      * no such values.
-     *
+     * @throws IllegalArgumentException if one of the values is not of a type
+     * that can be serialized to a CQL3 type
      * @see SimpleStatement#SimpleStatement(String, Object...)
      */
+    @Deprecated
     public abstract ByteBuffer[] getValues();
+
+    /**
+     * Return the values to use for this statement, converted using the given
+     * {@link CodecRegistry instance}.
+     * <p>
+     * Note: Values for a RegularStatement (i.e. if this method does not return
+     * {@code null}) are not supported with the native protocol version 1: you
+     * will get an {@link UnsupportedProtocolVersionException} when submitting
+     * one if version 1 of the protocol is in use (i.e. if you've force version
+     * 1 through {@link Cluster.Builder#withProtocolVersion} or you use
+     * Cassandra 1.2).
+     *
+     * @return the values to use for this statement or {@code null} if there is
+     * no such values.
+     * @throws IllegalArgumentException if one of the values is not of a type
+     * that can be serialized to a CQL3 type
+     * @see SimpleStatement#SimpleStatement(String, Object...)
+     */
+    public abstract ByteBuffer[] getValues(CodecRegistry codecRegistry);
 
     @Override
     public String toString() {
-        return getQueryString();
+        return getQueryString(CodecRegistry.DEFAULT_INSTANCE);
     }
 }

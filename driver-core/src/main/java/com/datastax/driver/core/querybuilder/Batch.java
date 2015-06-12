@@ -17,10 +17,11 @@ package com.datastax.driver.core.querybuilder;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
+import com.datastax.driver.core.CodecRegistry;
 import com.datastax.driver.core.RegularStatement;
+import com.datastax.driver.core.SimpleStatement;
 
 /**
  * A built BATCH statement.
@@ -48,7 +49,7 @@ public class Batch extends BuiltStatement {
     }
 
     @Override
-    StringBuilder buildQueryString(List<ByteBuffer> variables) {
+    StringBuilder buildQueryString(List<Object> variables, CodecRegistry codecRegistry) {
         StringBuilder builder = new StringBuilder();
 
         builder.append(isCounterOp()
@@ -57,7 +58,7 @@ public class Batch extends BuiltStatement {
 
         if (!usings.usings.isEmpty()) {
             builder.append(" USING ");
-            Utils.joinAndAppend(builder, " AND ", usings.usings, variables);
+            Utils.joinAndAppend(builder, codecRegistry, " AND ", usings.usings, variables);
         }
         builder.append(' ');
 
@@ -65,7 +66,7 @@ public class Batch extends BuiltStatement {
             RegularStatement stmt = statements.get(i);
             if (stmt instanceof BuiltStatement) {
                 BuiltStatement bst = (BuiltStatement)stmt;
-                builder.append(maybeAddSemicolon(bst.buildQueryString(variables)));
+                builder.append(maybeAddSemicolon(bst.buildQueryString(variables, codecRegistry)));
 
             } else {
                 String str = stmt.getQueryString();
@@ -110,8 +111,7 @@ public class Batch extends BuiltStatement {
             // For non-BuiltStatement, we cannot know if it includes a bind makers and we assume it does. In practice,
             // this means we will always serialize values as strings when there is non-BuiltStatement
             this.hasBindMarkers = true;
-            if (statement.getValues() != null)
-                this.nonBuiltStatementValues += statement.getValues().length;
+            this.nonBuiltStatementValues += ((SimpleStatement)statement).valuesCount();
         }
 
         checkForBindMarkers(null);
@@ -139,7 +139,7 @@ public class Batch extends BuiltStatement {
             if (statement instanceof BuiltStatement)
                 continue;
 
-            ByteBuffer[] statementValues = statement.getValues();
+            @SuppressWarnings("deprecation") ByteBuffer[] statementValues = statement.getValues();
             System.arraycopy(statementValues, 0, values, i, statementValues.length);
             i += statementValues.length;
         }

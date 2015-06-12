@@ -68,4 +68,5 @@ public class BoundStatementTest extends CCMBridge.PerClassSingleNodeCluster {
             fail("Expected index error");
         } catch (IndexOutOfBoundsException e) { /* expected */ }
     }
+
 }

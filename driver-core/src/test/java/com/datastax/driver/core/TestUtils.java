@@ -156,11 +156,15 @@ public abstract class TestUtils {
             case TIMEUUID:
                 return row.getUUID(name);
             case LIST:
-                return row.getList(name, type.getTypeArguments().get(0).asJavaClass());
+                Class<?> listEltClass = CodecRegistry.DEFAULT_INSTANCE.codecFor(type.getTypeArguments().get(0)).getJavaType().getRawType();
+                return row.getList(name, listEltClass);
             case SET:
-                return row.getSet(name, type.getTypeArguments().get(0).asJavaClass());
+                Class<?> setEltClass = CodecRegistry.DEFAULT_INSTANCE.codecFor(type.getTypeArguments().get(0)).getJavaType().getRawType();
+                return row.getSet(name, setEltClass);
             case MAP:
-                return row.getMap(name, type.getTypeArguments().get(0).asJavaClass(), type.getTypeArguments().get(1).asJavaClass());
+                Class<?> keyClass = CodecRegistry.DEFAULT_INSTANCE.codecFor(type.getTypeArguments().get(0)).getJavaType().getRawType();
+                Class<?> valueClass = CodecRegistry.DEFAULT_INSTANCE.codecFor(type.getTypeArguments().get(1)).getJavaType().getRawType();
+                return row.getMap(name, keyClass, valueClass);
         }
         throw new RuntimeException("Missing handling of " + type);
     }

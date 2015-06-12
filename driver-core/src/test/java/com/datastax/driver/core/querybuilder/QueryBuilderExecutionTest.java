@@ -40,7 +40,7 @@ public class QueryBuilderExecutionTest extends CCMBridge.PerClassSingleNodeClust
     @Test(groups = "short")
     public void executeTest() throws Exception {
 
-        session.execute(insertInto(TABLE1).value("k", "k1").value("t", "This is a test").value("i", 3).value("f", 0.42));
+        session.execute(insertInto(TABLE1).value("k", "k1").value("t", "This is a test").value("i", 3).value("f", 0.42f));
         session.execute(update(TABLE1).with(set("t", "Another test")).where(eq("k", "k2")));
 
         List<Row> rows = session.execute(select().from(TABLE1).where(in("k", "k1", "k2"))).all();

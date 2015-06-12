@@ -28,6 +28,8 @@ import com.datastax.driver.core.exceptions.InvalidTypeException;
 
 public class DataTypeTest {
 
+    private CodecRegistry codecRegistry = CodecRegistry.DEFAULT_INSTANCE;
+
     @Test(groups = "unit")
     public void serializeDeserializeTest() {
 
@@ -36,17 +38,15 @@ public class DataTypeTest {
                 continue;
 
             Object value = TestUtils.getFixedValue(dt);
-            assertEquals(dt.deserialize(dt.serialize(value)), value);
+            TypeCodec<Object> codec = codecRegistry.codecFor(dt);
+            assertEquals(codec.deserialize(codec.serialize(value)), value);
         }
 
-        try {
-            DataType.bigint().serialize(4);
-            fail("This should not have worked");
-        } catch (InvalidTypeException e) { /* That's what we want */ }
+        TypeCodec<Long> codec = codecRegistry.codecFor(DataType.bigint());
 
         try {
             ByteBuffer badValue = ByteBuffer.allocate(4);
-            DataType.bigint().deserialize(badValue);
+            codec.deserialize(badValue);
             fail("This should not have worked");
         } catch (InvalidTypeException e) { /* That's what we want */ }
     }
@@ -57,10 +57,13 @@ public class DataTypeTest {
         List<String> l = Arrays.asList("foo", "bar");
 
         DataType dt = DataType.list(DataType.text());
-        assertEquals(dt.deserialize(dt.serialize(l)), l);
+        TypeCodec<List<String>> codec = codecRegistry.codecFor(dt);
+        assertEquals(codec.deserialize(codec.serialize(l)), l);
 
         try {
-            DataType.list(DataType.bigint()).serialize(l);
+            DataType listOfBigint = DataType.list(DataType.bigint());
+            codec = codecRegistry.codecFor(listOfBigint);
+            codec.serialize(l);
             fail("This should not have worked");
         } catch (InvalidTypeException e) { /* That's what we want */ }
     }

@@ -256,7 +256,7 @@ class CassandraTypeParser {
                 String bbHex = readNextIdentifier();
                 String name = null;
                 try {
-                    name = TypeCodec.StringCodec.utf8Instance.deserialize(Bytes.fromHexString("0x" + bbHex));
+                    name = TypeCodec.VarcharCodec.instance.deserialize(Bytes.fromHexString("0x" + bbHex));
                 } catch (NumberFormatException e) {
                     throwSyntaxError(e.getMessage());
                 }

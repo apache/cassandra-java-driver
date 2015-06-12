@@ -16,7 +16,9 @@
 package com.datastax.driver.core;
 
 import java.net.InetSocketAddress;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
@@ -114,7 +116,7 @@ public abstract class TokenIntegrationTest {
 
         // Find the replica for a given partition key
         int testKey = 1;
-        Set<Host> replicas = metadata.getReplicas("test", DataType.cint().serialize(testKey));
+        Set<Host> replicas = metadata.getReplicas("test", TypeCodec.IntCodec.instance.serialize(testKey));
         assertThat(replicas).hasSize(1);
         Host replica = replicas.iterator().next();
 

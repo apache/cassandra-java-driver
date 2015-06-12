@@ -15,12 +15,12 @@
  */
 package com.datastax.driver.core.querybuilder;
 
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import com.datastax.driver.core.CodecRegistry;
 import com.datastax.driver.core.TableMetadata;
 
 /**
@@ -55,7 +55,7 @@ public class Select extends BuiltStatement {
     }
 
     @Override
-    StringBuilder buildQueryString(List<ByteBuffer> variables) {
+    StringBuilder buildQueryString(List<Object> variables, CodecRegistry codecRegistry) {
         StringBuilder builder = new StringBuilder();
 
         builder.append("SELECT ");
@@ -64,7 +64,7 @@ public class Select extends BuiltStatement {
         if (columnNames == null) {
             builder.append('*');
         } else {
-            Utils.joinAndAppendNames(builder, ",", columnNames);
+            Utils.joinAndAppendNames(builder, codecRegistry, ",", columnNames);
         }
         builder.append(" FROM ");
         if (keyspace != null)
@@ -73,12 +73,12 @@ public class Select extends BuiltStatement {
 
         if (!where.clauses.isEmpty()) {
             builder.append(" WHERE ");
-            Utils.joinAndAppend(builder, " AND ", where.clauses, variables);
+            Utils.joinAndAppend(builder, codecRegistry, " AND ", where.clauses, variables);
         }
 
         if (orderings != null) {
             builder.append(" ORDER BY ");
-            Utils.joinAndAppend(builder, ",", orderings, variables);
+            Utils.joinAndAppend(builder, codecRegistry, ",", orderings, variables);
         }
 
         if (limit != null) {
@@ -127,8 +127,8 @@ public class Select extends BuiltStatement {
             throw new IllegalStateException("An ORDER BY clause has already been provided");
 
         this.orderings = Arrays.asList(orderings);
-        for (int i = 0; i < orderings.length; i++)
-            checkForBindMarkers(orderings[i]);
+        for (Ordering ordering : orderings)
+            checkForBindMarkers(ordering);
         return this;
     }
 
@@ -430,7 +430,7 @@ public class Select extends BuiltStatement {
             if (previousSelection != null)
                 throw new IllegalStateException(String.format("Some columns ([%s]) have already been selected.", previousSelection));
 
-            return (Builder)this;
+            return this;
         }
 
         /**
@@ -447,7 +447,7 @@ public class Select extends BuiltStatement {
                 throw new IllegalStateException(String.format("Some columns ([%s]) have already been selected.", previousSelection));
 
             columnNames = COUNT_ALL;
-            return (Builder)this;
+            return this;
         }
 
         /**

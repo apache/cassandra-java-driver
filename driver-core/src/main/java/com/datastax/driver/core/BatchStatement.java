@@ -80,14 +80,17 @@ public class BatchStatement extends Statement {
         this.batchType = batchType;
     }
 
-    IdAndValues getIdAndValues() {
+    IdAndValues getIdAndValues(CodecRegistry codecRegistry) {
         IdAndValues idAndVals = new IdAndValues(statements.size());
         for (Statement statement : statements) {
             if (statement instanceof RegularStatement) {
                 RegularStatement st = (RegularStatement)statement;
-                ByteBuffer[] vals = st.getValues();
-                idAndVals.ids.add(st.getQueryString());
-                idAndVals.values.add(vals == null ? Collections.<ByteBuffer>emptyList() : Arrays.asList(vals));
+                Object[] vals = st.getValues(codecRegistry);
+                idAndVals.ids.add(st.getQueryString(codecRegistry));
+                idAndVals.values.add(
+                    vals == null ?
+                        Collections.<ByteBuffer>emptyList() :
+                        Arrays.asList(CodecUtils.convert(vals, codecRegistry)));
             } else {
                 // We handle BatchStatement in add() so ...
                 assert statement instanceof BoundStatement;

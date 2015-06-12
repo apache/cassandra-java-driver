@@ -21,21 +21,27 @@ import java.net.InetAddress;
 import java.util.*;
 
 import org.testng.annotations.Test;
-import static org.testng.Assert.*;
 
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
+
+import com.datastax.driver.core.CodecRegistry;
 import com.datastax.driver.core.ConsistencyLevel;
 import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.exceptions.CodecNotFoundException;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 
-public class QueryBuilderTest {
+public class QueryBuilderCodecTest {
+
+    private CodecRegistry registry = CodecRegistry.builder().withCodecs().build();
 
     @Test(groups = "unit")
     public void selectTest() throws Exception {
 
         String query;
-        Statement select;
+        BuiltStatement select;
 
         query = "SELECT * FROM foo WHERE k=4 AND c>'a' AND c<='z';";
         select = select().all().from("foo").where(eq("k", 4)).and(gt("c", "a")).and(lte("c", "z"));
