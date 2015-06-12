@@ -123,7 +123,7 @@ public interface GettableByIndexData {
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
      * @throws InvalidTypeException if value {@code i} is not of type DATE.
      */
-    public DateWithoutTime getDate(int i);
+    public LocalDate getDate(int i);
 
     /**
      * Returns the {@code i}th value as a long in nanoseconds since midnight.

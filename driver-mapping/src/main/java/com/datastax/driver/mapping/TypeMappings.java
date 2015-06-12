@@ -22,7 +22,7 @@ import java.nio.ByteBuffer;
 import java.util.*;
 
 import com.datastax.driver.core.DataType;
-import com.datastax.driver.core.DateWithoutTime;
+import com.datastax.driver.core.LocalDate;
 import com.datastax.driver.core.TupleValue;
 import com.datastax.driver.core.UDTValue;
 import com.datastax.driver.mapping.annotations.UDT;
@@ -64,7 +64,7 @@ class TypeMappings {
             return DataType.timestamp();
         if (UUID.class.isAssignableFrom(klass))
             return DataType.uuid();
-        if (DateWithoutTime.class.isAssignableFrom(klass))
+        if (LocalDate.class.isAssignableFrom(klass))
             return DataType.date();
 
         if (Collection.class.isAssignableFrom(klass))

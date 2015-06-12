@@ -936,7 +936,7 @@ abstract class TypeCodec<T> {
         }
     }
 
-    static class DateCodec extends TypeCodec<DateWithoutTime> {
+    static class DateCodec extends TypeCodec<LocalDate> {
 
         public static final DateCodec instance = new DateCodec();
         private static final Pattern IS_LONG_PATTERN = Pattern.compile("^-?\\d+$");
@@ -948,7 +948,7 @@ abstract class TypeCodec<T> {
         }
 
         @Override
-        public DateWithoutTime parse(String value) {
+        public LocalDate parse(String value) {
             if (IS_LONG_PATTERN.matcher(value).matches()) {
                 // In CQL, numeric DATE literals are longs between 0 and 2^32 - 1, with the epoch in the middle,
                 // so parse it as a long and re-center at 0
@@ -964,7 +964,7 @@ abstract class TypeCodec<T> {
 
                 int days = (int)(cqlLong - EPOCH_AS_CQL_LONG);
 
-                return DateWithoutTime.fromDaysSinceEpoch(days);
+                return LocalDate.fromDaysSinceEpoch(days);
             }
 
             SimpleDateFormat parser = new SimpleDateFormat(pattern);
@@ -974,25 +974,25 @@ abstract class TypeCodec<T> {
             ParsePosition pos = new ParsePosition(0);
             Date date = parser.parse(value, pos);
             if (date != null && pos.getIndex() == value.length()) {
-                return DateWithoutTime.fromMillisSinceEpoch(date.getTime());
+                return LocalDate.fromMillisSinceEpoch(date.getTime());
             }
 
             throw new InvalidTypeException(String.format("Cannot parse date value from \"%s\"", value));
         }
 
         @Override
-        public String format(DateWithoutTime value) {
+        public String format(LocalDate value) {
             return value.toString();
         }
 
         @Override
-        public ByteBuffer serialize(DateWithoutTime value) {
+        public ByteBuffer serialize(LocalDate value) {
             return IntCodec.instance.serializeNoBoxing(javaToProtocol(value.getDaysSinceEpoch()));
         }
 
         @Override
-        public DateWithoutTime deserialize(ByteBuffer bytes) {
-            return DateWithoutTime.fromDaysSinceEpoch(protocolToJava(IntCodec.instance.deserializeNoBoxing(bytes)));
+        public LocalDate deserialize(ByteBuffer bytes) {
+            return LocalDate.fromDaysSinceEpoch(protocolToJava(IntCodec.instance.deserializeNoBoxing(bytes)));
         }
 
         // The protocol encodes DATE as an _unsigned_ int with the epoch in the middle of the range (2^31).

@@ -153,12 +153,12 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
         return wrapped;
     }
 
-    public T setDate(int i, DateWithoutTime v) {
+    public T setDate(int i, LocalDate v) {
         checkType(i, DataType.Name.DATE);
         return setValue(i, TypeCodec.DateCodec.instance.serialize(v));
     }
 
-    public T setDate(String name, DateWithoutTime v) {
+    public T setDate(String name, LocalDate v) {
         int[] indexes = getAllIndexesOf(name);
         ByteBuffer value = TypeCodec.DateCodec.instance.serialize(v);
         for (int i = 0; i < indexes.length; i++) {

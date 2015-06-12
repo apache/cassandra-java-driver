@@ -15,16 +15,17 @@
  */
 package com.datastax.driver.core;
 
+import java.util.Calendar;
 import java.util.concurrent.TimeUnit;
 
 import org.testng.annotations.Test;
 
 import static com.datastax.driver.core.Assertions.assertThat;
-import static com.datastax.driver.core.DateWithoutTime.fromDaysSinceEpoch;
-import static com.datastax.driver.core.DateWithoutTime.fromMillisSinceEpoch;
-import static com.datastax.driver.core.DateWithoutTime.fromYearMonthDay;
+import static com.datastax.driver.core.LocalDate.fromDaysSinceEpoch;
+import static com.datastax.driver.core.LocalDate.fromMillisSinceEpoch;
+import static com.datastax.driver.core.LocalDate.fromYearMonthDay;
 
-public class DateWithoutTimeTest {
+public class LocalDateTest {
 
     @Test(groups = "unit")
     public void should_build_from_days_since_epoch() {
@@ -143,53 +144,53 @@ public class DateWithoutTimeTest {
 
     @Test(groups = "unit")
     public void should_add_and_subtract_years() {
-        assertThat(fromYearMonthDay(1970, 1, 1).plusYears(1))
+        assertThat(fromYearMonthDay(1970, 1, 1).add(Calendar.YEAR, 1))
             .hasYearMonthDay(1971, 1, 1);
-        assertThat(fromYearMonthDay(1970, 1, 1).plusYears(-1))
+        assertThat(fromYearMonthDay(1970, 1, 1).add(Calendar.YEAR, -1))
             .hasYearMonthDay(1969, 1, 1);
-        assertThat(fromYearMonthDay(1970, 1, 1).plusYears(-1970))
+        assertThat(fromYearMonthDay(1970, 1, 1).add(Calendar.YEAR, -1970))
             .hasYearMonthDay(0, 1, 1);
-        assertThat(fromYearMonthDay(1970, 1, 1).plusYears(-1971))
+        assertThat(fromYearMonthDay(1970, 1, 1).add(Calendar.YEAR, -1971))
             .hasYearMonthDay(-1, 1, 1);
-        assertThat(fromYearMonthDay(0, 5, 12).plusYears(1))
+        assertThat(fromYearMonthDay(0, 5, 12).add(Calendar.YEAR, 1))
             .hasYearMonthDay(1, 5, 12);
-        assertThat(fromYearMonthDay(-1, 5, 12).plusYears(1))
+        assertThat(fromYearMonthDay(-1, 5, 12).add(Calendar.YEAR, 1))
             .hasYearMonthDay(0, 5, 12);
-        assertThat(fromYearMonthDay(-1, 5, 12).plusYears(2))
+        assertThat(fromYearMonthDay(-1, 5, 12).add(Calendar.YEAR, 2))
             .hasYearMonthDay(1, 5, 12);
     }
 
     @Test(groups = "unit")
     public void should_add_and_subtract_months() {
-        assertThat(fromYearMonthDay(1970, 1, 1).plusMonths(2))
+        assertThat(fromYearMonthDay(1970, 1, 1).add(Calendar.MONTH, 2))
             .hasYearMonthDay(1970, 3, 1);
-        assertThat(fromYearMonthDay(1970, 1, 1).plusMonths(24))
+        assertThat(fromYearMonthDay(1970, 1, 1).add(Calendar.MONTH, 24))
             .hasYearMonthDay(1972, 1, 1);
-        assertThat(fromYearMonthDay(1970, 1, 1).plusMonths(-5))
+        assertThat(fromYearMonthDay(1970, 1, 1).add(Calendar.MONTH, -5))
             .hasYearMonthDay(1969, 8, 1);
-        assertThat(fromYearMonthDay(1, 1, 1).plusMonths(-1))
+        assertThat(fromYearMonthDay(1, 1, 1).add(Calendar.MONTH, -1))
             .hasYearMonthDay(0, 12, 1);
-        assertThat(fromYearMonthDay(0, 1, 1).plusMonths(-1))
+        assertThat(fromYearMonthDay(0, 1, 1).add(Calendar.MONTH, -1))
             .hasYearMonthDay(-1, 12, 1);
-        assertThat(fromYearMonthDay(-1, 12, 1).plusMonths(1))
+        assertThat(fromYearMonthDay(-1, 12, 1).add(Calendar.MONTH, 1))
             .hasYearMonthDay(0, 1, 1);
-        assertThat(fromYearMonthDay(0, 12, 1).plusMonths(1))
+        assertThat(fromYearMonthDay(0, 12, 1).add(Calendar.MONTH, 1))
             .hasYearMonthDay(1, 1, 1);
     }
 
-    @Test(groups="unit")
+    @Test(groups = "unit")
     public void should_add_and_subtract_days() {
-        assertThat(fromYearMonthDay(1970, 1, 1).plusDays(12))
+        assertThat(fromYearMonthDay(1970, 1, 1).add(Calendar.DAY_OF_MONTH, 12))
             .hasYearMonthDay(1970, 1, 13);
-        assertThat(fromYearMonthDay(1970, 3, 28).plusDays(-40))
+        assertThat(fromYearMonthDay(1970, 3, 28).add(Calendar.DAY_OF_MONTH, -40))
             .hasYearMonthDay(1970, 2, 16);
-        assertThat(fromYearMonthDay(1, 1, 1).plusDays(-2))
+        assertThat(fromYearMonthDay(1, 1, 1).add(Calendar.DAY_OF_MONTH, -2))
             .hasYearMonthDay(0, 12, 30);
-        assertThat(fromYearMonthDay(0, 1, 1).plusDays(-2))
+        assertThat(fromYearMonthDay(0, 1, 1).add(Calendar.DAY_OF_MONTH, -2))
             .hasYearMonthDay(-1, 12, 30);
-        assertThat(fromYearMonthDay(-1, 12, 31).plusDays(4))
+        assertThat(fromYearMonthDay(-1, 12, 31).add(Calendar.DAY_OF_MONTH, 4))
             .hasYearMonthDay(0, 1, 4);
-        assertThat(fromYearMonthDay(0, 12, 25).plusDays(14))
+        assertThat(fromYearMonthDay(0, 12, 25).add(Calendar.DAY_OF_MONTH, 14))
             .hasYearMonthDay(1, 1, 8);
     }
 }

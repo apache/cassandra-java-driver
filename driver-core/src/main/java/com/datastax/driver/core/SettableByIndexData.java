@@ -110,7 +110,7 @@ public interface SettableByIndexData<T extends SettableByIndexData<T>> {
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
      * @throws InvalidTypeException if value {@code i} is not of type DATE.
      */
-    public T setDate(int i, DateWithoutTime v);
+    public T setDate(int i, LocalDate v);
 
     /**
      * Set the {@code i}th value to the provided time as a long in nanoseconds since midnight.

@@ -16,7 +16,7 @@
 package com.datastax.driver.mapping;
 
 import com.datastax.driver.core.CCMBridge;
-import com.datastax.driver.core.DateWithoutTime;
+import com.datastax.driver.core.LocalDate;
 import com.datastax.driver.core.utils.Bytes;
 import com.datastax.driver.core.utils.CassandraVersion;
 import com.datastax.driver.mapping.annotations.PartitionKey;
@@ -35,7 +35,7 @@ public class MapperPrimitiveTypes22Test extends CCMBridge.PerClassSingleNodeClus
     protected Collection<String> getTableDefinitions() {
         return Arrays.asList("CREATE TABLE primitiveTypes22 ("
                         + "byteBufferCol blob primary key,"
-                        + "dateWithoutTimeCol date,"
+                        + "localDateCol date,"
                         + "timeCol time, timeWrapperCol time,"
                         + "byteCol tinyint, byteWrapperCol tinyint,"
                         + "shortCol smallint, shortWrapperCol smallint)");
@@ -44,7 +44,7 @@ public class MapperPrimitiveTypes22Test extends CCMBridge.PerClassSingleNodeClus
     @Test(groups = "short")
     public void testWriteRead22() throws Exception {
         ByteBuffer byteBufferCol = Bytes.fromHexString("0xCAFEBABE");
-        DateWithoutTime dateWithoutTimeCol = DateWithoutTime.fromMillisSinceEpoch(System.currentTimeMillis());
+        LocalDate localDateCol = LocalDate.fromMillisSinceEpoch(System.currentTimeMillis());
         long timeCol = 123456789L;
         Long timeWrapperCol = 123456789L;
         byte byteCol = 42;
@@ -54,7 +54,7 @@ public class MapperPrimitiveTypes22Test extends CCMBridge.PerClassSingleNodeClus
 
         PrimitiveTypes22 primitiveTypes = new PrimitiveTypes22();
         primitiveTypes.setByteBufferCol(byteBufferCol);
-        primitiveTypes.setDateWithoutTimeCol(dateWithoutTimeCol);
+        primitiveTypes.setLocalDateCol(localDateCol);
         primitiveTypes.setTimeCol(timeCol);
         primitiveTypes.setTimeWrapperCol(timeWrapperCol);
         primitiveTypes.setByteCol(byteCol);
@@ -67,7 +67,7 @@ public class MapperPrimitiveTypes22Test extends CCMBridge.PerClassSingleNodeClus
         PrimitiveTypes22 primitiveTypes2 = mapper.get(byteBufferCol);
 
         assertEquals(primitiveTypes2.getByteBufferCol(), byteBufferCol);
-        assertEquals(primitiveTypes2.getDateWithoutTimeCol(), dateWithoutTimeCol);
+        assertEquals(primitiveTypes2.getLocalDateCol(), localDateCol);
         assertEquals(primitiveTypes2.getTimeCol(), timeCol);
         assertEquals(primitiveTypes2.getTimeWrapperCol(), timeWrapperCol);
         assertEquals(primitiveTypes2.getByteCol(), byteCol);
@@ -81,7 +81,7 @@ public class MapperPrimitiveTypes22Test extends CCMBridge.PerClassSingleNodeClus
     public static class PrimitiveTypes22 {
         @PartitionKey
         private ByteBuffer byteBufferCol;
-        private DateWithoutTime dateWithoutTimeCol;
+        private LocalDate localDateCol;
         private long timeCol;
         private Long timeWrapperCol;
         private byte byteCol;
@@ -97,12 +97,12 @@ public class MapperPrimitiveTypes22Test extends CCMBridge.PerClassSingleNodeClus
             this.byteBufferCol = byteBufferCol;
         }
 
-        public DateWithoutTime getDateWithoutTimeCol() {
-            return dateWithoutTimeCol;
+        public LocalDate getLocalDateCol() {
+            return localDateCol;
         }
 
-        public void setDateWithoutTimeCol(DateWithoutTime dateWithoutTimeCol) {
-            this.dateWithoutTimeCol = dateWithoutTimeCol;
+        public void setLocalDateCol(LocalDate localDateCol) {
+            this.localDateCol = localDateCol;
         }
 
         public long getTimeCol() {

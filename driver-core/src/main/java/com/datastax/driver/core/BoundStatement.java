@@ -533,7 +533,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
      * @throws InvalidTypeException if value {@code i} is not of type DATE.
      */
-    public BoundStatement setDate(int i, DateWithoutTime v) {
+    public BoundStatement setDate(int i, LocalDate v) {
         return wrapper.setDate(i, v);
     }
 
@@ -550,7 +550,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @throws InvalidTypeException if (any occurrence of) {@code name} is
      * not of type DATE.
      */
-    public BoundStatement setDate(String name, DateWithoutTime v) {
+    public BoundStatement setDate(String name, LocalDate v) {
         return wrapper.setDate(name, v);
     }
 
@@ -1303,14 +1303,14 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     /**
      * {@inheritDoc}
      */
-    public DateWithoutTime getDate(int i) {
+    public LocalDate getDate(int i) {
         return wrapper.getDate(i);
     }
 
     /**
      * {@inheritDoc}
      */
-    public DateWithoutTime getDate(String name) {
+    public LocalDate getDate(String name) {
         return wrapper.getDate(name);
     }
 
