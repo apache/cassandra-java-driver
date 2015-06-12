@@ -80,6 +80,8 @@ public class Insert extends BuiltStatement {
         names.add(name);
         values.add(value);
         checkForBindMarkers(value);
+        if (!hasNonIdempotentOps() && !Utils.isIdempotent(value))
+            this.setNonIdempotentOps();
         maybeAddRoutingKey(name, value);
         return this;
     }
@@ -114,8 +116,11 @@ public class Insert extends BuiltStatement {
         this.names.addAll(names);
         this.values.addAll(values);
         for (int i = 0; i < names.size(); i++) {
-            checkForBindMarkers(values.get(i));
-            maybeAddRoutingKey(names.get(i), values.get(i));
+            Object value = values.get(i);
+            checkForBindMarkers(value);
+            maybeAddRoutingKey(names.get(i), value);
+            if (!hasNonIdempotentOps() && !Utils.isIdempotent(value))
+                this.setNonIdempotentOps();
         }
         return this;
     }

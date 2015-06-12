@@ -22,6 +22,8 @@ import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.regex.Pattern;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.utils.Bytes;
 
@@ -29,7 +31,6 @@ import com.datastax.driver.core.utils.Bytes;
 abstract class Utils {
 
     private static final Pattern cnamePattern = Pattern.compile("\\w+(?:\\[.+\\])?");
-
 
     static StringBuilder joinAndAppend(StringBuilder sb, String separator, List<? extends Appendeable> values, List<ByteBuffer> variables) {
         for (int i = 0; i < values.size(); i++) {
@@ -247,6 +248,31 @@ abstract class Utils {
         return false;
     }
 
+    static boolean isIdempotent(Object value) {
+        if(value == null) {
+            return true;
+        } else if (value instanceof Assignment) {
+            Assignment assignment = (Assignment)value;
+            return assignment.isIdempotent();
+        } else if (value instanceof FCall) {
+            return false;
+        } else if (value instanceof RawString) {
+            return false;
+        } else if(value instanceof Collection) {
+            for (Object elt : ((Collection)value)) {
+                if(!isIdempotent(elt))
+                    return false;
+            }
+            return true;
+        } else if (value instanceof Map) {
+            for (Map.Entry<?, ?> entry : ((Map<?, ?>)value).entrySet()) {
+                if (!isIdempotent(entry.getKey()) || !isIdempotent(entry.getValue()))
+                    return false;
+            }
+        }
+        return true;
+    }
+
     private static StringBuilder appendMap(Map<?, ?> m, StringBuilder sb, boolean rawValue) {
         sb.append('{');
         boolean first = true;
@@ -363,10 +389,12 @@ abstract class Utils {
     }
 
     static class FCall {
+
         private final String name;
         private final Object[] parameters;
 
         FCall(String name, Object... parameters) {
+            checkNotNull(name);
             this.name = name;
             this.parameters = parameters;
         }
@@ -383,6 +411,7 @@ abstract class Utils {
             sb.append(')');
             return sb.toString();
         }
+
     }
 
     static class CName {
