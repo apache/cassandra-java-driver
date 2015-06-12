@@ -114,11 +114,11 @@ abstract class Message {
             }
         }
 
-        long defaultTimestamp() {
+        long timestamp() {
             switch (this.type) {
-                case QUERY:   return ((Requests.Query)this).options.defaultTimestamp;
-                case EXECUTE: return ((Requests.Execute)this).options.defaultTimestamp;
-                case BATCH:   return ((Requests.Batch)this).options.defaultTimestamp;
+                case QUERY:   return ((Requests.Query)this).options.timestamp;
+                case EXECUTE: return ((Requests.Execute)this).options.timestamp;
+                case BATCH:   return ((Requests.Batch)this).options.timestamp;
                 default:      return 0;
             }
         }

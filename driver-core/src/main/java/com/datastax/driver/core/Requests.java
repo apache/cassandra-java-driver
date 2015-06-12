@@ -176,7 +176,7 @@ class Requests {
         PAGE_SIZE,
         PAGING_STATE,
         SERIAL_CONSISTENCY,
-        DEFAULT_TIMESTAMP,
+        TIMESTAMP,
         VALUE_NAMES;
 
         public static EnumSet<QueryFlag> deserialize(int flags) {
@@ -215,7 +215,7 @@ class Requests {
         public final int pageSize;
         public final ByteBuffer pagingState;
         public final ConsistencyLevel serialConsistency;
-        public final long defaultTimestamp;
+        public final long timestamp;
 
         public QueryProtocolOptions(ConsistencyLevel consistency,
                                     List<ByteBuffer> values,
@@ -223,7 +223,7 @@ class Requests {
                                     int pageSize,
                                     ByteBuffer pagingState,
                                     ConsistencyLevel serialConsistency,
-                                    long defaultTimestamp) {
+                                    long timestamp) {
 
             this.consistency = consistency;
             this.values = values;
@@ -231,7 +231,7 @@ class Requests {
             this.pageSize = pageSize;
             this.pagingState = pagingState;
             this.serialConsistency = serialConsistency;
-            this.defaultTimestamp = defaultTimestamp;
+            this.timestamp = timestamp;
 
             // Populate flags
             if (!values.isEmpty())
@@ -244,8 +244,8 @@ class Requests {
                 flags.add(QueryFlag.PAGING_STATE);
             if (serialConsistency != ConsistencyLevel.SERIAL)
                 flags.add(QueryFlag.SERIAL_CONSISTENCY);
-            if (defaultTimestamp != Long.MIN_VALUE)
-                flags.add(QueryFlag.DEFAULT_TIMESTAMP);
+            if (timestamp != Long.MIN_VALUE)
+                flags.add(QueryFlag.TIMESTAMP);
         }
 
         public void encode(ByteBuf dest, ProtocolVersion version) {
@@ -267,8 +267,8 @@ class Requests {
                         CBUtil.writeValue(pagingState, dest);
                     if (flags.contains(QueryFlag.SERIAL_CONSISTENCY))
                         CBUtil.writeConsistencyLevel(serialConsistency, dest);
-                    if (version == ProtocolVersion.V3 && flags.contains(QueryFlag.DEFAULT_TIMESTAMP))
-                        dest.writeLong(defaultTimestamp);
+                    if (version == ProtocolVersion.V3 && flags.contains(QueryFlag.TIMESTAMP))
+                        dest.writeLong(timestamp);
                     break;
                 default:
                     throw version.unsupported();
@@ -293,7 +293,7 @@ class Requests {
                         size += CBUtil.sizeOfValue(pagingState);
                     if (flags.contains(QueryFlag.SERIAL_CONSISTENCY))
                         size += CBUtil.sizeOfConsistencyLevel(serialConsistency);
-                    if (version == ProtocolVersion.V3 && flags.contains(QueryFlag.DEFAULT_TIMESTAMP))
+                    if (version == ProtocolVersion.V3 && flags.contains(QueryFlag.TIMESTAMP))
                         size += 8;
                     return size;
                 default:
@@ -385,17 +385,17 @@ class Requests {
         private final EnumSet<QueryFlag> flags = EnumSet.noneOf(QueryFlag.class);
         public final ConsistencyLevel consistency;
         public final ConsistencyLevel serialConsistency;
-        public final long defaultTimestamp;
+        public final long timestamp;
 
-        public BatchProtocolOptions(ConsistencyLevel consistency, ConsistencyLevel serialConsistency, long defaultTimestamp) {
+        public BatchProtocolOptions(ConsistencyLevel consistency, ConsistencyLevel serialConsistency, long timestamp) {
             this.consistency = consistency;
             this.serialConsistency = serialConsistency;
-            this.defaultTimestamp = defaultTimestamp;
+            this.timestamp = timestamp;
 
             if (serialConsistency != ConsistencyLevel.SERIAL)
                 flags.add(QueryFlag.SERIAL_CONSISTENCY);
-            if (defaultTimestamp != Long.MIN_VALUE)
-                flags.add(QueryFlag.DEFAULT_TIMESTAMP);
+            if (timestamp != Long.MIN_VALUE)
+                flags.add(QueryFlag.TIMESTAMP);
         }
 
         public void encode(ByteBuf dest, ProtocolVersion version) {
@@ -408,8 +408,8 @@ class Requests {
                     dest.writeByte((byte)QueryFlag.serialize(flags));
                     if (flags.contains(QueryFlag.SERIAL_CONSISTENCY))
                         CBUtil.writeConsistencyLevel(serialConsistency, dest);
-                    if (flags.contains(QueryFlag.DEFAULT_TIMESTAMP))
-                        dest.writeLong(defaultTimestamp);
+                    if (flags.contains(QueryFlag.TIMESTAMP))
+                        dest.writeLong(timestamp);
                     break;
                 default:
                     throw version.unsupported();
@@ -426,7 +426,7 @@ class Requests {
                     size += 1; // flags
                     if (flags.contains(QueryFlag.SERIAL_CONSISTENCY))
                         size += CBUtil.sizeOfConsistencyLevel(serialConsistency);
-                    if (flags.contains(QueryFlag.DEFAULT_TIMESTAMP))
+                    if (flags.contains(QueryFlag.TIMESTAMP))
                         size += 8;
                     return size;
                 default:
@@ -437,7 +437,7 @@ class Requests {
         @Override
         public String toString() {
             return String.format("[cl=%s, serialCl=%s, defaultTs=%d]",
-                                 consistency, serialConsistency, defaultTimestamp);
+                                 consistency, serialConsistency, timestamp);
         }
     }
 
