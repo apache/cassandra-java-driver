@@ -4,6 +4,7 @@
 
 - [improvement] Make NativeColumnType a top-level class (JAVA-715)
 - [improvement] Unify "Target" enum for schema elements (JAVA-782)
+- [improvement] HashMap throws an OOM Exception when logging level is set to TRACE (JAVA-713)
 
 
 ### 2.1.6
