@@ -4,6 +4,7 @@
 
 - [improvement] Make NativeColumnType a top-level class (JAVA-715)
 - [improvement] Unify "Target" enum for schema elements (JAVA-782)
+- [bug] Support bind marker in QueryBuilder DELETE's list index (JAVA-679)
 
 
 ### 2.1.6

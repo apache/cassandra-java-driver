@@ -337,6 +337,10 @@ public class QueryBuilderTest {
         delete = delete().listElt("a", 3).mapElt("b", "foo").column("c").from("foo").where(eq("k", 1));
         assertEquals(delete.toString(), query);
 
+        query = "DELETE a[?],b[?],c FROM foo WHERE k=1;";
+        delete = delete().listElt("a", bindMarker()).mapElt("b", bindMarker()).column("c").from("foo").where(eq("k", 1));
+        assertEquals(delete.toString(), query);
+
         // Invalid CQL, testing edge case
         query = "DELETE a,b,c FROM foo;";
         delete = delete("a", "b", "c").from("foo");
