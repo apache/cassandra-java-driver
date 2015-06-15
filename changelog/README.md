@@ -10,6 +10,7 @@
 - [bug] Forbid bind marker in QueryBuilder add/append/prepend (JAVA-736)
 - [bug] Prevent QueryBuilder.quote() from applying duplicate double quotes (JAVA-712)
 - [bug] Prevent QueryBuilder from trying to serialize raw string (JAVA-688)
+- [bug] Support bind marker in QueryBuilder DELETE's list index (JAVA-679)
 
 Merged from 2.0.10_fixes branch:
 

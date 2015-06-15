@@ -137,7 +137,7 @@ public final class QueryBuilder {
      * clause needs to be provided to complete the query).
      */
     public static Delete.Builder delete(String... columns) {
-        return new Delete.Builder(Arrays.asList((Object[])columns));
+        return new Delete.Builder(columns);
     }
 
     /**
