@@ -85,6 +85,14 @@ public class QueryBuilderTest {
         select = select("a").from("foo").where(in("k", bindMarker()));
         assertEquals(select.toString(), query);
 
+        query = "SELECT DISTINCT a FROM foo WHERE k=1;";
+        select = select("a").distinct().from("foo").where(eq("k", 1));
+        assertEquals(select.toString(), query);
+
+        query = "SELECT DISTINCT a,b FROM foo WHERE k=1;";
+        select = select("a", "b").distinct().from("foo").where(eq("k", 1));
+        assertEquals(select.toString(), query);
+
         query = "SELECT count(*) FROM foo;";
         select = select().countAll().from("foo");
         assertEquals(select.toString(), query);
