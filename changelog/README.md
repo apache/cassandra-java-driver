@@ -11,6 +11,7 @@
 - [bug] Prevent QueryBuilder.quote() from applying duplicate double quotes (JAVA-712)
 - [bug] Prevent QueryBuilder from trying to serialize raw string (JAVA-688)
 - [bug] Support bind marker in QueryBuilder DELETE's list index (JAVA-679)
+- [improvement] Improve QueryBuilder API for SELECT DISTINCT (JAVA-475)
 
 Merged from 2.0.10_fixes branch:
 
