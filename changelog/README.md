@@ -4,6 +4,7 @@
 
 - [improvement] Make NativeColumnType a top-level class (JAVA-715)
 - [improvement] Unify "Target" enum for schema elements (JAVA-782)
+- [improvement] Create values() function for Insert builder using List (JAVA-225)
 
 
 ### 2.1.6
