@@ -2049,7 +2049,7 @@ public class Cluster implements Closeable {
                         if (!schemaInAgreement)
                             logger.warn("No schema agreement from live replicas after {} s. The schema may not be up to date on some nodes.", configuration.getProtocolOptions().getMaxSchemaAgreementWaitSeconds());
                         if (refreshSchema)
-                            ControlConnection.refreshSchema(connection, targetType, targetKeyspace, targetName, targetSignature, Manager.this, false);
+                            ControlConnection.refreshSchema(connection, targetType, targetKeyspace, targetName, targetSignature, Manager.this);
                     } catch (Exception e) {
                         if (refreshSchema) {
                             logger.error("Error during schema refresh ({}). The schema from Cluster.getMetadata() might appear stale. Asynchronously submitting job to fix.", e.getMessage());
@@ -2183,7 +2183,7 @@ public class Cluster implements Closeable {
                             if (scc.targetType == KEYSPACE) {
                                 manager.metadata.removeKeyspace(scc.targetKeyspace);
                             } else {
-                                KeyspaceMetadata keyspace = manager.metadata.getKeyspaceInternal(scc.targetKeyspace);
+                                KeyspaceMetadata keyspace = manager.metadata.keyspaces.get(scc.targetKeyspace);
                                 if (keyspace == null) {
                                     logger.warn("Received a DROPPED notification for {} {}.{}, but this keyspace is unknown in our metadata",
                                         scc.targetType, scc.targetKeyspace, scc.targetName);
