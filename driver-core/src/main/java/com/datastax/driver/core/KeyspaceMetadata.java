@@ -15,7 +15,10 @@
  */
 package com.datastax.driver.core;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -26,10 +29,11 @@ import com.google.common.collect.Lists;
  */
 public class KeyspaceMetadata {
 
-    public static final String KS_NAME           = "keyspace_name";
+    public  static final String KS_NAME          = "keyspace_name";
     private static final String DURABLE_WRITES   = "durable_writes";
     private static final String STRATEGY_CLASS   = "strategy_class";
     private static final String STRATEGY_OPTIONS = "strategy_options";
+    private static final String REPLICATION      = "replication";
 
     private final String name;
     private final boolean durableWrites;
@@ -50,23 +54,20 @@ public class KeyspaceMetadata {
         this.strategy = ReplicationStrategy.create(replication);
     }
 
-    static KeyspaceMetadata build(Row row, List<Row> udtRows, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
-
+    static KeyspaceMetadata buildV2(Row row) {
         String name = row.getString(KS_NAME);
         boolean durableWrites = row.getBool(DURABLE_WRITES);
-
-        Map<String, String> replicationOptions = new HashMap<String, String>();
+        Map<String, String> replicationOptions;
+        replicationOptions = new HashMap<String, String>();
         replicationOptions.put("class", row.getString(STRATEGY_CLASS));
         replicationOptions.putAll(SimpleJSONParser.parseStringMap(row.getString(STRATEGY_OPTIONS)));
+        return new KeyspaceMetadata(name, durableWrites, replicationOptions);
+    }
 
-        KeyspaceMetadata ksm = new KeyspaceMetadata(name, durableWrites, replicationOptions);
-
-        if (udtRows == null)
-            return ksm;
-
-        ksm.addUserTypes(udtRows, protocolVersion, codecRegistry);
-
-        return ksm;
+    static KeyspaceMetadata buildV3(Row row) {
+        String name = row.getString(KS_NAME);
+        boolean durableWrites = row.getBool(DURABLE_WRITES);
+        return new KeyspaceMetadata(name, durableWrites, row.getMap(REPLICATION, String.class, String.class));
     }
 
     /**
@@ -141,13 +142,6 @@ public class KeyspaceMetadata {
      */
     public Collection<UserType> getUserTypes() {
         return Collections.unmodifiableCollection(userTypes.values());
-    }
-
-    void addUserTypes(List<Row> udtRows, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
-        for (Row r : udtRows) {
-            UserType def = UserType.build(r, protocolVersion, codecRegistry);
-            userTypes.put(def.getTypeName(), def);
-        }
     }
 
     void removeUserType(String userType) {
@@ -303,6 +297,10 @@ public class KeyspaceMetadata {
 
     void add(AggregateMetadata aggregate) {
         aggregates.put(aggregate.getFullName(), aggregate);
+    }
+
+    void add(UserType userType) {
+        userTypes.put(userType.getTypeName(), userType);
     }
 
     ReplicationStrategy replicationStrategy() {

@@ -73,6 +73,7 @@ public class SessionLeakTest {
 
             // ensure bootstrapping a node does not create additional connections
             ccmBridge.bootstrapNode(2);
+            ccmBridge.waitForUp(2);
             assertThat(cluster).host(2).comesUpWithin(2, MINUTES);
 
             assertThat(cluster.manager.sessions.size()).isEqualTo(0);
