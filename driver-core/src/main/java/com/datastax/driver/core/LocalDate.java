@@ -37,7 +37,7 @@ import static com.google.common.base.Preconditions.checkArgument;
  *
  * @since 2.2
  */
-public final class DateWithoutTime {
+public final class LocalDate {
 
     private static final TimeZone UTC = TimeZone.getTimeZone("UTC");
 
@@ -47,7 +47,7 @@ public final class DateWithoutTime {
     // This gets initialized lazily if we ever need it. Once set, it is effectively immutable.
     private volatile GregorianCalendar calendar;
 
-    private DateWithoutTime(int daysSinceEpoch) {
+    private LocalDate(int daysSinceEpoch) {
         this.daysSinceEpoch = daysSinceEpoch;
         this.millisSinceEpoch = TimeUnit.DAYS.toMillis(daysSinceEpoch);
     }
@@ -59,26 +59,27 @@ public final class DateWithoutTime {
      *
      * @return the new instance.
      */
-    public static DateWithoutTime fromDaysSinceEpoch(int daysSinceEpoch) {
-        return new DateWithoutTime(daysSinceEpoch);
+    public static LocalDate fromDaysSinceEpoch(int daysSinceEpoch) {
+        return new LocalDate(daysSinceEpoch);
     }
 
     /**
      * Builds a new instance from a number of milliseconds since January 1st, 1970 GMT.
+     * Note that if the given number does not correspond to a whole number of days,
+     * it will be rounded towards 0.
      *
-     * @param millisSinceEpoch the number of milliseconds. Note that if it does not correspond to a whole number of days,
-     *                         it will be rounded towards 0.
+     * @param millisSinceEpoch the number of milliseconds since January 1st, 1970 GMT.
      *
      * @return the new instance.
      *
      * @throws IllegalArgumentException if the date is not in the range [-5877641-06-23; 5881580-07-11].
      */
-    public static DateWithoutTime fromMillisSinceEpoch(long millisSinceEpoch) throws IllegalArgumentException {
+    public static LocalDate fromMillisSinceEpoch(long millisSinceEpoch) throws IllegalArgumentException {
         long daysSinceEpoch = TimeUnit.MILLISECONDS.toDays(millisSinceEpoch);
         checkArgument(daysSinceEpoch >= Integer.MIN_VALUE && daysSinceEpoch <= Integer.MAX_VALUE,
             "Date should be in the range [-5877641-06-23; 5881580-07-11]");
 
-        return new DateWithoutTime((int)daysSinceEpoch);
+        return new LocalDate((int)daysSinceEpoch);
     }
 
     /**
@@ -87,7 +88,7 @@ public final class DateWithoutTime {
      * This method is not lenient, i.e. '2014-12-32' will not be treated as '2015-01-01', but
      * instead throw an {@code IllegalArgumentException}.
      *
-     * @param year the year in ISO format (see {@link DateWithoutTime this class's Javadoc}).
+     * @param year the year in ISO format (see {@link LocalDate this class's Javadoc}).
      * @param month the month. It is 1-based (e.g. 1 for January).
      * @param dayOfMonth the day of the month.
      *
@@ -96,7 +97,7 @@ public final class DateWithoutTime {
      * @throws IllegalArgumentException if the corresponding date does not exist in the ISO8601
      * calendar.
      */
-    public static DateWithoutTime fromYearMonthDay(int year, int month, int dayOfMonth) {
+    public static LocalDate fromYearMonthDay(int year, int month, int dayOfMonth) {
         int calendarYear = (year <= 0) ? -year + 1 : year;
         int calendarEra = (year <= 0) ? GregorianCalendar.BC : GregorianCalendar.AD;
 
@@ -107,7 +108,7 @@ public final class DateWithoutTime {
         calendar.set(calendarYear, month - 1, dayOfMonth, 0, 0, 0);
         calendar.set(Calendar.ERA, calendarEra);
 
-        DateWithoutTime date = fromMillisSinceEpoch(calendar.getTimeInMillis());
+        LocalDate date = fromMillisSinceEpoch(calendar.getTimeInMillis());
         date.calendar = calendar;
         return date;
     }
@@ -162,46 +163,28 @@ public final class DateWithoutTime {
     }
 
     /**
-     * Builds a new instance by adding a number of years.
+     * Return a new {@link LocalDate} with the specified (signed) amount
+     * of time added to (or subtracted from) the given {@link Calendar} field,
+     * based on the calendar's rules.
+     * <p>
+     * Note that adding any amount to a field smaller than
+     * {@link Calendar#DAY_OF_MONTH} will remain without effect,
+     * as this class does not keep time components.
+     * <p>
+     * See {@link Calendar} javadocs for more information.
      *
-     * @param years the number of years (can be negative).
-     * @return the new instance.
-     *
-     * @throws IllegalArgumentException if the new date is not in the range [-5877641-06-23; 5881580-07-11].
-     */
-    public DateWithoutTime plusYears(int years) {
-        return add(Calendar.YEAR, years);
-    }
-
-    /**
-     * Builds a new instance by adding a number of months.
-     *
-     * @param months the number of months (can be negative).
-     * @return the new instance.
+     * @param field a {@link Calendar} field to modify.
+     * @param amount the amount of date or time to be added to the field.
+     * @return a new {@link LocalDate} with the specified (signed) amount
+     * of time added to (or subtracted from) the given {@link Calendar} field.
      *
      * @throws IllegalArgumentException if the new date is not in the range [-5877641-06-23; 5881580-07-11].
      */
-    public DateWithoutTime plusMonths(int months) {
-        return add(Calendar.MONTH, months);
-    }
-
-    /**
-     * Builds a new instance by adding a number of days.
-     *
-     * @param days the number of days (can be negative).
-     * @return the new instance.
-     *
-     * @throws IllegalArgumentException if the new date is not in the range [-5877641-06-23; 5881580-07-11].
-     */
-    public DateWithoutTime plusDays(int days) {
-        return add(Calendar.DAY_OF_MONTH, days);
-    }
-
-    private DateWithoutTime add(int field, int amount) {
+    public LocalDate add(int field, int amount) {
         GregorianCalendar newCalendar = isoCalendar();
         newCalendar.setTimeInMillis(millisSinceEpoch);
         newCalendar.add(field, amount);
-        DateWithoutTime newDate = fromMillisSinceEpoch(newCalendar.getTimeInMillis());
+        LocalDate newDate = fromMillisSinceEpoch(newCalendar.getTimeInMillis());
         newDate.calendar = newCalendar;
         return newDate;
     }
@@ -211,8 +194,8 @@ public final class DateWithoutTime {
         if (this == o)
             return true;
 
-        if (o instanceof DateWithoutTime) {
-            DateWithoutTime that = (DateWithoutTime)o;
+        if (o instanceof LocalDate) {
+            LocalDate that = (LocalDate)o;
             return this.daysSinceEpoch == that.daysSinceEpoch;
         }
         return false;

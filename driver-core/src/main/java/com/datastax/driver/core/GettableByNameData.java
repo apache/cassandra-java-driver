@@ -122,7 +122,7 @@ public interface GettableByNameData {
      * @throws IllegalArgumentException if {@code name} is not valid name for this object.
      * @throws InvalidTypeException if value {@code name} is not of type DATE.
      */
-    public DateWithoutTime getDate(String name);
+    public LocalDate getDate(String name);
 
     /**
      * Returns the value for {@code name} as a long in nanoseconds since midnight.

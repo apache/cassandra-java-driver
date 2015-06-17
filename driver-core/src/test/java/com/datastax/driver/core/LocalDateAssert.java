@@ -19,29 +19,29 @@ import org.assertj.core.api.AbstractAssert;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class DateWithoutTimeAssert extends AbstractAssert<DateWithoutTimeAssert, DateWithoutTime> {
-    public DateWithoutTimeAssert(DateWithoutTime actual) {
-        super(actual, DateWithoutTimeAssert.class);
+public class LocalDateAssert extends AbstractAssert<LocalDateAssert, LocalDate> {
+    public LocalDateAssert(LocalDate actual) {
+        super(actual, LocalDateAssert.class);
     }
 
-    public DateWithoutTimeAssert hasDaysSinceEpoch(int expected) {
+    public LocalDateAssert hasDaysSinceEpoch(int expected) {
         assertThat(actual.getDaysSinceEpoch()).isEqualTo(expected);
         return this;
     }
 
-    public DateWithoutTimeAssert hasMillisSinceEpoch(long expected) {
+    public LocalDateAssert hasMillisSinceEpoch(long expected) {
         assertThat(actual.getMillisSinceEpoch()).isEqualTo(expected);
         return this;
     }
 
-    public DateWithoutTimeAssert hasYearMonthDay(int expectedYear, int expectedMonth, int expectedDay) {
+    public LocalDateAssert hasYearMonthDay(int expectedYear, int expectedMonth, int expectedDay) {
         assertThat(actual.getYear()).isEqualTo(expectedYear);
         assertThat(actual.getMonth()).isEqualTo(expectedMonth);
         assertThat(actual.getDay()).isEqualTo(expectedDay);
         return this;
     }
 
-    public DateWithoutTimeAssert hasToString(String expected) {
+    public LocalDateAssert hasToString(String expected) {
         assertThat(actual.toString()).isEqualTo(expected);
         return this;
     }

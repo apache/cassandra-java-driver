@@ -188,7 +188,7 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
      * {@inheritDoc}
      */
     @Override
-    public DateWithoutTime getDate(int i) {
+    public LocalDate getDate(int i) {
         checkType(i, DataType.Name.DATE);
 
         ByteBuffer value = getValue(i);

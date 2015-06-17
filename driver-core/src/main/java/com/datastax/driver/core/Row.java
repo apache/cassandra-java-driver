@@ -236,7 +236,7 @@ public interface Row extends GettableData {
      * @throws InvalidTypeException if value {@code i} is not of type DATE.
      */
     @Override
-    public DateWithoutTime getDate(int i);
+    public LocalDate getDate(int i);
 
     /**
      * Returns the value for {@code name} as a date (without time).
@@ -249,7 +249,7 @@ public interface Row extends GettableData {
      * @throws InvalidTypeException if value {@code name} is not of type DATE.
      */
     @Override
-    public DateWithoutTime getDate(String name);
+    public LocalDate getDate(String name);
 
     /**
      * Returns the {@code i}th value as a long in nanoseconds since midnight.

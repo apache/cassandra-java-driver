@@ -109,7 +109,7 @@ public abstract class AbstractGettableData extends AbstractGettableByIndexData i
      * {@inheritDoc}
      */
     @Override
-    public DateWithoutTime getDate(String name) {
+    public LocalDate getDate(String name) {
         return getDate(getIndexOf(name));
     }
 
