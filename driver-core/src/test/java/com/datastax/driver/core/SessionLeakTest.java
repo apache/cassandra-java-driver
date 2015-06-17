@@ -25,17 +25,19 @@ import static java.util.concurrent.TimeUnit.MINUTES;
 import com.google.common.collect.Lists;
 import org.testng.annotations.Test;
 
+import static org.assertj.core.api.Assertions.fail;
+
+import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.utils.SocketChannelMonitor;
 
 import static com.datastax.driver.core.Assertions.assertThat;
-
 
 public class SessionLeakTest {
 
     Cluster cluster;
     List<InetSocketAddress> nodes = Lists.newArrayList(
-            new InetSocketAddress(CCMBridge.IP_PREFIX + '1', 9042),
-            new InetSocketAddress(CCMBridge.IP_PREFIX + '2', 9042));
+        new InetSocketAddress(CCMBridge.IP_PREFIX + '1', 9042),
+        new InetSocketAddress(CCMBridge.IP_PREFIX + '2', 9042));
     SocketChannelMonitor channelMonitor;
 
     @Test(groups = "short")
@@ -47,9 +49,9 @@ public class SessionLeakTest {
         channelMonitor.reportAtFixedInterval(1, TimeUnit.SECONDS);
         try {
             cluster = Cluster.builder()
-                    .addContactPointsWithPorts(Collections.singletonList(
-                            new InetSocketAddress(CCMBridge.IP_PREFIX + '1', 9042)))
-                    .withNettyOptions(channelMonitor.nettyOptions()).build();
+                .addContactPointsWithPorts(Collections.singletonList(
+                    new InetSocketAddress(CCMBridge.IP_PREFIX + '1', 9042)))
+                .withNettyOptions(channelMonitor.nettyOptions()).build();
 
             cluster.init();
 
@@ -88,7 +90,51 @@ public class SessionLeakTest {
             assertThat(cluster.manager.sessions.size()).isEqualTo(0);
             assertOpenConnections(1);
         } finally {
-            if(cluster != null){
+            if (cluster != null) {
+                cluster.close();
+            }
+            if (ccmBridge != null) {
+                ccmBridge.remove();
+            }
+            // Ensure no channels remain open.
+            channelMonitor.stop();
+            channelMonitor.report();
+            assertThat(channelMonitor.openChannels(nodes).size()).isEqualTo(0);
+        }
+    }
+
+    @Test(groups = "short")
+    public void should_not_leak_session_when_wrong_keyspace() throws Exception {
+        // Checking for JAVA-806
+        CCMBridge ccmBridge;
+        ccmBridge = CCMBridge.create("test", 1);
+        channelMonitor = new SocketChannelMonitor();
+        channelMonitor.reportAtFixedInterval(1, TimeUnit.SECONDS);
+        try {
+            cluster = Cluster.builder()
+                .addContactPointsWithPorts(Collections.singletonList(
+                    new InetSocketAddress(CCMBridge.IP_PREFIX + '1', 9042)))
+                .withNettyOptions(channelMonitor.nettyOptions()).build();
+
+            cluster.init();
+
+            assertThat(cluster.manager.sessions.size()).isEqualTo(0);
+            // Should be 1 control connection after initialization.
+            assertOpenConnections(1);
+
+            cluster.connect("wrong_keyspace");
+
+            fail("Should not have connected to a wrong keyspace");
+
+        } catch (InvalidQueryException e) {
+
+            // ok
+
+        } finally {
+
+            assertThat(cluster.manager.sessions.size()).isEqualTo(0);
+
+            if (cluster != null) {
                 cluster.close();
             }
             if (ccmBridge != null) {
