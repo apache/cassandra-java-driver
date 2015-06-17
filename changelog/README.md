@@ -4,6 +4,8 @@
 
 - [improvement] Make NativeColumnType a top-level class (JAVA-715)
 - [improvement] Unify "Target" enum for schema elements (JAVA-782)
+- [improvement] Warn when ReplicationStrategy encounters invalid
+  replication factors (JAVA-702)
 
 
 ### 2.1.6
