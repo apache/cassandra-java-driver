@@ -133,8 +133,8 @@ public class DowngradingConsistencyRetryPolicy implements RetryPolicy {
      * and at least one replica acknowledged, the write is retried with a
      * lower consistency level (with unlogged batch, a write timeout can
      * <b>always</b> mean that part of the batch haven't been persisted at
-     * all, even if {@code receivedAcks > 0}). For other {@code WriteType.SIMPLE}
-     * and {@code WriteType.BATCH} types, if we know the write has been persisted on at
+     * all, even if {@code receivedAcks > 0}). For other write types ({@code WriteType.SIMPLE}
+     * and {@code WriteType.BATCH}), if we know the write has been persisted on at
      * least one replica, we ignore the exception. Otherwise, an exception is thrown.
      *
      * @param statement the original query that timed out.
