@@ -803,25 +803,30 @@ public class QueryBuilderTest {
         assertThat(statement.toString()).isEqualTo(query);
     }
 
-    @Test(groups = "unit")
-    public void should_not_allow_bind_marker_as_added_collection_item() {
-        try {
-            // This generates the query "UPDATE foo SET s = s + {?} WHERE k = 1", which is invalid in Cassandra
-            // (individual values in collections can't be bound)
-            update("foo").with(add("s", bindMarker())).where(eq("k", 1));
-            fail("Expected an exception");
-        } catch (InvalidQueryException e) { /*expected*/ }
+    @Test(groups = "unit", expectedExceptions = InvalidQueryException.class)
+    public void should_not_allow_bind_marker_for_add() {
+        // This generates the query "UPDATE foo SET s = s + {?} WHERE k = 1", which is invalid in Cassandra
+        update("foo").with(add("s", bindMarker())).where(eq("k", 1));
+    }
 
-        // Same for list append/prepend
-        try {
-            update("foo").with(prepend("l", bindMarker())).where(eq("k", 1));
-            fail("Expected an exception");
-        } catch (InvalidQueryException e) { /*expected*/ }
-        try {
-            update("foo").with(append("l", bindMarker())).where(eq("k", 1));
-            fail("Expected an exception");
-        } catch (InvalidQueryException e) { /*expected*/ }
+    @Test(groups = "unit", expectedExceptions = InvalidQueryException.class)
+    public void should_now_allow_bind_marker_for_prepend() {
+        update("foo").with(prepend("l", bindMarker())).where(eq("k", 1));
+    }
 
+    @Test(groups = "unit", expectedExceptions = InvalidQueryException.class)
+    public void should_not_allow_bind_marker_for_append() {
+        update("foo").with(append("l", bindMarker())).where(eq("k", 1));
+    }
+
+    @Test(groups = "unit", expectedExceptions = InvalidQueryException.class)
+    public void should_not_allow_bind_marker_for_remove() {
+        update("foo").with(remove("s", bindMarker())).where(eq("k", 1));
+    }
+
+    @Test(groups = "unit", expectedExceptions = InvalidQueryException.class)
+    public void should_not_allow_bind_marker_for_discard() {
+        update("foo").with(discard("l", bindMarker())).where(eq("k", 1));
     }
 
     @Test(groups = "unit")
