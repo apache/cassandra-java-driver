@@ -108,8 +108,8 @@ public class MapperAccessorTest extends CCMBridge.PerClassSingleNodeCluster {
 
     @Accessor
     public interface VoidAccessor {
-        @Query("insert into foo (k, v) values (:k, :v)")
-        void insert(@Param("k") int k, @Param("v") String v);
+        @Query("insert into foo (k, v) values (?, ?)")
+        void insert(int k, String v);
     }
 
 }
