@@ -3,6 +3,11 @@
 The purpose of this guide is to detail changes made by successive
 versions of the Java driver.
 
+### 2.1.6
+
+See [2.0.10](20x-to-2010).
+
+
 ### 2.1.2
 
 2.1.2 brings important internal changes with native protocol v3 support, but
