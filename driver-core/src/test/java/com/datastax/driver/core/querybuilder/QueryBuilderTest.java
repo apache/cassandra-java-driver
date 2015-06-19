@@ -85,6 +85,14 @@ public class QueryBuilderTest {
         select = select("a").from("foo").where(in("k", bindMarker()));
         assertEquals(select.toString(), query);
 
+        query = "SELECT DISTINCT a FROM foo WHERE k=1;";
+        select = select("a").distinct().from("foo").where(eq("k", 1));
+        assertEquals(select.toString(), query);
+
+        query = "SELECT DISTINCT a,b FROM foo WHERE k=1;";
+        select = select("a", "b").distinct().from("foo").where(eq("k", 1));
+        assertEquals(select.toString(), query);
+
         query = "SELECT count(*) FROM foo;";
         select = select().countAll().from("foo");
         assertEquals(select.toString(), query);
@@ -833,6 +841,15 @@ public class QueryBuilderTest {
         // A column name can be anything as long as it's quoted, so "foo.bar" is a valid name
         String query = "SELECT * FROM foo WHERE \"foo.bar\"=1;";
         Statement statement = select().from("foo").where(eq(quote("foo.bar"), 1));
+
+        assertThat(statement.toString()).isEqualTo(query);
+    }
+
+    @Test(groups = "unit")
+    public void should_quote_column_names_with_escaped_quotes() {
+        // A column name can include quotes as long as it is escaped with another set of quotes, so "foo""bar" is a valid name.
+        String query = "SELECT * FROM foo WHERE \"foo \"\" bar\"=1;";
+        Statement statement = select().from("foo").where(eq(quote("foo \"\" bar"), 1));
 
         assertThat(statement.toString()).isEqualTo(query);
     }

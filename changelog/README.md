@@ -2,8 +2,13 @@
 
 ### 2.1.7 (in progress)
 
+- [improvement] Improve QueryBuilder API for SELECT DISTINCT (JAVA-475)
 - [improvement] Make NativeColumnType a top-level class (JAVA-715)
 - [improvement] Unify "Target" enum for schema elements (JAVA-782)
+- [improvement] Expose ProtocolVersion#toInt (JAVA-700)
+- [bug] Handle void return types in accessors (JAVA-542)
+- [improvement] Create values() function for Insert builder using List (JAVA-225)
+- [improvement] HashMap throws an OOM Exception when logging level is set to TRACE (JAVA-713)
 - [bug] Support bind marker in QueryBuilder DELETE's list index (JAVA-679)
 
 
@@ -217,6 +222,18 @@ Merged from 2.0 branch: everything up to 2.0.3 (included), and the following.
 - [bug] Avoid classloader leak in Tomcat (JAVA-343)
 - [bug] Avoid deadlock in onAdd/onUp (JAVA-387)
 - [bug] Make metadata parsing more lenient (JAVA-377, JAVA-391)
+
+
+### 2.0.11 (in progress)
+
+- [bug] Fix SpeculativeExecutionPolicy.init() and close() are never called (JAVA-796)
+
+Merged from 2.0.10_fixes branch:
+
+- [improvement] Use Netty's pooled ByteBufAllocator by default (JAVA-756)
+- [improvement] Expose "unsafe" paging state API (JAVA-759)
+- [bug] Fix getObject by name (JAVA-767)
+- [bug] Prevent race during pool initialization (JAVA-768)
 
 
 ### 2.0.10.1
