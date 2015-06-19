@@ -265,6 +265,16 @@ public class Select extends BuiltStatement {
         }
 
         /**
+         * Uses DISTINCT selection.
+         *
+         * @return this in-build SELECT statement.
+         */
+        public Builder distinct() {
+            this.isDistinct = true;
+            return this;
+        }
+
+        /**
          * Adds the table to select from.
          *
          * @param table the name of the table to select from.
