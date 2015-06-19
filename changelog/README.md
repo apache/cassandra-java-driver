@@ -7,6 +7,7 @@
 - [improvement] Unify "Target" enum for schema elements (JAVA-782)
 - [improvement] Expose ProtocolVersion#toInt (JAVA-700)
 - [bug] Handle void return types in accessors (JAVA-542)
+- [improvement] Create values() function for Insert builder using List (JAVA-225)
 
 
 ### 2.1.6
