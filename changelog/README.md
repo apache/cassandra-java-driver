@@ -6,6 +6,7 @@
 - [improvement] Make NativeColumnType a top-level class (JAVA-715)
 - [improvement] Unify "Target" enum for schema elements (JAVA-782)
 - [improvement] Expose ProtocolVersion#toInt (JAVA-700)
+- [bug] Handle void return types in accessors (JAVA-542)
 
 
 ### 2.1.6
