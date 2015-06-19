@@ -51,8 +51,6 @@ The driver contains the following modules:
 - driver-examples: example applications using the other modules which are
   only meant for demonstration purposes.
 
-Please refer to the README of each module for more information.
-
 **Community:**
 
 - JIRA: https://datastax-oss.atlassian.net/browse/JAVA

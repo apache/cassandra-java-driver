@@ -83,7 +83,7 @@ public class DefaultRetryPolicy implements RetryPolicy {
      * the nodes in that subset were alive but the coordinator hasn't
      * detected them as dead. By the time we get the timeout the dead
      * nodes will likely have been detected as dead and the retry has thus a
-     * high change of success.
+     * high chance of success.
      *
      * @param statement the original query that timed out.
      * @param cl the original consistency level of the write that timed out.
