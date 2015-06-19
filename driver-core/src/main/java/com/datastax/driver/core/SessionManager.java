@@ -471,7 +471,11 @@ class SessionManager extends AbstractSession {
                 defaultTimestamp = cluster.getConfiguration().getPolicies().getTimestampGenerator().next();
         }
 
-        return makeRequestMessage(statement, consistency, serialConsistency, pagingState, defaultTimestamp);
+        Message.Request request = makeRequestMessage(statement, consistency, serialConsistency, pagingState, defaultTimestamp);
+        if (statement.isTracing())
+            request.setTracingRequested();
+
+        return request;
     }
 
     Message.Request makeRequestMessage(Statement statement, ConsistencyLevel cl, ConsistencyLevel scl, ByteBuffer pagingState, long defaultTimestamp) {
@@ -591,8 +595,6 @@ class SessionManager extends AbstractSession {
     }
 
     ResultSetFuture executeQuery(Message.Request msg, Statement statement) {
-        if (statement.isTracing())
-            msg.setTracingRequested();
 
         DefaultResultSetFuture future = new DefaultResultSetFuture(this, configuration().getProtocolOptions().getProtocolVersionEnum(), msg);
         execute(future, statement);
