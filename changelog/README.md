@@ -9,6 +9,7 @@
 - [bug] Handle void return types in accessors (JAVA-542)
 - [improvement] Create values() function for Insert builder using List (JAVA-225)
 - [improvement] HashMap throws an OOM Exception when logging level is set to TRACE (JAVA-713)
+- [bug] Support bind marker in QueryBuilder DELETE's list index (JAVA-679)
 
 
 ### 2.1.6
