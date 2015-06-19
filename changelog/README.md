@@ -8,6 +8,7 @@
 - [improvement] Expose ProtocolVersion#toInt (JAVA-700)
 - [bug] Handle void return types in accessors (JAVA-542)
 - [improvement] Create values() function for Insert builder using List (JAVA-225)
+- [improvement] HashMap throws an OOM Exception when logging level is set to TRACE (JAVA-713)
 
 
 ### 2.1.6
