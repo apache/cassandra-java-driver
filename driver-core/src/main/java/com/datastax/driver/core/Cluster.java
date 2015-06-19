@@ -1156,14 +1156,14 @@ public class Cluster implements Closeable {
          */
         @Override
         public Configuration getConfiguration() {
-            Policies policies = new Policies(
-                loadBalancingPolicy == null ? Policies.defaultLoadBalancingPolicy() : loadBalancingPolicy,
-                Objects.firstNonNull(reconnectionPolicy, Policies.defaultReconnectionPolicy()),
-                Objects.firstNonNull(retryPolicy, Policies.defaultRetryPolicy()),
-                Objects.firstNonNull(addressTranslater, Policies.defaultAddressTranslater()),
-                Objects.firstNonNull(timestampGenerator, Policies.defaultTimestampGenerator()),
-                Objects.firstNonNull(speculativeExecutionPolicy, Policies.defaultSpeculativeExecutionPolicy())
-            );
+            Policies policies = Policies.builder()
+                .withLoadBalancingPolicy(loadBalancingPolicy)
+                .withReconnectionPolicy(reconnectionPolicy)
+                .withRetryPolicy(retryPolicy)
+                .withAddressTranslater(addressTranslater)
+                .withTimestampGenerator(timestampGenerator)
+                .withSpeculativeExecutionPolicy(speculativeExecutionPolicy)
+                .build();
             return new Configuration(policies,
                                      new ProtocolOptions(port, protocolVersion, maxSchemaAgreementWaitSeconds, sslOptions, authProvider).setCompression(compression),
                                      poolingOptions == null ? new PoolingOptions() : poolingOptions,
