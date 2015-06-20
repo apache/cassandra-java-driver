@@ -171,6 +171,7 @@
             <exclude>com/datastax/driver/core/Message$*</exclude>
             <exclude>com/datastax/driver/core/Requests$*</exclude>
             <exclude>com/datastax/driver/core/Responses$*</exclude>
+            <exclude>com/datastax/driver/core/Connection$*</exclude>
           </excludes>
         </configuration>
       </plugin>

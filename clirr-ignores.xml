@@ -6,7 +6,7 @@
   To update this file:
   * run `mvn clirr:clirr` at the root directory
   * check the reports in `<module>/target/site/clirr-report.html`
-  * add new differences if needed. Difference types are explained at http://mojo.codehaus.org/clirr-maven-plugin/examples/ignored-differences.html
+  * add new differences if needed. Difference types are explained at http://www.mojohaus.org/clirr-maven-plugin/examples/ignored-differences.html
 -->
 <differences>
   <difference>
@@ -59,6 +59,124 @@
     <method>java.nio.ByteBuffer[] getValues(int)</method>
     <to>java.nio.ByteBuffer[] getValues(com.datastax.driver.core.ProtocolVersion)</to>
     <justification>A backward compatible version has been added to the parent class RegularStatement</justification>
+  </difference>
+
+  <difference>
+    <differenceType>7013</differenceType> <!-- abstract method added to class -->
+    <className>com/datastax/driver/core/DataType</className>
+    <method>boolean isFrozen()</method>
+    <justification>Required for frozen type support. Clients do not create their own DataType subclasses</justification>
+  </difference>
+
+  <difference>
+    <differenceType>7012</differenceType> <!-- method added to interface -->
+    <className>com/datastax/driver/core/GettableByIndexData</className>
+    <method>java.util.List getList(int, com.google.common.reflect.TypeToken)</method>
+    <justification>Breaking change, required for nested collection support</justification>
+  </difference>
+
+  <difference>
+    <differenceType>7012</differenceType> <!-- method added to interface -->
+    <className>com/datastax/driver/core/GettableByIndexData</className>
+    <method>java.util.Map getMap(int, com.google.common.reflect.TypeToken, com.google.common.reflect.TypeToken)</method>
+    <justification>Breaking change, required for nested collection support</justification>
+  </difference>
+
+  <difference>
+    <differenceType>7012</differenceType> <!-- method added to interface -->
+    <className>com/datastax/driver/core/GettableByIndexData</className>
+    <method>java.util.Set getSet(int, com.google.common.reflect.TypeToken)</method>
+    <justification>Breaking change, required for nested collection support</justification>
+  </difference>
+
+  <difference>
+    <differenceType>7012</differenceType> <!-- method added to interface -->
+    <className>com/datastax/driver/core/GettableByNameData</className>
+    <method>java.util.List getList(java.lang.String, com.google.common.reflect.TypeToken)</method>
+    <justification>Breaking change, required for nested collection support</justification>
+  </difference>
+
+  <difference>
+    <differenceType>7012</differenceType> <!-- method added to interface -->
+    <className>com/datastax/driver/core/GettableByNameData</className>
+    <method>java.util.Map getMap(java.lang.String, com.google.common.reflect.TypeToken, com.google.common.reflect.TypeToken)</method>
+    <justification>Breaking change, required for nested collection support</justification>
+  </difference>
+
+  <difference>
+    <differenceType>7012</differenceType> <!-- method added to interface -->
+    <className>com/datastax/driver/core/GettableByNameData</className>
+    <method>java.util.Set getSet(java.lang.String, com.google.common.reflect.TypeToken)</method>
+    <justification>Breaking change, required for nested collection support</justification>
+  </difference>
+
+  <difference>
+    <differenceType>7012</differenceType> <!-- method added to interface -->
+    <className>com/datastax/driver/core/GettableByIndexData</className>
+    <method>java.lang.Object getObject(int)</method>
+    <justification>Breaking change, requires update of potential client implementations</justification>
+  </difference>
+
+  <difference>
+    <differenceType>7012</differenceType> <!-- method added to interface -->
+    <className>com/datastax/driver/core/GettableByNameData</className>
+    <method>java.lang.Object getObject(java.lang.String)</method>
+    <justification>Breaking change, requires update of potential client implementations</justification>
+  </difference>
+
+  <difference>
+    <differenceType>7004</differenceType> <!-- method argument count changed -->
+    <className>com/datastax/driver/core/LatencyTracker</className>
+    <method>void update(com.datastax.driver.core.Host, long)</method>
+    <justification>Breaking change, requires update of client implementations</justification>
+  </difference>
+
+  <difference>
+    <differenceType>3005</differenceType> <!-- added abstract modifier to class -->
+    <className>com/datastax/driver/core/ProtocolOptions$Compression</className>
+    <justification>False positive because an abstract method was added. Since this is an enum there is no impact for clients</justification>
+  </difference>
+
+  <difference>
+    <differenceType>7012</differenceType> <!-- method added to interface -->
+    <className>com/datastax/driver/core/Row</className>
+    <method>com.datastax.driver.core.Token getPartitionKeyToken()</method>
+    <justification>Breaking change required for token support. Requires update of potential client implementations</justification>
+  </difference>
+
+  <difference>
+    <differenceType>7012</differenceType> <!-- method added to interface -->
+    <className>com/datastax/driver/core/Row</className>
+    <method>com.datastax.driver.core.Token getToken(int)</method>
+    <justification>Breaking change required for token support. Requires update of potential client implementations</justification>
+  </difference>
+
+  <difference>
+    <differenceType>7012</differenceType> <!-- method added to interface -->
+    <className>com/datastax/driver/core/Row</className>
+    <method>com.datastax.driver.core.Token getToken(java.lang.String)</method>
+    <justification>Breaking change required for token support. Requires update of potential client implementations</justification>
+  </difference>
+
+  <difference>
+    <differenceType>7012</differenceType> <!-- method added to interface -->
+    <className>com/datastax/driver/core/Session$State</className>
+    <method>int getTrashedConnections(com.datastax.driver.core.Host)</method>
+    <justification>It's very unlikely that client have their own implementation of this interface</justification>
+  </difference>
+
+  <difference>
+    <differenceType>1001</differenceType> <!-- decreased visibility of class -->
+    <className>com/datastax/driver/core/Token$Factory</className>
+    <justification>False positive: Token was package-private before, so Token$Factory was never visible</justification>
+  </difference>
+
+  <difference>
+    <differenceType>7006</differenceType> <!-- return type changed -->
+    <className>com/datastax/driver/core/exceptions/DriverInternalError</className>
+    <method>com.datastax.driver.core.exceptions.DriverException copy()</method>
+    <to>com.datastax.driver.core.exceptions.DriverInternalError</to>
+    <justification>Covariant return, would only break if a client extended the class, which is unlikely</justification>
   </difference>
 
 </differences>
