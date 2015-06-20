@@ -82,6 +82,20 @@ public class Configuration {
         this.nettyOptions = nettyOptions;
     }
 
+    /**
+     * @deprecated this constructor is provided for backward compatibility.
+     */
+    @Deprecated
+    public Configuration(Policies policies,
+                         ProtocolOptions protocolOptions,
+                         PoolingOptions poolingOptions,
+                         SocketOptions socketOptions,
+                         MetricsOptions metricsOptions,
+                         QueryOptions queryOptions) {
+        this(policies, protocolOptions, poolingOptions, socketOptions, metricsOptions, queryOptions,
+            NettyOptions.DEFAULT_INSTANCE);
+    }
+
     void register(Cluster.Manager manager) {
         protocolOptions.register(manager);
         poolingOptions.register(manager);
