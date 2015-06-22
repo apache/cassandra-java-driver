@@ -17,20 +17,21 @@ package com.datastax.driver.mapping;
 
 import java.util.*;
 
+import com.datastax.driver.core.*;
+import com.datastax.driver.core.exceptions.CodecNotFoundException;
 import com.google.common.collect.Maps;
+import org.assertj.core.data.MapEntry;
 import org.testng.annotations.BeforeMethod;
 
 import com.google.common.base.Objects;
 import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 
-import com.datastax.driver.core.CCMBridge;
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.Row;
 import com.datastax.driver.core.utils.UUIDs;
 
 import com.datastax.driver.mapping.annotations.*;
@@ -272,5 +273,71 @@ public class MapperUDTTest extends CCMBridge.PerClassSingleNodeCluster {
         Result<User> u = userAccessor.getAll();
         assertEquals(u.one(), u5);
         assertTrue(u.isExhausted());
+    }
+
+    @Test(groups = "short")
+    public void should_be_able_to_use_udtCodec_standalone() {
+        // Create a separate Cluster/Session to start with a CodecRegistry from scratch (so not already registered).
+        Cluster cluster = Cluster.builder().addContactPointsWithPorts(Collections.singleton(hostAddress)).build();
+        try {
+            CodecRegistry registry = cluster.getConfiguration().getCodecRegistry();
+            Session session = cluster.connect(keyspace);
+
+            UUID userId = UUIDs.random();
+
+            // Create a user.
+            session.execute("update users SET other_addresses['condo']={street: '101 Ocean Ln', city: 'Jacksonville, FL', zip_code: 89898, phones: {'8675309'}} " +
+                    " WHERE user_id=" + TypeCodec.UUIDCodec.instance.format(userId));
+            session.execute("update users SET mainaddress={street: '42 Middle of Nowhere', city: 'Lake of the Woods', zip_code: 49553, phones: {'8675039'}} " +
+                    " WHERE user_Id=" + TypeCodec.UUIDCodec.instance.format(userId));
+
+            // Get the user.
+            Row row = session.execute("select * from users where user_id=?", userId).one();
+
+            UDTValue udtValue = row.getUDTValue("mainaddress");
+            assertThat(udtValue.getString("street")).isEqualTo("42 Middle of Nowhere");
+
+            Object udtObject = row.getObject("mainaddress");
+            assertThat(udtObject).isEqualTo(udtValue);
+
+            // There shouldn't be a codec for address.
+            try {
+                assertThat(registry.codecFor(udtValue.getType(), Address.class));
+                fail("Didn't expect to find codec for udtType <-> Address");
+            } catch (CodecNotFoundException e) {
+                // expected.
+            }
+
+            // Expect a this_udt <-> UDTValue codec to exist.  This is a pretty safe bet or else we wouldn't get
+            // this value back.
+            TypeCodec<UDTValue> udtCodec = registry.codecFor(udtValue.getType());
+            assertThat(udtCodec.getCqlType()).isEqualTo(udtValue.getType());
+            assertThat(udtCodec.getJavaType().getRawType()).isEqualTo(UDTValue.class);
+
+            // Retrieve codec for Address, if it can be mapped it will be created, if already registered it'll be used.
+            TypeCodec<Address> codec = new MappingManager(session).udtCodec(Address.class);
+
+            // The codec should be registered after we call udtCodec.
+            assertThat(registry.codecFor(udtValue.getType(), Address.class)).isEqualTo(codec);
+
+            // Should be able to retrieve as an Address.
+            Address mainAddress = row.get("mainaddress", Address.class);
+            assertThat(mainAddress.getCity()).isEqualTo("Lake of the Woods");
+            assertThat(mainAddress.getStreet()).isEqualTo("42 Middle of Nowhere");
+            assertThat(mainAddress.getZipCode()).isEqualTo(49553);
+            assertThat(mainAddress.getPhones()).containsExactly("8675039");
+
+            // Should be able to retrieve within a Map.
+            Address expectedOtherAddress = new Address();
+            expectedOtherAddress.setStreet("101 Ocean Ln");
+            expectedOtherAddress.setCity("Jacksonville, FL");
+            expectedOtherAddress.setZipCode(89898);
+            expectedOtherAddress.setPhones(Collections.singleton("8675309"));
+
+            Map<String, Address> otherAddresses = row.getMap("other_addresses", String.class, Address.class);
+            assertThat(otherAddresses).containsOnly(MapEntry.entry("condo", expectedOtherAddress));
+        } finally {
+            cluster.close();
+        }
     }
 }

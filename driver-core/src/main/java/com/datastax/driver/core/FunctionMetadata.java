@@ -20,7 +20,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,7 +69,7 @@ public class FunctionMetadata {
     //     return_type text,
     //     PRIMARY KEY (keyspace_name, function_name, signature)
     // ) WITH CLUSTERING ORDER BY (function_name ASC, signature ASC)
-    static FunctionMetadata build(KeyspaceMetadata ksm, Row row) {
+    static FunctionMetadata build(KeyspaceMetadata ksm, Row row, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
         String simpleName = row.getString("function_name");
         List<String> signature = row.getList("signature", String.class);
         String fullName = Metadata.fullFunctionName(simpleName, signature);
@@ -83,12 +82,12 @@ public class FunctionMetadata {
                 ksm.getName(), fullName));
             return null;
         }
-        Map<String, DataType> arguments = buildArguments(argumentNames, argumentTypes);
+        Map<String, DataType> arguments = buildArguments(argumentNames, argumentTypes, protocolVersion, codecRegistry);
 
         String body = row.getString("body");
         boolean calledOnNullInput = row.getBool("called_on_null_input");
         String language = row.getString("language");
-        DataType returnType = CassandraTypeParser.parseOne(row.getString("return_type"));
+        DataType returnType = CassandraTypeParser.parseOne(row.getString("return_type"), protocolVersion, codecRegistry);
 
         FunctionMetadata function = new FunctionMetadata(ksm, fullName, simpleName, arguments, body,
             calledOnNullInput, language, returnType);
@@ -97,14 +96,14 @@ public class FunctionMetadata {
     }
 
     // Note: the caller ensures that names and types have the same size
-    private static Map<String, DataType> buildArguments(List<String> names, List<String> types) {
+    private static Map<String, DataType> buildArguments(List<String> names, List<String> types, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
         if (names.isEmpty())
             return Collections.emptyMap();
 
         ImmutableMap.Builder<String, DataType> builder = ImmutableMap.builder();
         Iterator<String> iterTypes = types.iterator();
         for (String name : names) {
-            DataType type = CassandraTypeParser.parseOne(iterTypes.next());
+            DataType type = CassandraTypeParser.parseOne(iterTypes.next(), protocolVersion, codecRegistry);
             builder.put(name, type);
         }
         return builder.build();

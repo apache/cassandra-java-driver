@@ -337,4 +337,14 @@ public interface PreparedStatement {
      */
     public PreparedStatement setOutgoingPayload(Map<String, ByteBuffer> payload);
 
+    /**
+     * Return the {@link CodecRegistry} instance associated with this prepared statement.
+     * Implementations should never return {@code null}; instead, they should always return
+     * the {@link CodecRegistry} instance registered with the {@link Cluster} instance
+     * this prepared statement belongs to.
+     *
+     * @return the {@link CodecRegistry} instance associated with this prepared statement.
+     */
+    public CodecRegistry getCodecRegistry();
+
 }

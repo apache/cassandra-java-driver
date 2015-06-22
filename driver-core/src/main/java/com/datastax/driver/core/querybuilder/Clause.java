@@ -17,6 +17,8 @@ package com.datastax.driver.core.querybuilder;
 
 import java.util.List;
 
+import com.datastax.driver.core.CodecRegistry;
+
 public abstract class Clause extends Utils.Appendeable {
 
     abstract String name();
@@ -47,9 +49,9 @@ public abstract class Clause extends Utils.Appendeable {
         }
 
         @Override
-        void appendTo(StringBuilder sb, List<Object> variables) {
+        void appendTo(StringBuilder sb, List<Object> variables, CodecRegistry codecRegistry) {
             Utils.appendName(name, sb).append(op);
-            Utils.appendValue(value, sb, variables);
+            Utils.appendValue(value, codecRegistry, sb, variables);
         }
 
         @Override
@@ -78,7 +80,7 @@ public abstract class Clause extends Utils.Appendeable {
         }
 
         @Override
-        void appendTo(StringBuilder sb, List<Object> variables) {
+        void appendTo(StringBuilder sb, List<Object> variables, CodecRegistry codecRegistry) {
 
             // We special case the case of just one bind marker because there is little
             // reasons to do:
@@ -93,7 +95,7 @@ public abstract class Clause extends Utils.Appendeable {
             }
 
             Utils.appendName(name, sb).append(" IN (");
-            Utils.joinAndAppendValues(sb, ",", values, variables).append(')');
+            Utils.joinAndAppendValues(sb, codecRegistry, ",", values, variables).append(')');
         }
 
         @Override
@@ -123,9 +125,9 @@ public abstract class Clause extends Utils.Appendeable {
         }
 
         @Override
-        void appendTo(StringBuilder sb, List<Object> variables) {
+        void appendTo(StringBuilder sb, List<Object> variables, CodecRegistry codecRegistry) {
             Utils.appendName(name, sb).append(" CONTAINS ");
-            Utils.appendValue(value, sb, variables);
+            Utils.appendValue(value, codecRegistry, sb, variables);
         }
 
         @Override
@@ -153,9 +155,9 @@ public abstract class Clause extends Utils.Appendeable {
         }
 
         @Override
-        void appendTo(StringBuilder sb, List<Object> variables) {
+        void appendTo(StringBuilder sb, List<Object> variables, CodecRegistry codecRegistry) {
             Utils.appendName(name, sb).append(" CONTAINS KEY ");
-            Utils.appendValue(value, sb, variables);
+            Utils.appendValue(value, codecRegistry, sb, variables);
         }
 
         @Override
@@ -198,14 +200,14 @@ public abstract class Clause extends Utils.Appendeable {
 
         @Override
         boolean containsBindMarker() {
-            for (int i = 0; i < values.size(); i++)
-                if (Utils.containsBindMarker(values.get(i)))
+            for (Object value : values)
+                if (Utils.containsBindMarker(value))
                     return true;
             return false;
         }
 
         @Override
-        void appendTo(StringBuilder sb, List<Object> variables) {
+        void appendTo(StringBuilder sb, List<Object> variables, CodecRegistry codecRegistry) {
             sb.append("(");
             for (int i = 0; i < names.size(); i++) {
                 if (i > 0)
@@ -216,7 +218,7 @@ public abstract class Clause extends Utils.Appendeable {
             for (int i = 0; i < values.size(); i++) {
                 if (i > 0)
                     sb.append(",");
-                Utils.appendValue(values.get(i), sb, variables);
+                Utils.appendValue(values.get(i), codecRegistry, sb, variables);
             }
             sb.append(")");
         }

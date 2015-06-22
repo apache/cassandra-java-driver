@@ -20,11 +20,16 @@ import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
-import static com.datastax.driver.core.TestUtils.*;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.batch;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.insertInto;
+import com.datastax.driver.core.querybuilder.QueryBuilder;
+
+import static com.datastax.driver.core.TestUtils.CREATE_KEYSPACE_GENERIC_FORMAT;
+import static com.datastax.driver.core.TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT;
+import static com.datastax.driver.core.TestUtils.SIMPLE_KEYSPACE;
+import static com.datastax.driver.core.TestUtils.SIMPLE_TABLE;
 
 public abstract class AbstractPoliciesTest {
     private static final boolean DEBUG = false;
@@ -179,11 +184,11 @@ public abstract class AbstractPoliciesTest {
         for (int i = 0; i < n; ++i)
             if (batch)
                 // BUG: WriteType == SIMPLE
-                c.session.execute(batch()
-                        .add(insertInto(SIMPLE_TABLE).values(new String[]{ "k", "i"}, new Object[]{ 0, 0 }))
+                c.session.execute(new QueryBuilder(c.cluster).batch()
+                        .add(new QueryBuilder(c.cluster).insertInto(SIMPLE_TABLE).values(new String[]{ "k", "i"}, new Object[]{ 0, 0 }))
                         .setConsistencyLevel(cl));
             else
-                c.session.execute(new SimpleStatement(String.format("INSERT INTO %s(k, i) VALUES (0, 0)", SIMPLE_TABLE)).setConsistencyLevel(cl));
+                c.session.execute(c.session.newSimpleStatement(String.format("INSERT INTO %s(k, i) VALUES (0, 0)", SIMPLE_TABLE)).setConsistencyLevel(cl));
     }
 
 
@@ -211,7 +216,7 @@ public abstract class AbstractPoliciesTest {
             ByteBuffer routingKey = ByteBuffer.allocate(4);
             routingKey.putInt(0, 0);
             for (int i = 0; i < n; ++i)
-                addCoordinator(c.session.execute(new SimpleStatement(String.format("SELECT * FROM %s WHERE k = 0", SIMPLE_TABLE)).setRoutingKey(routingKey).setConsistencyLevel(cl)));
+                addCoordinator(c.session.execute(c.session.newSimpleStatement(String.format("SELECT * FROM %s WHERE k = 0", SIMPLE_TABLE)).setRoutingKey(routingKey).setConsistencyLevel(cl)));
         }
     }
 }

@@ -17,6 +17,8 @@ package com.datastax.driver.core.querybuilder;
 
 import java.util.List;
 
+import com.datastax.driver.core.CodecRegistry;
+
 public abstract class Using extends Utils.Appendeable {
 
     final String optionName;
@@ -34,7 +36,7 @@ public abstract class Using extends Utils.Appendeable {
         }
 
         @Override
-        void appendTo(StringBuilder sb, List<Object> variables) {
+        void appendTo(StringBuilder sb, List<Object> variables, CodecRegistry codecRegistry) {
             sb.append(optionName).append(' ').append(value);
         }
 
@@ -53,7 +55,7 @@ public abstract class Using extends Utils.Appendeable {
         }
 
         @Override
-        void appendTo(StringBuilder sb, List<Object> variables) {
+        void appendTo(StringBuilder sb, List<Object> variables, CodecRegistry codecRegistry) {
             sb.append(optionName).append(' ').append(marker);
         }
 

@@ -66,7 +66,7 @@ public class MetricsTest extends CCMBridge.PerClassSingleNodeCluster {
         retryDecision = RetryDecision.retry(ConsistencyLevel.ONE);
 
         // We only have one node, this will throw an unavailable exception
-        Statement statement = new SimpleStatement("SELECT v FROM test WHERE k = 1").setConsistencyLevel(ConsistencyLevel.TWO);
+        Statement statement = session.newSimpleStatement("SELECT v FROM test WHERE k = 1").setConsistencyLevel(ConsistencyLevel.TWO);
         session.execute(statement);
 
         Errors errors = cluster.getMetrics().getErrorMetrics();

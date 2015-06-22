@@ -17,6 +17,8 @@ package com.datastax.driver.core.querybuilder;
 
 import java.util.List;
 
+import com.datastax.driver.core.CodecRegistry;
+
 public class Ordering extends Utils.Appendeable {
 
     private final String name;
@@ -28,7 +30,7 @@ public class Ordering extends Utils.Appendeable {
     }
 
     @Override
-    void appendTo(StringBuilder sb, List<Object> variables) {
+    void appendTo(StringBuilder sb, List<Object> variables, CodecRegistry codecRegistry) {
         Utils.appendName(name, sb);
         sb.append(isDesc ? " DESC" : " ASC");
     }

@@ -21,7 +21,6 @@ import java.util.List;
 
 import com.google.common.base.Strings;
 
-import com.datastax.driver.core.ProtocolVersion;
 import com.datastax.driver.core.RegularStatement;
 
 /**
@@ -51,7 +50,7 @@ public abstract class SchemaStatement extends RegularStatement {
     }
 
     @Override
-    public ByteBuffer[] getValues(ProtocolVersion protocolVersion) {
+    public ByteBuffer[] getValues() {
         // DDL statements never have values
         return new ByteBuffer[0];
     }

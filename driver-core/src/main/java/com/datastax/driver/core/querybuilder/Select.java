@@ -15,12 +15,13 @@
  */
 package com.datastax.driver.core.querybuilder;
 
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.CodecRegistry;
 import com.datastax.driver.core.TableMetadata;
 
 /**
@@ -38,16 +39,16 @@ public class Select extends BuiltStatement {
     private Object limit;
     private boolean allowFiltering;
 
-    Select(String keyspace, String table, List<Object> columnNames, boolean isDistinct) {
-        super(keyspace);
+    Select(Cluster cluster, String keyspace, String table, List<Object> columnNames, boolean isDistinct) {
+        super(keyspace, cluster);
         this.table = table;
         this.isDistinct = isDistinct;
         this.columnNames = columnNames;
         this.where = new Where(this);
     }
 
-    Select(TableMetadata table, List<Object> columnNames, boolean isDistinct) {
-        super(table);
+    Select(Cluster cluster, TableMetadata table, List<Object> columnNames, boolean isDistinct) {
+        super(table, cluster);
         this.table = escapeId(table.getName());
         this.isDistinct = isDistinct;
         this.columnNames = columnNames;
@@ -58,13 +59,14 @@ public class Select extends BuiltStatement {
     StringBuilder buildQueryString(List<Object> variables) {
         StringBuilder builder = new StringBuilder();
 
+        CodecRegistry codecRegistry = getCodecRegistry();
         builder.append("SELECT ");
         if (isDistinct)
             builder.append("DISTINCT ");
         if (columnNames == null) {
             builder.append('*');
         } else {
-            Utils.joinAndAppendNames(builder, ",", columnNames);
+            Utils.joinAndAppendNames(builder, codecRegistry, ",", columnNames);
         }
         builder.append(" FROM ");
         if (keyspace != null)
@@ -73,12 +75,12 @@ public class Select extends BuiltStatement {
 
         if (!where.clauses.isEmpty()) {
             builder.append(" WHERE ");
-            Utils.joinAndAppend(builder, " AND ", where.clauses, variables);
+            Utils.joinAndAppend(builder, codecRegistry, " AND ", where.clauses, variables);
         }
 
         if (orderings != null) {
             builder.append(" ORDER BY ");
-            Utils.joinAndAppend(builder, ",", orderings, variables);
+            Utils.joinAndAppend(builder, codecRegistry, ",", orderings, variables);
         }
 
         if (limit != null) {
@@ -255,12 +257,16 @@ public class Select extends BuiltStatement {
      */
     public static class Builder {
 
+        private final Cluster cluster;
         List<Object> columnNames;
         boolean isDistinct;
 
-        Builder() {}
+        Builder(Cluster cluster) {
+            this.cluster = cluster;
+        }
 
-        Builder(List<Object> columnNames) {
+        Builder(Cluster cluster, List<Object> columnNames) {
+            this.cluster = cluster;
             this.columnNames = columnNames;
         }
 
@@ -292,7 +298,7 @@ public class Select extends BuiltStatement {
          * @return a newly built SELECT statement that selects from {@code keyspace.table}.
          */
         public Select from(String keyspace, String table) {
-            return new Select(keyspace, table, columnNames, isDistinct);
+            return new Select(cluster, keyspace, table, columnNames, isDistinct);
         }
 
         /**
@@ -302,7 +308,7 @@ public class Select extends BuiltStatement {
          * @return a newly built SELECT statement that selects from {@code table}.
          */
         public Select from(TableMetadata table) {
-            return new Select(table, columnNames, isDistinct);
+            return new Select(cluster, table, columnNames, isDistinct);
         }
     }
 
@@ -310,6 +316,10 @@ public class Select extends BuiltStatement {
      * An Selection clause for an in-construction SELECT statement.
      */
     public static abstract class Selection extends Builder {
+
+        Selection(Cluster cluster) {
+            super(cluster);
+        }
 
         /**
          * Uses DISTINCT selection.
@@ -395,7 +405,9 @@ public class Select extends BuiltStatement {
 
         private Object previousSelection;
 
-        SelectionOrAlias() {}
+        SelectionOrAlias(Cluster cluster) {
+            super(cluster);
+        }
 
         /**
          * Adds an alias for the just selected item.

@@ -36,7 +36,7 @@ public abstract class AbstractSession implements Session {
      */
     @Override
     public ResultSet execute(String query) {
-        return execute(new SimpleStatement(query));
+        return execute(newSimpleStatement(query));
     }
 
     /**
@@ -44,7 +44,7 @@ public abstract class AbstractSession implements Session {
      */
     @Override
     public ResultSet execute(String query, Object... values) {
-        return execute(new SimpleStatement(query, values));
+        return execute(newSimpleStatement(query, values));
     }
 
     /**
@@ -60,7 +60,7 @@ public abstract class AbstractSession implements Session {
      */
     @Override
     public ResultSetFuture executeAsync(String query) {
-        return executeAsync(new SimpleStatement(query));
+        return executeAsync(newSimpleStatement(query));
     }
 
     /**
@@ -68,7 +68,23 @@ public abstract class AbstractSession implements Session {
      */
     @Override
     public ResultSetFuture executeAsync(String query, Object... values) {
-        return executeAsync(new SimpleStatement(query, values));
+        return executeAsync(newSimpleStatement(query, values));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public SimpleStatement newSimpleStatement(String query) {
+        return new SimpleStatement(query, this.getCluster());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public SimpleStatement newSimpleStatement(String query, Object... values) {
+        return new SimpleStatement(query, this.getCluster(), values);
     }
 
     /**
@@ -108,10 +124,11 @@ public abstract class AbstractSession implements Session {
      */
     @Override
     public ListenableFuture<PreparedStatement> prepareAsync(final RegularStatement statement) {
+
         if (statement.hasValues())
             throw new IllegalArgumentException("A statement to prepare should not have values");
 
-        ListenableFuture<PreparedStatement> prepared = prepareAsync(statement.toString(), statement.getOutgoingPayload());
+        ListenableFuture<PreparedStatement> prepared = prepareAsync(statement.getQueryString(), statement.getOutgoingPayload());
         return Futures.transform(prepared, new Function<PreparedStatement, PreparedStatement>() {
             @Override
             public PreparedStatement apply(PreparedStatement prepared) {

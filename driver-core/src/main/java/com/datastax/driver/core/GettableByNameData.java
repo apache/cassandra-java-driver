@@ -403,6 +403,10 @@ public interface GettableByNameData {
 
     /**
      * Returns the value for {@code name} as the Java type matching its CQL type.
+     * <p>
+     * This method is not suitable to use with custom codecs: it will always
+     * use the default ones for the underlying CQL type. If you want to use
+     * non-default codecs, use {@link #get(String, Class)} or {@link #get(String, TypeToken)} instead.
      *
      * @param name the name to retrieve.
      * @return the value of the {@code i}th value as the Java type matching its CQL type.
@@ -412,4 +416,66 @@ public interface GettableByNameData {
      * @throws IllegalArgumentException if {@code name} is not a valid name for this object.
      */
     Object getObject(String name);
+
+    /**
+     * Returns the value for {@code name} converted to the given Java type.
+     * <p>
+     * A suitable {@link TypeCodec} instance for for the underlying CQL type and {@code targetClass} must
+     * have been previously registered with the {@link CodecRegistry} currently in use.
+     * <p>
+     * This method should be used instead of {@link #getObject(String)} in cases
+     * where more than one codec is registered for the same CQL type; specifying the Java class
+     * allows the {@link CodecRegistry} to narrow down the search and return only an exactly-matching codec (if any),
+     * thus avoiding any risk of ambiguity.
+     *
+     * @param name the name to retrieve.
+     * @param targetClass The Java type the value should be converted to.
+     * @return the value for {@code name} value converted to the given Java type.
+     * If the CQL value is {@code NULL}, then {@code null} is returned.
+     * @throws IllegalArgumentException if {@code name} is not a valid name for this object.
+     * @throws com.datastax.driver.core.exceptions.CodecNotFoundException
+     * if no {@link TypeCodec} instance for {@code targetClass} could be found
+     * by the {@link CodecRegistry} currently in use.
+     */
+    <T> T get(String name, Class<T> targetClass);
+
+    /**
+     * Returns the value for {@code name} converted to the given Java type.
+     * <p>
+     * A suitable {@link TypeCodec} instance for for the underlying CQL type and {@code targetType} must
+     * have been previously registered with the {@link CodecRegistry} currently in use.
+     * <p>
+     * This method should be used instead of {@link #getObject(String)} in cases
+     * where more than one codec is registered for the same CQL type; specifying the Java class
+     * allows the {@link CodecRegistry} to narrow down the search and return only an exactly-matching codec (if any),
+     * thus avoiding any risk of ambiguity.
+     *
+     * @param name the name to retrieve.
+     * @param targetType The Java type the value should be converted to.
+     * @return the value for {@code name} value converted to the given Java type.
+     * If the CQL value is {@code NULL}, then {@code null} is returned.
+     * @throws IllegalArgumentException if {@code name} is not a valid name for this object.
+     * @throws com.datastax.driver.core.exceptions.CodecNotFoundException
+     * if no {@link TypeCodec} instance for {@code targetType} could be found
+     * by the {@link CodecRegistry} currently in use.
+     */
+    <T> T get(String name, TypeToken<T> targetType);
+
+    /**
+     * Returns the value for {@code name} converted using the given {@link TypeCodec}.
+     * <p>
+     * Note that this method allows to entirely bypass the {@link CodecRegistry} currently in use
+     * and forces the driver to use the given codec instead.
+     * <p>
+     * It is the caller's responsibility to ensure that the given codec {@link TypeCodec#accepts(DataType) accepts}
+     * the underlying CQL type; failing to do so may result in {@link InvalidTypeException}s being thrown.
+     *
+     * @param name the name to retrieve.
+     * @param codec The {@link TypeCodec} to use to deserialize the value; may not be {@code null}.
+     * @return the value of the {@code i}th value converted using the given {@link TypeCodec}.
+     * @throws InvalidTypeException if the given codec does not {@link TypeCodec#accepts(DataType) accept} the underlying CQL type.
+     * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
+     */
+    <T> T get(String name, TypeCodec<T> codec);
+
 }

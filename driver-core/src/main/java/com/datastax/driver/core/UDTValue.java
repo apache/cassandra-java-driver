@@ -15,6 +15,8 @@
  */
 package com.datastax.driver.core;
 
+import com.google.common.base.Joiner;
+
 /**
  * A value for a User Defined Type.
  */
@@ -23,8 +25,7 @@ public class UDTValue extends AbstractData<UDTValue> {
     private final UserType definition;
 
     UDTValue(UserType definition) {
-        // All things in a UDT are encoded with the protocol v3
-        super(ProtocolVersion.V3, definition.size());
+        super(definition.getProtocolVersion(), definition.size());
         this.definition = definition;
     }
 
@@ -34,6 +35,11 @@ public class UDTValue extends AbstractData<UDTValue> {
 
     protected String getName(int i) {
         return definition.byIdx[i].getName();
+    }
+
+    @Override
+    protected CodecRegistry getCodecRegistry() {
+        return definition.getCodecRegistry();
     }
 
     protected int[] getAllIndexesOf(String name) {
@@ -75,12 +81,18 @@ public class UDTValue extends AbstractData<UDTValue> {
         sb.append("{");
         for (int i = 0; i < values.length; i++) {
             if (i > 0)
-                sb.append(", ");
+                sb.append(",");
 
             sb.append(getName(i));
             sb.append(":");
-            DataType dt = getType(i);
-            sb.append(values[i] == null ? "null" : dt.format(dt.deserialize(values[i], ProtocolVersion.V3)));
+
+            if(values[i] == null)
+                sb.append("null");
+            else {
+                DataType dt = getType(i);
+                TypeCodec<Object> codec = getCodecRegistry().codecFor(dt);
+                sb.append(codec.format(codec.deserialize(values[i], protocolVersion)));
+            }
         }
         sb.append("}");
         return sb.toString();

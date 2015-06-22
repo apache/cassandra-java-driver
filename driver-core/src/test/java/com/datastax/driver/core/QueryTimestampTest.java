@@ -62,7 +62,7 @@ public class QueryTimestampTest extends CCMBridge.PerClassSingleNodeCluster {
     public void should_use_CQL_timestamp_over_anything_else() {
         timestampFromGenerator = 10;
         String query = "INSERT INTO foo (k, v) VALUES (1, 1) USING TIMESTAMP 20";
-        session.execute(new SimpleStatement(query).setDefaultTimestamp(30));
+        session.execute(session.newSimpleStatement(query).setDefaultTimestamp(30));
 
         long writeTime = session.execute("SELECT writeTime(v) FROM foo WHERE k = 1").one().getLong(0);
         assertEquals(writeTime, 20);
@@ -72,7 +72,7 @@ public class QueryTimestampTest extends CCMBridge.PerClassSingleNodeCluster {
     public void should_use_statement_timestamp_over_generator() {
         timestampFromGenerator = 10;
         String query = "INSERT INTO foo (k, v) VALUES (1, 1)";
-        session.execute(new SimpleStatement(query).setDefaultTimestamp(30));
+        session.execute(session.newSimpleStatement(query).setDefaultTimestamp(30));
 
         long writeTime = session.execute("SELECT writeTime(v) FROM foo WHERE k = 1").one().getLong(0);
         assertEquals(writeTime, 30);
@@ -102,8 +102,8 @@ public class QueryTimestampTest extends CCMBridge.PerClassSingleNodeCluster {
     @Test(groups = "short")
     public void should_apply_statement_timestamp_only_to_batched_queries_without_timestamp() {
         BatchStatement batch = new BatchStatement();
-        batch.add(new SimpleStatement("INSERT INTO foo (k, v) VALUES (1, 1)"));
-        batch.add(new SimpleStatement("INSERT INTO foo (k, v) VALUES (2, 1) USING TIMESTAMP 20"));
+        batch.add(session.newSimpleStatement("INSERT INTO foo (k, v) VALUES (1, 1)"));
+        batch.add(session.newSimpleStatement("INSERT INTO foo (k, v) VALUES (2, 1) USING TIMESTAMP 20"));
         batch.setDefaultTimestamp(10);
         session.execute(batch);
 
@@ -117,8 +117,8 @@ public class QueryTimestampTest extends CCMBridge.PerClassSingleNodeCluster {
     public void should_apply_generator_timestamp_only_to_batched_queries_without_timestamp() {
         timestampFromGenerator = 10;
         BatchStatement batch = new BatchStatement();
-        batch.add(new SimpleStatement("INSERT INTO foo (k, v) VALUES (1, 1)"));
-        batch.add(new SimpleStatement("INSERT INTO foo (k, v) VALUES (2, 1) USING TIMESTAMP 20"));
+        batch.add(session.newSimpleStatement("INSERT INTO foo (k, v) VALUES (1, 1)"));
+        batch.add(session.newSimpleStatement("INSERT INTO foo (k, v) VALUES (2, 1) USING TIMESTAMP 20"));
         session.execute(batch);
 
         long writeTime1 = session.execute("SELECT writeTime(v) FROM foo WHERE k = 1").one().getLong(0);
@@ -132,8 +132,8 @@ public class QueryTimestampTest extends CCMBridge.PerClassSingleNodeCluster {
         timestampFromGenerator = Long.MIN_VALUE;
         long clientTime = System.currentTimeMillis() * 1000;
         BatchStatement batch = new BatchStatement();
-        batch.add(new SimpleStatement("INSERT INTO foo (k, v) VALUES (1, 1)"));
-        batch.add(new SimpleStatement("INSERT INTO foo (k, v) VALUES (2, 1) USING TIMESTAMP 20"));
+        batch.add(session.newSimpleStatement("INSERT INTO foo (k, v) VALUES (1, 1)"));
+        batch.add(session.newSimpleStatement("INSERT INTO foo (k, v) VALUES (2, 1) USING TIMESTAMP 20"));
         session.execute(batch);
 
         long writeTime1 = session.execute("SELECT writeTime(v) FROM foo WHERE k = 1").one().getLong(0);
@@ -144,7 +144,7 @@ public class QueryTimestampTest extends CCMBridge.PerClassSingleNodeCluster {
 
     @Test(groups = "short")
     public void should_preserve_timestamp_when_retrying() {
-        SimpleStatement statement = new SimpleStatement("INSERT INTO foo (k, v) VALUES (1, 1)");
+        SimpleStatement statement = session.newSimpleStatement("INSERT INTO foo (k, v) VALUES (1, 1)");
         statement.setDefaultTimestamp(10);
         // This will fail since we test against a single-host cluster. The DowngradingConsistencyRetryPolicy
         // will retry it at ONE.

@@ -206,7 +206,7 @@ public abstract class QueryLogger implements LatencyTracker {
     protected volatile int maxLoggedParameters;
 
     /**
-     * Private constructor. Instances of QueryLogger should be obtained via the {@link #builder(Cluster)} method.
+     * Private constructor. Instances of QueryLogger should be obtained via the {@link #builder()} method.
      */
     private QueryLogger(int maxQueryStringLength, int maxParameterValueLength, int maxLoggedParameters) {
         this.maxQueryStringLength = maxQueryStringLength;
@@ -725,6 +725,8 @@ public abstract class QueryLogger implements LatencyTracker {
             valueStr = "NULL";
         } else {
             DataType type = definition.getType();
+            CodecRegistry codecRegistry = cluster.getConfiguration().getCodecRegistry();
+            TypeCodec<Object> codec = codecRegistry.codecFor(type);
             int maxParameterValueLength = this.maxParameterValueLength;
             if (type.equals(DataType.blob()) && maxParameterValueLength != -1) {
                 // prevent large blobs from being converted to strings
@@ -733,14 +735,14 @@ public abstract class QueryLogger implements LatencyTracker {
                 if (bufferTooLarge) {
                     raw = (ByteBuffer)raw.duplicate().limit(maxBufferLength);
                 }
-                Object value = type.deserialize(raw, protocolVersion());
-                valueStr = type.format(value);
+                Object value = codec.deserialize(raw, protocolVersion());
+                valueStr = codec.format(value);
                 if (bufferTooLarge) {
                     valueStr = valueStr + TRUNCATED_OUTPUT;
                 }
             } else {
-                Object value = type.deserialize(raw, protocolVersion());
-                valueStr = type.format(value);
+                Object value = codec.deserialize(raw, protocolVersion());
+                valueStr = codec.format(value);
                 if (maxParameterValueLength != -1 && valueStr.length() > maxParameterValueLength) {
                     valueStr = valueStr.substring(0, maxParameterValueLength) + TRUNCATED_OUTPUT;
                 }
@@ -766,7 +768,9 @@ public abstract class QueryLogger implements LatencyTracker {
             statement = ((StatementWrapper)statement).getWrappedStatement();
 
         if (statement instanceof RegularStatement) {
-            remaining = append(((RegularStatement)statement).getQueryString().trim(), buffer, remaining);
+            RegularStatement rs = (RegularStatement)statement;
+            String query = rs.getQueryString();
+            remaining = append(query.trim(), buffer, remaining);
         } else if (statement instanceof BoundStatement) {
             remaining = append(((BoundStatement)statement).preparedStatement().getQueryString().trim(), buffer, remaining);
         } else if (statement instanceof BatchStatement) {

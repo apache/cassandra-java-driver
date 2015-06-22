@@ -33,6 +33,7 @@ public class AggregateMetadataTest {
     // These tests needs a protocol version to (de)serialize INITCONDs. Since we're using basic types, I don't think the binary format
     // is going to change at any time in the future, so the actual version does not matter.
     private static final ProtocolVersion PROTOCOL_VERSION = ProtocolVersion.NEWEST_SUPPORTED;
+    private CodecRegistry codecRegistry = new CodecRegistry();
 
     KeyspaceMetadata keyspace;
 
@@ -46,7 +47,7 @@ public class AggregateMetadataTest {
         FunctionMetadata stateFunc = mock(FunctionMetadata.class);
         keyspace.functions.put("cat(text,int)", stateFunc);
 
-        AggregateMetadata aggregate = AggregateMetadata.build(keyspace, SYSTEM_ROW_CAT_TOS, PROTOCOL_VERSION);
+        AggregateMetadata aggregate = AggregateMetadata.build(keyspace, SYSTEM_ROW_CAT_TOS, PROTOCOL_VERSION, codecRegistry);
 
         assertThat(aggregate).isNotNull();
         assertThat(aggregate.getFullName()).isEqualTo("cat_tos(int)");
@@ -72,7 +73,7 @@ public class AggregateMetadataTest {
         FunctionMetadata stateFunc = mock(FunctionMetadata.class);
         keyspace.functions.put("inc(int)", stateFunc);
 
-        AggregateMetadata aggregate = AggregateMetadata.build(keyspace, SYSTEM_ROW_MYCOUNT, PROTOCOL_VERSION);
+        AggregateMetadata aggregate = AggregateMetadata.build(keyspace, SYSTEM_ROW_MYCOUNT, PROTOCOL_VERSION, codecRegistry);
 
         assertThat(aggregate).isNotNull();
         assertThat(aggregate.getFullName()).isEqualTo("mycount()");
@@ -100,7 +101,7 @@ public class AggregateMetadataTest {
         FunctionMetadata finalFunc = mock(FunctionMetadata.class);
         keyspace.functions.put("announce(int)", finalFunc);
 
-        AggregateMetadata aggregate = AggregateMetadata.build(keyspace, SYSTEM_ROW_PRETTYSUM, PROTOCOL_VERSION);
+        AggregateMetadata aggregate = AggregateMetadata.build(keyspace, SYSTEM_ROW_PRETTYSUM, PROTOCOL_VERSION, codecRegistry);
 
         assertThat(aggregate).isNotNull();
         assertThat(aggregate.getFullName()).isEqualTo("prettysum(int)");
@@ -127,7 +128,7 @@ public class AggregateMetadataTest {
         FunctionMetadata stateFunc = mock(FunctionMetadata.class);
         keyspace.functions.put("plus(int,int)", stateFunc);
 
-        AggregateMetadata aggregate = AggregateMetadata.build(keyspace, SYSTEM_ROW_SUM, PROTOCOL_VERSION);
+        AggregateMetadata aggregate = AggregateMetadata.build(keyspace, SYSTEM_ROW_SUM, PROTOCOL_VERSION, codecRegistry);
 
         assertThat(aggregate).isNotNull();
         assertThat(aggregate.getFullName()).isEqualTo("sum(int)");
@@ -151,13 +152,13 @@ public class AggregateMetadataTest {
     private static final String TEXT = "org.apache.cassandra.db.marshal.UTF8Type";
 
     private static final Row SYSTEM_ROW_CAT_TOS = mockRow("cat_tos", ImmutableList.of("int"), ImmutableList.of(INT),
-        null, DataType.text().serialize("0", PROTOCOL_VERSION), TEXT, "cat", TEXT);
+        null, TypeCodec.VarcharCodec.instance.serialize("0", PROTOCOL_VERSION), TEXT, "cat", TEXT);
 
     private static final Row SYSTEM_ROW_MYCOUNT = mockRow("mycount", Collections.<String>emptyList(), Collections.<String>emptyList(),
-        null, DataType.cint().serialize(0, PROTOCOL_VERSION), INT, "inc", INT);
+        null, TypeCodec.IntCodec.instance.serialize(0, PROTOCOL_VERSION), INT, "inc", INT);
 
     private static final Row SYSTEM_ROW_PRETTYSUM = mockRow("prettysum", ImmutableList.of("int"), ImmutableList.of(INT),
-        "announce", DataType.cint().serialize(0, PROTOCOL_VERSION), TEXT, "plus", INT);
+        "announce", TypeCodec.IntCodec.instance.serialize(0, PROTOCOL_VERSION), TEXT, "plus", INT);
 
     private static final Row SYSTEM_ROW_SUM = mockRow("sum", ImmutableList.of("int"), ImmutableList.of(INT),
         null, null, INT, "plus", INT);

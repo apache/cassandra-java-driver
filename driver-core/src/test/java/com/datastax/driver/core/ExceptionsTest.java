@@ -202,12 +202,12 @@ public class ExceptionsTest {
             c.session.execute("USE " + keyspace);
             c.session.execute(String.format("CREATE TABLE %s (k text PRIMARY KEY, t text, i int, f float)", table));
 
-            c.session.execute(new SimpleStatement(String.format(Locale.US, "INSERT INTO %s (k, t, i, f) VALUES ('%s', '%s', %d, %f)", table, key, "foo", 42, 24.03f)).setConsistencyLevel(ConsistencyLevel.ALL));
-            c.session.execute(new SimpleStatement(String.format(TestUtils.SELECT_ALL_FORMAT, table)).setConsistencyLevel(ConsistencyLevel.ALL));
+            c.session.execute(c.session.newSimpleStatement(String.format(Locale.US, "INSERT INTO %s (k, t, i, f) VALUES ('%s', '%s', %d, %f)", table, key, "foo", 42, 24.03f)).setConsistencyLevel(ConsistencyLevel.ALL));
+            c.session.execute(c.session.newSimpleStatement(String.format(TestUtils.SELECT_ALL_FORMAT, table)).setConsistencyLevel(ConsistencyLevel.ALL));
 
             c.cassandraCluster.forceStop(2);
             try{
-                c.session.execute(new SimpleStatement(String.format(TestUtils.SELECT_ALL_FORMAT, table)).setConsistencyLevel(ConsistencyLevel.ALL));
+                c.session.execute(c.session.newSimpleStatement(String.format(TestUtils.SELECT_ALL_FORMAT, table)).setConsistencyLevel(ConsistencyLevel.ALL));
             } catch (ReadTimeoutException e) {
                 assertEquals(e.getConsistencyLevel(), ConsistencyLevel.ALL);
                 assertEquals(e.getReceivedAcknowledgements(), 2);
@@ -318,15 +318,15 @@ public class ExceptionsTest {
             c.session.execute("USE " + keyspace);
             c.session.execute(String.format("CREATE TABLE %s (k text PRIMARY KEY, t text, i int, f float)", table));
 
-            c.session.execute(new SimpleStatement(String.format(Locale.US, "INSERT INTO %s (k, t, i, f) VALUES ('%s', '%s', %d, %f)", table, key, "foo", 42, 24.03f)).setConsistencyLevel(ConsistencyLevel.ALL));
-            c.session.execute(new SimpleStatement(String.format(TestUtils.SELECT_ALL_FORMAT, table)).setConsistencyLevel(ConsistencyLevel.ALL));
+            c.session.execute(c.session.newSimpleStatement(String.format(Locale.US, "INSERT INTO %s (k, t, i, f) VALUES ('%s', '%s', %d, %f)", table, key, "foo", 42, 24.03f)).setConsistencyLevel(ConsistencyLevel.ALL));
+            c.session.execute(c.session.newSimpleStatement(String.format(TestUtils.SELECT_ALL_FORMAT, table)).setConsistencyLevel(ConsistencyLevel.ALL));
 
             c.cassandraCluster.stop(2);
 
             waitForDownWithWait(CCMBridge.IP_PREFIX + '2', c.cluster, 10);
 
             try{
-                c.session.execute(new SimpleStatement(String.format(TestUtils.SELECT_ALL_FORMAT, table)).setConsistencyLevel(ConsistencyLevel.ALL));
+                c.session.execute(c.session.newSimpleStatement(String.format(TestUtils.SELECT_ALL_FORMAT, table)).setConsistencyLevel(ConsistencyLevel.ALL));
             } catch (UnavailableException e) {
                 String expectedError = String.format("Not enough replica available for query at consistency %s (%d required but only %d alive)", "ALL", 3, 2);
                 assertEquals(e.getMessage(), expectedError);
@@ -336,7 +336,7 @@ public class ExceptionsTest {
             }
 
             try{
-                c.session.execute(new SimpleStatement(String.format(Locale.US, "INSERT INTO %s (k, t, i, f) VALUES ('%s', '%s', %d, %f)", table, key, "foo", 42, 24.03f)).setConsistencyLevel(ConsistencyLevel.ALL));
+                c.session.execute(c.session.newSimpleStatement(String.format(Locale.US, "INSERT INTO %s (k, t, i, f) VALUES ('%s', '%s', %d, %f)", table, key, "foo", 42, 24.03f)).setConsistencyLevel(ConsistencyLevel.ALL));
             } catch (UnavailableException e) {
                 String expectedError = String.format("Not enough replica available for query at consistency %s (%d required but only %d alive)", "ALL", 3, 2);
                 assertEquals(e.getMessage(), expectedError);
@@ -371,12 +371,12 @@ public class ExceptionsTest {
             c.session.execute("USE " + keyspace);
             c.session.execute(String.format("CREATE TABLE %s (k text PRIMARY KEY, t text, i int, f float)", table));
 
-            c.session.execute(new SimpleStatement(String.format(Locale.US, "INSERT INTO %s (k, t, i, f) VALUES ('%s', '%s', %d, %f)", table, key, "foo", 42, 24.03f)).setConsistencyLevel(ConsistencyLevel.ALL));
-            c.session.execute(new SimpleStatement(String.format(TestUtils.SELECT_ALL_FORMAT, table)).setConsistencyLevel(ConsistencyLevel.ALL));
+            c.session.execute(c.session.newSimpleStatement(String.format(Locale.US, "INSERT INTO %s (k, t, i, f) VALUES ('%s', '%s', %d, %f)", table, key, "foo", 42, 24.03f)).setConsistencyLevel(ConsistencyLevel.ALL));
+            c.session.execute(c.session.newSimpleStatement(String.format(TestUtils.SELECT_ALL_FORMAT, table)).setConsistencyLevel(ConsistencyLevel.ALL));
 
             c.cassandraCluster.forceStop(2);
             try{
-                c.session.execute(new SimpleStatement(String.format(Locale.US, "INSERT INTO %s (k, t, i, f) VALUES ('%s', '%s', %d, %f)", table, key, "foo", 42, 24.03f)).setConsistencyLevel(ConsistencyLevel.ALL));
+                c.session.execute(c.session.newSimpleStatement(String.format(Locale.US, "INSERT INTO %s (k, t, i, f) VALUES ('%s', '%s', %d, %f)", table, key, "foo", 42, 24.03f)).setConsistencyLevel(ConsistencyLevel.ALL));
             } catch (WriteTimeoutException e) {
                 assertEquals(e.getConsistencyLevel(), ConsistencyLevel.ALL);
                 assertEquals(e.getReceivedAcknowledgements(), 2);
@@ -429,7 +429,7 @@ public class ExceptionsTest {
 
             try {
                 // Query with a CL of ALL to hit all replicas.
-                session.execute(new SimpleStatement(String.format(Locale.US, "INSERT INTO testtable (k, t, i, f) VALUES ('%s', '%s', %d, %f)", "1", "2", 3, 4.0f))
+                session.execute(session.newSimpleStatement(String.format(Locale.US, "INSERT INTO testtable (k, t, i, f) VALUES ('%s', '%s', %d, %f)", "1", "2", 3, 4.0f))
                         .setConsistencyLevel(ConsistencyLevel.ALL));
             } catch(WriteFailureException e) {
                 // Expect a failure for node configured to fail writes.

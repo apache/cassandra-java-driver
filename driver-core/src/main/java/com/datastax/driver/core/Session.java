@@ -110,7 +110,7 @@ public interface Session extends Closeable {
      *
      * @param query the CQL query to execute.
      * @param values values required for the execution of {@code query}. See
-     * {@link SimpleStatement#SimpleStatement(String, Object...)} for more detail.
+     * {@link #newSimpleStatement(String, Object...)} for more detail.
      * @return the result of the query. That result will never be null but can
      * be empty (and will be for any non SELECT query).
      *
@@ -172,7 +172,7 @@ public interface Session extends Closeable {
      *
      * @param query the CQL query to execute.
      * @param values values required for the execution of {@code query}. See
-     * {@link SimpleStatement#SimpleStatement(String, Object...)} for more detail.
+     * {@link #newSimpleStatement(String, Object...)} for more detail.
      * @return a future on the result of the query.
      *
      * @throws UnsupportedFeatureException if version 1 of the protocol
@@ -180,6 +180,68 @@ public interface Session extends Closeable {
      * or you use Cassandra 1.2).
      */
     public ResultSetFuture executeAsync(String query, Object... values);
+
+    /**
+     * Builds, but does not execute, a simple statement containing the provided query.
+     *
+     * Use this method when you want to customize certain aspects of the statement before
+     * executing it (fetch size, tracing...); you can then pass the statement to
+     * {@link #execute(Statement)}.
+     *
+     * @param query the CQL query to execute.
+     * @return the simple statement.
+     */
+    public SimpleStatement newSimpleStatement(String query);
+
+    /**
+     * Builds, but does not execute, a simple statement containing the provided query with
+     * the provided parameters.
+     *
+     * Use this method when you want to customize certain aspects of the statement before
+     * executing it (fetch size, tracing...); you can then pass the statement to
+     * {@link #execute(Statement)}.
+     * <p>
+     * Parameterized simple statements are useful when you want to execute a
+     * query only once (and thus do not want to resort to prepared statements), but
+     * do not want to convert all column values to string (typically, if you have blob
+     * values, encoding them to a hexadecimal string is not very efficient). In
+     * that case, you can provide a query string with bind marker to this method,
+     * along with the values for those bind variables. When executed, the server will
+     * prepare the provided query, bind the provided values to that prepare statement and
+     * execute the resulting statement. Thus,
+     * <pre>
+     *   session.execute(session.newSimpleStatement(query, value1, value2, value3));
+     * </pre>
+     * is functionally equivalent to
+     * <pre>
+     *   PreparedStatement ps = session.prepare(query);
+     *   session.execute(ps.bind(value1, value2, value3));
+     * </pre>
+     * except that the former version:
+     * <ul>
+     *   <li>Requires only one round-trip to a Cassandra node.</li>
+     *   <li>Does not leave any prepared statement stored in memory (neither client or
+     *   server side) once it has been executed.</li>
+     * </ul>
+     * <p>
+     * Note that the type of the {@code values} provided to this method will
+     * not be validated by the driver as is done by {@link BoundStatement#bind} since
+     * {@code query} is not parsed (and hence the driver cannot know what those value
+     * should be). The codec to serialize each value will be chosen in the codec registry
+     * associated with this session's cluster, based on the value's Java type
+     * (this is the equivalent to calling {@link CodecRegistry#codecFor(Object)}).
+     * If too many or too few values are provided, or if a value is not a valid one for
+     * the variable it is bound to, an
+     * {@link com.datastax.driver.core.exceptions.InvalidQueryException} will be thrown
+     * by Cassandra at execution time. A {@code CodecNotFoundException} may be
+     * thrown by this constructor however, if the codec registry does not know how to
+     * handle one of the values.
+     *
+     * @param query the CQL query to execute.
+     * @param values values required for the execution of {@code query}.
+     * @return the simple statement.
+     */
+    public SimpleStatement newSimpleStatement(String query, Object... values);
 
     /**
      * Executes the provided query asynchronously.

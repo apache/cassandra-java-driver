@@ -18,12 +18,28 @@ package com.datastax.driver.core;
 import java.util.Collections;
 import java.util.List;
 
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 public class SimpleStatementTest {
+    Cluster cluster;
+    CodecRegistry codecRegistry = new CodecRegistry();
+
+    @BeforeClass(groups = "unit")
+    public void setup() {
+        cluster = mock(Cluster.class);
+        Configuration configuration = mock(Configuration.class);
+        when(cluster.getConfiguration()).thenReturn(configuration);
+        ProtocolOptions protocolOptions = mock(ProtocolOptions.class);
+        when(configuration.getProtocolOptions()).thenReturn(protocolOptions);
+    }
+
     @Test(groups = "unit", expectedExceptions = { IllegalArgumentException.class })
     public void should_fail_if_too_many_variables() {
         List<Object> args = Collections.nCopies(1 << 16, (Object)1);
-        new SimpleStatement("mock query", args.toArray());
+        new SimpleStatement("mock query", cluster, args.toArray());
     }
 }

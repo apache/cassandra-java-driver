@@ -25,6 +25,7 @@ import com.google.common.base.Objects;
 import com.datastax.driver.core.TableMetadata;
 import com.datastax.driver.core.querybuilder.Delete;
 import com.datastax.driver.core.querybuilder.Insert;
+import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.querybuilder.Select;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
@@ -62,11 +63,12 @@ class QueryType {
     }
 
     String makePreparedQueryString(TableMetadata table, EntityMapper<?> mapper, MappingManager manager, Set<ColumnMapper<?>> columns, Collection<Mapper.Option> options) {
+        QueryBuilder builder = new QueryBuilder(manager.getSession().getCluster());
         switch (kind) {
             case SAVE: {
                 Insert insert = table == null
-                    ? insertInto(mapper.getKeyspace(), mapper.getTable())
-                    : insertInto(table);
+                    ? builder.insertInto(mapper.getKeyspace(), mapper.getTable())
+                    : builder.insertInto(table);
                 for (ColumnMapper<?> cm : columns)
                     if (cm.kind != ColumnMapper.Kind.COMPUTED)
                         insert.value(cm.getColumnName(), bindMarker());
@@ -80,7 +82,7 @@ class QueryType {
                 return insert.toString();
             }
             case GET: {
-                Select.Selection selection = select();
+                Select.Selection selection = builder.select();
                 for (ColumnMapper cm : mapper.allColumns()) {
                     Select.SelectionOrAlias column = (cm.kind == ColumnMapper.Kind.COMPUTED)
                         ? ((Select.SelectionOrAlias)selection).raw(cm.getColumnName())
@@ -108,8 +110,8 @@ class QueryType {
             }
             case DEL: {
                 Delete delete = table == null
-                    ? delete().all().from(mapper.getKeyspace(), mapper.getTable())
-                    : delete().all().from(table);
+                    ? builder.delete().all().from(mapper.getKeyspace(), mapper.getTable())
+                    : builder.delete().all().from(table);
                 Delete.Where where = delete.where();
                 for (int i = 0; i < mapper.primaryKeySize(); i++)
                     where.and(eq(mapper.getPrimaryKeyColumn(i).getColumnName(), bindMarker()));
@@ -124,8 +126,8 @@ class QueryType {
             case SLICE:
             case REVERSED_SLICE: {
                 Select select = table == null
-                    ? select().all().from(mapper.getKeyspace(), mapper.getTable())
-                    : select().all().from(table);
+                    ? builder.select().all().from(mapper.getKeyspace(), mapper.getTable())
+                    : builder.select().all().from(table);
                 Select.Where where = select.where();
                 for (int i = 0; i < mapper.partitionKeys.size(); i++)
                     where.and(eq(mapper.partitionKeys.get(i).getColumnName(), bindMarker()));

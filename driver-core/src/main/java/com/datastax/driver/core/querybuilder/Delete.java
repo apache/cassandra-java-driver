@@ -18,6 +18,8 @@ package com.datastax.driver.core.querybuilder;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.CodecRegistry;
 import com.datastax.driver.core.TableMetadata;
 
 /**
@@ -32,8 +34,8 @@ public class Delete extends BuiltStatement {
     private final Conditions conditions;
     private boolean ifExists;
 
-    Delete(String keyspace, String table, List<Selector> columns) {
-        super(keyspace);
+    Delete(Cluster cluster, String keyspace, String table, List<Selector> columns) {
+        super(keyspace, cluster);
         this.table = table;
         this.columns = columns;
         this.where = new Where(this);
@@ -41,8 +43,8 @@ public class Delete extends BuiltStatement {
         this.conditions = new Conditions(this);
     }
 
-    Delete(TableMetadata table, List<Selector> columns) {
-        super(table);
+    Delete(Cluster cluster, TableMetadata table, List<Selector> columns) {
+        super(table, cluster);
         this.table = escapeId(table.getName());
         this.columns = columns;
         this.where = new Where(this);
@@ -54,9 +56,10 @@ public class Delete extends BuiltStatement {
     StringBuilder buildQueryString(List<Object> variables) {
         StringBuilder builder = new StringBuilder();
 
+        CodecRegistry codecRegistry = getCodecRegistry();
         builder.append("DELETE");
         if (!columns.isEmpty())
-            Utils.joinAndAppend(builder.append(" "), ",", columns, variables);
+            Utils.joinAndAppend(builder.append(" "), codecRegistry, ",", columns, variables);
 
         builder.append(" FROM ");
         if (keyspace != null)
@@ -64,12 +67,12 @@ public class Delete extends BuiltStatement {
         Utils.appendName(table, builder);
         if (!usings.usings.isEmpty()) {
             builder.append(" USING ");
-            Utils.joinAndAppend(builder, " AND ", usings.usings, variables);
+            Utils.joinAndAppend(builder, codecRegistry, " AND ", usings.usings, variables);
         }
 
         if (!where.clauses.isEmpty()) {
             builder.append(" WHERE ");
-            Utils.joinAndAppend(builder, " AND ", where.clauses, variables);
+            Utils.joinAndAppend(builder, codecRegistry, " AND ", where.clauses, variables);
         }
 
         if (ifExists) {
@@ -78,7 +81,7 @@ public class Delete extends BuiltStatement {
 
         if (!conditions.conditions.isEmpty()) {
             builder.append(" IF ");
-            Utils.joinAndAppend(builder, " AND ", conditions.conditions, variables);
+            Utils.joinAndAppend(builder, codecRegistry, " AND ", conditions.conditions, variables);
         }
 
         return builder;
@@ -274,12 +277,16 @@ public class Delete extends BuiltStatement {
      */
     public static class Builder {
 
+        private final Cluster cluster;
+
         List<Selector> columns = new ArrayList<Selector>();
 
-        Builder() {
+        Builder(Cluster cluster) {
+            this.cluster = cluster;
         }
 
-        Builder(String... columnNames) {
+        Builder(Cluster cluster, String... columnNames) {
+            this.cluster = cluster;
             for (String columnName : columnNames) {
                 this.columns.add(new Selector(columnName));
             }
@@ -303,7 +310,7 @@ public class Delete extends BuiltStatement {
          * @return a newly built DELETE statement that deletes from {@code keyspace.table}.
          */
         public Delete from(String keyspace, String table) {
-            return new Delete(keyspace, table, columns);
+            return new Delete(cluster, keyspace, table, columns);
         }
 
         /**
@@ -313,7 +320,7 @@ public class Delete extends BuiltStatement {
          * @return a newly built DELETE statement that deletes from {@code table}.
          */
         public Delete from(TableMetadata table) {
-            return new Delete(table, columns);
+            return new Delete(cluster, table, columns);
         }
     }
 
@@ -321,6 +328,10 @@ public class Delete extends BuiltStatement {
      * An column selection clause for an in-construction DELETE statement.
      */
     public static class Selection extends Builder {
+
+        Selection(Cluster cluster) {
+            super(cluster);
+        }
 
         /**
          * Deletes all columns (i.e. "DELETE FROM ...")
@@ -424,7 +435,7 @@ public class Delete extends BuiltStatement {
         }
 
         @Override
-        void appendTo(StringBuilder sb, List<Object> values) {
+        void appendTo(StringBuilder sb, List<Object> values, CodecRegistry codecRegistry) {
             Utils.appendName(columnName, sb);
         }
 
@@ -435,9 +446,7 @@ public class Delete extends BuiltStatement {
 
         @Override
         public String toString() {
-            StringBuilder sb = new StringBuilder();
-            appendTo(sb, new ArrayList<Object>());
-            return sb.toString();
+            return columnName;
         }
     }
 
@@ -454,10 +463,10 @@ public class Delete extends BuiltStatement {
         }
 
         @Override
-        void appendTo(StringBuilder sb, List<Object> values) {
-            super.appendTo(sb, values);
+        void appendTo(StringBuilder sb, List<Object> values, CodecRegistry codecRegistry) {
+            super.appendTo(sb, values, codecRegistry);
             sb.append('[');
-            Utils.appendValue(key, sb);
+            Utils.appendValue(key, codecRegistry, sb, values);
             sb.append(']');
         }
 

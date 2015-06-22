@@ -82,7 +82,7 @@ public class Metadata {
                     l = new HashMap<String, ColumnMetadata.Raw>();
                     colsByCf.put(cfName, l);
                 }
-                ColumnMetadata.Raw c = ColumnMetadata.Raw.fromRow(row, cassandraVersion);
+                ColumnMetadata.Raw c = ColumnMetadata.Raw.fromRow(row, cassandraVersion, cluster.protocolVersion(), cluster.configuration.getCodecRegistry());
                 l.put(c.name, c);
             }
         }
@@ -92,16 +92,16 @@ public class Metadata {
             Set<String> addedKs = new HashSet<String>();
             for (Row ksRow : ks) {
                 String ksName = ksRow.getString(KeyspaceMetadata.KS_NAME);
-                KeyspaceMetadata ksm = KeyspaceMetadata.build(ksRow, udtDefs.get(ksName));
+                KeyspaceMetadata ksm = KeyspaceMetadata.build(ksRow, udtDefs.get(ksName), cluster.protocolVersion(), cluster.configuration.getCodecRegistry());
 
                 if (cfDefs.containsKey(ksName)) {
                     buildTableMetadata(ksm, cfDefs.get(ksName), colsDefs.get(ksName), cassandraVersion);
                 }
                 if (functionDefs.containsKey(ksName)) {
-                    buildFunctionMetadata(ksm, functionDefs.get(ksName));
+                    buildFunctionMetadata(ksm, functionDefs.get(ksName), cluster.protocolVersion(), cluster.configuration.getCodecRegistry());
                 }
                 if (aggregateDefs.containsKey(ksName)) {
-                    buildAggregateMetadata(ksm, aggregateDefs.get(ksName), cluster.protocolVersion());
+                    buildAggregateMetadata(ksm, aggregateDefs.get(ksName), cluster.protocolVersion(), cluster.configuration.getCodecRegistry());
                 }
                 addedKs.add(ksName);
                 keyspaces.put(ksName, ksm);
@@ -135,15 +135,15 @@ public class Metadata {
                     break;
                 case TYPE:
                     if (udtDefs.containsKey(targetKeyspace))
-                        ksm.addUserTypes(udtDefs.get(targetKeyspace));
+                        ksm.addUserTypes(udtDefs.get(targetKeyspace), cluster.protocolVersion(), cluster.configuration.getCodecRegistry());
                     break;
                 case FUNCTION:
                     if (functionDefs.containsKey(targetKeyspace))
-                        buildFunctionMetadata(ksm, functionDefs.get(targetKeyspace));
+                        buildFunctionMetadata(ksm, functionDefs.get(targetKeyspace), cluster.protocolVersion(), cluster.configuration.getCodecRegistry());
                     break;
                 case AGGREGATE:
                     if (functionDefs.containsKey(targetKeyspace))
-                        buildAggregateMetadata(ksm, aggregateDefs.get(targetKeyspace), cluster.protocolVersion());
+                        buildAggregateMetadata(ksm, aggregateDefs.get(targetKeyspace), cluster.protocolVersion(), cluster.configuration.getCodecRegistry());
                     break;
                 default:
                     logger.warn("Unexpected element type to rebuild: {}", targetType);
@@ -192,7 +192,7 @@ public class Metadata {
                         cols = Collections.<String, ColumnMetadata.Raw>emptyMap();
                     }
                 }
-                TableMetadata.build(ksm, cfRow, cols, cassandraVersion);
+                TableMetadata.build(ksm, cfRow, cols, cassandraVersion, cluster.protocolVersion(), cluster.configuration.getCodecRegistry());
             } catch (RuntimeException e) {
                 // See ControlConnection#refreshSchema for why we'd rather not probably this further
                 logger.error(String.format("Error parsing schema for table %s.%s: "
@@ -202,14 +202,14 @@ public class Metadata {
         }
     }
 
-    private void buildFunctionMetadata(KeyspaceMetadata ksm, List<Row> rows) {
+    private void buildFunctionMetadata(KeyspaceMetadata ksm, List<Row> rows, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
         for (Row row : rows)
-            FunctionMetadata.build(ksm, row);
+            FunctionMetadata.build(ksm, row, protocolVersion, codecRegistry);
     }
 
-    private void buildAggregateMetadata(KeyspaceMetadata ksm, List<Row> rows, ProtocolVersion protocolVersion) {
+    private void buildAggregateMetadata(KeyspaceMetadata ksm, List<Row> rows, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
         for (Row row : rows)
-            AggregateMetadata.build(ksm, row, protocolVersion);
+            AggregateMetadata.build(ksm, row, protocolVersion, codecRegistry);
     }
 
 
@@ -483,6 +483,16 @@ public class Metadata {
             sb.append(ksm.exportAsString()).append('\n');
 
         return sb.toString();
+    }
+
+    /**
+     * Creates a tuple type given a list of types.
+     *
+     * @param types the types for the tuple type.
+     * @return the newly created tuple type.
+     */
+    public TupleType newTupleType(DataType... types) {
+        return new TupleType(Arrays.asList(types), cluster.protocolVersion(), cluster.configuration.getCodecRegistry());
     }
 
     /**

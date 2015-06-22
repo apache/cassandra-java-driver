@@ -43,15 +43,11 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <cassandra.version>2.2.0-rc2</cassandra.version>
+    <cassandra.version>2.2.0</cassandra.version>
     <java.version>1.6</java.version>
     <log4j.version>1.2.17</log4j.version>
     <slf4j-log4j12.version>1.7.6</slf4j-log4j12.version>
-    <!--
-      We use an old version of Guava to be compatible with Spark 1.1.
-      Check with the spark-cassandra-connector team before upgrading this.
-    -->
-    <guava.version>14.0.1</guava.version>
+    <guava.version>16.0.1</guava.version>
     <netty.version>4.0.27.Final</netty.version>
     <metrics.version>3.0.2</metrics.version>
     <snappy.version>1.0.5</snappy.version>

@@ -15,6 +15,8 @@
  */
 package com.datastax.driver.mapping;
 
+import com.google.common.reflect.TypeToken;
+
 /**
  * The types of way to persist a JAVA Enum.
  */
@@ -25,7 +27,15 @@ public enum EnumType {
      * Note that this relies on the order of the values in source code, and will change
      * if values are added/removed before existing ones.
      */
-    ORDINAL,
+    ORDINAL(Integer.class),
     /** Persists enumeration values using the string they have been declared with. */
-    STRING
+    STRING(String.class);
+
+    @SuppressWarnings("unchecked")
+    EnumType(Class<?> klass) {
+        this.pivotType = (TypeToken<Object>)TypeToken.of(klass);
+    }
+
+    /** The type enum constants will be turned into before being saved */
+    final TypeToken<Object> pivotType;
 }

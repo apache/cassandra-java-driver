@@ -19,6 +19,8 @@ import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.regex.Pattern;
 
+import com.google.common.base.Joiner;
+
 import com.datastax.driver.core.exceptions.DriverInternalError;
 
 /**
@@ -72,6 +74,11 @@ class ArrayBackedRow extends AbstractGettableData implements Row {
     }
 
     @Override
+    protected CodecRegistry getCodecRegistry() {
+        return metadata.getCodecRegistry();
+    }
+
+    @Override
     protected int getIndexOf(String name) {
         return metadata.getFirstIdx(name);
     }
@@ -81,7 +88,7 @@ class ArrayBackedRow extends AbstractGettableData implements Row {
         if (tokenFactory == null)
             throw new DriverInternalError("Token factory not set. This should only happen at initialization time");
 
-        metadata.checkType(i, tokenFactory.getTokenType().getName());
+        checkType(i, tokenFactory.getTokenType().getName());
 
         ByteBuffer value = data.get(i);
         if (value == null || value.remaining() == 0)
@@ -116,7 +123,7 @@ class ArrayBackedRow extends AbstractGettableData implements Row {
             if (bb == null)
                 sb.append("NULL");
             else
-                sb.append(metadata.getType(i).codec(protocolVersion).deserialize(bb).toString());
+                sb.append(getCodecRegistry().codecFor(metadata.getType(i)).deserialize(bb, protocolVersion).toString());
         }
         sb.append(']');
         return sb.toString();

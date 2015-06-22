@@ -15,7 +15,6 @@
  */
 package com.datastax.driver.mapping;
 
-import java.nio.ByteBuffer;
 import java.util.*;
 
 import com.datastax.driver.core.*;
@@ -47,11 +46,29 @@ public class Result<T> implements Iterable<T> {
             String name = cm.getAlias() != null && this.useAlias ? cm.getAlias() : cm.getColumnName();
             if (!row.getColumnDefinitions().contains(name))
                 continue;
-            ByteBuffer bytes = row.getBytesUnsafe(name);
-            if (bytes != null)
-                cm.setValue(entity, cm.getDataType().deserialize(bytes, protocolVersion));
+
+            Object value;
+            TypeCodec<Object> customCodec = cm.getCustomCodec();
+            if (customCodec != null)
+                value = row.get(name, customCodec);
+            else
+                value = row.get(name, cm.getPivotType());
+
+            if (shouldSetValue(value)) {
+                cm.setValue(entity, value);
+            }
         }
         return entity;
+    }
+
+    private static boolean shouldSetValue(Object value) {
+        if (value == null)
+            return false;
+        if(value instanceof Collection)
+            return !((Collection)value).isEmpty();
+        if(value instanceof Map)
+            return !((Map)value).isEmpty();
+        return true;
     }
 
     /**

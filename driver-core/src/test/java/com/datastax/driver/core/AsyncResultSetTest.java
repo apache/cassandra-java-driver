@@ -57,7 +57,7 @@ public class AsyncResultSetTest extends CCMBridge.PerClassSingleNodeCluster {
         for (int i = 0; i < totalCount; i++)
             session.execute(String.format("insert into ints (i) values (%d)", i));
 
-        Statement statement = new SimpleStatement("select * from ints").setFetchSize(fetchSize);
+        Statement statement = session.newSimpleStatement("select * from ints").setFetchSize(fetchSize);
         ResultsAccumulator results = new ResultsAccumulator();
 
         ListenableFuture<ResultSet> future = Futures.transform(

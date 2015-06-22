@@ -33,46 +33,32 @@ import com.datastax.driver.core.policies.Policies;
  */
 public class Configuration {
 
-    private final Policies policies;
+    /**
+     * Returns a builder to create a new {@code Configuration} object.
+     *
+     * @return the builder.
+     */
+    public static Builder builder() {
+        return new Builder();
+    }
 
+    private final Policies policies;
     private final ProtocolOptions protocolOptions;
     private final PoolingOptions poolingOptions;
     private final SocketOptions socketOptions;
     private final MetricsOptions metricsOptions;
     private final QueryOptions queryOptions;
     private final NettyOptions nettyOptions;
+    private final CodecRegistry codecRegistry;
 
-    /*
-     * Creates a configuration object.
-     */
-    public Configuration() {
-        this(Policies.builder().build(),
-             new ProtocolOptions(),
-             new PoolingOptions(),
-             new SocketOptions(),
-             new MetricsOptions(),
-             new QueryOptions(),
-             NettyOptions.DEFAULT_INSTANCE);
-    }
-
-    /**
-     * Creates a configuration with the specified parameters.
-     * 
-     * @param policies the policies to use
-     * @param protocolOptions the protocol options to use
-     * @param poolingOptions the pooling options to use
-     * @param socketOptions the socket options to use
-     * @param metricsOptions the metrics options, or null to disable metrics.
-     * @param queryOptions defaults related to queries.
-     * @param nettyOptions the {@link NettyOptions} instance to use
-     */
-    public Configuration(Policies policies,
+    private Configuration(Policies policies,
                          ProtocolOptions protocolOptions,
                          PoolingOptions poolingOptions,
                          SocketOptions socketOptions,
                          MetricsOptions metricsOptions,
                          QueryOptions queryOptions,
-                         NettyOptions nettyOptions) {
+                         NettyOptions nettyOptions,
+                         CodecRegistry codecRegistry) {
         this.policies = policies;
         this.protocolOptions = protocolOptions;
         this.poolingOptions = poolingOptions;
@@ -80,6 +66,7 @@ public class Configuration {
         this.metricsOptions = metricsOptions;
         this.queryOptions = queryOptions;
         this.nettyOptions = nettyOptions;
+        this.codecRegistry = codecRegistry;
     }
 
     void register(Cluster.Manager manager) {
@@ -151,5 +138,126 @@ public class Configuration {
      */
     public NettyOptions getNettyOptions() {
         return nettyOptions;
+    }
+
+    /**
+     * Returns the {@link CodecRegistry} instance for this configuration.
+     * @return the {@link CodecRegistry} instance for this configuration.
+     */
+    public CodecRegistry getCodecRegistry() {
+        return codecRegistry;
+    }
+
+    /**
+     * A builder to create a new {@code Configuration} object.
+     */
+    public static class Builder {
+        private Policies policies;
+        private ProtocolOptions protocolOptions;
+        private PoolingOptions poolingOptions;
+        private SocketOptions socketOptions;
+        private MetricsOptions metricsOptions;
+        private QueryOptions queryOptions;
+        private NettyOptions nettyOptions;
+        private CodecRegistry codecRegistry;
+
+        /**
+         * Sets the policies for this cluster.
+         * @param policies the policies.
+         * @return this builder.
+         */
+        public Builder withPolicies(Policies policies) {
+            this.policies = policies;
+            return this;
+        }
+
+        /**
+         * Sets the protocol options for this cluster.
+         * @param protocolOptions the protocol options.
+         * @return this builder.
+         */
+        public Builder withProtocolOptions(ProtocolOptions protocolOptions) {
+            this.protocolOptions = protocolOptions;
+            return this;
+        }
+
+        /**
+         * Sets the pooling options for this cluster.
+         * @param poolingOptions the pooling options.
+         * @return this builder.
+         */
+        public Builder withPoolingOptions(PoolingOptions poolingOptions) {
+            this.poolingOptions = poolingOptions;
+            return this;
+        }
+
+        /**
+         * Sets the socket options for this cluster.
+         * @param socketOptions the socket options.
+         * @return this builder.
+         */
+        public Builder withSocketOptions(SocketOptions socketOptions) {
+            this.socketOptions = socketOptions;
+            return this;
+        }
+        
+        /**
+         * Sets the metrics options for this cluster.
+         * @param metricsOptions the metrics options.
+         * @return this builder.
+         */
+        public Builder withMetricsOptions(MetricsOptions metricsOptions) {
+            this.metricsOptions = metricsOptions;
+            return this;
+        }
+        
+        /**
+         * Sets the query options for this cluster.
+         * @param queryOptions the query options.
+         * @return this builder.
+         */
+        public Builder withQueryOptions(QueryOptions queryOptions) {
+            this.queryOptions = queryOptions;
+            return this;
+        }
+        
+        /**
+         * Sets the Netty options for this cluster.
+         * @param nettyOptions the Netty options.
+         * @return this builder.
+         */
+        public Builder withNettyOptions(NettyOptions nettyOptions) {
+            this.nettyOptions = nettyOptions;
+            return this;
+        }
+
+        /**
+         * Sets the codec registry for this cluster.
+         * @param codecRegistry the codec registry.
+         * @return this builder.
+         */
+        public Builder withCodecRegistry(CodecRegistry codecRegistry) {
+            this.codecRegistry = codecRegistry;
+            return this;
+        }
+
+        /**
+         * Builds the final object from this builder.
+         * <p>
+         * Any field that hasn't been set explicitly will get its default value.
+         *
+         * @return the object.
+         */
+        public Configuration build() {
+            return new Configuration(
+                policies != null ? policies : Policies.builder().build(),
+                protocolOptions != null ? protocolOptions : new ProtocolOptions(),
+                poolingOptions != null ? poolingOptions : new PoolingOptions(),
+                socketOptions != null ? socketOptions : new SocketOptions(),
+                metricsOptions != null ? metricsOptions : new MetricsOptions(),
+                queryOptions != null ? queryOptions : new QueryOptions(),
+                nettyOptions != null ? nettyOptions : NettyOptions.DEFAULT_INSTANCE,
+                codecRegistry != null ? codecRegistry : new CodecRegistry());
+        }
     }
 }

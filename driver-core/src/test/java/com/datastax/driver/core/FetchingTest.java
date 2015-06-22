@@ -43,7 +43,7 @@ public class FetchingTest extends CCMBridge.PerClassSingleNodeCluster {
             for (int i = 0; i < 100; i++)
                 session.execute(String.format("INSERT INTO test (k, v) VALUES ('%s', %d)", key, i));
 
-            SimpleStatement st = new SimpleStatement(String.format("SELECT v FROM test WHERE k='%s'", key));
+            SimpleStatement st = session.newSimpleStatement(String.format("SELECT v FROM test WHERE k='%s'", key));
             st.setFetchSize(5); // Ridiculously small fetch size for testing purpose. Don't do at home.
             ResultSet rs = session.execute(st);
 

@@ -9,6 +9,8 @@
 - [improvement] Make ResultSet#fetchMoreResult return a
   ListenableFuture<ResultSet> (JAVA-836)
 - [improvement] Disable frozen checks in mapper (JAVA-843)
+- [improvement] Allow user to register custom type codecs (JAVA-721)
+- [improvement] Support custom type codecs in mapper (JAVA-722)
 
 Merged from 2.1 branch:
 

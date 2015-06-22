@@ -98,15 +98,15 @@ public class TableMetadata {
         this.cassandraVersion = cassandraVersion;
     }
 
-    static TableMetadata build(KeyspaceMetadata ksm, Row row, Map<String, ColumnMetadata.Raw> rawCols, VersionNumber cassandraVersion) {
+    static TableMetadata build(KeyspaceMetadata ksm, Row row, Map<String, ColumnMetadata.Raw> rawCols, VersionNumber cassandraVersion, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
 
         String name = row.getString(CF_NAME);
         UUID id = (cassandraVersion.getMajor() > 2 || (cassandraVersion.getMajor() == 2 && cassandraVersion.getMinor() >= 1))
                 ? row.getUUID(CF_ID)
                 : null;
 
-        CassandraTypeParser.ParseResult keyValidator = CassandraTypeParser.parseWithComposite(row.getString(KEY_VALIDATOR));
-        CassandraTypeParser.ParseResult comparator = CassandraTypeParser.parseWithComposite(row.getString(COMPARATOR));
+        CassandraTypeParser.ParseResult keyValidator = CassandraTypeParser.parseWithComposite(row.getString(KEY_VALIDATOR), protocolVersion, codecRegistry);
+        CassandraTypeParser.ParseResult comparator = CassandraTypeParser.parseWithComposite(row.getString(COMPARATOR), protocolVersion, codecRegistry);
         List<String> columnAliases = cassandraVersion.getMajor() >= 2 || row.getString(COLUMN_ALIASES) == null
                                    ? Collections.<String>emptyList()
                                    : SimpleJSONParser.parseStringList(row.getString(COLUMN_ALIASES));
@@ -159,7 +159,7 @@ public class TableMetadata {
             // We have a value alias if we're dense
             if (isDense) {
                 String alias = row.isNull(VALUE_ALIAS) ? DEFAULT_VALUE_ALIAS : row.getString(VALUE_ALIAS);
-                DataType type = CassandraTypeParser.parseOne(row.getString(VALIDATOR));
+                DataType type = CassandraTypeParser.parseOne(row.getString(VALIDATOR), protocolVersion, codecRegistry);
                 otherColumns.add(ColumnMetadata.forAlias(tm, alias, type));
             }
         }

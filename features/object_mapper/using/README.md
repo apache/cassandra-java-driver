@@ -175,24 +175,6 @@ and `isExhausted()`. Note that iterating the `Result` will consume the
 
 [Result]: http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/mapping/Result.html
 
-### UDT Mappers
-
-A UDT will be automatically mapped when it is part of a table-level
-class (as shown [here](../creating/#mapping-user-types)).
-
-However, there might be cases where it is useful to convert a mapped
-instance to the corresponding [UDTValue][UDTValue] (and back). The
-mapper provides an [UDTMapper] for that purpose:
-
-```java
-UDTMapper<Address> addressMapper = manager.getUDTMapper(Address.class);
-Address address = addressMapper.fromUDT(udtValue);
-UDTValue value = addressMapper.toUDT(address);
-```
-
-[UDTValue]: http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/UDTValue.html
-[UDTMapper]: http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/mapping/UDTMapper.html
-
 ### Accessors
 
 `Accessor`s provide a way to map custom queries not supported by the

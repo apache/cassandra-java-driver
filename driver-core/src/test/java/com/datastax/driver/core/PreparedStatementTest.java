@@ -128,7 +128,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
             session.execute(setBoundValue(bs, name, type, getFixedValue(type)));
 
             Row row = session.execute(String.format("SELECT %s FROM %s WHERE k='prepared_native'", name, ALL_NATIVE_TABLE)).one();
-            assertEquals(getValue(row, name, type), getFixedValue(type), "For type " + type);
+            assertEquals(getValue(row, name, type, cluster.getConfiguration().getCodecRegistry()), getFixedValue(type), "For type " + type);
         }
     }
 
@@ -149,7 +149,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
             session.execute(setBoundValue(bs, name, type, getFixedValue2(type)));
 
             Row row = session.execute(String.format("SELECT %s FROM %s WHERE k='prepared_native'", name, ALL_NATIVE_TABLE)).one();
-            assertEquals(getValue(row, name, type), getFixedValue2(type), "For type " + type);
+            assertEquals(getValue(row, name, type, cluster.getConfiguration().getCodecRegistry()), getFixedValue2(type), "For type " + type);
         }
     }
 
@@ -170,7 +170,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
             session.execute(setBoundValue(bs, name, type, value));
 
             Row row = session.execute(String.format("SELECT %s FROM %s WHERE k='prepared_list'", name, ALL_LIST_TABLE)).one();
-            assertEquals(getValue(row, name, type), value, "For type " + type);
+            assertEquals(getValue(row, name, type, cluster.getConfiguration().getCodecRegistry()), value, "For type " + type);
         }
     }
 
@@ -194,7 +194,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
             session.execute(setBoundValue(bs, name, type, value));
 
             Row row = session.execute(String.format("SELECT %s FROM %s WHERE k='prepared_list'", name, ALL_LIST_TABLE)).one();
-            assertEquals(getValue(row, name, type), value, "For type " + type);
+            assertEquals(getValue(row, name, type, cluster.getConfiguration().getCodecRegistry()), value, "For type " + type);
         }
     }
 
@@ -215,7 +215,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
             session.execute(setBoundValue(bs, name, type, value));
 
             Row row = session.execute(String.format("SELECT %s FROM %s WHERE k='prepared_set'", name, ALL_SET_TABLE)).one();
-            assertEquals(getValue(row, name, type), value, "For type " + type);
+            assertEquals(getValue(row, name, type, cluster.getConfiguration().getCodecRegistry()), value, "For type " + type);
         }
     }
 
@@ -239,7 +239,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
             session.execute(setBoundValue(bs, name, type, value));
 
             Row row = session.execute(String.format("SELECT %s FROM %s WHERE k='prepared_set'", name, ALL_SET_TABLE)).one();
-            assertEquals(getValue(row, name, type), value, "For type " + type);
+            assertEquals(getValue(row, name, type, cluster.getConfiguration().getCodecRegistry()), value, "For type " + type);
         }
     }
 
@@ -265,7 +265,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
                 session.execute(setBoundValue(bs, name, type, value));
 
                 Row row = session.execute(String.format("SELECT %s FROM %s WHERE k='prepared_map'", name, ALL_MAP_TABLE)).one();
-                assertEquals(getValue(row, name, type), value, "For type " + type);
+                assertEquals(getValue(row, name, type, cluster.getConfiguration().getCodecRegistry()), value, "For type " + type);
             }
         }
     }
@@ -295,7 +295,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
                 session.execute(setBoundValue(bs, name, type, value));
 
                 Row row = session.execute(String.format("SELECT %s FROM %s WHERE k='prepared_map'", name, ALL_MAP_TABLE)).one();
-                assertEquals(getValue(row, name, type), value, "For type " + type);
+                assertEquals(getValue(row, name, type, cluster.getConfiguration().getCodecRegistry()), value, "For type " + type);
             }
         }
     }
@@ -368,7 +368,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
     @Test(groups = "short")
     public void prepareStatementInheritPropertiesTest() {
 
-        RegularStatement toPrepare = new SimpleStatement("SELECT * FROM test WHERE k=?");
+        RegularStatement toPrepare = session.newSimpleStatement("SELECT * FROM test WHERE k=?");
         toPrepare.setConsistencyLevel(ConsistencyLevel.QUORUM);
         toPrepare.enableTracing();
 
@@ -400,7 +400,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
             BatchStatement bs = new BatchStatement();
             bs.add(ps1.bind("one", "foo"));
             bs.add(ps2.bind("two"));
-            bs.add(new SimpleStatement("INSERT INTO " + SIMPLE_TABLE2 + " (k, v) VALUES ('three', 'foobar')"));
+            bs.add(session.newSimpleStatement("INSERT INTO " + SIMPLE_TABLE2 + " (k, v) VALUES ('three', 'foobar')"));
 
             session.execute(bs);
 
@@ -540,7 +540,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
         st2.setString(0, "foo");
         // i is UNSET
         session.execute(st2);
-        Statement st3 = new SimpleStatement("SELECT i from " + SIMPLE_TABLE + " where k = 'foo'");
+        Statement st3 = session.newSimpleStatement("SELECT i from " + SIMPLE_TABLE + " where k = 'foo'");
         st3.enableTracing();
         ResultSet rows = session.execute(st3);
         assertThat(rows.one().getInt("i")).isEqualTo(1234);
@@ -569,7 +569,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
         st2.setString(0, "foo");
         // i is UNSET
         session.execute(new BatchStatement().add(st2));
-        Statement st3 = new SimpleStatement("SELECT i from " + SIMPLE_TABLE + " where k = 'foo'");
+        Statement st3 = session.newSimpleStatement("SELECT i from " + SIMPLE_TABLE + " where k = 'foo'");
         st3.enableTracing();
         ResultSet rows = session.execute(st3);
         assertThat(rows.one().getInt("i")).isEqualTo(1234);
@@ -591,7 +591,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
         st1.setString(0, "foo");
         st1.setToNull(1);
         session.execute(st1);
-        Statement st2 = new SimpleStatement("SELECT i from " + SIMPLE_TABLE + " where k = 'foo'");
+        Statement st2 = session.newSimpleStatement("SELECT i from " + SIMPLE_TABLE + " where k = 'foo'");
         st2.enableTracing();
         ResultSet rows = session.execute(st2);
         assertThat(rows.one().isNull(0)).isTrue();
@@ -614,7 +614,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
         st1.setString(0, "foo");
         st1.setToNull(1);
         session.execute(new BatchStatement().add(st1));
-        Statement st2 = new SimpleStatement("SELECT i from " + SIMPLE_TABLE + " where k = 'foo'");
+        Statement st2 = session.newSimpleStatement("SELECT i from " + SIMPLE_TABLE + " where k = 'foo'");
         st2.enableTracing();
         ResultSet rows = session.execute(st2);
         assertThat(rows.one().isNull(0)).isTrue();

@@ -404,6 +404,10 @@ public interface GettableByIndexData {
 
     /**
      * Returns the {@code i}th value as the Java type matching its CQL type.
+     * <p>
+     * This method is not suitable to use with custom codecs: it will always
+     * use the default ones for the underlying CQL type. If you want to use
+     * non-default codecs, use {@link #get(int, Class)} or {@link #get(int, TypeToken)} instead.
      *
      * @param i the index to retrieve.
      * @return the value of the {@code i}th value as the Java type matching its CQL type.
@@ -413,4 +417,68 @@ public interface GettableByIndexData {
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
      */
     public Object getObject(int i);
+
+    /**
+     * Returns the {@code i}th value converted to the given Java type.
+     * <p>
+     * A suitable {@link TypeCodec} instance for the underlying CQL type and {@code targetClass} must
+     * have been previously registered with the {@link CodecRegistry} currently in use.
+     * <p>
+     * This method should be used instead of {@link #getObject(int)} in cases
+     * where more than one codec is registered for the same CQL type; specifying the Java class
+     * allows the {@link CodecRegistry} to narrow down the search and return only an exactly-matching codec (if any),
+     * thus avoiding any risk of ambiguity.
+     *
+     * @param i the index to retrieve.
+     * @param targetClass The Java type the value should be converted to.
+     * @return the value of the {@code i}th value converted to the given Java type.
+     * If the CQL value is {@code NULL}, this method will return {@code null}
+     * for a simple type, UDT or tuple, and an empty (immutable) collection for collection types.
+     * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
+     * @throws com.datastax.driver.core.exceptions.CodecNotFoundException
+     * if no {@link TypeCodec} instance for {@code targetClass} could be found
+     * by the {@link CodecRegistry} currently in use.
+     */
+    <T> T get(int i, Class<T> targetClass);
+
+    /**
+     * Returns the {@code i}th value converted to the given Java type.
+     * <p>
+     * A suitable {@link TypeCodec} instance for the underlying CQL type and {@code targetType} must
+     * have been previously registered with the {@link CodecRegistry} currently in use.
+     * <p>
+     * This method should be used instead of {@link #getObject(int)} in cases
+     * where more than one codec is registered for the same CQL type; specifying the Java class
+     * allows the {@link CodecRegistry} to narrow down the search and return only an exactly-matching codec (if any),
+     * thus avoiding any risk of ambiguity.
+     *
+     * @param i the index to retrieve.
+     * @param targetType The Java type the value should be converted to.
+     * @return the value of the {@code i}th value converted to the given Java type.
+     * If the CQL value is {@code NULL}, the default set of codecs will return {@code null}
+     * for a simple type, UDT or tuple, and an empty (immutable) collection for collection types.
+     * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
+     * @throws com.datastax.driver.core.exceptions.CodecNotFoundException
+     * if no {@link TypeCodec} instance for {@code targetType} could be found
+     * by the {@link CodecRegistry} currently in use.
+     */
+    <T> T get(int i, TypeToken<T> targetType);
+
+    /**
+     * Returns the {@code i}th value converted using the given {@link TypeCodec}.
+     * <p>
+     * Note that this method allows to entirely bypass the {@link CodecRegistry} currently in use
+     * and forces the driver to use the given codec instead.
+     * <p>
+     * It is the caller's responsibility to ensure that the given codec {@link TypeCodec#accepts(DataType) accepts}
+     * the underlying CQL type; failing to do so may result in {@link InvalidTypeException}s being thrown.
+     *
+     * @param i the index to retrieve.
+     * @param codec The {@link TypeCodec} to use to deserialize the value; may not be {@code null}.
+     * @return the value of the {@code i}th value converted using the given {@link TypeCodec}.
+     * @throws InvalidTypeException if the given codec does not {@link TypeCodec#accepts(DataType) accept} the underlying CQL type.
+     * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
+     */
+    <T> T get(int i, TypeCodec<T> codec);
+
 }

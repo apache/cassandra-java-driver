@@ -15,29 +15,22 @@
  */
 package com.datastax.driver.core;
 
-import static com.datastax.driver.core.Assertions.assertThat;
-import static com.datastax.driver.core.ColumnMetadata.COLUMN_NAME;
-import static com.datastax.driver.core.ColumnMetadata.COMPONENT_INDEX;
-import static com.datastax.driver.core.ColumnMetadata.INDEX_NAME;
-import static com.datastax.driver.core.ColumnMetadata.INDEX_OPTIONS;
-import static com.datastax.driver.core.ColumnMetadata.INDEX_TYPE;
-import static com.datastax.driver.core.ColumnMetadata.KIND;
-import static com.datastax.driver.core.ColumnMetadata.VALIDATOR;
-import static com.datastax.driver.core.DataType.cint;
-import static com.datastax.driver.core.DataType.text;
-
 import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.List;
 
-import org.testng.annotations.Test;
-
-import com.datastax.driver.core.ColumnMetadata.IndexMetadata;
-import com.datastax.driver.core.ColumnMetadata.Raw;
-import com.datastax.driver.core.Token.M3PToken;
-import com.datastax.driver.core.utils.CassandraVersion;
 import com.google.common.collect.ImmutableList;
 import com.google.common.primitives.Ints;
+import org.testng.annotations.Test;
+
+import com.datastax.driver.core.ColumnMetadata.*;
+import com.datastax.driver.core.Token.M3PToken;
+import com.datastax.driver.core.utils.CassandraVersion;
+
+import static com.datastax.driver.core.Assertions.assertThat;
+import static com.datastax.driver.core.ColumnMetadata.*;
+import static com.datastax.driver.core.DataType.cint;
+import static com.datastax.driver.core.DataType.text;
 
 @CassandraVersion(
     major = 1.2)
@@ -55,6 +48,10 @@ public class IndexMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
             definition(VALIDATOR, text()),
             definition(INDEX_OPTIONS, text())
     });
+    
+    static {
+        defs.setCodecRegistry(new CodecRegistry());
+    }
 
     @Override
     protected Collection<String> getTableDefinitions() {
@@ -205,7 +202,7 @@ public class IndexMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
             wrap("{\"foo\" : \"bar\", \"class_name\" : \"dummy.DummyIndex\"}") // index options
             );
         Row row = ArrayBackedRow.fromData(defs, M3PToken.FACTORY, ProtocolVersion.V3, data);
-        ColumnMetadata column = ColumnMetadata.fromRaw(table, Raw.fromRow(row, VersionNumber.parse("2.1")));
+        ColumnMetadata column = ColumnMetadata.fromRaw(table, Raw.fromRow(row, VersionNumber.parse("2.1"), ProtocolVersion.V3, new CodecRegistry()));
         IndexMetadata index = column.getIndex();
         assertThat(index).hasName("custom_index")
             .isNotKeys()
@@ -240,7 +237,10 @@ public class IndexMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
                 wrap("null") // index options
         );
         Row row = ArrayBackedRow.fromData(defs, M3PToken.FACTORY, ProtocolVersion.V3, data);
-        ColumnMetadata column = ColumnMetadata.fromRaw(table, Raw.fromRow(row, VersionNumber.parse("2.1")));
+        ColumnMetadata column = ColumnMetadata.fromRaw(table,
+            Raw.fromRow(row, VersionNumber.parse("2.1"),
+                cluster.getConfiguration().getProtocolOptions().getProtocolVersion(),
+                cluster.getConfiguration().getCodecRegistry()));
         IndexMetadata index = column.getIndex();
 
         assertThat(index).hasName("cfs_archive_parent_path")

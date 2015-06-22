@@ -114,7 +114,7 @@ public abstract class TokenIntegrationTest {
 
         // Find the replica for a given partition key
         int testKey = 1;
-        Set<Host> replicas = metadata.getReplicas("test", DataType.cint().serialize(testKey, cluster.getConfiguration().getProtocolOptions().getProtocolVersion()));
+        Set<Host> replicas = metadata.getReplicas("test", TypeCodec.IntCodec.instance.serialize(testKey, cluster.getConfiguration().getProtocolOptions().getProtocolVersion()));
         assertThat(replicas).hasSize(1);
         Host replica = replicas.iterator().next();
 

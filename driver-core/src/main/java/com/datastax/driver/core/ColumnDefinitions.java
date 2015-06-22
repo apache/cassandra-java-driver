@@ -17,8 +17,6 @@ package com.datastax.driver.core;
 
 import java.util.*;
 
-import com.datastax.driver.core.exceptions.InvalidTypeException;
-
 /**
  * Metadata describing the columns returned in a {@link ResultSet} or a
  * {@link PreparedStatement}.
@@ -61,6 +59,7 @@ public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition>
 
     private final Definition[] byIdx;
     private final Map<String, int[]> byName;
+    private volatile CodecRegistry codecRegistry;
 
     ColumnDefinitions(Definition[] defs) {
 
@@ -279,32 +278,34 @@ public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition>
         return getAllIdx(name)[0];
     }
 
-    void checkBounds(int i) {
-        if (i < 0 || i >= size())
-            throw new ArrayIndexOutOfBoundsException(i);
+    CodecRegistry getCodecRegistry() {
+        // this method should only be called after this field is set
+        assert codecRegistry != null;
+        return codecRegistry;
     }
 
-    // Note: we avoid having a vararg method to avoid the array allocation that comes with it.
-    void checkType(int i, DataType.Name name) {
-        DataType defined = getType(i);
-        if (name != defined.getName())
-            throw new InvalidTypeException(String.format("Column %s is of type %s", getName(i), defined));
+    void setCodecRegistry(CodecRegistry codecRegistry) {
+        for (Definition definition : byIdx) {
+            setCodecRegistry(definition.type, codecRegistry);
+        }
+        this.codecRegistry = codecRegistry;
     }
 
-    DataType.Name checkType(int i, DataType.Name name1, DataType.Name name2) {
-        DataType defined = getType(i);
-        if (name1 != defined.getName() && name2 != defined.getName())
-            throw new InvalidTypeException(String.format("Column %s is of type %s", getName(i), defined));
-
-        return defined.getName();
-    }
-
-    DataType.Name checkType(int i, DataType.Name name1, DataType.Name name2, DataType.Name name3) {
-        DataType defined = getType(i);
-        if (name1 != defined.getName() && name2 != defined.getName() && name3 != defined.getName())
-            throw new InvalidTypeException(String.format("Column %s is of type %s", getName(i), defined));
-
-        return defined.getName();
+    void setCodecRegistry(DataType cqlType, CodecRegistry codecRegistry) {
+        // by the time UDT and tuple values are decoded from response messages, the
+        // codec registry is not available, so set it now;
+        // this method should be called immediately after a response
+        // is decoded into either a prepared statement or a result set.
+        if(cqlType instanceof UserType) {
+            ((UserType)cqlType).setCodecRegistry(codecRegistry);
+        }
+        if(cqlType instanceof TupleType) {
+            ((TupleType)cqlType).setCodecRegistry(codecRegistry);
+        }
+        // propagate codec registry to inner types
+        for (DataType inner : cqlType.getTypeArguments()) {
+            setCodecRegistry(inner, codecRegistry);
+        }
     }
 
     /**

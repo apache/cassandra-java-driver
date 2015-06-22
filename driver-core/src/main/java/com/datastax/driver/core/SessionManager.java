@@ -147,7 +147,7 @@ class SessionManager extends AbstractSession {
                         switch (rm.kind) {
                             case PREPARED:
                                 Responses.Result.Prepared pmsg = (Responses.Result.Prepared)rm;
-                                PreparedStatement stmt = DefaultPreparedStatement.fromMessage(pmsg, cluster.getMetadata(), cluster.getConfiguration().getProtocolOptions().getProtocolVersion(), query, poolsState.keyspace);
+                                PreparedStatement stmt = DefaultPreparedStatement.fromMessage(pmsg, cluster, query, poolsState.keyspace);
                                 stmt = cluster.manager.addPrepared(stmt);
                                 try {
                                     // All Sessions are connected to the same nodes so it's enough to prepare only the nodes of this session.
@@ -499,6 +499,7 @@ class SessionManager extends AbstractSession {
             statement = ((StatementWrapper)statement).getWrappedStatement();
 
         Message.Request request;
+
         if (statement instanceof RegularStatement) {
             RegularStatement rs = (RegularStatement)statement;
 
@@ -508,13 +509,15 @@ class SessionManager extends AbstractSession {
             if (version == ProtocolVersion.V1 && rs instanceof com.datastax.driver.core.querybuilder.BuiltStatement)
                 ((com.datastax.driver.core.querybuilder.BuiltStatement)rs).setForceNoValues(true);
 
-            ByteBuffer[] rawValues = rs.getValues(version);
+            ByteBuffer[] rawValues = rs.getValues();
 
             if (version == ProtocolVersion.V1 && rawValues != null)
                 throw new UnsupportedFeatureException(version, "Binary values are not supported");
 
             List<ByteBuffer> values = rawValues == null ? Collections.<ByteBuffer>emptyList() : Arrays.asList(rawValues);
+
             String qString = rs.getQueryString();
+
             Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(consistency, values, false,
                                                                                       fetchSize, usedPagingState, serialConsistency, defaultTimestamp);
             request =  new Requests.Query(qString, options, statement.isTracing());
@@ -540,7 +543,7 @@ class SessionManager extends AbstractSession {
             BatchStatement bs = (BatchStatement)statement;
             if (version.compareTo(ProtocolVersion.V4) < 0)
                 bs.ensureAllSet();
-            BatchStatement.IdAndValues idAndVals = bs.getIdAndValues(version);
+            BatchStatement.IdAndValues idAndVals = bs.getIdAndValues();
             Requests.BatchProtocolOptions options = new Requests.BatchProtocolOptions(consistency, serialConsistency, defaultTimestamp);
             request =  new Requests.Batch(bs.batchType, idAndVals.ids, idAndVals.values, options, statement.isTracing());
         }

@@ -17,6 +17,8 @@ package com.datastax.driver.core;
 
 import java.nio.ByteBuffer;
 
+import com.datastax.driver.core.exceptions.InvalidTypeException;
+
 /**
  * A regular (non-prepared and non batched) CQL statement.
  * <p>
@@ -49,14 +51,11 @@ public abstract class RegularStatement extends Statement {
      * 1 through {@link Cluster.Builder#withProtocolVersion} or you use
      * Cassandra 1.2).
      *
-     * @param protocolVersion the protocol version in which the returned values
-     * must be serialized for.
-     * @return the values to use for this statement or {@code null} if there is
-     * no such values.
-     *
-     * @see SimpleStatement#SimpleStatement(String, Object...)
+     * @throws InvalidTypeException if one of the values is not of a type
+     * that can be serialized to a CQL3 type
+     * @see SimpleStatement#SimpleStatement(String, Cluster, Object...)
      */
-    public abstract ByteBuffer[] getValues(ProtocolVersion protocolVersion);
+    public abstract ByteBuffer[] getValues();
 
     /**
      * Whether or not this statement has values, that is if {@code getValues}

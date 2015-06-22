@@ -25,7 +25,7 @@ cluster.getConfiguration().getQueryOptions().setFetchSize(2000);
 The fetch size can also be set on a statement:
 
 ```java
-Statement statement = new SimpleStatement("your query");
+Statement statement = session.newSimpleStatement("your query");
 statement.setFetchSize(2000);
 ```
 
@@ -125,7 +125,7 @@ retrieved later, we can deserialize it and reinject it in a statement:
 
 ```java
 PagingState pagingState = PagingState.fromString(string);
-Statement st = new SimpleStatement("your query");
+Statement st = session.newSimpleStatement("your query");
 st.setPagingState(pagingState);
 ResultSet rs = session.execute(st);
 ```
@@ -142,7 +142,7 @@ implementation for our web service:
 ```java
 final int RESULTS_PER_PAGE = 100;
 
-Statement st = new SimpleStatement("your query");
+Statement st = session.newSimpleStatement("your query");
 st.setFetchSize(RESULTS_PER_PAGE);
 
 String requestedPage = extractPagingStateStringFromURL();

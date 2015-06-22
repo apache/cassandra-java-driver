@@ -29,24 +29,27 @@ import static com.datastax.driver.core.Assertions.assertThat;
 
 public class CassandraTypeParserTest {
 
+    private ProtocolVersion protocolVersion = TestUtils.getDesiredProtocolVersion();
+    private CodecRegistry codecRegistry = new CodecRegistry();
+
     @Test(groups = "unit")
     public void parseOneTest() {
 
-        assertEquals(CassandraTypeParser.parseOne("org.apache.cassandra.db.marshal.ByteType"), DataType.tinyint());
-        assertEquals(CassandraTypeParser.parseOne("org.apache.cassandra.db.marshal.ShortType"), DataType.smallint());
-        assertEquals(CassandraTypeParser.parseOne("org.apache.cassandra.db.marshal.SimpleDateType"), DataType.date());
-        assertEquals(CassandraTypeParser.parseOne("org.apache.cassandra.db.marshal.TimeType"), DataType.time());
-        assertEquals(CassandraTypeParser.parseOne("org.apache.cassandra.db.marshal.InetAddressType"), DataType.inet());
-        assertEquals(CassandraTypeParser.parseOne("org.apache.cassandra.db.marshal.ListType(org.apache.cassandra.db.marshal.UTF8Type)"), DataType.list(DataType.text()));
-        assertEquals(CassandraTypeParser.parseOne("org.apache.cassandra.db.marshal.ReversedType(org.apache.cassandra.db.marshal.UTF8Type)"), DataType.text());
+        assertEquals(CassandraTypeParser.parseOne("org.apache.cassandra.db.marshal.ByteType", protocolVersion, codecRegistry), DataType.tinyint());
+        assertEquals(CassandraTypeParser.parseOne("org.apache.cassandra.db.marshal.ShortType", protocolVersion, codecRegistry), DataType.smallint());
+        assertEquals(CassandraTypeParser.parseOne("org.apache.cassandra.db.marshal.SimpleDateType", protocolVersion, codecRegistry), DataType.date());
+        assertEquals(CassandraTypeParser.parseOne("org.apache.cassandra.db.marshal.TimeType", protocolVersion, codecRegistry), DataType.time());
+        assertEquals(CassandraTypeParser.parseOne("org.apache.cassandra.db.marshal.InetAddressType", protocolVersion, codecRegistry), DataType.inet());
+        assertEquals(CassandraTypeParser.parseOne("org.apache.cassandra.db.marshal.ListType(org.apache.cassandra.db.marshal.UTF8Type)", protocolVersion, codecRegistry), DataType.list(DataType.text()));
+        assertEquals(CassandraTypeParser.parseOne("org.apache.cassandra.db.marshal.ReversedType(org.apache.cassandra.db.marshal.UTF8Type)", protocolVersion, codecRegistry), DataType.text());
 
         String s;
 
         s = "org.apache.cassandra.db.marshal.CompositeType(org.apache.cassandra.db.marshal.UTF8Type, org.apache.cassandra.db.marshal.Int32Type)";
-        assertEquals(CassandraTypeParser.parseOne(s), DataType.custom(s));
+        assertEquals(CassandraTypeParser.parseOne(s, protocolVersion, codecRegistry), DataType.custom(s));
 
         s = "org.apache.cassandra.db.marshal.ReversedType(org.apache.cassandra.db.marshal.ListType(org.apache.cassandra.db.marshal.Int32Type))";
-        assertEquals(CassandraTypeParser.parseOne(s), DataType.list(DataType.cint()));
+        assertEquals(CassandraTypeParser.parseOne(s, protocolVersion, codecRegistry), DataType.list(DataType.cint()));
     }
 
     @Test(groups = "unit")
@@ -54,13 +57,13 @@ public class CassandraTypeParserTest {
 
         String s = "org.apache.cassandra.db.marshal.CompositeType(org.apache.cassandra.db.marshal.Int32Type, org.apache.cassandra.db.marshal.UTF8Type,";
         s += "org.apache.cassandra.db.marshal.ColumnToCollectionType(6162:org.apache.cassandra.db.marshal.ListType(org.apache.cassandra.db.marshal.Int32Type)))";
-        CassandraTypeParser.ParseResult r1 = CassandraTypeParser.parseWithComposite(s);
+        CassandraTypeParser.ParseResult r1 = CassandraTypeParser.parseWithComposite(s, protocolVersion, codecRegistry);
         assertTrue(r1.isComposite);
         assertEquals(r1.types, Arrays.asList(DataType.cint(), DataType.text()));
         assertEquals(r1.collections.size(), 1);
         assertEquals(r1.collections.get("ab"), DataType.list(DataType.cint()));
 
-        CassandraTypeParser.ParseResult r2 = CassandraTypeParser.parseWithComposite("org.apache.cassandra.db.marshal.TimestampType");
+        CassandraTypeParser.ParseResult r2 = CassandraTypeParser.parseWithComposite("org.apache.cassandra.db.marshal.TimestampType", protocolVersion, codecRegistry);
         assertFalse(r2.isComposite);
         assertEquals(r2.types, Arrays.asList(DataType.timestamp()));
         assertEquals(r2.collections.size(), 0);
@@ -70,7 +73,7 @@ public class CassandraTypeParserTest {
     public void parseUserTypes() {
 
         String s = "org.apache.cassandra.db.marshal.UserType(foo,61646472657373,737472656574:org.apache.cassandra.db.marshal.UTF8Type,7a6970636f6465:org.apache.cassandra.db.marshal.Int32Type,70686f6e6573:org.apache.cassandra.db.marshal.SetType(org.apache.cassandra.db.marshal.UserType(foo,70686f6e65,6e616d65:org.apache.cassandra.db.marshal.UTF8Type,6e756d626572:org.apache.cassandra.db.marshal.UTF8Type)))";
-        UserType def = (UserType)CassandraTypeParser.parseOne(s);
+        UserType def = (UserType)CassandraTypeParser.parseOne(s, protocolVersion, codecRegistry);
 
         assertEquals(def.getKeyspace(), "foo");
         assertEquals(def.getTypeName(), "address");
@@ -109,7 +112,7 @@ public class CassandraTypeParserTest {
     @Test(groups = "unit")
     public void parseTupleTest() {
         String s = "org.apache.cassandra.db.marshal.TupleType(org.apache.cassandra.db.marshal.Int32Type,org.apache.cassandra.db.marshal.UTF8Type,org.apache.cassandra.db.marshal.FloatType)";
-        TupleType type = (TupleType)CassandraTypeParser.parseOne(s);
+        TupleType type = (TupleType)CassandraTypeParser.parseOne(s, protocolVersion, codecRegistry);
         assertNotNull(type);
         assertEquals(type.getComponentTypes().get(0), DataType.cint());
         assertEquals(type.getComponentTypes().get(1), DataType.text());
@@ -121,7 +124,7 @@ public class CassandraTypeParserTest {
         // map<text, frozen<map<int,int>>>
         String s = "org.apache.cassandra.db.marshal.MapType(org.apache.cassandra.db.marshal.UTF8Type,org.apache.cassandra.db.marshal.FrozenType(org.apache.cassandra.db.marshal.MapType(org.apache.cassandra.db.marshal.Int32Type,org.apache.cassandra.db.marshal.Int32Type)))";
 
-        DataType parentMap = CassandraTypeParser.parseOne(s);
+        DataType parentMap = CassandraTypeParser.parseOne(s, protocolVersion, codecRegistry);
         assertThat(parentMap)
             .hasName(DataType.Name.MAP)
             .isNotFrozen()

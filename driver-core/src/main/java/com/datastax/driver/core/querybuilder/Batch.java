@@ -19,9 +19,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.datastax.driver.core.ProtocolVersion;
-import com.datastax.driver.core.RegularStatement;
-import com.datastax.driver.core.SimpleStatement;
+import com.datastax.driver.core.*;
 
 /**
  * A built BATCH statement.
@@ -31,13 +29,12 @@ public class Batch extends BuiltStatement {
     private final List<RegularStatement> statements;
     private final boolean logged;
     private final Options usings;
-    private ByteBuffer routingKey;
 
     // Only used when we add at last one statement that is not a BuiltStatement subclass
     private int nonBuiltStatementValues;
 
-    Batch(RegularStatement[] statements, boolean logged) {
-        super((String)null);
+    Batch(Cluster cluster, RegularStatement[] statements, boolean logged) {
+        super((String)null, cluster);
         this.statements = statements.length == 0
                         ? new ArrayList<RegularStatement>()
                         : new ArrayList<RegularStatement>(statements.length);
@@ -58,7 +55,7 @@ public class Batch extends BuiltStatement {
 
         if (!usings.usings.isEmpty()) {
             builder.append(" USING ");
-            Utils.joinAndAppend(builder, " AND ", usings.usings, variables);
+            Utils.joinAndAppend(builder, getCodecRegistry(), " AND ", usings.usings, variables);
         }
         builder.append(' ');
 
@@ -116,21 +113,18 @@ public class Batch extends BuiltStatement {
 
         checkForBindMarkers(null);
 
-        if (routingKey == null && statement.getRoutingKey() != null)
-            routingKey = statement.getRoutingKey();
-
         return this;
     }
 
     @Override
-    public ByteBuffer[] getValues(ProtocolVersion protocolVersion) {
+    public ByteBuffer[] getValues() {
         // If there is some non-BuiltStatement inside the batch with values, we shouldn't
         // use super.getValues() since it will ignore the values of said non-BuiltStatement.
         // If that's the case, we just collects all those values (and we know
         // super.getValues() == null in that case since we've explicitely set this.hasBindMarker
         // to true). Otherwise, we simply call super.getValues().
         if (nonBuiltStatementValues == 0)
-            return super.getValues(protocolVersion);
+            return super.getValues();
 
         ByteBuffer[] values = new ByteBuffer[nonBuiltStatementValues];
         int i = 0;
@@ -139,7 +133,7 @@ public class Batch extends BuiltStatement {
             if (statement instanceof BuiltStatement)
                 continue;
 
-            ByteBuffer[] statementValues = statement.getValues(protocolVersion);
+            ByteBuffer[] statementValues = statement.getValues();
             System.arraycopy(statementValues, 0, values, i, statementValues.length);
             i += statementValues.length;
         }
@@ -164,7 +158,13 @@ public class Batch extends BuiltStatement {
      */
     @Override
     public ByteBuffer getRoutingKey() {
-        return routingKey;
+        for (RegularStatement statement : statements) {
+            ByteBuffer routingKey = statement.getRoutingKey();
+            if (routingKey != null) {
+                return routingKey;
+            }
+        }
+        return null;
     }
 
     /**

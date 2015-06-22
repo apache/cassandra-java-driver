@@ -25,12 +25,13 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.google.common.base.Strings;
+import com.google.common.reflect.TypeToken;
 
 import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.core.TypeCodec;
+import com.datastax.driver.core.UserType;
 import com.datastax.driver.mapping.MethodMapper.EnumParamMapper;
-import com.datastax.driver.mapping.MethodMapper.NestedUDTParamMapper;
 import com.datastax.driver.mapping.MethodMapper.ParamMapper;
-import com.datastax.driver.mapping.MethodMapper.UDTParamMapper;
 import com.datastax.driver.mapping.annotations.*;
 
 /**
@@ -112,7 +113,7 @@ class AnnotationParser {
         return mapper;
     }
 
-    public static <T> EntityMapper<T> parseUDT(Class<T> udtClass, EntityMapper.Factory factory, MappingManager mappingManager) {
+    public static <T> MappedUDTCodec<T> parseUDT(Class<T> udtClass, EntityMapper.Factory factory, MappingManager mappingManager) {
         UDT udt = AnnotationChecks.getTypeAnnotation(UDT.class, udtClass);
 
         String ksName = udt.caseSensitiveKeyspace() ? udt.keyspace() : udt.keyspace().toLowerCase();
@@ -122,23 +123,23 @@ class AnnotationParser {
             ksName = mappingManager.getSession().getLoggedKeyspace();
             if (Strings.isNullOrEmpty(ksName))
                 throw new IllegalArgumentException(String.format(
-                    "Error creating UDT mapper for class %s, the @%s annotation declares no default keyspace, and the session is not currently logged to any keyspace",
+                    "Error creating UDT codec for class %s, the @%s annotation declares no default keyspace, and the session is not currently logged to any keyspace",
                     udtClass.getSimpleName(),
                     UDT.class.getSimpleName()
                 ));
         }
 
-        EntityMapper<T> mapper = factory.create(udtClass, ksName, udtName, null, null);
+        UserType userType = mappingManager.getSession().getCluster().getMetadata().getKeyspace(ksName).getUserType(udtName);
 
         List<Field> columns = new ArrayList<Field>();
 
         for (Field field : udtClass.getDeclaredFields()) {
             if(field.isSynthetic() || (field.getModifiers() & Modifier.STATIC) == Modifier.STATIC)
                 continue;
-            
+
             AnnotationChecks.validateAnnotations(field, "UDT",
-                                                 com.datastax.driver.mapping.annotations.Field.class, Frozen.class, FrozenKey.class,
-                                                 FrozenValue.class, Enumerated.class, Transient.class);
+                com.datastax.driver.mapping.annotations.Field.class, Frozen.class, FrozenKey.class,
+                FrozenValue.class, Enumerated.class, Transient.class);
 
             if (field.getAnnotation(Transient.class) != null)
                 continue;
@@ -153,9 +154,8 @@ class AnnotationParser {
                     break;
             }
         }
-
-        mapper.addColumns(convert(columns, factory, udtClass, mappingManager, null));
-        return mapper;
+        List<ColumnMapper<T>> columnMappers = convert(columns, factory, udtClass, mappingManager, null);
+        return new MappedUDTCodec<T>(userType, udtClass, columnMappers, mappingManager);
     }
 
     private static <T> List<ColumnMapper<T>> convert(List<Field> fields, EntityMapper.Factory factory, Class<T> klass, MappingManager mappingManager, AtomicInteger columnCounter) {
@@ -244,6 +244,36 @@ class AnnotationParser {
 
     }
 
+    public static TypeCodec<Object> customCodec(Field field) {
+        Class<? extends TypeCodec<?>> codecClass = getCodecClass(field);
+
+        if (codecClass.equals(Defaults.NoCodec.class))
+            return null;
+
+        try {
+            @SuppressWarnings("unchecked")
+            TypeCodec<Object> instance = (TypeCodec<Object>)codecClass.newInstance();
+            return instance;
+        } catch (Exception e) {
+            throw new IllegalArgumentException(String.format(
+                "Cannot create an instance of custom codec %s for field %s",
+                codecClass, field
+            ), e);
+        }
+    }
+
+    private static Class<? extends TypeCodec<?>> getCodecClass(Field field) {
+        Column column = field.getAnnotation(Column.class);
+        if (column != null)
+            return column.codec();
+
+        com.datastax.driver.mapping.annotations.Field udtField = field.getAnnotation(com.datastax.driver.mapping.annotations.Field.class);
+        if (udtField != null)
+            return udtField.codec();
+
+        return Defaults.NoCodec.class;
+    }
+
     public static <T> AccessorMapper<T> parseAccessor(Class<T> accClass, AccessorMapper.Factory factory, MappingManager mappingManager) {
         if (!accClass.isInterface())
             throw new IllegalArgumentException("@Accessor annotation is only allowed on interfaces");
@@ -261,21 +291,29 @@ class AnnotationParser {
             Annotation[][] paramAnnotations = m.getParameterAnnotations();
             Type[] paramTypes = m.getGenericParameterTypes();
             ParamMapper[] paramMappers = new ParamMapper[paramAnnotations.length];
-            Boolean hasParamAnnotation = null;
+            Boolean allParamsNamed = null;
             for (int i = 0; i < paramMappers.length; i++) {
                 String paramName = null;
+                Class<? extends TypeCodec<?>> codecClass = null;
                 for (Annotation a : paramAnnotations[i]) {
                     if (a.annotationType().equals(Param.class)) {
-                        paramName = ((Param) a).value();
+                        Param param = (Param)a;
+                        paramName = param.value();
+                        if (paramName.isEmpty())
+                            paramName = null;
+                        codecClass = param.codec();
+                        if (Defaults.NoCodec.class.equals(codecClass))
+                            codecClass = null;
                         break;
                     }
                 }
-                if (hasParamAnnotation == null)
-                    hasParamAnnotation = (paramName != null);
-                if (hasParamAnnotation != (paramName != null))
-                    throw new IllegalArgumentException(String.format("For method '%s', either all or none of the paramaters of a method must have a @Param annotation", m.getName()));
+                boolean thisParamNamed = (paramName != null);
+                if (allParamsNamed == null)
+                    allParamsNamed = thisParamNamed;
+                else if (allParamsNamed != thisParamNamed)
+                    throw new IllegalArgumentException(String.format("For method '%s', either all or none of the parameters must be named", m.getName()));
 
-                paramMappers[i] = newParamMapper(accClass.getName(), m.getName(), i, paramName, paramTypes[i], paramAnnotations[i], mappingManager);
+                paramMappers[i] = newParamMapper(accClass.getName(), m.getName(), i, paramName, codecClass, paramTypes[i], paramAnnotations[i], mappingManager);
             }
 
             ConsistencyLevel cl = null;
@@ -296,13 +334,10 @@ class AnnotationParser {
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
-    private static ParamMapper newParamMapper(String className, String methodName, int idx, String paramName, Type paramType, Annotation[] paramAnnotations, MappingManager mappingManager) {
+    private static ParamMapper newParamMapper(String className, String methodName, int idx, String paramName, Class<? extends TypeCodec<?>> codecClass, Type paramType, Annotation[] paramAnnotations, MappingManager mappingManager) {
         if (paramType instanceof Class) {
             Class<?> paramClass = (Class<?>) paramType;
-            if (paramClass.isAnnotationPresent(UDT.class)) {
-                UDTMapper<?> udtMapper = mappingManager.getUDTMapper(paramClass);
-                return new UDTParamMapper(paramName, idx, udtMapper);
-            } else if (paramClass.isEnum()) {
+            if (paramClass.isEnum()) {
                 EnumType enumType = EnumType.STRING;
                 for (Annotation annotation : paramAnnotations) {
                     if (annotation instanceof Enumerated) {
@@ -311,16 +346,16 @@ class AnnotationParser {
                 }
                 return new EnumParamMapper(paramName, idx, enumType);
             }
-            return new ParamMapper(paramName, idx);
-        } if (paramType instanceof ParameterizedType) {
-            InferredCQLType inferredCQLType = InferredCQLType.from(className, methodName, idx, paramName, paramType, mappingManager);
-            if (inferredCQLType.containsMappedUDT) {
-                // We need a specialized mapper to convert UDT instances in the hierarchy.
-                return new NestedUDTParamMapper(paramName, idx, inferredCQLType);
-            } else {
-                // Use the default mapper but provide the extracted type
-                return new ParamMapper(paramName, idx, inferredCQLType.dataType);
-            }
+
+            if (TypeMappings.isMappedUDT(paramClass))
+                mappingManager.getUDTCodec(paramClass);
+
+            return new ParamMapper(paramName, idx, TypeToken.of(paramType), codecClass);
+        } else if (paramType instanceof ParameterizedType) {
+            for (Class<?> udt : TypeMappings.findUDTs(paramType))
+                mappingManager.getUDTCodec(udt);
+
+            return new ParamMapper(paramName, idx, TypeToken.of(paramType), codecClass);
         } else {
             throw new IllegalArgumentException(String.format("Cannot map class %s for parameter %s of %s.%s", paramType, paramName, className, methodName));
         }
