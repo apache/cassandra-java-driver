@@ -13,6 +13,8 @@
 - [bug] Support bind marker in QueryBuilder DELETE's list index (JAVA-679)
 - [improvement] Improve QueryBuilder API for SELECT DISTINCT (JAVA-475)
 - [improvement] Create values() function for Insert builder using List (JAVA-225)
+- [improvement] Warn when ReplicationStrategy encounters invalid
+  replication factors (JAVA-702)
 
 Merged from 2.0.10_fixes branch:
 
