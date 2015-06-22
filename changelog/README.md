@@ -10,6 +10,13 @@
 - [improvement] Create values() function for Insert builder using List (JAVA-225)
 - [improvement] HashMap throws an OOM Exception when logging level is set to TRACE (JAVA-713)
 - [bug] Support bind marker in QueryBuilder DELETE's list index (JAVA-679)
+- [bug] DowngradingConsistencyRetryPolicy ignores write timeouts (JAVA-737)
+- [bug] Forbid bind marker in QueryBuilder add/append/prepend (JAVA-736)
+- [improvement] Expose KEYS and FULL indexing options in IndexMetadata (JAVA-732)
+- [bug] Prevent QueryBuilder.quote() from applying duplicate double quotes (JAVA-712)
+- [bug] Prevent QueryBuilder from trying to serialize raw string (JAVA-688)
+- [improvement] Allow @Enumerated in Accessor method parameters (JAVA-589)
+- [improvement] Allow access to table metadata from Mapper (JAVA-554)
 
 
 ### 2.1.6
