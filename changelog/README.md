@@ -15,6 +15,8 @@
 - [improvement] Create values() function for Insert builder using List (JAVA-225)
 - [improvement] Warn when ReplicationStrategy encounters invalid
   replication factors (JAVA-702)
+- [improvement] Add PoolingOptions method to set both core and max
+  connections (JAVA-662).
 
 Merged from 2.0.10_fixes branch:
 
