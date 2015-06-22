@@ -594,7 +594,7 @@ public final class QueryBuilder {
      *
      * @param name the column name (must be of type list).
      * @param value the value to prepend. Using a BindMarker here is not supported.
-     *              To use a BindMarker use {@code QueryBuilder#addAll} with a
+     *              To use a BindMarker use {@code QueryBuilder#prependAll} with a
      *              singleton list.
      * @return the correspond assignment (to use in an update query)
      */
@@ -602,7 +602,7 @@ public final class QueryBuilder {
         if (value instanceof BindMarker) {
             throw new InvalidQueryException("binding a value in prepend() is not supported, use prependAll() and bind a singleton list");
         }
-        return new Assignment.ListPrependAssignment(name, Collections.singletonList(value));
+        return prependAll(name, Collections.singletonList(value));
     }
 
     /**
@@ -638,7 +638,7 @@ public final class QueryBuilder {
      *
      * @param name the column name (must be of type list).
      * @param value the value to append. Using a BindMarker here is not supported.
-     *              To use a BindMarker use {@code QueryBuilder#addAll} with a
+     *              To use a BindMarker use {@code QueryBuilder#appendAll} with a
      *              singleton list.
      * @return the correspond assignment (to use in an update query)
      */
@@ -646,7 +646,7 @@ public final class QueryBuilder {
         if (value instanceof BindMarker) {
             throw new InvalidQueryException("Binding a value in append() is not supported, use appendAll() and bind a singleton list");
         }
-        return new Assignment.CollectionAssignment(name, Collections.singletonList(value), true, false);
+        return appendAll(name, Collections.singletonList(value));
     }
 
     /**
@@ -681,12 +681,15 @@ public final class QueryBuilder {
      * This will generate: {@code name = name - [value]}.
      *
      * @param name the column name (must be of type list).
-     * @param value the value to discard
+     * @param value the value to discard.  Using a BindMarker here is not supported.
+     *              To use a BindMarker use {@code QueryBuilder#discardAll} with a singleton list.
      * @return the correspond assignment (to use in an update query)
      */
     public static Assignment discard(String name, Object value) {
-        Object v = value instanceof BindMarker ? value : Collections.singletonList(value);
-        return new Assignment.CollectionAssignment(name, v, false);
+        if (value instanceof BindMarker) {
+            throw new InvalidQueryException("Binding a value in discard() is not supported, use discardAll() and bind a singleton list");
+        }
+        return discardAll(name, Collections.singletonList(value));
     }
 
     /**
@@ -737,14 +740,14 @@ public final class QueryBuilder {
      * @param name the column name (must be of type set).
      * @param value the value to add. Using a BindMarker here is not supported.
      *              To use a BindMarker use {@code QueryBuilder#addAll} with a
-     *              singleton list.
+     *              singleton set.
      * @return the correspond assignment (to use in an update query)
      */
     public static Assignment add(String name, Object value) {
         if (value instanceof BindMarker){
             throw new InvalidQueryException("Binding a value in add() is not supported, use addAll() and bind a singleton list");
         }
-        return new Assignment.CollectionAssignment(name, Collections.singleton(value), true);
+        return addAll(name, Collections.singleton(value));
     }
 
     /**
@@ -779,12 +782,15 @@ public final class QueryBuilder {
      * This will generate: {@code name = name - {value}}.
      *
      * @param name the column name (must be of type set).
-     * @param value the value to remove
+     * @param value the value to remove. Using a BindMarker here is not supported.
+     *              To use a BindMarker use {@code QueryBuilder#removeAll} with a singleton set.
      * @return the correspond assignment (to use in an update query)
      */
     public static Assignment remove(String name, Object value) {
-        Object v = value instanceof BindMarker ? value : Collections.singleton(value);
-        return new Assignment.CollectionAssignment(name, v, false);
+        if (value instanceof BindMarker) {
+            throw new InvalidQueryException("Binding a value in remove() is not supported, use removeAll() and bind a singleton set");
+        }
+        return removeAll(name, Collections.singleton(value));
     }
 
     /**
