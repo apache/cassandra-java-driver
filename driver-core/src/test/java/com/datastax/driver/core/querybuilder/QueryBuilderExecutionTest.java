@@ -147,9 +147,9 @@ public class QueryBuilderExecutionTest extends CCMBridge.PerClassSingleNodeClust
         //given
         session.execute("INSERT INTO test_coll (k, a, b) VALUES (1, null, {1:'foo', 2:'bar'})");
         //when
-        BuiltStatement statement = delete().mapElt("b", bindMarker("mapEntry")).from("test_coll").where(eq("k", 1));
+        BuiltStatement statement = delete().mapElt("b", bindMarker()).from("test_coll").where(eq("k", 1));
         PreparedStatement ps = session.prepare(statement);
-        session.execute(ps.bind().setInt("mapEntry", 1));
+        session.execute(ps.bind().setInt(0, 1));
         //then
         Map<Integer, String> actual = session.execute("SELECT b FROM test_coll WHERE k = 1").one().getMap("b", Integer.class, String.class);
         assertThat(actual).containsExactly(entry(2, "bar"));
