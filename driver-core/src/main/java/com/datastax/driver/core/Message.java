@@ -96,6 +96,11 @@ abstract class Message {
             this.type = type;
         }
 
+        protected Request(Type type, boolean tracingRequested) {
+            this.type = type;
+            this.tracingRequested = tracingRequested;
+        }
+
         public void setTracingRequested() {
             this.tracingRequested = true;
         }

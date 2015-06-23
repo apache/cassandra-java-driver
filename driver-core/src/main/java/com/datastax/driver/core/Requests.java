@@ -139,7 +139,11 @@ class Requests {
         }
 
         public Query(String query, QueryProtocolOptions options) {
-            super(Type.QUERY);
+            this(query, options, false);
+       }
+
+        public Query(String query, QueryProtocolOptions options, boolean tracing) {
+            super(Type.QUERY, tracing);
             this.query = query;
             this.options = options;
         }
@@ -182,7 +186,11 @@ class Requests {
         public final QueryProtocolOptions options;
 
         public Execute(MD5Digest statementId, QueryProtocolOptions options) {
-            super(Message.Request.Type.EXECUTE);
+            this(statementId, options, false);
+        }
+
+        public Execute(MD5Digest statementId, QueryProtocolOptions options, boolean tracing) {
+            super(Message.Request.Type.EXECUTE, tracing);
             this.statementId = statementId;
             this.options = options;
         }
@@ -352,8 +360,8 @@ class Requests {
         public final List<List<ByteBuffer>> values;
         public final ConsistencyLevel consistency;
 
-        public Batch(BatchStatement.Type type, List<Object> queryOrIdList, List<List<ByteBuffer>> values, ConsistencyLevel consistency) {
-            super(Message.Request.Type.BATCH);
+        public Batch(BatchStatement.Type type, List<Object> queryOrIdList, List<List<ByteBuffer>> values, ConsistencyLevel consistency, boolean tracing) {
+            super(Message.Request.Type.BATCH, tracing);
             this.type = type;
             this.queryOrIdList = queryOrIdList;
             this.values = values;

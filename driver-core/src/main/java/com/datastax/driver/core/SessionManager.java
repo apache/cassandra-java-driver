@@ -455,8 +455,6 @@ class SessionManager extends AbstractSession {
             serialConsistency = configuration().getQueryOptions().getSerialConsistencyLevel();
 
         Message.Request request = makeRequestMessage(statement, consistency, serialConsistency, pagingState);
-        if (statement.isTracing())
-            request.setTracingRequested();
 
         return request;
     }
@@ -505,7 +503,7 @@ class SessionManager extends AbstractSession {
             List<ByteBuffer> values = rawValues == null ? Collections.<ByteBuffer>emptyList() : Arrays.asList(rawValues);
             String qString = rs.getQueryString();
             Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(cl, values, false, fetchSize, usedPagingState, scl);
-            return new Requests.Query(qString, options);
+            return new Requests.Query(qString, options, statement.isTracing());
         } else if (statement instanceof BoundStatement) {
             BoundStatement bs = (BoundStatement)statement;
             if (!cluster.manager.preparedQueries.containsKey(bs.statement.getPreparedId().id)) {
@@ -514,7 +512,7 @@ class SessionManager extends AbstractSession {
             }
             boolean skipMetadata = protoVersion != 1 && bs.statement.getPreparedId().resultSetMetadata != null;
             Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(cl, Arrays.asList(bs.values), skipMetadata, fetchSize, usedPagingState, scl);
-            return new Requests.Execute(bs.statement.getPreparedId().id, options);
+            return new Requests.Execute(bs.statement.getPreparedId().id, options, statement.isTracing());
         } else {
             assert statement instanceof BatchStatement : statement;
             assert pagingState == null;
@@ -524,7 +522,7 @@ class SessionManager extends AbstractSession {
 
             BatchStatement bs = (BatchStatement)statement;
             BatchStatement.IdAndValues idAndVals = bs.getIdAndValues();
-            return new Requests.Batch(bs.batchType, idAndVals.ids, idAndVals.values, cl);
+            return new Requests.Batch(bs.batchType, idAndVals.ids, idAndVals.values, cl, statement.isTracing());
         }
     }
 
