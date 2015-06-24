@@ -3,6 +3,7 @@
 ### 2.2.0-rc2 (in progress)
 
 - [improvement] Rename DateWithoutTime to LocalDate (JAVA-810)
+- [bug] TypeCodec.getDataTypeFor() does not handle LocalDate instances. (JAVA-818)
 
 Merged from 2.1 branch:
 

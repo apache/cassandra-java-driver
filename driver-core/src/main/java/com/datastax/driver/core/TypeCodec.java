@@ -202,6 +202,9 @@ abstract class TypeCodec<T> {
         if (value instanceof Date)
             return DataType.timestamp();
 
+        if (value instanceof LocalDate)
+            return DataType.date();
+
         if (value instanceof UUID)
             return DataType.uuid();
 
