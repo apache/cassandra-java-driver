@@ -156,7 +156,7 @@ public class DowngradingConsistencyRetryPolicy implements RetryPolicy {
             case SIMPLE:
             case BATCH:
                 // Since we provide atomicity there is no point in retrying
-                return requiredAcks > 0 ? RetryDecision.ignore() : RetryDecision.rethrow();
+                return receivedAcks > 0 ? RetryDecision.ignore() : RetryDecision.rethrow();
             case UNLOGGED_BATCH:
                 // Since only part of the batch could have been persisted,
                 // retry with whatever consistency should allow to persist all
