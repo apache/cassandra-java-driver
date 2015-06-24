@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core;
 
+import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -89,7 +90,9 @@ public class DataTypeIntegrationTest extends CCMBridge.PerClassSingleNodeCluster
                     session.execute(table.insertStatement.replace("?", table.testColumnType.format(table.sampleValue)));
                     break;
                 case SIMPLE_WITH_PARAM:
-                    session.execute(table.insertStatement, table.sampleValue);
+                    SimpleStatement statement = new SimpleStatement(table.insertStatement, table.sampleValue);
+                    checkGetValuesReturnsSerializedValue(protocolVersion, statement, table);
+                    session.execute(statement);
                     break;
                 case PREPARED:
                     PreparedStatement ps = session.prepare(table.insertStatement);
@@ -121,6 +124,14 @@ public class DataTypeIntegrationTest extends CCMBridge.PerClassSingleNodeCluster
         // Ensure that bs.getObject() also returns the expected value.
         assertThat(bs.getObject(0)).isEqualTo(table.sampleValue);
         assertThat(bs.getObject("v")).isEqualTo(table.sampleValue);
+    }
+
+    public void checkGetValuesReturnsSerializedValue(ProtocolVersion protocolVersion, SimpleStatement statement, TestTable table) {
+        ByteBuffer[] values = statement.getValues(protocolVersion);
+        assertThat(values.length).isEqualTo(1);
+        assertThat(values[0])
+                .as("Value not serialized as expected for " + table.sampleValue)
+                .isEqualTo(DataType.serializeValue(table.sampleValue, protocolVersion));
     }
 
     /**
