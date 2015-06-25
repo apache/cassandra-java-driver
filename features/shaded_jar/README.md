@@ -10,7 +10,7 @@ package name:
 
 ```xml
 <dependency>
-  <groupId>${project.groupId}</groupId>
+  <groupId>com.datastax.cassandra</groupId>
   <artifactId>cassandra-driver-core</artifactId>
   <version>2.1.6</version>
   <classifier>shaded</classifier>
