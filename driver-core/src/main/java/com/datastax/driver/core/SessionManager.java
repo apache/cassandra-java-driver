@@ -454,14 +454,6 @@ class SessionManager extends AbstractSession {
         if (serialConsistency == null)
             serialConsistency = configuration().getQueryOptions().getSerialConsistencyLevel();
 
-        Message.Request request = makeRequestMessage(statement, consistency, serialConsistency, pagingState);
-        if (statement.isTracing())
-            request.setTracingRequested();
-
-        return request;
-    }
-
-    Message.Request makeRequestMessage(Statement statement, ConsistencyLevel cl, ConsistencyLevel scl, ByteBuffer pagingState) {
         int protoVersion = cluster.manager.protocolVersion();
         int fetchSize = statement.getFetchSize();
         ByteBuffer usedPagingState = pagingState;
@@ -504,8 +496,8 @@ class SessionManager extends AbstractSession {
 
             List<ByteBuffer> values = rawValues == null ? Collections.<ByteBuffer>emptyList() : Arrays.asList(rawValues);
             String qString = rs.getQueryString();
-            Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(cl, values, false, fetchSize, usedPagingState, scl);
-            return new Requests.Query(qString, options);
+            Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(consistency, values, false, fetchSize, usedPagingState, serialConsistency);
+            return new Requests.Query(qString, options, statement.isTracing());
         } else if (statement instanceof BoundStatement) {
             BoundStatement bs = (BoundStatement)statement;
             if (!cluster.manager.preparedQueries.containsKey(bs.statement.getPreparedId().id)) {
@@ -513,8 +505,8 @@ class SessionManager extends AbstractSession {
                     + "You may have used a PreparedStatement that was created with another Cluster instance.", bs.statement.getPreparedId().id));
             }
             boolean skipMetadata = protoVersion != 1 && bs.statement.getPreparedId().resultSetMetadata != null;
-            Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(cl, Arrays.asList(bs.values), skipMetadata, fetchSize, usedPagingState, scl);
-            return new Requests.Execute(bs.statement.getPreparedId().id, options);
+            Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(consistency, Arrays.asList(bs.values), skipMetadata, fetchSize, usedPagingState, serialConsistency);
+            return new Requests.Execute(bs.statement.getPreparedId().id, options, statement.isTracing());
         } else {
             assert statement instanceof BatchStatement : statement;
             assert pagingState == null;
@@ -524,7 +516,7 @@ class SessionManager extends AbstractSession {
 
             BatchStatement bs = (BatchStatement)statement;
             BatchStatement.IdAndValues idAndVals = bs.getIdAndValues();
-            return new Requests.Batch(bs.batchType, idAndVals.ids, idAndVals.values, cl);
+            return new Requests.Batch(bs.batchType, idAndVals.ids, idAndVals.values, consistency, statement.isTracing());
         }
     }
 

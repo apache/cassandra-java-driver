@@ -20,6 +20,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
+import com.datastax.driver.core.policies.DowngradingConsistencyRetryPolicy;
 import com.datastax.driver.core.utils.CassandraVersion;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -28,6 +29,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CassandraVersion(major=2.0)
 public class TracingTest extends CCMBridge.PerClassSingleNodeCluster {
+
+    @Override
+    protected Cluster.Builder configure(Cluster.Builder builder) {
+        return builder.withRetryPolicy(DowngradingConsistencyRetryPolicy.INSTANCE);
+    }
 
     public static final String KEY = "tracing_test";
 
@@ -68,6 +74,25 @@ public class TracingTest extends CCMBridge.PerClassSingleNodeCluster {
 
         assertThat(result.getExecutionInfo().getQueryTrace().getEvents()).isNotNull()
                                                                          .isNotEmpty();
+    }
+
+    /**
+     * Validates that if a query gets retried, the second internal query will still have tracing enabled.
+     *
+     * To force a retry, we use the downgrading policy with an impossible CL.
+     *
+     * @test_category tracing
+     * @jira_ticket JAVA-815
+     * @expected_result {@link ResultSet} where {@link ExecutionInfo} contains trace information after a retry.
+     */
+    @Test(groups = "short")
+    public void should_preserve_tracing_status_across_retries() {
+        SimpleStatement st = new SimpleStatement(String.format("SELECT v FROM test WHERE k='%s'", KEY));
+        st.setConsistencyLevel(ConsistencyLevel.THREE).enableTracing();
+
+        ResultSet result = session.execute(st);
+
+        assertThat(result.getExecutionInfo().getQueryTrace()).isNotNull();
     }
 }
 

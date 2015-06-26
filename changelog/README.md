@@ -18,6 +18,8 @@
 - [improvement] Add PoolingOptions method to set both core and max
   connections (JAVA-662).
 - [improvement] Do not include epoll JAR in binary distribution (JAVA-766)
+- [improvement] Optimize internal copies of Request objects (JAVA-726)
+- [bug] Preserve tracing across retries (JAVA-815)
 
 Merged from 2.0.10_fixes branch:
 

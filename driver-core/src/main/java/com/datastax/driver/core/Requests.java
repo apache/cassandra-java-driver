@@ -135,13 +135,23 @@ class Requests {
         public final QueryProtocolOptions options;
 
         public Query(String query) {
-            this(query, QueryProtocolOptions.DEFAULT);
+            this(query, QueryProtocolOptions.DEFAULT, false);
         }
 
-        public Query(String query, QueryProtocolOptions options) {
-            super(Type.QUERY);
+        public Query(String query, QueryProtocolOptions options, boolean tracingRequested) {
+            super(Type.QUERY, tracingRequested);
             this.query = query;
             this.options = options;
+        }
+
+        @Override
+        Request copy() {
+            return new Query(this.query, options, isTracingRequested());
+        }
+
+        @Override
+        Request copy(ConsistencyLevel newConsistencyLevel) {
+            return new Query(this.query, options.copy(newConsistencyLevel), isTracingRequested());
         }
 
         @Override
@@ -181,10 +191,20 @@ class Requests {
         public final MD5Digest statementId;
         public final QueryProtocolOptions options;
 
-        public Execute(MD5Digest statementId, QueryProtocolOptions options) {
-            super(Message.Request.Type.EXECUTE);
+        public Execute(MD5Digest statementId, QueryProtocolOptions options, boolean tracingRequested) {
+            super(Message.Request.Type.EXECUTE, tracingRequested);
             this.statementId = statementId;
             this.options = options;
+        }
+
+        @Override
+        Request copy() {
+            return new Execute(statementId, options, isTracingRequested());
+        }
+
+        @Override
+        Request copy(ConsistencyLevel newConsistencyLevel) {
+            return new Execute(statementId, options.copy(newConsistencyLevel), isTracingRequested());
         }
 
         @Override
@@ -262,6 +282,10 @@ class Requests {
                 flags.add(Flag.PAGING_STATE);
             if (serialConsistency != ConsistencyLevel.SERIAL)
                 flags.add(Flag.SERIAL_CONSISTENCY);
+        }
+
+        public QueryProtocolOptions copy(ConsistencyLevel newConsistencyLevel) {
+            return new QueryProtocolOptions(newConsistencyLevel, values, skipMetadata, pageSize, pagingState, serialConsistency);
         }
 
         public void encode(ByteBuf dest) {
@@ -352,12 +376,22 @@ class Requests {
         public final List<List<ByteBuffer>> values;
         public final ConsistencyLevel consistency;
 
-        public Batch(BatchStatement.Type type, List<Object> queryOrIdList, List<List<ByteBuffer>> values, ConsistencyLevel consistency) {
-            super(Message.Request.Type.BATCH);
+        public Batch(BatchStatement.Type type, List<Object> queryOrIdList, List<List<ByteBuffer>> values, ConsistencyLevel consistency, boolean tracingRequested) {
+            super(Message.Request.Type.BATCH, tracingRequested);
             this.type = type;
             this.queryOrIdList = queryOrIdList;
             this.values = values;
             this.consistency = consistency;
+        }
+
+        @Override
+        Request copy() {
+            return new Batch(type, queryOrIdList, values, consistency, isTracingRequested());
+        }
+
+        @Override
+        Request copy(ConsistencyLevel newConsistencyLevel) {
+            return new Batch(type, queryOrIdList, values, newConsistencyLevel, isTracingRequested());
         }
 
         @Override

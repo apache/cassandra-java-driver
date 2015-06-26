@@ -90,14 +90,15 @@ abstract class Message {
         }
 
         public final Type type;
-        protected boolean tracingRequested;
+        private final boolean tracingRequested;
 
         protected Request(Type type) {
-            this.type = type;
+            this(type, false);
         }
 
-        public void setTracingRequested() {
-            this.tracingRequested = true;
+        protected Request(Type type, boolean tracingRequested) {
+            this.type = type;
+            this.tracingRequested = tracingRequested;
         }
 
         public boolean isTracingRequested() {
@@ -127,6 +128,14 @@ abstract class Message {
                 case EXECUTE: return ((Requests.Execute)this).options.pagingState;
                 default:      return null;
             }
+        }
+
+        Request copy() {
+            throw new UnsupportedOperationException();
+        }
+
+        Request copy(ConsistencyLevel newConsistencyLevel) {
+            throw new UnsupportedOperationException();
         }
     }
 
