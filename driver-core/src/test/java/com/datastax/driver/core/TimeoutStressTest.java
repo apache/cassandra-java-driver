@@ -68,8 +68,6 @@ public class TimeoutStressTest {
 
     static List<InetSocketAddress> nodes;
 
-    static PreparedStatement statement;
-
     @BeforeClass(groups = "long")
     public void beforeClass() throws Exception {
         ccmBridge = CCMBridge.create("test", 3);
@@ -87,9 +85,6 @@ public class TimeoutStressTest {
                 .withPoolingOptions(poolingOptions)
                 .withNettyOptions(channelMonitor.nettyOptions())
                 .build();
-        Session session = cluster.connect();
-        setupSchema(session);
-        session.close();
     }
 
     @AfterClass(groups = "long")
@@ -129,11 +124,17 @@ public class TimeoutStressTest {
      * @since 2.0.10, 2.1.6
      */
     @Test(groups = "long")
-    public void host_state_should_be_maintained_with_timeouts() {
+    public void host_state_should_be_maintained_with_timeouts() throws Exception {
+        // Setup schema and insert records.
+        Session session = cluster.connect();
+        setupSchema(session);
+        session.close();
+
         // Set very low timeouts.
         cluster.getConfiguration().getSocketOptions().setConnectTimeoutMillis(CONNECTION_TIMEOUT_IN_MS);
         cluster.getConfiguration().getSocketOptions().setReadTimeoutMillis(READ_TIMEOUT_IN_MS);
-        Session session = cluster.connect();
+        session = cluster.connect();
+        PreparedStatement statement = session.prepare("select * from " + KEYSPACE + ".record where name=? limit 1000;");
 
         int workers = Runtime.getRuntime().availableProcessors();
         ExecutorService workerPool = Executors.newFixedThreadPool(workers,
@@ -147,7 +148,7 @@ public class TimeoutStressTest {
         try {
             Semaphore concurrentQueries = new Semaphore(CONCURRENT_QUERIES);
             for (int i = 0; i < workers; i++) {
-                workerPool.submit(new TimeoutStressWorker(session, concurrentQueries, stopped));
+                workerPool.submit(new TimeoutStressWorker(session, statement, concurrentQueries, stopped));
             }
 
             long startTime = System.currentTimeMillis();
@@ -213,20 +214,13 @@ public class TimeoutStressTest {
                 + ");");
 
         int records = 30000;
-        List<ResultSetFuture> futures = Lists.newArrayListWithExpectedSize(records);
-
         PreparedStatement insertStmt = session.prepare("insert into record (name, phone, value) values (?, ?, ?)");
 
         for (int i = 0; i < records; i++) {
             if (i % 1000 == 0)
                 logger.debug("Inserting record {}.", i);
-            futures.add(session.executeAsync(insertStmt.bind("0", Integer.toString(i), "test")));
+            session.execute(insertStmt.bind("0", Integer.toString(i), "test"));
         }
-
-        statement = session.prepare("select * from " + KEYSPACE + ".record where name=? limit 1000;");
-
-        logger.debug("Completed inserting data.  Waiting up to 30 for inserts to complete seconds before proceeding.");
-        Futures.allAsList(futures).get(30, TimeUnit.SECONDS);
         logger.debug("Inserts complete.");
     }
 
@@ -235,9 +229,11 @@ public class TimeoutStressTest {
         private final Semaphore concurrentQueries;
         private final AtomicBoolean stopped;
         private final Session session;
+        private final PreparedStatement statement;
 
-        public TimeoutStressWorker(Session session, Semaphore concurrentQueries, AtomicBoolean stopped) {
+        public TimeoutStressWorker(Session session, PreparedStatement statement, Semaphore concurrentQueries, AtomicBoolean stopped) {
             this.session = session;
+            this.statement = statement;
             this.concurrentQueries = concurrentQueries;
             this.stopped = stopped;
         }

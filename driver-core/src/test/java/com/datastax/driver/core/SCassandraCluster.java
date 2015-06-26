@@ -25,9 +25,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import org.scassandra.Scassandra;
 import org.scassandra.ScassandraFactory;
-import org.scassandra.http.client.ColumnTypes;
-import org.scassandra.http.client.PrimingClient;
-import org.scassandra.http.client.PrimingRequest;
+import org.scassandra.http.client.*;
 
 /**
  * Launches multiple SCassandra instances, and mocks the appropriate request to make the driver think
@@ -43,11 +41,13 @@ public class SCassandraCluster {
     private final List<Scassandra> scassandras;
     private final List<InetAddress> addresses;
     private final List<PrimingClient> primingClients;
+    private final List<ActivityClient> activityClients;
 
     public SCassandraCluster(String ipPrefix, int nodeCount) {
         scassandras = Lists.newArrayListWithCapacity(nodeCount);
         addresses = Lists.newArrayListWithCapacity(nodeCount);
         primingClients = Lists.newArrayListWithCapacity(nodeCount);
+        activityClients = Lists.newArrayListWithCapacity(nodeCount);
 
         for (int i = 1; i <= nodeCount; i++) {
             String ip = ipPrefix + i;
@@ -64,6 +64,10 @@ public class SCassandraCluster {
             primingClients.add(PrimingClient.builder()
                 .withHost(ip).withPort(scassandra.getAdminPort())
                 .build());
+            activityClients.add(ActivityClient.builder()
+                    .withHost(ip).withPort(scassandra.getAdminPort())
+                    .build()
+            );
         }
         primePeers();
     }
@@ -82,10 +86,19 @@ public class SCassandraCluster {
         return this;
     }
 
+    public List<Query> retrieveQueries(int node) {
+        return activityClients.get(node - 1).retrieveQueries();
+    }
+
     public void clearAllPrimes() {
         for (PrimingClient primingClient : primingClients)
             primingClient.clearAllPrimes();
         primePeers();
+    }
+
+    public void clearAllRecordedActivity() {
+        for (ActivityClient activityClient : activityClients)
+            activityClient.clearAllRecordedActivity();
     }
 
     private void primePeers() {

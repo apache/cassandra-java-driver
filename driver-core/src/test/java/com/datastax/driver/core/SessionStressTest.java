@@ -20,6 +20,8 @@ import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.net.InetSocketAddress;
@@ -35,6 +37,12 @@ public class SessionStressTest extends CCMBridge.PerClassSingleNodeCluster {
 
     private ListeningExecutorService executorService;
 
+    private Cluster stressCluster;
+
+    private final SocketChannelMonitor channelMonitor = new SocketChannelMonitor();
+
+    private List<InetSocketAddress> contactPoints;
+
     public SessionStressTest() {
         // 8 threads should be enough so that we stress the driver and not the OS thread scheduler
         executorService = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(8));
@@ -45,6 +53,27 @@ public class SessionStressTest extends CCMBridge.PerClassSingleNodeCluster {
         return new ArrayList<String>(0);
     }
 
+    @BeforeMethod
+    public void setUp() {
+        contactPoints = Collections.singletonList(hostAddress);
+        // override inherited field with a new cluster object and ensure 0 sessions and connections
+        channelMonitor.reportAtFixedInterval(1, TimeUnit.SECONDS);
+        stressCluster = Cluster.builder().addContactPointsWithPorts(contactPoints)
+                .withPoolingOptions(new PoolingOptions().setCoreConnectionsPerHost(HostDistance.LOCAL, 1))
+                .withNettyOptions(channelMonitor.nettyOptions()).build();
+        stressCluster.init();
+    }
+
+    @AfterMethod
+    public void tearDown() {
+        stressCluster.close();
+
+        // Ensure no channels remain open.
+        assertEquals(channelMonitor.openChannels(contactPoints).size(), 0);
+
+        channelMonitor.stop();
+        channelMonitor.report();
+    }
 
     /**
      * Stress test on opening/closing sessions.
@@ -71,100 +100,82 @@ public class SessionStressTest extends CCMBridge.PerClassSingleNodeCluster {
      */
     @Test(groups = "long")
     public void sessions_should_not_leak_connections() {
-        // override inherited field with a new cluster object and ensure 0 sessions and connections
-        SocketChannelMonitor channelMonitor = new SocketChannelMonitor();
-        channelMonitor.reportAtFixedInterval(1, TimeUnit.SECONDS);
-        List<InetSocketAddress> contactPoints = Collections.singletonList(hostAddress);
-        cluster = Cluster.builder().addContactPointsWithPorts(contactPoints)
-                .withPoolingOptions(new PoolingOptions().setCoreConnectionsPerHost(HostDistance.LOCAL, 1))
-                .withNettyOptions(channelMonitor.nettyOptions()).build();
-        cluster.init();
-
         // The cluster has been initialized, we should have 1 connection.
-        assertEquals(cluster.manager.sessions.size(), 0);
-        assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1);
+        assertEquals(stressCluster.manager.sessions.size(), 0);
+        assertEquals((int) stressCluster.getMetrics().getOpenConnections().getValue(), 1);
 
         // The first session initializes the cluster and its control connection
         // This is a local cluster so we also have 2 connections per session
-        Session session = cluster.connect();
-        assertEquals(cluster.manager.sessions.size(), 1);
-        int coreConnections = TestUtils.numberOfLocalCoreConnections(cluster);
-        assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1 + coreConnections);
+        Session session = stressCluster.connect();
+        assertEquals(stressCluster.manager.sessions.size(), 1);
+        int coreConnections = TestUtils.numberOfLocalCoreConnections(stressCluster);
+        assertEquals((int) stressCluster.getMetrics().getOpenConnections().getValue(), 1 + coreConnections);
         assertEquals(channelMonitor.openChannels(contactPoints).size(), 1 + coreConnections);
 
         // Closing the session keeps the control connection opened
         session.close();
-        assertEquals(cluster.manager.sessions.size(), 0);
-        assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1);
+        assertEquals(stressCluster.manager.sessions.size(), 0);
+        assertEquals((int) stressCluster.getMetrics().getOpenConnections().getValue(), 1);
         assertEquals(channelMonitor.openChannels(contactPoints).size(), 1);
 
-        try {
-            int nbOfSessions = 2000;
-            int halfOfTheSessions = nbOfSessions / 2;
-            int nbOfIterations = 5;
-            int sleepTime = 20;
+        int nbOfSessions = 2000;
+        int halfOfTheSessions = nbOfSessions / 2;
+        int nbOfIterations = 5;
+        int sleepTime = 20;
 
-            for (int iteration = 1; iteration <= nbOfIterations; iteration++) {
-                logger.info("On iteration {}/{}.", iteration, nbOfIterations);
-                logger.info("Creating {} sessions.", nbOfSessions);
-                waitFor(openSessionsConcurrently(nbOfSessions));
+        for (int iteration = 1; iteration <= nbOfIterations; iteration++) {
+            logger.info("On iteration {}/{}.", iteration, nbOfIterations);
+            logger.info("Creating {} sessions.", nbOfSessions);
+            waitFor(openSessionsConcurrently(nbOfSessions));
 
-                // We should see the exact number of opened sessions
-                // Since we have 2 connections per session, we should see 2 * sessions + control connection
-                assertEquals(cluster.manager.sessions.size(), nbOfSessions);
-                assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(),
-                        coreConnections * nbOfSessions + 1);
-                assertEquals(channelMonitor.openChannels(contactPoints).size(), coreConnections * nbOfSessions + 1);
+            // We should see the exact number of opened sessions
+            // Since we have 2 connections per session, we should see 2 * sessions + control connection
+            assertEquals(stressCluster.manager.sessions.size(), nbOfSessions);
+            assertEquals((int) stressCluster.getMetrics().getOpenConnections().getValue(),
+                    coreConnections * nbOfSessions + 1);
+            assertEquals(channelMonitor.openChannels(contactPoints).size(), coreConnections * nbOfSessions + 1);
 
-                // Close half of the sessions asynchronously
-                logger.info("Closing {}/{} sessions.", halfOfTheSessions, nbOfSessions);
-                waitFor(closeSessionsConcurrently(halfOfTheSessions));
+            // Close half of the sessions asynchronously
+            logger.info("Closing {}/{} sessions.", halfOfTheSessions, nbOfSessions);
+            waitFor(closeSessionsConcurrently(halfOfTheSessions));
 
-                // Check that we have the right number of sessions and connections
-                assertEquals(cluster.manager.sessions.size(), halfOfTheSessions);
-                assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(),
-                        coreConnections * (nbOfSessions / 2) + 1);
-                assertEquals(channelMonitor.openChannels(contactPoints).size(),
-                        coreConnections * (nbOfSessions / 2) + 1);
+            // Check that we have the right number of sessions and connections
+            assertEquals(stressCluster.manager.sessions.size(), halfOfTheSessions);
+            assertEquals((int) stressCluster.getMetrics().getOpenConnections().getValue(),
+                    coreConnections * (nbOfSessions / 2) + 1);
+            assertEquals(channelMonitor.openChannels(contactPoints).size(),
+                    coreConnections * (nbOfSessions / 2) + 1);
 
-                // Close and open the same number of sessions concurrently
-                logger.info("Closing and Opening {} sessions concurrently.", halfOfTheSessions);
-                CountDownLatch startSignal = new CountDownLatch(2);
-                List<ListenableFuture<Session>> openSessionFutures =
-                        openSessionsConcurrently(halfOfTheSessions, startSignal);
-                List<ListenableFuture<Void>> closeSessionsFutures = closeSessionsConcurrently(halfOfTheSessions,
-                        startSignal);
-                startSignal.countDown();
-                waitFor(openSessionFutures);
-                waitFor(closeSessionsFutures);
+            // Close and open the same number of sessions concurrently
+            logger.info("Closing and Opening {} sessions concurrently.", halfOfTheSessions);
+            CountDownLatch startSignal = new CountDownLatch(2);
+            List<ListenableFuture<Session>> openSessionFutures =
+                    openSessionsConcurrently(halfOfTheSessions, startSignal);
+            List<ListenableFuture<Void>> closeSessionsFutures = closeSessionsConcurrently(halfOfTheSessions,
+                    startSignal);
+            startSignal.countDown();
+            waitFor(openSessionFutures);
+            waitFor(closeSessionsFutures);
 
-                // Check that we have the same number of sessions and connections
-                assertEquals(cluster.manager.sessions.size(), halfOfTheSessions);
-                assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(),
-                        coreConnections * (nbOfSessions / 2) + 1);
-                assertEquals(channelMonitor.openChannels(contactPoints).size(),
-                        coreConnections * (nbOfSessions / 2) + 1);
+            // Check that we have the same number of sessions and connections
+            assertEquals(stressCluster.manager.sessions.size(), halfOfTheSessions);
+            assertEquals((int) stressCluster.getMetrics().getOpenConnections().getValue(),
+                    coreConnections * (nbOfSessions / 2) + 1);
+            assertEquals(channelMonitor.openChannels(contactPoints).size(),
+                    coreConnections * (nbOfSessions / 2) + 1);
 
-                // Close the remaining sessions
-                logger.info("Closing remaining {} sessions.", halfOfTheSessions);
-                waitFor(closeSessionsConcurrently(halfOfTheSessions));
+            // Close the remaining sessions
+            logger.info("Closing remaining {} sessions.", halfOfTheSessions);
+            waitFor(closeSessionsConcurrently(halfOfTheSessions));
 
-                // Check that we have a clean state
-                assertEquals(cluster.manager.sessions.size(), 0);
-                assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1);
-                assertEquals(channelMonitor.openChannels(contactPoints).size(), 1);
+            // Check that we have a clean state
+            assertEquals(stressCluster.manager.sessions.size(), 0);
+            assertEquals((int) stressCluster.getMetrics().getOpenConnections().getValue(), 1);
+            assertEquals(channelMonitor.openChannels(contactPoints).size(), 1);
 
-                // On OSX, the TCP connections are released after 15s by default (sysctl -a net.inet.tcp.msl)
-                logger.info("Sleeping {} seconds so that TCP connections are released by the OS", sleepTime);
-                Uninterruptibles.sleepUninterruptibly(sleepTime, TimeUnit.SECONDS);
-            }
-        } finally {
-            cluster.close();
-
-            // Ensure no channels remain open.
-            channelMonitor.stop();
-            channelMonitor.report();
-            assertEquals(channelMonitor.openChannels(contactPoints).size(), 0);
+            // On OSX, the TCP connections are released after 15s by default (sysctl -a net.inet.tcp.msl)
+            logger.info("Sleeping {} seconds so that TCP connections are released by the OS", sleepTime);
+            Uninterruptibles.sleepUninterruptibly(sleepTime, TimeUnit.SECONDS);
         }
     }
 
@@ -177,7 +188,7 @@ public class SessionStressTest extends CCMBridge.PerClassSingleNodeCluster {
         // Open new sessions once all tasks have been created
         List<ListenableFuture<Session>> sessionFutures = Lists.newArrayListWithCapacity(iterations);
         for (int i = 0; i < iterations; i++) {
-            sessionFutures.add(executorService.submit(new OpenSession(cluster, countDownLatch)));
+            sessionFutures.add(executorService.submit(new OpenSession(countDownLatch)));
         }
         countDownLatch.countDown();
         return sessionFutures;
@@ -191,7 +202,7 @@ public class SessionStressTest extends CCMBridge.PerClassSingleNodeCluster {
     private List<ListenableFuture<Void>> closeSessionsConcurrently(int iterations, CountDownLatch countDownLatch) {
         // Get a reference to every session we want to close
         Stack<Session> sessionsToClose = new Stack<Session>();
-        Iterator<? extends Session> iterator = cluster.manager.sessions.iterator();
+        Iterator<? extends Session> iterator = stressCluster.manager.sessions.iterator();
         for (int i = 0; i < iterations; i++) {
             sessionsToClose.push(iterator.next());
         }
@@ -228,19 +239,17 @@ public class SessionStressTest extends CCMBridge.PerClassSingleNodeCluster {
         }
     }
 
-    private static class OpenSession implements Callable<Session> {
-        private final Cluster cluster;
+    private class OpenSession implements Callable<Session> {
         private final CountDownLatch startSignal;
 
-        OpenSession(Cluster cluster, CountDownLatch startSignal) {
-            this.cluster = cluster;
+        OpenSession(CountDownLatch startSignal) {
             this.startSignal = startSignal;
         }
 
         @Override
         public Session call() throws Exception {
             startSignal.await();
-            return cluster.connect();
+            return stressCluster.connect();
         }
     }
 
