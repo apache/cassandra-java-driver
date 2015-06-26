@@ -17,6 +17,7 @@
   replication factors (JAVA-702)
 - [improvement] Add PoolingOptions method to set both core and max
   connections (JAVA-662).
+- [improvement] Do not include epoll JAR in binary distribution (JAVA-766)
 
 Merged from 2.0.10_fixes branch:
 

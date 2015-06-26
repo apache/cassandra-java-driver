@@ -37,6 +37,7 @@
             <outputDirectory>lib</outputDirectory>
             <excludes>
               <exclude>com.datastax.cassandra:*</exclude>
+              <exclude>io.netty:netty-transport-native-epoll:*</exclude>
             </excludes>
           </dependencySet>
         </dependencySets>
