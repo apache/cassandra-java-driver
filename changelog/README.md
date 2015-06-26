@@ -19,6 +19,7 @@
 - [improvement] Allow access to table metadata from Mapper (JAVA-554)
 - [improvement] Provide a way to map computed fields (JAVA-661)
 - [improvement] Ignore missing columns in mapper (JAVA-824)
+- [improvement] Support CONTAINS / CONTAINS KEY in QueryBuilder (JAVA-677)
 
 
 ### 2.1.6
