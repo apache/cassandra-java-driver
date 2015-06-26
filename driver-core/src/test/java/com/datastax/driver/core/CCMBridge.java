@@ -504,7 +504,13 @@ public class CCMBridge {
 
         @AfterClass(groups = { "short", "long" })
         public void afterClass() {
-            clearSimpleKeyspace();
+            try {
+                clearSimpleKeyspace();
+            } finally {
+                if(cluster != null) {
+                    cluster.close();
+                }
+            }
         }
 
         private void maybeInitCluster(){
@@ -568,9 +574,17 @@ public class CCMBridge {
         }
 
         private void clearSimpleKeyspace() {
-            session.execute("DROP KEYSPACE " + keyspace);
-            if (cluster != null) {
-                cluster.close();
+            if(keyspace != null) {
+                // Temporarily extend read timeout to 1 minute to accommodate keyspaces with many tables.
+                // This should be more than enough although some tests create many tables, so dropping a keyspace
+                // could take as long as 12 seconds on restricted hardware.
+                int currentTimeout = cluster.getConfiguration().getSocketOptions().getReadTimeoutMillis();
+                cluster.getConfiguration().getSocketOptions().setReadTimeoutMillis(60000);
+                try {
+                    session.execute("DROP KEYSPACE " + keyspace);
+                } finally {
+                    cluster.getConfiguration().getSocketOptions().setReadTimeoutMillis(currentTimeout);
+                }
             }
         }
 
