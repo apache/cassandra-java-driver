@@ -44,9 +44,10 @@ public class Result<T> implements Iterable<T> {
     private T map(Row row) {
         T entity = mapper.newEntity();
         for (ColumnMapper<T> cm : mapper.allColumns()) {
-            if (!useAlias && cm.kind == ColumnMapper.Kind.COMPUTED)
+            String name = cm.getAlias() != null && this.useAlias ? cm.getAlias() : cm.getColumnName();
+            if (!row.getColumnDefinitions().contains(name))
                 continue;
-            ByteBuffer bytes = row.getBytesUnsafe(cm.getAlias() != null && this.useAlias ? cm.getAlias() : cm.getColumnName());
+            ByteBuffer bytes = row.getBytesUnsafe(name);
             if (bytes != null)
                 cm.setValue(entity, cm.getDataType().deserialize(bytes, protocolVersion));
         }
