@@ -143,7 +143,8 @@ class SessionManager extends AbstractSession {
                         switch (rm.kind) {
                             case PREPARED:
                                 Responses.Result.Prepared pmsg = (Responses.Result.Prepared)rm;
-                                PreparedStatement stmt = DefaultPreparedStatement.fromMessage(pmsg, cluster.getMetadata(), cluster.getConfiguration().getProtocolOptions().getProtocolVersionEnum(), query, poolsState.keyspace);
+                                PreparedStatement stmt = DefaultPreparedStatement
+                                    .fromMessage(pmsg, cluster.getMetadata(), cluster.getConfiguration().getProtocolOptions().getProtocolVersionEnum(), query, poolsState.keyspace);
                                 stmt = cluster.manager.addPrepared(stmt);
                                 try {
                                     // All Sessions are connected to the same nodes so it's enough to prepare only the nodes of this session.
@@ -440,13 +441,25 @@ class SessionManager extends AbstractSession {
             // Note: using the connection timeout isn't perfectly correct, we should probably change that someday
             Uninterruptibles.getUninterruptibly(future, timeout, TimeUnit.MILLISECONDS);
         } catch (TimeoutException e) {
-            throw new DriverInternalError(String.format("No responses after %d milliseconds while setting current keyspace. This should not happen, unless you have setup a very low connection timeout.", timeout));
+            throw new DriverInternalError(
+                String.format("No responses after %d milliseconds while setting current keyspace. This should not happen, unless you have setup a very low connection timeout.", timeout));
         } catch (ExecutionException e) {
             throw DefaultResultSetFuture.extractCauseFromExecutionException(e);
         }
     }
 
     Message.Request makeRequestMessage(Statement statement, ByteBuffer pagingState) {
+        long defaultTimestamp = Long.MIN_VALUE;
+        ProtocolVersion pv = cluster.manager.protocolVersion();
+        if (cluster.manager.protocolVersion().compareTo(ProtocolVersion.V3) >= 0) {
+            defaultTimestamp = statement.getDefaultTimestamp();
+            if (defaultTimestamp == Long.MIN_VALUE)
+                defaultTimestamp = cluster.getConfiguration().getPolicies().getTimestampGenerator().next();
+        }
+        return makeRequestMessage(statement, pagingState, defaultTimestamp);
+    }
+
+    Message.Request makeRequestMessage(Statement statement, ByteBuffer pagingState, long timestamp) {
         // We need the protocol version, which is only available once the cluster has initialized. Initialize the session to ensure this is the case.
         // init() locks, so avoid if we know we don't need it.
         if (!isInit)
@@ -463,22 +476,10 @@ class SessionManager extends AbstractSession {
                 throw new UnsupportedFeatureException(version, "Serial consistency on batch statements is not supported");
         } else if (serialConsistency == null)
             serialConsistency = configuration().getQueryOptions().getSerialConsistencyLevel();
-
-        long defaultTimestamp = Long.MIN_VALUE;
-        if (cluster.manager.protocolVersion().compareTo(ProtocolVersion.V3) >= 0) {
-            defaultTimestamp = statement.getDefaultTimestamp();
-            if (defaultTimestamp == Long.MIN_VALUE)
-                defaultTimestamp = cluster.getConfiguration().getPolicies().getTimestampGenerator().next();
-        }
-
-        Message.Request request = makeRequestMessage(statement, consistency, serialConsistency, pagingState, defaultTimestamp);
-        if (statement.isTracing())
-            request.setTracingRequested();
-
-        return request;
+        return makeRequestMessage(statement, consistency, serialConsistency, pagingState, timestamp);
     }
 
-    Message.Request makeRequestMessage(Statement statement, ConsistencyLevel cl, ConsistencyLevel scl, ByteBuffer pagingState, long defaultTimestamp) {
+    Message.Request makeRequestMessage(Statement statement, ConsistencyLevel cl, ConsistencyLevel scl, ByteBuffer pagingState, long timestamp) {
         ProtocolVersion protoVersion = cluster.manager.protocolVersion();
         int fetchSize = statement.getFetchSize();
         ByteBuffer usedPagingState = pagingState;
@@ -522,7 +523,7 @@ class SessionManager extends AbstractSession {
             List<ByteBuffer> values = rawValues == null ? Collections.<ByteBuffer>emptyList() : Arrays.asList(rawValues);
             String qString = rs.getQueryString();
             Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(cl, values, false,
-                                                                                      fetchSize, usedPagingState, scl, defaultTimestamp);
+                fetchSize, usedPagingState, scl, timestamp);
             return new Requests.Query(qString, options);
         } else if (statement instanceof BoundStatement) {
             BoundStatement bs = (BoundStatement)statement;
@@ -533,7 +534,7 @@ class SessionManager extends AbstractSession {
             bs.ensureAllSet();
             boolean skipMetadata = protoVersion != ProtocolVersion.V1 && bs.statement.getPreparedId().resultSetMetadata != null;
             Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(cl, Arrays.asList(bs.wrapper.values), skipMetadata,
-                                                                                      fetchSize, usedPagingState, scl, defaultTimestamp);
+                fetchSize, usedPagingState, scl, timestamp);
             return new Requests.Execute(bs.statement.getPreparedId().id, options);
         } else {
             assert statement instanceof BatchStatement : statement;
@@ -545,14 +546,14 @@ class SessionManager extends AbstractSession {
             BatchStatement bs = (BatchStatement)statement;
             bs.ensureAllSet();
             BatchStatement.IdAndValues idAndVals = bs.getIdAndValues(protoVersion);
-            Requests.BatchProtocolOptions options = new Requests.BatchProtocolOptions(cl, scl, defaultTimestamp);
+            Requests.BatchProtocolOptions options = new Requests.BatchProtocolOptions(cl, scl, timestamp);
             return new Requests.Batch(bs.batchType, idAndVals.ids, idAndVals.values, options);
         }
     }
 
     /**
      * Execute the provided request.
-     *
+     * <p/>
      * This method will find a suitable node to connect to using the
      * {@link LoadBalancingPolicy} and handle host failover.
      */
