@@ -562,7 +562,7 @@ class Connection {
                         }
                     });
                 } else {
-                    logger.trace("{} request sent successfully", Connection.this);
+                    logger.trace("{}, stream {}, request sent successfully", Connection.this, request.getStreamId());
                 }
             }
         };
@@ -955,7 +955,7 @@ class Connection {
             int streamId = response.getStreamId();
 
             if(logger.isTraceEnabled())
-                logger.trace("{} received: {}", Connection.this, asDebugString(response));
+                logger.trace("{}, stream {}, received: {}", Connection.this, response.getStreamId(), asDebugString(response));
 
             if (streamId < 0) {
                 factory.defaultHandler.handle(response);
