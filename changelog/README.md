@@ -17,6 +17,8 @@
 - [bug] Prevent QueryBuilder from trying to serialize raw string (JAVA-688)
 - [improvement] Allow @Enumerated in Accessor method parameters (JAVA-589)
 - [improvement] Allow access to table metadata from Mapper (JAVA-554)
+- [improvement] Provide a way to map computed fields (JAVA-661)
+- [improvement] Ignore missing columns in mapper (JAVA-824)
 
 
 ### 2.1.6

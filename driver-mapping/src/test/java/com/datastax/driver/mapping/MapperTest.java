@@ -22,6 +22,8 @@ import java.util.*;
 import com.google.common.base.Objects;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.testng.annotations.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.testng.Assert.*;
 
 import com.datastax.driver.mapping.MapperTest.User.Gender;
@@ -376,5 +378,41 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
         // Test that an enum value can be unassigned through an accessor (set to null).
         userAccessor.updateNameAndGender("Paule", null, u1.getUserId());
         assertEquals(userMapper.get(u1.getUserId()).getGender(), null);
+    }
+
+    @Test(groups="short")
+    public void should_map_objects_from_partial_queries() throws Exception {
+        MappingManager manager = new MappingManager(session);
+
+        Mapper<Post> m = manager.mapper(Post.class);
+
+        // Insert a few posts
+        User u1 = new User("Paul", "paul@gmail.com", User.Gender.MALE);
+        Post p1 = new Post(u1, "Something about mapping");
+        Post p2 = new Post(u1, "Something else");
+        Post p3 = new Post(u1, "Something more");
+
+        p1.setDevice(InetAddress.getLocalHost());
+        p2.setTags(new HashSet<String>(Arrays.asList("important", "keeper")));
+
+        m.save(p1);
+        m.save(p2);
+        m.save(p3);
+
+        // Retrieve posts with a projection query that only retrieves some of the fields
+        ResultSet rs = session.execute("select user_id, post_id, title from posts where user_id = ?", u1.getUserId());
+
+        Result<Post> result = m.map(rs);
+        for (Post post : result) {
+            assertThat(post.getUserId()).isEqualTo(u1.getUserId());
+            assertThat(post.getPostId()).isNotNull();
+            assertThat(post.getTitle()).isNotNull();
+
+            assertThat(post.getDevice()).isNull();
+            assertThat(post.getTags()).isNull();
+        }
+
+        // cleanup
+        session.execute("delete from posts where user_id = ?", u1.getUserId());
     }
 }
