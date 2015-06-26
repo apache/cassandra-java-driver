@@ -69,7 +69,7 @@ class RequestHandler {
     private AtomicInteger executionCount = new AtomicInteger();
 
     // Timestamp common to all Speculative Executions of a same request
-    private long commonTimestamp = 0;
+    private volatile long commonTimestamp = 0;
 
     public RequestHandler(SessionManager manager, Callback callback, Statement statement) {
         this.id = Long.toString(System.identityHashCode(this));
