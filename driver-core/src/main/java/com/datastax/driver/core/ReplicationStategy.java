@@ -18,6 +18,9 @@ package com.datastax.driver.core;
 import java.util.*;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /*
  * Computes the token->list<replica> association, given the token ring and token->primary token map.
@@ -87,6 +90,7 @@ abstract class ReplicationStrategy {
     }
 
     static class NetworkTopologyStrategy extends ReplicationStrategy {
+        private static final Logger logger = LoggerFactory.getLogger(NetworkTopologyStrategy.class);
 
         private final Map<String, Integer> replicationFactors;
 
@@ -99,6 +103,9 @@ abstract class ReplicationStrategy {
              // This is essentially a copy of org.apache.cassandra.locator.NetworkTopologyStrategy
             Map<String, Set<String>> racks = getRacksInDcs(tokenToPrimary.values());
             Map<Token, Set<Host>> replicaMap = new HashMap<Token, Set<Host>>(tokenToPrimary.size());
+
+            Set<String> warnedDcs = Sets.newHashSetWithExpectedSize(replicationFactors.size());
+
             for (int i = 0; i < ring.size(); i++) {
                 Map<String, Set<Host>> allDcReplicas = new HashMap<String, Set<Host>>();
                 Map<String, Set<String>> seenRacks = new HashMap<String, Set<String>>();
@@ -147,6 +154,25 @@ abstract class ReplicationStrategy {
                         }
                     }
                 }
+
+                // If we haven't found enough replicas after a whole trip around the ring, this probably
+                // means that the replication factors are broken.
+                // Warn the user because that leads to quadratic performance of this method (JAVA-702).
+                for (Map.Entry<String, Set<Host>> entry : allDcReplicas.entrySet()) {
+                    String dcName = entry.getKey();
+                    int expectedFactor = replicationFactors.get(dcName);
+                    int achievedFactor = entry.getValue().size();
+                    if (achievedFactor < expectedFactor && !warnedDcs.contains(dcName)) {
+                        logger.warn("Error while computing token map for datacenter {}: "
+                                + "could not achieve replication factor {} (found {} replicas only), "
+                                + "check your keyspace replication settings. "
+                                + "Note that this can affect the performance of the driver.",
+                            dcName, expectedFactor, achievedFactor);
+                        // only warn once per DC
+                        warnedDcs.add(dcName);
+                    }
+                }
+
                 replicaMap.put(ring.get(i), ImmutableSet.copyOf(replicas));
             }
             return replicaMap;

@@ -257,6 +257,30 @@ public class PoolingOptions {
     }
 
     /**
+     * Sets the core and maximum number of connections per host in one call.
+     * <p>
+     * This is a convenience method that is equivalent to calling {@link #setCoreConnectionsPerHost(HostDistance, int)}
+     * and {@link #setMaxConnectionsPerHost(HostDistance, int)}.
+     *
+     * @param distance the {@code HostDistance} for which to set these threshold.
+     * @param core the core number of connections.
+     * @param max the max number of connections.
+     * @return this {@code PoolingOptions}.
+     *
+     * @throws IllegalArgumentException if {@code distance == HostDistance.IGNORED},
+     * or if {@code core} > {@code max}.
+     */
+    public synchronized PoolingOptions setConnectionsPerHost(HostDistance distance, int core, int max) {
+        if (distance == HostDistance.IGNORED)
+            throw new IllegalArgumentException("Cannot set connections per host for " + distance + " hosts");
+
+        checkConnectionsPerHostOrder(core, max, distance);
+        coreConnections[distance.ordinal()] = core;
+        maxConnections[distance.ordinal()] = max;
+        return this;
+    }
+
+    /**
      * Returns the timeout before an idle connection is removed.
      *
      * @return the timeout.

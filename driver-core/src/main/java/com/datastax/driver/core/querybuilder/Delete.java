@@ -344,7 +344,7 @@ public class Delete extends BuiltStatement {
          * @return this in-build DELETE Selection
          */
         public Selection listElt(String columnName, int idx) {
-            columns.add(new IndexedSelector(columnName, idx));
+            columns.add(new CollectionElementSelector(columnName, idx));
             return this;
         }
 
@@ -357,7 +357,32 @@ public class Delete extends BuiltStatement {
          * @return this in-build DELETE Selection
          */
         public Selection listElt(String columnName, BindMarker idx) {
-            columns.add(new IndexedSelector(columnName, idx));
+            columns.add(new CollectionElementSelector(columnName, idx));
+            return this;
+        }
+
+        /**
+         * Deletes the provided set element.
+         *
+         * @param columnName the name of the set column.
+         * @param element the element to delete.
+         * @return this in-build DELETE Selection
+         */
+        public Selection setElt(String columnName, Object element) {
+            columns.add(new CollectionElementSelector(columnName, element));
+            return this;
+        }
+
+        /**
+         * Deletes the provided set element,
+         * specified as a bind marker.
+         *
+         * @param columnName the name of the set column.
+         * @param element the element to delete.
+         * @return this in-build DELETE Selection
+         */
+        public Selection setElt(String columnName, BindMarker element) {
+            columns.add(new CollectionElementSelector(columnName, element));
             return this;
         }
 
@@ -369,7 +394,7 @@ public class Delete extends BuiltStatement {
          * @return this in-build DELETE Selection
          */
         public Selection mapElt(String columnName, Object key) {
-            columns.add(new IndexedSelector(columnName, key));
+            columns.add(new CollectionElementSelector(columnName, key));
             return this;
         }
     }
@@ -377,7 +402,7 @@ public class Delete extends BuiltStatement {
     /**
      * A selector in a DELETE selection clause.
      * A selector can be either a column name,
-     * a list element or a map entry.
+     * a list element, a set element or a map entry.
      */
     static class Selector extends Utils.Appendeable {
 
@@ -406,13 +431,13 @@ public class Delete extends BuiltStatement {
     }
 
     /**
-     * A list element or a map entry in a DELETE selection clause.
+     * A selector representing a list index, a set element or a map key in a DELETE selection clause.
      */
-    static class IndexedSelector extends Selector {
+    static class CollectionElementSelector extends Selector {
 
         private final Object key;
 
-        IndexedSelector(String columnName, Object key) {
+        CollectionElementSelector(String columnName, Object key) {
             super(columnName);
             this.key = key;
         }

@@ -38,7 +38,7 @@ public class QueryBuilderExecutionTest extends CCMBridge.PerClassSingleNodeClust
         return Arrays.asList(
             String.format(TestUtils.CREATE_TABLE_SIMPLE_FORMAT, TABLE1),
             "CREATE TABLE dateTest (t timestamp PRIMARY KEY)",
-            "CREATE TABLE test_coll (k int PRIMARY KEY, a list<int>, b map<int,text>)");
+            "CREATE TABLE test_coll (k int PRIMARY KEY, a list<int>, b map<int,text>, c set<text>)");
     }
 
     @Test(groups = "short")
@@ -124,7 +124,7 @@ public class QueryBuilderExecutionTest extends CCMBridge.PerClassSingleNodeClust
     @Test(groups = "short")
     public void should_delete_list_element_with_bind_marker() throws Exception {
         //given
-        session.execute("INSERT INTO test_coll (k, a, b) VALUES (1, [1,2,3], null)");
+        session.execute("INSERT INTO test_coll (k, a) VALUES (1, [1,2,3])");
         //when
         BuiltStatement statement = delete().listElt("a", bindMarker()).from("test_coll").where(eq("k", 1));
         PreparedStatement ps = session.prepare(statement);
@@ -135,9 +135,34 @@ public class QueryBuilderExecutionTest extends CCMBridge.PerClassSingleNodeClust
     }
 
     @Test(groups = "short")
+    public void should_delete_set_element() throws Exception {
+        //given
+        session.execute("INSERT INTO test_coll (k, c) VALUES (1, {'foo','bar','qix'})");
+        //when
+        BuiltStatement statement = delete().setElt("c", "foo").from("test_coll").where(eq("k", 1));
+        session.execute(statement);
+        //then
+        Set<String> actual = session.execute("SELECT c FROM test_coll WHERE k = 1").one().getSet("c", String.class);
+        assertThat(actual).containsOnly("bar", "qix");
+    }
+
+    @Test(groups = "short")
+    public void should_delete_set_element_with_bind_marker() throws Exception {
+        //given
+        session.execute("INSERT INTO test_coll (k, c) VALUES (1, {'foo','bar','qix'})");
+        //when
+        BuiltStatement statement = delete().setElt("c", bindMarker()).from("test_coll").where(eq("k", 1));
+        PreparedStatement ps = session.prepare(statement);
+        session.execute(ps.bind("foo"));
+        //then
+        Set<String> actual = session.execute("SELECT c FROM test_coll WHERE k = 1").one().getSet("c", String.class);
+        assertThat(actual).containsOnly("bar", "qix");
+    }
+
+    @Test(groups = "short")
     public void should_delete_map_entry() throws Exception {
         //given
-        session.execute("INSERT INTO test_coll (k, a, b) VALUES (1, null, {1:'foo', 2:'bar'})");
+        session.execute("INSERT INTO test_coll (k, b) VALUES (1, {1:'foo', 2:'bar'})");
         //when
         BuiltStatement statement = delete().mapElt("b", 1).from("test_coll").where(eq("k", 1));
         session.execute(statement);
@@ -151,9 +176,9 @@ public class QueryBuilderExecutionTest extends CCMBridge.PerClassSingleNodeClust
         //given
         session.execute("INSERT INTO test_coll (k, a, b) VALUES (1, null, {1:'foo', 2:'bar'})");
         //when
-        BuiltStatement statement = delete().mapElt("b", bindMarker("mapEntry")).from("test_coll").where(eq("k", 1));
+        BuiltStatement statement = delete().mapElt("b", bindMarker()).from("test_coll").where(eq("k", 1));
         PreparedStatement ps = session.prepare(statement);
-        session.execute(ps.bind().setInt("mapEntry", 1));
+        session.execute(ps.bind().setInt(0, 1));
         //then
         Map<Integer, String> actual = session.execute("SELECT b FROM test_coll WHERE k = 1").one().getMap("b", Integer.class, String.class);
         assertThat(actual).containsExactly(entry(2, "bar"));
