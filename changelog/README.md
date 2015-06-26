@@ -15,6 +15,7 @@
 - [improvement] Allow access to table metadata from Mapper (JAVA-554)
 - [improvement] Provide a way to map computed fields (JAVA-661)
 - [improvement] Ignore missing columns in mapper (JAVA-824)
+- [bug] Preserve default timestamp for retries and speculative executions (JAVA-724)
 
 Merged from 2.0 branch:
 
