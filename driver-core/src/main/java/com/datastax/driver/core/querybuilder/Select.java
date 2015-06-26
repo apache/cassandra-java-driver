@@ -348,14 +348,6 @@ public class Select extends BuiltStatement {
         public abstract SelectionOrAlias column(String name);
 
         /**
-         * Selects the provided raw expression.
-         *
-         * @param rawString the raw expression to add.
-         * @return this in-build SELECT statement
-         */
-        public abstract SelectionOrAlias raw(String rawString);
-
-        /**
          * Selects the write time of provided column.
          * <p>
          * This is a shortcut for {@code fcall("writetime", QueryBuilder.column(name))}.
@@ -478,7 +470,17 @@ public class Select extends BuiltStatement {
             return queueName(name);
         }
 
-        @Override
+        /**
+         * Selects the provided raw expression.
+         *
+         * This method is used internally by the mapper module. It is not exposed on the parent class {@link Selection} to
+         * avoid breaking binary compatibility. This means that it is not accessible directly via the fluent API (you need
+         * a cast). This shouldn't be a problem for regular clients because they will use other methods of the DSL
+         * ({@code fcall}, etc.) rather than provide a raw string.
+         *
+         * @param rawString the raw expression to add.
+         * @return this in-build SELECT statement
+         */
         public SelectionOrAlias raw(String rawString) {
             return queueName(QueryBuilder.raw(rawString));
         }
