@@ -161,6 +161,30 @@
       </plugin>
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
+        <artifactId>clirr-maven-plugin</artifactId>
+        <version>2.6.1</version>
+        <executions>
+          <execution>
+            <phase>compile</phase>
+            <goals><goal>check</goal></goals>
+          </execution>
+        </executions>
+        <configuration>
+          <comparisonVersion>2.0.10.1</comparisonVersion>
+          <ignoredDifferencesFile>../clirr-ignores.xml</ignoredDifferencesFile>
+          <excludes>
+            <!-- Package-private, internal classes -->
+            <exclude>com/datastax/driver/core/Frame$*</exclude>
+            <exclude>com/datastax/driver/core/ProtocolEvent$*</exclude>
+            <exclude>com/datastax/driver/core/Message$*</exclude>
+            <exclude>com/datastax/driver/core/Requests$*</exclude>
+            <exclude>com/datastax/driver/core/Responses$*</exclude>
+            <exclude>com/datastax/driver/core/Connection$*</exclude>
+          </excludes>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
         <artifactId>build-helper-maven-plugin</artifactId>
         <version>1.9.1</version>
         <executions>
