@@ -205,8 +205,7 @@ class SessionManager extends AbstractSession {
         if (isClosing)
             return Futures.immediateFuture(false);
 
-        final HostConnectionPool newPool = HostConnectionPool.newInstance(host, distance, SessionManager.this,
-            cluster.getConfiguration().getProtocolOptions().getProtocolVersionEnum());
+        final HostConnectionPool newPool = new HostConnectionPool(host, distance, this);
         ListenableFuture<Void> poolInitFuture = newPool.initAsync(reusedConnection);
 
         final SettableFuture<Boolean> future = SettableFuture.create();
@@ -248,8 +247,7 @@ class SessionManager extends AbstractSession {
         if (isClosing)
             return MoreFutures.VOID_SUCCESS;
 
-        final HostConnectionPool newPool = HostConnectionPool.newInstance(host, distance, this,
-            cluster.getConfiguration().getProtocolOptions().getProtocolVersionEnum());
+        final HostConnectionPool newPool = new HostConnectionPool(host, distance, this);
         if (previous == null) {
             if (pools.putIfAbsent(host, newPool) != null) {
                 return null;
@@ -628,7 +626,7 @@ class SessionManager extends AbstractSession {
                 }
 
                 openConnections[i] = p.opened();
-                inFlightQueries[i] = p.inFlightQueriesCount();
+                inFlightQueries[i] = p.totalInFlight.get();
                 trashedConnections[i] = p.trashed();
                 i++;
             }

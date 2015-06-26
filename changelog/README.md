@@ -16,6 +16,8 @@
 - [improvement] Provide a way to map computed fields (JAVA-661)
 - [improvement] Ignore missing columns in mapper (JAVA-824)
 - [bug] Preserve default timestamp for retries and speculative executions (JAVA-724)
+- [improvement] Use same pool implementation for protocol v2 and v3
+  (JAVA-738).
 
 Merged from 2.0 branch:
 

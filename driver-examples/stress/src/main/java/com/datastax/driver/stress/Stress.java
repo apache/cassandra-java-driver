@@ -210,7 +210,7 @@ public class Stress {
                            : concurrency / maxRequestsPerConnection + 1;
 
         PoolingOptions pools = new PoolingOptions();
-        pools.setMaxSimultaneousRequestsPerConnectionThreshold(HostDistance.LOCAL, concurrency);
+        pools.setNewConnectionThreshold(HostDistance.LOCAL, concurrency);
         pools.setCoreConnectionsPerHost(HostDistance.LOCAL, maxConnections);
         pools.setMaxConnectionsPerHost(HostDistance.LOCAL, maxConnections);
         pools.setCoreConnectionsPerHost(HostDistance.REMOTE, maxConnections);
