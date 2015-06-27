@@ -22,6 +22,8 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.mockito.Mockito;
 import org.scassandra.http.client.PrimingRequest;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 
@@ -124,5 +126,18 @@ public class AbstractRetryPolicyIntegrationTest {
 
     protected void assertQueried(int hostNumber, int times) {
         assertThat(scassandras.retrieveQueries(hostNumber)).hasSize(times);
+    }
+
+    @AfterMethod(groups = "short")
+    public void afterMethod() {
+        scassandras.clearAllPrimes();
+        if (cluster != null)
+            cluster.close();
+    }
+
+    @AfterClass(groups = "short")
+    public void afterClass() {
+        if (scassandras != null)
+            scassandras.stop();
     }
 }
