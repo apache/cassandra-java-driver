@@ -15,7 +15,6 @@
  */
 package com.datastax.driver.core.querybuilder;
 
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -52,7 +51,7 @@ public class Delete extends BuiltStatement {
     }
 
     @Override
-    StringBuilder buildQueryString(List<ByteBuffer> variables) {
+    StringBuilder buildQueryString(List<Object> variables) {
         StringBuilder builder = new StringBuilder();
 
         builder.append("DELETE");
@@ -414,7 +413,7 @@ public class Delete extends BuiltStatement {
         }
 
         @Override
-        void appendTo(StringBuilder sb, List<ByteBuffer> values) {
+        void appendTo(StringBuilder sb, List<Object> values) {
             Utils.appendName(columnName, sb);
         }
 
@@ -426,7 +425,7 @@ public class Delete extends BuiltStatement {
         @Override
         public String toString() {
             StringBuilder sb = new StringBuilder();
-            appendTo(sb, new ArrayList<ByteBuffer>());
+            appendTo(sb, new ArrayList<Object>());
             return sb.toString();
         }
     }
@@ -444,7 +443,7 @@ public class Delete extends BuiltStatement {
         }
 
         @Override
-        void appendTo(StringBuilder sb, List<ByteBuffer> values) {
+        void appendTo(StringBuilder sb, List<Object> values) {
             super.appendTo(sb, values);
             sb.append('[');
             Utils.appendFlatValue(key, sb);

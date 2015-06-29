@@ -25,14 +25,13 @@ import java.util.regex.Pattern;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.datastax.driver.core.DataType;
-import com.datastax.driver.core.utils.Bytes;
 
 // Static utilities private to the query builder
 abstract class Utils {
 
     private static final Pattern cnamePattern = Pattern.compile("\\w+(?:\\[.+\\])?");
 
-    static StringBuilder joinAndAppend(StringBuilder sb, String separator, List<? extends Appendeable> values, List<ByteBuffer> variables) {
+    static StringBuilder joinAndAppend(StringBuilder sb, String separator, List<? extends Appendeable> values, List<Object> variables) {
         for (int i = 0; i < values.size(); i++) {
             if (i > 0)
                 sb.append(separator);
@@ -50,7 +49,7 @@ abstract class Utils {
         return sb;
     }
 
-    static StringBuilder joinAndAppendValues(StringBuilder sb, String separator, List<?> values, List<ByteBuffer> variables) {
+    static StringBuilder joinAndAppendValues(StringBuilder sb, String separator, List<?> values, List<Object> variables) {
         for (int i = 0; i < values.size(); i++) {
             if (i > 0)
                 sb.append(separator);
@@ -59,37 +58,42 @@ abstract class Utils {
         return sb;
     }
 
-    // Returns null if it's not really serializable (function call, bind markers, ...)
-    static ByteBuffer serializeValue(Object value) {
-        if (value == QueryBuilder.bindMarker() || value instanceof FCall || value instanceof CName)
-            return null;
+    // Returns false if it's not really serializable (function call, bind markers, ...)
+    static boolean isSerializable(Object value) {
+        if (value instanceof BindMarker || value instanceof FCall || value instanceof CName)
+            return false;
 
         if (value instanceof RawString)
-            return null;
+            return false;
 
         // We also don't serialize fixed size number types. The reason is that if we do it, we will
         // force a particular size (4 bytes for ints, ...) and for the query builder, we don't want
         // users to have to bother with that.
         if (value instanceof Number && !(value instanceof BigInteger || value instanceof BigDecimal))
-            return null;
+            return false;
 
-        try {
-            return DataType.serializeValue(value);
-        } catch (IllegalArgumentException e) {
-            return null;
-        }
+        return true;
     }
 
-    static StringBuilder appendValue(Object value, StringBuilder sb, List<ByteBuffer> variables) {
-        if (variables == null)
-            return appendValue(value, sb, false);
+    static ByteBuffer[] convert(List<Object> values) {
+        ByteBuffer[] serializedValues = new ByteBuffer[values.size()];
+        for (int i = 0; i < values.size(); i++) {
+            try {
+                serializedValues[i] = DataType.serializeValue(values.get(i));
+            } catch (IllegalArgumentException e) {
+                // Catch and rethrow to provide a more helpful error message (one that include which value is bad)
+                throw new IllegalArgumentException(String.format("Value %d of type %s does not correspond to any CQL3 type", i, values.get(i).getClass()));
+            }
+        }
+        return serializedValues;
+    }
 
-        ByteBuffer bb = serializeValue(value);
-        if (bb == null)
+    static StringBuilder appendValue(Object value, StringBuilder sb, List<Object> variables) {
+        if (variables == null || !isSerializable(value))
             return appendValue(value, sb, false);
 
         sb.append('?');
-        variables.add(bb);
+        variables.add(value);
         return sb;
     }
 
@@ -140,13 +144,13 @@ abstract class Utils {
             sb.append(value);
             return true;
         } else if (value instanceof InetAddress) {
-            sb.append('\'').append(((InetAddress)value).getHostAddress()).append('\'');
+            sb.append(DataType.inet().format(value));
             return true;
         } else if (value instanceof Date) {
-            sb.append(((Date)value).getTime());
+            sb.append(DataType.timestamp().format(value));
             return true;
         } else if (value instanceof ByteBuffer) {
-            sb.append(Bytes.toHexString((ByteBuffer) value));
+            sb.append(DataType.blob().format(value));
             return true;
         } else if (value instanceof BindMarker) {
             sb.append(value);
@@ -188,23 +192,18 @@ abstract class Utils {
         }
     }
 
-    static StringBuilder appendCollection(Object value, StringBuilder sb, List<ByteBuffer> variables) {
-        ByteBuffer bb = variables == null ? null : serializeValue(value);
-        if (bb == null) {
+    static StringBuilder appendCollection(Object value, StringBuilder sb, List<Object> variables) {
+        if (variables == null || !isSerializable(value)) {
             boolean wasCollection = appendValueIfCollection(value, sb, false);
             assert wasCollection;
         } else {
             sb.append('?');
-            variables.add(bb);
+            variables.add(value);
         }
         return sb;
     }
 
-    static StringBuilder appendList(List<?> l, StringBuilder sb) {
-        return appendList(l, sb, false);
-    }
-
-    private static StringBuilder appendList(List<?> l, StringBuilder sb, boolean rawValue) {
+    static StringBuilder appendList(List<?> l, StringBuilder sb, boolean rawValue) {
         sb.append('[');
         for (int i = 0; i < l.size(); i++) {
             if (i > 0)
@@ -215,11 +214,7 @@ abstract class Utils {
         return sb;
     }
 
-    static StringBuilder appendSet(Set<?> s, StringBuilder sb) {
-        return appendSet(s, sb, false);
-    }
-
-    private static StringBuilder appendSet(Set<?> s, StringBuilder sb, boolean rawValue) {
+    static StringBuilder appendSet(Set<?> s, StringBuilder sb, boolean rawValue) {
         sb.append('{');
         boolean first = true;
         for (Object elt : s) {
@@ -230,8 +225,20 @@ abstract class Utils {
         return sb;
     }
 
-    static StringBuilder appendMap(Map<?, ?> m, StringBuilder sb) {
-        return appendMap(m, sb, false);
+    static StringBuilder appendMap(Map<?, ?> m, StringBuilder sb, boolean rawValue) {
+        sb.append('{');
+        boolean first = true;
+        for (Map.Entry<?, ?> entry : m.entrySet()) {
+            if (first)
+                first = false;
+            else
+                sb.append(',');
+            appendFlatValue(entry.getKey(), sb, rawValue);
+            sb.append(':');
+            appendFlatValue(entry.getValue(), sb, rawValue);
+        }
+        sb.append('}');
+        return sb;
     }
 
     static boolean containsBindMarker(Object value) {
@@ -273,24 +280,8 @@ abstract class Utils {
         return true;
     }
 
-    private static StringBuilder appendMap(Map<?, ?> m, StringBuilder sb, boolean rawValue) {
-        sb.append('{');
-        boolean first = true;
-        for (Map.Entry<?, ?> entry : m.entrySet()) {
-            if (first)
-                first = false;
-            else
-                sb.append(',');
-            appendFlatValue(entry.getKey(), sb, rawValue);
-            sb.append(':');
-            appendFlatValue(entry.getValue(), sb, rawValue);
-        }
-        sb.append('}');
-        return sb;
-    }
-
     private static StringBuilder appendValueString(String value, StringBuilder sb) {
-        return sb.append('\'').append(replace(value, '\'', "''")).append('\'');
+        return sb.append(DataType.text().format(value));
     }
 
     static boolean isRawValue(Object value) {
@@ -339,7 +330,7 @@ abstract class Utils {
     }
 
     static abstract class Appendeable {
-        abstract void appendTo(StringBuilder sb, List<ByteBuffer> values);
+        abstract void appendTo(StringBuilder sb, List<Object> values);
         abstract boolean containsBindMarker();
     }
 

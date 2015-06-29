@@ -36,7 +36,7 @@ public abstract class BuiltStatement extends RegularStatement {
 
     private boolean dirty;
     private String cache;
-    private ByteBuffer[] values;
+    private List<Object> values;
 
     Boolean isCounterOp;
     boolean hasNonIdempotentOps;
@@ -64,11 +64,28 @@ public abstract class BuiltStatement extends RegularStatement {
         return lowercaseId.matcher(ident).matches() ? ident : Metadata.quote(ident);
     }
 
-
     @Override
     public String getQueryString() {
         maybeRebuildCache();
         return cache;
+    }
+
+    /**
+     * Returns the {@code i}th value as the Java type matching its CQL type.
+     *
+     * @param i the index to retrieve.
+     * @return the value of the {@code i}th value of this statement.
+     *
+     * @throws IllegalStateException if this statement does not have values.
+     * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
+     */
+    public Object getObject(int i) {
+        maybeRebuildCache();
+        if (values == null || values.isEmpty())
+            throw new IllegalStateException("This statement does not have values");
+        if (i < 0 || i >= values.size())
+            throw new ArrayIndexOutOfBoundsException(i);
+        return values.get(i);
     }
 
     private void maybeRebuildCache() {
@@ -81,14 +98,14 @@ public abstract class BuiltStatement extends RegularStatement {
         if (hasBindMarkers || forceNoValues) {
             sb = buildQueryString(null);
         } else {
-            List<ByteBuffer> l = new ArrayList<ByteBuffer>();
-            sb = buildQueryString(l);
+            values = new ArrayList<Object>();
+            sb = buildQueryString(values);
 
-            if (l.size() > 65535)
+            if (values.size() > 65535)
                 throw new IllegalArgumentException("Too many values for built statement, the maximum allowed is 65535");
 
-            if (!l.isEmpty())
-                values = l.toArray(new ByteBuffer[l.size()]);
+            if (values.isEmpty())
+                values = null;
         }
 
         maybeAddSemicolon(sb);
@@ -111,7 +128,7 @@ public abstract class BuiltStatement extends RegularStatement {
         return sb;
     }
 
-    abstract StringBuilder buildQueryString(List<ByteBuffer> variables);
+    abstract StringBuilder buildQueryString(List<Object> variables);
 
     boolean isCounterOp() {
         return isCounterOp == null ? false : isCounterOp;
@@ -148,7 +165,8 @@ public abstract class BuiltStatement extends RegularStatement {
 
         for (int i = 0; i < partitionKey.size(); i++) {
             if (name.equals(partitionKey.get(i).getName()) && Utils.isRawValue(value)) {
-                routingKey[i] = partitionKey.get(i).getType().parse(Utils.toRawString(value));
+                DataType dt = partitionKey.get(i).getType();
+                routingKey[i] = dt.serialize(value);
                 return;
             }
         }
@@ -176,7 +194,7 @@ public abstract class BuiltStatement extends RegularStatement {
     @Override
     public ByteBuffer[] getValues() {
         maybeRebuildCache();
-        return values;
+        return values == null ? null : Utils.convert(values);
     }
 
     @Override
@@ -272,7 +290,7 @@ public abstract class BuiltStatement extends RegularStatement {
         }
 
         @Override
-        StringBuilder buildQueryString(List<ByteBuffer> values) {
+        StringBuilder buildQueryString(List<Object> values) {
             return statement.buildQueryString(values);
         }
 

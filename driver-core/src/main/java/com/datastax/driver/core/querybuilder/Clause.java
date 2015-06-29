@@ -15,7 +15,6 @@
  */
 package com.datastax.driver.core.querybuilder;
 
-import java.nio.ByteBuffer;
 import java.util.List;
 
 public abstract class Clause extends Utils.Appendeable {
@@ -48,7 +47,7 @@ public abstract class Clause extends Utils.Appendeable {
         }
 
         @Override
-        void appendTo(StringBuilder sb, List<ByteBuffer> variables) {
+        void appendTo(StringBuilder sb, List<Object> variables) {
             Utils.appendName(name, sb).append(op);
             Utils.appendValue(value, sb, variables);
         }
@@ -79,7 +78,7 @@ public abstract class Clause extends Utils.Appendeable {
         }
 
         @Override
-        void appendTo(StringBuilder sb, List<ByteBuffer> variables) {
+        void appendTo(StringBuilder sb, List<Object> variables) {
 
             // We special case the case of just one bind marker because there is little
             // reasons to do:
@@ -146,7 +145,7 @@ public abstract class Clause extends Utils.Appendeable {
         }
 
         @Override
-        void appendTo(StringBuilder sb, List<ByteBuffer> variables) {
+        void appendTo(StringBuilder sb, List<Object> variables) {
             sb.append("(");
             for (int i = 0; i < names.size(); i++) {
                 if (i > 0)

@@ -22,6 +22,7 @@
 - [bug] Preserve tracing across retries (JAVA-815)
 - [improvement] New RetryDecision.tryNextHost() (JAVA-709)
 - [bug] Handle function calls and raw strings as non-idempotent in QueryBuilder (JAVA-733)
+- [improvement] Provide API to retrieve values of a Parameterized SimpleStatement (JAVA-765)
 
 Merged from 2.0.10_fixes branch:
 
