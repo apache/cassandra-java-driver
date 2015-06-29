@@ -15,6 +15,11 @@
  */
 package com.datastax.driver.core.policies;
 
+import com.datastax.driver.core.CCMBridge;
+import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.Metrics;
+import com.datastax.driver.core.Session;
+import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -26,6 +31,8 @@ import static org.scassandra.http.client.PrimingRequest.Result.write_request_tim
 import com.datastax.driver.core.exceptions.ReadTimeoutException;
 import com.datastax.driver.core.exceptions.UnavailableException;
 import com.datastax.driver.core.exceptions.WriteTimeoutException;
+
+import java.util.Collections;
 
 public class DefaultRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegrationTest {
     public DefaultRetryPolicyIntegrationTest() {
@@ -93,5 +100,46 @@ public class DefaultRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegr
         assertQueried(1, 1);
         assertQueried(2, 1);
         assertQueried(3, 0);
+    }
+
+    @Test(groups = "short")
+    public void should_rethrow_unavailable_in_no_host_available_exception() {
+        LoadBalancingPolicy firstHostOnlyPolicy =
+                new WhiteListPolicy(Policies.defaultLoadBalancingPolicy(),
+                        Collections.singletonList(host1.getSocketAddress()));
+
+        Cluster whiteListedCluster = Cluster.builder()
+                .addContactPoint(CCMBridge.ipOfNode(1))
+                .withRetryPolicy(retryPolicy)
+                .withLoadBalancingPolicy(firstHostOnlyPolicy)
+                .build();
+
+        try {
+            Session whiteListedSession = whiteListedCluster.connect();
+            // Clear all activity as result of connect.
+            scassandras.clearAllRecordedActivity();
+
+            simulateError(1, unavailable);
+
+            try {
+                query(whiteListedSession);
+                fail("expected an NoHostAvailableException");
+            } catch(NoHostAvailableException e) {
+                // ok
+                Throwable error = e.getErrors().get(host1.getSocketAddress());
+                assertThat(error).isNotNull();
+                assertThat(error).isInstanceOf(UnavailableException.class);
+            }
+
+            assertOnUnavailableWasCalled(1);
+            // We expect a retry, but it was never sent because there were no more hosts.
+            Metrics.Errors whiteListErrors = whiteListedCluster.getMetrics().getErrorMetrics();
+            assertThat(whiteListErrors.getRetriesOnUnavailable().getCount()).isEqualTo(1);
+            assertQueried(1, 1);
+            assertQueried(2, 0);
+            assertQueried(3, 0);
+        } finally {
+            whiteListedCluster.close();
+        }
     }
 }
