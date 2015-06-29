@@ -19,6 +19,7 @@ import java.util.concurrent.CountDownLatch;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
+import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -111,9 +112,12 @@ public class LatencyAwarePolicyTest extends ScassandraTestBase {
         // when
         try {
             session.execute(query);
-            fail("Should have thrown UnavailableException");
-        } catch(UnavailableException e) {
+            fail("Should have thrown NoHostAvailableException");
+        } catch(NoHostAvailableException e) {
             // ok
+            Throwable error = e.getErrors().get(hostAddress);
+            assertThat(error).isNotNull();
+            assertThat(error).isInstanceOf(UnavailableException.class);
         }
         // then
         // wait until trackers have been notified

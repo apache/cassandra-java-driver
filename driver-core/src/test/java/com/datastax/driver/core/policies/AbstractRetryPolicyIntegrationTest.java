@@ -105,6 +105,10 @@ public class AbstractRetryPolicyIntegrationTest {
     }
 
     protected ResultSet query() {
+        return query(session);
+    }
+
+    protected ResultSet query(Session session) {
         return session.execute("mock query");
     }
 
