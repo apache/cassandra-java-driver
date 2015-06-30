@@ -936,6 +936,24 @@ public final class QueryBuilder {
     }
 
     /**
+     * Creates a {@code now()} function call.
+     *
+     * @return the function call.
+     */
+    public static Object now() {
+        return new Utils.FCall("now");
+    }
+
+    /**
+     * Creates a {@code uuid()} function call.
+     *
+     * @return the function call.
+     */
+    public static Object uuid() {
+        return new Utils.FCall("uuid");
+    }
+
+    /**
      * Declares that the name in argument should be treated as a column name.
      * <p>
      * This mainly meant for use with {@link Select.Selection#fcall} when a

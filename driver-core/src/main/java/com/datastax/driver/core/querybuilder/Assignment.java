@@ -54,7 +54,7 @@ public abstract class Assignment extends Utils.Appendeable {
 
         @Override
         boolean isIdempotent() {
-            return true;
+            return Utils.isIdempotent(value);
         }
     }
 
