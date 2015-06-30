@@ -27,7 +27,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.google.common.base.Strings;
 
 import com.datastax.driver.core.ConsistencyLevel;
-import com.datastax.driver.core.ProtocolVersion;
 import com.datastax.driver.mapping.MethodMapper.EnumParamMapper;
 import com.datastax.driver.mapping.MethodMapper.NestedUDTParamMapper;
 import com.datastax.driver.mapping.MethodMapper.ParamMapper;
@@ -76,7 +75,7 @@ class AnnotationParser {
             if(field.isSynthetic() || (field.getModifiers() & Modifier.STATIC) == Modifier.STATIC)
                 continue;
 
-            if (!mappingManager.supportsAliases && field.getAnnotation(Computed.class) != null)
+            if (mappingManager.isCassandraV1 && field.getAnnotation(Computed.class) != null)
                 throw new UnsupportedOperationException("Computed fields are not supported with native protocol v1");
 
             AnnotationChecks.validateAnnotations(field, "entity",
@@ -99,7 +98,7 @@ class AnnotationParser {
             }
         }
 
-        AtomicInteger columnCounter = mappingManager.supportsAliases ? new AtomicInteger(0) : null;
+        AtomicInteger columnCounter = mappingManager.isCassandraV1 ? null : new AtomicInteger(0);
 
         Collections.sort(pks, fieldComparator);
         Collections.sort(ccs, fieldComparator);
