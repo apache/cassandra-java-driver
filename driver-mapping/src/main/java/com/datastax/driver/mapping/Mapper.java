@@ -312,7 +312,9 @@ public class Mapper<T> {
 
         for (Option opt : options.values()) {
             opt.checkValidFor(QueryType.GET, manager);
-            opt.addToPreparedStatement(bs, i++);
+            opt.addToPreparedStatement(bs, i);
+            if (opt.isIncludedInQuery())
+                i++;
         }
 
         if (mapper.readConsistency != null)
@@ -781,20 +783,20 @@ public class Mapper<T> {
             void appendTo(Insert.Options usings) {
                 usings.and(QueryBuilder.ttl(QueryBuilder.bindMarker()));
             }
-
+            @Override
             void appendTo(Delete.Options usings) {
                 throw new UnsupportedOperationException("shouldn't be called");
             }
-
+            @Override
             void addToPreparedStatement(BoundStatement bs, int i) {
                 bs.setInt(i, this.ttlValue);
             }
-
+            @Override
             void checkValidFor(QueryType qt, MappingManager manager) {
                 checkArgument(!manager.isCassandraV1, "TTL option requires native protocol v2 or above");
                 checkArgument(qt == QueryType.SAVE, "TTL option is only allowed in save queries");
             }
-
+            @Override
             boolean isIncludedInQuery() {
                 return true;
             }
@@ -808,24 +810,24 @@ public class Mapper<T> {
                 super(Type.TIMESTAMP);
                 this.tsValue = value;
             }
-
+            @Override
             void appendTo(Insert.Options usings) {
                 usings.and(QueryBuilder.timestamp(QueryBuilder.bindMarker()));
             }
-
+            @Override
             void appendTo(Delete.Options usings) {
                 usings.and(QueryBuilder.timestamp(QueryBuilder.bindMarker()));
             }
-
+            @Override
             void checkValidFor(QueryType qt, MappingManager manager) {
                 checkArgument(!manager.isCassandraV1, "Timestamp option requires native protocol v2 or above");
                 checkArgument(qt == QueryType.SAVE || qt == QueryType.DEL, "Timestamp option is only allowed in save and delete queries");
             }
-
+            @Override
             void addToPreparedStatement(BoundStatement bs, int i) {
                 bs.setLong(i, this.tsValue);
             }
-
+            @Override
             boolean isIncludedInQuery() {
                 return true;
             }
@@ -839,24 +841,26 @@ public class Mapper<T> {
                 super(Type.CL);
                 this.cl = cl;
             }
-
+            @Override
             void appendTo(Insert.Options usings) {
                 throw new UnsupportedOperationException("shouldn't be called");
             }
-
+            @Override
             void appendTo(Delete.Options usings) {
                 throw new UnsupportedOperationException("shouldn't be called");
             }
 
+            @Override
             void addToPreparedStatement(BoundStatement bs, int i) {
                 bs.setConsistencyLevel(cl);
             }
-
+            @Override
             void checkValidFor(QueryType qt, MappingManager manager) {
                 checkArgument(qt == QueryType.SAVE || qt == QueryType.DEL || qt == QueryType.GET,
                     "Consistency level option is only allowed in save, delete and get queries");
             }
 
+            @Override
             boolean isIncludedInQuery() {
                 return false;
             }
@@ -870,25 +874,28 @@ public class Mapper<T> {
                 super(Type.TRACING);
                 this.tracing = tracing;
             }
-
+            @Override
             void appendTo(Insert.Options usings) {
                 throw new UnsupportedOperationException("shouldn't be called");
             }
-
+            @Override
             void appendTo(Delete.Options usings) {
                 throw new UnsupportedOperationException("shouldn't be called");
             }
 
+            @Override
             void addToPreparedStatement(BoundStatement bs, int i) {
                 if (this.tracing)
                     bs.enableTracing();
             }
 
+            @Override
             void checkValidFor(QueryType qt, MappingManager manager) {
                 checkArgument(qt == QueryType.SAVE || qt == QueryType.DEL || qt == QueryType.GET,
                     "Tracing option is only allowed in save, delete and get queries");
             }
 
+            @Override
             boolean isIncludedInQuery() {
                 return false;
             }
