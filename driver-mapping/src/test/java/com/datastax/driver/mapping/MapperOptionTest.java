@@ -19,7 +19,6 @@ import java.util.Collection;
 import java.util.concurrent.ExecutionException;
 
 import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.ListenableFuture;
 import org.testng.SkipException;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -28,6 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 import com.datastax.driver.core.*;
+import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.datastax.driver.core.exceptions.UnavailableException;
 import com.datastax.driver.core.utils.CassandraVersion;
 import com.datastax.driver.mapping.annotations.PartitionKey;
@@ -56,7 +56,7 @@ public class MapperOptionTest extends CCMBridge.PerClassSingleNodeCluster {
     @Test(groups = "short")
     @CassandraVersion(major = 2.0)
     void should_use_save_options() {
-        Long tsValue = 906L;
+        Long tsValue = futureTimestamp();
         mapper.saveAsync(new User(42, "helloworld"), Option.timestamp(tsValue), Option.tracing(true));
         assertThat(mapper.get(42).getV()).isEqualTo("helloworld");
         Long tsReturned = session.execute("SELECT writetime(v) FROM user WHERE key=" + 42).one().getLong(0);
@@ -73,23 +73,26 @@ public class MapperOptionTest extends CCMBridge.PerClassSingleNodeCluster {
         assertThat(bs.preparedStatement().getQueryString()).contains("USING TIMESTAMP");
     }
 
-    @Test(groups = "short", expectedExceptions = {UnsupportedOperationException.class})
+    @Test(groups = "short", expectedExceptions = {IllegalArgumentException.class})
     @CassandraVersion(major = 2.0)
     void should_use_get_options() {
         User todelete = new User(45, "toget");
         mapper.save(todelete);
+
         Option opt = Option.tracing(true);
         BoundStatement bs = (BoundStatement)mapper.getQuery(45, opt);
         assertThat(bs.isTracing()).isTrue();
-        User us = mapper.map(session.execute(bs)).one();
+
+        User us = mapper.mapAliased(session.execute(bs)).one();
         assertThat(us.getV()).isEqualTo("toget");
-        bs = (BoundStatement)mapper.getQuery(45, Option.timestamp(1337));
+
+        mapper.getQuery(45, Option.timestamp(1337));
     }
 
     @Test(groups = "short")
     @CassandraVersion(major = 2.0)
     void should_use_options_only_once() {
-        Long tsValue = 1L;
+        Long tsValue = futureTimestamp();
         mapper.save(new User(43, "helloworld"), Option.timestamp(tsValue));
         mapper.save(new User(44, "test"));
         Long tsReturned = session.execute("SELECT writetime(v) FROM user WHERE key=" + 44).one().getLong(0);
@@ -102,20 +105,22 @@ public class MapperOptionTest extends CCMBridge.PerClassSingleNodeCluster {
     void should_use_default_options() {
         mapper.setDefaultSaveOptions(Option.timestamp(644746L), Option.ttl(76324));
         BoundStatement bs = (BoundStatement)mapper.saveQuery(new User(46, "rjhrgce"));
-        assertThat(bs.preparedStatement().getQueryString()).contains("USING TIMESTAMP");
+        assertThat(bs.preparedStatement().getQueryString()).contains("TIMESTAMP").contains("TTL");
 
         mapper.resetDefaultSaveOptions();
         bs = (BoundStatement)mapper.saveQuery(new User(47, "rjhrgce"));
-        assertThat(bs.preparedStatement().getQueryString()).doesNotContain("USING TIMESTAMP");
+        assertThat(bs.preparedStatement().getQueryString()).doesNotContain("TIMESTAMP").doesNotContain("TTL");
 
         mapper.setDefaultDeleteOptions(Option.timestamp(3245L), Option.tracing(true));
         bs = (BoundStatement)mapper.deleteQuery(47);
-        assertThat(bs.preparedStatement().getQueryString()).contains("USING TIMESTAMP");
+        assertThat(bs.preparedStatement().getQueryString()).contains("TIMESTAMP");
         assertThat(bs.isTracing()).isTrue();
 
         mapper.resetDefaultDeleteOptions();
         bs = (BoundStatement)mapper.deleteQuery(47);
-        assertThat(bs.preparedStatement().getQueryString()).doesNotContain("USING TIMESTAMP");
+        assertThat(bs.preparedStatement().getQueryString()).doesNotContain("TIMESTAMP");
+        assertThat(bs.isTracing()).isFalse();
+
         bs = (BoundStatement)mapper.saveQuery(new User(46, "rjhrgce"), Option.timestamp(23), Option.consistencyLevel(ConsistencyLevel.ANY));
         assertThat(bs.getConsistencyLevel()).isEqualTo(ConsistencyLevel.ANY);
 
@@ -125,16 +130,14 @@ public class MapperOptionTest extends CCMBridge.PerClassSingleNodeCluster {
 
         mapper.resetDefaultGetOptions();
         bs = (BoundStatement)mapper.getQuery(46);
-        // This is depends on the default behaviour of the driver.
-        // Currently by default tracing turned off.
         assertThat(bs.isTracing()).isFalse();
     }
 
     @Test(groups = "short")
     @CassandraVersion(major = 2.0)
     void should_use_explicit_options_over_default_options() {
-        long defaultTimestamp = 644746L;
-        long explicitTimestamp = 123431L;
+        long defaultTimestamp = futureTimestamp();
+        long explicitTimestamp = futureTimestamp();
 
         mapper.setDefaultSaveOptions(Option.timestamp(defaultTimestamp));
 
@@ -147,7 +150,7 @@ public class MapperOptionTest extends CCMBridge.PerClassSingleNodeCluster {
     @Test(groups = "short")
     @CassandraVersion(major = 2.0)
     void should_use_save_options_for_all_variants() throws ExecutionException, InterruptedException {
-        Long timestamp = (System.currentTimeMillis() + 10000) * 1000;
+        Long timestamp = futureTimestamp();
         User user = new User(42, "helloworld");
 
         mapper.save(user, Option.timestamp(timestamp));
@@ -188,14 +191,16 @@ public class MapperOptionTest extends CCMBridge.PerClassSingleNodeCluster {
     void should_use_get_options_for_all_variants() throws InterruptedException {
         try {
             mapper.get(42, Option.consistencyLevel(TWO));
-            fail("Expected an UnavailableException");
-        } catch (UnavailableException e) { /*expected*/ }
+            fail("Expected a NoHostAvailableException");
+        } catch (NoHostAvailableException e) {
+            assertFirstNodeUnavailable(e);
+        }
 
         try {
             mapper.getAsync(42, Option.consistencyLevel(TWO)).get();
             fail("Expected an ExecutionException");
         } catch (ExecutionException e) {
-            assertThat(e.getCause()).isInstanceOf(UnavailableException.class);
+            assertFirstNodeUnavailable(e);
         }
 
         Statement statement = mapper.getQuery(42, Option.consistencyLevel(TWO));
@@ -206,14 +211,16 @@ public class MapperOptionTest extends CCMBridge.PerClassSingleNodeCluster {
 
         try {
             mapper.get(42);
-            fail("Expected an UnavailableException");
-        } catch (UnavailableException e) { /*expected*/ }
+            fail("Expected a NoHostAvailableException");
+        } catch (NoHostAvailableException e) {
+            assertFirstNodeUnavailable(e);
+        }
 
         try {
             mapper.getAsync(42).get();
             fail("Expected an ExecutionException");
         } catch (ExecutionException e) {
-            assertThat(e.getCause()).isInstanceOf(UnavailableException.class);
+            assertFirstNodeUnavailable(e);
         }
 
         statement = mapper.getQuery(42);
@@ -227,14 +234,16 @@ public class MapperOptionTest extends CCMBridge.PerClassSingleNodeCluster {
 
         try {
             mapper.delete(user, Option.consistencyLevel(TWO));
-            fail("Expected an UnavailableException");
-        } catch (UnavailableException e) { /*expected*/ }
+            fail("Expected a NoHostAvailableException");
+        } catch (NoHostAvailableException e) {
+            assertFirstNodeUnavailable(e);
+        }
 
         try {
             mapper.deleteAsync(user, Option.consistencyLevel(TWO)).get();
             fail("Expected an ExecutionException");
         } catch (ExecutionException e) {
-            assertThat(e.getCause()).isInstanceOf(UnavailableException.class);
+            assertFirstNodeUnavailable(e);
         }
 
         Statement statement = mapper.deleteQuery(user, Option.consistencyLevel(TWO));
@@ -242,14 +251,16 @@ public class MapperOptionTest extends CCMBridge.PerClassSingleNodeCluster {
 
         try {
             mapper.delete(user.getKey(), Option.consistencyLevel(TWO));
-            fail("Expected an UnavailableException");
-        } catch (UnavailableException e) { /*expected*/ }
+            fail("Expected a NoHostAvailableException");
+        } catch (NoHostAvailableException e) {
+            assertFirstNodeUnavailable(e);
+        }
 
         try {
             mapper.deleteAsync(user.getKey(), Option.consistencyLevel(TWO)).get();
             fail("Expected an ExecutionException");
         } catch (ExecutionException e) {
-            assertThat(e.getCause()).isInstanceOf(UnavailableException.class);
+            assertFirstNodeUnavailable(e);
         }
 
         statement = mapper.deleteQuery(user.getKey(), Option.consistencyLevel(TWO));
@@ -260,14 +271,16 @@ public class MapperOptionTest extends CCMBridge.PerClassSingleNodeCluster {
 
         try {
             mapper.delete(user);
-            fail("Expected an UnavailableException");
-        } catch (UnavailableException e) { /*expected*/ }
+            fail("Expected a NoHostAvailableException");
+        } catch (NoHostAvailableException e) {
+            assertFirstNodeUnavailable(e);
+        }
 
         try {
             mapper.deleteAsync(user).get();
             fail("Expected an ExecutionException");
         } catch (ExecutionException e) {
-            assertThat(e.getCause()).isInstanceOf(UnavailableException.class);
+            assertFirstNodeUnavailable(e);
         }
 
         statement = mapper.deleteQuery(user);
@@ -275,14 +288,16 @@ public class MapperOptionTest extends CCMBridge.PerClassSingleNodeCluster {
 
         try {
             mapper.delete(user.getKey());
-            fail("Expected an UnavailableException");
-        } catch (UnavailableException e) { /*expected*/ }
+            fail("Expected a NoHostAvailableException");
+        } catch (NoHostAvailableException e) {
+            assertFirstNodeUnavailable(e);
+        }
 
         try {
             mapper.deleteAsync(user.getKey()).get();
             fail("Expected an ExecutionException");
         } catch (ExecutionException e) {
-            assertThat(e.getCause()).isInstanceOf(UnavailableException.class);
+            assertFirstNodeUnavailable(e);
         }
 
         statement = mapper.deleteQuery(user.getKey());
@@ -310,7 +325,22 @@ public class MapperOptionTest extends CCMBridge.PerClassSingleNodeCluster {
         mapper.saveQuery(new User(42, "helloworld"), Option.timestamp(15));
     }
 
-    @Table(name = "user")
+    private static void assertFirstNodeUnavailable(NoHostAvailableException e) {
+        Throwable node1Error = e.getErrors().values().iterator().next();
+        assertThat(node1Error).isInstanceOf(UnavailableException.class);
+    }
+
+    private static void assertFirstNodeUnavailable(ExecutionException e) {
+        Throwable cause = e.getCause();
+        assertThat(cause).isInstanceOf(NoHostAvailableException.class);
+        assertFirstNodeUnavailable((NoHostAvailableException)cause);
+    }
+
+    private static long futureTimestamp() {
+        return (System.currentTimeMillis() + 1000) * 1000;
+    }
+
+    @Table(name = "user", writeConsistency = "ONE")
     public static class User {
         @PartitionKey
         private int key;
