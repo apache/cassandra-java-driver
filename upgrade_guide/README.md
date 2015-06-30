@@ -5,6 +5,9 @@ versions of the Java driver.
 
 ### 2.1.7
 
+This version brings a few changes in the driver's behavior; none of them break
+binary compatibility.
+
 1. The `DefaultRetryPolicy`'s behaviour has changed in the case of an Unavailable
    exception received from a request. The new behaviour will cause the driver to
    process a Retry on a different node at most once, otherwise an exception will
@@ -24,6 +27,29 @@ versions of the Java driver.
     Also, note that the connection pool for protocol v3 can now be configured to
     use multiple connections. See [this page](../features/pooling) for more
     information.
+
+3. `MappingManager(Session)` will now force the initialization of the `Session`
+   if needed. This is a change from 2.1.6, where if you gave it an uninitialized
+   session (created with `Cluster#newSession()` instead of `Cluster#connect()`),
+   it would only initialize it on the first request.
+
+    If this is a problem for you, `MappingManager(Session, boolean)` preserves
+    the previous behavior (see the API docs for more details).
+
+Merged from 2.0.11:
+
+4. The `DefaultRetryPolicy`'s behaviour has changed in the case of an Unavailable
+   exception received from a request. The new behaviour will cause the driver to
+   process a Retry on a different node at most once, otherwise an exception will
+   be thrown. This change makes sense in the case where the node tried initially
+   for the request happens to be isolated from the rest of the cluster (e.g.
+   because of a network partition) but can still answer to the client normally.
+   In this case, trying another node has a chance of success.
+   The previous behaviour was to always throw an exception.
+5. A `BuiltStatement` is now considered non-idempotent whenever a `fcall()`
+   or `raw()` is used to build a value to be inserted in the database.
+   If you know that the CQL functions or expressions are safe, use
+   `setIdempotent(true)` on the statement.
 
 
 ### 2.1.6

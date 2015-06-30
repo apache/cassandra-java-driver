@@ -38,11 +38,15 @@ public class MappingManager {
 
     /**
      * Creates a new {@code MappingManager} using the provided {@code Session}.
+     * <p>
+     * Note that this constructor forces the initialization of the session (see {@link #MappingManager(Session, boolean)} if
+     * that is a problem for you).
      *
      * @param session the {@code Session} to use.
      */
     public MappingManager(Session session) {
         this.session = session;
+        session.init();
 
         ProtocolVersion protocolVersion = session.getCluster().getConfiguration().getProtocolOptions().getProtocolVersionEnum();
         // This is not strictly correct because we could connect to C* 2.0 with the v1 protocol.
@@ -50,6 +54,25 @@ public class MappingManager {
         // which nodes might join the cluster later.
         // At least if protocol >=2 we know there won't be any 1.2 nodes ever.
         this.isCassandraV1 = (protocolVersion == ProtocolVersion.V1);
+    }
+
+    /**
+     * Creates a new {@code MappingManager} using the provided {@code Session}.
+     * <p>
+     * This constructor is only provided for backward compatibility: before 2.1.7, {@code MappingManager} could be
+     * built from an uninitialized session; since 2.1.7, the mapper needs to know the Cassandra version to
+     * adapt its internal requests, so {@link #MappingManager(Session)} will now initialize the session if needed.
+     * If you rely on the session not being initialized, use this constructor and provide the version information
+     * manually.
+     *
+     * @param session the {@code Session} to use.
+     * @param isCassandraV1 whether the target cluster uses Cassandra 1.2.
+     *
+     * @since 2.1.7
+     */
+    public MappingManager(Session session, boolean isCassandraV1) {
+        this.session = session;
+        this.isCassandraV1 = isCassandraV1;
     }
 
     /**
