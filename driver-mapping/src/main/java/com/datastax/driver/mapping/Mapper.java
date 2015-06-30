@@ -27,8 +27,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.datastax.driver.core.*;
-import com.datastax.driver.mapping.annotations.Computed;
 import com.datastax.driver.mapping.annotations.Accessor;
+import com.datastax.driver.mapping.annotations.Computed;
 
 /**
  * An object handling the mapping of a particular class.
@@ -327,7 +327,9 @@ public class Mapper<T> {
      * @see #map(ResultSet)
      */
     public Result<T> mapAliased(ResultSet resultSet) {
-        return new Result<T>(resultSet, mapper, protocolVersion, true);
+        return (manager.supportsAliases)
+            ? new Result<T>(resultSet, mapper, protocolVersion, true)
+            : map(resultSet);
     }
 
     /**

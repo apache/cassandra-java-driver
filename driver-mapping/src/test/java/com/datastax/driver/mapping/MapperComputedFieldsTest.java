@@ -25,6 +25,7 @@ import static org.assertj.core.api.Assertions.fail;
 
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
+import com.datastax.driver.core.utils.CassandraVersion;
 import com.datastax.driver.mapping.annotations.*;
 
 import static com.datastax.driver.core.Assertions.assertThat;
@@ -34,6 +35,7 @@ import static com.datastax.driver.core.Assertions.assertThat;
  * annotation to map computed fields.
  */
 @SuppressWarnings("unused")
+@CassandraVersion(major = 2.0)
 public class MapperComputedFieldsTest extends CCMBridge.PerClassSingleNodeCluster {
 
     @Override
