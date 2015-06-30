@@ -24,15 +24,13 @@ import com.datastax.driver.core.*;
 import com.datastax.driver.mapping.annotations.Accessor;
 import com.datastax.driver.mapping.annotations.Table;
 
-import com.datastax.driver.mapping.annotations.UDT;
-
 /**
  * Mapping manager from which to obtain entity mappers.
  */
 public class MappingManager {
 
     private final Session session;
-    final boolean supportsAliases;
+    final boolean isCassandraV1;
 
     private volatile Map<Class<?>, Mapper<?>> mappers = Collections.<Class<?>, Mapper<?>>emptyMap();
     private volatile Map<Class<?>, UDTMapper<?>> udtMappers = Collections.<Class<?>, UDTMapper<?>>emptyMap();
@@ -47,10 +45,11 @@ public class MappingManager {
         this.session = session;
 
         ProtocolVersion protocolVersion = session.getCluster().getConfiguration().getProtocolOptions().getProtocolVersionEnum();
-        // The real condition should be Cassandra version >= 2.0, but mappers need this so that generated queries are compatible,
-        // and we don't know in advance the version of all future peers.
-        // At least if protocol >=2 we know there won't be any 1.2 nodes.
-        this.supportsAliases = (protocolVersion != ProtocolVersion.V1);
+        // This is not strictly correct because we could connect to C* 2.0 with the v1 protocol.
+        // But mappers need to make a decision early so that generated queries are compatible, and we don't know in advance
+        // which nodes might join the cluster later.
+        // At least if protocol >=2 we know there won't be any 1.2 nodes ever.
+        this.isCassandraV1 = (protocolVersion == ProtocolVersion.V1);
     }
 
     /**

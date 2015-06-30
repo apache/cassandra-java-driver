@@ -60,7 +60,7 @@ class QueryType {
         return new QueryType(reversed ? Kind.REVERSED_SLICE : Kind.SLICE, startBoundSize, startInclusive, endBoundSize, endInclusive);
     }
 
-    String makePreparedQueryString(TableMetadata table, EntityMapper<?> mapper, Collection<Mapper.Option> options) {
+    String makePreparedQueryString(TableMetadata table, EntityMapper<?> mapper, MappingManager manager, Collection<Mapper.Option> options) {
         switch (kind) {
             case SAVE: {
                 Insert insert = table == null
@@ -72,11 +72,9 @@ class QueryType {
                 
                 Insert.Options usings = insert.using();
                 for (Mapper.Option opt : options) {
-                    if (opt.isValidFor(QueryType.SAVE)) {
-                        if (opt.isIncludedInQuery())
-                            opt.appendTo(usings);
-                    } else
-                        throw new IllegalArgumentException(String.format("Cannot use %s in this type of query : %s", opt.getClass().getName(), QueryType.SAVE));
+                    opt.checkValidFor(QueryType.SAVE, manager);
+                    if (opt.isIncludedInQuery())
+                        opt.appendTo(usings);
                 }
                 return insert.toString();
             }
@@ -103,11 +101,8 @@ class QueryType {
                 for (int i = 0; i < mapper.primaryKeySize(); i++)
                     where.and(eq(mapper.getPrimaryKeyColumn(i).getColumnName(), bindMarker()));
             
-                for (Mapper.Option opt : options) {
-                    if (!opt.isValidFor(QueryType.GET)) {
-                        throw new IllegalArgumentException(String.format("Cannot use %s in this type of query : %s", opt.getClass().getName(), QueryType.DEL));
-                    }
-                }
+                for (Mapper.Option opt : options)
+                    opt.checkValidFor(QueryType.GET, manager);
                 return select.toString();
             }
             case DEL: {
@@ -119,12 +114,9 @@ class QueryType {
                     where.and(eq(mapper.getPrimaryKeyColumn(i).getColumnName(), bindMarker()));
                 Delete.Options usings = delete.using();
                 for (Mapper.Option opt : options) {
-                    if (opt.isValidFor(QueryType.DEL)) {
-                        if (opt.isIncludedInQuery())
-                            opt.appendTo(usings);
-                    } else {
-                        throw new IllegalArgumentException(String.format("Cannot use %s in this type of query : %s", opt.getClass().getName(), QueryType.DEL));
-                    }
+                    opt.checkValidFor(QueryType.DEL, manager);
+                    if (opt.isIncludedInQuery())
+                        opt.appendTo(usings);
                 }
                 return delete.toString();
             }

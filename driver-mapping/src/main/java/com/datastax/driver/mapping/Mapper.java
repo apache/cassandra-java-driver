@@ -26,6 +26,8 @@ import com.google.common.util.concurrent.ListenableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static com.google.common.base.Preconditions.checkArgument;
+
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.querybuilder.Delete;
 import com.datastax.driver.core.querybuilder.Insert;
@@ -107,7 +109,7 @@ public class Mapper<T> {
             synchronized (preparedQueries) {
                 stmt = preparedQueries.get(pqk);
                 if (stmt == null) {
-                    String queryString = type.makePreparedQueryString(tableMetadata, mapper, options.values());
+                    String queryString = type.makePreparedQueryString(tableMetadata, mapper, manager, options.values());
                     logger.debug("Preparing query {}", queryString);
                     stmt = session().prepare(queryString);
                     Map<MapperQueryKey, PreparedStatement> newQueries = new HashMap<MapperQueryKey, PreparedStatement>(preparedQueries);
@@ -188,8 +190,8 @@ public class Mapper<T> {
         }
 
         for (Option opt : options.values()) {
-            if (opt.isValidFor(QueryType.SAVE))
-                opt.addToPreparedStatement(bs, i++);
+            opt.checkValidFor(QueryType.SAVE, manager);
+            opt.addToPreparedStatement(bs, i++);
         }
 
         if (mapper.writeConsistency != null)
@@ -309,8 +311,8 @@ public class Mapper<T> {
         }
 
         for (Option opt : options.values()) {
-            if (opt.isValidFor(QueryType.GET))
-                opt.addToPreparedStatement(bs, i++);
+            opt.checkValidFor(QueryType.GET, manager);
+            opt.addToPreparedStatement(bs, i++);
         }
 
         if (mapper.readConsistency != null)
@@ -468,8 +470,8 @@ public class Mapper<T> {
         BoundStatement bs = getPreparedQuery(QueryType.DEL, options).bind();
         int i = 0;
         for (Option opt : options.values()) {
-            if (opt.isValidFor(QueryType.DEL))
-                opt.addToPreparedStatement(bs, i);
+            opt.checkValidFor(QueryType.DEL, manager);
+            opt.addToPreparedStatement(bs, i);
             if (opt.isIncludedInQuery())
                 i++;
         }
@@ -606,9 +608,9 @@ public class Mapper<T> {
      * @see #map(ResultSet)
      */
     public Result<T> mapAliased(ResultSet resultSet) {
-        return (manager.supportsAliases)
-            ? new Result<T>(resultSet, mapper, protocolVersion, true)
-            : map(resultSet);
+        return (manager.isCassandraV1)
+            ? map(resultSet) // no aliases
+            : new Result<T>(resultSet, mapper, protocolVersion, true);
     }
 
     /**
@@ -713,6 +715,8 @@ public class Mapper<T> {
         /**
          * Creates a new Option object to add time-to-live to a mapper operation. This is
          * only valid for save operations.
+         * <p>
+         * Note that this option is only available if using {@link ProtocolVersion#V2} or above.
          *
          * @param ttl the TTL (in seconds).
          * @return the option.
@@ -724,6 +728,8 @@ public class Mapper<T> {
         /**
          * Creates a new Option object to add a timestamp to a mapper operation. This is
          * only valid for save and delete operations.
+         * <p>
+         * Note that this option is only available if using {@link ProtocolVersion#V2} or above.
          *
          * @param timestamp the timestamp (in microseconds).
          * @return the option.
@@ -759,7 +765,7 @@ public class Mapper<T> {
 
         abstract void addToPreparedStatement(BoundStatement bs, int i);
 
-        abstract boolean isValidFor(QueryType qt);
+        abstract void checkValidFor(QueryType qt, MappingManager manager) throws IllegalArgumentException;
 
         abstract boolean isIncludedInQuery();
 
@@ -784,8 +790,9 @@ public class Mapper<T> {
                 bs.setInt(i, this.ttlValue);
             }
 
-            boolean isValidFor(QueryType qt) {
-                return qt == QueryType.SAVE;
+            void checkValidFor(QueryType qt, MappingManager manager) {
+                checkArgument(!manager.isCassandraV1, "TTL option requires native protocol v2 or above");
+                checkArgument(qt == QueryType.SAVE, "TTL option is only allowed in save queries");
             }
 
             boolean isIncludedInQuery() {
@@ -810,8 +817,9 @@ public class Mapper<T> {
                 usings.and(QueryBuilder.timestamp(QueryBuilder.bindMarker()));
             }
 
-            boolean isValidFor(QueryType qt) {
-                return qt == QueryType.SAVE || qt == QueryType.DEL;
+            void checkValidFor(QueryType qt, MappingManager manager) {
+                checkArgument(!manager.isCassandraV1, "Timestamp option requires native protocol v2 or above");
+                checkArgument(qt == QueryType.SAVE || qt == QueryType.DEL, "Timestamp option is only allowed in save and delete queries");
             }
 
             void addToPreparedStatement(BoundStatement bs, int i) {
@@ -844,10 +852,9 @@ public class Mapper<T> {
                 bs.setConsistencyLevel(cl);
             }
 
-            boolean isValidFor(QueryType qt) {
-                return qt == QueryType.SAVE
-                    || qt == QueryType.DEL
-                    || qt == QueryType.GET;
+            void checkValidFor(QueryType qt, MappingManager manager) {
+                checkArgument(qt == QueryType.SAVE || qt == QueryType.DEL || qt == QueryType.GET,
+                    "Consistency level option is only allowed in save, delete and get queries");
             }
 
             boolean isIncludedInQuery() {
@@ -877,10 +884,9 @@ public class Mapper<T> {
                     bs.enableTracing();
             }
 
-            boolean isValidFor(QueryType qt) {
-                return qt == QueryType.SAVE
-                    || qt == QueryType.DEL
-                    || qt == QueryType.GET;
+            void checkValidFor(QueryType qt, MappingManager manager) {
+                checkArgument(qt == QueryType.SAVE || qt == QueryType.DEL || qt == QueryType.GET,
+                    "Tracing option is only allowed in save, delete and get queries");
             }
 
             boolean isIncludedInQuery() {

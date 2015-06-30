@@ -20,6 +20,7 @@ import java.util.concurrent.ExecutionException;
 
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
+import org.testng.SkipException;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -33,11 +34,12 @@ import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
 
 import static com.datastax.driver.core.ConsistencyLevel.TWO;
+import static com.datastax.driver.core.ProtocolVersion.V1;
 import static com.datastax.driver.mapping.Mapper.Option;
 
-@CassandraVersion(major=2.0)
 public class MapperOptionTest extends CCMBridge.PerClassSingleNodeCluster {
 
+    ProtocolVersion protocolVersion;
     Mapper<User> mapper;
 
     @Override
@@ -48,9 +50,11 @@ public class MapperOptionTest extends CCMBridge.PerClassSingleNodeCluster {
     @BeforeMethod(groups = "short")
     public void setup() {
         mapper = new MappingManager(session).mapper(User.class);
+        protocolVersion = cluster.getConfiguration().getProtocolOptions().getProtocolVersionEnum();
     }
 
     @Test(groups = "short")
+    @CassandraVersion(major = 2.0)
     void should_use_save_options() {
         Long tsValue = 906L;
         mapper.saveAsync(new User(42, "helloworld"), Option.timestamp(tsValue), Option.tracing(true));
@@ -60,6 +64,7 @@ public class MapperOptionTest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     @Test(groups = "short")
+    @CassandraVersion(major = 2.0)
     void should_use_delete_options() {
         User todelete = new User(45, "todelete");
         mapper.save(todelete);
@@ -69,6 +74,7 @@ public class MapperOptionTest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     @Test(groups = "short", expectedExceptions = {UnsupportedOperationException.class})
+    @CassandraVersion(major = 2.0)
     void should_use_get_options() {
         User todelete = new User(45, "toget");
         mapper.save(todelete);
@@ -81,6 +87,7 @@ public class MapperOptionTest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     @Test(groups = "short")
+    @CassandraVersion(major = 2.0)
     void should_use_options_only_once() {
         Long tsValue = 1L;
         mapper.save(new User(43, "helloworld"), Option.timestamp(tsValue));
@@ -91,6 +98,7 @@ public class MapperOptionTest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     @Test(groups = "short")
+    @CassandraVersion(major = 2.0)
     void should_use_default_options() {
         mapper.setDefaultSaveOptions(Option.timestamp(644746L), Option.ttl(76324));
         BoundStatement bs = (BoundStatement)mapper.saveQuery(new User(46, "rjhrgce"));
@@ -123,6 +131,7 @@ public class MapperOptionTest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     @Test(groups = "short")
+    @CassandraVersion(major = 2.0)
     void should_use_explicit_options_over_default_options() {
         long defaultTimestamp = 644746L;
         long explicitTimestamp = 123431L;
@@ -136,6 +145,7 @@ public class MapperOptionTest extends CCMBridge.PerClassSingleNodeCluster {
 
     /** Cover all versions of save() to check that methods that call each other properly propagate the options */
     @Test(groups = "short")
+    @CassandraVersion(major = 2.0)
     void should_use_save_options_for_all_variants() throws ExecutionException, InterruptedException {
         Long timestamp = (System.currentTimeMillis() + 10000) * 1000;
         User user = new User(42, "helloworld");
@@ -174,6 +184,7 @@ public class MapperOptionTest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     @Test(groups = "short")
+    @CassandraVersion(major = 2.0)
     void should_use_get_options_for_all_variants() throws InterruptedException {
         try {
             mapper.get(42, Option.consistencyLevel(TWO));
@@ -210,6 +221,7 @@ public class MapperOptionTest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     @Test(groups = "short")
+    @CassandraVersion(major = 2.0)
     void should_use_delete_options_for_all_variants() throws InterruptedException {
         User user = new User(42, "helloworld");
 
@@ -280,6 +292,22 @@ public class MapperOptionTest extends CCMBridge.PerClassSingleNodeCluster {
     @Test(groups="short", expectedExceptions = IllegalArgumentException.class)
     void should_fail_if_option_does_not_apply_to_query() {
         mapper.get(42, Option.ttl(1));
+    }
+
+    @Test(groups="short", expectedExceptions = IllegalArgumentException.class)
+    void should_fail_when_using_ttl_with_protocol_v1() {
+        if (protocolVersion.compareTo(V1) > 0)
+            throw new SkipException("Skipped when protocol version > V1");
+
+        mapper.saveQuery(new User(42, "helloworld"), Option.ttl(15));
+    }
+
+    @Test(groups="short", expectedExceptions = IllegalArgumentException.class)
+    void should_fail_when_using_timestamp_with_protocol_v1() {
+        if (protocolVersion.compareTo(V1) > 0)
+            throw new SkipException("Skipped when protocol version > V1");
+
+        mapper.saveQuery(new User(42, "helloworld"), Option.timestamp(15));
     }
 
     @Table(name = "user")
