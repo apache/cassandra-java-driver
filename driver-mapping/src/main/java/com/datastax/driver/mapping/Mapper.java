@@ -189,13 +189,14 @@ public class Mapper<T> {
             }
         }
 
+        if (mapper.writeConsistency != null)
+            bs.setConsistencyLevel(mapper.writeConsistency);
+
         for (Option opt : options.values()) {
             opt.checkValidFor(QueryType.SAVE, manager);
             opt.addToPreparedStatement(bs, i++);
         }
 
-        if (mapper.writeConsistency != null)
-            bs.setConsistencyLevel(mapper.writeConsistency);
         return bs;
     }
 
@@ -310,6 +311,9 @@ public class Mapper<T> {
             i++;
         }
 
+        if (mapper.readConsistency != null)
+            bs.setConsistencyLevel(mapper.readConsistency);
+
         for (Option opt : options.values()) {
             opt.checkValidFor(QueryType.GET, manager);
             opt.addToPreparedStatement(bs, i);
@@ -317,8 +321,6 @@ public class Mapper<T> {
                 i++;
         }
 
-        if (mapper.readConsistency != null)
-            bs.setConsistencyLevel(mapper.readConsistency);
         return bs;
     }
 
@@ -470,6 +472,10 @@ public class Mapper<T> {
             throw new IllegalArgumentException(String.format("Invalid number of PRIMARY KEY columns provided, %d expected but got %d", mapper.primaryKeySize(), primaryKey.size()));
 
         BoundStatement bs = getPreparedQuery(QueryType.DEL, options).bind();
+
+        if (mapper.writeConsistency != null)
+            bs.setConsistencyLevel(mapper.writeConsistency);
+
         int i = 0;
         for (Option opt : options.values()) {
             opt.checkValidFor(QueryType.DEL, manager);
@@ -487,9 +493,6 @@ public class Mapper<T> {
             bs.setBytesUnsafe(i++, column.getDataType().serialize(value, protocolVersion));
             columnNumber++;
         }
-
-        if (mapper.writeConsistency != null)
-            bs.setConsistencyLevel(mapper.writeConsistency);
         return bs;
     }
 
@@ -743,6 +746,11 @@ public class Mapper<T> {
         /**
          * Creates a new Option object to add a consistency level value to a mapper operation. This
          * is valid for save, delete and get operations.
+         * <p>
+         * Note that the consistency level can also be defined at the mapper level, as a parameter
+         * of the {@link com.datastax.driver.mapping.annotations.Table} annotation (this is redundant
+         * for backward compatibility). This option, whether defined on a specific call or as the
+         * default, will always take precedence over the annotation.
          *
          * @param cl the {@link com.datastax.driver.core.ConsistencyLevel} to use for the operation.
          * @return the option.
