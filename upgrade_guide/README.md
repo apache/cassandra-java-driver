@@ -31,10 +31,10 @@ binary compatibility.
 3. `MappingManager(Session)` will now force the initialization of the `Session`
    if needed. This is a change from 2.1.6, where if you gave it an uninitialized
    session (created with `Cluster#newSession()` instead of `Cluster#connect()`),
-   it would only initialize it on the first request.
+   it would only get initialized on the first request.
 
-    If this is a problem for you, `MappingManager(Session, boolean)` preserves
-    the previous behavior (see the API docs for more details).
+    If this is a problem for you, `MappingManager(Session, ProtocolVersion)`
+    preserves the previous behavior (see the API docs for more details).
 
 Merged from 2.0.11:
 
