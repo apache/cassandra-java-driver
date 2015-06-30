@@ -29,14 +29,14 @@ public class FunctionExecutionExceptionTest extends CCMBridge.PerClassSingleNode
     @Override
     protected Collection<String> getTableDefinitions() {
         return Lists.newArrayList(
-            "CREATE TABLE foo (k int primary key)",
-            "INSERT INTO foo (k) VALUES (0)",
-            "CREATE FUNCTION inverse(i int) RETURNS NULL ON NULL INPUT RETURNS double LANGUAGE java AS 'return 1.0/i;'"
+            "CREATE TABLE foo (k int primary key, i int, l list<int>)",
+            "INSERT INTO foo (k, i, l) VALUES (1, 1, [1])",
+            "CREATE FUNCTION element_at(l list<int>, i int) RETURNS NULL ON NULL INPUT RETURNS int LANGUAGE java AS 'return (Integer) l.get(i);'"
         );
     }
 
     @Test(groups = "short", expectedExceptions = FunctionExecutionException.class)
     public void should_throw_when_function_execution_fails() {
-        session.execute("SELECT inverse(k) FROM foo");
+        session.execute("SELECT element_at(l, i) FROM foo WHERE k = 1");
     }
 }
