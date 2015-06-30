@@ -16,6 +16,8 @@
 package com.datastax.driver.mapping;
 
 import java.net.InetAddress;
+
+import com.datastax.driver.core.utils.CassandraVersion;
 import com.datastax.driver.mapping.annotations.Table;
 import java.util.*;
 
@@ -312,6 +314,7 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     @Test(groups = "short")
+    @CassandraVersion(major=2.0)
     public void testDynamicEntity() throws Exception {
         MappingManager manager = new MappingManager(session);
 
@@ -400,7 +403,7 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
         m.save(p3);
 
         // Retrieve posts with a projection query that only retrieves some of the fields
-        ResultSet rs = session.execute("select user_id, post_id, title from posts where user_id = ?", u1.getUserId());
+        ResultSet rs = session.execute("select user_id, post_id, title from posts where user_id = " + u1.getUserId());
 
         Result<Post> result = m.map(rs);
         for (Post post : result) {
@@ -413,6 +416,6 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
         }
 
         // cleanup
-        session.execute("delete from posts where user_id = ?", u1.getUserId());
+        session.execute("delete from posts where user_id = " + u1.getUserId());
     }
 }
