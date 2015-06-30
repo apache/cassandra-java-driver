@@ -37,6 +37,7 @@ Merged from 2.0 branch:
 - [improvement] Optimize internal copies of Request objects (JAVA-726)
 - [bug] Preserve tracing across retries (JAVA-815)
 - [improvement] New RetryDecision.tryNextHost() (JAVA-709)
+- [bug] Handle function calls and raw strings as non-idempotent in QueryBuilder (JAVA-733)
 
 
 ### 2.1.6
@@ -272,6 +273,7 @@ Merged from 2.0 branch: everything up to 2.0.3 (included), and the following.
 - [improvement] Optimize internal copies of Request objects (JAVA-726)
 - [bug] Preserve tracing across retries (JAVA-815)
 - [improvement] New RetryDecision.tryNextHost() (JAVA-709)
+- [bug] Handle function calls and raw strings as non-idempotent in QueryBuilder (JAVA-733)
 
 Merged from 2.0.10_fixes branch:
 

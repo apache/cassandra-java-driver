@@ -427,9 +427,10 @@ public abstract class Statement {
      * <p>
      * By default, this method returns {@code null} for all statements, except for
      * {@link BuiltStatement}s, where the value will be inferred from the query: if it updates
-     * counters or prepends/appends to a list, the result will be {@code false}, otherwise it
-     * will be {@code true}. In all cases, calling {@link #setIdempotent(boolean)} forces a
-     * value that overrides every other mechanism.
+     * counters, prepends/appends to a list, or uses a function call or
+     * {@link com.datastax.driver.core.querybuilder.QueryBuilder#raw(String)} anywhere in an inserted value,
+     * the result will be {@code false}; otherwise it will be {@code true}.
+     * In all cases, calling {@link #setIdempotent(boolean)} forces a value that overrides every other mechanism.
      *
      * @return whether this statement is idempotent, or {@code null} to use
      * {@link QueryOptions#getDefaultIdempotence()}.

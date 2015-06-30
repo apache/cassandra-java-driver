@@ -142,6 +142,10 @@ driver, but rather third-party frameworks and tools.
    because of a network partition) but can still answer to the client normally.
    In this case, trying another node has a chance of success.
    The previous behaviour was to always throw an exception.
+2. A `BuiltStatement` is now considered non-idempotent whenever a `fcall()`
+   or `raw()` is used to build a value to be inserted in the database.
+   If you know that the CQL functions or expressions are safe, use
+   `setIdempotent(true)` on the statement.
 
 ### 2.0.x to 2.0.10
 

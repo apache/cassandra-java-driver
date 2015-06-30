@@ -78,12 +78,14 @@ doesn't parse query strings, so in most cases it has no information
 about what the query actually does. Therefore:
 
 * **`Statement#isIdempotent()` is only computed automatically for
-  statements built with [QueryBuilder][QueryBuilder]**. Note that there
-  is a known issue in 2.1.6 where calls to `now()` or `uuid()` are not
-  taken into account (see
-  [JAVA-733](https://datastax-oss.atlassian.net/browse/JAVA-733)). If
-  you're using these CQL functions with built statements, force
-  idempotence to `false` manually (see below);
+  statements built with [QueryBuilder][QueryBuilder]**.
+  Note that the driver takes a rather conservative approach with uses
+  of `fcall()` or `raw()`: whenever they appear in a value to be
+  inserted in the database (like the values of an `Insert` or the
+  right-hand side of an assignment in an `Update`), the statement
+  will be considered non-idempotent by default. If you know that your
+  CQL functions or expressions are safe, force idempotence to `true`
+  on the statement manually (see below);
 * **for all other types of statements, it defaults to `false`.** You'll
   need to set it manually, with one of the mechanism described below.
 
