@@ -137,6 +137,17 @@ public class Delete extends BuiltStatement {
     }
 
     /**
+     * Returns the options for this DELETE statement.
+     * <p/>
+     * Chain this with {@link Options#and(Using)} to add options.
+     *
+     * @return the options of this DELETE statement.
+     */
+    public Options using() {
+        return usings;
+    }
+
+    /**
      * Sets the 'IF EXISTS' option for this DELETE statement.
      *
      * <p>

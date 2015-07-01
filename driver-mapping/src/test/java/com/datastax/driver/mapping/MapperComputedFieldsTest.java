@@ -18,9 +18,11 @@ package com.datastax.driver.mapping;
 import java.util.Collection;
 
 import com.google.common.collect.Lists;
+import org.testng.SkipException;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import static com.datastax.driver.core.ProtocolVersion.V1;
 import static org.assertj.core.api.Assertions.fail;
 
 import com.datastax.driver.core.*;
@@ -35,7 +37,6 @@ import static com.datastax.driver.core.Assertions.assertThat;
  * annotation to map computed fields.
  */
 @SuppressWarnings("unused")
-@CassandraVersion(major = 2.0)
 public class MapperComputedFieldsTest extends CCMBridge.PerClassSingleNodeCluster {
 
     @Override
@@ -45,16 +46,28 @@ public class MapperComputedFieldsTest extends CCMBridge.PerClassSingleNodeCluste
             "INSERT INTO user (login, name) VALUES ('testlogin', 'test name')");
     }
 
+    ProtocolVersion protocolVersion;
     MappingManager mappingManager;
     Mapper<User> userMapper;
 
     @BeforeMethod(groups = "short")
     void setup() {
         mappingManager = new MappingManager(session);
+        protocolVersion = cluster.getConfiguration().getProtocolOptions().getProtocolVersionEnum();
+        if (protocolVersion.compareTo(V1) > 0)
+            userMapper = mappingManager.mapper(User.class);
+    }
+
+    @Test(groups = "short", expectedExceptions = { UnsupportedOperationException.class })
+    void should_get_unsupported_operation_exception_on_v1() {
+        if (protocolVersion.compareTo(V1) > 0)
+            throw new SkipException("Skipped when protocol version > V1");
+
         userMapper = mappingManager.mapper(User.class);
     }
 
     @Test(groups = "short")
+    @CassandraVersion(major = 2.0)
     void should_save_and_get_entity_with_computed_fields() {
         long writeTime = System.currentTimeMillis() * 1000;
         User newUser = new User("testlogin2", "blah");
@@ -80,6 +93,7 @@ public class MapperComputedFieldsTest extends CCMBridge.PerClassSingleNodeCluste
     }
 
     @Test(groups = "short")
+    @CassandraVersion(major = 2.0)
     void should_add_aliases_for_fields_in_select_queries() {
         BoundStatement bs = (BoundStatement)userMapper.getQuery("test");
         assertThat(bs.preparedStatement().getQueryString())
@@ -87,6 +101,7 @@ public class MapperComputedFieldsTest extends CCMBridge.PerClassSingleNodeCluste
     }
 
     @Test(groups = "short")
+    @CassandraVersion(major = 2.0)
     public void should_map_aliased_resultset_to_objects() {
         Statement getQuery = userMapper.getQuery("testlogin");
         getQuery.setConsistencyLevel(ConsistencyLevel.QUORUM);
@@ -99,6 +114,7 @@ public class MapperComputedFieldsTest extends CCMBridge.PerClassSingleNodeCluste
     }
 
     @Test(groups = "short")
+    @CassandraVersion(major = 2.0)
     void should_map_unaliased_resultset_to_objects() {
         UserAccessor userAccessor = mappingManager.createAccessor(UserAccessor.class);
         ResultSet rs = userAccessor.all();
@@ -110,11 +126,13 @@ public class MapperComputedFieldsTest extends CCMBridge.PerClassSingleNodeCluste
     }
 
     @Test(groups = "short", expectedExceptions = IllegalArgumentException.class)
+    @CassandraVersion(major = 2.0)
     void should_fail_if_computed_field_is_not_right_type() {
         mappingManager.mapper(User_WrongComputedType.class);
     }
 
     @Test(groups = "short")
+    @CassandraVersion(major = 2.0)
     void should_fail_if_computed_field_marked_with_column_annotation() {
         Mapper<User_WrongAnnotationForComputed> mapper = mappingManager.mapper(User_WrongAnnotationForComputed.class);
         try {

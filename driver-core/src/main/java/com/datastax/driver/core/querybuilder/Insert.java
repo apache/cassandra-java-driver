@@ -135,6 +135,16 @@ public class Insert extends BuiltStatement {
     }
 
     /**
+     * Returns the options for this INSERT statement.
+     * <p/>
+     * Chain this with {@link Options#and(Using)} to add options.
+     *
+     * @return the options of this INSERT statement.
+     */
+    public Options using() {
+        return usings;
+    }
+    /**
      * Sets the 'IF NOT EXISTS' option for this INSERT statement.
      * <p>
      * An insert with that option will not succeed unless the row does not
