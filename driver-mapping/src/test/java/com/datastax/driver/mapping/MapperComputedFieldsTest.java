@@ -189,59 +189,6 @@ public class MapperComputedFieldsTest extends CCMBridge.PerClassSingleNodeCluste
         ResultSet all();
     }
 
-    @Table(name = "key_value")
-    public static class KeyValue {
-        @PartitionKey
-        private int key;
-        private String v;
-
-        @Computed(formula = "writetime(\"v\")")
-        long writeTime;
-
-        @Computed(formula = "ttl(v)")
-        Integer ttl;
-
-        public KeyValue() {
-        }
-
-        public KeyValue(int k, String val) {
-            this.key = k;
-            this.v = val;
-        }
-
-        public int getKey() {
-            return this.key;
-        }
-
-        public void setKey(int pk) {
-            this.key = pk;
-        }
-
-        public String getV() {
-            return this.v;
-        }
-
-        public void setV(String val) {
-            this.v = val;
-        }
-
-        public long getWriteTime() {
-            return this.writeTime;
-        }
-
-        public void setWriteTime(long pk) {
-            this.writeTime = pk;
-        }
-
-        public Integer getTtl() {
-            return this.ttl;
-        }
-
-        public void setTtl(Integer ttl) {
-            this.ttl = ttl;
-        }
-    }
-
     @Table(name = "user")
     public static class User_WrongComputedType {
         @PartitionKey
