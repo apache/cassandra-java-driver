@@ -145,16 +145,9 @@ class SessionManager extends AbstractSession {
                                 Responses.Result.Prepared pmsg = (Responses.Result.Prepared)rm;
                                 PreparedStatement stmt = DefaultPreparedStatement.fromMessage(pmsg, cluster.getMetadata(), query, poolsState.keyspace);
                                 stmt = cluster.manager.addPrepared(stmt);
-                                try {
-                                    // All Sessions are connected to the same nodes so it's enough to prepare only the nodes of this session.
-                                    // If that changes, we'll have to make sure this propagate to other sessions too.
-                                    prepare(stmt.getQueryString(), future.getAddress());
-                                } catch (InterruptedException e) {
-                                    Thread.currentThread().interrupt();
-                                    // This method doesn't propagate interruption, at least not for now. However, if we've
-                                    // interrupted preparing queries on other node it's not a problem as we'll re-prepare
-                                    // later if need be. So just ignore.
-                                }
+                                // All Sessions are connected to the same nodes so it's enough to prepare only the nodes of this session.
+                                // If that changes, we'll have to make sure this propagate to other sessions too.
+                                prepare(stmt.getQueryString(), future.getAddress());
                                 return stmt;
                             default:
                                 throw new DriverInternalError(String.format("%s response received when prepared statement was expected", rm.kind));
@@ -165,7 +158,7 @@ class SessionManager extends AbstractSession {
                         throw new DriverInternalError(String.format("%s response received when prepared statement was expected", response.type));
                 }
             }
-        }, executor()); // Since the transformation involves querying other nodes, we should not do that in an I/O thread
+        });
     }
 
     Connection.Factory connectionFactory() {
@@ -533,34 +526,52 @@ class SessionManager extends AbstractSession {
         new RequestHandler(this, callback, statement).sendRequest();
     }
 
-    private void prepare(String query, InetSocketAddress toExclude) throws InterruptedException {
-        for (Map.Entry<Host, HostConnectionPool> entry : pools.entrySet()) {
+    private void prepare(final String query, InetSocketAddress toExclude) {
+        List<ListenableFuture<?>> futures = new ArrayList<ListenableFuture<?>>(pools.size());
+        for (final Map.Entry<Host, HostConnectionPool> entry : pools.entrySet()) {
             if (entry.getKey().getSocketAddress().equals(toExclude))
                 continue;
-
-            // Let's not wait too long if we can't get a connection. Things
-            // will fix themselves once the user tries a query anyway.
-            Connection c = null;
-            boolean timedOut = false;
-            try {
-                c = entry.getValue().borrowConnection(200, TimeUnit.MILLISECONDS);
-                c.write(new Requests.Prepare(query)).get();
-            } catch (ConnectionException e) {
-                // Again, not being able to prepare the query right now is no big deal, so just ignore
-            } catch (BusyConnectionException e) {
-                // Same as above
-            } catch (TimeoutException e) {
-                // Same as above
-            } catch (ExecutionException e) {
-                // We shouldn't really get exception while preparing a
-                // query, so log this (but ignore otherwise as it's not a big deal)
-                logger.error(String.format("Unexpected error while preparing query (%s) on %s", query, entry.getKey()), e);
-                // If the query timed out, that already released the connection
-                timedOut = e.getCause() instanceof OperationTimedOutException;
-            } finally {
-                if (c != null && !timedOut)
-                    c.release();
-            }
+            // prepare on other nodes: we use an executor so that the query is not done in an IO thread.
+            futures.add(executor().submit(new Runnable() {
+                @Override
+                public void run() {
+                    Connection c = null;
+                    boolean timedOut = false;
+                    try {
+                        // Let's not wait too long if we can't get a connection. Things
+                        // will fix themselves once the user tries a query anyway.
+                        c = entry.getValue().borrowConnection(200, TimeUnit.MILLISECONDS);
+                        c.write(new Requests.Prepare(query)).get();
+                    } catch (ConnectionException e) {
+                        // Again, not being able to prepare the query right now is no big deal, so just ignore
+                    } catch (BusyConnectionException e) {
+                        // Same as above
+                    } catch (TimeoutException e) {
+                        // Same as above
+                    } catch (ExecutionException e) {
+                        // We shouldn't really get exception while preparing a
+                        // query, so log this (but ignore otherwise as it's not a big deal)
+                        logger.error(String.format("Unexpected error while preparing query (%s) on %s", query, entry.getKey()), e);
+                        // If the query timed out, that already released the connection
+                        timedOut = e.getCause() instanceof OperationTimedOutException;
+                    } catch (InterruptedException e) {
+                        // This method doesn't propagate interruption, at least not for now. However, if we've
+                        // interrupted preparing queries on other node it's not a problem as we'll re-prepare
+                        // later if need be. So just ignore.
+                        Thread.currentThread().interrupt();
+                    } finally {
+                        if (c != null && !timedOut)
+                            c.release();
+                    }
+                }
+            }));
+        }
+        try {
+            Futures.successfulAsList(futures).get();
+        } catch (ExecutionException e) {
+            // already handled
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
     }
 
