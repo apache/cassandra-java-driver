@@ -15,6 +15,8 @@
  */
 package com.datastax.driver.core;
 
+import java.util.Locale;
+
 import com.datastax.driver.core.exceptions.*;
 import org.testng.annotations.Test;
 
@@ -192,7 +194,7 @@ public class ExceptionsTest {
             c.session.execute("USE " + keyspace);
             c.session.execute(String.format(TestUtils.CREATE_TABLE_SIMPLE_FORMAT, table));
 
-            c.session.execute(new SimpleStatement(String.format(TestUtils.INSERT_FORMAT, table, key, "foo", 42, 24.03f)).setConsistencyLevel(ConsistencyLevel.ALL));
+            c.session.execute(new SimpleStatement(String.format(Locale.US, TestUtils.INSERT_FORMAT, table, key, "foo", 42, 24.03f)).setConsistencyLevel(ConsistencyLevel.ALL));
             c.session.execute(new SimpleStatement(String.format(TestUtils.SELECT_ALL_FORMAT, table)).setConsistencyLevel(ConsistencyLevel.ALL));
 
             c.cassandraCluster.forceStop(2);
@@ -308,7 +310,7 @@ public class ExceptionsTest {
             c.session.execute("USE " + keyspace);
             c.session.execute(String.format(TestUtils.CREATE_TABLE_SIMPLE_FORMAT, table));
 
-            c.session.execute(new SimpleStatement(String.format(TestUtils.INSERT_FORMAT, table, key, "foo", 42, 24.03f)).setConsistencyLevel(ConsistencyLevel.ALL));
+            c.session.execute(new SimpleStatement(String.format(Locale.US, TestUtils.INSERT_FORMAT, table, key, "foo", 42, 24.03f)).setConsistencyLevel(ConsistencyLevel.ALL));
             c.session.execute(new SimpleStatement(String.format(TestUtils.SELECT_ALL_FORMAT, table)).setConsistencyLevel(ConsistencyLevel.ALL));
 
             c.cassandraCluster.stop(2);
@@ -326,7 +328,7 @@ public class ExceptionsTest {
             }
 
             try{
-                c.session.execute(new SimpleStatement(String.format(TestUtils.INSERT_FORMAT, table, key, "foo", 42, 24.03f)).setConsistencyLevel(ConsistencyLevel.ALL));
+                c.session.execute(new SimpleStatement(String.format(Locale.US, TestUtils.INSERT_FORMAT, table, key, "foo", 42, 24.03f)).setConsistencyLevel(ConsistencyLevel.ALL));
             } catch (UnavailableException e) {
                 String expectedError = String.format("Not enough replica available for query at consistency %s (%d required but only %d alive)", "ALL", 3, 2);
                 assertEquals(e.getMessage(), expectedError);
@@ -361,12 +363,12 @@ public class ExceptionsTest {
             c.session.execute("USE " + keyspace);
             c.session.execute(String.format(TestUtils.CREATE_TABLE_SIMPLE_FORMAT, table));
 
-            c.session.execute(new SimpleStatement(String.format(TestUtils.INSERT_FORMAT, table, key, "foo", 42, 24.03f)).setConsistencyLevel(ConsistencyLevel.ALL));
+            c.session.execute(new SimpleStatement(String.format(Locale.US, TestUtils.INSERT_FORMAT, table, key, "foo", 42, 24.03f)).setConsistencyLevel(ConsistencyLevel.ALL));
             c.session.execute(new SimpleStatement(String.format(TestUtils.SELECT_ALL_FORMAT, table)).setConsistencyLevel(ConsistencyLevel.ALL));
 
             c.cassandraCluster.forceStop(2);
             try{
-                c.session.execute(new SimpleStatement(String.format(TestUtils.INSERT_FORMAT, table, key, "foo", 42, 24.03f)).setConsistencyLevel(ConsistencyLevel.ALL));
+                c.session.execute(new SimpleStatement(String.format(Locale.US, TestUtils.INSERT_FORMAT, table, key, "foo", 42, 24.03f)).setConsistencyLevel(ConsistencyLevel.ALL));
             } catch (WriteTimeoutException e) {
                 assertEquals(e.getConsistencyLevel(), ConsistencyLevel.ALL);
                 assertEquals(e.getReceivedAcknowledgements(), 2);
