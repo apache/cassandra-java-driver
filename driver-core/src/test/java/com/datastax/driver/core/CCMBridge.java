@@ -191,33 +191,24 @@ public class CCMBridge {
     }
 
     public static CCMBridge create(String name, String... options) {
-        // This leads to a confusing CCM error message so check explicitly:
-        checkArgument(!"current".equals(name.toLowerCase()),
-            "cluster can't be called \"current\"");
         CCMBridge bridge = new CCMBridge();
         bridge.execute(CCM_COMMAND + " create %s -b -i %s %s " + Joiner.on(" ").join(options), name, IP_PREFIX, CASSANDRA_VERSION);
         return bridge;
     }
 
     public static CCMBridge create(String name, int nbNodes, String... options) {
-        checkArgument(!"current".equals(name.toLowerCase()),
-            "cluster can't be called \"current\"");
         CCMBridge bridge = new CCMBridge();
         bridge.execute(CCM_COMMAND + " create %s -n %d -s -i %s -b %s " + Joiner.on(" ").join(options), name, nbNodes, IP_PREFIX, CASSANDRA_VERSION);
         return bridge;
     }
 
     public static CCMBridge createWithCustomVersion(String name, int nbNodes, String cassandraVersion) {
-        checkArgument(!"current".equals(name.toLowerCase()),
-            "cluster can't be called \"current\"");
         CCMBridge bridge = new CCMBridge();
         bridge.execute(CCM_COMMAND + " create %s -n %d -s -i %s -b -v %s ", name, nbNodes, IP_PREFIX, cassandraVersion);
         return bridge;
     }
 
     public static CCMBridge create(String name, int nbNodesDC1, int nbNodesDC2) {
-        checkArgument(!"current".equals(name.toLowerCase()),
-            "cluster can't be called \"current\"");
         CCMBridge bridge = new CCMBridge();
         bridge.execute(CCM_COMMAND + " create %s -n %d:%d -s -i %s -b %s", name, nbNodesDC1, nbNodesDC2, IP_PREFIX, CASSANDRA_VERSION);
         return bridge;
