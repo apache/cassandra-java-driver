@@ -41,6 +41,8 @@
 - [improvement] Allow hosts to remain partially up (JAVA-544)
 - [improvement] Remove internal blocking calls and expose async session
   creation (JAVA-821, JAVA-822)
+- [improvement] Use parallel calls when re-preparing statement on other
+  hosts (JAVA-725)
 
 Merged from 2.0.10_fixes branch:
 
