@@ -48,7 +48,7 @@ public class NettyOptionsTest {
     public void should_invoke_netty_options_hooks(int hosts, int coreConnections) throws Exception {
         //given
         int expectedNumberOfCalls = coreConnections * hosts + 1;
-        CCMBridge ccm = CCMBridge.createWithCustomVersion("test", hosts, "2.0.10");
+        CCMBridge ccm = CCMBridge.builder("test").withNodes(hosts).withCassandraVersion("2.0.10").build();
         Cluster cluster = null;
         try {
             NettyOptions nettyOptions = mock(NettyOptions.class, CALLS_REAL_METHODS.get());

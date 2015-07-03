@@ -34,11 +34,10 @@ public class SingleTokenIntegrationTest {
         Cluster cluster = null;
 
         try {
-            ccm = CCMBridge.create("test");
-            // force the initial token to a non-min value to validate that the single range will always be ]minToken, minToken]
-            ccm.updateConfig("initial_token", "1");
-            ccm.bootstrapNode(1);
-            ccm.start();
+            ccm = CCMBridge.builder("test")
+                // force the initial token to a non-min value to validate that the single range will always be ]minToken, minToken]
+                .withCassandraConfiguration("initial_token", "1")
+                .build();
 
             cluster = Cluster.builder().addContactPoint(CCMBridge.ipOfNode(1)).build();
 

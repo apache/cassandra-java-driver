@@ -70,7 +70,7 @@ public class TimeoutStressTest {
 
     @BeforeClass(groups = "long")
     public void beforeClass() throws Exception {
-        ccmBridge = CCMBridge.create("test", 3);
+        ccmBridge = CCMBridge.builder("test").withNodes(3).build();
         channelMonitor = new SocketChannelMonitor();
         nodes = Lists.newArrayList(
                 new InetSocketAddress(CCMBridge.IP_PREFIX + '1', 9042),

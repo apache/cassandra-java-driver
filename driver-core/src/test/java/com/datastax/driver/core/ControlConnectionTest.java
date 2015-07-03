@@ -55,7 +55,7 @@ public class ControlConnectionTest {
         };
 
         try {
-            ccm = CCMBridge.create("test", 2);
+            ccm = CCMBridge.builder("test").withNodes(2).build();
             // We pass only the first host as contact point, so we know the control connection will be on this host
             cluster = Cluster.builder()
                 .addContactPoint(CCMBridge.ipOfNode(1))
@@ -96,7 +96,7 @@ public class ControlConnectionTest {
         Cluster cluster = null;
 
         try {
-            ccm = CCMBridge.create("test", 3);
+            ccm = CCMBridge.builder("test").withNodes(3).build();
 
             cluster = Cluster.builder()
                     .addContactPoint(CCMBridge.ipOfNode(1))

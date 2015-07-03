@@ -27,13 +27,9 @@ import java.util.concurrent.TimeUnit;
 import static org.testng.Assert.assertEquals;
 import static java.util.concurrent.TimeUnit.MINUTES;
 
-import com.google.common.collect.Lists;
-import org.testng.annotations.Test;
-
 import static org.assertj.core.api.Assertions.fail;
 
 import com.datastax.driver.core.exceptions.InvalidQueryException;
-import com.datastax.driver.core.utils.SocketChannelMonitor;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 
@@ -50,7 +46,7 @@ public class SessionLeakTest {
     public void connectionLeakTest() throws Exception {
         // Checking for JAVA-342
         CCMBridge ccmBridge;
-        ccmBridge = CCMBridge.create("test", 1);
+        ccmBridge = CCMBridge.builder("test").withNodes(1).build();
         channelMonitor = new SocketChannelMonitor();
         channelMonitor.reportAtFixedInterval(1, TimeUnit.SECONDS);
         try {
@@ -113,7 +109,7 @@ public class SessionLeakTest {
     public void should_not_leak_session_when_wrong_keyspace() throws Exception {
         // Checking for JAVA-806
         CCMBridge ccmBridge;
-        ccmBridge = CCMBridge.create("test", 1);
+        ccmBridge = CCMBridge.builder("test").withNodes(1).build();
         channelMonitor = new SocketChannelMonitor();
         channelMonitor.reportAtFixedInterval(1, TimeUnit.SECONDS);
         try {
