@@ -32,6 +32,7 @@ public class Update extends BuiltStatement {
     private final Where where;
     private final Options usings;
     private final Conditions conditions;
+    private boolean ifExists;
 
     Update(String keyspace, String table) {
         super(keyspace);
@@ -73,6 +74,10 @@ public class Update extends BuiltStatement {
         if (!where.clauses.isEmpty()) {
             builder.append(" WHERE ");
             Utils.joinAndAppend(builder, " AND ", where.clauses, variables);
+        }
+
+        if (ifExists) {
+            builder.append(" IF EXISTS ");
         }
 
         if (!conditions.conditions.isEmpty()) {
@@ -154,6 +159,16 @@ public class Update extends BuiltStatement {
      */
     public Options using(Using using) {
         return usings.and(using);
+    }
+
+    /**
+     * Sets the 'IF EXISTS' option for this UPDATE statement.
+     *
+     * @return this Update statement
+     */
+    public Update ifExists() {
+        this.ifExists = true;
+        return this;
     }
 
     /**
@@ -265,6 +280,15 @@ public class Update extends BuiltStatement {
          */
         public Conditions onlyIf(Clause condition) {
             return statement.onlyIf(condition);
+        }
+
+        /**
+         * Sets the 'IF EXISTS' option for this UPDATE statement.
+         *
+         * @return the UPDATE statement this WHERE clause is part of
+         */
+        public Update ifExists() {
+            return statement.ifExists();
         }
     }
 

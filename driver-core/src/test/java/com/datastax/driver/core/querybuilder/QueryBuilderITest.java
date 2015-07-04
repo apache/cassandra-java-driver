@@ -164,6 +164,30 @@ public class QueryBuilderITest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     @Test(groups = "short")
+    @CassandraVersion(major=2.0, minor=13, description="DELETE..IF EXISTS only supported in 2.0.13+ (CASSANDRA-8610)")
+    public void conditionalUpdatesTest() throws Exception {
+        session.execute(String.format("INSERT INTO %s.test_int (k, a, b) VALUES (1, 1, 1)",keyspace));
+
+        Statement update;
+        Row row;
+        update = update(TABLE_INT).with(set("a", 2)).and(set("b", 2)).where(eq("k", 2)).ifExists();
+        row = session.execute(update).one();
+        assertFalse(row.getBool("[applied]"));
+
+        update = update(TABLE_INT).with(set("a", 2)).and(set("b", 2)).where(eq("k", 1)).ifExists();
+        row = session.execute(update).one();
+        assertFalse(row.getBool("[applied]"));
+
+        update = update(TABLE_INT).with(set("a", 2)).and(set("b", 2)).where(eq("k", 2)).onlyIf(eq("a", 1)).and(eq("b", 2));
+        row = session.execute(update).one();
+        assertFalse(row.getBool("[applied]"));
+
+        update = update(TABLE_INT).with(set("a", 2)).and(set("b", 2)).where(eq("k", 2)).onlyIf(eq("a", 2)).and(eq("b", 2));
+        row = session.execute(update).one();
+        assertTrue(row.getBool("[applied]"));
+    }
+
+    @Test(groups = "short")
     public void deleteInjectionTests() throws Exception {
 
         String query;
@@ -211,13 +235,13 @@ public class QueryBuilderITest extends CCMBridge.PerClassSingleNodeCluster {
     @CassandraVersion(major=2.0, minor=7, description="DELETE..IF EXISTS only supported in 2.0.7+ (CASSANDRA-5708)")
     public void conditionalDeletesTest() throws Exception {
         session.execute(String.format("INSERT INTO %s.test_int (k, a, b) VALUES (1, 1, 1)",keyspace));
-        
+
         Statement delete;
         Row row;
         delete = delete().from(keyspace, TABLE_INT).where(eq("k", 2)).ifExists();
         row = session.execute(delete).one();
         assertFalse(row.getBool("[applied]"));
-        
+
         delete = delete().from(keyspace, TABLE_INT).where(eq("k", 1)).ifExists();
         row = session.execute(delete).one();
         assertTrue(row.getBool("[applied]"));
@@ -227,7 +251,7 @@ public class QueryBuilderITest extends CCMBridge.PerClassSingleNodeCluster {
         delete = delete().from(keyspace, TABLE_INT).where(eq("k", 1)).onlyIf(eq("a", 1)).and(eq("b", 2));
         row = session.execute(delete).one();
         assertFalse(row.getBool("[applied]"));
-        
+
         delete = delete().from(keyspace, TABLE_INT).where(eq("k", 1)).onlyIf(eq("a", 1)).and(eq("b", 1));
         row = session.execute(delete).one();
         assertTrue(row.getBool("[applied]"));
