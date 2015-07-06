@@ -162,10 +162,10 @@ public class MapperComputedFieldsTest extends CCMBridge.PerClassSingleNodeCluste
 
         // quotes in the column name inserted on purpose
         // to test the alias generation mechanism
-        @Computed(formula = "writetime(\"name\")")
+        @Computed(value = "writetime(\"name\")")
         long writeTime;
 
-        @Computed(formula = "ttl(name)")
+        @Computed("ttl(name)")
         Integer ttl;
 
         public String getLogin() {

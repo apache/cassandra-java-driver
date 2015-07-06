@@ -233,7 +233,7 @@ class AnnotationParser {
         }
 
         if (computedField != null) {
-            return computedField.formula();
+            return computedField.value();
         }
 
         return field.getName().toLowerCase();

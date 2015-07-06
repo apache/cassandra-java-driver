@@ -46,5 +46,5 @@ public @interface Computed {
      *
      * @return the formula.
      */
-    String formula();
+    String value();
 }
