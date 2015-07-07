@@ -15,6 +15,8 @@
  */
 package com.datastax.driver.core.exceptions;
 
+import java.net.InetSocketAddress;
+
 import com.datastax.driver.core.ConsistencyLevel;
 
 /**
@@ -26,16 +28,27 @@ public class ReadTimeoutException extends QueryTimeoutException {
 
     private final boolean dataPresent;
 
+    /**
+     * This constructor should only be used internally by the driver
+     * when decoding error responses.
+     */
     public ReadTimeoutException(ConsistencyLevel consistency, int received, int required, boolean dataPresent) {
-        super(String.format("Cassandra timeout during read query at consistency %s (%s)", consistency, formatDetails(received, required, dataPresent)),
-              consistency,
-              received,
-              required);
+        this(null, consistency, received, required, dataPresent);
+    }
+
+    public ReadTimeoutException(InetSocketAddress address, ConsistencyLevel consistency, int received, int required, boolean dataPresent) {
+        super(
+            address,
+            String.format("Cassandra timeout during read query at consistency %s (%s)", consistency, formatDetails(received, required, dataPresent)),
+            consistency,
+            received,
+            required
+        );
         this.dataPresent = dataPresent;
     }
 
-    private ReadTimeoutException(String msg, Throwable cause, ConsistencyLevel consistency, int received, int required, boolean dataPresent) {
-        super(msg, cause, consistency, received, required);
+    private ReadTimeoutException(InetSocketAddress address, String msg, Throwable cause, ConsistencyLevel consistency, int received, int required, boolean dataPresent) {
+        super(address, msg, cause, consistency, received, required);
         this.dataPresent = dataPresent;
     }
 
@@ -66,11 +79,42 @@ public class ReadTimeoutException extends QueryTimeoutException {
 
     @Override
     public DriverException copy() {
-        return new ReadTimeoutException(getMessage(),
-                                        this,
-                                        getConsistencyLevel(),
-                                        getReceivedAcknowledgements(),
-                                        getRequiredAcknowledgements(),
-                                        wasDataRetrieved());
+        return new ReadTimeoutException(
+            getAddress(),
+            getMessage(),
+            this,
+            getConsistencyLevel(),
+            getReceivedAcknowledgements(),
+            getRequiredAcknowledgements(),
+            wasDataRetrieved()
+        );
     }
+
+    /**
+     * Create a copy of this exception with a nicer stack trace, and including the coordinator
+     * address that caused this exception to be raised.
+     * <p>
+     * This method is mainly intended for internal use by the driver and exists mainly because:
+     * <ol>
+     *   <li>the original exception was decoded from a response frame
+     *   and at that time, the coordinator address was not available; and</li>
+     *   <li>the newly-created exception will refer to the current thread in its stack trace,
+     *   which generally yields a more user-friendly stack trace that the original one.</li>
+     * </ol>
+     *
+     * @param address The full address of the host that caused this exception to be thrown.
+     * @return a copy/clone of this exception, but with the given host address instead of the original one.
+     */
+    public ReadTimeoutException copy(InetSocketAddress address) {
+        return new ReadTimeoutException(
+            address,
+            getMessage(),
+            this,
+            getConsistencyLevel(),
+            getReceivedAcknowledgements(),
+            getRequiredAcknowledgements(),
+            wasDataRetrieved()
+        );
+    }
+
 }

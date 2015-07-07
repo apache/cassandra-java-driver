@@ -26,6 +26,7 @@
 - [improvement] Provide API to retrieve values of a Parameterized SimpleStatement (JAVA-765)
 - [improvement] implement UPDATE ... IF EXISTS in QueryBuilder (JAVA-827)
 - [improvement] Randomize contact points list to prevent hotspots (JAVA-618)
+- [improvement] Surface the coordinator used on query failure (JAVA-720)
 
 Merged from 2.0.10_fixes branch:
 
