@@ -94,6 +94,10 @@ public class SCassandraCluster {
         return activityClients.get(node - 1).retrieveQueries();
     }
 
+    public List<PreparedStatementExecution> retrievePreparedStatementExecutions(int node){
+        return activityClients.get(node - 1).retrievePreparedStatementExecutions();
+    }
+
     public void clearAllPrimes() {
         for (PrimingClient primingClient : primingClients)
             primingClient.clearAllPrimes();

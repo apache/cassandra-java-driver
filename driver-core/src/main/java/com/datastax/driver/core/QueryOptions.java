@@ -47,6 +47,7 @@ public class QueryOptions {
     private volatile int fetchSize = DEFAULT_FETCH_SIZE;
     private volatile boolean defaultIdempotence = DEFAULT_IDEMPOTENCE;
     private volatile Cluster.Manager manager;
+    private volatile boolean prepareOnAllHosts = true;
 
     /**
      * Creates a new {@link QueryOptions} instance using the {@link #DEFAULT_CONSISTENCY_LEVEL},
@@ -168,5 +169,46 @@ public class QueryOptions {
      */
     public boolean getDefaultIdempotence() {
         return defaultIdempotence;
+    }
+
+    /**
+     * Set whether the driver should prepare statements on all hosts in the cluster.
+     * <p>
+     * A statement is normally prepared in two steps:
+     * <ol>
+     *     <li>prepare the query on a single host in the cluster;</li>
+     *     <li>if that succeeds, prepare on all other hosts.</li>
+     * </ol>
+     * This option controls whether step 2 is executed. It is enabled by default.
+     * <p>
+     * The reason why you might want to disable it is to optimize network usage if you
+     * have a large number of clients preparing the same set of statements at startup.
+     * If your load balancing policy distributes queries randomly, each client will pick
+     * a different host to prepare its statements, and on the whole each host has a good
+     * chance of having been hit by at least one client for each statement.
+     * <p>
+     * On the other hand, if that assumption turns out to be wrong and one host hasn't
+     * prepared a given statement, you will pay a penalty on the first execution of this
+     * statement on this host (one extra roundtrip to resend the query to prepare, and
+     * another to retry the execution).
+     *
+     * @param prepareOnAllHosts the new value to set to indicate whether to prepare
+     *                          statements once or on all nodes.
+     * @return this {@code QueryOptions} instance.
+     */
+    public QueryOptions setPrepareOnAllHosts(boolean prepareOnAllHosts) {
+        this.prepareOnAllHosts = prepareOnAllHosts;
+        return this;
+    }
+
+    /**
+     * Returns whether the driver should prepare statements on all hosts in the cluster.
+     *
+     * @return the value.
+     *
+     * @see #setPrepareOnAllHosts(boolean)
+     */
+    public boolean isPrepareOnAllHosts() {
+        return this.prepareOnAllHosts;
     }
 }

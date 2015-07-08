@@ -145,15 +145,17 @@ class SessionManager extends AbstractSession {
                                 Responses.Result.Prepared pmsg = (Responses.Result.Prepared)rm;
                                 PreparedStatement stmt = DefaultPreparedStatement.fromMessage(pmsg, cluster.getMetadata(), query, poolsState.keyspace);
                                 stmt = cluster.manager.addPrepared(stmt);
-                                try {
-                                    // All Sessions are connected to the same nodes so it's enough to prepare only the nodes of this session.
-                                    // If that changes, we'll have to make sure this propagate to other sessions too.
-                                    prepare(stmt.getQueryString(), future.getAddress());
-                                } catch (InterruptedException e) {
-                                    Thread.currentThread().interrupt();
-                                    // This method doesn't propagate interruption, at least not for now. However, if we've
-                                    // interrupted preparing queries on other node it's not a problem as we'll re-prepare
-                                    // later if need be. So just ignore.
+                                if (cluster.getConfiguration().getQueryOptions().isPrepareOnAllHosts()){
+                                    try {
+                                        // All Sessions are connected to the same nodes so it's enough to prepare only the nodes of this session.
+                                        // If that changes, we'll have to make sure this propagate to other sessions too.
+                                        prepare(stmt.getQueryString(), future.getAddress());
+                                    } catch (InterruptedException e) {
+                                        Thread.currentThread().interrupt();
+                                        // This method doesn't propagate interruption, at least not for now. However, if we've
+                                        // interrupted preparing queries on other node it's not a problem as we'll re-prepare
+                                        // later if need be. So just ignore.
+                                    }
                                 }
                                 return stmt;
                             default:
