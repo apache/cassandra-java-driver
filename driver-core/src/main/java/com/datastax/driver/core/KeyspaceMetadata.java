@@ -37,7 +37,7 @@ public class KeyspaceMetadata {
     private final ReplicationStrategy strategy;
     private final Map<String, String> replication;
 
-    private final Map<String, TableMetadata> tables = new ConcurrentHashMap<String, TableMetadata>();
+    final Map<String, TableMetadata> tables = new ConcurrentHashMap<String, TableMetadata>();
 
     private KeyspaceMetadata(String name, boolean durableWrites, Map<String, String> replication) {
         this.name = name;
@@ -97,8 +97,8 @@ public class KeyspaceMetadata {
         return tables.get(Metadata.handleId(name));
     }
 
-    void removeTable(String table) {
-        tables.remove(table);
+    TableMetadata removeTable(String table) {
+        return tables.remove(table);
     }
 
     /**
@@ -159,6 +159,37 @@ public class KeyspaceMetadata {
         return sb.toString();
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+
+        KeyspaceMetadata that = (KeyspaceMetadata)o;
+
+        if (durableWrites != that.durableWrites)
+            return false;
+        if (!name.equals(that.name))
+            return false;
+        if (strategy != null ? !strategy.equals(that.strategy) : that.strategy != null)
+            return false;
+        if (!replication.equals(that.replication))
+            return false;
+        return tables.equals(that.tables);
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = name.hashCode();
+        result = 31 * result + (durableWrites ? 1 : 0);
+        result = 31 * result + (strategy != null ? strategy.hashCode() : 0);
+        result = 31 * result + replication.hashCode();
+        result = 31 * result + tables.hashCode();
+        return result;
+    }
+
     void add(TableMetadata tm) {
         tables.put(tm.getName(), tm);
     }
@@ -166,4 +197,5 @@ public class KeyspaceMetadata {
     ReplicationStrategy replicationStrategy() {
         return strategy;
     }
+
 }

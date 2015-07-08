@@ -52,12 +52,35 @@ public class Metadata {
     }
 
     // Synchronized to make it easy to detect dropped keyspaces
-    synchronized void rebuildSchema(String keyspace, String table, ResultSet ks, ResultSet cfs, ResultSet cols, VersionNumber cassandraVersion) {
+    synchronized void rebuildSchema(String keyspaceToRebuild, String tableToRebuild, ResultSet ks, ResultSet cfs, ResultSet cols, VersionNumber cassandraVersion) {
+        Map<String, List<Row>> tableRows = groupByKeyspace(cfs);
+        Map<String, Map<String, Map<String, ColumnMetadata.Raw>>> colsDefs = groupByKeyspaceAndTable(cols, cassandraVersion);
+        if (tableToRebuild == null) {
+            // building a keyspace (keyspaceToRebuild != null), or the whole schema (keyspaceToRebuild == null)
+            assert ks != null;
+            Map<String, KeyspaceMetadata> keyspaces = buildKeyspaces(ks, tableRows, colsDefs, cassandraVersion);
+            updateKeyspaces(this.keyspaces, keyspaces, keyspaceToRebuild);
+        } else {
+            // building only a table
+            assert keyspaceToRebuild != null;
+            KeyspaceMetadata keyspace = this.keyspaces.get(keyspaceToRebuild);
+            // If we update a keyspace we don't know about, something went
+            // wrong. Log an error and schedule a full schema rebuild.
+            if (keyspace == null) {
+                logger.error(String.format("Asked to rebuild table %s.%s but I don't know keyspace %s", keyspaceToRebuild, tableToRebuild, keyspaceToRebuild));
+                cluster.submitSchemaRefresh(null, null);
+                return;
+            }
+            if (tableRows.containsKey(keyspaceToRebuild)) {
+                Map<String, TableMetadata> tables = buildTables(keyspace, tableRows.get(keyspaceToRebuild), colsDefs.get(keyspaceToRebuild), cassandraVersion);
+                updateTables(keyspace.tables, tables, tableToRebuild);
+            }
+        }
+    }
 
-        Map<String, List<Row>> cfDefs = new HashMap<String, List<Row>>();
-        Map<String, Map<String, Map<String, ColumnMetadata.Raw>>> colsDefs = new HashMap<String, Map<String, Map<String, ColumnMetadata.Raw>>>();
-
+    private Map<String, List<Row>> groupByKeyspace(ResultSet cfs) {
         // Gather cf defs
+        Map<String, List<Row>> cfDefs = new HashMap<String, List<Row>>();
         for (Row row : cfs) {
             String ksName = row.getString(KeyspaceMetadata.KS_NAME);
             List<Row> l = cfDefs.get(ksName);
@@ -67,8 +90,11 @@ public class Metadata {
             }
             l.add(row);
         }
+        return cfDefs;
+    }
 
-        // Gather columns per Cf
+    private Map<String, Map<String, Map<String, ColumnMetadata.Raw>>> groupByKeyspaceAndTable(ResultSet cols, VersionNumber cassandraVersion) {
+        Map<String, Map<String, Map<String, ColumnMetadata.Raw>>> colsDefs = new HashMap<String, Map<String, Map<String, ColumnMetadata.Raw>>>();
         for (Row row : cols) {
             String ksName = row.getString(KeyspaceMetadata.KS_NAME);
             String cfName = row.getString(TableMetadata.CF_NAME);
@@ -85,78 +111,163 @@ public class Metadata {
             ColumnMetadata.Raw c = ColumnMetadata.Raw.fromRow(row, cassandraVersion);
             l.put(c.name, c);
         }
+        return colsDefs;
+    }
 
-        if (table == null) {
-            assert ks != null;
-            Set<String> addedKs = new HashSet<String>();
-            for (Row ksRow : ks) {
-                String ksName = ksRow.getString(KeyspaceMetadata.KS_NAME);
-                KeyspaceMetadata ksm = KeyspaceMetadata.build(ksRow);
+    private Map<String, KeyspaceMetadata> buildKeyspaces(ResultSet keyspaceRows, Map<String, List<Row>> tableRows, Map<String, Map<String, Map<String, ColumnMetadata.Raw>>> colsDefs, VersionNumber cassandraVersion) {
+        Map<String, KeyspaceMetadata> keyspaces = new LinkedHashMap<String, KeyspaceMetadata>();
+        for (Row keyspaceRow : keyspaceRows) {
+            KeyspaceMetadata keyspace = KeyspaceMetadata.build(keyspaceRow);
+            Map<String, TableMetadata> tables = buildTables(keyspace, tableRows.get(keyspace.getName()), colsDefs.get(keyspace.getName()), cassandraVersion);
+            for (TableMetadata table : tables.values()) {
+                keyspace.add(table);
+            }
+            keyspaces.put(keyspace.getName(), keyspace);
+        }
+        return keyspaces;
+    }
 
-                if (cfDefs.containsKey(ksName)) {
-                    buildTableMetadata(ksm, cfDefs.get(ksName), colsDefs.get(ksName), cassandraVersion);
+    private Map<String, TableMetadata> buildTables(KeyspaceMetadata keyspace, List<Row> tableRows, Map<String, Map<String, ColumnMetadata.Raw>> colsDefs, VersionNumber cassandraVersion) {
+        Map<String, TableMetadata> tables = new LinkedHashMap<String, TableMetadata>();
+        if(tableRows != null) {
+            for (Row tableDef : tableRows) {
+                String cfName = tableDef.getString(TableMetadata.CF_NAME);
+                try {
+                    Map<String, ColumnMetadata.Raw> cols = colsDefs == null ? null : colsDefs.get(cfName);
+                    if (cols == null || cols.isEmpty()) {
+                        if (cassandraVersion.getMajor() >= 2) {
+                            // In C* >= 2.0, we should never have no columns metadata because at the very least we should
+                            // have the metadata corresponding to the default CQL metadata. So if we don't have any columns,
+                            // that can only mean that the table got creating concurrently with our schema queries, and the
+                            // query for columns metadata reached the node before the table was persisted while the table
+                            // metadata one reached it afterwards. We could make the query to the column metadata sequential
+                            // with the table metadata instead of in parallel, but it's probably not worth making it slower
+                            // all the time to avoid this race since 1) it's very very uncommon and 2) we can just ignore the
+                            // incomplete table here for now and it'll get updated next time with no particular consequence
+                            // (if the table creation was concurrent with our querying, we'll get a notifciation later and
+                            // will reupdate the schema for it anyway). See JAVA-320 for why we need this.
+                            continue;
+                        } else {
+                            // C* 1.2 don't persists default CQL metadata, so it's possible not to have columns (for thirft
+                            // tables). But in that case TableMetadata.build() knows how to handle it.
+                            cols = Collections.emptyMap();
+                        }
+                    }
+                    TableMetadata table = TableMetadata.build(keyspace, tableDef, cols, cassandraVersion);
+                    tables.put(table.getName(), table);
+                } catch (RuntimeException e) {
+                    // See ControlConnection#refreshSchema for why we'd rather not probably this further
+                    logger.error(String.format("Error parsing schema for table %s.%s: "
+                            + "Cluster.getMetadata().getKeyspace(\"%s\").getTable(\"%s\") will be missing or incomplete",
+                        keyspace.getName(), cfName, keyspace.getName(), cfName), e);
                 }
-                addedKs.add(ksName);
-                keyspaces.put(ksName, ksm);
             }
+        }
+        return tables;
+    }
 
-            // If keyspace is null, it means we're rebuilding from scratch, so
-            // remove anything that was not just added as it means it's a dropped keyspace
-            if (keyspace == null) {
-                Iterator<String> iter = keyspaces.keySet().iterator();
-                while (iter.hasNext()) {
-                    if (!addedKs.contains(iter.next()))
-                        iter.remove();
-                }
+    /**
+     * Update {@code oldKeyspaces} with the changes contained in {@code newKeyspaces}.
+     * This method also takes care of triggering the relevant events
+     * as the updates take place.
+     *
+     * @param oldKeyspaces the set of keyspaces to be updated.
+     * @param newKeyspaces the temporary set of keyspaces built with information gathered
+     * from schema tables.
+     * @param keyspaceToRebuild If we are rebuilding just one keyspace, the update operation will be limited
+     * to this keyspace only (in which case {@code newKeyspaces} shoudl contain only one entry for it)
+     */
+    private void updateKeyspaces(Map<String, KeyspaceMetadata> oldKeyspaces, Map<String, KeyspaceMetadata> newKeyspaces, String keyspaceToRebuild) {
+        Iterator<KeyspaceMetadata> it = oldKeyspaces.values().iterator();
+        while (it.hasNext()) {
+            KeyspaceMetadata oldKeyspace = it.next();
+            String keyspaceName = oldKeyspace.getName();
+            // If we're rebuilding only a single keyspace, we should only consider that one
+            // because newKeyspaces will only contain that keyspace.
+            if ((keyspaceToRebuild == null || keyspaceToRebuild.equals(keyspaceName)) && !newKeyspaces.containsKey(keyspaceName)) {
+                it.remove();
+                triggerOnKeyspaceRemoved(oldKeyspace);
             }
-        } else {
-            assert keyspace != null;
-            KeyspaceMetadata ksm = keyspaces.get(keyspace);
-
-            // If we update a keyspace we don't know about, something went
-            // wrong. Log an error an schedule a full schema rebuilt.
-            if (ksm == null) {
-                logger.error(String.format("Asked to rebuild table %s.%s but I don't know keyspace %s", keyspace, table, keyspace));
-                cluster.submitSchemaRefresh(null, null);
-                return;
+        }
+        for (KeyspaceMetadata newKeyspace : newKeyspaces.values()) {
+            KeyspaceMetadata oldKeyspace = oldKeyspaces.put(newKeyspace.getName(), newKeyspace);
+            if (oldKeyspace == null) {
+                triggerOnKeyspaceAdded(newKeyspace);
+            } else if (!oldKeyspace.equals(newKeyspace)) {
+                triggerOnKeyspaceChanged(newKeyspace, oldKeyspace);
             }
-
-            if (cfDefs.containsKey(keyspace))
-                buildTableMetadata(ksm, cfDefs.get(keyspace), colsDefs.get(keyspace), cassandraVersion);
+            Map<String, TableMetadata> oldTables = oldKeyspace == null ? new HashMap<String, TableMetadata>() : oldKeyspace.tables;
+            Map<String, TableMetadata> newTables = newKeyspace.tables;
+            updateTables(oldTables, newTables, null);
         }
     }
 
-    private void buildTableMetadata(KeyspaceMetadata ksm, List<Row> cfRows, Map<String, Map<String, ColumnMetadata.Raw>> colsDefs, VersionNumber cassandraVersion) {
-        for (Row cfRow : cfRows) {
-            String cfName = cfRow.getString(TableMetadata.CF_NAME);
-            try {
-                Map<String, ColumnMetadata.Raw> cols = colsDefs == null ? null : colsDefs.get(cfName);
-                if (cols == null || cols.isEmpty()) {
-                    if (cassandraVersion.getMajor() >= 2) {
-                        // In C* >= 2.0, we should never have no columns metadata because at the very least we should
-                        // have the metadata corresponding to the default CQL metadata. So if we don't have any columns,
-                        // that can only mean that the table got creating concurrently with our schema queries, and the
-                        // query for columns metadata reached the node before the table was persisted while the table
-                        // metadata one reached it afterwards. We could make the query to the column metadata sequential
-                        // with the table metadata instead of in parallel, but it's probably not worth making it slower
-                        // all the time to avoid this race since 1) it's very very uncommon and 2) we can just ignore the
-                        // incomplete table here for now and it'll get updated next time with no particular consequence
-                        // (if the table creation was concurrent with our querying, we'll get a notifciation later and
-                        // will reupdate the schema for it anyway). See JAVA-320 for why we need this.
-                        continue;
-                    } else {
-                        // C* 1.2 don't persists default CQL metadata, so it's possible not to have columns (for thirft
-                        // tables). But in that case TableMetadata.build() knows how to handle it.
-                        cols = Collections.<String, ColumnMetadata.Raw>emptyMap();
-                    }
-                }
-                TableMetadata.build(ksm, cfRow, cols, cassandraVersion);
-            } catch (RuntimeException e) {
-                // See ControlConnection#refreshSchema for why we'd rather not probably this further
-                logger.error(String.format("Error parsing schema for table %s.%s: "
-                                           + "Cluster.getMetadata().getKeyspace(\"%s\").getTable(\"%s\") will be missing or incomplete",
-                                           ksm.getName(), cfName, ksm.getName(), cfName), e);
+    /**
+     * Update {@code oldTables} with the changes contained in {@code newTables}.
+     * This method also takes care of triggering the relevant events
+     * as the updates take place.
+     *
+     * @param oldTables the set of tables to be updated.
+     * @param newTables the temporary set of tables built with information gathered
+     * from schema tables.
+     * @param tableToRebuild If we are rebuilding just one table, the update operation will be limited
+     * to this table only (in which case {@code newTables} shoudl contain only one entry for it)
+     */
+    private void updateTables(Map<String, TableMetadata> oldTables, Map<String, TableMetadata> newTables, String tableToRebuild) {
+        Iterator<TableMetadata> it = oldTables.values().iterator();
+        while (it.hasNext()) {
+            TableMetadata oldTable = it.next();
+            String tableName = oldTable.getName();
+            // If we're rebuilding only a single table, we should only consider that one
+            // because newTables will only contain that table.
+            if ((tableToRebuild == null || tableToRebuild.equals(tableName)) && !newTables.containsKey(tableName)) {
+                it.remove();
+                triggerOnTableRemoved(oldTable);
             }
+        }
+        for (TableMetadata newTable : newTables.values()) {
+            TableMetadata oldTable = oldTables.put(newTable.getName(), newTable);
+            if (oldTable == null) {
+                triggerOnTableAdded(newTable);
+            } else if (!oldTable.equals(newTable)) {
+                triggerOnTableChanged(newTable, oldTable);
+            }
+        }
+    }
+
+    void triggerOnKeyspaceAdded(KeyspaceMetadata keyspace) {
+        for (SchemaChangeListener listener : cluster.schemaChangeListeners) {
+            listener.onKeyspaceAdded(keyspace);
+        }
+    }
+
+    void triggerOnKeyspaceChanged(KeyspaceMetadata current, KeyspaceMetadata previous) {
+        for (SchemaChangeListener listener : cluster.schemaChangeListeners) {
+            listener.onKeyspaceChanged(current, previous);
+        }
+    }
+
+    void triggerOnKeyspaceRemoved(KeyspaceMetadata keyspace) {
+        for (SchemaChangeListener listener : cluster.schemaChangeListeners) {
+            listener.onKeyspaceRemoved(keyspace);
+        }
+    }
+
+    void triggerOnTableAdded(TableMetadata table) {
+        for (SchemaChangeListener listener : cluster.schemaChangeListeners) {
+            listener.onTableAdded(table);
+        }
+    }
+
+    void triggerOnTableChanged(TableMetadata current, TableMetadata previous) {
+        for (SchemaChangeListener listener : cluster.schemaChangeListeners) {
+            listener.onTableChanged(current, previous);
+        }
+    }
+
+    void triggerOnTableRemoved(TableMetadata table) {
+        for (SchemaChangeListener listener : cluster.schemaChangeListeners) {
+            listener.onTableRemoved(table);
         }
     }
 
@@ -386,10 +497,11 @@ public class Metadata {
         return keyspaces.get(keyspace);
     }
 
-    void removeKeyspace(String keyspace) {
-        keyspaces.remove(keyspace);
+    KeyspaceMetadata removeKeyspace(String keyspace) {
+        KeyspaceMetadata removed = keyspaces.remove(keyspace);
         if (tokenMap != null)
             tokenMap.tokenToHosts.remove(keyspace);
+        return removed;
     }
 
     /**

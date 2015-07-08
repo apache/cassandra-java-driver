@@ -82,14 +82,32 @@ class DefaultResultSetFuture extends AbstractFuture<ResultSet> implements Result
                                         // We'll add it back if CASSANDRA-5358 changes that behavior
                                         //if (scc.keyspace.equals(session.poolsState.keyspace))
                                         //    session.poolsState.setKeyspace(null);
-                                        session.cluster.manager.metadata.removeKeyspace(scc.keyspace);
+                                        final KeyspaceMetadata removed = session.cluster.manager.metadata.removeKeyspace(scc.keyspace);
+                                        if(removed != null) {
+                                            session.cluster.manager.executor.submit(new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    session.cluster.manager.metadata.triggerOnKeyspaceRemoved(removed);
+                                                }
+                                            });
+                                        }
+
                                     } else {
                                         KeyspaceMetadata keyspace = session.cluster.manager.metadata.getKeyspaceInternal(scc.keyspace);
                                         if (keyspace == null)
                                             logger.warn("Received a DROPPED notification for {}.{}, but this keyspace is unknown in our metadata",
                                                 scc.keyspace, scc.columnFamily);
-                                        else
-                                            keyspace.removeTable(scc.columnFamily);
+                                        else {
+                                            final TableMetadata removed = keyspace.removeTable(scc.columnFamily);
+                                            if (removed != null) {
+                                                session.cluster.manager.executor.submit(new Runnable() {
+                                                    @Override
+                                                    public void run() {
+                                                        session.cluster.manager.metadata.triggerOnTableRemoved(removed);
+                                                    }
+                                                });
+                                            }
+                                        }
                                     }
                                     session.cluster.manager.waitForSchemaAgreementAndSignal(connection, this, rs);
                                     break;
