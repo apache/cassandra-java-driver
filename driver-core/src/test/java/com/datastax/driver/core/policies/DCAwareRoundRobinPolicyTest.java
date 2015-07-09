@@ -191,7 +191,6 @@ public class DCAwareRoundRobinPolicyTest {
         }
 
         @Override public void init(Cluster cluster, Collection<Host> hosts) {
-            System.out.println("init " + hosts);
             initHosts.addAll(hosts);
             super.init(cluster, hosts);
         }

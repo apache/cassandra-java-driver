@@ -19,9 +19,6 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -210,6 +207,9 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy, CloseableLo
             String nonLocalHosts = Joiner.on(",").join(notInLocalDC);
             logger.warn("Some contact points don't match local data center. Local DC = {}. Non-conforming contact points: {}", localDc, nonLocalHosts);
         }
+
+        this.index.set(new Random().nextInt(Math.max(hosts.size(), 1)));
+
     }
 
     private String dc(Host host) {

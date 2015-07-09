@@ -74,7 +74,10 @@ class ControlConnection implements Host.StateListener {
             return;
 
         // NB: at this stage, allHosts() only contains the initial contact points
-        setNewConnection(reconnectInternal(cluster.metadata.allHosts().iterator(), true));
+        List<Host> hosts = new ArrayList<Host>(cluster.metadata.allHosts());
+        // shuffle so that multiple clients with the same contact points don't all pick the same control host
+        Collections.shuffle(hosts);
+        setNewConnection(reconnectInternal(hosts.iterator(), true));
     }
 
     public CloseFuture closeAsync() {
