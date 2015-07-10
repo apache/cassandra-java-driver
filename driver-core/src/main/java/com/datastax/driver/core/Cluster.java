@@ -1550,7 +1550,8 @@ public class Cluster implements Closeable {
                     }
 
                     try {
-                        reusedConnection = prepareAllQueries(host, reusedConnection);
+                        if (getCluster().getConfiguration().getQueryOptions().isReprepareOnUp())
+                            reusedConnection = prepareAllQueries(host, reusedConnection);
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt();
                         // Don't propagate because we don't want to prevent other listener to run
