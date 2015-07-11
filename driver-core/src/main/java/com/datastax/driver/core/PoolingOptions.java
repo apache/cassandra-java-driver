@@ -135,6 +135,8 @@ public class PoolingOptions {
      *
      * @throws IllegalArgumentException if {@code distance == HostDistance.IGNORED},
      * or if {@code newCoreConnections} is greater than the maximum value for this distance.
+     *
+     * @see #setConnectionsPerHost(HostDistance, int, int)
      */
     public synchronized PoolingOptions setCoreConnectionsPerHost(HostDistance distance, int newCoreConnections) {
         if (distance == HostDistance.IGNORED)
@@ -178,6 +180,8 @@ public class PoolingOptions {
      *
      * @throws IllegalArgumentException if {@code distance == HostDistance.IGNORED},
      * or if {@code newMaxConnections} is less than the core value for this distance.
+     *
+     * @see #setConnectionsPerHost(HostDistance, int, int)
      */
     public synchronized PoolingOptions setMaxConnectionsPerHost(HostDistance distance, int newMaxConnections) {
         if (distance == HostDistance.IGNORED)

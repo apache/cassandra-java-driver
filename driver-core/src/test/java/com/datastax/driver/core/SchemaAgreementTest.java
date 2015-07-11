@@ -41,7 +41,7 @@ public class SchemaAgreementTest {
 
     @BeforeClass(groups = "short")
     public void setup() {
-        ccm = CCMBridge.create("schema_agreement", 2);
+        ccm = CCMBridge.builder("schema_agreement").withNodes(2).build();
         cluster = Cluster.builder().addContactPoint(CCMBridge.ipOfNode(1)).build();
         session = cluster.connect();
         session.execute("create keyspace test with replication = {'class': 'SimpleStrategy', 'replication_factor': 1}");

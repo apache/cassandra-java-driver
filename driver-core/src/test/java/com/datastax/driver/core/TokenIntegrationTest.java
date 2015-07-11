@@ -72,7 +72,7 @@ public abstract class TokenIntegrationTest {
 
     @BeforeClass(groups = "short")
     public void setup() {
-        ccm = CCMBridge.create("test", 3, ccmOptions);
+        ccm = CCMBridge.builder("test").withNodes(3).withStartOptions(ccmOptions).build();
 
         // Only connect to node 1, which makes it easier to query system tables in should_expose_tokens_per_host()
         LoadBalancingPolicy lbp = new WhiteListPolicy(new RoundRobinPolicy(),

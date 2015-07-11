@@ -16,9 +16,7 @@
 package com.datastax.driver.core.policies;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import com.google.common.collect.Lists;
@@ -44,7 +42,7 @@ public class TokenAwarePolicyTest {
         CCMBridge ccm = null;
         Cluster cluster = null;
         try {
-            ccm = CCMBridge.create("test", 3);
+            ccm = CCMBridge.builder("test").withNodes(3).build();
             cluster = Cluster.builder()
                              .addContactPoint(CCMBridge.ipOfNode(1))
                              .withLoadBalancingPolicy(loadBalancingPolicy)

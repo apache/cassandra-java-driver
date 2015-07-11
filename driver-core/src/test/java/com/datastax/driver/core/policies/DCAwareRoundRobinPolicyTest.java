@@ -36,7 +36,7 @@ public class DCAwareRoundRobinPolicyTest {
     @BeforeClass(groups = "short")
     public void createCcm() {
         // Two-DC cluster with one host in each DC
-        ccm = CCMBridge.create("test", 1, 1);
+        ccm = CCMBridge.builder("test").withNodes(1, 1).build();
     }
 
     @AfterClass(groups = "short")

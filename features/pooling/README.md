@@ -99,6 +99,27 @@ that triggers the creation of a new connection when the pool is not at
 its maximum capacity. In general, you shouldn't need to change its
 default value.
 
+#### Dynamic resizing
+
+If core != max, the pool will resize automatically to adjust to the
+current activity on the host.
+
+When activity goes up and there are *n* connections with n < max, the driver
+will add a connection when the number of concurrent requests is more than
+(n - 1) * 128 + [PoolingOptions.setNewConnectionThreshold][nct]
+(in layman's terms, when all but the last connection are full and the last
+connection is above the threshold).
+
+When activity goes down, the driver will "trash" connections if the maximum
+number of requests in a 10 second time period can be satisfied by less than
+the number of connections opened. Trashed connections are kept open but do
+not accept new requests. After a given timeout (defined by
+[PoolingOptions.setIdleTimeoutSeconds][sits]), trashed connections are closed
+and removed. If during that idle period activity increases again, those
+connections will be resurrected back into the active pool and reused. The
+main intent of that is to not constantly recreate connections if activity
+changes quickly over an interval.
+
 #### Simultaneous requests per connection
 
 [PoolingOptions.setMaxRequestsPerConnection][mrpc] allows you to
@@ -228,6 +249,7 @@ connections.
 [lbp]:http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/policies/LoadBalancingPolicy.html
 [nct]:http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/PoolingOptions.html#setNewConnectionThreshold(com.datastax.driver.core.HostDistance,%20int)
 [mrpc]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/PoolingOptions.html#setMaxRequestsPerConnection(com.datastax.driver.core.HostDistance,%20int)
+[sits]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/PoolingOptions.html#setIdleTimeoutSeconds(int)
 [rtm]:http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/SocketOptions.html#getReadTimeoutMillis()
 [exec_async]:http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/Session.html#executeAsync(com.datastax.driver.core.Statement)
 [ptm]:http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/PoolingOptions.html#setPoolTimeoutMillis(int)

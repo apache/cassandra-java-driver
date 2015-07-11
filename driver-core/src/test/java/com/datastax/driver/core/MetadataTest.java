@@ -54,7 +54,7 @@ public class MetadataTest {
         Cluster cluster = null;
 
         try {
-            ccm = CCMBridge.create("test", 3);
+            ccm = CCMBridge.builder("test").withNodes(3).build();
 
             cluster = Cluster.builder()
                 .addContactPoint(CCMBridge.ipOfNode(1))

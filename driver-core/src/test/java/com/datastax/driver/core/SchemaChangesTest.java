@@ -42,7 +42,7 @@ public class SchemaChangesTest {
 
     @BeforeClass(groups = "short")
     public void setup() {
-        ccm = CCMBridge.create("schemaChangesTest", 1);
+        ccm = CCMBridge.builder("schemaChangesTest").withNodes(1).build();
 
         cluster = Cluster.builder().addContactPoint(CCMBridge.ipOfNode(1)).build();
         cluster2 = Cluster.builder().addContactPoint(CCMBridge.ipOfNode(1)).build();

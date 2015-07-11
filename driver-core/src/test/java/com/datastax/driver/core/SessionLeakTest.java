@@ -44,7 +44,7 @@ public class SessionLeakTest {
     public void connectionLeakTest() throws Exception {
         // Checking for JAVA-342
         CCMBridge ccmBridge;
-        ccmBridge = CCMBridge.create("test", 1);
+        ccmBridge = CCMBridge.builder("test").withNodes(1).build();
         channelMonitor = new SocketChannelMonitor();
         channelMonitor.reportAtFixedInterval(1, TimeUnit.SECONDS);
         try {
@@ -107,7 +107,7 @@ public class SessionLeakTest {
     public void should_not_leak_session_when_wrong_keyspace() throws Exception {
         // Checking for JAVA-806
         CCMBridge ccmBridge;
-        ccmBridge = CCMBridge.create("test", 1);
+        ccmBridge = CCMBridge.builder("test").withNodes(1).build();
         channelMonitor = new SocketChannelMonitor();
         channelMonitor.reportAtFixedInterval(1, TimeUnit.SECONDS);
         try {
