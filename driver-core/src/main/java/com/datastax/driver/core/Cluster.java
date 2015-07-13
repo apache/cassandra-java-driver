@@ -24,13 +24,14 @@ import java.util.Map.Entry;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Objects;
 import com.google.common.base.Predicates;
 import com.google.common.collect.*;
 import com.google.common.util.concurrent.*;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -1166,6 +1167,14 @@ public class Cluster implements Closeable {
      */
     class Manager implements Connection.DefaultResponseHandler {
 
+        // TODO options
+        private static final int MAX_PENDING_REFRESH_NODE_LIST_REQUESTS = 20;
+        private static final int MAX_PENDING_REFRESH_NODE_REQUESTS = 20;
+        private static final int MAX_PENDING_REFRESH_SCHEMA_REQUESTS = 20;
+        private static final int REFRESH_NODE_LIST_INTERVAL_MILLIS = 1000;
+        private static final int REFRESH_NODE_INTERVAL_MILLIS = 1000;
+        private static final int REFRESH_SCHEMA_INTERVAL_MILLIS = 1000;
+
         final String clusterName;
         private boolean isInit;
         private volatile boolean isFullyInit;
@@ -1211,6 +1220,20 @@ public class Cluster implements Closeable {
         final Set<Host.StateListener> listeners;
         final Set<LatencyTracker> trackers = new CopyOnWriteArraySet<LatencyTracker>();
 
+        // counters for pending refresh requests
+        private final AtomicInteger pendingRefreshNodeListRequests = new AtomicInteger(0);
+        private final AtomicInteger pendingRefreshSchemaRequests = new AtomicInteger(0);
+        private final AtomicInteger pendingRefreshNodeRequests = new AtomicInteger(0);
+
+        // pending requests to be coalesced / executed
+        private final BlockingQueue<SchemaRefreshRequest> schemaRefreshRequests = new LinkedBlockingQueue<SchemaRefreshRequest>();
+        private final BlockingQueue<NodeRefreshRequest> nodeRefreshRequests = new DelayQueue<NodeRefreshRequest>();
+
+        // locks used to flush enqueued requests
+        private ReadWriteLock schemaRefreshLock = new ReentrantReadWriteLock();
+        private ReadWriteLock nodeListRefreshLock = new ReentrantReadWriteLock();
+        private ReadWriteLock nodeRefreshLock = new ReentrantReadWriteLock();
+
         private Manager(String clusterName, List<InetSocketAddress> contactPoints, Configuration configuration, Collection<Host.StateListener> listeners) {
             this.clusterName = clusterName == null ? generateClusterName() : clusterName;
             this.configuration = configuration;
@@ -1235,9 +1258,7 @@ public class Cluster implements Closeable {
             this.blockingExecutorQueue = new LinkedBlockingQueue<Runnable>();
             this.blockingExecutor = makeExecutor(2, "blocking-task-worker", blockingExecutorQueue);
             this.reconnectionExecutor = new ScheduledThreadPoolExecutor(2, threadFactory("reconnection"));
-            // scheduledTasksExecutor is used to process C* notifications. So having it mono-threaded ensures notifications are
-            // applied in the order received.
-            this.scheduledTasksExecutor = new ScheduledThreadPoolExecutor(1, threadFactory("scheduled-task-worker"));
+            this.scheduledTasksExecutor = new ScheduledThreadPoolExecutor(2, threadFactory("scheduled-task-worker"));
 
             this.reaper = new ConnectionReaper(this);
             this.metadata = new Metadata(this);
@@ -1248,6 +1269,9 @@ public class Cluster implements Closeable {
 
             this.scheduledTasksExecutor.scheduleWithFixedDelay(new CleanupIdleConnectionsTask(), 10, 10, TimeUnit.SECONDS);
 
+            this.scheduledTasksExecutor.scheduleWithFixedDelay(new RefreshNodeListTimerTask(), REFRESH_NODE_LIST_INTERVAL_MILLIS, REFRESH_NODE_LIST_INTERVAL_MILLIS, TimeUnit.MILLISECONDS);
+            this.scheduledTasksExecutor.scheduleWithFixedDelay(new RefreshSchemaTimerTask(), REFRESH_SCHEMA_INTERVAL_MILLIS, REFRESH_SCHEMA_INTERVAL_MILLIS, TimeUnit.MILLISECONDS);
+            this.scheduledTasksExecutor.scheduleWithFixedDelay(new RefreshNodeTimerTask(), REFRESH_NODE_INTERVAL_MILLIS, REFRESH_NODE_INTERVAL_MILLIS, TimeUnit.MILLISECONDS);
 
             for (InetSocketAddress address : contactPoints) {
                 // We don't want to signal -- call onAdd() -- because nothing is ready
@@ -2008,14 +2032,132 @@ public class Cluster implements Closeable {
             }
         }
 
-        public void submitSchemaRefresh(final String keyspace, final String table) {
-            logger.trace("Submitting schema refresh");
-            executor.submit(new ExceptionCatchingRunnable() {
-                @Override
-                public void runMayThrow() throws InterruptedException, ExecutionException {
-                    controlConnection.refreshSchema(keyspace, table);
+        void submitNodeListRefresh() {
+            logger.trace("Submitting node list and token map refresh");
+            nodeListRefreshLock.readLock().lock();
+            try {
+                int count = pendingRefreshNodeListRequests.incrementAndGet();
+                if (count == MAX_PENDING_REFRESH_NODE_LIST_REQUESTS) {
+                    executor.submit(new ExceptionCatchingRunnable() {
+                        @Override
+                        public void runMayThrow() throws InterruptedException, ExecutionException {
+                            flushNodeListRequests();
+                        }
+                    });
                 }
-            });
+            } finally {
+                nodeListRefreshLock.readLock().unlock();
+            }
+        }
+
+        void submitSchemaRefresh(String keyspace, String table) {
+            logger.trace("Submitting schema refresh (ks {}, table {})", keyspace, table);
+            SchemaRefreshRequest request = new SchemaRefreshRequest(keyspace, table);
+            schemaRefreshLock.readLock().lock();
+            try {
+                schemaRefreshRequests.add(request);
+                int count = pendingRefreshSchemaRequests.incrementAndGet();
+                if (count == MAX_PENDING_REFRESH_SCHEMA_REQUESTS) {
+                    executor.submit(new ExceptionCatchingRunnable() {
+                        @Override
+                        public void runMayThrow() throws InterruptedException, ExecutionException {
+                            flushSchemaRefreshRequests();
+                        }
+                    });
+                }
+            } finally {
+                schemaRefreshLock.readLock().unlock();
+            }
+        }
+
+        private void submitNodeRefresh(Host host, Host.State state, boolean delay) {
+            logger.trace("Submitting node refresh (host {}, state {})", host, state);
+            NodeRefreshRequest request = new NodeRefreshRequest(host, state, delay);
+            nodeRefreshLock.readLock().lock();
+            try {
+                nodeRefreshRequests.add(request);
+                int count = pendingRefreshNodeRequests.incrementAndGet();
+                if (count == MAX_PENDING_REFRESH_NODE_REQUESTS) {
+                    executor.submit(new ExceptionCatchingRunnable() {
+                        @Override
+                        public void runMayThrow() throws InterruptedException, ExecutionException {
+                            flushNodeRefreshRequests();
+                        }
+                    });
+                }
+            } finally {
+                nodeRefreshLock.readLock().unlock();
+            }
+        }
+
+        private void flushNodeListRequests() {
+            nodeListRefreshLock.writeLock().lock();
+            try {
+                int count = pendingRefreshNodeListRequests.get();
+                if(count > 0 && pendingRefreshNodeListRequests.compareAndSet(count, 0)) {
+                    controlConnection.refreshNodeListAndTokenMap();
+                }
+            } finally {
+                nodeListRefreshLock.writeLock().unlock();
+            }
+        }
+
+        private void flushSchemaRefreshRequests() throws InterruptedException {
+            schemaRefreshLock.writeLock().lock();
+            try {
+                final Set<SchemaRefreshRequest> requests = new HashSet<SchemaRefreshRequest>();
+                int drained = schemaRefreshRequests.drainTo(requests);
+                if (!requests.isEmpty()) {
+                    logger.trace("Flushing {} schema refresh requests", requests.size());
+                    SchemaRefreshRequest coalesced = null;
+                    for (SchemaRefreshRequest request : requests) {
+                        coalesced = coalesced == null ? request : coalesced.coalesce(request);
+                    }
+                    logger.trace("Coalesced schema refresh request: {}", coalesced);
+                    controlConnection.refreshSchema(coalesced.keyspace, coalesced.table);
+                    int current = pendingRefreshSchemaRequests.get();
+                    pendingRefreshSchemaRequests.set(current - drained);
+                }
+            } finally {
+                schemaRefreshLock.writeLock().unlock();
+            }
+        }
+
+        private void flushNodeRefreshRequests() throws ExecutionException, InterruptedException {
+            nodeRefreshLock.writeLock().lock();
+            try {
+                Set<NodeRefreshRequest> requests = new HashSet<NodeRefreshRequest>();
+                int drained = nodeRefreshRequests.drainTo(requests);
+                if (!requests.isEmpty()) {
+                    logger.trace("Flushing {} node refresh requests", requests.size());
+                    Map<Host, Host.State> hosts = new HashMap<Host, Host.State>();
+                    for (NodeRefreshRequest req : requests) {
+                        hosts.put(req.host, req.state);
+                    }
+                    for (final Entry<Host, Host.State> entry : hosts.entrySet()) {
+                        // Make sure we have up-to-date infos on that host before adding it (so we typically
+                        // catch that an upgraded node uses a new cassandra version).
+                        Host host = entry.getKey();
+                        Host.State state = entry.getValue();
+                        if (controlConnection.refreshNodeInfo(host)) {
+                            switch (state) {
+                                case UP:
+                                    onUp(host, null);
+                                    break;
+                                case ADDED:
+                                    onAdd(host, null);
+                                    break;
+                            }
+                        } else {
+                            logger.debug("Not enough info for {}, ignoring host", host);
+                        }
+                    }
+                    int current = pendingRefreshNodeRequests.get();
+                    pendingRefreshNodeRequests.set(current - drained);
+                }
+            } finally {
+                nodeRefreshLock.writeLock().unlock();
+            }
         }
 
         // refresh the schema using the provided connection, and notice the future with the provided resultset once done
@@ -2043,8 +2185,11 @@ public class Cluster implements Closeable {
                         schemaInAgreement = ControlConnection.waitForSchemaAgreement(connection, Manager.this);
                         if (!schemaInAgreement)
                             logger.warn("No schema agreement from live replicas after {} s. The schema may not be up to date on some nodes.", configuration.getProtocolOptions().getMaxSchemaAgreementWaitSeconds());
-                        if (refreshSchema)
-                            ControlConnection.refreshSchema(connection, keyspace, table, Manager.this, false);
+                        if (refreshSchema) {
+                            // forcefully trigger a synchronous schema refresh
+                            submitSchemaRefresh(keyspace, table);
+                            flushSchemaRefreshRequests();
+                        }
                     } catch (Exception e) {
                         if (refreshSchema) {
                             logger.error("Error during schema refresh ({}). The schema from Cluster.getMetadata() might appear stale. Asynchronously submitting job to fix.", e.getMessage());
@@ -2087,30 +2232,14 @@ public class Cluster implements Closeable {
                                 // gossip is up, but that is before the client-side server is up), so we add a delay
                                 // (otherwise the connection will likely fail and have to be retry which is wasteful). This
                                 // probably should be fixed C* side, after which we'll be able to remove this.
-                                scheduledTasksExecutor.schedule(new ExceptionCatchingRunnable() {
-                                    @Override
-                                    public void runMayThrow() throws InterruptedException, ExecutionException {
-                                        // Make sure we have up-to-date infos on that host before adding it (so we typically
-                                        // catch that an upgraded node uses a new cassandra version).
-                                        if (controlConnection.refreshNodeInfo(newHost)) {
-                                            onAdd(newHost, null);
-                                        } else {
-                                            logger.debug("Not enough info for {}, ignoring host", newHost);
-                                        }
-                                    }
-                                }, NEW_NODE_DELAY_SECONDS, TimeUnit.SECONDS);
+                                submitNodeRefresh(newHost, Host.State.ADDED, true);
                             }
                             break;
                         case REMOVED_NODE:
                             removeHost(metadata.getHost(tpAddr), false);
                             break;
                         case MOVED_NODE:
-                            executor.submit(new ExceptionCatchingRunnable() {
-                                @Override
-                                public void runMayThrow() {
-                                    controlConnection.refreshNodeListAndTokenMap();
-                                }
-                            });
+                            submitNodeListRefresh();
                             break;
                     }
                     break;
@@ -2129,31 +2258,9 @@ public class Cluster implements Closeable {
                                     return;
 
                                 // See NEW_NODE above
-                                scheduledTasksExecutor.schedule(new ExceptionCatchingRunnable() {
-                                    @Override
-                                    public void runMayThrow() throws InterruptedException, ExecutionException {
-                                        // Make sure we have up-to-date infos on that host before adding it (so we typically
-                                        // catch that an upgraded node uses a new cassandra version).
-                                        if (controlConnection.refreshNodeInfo(h)) {
-                                            onAdd(h, null);
-                                        } else {
-                                            logger.debug("Not enough info for {}, ignoring host", h);
-                                        }
-                                    }
-                                }, NEW_NODE_DELAY_SECONDS, TimeUnit.SECONDS);
+                                submitNodeRefresh(h, Host.State.ADDED, true);
                             } else {
-                                executor.submit(new ExceptionCatchingRunnable() {
-                                    @Override
-                                    public void runMayThrow() throws InterruptedException, ExecutionException {
-                                        // Make sure we have up-to-date infos on that host before adding it (so we typically
-                                        // catch that an upgraded node uses a new cassandra version).
-                                        if (controlConnection.refreshNodeInfo(hostUp)) {
-                                            onUp(hostUp, null);
-                                        } else {
-                                            logger.debug("Not enough info for {}, ignoring host", hostUp);
-                                        }
-                                    }
-                                });
+                                submitNodeRefresh(hostUp, Host.State.UP, false);
                             }
                             break;
                         case DOWN:
@@ -2282,6 +2389,129 @@ public class Cluster implements Closeable {
                 }
             }
         }
+
+        private class SchemaRefreshRequest {
+
+            private final String keyspace;
+
+            private final String table;
+
+            SchemaRefreshRequest(String keyspace, String table) {
+                this.keyspace = keyspace;
+                this.table = table;
+            }
+
+            SchemaRefreshRequest coalesce(SchemaRefreshRequest that) {
+                if(this.keyspace == null || that.keyspace == null)
+                    return new SchemaRefreshRequest(null, null);
+                if(!this.keyspace.equals(that.keyspace))
+                    return new SchemaRefreshRequest(null, null);
+                if(this.table == null || that.table == null)
+                    return new SchemaRefreshRequest(keyspace, null);
+                if(!this.table.equals(that.table))
+                    return new SchemaRefreshRequest(keyspace, null);
+                return this;
+            }
+
+            @Override
+            public boolean equals(Object o) {
+                if (this == o)
+                    return true;
+                if (o == null || getClass() != o.getClass())
+                    return false;
+                SchemaRefreshRequest that = (SchemaRefreshRequest)o;
+                return Objects.equal(keyspace, that.keyspace) &&
+                    Objects.equal(table, that.table);
+            }
+
+            @Override
+            public int hashCode() {
+                return Objects.hashCode(keyspace, table);
+            }
+
+            @Override
+            public String toString() {
+                return Objects.toStringHelper(this)
+                    .add("keyspace", keyspace)
+                    .add("table", table)
+                    .toString();
+            }
+        }
+
+        private class NodeRefreshRequest implements Delayed {
+
+            private final Host host;
+
+            private final Host.State state;
+
+            private final long created;
+
+            private NodeRefreshRequest(Host host, Host.State state, boolean delay) {
+                this.host = host;
+                this.state = state;
+                this.created = delay ? System.currentTimeMillis() : -1;
+            }
+
+            @Override
+            public boolean equals(Object o) {
+                if (this == o)
+                    return true;
+                if (o == null || getClass() != o.getClass())
+                    return false;
+                NodeRefreshRequest that = (NodeRefreshRequest)o;
+                return Objects.equal(host, that.host) &&
+                    Objects.equal(state, that.state);
+            }
+
+            @Override
+            public int hashCode() {
+                return Objects.hashCode(host, state);
+            }
+
+            @Override
+            public String toString() {
+                return Objects.toStringHelper(this)
+                    .add("host", host)
+                    .add("state", state)
+                    .toString();
+            }
+
+            @Override
+            public long getDelay(TimeUnit unit) {
+                if(created == -1)
+                    return -1;
+                long now = System.currentTimeMillis();
+                long delayMillis = created + NEW_NODE_DELAY_SECONDS * 1000 - now;
+                return unit.convert(delayMillis, TimeUnit.MILLISECONDS);
+            }
+
+            @Override
+            public int compareTo(Delayed o) {
+                return Long.compare(this.created, ((NodeRefreshRequest)o).created);
+            }
+        }
+
+        private class RefreshNodeListTimerTask extends ExceptionCatchingRunnable {
+            @Override
+            public void runMayThrow() {
+                flushNodeListRequests();
+            }
+        }
+
+        private class RefreshSchemaTimerTask extends ExceptionCatchingRunnable {
+            @Override
+            public void runMayThrow() throws InterruptedException {
+                flushSchemaRefreshRequests();
+            }
+        }
+
+        private class RefreshNodeTimerTask extends ExceptionCatchingRunnable {
+            @Override
+            public void runMayThrow() throws InterruptedException, ExecutionException {
+                flushNodeRefreshRequests();
+            }
+        }
+
     }
 
     /**
