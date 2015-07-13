@@ -13,3 +13,5 @@ notes
 *.iml
 
 /driver-core/dependency-reduced-pom.xml
+driver-core/test-output/
+driver-jdbc/test-output/
