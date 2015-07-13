@@ -68,7 +68,13 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
 
     @BeforeClass(groups = "short")
     public void setup() throws InterruptedException {
-        Cluster.Builder builder = configure(Cluster.builder()).addContactPointsWithPorts(Collections.singletonList(hostAddress));
+        Cluster.Builder builder = configure(Cluster.builder())
+            .addContactPointsWithPorts(Collections.singletonList(hostAddress))
+            .withQueryOptions(new QueryOptions()
+                    .setRefreshNodeIntervalMillis(0)
+                    .setRefreshNodeListIntervalMillis(0)
+                    .setRefreshSchemaIntervalMillis(0)
+            );
         cluster1 = builder.build();
         cluster2 = builder.build();
 

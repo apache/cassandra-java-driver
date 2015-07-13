@@ -24,6 +24,7 @@ import java.net.ServerSocket;
 import java.nio.ByteBuffer;
 import java.util.*;
 
+import com.google.common.util.concurrent.Futures;
 import org.scassandra.Scassandra;
 import org.scassandra.ScassandraFactory;
 import org.slf4j.Logger;
@@ -323,8 +324,9 @@ public abstract class TestUtils {
         // tried doing an actual query, the driver won't realize that last node is dead until
         // keep alive kicks in, but that's a fairly long time. So we cheat and trigger a force
         // the detection by forcing a request.
-        if (waitForDead || waitForOut)
-            cluster.manager.submitSchemaRefresh(null, null);
+        if (waitForDead || waitForOut) {
+            Futures.getUnchecked(cluster.manager.submitSchemaRefresh(null, null));
+        }
 
         InetAddress address;
         try {

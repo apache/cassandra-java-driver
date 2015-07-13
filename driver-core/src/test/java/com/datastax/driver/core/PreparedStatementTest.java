@@ -108,6 +108,15 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
         return defs;
     }
 
+    @Override
+    protected Cluster.Builder configure(Cluster.Builder builder) {
+        return builder.withQueryOptions(new QueryOptions()
+            .setRefreshNodeIntervalMillis(0)
+            .setRefreshNodeListIntervalMillis(0)
+            .setRefreshSchemaIntervalMillis(0)
+        );
+    }
+
     @Test(groups = "short")
     public void preparedNativeTest() {
         // Test preparing/bounding for all native types

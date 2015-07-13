@@ -32,6 +32,15 @@ public class TableMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
         );
     }
 
+    @Override
+    protected Cluster.Builder configure(Cluster.Builder builder) {
+        return builder.withQueryOptions(new QueryOptions()
+            .setRefreshNodeIntervalMillis(0)
+            .setRefreshNodeListIntervalMillis(0)
+            .setRefreshSchemaIntervalMillis(0)
+        );
+    }
+
     @Test(groups = "short")
     public void should_escape_single_quote_table_comment() {
         TableMetadata table = cluster.getMetadata().getKeyspace(keyspace).getTable("single_quote");

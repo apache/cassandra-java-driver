@@ -474,7 +474,12 @@ public class Metadata {
      * (for example, if the control connection is down).
      */
     public boolean checkSchemaAgreement() {
-        return cluster.controlConnection.checkSchemaAgreement();
+        try {
+            return cluster.controlConnection.checkSchemaAgreement();
+        } catch (Exception e) {
+            logger.warn("Error while checking schema agreement", e);
+            return false;
+        }
     }
 
     /**
