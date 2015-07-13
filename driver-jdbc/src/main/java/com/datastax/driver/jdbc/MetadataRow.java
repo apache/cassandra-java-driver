@@ -112,7 +112,17 @@ public class MetadataRow{
  
 	public int getInt(int i) {
 		// TODO Auto-generated method stub
-		return Integer.parseInt(entries.get(i));
+		try{
+			if(entries!=null){
+				if(entries.get(i)!=null){
+					return Integer.parseInt(entries.get(i));
+				}
+			}
+			return 0;
+		}catch(Exception e){
+			return 0;
+		}
+		
 	}
 
  
