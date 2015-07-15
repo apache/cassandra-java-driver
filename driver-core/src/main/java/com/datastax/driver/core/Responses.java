@@ -429,17 +429,19 @@ class Responses {
                         data.add(row);
                     }
 
-                    return new Rows(metadata, data);
+                    return new Rows(metadata, data, version);
                 }
             };
 
             public final Metadata metadata;
             public final Queue<List<ByteBuffer>> data;
+            private final ProtocolVersion version;
 
-            private Rows(Metadata metadata, Queue<List<ByteBuffer>> data) {
+            private Rows(Metadata metadata, Queue<List<ByteBuffer>> data, ProtocolVersion version) {
                 super(Kind.ROWS);
                 this.metadata = metadata;
                 this.data = data;
+                this.version = version;
             }
 
             @Override
@@ -456,14 +458,7 @@ class Responses {
                             if (metadata.columns == null) {
                                 sb.append(Bytes.toHexString(v));
                             } else {
-                                // We don't have the protocol version available and it's a pain to change
-                                // everything to get it when this method is only ever call for debugging.
-                                // So trying v3 and falling back to v2, which is ugly but good enough for now.
-                                try {
-                                    sb.append(metadata.columns.getType(i).deserialize(v, ProtocolVersion.V3));
-                                } catch (IllegalArgumentException e) {
-                                    sb.append(metadata.columns.getType(i).deserialize(v, ProtocolVersion.V2));
-                                }
+                                sb.append(metadata.columns.getType(i).deserialize(v, version));
                             }
                         }
                     }

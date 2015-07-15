@@ -26,25 +26,25 @@ import com.datastax.driver.core.TableMetadata;
 public class Delete extends BuiltStatement {
 
     private final String table;
-    private final List<?> columnNames;
+    private final List<Selector> columns;
     private final Where where;
     private final Options usings;
     private final Conditions conditions;
     private boolean ifExists;
 
-    Delete(String keyspace, String table, List<?> columnNames) {
+    Delete(String keyspace, String table, List<Selector> columns) {
         super(keyspace);
         this.table = table;
-        this.columnNames = columnNames;
+        this.columns = columns;
         this.where = new Where(this);
         this.usings = new Options(this);
         this.conditions = new Conditions(this);
     }
 
-    Delete(TableMetadata table, List<Object> columnNames) {
+    Delete(TableMetadata table, List<Selector> columns) {
         super(table);
         this.table = escapeId(table.getName());
-        this.columnNames = columnNames;
+        this.columns = columns;
         this.where = new Where(this);
         this.usings = new Options(this);
         this.conditions = new Conditions(this);
@@ -55,8 +55,8 @@ public class Delete extends BuiltStatement {
         StringBuilder builder = new StringBuilder();
 
         builder.append("DELETE");
-        if (columnNames != null)
-            Utils.joinAndAppendNames(builder.append(" "), ",", columnNames);
+        if (!columns.isEmpty())
+            Utils.joinAndAppend(builder.append(" "), ",", columns, variables);
 
         builder.append(" FROM ");
         if (keyspace != null)
@@ -134,6 +134,17 @@ public class Delete extends BuiltStatement {
      */
     public Options using(Using using) {
         return usings.and(using);
+    }
+
+    /**
+     * Returns the options for this DELETE statement.
+     * <p/>
+     * Chain this with {@link Options#and(Using)} to add options.
+     *
+     * @return the options of this DELETE statement.
+     */
+    public Options using() {
+        return usings;
     }
 
     /**
@@ -263,12 +274,15 @@ public class Delete extends BuiltStatement {
      */
     public static class Builder {
 
-        List<Object> columnNames;
+        List<Selector> columns = new ArrayList<Selector>();
 
-        Builder() {}
+        Builder() {
+        }
 
-        Builder(List<Object> columnNames) {
-            this.columnNames = columnNames;
+        Builder(String... columnNames) {
+            for (String columnName : columnNames) {
+                this.columns.add(new Selector(columnName));
+            }
         }
 
         /**
@@ -289,7 +303,7 @@ public class Delete extends BuiltStatement {
          * @return a newly built DELETE statement that deletes from {@code keyspace.table}.
          */
         public Delete from(String keyspace, String table) {
-            return new Delete(keyspace, table, columnNames);
+            return new Delete(keyspace, table, columns);
         }
 
         /**
@@ -299,7 +313,7 @@ public class Delete extends BuiltStatement {
          * @return a newly built DELETE statement that deletes from {@code table}.
          */
         public Delete from(TableMetadata table) {
-            return new Delete(table, columnNames);
+            return new Delete(table, columns);
         }
     }
 
@@ -316,23 +330,20 @@ public class Delete extends BuiltStatement {
          * @throws IllegalStateException if some columns had already been selected for this builder.
          */
         public Builder all() {
-            if (columnNames != null)
-                throw new IllegalStateException(String.format("Some columns (%s) have already been selected.", columnNames));
+            if (!columns.isEmpty())
+                throw new IllegalStateException(String.format("Some columns (%s) have already been selected.", columns));
 
-            return (Builder)this;
+            return this;
         }
 
         /**
          * Deletes the provided column.
          *
-         * @param name the column name to select for deletion.
+         * @param columnName the column to select for deletion.
          * @return this in-build DELETE Selection
          */
-        public Selection column(String name) {
-            if (columnNames == null)
-                columnNames = new ArrayList<Object>();
-
-            columnNames.add(name);
+        public Selection column(String columnName) {
+            columns.add(new Selector(columnName));
             return this;
         }
 
@@ -344,9 +355,46 @@ public class Delete extends BuiltStatement {
          * @return this in-build DELETE Selection
          */
         public Selection listElt(String columnName, int idx) {
-            StringBuilder sb = new StringBuilder();
-            Utils.appendName(columnName, sb);
-            return column(sb.append('[').append(idx).append(']').toString());
+            columns.add(new CollectionElementSelector(columnName, idx));
+            return this;
+        }
+
+        /**
+         * Deletes the provided list element,
+         * specified as a bind marker.
+         *
+         * @param columnName the name of the list column.
+         * @param idx the index of the element to delete.
+         * @return this in-build DELETE Selection
+         */
+        public Selection listElt(String columnName, BindMarker idx) {
+            columns.add(new CollectionElementSelector(columnName, idx));
+            return this;
+        }
+
+        /**
+         * Deletes the provided set element.
+         *
+         * @param columnName the name of the set column.
+         * @param element the element to delete.
+         * @return this in-build DELETE Selection
+         */
+        public Selection setElt(String columnName, Object element) {
+            columns.add(new CollectionElementSelector(columnName, element));
+            return this;
+        }
+
+        /**
+         * Deletes the provided set element,
+         * specified as a bind marker.
+         *
+         * @param columnName the name of the set column.
+         * @param element the element to delete.
+         * @return this in-build DELETE Selection
+         */
+        public Selection setElt(String columnName, BindMarker element) {
+            columns.add(new CollectionElementSelector(columnName, element));
+            return this;
         }
 
         /**
@@ -357,12 +405,67 @@ public class Delete extends BuiltStatement {
          * @return this in-build DELETE Selection
          */
         public Selection mapElt(String columnName, Object key) {
-            StringBuilder sb = new StringBuilder();
+            columns.add(new CollectionElementSelector(columnName, key));
+            return this;
+        }
+    }
+
+    /**
+     * A selector in a DELETE selection clause.
+     * A selector can be either a column name,
+     * a list element, a set element or a map entry.
+     */
+    static class Selector extends Utils.Appendeable {
+
+        private final String columnName;
+
+        Selector(String columnName) {
+            this.columnName = columnName;
+        }
+
+        @Override
+        void appendTo(StringBuilder sb, List<Object> values) {
             Utils.appendName(columnName, sb);
+        }
+
+        @Override
+        boolean containsBindMarker() {
+            return false;
+        }
+
+        @Override
+        public String toString() {
+            StringBuilder sb = new StringBuilder();
+            appendTo(sb, new ArrayList<Object>());
+            return sb.toString();
+        }
+    }
+
+    /**
+     * A selector representing a list index, a set element or a map key in a DELETE selection clause.
+     */
+    static class CollectionElementSelector extends Selector {
+
+        private final Object key;
+
+        CollectionElementSelector(String columnName, Object key) {
+            super(columnName);
+            this.key = key;
+        }
+
+        @Override
+        void appendTo(StringBuilder sb, List<Object> values) {
+            super.appendTo(sb, values);
             sb.append('[');
             Utils.appendValue(key, sb);
-            return column(sb.append(']').toString());
+            sb.append(']');
         }
+
+        @Override
+        boolean containsBindMarker() {
+            return Utils.containsBindMarker(key);
+        }
+
     }
 
     /**

@@ -57,7 +57,7 @@ public class HeartbeatTest {
         CCMBridge ccm = null;
         Cluster cluster = null;
         try {
-            ccm = CCMBridge.create("test", 1);
+            ccm = CCMBridge.builder("test").withNodes(1).build();
             cluster = Cluster.builder().addContactPoint(CCMBridge.ipOfNode(1))
                 .withPoolingOptions(new PoolingOptions()
                     .setHeartbeatIntervalSeconds(3))
@@ -121,7 +121,7 @@ public class HeartbeatTest {
         CCMBridge ccm = null;
         Cluster cluster = null;
         try {
-            ccm = CCMBridge.create("test", 1);
+            ccm = CCMBridge.builder("test").withNodes(1).build();
             cluster = Cluster.builder().addContactPoint(CCMBridge.ipOfNode(1))
                     .withPoolingOptions(new PoolingOptions()
                             .setHeartbeatIntervalSeconds(0))

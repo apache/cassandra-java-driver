@@ -26,16 +26,4 @@ import com.datastax.driver.core.DataType;
  */
 interface ColumnType {
     String asCQLString();
-
-    class NativeColumnType implements ColumnType {
-        private final String asCQLString;
-
-        NativeColumnType(DataType nativeType) {
-            asCQLString = nativeType.toString();
-        }
-
-        @Override public String asCQLString() {
-            return asCQLString;
-        }
-    }
 }

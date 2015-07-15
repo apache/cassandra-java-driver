@@ -281,14 +281,16 @@ public class Cluster implements Closeable {
         long timeout = getConfiguration().getSocketOptions().getConnectTimeoutMillis();
         Session session = connect();
         try {
-            ResultSetFuture future = session.executeAsync("USE " + keyspace);
-            // Note: using the connection timeout isn't perfectly correct, we should probably change that someday
-            Uninterruptibles.getUninterruptibly(future, timeout, TimeUnit.MILLISECONDS);
-            return session;
-        } catch (TimeoutException e) {
-            throw new DriverInternalError(String.format("No responses after %d milliseconds while setting current keyspace. This should not happen, unless you have setup a very low connection timeout.", timeout));
-        } catch (ExecutionException e) {
-            throw DefaultResultSetFuture.extractCauseFromExecutionException(e);
+            try {
+                ResultSetFuture future = session.executeAsync("USE " + keyspace);
+                // Note: using the connection timeout isn't perfectly correct, we should probably change that someday
+                Uninterruptibles.getUninterruptibly(future, timeout, TimeUnit.MILLISECONDS);
+                return session;
+            } catch (TimeoutException e) {
+                throw new DriverInternalError(String.format("No responses after %d milliseconds while setting current keyspace. This should not happen, unless you have setup a very low connection timeout.", timeout));
+            } catch (ExecutionException e) {
+                throw DefaultResultSetFuture.extractCauseFromExecutionException(e);
+            }
         } catch (RuntimeException e) {
             session.close();
             throw e;
@@ -1114,14 +1116,14 @@ public class Cluster implements Closeable {
          */
         @Override
         public Configuration getConfiguration() {
-            Policies policies = new Policies(
-                loadBalancingPolicy == null ? Policies.defaultLoadBalancingPolicy() : loadBalancingPolicy,
-                Objects.firstNonNull(reconnectionPolicy, Policies.defaultReconnectionPolicy()),
-                Objects.firstNonNull(retryPolicy, Policies.defaultRetryPolicy()),
-                Objects.firstNonNull(addressTranslator, Policies.defaultAddressTranslator()),
-                Objects.firstNonNull(timestampGenerator, Policies.defaultTimestampGenerator()),
-                Objects.firstNonNull(speculativeExecutionPolicy, Policies.defaultSpeculativeExecutionPolicy())
-            );
+            Policies policies = Policies.builder()
+                .withLoadBalancingPolicy(loadBalancingPolicy)
+                .withReconnectionPolicy(reconnectionPolicy)
+                .withRetryPolicy(retryPolicy)
+                .withAddressTranslator(addressTranslator)
+                .withTimestampGenerator(timestampGenerator)
+                .withSpeculativeExecutionPolicy(speculativeExecutionPolicy)
+                .build();
             return new Configuration(policies,
                                      new ProtocolOptions(port, protocolVersion, maxSchemaAgreementWaitSeconds, sslOptions, authProvider).setCompression(compression),
                                      poolingOptions == null ? new PoolingOptions() : poolingOptions,
@@ -1299,6 +1301,8 @@ public class Cluster implements Closeable {
                     for (Host.StateListener listener : listeners)
                         listener.onDown(host);
                 }
+
+                configuration.getPoolingOptions().setProtocolVersion(protocolVersion());
 
                 for (Host host : metadata.allHosts()) {
                     // If the host is down at this stage, it's a contact point that the control connection failed to reach.
@@ -1553,7 +1557,7 @@ public class Cluster implements Closeable {
                     } catch (ExecutionException e) {
                         Throwable t = e.getCause();
                         // That future is not really supposed to throw unexpected exceptions
-                        if (!(t instanceof InterruptedException))
+                        if (!(t instanceof InterruptedException) && !(t instanceof CancellationException))
                             logger.error("Unexpected error while marking node UP: while this shouldn't happen, this shouldn't be critical", t);
                     }
 
@@ -1824,7 +1828,7 @@ public class Cluster implements Closeable {
                     } catch (ExecutionException e) {
                         Throwable t = e.getCause();
                         // That future is not really supposed to throw unexpected exceptions
-                        if (!(t instanceof InterruptedException))
+                        if (!(t instanceof InterruptedException) && !(t instanceof CancellationException))
                             logger.error("Unexpected error while adding node: while this shouldn't happen, this shouldn't be critical", t);
                     }
 

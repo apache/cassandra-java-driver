@@ -22,6 +22,8 @@ import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.regex.Pattern;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
 import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.ProtocolVersion;
 import com.datastax.driver.core.TupleValue;
@@ -59,9 +61,12 @@ abstract class Utils {
         return sb;
     }
 
-    // Returns null if it's not really serializable (function call, bind markers, ...)
+    // Returns false if it's not really serializable (function call, bind markers, ...)
     static boolean isSerializable(Object value) {
         if (value instanceof BindMarker || value instanceof FCall || value instanceof CName)
+            return false;
+
+        if (value instanceof RawString)
             return false;
 
         // We also don't serialize fixed size number types. The reason is that if we do it, we will
@@ -261,6 +266,31 @@ abstract class Utils {
         return false;
     }
 
+    static boolean isIdempotent(Object value) {
+        if(value == null) {
+            return true;
+        } else if (value instanceof Assignment) {
+            Assignment assignment = (Assignment)value;
+            return assignment.isIdempotent();
+        } else if (value instanceof FCall) {
+            return false;
+        } else if (value instanceof RawString) {
+            return false;
+        } else if(value instanceof Collection) {
+            for (Object elt : ((Collection)value)) {
+                if(!isIdempotent(elt))
+                    return false;
+            }
+            return true;
+        } else if (value instanceof Map) {
+            for (Map.Entry<?, ?> entry : ((Map<?, ?>)value).entrySet()) {
+                if (!isIdempotent(entry.getKey()) || !isIdempotent(entry.getValue()))
+                    return false;
+            }
+        }
+        return true;
+    }
+
     private static StringBuilder appendValueString(String value, StringBuilder sb) {
         return sb.append(DataType.text().format(value));
     }
@@ -304,6 +334,8 @@ abstract class Utils {
             Alias alias = (Alias)name;
             appendName(alias.column, sb);
             sb.append(" AS ").append(alias.alias);
+        } else if (name instanceof RawString) {
+            sb.append(((RawString)name).str);
         } else {
             throw new IllegalArgumentException(String.format("Invalid column %s of type unknown of the query builder", name));
         }
@@ -329,10 +361,12 @@ abstract class Utils {
     }
 
     static class FCall {
+
         private final String name;
         private final Object[] parameters;
 
         FCall(String name, Object... parameters) {
+            checkNotNull(name);
             this.name = name;
             this.parameters = parameters;
         }
@@ -349,6 +383,7 @@ abstract class Utils {
             sb.append(')');
             return sb.toString();
         }
+
     }
 
     static class CName {

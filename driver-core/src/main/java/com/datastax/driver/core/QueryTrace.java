@@ -232,7 +232,7 @@ public class QueryTrace {
         }
 
         if (tries > MAX_TRIES)
-            throw new TraceRetrievalException(String.format("Unable to retrieve complete query trace after %d tries", MAX_TRIES));
+            throw new TraceRetrievalException(String.format("Unable to retrieve complete query trace for id %s after %d tries", traceId, MAX_TRIES));
     }
 
     /**

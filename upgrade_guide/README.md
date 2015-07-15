@@ -125,6 +125,60 @@ opportunity to clean up the API.
     exception hierarchy, it now has new child classes that are not
     related to timeouts).
 
+### 2.1.7
+
+This version brings a few changes in the driver's behavior; none of them break
+binary compatibility.
+
+1. The `DefaultRetryPolicy`'s behaviour has changed in the case of an Unavailable
+   exception received from a request. The new behaviour will cause the driver to
+   process a Retry on a different node at most once, otherwise an exception will
+   be thrown. This change makes sense in the case where the node tried initially
+   for the request happens to be isolated from the rest of the cluster (e.g.
+   because of a network partition) but can still answer to the client normally.
+   In this case, trying another node has a chance of success.
+   The previous behaviour was to always throw an exception.
+
+2. The following properties in `PoolingOptions` were renamed:
+    * `MaxSimultaneousRequestsPerConnectionThreshold` to `NewConnectionThreshold`
+    * `MaxSimultaneousRequestsPerHostThreshold` to `MaxRequestsPerConnection`
+
+    The old getters/setters were deprecated, but they delegate to the new
+    ones.
+
+    Also, note that the connection pool for protocol v3 can now be configured to
+    use multiple connections. See [this page](../features/pooling) for more
+    information.
+
+3. `MappingManager(Session)` will now force the initialization of the `Session`
+   if needed. This is a change from 2.1.6, where if you gave it an uninitialized
+   session (created with `Cluster#newSession()` instead of `Cluster#connect()`),
+   it would only get initialized on the first request.
+
+    If this is a problem for you, `MappingManager(Session, ProtocolVersion)`
+    preserves the previous behavior (see the API docs for more details).
+
+Merged from 2.0.11:
+
+4. The `DefaultRetryPolicy`'s behaviour has changed in the case of an Unavailable
+   exception received from a request. The new behaviour will cause the driver to
+   process a Retry on a different node at most once, otherwise an exception will
+   be thrown. This change makes sense in the case where the node tried initially
+   for the request happens to be isolated from the rest of the cluster (e.g.
+   because of a network partition) but can still answer to the client normally.
+   In this case, trying another node has a chance of success.
+   The previous behaviour was to always throw an exception.
+5. A `BuiltStatement` is now considered non-idempotent whenever a `fcall()`
+   or `raw()` is used to build a value to be inserted in the database.
+   If you know that the CQL functions or expressions are safe, use
+   `setIdempotent(true)` on the statement.
+
+
+### 2.1.6
+
+See [2.0.10](20x-to-2010).
+
+
 ### 2.1.2
 
 2.1.2 brings important internal changes with native protocol v3 support, but
@@ -226,6 +280,21 @@ driver, but rather third-party frameworks and tools.
    (`cluster.getConfiguration().getProtocolOptions().getProtocolVersion()`).
 
 
+### 2.0.11
+
+1. The `DefaultRetryPolicy`'s behaviour has changed in the case of an Unavailable
+   exception received from a request. The new behaviour will cause the driver to
+   process a Retry on a different node at most once, otherwise an exception will
+   be thrown. This change makes sense in the case where the node tried initially
+   for the request happens to be isolated from the rest of the cluster (e.g.
+   because of a network partition) but can still answer to the client normally.
+   In this case, trying another node has a chance of success.
+   The previous behaviour was to always throw an exception.
+2. A `BuiltStatement` is now considered non-idempotent whenever a `fcall()`
+   or `raw()` is used to build a value to be inserted in the database.
+   If you know that the CQL functions or expressions are safe, use
+   `setIdempotent(true)` on the statement.
+
 ### 2.0.x to 2.0.10
 
 We try to avoid breaking changes within a branch (2.0.x to 2.0.y), but
@@ -326,7 +395,6 @@ you have trouble compiling your application after an upgrade.
    This means for instance that `eq("x", raw(foo))` will output `x = foo`,
    not `x = 'foo'` (you don't need the raw method to output the latter string).
 
-
 9. The `QueryBuilder` will now sometimes use the new ability to send value as
    bytes instead of serializing everything to string. In general the QueryBuilder
    will do the right thing, but if you were calling the `getQueryString()` method
@@ -424,8 +492,8 @@ exhaustive list of new features in 2.0.
     ```
 
 3. SELECT queries are now "paged" under the hood. In other words, if a query
-   yields a very large result, only the beginning of the `ResultSet` will be fetch
-   initially, the rest being fetch "on-demand". In practice, this means that:
+   yields a very large result, only the beginning of the `ResultSet` will be fetched
+   initially, the rest being fetched "on-demand". In practice, this means that:
 
     ```java
     for (Row r : session.execute("SELECT * FROM mytable"))
@@ -438,6 +506,5 @@ exhaustive list of new features in 2.0.
     fine tune the behavior of that paging:
     * the size of each "page" can be set per-query (`Statement#setFetchSize()`)
     * the `ResultSet` object provides 2 methods to check the state of paging
-      (`ResultSet#getAvailableWithoutFetching` and
-      `ResultSet#isFullyFetched`) as well as a mean to force the pre-fetching
-      of the next page (`ResultSet#fetchMoreResults`).
+      (`ResultSet#getAvailableWithoutFetching` and `ResultSet#isFullyFetched`)
+      as well as a mean to force the pre-fetching of the next page (`ResultSet#fetchMoreResults`).

@@ -19,6 +19,7 @@ import java.util.*;
 
 import com.datastax.driver.core.RegularStatement;
 import com.datastax.driver.core.TableMetadata;
+import com.datastax.driver.core.exceptions.InvalidQueryException;
 
 /**
  * Static methods to build a CQL3 query.
@@ -136,7 +137,7 @@ public final class QueryBuilder {
      * clause needs to be provided to complete the query).
      */
     public static Delete.Builder delete(String... columns) {
-        return new Delete.Builder(Arrays.asList((Object[])columns));
+        return new Delete.Builder(columns);
     }
 
     /**
@@ -226,11 +227,7 @@ public final class QueryBuilder {
      * @return the quoted column name.
      */
     public static String quote(String columnName) {
-        StringBuilder sb = new StringBuilder();
-        sb.append('"');
-        Utils.appendName(columnName, sb);
-        sb.append('"');
-        return sb.toString();
+        return '"' + columnName + '"';
     }
 
     /**
@@ -298,6 +295,30 @@ public final class QueryBuilder {
 	public static Clause in(String name, List<?> values) {
 		return new Clause.InClause(name, values);
 	}
+
+    /**
+     * Creates a "contains" where clause stating the provided column must contain
+     * the value provided.
+     *
+     * @param name the column name
+     * @param value the value
+     * @return the corresponding where clause.
+     */
+    public static Clause contains(String name, Object value) {
+        return new Clause.ContainsClause(name, value);
+    }
+
+    /**
+     * Creates a "contains key" where clause stating the provided column must contain
+     * the key provided.
+     *
+     * @param name the column name
+     * @param key the key
+     * @return the corresponding where clause.
+     */
+    public static Clause containsKey(String name, Object key) {
+        return new Clause.ContainsKeyClause(name, key);
+    }
 
     /**
      * Creates a "lesser than" where clause stating the provided column must be less than
@@ -596,12 +617,16 @@ public final class QueryBuilder {
      * This will generate: {@code name = [ value ] + name}.
      *
      * @param name the column name (must be of type list).
-     * @param value the value to prepend
+     * @param value the value to prepend. Using a BindMarker here is not supported.
+     *              To use a BindMarker use {@code QueryBuilder#prependAll} with a
+     *              singleton list.
      * @return the correspond assignment (to use in an update query)
      */
     public static Assignment prepend(String name, Object value) {
-        Object v = value instanceof BindMarker ? value : Collections.singletonList(value);
-        return new Assignment.ListPrependAssignment(name, v);
+        if (value instanceof BindMarker) {
+            throw new InvalidQueryException("binding a value in prepend() is not supported, use prependAll() and bind a singleton list");
+        }
+        return prependAll(name, Collections.singletonList(value));
     }
 
     /**
@@ -636,12 +661,16 @@ public final class QueryBuilder {
      * This will generate: {@code name = name + [value]}.
      *
      * @param name the column name (must be of type list).
-     * @param value the value to append
+     * @param value the value to append. Using a BindMarker here is not supported.
+     *              To use a BindMarker use {@code QueryBuilder#appendAll} with a
+     *              singleton list.
      * @return the correspond assignment (to use in an update query)
      */
     public static Assignment append(String name, Object value) {
-        Object v = value instanceof BindMarker ? value : Collections.singletonList(value);
-        return new Assignment.CollectionAssignment(name, v, true, false);
+        if (value instanceof BindMarker) {
+            throw new InvalidQueryException("Binding a value in append() is not supported, use appendAll() and bind a singleton list");
+        }
+        return appendAll(name, Collections.singletonList(value));
     }
 
     /**
@@ -676,12 +705,15 @@ public final class QueryBuilder {
      * This will generate: {@code name = name - [value]}.
      *
      * @param name the column name (must be of type list).
-     * @param value the value to discard
+     * @param value the value to discard.  Using a BindMarker here is not supported.
+     *              To use a BindMarker use {@code QueryBuilder#discardAll} with a singleton list.
      * @return the correspond assignment (to use in an update query)
      */
     public static Assignment discard(String name, Object value) {
-        Object v = value instanceof BindMarker ? value : Collections.singletonList(value);
-        return new Assignment.CollectionAssignment(name, v, false);
+        if (value instanceof BindMarker) {
+            throw new InvalidQueryException("Binding a value in discard() is not supported, use discardAll() and bind a singleton list");
+        }
+        return discardAll(name, Collections.singletonList(value));
     }
 
     /**
@@ -730,12 +762,16 @@ public final class QueryBuilder {
      * This will generate: {@code name = name + {value}}.
      *
      * @param name the column name (must be of type set).
-     * @param value the value to add
+     * @param value the value to add. Using a BindMarker here is not supported.
+     *              To use a BindMarker use {@code QueryBuilder#addAll} with a
+     *              singleton set.
      * @return the correspond assignment (to use in an update query)
      */
     public static Assignment add(String name, Object value) {
-        Object v = value instanceof BindMarker ? value : Collections.singleton(value);
-        return new Assignment.CollectionAssignment(name, v, true);
+        if (value instanceof BindMarker){
+            throw new InvalidQueryException("Binding a value in add() is not supported, use addAll() and bind a singleton list");
+        }
+        return addAll(name, Collections.singleton(value));
     }
 
     /**
@@ -770,12 +806,15 @@ public final class QueryBuilder {
      * This will generate: {@code name = name - {value}}.
      *
      * @param name the column name (must be of type set).
-     * @param value the value to remove
+     * @param value the value to remove. Using a BindMarker here is not supported.
+     *              To use a BindMarker use {@code QueryBuilder#removeAll} with a singleton set.
      * @return the correspond assignment (to use in an update query)
      */
     public static Assignment remove(String name, Object value) {
-        Object v = value instanceof BindMarker ? value : Collections.singleton(value);
-        return new Assignment.CollectionAssignment(name, v, false);
+        if (value instanceof BindMarker) {
+            throw new InvalidQueryException("Binding a value in remove() is not supported, use removeAll() and bind a singleton set");
+        }
+        return removeAll(name, Collections.singleton(value));
     }
 
     /**
@@ -918,6 +957,24 @@ public final class QueryBuilder {
      */
     public static Object fcall(String name, Object... parameters) {
         return new Utils.FCall(name, parameters);
+    }
+
+    /**
+     * Creates a {@code now()} function call.
+     *
+     * @return the function call.
+     */
+    public static Object now() {
+        return new Utils.FCall("now");
+    }
+
+    /**
+     * Creates a {@code uuid()} function call.
+     *
+     * @return the function call.
+     */
+    public static Object uuid() {
+        return new Utils.FCall("uuid");
     }
 
     /**

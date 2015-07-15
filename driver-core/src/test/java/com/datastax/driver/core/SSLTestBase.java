@@ -17,7 +17,6 @@ package com.datastax.driver.core;
 
 import java.security.KeyStore;
 import java.security.SecureRandom;
-import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Optional;
 import javax.net.ssl.KeyManagerFactory;
@@ -25,15 +24,9 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
 
-import com.datastax.driver.core.exceptions.NoHostAvailableException;
-
-import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.CCMBridge.DEFAULT_CLIENT_KEYSTORE_PASSWORD;
-import static com.datastax.driver.core.CCMBridge.DEFAULT_CLIENT_KEYSTORE_PATH;
 import static com.datastax.driver.core.CCMBridge.DEFAULT_CLIENT_TRUSTSTORE_PASSWORD;
-import static com.datastax.driver.core.CCMBridge.DEFAULT_CLIENT_TRUSTSTORE_PATH;
 public abstract class SSLTestBase {
 
     private final boolean requireClientAuth;
@@ -46,9 +39,9 @@ public abstract class SSLTestBase {
 
     @BeforeClass(groups={"short", "long"})
     public void beforeClass() {
-        ccm = CCMBridge.create("test");
-        ccm.enableSSL(requireClientAuth);
-        ccm.bootstrapNode(1);
+        ccm = CCMBridge.builder("test")
+            .withSSL(requireClientAuth)
+            .build();
     }
 
     @AfterClass(groups={"short", "long"})

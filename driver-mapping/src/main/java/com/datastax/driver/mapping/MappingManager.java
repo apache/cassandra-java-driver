@@ -19,12 +19,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.datastax.driver.core.*;
-
+import com.datastax.driver.core.ProtocolVersion;
+import com.datastax.driver.core.Session;
 import com.datastax.driver.mapping.annotations.Accessor;
 import com.datastax.driver.mapping.annotations.Table;
-
-import com.datastax.driver.mapping.annotations.UDT;
 
 /**
  * Mapping manager from which to obtain entity mappers.
@@ -32,6 +30,7 @@ import com.datastax.driver.mapping.annotations.UDT;
 public class MappingManager {
 
     private final Session session;
+    final boolean isCassandraV1;
 
     private volatile Map<Class<?>, Mapper<?>> mappers = Collections.<Class<?>, Mapper<?>>emptyMap();
     private volatile Map<Class<?>, UDTMapper<?>> udtMappers = Collections.<Class<?>, UDTMapper<?>>emptyMap();
@@ -39,11 +38,23 @@ public class MappingManager {
 
     /**
      * Creates a new {@code MappingManager} using the provided {@code Session}.
+     * <p>
+     * Note that this constructor forces the initialization of the session.
      *
      * @param session the {@code Session} to use.
      */
     public MappingManager(Session session) {
         this.session = session;
+        // This is not strictly correct because we could connect to C* 2.0 with the v1 protocol.
+        // But mappers need to make a decision early so that generated queries are compatible, and we don't know in advance
+        // which nodes might join the cluster later.
+        // At least if protocol >=2 we know there won't be any 1.2 nodes ever.
+        this.isCassandraV1 = (getProtocolVersion(session) == ProtocolVersion.V1);
+    }
+
+    private static ProtocolVersion getProtocolVersion(Session session) {
+        session.init();
+        return session.getCluster().getConfiguration().getProtocolOptions().getProtocolVersion();
     }
 
     /**

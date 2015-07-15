@@ -51,18 +51,18 @@ The driver contains the following modules:
 - driver-examples: example applications using the other modules which are
   only meant for demonstration purposes.
 
-Please refer to the README of each module for more information.
-
 **Community:**
 
 - JIRA: https://datastax-oss.atlassian.net/browse/JAVA
 - MAILING LIST: https://groups.google.com/a/lists.datastax.com/forum/#!forum/java-driver-user
 - IRC: #datastax-drivers on [irc.freenode.net](http://freenode.net)
 - TWITTER: Follow the latest news about DataStax Drivers - [@olim7t](http://twitter.com/olim7t), [@mfiguiere](http://twitter.com/mfiguiere)
-- DOCS: http://www.datastax.com/documentation/developer/java-driver/2.2/index.html
+- DOCS: the [user guide](http://docs.datastax.com/en/developer/java-driver/2.2/java-driver/whatsNew2.html)
+  has introductory material. We are progressively migrating the doc
+  [here](features/) with more technical details.
 - API: http://www.datastax.com/drivers/java/2.2
 
-**Feeback requested:** help us focus our efforts, provide your input on the [Platform and Runtime Survey](http://goo.gl/forms/qwUE6qnL7U) (we kept it short).
+**Feeback requested:** help us focus our efforts, provide your input on the [Platform and Runtime Survey](http://goo.gl/forms/qwUE6qnL7U) (we kept it short).  
 
 
 ## Maven

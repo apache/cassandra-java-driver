@@ -15,9 +15,6 @@
  */
 package com.datastax.driver.core;
 
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
@@ -36,17 +33,18 @@ public class AuthenticationTest {
 
     private static final Logger logger = LoggerFactory.getLogger(AuthenticationTest.class);
 
-    private CCMBridge cassandraCluster;
+    private CCMBridge ccm;
 
     /**
      * creates a cluster and turns on password authentication before starting it.
      */
     @BeforeClass (groups = "short")
     public void setupClusterWithAuthentication() throws InterruptedException {
-        cassandraCluster = CCMBridge.create("test");
-        cassandraCluster.populate(1);
-        cassandraCluster.updateConfig("authenticator", "PasswordAuthenticator");
-        cassandraCluster.start(1, "-Dcassandra.superuser_setup_delay_ms=0");
+        ccm = CCMBridge.builder("test")
+            .withCassandraConfiguration("authenticator", "PasswordAuthenticator")
+            .notStarted()
+            .build();
+        ccm.start(1, "-Dcassandra.superuser_setup_delay_ms=0");
 
         // Even though we've override the default user setup delay, still wait
         // one second to make sure we don't race
@@ -55,51 +53,42 @@ public class AuthenticationTest {
 
     @AfterClass (groups = "short")
     public void shutdownCluster() {
-        if (null != cassandraCluster)
-            cassandraCluster.stop();
+        if (ccm != null)
+            ccm.stop();
     }
 
     @Test(groups = "short")
-    public void testAuthenticatedConnection() throws InterruptedException {
+    public void should_connect_with_credentials() throws InterruptedException {
         try {
             Cluster.builder().addContactPoint(CCMBridge.IP_PREFIX + '1')
                                                 .withCredentials("cassandra", "cassandra")
                                                 .build()
                                                 .connect();
         } catch (NoHostAvailableException e) {
-
-            for (Map.Entry<InetSocketAddress, Throwable> entry : e.getErrors().entrySet())
-                logger.error("Error connecting to " + entry.getKey(),  entry.getValue());
-            throw new RuntimeException(e);
+            logger.error(e.getCustomMessage(1, true, true));
         }
     }
 
     @Test(groups = "short", expectedExceptions = AuthenticationException.class)
-    public void testConnectionAttemptWithIncorrectCredentialsIsRefused() throws InterruptedException {
+    public void should_fail_to_connect_with_wrong_credentials() throws InterruptedException {
         try {
             Cluster.builder().addContactPoint(CCMBridge.IP_PREFIX + '1')
                    .withCredentials("bogus", "bogus")
                    .build()
                    .connect();
         } catch (NoHostAvailableException e) {
-
-            for (Map.Entry<InetSocketAddress, Throwable> entry : e.getErrors().entrySet())
-                logger.info("Error connecting to " + entry.getKey() + ": " + entry.getValue());
-            throw new RuntimeException(e);
+            logger.error(e.getCustomMessage(1, true, true));
         }
     }
 
     @Test(groups = "short", expectedExceptions = AuthenticationException.class)
-    public void testConnectionAttemptWithoutCredentialsIsRefused() throws InterruptedException {
+    public void should_fail_to_connect_without_credentials() throws InterruptedException {
         try {
             Cluster.builder().addContactPoint(CCMBridge.IP_PREFIX + '1')
                               .build()
                               .connect();
         } catch (NoHostAvailableException e) {
-
-            for (Map.Entry<InetSocketAddress, Throwable> entry : e.getErrors().entrySet())
-                logger.info("Error connecting to " + entry.getKey() + ": " + entry.getValue());
-            throw new RuntimeException(e);
+            logger.error(e.getCustomMessage(1, true, true));
         }
     }
 }

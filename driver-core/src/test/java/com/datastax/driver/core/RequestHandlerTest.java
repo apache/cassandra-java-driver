@@ -83,9 +83,6 @@ public class RequestHandlerTest {
 
     private Connection getSingleConnection(Session session) {
         HostConnectionPool pool = ((SessionManager)session).pools.values().iterator().next();
-        if (pool instanceof DynamicConnectionPool)
-            return ((DynamicConnectionPool)pool).connections.get(0);
-        else
-            return ((SingleConnectionPool)pool).connectionRef.get();
+        return pool.connections.get(0);
     }
 }

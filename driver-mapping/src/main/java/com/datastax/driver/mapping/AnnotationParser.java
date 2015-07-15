@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.google.common.base.Strings;
 
@@ -73,10 +74,13 @@ class AnnotationParser {
         for (Field field : entityClass.getDeclaredFields()) {
             if(field.isSynthetic() || (field.getModifiers() & Modifier.STATIC) == Modifier.STATIC)
                 continue;
-            
+
+            if (mappingManager.isCassandraV1 && field.getAnnotation(Computed.class) != null)
+                throw new UnsupportedOperationException("Computed fields are not supported with native protocol v1");
+
             AnnotationChecks.validateAnnotations(field, "entity",
                                                  Column.class, ClusteringColumn.class, Enumerated.class, Frozen.class, FrozenKey.class,
-                                                 FrozenValue.class, PartitionKey.class, Transient.class);
+                                                 FrozenValue.class, PartitionKey.class, Transient.class, Computed.class);
 
             if (field.getAnnotation(Transient.class) != null)
                 continue;
@@ -94,15 +98,17 @@ class AnnotationParser {
             }
         }
 
+        AtomicInteger columnCounter = mappingManager.isCassandraV1 ? null : new AtomicInteger(0);
+
         Collections.sort(pks, fieldComparator);
         Collections.sort(ccs, fieldComparator);
 
         validateOrder(pks, "@PartitionKey");
         validateOrder(ccs, "@ClusteringColumn");
 
-        mapper.addColumns(convert(pks, factory, mapper.entityClass, mappingManager),
-                          convert(ccs, factory, mapper.entityClass, mappingManager),
-                          convert(rgs, factory, mapper.entityClass, mappingManager));
+        mapper.addColumns(convert(pks, factory, mapper.entityClass, mappingManager, columnCounter),
+                          convert(ccs, factory, mapper.entityClass, mappingManager, columnCounter),
+                          convert(rgs, factory, mapper.entityClass, mappingManager, columnCounter));
         return mapper;
     }
 
@@ -148,16 +154,16 @@ class AnnotationParser {
             }
         }
 
-        mapper.addColumns(convert(columns, factory, udtClass, mappingManager));
+        mapper.addColumns(convert(columns, factory, udtClass, mappingManager, null));
         return mapper;
     }
 
-    private static <T> List<ColumnMapper<T>> convert(List<Field> fields, EntityMapper.Factory factory, Class<T> klass, MappingManager mappingManager) {
+    private static <T> List<ColumnMapper<T>> convert(List<Field> fields, EntityMapper.Factory factory, Class<T> klass, MappingManager mappingManager, AtomicInteger columnCounter) {
         List<ColumnMapper<T>> mappers = new ArrayList<ColumnMapper<T>>(fields.size());
         for (int i = 0; i < fields.size(); i++) {
             Field field = fields.get(i);
             int pos = position(field);
-            mappers.add(factory.createColumnMapper(klass, field, pos < 0 ? i : pos, mappingManager));
+            mappers.add(factory.createColumnMapper(klass, field, pos < 0 ? i : pos, mappingManager, columnCounter));
         }
         return mappers;
     }
@@ -186,12 +192,20 @@ class AnnotationParser {
     public static ColumnMapper.Kind kind(Field field) {
         PartitionKey pk = field.getAnnotation(PartitionKey.class);
         ClusteringColumn cc = field.getAnnotation(ClusteringColumn.class);
+        Computed comp = field.getAnnotation(Computed.class);
         if (pk != null && cc != null)
             throw new IllegalArgumentException("Field " + field.getName() + " cannot have both the @PartitionKey and @ClusteringColumn annotations");
 
-        return pk != null
-             ? ColumnMapper.Kind.PARTITION_KEY
-             : (cc != null ? ColumnMapper.Kind.CLUSTERING_COLUMN : ColumnMapper.Kind.REGULAR);
+        if (pk != null) {
+            return ColumnMapper.Kind.PARTITION_KEY;
+        }
+        if (cc != null) {
+            return ColumnMapper.Kind.CLUSTERING_COLUMN;
+        }
+        if (comp != null) {
+            return ColumnMapper.Kind.COMPUTED;
+        }
+        return ColumnMapper.Kind.REGULAR;
     }
 
     public static EnumType enumType(Field field) {
@@ -205,7 +219,11 @@ class AnnotationParser {
 
     public static String columnName(Field field) {
         Column column = field.getAnnotation(Column.class);
+        Computed computedField = field.getAnnotation(Computed.class);
         if (column != null && !column.name().isEmpty()) {
+            if (computedField != null){
+                throw new IllegalArgumentException("Cannot use @Column and @Computed on the same field");
+            }
             return column.caseSensitive() ? column.name() : column.name().toLowerCase();
         }
 
@@ -214,7 +232,16 @@ class AnnotationParser {
             return udtField.caseSensitive() ? udtField.name() : udtField.name().toLowerCase();
         }
 
+        if (computedField != null) {
+            return computedField.value();
+        }
+
         return field.getName().toLowerCase();
+    }
+
+    public static String newAlias(Field field, int columnNumber) {
+        return "col" + columnNumber;
+
     }
 
     public static <T> AccessorMapper<T> parseAccessor(Class<T> accClass, AccessorMapper.Factory factory, MappingManager mappingManager) {

@@ -7,7 +7,7 @@ binary protocol. This protocol is asynchronous, which allows each TCP
 connection to handle multiple simultaneous requests:
 
 * when a query gets executed, a *stream id* gets assigned to it. It is a
-  unique identifier for the current connection;
+  unique identifier on the current connection;
 * the driver writes a request containing the stream id and the query on
   the connection, and then proceeds without waiting for the response (if
   you're using the asynchronous API, this is when the driver will send you
@@ -23,19 +23,17 @@ To increase the number of concurrent requests, we use a pool of
 connections to each host.  **For each `Session` object, there is one
 connection pool per connected host**.
 
-The number of connections and stream ids depends on the [native protocol
-version](../native_protocol/):
+The number of connections per pool is configurable (this will be
+described in the next section).  The number of stream ids depends on the
+[native protocol version](../native_protocol/):
 
-* **protocol v2 or below**: there are **128 stream ids per connection.**
-  The number of connections per pool is configurable (this will be
-  described in the next section).
-* v3 or above: there are **up to 32768 stream ids per connection**, and
-  **1 connection per pool**.
+* protocol v2 or below: 128 stream ids per connection.
+* protocol v3 or above: up to 32768 stream ids per connection.
 
 ```ditaa
-+-------+1   n+-------+1   n+----+1   n/1+----------+1   128/32K+-------+
-|Cluster+-----+Session+-----+Pool+-------+Connection+-----------+Request+
-+-------+     +-------+     +----+       +----------+           +-------+
++-------+1   n+-------+1   n+----+1   n+----------+1   128/32K+-------+
+|Cluster+-----+Session+-----+Pool+-----+Connection+-----------+Request+
++-------+     +-------+     +----+     +----------+           +-------+
 ```
 
 ### Configuring the connection pool
@@ -62,7 +60,7 @@ PoolingOptions poolingOptions = cluster.getConfiguration().getPoolingOptions();
 // customize options...
 ```
 
-#### Pool size (protocol v2 only)
+#### Pool size
 
 Connection pools have a variable size, which gets adjusted automatically
 depending on the current load. There will always be at least a *core*
@@ -79,35 +77,72 @@ poolingOptions
     .setMaxConnectionsPerHost( HostDistance.REMOTE, 4);
 ```
 
-Note: the setters always enforce core <= max, which can get annoying
-when you try to set both values at once.
-[JAVA-662](https://datastax-oss.atlassian.net/browse/JAVA-662) will
-address this issue.
-
-[PoolingOptions.setMaxSimultaneousRequestsPerConnectionThreshold][msrpct]
-has a slightly misleading name: it does not limit the number of requests per
-connection, but only determines the threshold that triggers the creation
-of a new connection when the pool is not at its maximum capacity. In
-general, you shouldn't have to change its default value.
-
-#### Number of simultaneous requests per host (protocol v3 only)
-
-Protocol v3 uses a single connection per host. While the number of
-simultaneous requests can go up to 32768, it is limited by
-[PoolingOptions.setMaxSimultaneousRequestsPerHostThreshold][msrpht]. The
-goal of this option is to throttle the load that each client can
-generate on the server. By default, it is set to 1024 for local hosts,
-and 256 for remote hosts (this was chosen to match the capacity of a v2
-pool with the default configuration).
-
-If your performance tests show that your cluster can handle a higher
-load, you can raise this threshold:
+For convenience, core and max can be set simultaneously:
 
 ```java
 poolingOptions
-    .setMaxSimultaneousRequestsPerHostThreshold(HostDistance.LOCAL, 20000)
-    .setMaxSimultaneousRequestsPerHostThreshold(HostDistance.REMOTE, 1000);
+    .setConnectionsPerHost(HostDistance.LOCAL,  4, 10)
+    .setConnectionsPerHost(HostDistance.REMOTE, 2, 4);
 ```
+
+The default settings are:
+
+* protocol v2:
+  * `LOCAL` hosts: core = 2, max = 8
+  * `REMOTE` hosts: core = 1, max = 2
+* protocol v3:
+  * `LOCAL` hosts: core = max = 1
+  * `REMOTE` hosts: core = max = 1
+
+[PoolingOptions.setNewConnectionThreshold][nct] determines the threshold
+that triggers the creation of a new connection when the pool is not at
+its maximum capacity. In general, you shouldn't need to change its
+default value.
+
+#### Dynamic resizing
+
+If core != max, the pool will resize automatically to adjust to the
+current activity on the host.
+
+When activity goes up and there are *n* connections with n < max, the driver
+will add a connection when the number of concurrent requests is more than
+(n - 1) * 128 + [PoolingOptions.setNewConnectionThreshold][nct]
+(in layman's terms, when all but the last connection are full and the last
+connection is above the threshold).
+
+When activity goes down, the driver will "trash" connections if the maximum
+number of requests in a 10 second time period can be satisfied by less than
+the number of connections opened. Trashed connections are kept open but do
+not accept new requests. After a given timeout (defined by
+[PoolingOptions.setIdleTimeoutSeconds][sits]), trashed connections are closed
+and removed. If during that idle period activity increases again, those
+connections will be resurrected back into the active pool and reused. The
+main intent of that is to not constantly recreate connections if activity
+changes quickly over an interval.
+
+#### Simultaneous requests per connection
+
+[PoolingOptions.setMaxRequestsPerConnection][mrpc] allows you to
+throttle the number of concurrent requests per connection.
+
+With protocol v2, there is no reason to throttle. It is set to 128 (the
+max) and you should not change it.
+
+With protocol v3, it is set to 1024 for `LOCAL`  hosts, and 256 for
+`REMOTE` hosts. These low defaults were chosen so that the default
+configuration for protocol v2 and v3 allow the same total number of
+simultaneous requests (to avoid bad surprises when clients migrate from
+v2 to v3). You can raise this threshold, or even set it to the max:
+
+```java
+poolingOptions
+    .setMaxRequestsPerConnection(HostDistance.LOCAL, 32768)
+    .setMaxRequestsPerConnection(HostDistance.REMOTE, 2000);
+```
+
+Just keep in mind that high values will give clients more bandwidth and
+therefore put more pressure on your cluster. This might require some
+tuning, especially if you have many clients.
 
 #### Heartbeat
 
@@ -173,24 +208,11 @@ requests, and maximum capacity for each host, every 5 seconds:
 ```java
 final LoadBalancingPolicy loadBalancingPolicy =
     cluster.getConfiguration().getPolicies().getLoadBalancingPolicy();
-PoolingOptions poolingOptions = cluster.getConfiguration().getPoolingOptions();
-ProtocolOptions protocolOptions = cluster.getConfiguration().getProtocolOptions();
+final PoolingOptions poolingOptions =
+cluster.getConfiguration().getPoolingOptions();
 
-final Map<HostDistance, Integer> requestsPerConnection;
-ProtocolVersion protocolVersion = protocolOptions.getProtocolVersionEnum();
-if (protocolVersion == ProtocolVersion.V3) {
-    requestsPerConnection = ImmutableMap.of(
-        HostDistance.LOCAL,
-        poolingOptions.getMaxSimultaneousRequestsPerHostThreshold(HostDistance.LOCAL),
-        HostDistance.REMOTE,
-        poolingOptions.getMaxSimultaneousRequestsPerHostThreshold(HostDistance.REMOTE));
-} else {
-    requestsPerConnection = ImmutableMap.of(
-        HostDistance.LOCAL, 128,
-        HostDistance.REMOTE, 128);
-}
-
-ScheduledExecutorService scheduled = Executors.newScheduledThreadPool(1);
+ScheduledExecutorService scheduled =
+Executors.newScheduledThreadPool(1);
 scheduled.scheduleAtFixedRate(new Runnable() {
     @Override
     public void run() {
@@ -199,9 +221,11 @@ scheduled.scheduleAtFixedRate(new Runnable() {
             HostDistance distance = loadBalancingPolicy.distance(host);
             int connections = state.getOpenConnections(host);
             int inFlightQueries = state.getInFlightQueries(host);
-            System.out.printf("%s connections=%d current load=%d max load=%d%n",
+            System.out.printf("%s connections=%d, current load=%d, max
+load=%d%n",
                 host, connections, inFlightQueries,
-                connections * requestsPerConnection.get(distance));
+                connections *
+poolingOptions.getMaxRequestsPerConnection(distance));
         }
     }
 }, 5, 5, TimeUnit.SECONDS);
@@ -213,18 +237,52 @@ tool.
 
 If you find that the current load stays close or equal to the maximum
 load at all time, it's a sign that your connection pools are saturated
-and you should raise the max connections per host (protocol v2) or max
-requests per host (protocol v3).
+and you should raise the max connections per host, or max requests per
+connection (protocol v3).
 
 If you're using protocol v2 and the load is often less than core * 128,
 your pools are underused and you could get away with less core
 connections.
 
+#### Tuning protocol v3 for very high throughputs
+
+As mentioned above, the default pool size for protocol v3 is core = max
+= 1. This means all requests to a given node will share a single
+connection, and therefore a single Netty I/O thread.
+
+There is a corner case where this I/O thread can max out its CPU core
+and become a bottleneck in the driver; in our benchmarks, this happened
+with a single-node cluster and a high throughput (approximately 80K
+requests / second).
+
+It's unlikely that you'll run into this issue: in most real-world
+deployments, the driver connects to more than one node, so the load will
+spread across more I/O threads. However if you suspect that you
+experience the issue, here's what to look out for:
+
+* the driver throughput plateaus but the process does not appear to
+  max out any system resource (in particular, overall CPU usage is well
+  below 100%);
+* one of the driver's I/O threads maxes out its CPU core. You can see
+  that with a profiler, or OS-level tools like `pidstat -tu` on Linux.
+  I/O threads are called `<cluster_name>-nio-worker-<n>`, unless you're
+  injecting your own `EventLoopGroup` with `NettyOptions`.
+
+The solution is to add more connections per node. To ensure that
+additional connections get created before you run into the bottleneck,
+either:
+
+* set core = max;
+* keep core = 1, but adjust [maxRequestsPerConnection][mrpc] and
+  [newConnectionThreshold][nct] so that enough connections are added by
+  the time you reach the bottleneck.
+
 [result_set_future]:http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/ResultSetFuture.html
 [pooling_options]:http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/PoolingOptions.html
 [lbp]:http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/policies/LoadBalancingPolicy.html
-[msrpct]:http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/PoolingOptions.html#setMaxSimultaneousRequestsPerConnectionThreshold(com.datastax.driver.core.HostDistance,%20int)
-[msrpht]: http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/PoolingOptions.html#setMaxSimultaneousRequestsPerHostThreshold(com.datastax.driver.core.HostDistance,%20int)
+[nct]:http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/PoolingOptions.html#setNewConnectionThreshold(com.datastax.driver.core.HostDistance,%20int)
+[mrpc]: http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/PoolingOptions.html#setMaxRequestsPerConnection(com.datastax.driver.core.HostDistance,%20int)
+[sits]: http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/PoolingOptions.html#setIdleTimeoutSeconds(int)
 [rtm]:http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/SocketOptions.html#getReadTimeoutMillis()
 [exec_async]:http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/Session.html#executeAsync(com.datastax.driver.core.Statement)
 [ptm]:http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/PoolingOptions.html#setPoolTimeoutMillis(int)

@@ -265,6 +265,16 @@ public class Select extends BuiltStatement {
         }
 
         /**
+         * Uses DISTINCT selection.
+         *
+         * @return this in-build SELECT statement.
+         */
+        public Builder distinct() {
+            this.isDistinct = true;
+            return this;
+        }
+
+        /**
          * Adds the table to select from.
          *
          * @param table the name of the table to select from.
@@ -458,6 +468,21 @@ public class Select extends BuiltStatement {
          */
         public SelectionOrAlias column(String name) {
             return queueName(name);
+        }
+
+        /**
+         * Selects the provided raw expression.
+         *
+         * This method is used internally by the mapper module. It is not exposed on the parent class {@link Selection} to
+         * avoid breaking binary compatibility. This means that it is not accessible directly via the fluent API (you need
+         * a cast). This shouldn't be a problem for regular clients because they will use other methods of the DSL
+         * ({@code fcall}, etc.) rather than provide a raw string.
+         *
+         * @param rawString the raw expression to add.
+         * @return this in-build SELECT statement
+         */
+        public SelectionOrAlias raw(String rawString) {
+            return queueName(QueryBuilder.raw(rawString));
         }
 
         /**

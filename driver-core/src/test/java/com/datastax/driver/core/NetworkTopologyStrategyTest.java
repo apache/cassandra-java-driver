@@ -22,7 +22,11 @@ import java.util.Set;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 import org.testng.annotations.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class NetworkTopologyStrategyTest extends AbstractReplicationStrategyTest {
 
@@ -588,5 +592,42 @@ public class NetworkTopologyStrategyTest extends AbstractReplicationStrategyTest
         assertReplicaPlacement(replicaMap, TOKEN16, IP3, IP2, IP6, IP5, IP1, IP4);
         assertReplicaPlacement(replicaMap, TOKEN17, IP2, IP6, IP1, IP5, IP3, IP4);
         assertReplicaPlacement(replicaMap, TOKEN18, IP6, IP1, IP5, IP3, IP2, IP4);
+    }
+
+    @Test(groups = "unit")
+    public void should_warn_if_replication_factor_cannot_be_met() {
+        Logger logger = Logger.getLogger(ReplicationStrategy.NetworkTopologyStrategy.class);
+        MemoryAppender logs = new MemoryAppender();
+        logger.setLevel(Level.WARN);
+        logger.addAppender(logs);
+
+        List<Token> ring = ImmutableList.<Token>builder()
+            .add(TOKEN01)
+            .add(TOKEN02)
+            .add(TOKEN03)
+            .add(TOKEN04)
+            .build();
+
+        Map<Token, Host> tokenToPrimary = ImmutableMap.<Token, Host>builder()
+            .put(TOKEN01, host(IP1, DC1, RACK11))
+            .put(TOKEN02, host(IP2, DC1, RACK12))
+            .put(TOKEN03, host(IP3, DC2, RACK21))
+            .put(TOKEN04, host(IP4, DC2, RACK22))
+            .build();
+
+        // Wrong configuration: impossible replication factor for DC2
+        networkTopologyStrategy(rf(DC1, 2), rf(DC2, 3))
+            .computeTokenToReplicaMap(tokenToPrimary, ring);
+        assertThat(logs.getNext())
+            .contains("Error while computing token map for datacenter DC2");
+
+        // Wrong configuration: non-existing datacenter
+        networkTopologyStrategy(rf(DC1, 2), rf("does_not_exist", 2))
+            .computeTokenToReplicaMap(tokenToPrimary, ring);
+        assertThat(logs.getNext())
+            .contains("Error while computing token map for datacenter does_not_exist");
+
+        logger.setLevel(null);
+        logger.removeAppender(logs);
     }
 }

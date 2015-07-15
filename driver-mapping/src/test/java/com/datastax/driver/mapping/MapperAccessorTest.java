@@ -79,6 +79,15 @@ public class MapperAccessorTest extends CCMBridge.PerClassSingleNodeCluster {
         assertThat(row.getString("v")).isNull();
     }
 
+    @Test(groups = "short")
+    public void should_allow_void_return_type_in_accessor() {
+        VoidAccessor accessor = new MappingManager(session).createAccessor(VoidAccessor.class);
+        accessor.insert(1, "bar");
+        Row row = session.execute("select * from foo where k = 1").one();
+        assertThat(row.getInt("k")).isEqualTo(1);
+        assertThat(row.getString("v")).isEqualTo("bar");
+    }
+
     @Accessor
     public interface SystemAccessor {
         @Query("select release_version from system.local")
@@ -96,4 +105,11 @@ public class MapperAccessorTest extends CCMBridge.PerClassSingleNodeCluster {
         @Query("insert into foo (k, v) values (?, ?)")
         ResultSet insert(int k, String v);
     }
+
+    @Accessor
+    public interface VoidAccessor {
+        @Query("insert into foo (k, v) values (?, ?)")
+        void insert(int k, String v);
+    }
+
 }

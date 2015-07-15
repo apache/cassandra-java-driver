@@ -42,11 +42,12 @@ public class SchemaChangesTest {
 
     @BeforeClass(groups = "short")
     public void setup() {
-        ccm = CCMBridge.create("schemaChangesTest");
-        // Only enable user defined functions if protocol version is >= 4.
-        if(TestUtils.getDesiredProtocolVersion().compareTo(ProtocolVersion.V4) >= 0)
-            ccm.updateConfig("enable_user_defined_functions", "true");
-        ccm.bootstrapNode(1);
+        ccm = CCMBridge.builder("schemaChangesTest")
+            .withNodes(1)
+            .withCassandraConfiguration("enable_user_defined_functions",
+                // Only enable user defined functions if protocol version is >= 4.
+                Boolean.toString(TestUtils.getDesiredProtocolVersion().compareTo(ProtocolVersion.V4) >= 0))
+            .build();
 
         cluster = Cluster.builder().addContactPoint(CCMBridge.ipOfNode(1)).build();
         cluster2 = Cluster.builder().addContactPoint(CCMBridge.ipOfNode(1)).build();

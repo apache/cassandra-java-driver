@@ -38,7 +38,7 @@ public class UDTFieldMapperTest {
 
         try {
             // Create type and table
-            ccm = CCMBridge.create("test", 1);
+            ccm = CCMBridge.builder("test").build();
             cluster = Cluster.builder().addContactPoint(CCMBridge.ipOfNode(1)).build();
             Session session1 = cluster.connect();
             session1.execute("create schema if not exists java_509 " +
@@ -85,7 +85,7 @@ public class UDTFieldMapperTest {
 
         try {
             // Create type and table
-            ccm = CCMBridge.create("test", 1);
+            ccm = CCMBridge.builder("test").build();
             cluster = Cluster.builder().addContactPoint(CCMBridge.ipOfNode(1)).build();
             Session session1 = cluster.connect();
             session1.execute("create schema if not exists java_509 " +

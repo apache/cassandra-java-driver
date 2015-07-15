@@ -214,11 +214,15 @@ public class QueryLoggerErrorsTest extends ScassandraTestBase.PerClassCluster {
                 .build()
         );
         // when
+        // when
         try {
             session.execute(query);
-            fail("Should have thrown UnavailableException");
-        } catch (UnavailableException e) {
+            fail("Should have thrown NoHostAvailableException");
+        } catch(NoHostAvailableException e) {
             // ok
+            Throwable error = e.getErrors().get(hostAddress);
+            assertThat(error).isNotNull();
+            assertThat(error).isInstanceOf(UnavailableException.class);
         }
         // then
         String line = errorAppender.waitAndGet(5000);

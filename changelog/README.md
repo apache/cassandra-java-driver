@@ -4,6 +4,48 @@
 
 - [improvement] Rename DateWithoutTime to LocalDate (JAVA-810)
 
+Merged from 2.1 branch:
+
+- [improvement] Improve QueryBuilder API for SELECT DISTINCT (JAVA-475)
+- [improvement] Make NativeColumnType a top-level class (JAVA-715)
+- [improvement] Expose ProtocolVersion#toInt (JAVA-700)
+- [bug] Handle void return types in accessors (JAVA-542)
+- [improvement] Create values() function for Insert builder using List (JAVA-225)
+- [improvement] HashMap throws an OOM Exception when logging level is set to TRACE (JAVA-713)
+- [bug] Support bind marker in QueryBuilder DELETE's list index (JAVA-679)
+- [improvement] Expose KEYS and FULL indexing options in IndexMetadata (JAVA-732)
+- [improvement] Allow @Enumerated in Accessor method parameters (JAVA-589)
+- [improvement] Allow access to table metadata from Mapper (JAVA-554)
+- [improvement] Provide a way to map computed fields (JAVA-661)
+- [improvement] Ignore missing columns in mapper (JAVA-824)
+- [bug] Preserve default timestamp for retries and speculative executions (JAVA-724)
+- [improvement] Use same pool implementation for protocol v2 and v3
+  (JAVA-738).
+- [improvement] Support CONTAINS / CONTAINS KEY in QueryBuilder (JAVA-677)
+- [improvement] Add USING options in mapper for delete and save
+  operations (JAVA-477/JAVA-540)
+- [improvement] Add mapper option to configure whether to save null fields (JAVA-473)
+
+Merged from 2.0 branch:
+
+- [bug] DowngradingConsistencyRetryPolicy ignores write timeouts (JAVA-737)
+- [bug] Forbid bind marker in QueryBuilder add/append/prepend (JAVA-736)
+- [bug] Prevent QueryBuilder.quote() from applying duplicate double quotes (JAVA-712)
+- [bug] Prevent QueryBuilder from trying to serialize raw string (JAVA-688)
+- [bug] Support bind marker in QueryBuilder DELETE's list index (JAVA-679)
+- [improvement] Improve QueryBuilder API for SELECT DISTINCT (JAVA-475)
+- [improvement] Create values() function for Insert builder using List (JAVA-225)
+- [improvement] Warn when ReplicationStrategy encounters invalid
+  replication factors (JAVA-702)
+- [improvement] Add PoolingOptions method to set both core and max
+  connections (JAVA-662).
+- [improvement] Do not include epoll JAR in binary distribution (JAVA-766)
+- [improvement] Optimize internal copies of Request objects (JAVA-726)
+- [bug] Preserve tracing across retries (JAVA-815)
+- [improvement] New RetryDecision.tryNextHost() (JAVA-709)
+- [bug] Handle function calls and raw strings as non-idempotent in QueryBuilder (JAVA-733)
+
+
 ### 2.2.0-rc1
 
 - [new feature] Protocol V4 enum support (JAVA-783)
@@ -20,6 +62,49 @@
 Merged from 2.1 branch:
 
 - [improvement] Unify "Target" enum for schema elements (JAVA-782)
+
+
+### 2.1.7
+
+- [improvement] Improve QueryBuilder API for SELECT DISTINCT (JAVA-475)
+- [improvement] Make NativeColumnType a top-level class (JAVA-715)
+- [improvement] Unify "Target" enum for schema elements (JAVA-782)
+- [improvement] Expose ProtocolVersion#toInt (JAVA-700)
+- [bug] Handle void return types in accessors (JAVA-542)
+- [improvement] Create values() function for Insert builder using List (JAVA-225)
+- [improvement] HashMap throws an OOM Exception when logging level is set to TRACE (JAVA-713)
+- [bug] Support bind marker in QueryBuilder DELETE's list index (JAVA-679)
+- [improvement] Expose KEYS and FULL indexing options in IndexMetadata (JAVA-732)
+- [improvement] Allow @Enumerated in Accessor method parameters (JAVA-589)
+- [improvement] Allow access to table metadata from Mapper (JAVA-554)
+- [improvement] Provide a way to map computed fields (JAVA-661)
+- [improvement] Ignore missing columns in mapper (JAVA-824)
+- [bug] Preserve default timestamp for retries and speculative executions (JAVA-724)
+- [improvement] Use same pool implementation for protocol v2 and v3
+  (JAVA-738).
+- [improvement] Support CONTAINS / CONTAINS KEY in QueryBuilder (JAVA-677)
+- [improvement] Add USING options in mapper for delete and save
+  operations (JAVA-477/JAVA-540)
+- [improvement] Add mapper option to configure whether to save null fields (JAVA-473)
+
+Merged from 2.0 branch:
+
+- [bug] DowngradingConsistencyRetryPolicy ignores write timeouts (JAVA-737)
+- [bug] Forbid bind marker in QueryBuilder add/append/prepend (JAVA-736)
+- [bug] Prevent QueryBuilder.quote() from applying duplicate double quotes (JAVA-712)
+- [bug] Prevent QueryBuilder from trying to serialize raw string (JAVA-688)
+- [bug] Support bind marker in QueryBuilder DELETE's list index (JAVA-679)
+- [improvement] Improve QueryBuilder API for SELECT DISTINCT (JAVA-475)
+- [improvement] Create values() function for Insert builder using List (JAVA-225)
+- [improvement] Warn when ReplicationStrategy encounters invalid
+  replication factors (JAVA-702)
+- [improvement] Add PoolingOptions method to set both core and max
+  connections (JAVA-662).
+- [improvement] Do not include epoll JAR in binary distribution (JAVA-766)
+- [improvement] Optimize internal copies of Request objects (JAVA-726)
+- [bug] Preserve tracing across retries (JAVA-815)
+- [improvement] New RetryDecision.tryNextHost() (JAVA-709)
+- [bug] Handle function calls and raw strings as non-idempotent in QueryBuilder (JAVA-733)
 
 
 ### 2.1.6
@@ -232,6 +317,37 @@ Merged from 2.0 branch: everything up to 2.0.3 (included), and the following.
 - [bug] Avoid classloader leak in Tomcat (JAVA-343)
 - [bug] Avoid deadlock in onAdd/onUp (JAVA-387)
 - [bug] Make metadata parsing more lenient (JAVA-377, JAVA-391)
+
+
+### 2.0.11 (in progress)
+
+- [bug] Fix SpeculativeExecutionPolicy.init() and close() are never called (JAVA-796)
+- [improvement] Suppress unnecessary warning at shutdown (JAVA-710)
+- [improvement] Allow DNS name with multiple A-records as contact point (#340)
+- [bug] Allow tracing across multiple result pages (JAVA-794)
+- [bug] DowngradingConsistencyRetryPolicy ignores write timeouts (JAVA-737)
+- [bug] Forbid bind marker in QueryBuilder add/append/prepend (JAVA-736)
+- [bug] Prevent QueryBuilder.quote() from applying duplicate double quotes (JAVA-712)
+- [bug] Prevent QueryBuilder from trying to serialize raw string (JAVA-688)
+- [bug] Support bind marker in QueryBuilder DELETE's list index (JAVA-679)
+- [improvement] Improve QueryBuilder API for SELECT DISTINCT (JAVA-475)
+- [improvement] Create values() function for Insert builder using List (JAVA-225)
+- [improvement] Warn when ReplicationStrategy encounters invalid
+  replication factors (JAVA-702)
+- [improvement] Add PoolingOptions method to set both core and max
+  connections (JAVA-662).
+- [improvement] Do not include epoll JAR in binary distribution (JAVA-766)
+- [improvement] Optimize internal copies of Request objects (JAVA-726)
+- [bug] Preserve tracing across retries (JAVA-815)
+- [improvement] New RetryDecision.tryNextHost() (JAVA-709)
+- [bug] Handle function calls and raw strings as non-idempotent in QueryBuilder (JAVA-733)
+
+Merged from 2.0.10_fixes branch:
+
+- [improvement] Use Netty's pooled ByteBufAllocator by default (JAVA-756)
+- [improvement] Expose "unsafe" paging state API (JAVA-759)
+- [bug] Fix getObject by name (JAVA-767)
+- [bug] Prevent race during pool initialization (JAVA-768)
 
 
 ### 2.0.10.1

@@ -47,7 +47,7 @@ public class NettyOptionsTest {
     @Test(groups = "short", dataProvider = "NettyOptionsTest")
     public void should_invoke_netty_options_hooks(int hosts, int coreConnections) throws Exception {
         //given
-        CCMBridge ccm = CCMBridge.create("test", hosts);
+        CCMBridge ccm = CCMBridge.builder("test").withNodes(hosts).build();
         Cluster cluster = null;
         try {
             NettyOptions nettyOptions = mock(NettyOptions.class, CALLS_REAL_METHODS.get());
@@ -65,7 +65,7 @@ public class NettyOptionsTest {
             cluster = Cluster.builder()
                 .addContactPoint(ipOfNode(1))
                 .withPoolingOptions(new PoolingOptions()
-                    .setCoreConnectionsPerHost(HostDistance.LOCAL, coreConnections)
+                    .setConnectionsPerHost(HostDistance.LOCAL, coreConnections, coreConnections)
                 )
                 .withNettyOptions(nettyOptions)
                 .build();

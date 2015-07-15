@@ -32,7 +32,7 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 import static org.testng.Assert.fail;
 
-public class DynamicConnectionPoolTest extends CCMBridge.PerClassSingleNodeCluster {
+public class HostConnectionPoolTest extends CCMBridge.PerClassSingleNodeCluster {
     @Override
     protected Collection<String> getTableDefinitions() {
         StringBuilder sb = new StringBuilder("CREATE TABLE Java349 (mykey INT primary key");
@@ -60,7 +60,7 @@ public class DynamicConnectionPoolTest extends CCMBridge.PerClassSingleNodeClust
      */
     @Test(groups = "short")
     public void fixed_size_pool_should_fill_its_core_connections_and_then_timeout() throws ConnectionException, TimeoutException {
-        DynamicConnectionPool pool = createPool(2, 2);
+        HostConnectionPool pool = createPool(2, 2);
 
         assertThat(pool.connections.size()).isEqualTo(2);
         List<Connection> coreConnections = Lists.newArrayList(pool.connections);
@@ -89,7 +89,7 @@ public class DynamicConnectionPoolTest extends CCMBridge.PerClassSingleNodeClust
      */
     @Test(groups = "short")
     public void variable_size_pool_should_fill_its_connections_and_then_timeout() throws ConnectionException, TimeoutException {
-        DynamicConnectionPool pool = createPool(1, 2);
+        HostConnectionPool pool = createPool(1, 2);
 
         assertThat(pool.connections.size()).isEqualTo(1);
         List<Connection> coreConnections = Lists.newArrayList(pool.connections);
@@ -127,7 +127,7 @@ public class DynamicConnectionPoolTest extends CCMBridge.PerClassSingleNodeClust
         cluster.getConfiguration().getPoolingOptions()
             .setIdleTimeoutSeconds(20);
 
-        DynamicConnectionPool pool = createPool(1, 2);
+        HostConnectionPool pool = createPool(1, 2);
         Connection core = pool.connections.get(0);
 
         // Fill core connection
@@ -154,7 +154,7 @@ public class DynamicConnectionPoolTest extends CCMBridge.PerClassSingleNodeClust
         cluster.getConfiguration().getPoolingOptions()
             .setIdleTimeoutSeconds(20);
 
-        DynamicConnectionPool pool = createPool(1, 2);
+        HostConnectionPool pool = createPool(1, 2);
         Connection connection1 = pool.connections.get(0);
 
         for (int i = 0; i < 101; i++)
@@ -211,7 +211,7 @@ public class DynamicConnectionPoolTest extends CCMBridge.PerClassSingleNodeClust
         cluster.getConfiguration().getPoolingOptions()
             .setIdleTimeoutSeconds(20);
 
-        DynamicConnectionPool pool = createPool(1, 2);
+        HostConnectionPool pool = createPool(1, 2);
         Connection connection1 = pool.connections.get(0);
 
         for (int i = 0; i < 101; i++)
@@ -273,7 +273,7 @@ public class DynamicConnectionPoolTest extends CCMBridge.PerClassSingleNodeClust
         cluster.getConfiguration().getPoolingOptions()
             .setIdleTimeoutSeconds(20);
 
-        DynamicConnectionPool pool = createPool(1, 2);
+        HostConnectionPool pool = createPool(1, 2);
         Connection connection1 = pool.connections.get(0);
 
         // Fill core connection enough to trigger creation of another one
@@ -320,7 +320,7 @@ public class DynamicConnectionPoolTest extends CCMBridge.PerClassSingleNodeClust
     @Test(groups = "short")
     public void should_trash_on_returning_connection_with_insufficient_streams()
         throws ConnectionException, TimeoutException, InterruptedException {
-        DynamicConnectionPool pool = createPool(1, 2);
+        HostConnectionPool pool = createPool(1, 2);
         Connection core = pool.connections.get(0);
 
         for (int i = 0; i < 128; i++)
@@ -351,13 +351,13 @@ public class DynamicConnectionPoolTest extends CCMBridge.PerClassSingleNodeClust
         assertThat(pool.connections).hasSize(1);
     }
 
-    private DynamicConnectionPool createPool(int coreConnections, int maxConnections) {
+    private HostConnectionPool createPool(int coreConnections, int maxConnections) {
         cluster.getConfiguration().getPoolingOptions()
             .setCoreConnectionsPerHost(HostDistance.LOCAL, coreConnections)
             .setMaxConnectionsPerHost(HostDistance.LOCAL, maxConnections);
         Session session = cluster.connect();
         Host host = TestUtils.findHost(cluster, 1);
-        return (DynamicConnectionPool)((SessionManager)session).pools.get(host);
+        return (HostConnectionPool)((SessionManager)session).pools.get(host);
     }
 
     /**

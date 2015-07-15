@@ -18,12 +18,16 @@ package com.datastax.driver.mapping;
 import java.beans.IntrospectionException;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.lang.reflect.Method;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
-import com.datastax.driver.core.*;
+import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.core.DataType;
+import com.datastax.driver.core.UDTValue;
 
 /**
  * An {@link EntityMapper} implementation that use reflection to read and write fields
@@ -55,12 +59,12 @@ class ReflectionMapper<T> extends EntityMapper<T> {
         private final Method readMethod;
         private final Method writeMethod;
 
-        private LiteralMapper(Field field, int position, PropertyDescriptor pd) {
-            this(field, extractSimpleType(field), position, pd);
+        private LiteralMapper(Field field, int position, PropertyDescriptor pd, AtomicInteger columnNumber) {
+            this(field, extractSimpleType(field), position, pd, columnNumber);
         }
 
-        private LiteralMapper(Field field, DataType type, int position, PropertyDescriptor pd) {
-            super(field, type, position);
+        private LiteralMapper(Field field, DataType type, int position, PropertyDescriptor pd, AtomicInteger columnCounter) {
+            super(field, type, position, columnCounter);
             this.readMethod = pd.getReadMethod();
             this.writeMethod = pd.getWriteMethod();
         }
@@ -93,8 +97,8 @@ class ReflectionMapper<T> extends EntityMapper<T> {
         private final EnumType enumType;
         private final Map<String, Object> fromString;
 
-        private EnumMapper(Field field, int position, PropertyDescriptor pd, EnumType enumType) {
-            super(field, enumType == EnumType.STRING ? DataType.text() : DataType.cint(), position, pd);
+        private EnumMapper(Field field, int position, PropertyDescriptor pd, EnumType enumType, AtomicInteger columnCounter) {
+            super(field, enumType == EnumType.STRING ? DataType.text() : DataType.cint(), position, pd, columnCounter);
             this.enumType = enumType;
 
             if (enumType == EnumType.STRING) {
@@ -108,7 +112,7 @@ class ReflectionMapper<T> extends EntityMapper<T> {
         }
 
         @SuppressWarnings("rawtypes")
-		@Override
+        @Override
         public Object getValue(T entity) {
             Object value = super.getValue(entity);
             switch (enumType) {
@@ -138,22 +142,22 @@ class ReflectionMapper<T> extends EntityMapper<T> {
     private static class UDTColumnMapper<T, U> extends LiteralMapper<T> {
         private final UDTMapper<U> udtMapper;
 
-        private UDTColumnMapper(Field field, int position, PropertyDescriptor pd, UDTMapper<U> udtMapper) {
-            super(field, udtMapper.getUserType(), position, pd);
+        private UDTColumnMapper(Field field, int position, PropertyDescriptor pd, UDTMapper<U> udtMapper, AtomicInteger columnCounter) {
+            super(field, udtMapper.getUserType(), position, pd, columnCounter);
             this.udtMapper = udtMapper;
         }
 
         @Override
         public Object getValue(T entity) {
             @SuppressWarnings("unchecked")
-            U udtEntity = (U) super.getValue(entity);
+            U udtEntity = (U)super.getValue(entity);
             return udtEntity == null ? null : udtMapper.toUDT(udtEntity);
         }
 
         @Override
         public void setValue(Object entity, Object value) {
             assert value instanceof UDTValue;
-            UDTValue udtValue = (UDTValue) value;
+            UDTValue udtValue = (UDTValue)value;
             assert udtValue.getType().equals(udtMapper.getUserType());
 
             super.setValue(entity, udtMapper.toEntity((udtValue)));
@@ -163,8 +167,8 @@ class ReflectionMapper<T> extends EntityMapper<T> {
     private static class NestedUDTMapper<T> extends LiteralMapper<T> {
         private final InferredCQLType inferredCQLType;
 
-        public NestedUDTMapper(Field field, int position, PropertyDescriptor pd, InferredCQLType inferredCQLType) {
-            super(field, inferredCQLType.dataType, position, pd);
+        public NestedUDTMapper(Field field, int position, PropertyDescriptor pd, InferredCQLType inferredCQLType, AtomicInteger columnCounter) {
+            super(field, inferredCQLType.dataType, position, pd, columnCounter);
             this.inferredCQLType = inferredCQLType;
         }
 
@@ -199,32 +203,32 @@ class ReflectionMapper<T> extends EntityMapper<T> {
         }
 
         @SuppressWarnings({ "unchecked", "rawtypes" })
-        public <T> ColumnMapper<T> createColumnMapper(Class<T> entityClass, Field field, int position, MappingManager mappingManager) {
+        public <T> ColumnMapper<T> createColumnMapper(Class<T> entityClass, Field field, int position, MappingManager mappingManager, AtomicInteger columnCounter) {
             String fieldName = field.getName();
             try {
                 PropertyDescriptor pd = new PropertyDescriptor(fieldName, field.getDeclaringClass());
 
                 if (field.getType().isEnum()) {
-                    return new EnumMapper<T>(field, position, pd, AnnotationParser.enumType(field));
+                    return new EnumMapper<T>(field, position, pd, AnnotationParser.enumType(field), columnCounter);
                 }
 
                 if (TypeMappings.isMappedUDT(field.getType())) {
                     UDTMapper<?> udtMapper = mappingManager.getUDTMapper(field.getType());
-                    return (ColumnMapper<T>) new UDTColumnMapper(field, position, pd, udtMapper);
+                    return (ColumnMapper<T>) new UDTColumnMapper(field, position, pd, udtMapper, columnCounter);
                 }
 
                 if (field.getGenericType() instanceof ParameterizedType) {
                     InferredCQLType inferredCQLType = InferredCQLType.from(field, mappingManager);
                     if (inferredCQLType.containsMappedUDT) {
                         // We need a specialized mapper to convert UDT instances in the hierarchy.
-                        return (ColumnMapper<T>)new NestedUDTMapper(field, position, pd, inferredCQLType);
+                        return (ColumnMapper<T>)new NestedUDTMapper(field, position, pd, inferredCQLType, columnCounter);
                     } else {
                         // The default codecs will know how to handle the extracted datatype.
-                        return new LiteralMapper<T>(field, inferredCQLType.dataType, position, pd);
+                        return new LiteralMapper<T>(field, inferredCQLType.dataType, position, pd, columnCounter);
                     }
                 }
 
-                return new LiteralMapper<T>(field, position, pd);
+                return new LiteralMapper<T>(field, position, pd, columnCounter);
 
             } catch (IntrospectionException e) {
                 throw new IllegalArgumentException("Cannot find matching getter and setter for field '" + fieldName + "'");

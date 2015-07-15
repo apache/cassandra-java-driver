@@ -67,7 +67,7 @@ class MethodMapper {
         // TODO: we should also validate the types of the parameters...
 
         Class<?> returnType = method.getReturnType();
-        if (Void.class.isAssignableFrom(returnType) || ResultSet.class.isAssignableFrom(returnType))
+        if (Void.TYPE.isAssignableFrom(returnType) || ResultSet.class.isAssignableFrom(returnType))
             return;
 
         if (Statement.class.isAssignableFrom(returnType)) {
@@ -142,8 +142,8 @@ class MethodMapper {
                 return future;
 
             return mapOne
-                 ? Futures.transform(future, returnMapper.mapOneFunction)
-                 : Futures.transform(future, returnMapper.mapAllFunction);
+                 ? Futures.transform(future, returnMapper.mapOneFunctionWithoutAliases)
+                 : Futures.transform(future, returnMapper.mapAllFunctionWithoutAliases);
         } else {
             ResultSet rs = session.execute(bs);
             if (returnMapper == null)

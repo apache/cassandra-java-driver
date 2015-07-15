@@ -15,16 +15,17 @@
  */
 package com.datastax.driver.core;
 
+import java.util.Locale;
+
 import com.datastax.driver.core.exceptions.*;
 import com.datastax.driver.core.policies.Policies;
 import com.datastax.driver.core.policies.WhiteListPolicy;
 import com.datastax.driver.core.utils.CassandraVersion;
-import com.google.common.collect.ImmutableMap;
+
 import com.google.common.collect.Lists;
 import org.testng.annotations.Test;
 
 import java.net.InetSocketAddress;
-import java.util.List;
 
 import static com.datastax.driver.core.TestUtils.waitForDownWithWait;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -52,7 +53,7 @@ public class ExceptionsTest {
             String[] cqlCommands = new String[]{
                 String.format(TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT, keyspace, 1),
                 "USE " + keyspace,
-                String.format(TestUtils.CREATE_TABLE_SIMPLE_FORMAT, table)
+                String.format("CREATE TABLE %s (k text PRIMARY KEY, t text, i int, f float)", table)
             };
 
             // Create the schema once
@@ -199,9 +200,9 @@ public class ExceptionsTest {
 
             c.session.execute(String.format(TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT, keyspace, replicationFactor));
             c.session.execute("USE " + keyspace);
-            c.session.execute(String.format(TestUtils.CREATE_TABLE_SIMPLE_FORMAT, table));
+            c.session.execute(String.format("CREATE TABLE %s (k text PRIMARY KEY, t text, i int, f float)", table));
 
-            c.session.execute(new SimpleStatement(String.format(TestUtils.INSERT_FORMAT, table, key, "foo", 42, 24.03f)).setConsistencyLevel(ConsistencyLevel.ALL));
+            c.session.execute(new SimpleStatement(String.format(Locale.US, "INSERT INTO %s (k, t, i, f) VALUES ('%s', '%s', %d, %f)", table, key, "foo", 42, 24.03f)).setConsistencyLevel(ConsistencyLevel.ALL));
             c.session.execute(new SimpleStatement(String.format(TestUtils.SELECT_ALL_FORMAT, table)).setConsistencyLevel(ConsistencyLevel.ALL));
 
             c.cassandraCluster.forceStop(2);
@@ -315,9 +316,9 @@ public class ExceptionsTest {
 
             c.session.execute(String.format(TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT, keyspace, replicationFactor));
             c.session.execute("USE " + keyspace);
-            c.session.execute(String.format(TestUtils.CREATE_TABLE_SIMPLE_FORMAT, table));
+            c.session.execute(String.format("CREATE TABLE %s (k text PRIMARY KEY, t text, i int, f float)", table));
 
-            c.session.execute(new SimpleStatement(String.format(TestUtils.INSERT_FORMAT, table, key, "foo", 42, 24.03f)).setConsistencyLevel(ConsistencyLevel.ALL));
+            c.session.execute(new SimpleStatement(String.format(Locale.US, "INSERT INTO %s (k, t, i, f) VALUES ('%s', '%s', %d, %f)", table, key, "foo", 42, 24.03f)).setConsistencyLevel(ConsistencyLevel.ALL));
             c.session.execute(new SimpleStatement(String.format(TestUtils.SELECT_ALL_FORMAT, table)).setConsistencyLevel(ConsistencyLevel.ALL));
 
             c.cassandraCluster.stop(2);
@@ -335,7 +336,7 @@ public class ExceptionsTest {
             }
 
             try{
-                c.session.execute(new SimpleStatement(String.format(TestUtils.INSERT_FORMAT, table, key, "foo", 42, 24.03f)).setConsistencyLevel(ConsistencyLevel.ALL));
+                c.session.execute(new SimpleStatement(String.format(Locale.US, "INSERT INTO %s (k, t, i, f) VALUES ('%s', '%s', %d, %f)", table, key, "foo", 42, 24.03f)).setConsistencyLevel(ConsistencyLevel.ALL));
             } catch (UnavailableException e) {
                 String expectedError = String.format("Not enough replica available for query at consistency %s (%d required but only %d alive)", "ALL", 3, 2);
                 assertEquals(e.getMessage(), expectedError);
@@ -368,14 +369,14 @@ public class ExceptionsTest {
 
             c.session.execute(String.format(TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT, keyspace, replicationFactor));
             c.session.execute("USE " + keyspace);
-            c.session.execute(String.format(TestUtils.CREATE_TABLE_SIMPLE_FORMAT, table));
+            c.session.execute(String.format("CREATE TABLE %s (k text PRIMARY KEY, t text, i int, f float)", table));
 
-            c.session.execute(new SimpleStatement(String.format(TestUtils.INSERT_FORMAT, table, key, "foo", 42, 24.03f)).setConsistencyLevel(ConsistencyLevel.ALL));
+            c.session.execute(new SimpleStatement(String.format(Locale.US, "INSERT INTO %s (k, t, i, f) VALUES ('%s', '%s', %d, %f)", table, key, "foo", 42, 24.03f)).setConsistencyLevel(ConsistencyLevel.ALL));
             c.session.execute(new SimpleStatement(String.format(TestUtils.SELECT_ALL_FORMAT, table)).setConsistencyLevel(ConsistencyLevel.ALL));
 
             c.cassandraCluster.forceStop(2);
             try{
-                c.session.execute(new SimpleStatement(String.format(TestUtils.INSERT_FORMAT, table, key, "foo", 42, 24.03f)).setConsistencyLevel(ConsistencyLevel.ALL));
+                c.session.execute(new SimpleStatement(String.format(Locale.US, "INSERT INTO %s (k, t, i, f) VALUES ('%s', '%s', %d, %f)", table, key, "foo", 42, 24.03f)).setConsistencyLevel(ConsistencyLevel.ALL));
             } catch (WriteTimeoutException e) {
                 assertEquals(e.getConsistencyLevel(), ConsistencyLevel.ALL);
                 assertEquals(e.getReceivedAcknowledgements(), 2);
@@ -404,14 +405,12 @@ public class ExceptionsTest {
     @Test(groups = "long", expectedExceptions = WriteFailureException.class)
     public void should_rethrow_write_failure_when_encountered_on_replica() throws InterruptedException {
         String keyspace = "writefailureks";
-        String table = "testtable";
 
         CCMBridge ccm = null;
         Cluster cluster = null;
 
         try {
-            ccm = CCMBridge.create("test");
-            ccm.populate(2);
+            ccm = CCMBridge.builder("test").withNodes(2).notStarted().build();
             // Configure 1 of the nodes to fail writes to the keyspace.
             ccm.start(1, "-Dcassandra.test.fail_writes_ks=" +keyspace);
             ccm.start(2);
@@ -426,11 +425,11 @@ public class ExceptionsTest {
 
             session.execute(String.format(TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT, keyspace, 2));
             session.execute("USE " + keyspace);
-            session.execute(String.format(TestUtils.CREATE_TABLE_SIMPLE_FORMAT, table));
+            session.execute("CREATE TABLE testtable (k text PRIMARY KEY, t text, i int, f float)");
 
             try {
                 // Query with a CL of ALL to hit all replicas.
-                session.execute(new SimpleStatement(String.format(TestUtils.INSERT_FORMAT, table, "1", "2", 3, 4.0f))
+                session.execute(new SimpleStatement(String.format(Locale.US, "INSERT INTO testtable (k, t, i, f) VALUES ('%s', '%s', %d, %f)", "1", "2", 3, 4.0f))
                         .setConsistencyLevel(ConsistencyLevel.ALL));
             } catch(WriteFailureException e) {
                 // Expect a failure for node configured to fail writes.
@@ -470,21 +469,17 @@ public class ExceptionsTest {
         CCMBridge ccm = null;
         Cluster cluster = null;
         try {
-            ccm = CCMBridge.create("test");
-
-            // This relies on the fact that the previous line did not start the cluster, which is true
-            // but a bit weird considering that other versions of create do
-            // (JAVA-789 will fix this)
-            ccm.updateConfig("tombstone_failure_threshold", "1000");
-            ccm.populate(2);
-            ccm.start();
+            ccm = CCMBridge.builder("test")
+                .withNodes(2)
+                .withCassandraConfiguration("tombstone_failure_threshold", "1000")
+                .build();
 
             // The rest of the test relies on the fact that the PK '1' will be placed on node1
             // (hard-coding it is reasonable considering that C* shouldn't change its default partitioner too often)
             cluster = Cluster.builder()
-                    .addContactPoint(CCMBridge.ipOfNode(2))
-                    .withLoadBalancingPolicy(new WhiteListPolicy(Policies.defaultLoadBalancingPolicy(),
-                            Lists.newArrayList(new InetSocketAddress(CCMBridge.ipOfNode(2), 9042))))
+                .addContactPoint(CCMBridge.ipOfNode(2))
+                .withLoadBalancingPolicy(new WhiteListPolicy(Policies.defaultLoadBalancingPolicy(),
+                    Lists.newArrayList(new InetSocketAddress(CCMBridge.ipOfNode(2), 9042))))
                     .build();
 
             Session session = cluster.connect();

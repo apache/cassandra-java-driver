@@ -78,12 +78,14 @@ doesn't parse query strings, so in most cases it has no information
 about what the query actually does. Therefore:
 
 * **`Statement#isIdempotent()` is only computed automatically for
-  statements built with [QueryBuilder][QueryBuilder]**. Note that there
-  is a known issue in 2.2.0-rc1 where calls to `now()` or `uuid()` are not
-  taken into account (see
-  [JAVA-733](https://datastax-oss.atlassian.net/browse/JAVA-733)). If
-  you're using these CQL functions with built statements, force
-  idempotence to `false` manually (see below);
+  statements built with [QueryBuilder][QueryBuilder]**.
+  Note that the driver takes a rather conservative approach with uses
+  of `fcall()` or `raw()`: whenever they appear in a value to be
+  inserted in the database (like the values of an `Insert` or the
+  right-hand side of an assignment in an `Update`), the statement
+  will be considered non-idempotent by default. If you know that your
+  CQL functions or expressions are safe, force idempotence to `true`
+  on the statement manually (see below);
 * **for all other types of statements, it defaults to `false`.** You'll
   need to set it manually, with one of the mechanism described below.
 
@@ -332,7 +334,10 @@ But now the second execution of the first query finally reaches its
 target node, which applies the mutation. The row that you've just
 deleted is back!
 
-The workaround is to use
-[client-sidetimestamps](../query_timestamps/#client-side-generation) (if
-you're using native protocol v3 or more, the driver already does this
+The workaround is to use a timestamp with your queries:
+
+    insert into my_table (k, v) values (1, 1) USING TIMESTAMP 1432764000;
+
+If you're using native protocol v3, you can also enable [client-side
+timestamps](../query_timestamps/#client-side-generation) to have this done
 automatically.

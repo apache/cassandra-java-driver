@@ -66,7 +66,7 @@ public class Create extends AbstractCreateStatement<Create> {
         validateNotEmpty(columnName, "Partition key name");
         validateNotNull(dataType, "Partition key type");
         validateNotKeyWord(columnName, String.format("The partition key name '%s' is not allowed because it is a reserved keyword", columnName));
-        partitionColumns.put(columnName, new ColumnType.NativeColumnType(dataType));
+        partitionColumns.put(columnName, new NativeColumnType(dataType));
         return this;
     }
 
@@ -104,7 +104,7 @@ public class Create extends AbstractCreateStatement<Create> {
         validateNotEmpty(columnName, "Clustering column name");
         validateNotNull(dataType, "Clustering column type");
         validateNotKeyWord(columnName, String.format("The clustering column name '%s' is not allowed because it is a reserved keyword", columnName));
-        clusteringColumns.put(columnName, new ColumnType.NativeColumnType(dataType));
+        clusteringColumns.put(columnName, new NativeColumnType(dataType));
         return this;
     }
 
@@ -138,7 +138,7 @@ public class Create extends AbstractCreateStatement<Create> {
         validateNotEmpty(columnName, "Column name");
         validateNotNull(dataType, "Column type");
         validateNotKeyWord(columnName, String.format("The static column name '%s' is not allowed because it is a reserved keyword", columnName));
-        staticColumns.put(columnName, new ColumnType.NativeColumnType(dataType));
+        staticColumns.put(columnName, new NativeColumnType(dataType));
         return this;
     }
 

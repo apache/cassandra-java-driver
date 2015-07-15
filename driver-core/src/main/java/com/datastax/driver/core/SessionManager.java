@@ -209,8 +209,7 @@ class SessionManager extends AbstractSession {
         if (isClosing)
             return Futures.immediateFuture(false);
 
-        final HostConnectionPool newPool = HostConnectionPool.newInstance(host, distance, SessionManager.this,
-            cluster.getConfiguration().getProtocolOptions().getProtocolVersion());
+        final HostConnectionPool newPool = new HostConnectionPool(host, distance, this);
         ListenableFuture<Void> poolInitFuture = newPool.initAsync(reusedConnection);
 
         final SettableFuture<Boolean> future = SettableFuture.create();
@@ -252,8 +251,7 @@ class SessionManager extends AbstractSession {
         if (isClosing)
             return MoreFutures.VOID_SUCCESS;
 
-        final HostConnectionPool newPool = HostConnectionPool.newInstance(host, distance, this,
-            cluster.getConfiguration().getProtocolOptions().getProtocolVersion());
+        final HostConnectionPool newPool = new HostConnectionPool(host, distance, this);
         if (previous == null) {
             if (pools.putIfAbsent(host, newPool) != null) {
                 return null;
@@ -475,22 +473,17 @@ class SessionManager extends AbstractSession {
                 defaultTimestamp = cluster.getConfiguration().getPolicies().getTimestampGenerator().next();
         }
 
-        return makeRequestMessage(statement, consistency, serialConsistency, pagingState, defaultTimestamp);
-    }
-
-    Message.Request makeRequestMessage(Statement statement, ConsistencyLevel cl, ConsistencyLevel scl, ByteBuffer pagingState, long defaultTimestamp) {
-        ProtocolVersion protoVersion = cluster.manager.protocolVersion();
         int fetchSize = statement.getFetchSize();
         ByteBuffer usedPagingState = pagingState;
 
-        if (protoVersion == ProtocolVersion.V1) {
+        if (version == ProtocolVersion.V1) {
             assert pagingState == null;
             // We don't let the user change the fetchSize globally if the proto v1 is used, so we just need to
             // check for the case of a per-statement override
             if (fetchSize <= 0)
                 fetchSize = -1;
             else if (fetchSize != Integer.MAX_VALUE)
-                throw new UnsupportedFeatureException(protoVersion, "Paging is not supported");
+                throw new UnsupportedFeatureException(version, "Paging is not supported");
         } else if (fetchSize <= 0) {
             fetchSize = configuration().getQueryOptions().getFetchSize();
         }
@@ -512,44 +505,44 @@ class SessionManager extends AbstractSession {
             // It saddens me that we special case for the query builder here, but for now this is simpler.
             // We could provide a general API in RegularStatement instead at some point but it's unclear what's
             // the cleanest way to do that is right now (and it's probably not really that useful anyway).
-            if (protoVersion == ProtocolVersion.V1 && rs instanceof com.datastax.driver.core.querybuilder.BuiltStatement)
+            if (version == ProtocolVersion.V1 && rs instanceof com.datastax.driver.core.querybuilder.BuiltStatement)
                 ((com.datastax.driver.core.querybuilder.BuiltStatement)rs).setForceNoValues(true);
 
-            ByteBuffer[] rawValues = rs.getValues(protoVersion);
+            ByteBuffer[] rawValues = rs.getValues(version);
 
-            if (protoVersion == ProtocolVersion.V1 && rawValues != null)
-                throw new UnsupportedFeatureException(protoVersion, "Binary values are not supported");
+            if (version == ProtocolVersion.V1 && rawValues != null)
+                throw new UnsupportedFeatureException(version, "Binary values are not supported");
 
             List<ByteBuffer> values = rawValues == null ? Collections.<ByteBuffer>emptyList() : Arrays.asList(rawValues);
             String qString = rs.getQueryString();
-            Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(cl, values, false,
-                                                                                      fetchSize, usedPagingState, scl, defaultTimestamp);
-            request = new Requests.Query(qString, options);
+            Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(consistency, values, false,
+                                                                                      fetchSize, usedPagingState, serialConsistency, defaultTimestamp);
+            request =  new Requests.Query(qString, options, statement.isTracing());
         } else if (statement instanceof BoundStatement) {
             BoundStatement bs = (BoundStatement)statement;
             if (!cluster.manager.preparedQueries.containsKey(bs.statement.getPreparedId().id)) {
                 throw new InvalidQueryException(String.format("Tried to execute unknown prepared query : %s. "
                     + "You may have used a PreparedStatement that was created with another Cluster instance.", bs.statement.getPreparedId().id));
             }
-            if(protoVersion.compareTo(ProtocolVersion.V4) < 0)
+            if (version.compareTo(ProtocolVersion.V4) < 0)
                 bs.ensureAllSet();
-            boolean skipMetadata = protoVersion != ProtocolVersion.V1 && bs.statement.getPreparedId().resultSetMetadata != null;
-            Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(cl, Arrays.asList(bs.wrapper.values), skipMetadata,
-                                                                                      fetchSize, usedPagingState, scl, defaultTimestamp);
-            request = new Requests.Execute(bs.statement.getPreparedId().id, options);
+            boolean skipMetadata = version != ProtocolVersion.V1 && bs.statement.getPreparedId().resultSetMetadata != null;
+            Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(consistency, Arrays.asList(bs.wrapper.values), skipMetadata,
+                                                                                      fetchSize, usedPagingState, serialConsistency, defaultTimestamp);
+            request = new Requests.Execute(bs.statement.getPreparedId().id, options, statement.isTracing());
         } else {
             assert statement instanceof BatchStatement : statement;
             assert pagingState == null;
 
-            if (protoVersion == ProtocolVersion.V1)
-                throw new UnsupportedFeatureException(protoVersion, "Protocol level batching is not supported");
+            if (version == ProtocolVersion.V1)
+                throw new UnsupportedFeatureException(version, "Protocol level batching is not supported");
 
             BatchStatement bs = (BatchStatement)statement;
-            if(protoVersion.compareTo(ProtocolVersion.V4) < 0)
+            if (version.compareTo(ProtocolVersion.V4) < 0)
                 bs.ensureAllSet();
-            BatchStatement.IdAndValues idAndVals = bs.getIdAndValues(protoVersion);
-            Requests.BatchProtocolOptions options = new Requests.BatchProtocolOptions(cl, scl, defaultTimestamp);
-            request = new Requests.Batch(bs.batchType, idAndVals.ids, idAndVals.values, options);
+            BatchStatement.IdAndValues idAndVals = bs.getIdAndValues(version);
+            Requests.BatchProtocolOptions options = new Requests.BatchProtocolOptions(consistency, serialConsistency, defaultTimestamp);
+            request =  new Requests.Batch(bs.batchType, idAndVals.ids, idAndVals.values, options, statement.isTracing());
         }
 
         request.setCustomPayload(statement.getOutgoingPayload());
@@ -601,8 +594,6 @@ class SessionManager extends AbstractSession {
     }
 
     ResultSetFuture executeQuery(Message.Request msg, Statement statement) {
-        if (statement.isTracing())
-            msg.setTracingRequested();
 
         DefaultResultSetFuture future = new DefaultResultSetFuture(this, configuration().getProtocolOptions().getProtocolVersion(), msg);
         execute(future, statement);
@@ -645,7 +636,7 @@ class SessionManager extends AbstractSession {
                 }
 
                 openConnections[i] = p.opened();
-                inFlightQueries[i] = p.inFlightQueriesCount();
+                inFlightQueries[i] = p.totalInFlight.get();
                 trashedConnections[i] = p.trashed();
                 i++;
             }

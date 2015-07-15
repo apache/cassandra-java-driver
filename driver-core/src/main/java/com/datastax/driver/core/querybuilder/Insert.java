@@ -15,7 +15,6 @@
  */
 package com.datastax.driver.core.querybuilder;
 
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -80,6 +79,8 @@ public class Insert extends BuiltStatement {
         names.add(name);
         values.add(value);
         checkForBindMarkers(value);
+        if (!hasNonIdempotentOps() && !Utils.isIdempotent(value))
+            this.setNonIdempotentOps();
         maybeAddRoutingKey(name, value);
         return this;
     }
@@ -92,18 +93,33 @@ public class Insert extends BuiltStatement {
      * value in {@code values} will be inserted for the {@code i}th column
      * in {@code names}.
      * @return this INSERT statement.
-     *
      * @throws IllegalArgumentException if {@code names.length != values.length}.
      */
     public Insert values(String[] names, Object[] values) {
-        if (names.length != values.length)
-            throw new IllegalArgumentException(String.format("Got %d names but %d values", names.length, values.length));
-        this.names.addAll(Arrays.asList(names));
-        this.values.addAll(Arrays.asList(values));
+        return values(Arrays.asList(names), Arrays.asList(values));
+    }
 
-        for (int i = 0; i < names.length; i++) {
-            checkForBindMarkers(values[i]);
-            maybeAddRoutingKey(names[i], values[i]);
+    /**
+     * Adds multiple column/value pairs to the values inserted by this INSERT statement.
+     *
+     * @param names a list of column names to insert/update.
+     * @param values a list of values to insert/update. The {@code i}th
+     * value in {@code values} will be inserted for the {@code i}th column
+     * in {@code names}.
+     * @return this INSERT statement.
+     * @throws IllegalArgumentException if {@code names.size() != values.size()}.
+     */
+    public Insert values(List<String> names, List<Object> values) {
+        if (names.size() != values.size())
+            throw new IllegalArgumentException(String.format("Got %d names but %d values", names.size(), values.size()));
+        this.names.addAll(names);
+        this.values.addAll(values);
+        for (int i = 0; i < names.size(); i++) {
+            Object value = values.get(i);
+            checkForBindMarkers(value);
+            maybeAddRoutingKey(names.get(i), value);
+            if (!hasNonIdempotentOps() && !Utils.isIdempotent(value))
+                this.setNonIdempotentOps();
         }
         return this;
     }
@@ -118,6 +134,16 @@ public class Insert extends BuiltStatement {
         return usings.and(using);
     }
 
+    /**
+     * Returns the options for this INSERT statement.
+     * <p/>
+     * Chain this with {@link Options#and(Using)} to add options.
+     *
+     * @return the options of this INSERT statement.
+     */
+    public Options using() {
+        return usings;
+    }
     /**
      * Sets the 'IF NOT EXISTS' option for this INSERT statement.
      * <p>

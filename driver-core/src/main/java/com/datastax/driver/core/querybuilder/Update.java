@@ -175,7 +175,7 @@ public class Update extends BuiltStatement {
          */
         public Assignments and(Assignment assignment) {
             statement.setCounterOp(assignment instanceof CounterAssignment);
-            if (!assignment.isIdempotent())
+            if (!hasNonIdempotentOps() && !Utils.isIdempotent(assignment))
                 statement.setNonIdempotentOps();
             assignments.add(assignment);
             checkForBindMarkers(assignment);

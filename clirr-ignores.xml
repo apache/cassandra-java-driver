@@ -6,59 +6,7 @@
   To update this file:
   * run `mvn clirr:clirr` at the root directory
   * check the reports in `<module>/target/site/clirr-report.html`
-  * add new differences if needed. Difference types are explained at http://mojo.codehaus.org/clirr-maven-plugin/examples/ignored-differences.html
+  * add new differences if needed. Difference types are explained at http://www.mojohaus.org/clirr-maven-plugin/examples/ignored-differences.html
 -->
 <differences>
-  <difference>
-    <differenceType>7006</differenceType> <!-- return type changed -->
-    <className>com/datastax/driver/core/BatchStatement</className>
-    <method>com.datastax.driver.core.Statement setSerialConsistencyLevel(com.datastax.driver.core.ConsistencyLevel)</method>
-    <to>com.datastax.driver.core.BatchStatement</to>
-    <justification>A covariant return makes the API more fluent. It's unlikely that any client has extended this class</justification>
-  </difference>
-
-  <difference>
-    <differenceType>6002</differenceType> <!-- no longer a compile-time constant -->
-    <className>com/datastax/driver/core/ProtocolOptions</className>
-    <field>NEWEST_SUPPORTED_PROTOCOL_VERSION</field>
-    <justification>It calls an enum's method that is known to have a constant result</justification>
-  </difference>
-
-  <difference>
-    <differenceType>7004</differenceType> <!-- argument count changed -->
-    <className>com/datastax/driver/core/exceptions/UnsupportedFeatureException</className>
-    <method>UnsupportedFeatureException(java.lang.String)</method>
-    <justification>A client has no reason to call this constructor</justification>
-  </difference>
-
-  <difference>
-    <differenceType>7012</differenceType> <!-- method added to interface -->
-    <className>com/datastax/driver/core/ResultSet</className>
-    <method>boolean wasApplied()</method>
-    <justification>This interface is not meant to be extended by clients</justification>
-  </difference>
-
-  <difference>
-    <differenceType>7013</differenceType> <!-- abstract method added -->
-    <className>com/datastax/driver/core/RegularStatement</className>
-    <method>java.nio.ByteBuffer[] getValues(com.datastax.driver.core.ProtocolVersion)</method>
-    <justification>Indeed a breaking change, but extending this class from a client should be rarely needed</justification>
-  </difference>
-
-  <difference>
-    <differenceType>7005</differenceType> <!-- argument type changed -->
-    <className>com/datastax/driver/core/SimpleStatement</className>
-    <method>java.nio.ByteBuffer[] getValues(int)</method>
-    <to>java.nio.ByteBuffer[] getValues(com.datastax.driver.core.ProtocolVersion)</to>
-    <justification>A backward compatible version has been added to the parent class RegularStatement</justification>
-  </difference>
-
-  <difference>
-    <differenceType>7005</differenceType> <!-- argument type changed -->
-    <className>com/datastax/driver/core/querybuilder/*</className>
-    <method>java.nio.ByteBuffer[] getValues(int)</method>
-    <to>java.nio.ByteBuffer[] getValues(com.datastax.driver.core.ProtocolVersion)</to>
-    <justification>A backward compatible version has been added to the parent class RegularStatement</justification>
-  </difference>
-
 </differences>

@@ -48,9 +48,6 @@ public abstract class TestUtils {
     public static final String SIMPLE_KEYSPACE = "ks";
     public static final String SIMPLE_TABLE = "test";
 
-    public static final String CREATE_TABLE_SIMPLE_FORMAT = "CREATE TABLE %s (k text PRIMARY KEY, t text, i int, f float)";
-
-    public static final String INSERT_FORMAT = "INSERT INTO %s (k, t, i, f) VALUES ('%s', '%s', %d, %f)";
     public static final String SELECT_ALL_FORMAT = "SELECT * FROM %s";
 
     public static final int TEST_BASE_NODE_WAIT = SystemProperties.getInt("com.datastax.driver.TEST_BASE_NODE_WAIT", 60);
@@ -431,10 +428,7 @@ public abstract class TestUtils {
 
     public static int numberOfLocalCoreConnections(Cluster cluster) {
         Configuration configuration = cluster.getConfiguration();
-        ProtocolVersion protocolVersion = configuration.getProtocolOptions().getProtocolVersion();
-        return (protocolVersion.compareTo(ProtocolVersion.V3) < 0)
-            ? configuration.getPoolingOptions().getCoreConnectionsPerHost(HostDistance.LOCAL)
-            : 1;
+        return configuration.getPoolingOptions().getCoreConnectionsPerHost(HostDistance.LOCAL);
     }
 
     /**

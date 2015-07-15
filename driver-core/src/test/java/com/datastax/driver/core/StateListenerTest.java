@@ -15,78 +15,109 @@
  */
 package com.datastax.driver.core;
 
-import com.google.common.collect.Sets;
+import java.util.concurrent.CountDownLatch;
+
+import static java.util.concurrent.TimeUnit.MINUTES;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testng.annotations.Test;
 
-import java.util.Set;
+import static org.assertj.core.api.Assertions.assertThat;
 
-import static org.testng.Assert.assertEquals;
+import static com.datastax.driver.core.StateListenerTest.TestListener.Event.*;
 
-import static com.datastax.driver.core.TestUtils.*;
-
-/**
- * Simple test of the Sessions methods against a one node cluster.
- */
 public class StateListenerTest {
+    private static final Logger logger = LoggerFactory.getLogger(StateListenerTest.class);
 
     @Test(groups = "long")
-    public void listenerTest() throws Throwable {
-
-        CCMBridge.CCMCluster c = CCMBridge.buildCluster(1, Cluster.builder());
-        Cluster cluster = c.cluster;
-
+    public void should_receive_events_when_node_states_change() throws InterruptedException {
+        CCMBridge ccm = null;
+        Cluster cluster = null;
         try {
-            CountingListener listener = new CountingListener();
+            ccm = CCMBridge.builder("test").build();
+            cluster = Cluster.builder()
+                .addContactPoint(CCMBridge.ipOfNode(1))
+                .build();
+            cluster.init();
+            TestListener listener = new TestListener();
             cluster.register(listener);
 
-            c.cassandraCluster.bootstrapNode(2);
-            waitFor(CCMBridge.IP_PREFIX + '2', cluster);
+            listener.setExpectedEvent(ADD);
+            ccm.bootstrapNode(2);
+            listener.waitForEvent();
 
-            // We sleep slightly before checking the listener because the node is marked UP
-            // just before the listeners are called, and since waitFor is based on isUP,
-            // it can return *just* before the listener are called.
-            Thread.sleep(500);
-            assertEquals(listener.adds.size(), 1);
+            listener.setExpectedEvent(DOWN);
+            ccm.forceStop(1);
+            listener.waitForEvent();
 
-            c.cassandraCluster.forceStop(1);
-            waitForDown(CCMBridge.IP_PREFIX + '1', cluster);
-            Thread.sleep(500);
-            assertEquals(listener.downs.size(), 1);
+            listener.setExpectedEvent(UP);
+            ccm.start(1);
+            listener.waitForEvent();
 
-            c.cassandraCluster.start(1);
-            waitFor(CCMBridge.IP_PREFIX + '1', cluster);
-            Thread.sleep(500);
-            assertEquals(listener.ups.size(), 1);
+            listener.setExpectedEvent(REMOVE);
+            ccm.decommissionNode(2);
+            listener.waitForEvent();
 
-            c.cassandraCluster.decommissionNode(2);
-            waitForDecommission(CCMBridge.IP_PREFIX + '2', cluster);
-            Thread.sleep(500);
-            assertEquals(listener.removes.size(), 1);
-        } catch (Throwable e) {
-            c.errorOut();
-            throw e;
         } finally {
-            c.discard();
+            if (cluster != null)
+                cluster.close();
+            if (ccm != null)
+                ccm.remove();
         }
     }
 
-    private static class CountingListener implements Host.StateListener {
+    static class TestListener implements Host.StateListener {
+        enum Event {ADD, UP, SUSPECTED, DOWN, REMOVE}
 
-        public Set<Host> adds = Sets.newHashSet();
-        public Set<Host> removes = Sets.newHashSet();
-        public Set<Host> ups = Sets.newHashSet();
-        public Set<Host> downs = Sets.newHashSet();
+        volatile CountDownLatch latch;
+        volatile Event expectedEvent;
+        volatile Event actualEvent;
 
-        public void onAdd(Host host) { adds.add(host); }
+        void setExpectedEvent(Event expectedEvent) {
+            logger.debug("Set expected event {}", expectedEvent);
+            this.expectedEvent = expectedEvent;
+            latch = new CountDownLatch(1);
+        }
 
-        public void onUp(Host host) { ups.add(host); }
+        void waitForEvent() throws InterruptedException {
+            assertThat(latch.await(2, MINUTES))
+                .as("Timed out waiting for event " + expectedEvent)
+                .isTrue();
+            assertThat(actualEvent).isEqualTo(expectedEvent);
+        }
 
-        public void onSuspected(Host host) {}
+        private void reportActualEvent(Event event) {
+            if (latch.getCount() == 0) {
+                // TODO this actually happens because C* sends REMOVE/ADD/REMOVE on a remove
+                logger.error("Was not waiting for an event but got {} (this should eventually be fixed by JAVA-657)", event);
+                return;
+            }
+            logger.debug("Got event {}", event);
+            actualEvent = event;
+            latch.countDown();
+        }
 
-        public void onDown(Host host) { downs.add(host); }
+        @Override
+        public void onAdd(Host host) {
+            reportActualEvent(ADD);
+        }
 
-        public void onRemove(Host host) { removes.add(host); }
+        @Override
+        public void onUp(Host host) {
+            reportActualEvent(UP);
+        }
 
+        @Override
+        public void onDown(Host host) {
+            reportActualEvent(DOWN);
+        }
+
+        @Override
+        public void onRemove(Host host) {
+            reportActualEvent(REMOVE);
+        }
+        
         @Override
         public void onRegister(Cluster cluster) {}
 

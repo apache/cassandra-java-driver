@@ -28,17 +28,26 @@ public class Result<T> implements Iterable<T> {
     private final ResultSet rs;
     private final EntityMapper<T> mapper;
     private final ProtocolVersion protocolVersion;
+    private final boolean useAlias;
 
     Result(ResultSet rs, EntityMapper<T> mapper, ProtocolVersion protocolVersion) {
+        this(rs, mapper, protocolVersion, false);
+    }
+
+    Result(ResultSet rs, EntityMapper<T> mapper, ProtocolVersion protocolVersion, boolean useAlias) {
         this.rs = rs;
         this.mapper = mapper;
         this.protocolVersion = protocolVersion;
+        this.useAlias = useAlias;
     }
 
     private T map(Row row) {
         T entity = mapper.newEntity();
         for (ColumnMapper<T> cm : mapper.allColumns()) {
-            ByteBuffer bytes = row.getBytesUnsafe(cm.getColumnName());
+            String name = cm.getAlias() != null && this.useAlias ? cm.getAlias() : cm.getColumnName();
+            if (!row.getColumnDefinitions().contains(name))
+                continue;
+            ByteBuffer bytes = row.getBytesUnsafe(name);
             if (bytes != null)
                 cm.setValue(entity, cm.getDataType().deserialize(bytes, protocolVersion));
         }

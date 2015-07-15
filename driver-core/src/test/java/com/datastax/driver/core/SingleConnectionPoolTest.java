@@ -41,7 +41,7 @@ public class SingleConnectionPoolTest extends CCMBridge.PerClassSingleNodeCluste
         // Throttle to a very low value. Even a single thread can generate a higher throughput.
         final int maxRequests = 10;
         cluster.getConfiguration().getPoolingOptions()
-               .setMaxSimultaneousRequestsPerHostThreshold(HostDistance.LOCAL, maxRequests);
+               .setMaxRequestsPerConnection(HostDistance.LOCAL, maxRequests);
 
         // Track in flight requests in a dedicated thread every second
         final AtomicBoolean excessInflightQueriesSpotted = new AtomicBoolean(false);

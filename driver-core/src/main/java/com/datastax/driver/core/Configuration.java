@@ -46,7 +46,7 @@ public class Configuration {
      * Creates a configuration object.
      */
     public Configuration() {
-        this(new Policies(),
+        this(Policies.builder().build(),
              new ProtocolOptions(),
              new PoolingOptions(),
              new SocketOptions(),
