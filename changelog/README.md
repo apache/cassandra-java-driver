@@ -1,5 +1,10 @@
 ## Changelog
 
+### 2.1.7.1
+
+- [bug] Special case check for 'null' string in index_options column (JAVA-834)
+
+
 ### 2.1.7
 
 - [improvement] Improve QueryBuilder API for SELECT DISTINCT (JAVA-475)
