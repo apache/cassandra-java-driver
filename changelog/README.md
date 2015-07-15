@@ -1,6 +1,6 @@
 ## Changelog
 
-### 2.1.7 (in progress)
+### 2.1.7
 
 - [improvement] Improve QueryBuilder API for SELECT DISTINCT (JAVA-475)
 - [improvement] Make NativeColumnType a top-level class (JAVA-715)
