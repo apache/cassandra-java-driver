@@ -7,7 +7,7 @@ binary protocol. This protocol is asynchronous, which allows each TCP
 connection to handle multiple simultaneous requests:
 
 * when a query gets executed, a *stream id* gets assigned to it. It is a
-  unique identifier for the current connection;
+  unique identifier on the current connection;
 * the driver writes a request containing the stream id and the query on
   the connection, and then proceeds without waiting for the response (if
   you're using the asynchronous API, this is when the driver will send you
@@ -243,6 +243,39 @@ connection (protocol v3).
 If you're using protocol v2 and the load is often less than core * 128,
 your pools are underused and you could get away with less core
 connections.
+
+#### Tuning protocol v3 for very high throughputs
+
+As mentioned above, the default pool size for protocol v3 is core = max
+= 1. This means all requests to a given node will share a single
+connection, and therefore a single Netty I/O thread.
+
+There is a corner case where this I/O thread can max out its CPU core
+and become a bottleneck in the driver; in our benchmarks, this happened
+with a single-node cluster and a high throughput (approximately 80K
+requests / second).
+
+It's unlikely that you'll run into this issue: in most real-world
+deployments, the driver connects to more than one node, so the load will
+spread across more I/O threads. However if you suspect that you
+experience the issue, here's what to look out for:
+
+* the driver throughput plateaus but the process does not appear to
+  max out any system resource (in particular, overall CPU usage is well
+  below 100%);
+* one of the driver's I/O threads maxes out its CPU core. You can see
+  that with a profiler, or OS-level tools like `pidstat -tu` on Linux.
+  I/O threads are called `<cluster_name>-nio-worker-<n>`, unless you're
+  injecting your own `EventLoopGroup` with `NettyOptions`.
+
+The solution is to add more connections per node. To ensure that
+additional connections get created before you run into the bottleneck,
+either:
+
+* set core = max;
+* keep core = 1, but adjust [maxRequestsPerConnection][mrpc] and
+  [newConnectionThreshold][nct] so that enough connections are added by
+  the time you reach the bottleneck.
 
 [result_set_future]:http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/ResultSetFuture.html
 [pooling_options]:http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/PoolingOptions.html
