@@ -43,7 +43,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <cassandra.version>2.2.0-rc1</cassandra.version>
+    <cassandra.version>2.2.0-rc2</cassandra.version>
     <java.version>1.6</java.version>
     <log4j.version>1.2.17</log4j.version>
     <slf4j-log4j12.version>1.7.6</slf4j-log4j12.version>
