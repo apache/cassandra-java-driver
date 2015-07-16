@@ -449,13 +449,14 @@ public class CCMBridge {
                 try {
                     ProtocolVersion protocolVersion = TestUtils.getDesiredProtocolVersion();
 
-                    ccmBridge = CCMBridge.builder("test-class")
-                        .withoutNodes()
-                        .notStarted()
-                        .withCassandraConfiguration("enable_user_defined_functions",
-                            // Only enable user defined functions if protocol version is >= 4.
-                            Boolean.toString(protocolVersion.compareTo(ProtocolVersion.V4) >= 0))
-                        .build();
+                    CCMBridge.Builder builder = CCMBridge.builder("test-class")
+                            .withoutNodes()
+                            .notStarted();
+
+                    if(protocolVersion.compareTo(ProtocolVersion.V4) >= 0) {
+                        builder = builder.withCassandraConfiguration("enable_user_defined_functions", "true");
+                    }
+                    ccmBridge = builder.build();
 
                     ports = new int[5];
                     for (int i = 0; i < 5; i++) {
