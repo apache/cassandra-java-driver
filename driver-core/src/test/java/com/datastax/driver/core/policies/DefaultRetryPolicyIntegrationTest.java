@@ -15,10 +15,7 @@
  */
 package com.datastax.driver.core.policies;
 
-import com.datastax.driver.core.CCMBridge;
-import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.Metrics;
-import com.datastax.driver.core.Session;
+import com.datastax.driver.core.*;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import org.testng.annotations.Test;
 
@@ -110,6 +107,8 @@ public class DefaultRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegr
 
         Cluster whiteListedCluster = Cluster.builder()
                 .addContactPoint(CCMBridge.ipOfNode(1))
+                // Scassandra does not support V3 nor V4 yet, and V4 may cause the server to crash
+                .withProtocolVersion(ProtocolVersion.V2)
                 .withRetryPolicy(retryPolicy)
                 .withLoadBalancingPolicy(firstHostOnlyPolicy)
                 .build();

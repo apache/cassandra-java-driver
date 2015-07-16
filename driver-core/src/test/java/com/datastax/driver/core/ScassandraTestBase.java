@@ -74,7 +74,7 @@ public abstract class ScassandraTestBase {
     protected Cluster.Builder createClusterBuilder() {
         Cluster.Builder builder = Cluster.builder()
             .addContactPoint("127.0.0.1")
-            // Scassandra does not support V3 yet
+            // Scassandra does not support V3 yet, and V4 may cause the server to crash
             .withProtocolVersion(ProtocolVersion.V2)
             .withPoolingOptions(new PoolingOptions()
                 .setCoreConnectionsPerHost(HostDistance.LOCAL, 1)

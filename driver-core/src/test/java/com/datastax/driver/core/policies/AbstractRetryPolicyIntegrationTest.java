@@ -69,6 +69,13 @@ public class AbstractRetryPolicyIntegrationTest {
             .addContactPoint(CCMBridge.ipOfNode(1))
             .withRetryPolicy(retryPolicy)
             .withLoadBalancingPolicy(new SortingLoadBalancingPolicy())
+            // Scassandra does not support V3 nor V4 yet, and V4 may cause the server to crash
+            .withProtocolVersion(ProtocolVersion.V2)
+            .withPoolingOptions(new PoolingOptions()
+                .setCoreConnectionsPerHost(HostDistance.LOCAL, 1)
+                .setMaxConnectionsPerHost(HostDistance.LOCAL, 1)
+                .setHeartbeatIntervalSeconds(0))
+            .withPort(SCassandraCluster.BINARY_PORT)
             .build();
 
         session = cluster.connect();

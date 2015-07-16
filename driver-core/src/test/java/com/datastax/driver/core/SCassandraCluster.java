@@ -35,7 +35,7 @@ import org.scassandra.http.client.*;
  * and a CCM cluster is not running at the same time.
  */
 public class SCassandraCluster {
-    private static final int BINARY_PORT = 9042;
+    public static final int BINARY_PORT = 9042;
     private static final int ADMIN_PORT = 9052;
 
     private final List<Scassandra> scassandras;

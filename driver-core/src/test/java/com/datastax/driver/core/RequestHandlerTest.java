@@ -43,7 +43,11 @@ public class RequestHandlerTest {
                     .build()
             );
 
-            cluster = Cluster.builder().addContactPoint("127.0.0.1").withPort(scassandra.getBinaryPort())
+            cluster = Cluster.builder()
+                .addContactPoint("127.0.0.1")
+                .withPort(scassandra.getBinaryPort())
+                // Scassandra does not support V3 nor V4 yet, and V4 may cause the server to crash
+                .withProtocolVersion(ProtocolVersion.V2)
                 .withPoolingOptions(new PoolingOptions()
                     .setCoreConnectionsPerHost(HostDistance.LOCAL, 1)
                     .setMaxConnectionsPerHost(HostDistance.LOCAL, 1)
