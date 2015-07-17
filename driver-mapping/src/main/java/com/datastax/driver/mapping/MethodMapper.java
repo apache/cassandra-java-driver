@@ -19,7 +19,9 @@ import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.nio.ByteBuffer;
+import java.util.Set;
 
+import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
@@ -58,13 +60,7 @@ class MethodMapper {
         this.session = manager.getSession();
         this.statement = ps;
 
-        if (method.isVarArgs())
-            throw new IllegalArgumentException(String.format("Invalid varargs method %s in @Accessor interface"));
-        if (ps.getVariables().size() != method.getParameterTypes().length)
-            throw new IllegalArgumentException(String.format("The number of arguments for method %s (%d) does not match the number of bind parameters in the @Query (%d)",
-                                                              method.getName(), method.getParameterTypes().length, ps.getVariables().size()));
-
-        // TODO: we should also validate the types of the parameters...
+        validateParameters();
 
         Class<?> returnType = method.getReturnType();
         if (Void.TYPE.isAssignableFrom(returnType) || ResultSet.class.isAssignableFrom(returnType))
@@ -90,6 +86,30 @@ class MethodMapper {
         } else {
             mapType(manager, returnType, method.getGenericReturnType());
         }
+    }
+
+    // Checks the method parameters against the query's bind variables
+    private void validateParameters() {
+        if (method.isVarArgs())
+            throw new IllegalArgumentException(String.format("Invalid varargs method %s in @Accessor interface", method.getName()));
+
+        ColumnDefinitions variables = statement.getVariables();
+        Set<String> names = Sets.newHashSet();
+        for (ColumnDefinitions.Definition variable : variables) {
+            names.add(variable.getName());
+        }
+
+        if (method.getParameterTypes().length < names.size())
+            throw new IllegalArgumentException(String.format("Not enough arguments for method %s, "
+                    + "found %d but it should be at least the number of unique bind parameter names in the @Query (%d)",
+                method.getName(), method.getParameterTypes().length, names.size()));
+
+        if (method.getParameterTypes().length > variables.size())
+            throw new IllegalArgumentException(String.format("Too many arguments for method %s, "
+                    + "found %d but it should be at most the number of bind parameters in the @Query (%d)",
+                method.getName(), method.getParameterTypes().length, variables.size()));
+
+        // TODO could go further, e.g. check that the types match, inspect @Param annotations to check that all names are bound...
     }
 
     @SuppressWarnings("rawtypes")
