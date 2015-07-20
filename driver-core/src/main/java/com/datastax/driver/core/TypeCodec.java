@@ -202,6 +202,9 @@ abstract class TypeCodec<T> {
         if (value instanceof Date)
             return DataType.timestamp();
 
+        if (value instanceof LocalDate)
+            return DataType.date();
+
         if (value instanceof UUID)
             return DataType.uuid();
 
@@ -905,6 +908,11 @@ abstract class TypeCodec<T> {
 
         @Override
         public Date parse(String value) {
+            // strip enclosing single quotes, if any
+            // enclosing quotes are optional for long literals, mandatory for date patterns
+            if (value.charAt(0) == '\'' && value.charAt(value.length() - 1) == '\'')
+                value = value.substring(1, value.length() - 1);
+
             if (IS_LONG_PATTERN.matcher(value).matches()) {
                 try {
                     return new Date(Long.parseLong(value));
@@ -949,6 +957,12 @@ abstract class TypeCodec<T> {
 
         @Override
         public LocalDate parse(String value) {
+
+            // strip enclosing single quotes, if any
+            // single quotes are optional for long literals, mandatory for date patterns
+            if (value.charAt(0) == '\'' && value.charAt(value.length() - 1) == '\'')
+                value = value.substring(1, value.length() - 1);
+
             if (IS_LONG_PATTERN.matcher(value).matches()) {
                 // In CQL, numeric DATE literals are longs between 0 and 2^32 - 1, with the epoch in the middle,
                 // so parse it as a long and re-center at 0
@@ -982,7 +996,7 @@ abstract class TypeCodec<T> {
 
         @Override
         public String format(LocalDate value) {
-            return value.toString();
+            return "'" + value.toString() + "'";
         }
 
         @Override
@@ -1007,7 +1021,7 @@ abstract class TypeCodec<T> {
         }
     }
 
-    static class TimeCodec extends TypeCodec<Long> {
+    static class TimeCodec extends LongCodec {
 
         private static final Pattern IS_LONG_PATTERN = Pattern.compile("^-?\\d+$");
 
@@ -1079,6 +1093,11 @@ abstract class TypeCodec<T> {
 
         @Override
         public Long parse(String value) {
+            // enclosing single quotes required, even for long literals
+            if (value.charAt(0) != '\'' || value.charAt(value.length() - 1) != '\'')
+                throw new InvalidTypeException("time values must be enclosed by single quotes");
+            value = value.substring(1, value.length() - 1);
+
             if (IS_LONG_PATTERN.matcher(value).matches()) {
                 try {
                     return Long.parseLong(value);
@@ -1096,26 +1115,37 @@ abstract class TypeCodec<T> {
 
         @Override
         public String format(Long value) {
-            return value.toString();
+            if (value == null)
+                return "null";
+            int nano = (int)(value % 1000000000);
+            value -= nano;
+            value /= 1000000000;
+            int seconds = (int)(value % 60);
+            value -= seconds;
+            value /= 60;
+            int minutes = (int)(value % 60);
+            value -= minutes;
+            value /= 60;
+            int hours = (int)(value % 24);
+            value -= hours;
+            value /= 24;
+            assert(value == 0);
+            StringBuilder sb = new StringBuilder("'");
+            leftPadZeros(hours, 2, sb);
+            sb.append(":");
+            leftPadZeros(minutes, 2, sb);
+            sb.append(":");
+            leftPadZeros(seconds, 2, sb);
+            sb.append(".");
+            leftPadZeros(nano, 9, sb);
+            sb.append("'");
+            return sb.toString();
         }
 
-        @Override
-        public ByteBuffer serialize(Long value) {
-            return LongCodec.instance.serializeNoBoxing(value);
+        private static void leftPadZeros(int value, int digits, StringBuilder sb) {
+            sb.append(String.format("%0" + digits + "d", value));
         }
 
-        @Override
-        public Long deserialize(ByteBuffer bytes) {
-            return LongCodec.instance.deserializeNoBoxing(bytes);
-        }
-
-        public ByteBuffer serializeNoBoxing(long value) {
-            return LongCodec.instance.serializeNoBoxing(value);
-        }
-
-        public long deserializeNoBoxing(ByteBuffer bytes) {
-            return LongCodec.instance.deserializeNoBoxing(bytes);
-        }
     }
 
     static class UUIDCodec extends TypeCodec<UUID> {
