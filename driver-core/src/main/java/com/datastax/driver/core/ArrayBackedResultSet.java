@@ -21,6 +21,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.LinkedBlockingDeque;
 
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
@@ -187,8 +188,8 @@ abstract class ArrayBackedResultSet implements ResultSet {
             return true;
         }
 
-        public ListenableFuture<Void> fetchMoreResults() {
-            return MoreFutures.VOID_SUCCESS;
+        public ListenableFuture<ResultSet> fetchMoreResults() {
+            return Futures.<ResultSet>immediateFuture(this);
         }
 
         public ExecutionInfo getExecutionInfo() {
@@ -292,25 +293,25 @@ abstract class ArrayBackedResultSet implements ResultSet {
             }
         }
 
-        public ListenableFuture<Void> fetchMoreResults() {
+        public ListenableFuture<ResultSet> fetchMoreResults() {
             return fetchMoreResults(this.fetchState);
         }
 
-        private ListenableFuture<Void> fetchMoreResults(FetchingState fetchState) {
+        private ListenableFuture<ResultSet> fetchMoreResults(FetchingState fetchState) {
             if (fetchState == null)
-                return MoreFutures.VOID_SUCCESS;
+                return Futures.<ResultSet>immediateFuture(this);
 
             if (fetchState.inProgress != null)
                 return fetchState.inProgress;
 
             assert fetchState.nextStart != null;
             ByteBuffer state = fetchState.nextStart;
-            SettableFuture<Void> future = SettableFuture.create();
+            SettableFuture<ResultSet> future = SettableFuture.create();
             this.fetchState = new FetchingState(null, future);
             return queryNextPage(state, future);
         }
 
-        private ListenableFuture<Void> queryNextPage(ByteBuffer nextStart, final SettableFuture<Void> future) {
+        private ListenableFuture<ResultSet> queryNextPage(ByteBuffer nextStart, final SettableFuture<ResultSet> future) {
 
             assert !(statement instanceof BatchStatement);
 
@@ -351,7 +352,7 @@ abstract class ArrayBackedResultSet implements ResultSet {
                                 }
 
                                 MultiPage.this.infos.offer(info);
-                                future.set(null);
+                                future.set(MultiPage.this);
                                 break;
                             case ERROR:
                                 future.setException(((Responses.Error)response).asException(connection.address));
@@ -406,9 +407,9 @@ abstract class ArrayBackedResultSet implements ResultSet {
 
         private static class FetchingState {
             public final ByteBuffer nextStart;
-            public final ListenableFuture<Void> inProgress;
+            public final ListenableFuture<ResultSet> inProgress;
 
-            FetchingState(ByteBuffer nextStart, ListenableFuture<Void> inProgress) {
+            FetchingState(ByteBuffer nextStart, ListenableFuture<ResultSet> inProgress) {
                 assert (nextStart == null) != (inProgress == null);
                 this.nextStart = nextStart;
                 this.inProgress = inProgress;

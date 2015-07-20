@@ -125,6 +125,12 @@ opportunity to clean up the API.
     exception hierarchy, it now has new child classes that are not
     related to timeouts).
 
+13. `ResultSet#fetchMoreResults()` now returns a `ListenableFuture<ResultSet>`.
+    This makes the API more friendly if you chain transformations on an async
+    query to process all pages (see `AsyncResultSetTest` in the sources for an
+    example).
+
+
 ### 2.1.7
 
 This version brings a few changes in the driver's behavior; none of them break
