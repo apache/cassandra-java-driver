@@ -130,6 +130,13 @@ opportunity to clean up the API.
     query to process all pages (see `AsyncResultSetTest` in the sources for an
     example).
 
+14. `Frozen` annotations in the mapper are no longer checked at runtime (see
+    [JAVA-843|https://datastax-oss.atlassian.net/browse/JAVA-843] for more
+    explanations). So they become purely informational at this stage.
+    However it is a good idea to keep using these annotations and make sure
+    they match the schema, in anticipation for the schema generation features
+    that will be added in a future version.
+
 
 ### 2.1.7
 

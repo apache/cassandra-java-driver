@@ -8,6 +8,7 @@
 - [bug] TypeCodec.getDataTypeFor() does not handle LocalDate instances (JAVA-818)
 - [improvement] Make ResultSet#fetchMoreResult return a
   ListenableFuture<ResultSet> (JAVA-836)
+- [improvement] Disable frozen checks in mapper (JAVA-843)
 
 Merged from 2.1 branch:
 
