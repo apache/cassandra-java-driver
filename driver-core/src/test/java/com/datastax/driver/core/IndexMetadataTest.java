@@ -43,6 +43,19 @@ import com.google.common.primitives.Ints;
     major = 1.2)
 public class IndexMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
 
+    /**
+     * Column definitions for schema_columns table.
+     */
+    private static final ColumnDefinitions defs = new ColumnDefinitions(new ColumnDefinitions.Definition[] {
+            definition(COLUMN_NAME, text()),
+            definition(COMPONENT_INDEX, cint()),
+            definition(KIND, text()),
+            definition(INDEX_NAME, text()),
+            definition(INDEX_TYPE, text()),
+            definition(VALIDATOR, text()),
+            definition(INDEX_OPTIONS, text())
+    });
+
     @Override
     protected Collection<String> getTableDefinitions() {
         String createTable = "CREATE TABLE indexing ("
@@ -182,15 +195,6 @@ public class IndexMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
             + "otherwise, it would require deploying an actual custom index class into the C* test cluster")
     public void should_parse_custom_index_options() {
         TableMetadata table = getTable("indexing");
-        ColumnDefinitions defs = new ColumnDefinitions(new ColumnDefinitions.Definition[] {
-                definition(COLUMN_NAME, text()),
-                definition(COMPONENT_INDEX, cint()),
-                definition(KIND, text()),
-                definition(INDEX_NAME, text()),
-                definition(INDEX_TYPE, text()),
-                definition(VALIDATOR, text()),
-                definition(INDEX_OPTIONS, text())
-        });
         List<ByteBuffer> data = ImmutableList.of(
             wrap("text_column"), // column name
             wrap(0), // component index
@@ -213,15 +217,50 @@ public class IndexMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
                 + "USING 'dummy.DummyIndex' WITH OPTIONS = {'foo' : 'bar', 'class_name' : 'dummy.DummyIndex'};", keyspace));
     }
 
-    private ColumnDefinitions.Definition definition(String name, DataType type) {
+    /**
+     * Validates a special case where a 'KEYS' index was created using thrift.  In this particular case the index lacks
+     * index_options, however the index_options value is a 'null' string rather then a null value.
+     *
+     * @test_category metadata
+     * @expected_result Index properly parsed and is present.
+     * @jira_ticket JAVA-834
+     * @since 2.0.11, 2.1.7
+     */
+    @Test(groups = "short")
+    public void should_parse_with_null_string_index_options() {
+        TableMetadata table = getTable("indexing");
+
+        List<ByteBuffer> data = ImmutableList.of(
+                wrap("b@706172656e745f70617468"), // column name 'parent_path'
+                ByteBuffer.allocate(0), // component index (null)
+                wrap("regular"), // kind
+                wrap("cfs_archive_parent_path"), // index name
+                wrap("KEYS"), // index type
+                wrap("org.apache.cassandra.db.marshal.BytesType"), // validator
+                wrap("null") // index options
+        );
+        Row row = ArrayBackedRow.fromData(defs, M3PToken.FACTORY, ProtocolVersion.V3, data);
+        ColumnMetadata column = ColumnMetadata.fromRaw(table, Raw.fromRow(row, VersionNumber.parse("2.1")));
+        IndexMetadata index = column.getIndex();
+
+        assertThat(index).hasName("cfs_archive_parent_path")
+                .isNotKeys() // While the index type is KEYS, since it lacks index_options it does not considered.
+                .isNotFull()
+                .isNotEntries()
+                .isNotCustomIndex()
+                .asCqlQuery(String.format("CREATE INDEX cfs_archive_parent_path ON %s.indexing (\"b@706172656e745f70617468\");", keyspace));
+    }
+
+
+    private static ColumnDefinitions.Definition definition(String name, DataType type) {
         return new ColumnDefinitions.Definition("ks", "table", name, type);
     }
 
-    private ByteBuffer wrap(String value) {
+    private static ByteBuffer wrap(String value) {
         return ByteBuffer.wrap(value.getBytes());
     }
 
-    private ByteBuffer wrap(int number) {
+    private static ByteBuffer wrap(int number) {
         return ByteBuffer.wrap(Ints.toByteArray(number));
     }
 

@@ -9,6 +9,9 @@
 
 Merged from 2.1 branch:
 
+- [bug] Special case check for 'null' string in index_options column (JAVA-834)
+- [improvement] Allow accessor methods with less parameters in case
+  named bind markers are repeated (JAVA-835)
 - [improvement] Improve QueryBuilder API for SELECT DISTINCT (JAVA-475)
 - [improvement] Make NativeColumnType a top-level class (JAVA-715)
 - [improvement] Expose ProtocolVersion#toInt (JAVA-700)
@@ -65,6 +68,13 @@ Merged from 2.0 branch:
 Merged from 2.1 branch:
 
 - [improvement] Unify "Target" enum for schema elements (JAVA-782)
+
+
+### 2.1.7.1
+
+- [bug] Special case check for 'null' string in index_options column (JAVA-834)
+- [improvement] Allow accessor methods with less parameters in case
+  named bind markers are repeated (JAVA-835)
 
 
 ### 2.1.7

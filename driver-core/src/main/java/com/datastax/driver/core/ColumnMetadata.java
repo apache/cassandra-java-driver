@@ -277,11 +277,16 @@ public class ColumnMetadata {
             if (type == null)
                 return null;
 
-            if (!indexColumns.containsKey(INDEX_OPTIONS))
+            // Special case check for the value of the index_options column being a string with value 'null' as this
+            // column appears to be set this way (JAVA-834).
+            String indexOptionsCol = indexColumns.get(INDEX_OPTIONS);
+            if (indexOptionsCol == null || indexOptionsCol.isEmpty() || indexOptionsCol.equals("null"))
                 return new IndexMetadata(column, indexColumns.get(INDEX_NAME));
+            else {
+                Map<String, String> indexOptions = SimpleJSONParser.parseStringMap(indexOptionsCol);
+                return new IndexMetadata(column, indexColumns.get(INDEX_NAME), indexOptions);
+            }
 
-            Map<String, String> indexOptions = SimpleJSONParser.parseStringMap(indexColumns.get(INDEX_OPTIONS));
-            return new IndexMetadata(column, indexColumns.get(INDEX_NAME), indexOptions);
         }
     }
 
