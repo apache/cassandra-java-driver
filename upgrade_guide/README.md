@@ -3,6 +3,16 @@
 The purpose of this guide is to detail changes made by successive
 versions of the Java driver.
 
+### 2.1.10
+
+1.  `Frozen` annotations in the mapper are no longer checked at runtime (see
+    [JAVA-843|https://datastax-oss.atlassian.net/browse/JAVA-843] for more
+    explanations). So they become purely informational at this stage.
+    However it is a good idea to keep using these annotations and make sure
+    they match the schema, in anticipation for the schema generation features
+    that will be added in a future version.
+
+
 ### 2.1.8
 
 2.1.8 is binary-compatible with 2.1.7 but introduces a small change in the 
