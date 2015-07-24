@@ -341,6 +341,24 @@ public class QueryBuilderTest {
     }
 
     @Test(groups = "unit")
+    public void should_handle_update_if_exists() {
+        Statement update = update("foo").with(set("x", 3)).ifExists();
+        assertThat(update.toString()).isEqualTo("UPDATE foo SET x=3 IF EXISTS;");
+    }
+    
+    @Test(groups = "unit")
+    public void should_handle_update_with_conditions_and_if_exists() {
+        Statement update = update("foo").with(set("x", 3)).where(eq("k", 2)).ifExists();
+        assertThat(update.toString()).isEqualTo("UPDATE foo SET x=3 WHERE k=2 IF EXISTS;");
+    }
+    
+    @Test(groups = "unit")
+    public void if_exists_should_combine_with_any_condition() {
+        Statement update = update("foo").with(set("x", 3)).where(eq("k", 2)).onlyIf(eq("k", "2")).ifExists();
+        assertThat(update.toString()).isEqualTo("UPDATE foo SET x=3 WHERE k=2 IF k='2' IF EXISTS;");
+    }
+    
+    @Test(groups = "unit")
     public void deleteTest() throws Exception {
 
         String query;

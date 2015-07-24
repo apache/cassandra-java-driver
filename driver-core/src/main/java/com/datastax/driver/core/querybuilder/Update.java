@@ -15,7 +15,6 @@
  */
 package com.datastax.driver.core.querybuilder;
 
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,6 +31,7 @@ public class Update extends BuiltStatement {
     private final Where where;
     private final Options usings;
     private final Conditions conditions;
+    private boolean ifExists;
 
     Update(String keyspace, String table) {
         super(keyspace);
@@ -40,6 +40,7 @@ public class Update extends BuiltStatement {
         this.where = new Where(this);
         this.usings = new Options(this);
         this.conditions = new Conditions(this);
+        this.ifExists = false;
     }
 
     Update(TableMetadata table) {
@@ -49,6 +50,7 @@ public class Update extends BuiltStatement {
         this.where = new Where(this);
         this.usings = new Options(this);
         this.conditions = new Conditions(this);
+        this.ifExists = false;
     }
 
     @Override
@@ -78,6 +80,10 @@ public class Update extends BuiltStatement {
         if (!conditions.conditions.isEmpty()) {
             builder.append(" IF ");
             Utils.joinAndAppend(builder, " AND ", conditions.conditions, variables);
+        }
+
+        if (ifExists) {
+            builder.append(" IF EXISTS");
         }
 
         return builder;
@@ -147,6 +153,27 @@ public class Update extends BuiltStatement {
     }
 
     /**
+     * Sets the 'IF EXISTS' option for this UPDATE statement.
+     *
+     * <p>
+     * A update with that option will report whether the statement actually
+     * resulted in data being updated. The existence check and update are
+     * done transactionally in the sense that if multiple clients attempt to
+     * update a given row with this option, then at most one may succeed.
+     * </p>
+     * <p>
+     * Please keep in mind that using this option has a non negligible
+     * performance impact and should be avoided when possible.
+     * </p>
+     *
+     * @return this UPDATE statement.
+     */
+    public IfExists ifExists() {
+        this.ifExists = true;
+        return new IfExists(this);
+    }
+    
+    /**
      * Adds a new options for this UPDATE statement.
      *
      * @param using the option to add.
@@ -211,6 +238,27 @@ public class Update extends BuiltStatement {
         public Conditions onlyIf(Clause condition) {
             return statement.onlyIf(condition);
         }
+
+        /**
+         * Sets the 'IF EXISTS' option for the UPDATE statement those assignments are part of.
+         *
+         * <p>
+         * An update with that option will report whether the statement actually
+         * resulted in data being updated. The existence check and update are
+         * done transactionally in the sense that if multiple clients attempt to
+         * update a given row with this option, then at most one may succeed.
+         * </p>
+         * <p>
+         * Please keep in mind that using this option has a non negligible
+         * performance impact and should be avoided when possible.
+         * </p>
+         *
+         * @return the UPDATE statement those assignments are part of.
+         */
+        public IfExists ifExists() {
+            statement.ifExists = true;
+            return new IfExists(statement);
+        }
     }
 
     /**
@@ -265,6 +313,28 @@ public class Update extends BuiltStatement {
          */
         public Conditions onlyIf(Clause condition) {
             return statement.onlyIf(condition);
+        }
+        
+        /**
+         * Sets the 'IF EXISTS' option for the UPDATE statement this WHERE clause
+         * is part of.
+         *
+         * <p>
+         * An update with that option will report whether the statement actually
+         * resulted in data being updated. The existence check and update are
+         * done transactionally in the sense that if multiple clients attempt to
+         * update a given row with this option, then at most one may succeed.
+         * </p>
+         * <p>
+         * Please keep in mind that using this option has a non negligible
+         * performance impact and should be avoided when possible.
+         * </p>
+         *
+         * @return the UPDATE statement this WHERE clause is part of.
+         */
+        public IfExists ifExists() {
+            statement.ifExists = true;
+            return new IfExists(statement);
         }
     }
 
@@ -382,6 +452,34 @@ public class Update extends BuiltStatement {
          */
         public Options using(Using using) {
             return statement.using(using);
+        }
+        
+        /**
+         * Sets the 'IF EXISTS' option for the UPDATE statement those conditions are part of
+         * is part of.
+         *
+         * <p>
+         * An update with that option will report whether the statement actually
+         * resulted in data being updated. The existence check and update are
+         * done transactionally in the sense that if multiple clients attempt to
+         * update a given row with this option, then at most one may succeed.
+         * </p>
+         * <p>
+         * Please keep in mind that using this option has a non negligible
+         * performance impact and should be avoided when possible.
+         * </p>
+         *
+         * @return the UPDATE statement those conditions are part of.
+         */
+        public IfExists ifExists() {
+            statement.ifExists = true;
+            return new IfExists(statement);
+        }
+    }
+    
+    public static class IfExists extends BuiltStatement.ForwardingStatement<Update> {
+        IfExists(Update statement) {
+            super(statement);
         }
     }
 }
