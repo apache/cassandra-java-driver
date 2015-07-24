@@ -6,6 +6,8 @@
 - [bug] DateCodec does not format values correctly (JAVA-816)
 - [bug] TimeCodec does not format values correctly (JAVA-817)
 - [bug] TypeCodec.getDataTypeFor() does not handle LocalDate instances (JAVA-818)
+- [improvement] Make ResultSet#fetchMoreResult return a
+  ListenableFuture<ResultSet> (JAVA-836)
 
 Merged from 2.1 branch:
 
