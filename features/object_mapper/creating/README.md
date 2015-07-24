@@ -217,9 +217,12 @@ Cassandra types. As in Cassandra, collections can contain all native
 types and all [user types](#mapping-user-types) previously defined is
 the database.
 
-Collection fields must be annotated to indicate whether they are frozen
-or not (currently this is only for informational purposes, but the
-mapper will check that the declared state match the rules in Cassandra).
+Collection and UDT fields should be annotated to indicate whether they are
+frozen. Currently this is only for informational purposes (the mapper
+won't check that the declarations match the rules in Cassandra).
+However it is a good idea to keep using these annotations and make sure
+they match the schema, in anticipation for the schema generation features
+that will be added in a future version.
 The default annotation is [@Frozen][frozen], [@FrozenKey][frozenkey] and
 [@FrozenValue][frozenvalue]` are also provided for convenience:
 
