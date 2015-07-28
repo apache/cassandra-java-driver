@@ -61,7 +61,7 @@
           </ul>
           <form class="navbar-form form-search navbar-right dropdown visible-lg-block" ng-class="{open: hasResults}" role="search" ng-submit="submit()">
             <div class="form-group has-feedback">
-              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.2.0-rc1')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.2.0-rc2')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
             </div>
             <ul class="dropdown-menu" role="menu">
               <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
@@ -80,12 +80,14 @@
               <li>
                 <div class="dropdown">
                   <button id="current-version" class="btn btn-default btn-sm" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    2.2.0-rc1
+                    2.2.0-rc2
                     <span class="caret"></span>
                   </button>
                   <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
                   
-                    <li class="disabled"><a href="./">2.2.0-rc1</a></li>
+                    <li class="disabled"><a href="./">2.2.0-rc2</a></li>
+                  
+                    <li><a href="../../2.2.0-rc1/features/paging/">2.2.0-rc1</a></li>
                   
                     <li><a href="../../2.1.7/features/paging/">2.1.7</a></li>
                   
@@ -148,7 +150,7 @@ Cassandra (in other words, it’s the size of each page).</p>
 <span class="n">cluster</span><span class="o">.</span><span class="na">getConfiguration</span><span class="o">().</span><span class="na">getQueryOptions</span><span class="o">().</span><span class="na">setFetchSize</span><span class="o">(</span><span class="mi">2000</span><span class="o">);</span>
 </code></pre>
 <p>The fetch size can also be set on a statement:</p>
-<pre class="highlight"><code><span class="n">Statement</span> <span class="n">statement</span> <span class="o">=</span> <span class="k">new</span> <span class="n">SimpleStatement</span><span class="o">(</span><span class="s">"your query"</span><span class="o">);</span>
+<pre class="highlight"><code><span class="n">Statement</span> <span class="n">statement</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="na">newSimpleStatement</span><span class="o">(</span><span class="s">"your query"</span><span class="o">);</span>
 <span class="n">statement</span><span class="o">.</span><span class="na">setFetchSize</span><span class="o">(</span><span class="mi">2000</span><span class="o">);</span>
 </code></pre>
 <p>If the fetch size is set on a statement, it will take precedence;
@@ -212,7 +214,7 @@ string version as a query parameter in the URL to the next page
 (<code>http://myservice.com/results?page=&lt;...&gt;</code>). When that value is
 retrieved later, we can deserialize it and reinject it in a statement:</p>
 <pre class="highlight"><code><span class="n">PagingState</span> <span class="n">pagingState</span> <span class="o">=</span> <span class="n">PagingState</span><span class="o">.</span><span class="na">fromString</span><span class="o">(</span><span class="n">string</span><span class="o">);</span>
-<span class="n">Statement</span> <span class="n">st</span> <span class="o">=</span> <span class="k">new</span> <span class="n">SimpleStatement</span><span class="o">(</span><span class="s">"your query"</span><span class="o">);</span>
+<span class="n">Statement</span> <span class="n">st</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="na">newSimpleStatement</span><span class="o">(</span><span class="s">"your query"</span><span class="o">);</span>
 <span class="n">st</span><span class="o">.</span><span class="na">setPagingState</span><span class="o">(</span><span class="n">pagingState</span><span class="o">);</span>
 <span class="n">ResultSet</span> <span class="n">rs</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="na">execute</span><span class="o">(</span><span class="n">st</span><span class="o">);</span>
 </code></pre>
@@ -226,7 +228,7 @@ driver will raise an error.</p>
 implementation for our web service:</p>
 <pre class="highlight"><code><span class="kd">final</span> <span class="kt">int</span> <span class="n">RESULTS_PER_PAGE</span> <span class="o">=</span> <span class="mi">100</span><span class="o">;</span>
 
-<span class="n">Statement</span> <span class="n">st</span> <span class="o">=</span> <span class="k">new</span> <span class="n">SimpleStatement</span><span class="o">(</span><span class="s">"your query"</span><span class="o">);</span>
+<span class="n">Statement</span> <span class="n">st</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="na">newSimpleStatement</span><span class="o">(</span><span class="s">"your query"</span><span class="o">);</span>
 <span class="n">st</span><span class="o">.</span><span class="na">setFetchSize</span><span class="o">(</span><span class="n">RESULTS_PER_PAGE</span><span class="o">);</span>
 
 <span class="n">String</span> <span class="n">requestedPage</span> <span class="o">=</span> <span class="n">extractPagingStateStringFromURL</span><span class="o">();</span>

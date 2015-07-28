@@ -61,7 +61,7 @@
           </ul>
           <form class="navbar-form form-search navbar-right dropdown visible-lg-block" ng-class="{open: hasResults}" role="search" ng-submit="submit()">
             <div class="form-group has-feedback">
-              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.2.0-rc1')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.2.0-rc2')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
             </div>
             <ul class="dropdown-menu" role="menu">
               <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
@@ -80,12 +80,14 @@
               <li>
                 <div class="dropdown">
                   <button id="current-version" class="btn btn-default btn-sm" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    2.2.0-rc1
+                    2.2.0-rc2
                     <span class="caret"></span>
                   </button>
                   <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
                   
-                    <li class="disabled"><a href="./">2.2.0-rc1</a></li>
+                    <li class="disabled"><a href="./">2.2.0-rc2</a></li>
+                  
+                    <li><a href="../2.2.0-rc1/upgrade_guide/">2.2.0-rc1</a></li>
                   
                     <li><a href="../2.1.7/upgrade_guide/">2.1.7</a></li>
                   
@@ -127,10 +129,143 @@ versions of the Java driver.</p>
 <h3 id="2-2-0">2.2.0<a class="anchor" href="#2-2-0" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h3>
 
-<p>This version brings parity with Cassandra 2.2. We’ve also seized the
-opportunity to clean up the API.</p>
+<p>This version brings parity with Cassandra 2.2.</p>
+
+<p>It is <strong>not binary compatible</strong> with the driver’s 2.1 branch.
+The main changes were introduced by the custom codecs feature (see below).
+We’ve also seized the opportunity to remove code that was deprecated in 2.1.</p>
 
 <ol>
+<li>
+<p><a href="../features/custom_codecs/">Custom codecs</a>
+(<a href="https://datastax-oss.atlassian.net/browse/JAVA-721">JAVA-721</a>)
+introduce several breaking changes and also modify a few runtime behaviors.</p>
+
+<p>Here is a detailed list of breaking API changes:</p>
+
+<ul>
+<li>
+<code>TypeCodec</code> was package-private before and is now public.</li>
+<li>
+<code>DataType</code> has no more references to <code>TypeCodec</code>, so most methods that dealt with serialization and deserialization of data types have been removed:
+
+<ul>
+<li><code>ByteBuffer serialize(Object value, ProtocolVersion protocolVersion)</code></li>
+<li><code>ByteBuffer serializeValue(Object value, ProtocolVersion protocolVersion)</code></li>
+<li><code>Object deserialize(ByteBuffer bytes, ProtocolVersion protocolVersion)</code></li>
+<li><code>Object deserialize(ByteBuffer bytes, int protocolVersion)</code></li>
+<li><code>Object parse(String value)</code></li>
+<li><code>String format(Object value)</code></li>
+<li><code>Class&lt;?&gt; asJavaClass()</code></li>
+</ul>
+</li>
+<li>
+<code>GettableByIndexData</code> (affects <code>Row</code>, <code>BoundStatement</code>, <code>TupleValue</code> and <code>UDTValue</code>). The following public methods were added:
+
+<ul>
+<li><code>&lt;T&gt; T get(int i, Class&lt;T&gt; targetClass)</code></li>
+<li><code>&lt;T&gt; T get(int i, TypeToken&lt;T&gt; targetType)</code></li>
+<li><code>&lt;T&gt; T get(int i, TypeCodec&lt;T&gt; codec)</code></li>
+</ul>
+</li>
+<li>
+<code>GettableByNameData</code> (affects <code>Row</code>, <code>BoundStatement</code> and <code>UDTValue</code>). The following public methods were added:
+
+<ul>
+<li><code>&lt;T&gt; T get(String name, Class&lt;T&gt; targetClass)</code></li>
+<li><code>&lt;T&gt; T get(String name, TypeToken&lt;T&gt; targetType)</code></li>
+<li><code>&lt;T&gt; T get(String name, TypeCodec&lt;T&gt; codec)</code></li>
+</ul>
+</li>
+<li>
+<code>SettableByIndexData</code> (affects <code>Row</code>, <code>BoundStatement</code>, <code>TupleValue</code> and <code>UDTValue</code>). The following public methods were added:
+
+<ul>
+<li><code>&lt;V&gt; T set(int i, V v, Class&lt;V&gt; targetClass)</code></li>
+<li><code>&lt;V&gt; T set(int i, V v, TypeToken&lt;V&gt; targetType)</code></li>
+<li><code>&lt;V&gt; T set(int i, V v, TypeCodec&lt;V&gt; codec)</code></li>
+</ul>
+</li>
+<li>
+<code>SettableByNameData</code> (affects <code>Row</code>, <code>BoundStatement</code> and <code>UDTValue</code>). The following public methods were added:
+
+<ul>
+<li><code>&lt;V&gt; T set(String name, V v, Class&lt;V&gt; targetClass)</code></li>
+<li><code>&lt;V&gt; T set(String name, V v, TypeToken&lt;V&gt; targetType)</code></li>
+<li><code>&lt;V&gt; T set(String name, V v, TypeCodec&lt;V&gt; codec)</code></li>
+</ul>
+</li>
+<li>
+<code>Session</code>. The following methods were added:
+
+<ul>
+<li><code>newSimpleStatement(String query)</code></li>
+<li><code>newSimpleStatement(String query, Object... values)</code></li>
+</ul>
+</li>
+<li>
+<code>RegularStatement</code>. The following public methods were modified:
+
+<ul>
+<li><code>getValues()</code></li>
+<li><code>hasValues()</code></li>
+</ul>
+</li>
+<li>
+<code>SimpleStatement</code>. Public constructors were removed; users are required to call either:
+
+<ul>
+<li>
+<code>Session.newSimpleStatement(String query)</code> or</li>
+<li><code>Session.newSimpleStatement(String query, Object... values)</code></li>
+</ul>
+</li>
+<li>
+<code>QueryBuilder</code>. This class now has a single, public constructor: <code>QueryBuilder(Cluster cluster)</code>.
+Its fluent API has also changed; instead of e.g.: <code>QueryBuilder.select(...)</code>,
+users should now use the following idiom: <code>new QueryBuilder(cluster).select(...)</code>
+All methods that start a query are now instance methods instead of static ones.</li>
+<li>
+<code>PreparedStatement</code>. The following public method was added:
+
+<ul>
+<li>
+<code>CodecRegistry getCodecRegistry()</code>.</li>
+</ul>
+</li>
+<li>
+<code>TupleType</code>. The following public method was deleted:
+
+<ul>
+<li>
+<code>TupleType of(DataType... types)</code>; users should now use <code>Metadata.newTupleType(DataType...)</code>.</li>
+</ul>
+</li>
+</ul>
+
+<p>The driver runtime behavior changes in the following situations:</p>
+
+<ul>
+<li>
+<code>RuntimeException</code>s thrown during serialization or deserialization might not be
+the same ones as before, due to the newly-introduced <code>CodecNotFoundException</code>
+and to the dynamic nature of codec search introduced by JAVA-721.</li>
+<li>
+<code>TypeCodec.format(Object)</code> now returns the CQL keyword <code>"NULL"</code> instead of a <code>null</code> reference
+for <code>null</code> inputs.</li>
+</ul>
+</li>
+<li><p>The driver now depends on Guava 16.0.1 (instead of 14.0.1).
+This update has been mainly motivated by Guava’s <a href="https://code.google.com/p/guava-libraries/issues/detail?id=1635">Issue #1635</a>,
+which affects <code>TypeToken</code>, and hence all <code>TypeCodec</code> implementations handling parameterized types.</p></li>
+<li>
+<p><code>UDTMapper</code> (the type previously used to convert <code>@UDT</code>-annotated
+classes to their CQL counterpart) was removed, as well as the
+corresponding method <code>MappingManager#udtMapper</code>.</p>
+
+<p>The mapper now uses custom codecs to convert UDTs. See more
+explanations <a href="../features/object_mapper/custom_codecs/#implicit-udt-codecs">here</a>.</p>
+</li>
 <li>
 <p>All methods that took the protocol version as an <code>int</code> or assumed a
 default version have been removed (they were already deprecated in
@@ -139,16 +274,6 @@ default version have been removed (they were already deprecated in
 <ul>
 <li><code>AbstractGettableData(int)</code></li>
 <li><code>Cluster.Builder#withProtocolVersion(int)</code></li>
-<li>in <code>DataType</code>:
-
-<ul>
-<li><code>serialize(Object, int)</code></li>
-<li><code>serialize(Object)</code></li>
-<li><code>deserialize(ByteBuffer)</code></li>
-<li><code>serializeValue(Object, int)</code></li>
-<li><code>serializeValue(Object)</code></li>
-</ul>
-</li>
 <li>in <code>ProtocolOptions</code>:
 
 <ul>
@@ -156,13 +281,6 @@ default version have been removed (they were already deprecated in
 <code>NEWEST_SUPPORTED_PROTOCOL_VERSION</code> (replaced by
 <code>ProtocolVersion#NEWEST_SUPPORTED</code>)</li>
 <li><code>int getProtocolVersion()</code></li>
-</ul>
-</li>
-<li>in <code>RegularStatement</code>:
-
-<ul>
-<li><code>getValues(int)</code></li>
-<li><code>getValues()</code></li>
 </ul>
 </li>
 </ul>
@@ -297,7 +415,84 @@ way.</p>
 exception hierarchy, it now has new child classes that are not
 related to timeouts).</p>
 </li>
+<li><p><code>ResultSet#fetchMoreResults()</code> now returns a <code>ListenableFuture&lt;ResultSet&gt;</code>.
+This makes the API more friendly if you chain transformations on an async
+query to process all pages (see <code>AsyncResultSetTest</code> in the sources for an
+example).</p></li>
+<li><p><code>Frozen</code> annotations in the mapper are no longer checked at runtime (see
+<a href="https://datastax-oss.atlassian.net/browse/JAVA-843">JAVA-843</a> for more
+explanations). So they become purely informational at this stage.
+However it is a good idea to keep using these annotations and make sure
+they match the schema, in anticipation for the schema generation features
+that will be added in a future version.</p></li>
 </ol>
+
+<h3 id="2-1-7">2.1.7<a class="anchor" href="#2-1-7" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<p>This version brings a few changes in the driver’s behavior; none of them break
+binary compatibility.</p>
+
+<ol>
+<li><p>The <code>DefaultRetryPolicy</code>’s behaviour has changed in the case of an Unavailable
+exception received from a request. The new behaviour will cause the driver to
+process a Retry on a different node at most once, otherwise an exception will
+be thrown. This change makes sense in the case where the node tried initially
+for the request happens to be isolated from the rest of the cluster (e.g.
+because of a network partition) but can still answer to the client normally.
+In this case, trying another node has a chance of success.
+The previous behaviour was to always throw an exception.</p></li>
+<li>
+<p>The following properties in <code>PoolingOptions</code> were renamed:</p>
+
+<ul>
+<li>
+<code>MaxSimultaneousRequestsPerConnectionThreshold</code> to <code>NewConnectionThreshold</code>
+</li>
+<li>
+<code>MaxSimultaneousRequestsPerHostThreshold</code> to <code>MaxRequestsPerConnection</code>
+</li>
+</ul>
+
+<p>The old getters/setters were deprecated, but they delegate to the new
+ones.</p>
+
+<p>Also, note that the connection pool for protocol v3 can now be configured to
+use multiple connections. See <a href="../features/pooling">this page</a> for more
+information.</p>
+</li>
+<li>
+<p><code>MappingManager(Session)</code> will now force the initialization of the <code>Session</code>
+if needed. This is a change from 2.1.6, where if you gave it an uninitialized
+session (created with <code>Cluster#newSession()</code> instead of <code>Cluster#connect()</code>),
+it would only get initialized on the first request.</p>
+
+<p>If this is a problem for you, <code>MappingManager(Session, ProtocolVersion)</code>
+preserves the previous behavior (see the API docs for more details).</p>
+</li>
+</ol>
+
+<p>Merged from 2.0.11:</p>
+
+<ol>
+<li>The <code>DefaultRetryPolicy</code>’s behaviour has changed in the case of an Unavailable
+exception received from a request. The new behaviour will cause the driver to
+process a Retry on a different node at most once, otherwise an exception will
+be thrown. This change makes sense in the case where the node tried initially
+for the request happens to be isolated from the rest of the cluster (e.g.
+because of a network partition) but can still answer to the client normally.
+In this case, trying another node has a chance of success.
+The previous behaviour was to always throw an exception.</li>
+<li>A <code>BuiltStatement</code> is now considered non-idempotent whenever a <code>fcall()</code>
+or <code>raw()</code> is used to build a value to be inserted in the database.
+If you know that the CQL functions or expressions are safe, use
+<code>setIdempotent(true)</code> on the statement.</li>
+</ol>
+
+<h3 id="2-1-6">2.1.6<a class="anchor" href="#2-1-6" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<p>See <a href="#2-0-x-to-2-0-10">2.0.10</a>.</p>
 
 <h3 id="2-1-2">2.1.2<a class="anchor" href="#2-1-2" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h3>
@@ -410,7 +605,26 @@ the protocol version in use
 (<code>cluster.getConfiguration().getProtocolOptions().getProtocolVersion()</code>).</p></li>
 </ol>
 
-<h3 id="2-0-x-to-2-0-10">2.0.x to 2.0.10<a class="anchor" href="#2-0-x-to-2-0-10" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h3 id="2-0-11">2.0.11<a class="anchor" href="#2-0-11" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<ol>
+<li>The <code>DefaultRetryPolicy</code>’s behaviour has changed in the case of an Unavailable
+exception received from a request. The new behaviour will cause the driver to
+process a Retry on a different node at most once, otherwise an exception will
+be thrown. This change makes sense in the case where the node tried initially
+for the request happens to be isolated from the rest of the cluster (e.g.
+because of a network partition) but can still answer to the client normally.
+In this case, trying another node has a chance of success.
+The previous behaviour was to always throw an exception.</li>
+<li>A <code>BuiltStatement</code> is now considered non-idempotent whenever a <code>fcall()</code>
+or <code>raw()</code> is used to build a value to be inserted in the database.
+If you know that the CQL functions or expressions are safe, use
+<code>setIdempotent(true)</code> on the statement.</li>
+</ol>
+
+<h3 id="2-0-x-to-2-0-10">
+<a name="2-0-x-to-2-0-10"></a>2.0.x to 2.0.10<a class="anchor" href="#2-0-x-to-2-0-10" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h3>
 
 <p>We try to avoid breaking changes within a branch (2.0.x to 2.0.y), but
@@ -602,8 +816,8 @@ serialize all values into strings. Shortcut <code>Session#execute()</code> and
 </li>
 <li>
 <p>SELECT queries are now “paged” under the hood. In other words, if a query
-yields a very large result, only the beginning of the <code>ResultSet</code> will be fetch
-initially, the rest being fetch “on-demand”. In practice, this means that:</p>
+yields a very large result, only the beginning of the <code>ResultSet</code> will be fetched
+initially, the rest being fetched “on-demand”. In practice, this means that:</p>
 <pre class="highlight"><code><span class="k">for</span> <span class="o">(</span><span class="n">Row</span> <span class="n">r</span> <span class="o">:</span> <span class="n">session</span><span class="o">.</span><span class="na">execute</span><span class="o">(</span><span class="s">"SELECT * FROM mytable"</span><span class="o">))</span>
    <span class="o">...</span> <span class="n">process</span> <span class="n">r</span> <span class="o">...</span>
 </code></pre>
@@ -615,9 +829,8 @@ fine tune the behavior of that paging:</p>
 <ul>
 <li>the size of each “page” can be set per-query (<code>Statement#setFetchSize()</code>)</li>
 <li>the <code>ResultSet</code> object provides 2 methods to check the state of paging
-(<code>ResultSet#getAvailableWithoutFetching</code> and
-<code>ResultSet#isFullyFetched</code>) as well as a mean to force the pre-fetching
-of the next page (<code>ResultSet#fetchMoreResults</code>).</li>
+(<code>ResultSet#getAvailableWithoutFetching</code> and <code>ResultSet#isFullyFetched</code>)
+as well as a mean to force the pre-fetching of the next page (<code>ResultSet#fetchMoreResults</code>).</li>
 </ul>
 </li>
 </ol>
@@ -640,6 +853,10 @@ of the next page (<code>ResultSet#fetchMoreResults</code>).</li>
 <a href="#upgrade-guide">Upgrade guide
 </a><ol class="nav nav-pills nav-stacked">
 <li><a href="#2-2-0">2.2.0
+</a></li>
+<li><a href="#2-1-7">2.1.7
+</a></li>
+<li><a href="#2-1-6">2.1.6
 </a></li>
 <li>
 <a href="#2-1-2">2.1.2
@@ -666,7 +883,10 @@ of the next page (<code>ResultSet#fetchMoreResults</code>).</li>
 </a></li>
 </ol>
 </li>
-<li><a href="#2-0-x-to-2-0-10">2.0.x to 2.0.10
+<li><a href="#2-0-11">2.0.11
+</a></li>
+<li><a href="#2-0-x-to-2-0-10">
+2.0.x to 2.0.10
 </a></li>
 <li>
 <a href="#1-0-to-2-0">1.0 to 2.0

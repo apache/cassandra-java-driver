@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="description" content="High performance Java client for Apache Cassandra">
+    <meta name="author" content="DataStax">
+
+    <title>Java Driver for Apache Cassandra - Query timestamps</title>
+
+    <link rel="icon" href="../../../favicon.ico">
+    <link rel="apple-touch-icon" href="../../../favicon.png">
+    <link href="../../../css/style.css" rel="stylesheet">
+    <link href="../../../css/pygments.css" rel="stylesheet">
+    <link href="../../../css/hotkeys.css" rel="stylesheet">
+
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body ng-app="docs" data-spy="scroll" data-target=".side-nav">
+    <header class="navbar navbar-default navbar-static-top" role="navigation">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="../../">Java Driver for Apache Cassandra</a>
+        </div>
+        <div class="collapse navbar-collapse" ng-controller="search">
+          <ul class="nav navbar-nav">
+            
+            
+            
+            <li class="active">
+              <a href="../">Features</a>
+            </li>
+            
+            
+            <li>
+              <a href="../../changelog/">Changelog</a>
+            </li>
+            
+            
+            <li>
+              <a href="../../upgrade_guide/">Upgrading</a>
+            </li>
+            
+            
+            <li>
+              <a href="../../faq/">FAQ</a>
+            </li>
+            
+          </ul>
+          <form class="navbar-form form-search navbar-right dropdown visible-lg-block" ng-class="{open: hasResults}" role="search" ng-submit="submit()">
+            <div class="form-group has-feedback">
+              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.2.0-rc1')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+            </div>
+            <ul class="dropdown-menu" role="menu">
+              <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
+            </ul>
+          </form>
+        </div>
+      </div>
+    </header>
+
+    <div class="container" id="content">
+      <div class="row">
+        <div class="col-md-9 content">
+          <nav class="crumbs">
+            <ol class="breadcrumb">
+              
+              <li>
+                <div class="dropdown">
+                  <button id="current-version" class="btn btn-default btn-sm" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    2.2.0-rc1
+                    <span class="caret"></span>
+                  </button>
+                  <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
+                  
+                    <li><a href="../../../features/query_timestamps/">2.2.0-rc2</a></li>
+                  
+                    <li class="disabled"><a href="./">2.2.0-rc1</a></li>
+                  
+                    <li><a href="../../../2.1.7/features/query_timestamps/">2.1.7</a></li>
+                  
+                    <li><a href="../../../2.1.6/features/query_timestamps/">2.1.6</a></li>
+                  
+                    <li><a href="../../../2.1.5/">2.1.5</a></li>
+                  
+                    <li><a href="../../../2.0.10.1/">2.0.10.1</a></li>
+                  
+                    <li><a href="../../../2.0.10/">2.0.10</a></li>
+                  
+                  </ul>
+                </div>
+              </li>
+              
+              
+              
+              
+              <li><a href="../../">Home</a></li>
+              
+              
+              
+              
+              
+              <li><a href="../">Features</a></li>
+              
+              
+              
+              
+              
+              <li class="active">Query timestamps</li>
+              
+              
+              
+            </ol>
+          </nav>
+          
+
+<h2 id="query-timestamps">Query timestamps<a class="anchor" href="#query-timestamps" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h2>
+
+<p>In Cassandra, each mutation has a microsecond-precision timestamp, which
+is used to order operations relative to each other.</p>
+
+<p>There are various ways to assign it:</p>
+
+<h3 id="cql-using-timestamp">CQL <code>USING TIMESTAMP</code>
+<a class="anchor" href="#cql-using-timestamp" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<p>You can explicitly provide the timestamp in your CQL query:</p>
+<pre class="highlight"><code><span class="n">session</span><span class="o">.</span><span class="na">execute</span><span class="o">(</span><span class="s">"INSERT INTO my_table(c1, c2) values (1, 1) "</span> <span class="o">+</span>
+    <span class="s">"USING TIMESTAMP 1432815430948040"</span><span class="o">);</span>
+</code></pre>
+<h3 id="client-side-generation">Client-side generation<a class="anchor" href="#client-side-generation" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<p>This is enabled by default if you’re using the driver 2.2 and a version
+of Cassandra that supports <a href="../native_protocol">native protocol</a> v3 or
+above.</p>
+
+<p>A client timestamp will be sent by each query. It is generated by a
+<a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/TimestampGenerator.html">TimestampGenerator</a>. The default implementation is
+<a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/AtomicMonotonicTimestampGenerator.html">AtomicMonotonicTimestampGenerator</a>.</p>
+
+<p>You can specify another generator at initialization:</p>
+<pre class="highlight"><code><span class="n">Cluster</span><span class="o">.</span><span class="na">builder</span><span class="o">().</span><span class="na">addContactPoint</span><span class="o">(</span><span class="s">"127.0.0.1"</span><span class="o">)</span>
+    <span class="o">.</span><span class="na">withTimestampGenerator</span><span class="o">(</span><span class="k">new</span> <span class="n">MyCustomTimestampGenerator</span><span class="o">())</span>
+    <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+</code></pre>
+<p>In addition, you can also override the default timestamp on a
+per-statement basis:</p>
+<pre class="highlight"><code><span class="n">Statement</span> <span class="n">statement</span> <span class="o">=</span> <span class="k">new</span> <span class="n">SimpleStatement</span><span class="o">(</span>
+    <span class="s">"UPDATE users SET email = 'x@y.com' where id = 1"</span><span class="o">);</span>
+<span class="n">statement</span><span class="o">.</span><span class="na">setDefaultTimestamp</span><span class="o">(</span><span class="mi">1234567890</span><span class="o">);</span>
+<span class="n">session</span><span class="o">.</span><span class="na">execute</span><span class="o">(</span><span class="n">statement</span><span class="o">);</span>
+</code></pre>
+<h3 id="server-side-generation">Server-side generation<a class="anchor" href="#server-side-generation" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<p>This is the “legacy” behavior if you’re connected to a Cassandra version
+that only supports protocol v2 or below. The server will assign a
+timestamp based on the time it receives the query.</p>
+
+<p>This can be a problem when the order of the writes matter: with unlucky
+timing (different coordinators, network latency, etc.), two successive
+requests from the same client might be processed in a different order
+server-side, and end up with out-of-order timestamps. If protocol v3 is
+not an option, the only workaround is to add <code>USING TIMESTAMP</code> in your
+queries.</p>
+
+<h3 id="summary">Summary<a class="anchor" href="#summary" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<p>As shown in the previous sections, there are multiple ways to provide a
+timestamp, some of which overlap. The order of precedence is the
+following:</p>
+
+<ol>
+<li>if there is a <code>USING TIMESTAMP</code> clause in the CQL string, use that
+over anything else;</li>
+<li>otherwise, if a default timestamp was set on the statement and is
+different from <code>Long.MIN_VALUE</code>, use it;</li>
+<li>otherwise, if a generator is specified, invoke it and use its result
+if it is different from <code>Long.MIN_VALUE</code>;</li>
+<li>otherwise, let the server assign the timestamp.</li>
+</ol>
+
+<p>Steps 2 and 3 only apply if native protocol v3 or above is in use.</p>
+
+
+        </div>
+        <div class="col-md-3">
+          <div id="navigation" class="panel-group side-nav" data-spy="affix" data-offset-top="60" data-offset-bottom="80" role="tablist" aria-multiselectable="true">
+            <div id="table-of-contents-panel" class="panel panel-default">
+              <div id="table-of-contents-heading" class="panel-heading" role="tab">
+                <h4 class="panel-title">
+                  <a data-toggle="collapse" href="#table-of-contents" aria-expanded="true" aria-controls="table-of-contents">
+                    Contents<i class="pull-right glyphicon glyphicon-chevron-up"></i>
+                  </a>
+                </h4>
+              </div>
+              <div id="table-of-contents" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="table-of-contents-heading">
+                <div class="panel-body">
+                  <ol class="nav nav-pills nav-stacked toc"><li>
+<a href="#query-timestamps">Query timestamps
+</a><ol class="nav nav-pills nav-stacked">
+<li><a href="#cql-using-timestamp">CQL USING TIMESTAMP
+
+</a></li>
+<li><a href="#client-side-generation">Client-side generation
+</a></li>
+<li><a href="#server-side-generation">Server-side generation
+</a></li>
+<li><a href="#summary">Summary
+</a></li>
+</ol>
+</li></ol>
+                </div>
+              </div>
+            </div>
+
+            
+          </div>
+        </div>
+      </div>
+    </div>
+
+    
+    <footer class="container text-muted">
+      <ul class="list-inline">
+      
+        
+        <li>
+          <a href="https://github.com/datastax/java-driver/">Code</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="http://datastax.github.io/java-driver/">Docs</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://datastax-oss.atlassian.net/browse/JAVA/">Issues</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://groups.google.com/a/lists.datastax.com/forum/#!forum/java-driver-user">Mailing List</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="irc://irc.freenode.net/datastax-drivers">IRC Channel</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://github.com/datastax/java-driver/releases">Releases</a>
+        </li>
+      
+      </ul>
+    </footer>
+    
+
+    <script src="../../../js/jquery.js"></script>
+    <script src="../../../js/bootstrap.js"></script>
+    <script src="../../../js/angular.js"></script>
+    <script src="../../../js/mousetrap.js"></script>
+    <script src="../../../js/hotkeys.js"></script>
+    <script src="../../../js/ZeroClipboard.js"></script>
+    <script src="../../../js/lunr.js"></script>
+    <script src="../../../js/app.js"></script>
+  </body>
+</html>

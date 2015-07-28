@@ -61,7 +61,7 @@
           </ul>
           <form class="navbar-form form-search navbar-right dropdown visible-lg-block" ng-class="{open: hasResults}" role="search" ng-submit="submit()">
             <div class="form-group has-feedback">
-              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.2.0-rc1')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.2.0-rc2')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
             </div>
             <ul class="dropdown-menu" role="menu">
               <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
@@ -80,12 +80,14 @@
               <li>
                 <div class="dropdown">
                   <button id="current-version" class="btn btn-default btn-sm" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    2.2.0-rc1
+                    2.2.0-rc2
                     <span class="caret"></span>
                   </button>
                   <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
                   
-                    <li class="disabled"><a href="./">2.2.0-rc1</a></li>
+                    <li class="disabled"><a href="./">2.2.0-rc2</a></li>
+                  
+                    <li><a href="../../2.2.0-rc1/features/pooling/">2.2.0-rc1</a></li>
                   
                     <li><a href="../../2.1.7/features/pooling/">2.1.7</a></li>
                   
@@ -136,7 +138,7 @@ connection to handle multiple simultaneous requests:</p>
 
 <ul>
 <li>when a query gets executed, a <em>stream id</em> gets assigned to it. It is a
-unique identifier for the current connection;</li>
+unique identifier on the current connection;</li>
 <li>the driver writes a request containing the stream id and the query on
 the connection, and then proceeds without waiting for the response (if
 you’re using the asynchronous API, this is when the driver will send you
@@ -153,18 +155,15 @@ the point where your <code>ResultSetFuture</code> will get completed).</li>
 connections to each host.  <strong>For each <code>Session</code> object, there is one
 connection pool per connected host</strong>.</p>
 
-<p>The number of connections and stream ids depends on the <a href="../native_protocol/">native protocol
-version</a>:</p>
+<p>The number of connections per pool is configurable (this will be
+described in the next section).  The number of stream ids depends on the
+<a href="../native_protocol/">native protocol version</a>:</p>
 
 <ul>
-<li>
-<strong>protocol v2 or below</strong>: there are <strong>128 stream ids per connection.</strong>
-The number of connections per pool is configurable (this will be
-described in the next section).</li>
-<li>v3 or above: there are <strong>up to 32768 stream ids per connection</strong>, and
-<strong>1 connection per pool</strong>.</li>
+<li>protocol v2 or below: 128 stream ids per connection.</li>
+<li>protocol v3 or above: up to 32768 stream ids per connection.</li>
 </ul>
-<img src="data:image/png;base64,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%0AQVkmOztb34aOvOCo3trFYna1riIrK0uKEhWScsq22p4DBw48c+aMFNVLV80s%0AVZVB5HT/nnvu8fb2Vq+1laN0zGjEwsigyzGatSa2dbY6ykStuc2bNzd7u4Ec%0ANKcMkoG9b9++8iE4OFi5WyeipCgnw9qJlrSiJLIRGdSC+cJEN8XE9Gp+raio%0AaL0M2rBhg/q2ESNGJCYmNjY2NmnQ1NRUKYoafewSSnWK5NSaW7duXQvuebsj%0ABnsnQ+Fbb72lXnLq5+d3+PBhHRs68oKjemsX79q1SzWhTSQywUtNdHS0tqec%0ANKhN6n3B1oswzOYjZZDu3bsPGDBg4sSJciKlLtfpmNGIhY3IILPR+tGsNbGt%0As9VRJipN5uvrq53iG5RB5KAZIlb5cdiwYcOHD5cPDz74oLbJUUTt3btXXVys%0Arq629r4RGdSC+cJEMkh+rjKBo0RySgYJmZmZt912m/pOzbU2Bk1JSVF5HhMT%0As+D/bN26tTUrss3wTpqioqLevXvLUYsWLdKxoSMvOKq3trn658lBQUFaXE6f%0APl1qnn/+eXvvtGAI9uy1QRo6ZnTKwpzTt+Fo1prY1tnqKBNVcyKR7S9N6csg%0ActBUN8XOnj3bp08f+fzpp5/qz48id9S9M02pGJdBLZgvTCSDhPvuu09dndM0%0Apo4MUv9PTvSjun3YpUsXGxmkEE+oq9MnT57U7kq+/PLLaquYSVlcW9vl7JMy%0A5pRBatWbHPX444/r2NCRFxzVW9v88OHD6mu1hXX9+vXTzj6RQQZlkI4ZnbIw%0Ak1kbjmatiW2drY4yUWvuu+++s/klNuMhOWjytUFJSUnq8cZjx47pRFReXp6q%0AVw8Lnz59Wt0S1WSQzuzcgvnCPko9WQYVFxd37dpV9r/xxhvfe+89yagVK1ZE%0ARkaKn+yzTi36CwkJmTNnTt++fdVNa00GzZo1S75Bihs3bpR6f3//mpoaqRfr%0ASFHEqWhStdhqxowZ6t/zLlmyZPv27YsXL1YL1JFBNkjUTpky5Z133pGwjo+P%0AVwtQJG10bOjIC47qbWwuZwNSHD16tBhTnRBcd911Te6JDHIkg/TNaNzCTGZt%0AO5q1OLb1tzrKRNVc7969Y2NjZWc5sVb3TO3HQ3LQzDJIuOuuu6QoOkYthG8y%0AohobG0NDQ1VEiUYZNGhQjx49rGWQ/uzs7HxhH6WeLIOEEydOiFe0V8CJihw+%0AfPiyZcvss056OGrUKPUcXWZmps1NsYiIiICAAPVY06RJk9LT07XH/B555BHl%0AlR07dkjNuXPnoqOj/fz8VIu9evVSF9+QQTZkZGR4eXlp95sl7kUSqU2ObOjI%0AC47qbWxusVhmzpypziQ6deok+VlUVGRkMkAGWaNjRuMWZjJr29GsxbGtv9VR%0AJkpzMseoUxe1DFY9924/HpKDJpdBhw4dUu6Oi4vTiajc3FwRxOrxwMTERJub%0AYvqzs7PzhX2UergM0tbhHjx4sKCgoNnHL3W0oTR98uTJ2tpa+01yJnTq1Cmb%0AnY8fP15VVfVfq/Hgm2IXLlwQK2VlZR0+fNj6gXkdGzrygo537BuVE2vrV93g%0AoxagY8bWWBgZ1JrR7HLEts5oppqzv0lnPx6Sg2aOWIMRJZUi9NXyIBsZ1Ozs%0A7Ox8YSRKPU0GuTX82058ZB4fIYOAyCFim5RBbhpXyCCmWHyEj5jMyBQih4h1%0AghkzZoSHh//444/IIAYOplh8hAxiUgEih4hFBuEGplh8hAxiUgEih4hFBuEG%0AUgUfIYOYVAAZRMQig3ADqYKPkEFMKoAMImKRQbiBVMFHyCAmFWQQMoiIRQbh%0ABlIFHyGDmFTIQSBiPVYGmQ13nGLxET4yiSXJFCLHVDKIuGp/GSRYLJaSkpLC%0AwsJ9+/alpaV94elIH6Wn0l/ptfTdLbIFH+Ej81iSTCFyzANju0vIoJqamrKy%0AMpFmBQUF8vu+9XSkj9JT6a/0WvruFqmCj/CReSxJphA55oGx3SVkUF1dXWVl%0AZWlpqfwy0Wg5no70UXoq/ZVeS9/dIlXwET4yjyXJFCLHPDC2u4QMqq+vF1Em%0Av0nUWUlJyR+ejvRReir9lV5L390iVfARPjKPJckUIsc8MLa7hAxqbGyUXyO6%0ATH6WxWKp9HSkj9JT6a/0WvruFqmCj/CReSxJphA55oGx3SVkEAAAAICLgwwC%0AAAAAZBAyCAAAAJBBAAAAAMggAAAAAGQQAAAAADIIAAAAABkEAAAAgAwCAAAA%0AQAYBAAAAIIMAAAAAkEEAAAAAyCAAAAAAZBAAAAAAMggAAAAAGQQAAACADAIA%0AAABABgEAAAAggwAAAACQQQAAAADIIAAAAABkEAAAAAAyCAAAAAAZBAAAAIAM%0AAgAAAGQQMggAAACQQQAAAAAmAxkEAAAAyCAAAAAAM/E/0Bpl86jshPoAAAAA%0ASUVORK5CYII=%0A" alt="Text Diagram" class="img-rounded img-thumbnail center-block ditaa">
+<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAu4AAABiCAIAAACAksEXAAARC0lEQVR42u2d%0AeVBV5RvHUxAEUpEkNMlKhQZMzCQHS9OMLEakzJq2sWUclTZbcEKnzBkVybIk%0Axq1soiwpd0KjhRELZShIoEDBGlTcUApiTwjq94zv/M7cuZdzvOB27z2fzx/M%0Afd9z7nl5n+18z3qv+A8AAADAabkCEwAAAABSBgAAAOCySpl/AQAAAJwEpAwA%0AAAAgZQAAAACQMgAAAABIGQAAAEDKAAAAACBlAAAAAJAyAAAAAEgZAAAAQMoA%0AAAAAIGUAAAAAkDIAAACAlEHKAAAAAFIGAAAAACkDAAAAgJQBAAAApAwAAAAA%0AUgYAAAAAKQMAAACAlAEAAACkDAAAAABSBgAAAAApAwAAAEgZpAwAAAAgZQAA%0AAACQMgAAAABIGQegpqYmLS3t5ZdfLi4uxhr4CEsC3r/YIx48eDAlJWXOnDnT%0Apk1buXLl4cOHrb74999/Z2RkPPvss0899VRqaqpsp8Ptb9iwITMzU30uLy9P%0ATk5+5plnYmJiFi9enJub297ebueImzZtWrJkyb59+7QeWTkxMbG5uZmwQco4%0AAREREd27d7/iLNnZ2RgEH2FJwPsXe8T77rvP3d19/PjxY8eOdXNzkxWWL1+u%0ALW1sbAwLC/P09Lz//vtvu+02WRoSEiLixmr7ra2tffv23bx5s2q+9957fn5+%0AU87i4+Mj31q4cKGdI8pS6VmzZo1qrl+/XppLly4lbJAyzkFSUlJ+fv71119P%0AccdHWBLw/qUZUfr/+usvbTVZoU+fPtpJlO3bt0vP3LlzVXPixInSLCgosNr+%0A7t27PTw86urqVLOhoUHbwqpVq+QrQ4YMsXNESylTWFjo5eUVExNjeVIHkDJO%0AwODBgy9lcY+Pjx8zZsy2bdvWrVsXHh4uhx3yGS/gIywJLuZ9e0bMysqSFXx8%0AfM6cOaN6MjMzpSciIqK+vl5JGZEd2lKNuLi4SZMmdbjNxMRE2cJDDz1k54ia%0AlKmurpZ/WDSQ3iUtQMqQ3v9apo3U9yuvvHLYsGHy2dfX1zZRAR9hSXB5KRMb%0AGysrTJ06VetpaWkZN26cdA4aNGj27Nk9e/bcuXOn7ReDg4OTk5Mte06fPv3d%0Ad98tXrzYz88vNDS0qKjIzhFVlK5cuTIqKsrLy6uwsJBQQcqQ3nYVdxH+p06d%0AkubVV18tzV27duEIfIQlwVRS5osvvujevXtISEhlZaVlf15ennafzS233FJV%0AVWX1xbKyMll06NAhy85Zs2apr/Tr1y8/P9/+EVWU3njjjfJ3+PDhSG0nkDJX%0AmA/HLO6rVq1SzVGjRkkzPT0dH+EjLAmu5H3jETMyMjw8PEQ6nDx50rI/JyfH%0A19d3woQJaWlpIoLV6ZmKigrLdZYvX37TTTdZbbC6ujo3N1cWiVLp1q1bfHy8%0AnSOqKH3llVd69+4tH2JjY9mHdiquLo+U+c9MyHxra2sbGhqam5tbWlra2toc%0ApLhrd8t3WNzxET7CkuDs3jcYcevWre7u7qJX1A0xlkyePFm+cuDAAfksS6dM%0AmSLNRYsWWa4jX5w/f77eoLt27ZKveHt7azcFG4+oRemWLVvUzjslJYV9qP1x%0AhZS5FG4QOV9ZWSmCXZwhnqC44yMXljJY0sxSxtG8rzdiVlaWp6dnUFBQU1OT%0A7Vf8/PzkK9qraDIyMqT5+OOPayvU1NSIKMnJydEb9NSpU+qJ659//tmeES2j%0ANC4uTj57eXnZPjNFfdaLK6TMpXCDpMTvv/9+/Phx8YTVK49yc3MlH6655hpZ%0AbfXq1fL5jz/+oLjjI+eVMljSzFLGobxvMKK6ZWrYsGEPW6C9OUadhomMjPzx%0Axx8LCwvVw9gbN27UtrxhwwZ/f3+r0wOywtq1a0tKSvLy8h588EH5SmBgoHbX%0Ai/GIllHa2tqqbjoWESZmZB9qHFdImUvnhr179xYVFYknRFeKqLS0hre3t9VF%0AQcuEobjjI6eTMljSzFLGobxvMKLtIqGxsVEtraqqmjFjhtJAgp+fX1JSkuWW%0AH3300SeffNJquLlz51pubfTo0ZZPMBmPaBWlJ06cCAgIkJ7Jkyfbvl2G+oyU%0AuTxuyMjIEE+IrqyoqKitrXX8+73xET7CkmAG7xvz66+/lpSUWL3n1+olv5bU%0A19fL+jk5OUePHiViHSeukDIXxg2ff/75N998k5eXJ6KywxOGFHd85DJSBkua%0AWco4nfe7gNVLfolYx48rh5YyR44cEckssyK9SRV8dLGxM92wJFLG5aVMY2Pj%0A6dOniVikTOfcUFxcnJCQ8MQTT0RHR8fGxiYmJmZnZ0u/uri4du1a0vtypYq6%0AsW7evHkxMTEvvPDCihUrLqzpnn/++dDQ0I0bN+Kjzvpo8+bNCf8nOTk5PT29%0A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%0AAABJRU5ErkJggg==%0A" alt="Text Diagram" class="img-rounded img-thumbnail center-block ditaa">
 <h3 id="configuring-the-connection-pool">Configuring the connection pool<a class="anchor" href="#configuring-the-connection-pool" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h3>
 
@@ -184,7 +183,7 @@ reference to the <code>PoolingOptions</code> instance, here’s how you can get 
 <pre class="highlight"><code><span class="n">PoolingOptions</span> <span class="n">poolingOptions</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="na">getConfiguration</span><span class="o">().</span><span class="na">getPoolingOptions</span><span class="o">();</span>
 <span class="c1">// customize options...</span>
 </code></pre>
-<h4 id="pool-size-protocol-v2-only">Pool size (protocol v2 only)<a class="anchor" href="#pool-size-protocol-v2-only" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h4 id="pool-size">Pool size<a class="anchor" href="#pool-size" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h4>
 
 <p>Connection pools have a variable size, which gets adjusted automatically
@@ -199,34 +198,83 @@ host is in the same datacenter or not).</p>
     <span class="o">.</span><span class="na">setCoreConnectionsPerHost</span><span class="o">(</span><span class="n">HostDistance</span><span class="o">.</span><span class="na">REMOTE</span><span class="o">,</span> <span class="mi">2</span><span class="o">)</span>
     <span class="o">.</span><span class="na">setMaxConnectionsPerHost</span><span class="o">(</span> <span class="n">HostDistance</span><span class="o">.</span><span class="na">REMOTE</span><span class="o">,</span> <span class="mi">4</span><span class="o">);</span>
 </code></pre>
-<p>Note: the setters always enforce core &lt;= max, which can get annoying
-when you try to set both values at once.
-<a href="https://datastax-oss.atlassian.net/browse/JAVA-662">JAVA-662</a> will
-address this issue.</p>
+<p>For convenience, core and max can be set simultaneously:</p>
+<pre class="highlight"><code><span class="n">poolingOptions</span>
+    <span class="o">.</span><span class="na">setConnectionsPerHost</span><span class="o">(</span><span class="n">HostDistance</span><span class="o">.</span><span class="na">LOCAL</span><span class="o">,</span>  <span class="mi">4</span><span class="o">,</span> <span class="mi">10</span><span class="o">)</span>
+    <span class="o">.</span><span class="na">setConnectionsPerHost</span><span class="o">(</span><span class="n">HostDistance</span><span class="o">.</span><span class="na">REMOTE</span><span class="o">,</span> <span class="mi">2</span><span class="o">,</span> <span class="mi">4</span><span class="o">);</span>
+</code></pre>
+<p>The default settings are:</p>
 
-<p><a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/PoolingOptions.html#setMaxSimultaneousRequestsPerConnectionThreshold(com.datastax.driver.core.HostDistance,%20int)">PoolingOptions.setMaxSimultaneousRequestsPerConnectionThreshold</a>
-has a slightly misleading name: it does not limit the number of requests per
-connection, but only determines the threshold that triggers the creation
-of a new connection when the pool is not at its maximum capacity. In
-general, you shouldn’t have to change its default value.</p>
+<ul>
+<li>protocol v2:
 
-<h4 id="number-of-simultaneous-requests-per-host-protocol-v3-only">Number of simultaneous requests per host (protocol v3 only)<a class="anchor" href="#number-of-simultaneous-requests-per-host-protocol-v3-only" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<ul>
+<li>
+<code>LOCAL</code> hosts: core = 2, max = 8</li>
+<li>
+<code>REMOTE</code> hosts: core = 1, max = 2</li>
+</ul>
+</li>
+<li>protocol v3:
+
+<ul>
+<li>
+<code>LOCAL</code> hosts: core = max = 1</li>
+<li>
+<code>REMOTE</code> hosts: core = max = 1</li>
+</ul>
+</li>
+</ul>
+
+<p><a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/PoolingOptions.html#setNewConnectionThreshold(com.datastax.driver.core.HostDistance,%20int)">PoolingOptions.setNewConnectionThreshold</a> determines the threshold
+that triggers the creation of a new connection when the pool is not at
+its maximum capacity. In general, you shouldn’t need to change its
+default value.</p>
+
+<h4 id="dynamic-resizing">Dynamic resizing<a class="anchor" href="#dynamic-resizing" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h4>
 
-<p>Protocol v3 uses a single connection per host. While the number of
-simultaneous requests can go up to 32768, it is limited by
-<a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/PoolingOptions.html#setMaxSimultaneousRequestsPerHostThreshold(com.datastax.driver.core.HostDistance,%20int)">PoolingOptions.setMaxSimultaneousRequestsPerHostThreshold</a>. The
-goal of this option is to throttle the load that each client can
-generate on the server. By default, it is set to 1024 for local hosts,
-and 256 for remote hosts (this was chosen to match the capacity of a v2
-pool with the default configuration).</p>
+<p>If core != max, the pool will resize automatically to adjust to the
+current activity on the host.</p>
 
-<p>If your performance tests show that your cluster can handle a higher
-load, you can raise this threshold:</p>
+<p>When activity goes up and there are <em>n</em> connections with n &lt; max, the driver
+will add a connection when the number of concurrent requests is more than
+(n - 1) * 128 + <a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/PoolingOptions.html#setNewConnectionThreshold(com.datastax.driver.core.HostDistance,%20int)">PoolingOptions.setNewConnectionThreshold</a>
+(in layman’s terms, when all but the last connection are full and the last
+connection is above the threshold).</p>
+
+<p>When activity goes down, the driver will “trash” connections if the maximum
+number of requests in a 10 second time period can be satisfied by less than
+the number of connections opened. Trashed connections are kept open but do
+not accept new requests. After a given timeout (defined by
+<a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/PoolingOptions.html#setIdleTimeoutSeconds(int)">PoolingOptions.setIdleTimeoutSeconds</a>), trashed connections are closed
+and removed. If during that idle period activity increases again, those
+connections will be resurrected back into the active pool and reused. The
+main intent of that is to not constantly recreate connections if activity
+changes quickly over an interval.</p>
+
+<h4 id="simultaneous-requests-per-connection">Simultaneous requests per connection<a class="anchor" href="#simultaneous-requests-per-connection" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h4>
+
+<p><a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/PoolingOptions.html#setMaxRequestsPerConnection(com.datastax.driver.core.HostDistance,%20int)">PoolingOptions.setMaxRequestsPerConnection</a> allows you to
+throttle the number of concurrent requests per connection.</p>
+
+<p>With protocol v2, there is no reason to throttle. It is set to 128 (the
+max) and you should not change it.</p>
+
+<p>With protocol v3, it is set to 1024 for <code>LOCAL</code>  hosts, and 256 for
+<code>REMOTE</code> hosts. These low defaults were chosen so that the default
+configuration for protocol v2 and v3 allow the same total number of
+simultaneous requests (to avoid bad surprises when clients migrate from
+v2 to v3). You can raise this threshold, or even set it to the max:</p>
 <pre class="highlight"><code><span class="n">poolingOptions</span>
-    <span class="o">.</span><span class="na">setMaxSimultaneousRequestsPerHostThreshold</span><span class="o">(</span><span class="n">HostDistance</span><span class="o">.</span><span class="na">LOCAL</span><span class="o">,</span> <span class="mi">20000</span><span class="o">)</span>
-    <span class="o">.</span><span class="na">setMaxSimultaneousRequestsPerHostThreshold</span><span class="o">(</span><span class="n">HostDistance</span><span class="o">.</span><span class="na">REMOTE</span><span class="o">,</span> <span class="mi">1000</span><span class="o">);</span>
+    <span class="o">.</span><span class="na">setMaxRequestsPerConnection</span><span class="o">(</span><span class="n">HostDistance</span><span class="o">.</span><span class="na">LOCAL</span><span class="o">,</span> <span class="mi">32768</span><span class="o">)</span>
+    <span class="o">.</span><span class="na">setMaxRequestsPerConnection</span><span class="o">(</span><span class="n">HostDistance</span><span class="o">.</span><span class="na">REMOTE</span><span class="o">,</span> <span class="mi">2000</span><span class="o">);</span>
 </code></pre>
+<p>Just keep in mind that high values will give clients more bandwidth and
+therefore put more pressure on your cluster. This might require some
+tuning, especially if you have many clients.</p>
+
 <h4 id="heartbeat">Heartbeat<a class="anchor" href="#heartbeat" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h4>
 
@@ -287,24 +335,11 @@ a simple example that will print the number of open connections, active
 requests, and maximum capacity for each host, every 5 seconds:</p>
 <pre class="highlight"><code><span class="kd">final</span> <span class="n">LoadBalancingPolicy</span> <span class="n">loadBalancingPolicy</span> <span class="o">=</span>
     <span class="n">cluster</span><span class="o">.</span><span class="na">getConfiguration</span><span class="o">().</span><span class="na">getPolicies</span><span class="o">().</span><span class="na">getLoadBalancingPolicy</span><span class="o">();</span>
-<span class="n">PoolingOptions</span> <span class="n">poolingOptions</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="na">getConfiguration</span><span class="o">().</span><span class="na">getPoolingOptions</span><span class="o">();</span>
-<span class="n">ProtocolOptions</span> <span class="n">protocolOptions</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="na">getConfiguration</span><span class="o">().</span><span class="na">getProtocolOptions</span><span class="o">();</span>
+<span class="kd">final</span> <span class="n">PoolingOptions</span> <span class="n">poolingOptions</span> <span class="o">=</span>
+<span class="n">cluster</span><span class="o">.</span><span class="na">getConfiguration</span><span class="o">().</span><span class="na">getPoolingOptions</span><span class="o">();</span>
 
-<span class="kd">final</span> <span class="n">Map</span><span class="o">&lt;</span><span class="n">HostDistance</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;</span> <span class="n">requestsPerConnection</span><span class="o">;</span>
-<span class="n">ProtocolVersion</span> <span class="n">protocolVersion</span> <span class="o">=</span> <span class="n">protocolOptions</span><span class="o">.</span><span class="na">getProtocolVersionEnum</span><span class="o">();</span>
-<span class="k">if</span> <span class="o">(</span><span class="n">protocolVersion</span> <span class="o">==</span> <span class="n">ProtocolVersion</span><span class="o">.</span><span class="na">V3</span><span class="o">)</span> <span class="o">{</span>
-    <span class="n">requestsPerConnection</span> <span class="o">=</span> <span class="n">ImmutableMap</span><span class="o">.</span><span class="na">of</span><span class="o">(</span>
-        <span class="n">HostDistance</span><span class="o">.</span><span class="na">LOCAL</span><span class="o">,</span>
-        <span class="n">poolingOptions</span><span class="o">.</span><span class="na">getMaxSimultaneousRequestsPerHostThreshold</span><span class="o">(</span><span class="n">HostDistance</span><span class="o">.</span><span class="na">LOCAL</span><span class="o">),</span>
-        <span class="n">HostDistance</span><span class="o">.</span><span class="na">REMOTE</span><span class="o">,</span>
-        <span class="n">poolingOptions</span><span class="o">.</span><span class="na">getMaxSimultaneousRequestsPerHostThreshold</span><span class="o">(</span><span class="n">HostDistance</span><span class="o">.</span><span class="na">REMOTE</span><span class="o">));</span>
-<span class="o">}</span> <span class="k">else</span> <span class="o">{</span>
-    <span class="n">requestsPerConnection</span> <span class="o">=</span> <span class="n">ImmutableMap</span><span class="o">.</span><span class="na">of</span><span class="o">(</span>
-        <span class="n">HostDistance</span><span class="o">.</span><span class="na">LOCAL</span><span class="o">,</span> <span class="mi">128</span><span class="o">,</span>
-        <span class="n">HostDistance</span><span class="o">.</span><span class="na">REMOTE</span><span class="o">,</span> <span class="mi">128</span><span class="o">);</span>
-<span class="o">}</span>
-
-<span class="n">ScheduledExecutorService</span> <span class="n">scheduled</span> <span class="o">=</span> <span class="n">Executors</span><span class="o">.</span><span class="na">newScheduledThreadPool</span><span class="o">(</span><span class="mi">1</span><span class="o">);</span>
+<span class="n">ScheduledExecutorService</span> <span class="n">scheduled</span> <span class="o">=</span>
+<span class="n">Executors</span><span class="o">.</span><span class="na">newScheduledThreadPool</span><span class="o">(</span><span class="mi">1</span><span class="o">);</span>
 <span class="n">scheduled</span><span class="o">.</span><span class="na">scheduleAtFixedRate</span><span class="o">(</span><span class="k">new</span> <span class="n">Runnable</span><span class="o">()</span> <span class="o">{</span>
     <span class="nd">@Override</span>
     <span class="kd">public</span> <span class="kt">void</span> <span class="n">run</span><span class="o">()</span> <span class="o">{</span>
@@ -313,9 +348,11 @@ requests, and maximum capacity for each host, every 5 seconds:</p>
             <span class="n">HostDistance</span> <span class="n">distance</span> <span class="o">=</span> <span class="n">loadBalancingPolicy</span><span class="o">.</span><span class="na">distance</span><span class="o">(</span><span class="n">host</span><span class="o">);</span>
             <span class="kt">int</span> <span class="n">connections</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="na">getOpenConnections</span><span class="o">(</span><span class="n">host</span><span class="o">);</span>
             <span class="kt">int</span> <span class="n">inFlightQueries</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="na">getInFlightQueries</span><span class="o">(</span><span class="n">host</span><span class="o">);</span>
-            <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">printf</span><span class="o">(</span><span class="s">"%s connections=%d current load=%d max load=%d%n"</span><span class="o">,</span>
+            <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">printf</span><span class="o">(</span><span class="s">"%s connections=%d, current load=%d, max
+load=%d%n"</span><span class="o">,</span>
                 <span class="n">host</span><span class="o">,</span> <span class="n">connections</span><span class="o">,</span> <span class="n">inFlightQueries</span><span class="o">,</span>
-                <span class="n">connections</span> <span class="o">*</span> <span class="n">requestsPerConnection</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">distance</span><span class="o">));</span>
+                <span class="n">connections</span> <span class="o">*</span>
+<span class="n">poolingOptions</span><span class="o">.</span><span class="na">getMaxRequestsPerConnection</span><span class="o">(</span><span class="n">distance</span><span class="o">));</span>
         <span class="o">}</span>
     <span class="o">}</span>
 <span class="o">},</span> <span class="mi">5</span><span class="o">,</span> <span class="mi">5</span><span class="o">,</span> <span class="n">TimeUnit</span><span class="o">.</span><span class="na">SECONDS</span><span class="o">);</span>
@@ -326,12 +363,50 @@ tool.</p>
 
 <p>If you find that the current load stays close or equal to the maximum
 load at all time, it’s a sign that your connection pools are saturated
-and you should raise the max connections per host (protocol v2) or max
-requests per host (protocol v3).</p>
+and you should raise the max connections per host, or max requests per
+connection (protocol v3).</p>
 
 <p>If you’re using protocol v2 and the load is often less than core * 128,
 your pools are underused and you could get away with less core
 connections.</p>
+
+<h4 id="tuning-protocol-v3-for-very-high-throughputs">Tuning protocol v3 for very high throughputs<a class="anchor" href="#tuning-protocol-v3-for-very-high-throughputs" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h4>
+
+<p>As mentioned above, the default pool size for protocol v3 is core = max
+= 1. This means all requests to a given node will share a single
+connection, and therefore a single Netty I/O thread.</p>
+
+<p>There is a corner case where this I/O thread can max out its CPU core
+and become a bottleneck in the driver; in our benchmarks, this happened
+with a single-node cluster and a high throughput (approximately 80K
+requests / second).</p>
+
+<p>It’s unlikely that you’ll run into this issue: in most real-world
+deployments, the driver connects to more than one node, so the load will
+spread across more I/O threads. However if you suspect that you
+experience the issue, here’s what to look out for:</p>
+
+<ul>
+<li>the driver throughput plateaus but the process does not appear to
+max out any system resource (in particular, overall CPU usage is well
+below 100%);</li>
+<li>one of the driver’s I/O threads maxes out its CPU core. You can see
+that with a profiler, or OS-level tools like <code>pidstat -tu</code> on Linux.
+I/O threads are called <code>&lt;cluster_name&gt;-nio-worker-&lt;n&gt;</code>, unless you’re
+injecting your own <code>EventLoopGroup</code> with <code>NettyOptions</code>.</li>
+</ul>
+
+<p>The solution is to add more connections per node. To ensure that
+additional connections get created before you run into the bottleneck,
+either:</p>
+
+<ul>
+<li>set core = max;</li>
+<li>keep core = 1, but adjust <a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/PoolingOptions.html#setMaxRequestsPerConnection(com.datastax.driver.core.HostDistance,%20int)">maxRequestsPerConnection</a> and
+<a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/PoolingOptions.html#setNewConnectionThreshold(com.datastax.driver.core.HostDistance,%20int)">newConnectionThreshold</a> so that enough connections are added by
+the time you reach the bottleneck.</li>
+</ul>
 
 
         </div>
@@ -355,9 +430,11 @@ connections.</p>
 <li>
 <a href="#configuring-the-connection-pool">Configuring the connection pool
 </a><ol class="nav nav-pills nav-stacked">
-<li><a href="#pool-size-protocol-v2-only">Pool size (protocol v2 only)
+<li><a href="#pool-size">Pool size
 </a></li>
-<li><a href="#number-of-simultaneous-requests-per-host-protocol-v3-only">Number of simultaneous requests per host (protocol v3 only)
+<li><a href="#dynamic-resizing">Dynamic resizing
+</a></li>
+<li><a href="#simultaneous-requests-per-connection">Simultaneous requests per connection
 </a></li>
 <li><a href="#heartbeat">Heartbeat
 </a></li>
@@ -365,8 +442,11 @@ connections.</p>
 </a></li>
 </ol>
 </li>
-<li><a href="#monitoring-and-tuning-the-pool">Monitoring and tuning the pool
-</a></li>
+<li>
+<a href="#monitoring-and-tuning-the-pool">Monitoring and tuning the pool
+</a><ol class="nav nav-pills nav-stacked"><li><a href="#tuning-protocol-v3-for-very-high-throughputs">Tuning protocol v3 for very high throughputs
+</a></li></ol>
+</li>
 </ol>
 </li></ol>
                 </div>

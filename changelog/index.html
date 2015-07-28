@@ -61,7 +61,7 @@
           </ul>
           <form class="navbar-form form-search navbar-right dropdown visible-lg-block" ng-class="{open: hasResults}" role="search" ng-submit="submit()">
             <div class="form-group has-feedback">
-              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.2.0-rc1')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.2.0-rc2')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
             </div>
             <ul class="dropdown-menu" role="menu">
               <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
@@ -80,12 +80,14 @@
               <li>
                 <div class="dropdown">
                   <button id="current-version" class="btn btn-default btn-sm" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    2.2.0-rc1
+                    2.2.0-rc2
                     <span class="caret"></span>
                   </button>
                   <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
                   
-                    <li class="disabled"><a href="./">2.2.0-rc1</a></li>
+                    <li class="disabled"><a href="./">2.2.0-rc2</a></li>
+                  
+                    <li><a href="../2.2.0-rc1/changelog/">2.2.0-rc1</a></li>
                   
                     <li><a href="../2.1.7/changelog/">2.1.7</a></li>
                   
@@ -121,6 +123,70 @@
 <h2 id="changelog">Changelog<a class="anchor" href="#changelog" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h2>
 
+<h3 id="2-2-0-rc2">2.2.0-rc2<a class="anchor" href="#2-2-0-rc2" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<ul>
+<li>[improvement] Rename DateWithoutTime to LocalDate (JAVA-810)</li>
+<li>[bug] DateCodec does not format values correctly (JAVA-816)</li>
+<li>[bug] TimeCodec does not format values correctly (JAVA-817)</li>
+<li>[bug] TypeCodec.getDataTypeFor() does not handle LocalDate instances (JAVA-818)</li>
+<li>[improvement] Make ResultSet#fetchMoreResult return a
+ListenableFuture<resultset> (JAVA-836)</resultset>
+</li>
+<li>[improvement] Disable frozen checks in mapper (JAVA-843)</li>
+<li>[improvement] Allow user to register custom type codecs (JAVA-721)</li>
+<li>[improvement] Support custom type codecs in mapper (JAVA-722)</li>
+</ul>
+
+<p>Merged from 2.1 branch:</p>
+
+<ul>
+<li>[bug] Special case check for ‘null’ string in index_options column (JAVA-834)</li>
+<li>[improvement] Allow accessor methods with less parameters in case
+named bind markers are repeated (JAVA-835)</li>
+<li>[improvement] Improve QueryBuilder API for SELECT DISTINCT (JAVA-475)</li>
+<li>[improvement] Make NativeColumnType a top-level class (JAVA-715)</li>
+<li>[improvement] Expose ProtocolVersion#toInt (JAVA-700)</li>
+<li>[bug] Handle void return types in accessors (JAVA-542)</li>
+<li>[improvement] Create values() function for Insert builder using List (JAVA-225)</li>
+<li>[improvement] HashMap throws an OOM Exception when logging level is set to TRACE (JAVA-713)</li>
+<li>[bug] Support bind marker in QueryBuilder DELETE’s list index (JAVA-679)</li>
+<li>[improvement] Expose KEYS and FULL indexing options in IndexMetadata (JAVA-732)</li>
+<li>[improvement] Allow @Enumerated in Accessor method parameters (JAVA-589)</li>
+<li>[improvement] Allow access to table metadata from Mapper (JAVA-554)</li>
+<li>[improvement] Provide a way to map computed fields (JAVA-661)</li>
+<li>[improvement] Ignore missing columns in mapper (JAVA-824)</li>
+<li>[bug] Preserve default timestamp for retries and speculative executions (JAVA-724)</li>
+<li>[improvement] Use same pool implementation for protocol v2 and v3
+(JAVA-738).</li>
+<li>[improvement] Support CONTAINS / CONTAINS KEY in QueryBuilder (JAVA-677)</li>
+<li>[improvement] Add USING options in mapper for delete and save
+operations (JAVA-477/JAVA-540)</li>
+<li>[improvement] Add mapper option to configure whether to save null fields (JAVA-473)</li>
+</ul>
+
+<p>Merged from 2.0 branch:</p>
+
+<ul>
+<li>[bug] DowngradingConsistencyRetryPolicy ignores write timeouts (JAVA-737)</li>
+<li>[bug] Forbid bind marker in QueryBuilder add/append/prepend (JAVA-736)</li>
+<li>[bug] Prevent QueryBuilder.quote() from applying duplicate double quotes (JAVA-712)</li>
+<li>[bug] Prevent QueryBuilder from trying to serialize raw string (JAVA-688)</li>
+<li>[bug] Support bind marker in QueryBuilder DELETE’s list index (JAVA-679)</li>
+<li>[improvement] Improve QueryBuilder API for SELECT DISTINCT (JAVA-475)</li>
+<li>[improvement] Create values() function for Insert builder using List (JAVA-225)</li>
+<li>[improvement] Warn when ReplicationStrategy encounters invalid
+replication factors (JAVA-702)</li>
+<li>[improvement] Add PoolingOptions method to set both core and max
+connections (JAVA-662).</li>
+<li>[improvement] Do not include epoll JAR in binary distribution (JAVA-766)</li>
+<li>[improvement] Optimize internal copies of Request objects (JAVA-726)</li>
+<li>[bug] Preserve tracing across retries (JAVA-815)</li>
+<li>[improvement] New RetryDecision.tryNextHost() (JAVA-709)</li>
+<li>[bug] Handle function calls and raw strings as non-idempotent in QueryBuilder (JAVA-733)</li>
+</ul>
+
 <h3 id="2-2-0-rc1">2.2.0-rc1<a class="anchor" href="#2-2-0-rc1" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h3>
 
@@ -141,6 +207,62 @@
 
 <ul>
 <li>[improvement] Unify “Target” enum for schema elements (JAVA-782)</li>
+</ul>
+
+<h3 id="2-1-7-1">2.1.7.1<a class="anchor" href="#2-1-7-1" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<ul>
+<li>[bug] Special case check for &#8216;null’ string in index_options column (JAVA-834)</li>
+<li>[improvement] Allow accessor methods with less parameters in case
+named bind markers are repeated (JAVA-835)</li>
+</ul>
+
+<h3 id="2-1-7">2.1.7<a class="anchor" href="#2-1-7" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<ul>
+<li>[improvement] Improve QueryBuilder API for SELECT DISTINCT (JAVA-475)</li>
+<li>[improvement] Make NativeColumnType a top-level class (JAVA-715)</li>
+<li>[improvement] Unify “Target” enum for schema elements (JAVA-782)</li>
+<li>[improvement] Expose ProtocolVersion#toInt (JAVA-700)</li>
+<li>[bug] Handle void return types in accessors (JAVA-542)</li>
+<li>[improvement] Create values() function for Insert builder using List (JAVA-225)</li>
+<li>[improvement] HashMap throws an OOM Exception when logging level is set to TRACE (JAVA-713)</li>
+<li>[bug] Support bind marker in QueryBuilder DELETE’s list index (JAVA-679)</li>
+<li>[improvement] Expose KEYS and FULL indexing options in IndexMetadata (JAVA-732)</li>
+<li>[improvement] Allow @Enumerated in Accessor method parameters (JAVA-589)</li>
+<li>[improvement] Allow access to table metadata from Mapper (JAVA-554)</li>
+<li>[improvement] Provide a way to map computed fields (JAVA-661)</li>
+<li>[improvement] Ignore missing columns in mapper (JAVA-824)</li>
+<li>[bug] Preserve default timestamp for retries and speculative executions (JAVA-724)</li>
+<li>[improvement] Use same pool implementation for protocol v2 and v3
+(JAVA-738).</li>
+<li>[improvement] Support CONTAINS / CONTAINS KEY in QueryBuilder (JAVA-677)</li>
+<li>[improvement] Add USING options in mapper for delete and save
+operations (JAVA-477/JAVA-540)</li>
+<li>[improvement] Add mapper option to configure whether to save null fields (JAVA-473)</li>
+</ul>
+
+<p>Merged from 2.0 branch:</p>
+
+<ul>
+<li>[bug] DowngradingConsistencyRetryPolicy ignores write timeouts (JAVA-737)</li>
+<li>[bug] Forbid bind marker in QueryBuilder add/append/prepend (JAVA-736)</li>
+<li>[bug] Prevent QueryBuilder.quote() from applying duplicate double quotes (JAVA-712)</li>
+<li>[bug] Prevent QueryBuilder from trying to serialize raw string (JAVA-688)</li>
+<li>[bug] Support bind marker in QueryBuilder DELETE’s list index (JAVA-679)</li>
+<li>[improvement] Improve QueryBuilder API for SELECT DISTINCT (JAVA-475)</li>
+<li>[improvement] Create values() function for Insert builder using List (JAVA-225)</li>
+<li>[improvement] Warn when ReplicationStrategy encounters invalid
+replication factors (JAVA-702)</li>
+<li>[improvement] Add PoolingOptions method to set both core and max
+connections (JAVA-662).</li>
+<li>[improvement] Do not include epoll JAR in binary distribution (JAVA-766)</li>
+<li>[improvement] Optimize internal copies of Request objects (JAVA-726)</li>
+<li>[bug] Preserve tracing across retries (JAVA-815)</li>
+<li>[improvement] New RetryDecision.tryNextHost() (JAVA-709)</li>
+<li>[bug] Handle function calls and raw strings as non-idempotent in QueryBuilder (JAVA-733)</li>
 </ul>
 
 <h3 id="2-1-6">2.1.6<a class="anchor" href="#2-1-6" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
@@ -386,6 +508,41 @@ batches (JAVA-393)</li>
 <li>[bug] Make metadata parsing more lenient (JAVA-377, JAVA-391)</li>
 </ul>
 
+<h3 id="2-0-11-in-progress">2.0.11 (in progress)<a class="anchor" href="#2-0-11-in-progress" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<ul>
+<li>[bug] Fix SpeculativeExecutionPolicy.init() and close() are never called (JAVA-796)</li>
+<li>[improvement] Suppress unnecessary warning at shutdown (JAVA-710)</li>
+<li>[improvement] Allow DNS name with multiple A-records as contact point (#340)</li>
+<li>[bug] Allow tracing across multiple result pages (JAVA-794)</li>
+<li>[bug] DowngradingConsistencyRetryPolicy ignores write timeouts (JAVA-737)</li>
+<li>[bug] Forbid bind marker in QueryBuilder add/append/prepend (JAVA-736)</li>
+<li>[bug] Prevent QueryBuilder.quote() from applying duplicate double quotes (JAVA-712)</li>
+<li>[bug] Prevent QueryBuilder from trying to serialize raw string (JAVA-688)</li>
+<li>[bug] Support bind marker in QueryBuilder DELETE’s list index (JAVA-679)</li>
+<li>[improvement] Improve QueryBuilder API for SELECT DISTINCT (JAVA-475)</li>
+<li>[improvement] Create values() function for Insert builder using List (JAVA-225)</li>
+<li>[improvement] Warn when ReplicationStrategy encounters invalid
+replication factors (JAVA-702)</li>
+<li>[improvement] Add PoolingOptions method to set both core and max
+connections (JAVA-662).</li>
+<li>[improvement] Do not include epoll JAR in binary distribution (JAVA-766)</li>
+<li>[improvement] Optimize internal copies of Request objects (JAVA-726)</li>
+<li>[bug] Preserve tracing across retries (JAVA-815)</li>
+<li>[improvement] New RetryDecision.tryNextHost() (JAVA-709)</li>
+<li>[bug] Handle function calls and raw strings as non-idempotent in QueryBuilder (JAVA-733)</li>
+</ul>
+
+<p>Merged from 2.0.10_fixes branch:</p>
+
+<ul>
+<li>[improvement] Use Netty’s pooled ByteBufAllocator by default (JAVA-756)</li>
+<li>[improvement] Expose “unsafe” paging state API (JAVA-759)</li>
+<li>[bug] Fix getObject by name (JAVA-767)</li>
+<li>[bug] Prevent race during pool initialization (JAVA-768)</li>
+</ul>
+
 <h3 id="2-0-10-1">2.0.10.1<a class="anchor" href="#2-0-10-1" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h3>
 
@@ -600,7 +757,7 @@ which nodes a session is connected to (JAVA-265)</li>
 introduced in Cassandra 2.0.6) (JAVA-327)</li>
 <li>[improvement] Properly validate arguments of PoolingOptions methods
 (JAVA-359)</li>
-<li>[bug] Fix bogus rejection of BigInteger in ‘execute with values’
+<li>[bug] Fix bogus rejection of BigInteger in &#8216;execute with values’
 (JAVA-368)</li>
 <li>[bug] Signal connection failure sooner to avoid missing them
 (JAVA-367)</li>
@@ -950,7 +1107,13 @@ update) (JAVA-65)</li>
                   <ol class="nav nav-pills nav-stacked toc"><li>
 <a href="#changelog">Changelog
 </a><ol class="nav nav-pills nav-stacked">
+<li><a href="#2-2-0-rc2">2.2.0-rc2
+</a></li>
 <li><a href="#2-2-0-rc1">2.2.0-rc1
+</a></li>
+<li><a href="#2-1-7-1">2.1.7.1
+</a></li>
+<li><a href="#2-1-7">2.1.7
 </a></li>
 <li><a href="#2-1-6">2.1.6
 </a></li>
@@ -969,6 +1132,8 @@ update) (JAVA-65)</li>
 <li><a href="#2-1-0-rc1">2.1.0-rc1
 </a></li>
 <li><a href="#2-1-0-beta1">2.1.0-beta1
+</a></li>
+<li><a href="#2-0-11-in-progress">2.0.11 (in progress)
 </a></li>
 <li><a href="#2-0-10-1">2.0.10.1
 </a></li>

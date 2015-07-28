@@ -61,7 +61,7 @@
           </ul>
           <form class="navbar-form form-search navbar-right dropdown visible-lg-block" ng-class="{open: hasResults}" role="search" ng-submit="submit()">
             <div class="form-group has-feedback">
-              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.2.0-rc1')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.2.0-rc2')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
             </div>
             <ul class="dropdown-menu" role="menu">
               <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
@@ -80,12 +80,14 @@
               <li>
                 <div class="dropdown">
                   <button id="current-version" class="btn btn-default btn-sm" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    2.2.0-rc1
+                    2.2.0-rc2
                     <span class="caret"></span>
                   </button>
                   <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
                   
-                    <li class="disabled"><a href="./">2.2.0-rc1</a></li>
+                    <li class="disabled"><a href="./">2.2.0-rc2</a></li>
+                  
+                    <li><a href="../../2.2.0-rc1/features/logging/">2.2.0-rc1</a></li>
                   
                     <li><a href="../../2.1.7/features/logging/">2.1.7</a></li>
                   
@@ -392,7 +394,7 @@ See the <code>QueryLogger</code> <a href="http://docs.datastax.com/en/drivers/ja
 a constant threshold in milliseconds (which is the default behavior), or 
 a dynamic threshold based on per-host latency percentiles, as computed by <code>PerHostPercentileTracker</code>.</p>
 
-<p><strong>Dynamic thresholds are still a beta feature as of version 2.2.0-rc1: they
+<p><strong>Dynamic thresholds are still a beta feature as of version 2.2.0-rc2: they
 haven’t been extensively tested yet, and the API is still subject to
 change.</strong></p>
 
