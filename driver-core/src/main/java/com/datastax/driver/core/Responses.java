@@ -389,7 +389,7 @@ class Responses {
                         String name = CBUtil.readString(body);
                         // will set the appropriate CodecRegistry instance later
                         // when the message will be decoded into either a PreparedStatement or a ResultSet
-                        DataType type = DataType.decode(body, protocolVersion, null);
+                        DataType type = DataType.decode(body, protocolVersion, CodecRegistry.DEFAULT_INSTANCE);
                         defs[i] = new ColumnDefinitions.Definition(ksName, cfName, name, type);
                     }
 

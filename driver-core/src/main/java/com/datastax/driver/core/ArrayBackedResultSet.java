@@ -79,7 +79,7 @@ abstract class ArrayBackedResultSet implements ResultSet {
 
                 // if this is an internal call, it doesn't matter which codecRegistry will be used
                 CodecRegistry codecRegistry = session == null ?
-                    CodecRegistry.IMMUTABLE_INSTANCE :
+                    CodecRegistry.DEFAULT_INSTANCE :
                     session.getCluster().getConfiguration().getCodecRegistry();
                 columnDefs.setCodecRegistry(codecRegistry);
 

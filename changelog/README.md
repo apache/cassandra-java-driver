@@ -3,6 +3,8 @@
 ### 2.2.0-rc3 (in progress)
 
 - [bug] Propagate CodecRegistry to nested UDTs (JAVA-847)
+- [improvement] Ability to store a default, shareable CodecRegistry
+  instance (JAVA-848)
 
 
 ### 2.2.0-rc2
