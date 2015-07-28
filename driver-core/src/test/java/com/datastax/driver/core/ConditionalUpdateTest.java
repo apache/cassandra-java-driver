@@ -78,7 +78,7 @@ public class ConditionalUpdateTest extends CCMBridge.PerClassSingleNodeCluster {
 
         // This is really contrived, we just want to cover the code path in ArrayBackedResultSet#MultiPage.
         // Currently CAS update results are never multipage, so it's hard to come up with a meaningful example.
-        ResultSet rs = session.execute(new SimpleStatement("SELECT * FROM test WHERE k1 = 1").setFetchSize(1));
+        ResultSet rs = session.execute(session.newSimpleStatement("SELECT * FROM test WHERE k1 = 1").setFetchSize(1));
 
         assertTrue(rs.wasApplied());
     }

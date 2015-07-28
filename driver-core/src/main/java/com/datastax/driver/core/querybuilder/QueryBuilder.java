@@ -17,12 +17,13 @@ package com.datastax.driver.core.querybuilder;
 
 import java.util.*;
 
+import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.RegularStatement;
 import com.datastax.driver.core.TableMetadata;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
 
 /**
- * Static methods to build a CQL3 query.
+ * Builds CQL3 query via a fluent API.
  * <p>
  * The queries built by this builder will provide a value for the
  * {@link com.datastax.driver.core.Statement#getRoutingKey} method only when a
@@ -30,15 +31,27 @@ import com.datastax.driver.core.exceptions.InvalidQueryException;
  * It is thus advised to do so if a {@link com.datastax.driver.core.policies.TokenAwarePolicy}
  * is in use.
  * <p>
- * The provided builders perform very little validation of the built query.
+ * The provider builders perform very little validation of the built query.
  * There is thus no guarantee that a built query is valid, and it is
  * definitively possible to create invalid queries.
  * <p>
- * Note that it could be convenient to use an 'import static' to use the methods of this class.
+ * Note that it could be convenient to use an 'import static' to bring the static methods of
+ * this class into scope.
  */
 public final class QueryBuilder {
 
-    private QueryBuilder() {}
+    private final Cluster cluster;
+
+    /**
+     * Create a new QueryBuilder instance and associate it with the given {@link Cluster}.
+     * Note: if the {@link Cluster} is not yet initialized, certain methods of the QueryBuilder API
+     * may trigger its initialization.
+     *
+     * @param cluster The {@link Cluster} instance this object should be attached to.
+     */
+    public QueryBuilder(Cluster cluster) {
+        this.cluster = cluster;
+    }
 
     /**
      * Start building a new SELECT query that selects the provided names.
@@ -49,8 +62,8 @@ public final class QueryBuilder {
      * @return an in-construction SELECT query (you will need to provide at
      * least a FROM clause to complete the query).
      */
-    public static Select.Builder select(String... columns) {
-        return new Select.Builder(Arrays.asList((Object[])columns));
+    public Select.Builder select(String... columns) {
+        return new Select.Builder(cluster, Arrays.asList((Object[])columns));
     }
 
     /**
@@ -59,9 +72,9 @@ public final class QueryBuilder {
      * @return an in-construction SELECT query (you will need to provide a
      * column selection and at least a FROM clause to complete the query).
      */
-    public static Select.Selection select() {
+    public Select.Selection select() {
         // Note: the fact we return Select.Selection as return type is on purpose.
-        return new Select.SelectionOrAlias();
+        return new Select.SelectionOrAlias(cluster);
     }
 
     /**
@@ -70,8 +83,8 @@ public final class QueryBuilder {
      * @param table the name of the table in which to insert.
      * @return an in-construction INSERT query.
      */
-    public static Insert insertInto(String table) {
-        return new Insert(null, table);
+    public Insert insertInto(String table) {
+        return new Insert(cluster, null, table);
     }
 
     /**
@@ -81,8 +94,8 @@ public final class QueryBuilder {
      * @param table the name of the table to insert into.
      * @return an in-construction INSERT query.
      */
-    public static Insert insertInto(String keyspace, String table) {
-        return new Insert(keyspace, table);
+    public Insert insertInto(String keyspace, String table) {
+        return new Insert(cluster, keyspace, table);
     }
 
     /**
@@ -91,8 +104,8 @@ public final class QueryBuilder {
      * @param table the name of the table to insert into.
      * @return an in-construction INSERT query.
      */
-    public static Insert insertInto(TableMetadata table) {
-        return new Insert(table);
+    public Insert insertInto(TableMetadata table) {
+        return new Insert(cluster, table);
     }
 
     /**
@@ -102,8 +115,8 @@ public final class QueryBuilder {
      * @return an in-construction UPDATE query (at least a SET and a WHERE
      * clause needs to be provided to complete the query).
      */
-    public static Update update(String table) {
-        return new Update(null, table);
+    public Update update(String table) {
+        return new Update(cluster, null, table);
     }
 
     /**
@@ -114,8 +127,8 @@ public final class QueryBuilder {
      * @return an in-construction UPDATE query (at least a SET and a WHERE
      * clause needs to be provided to complete the query).
      */
-    public static Update update(String keyspace, String table) {
-        return new Update(keyspace, table);
+    public Update update(String keyspace, String table) {
+        return new Update(cluster, keyspace, table);
     }
 
     /**
@@ -125,8 +138,8 @@ public final class QueryBuilder {
      * @return an in-construction UPDATE query (at least a SET and a WHERE
      * clause needs to be provided to complete the query).
      */
-    public static Update update(TableMetadata table) {
-        return new Update(table);
+    public Update update(TableMetadata table) {
+        return new Update(cluster, table);
     }
 
     /**
@@ -136,8 +149,8 @@ public final class QueryBuilder {
      * @return an in-construction DELETE query (At least a FROM and a WHERE
      * clause needs to be provided to complete the query).
      */
-    public static Delete.Builder delete(String... columns) {
-        return new Delete.Builder(columns);
+    public Delete.Builder delete(String... columns) {
+        return new Delete.Builder(cluster, columns);
     }
 
     /**
@@ -147,8 +160,8 @@ public final class QueryBuilder {
      * column selection and at least a FROM and a WHERE clause to complete the
      * query).
      */
-    public static Delete.Selection delete() {
-        return new Delete.Selection();
+    public Delete.Selection delete() {
+        return new Delete.Selection(cluster);
     }
 
     /**
@@ -164,8 +177,8 @@ public final class QueryBuilder {
      * @param statements the statements to batch.
      * @return a new {@code RegularStatement} that batch {@code statements}.
      */
-    public static Batch batch(RegularStatement... statements) {
-        return new Batch(statements, true);
+    public Batch batch(RegularStatement... statements) {
+        return new Batch(cluster, statements, true);
     }
 
     /**
@@ -185,8 +198,8 @@ public final class QueryBuilder {
      * @return a new {@code RegularStatement} that batch {@code statements} without
      * using the batch log.
      */
-    public static Batch unloggedBatch(RegularStatement... statements) {
-        return new Batch(statements, false);
+    public Batch unloggedBatch(RegularStatement... statements) {
+        return new Batch(cluster, statements, false);
     }
 
     /**
@@ -195,8 +208,8 @@ public final class QueryBuilder {
      * @param table the name of the table to truncate.
      * @return the truncation query.
      */
-    public static Truncate truncate(String table) {
-        return new Truncate(null, table);
+    public Truncate truncate(String table) {
+        return new Truncate(cluster, null, table);
     }
 
     /**
@@ -206,8 +219,8 @@ public final class QueryBuilder {
      * @param table the name of the table to truncate.
      * @return the truncation query.
      */
-    public static Truncate truncate(String keyspace, String table) {
-        return new Truncate(keyspace, table);
+    public Truncate truncate(String keyspace, String table) {
+        return new Truncate(cluster, keyspace, table);
     }
 
     /**
@@ -216,8 +229,8 @@ public final class QueryBuilder {
      * @param table the table to truncate.
      * @return the truncation query.
      */
-    public static Truncate truncate(TableMetadata table) {
-        return new Truncate(table);
+    public Truncate truncate(TableMetadata table) {
+        return new Truncate(cluster, table);
     }
 
     /**
@@ -255,7 +268,7 @@ public final class QueryBuilder {
     public static String token(String... columnNames) {
         StringBuilder sb = new StringBuilder();
         sb.append("token(");
-        Utils.joinAndAppendNames(sb, ",", Arrays.asList((Object[])columnNames));
+        Utils.joinAndAppendNames(sb, null, ",", Arrays.asList((Object[])columnNames));
         sb.append(')');
         return sb.toString();
     }

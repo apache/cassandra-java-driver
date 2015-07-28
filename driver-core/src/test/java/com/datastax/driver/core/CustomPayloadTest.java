@@ -64,7 +64,7 @@ public class CustomPayloadTest extends CCMBridge.PerClassSingleNodeCluster {
 
     @Test(groups = "short")
     public void should_echo_custom_payload_when_executing_statement() throws Exception {
-        Statement statement = new SimpleStatement("SELECT c2 FROM t1 where c1 = ?", 1);
+        Statement statement = session.newSimpleStatement("SELECT c2 FROM t1 where c1 = ?", 1);
         statement.setOutgoingPayload(payload1);
         ResultSet rows = session.execute(statement);
         Map<String, ByteBuffer> actual = rows.getExecutionInfo().getIncomingPayload();
@@ -73,7 +73,7 @@ public class CustomPayloadTest extends CCMBridge.PerClassSingleNodeCluster {
 
     @Test(groups = "short")
     public void should_echo_custom_payload_when_executing_batch_statement() throws Exception {
-        Statement statement = new BatchStatement().add(new SimpleStatement("INSERT INTO t1 (c1, c2) values (1, 'foo')"));
+        Statement statement = new BatchStatement().add(session.newSimpleStatement("INSERT INTO t1 (c1, c2) values (1, 'foo')"));
         statement.setOutgoingPayload(payload1);
         ResultSet rows = session.execute(statement);
         Map<String, ByteBuffer> actual = rows.getExecutionInfo().getIncomingPayload();
@@ -82,7 +82,8 @@ public class CustomPayloadTest extends CCMBridge.PerClassSingleNodeCluster {
 
     @Test(groups = "short")
     public void should_echo_custom_payload_when_building_statement() throws Exception {
-        Statement statement = QueryBuilder.select("c2").from("t1").where(eq("c1", 1)).setOutgoingPayload(payload1);
+        QueryBuilder builder = new QueryBuilder(cluster);
+        Statement statement = builder.select("c2").from("t1").where(eq("c1", 1)).setOutgoingPayload(payload1);
         ResultSet rows = session.execute(statement);
         Map<String, ByteBuffer> actual = rows.getExecutionInfo().getIncomingPayload();
         assertThat(actual).isEqualTo(payload1);
@@ -96,7 +97,7 @@ public class CustomPayloadTest extends CCMBridge.PerClassSingleNodeCluster {
      */
     @Test(groups = "short")
     public void should_propagate_incoming_payload_to_bound_statement() throws Exception {
-        RegularStatement statement = new SimpleStatement("SELECT c2 as col1 FROM t1 where c1 = ?");
+        RegularStatement statement = session.newSimpleStatement("SELECT c2 as col1 FROM t1 where c1 = ?");
         statement.setOutgoingPayload(payload1);
         PreparedStatement ps = session.prepare(statement);
         // Prepared statement should inherit outgoing payload
@@ -123,7 +124,7 @@ public class CustomPayloadTest extends CCMBridge.PerClassSingleNodeCluster {
      */
     @Test(groups = "short")
     public void should_override_incoming_payload_when_outgoing_payload_explicitly_set_on_preparing_statement() throws Exception {
-        RegularStatement statement = new SimpleStatement("SELECT c2 as col2 FROM t1 where c1 = ?");
+        RegularStatement statement = session.newSimpleStatement("SELECT c2 as col2 FROM t1 where c1 = ?");
         statement.setOutgoingPayload(payload1);
         PreparedStatement ps = session.prepare(statement);
         // Prepared statement should inherit outgoing payload
@@ -150,7 +151,7 @@ public class CustomPayloadTest extends CCMBridge.PerClassSingleNodeCluster {
      */
     @Test(groups = "short")
     public void should_not_set_any_payload_on_bound_statement() throws Exception {
-        RegularStatement statement = new SimpleStatement("SELECT c2 as col3 FROM t1 where c1 = ?");
+        RegularStatement statement = session.newSimpleStatement("SELECT c2 as col3 FROM t1 where c1 = ?");
         PreparedStatement ps = session.prepare(statement);
         assertThat(ps.getOutgoingPayload()).isNull();
         assertThat(ps.getIncomingPayload()).isNull();
@@ -181,7 +182,7 @@ public class CustomPayloadTest extends CCMBridge.PerClassSingleNodeCluster {
     public void should_echo_custom_payload_when_paginating() throws Exception {
         session.execute("INSERT INTO t1 (c1) VALUES (1)");
         session.execute("INSERT INTO t1 (c1) VALUES (2)");
-        Statement statement = new SimpleStatement("SELECT c2 FROM t1 where c1 IN (1,2)");
+        Statement statement = session.newSimpleStatement("SELECT c2 FROM t1 where c1 IN (1,2)");
         statement.setFetchSize(1);
         statement.setOutgoingPayload(payload1);
         ResultSet rows = session.execute(statement);
@@ -200,7 +201,7 @@ public class CustomPayloadTest extends CCMBridge.PerClassSingleNodeCluster {
     public void should_encode_null_values() throws Exception {
         Map<String, ByteBuffer> payload = new HashMap<String, ByteBuffer>();
         payload.put("k1", Statement.NULL_PAYLOAD_VALUE);
-        Statement statement = new SimpleStatement("SELECT c2 FROM t1 where c1 = ?", 1);
+        Statement statement = session.newSimpleStatement("SELECT c2 FROM t1 where c1 = ?", 1);
         statement.setOutgoingPayload(payload);
         ResultSet rows = session.execute(statement);
         Map<String, ByteBuffer> actual = rows.getExecutionInfo().getIncomingPayload();
@@ -211,28 +212,28 @@ public class CustomPayloadTest extends CCMBridge.PerClassSingleNodeCluster {
     public void should_throw_npe_when_null_key_on_regular_statement() throws Exception {
         Map<String, ByteBuffer> payload = new HashMap<String, ByteBuffer>();
         payload.put(null, ByteBuffer.wrap(new byte[]{ 1 }));
-        new SimpleStatement("SELECT c2 FROM t1 where c1 = ?", 1).setOutgoingPayload(payload);
+        session.newSimpleStatement("SELECT c2 FROM t1 where c1 = ?", 1).setOutgoingPayload(payload);
     }
 
     @Test(groups = "unit", expectedExceptions = NullPointerException.class)
     public void should_throw_npe_when_null_value_on_regular_statement() throws Exception {
         Map<String, ByteBuffer> payload = new HashMap<String, ByteBuffer>();
         payload.put("k1", null);
-        new SimpleStatement("SELECT c2 FROM t1 where c1 = ?", 1).setOutgoingPayload(payload);
+        session.newSimpleStatement("SELECT c2 FROM t1 where c1 = ?", 1).setOutgoingPayload(payload);
     }
 
     @Test(groups = "short", expectedExceptions = NullPointerException.class)
     public void should_throw_npe_when_null_key_on_prepared_statement() throws Exception {
         Map<String, ByteBuffer> payload = new HashMap<String, ByteBuffer>();
         payload.put(null, ByteBuffer.wrap(new byte[]{ 1 }));
-        session.prepare(new SimpleStatement("SELECT c2 FROM t1 where c1 = 1")).setOutgoingPayload(payload);
+        session.prepare(session.newSimpleStatement("SELECT c2 FROM t1 where c1 = 1")).setOutgoingPayload(payload);
     }
 
     @Test(groups = "short", expectedExceptions = NullPointerException.class)
     public void should_throw_npe_when_null_value_on_prepared_statement() throws Exception {
         Map<String, ByteBuffer> payload = new HashMap<String, ByteBuffer>();
         payload.put("k1", null);
-        session.prepare(new SimpleStatement("SELECT c2 FROM t1 where c1 = 2")).setOutgoingPayload(payload);
+        session.prepare(session.newSimpleStatement("SELECT c2 FROM t1 where c1 = 2")).setOutgoingPayload(payload);
     }
 
     @Test(groups = "short")
@@ -246,7 +247,7 @@ public class CustomPayloadTest extends CCMBridge.PerClassSingleNodeCluster {
                 .build()
                 .init();
             v3session = v3cluster.connect();
-            Statement statement = new SimpleStatement("SELECT c2 FROM t1 where c1 = ?", 1);
+            Statement statement = session.newSimpleStatement("SELECT c2 FROM t1 where c1 = ?", 1);
             statement.setOutgoingPayload(payload1);
             v3session.execute(statement);
             fail("Should not send custom payloads with protocol V3");
@@ -282,7 +283,7 @@ public class CustomPayloadTest extends CCMBridge.PerClassSingleNodeCluster {
         try {
             logger.setLevel(TRACE);
             logger.addAppender(appender);
-            Statement statement = new SimpleStatement("SELECT c2 FROM t1 where c1 = ?", 1);
+            Statement statement = session.newSimpleStatement("SELECT c2 FROM t1 where c1 = ?", 1);
             statement.setOutgoingPayload(payload1);
             session.execute(statement);
             String logs = appender.waitAndGet(10000);

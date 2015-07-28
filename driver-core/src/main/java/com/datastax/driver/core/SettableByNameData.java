@@ -21,6 +21,8 @@ import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
 
+import com.google.common.reflect.TypeToken;
+
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 
 /**
@@ -290,7 +292,14 @@ public interface SettableByNameData<T extends SettableData<T>> {
      * Sets the value for (all occurrences of) variable {@code name} to the
      * provided list.
      * <p>
-     * Please note that {@code null} values are not supported inside collection by CQL.
+     * Please note that {@code null} values inside collections are not supported by CQL.
+     * <p>
+     * Note about performance: this method must perform a runtime inspection of the provided list,
+     * in order to guess the best codec to serialize the list elements.
+     * The result of such inspection cannot be cached and thus must be performed for each invocation
+     * of this method, which may incur in a performance penalty.
+     * To circumvent this problem, consider using {@link #setList(String, List, Class)} or
+     * {@link #setList(String, List, TypeToken)}, which do not suffer from such symptoms.
      *
      * @param name the name of the value to set; if {@code name} is present multiple
      * times, all its values are set.
@@ -307,10 +316,65 @@ public interface SettableByNameData<T extends SettableData<T>> {
     public <E> T setList(String name, List<E> v);
 
     /**
+     * Sets the value for (all occurrences of) variable {@code name} to the provided list,
+     * whose elements are of the provided Java class.
+     * <p>
+     * Please note that {@code null} values inside collections are not supported by CQL.
+     * <p>
+     * Note about performance: this method is able to cache codecs used to serialize the list elements,
+     * and thus should be used instead of {@link #setList(String, List)}
+     * whenever possible, because it performs significantly better.
+     *
+     * @param name the name of the value to set; if {@code name} is present multiple
+     * @param v the value to set.
+     * @param elementsClass the class for the elements of the list.
+     * @return this object.
+     *
+     * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
+     * @throws InvalidTypeException if value {@code i} is not a list type or
+     * if the elements of {@code v} are not of the type of the elements of
+     * column {@code i}.
+     * @throws NullPointerException if {@code v} contains null values. Nulls are not supported in collections
+     * by CQL.
+     */
+    public <E> T setList(String name, List<E> v, Class<E> elementsClass);
+
+    /**
+     * Sets the value for (all occurrences of) variable {@code name} to the provided list,
+     * whose elements are of the provided Java type.
+     * <p>
+     * Please note that {@code null} values inside collections are not supported by CQL.
+     * <p>
+     * Note about performance: this method is able to cache codecs used to serialize the list elements,
+     * and thus should be used instead of {@link #setList(String, List)}
+     * whenever possible, because it performs significantly better.
+     *
+     * @param name the name of the value to set; if {@code name} is present multiple
+     * @param v the value to set.
+     * @param elementsType the type for the elements of the list.
+     * @return this object.
+     *
+     * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
+     * @throws InvalidTypeException if value {@code i} is not a list type or
+     * if the elements of {@code v} are not of the type of the elements of
+     * column {@code i}.
+     * @throws NullPointerException if {@code v} contains null values. Nulls are not supported in collections
+     * by CQL.
+     */
+    public <E> T setList(String name, List<E> v, TypeToken<E> elementsType);
+
+    /**
      * Sets the value for (all occurrences of) variable {@code name} to the
      * provided map.
      * <p>
      * Please note that {@code null} values are not supported inside collection by CQL.
+     * <p>
+     * Note about performance: this method must perform a runtime inspection of the provided map,
+     * in order to guess the best codec to serialize the map entries.
+     * The result of such inspection cannot be cached and thus must be performed for each invocation
+     * of this method, which may incur in a performance penalty.
+     * To circumvent this problem, consider using {@link #setMap(String, Map, Class, Class)} or
+     * {@link #setMap(String, Map, TypeToken, TypeToken)}, which do not suffer from such symptoms.
      *
      * @param name the name of the value to set; if {@code name} is present multiple
      * times, all its values are set.
@@ -327,10 +391,69 @@ public interface SettableByNameData<T extends SettableData<T>> {
     public <K, V> T setMap(String name, Map<K, V> v);
 
     /**
+     * Sets the value for (all occurrences of) variable {@code name} to the provided map,
+     * whose keys and values are of the provided Java classes.
+     * <p>
+     * Please note that {@code null} values inside collections are not supported by CQL.
+     * <p>
+     * Note about performance: this method is able to cache codecs used to serialize the map entries,
+     * and thus should be used instead of {@link #setMap(String, Map)}
+     * whenever possible, because it performs significantly better.
+     *
+     * @param name the name of the value to set; if {@code name} is present multiple
+     * times, all its values are set.
+     * @param v the value to set.
+     * @param keysClass the class for the keys of the map.
+     * @param valuesClass the class for the values of the map.
+     * @return this object.
+     *
+     * @throws IllegalArgumentException if {@code name} is not a valid name for this object.
+     * @throws InvalidTypeException if (any occurrence of) {@code name} is
+     * not a map type or if the elements (keys or values) of {@code v} are not of
+     * the type of the elements of column {@code name}.
+     * @throws NullPointerException if {@code v} contains null values. Nulls are not supported in collections
+     * by CQL.
+     */
+    public <K, V> T setMap(String name, Map<K, V> v, Class<K> keysClass, Class<V> valuesClass);
+
+    /**
+     * Sets the value for (all occurrences of) variable {@code name} to the provided map,
+     * whose keys and values are of the provided Java types.
+     * <p>
+     * Please note that {@code null} values inside collections are not supported by CQL.
+     * <p>
+     * Note about performance: this method is able to cache codecs used to serialize the map entries,
+     * and thus should be used instead of {@link #setMap(String, Map)}
+     * whenever possible, because it performs significantly better.
+     *
+     * @param name the name of the value to set; if {@code name} is present multiple
+     * times, all its values are set.
+     * @param v the value to set.
+     * @param keysType the type for the keys of the map.
+     * @param valuesType the type for the values of the map.
+     * @return this object.
+     *
+     * @throws IllegalArgumentException if {@code name} is not a valid name for this object.
+     * @throws InvalidTypeException if (any occurrence of) {@code name} is
+     * not a map type or if the elements (keys or values) of {@code v} are not of
+     * the type of the elements of column {@code name}.
+     * @throws NullPointerException if {@code v} contains null values. Nulls are not supported in collections
+     * by CQL.
+     */
+    public <K, V> T setMap(String name, Map<K, V> v, TypeToken<K> keysType, TypeToken<V> valuesType);
+
+    /**
      * Sets the value for (all occurrences of) variable {@code name} to the
      * provided set.
      * <p>
      * Please note that {@code null} values are not supported inside collection by CQL.
+     * <p>
+     * Note about performance: this method must perform a runtime inspection of the provided map,
+     * in order to guess the best codec to serialize the map entries.
+     * The result of such inspection cannot be cached and thus must be performed for each invocation
+     * of this method, which may incur in a performance penalty.
+     * To circumvent this problem, consider using {@link #setSet(String, Set, Class)} or
+     * {@link #setSet(String, Set, TypeToken)}, which do not suffer from such symptoms.
      *
      * @param name the name of the value to set; if {@code name} is present multiple
      * times, all its values are set.
@@ -345,6 +468,54 @@ public interface SettableByNameData<T extends SettableData<T>> {
      * by CQL.
      */
     public <E> T setSet(String name, Set<E> v);
+
+    /**
+     * Sets the value for (all occurrences of) variable {@code name} to the provided set,
+     * whose elements are of the provided Java class.
+     * <p>
+     * Please note that {@code null} values inside collections are not supported by CQL.
+     * <p>
+     * Note about performance: this method is able to cache codecs used to serialize the set elements,
+     * and thus should be used instead of {@link #setSet(String, Set)}
+     * whenever possible, because it performs significantly better.
+     *
+     * @param name the name of the value to set; if {@code name} is present multiple
+     * @param v the value to set.
+     * @param elementsClass the class for the elements of the set.
+     * @return this object.
+     *
+     * @throws IllegalArgumentException if {@code name} is not a valid name for this object.
+     * @throws InvalidTypeException if (any occurrence of) {@code name} is
+     * not a map type or if the elements (keys or values) of {@code v} are not of
+     * the type of the elements of column {@code name}.
+     * @throws NullPointerException if {@code v} contains null values. Nulls are not supported in collections
+     * by CQL.
+     */
+    public <E> T setSet(String name, Set<E> v, Class<E> elementsClass);
+
+    /**
+     * Sets the value for (all occurrences of) variable {@code name} to the provided set,
+     * whose elements are of the provided Java type.
+     * <p>
+     * Please note that {@code null} values inside collections are not supported by CQL.
+     * <p>
+     * Note about performance: this method is able to cache codecs used to serialize the set elements,
+     * and thus should be used instead of {@link #setSet(String, Set)}
+     * whenever possible, because it performs significantly better.
+     *
+     * @param name the name of the value to set; if {@code name} is present multiple
+     * @param v the value to set.
+     * @param elementsType the type for the elements of the set.
+     * @return this object.
+     *
+     * @throws IllegalArgumentException if {@code name} is not a valid name for this object.
+     * @throws InvalidTypeException if (any occurrence of) {@code name} is
+     * not a map type or if the elements (keys or values) of {@code v} are not of
+     * the type of the elements of column {@code name}.
+     * @throws NullPointerException if {@code v} contains null values. Nulls are not supported in collections
+     * by CQL.
+     */
+    public <E> T setSet(String name, Set<E> v, TypeToken<E> elementsType);
 
     /**
      * Sets the value for (all occurrences of) variable {@code name} to the
@@ -391,4 +562,81 @@ public interface SettableByNameData<T extends SettableData<T>> {
      * @throws IllegalArgumentException if {@code name} is not a valid name for this object.
      */
     public T setToNull(String name);
+
+    /**
+     * Sets the value for (all occurrences of) variable {@code name} to the provided value.
+     * <p>
+     * This method is not suitable to use with custom codecs: it will always
+     * use the default ones for the underlying CQL type. If you want to use
+     * non-default codecs, use {@link #set(String, V, Class)} or {@link #set(String, V, TypeToken)} instead.
+     *
+     * @param name the name of the value to set; if {@code name} is present multiple
+     * times, all its values are set.
+     * @param v the value to set; may be {@code null}.
+     * @return this object.
+     * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
+     */
+    <V> T setObject(String name, V v);
+
+    /**
+     * Sets the value for (all occurrences of) variable {@code name} to the provided value of the provided Java class.
+     * <p>
+     * A suitable {@link TypeCodec} instance for the underlying CQL type and the provided class must
+     * have been previously registered with the {@link CodecRegistry} currently in use.
+     * <p>
+     * This method should be used instead of {@link #setObject(String, Object)} in cases
+     * where more than one codec is registered for the same CQL type; specifying the Java class
+     * allows the {@link CodecRegistry} to narrow down the search and return only an exactly-matching codec (if any),
+     * thus avoiding any risk of ambiguity.
+     *
+     * @param name the name of the value to set; if {@code name} is present multiple
+     * times, all its values are set.
+     * @param v the value to set; may be {@code null}.
+     * @param targetClass The Java class to convert to; must not be {@code null};
+     * @return this object.
+     * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
+     */
+    <V> T set(String name, V v, Class<V> targetClass);
+
+    /**
+     * Sets the value for (all occurrences of) variable {@code name} to the provided value of the provided Java type.
+     * <p>
+     * A suitable {@link TypeCodec} instance for the underlying CQL type and the provided class must
+     * have been previously registered with the {@link CodecRegistry} currently in use.
+     * <p>
+     * This method should be used instead of {@link #setObject(String, Object)} in cases
+     * where more than one codec is registered for the same CQL type; specifying the Java class
+     * allows the {@link CodecRegistry} to narrow down the search and return only an exactly-matching codec (if any),
+     * thus avoiding any risk of ambiguity.
+     *
+     * @param name the name of the value to set; if {@code name} is present multiple
+     * times, all its values are set.
+     * @param v the value to set; may be {@code null}.
+     * @param targetType The Java type to convert to; must not be {@code null};
+     * @return this object.
+     * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
+     */
+    <V> T set(String name, V v, TypeToken<V> targetType);
+
+    /**
+     * Sets the value for (all occurrences of) variable {@code name} to the provided value,
+     * converted using the given {@link TypeCodec}.
+     * <p>
+     * Note that this method allows to entirely bypass the {@link CodecRegistry} currently in use
+     * and forces the driver to use the given codec instead.
+     * <p>
+     * It is the caller's responsibility to ensure that the given codec {@link TypeCodec#accepts(DataType) accepts}
+     * the underlying CQL type; failing to do so may result in {@link InvalidTypeException}s being thrown.
+     *
+     * @param name the name of the value to set; if {@code name} is present multiple
+     * times, all its values are set.
+     * @param v the value to set; may be {@code null}.
+     * @param codec The {@link TypeCodec} to use to serialize the value; may not be {@code null}.
+     * @return this object.
+     * @throws InvalidTypeException if the given codec does not {@link TypeCodec#accepts(DataType) accept} the underlying CQL type.
+     * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
+     */
+    <V> T set(String name, V v, TypeCodec<V> codec);
+
+
 }

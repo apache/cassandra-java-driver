@@ -394,7 +394,7 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
                             alldatatypes.setMap(index, ImmutableMap.of(sampleElement, sampleElement));
                             break;
                         case TUPLE:
-                            alldatatypes.setTupleValue(index, TupleType.of(dataType).newValue(sampleElement));
+                            alldatatypes.setTupleValue(index, cluster.getMetadata().newTupleType(dataType).newValue(sampleElement));
                     }
                 }
 

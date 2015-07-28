@@ -26,7 +26,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Objects;
 import com.google.common.base.Predicates;
 import com.google.common.collect.*;
 import com.google.common.util.concurrent.*;
@@ -575,26 +574,15 @@ public class Cluster implements Closeable {
         private ProtocolVersion protocolVersion;
         private AuthProvider authProvider = AuthProvider.NONE;
 
-        private LoadBalancingPolicy loadBalancingPolicy;
-        private ReconnectionPolicy reconnectionPolicy;
-        private RetryPolicy retryPolicy;
-        private AddressTranslator addressTranslator;
-        private TimestampGenerator timestampGenerator;
-        private SpeculativeExecutionPolicy speculativeExecutionPolicy;
+        private final Policies.Builder policiesBuilder = Policies.builder();
+        private final Configuration.Builder configurationBuilder = Configuration.builder();
 
         private ProtocolOptions.Compression compression = ProtocolOptions.Compression.NONE;
         private SSLOptions sslOptions = null;
         private boolean metricsEnabled = true;
         private boolean jmxEnabled = true;
 
-        private PoolingOptions poolingOptions;
-        private SocketOptions socketOptions;
-        private QueryOptions queryOptions;
-
-        private NettyOptions nettyOptions = NettyOptions.DEFAULT_INSTANCE;
-
         private Collection<Host.StateListener> listeners;
-
 
         @Override
         public String getClusterName() {
@@ -852,7 +840,7 @@ public class Cluster implements Closeable {
          * @return this Builder.
          */
         public Builder withLoadBalancingPolicy(LoadBalancingPolicy policy) {
-            this.loadBalancingPolicy = policy;
+            policiesBuilder.withLoadBalancingPolicy(policy);
             return this;
         }
 
@@ -866,7 +854,7 @@ public class Cluster implements Closeable {
          * @return this Builder.
          */
         public Builder withReconnectionPolicy(ReconnectionPolicy policy) {
-            this.reconnectionPolicy = policy;
+            policiesBuilder.withReconnectionPolicy(policy);
             return this;
         }
 
@@ -880,7 +868,7 @@ public class Cluster implements Closeable {
          * @return this Builder.
          */
         public Builder withRetryPolicy(RetryPolicy policy) {
-            this.retryPolicy = policy;
+            policiesBuilder.withRetryPolicy(policy);
             return this;
         }
 
@@ -895,7 +883,7 @@ public class Cluster implements Closeable {
          * @return this Builder.
          */
         public Builder withAddressTranslator(AddressTranslator translator) {
-            this.addressTranslator = translator;
+            policiesBuilder.withAddressTranslator(translator);
             return this;
         }
 
@@ -915,7 +903,7 @@ public class Cluster implements Closeable {
          * @return this Builder.
          */
         public Builder withTimestampGenerator(TimestampGenerator timestampGenerator) {
-            this.timestampGenerator = timestampGenerator;
+            policiesBuilder.withTimestampGenerator(timestampGenerator);
             return this;
         }
 
@@ -929,7 +917,22 @@ public class Cluster implements Closeable {
          * @return this Builder.
          */
         public Builder withSpeculativeExecutionPolicy(SpeculativeExecutionPolicy policy) {
-            this.speculativeExecutionPolicy = policy;
+            policiesBuilder.withSpeculativeExecutionPolicy(policy);
+            return this;
+        }
+
+
+        /**
+         * Configures the {@link CodecRegistry} instance to use for the new cluster.
+         * <p>
+         * If no codec registry is set through this method, a newly-created instance
+         * will be used instead.
+         *
+         * @param codecRegistry the codec registry to use.
+         * @return this Builder.
+         */
+        public Builder withCodecRegistry(CodecRegistry codecRegistry) {
+            configurationBuilder.withCodecRegistry(codecRegistry);
             return this;
         }
 
@@ -1059,7 +1062,7 @@ public class Cluster implements Closeable {
          * @return this builder.
          */
         public Builder withPoolingOptions(PoolingOptions options) {
-            this.poolingOptions = options;
+            configurationBuilder.withPoolingOptions(options);
             return this;
         }
 
@@ -1073,7 +1076,7 @@ public class Cluster implements Closeable {
          * @return this builder.
          */
         public Builder withSocketOptions(SocketOptions options) {
-            this.socketOptions = options;
+            configurationBuilder.withSocketOptions(options);
             return this;
         }
 
@@ -1087,7 +1090,7 @@ public class Cluster implements Closeable {
          * @return this builder.
          */
         public Builder withQueryOptions(QueryOptions options) {
-            this.queryOptions = options;
+            configurationBuilder.withQueryOptions(options);
             return this;
         }
 
@@ -1101,7 +1104,7 @@ public class Cluster implements Closeable {
          * @return this builder.
          */
         public Builder withNettyOptions(NettyOptions nettyOptions) {
-            this.nettyOptions = nettyOptions;
+            configurationBuilder.withNettyOptions(nettyOptions);
             return this;
         }
 
@@ -1116,21 +1119,15 @@ public class Cluster implements Closeable {
          */
         @Override
         public Configuration getConfiguration() {
-            Policies policies = Policies.builder()
-                .withLoadBalancingPolicy(loadBalancingPolicy)
-                .withReconnectionPolicy(reconnectionPolicy)
-                .withRetryPolicy(retryPolicy)
-                .withAddressTranslator(addressTranslator)
-                .withTimestampGenerator(timestampGenerator)
-                .withSpeculativeExecutionPolicy(speculativeExecutionPolicy)
+            ProtocolOptions protocolOptions = new ProtocolOptions(port, protocolVersion, maxSchemaAgreementWaitSeconds, sslOptions, authProvider)
+                .setCompression(compression);
+            MetricsOptions metricsOptions = metricsEnabled ? new MetricsOptions(jmxEnabled) : null;
+
+            return configurationBuilder
+                .withProtocolOptions(protocolOptions)
+                .withMetricsOptions(metricsOptions)
+                .withPolicies(policiesBuilder.build())
                 .build();
-            return new Configuration(policies,
-                                     new ProtocolOptions(port, protocolVersion, maxSchemaAgreementWaitSeconds, sslOptions, authProvider).setCompression(compression),
-                                     poolingOptions == null ? new PoolingOptions() : poolingOptions,
-                                     socketOptions == null ? new SocketOptions() : socketOptions,
-                                     metricsEnabled ? new MetricsOptions(jmxEnabled) : null,
-                                     queryOptions == null ? new QueryOptions() : queryOptions,
-                                     nettyOptions);
         }
 
         @Override

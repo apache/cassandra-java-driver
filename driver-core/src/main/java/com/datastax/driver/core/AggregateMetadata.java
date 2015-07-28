@@ -38,10 +38,11 @@ public class AggregateMetadata {
     private final String stateFuncSimpleName;
     private final String stateFuncFullName;
     private final DataType stateType;
+    private final TypeCodec<Object> stateTypeCodec;
 
     public AggregateMetadata(KeyspaceMetadata keyspace, String fullName, String simpleName, List<DataType> argumentTypes,
                              String finalFuncSimpleName, String finalFuncFullName, Object initCond, DataType returnType,
-                             String stateFuncSimpleName, String stateFuncFullName, DataType stateType) {
+                             String stateFuncSimpleName, String stateFuncFullName, DataType stateType, TypeCodec<Object> stateTypeCodec) {
         this.keyspace = keyspace;
         this.fullName = fullName;
         this.simpleName = simpleName;
@@ -53,6 +54,7 @@ public class AggregateMetadata {
         this.stateFuncSimpleName = stateFuncSimpleName;
         this.stateFuncFullName = stateFuncFullName;
         this.stateType = stateType;
+        this.stateTypeCodec = stateTypeCodec;
     }
 
     // CREATE TABLE system.schema_aggregates (
@@ -67,25 +69,25 @@ public class AggregateMetadata {
     //     state_type text,
     //     PRIMARY KEY (keyspace_name, aggregate_name, signature)
     // ) WITH CLUSTERING ORDER BY (aggregate_name ASC, signature ASC)
-    static AggregateMetadata build(KeyspaceMetadata ksm, Row row, ProtocolVersion protocolVersion) {
+    static AggregateMetadata build(KeyspaceMetadata ksm, Row row, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
         String simpleName = row.getString("aggregate_name");
         List<String> signature = row.getList("signature", String.class);
         String fullName = Metadata.fullFunctionName(simpleName, signature);
-        List<DataType> argumentTypes = parseTypes(row.getList("argument_types", String.class));
+        List<DataType> argumentTypes = parseTypes(row.getList("argument_types", String.class), protocolVersion, codecRegistry);
         String finalFuncSimpleName = row.getString("final_func");
-        DataType returnType = CassandraTypeParser.parseOne(row.getString("return_type"));
+        DataType returnType = CassandraTypeParser.parseOne(row.getString("return_type"), protocolVersion, codecRegistry);
         String stateFuncSimpleName = row.getString("state_func");
         String stateTypeName = row.getString("state_type");
-        DataType stateType = CassandraTypeParser.parseOne(stateTypeName);
+        DataType stateType = CassandraTypeParser.parseOne(stateTypeName, protocolVersion, codecRegistry);
         ByteBuffer rawInitCond = row.getBytes("initcond");
-        Object initCond = rawInitCond == null ? null : stateType.deserialize(rawInitCond, protocolVersion);
+        Object initCond = rawInitCond == null ? null : codecRegistry.codecFor(stateType).deserialize(rawInitCond, protocolVersion);
 
         String finalFuncFullName = finalFuncSimpleName == null ? null : String.format("%s(%s)", finalFuncSimpleName, stateType);
         String stateFuncFullName = makeStateFuncFullName(stateFuncSimpleName, stateType.toString(), signature);
 
         AggregateMetadata aggregate = new AggregateMetadata(ksm, fullName, simpleName, argumentTypes,
             finalFuncSimpleName, finalFuncFullName, initCond, returnType, stateFuncSimpleName,
-            stateFuncFullName, stateType);
+            stateFuncFullName, stateType, codecRegistry.codecFor(stateType));
         ksm.add(aggregate);
         return aggregate;
     }
@@ -96,13 +98,15 @@ public class AggregateMetadata {
         return Metadata.fullFunctionName(stateFuncSimpleName, args);
     }
 
-    private static List<DataType> parseTypes(List<String> names) {
+    private static List<DataType> parseTypes(List<String> names, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
         if (names.isEmpty())
             return Collections.emptyList();
 
         ImmutableList.Builder<DataType> builder = ImmutableList.builder();
-        for (String name : names)
-            builder.add(CassandraTypeParser.parseOne(name));
+        for (String name : names) {
+            DataType type = CassandraTypeParser.parseOne(name, protocolVersion, codecRegistry);
+            builder.add(type);
+        }
         return builder.build();
     }
 
@@ -170,7 +174,7 @@ public class AggregateMetadata {
         if (initCond != null)
             TableMetadata.spaceOrNewLine(sb, formatted)
                 .append("INITCOND ")
-                .append(stateType.format(initCond));
+                .append(stateTypeCodec.format(initCond));
 
         sb.append(';');
 

@@ -20,6 +20,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import com.datastax.driver.core.TypeCodec;
+
 /**
  * Annotation that allows to specify the name of the CQL column to which the
  * field should be mapped.
@@ -49,4 +51,12 @@ public @interface Column {
      * @return whether the column name is a case sensitive one.
      */
     boolean caseSensitive() default false;
+
+    /**
+     * A custom codec that will be used to serialize and deserialize the column.
+     *
+     * @return the codec's class. It must have a no-argument constructor (the mapper
+     * will create an instance and cache it).
+     */
+    Class<? extends TypeCodec<?>> codec() default Defaults.NoCodec.class;
 }

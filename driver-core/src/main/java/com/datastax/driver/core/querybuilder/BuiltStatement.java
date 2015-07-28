@@ -17,11 +17,15 @@ package com.datastax.driver.core.querybuilder;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.policies.RetryPolicy;
+
+import static com.datastax.driver.core.CodecUtils.compose;
+import static com.datastax.driver.core.CodecUtils.convert;
 
 /**
  * Common ancestor to the query builder built statements.
@@ -31,13 +35,13 @@ public abstract class BuiltStatement extends RegularStatement {
     private static final Pattern lowercaseId = Pattern.compile("[a-z][a-z0-9_]*");
 
     private final List<ColumnMetadata> partitionKey;
-    private final ByteBuffer[] routingKey;
+    private final List<Object> routingKeyValues;
     final String keyspace;
+    protected final Cluster cluster;
 
     private boolean dirty;
     private String cache;
     private List<Object> values;
-
     Boolean isCounterOp;
     boolean hasNonIdempotentOps;
 
@@ -46,16 +50,18 @@ public abstract class BuiltStatement extends RegularStatement {
     boolean hasBindMarkers;
     private boolean forceNoValues;
 
-    BuiltStatement(String keyspace) {
+    BuiltStatement(String keyspace, Cluster cluster) {
         this.partitionKey = null;
-        this.routingKey = null;
+        this.routingKeyValues = null;
         this.keyspace = keyspace;
+        this.cluster = cluster;
     }
 
-    BuiltStatement(TableMetadata tableMetadata) {
+    BuiltStatement(TableMetadata tableMetadata, Cluster cluster) {
         this.partitionKey = tableMetadata.getPartitionKey();
-        this.routingKey = new ByteBuffer[tableMetadata.getPartitionKey().size()];
+        this.routingKeyValues = Arrays.asList(new Object[tableMetadata.getPartitionKey().size()]);
         this.keyspace = escapeId(tableMetadata.getKeyspace().getName());
+        this.cluster = cluster;
     }
 
     // Same as Metadata.escapeId, but we don't have access to it here.
@@ -142,32 +148,47 @@ public abstract class BuiltStatement extends RegularStatement {
 
     // TODO: Correctly document the InvalidTypeException
     void maybeAddRoutingKey(String name, Object value) {
-        if (routingKey == null || name == null || value == null || value instanceof BindMarker)
+        if (routingKeyValues == null || name == null || value == null || value instanceof BindMarker)
             return;
 
         for (int i = 0; i < partitionKey.size(); i++) {
             if (name.equals(partitionKey.get(i).getName()) && Utils.isRawValue(value)) {
-                DataType dt = partitionKey.get(i).getType();
-                // We don't really care which protocol version we use, since the only place it matters if for
-                // collections (not inside UDT), and those are not allowed in a partition key anyway, hence the hardcoding.
-                routingKey[i] = dt.serialize(dt.parse(Utils.toRawString(value)), ProtocolVersion.NEWEST_SUPPORTED);
+                routingKeyValues.set(i, value);
                 return;
             }
         }
     }
 
+    CodecRegistry getCodecRegistry(){
+        return cluster.getConfiguration().getCodecRegistry();
+    }
+
+    ProtocolVersion getProtocolVersion() {
+        cluster.init();
+        return cluster.getConfiguration().getProtocolOptions().getProtocolVersion();
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Note: Calling this method may trigger the underlying {@link Cluster} initialization.
+     */
     @Override
     public ByteBuffer getRoutingKey() {
-        if (routingKey == null)
+        if (routingKeyValues == null)
             return null;
-
-        for (ByteBuffer bb : routingKey)
-            if (bb == null)
+        ByteBuffer[] routingKeyParts = new ByteBuffer[partitionKey.size()];
+        CodecRegistry codecRegistry = getCodecRegistry();
+        for (int i = 0; i < partitionKey.size(); i++) {
+            Object value = routingKeyValues.get(i);
+            if(value == null)
                 return null;
-
-        return routingKey.length == 1
-             ? routingKey[0]
-             : compose(routingKey);
+            TypeCodec<Object> codec = codecRegistry.codecFor(partitionKey.get(i).getType(), value);
+            routingKeyParts[i] = codec.serialize(value, getProtocolVersion());
+        }
+        return routingKeyParts.length == 1
+            ? routingKeyParts[0]
+            : compose(routingKeyParts);
     }
 
     @Override
@@ -175,10 +196,15 @@ public abstract class BuiltStatement extends RegularStatement {
         return keyspace;
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Note: Calling this method may trigger the underlying {@link Cluster} initialization.
+     */
     @Override
-    public ByteBuffer[] getValues(ProtocolVersion protocolVersion) {
+    public ByteBuffer[] getValues() {
         maybeRebuildCache();
-        return values == null ? null : Utils.convert(values, protocolVersion);
+        return values == null ? null : convert(values.toArray(), getProtocolVersion(), getCodecRegistry());
     }
 
     @Override
@@ -197,18 +223,17 @@ public abstract class BuiltStatement extends RegularStatement {
         return !hasNonIdempotentOps();
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Note: Calling this method may trigger the underlying {@link Cluster} initialization.
+     */
     @Override
     public String toString() {
-        if (forceNoValues)
+        if (forceNoValues) {
             return getQueryString();
-
+        }
         return maybeAddSemicolon(buildQueryString(null)).toString();
-    }
-
-    // Not meant to be public
-    List<Object> getRawValues() {
-        maybeRebuildCache();
-        return values;
     }
 
     /**
@@ -245,29 +270,6 @@ public abstract class BuiltStatement extends RegularStatement {
         return this;
     }
 
-    // This is a duplicate of the one in SimpleStatement, but I don't want to expose this publicly so...
-    static ByteBuffer compose(ByteBuffer... buffers) {
-        int totalLength = 0;
-        for (ByteBuffer bb : buffers)
-            totalLength += 2 + bb.remaining() + 1;
-
-        ByteBuffer out = ByteBuffer.allocate(totalLength);
-        for (ByteBuffer buffer : buffers)
-        {
-            ByteBuffer bb = buffer.duplicate();
-            putShortLength(out, bb.remaining());
-            out.put(bb);
-            out.put((byte) 0);
-        }
-        out.flip();
-        return out;
-    }
-
-    private static void putShortLength(ByteBuffer bb, int length) {
-        bb.put((byte) ((length >> 8) & 0xFF));
-        bb.put((byte) (length & 0xFF));
-    }
-
     /**
      * An utility class to create a BuiltStatement that encapsulate another one.
      */
@@ -276,7 +278,7 @@ public abstract class BuiltStatement extends RegularStatement {
         T statement;
 
         ForwardingStatement(T statement) {
-            super((String)null);
+            super((String)null, statement.cluster);
             this.statement = statement;
         }
 
@@ -314,11 +316,6 @@ public abstract class BuiltStatement extends RegularStatement {
         public RegularStatement setForceNoValues(boolean forceNoValues) {
             statement.setForceNoValues(forceNoValues);
             return this;
-        }
-
-        @Override
-        List<Object> getRawValues() {
-            return statement.getRawValues();
         }
 
         @Override
@@ -361,8 +358,8 @@ public abstract class BuiltStatement extends RegularStatement {
         }
 
         @Override
-        public ByteBuffer[] getValues(ProtocolVersion protocolVersion) {
-            return statement.getValues(protocolVersion);
+        public ByteBuffer[] getValues() {
+            return statement.getValues();
         }
 
         @Override

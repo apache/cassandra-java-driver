@@ -17,6 +17,9 @@ package com.datastax.driver.core;
 
 import java.nio.ByteBuffer;
 
+import static com.datastax.driver.core.CodecUtils.compose;
+import static com.datastax.driver.core.CodecUtils.convert;
+
 /**
  * A simple {@code RegularStatement} implementation built directly from a query
  * string.
@@ -25,99 +28,42 @@ public class SimpleStatement extends RegularStatement {
 
     private final String query;
     private final Object[] values;
+    private final Cluster cluster;
 
     private volatile ByteBuffer routingKey;
     private volatile String keyspace;
-
-    /**
-     * Creates a new {@code SimpleStatement} with the provided query string (and no values).
-     *
-     * @param query the query string.
-     */
-    public SimpleStatement(String query) {
-        this.query = query;
-        this.values = null;
+    
+    protected SimpleStatement(String query, Cluster cluster) {
+        this(query, cluster, (Object[]) null);
     }
 
-    /**
-     * Creates a new {@code SimpleStatement} with the provided query string and values.
-     * <p>
-     * This version of SimpleStatement is useful when you do not want to execute a
-     * query only once (and thus do not want to resort to prepared statement), but
-     * do not want to convert all column values to string (typically, if you have blob
-     * values, encoding them to a hexadecimal string is not very efficient). In
-     * that case, you can provide a query string with bind marker to this constructor
-     * along with the values for those bind variables. When executed, the server will
-     * prepare the provided, bind the provided values to that prepare statement and
-     * execute the resulting statement. Thus,
-     * <pre>
-     *   session.execute(new SimpleStatement(query, value1, value2, value3));
-     * </pre>
-     * is functionally equivalent to
-     * <pre>
-     *   PreparedStatement ps = session.prepare(query);
-     *   session.execute(ps.bind(value1, value2, value3));
-     * </pre>
-     * except that the former version:
-     * <ul>
-     *   <li>Requires only one round-trip to a Cassandra node.</li>
-     *   <li>Does not left any prepared statement stored in memory (neither client or
-     *   server side) once it has been executed.</li>
-     * </ul>
-     * <p>
-     * Note that the type of the {@code values} provided to this method will
-     * not be validated by the driver as is done by {@link BoundStatement#bind} since
-     * {@code query} is not parsed (and hence the driver cannot know what those value
-     * should be). If too much or too little values are provided or if a value is not
-     * a valid one for the variable it is bound to, an
-     * {@link com.datastax.driver.core.exceptions.InvalidQueryException} will be thrown
-     * by Cassandra at execution time. An {@code IllegalArgumentException} may be
-     * thrown by this constructor however if one of the value does not correspond to
-     * any CQL3 type (for instance, if it is a custom class).
-     *
-     * @param query the query string.
-     * @param values values required for the execution of {@code query}.
-     *
-     * @throws IllegalArgumentException if one of {@code values} is not of a type
-     * corresponding to a CQL3 type, i.e. is not a Class that could be returned
-     * by {@link DataType#asJavaClass}.
-     */
-    public SimpleStatement(String query, Object... values) {
-        if (values.length > 65535)
+    protected SimpleStatement(String query, Cluster cluster, Object... values) {
+        if (values != null && values.length > 65535)
             throw new IllegalArgumentException("Too many values, the maximum allowed is 65535");
         this.query = query;
         this.values = values;
+        this.cluster = cluster;
     }
 
-    private static ByteBuffer[] convert(Object[] values, ProtocolVersion protocolVersion) {
-        ByteBuffer[] serializedValues = new ByteBuffer[values.length];
-        for (int i = 0; i < values.length; i++) {
-            Object value = values[i];
-            try {
-                if (value instanceof Token)
-                    value = ((Token)value).getValue();
-                serializedValues[i] = DataType.serializeValue(value, protocolVersion);
-            } catch (IllegalArgumentException e) {
-                // Catch and rethrow to provide a more helpful error message (one that include which value is bad)
-                throw new IllegalArgumentException(String.format("Value %d of type %s does not correspond to any CQL3 type", i, value.getClass()));
-            }
-        }
-        return serializedValues;
-    }
-
-    /**
-     * Returns the query string.
-     *
-     * @return the query string;
-     */
     @Override
     public String getQueryString() {
         return query;
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * Note: Calling this method may trigger the underlying {@link Cluster} initialization.
+     */
     @Override
-    public ByteBuffer[] getValues(ProtocolVersion protocolVersion) {
-        return values == null ? null : convert(values, protocolVersion);
+    public ByteBuffer[] getValues() {
+        if(values == null)
+            return null;
+        cluster.init();
+        Configuration configuration = cluster.getConfiguration();
+        ProtocolVersion protocolVersion = configuration.getProtocolOptions().getProtocolVersion();
+        CodecRegistry codecRegistry = configuration.getCodecRegistry();
+        return convert(values, protocolVersion, codecRegistry);
     }
 
     /**
@@ -229,26 +175,4 @@ public class SimpleStatement extends RegularStatement {
         return this;
     }
 
-    // TODO: we could find that a better place (but it's not expose so it doesn't matter too much)
-    static ByteBuffer compose(ByteBuffer... buffers) {
-        int totalLength = 0;
-        for (ByteBuffer bb : buffers)
-            totalLength += 2 + bb.remaining() + 1;
-
-        ByteBuffer out = ByteBuffer.allocate(totalLength);
-        for (ByteBuffer buffer : buffers)
-        {
-            ByteBuffer bb = buffer.duplicate();
-            putShortLength(out, bb.remaining());
-            out.put(bb);
-            out.put((byte) 0);
-        }
-        out.flip();
-        return out;
-    }
-
-    private static void putShortLength(ByteBuffer bb, int length) {
-        bb.put((byte) ((length >> 8) & 0xFF));
-        bb.put((byte) (length & 0xFF));
-    }
 }

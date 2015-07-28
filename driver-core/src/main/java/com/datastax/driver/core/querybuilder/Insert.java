@@ -19,6 +19,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.CodecRegistry;
 import com.datastax.driver.core.TableMetadata;
 
 /**
@@ -32,14 +34,14 @@ public class Insert extends BuiltStatement {
     private final Options usings;
     private boolean ifNotExists;
 
-    Insert(String keyspace, String table) {
-        super(keyspace);
+    Insert(Cluster cluster, String keyspace, String table) {
+        super(keyspace, cluster);
         this.table = table;
         this.usings = new Options(this);
     }
 
-    Insert(TableMetadata table) {
-        super(table);
+    Insert(Cluster cluster, TableMetadata table) {
+        super(table, cluster);
         this.table = escapeId(table.getName());
         this.usings = new Options(this);
     }
@@ -48,14 +50,15 @@ public class Insert extends BuiltStatement {
     StringBuilder buildQueryString(List<Object> variables) {
         StringBuilder builder = new StringBuilder();
 
+        CodecRegistry codecRegistry = getCodecRegistry();
         builder.append("INSERT INTO ");
         if (keyspace != null)
             Utils.appendName(keyspace, builder).append('.');
         Utils.appendName(table, builder);
         builder.append('(');
-        Utils.joinAndAppendNames(builder, ",", names);
+        Utils.joinAndAppendNames(builder, codecRegistry, ",", names);
         builder.append(") VALUES (");
-        Utils.joinAndAppendValues(builder, ",", values, variables);
+        Utils.joinAndAppendValues(builder, codecRegistry, ",", values, variables);
         builder.append(')');
 
         if (ifNotExists)
@@ -63,7 +66,7 @@ public class Insert extends BuiltStatement {
 
         if (!usings.usings.isEmpty()) {
             builder.append(" USING ");
-            Utils.joinAndAppend(builder, " AND ", usings.usings, variables);
+            Utils.joinAndAppend(builder, codecRegistry, " AND ", usings.usings, variables);
         }
         return builder;
     }

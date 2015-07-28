@@ -58,7 +58,7 @@ public class TokenAwarePolicyTest {
                                           keyspace));
 
             // Actual query does not matter, only the keyspace and routing key will be used
-            SimpleStatement statement = new SimpleStatement("foo");
+            SimpleStatement statement = session.newSimpleStatement("foo");
             statement.setKeyspace(keyspace);
             statement.setRoutingKey(routingKey);
 

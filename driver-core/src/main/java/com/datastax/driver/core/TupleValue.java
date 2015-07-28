@@ -15,9 +15,6 @@
  */
 package com.datastax.driver.core;
 
-import java.util.Arrays;
-import java.util.List;
-
 /**
  * A value for a Tuple.
  */
@@ -28,11 +25,10 @@ public class TupleValue extends AbstractAddressableByIndexData<TupleValue> {
     /**
      * Builds a new value for a tuple.
      *
-     * @param types the types of the tuple's components.
+     * @param type the {@link TupleType} instance defining this tuple's components.
      */
     TupleValue(TupleType type) {
-        // All things in a tuple are encoded with the protocol v3
-        super(ProtocolVersion.V3, type.getComponentTypes().size());
+        super(type.getProtocolVersion(), type.getComponentTypes().size());
         this.type = type;
     }
 
@@ -44,6 +40,11 @@ public class TupleValue extends AbstractAddressableByIndexData<TupleValue> {
     protected String getName(int i) {
         // This is used for error messages
         return "component " + i;
+    }
+
+    @Override
+    protected CodecRegistry getCodecRegistry() {
+        return type.getCodecRegistry();
     }
 
     /**
@@ -80,8 +81,13 @@ public class TupleValue extends AbstractAddressableByIndexData<TupleValue> {
             if (i > 0)
                 sb.append(", ");
 
-            DataType dt = getType(i);
-            sb.append(values[i] == null ? "null" : dt.format(dt.deserialize(values[i], ProtocolVersion.V3)));
+            if(values[i] == null)
+                sb.append("null");
+            else {
+                DataType dt = getType(i);
+                TypeCodec<Object> codec = getCodecRegistry().codecFor(dt);
+                sb.append(codec.format(codec.deserialize(values[i], protocolVersion)));
+            }
         }
         sb.append(")");
         return sb.toString();

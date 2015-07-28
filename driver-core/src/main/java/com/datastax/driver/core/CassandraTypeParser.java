@@ -72,7 +72,7 @@ class CassandraTypeParser {
             .put("org.apache.cassandra.db.marshal.ShortType",         DataType.smallint())
             .build();
 
-    static DataType parseOne(String className) {
+    static DataType parseOne(String className, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
         boolean frozen = false;
         if (isReversed(className)) {
             // Just skip the ReversedType part, we don't care
@@ -86,14 +86,14 @@ class CassandraTypeParser {
         String next = parser.parseNextName();
 
         if (next.startsWith(LIST_TYPE))
-            return DataType.list(parseOne(parser.getTypeParameters().get(0)), frozen);
+            return DataType.list(parseOne(parser.getTypeParameters().get(0), protocolVersion, codecRegistry), frozen);
 
         if (next.startsWith(SET_TYPE))
-            return DataType.set(parseOne(parser.getTypeParameters().get(0)), frozen);
+            return DataType.set(parseOne(parser.getTypeParameters().get(0), protocolVersion, codecRegistry), frozen);
 
         if (next.startsWith(MAP_TYPE)) {
             List<String> params = parser.getTypeParameters();
-            return DataType.map(parseOne(params.get(0)), parseOne(params.get(1)), frozen);
+            return DataType.map(parseOne(params.get(0), protocolVersion, codecRegistry), parseOne(params.get(1), protocolVersion, codecRegistry), frozen);
         }
 
         if (frozen)
@@ -105,22 +105,22 @@ class CassandraTypeParser {
 
             String keyspace = parser.readOne();
             parser.skipBlankAndComma();
-            String typeName = TypeCodec.StringCodec.utf8Instance.deserialize(Bytes.fromHexString("0x" + parser.readOne()));
+            String typeName = TypeCodec.VarcharCodec.instance.deserialize(Bytes.fromHexString("0x" + parser.readOne()), protocolVersion);
             parser.skipBlankAndComma();
             Map<String, String> rawFields = parser.getNameAndTypeParameters();
             List<UserType.Field> fields = new ArrayList<UserType.Field>(rawFields.size());
             for (Map.Entry<String, String> entry : rawFields.entrySet())
-                fields.add(new UserType.Field(entry.getKey(), parseOne(entry.getValue())));
-            return new UserType(keyspace, typeName, fields);
+                fields.add(new UserType.Field(entry.getKey(), parseOne(entry.getValue(), protocolVersion, codecRegistry)));
+            return new UserType(keyspace, typeName, fields, protocolVersion, codecRegistry);
         }
 
         if (isTupleType(next)) {
             List<String> rawTypes = parser.getTypeParameters();
             List<DataType> types = new ArrayList<DataType>(rawTypes.size());
             for (String rawType : rawTypes) {
-                types.add(parseOne(rawType));
+                types.add(parseOne(rawType, protocolVersion, codecRegistry));
             }
-            return new TupleType(types);
+            return new TupleType(types, protocolVersion, codecRegistry);
         }
 
         DataType type = cassTypeToDataType.get(next);
@@ -161,12 +161,12 @@ class CassandraTypeParser {
         return className.startsWith(COLLECTION_TYPE);
     }
 
-    static ParseResult parseWithComposite(String className) {
+    static ParseResult parseWithComposite(String className, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
         Parser parser = new Parser(className, 0);
 
         String next = parser.parseNextName();
         if (!isComposite(next))
-            return new ParseResult(parseOne(className), isReversed(next));
+            return new ParseResult(parseOne(className, protocolVersion, codecRegistry), isReversed(next));
 
         List<String> subClassNames = parser.getTypeParameters();
         int count = subClassNames.size();
@@ -178,13 +178,13 @@ class CassandraTypeParser {
             collectionParser.parseNextName(); // skips columnToCollectionType
             Map<String, String> params = collectionParser.getCollectionsParameters();
             for (Map.Entry<String, String> entry : params.entrySet())
-                collections.put(entry.getKey(), parseOne(entry.getValue()));
+                collections.put(entry.getKey(), parseOne(entry.getValue(), protocolVersion, codecRegistry));
         }
 
         List<DataType> types = new ArrayList<DataType>(count);
         List<Boolean> reversed = new ArrayList<Boolean>(count);
         for (int i = 0; i < count; i++) {
-            types.add(parseOne(subClassNames.get(i)));
+            types.add(parseOne(subClassNames.get(i), protocolVersion, codecRegistry));
             reversed.add(isReversed(subClassNames.get(i)));
         }
 
@@ -319,7 +319,7 @@ class CassandraTypeParser {
                 String bbHex = readNextIdentifier();
                 String name = null;
                 try {
-                    name = TypeCodec.StringCodec.utf8Instance.deserialize(Bytes.fromHexString("0x" + bbHex));
+                    name = TypeCodec.VarcharCodec.instance.deserialize(Bytes.fromHexString("0x" + bbHex), ProtocolVersion.NEWEST_SUPPORTED);
                 } catch (NumberFormatException e) {
                     throwSyntaxError(e.getMessage());
                 }

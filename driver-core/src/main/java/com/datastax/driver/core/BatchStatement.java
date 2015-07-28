@@ -16,11 +16,7 @@
 package com.datastax.driver.core;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import com.google.common.collect.ImmutableList;
 
@@ -85,13 +81,16 @@ public class BatchStatement extends Statement {
         this.batchType = batchType;
     }
 
-    IdAndValues getIdAndValues(ProtocolVersion protocolVersion) {
+    IdAndValues getIdAndValues() {
         IdAndValues idAndVals = new IdAndValues(statements.size());
         for (Statement statement : statements) {
+            if(statement instanceof StatementWrapper)
+                statement = ((StatementWrapper) statement).getWrappedStatement();
             if (statement instanceof RegularStatement) {
                 RegularStatement st = (RegularStatement)statement;
-                ByteBuffer[] vals = st.getValues(protocolVersion);
-                idAndVals.ids.add(st.getQueryString());
+                ByteBuffer[] vals = st.getValues();
+                String query = st.getQueryString();
+                idAndVals.ids.add(query);
                 idAndVals.values.add(vals == null ? Collections.<ByteBuffer>emptyList() : Arrays.asList(vals));
             } else {
                 // We handle BatchStatement in add() so ...
@@ -133,7 +132,7 @@ public class BatchStatement extends Statement {
     public BatchStatement add(Statement statement) {
 
         // We handle BatchStatement here (rather than in getIdAndValues) as it make it slightly
-        // easier to avoid endless loop if the use mistakenly pass a batch that depends on this
+        // easier to avoid endless loops if the user mistakenly passes a batch that depends on this
         // object (or this directly).
         if (statement instanceof BatchStatement) {
             for (Statement subStatements : ((BatchStatement)statement).statements) {
@@ -216,6 +215,8 @@ public class BatchStatement extends Statement {
     @Override
     public ByteBuffer getRoutingKey() {
         for (Statement statement : statements) {
+            if(statement instanceof StatementWrapper)
+                statement = ((StatementWrapper) statement).getWrappedStatement();
             ByteBuffer rk = statement.getRoutingKey();
             if (rk != null)
                 return rk;

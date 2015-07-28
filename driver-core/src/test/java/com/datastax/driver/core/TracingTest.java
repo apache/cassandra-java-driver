@@ -58,7 +58,7 @@ public class TracingTest extends CCMBridge.PerClassSingleNodeCluster {
      */
     @Test(groups = "short")
     public void should_have_a_different_tracingId_for_each_page() {
-        SimpleStatement st = new SimpleStatement(String.format("SELECT v FROM test WHERE k='%s'", KEY));
+        SimpleStatement st = session.newSimpleStatement(String.format("SELECT v FROM test WHERE k='%s'", KEY));
         ResultSet result = session.execute(st.setFetchSize(40).enableTracing());
         result.all();
 
@@ -87,7 +87,7 @@ public class TracingTest extends CCMBridge.PerClassSingleNodeCluster {
      */
     @Test(groups = "short")
     public void should_preserve_tracing_status_across_retries() {
-        SimpleStatement st = new SimpleStatement(String.format("SELECT v FROM test WHERE k='%s'", KEY));
+        SimpleStatement st = session.newSimpleStatement(String.format("SELECT v FROM test WHERE k='%s'", KEY));
         st.setConsistencyLevel(ConsistencyLevel.THREE).enableTracing();
 
         ResultSet result = session.execute(st);

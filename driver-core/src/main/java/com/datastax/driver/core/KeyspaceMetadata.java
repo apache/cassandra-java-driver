@@ -50,7 +50,7 @@ public class KeyspaceMetadata {
         this.strategy = ReplicationStrategy.create(replication);
     }
 
-    static KeyspaceMetadata build(Row row, List<Row> udtRows) {
+    static KeyspaceMetadata build(Row row, List<Row> udtRows, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
 
         String name = row.getString(KS_NAME);
         boolean durableWrites = row.getBool(DURABLE_WRITES);
@@ -64,7 +64,7 @@ public class KeyspaceMetadata {
         if (udtRows == null)
             return ksm;
 
-        ksm.addUserTypes(udtRows);
+        ksm.addUserTypes(udtRows, protocolVersion, codecRegistry);
 
         return ksm;
     }
@@ -143,9 +143,9 @@ public class KeyspaceMetadata {
         return Collections.unmodifiableCollection(userTypes.values());
     }
 
-    void addUserTypes(List<Row> udtRows) {
+    void addUserTypes(List<Row> udtRows, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
         for (Row r : udtRows) {
-            UserType def = UserType.build(r);
+            UserType def = UserType.build(r, protocolVersion, codecRegistry);
             userTypes.put(def.getTypeName(), def);
         }
     }

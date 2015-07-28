@@ -277,6 +277,7 @@ public class QueryLoggerTest extends CCMBridge.PerClassSingleNodeCluster {
             public ByteBuffer getRoutingKey() {
                 return null;
             }
+
             @Override
             public String getKeyspace() {
                 return null;
@@ -495,8 +496,10 @@ public class QueryLoggerTest extends CCMBridge.PerClassSingleNodeCluster {
             .contains("Query completed normally")
             .contains(ipOfNode(1))
             .contains(query);
+        CodecRegistry codecRegistry = cluster.getConfiguration().getCodecRegistry();
         for (DataType type : dataTypes) {
-            assertThat(line).contains(type.format(getFixedValue(type)));
+            TypeCodec<Object> codec = codecRegistry.codecFor(type);
+            assertThat(line).contains(codec.format(getFixedValue(type)));
         }
     }
 

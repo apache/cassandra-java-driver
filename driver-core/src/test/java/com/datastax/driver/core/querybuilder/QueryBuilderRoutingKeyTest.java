@@ -42,16 +42,17 @@ public class QueryBuilderRoutingKeyTest extends CCMBridge.PerClassSingleNodeClus
     @Test(groups = "short")
     public void textRoutingKeyTest() throws Exception {
 
-        Statement query;
+        BuiltStatement query;
         TableMetadata table = cluster.getMetadata().getKeyspace(keyspace).getTable(TABLE_TEXT);
         assertNotNull(table);
 
         String txt = "If she weighs the same as a duck... she's made of wood.";
-        query = insertInto(table).values(new String[]{"k", "a", "b"}, new Object[]{txt, 1, 2});
+        QueryBuilder builder = new QueryBuilder(cluster);
+        query = builder.insertInto(table).values(new String[]{"k", "a", "b"}, new Object[]{txt, 1, 2});
         assertEquals(query.getRoutingKey(), ByteBuffer.wrap(txt.getBytes()));
         session.execute(query);
 
-        query = select().from(table).where(eq("k", txt));
+        query = builder.select().from(table).where(eq("k", txt));
         assertEquals(query.getRoutingKey(), ByteBuffer.wrap(txt.getBytes()));
         Row row = session.execute(query).one();
         assertEquals(row.getString("k"), txt);
@@ -62,17 +63,17 @@ public class QueryBuilderRoutingKeyTest extends CCMBridge.PerClassSingleNodeClus
     @Test(groups = "short")
     public void intRoutingKeyTest() throws Exception {
 
-        Statement query;
+        BuiltStatement query;
         TableMetadata table = cluster.getMetadata().getKeyspace(keyspace).getTable(TABLE_INT);
         assertNotNull(table);
 
-        query = insertInto(table).values(new String[]{"k", "a", "b"}, new Object[]{42, 1, 2});
+        query = new QueryBuilder(cluster).insertInto(table).values(new String[]{"k", "a", "b"}, new Object[]{42, 1, 2});
         ByteBuffer bb = ByteBuffer.allocate(4);
         bb.putInt(0, 42);
         assertEquals(query.getRoutingKey(), bb);
         session.execute(query);
 
-        query = select().from(table).where(eq("k", 42));
+        query = new QueryBuilder(cluster).select().from(table).where(eq("k", 42));
         assertEquals(query.getRoutingKey(), bb);
         Row row = session.execute(query).one();
         assertEquals(row.getInt("k"), 42);
@@ -83,7 +84,7 @@ public class QueryBuilderRoutingKeyTest extends CCMBridge.PerClassSingleNodeClus
     @Test(groups = "short")
     public void intRoutingBatchKeyTest() throws Exception {
 
-        RegularStatement query;
+        BuiltStatement query;
         TableMetadata table = cluster.getMetadata().getKeyspace(keyspace).getTable(TABLE_INT);
         assertNotNull(table);
 
@@ -91,18 +92,18 @@ public class QueryBuilderRoutingKeyTest extends CCMBridge.PerClassSingleNodeClus
         bb.putInt(0, 42);
 
         String batch_query;
-        Statement batch;
-        ResultSet rs;
+        BuiltStatement batch;
 
-        query = select().from(table).where(eq("k", 42));
+        QueryBuilder builder = new QueryBuilder(cluster);
+        query = builder.select().from(table).where(eq("k", 42));
 
         batch_query = "BEGIN BATCH ";
         batch_query += String.format("INSERT INTO %s.test_int(k,a) VALUES (42,1);", keyspace);
         batch_query += String.format("UPDATE %s.test_int USING TTL 400;", keyspace);
         batch_query += "APPLY BATCH;";
-        batch = batch()
-                .add(insertInto(table).values(new String[]{"k", "a"}, new Object[]{42, 1}))
-                .add(update(table).using(ttl(400)));
+        batch = builder.batch()
+                .add(builder.insertInto(table).values(new String[]{"k", "a"}, new Object[]{42, 1}))
+                .add(builder.update(table).using(ttl(400)));
         assertEquals(batch.getRoutingKey(), bb);
         assertEquals(batch.toString(), batch_query);
         // TODO: rs = session.execute(batch); // Not guaranteed to be valid CQL
@@ -110,7 +111,7 @@ public class QueryBuilderRoutingKeyTest extends CCMBridge.PerClassSingleNodeClus
         batch_query = "BEGIN BATCH ";
         batch_query += String.format("SELECT * FROM %s.test_int WHERE k=42;", keyspace);
         batch_query += "APPLY BATCH;";
-        batch = batch(query);
+        batch = builder.batch(query);
         assertEquals(batch.getRoutingKey(), bb);
         assertEquals(batch.toString(), batch_query);
         // TODO: rs = session.execute(batch); // Not guaranteed to be valid CQL
@@ -118,7 +119,7 @@ public class QueryBuilderRoutingKeyTest extends CCMBridge.PerClassSingleNodeClus
         batch_query = "BEGIN BATCH ";
         batch_query += "SELECT * FROM foo WHERE k=42;";
         batch_query += "APPLY BATCH;";
-        batch = batch().add(select().from("foo").where(eq("k", 42)));
+        batch = builder.batch().add(builder.select().from("foo").where(eq("k", 42)));
         assertEquals(batch.getRoutingKey(), null);
         assertEquals(batch.toString(), batch_query);
         // TODO: rs = session.execute(batch); // Not guaranteed to be valid CQL
@@ -126,7 +127,7 @@ public class QueryBuilderRoutingKeyTest extends CCMBridge.PerClassSingleNodeClus
         batch_query = "BEGIN BATCH USING TIMESTAMP 42 ";
         batch_query += "INSERT INTO foo.bar(a) VALUES (123);";
         batch_query += "APPLY BATCH;";
-        batch = batch().using(timestamp(42)).add(insertInto("foo", "bar").value("a", 123));
+        batch = builder.batch().using(timestamp(42)).add(builder.insertInto("foo", "bar").value("a", 123));
         assertEquals(batch.getRoutingKey(), null);
         assertEquals(batch.toString(), batch_query);
         // TODO: rs = session.execute(batch); // Not guaranteed to be valid CQL

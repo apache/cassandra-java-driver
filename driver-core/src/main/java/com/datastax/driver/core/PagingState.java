@@ -37,13 +37,13 @@ import com.datastax.driver.core.utils.Bytes;
  */
 public class PagingState {
 
-    private byte[] pagingState;
-    private byte[] hash;
-    private ProtocolVersion protocolVersion;
+    private final byte[] pagingState;
+    private final byte[] hash;
+    private final ProtocolVersion protocolVersion;
 
     PagingState(ByteBuffer pagingState, Statement statement, ProtocolVersion protocolVersion) {
         this.pagingState = Bytes.getArray(pagingState);
-        this.hash = hash(statement, protocolVersion);
+        this.hash = hash(statement);
         this.protocolVersion = protocolVersion;
     }
 
@@ -70,7 +70,7 @@ public class PagingState {
             : ProtocolVersion.V2;
     }
 
-    private byte[] hash(Statement statement, ProtocolVersion protocolVersion) {
+    private byte[] hash(Statement statement) {
         byte[] digest;
         ByteBuffer[] values;
         MessageDigest md;
@@ -85,7 +85,7 @@ public class PagingState {
                 //it is a RegularStatement since Batch statements are not allowed
                 RegularStatement rs = (RegularStatement)statement;
                 md.update(rs.getQueryString().getBytes());
-                values = rs.getValues(protocolVersion);
+                values = rs.getValues();
             }
             if (values != null) {
                 for (ByteBuffer value : values) {
@@ -102,7 +102,7 @@ public class PagingState {
     }
 
     boolean matches(Statement statement) {
-        byte[] toTest = hash(statement, protocolVersion);
+        byte[] toTest = hash(statement);
         return Arrays.equals(toTest, this.hash);
     }
 

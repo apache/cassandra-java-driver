@@ -130,7 +130,7 @@ public abstract class TestUtils {
         return bs;
     }
 
-    public static Object getValue(Row row, String name, DataType type) {
+    public static Object getValue(Row row, String name, DataType type, CodecRegistry codecRegistry) {
         switch (type.getName()) {
             case ASCII:
                 return row.getString(name);
@@ -173,11 +173,15 @@ public abstract class TestUtils {
             case TIMEUUID:
                 return row.getUUID(name);
             case LIST:
-                return row.getList(name, type.getTypeArguments().get(0).asJavaClass());
+                Class<?> listEltClass = codecRegistry.codecFor(type.getTypeArguments().get(0)).getJavaType().getRawType();
+                return row.getList(name, listEltClass);
             case SET:
-                return row.getSet(name, type.getTypeArguments().get(0).asJavaClass());
+                Class<?> setEltClass = codecRegistry.codecFor(type.getTypeArguments().get(0)).getJavaType().getRawType();
+                return row.getSet(name, setEltClass);
             case MAP:
-                return row.getMap(name, type.getTypeArguments().get(0).asJavaClass(), type.getTypeArguments().get(1).asJavaClass());
+                Class<?> keyClass = codecRegistry.codecFor(type.getTypeArguments().get(0)).getJavaType().getRawType();
+                Class<?> valueClass = codecRegistry.codecFor(type.getTypeArguments().get(1)).getJavaType().getRawType();
+                return row.getMap(name, keyClass, valueClass);
         }
         throw new RuntimeException("Missing handling of " + type);
     }

@@ -22,16 +22,14 @@ import java.util.UUID;
 
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
+import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.utils.UUIDs;
 import com.datastax.driver.osgi.api.MailboxException;
 import com.datastax.driver.osgi.api.MailboxMessage;
 import com.datastax.driver.osgi.api.MailboxService;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.bindMarker;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.delete;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.insertInto;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
 
 public class MailboxImpl implements MailboxService {
 
@@ -73,17 +71,18 @@ public class MailboxImpl implements MailboxService {
                 "PRIMARY KEY (recipient, time))");
         }
 
-        retrieveStatement = session.prepare(select()
+        QueryBuilder builder = new QueryBuilder(session.getCluster());
+        retrieveStatement = session.prepare(builder.select()
             .from(keyspace, TABLE)
             .where(eq("recipient", bindMarker())));
 
-        insertStatement = session.prepare(insertInto(keyspace, TABLE)
+        insertStatement = session.prepare(builder.insertInto(keyspace, TABLE)
             .value("recipient", bindMarker())
             .value("time", bindMarker())
             .value("sender", bindMarker())
             .value("body", bindMarker()));
 
-        deleteStatement = session.prepare(delete().from(keyspace, TABLE)
+        deleteStatement = session.prepare(builder.delete().from(keyspace, TABLE)
             .where(eq("recipient", bindMarker())));
 
         initialized = true;

@@ -35,10 +35,10 @@ import static org.mockito.Mockito.verify;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.datastax.driver.core.policies.ConstantReconnectionPolicy;
 import com.datastax.driver.core.querybuilder.Insert;
+import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.utils.UUIDs;
 
 import static com.datastax.driver.core.FakeHost.Behavior.THROWING_CONNECT_TIMEOUTS;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.insertInto;
 
 public class ClusterInitTest {
     private static final Logger logger = LoggerFactory.getLogger(ClusterInitTest.class);
@@ -141,7 +141,7 @@ public class ClusterInitTest {
                 .one().getString("release_version");
 
             for (int i = 2; i <= 6; i++) {
-                Insert insertStmt = insertInto("peers")
+                Insert insertStmt = new QueryBuilder(cluster).insertInto("peers")
                     .value("peer", InetAddress.getByName(CCMBridge.ipOfNode(i)))
                     .value("data_center", "datacenter1")
                     .value("host_id", UUIDs.random())

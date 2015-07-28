@@ -18,7 +18,9 @@ package com.datastax.driver.mapping;
 import java.lang.reflect.Field;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.datastax.driver.core.DataType;
+import com.google.common.reflect.TypeToken;
+
+import com.datastax.driver.core.TypeCodec;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.quote;
 
@@ -29,24 +31,23 @@ abstract class ColumnMapper<T> {
     private final String columnName;
     private final String alias;
     protected final String fieldName;
-    protected final Class<?> javaType;
-    // Note: dataType is not guaranteed to be exact. Typically, it will be uuid even if the underlying
-    // type is timeuuid. Currently, this is not a problem, but we might allow some @Timeuuid annotation
-    // for the sake of validation (similarly, we'll always have text, never ascii).
-    protected final DataType dataType;
+    /** The type of the Java field in the mapped class */
+    protected final TypeToken<Object> fieldType;
     protected final Kind kind;
     protected final int position;
+    protected final TypeCodec<Object> customCodec;
 
-    protected ColumnMapper(Field field, DataType dataType, int position, AtomicInteger columnCounter) {
+    @SuppressWarnings("unchecked")
+    protected ColumnMapper(Field field, int position, AtomicInteger columnCounter) {
         this.columnName = AnnotationParser.columnName(field);
         this.alias = (columnCounter != null)
             ? AnnotationParser.newAlias(field, columnCounter.incrementAndGet())
             : null;
         this.fieldName = field.getName();
-        this.javaType = field.getType();
-        this.dataType = dataType;
+        this.fieldType = (TypeToken<Object>)TypeToken.of(field.getGenericType());
         this.kind = AnnotationParser.kind(field);
         this.position = position;
+        this.customCodec = AnnotationParser.customCodec(field);
     }
 
     public abstract Object getValue(T entity);
@@ -63,8 +64,15 @@ abstract class ColumnMapper<T> {
         return alias;
     }
 
-    public DataType getDataType() {
-        return dataType;
+    public TypeCodec<Object> getCustomCodec() {
+        return customCodec;
     }
 
+    /**
+     * The Java type that will get passed to the codec.
+     * This might be different from the field type if the column mapper does a transformation.
+     */
+    public TypeToken<Object> getPivotType() {
+        return fieldType;
+    }
 }

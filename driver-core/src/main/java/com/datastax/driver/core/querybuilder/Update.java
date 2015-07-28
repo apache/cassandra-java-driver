@@ -15,10 +15,11 @@
  */
 package com.datastax.driver.core.querybuilder;
 
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.CodecRegistry;
 import com.datastax.driver.core.TableMetadata;
 import com.datastax.driver.core.querybuilder.Assignment.CounterAssignment;
 
@@ -33,8 +34,8 @@ public class Update extends BuiltStatement {
     private final Options usings;
     private final Conditions conditions;
 
-    Update(String keyspace, String table) {
-        super(keyspace);
+    Update(Cluster cluster, String keyspace, String table) {
+        super(keyspace, cluster);
         this.table = table;
         this.assignments = new Assignments(this);
         this.where = new Where(this);
@@ -42,8 +43,8 @@ public class Update extends BuiltStatement {
         this.conditions = new Conditions(this);
     }
 
-    Update(TableMetadata table) {
-        super(table);
+    Update(Cluster cluster, TableMetadata table) {
+        super(table, cluster);
         this.table = escapeId(table.getName());
         this.assignments = new Assignments(this);
         this.where = new Where(this);
@@ -60,24 +61,25 @@ public class Update extends BuiltStatement {
             Utils.appendName(keyspace, builder).append('.');
         Utils.appendName(table, builder);
 
+        CodecRegistry codecRegistry = getCodecRegistry();
         if (!usings.usings.isEmpty()) {
             builder.append(" USING ");
-            Utils.joinAndAppend(builder, " AND ", usings.usings, variables);
+            Utils.joinAndAppend(builder, codecRegistry, " AND ", usings.usings, variables);
         }
 
         if (!assignments.assignments.isEmpty()) {
             builder.append(" SET ");
-            Utils.joinAndAppend(builder, ",", assignments.assignments, variables);
+            Utils.joinAndAppend(builder, codecRegistry, ",", assignments.assignments, variables);
         }
 
         if (!where.clauses.isEmpty()) {
             builder.append(" WHERE ");
-            Utils.joinAndAppend(builder, " AND ", where.clauses, variables);
+            Utils.joinAndAppend(builder, codecRegistry, " AND ", where.clauses, variables);
         }
 
         if (!conditions.conditions.isEmpty()) {
             builder.append(" IF ");
-            Utils.joinAndAppend(builder, " AND ", conditions.conditions, variables);
+            Utils.joinAndAppend(builder, codecRegistry, " AND ", conditions.conditions, variables);
         }
 
         return builder;

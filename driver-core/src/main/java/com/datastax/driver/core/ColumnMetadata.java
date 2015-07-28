@@ -190,7 +190,7 @@ public class ColumnMetadata {
              */
             return !isKeys()
                 && !isEntries()
-                && column.getType().isCollection()
+                && column.getType() instanceof DataType.CollectionType
                 && column.getType().isFrozen();
         }
 
@@ -299,6 +299,7 @@ public class ColumnMetadata {
     // Temporary class that is used to make building the schema easier. Not meant to be
     // exposed publicly at all.
     static class Raw {
+
         public enum Kind { PARTITION_KEY, CLUSTERING_KEY, REGULAR, COMPACT_VALUE, STATIC }
 
         public final String name;
@@ -317,7 +318,7 @@ public class ColumnMetadata {
             this.isReversed = isReversed;
         }
 
-        static Raw fromRow(Row row, VersionNumber version) {
+        static Raw fromRow(Row row, VersionNumber version, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
 
             String name = row.getString(COLUMN_NAME);
             Kind kind = version.getMajor() < 2 || row.isNull(KIND)
@@ -326,8 +327,7 @@ public class ColumnMetadata {
             int componentIndex = row.isNull(COMPONENT_INDEX) ? 0 : row.getInt(COMPONENT_INDEX);
             String validatorStr = row.getString(VALIDATOR);
             boolean reversed = CassandraTypeParser.isReversed(validatorStr);
-            DataType dataType = CassandraTypeParser.parseOne(validatorStr);
-
+            DataType dataType = CassandraTypeParser.parseOne(validatorStr, protocolVersion, codecRegistry);
             Raw c = new Raw(name, kind, componentIndex, dataType, reversed);
 
             for (String str : Arrays.asList(INDEX_TYPE, INDEX_NAME, INDEX_OPTIONS))

@@ -15,9 +15,9 @@
  */
 package com.datastax.driver.core.querybuilder;
 
-import java.nio.ByteBuffer;
 import java.util.List;
 
+import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.TableMetadata;
 
 /**
@@ -27,13 +27,13 @@ public class Truncate extends BuiltStatement {
 
     private final String table;
 
-    Truncate(String keyspace, String table) {
-        super(keyspace);
+    Truncate(Cluster cluster, String keyspace, String table) {
+        super(keyspace, cluster);
         this.table = table;
     }
 
-    Truncate(TableMetadata table) {
-        super(table);
+    Truncate(Cluster cluster, TableMetadata table) {
+        super(table, cluster);
         this.table = escapeId(table.getName());
     }
 

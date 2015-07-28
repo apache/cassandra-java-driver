@@ -48,7 +48,7 @@ public class StatementWrapperTest extends CCMBridge.PerClassSingleNodeCluster {
     public void should_pass_wrapped_statement_to_load_balancing_policy() {
         loadBalancingPolicy.customStatementsHandled.set(0);
 
-        SimpleStatement s = new SimpleStatement("select * from system.local");
+        SimpleStatement s = session.newSimpleStatement("select * from system.local");
         session.execute(s);
         assertThat(loadBalancingPolicy.customStatementsHandled.get()).isEqualTo(0);
 
@@ -60,7 +60,7 @@ public class StatementWrapperTest extends CCMBridge.PerClassSingleNodeCluster {
     public void should_pass_wrapped_statement_to_speculative_execution_policy() {
         speculativeExecutionPolicy.customStatementsHandled.set(0);
 
-        SimpleStatement s = new SimpleStatement("select * from system.local");
+        SimpleStatement s = session.newSimpleStatement("select * from system.local");
         session.execute(s);
         assertThat(speculativeExecutionPolicy.customStatementsHandled.get()).isEqualTo(0);
 
@@ -74,7 +74,7 @@ public class StatementWrapperTest extends CCMBridge.PerClassSingleNodeCluster {
 
         // Set CL TWO with only one node, so the statement will always cause UNAVAILABLE,
         // which our custom policy ignores.
-        Statement s = new SimpleStatement("select * from system.local")
+        Statement s = session.newSimpleStatement("select * from system.local")
             .setConsistencyLevel(ConsistencyLevel.TWO);
 
         session.execute(s);

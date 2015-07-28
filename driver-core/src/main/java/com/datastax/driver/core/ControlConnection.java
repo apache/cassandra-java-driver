@@ -38,6 +38,8 @@ class ControlConnection {
 
     private static final Logger logger = LoggerFactory.getLogger(ControlConnection.class);
 
+    private static final TypeCodec.ListCodec<String> LIST_OF_TEXT_CODEC = new TypeCodec.ListCodec<String>(TypeCodec.VarcharCodec.instance);
+
     private static final InetAddress bindAllAddress;
     static
     {
@@ -335,9 +337,9 @@ class ControlConnection {
             else if (targetType == TYPE)
                 whereClause += " AND type_name = '" + targetName + '\'';
             else if (targetType == FUNCTION)
-                whereClause += " AND function_name = '" + targetName + "' AND signature = " + DataType.LIST_OF_TEXT.format(targetSignature);
+                whereClause += " AND function_name = '" + targetName + "' AND signature = " + LIST_OF_TEXT_CODEC.format(targetSignature);
             else if (targetType == AGGREGATE)
-                whereClause += " AND aggregate_name = '" + targetName + "' AND signature = " + DataType.LIST_OF_TEXT.format(targetSignature);
+                whereClause += " AND aggregate_name = '" + targetName + "' AND signature = " + LIST_OF_TEXT_CODEC.format(targetSignature);
         }
 
         boolean isSchemaOrKeyspace = (targetType == null || targetType == KEYSPACE);
