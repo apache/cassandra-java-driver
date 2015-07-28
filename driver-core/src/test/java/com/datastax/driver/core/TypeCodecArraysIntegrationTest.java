@@ -59,10 +59,10 @@ public class TypeCodecArraysIntegrationTest extends CCMBridge.PerClassSingleNode
 
     @Test(groups = "short")
     public void should_set_list_column_with_array() {
-        PreparedStatement pst = session.prepare("INSERT INTO lists (i, l) VALUES (:i, :l)");
+        PreparedStatement pst = session.prepare("INSERT INTO lists (i, l) VALUES (?, ?)");
         BoundStatement bs = pst.bind()
-            .setInt("i", 2)
-            .set("l", new int[]{ 2, 3, 4 }, int[].class);
+            .setInt(0, 2)
+            .set(1, new int[]{ 2, 3, 4 }, int[].class);
         session.execute(bs);
 
         Row row = session.execute("SELECT l FROM lists WHERE i = 2").one();
