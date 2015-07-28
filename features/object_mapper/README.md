@@ -11,7 +11,7 @@ The mapper is published as a separate Maven artifact:
 <dependency>
   <groupId>com.datastax.cassandra</groupId>
   <artifactId>cassandra-driver-mapping</artifactId>
-  <version>2.2.0-rc1</version>
+  <version>2.2.0-rc2</version>
 </dependency>
 ```
 

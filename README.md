@@ -8,7 +8,7 @@ not yet have been released. You can find the documentation for latest
 version through [Java driver
 docs](http://datastax.github.io/java-driver/) or via the release tags,
 [e.g.
-2.2.0-rc1](https://github.com/datastax/java-driver/tree/2.2.0-rc1).*
+2.2.0-rc2](https://github.com/datastax/java-driver/tree/2.2.0-rc2).*
 
 A modern, [feature-rich](features/) and highly tunable Java client
 library for Apache Cassandra (1.2+) and DataStax Enterprise (3.1+) using
@@ -64,6 +64,15 @@ The driver contains the following modules:
 
 **Feeback requested:** help us focus our efforts, provide your input on the [Platform and Runtime Survey](http://goo.gl/forms/qwUE6qnL7U) (we kept it short).  
 
+## What's new in 2.2.0-rc2
+
+* support for Cassandra 2.2 and native protocol v4.
+* [custom codecs](features/custom_codecs/) to convert CQL values to your own Java types.
+
+See the [changelog](changelog/) for full details.
+
+This version is **not binary compatible** with the 2.1 branch.
+Refer to the [upgrade guide](upgrade_guide/) for more information.
 
 ## Maven
 
@@ -74,7 +83,7 @@ it in your application using the following Maven dependency:
 <dependency>
   <groupId>com.datastax.cassandra</groupId>
   <artifactId>cassandra-driver-core</artifactId>
-  <version>2.2.0-rc1</version>
+  <version>2.2.0-rc2</version>
 </dependency>
 ```
 
@@ -84,7 +93,7 @@ Note that the object mapper is published as a separate artifact:
 <dependency>
   <groupId>com.datastax.cassandra</groupId>
   <artifactId>cassandra-driver-mapping</artifactId>
-  <version>2.2.0-rc1</version>
+  <version>2.2.0-rc2</version>
 </dependency>
 ```
 

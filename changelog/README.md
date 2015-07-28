@@ -1,6 +1,6 @@
 ## Changelog
 
-### 2.2.0-rc2 (in progress)
+### 2.2.0-rc2
 
 - [improvement] Rename DateWithoutTime to LocalDate (JAVA-810)
 - [bug] DateCodec does not format values correctly (JAVA-816)
