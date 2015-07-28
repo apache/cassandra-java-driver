@@ -164,9 +164,9 @@ public class QueryBuilderITest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     @Test(groups = "short")
-    @CassandraVersion(major=2.0, minor=13, description="DELETE..IF EXISTS only supported in 2.0.13+ (CASSANDRA-8610)")
+    @CassandraVersion(major = 2.0, minor = 13, description = "UPDATE..IF EXISTS only supported in 2.0.13+ (CASSANDRA-8610)")
     public void conditionalUpdatesTest() throws Exception {
-        session.execute(String.format("INSERT INTO %s.test_int (k, a, b) VALUES (1, 1, 1)",keyspace));
+        session.execute(String.format("INSERT INTO %s.test_int (k, a, b) VALUES (1, 1, 1)", keyspace));
 
         Statement update;
         Row row;
@@ -232,9 +232,9 @@ public class QueryBuilderITest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     @Test(groups = "short")
-    @CassandraVersion(major=2.0, minor=7, description="DELETE..IF EXISTS only supported in 2.0.7+ (CASSANDRA-5708)")
+    @CassandraVersion(major = 2.0, minor = 7, description = "DELETE..IF EXISTS only supported in 2.0.7+ (CASSANDRA-5708)")
     public void conditionalDeletesTest() throws Exception {
-        session.execute(String.format("INSERT INTO %s.test_int (k, a, b) VALUES (1, 1, 1)",keyspace));
+        session.execute(String.format("INSERT INTO %s.test_int (k, a, b) VALUES (1, 1, 1)", keyspace));
 
         Statement delete;
         Row row;

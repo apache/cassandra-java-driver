@@ -138,7 +138,7 @@ public class Update extends BuiltStatement {
      * @param condition the condition to add.
      * @return the conditions of this query to which more conditions can be added.
      */
-    public Conditions onlyIf(Clause condition) {
+    private Conditions onlyIf(Clause condition) {
         return conditions.and(condition);
     }
 
@@ -147,7 +147,7 @@ public class Update extends BuiltStatement {
      *
      * @return the conditions of this query to which more conditions can be added.
      */
-    public Conditions onlyIf() {
+    private Conditions onlyIf() {
         return conditions;
     }
 
@@ -159,16 +159,6 @@ public class Update extends BuiltStatement {
      */
     public Options using(Using using) {
         return usings.and(using);
-    }
-
-    /**
-     * Sets the 'IF EXISTS' option for this UPDATE statement.
-     *
-     * @return this Update statement
-     */
-    public Update ifExists() {
-        this.ifExists = true;
-        return this;
     }
 
     /**
@@ -215,16 +205,6 @@ public class Update extends BuiltStatement {
          */
         public Options using(Using using) {
             return statement.using(using);
-        }
-
-        /**
-         * Adds a condition to the UPDATE statement those assignments are part of.
-         *
-         * @param condition the condition to add.
-         * @return the conditions for the UPDATE statement those assignments are part of.
-         */
-        public Conditions onlyIf(Clause condition) {
-            return statement.onlyIf(condition);
         }
     }
 
@@ -287,8 +267,9 @@ public class Update extends BuiltStatement {
          *
          * @return the UPDATE statement this WHERE clause is part of
          */
-        public Update ifExists() {
-            return statement.ifExists();
+        public IfExists ifExists() {
+            statement.ifExists = true;
+            return new IfExists(this.statement);
         }
     }
 
@@ -334,15 +315,23 @@ public class Update extends BuiltStatement {
         public Where where(Clause clause) {
             return statement.where(clause);
         }
+    }
 
-        /**
-         * Adds a condition to the UPDATE statement these options are part of.
-         *
-         * @param condition the condition to add.
-         * @return the conditions for the UPDATE statement these options are part of.
-         */
-        public Conditions onlyIf(Clause condition) {
-            return statement.onlyIf(condition);
+    /**
+     * IF EXISTS for an UPDATE statement.
+     * <p>
+     * An update with that option will report whether the statement actually
+     * resulted in data being updated. The existence check and update are
+     * done transactionally in the sense that if multiple clients attempt to
+     * update a given row with this option, then at most one may succeed.
+     * <p>
+     * Please keep in mind that using this option has a non negligible
+     * performance impact and should be avoided when possible.
+     */
+    public static class IfExists extends BuiltStatement.ForwardingStatement<Update> {
+
+        IfExists(Update statement) {
+            super(statement);
         }
     }
 
@@ -376,36 +365,6 @@ public class Update extends BuiltStatement {
             conditions.add(condition);
             checkForBindMarkers(condition);
             return this;
-        }
-
-        /**
-         * Adds an assignment to the UPDATE statement those conditions are part of.
-         *
-         * @param assignment the assignment to add.
-         * @return the assignments of the UPDATE statement those conditions are part of.
-         */
-        public Assignments with(Assignment assignment) {
-            return statement.with(assignment);
-        }
-
-        /**
-         * Adds a where clause to the UPDATE statement these conditions are part of.
-         *
-         * @param clause clause to add.
-         * @return the WHERE clause of the UPDATE statement these conditions are part of.
-         */
-        public Where where(Clause clause) {
-            return statement.where(clause);
-        }
-
-        /**
-         * Adds an option to the UPDATE statement these conditions are part of.
-         *
-         * @param using the using clause to add.
-         * @return the options of the UPDATE statement these conditions are part of.
-         */
-        public Options using(Using using) {
-            return statement.using(using);
         }
     }
 }
