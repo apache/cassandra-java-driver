@@ -303,7 +303,7 @@ serializing and deserializing. It's possible to bypass this step with a
 lower-level implementation that manipulates the binary stream directly.
 That's also how the object mapper handles UDTs, and you can rely on the
 mapper to generate UDT codecs for you; see
-[this page](object_mapper/custom_codecs/#implicit-udt-codecs) for more
+[this page](../object_mapper/custom_codecs/#implicit-udt-codecs) for more
 information.
 
 ### Limitations
@@ -377,7 +377,7 @@ A codec lookup operation may be costly; to mitigate this, the `CodecRegistry` ca
 
 The following situations are exceptions where it is not possible to cache lookup results:
 
-* With [SimpleStatement] and [BuiltStatement] (Query Builder) instances; in these places, the driver has
+* With [SimpleStatement] instances and [BuiltStatement] instances (created via the Query Builder); in these places, the driver has
   no way to determine the right CQL type to use, so it performs a best-effort heuristic to guess which codec to use.
 * When using "ambiguous" methods of `BoundStatement` and `Row`, such as [setList()][setList],
   [setSet()][setSet], [setMap()][setMap], [setObject()][setObject];

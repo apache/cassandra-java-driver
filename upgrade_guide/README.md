@@ -11,7 +11,7 @@ It is **not binary compatible** with the driver's 2.1 branch.
 The main changes were introduced by the custom codecs feature (see below).
 We've also seized the opportunity to remove code that was deprecated in 2.1.
 
-1.  [Custom codecs](../features/custom_codecs/README.md)
+1.  [Custom codecs](../features/custom_codecs/)
     ([JAVA-721](https://datastax-oss.atlassian.net/browse/JAVA-721))
     introduce several breaking changes and also modify a few runtime behaviors.
 
@@ -249,7 +249,7 @@ Merged from 2.0.11:
 
 ### 2.1.6
 
-See [2.0.10](20x-to-2010).
+See [2.0.10](#2-0-x-to-2-0-10).
 
 
 ### 2.1.2
@@ -368,7 +368,7 @@ driver, but rather third-party frameworks and tools.
    If you know that the CQL functions or expressions are safe, use
    `setIdempotent(true)` on the statement.
 
-### 2.0.x to 2.0.10
+### <a name="2-0-x-to-2-0-10"></a>2.0.x to 2.0.10
 
 We try to avoid breaking changes within a branch (2.0.x to 2.0.y), but
 2.0.10 saw a lot of new features and internal improvements. There is one
