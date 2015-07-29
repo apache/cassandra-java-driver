@@ -78,9 +78,7 @@ public class Update extends BuiltStatement {
 
         if (ifExists) {
             builder.append(" IF EXISTS ");
-        }
-
-        if (!conditions.conditions.isEmpty()) {
+        } else if (!conditions.conditions.isEmpty()) {
             builder.append(" IF ");
             Utils.joinAndAppend(builder, " AND ", conditions.conditions, variables);
         }
@@ -138,7 +136,8 @@ public class Update extends BuiltStatement {
      * @param condition the condition to add.
      * @return the conditions of this query to which more conditions can be added.
      */
-    private Conditions onlyIf(Clause condition) {
+    public Conditions onlyIf(Clause condition) {
+        ifExists = false;
         return conditions.and(condition);
     }
 
@@ -147,7 +146,7 @@ public class Update extends BuiltStatement {
      *
      * @return the conditions of this query to which more conditions can be added.
      */
-    private Conditions onlyIf() {
+    public Conditions onlyIf() {
         return conditions;
     }
 
@@ -206,6 +205,17 @@ public class Update extends BuiltStatement {
         public Options using(Using using) {
             return statement.using(using);
         }
+
+        /**
+         * Adds a condition to the UPDATE statement those assignments are part of.
+         *
+         * @param condition the condition to add.
+         * @return the conditions for the UPDATE statement those assignments are part of.
+         */
+        public Conditions onlyIf(Clause condition) {
+            statement.ifExists = false;
+            return statement.onlyIf(condition);
+        }
     }
 
     /**
@@ -259,6 +269,7 @@ public class Update extends BuiltStatement {
          * @return the conditions for the UPDATE statement this WHERE clause is part of.
          */
         public Conditions onlyIf(Clause condition) {
+            statement.ifExists = false;
             return statement.onlyIf(condition);
         }
 
@@ -315,6 +326,17 @@ public class Update extends BuiltStatement {
         public Where where(Clause clause) {
             return statement.where(clause);
         }
+
+        /**
+         * Adds a condition to the UPDATE statement these options are part of.
+         *
+         * @param condition the condition to add.
+         * @return the conditions for the UPDATE statement these options are part of.
+         */
+        public Conditions onlyIf(Clause condition) {
+            statement.ifExists = false;
+            return statement.onlyIf(condition);
+        }
     }
 
     /**
@@ -362,9 +384,40 @@ public class Update extends BuiltStatement {
          * @return this {@code Conditions} clause.
          */
         public Conditions and(Clause condition) {
+            statement.ifExists = false;
             conditions.add(condition);
             checkForBindMarkers(condition);
             return this;
+        }
+
+        /**
+         * Adds an assignment to the UPDATE statement those conditions are part of.
+         *
+         * @param assignment the assignment to add.
+         * @return the assignments of the UPDATE statement those conditions are part of.
+         */
+        public Assignments with(Assignment assignment) {
+            return statement.with(assignment);
+        }
+
+        /**
+         * Adds a where clause to the UPDATE statement these conditions are part of.
+         *
+         * @param clause clause to add.
+         * @return the WHERE clause of the UPDATE statement these conditions are part of.
+         */
+        public Where where(Clause clause) {
+            return statement.where(clause);
+        }
+
+        /**
+         * Adds an option to the UPDATE statement these conditions are part of.
+         *
+         * @param using the using clause to add.
+         * @return the options of the UPDATE statement these conditions are part of.
+         */
+        public Options using(Using using) {
+            return statement.using(using);
         }
     }
 }
