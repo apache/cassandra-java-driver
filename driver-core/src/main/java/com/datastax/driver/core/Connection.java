@@ -516,7 +516,7 @@ class Connection {
             throw new ConnectionException(address, "Connection has been closed");
         }
 
-        logger.trace("{} writing request {}", this, request);
+        logger.trace("{}, stream {}, writing request {}", this, request.getStreamId(), request);
         writer.incrementAndGet();
 
         if (DISABLE_COALESCING) {
@@ -538,7 +538,7 @@ class Connection {
                 writer.decrementAndGet();
 
                 if (!writeFuture.isSuccess()) {
-                    logger.debug("{} Error writing request {}", Connection.this, request);
+                    logger.debug("{}, stream {}, Error writing request {}", Connection.this, request.getStreamId(), request);
                     // Remove this handler from the dispatcher so it don't get notified of the error
                     // twice (we will fail that method already)
                     dispatcher.removeHandler(handler, true);
@@ -562,7 +562,7 @@ class Connection {
                         }
                     });
                 } else {
-                    logger.trace("{} request sent successfully", Connection.this);
+                    logger.trace("{}, stream {}, request sent successfully", Connection.this, request.getStreamId());
                 }
             }
         };
@@ -955,7 +955,7 @@ class Connection {
             int streamId = response.getStreamId();
 
             if(logger.isTraceEnabled())
-                logger.trace("{} received: {}", Connection.this, asDebugString(response));
+                logger.trace("{}, stream {}, received: {}", Connection.this, streamId, asDebugString(response));
 
             if (streamId < 0) {
                 factory.defaultHandler.handle(response);
