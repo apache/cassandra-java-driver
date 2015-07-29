@@ -297,6 +297,10 @@ public class QueryBuilderTest {
         query = "UPDATE foo SET x=4 WHERE k=0 IF x=1;";
         update = update("foo").with(set("x", 4)).where(eq("k", 0)).onlyIf(eq("x", 1));
         assertEquals(update.toString(), query);
+
+        query = "UPDATE foo SET x=4 WHERE k=0 IF EXISTS;";
+        update = update("foo").with(set("x", 4)).where(eq("k", 0)).ifExists();
+        assertEquals(update.toString(), query);
     }
 
     @Test(groups = "unit")

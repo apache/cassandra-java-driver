@@ -32,6 +32,7 @@ public class Update extends BuiltStatement {
     private final Where where;
     private final Options usings;
     private final Conditions conditions;
+    private boolean ifExists;
 
     Update(String keyspace, String table) {
         super(keyspace);
@@ -75,7 +76,9 @@ public class Update extends BuiltStatement {
             Utils.joinAndAppend(builder, " AND ", where.clauses, variables);
         }
 
-        if (!conditions.conditions.isEmpty()) {
+        if (ifExists) {
+            builder.append(" IF EXISTS ");
+        } else if (!conditions.conditions.isEmpty()) {
             builder.append(" IF ");
             Utils.joinAndAppend(builder, " AND ", conditions.conditions, variables);
         }
@@ -134,6 +137,7 @@ public class Update extends BuiltStatement {
      * @return the conditions of this query to which more conditions can be added.
      */
     public Conditions onlyIf(Clause condition) {
+        ifExists = false;
         return conditions.and(condition);
     }
 
@@ -209,6 +213,7 @@ public class Update extends BuiltStatement {
          * @return the conditions for the UPDATE statement those assignments are part of.
          */
         public Conditions onlyIf(Clause condition) {
+            statement.ifExists = false;
             return statement.onlyIf(condition);
         }
     }
@@ -264,7 +269,18 @@ public class Update extends BuiltStatement {
          * @return the conditions for the UPDATE statement this WHERE clause is part of.
          */
         public Conditions onlyIf(Clause condition) {
+            statement.ifExists = false;
             return statement.onlyIf(condition);
+        }
+
+        /**
+         * Sets the 'IF EXISTS' option for this UPDATE statement.
+         *
+         * @return the UPDATE statement this WHERE clause is part of
+         */
+        public IfExists ifExists() {
+            statement.ifExists = true;
+            return new IfExists(this.statement);
         }
     }
 
@@ -318,7 +334,26 @@ public class Update extends BuiltStatement {
          * @return the conditions for the UPDATE statement these options are part of.
          */
         public Conditions onlyIf(Clause condition) {
+            statement.ifExists = false;
             return statement.onlyIf(condition);
+        }
+    }
+
+    /**
+     * IF EXISTS for an UPDATE statement.
+     * <p>
+     * An update with that option will report whether the statement actually
+     * resulted in data being updated. The existence check and update are
+     * done transactionally in the sense that if multiple clients attempt to
+     * update a given row with this option, then at most one may succeed.
+     * <p>
+     * Please keep in mind that using this option has a non negligible
+     * performance impact and should be avoided when possible.
+     */
+    public static class IfExists extends BuiltStatement.ForwardingStatement<Update> {
+
+        IfExists(Update statement) {
+            super(statement);
         }
     }
 
@@ -349,6 +384,7 @@ public class Update extends BuiltStatement {
          * @return this {@code Conditions} clause.
          */
         public Conditions and(Clause condition) {
+            statement.ifExists = false;
             conditions.add(condition);
             checkForBindMarkers(condition);
             return this;
