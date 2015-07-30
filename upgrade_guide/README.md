@@ -54,7 +54,7 @@ Merged from 2.0.11:
 
 ### 2.1.6
 
-See [2.0.10](20x-to-2010).
+See [2.0.10](#2-0-x-to-2-0-10).
 
 
 ### 2.1.2
@@ -173,7 +173,7 @@ driver, but rather third-party frameworks and tools.
    If you know that the CQL functions or expressions are safe, use
    `setIdempotent(true)` on the statement.
 
-### 2.0.x to 2.0.10
+### <a name="2-0-x-to-2-0-10"></a>2.0.x to 2.0.10
 
 We try to avoid breaking changes within a branch (2.0.x to 2.0.y), but
 2.0.10 saw a lot of new features and internal improvements. There is one
