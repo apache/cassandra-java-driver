@@ -38,6 +38,7 @@
 - [improvement] Debounce control connection queries (JAVA-657)
 - [bug] LoadBalancingPolicy.distance() called before init() (JAVA-784)
 - [new feature] Make driver-side metadata optional (JAVA-828)
+- [improvement] Allow hosts to remain partially up (JAVA-544)
 
 Merged from 2.0.10_fixes branch:
 

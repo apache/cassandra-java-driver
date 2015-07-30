@@ -6,4 +6,20 @@
   * check the reports in `<module>/target/site/clirr-report.html`
   * add new differences if needed. Difference types are explained at http://www.mojohaus.org/clirr-maven-plugin/examples/ignored-differences.html
 -->
-<differences/>
+<differences>
+  <difference>
+    <differenceType>1001</differenceType> <!-- decreased visibility -->
+    <className>com/datastax/driver/core/ConvictionPolicy$Factory</className>
+    <justification>False positive, the enclosing class is package-private so this was never exposed</justification>
+  </difference>
+  <difference>
+    <differenceType>8001</differenceType> <!-- class removed -->
+    <className>com/datastax/driver/core/ConvictionPolicy$Simple</className>
+    <justification>False positive, the enclosing class is package-private so this was never exposed</justification>
+  </difference>
+  <difference>
+    <differenceType>8001</differenceType> <!-- class removed -->
+    <className>com/datastax/driver/core/ConvictionPolicy$Simple$Factory</className>
+    <justification>False positive, the enclosing class is package-private so this was never exposed</justification>
+  </difference>
+</differences>

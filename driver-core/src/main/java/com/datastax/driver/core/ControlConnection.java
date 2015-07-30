@@ -31,13 +31,13 @@ import com.datastax.driver.core.exceptions.DriverException;
 import com.datastax.driver.core.exceptions.DriverInternalError;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
-class ControlConnection implements Host.StateListener {
+class ControlConnection implements Host.StateListener, Connection.Owner {
 
     private static final Logger logger = LoggerFactory.getLogger(ControlConnection.class);
 
     private static final InetAddress bindAllAddress;
-    static
-    {
+
+    static {
         try {
             bindAllAddress = InetAddress.getByAddress(new byte[4]);
         } catch (UnknownHostException e) {
@@ -68,7 +68,7 @@ class ControlConnection implements Host.StateListener {
     }
 
     // Only for the initial connection. Does not schedule retries if it fails
-    public void connect() throws UnsupportedProtocolVersionException {
+    void connect() throws UnsupportedProtocolVersionException {
         if (isShutdown)
             return;
 
@@ -79,7 +79,7 @@ class ControlConnection implements Host.StateListener {
         setNewConnection(reconnectInternal(hosts.iterator(), true));
     }
 
-    public CloseFuture closeAsync() {
+    CloseFuture closeAsync() {
         // We don't have to be fancy here. We just set a flag so that we stop trying to reconnect (and thus change the
         // connection used) and shutdown the current one.
         isShutdown = true;
@@ -95,26 +95,13 @@ class ControlConnection implements Host.StateListener {
 
     Host connectedHost() {
         Connection current = connectionRef.get();
-        return cluster.metadata.getHost(current.address);
+        return (current == null)
+            ? null
+            : cluster.metadata.getHost(current.address);
     }
 
-    void reconnect() {
-        if (isShutdown)
-            return;
-
-        try {
-            setNewConnection(reconnectInternal(queryPlan(), false));
-        } catch (NoHostAvailableException e) {
-            logger.error("[Control connection] Cannot connect to any host, scheduling retry");
-            backgroundReconnect(-1);
-        } catch (UnsupportedProtocolVersionException e) {
-            // reconnectInternal only propagate those if we've not decided on the protocol version yet,
-            // which should only happen on the initial connection and thus in connect() but never here.
-            throw new AssertionError();
-        } catch (Exception e) {
-            logger.error("[Control connection] Unknown error during reconnection, scheduling retry", e);
-            backgroundReconnect(-1);
-        }
+    void triggerReconnect() {
+        backgroundReconnect(0);
     }
 
     /**
@@ -124,7 +111,14 @@ class ControlConnection implements Host.StateListener {
         if (isShutdown)
             return;
 
-        new AbstractReconnectionHandler(cluster.reconnectionExecutor, cluster.reconnectionPolicy().newSchedule(), reconnectionAttempt, initialDelayMs) {
+        // Abort if a reconnection is already in progress. This is not thread-safe: two threads might race through this and both
+        // schedule a reconnection; in that case AbstractReconnectionHandler knows how to deal with it correctly.
+        // But this cheap check can help us avoid creating the object unnecessarily.
+        ListenableFuture<?> reconnection = reconnectionAttempt.get();
+        if (reconnection != null && !reconnection.isDone())
+            return;
+
+        new AbstractReconnectionHandler("Control connection", cluster.reconnectionExecutor, cluster.reconnectionPolicy().newSchedule(), reconnectionAttempt, initialDelayMs) {
             @Override
             protected Connection tryReconnect() throws ConnectionException {
                 try {
@@ -163,17 +157,17 @@ class ControlConnection implements Host.StateListener {
 
     private void signalError() {
         Connection connection = connectionRef.get();
-        if (connection != null && connection.isDefunct() && cluster.metadata.getHost(connection.address) != null) {
-            // If the connection was marked as defunct and the host hadn't left, this already reported the
-            // host down, which will trigger a reconnect.
-            return;
-        }
-        // If the connection is not defunct, or the host has left, just reconnect manually
+        if (connection != null)
+            connection.closeAsync();
+
+        // If the error caused the host to go down, onDown might have already triggered a reconnect.
+        // But backgroundReconnect knows how to deal with that.
         backgroundReconnect(0);
     }
 
     private void setNewConnection(Connection newConnection) {
-        logger.debug("[Control connection] Successfully connected to {}", newConnection.address);
+        Host.statesLogger.debug("[Control connection] established to {}", newConnection.address);
+        newConnection.setOwner(this);
         Connection old = connectionRef.getAndSet(newConnection);
         if (old != null && !old.isClosed())
             old.closeAsync();
@@ -187,6 +181,8 @@ class ControlConnection implements Host.StateListener {
         try {
             while (iter.hasNext()) {
                 host = iter.next();
+                if (!host.convictionPolicy.canReconnectNow())
+                    continue;
                 try {
                     return tryConnect(host, isInitialConnection);
                 } catch (ConnectionException e) {
@@ -240,8 +236,7 @@ class ControlConnection implements Host.StateListener {
         return errors;
     }
 
-    private Connection tryConnect(Host host, boolean isInitialConnection) throws ConnectionException, ExecutionException, InterruptedException, UnsupportedProtocolVersionException, ClusterNameMismatchException
-    {
+    private Connection tryConnect(Host host, boolean isInitialConnection) throws ConnectionException, ExecutionException, InterruptedException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
         Connection connection = cluster.connectionFactory.open(host);
 
         try {
@@ -284,7 +279,7 @@ class ControlConnection implements Host.StateListener {
         }
     }
 
-    public void refreshSchema(String keyspace, String table) throws InterruptedException {
+    void refreshSchema(String keyspace, String table) throws InterruptedException {
         if(keyspace == null && table == null) {
             logger.debug("[Control connection] Refreshing schema");
         } else {
@@ -293,7 +288,7 @@ class ControlConnection implements Host.StateListener {
         try {
             Connection c = connectionRef.get();
             // At startup, when we add the initial nodes, this will be null, which is ok
-            if (c == null)
+            if (c == null || c.isClosed())
                 return;
             refreshSchema(c, keyspace, table, cluster);
             // If the table is null, we either rebuild all from scratch or have an updated keyspace. In both cases, rebuild the token map
@@ -325,8 +320,8 @@ class ControlConnection implements Host.StateListener {
         }
 
         DefaultResultSetFuture ksFuture = table == null
-                                        ? new DefaultResultSetFuture(null, new Requests.Query(SELECT_KEYSPACES + whereClause))
-                                        : null;
+            ? new DefaultResultSetFuture(null, new Requests.Query(SELECT_KEYSPACES + whereClause))
+            : null;
         DefaultResultSetFuture cfFuture = new DefaultResultSetFuture(null, new Requests.Query(SELECT_COLUMN_FAMILIES + whereClause));
         DefaultResultSetFuture colsFuture = new DefaultResultSetFuture(null, new Requests.Query(SELECT_COLUMNS + whereClause));
 
@@ -343,7 +338,7 @@ class ControlConnection implements Host.StateListener {
         if (host == null || host.getCassandraVersion() == null) {
             cassandraVersion = cluster.protocolVersion() == 1 ? VersionNumber.parse("1.2.0") : VersionNumber.parse("2.0.0");
             logger.warn("Cannot find Cassandra version for host {} to parse the schema, using {} based on protocol version in use. "
-                      + "If parsing the schema fails, this could be the cause", connection.address, cassandraVersion);
+                + "If parsing the schema fails, this could be the cause", connection.address, cassandraVersion);
         } else {
             cassandraVersion = host.getCassandraVersion();
         }
@@ -358,10 +353,10 @@ class ControlConnection implements Host.StateListener {
         }
     }
 
-    public void refreshNodeListAndTokenMap() {
+    void refreshNodeListAndTokenMap() {
         Connection c = connectionRef.get();
         // At startup, when we add the initial nodes, this will be null, which is ok
-        if (c == null)
+        if (c == null || c.isClosed())
             return;
 
         try {
@@ -427,11 +422,11 @@ class ControlConnection implements Host.StateListener {
     /**
      * @return whether we have enough information to bring the node back up
      */
-    public boolean refreshNodeInfo(Host host) {
+    boolean refreshNodeInfo(Host host) {
 
         Connection c = connectionRef.get();
         // At startup, when we add the initial nodes, this will be null, which is ok
-        if (c == null)
+        if (c == null || c.isClosed())
             return true;
 
         logger.debug("[Control connection] Refreshing node info on {}", host);
@@ -489,8 +484,8 @@ class ControlConnection implements Host.StateListener {
         String version = row.getString("release_version");
         // We don't know if it's a 'local' or a 'peers' row, and only 'peers' rows have the 'peer' field.
         InetAddress listenAddress = row.getColumnDefinitions().contains("peer")
-                                  ? row.getInet("peer")
-                                  : null;
+            ? row.getInet("peer")
+            : null;
 
         host.setVersionAndListenAdress(version, listenAddress);
     }
@@ -661,16 +656,31 @@ class ControlConnection implements Host.StateListener {
 
     @Override
     public void onDown(Host host) {
-        // If that's the host we're connected to, and we haven't yet schedule a reconnection, preemptively start one
+        onHostGone(host);
+    }
+
+    @Override
+    public void onRemove(Host host) {
+        onHostGone(host);
+        cluster.submitNodeListRefresh();
+    }
+
+    private void onHostGone(Host host) {
         Connection current = connectionRef.get();
-        if (logger.isDebugEnabled())
-            logger.debug("[Control connection] {} is down, currently connected to {}", host, current == null ? "nobody" : current.address);
 
         if (current != null && current.address.equals(host.getSocketAddress())) {
-            // This starts an AbstractReconnectionHandler, which will take care of checking if another reconnection is
-            // already in progress
+            logger.debug("[Control connection] {} is down/removed and it was the control host, triggering reconnect",
+                current.address);
+            if (!current.isClosed())
+                current.closeAsync();
             backgroundReconnect(0);
         }
+    }
+
+    @Override
+    public void onConnectionDefunct(Connection connection) {
+        if (connection == connectionRef.get())
+            backgroundReconnect(0);
     }
 
     @Override
@@ -684,19 +694,5 @@ class ControlConnection implements Host.StateListener {
         Metadata.TokenMap tkmap = cluster.metadata.tokenMap;
         if (host.getCassandraVersion() == null || tkmap == null || !tkmap.hosts.contains(host))
             cluster.submitNodeListRefresh();
-    }
-
-    @Override
-    public void onRemove(Host host) {
-        Connection current = connectionRef.get();
-        if (logger.isDebugEnabled())
-            logger.debug("[Control connection] {} has been removed, currently connected to {}", host, current == null ? "nobody" : current.address);
-
-        // Schedule a reconnection if that was our control host
-        if (current != null && current.address.equals(host.getSocketAddress())) {
-            backgroundReconnect(0);
-        }
-
-        cluster.submitNodeListRefresh();
     }
 }

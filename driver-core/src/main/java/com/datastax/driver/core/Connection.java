@@ -85,11 +85,11 @@ class Connection {
     private volatile String keyspace;
 
     private volatile boolean isInitialized;
-    private volatile boolean isDefunct;
+    private final AtomicBoolean isDefunct = new AtomicBoolean();
 
     private final AtomicReference<ConnectionCloseFuture> closeFuture = new AtomicReference<ConnectionCloseFuture>();
 
-    private final AtomicReference<HostConnectionPool> poolRef = new AtomicReference<HostConnectionPool>();
+    private final AtomicReference<Owner> ownerRef = new AtomicReference<Owner>();
 
     /**
      /**
@@ -98,14 +98,14 @@ class Connection {
      * @param name the connection name
      * @param address the remote address
      * @param factory the connection factory to use
-     * @param pool the pool this connection belongs to. May be null if this connection does not belong to a pool.
-     *             Note that an existing connection can also be associated to a pool later with {@link #setPool(HostConnectionPool)}.
+     * @param owner the component owning this connection (may be null).
+     *              Note that an existing connection can also be associated to an owner later with {@link #setOwner(Owner)}.
      */
-    protected Connection(String name, InetSocketAddress address, Factory factory, HostConnectionPool pool) {
+    protected Connection(String name, InetSocketAddress address, Factory factory, Owner owner) {
         this.address = address;
         this.factory = factory;
         this.name = name;
-        this.poolRef.set(pool);
+        this.ownerRef.set(owner);
     }
 
     /**
@@ -196,6 +196,9 @@ class Connection {
         Futures.addCallback(initFuture, new FutureCallback<Void>() {
             @Override
             public void onSuccess(Void result) {
+                Host host = factory.manager.metadata.getHost(address);
+                if(host != null)
+                    host.convictionPolicy.signalConnectionCreated();
                 isInitialized = true;
             }
 
@@ -373,7 +376,7 @@ class Connection {
     }
 
     public boolean isDefunct() {
-        return isDefunct;
+        return isDefunct.get();
     }
 
     public int maxAvailableStreams() {
@@ -381,9 +384,13 @@ class Connection {
     }
 
     <E extends Exception> E defunct(E e) {
-        if (logger.isDebugEnabled())
-            logger.debug("Defuncting connection to " + address, e);
-        isDefunct = true;
+        if (!isDefunct.compareAndSet(false, true))
+            return e;
+
+        if (Host.statesLogger.isTraceEnabled())
+            Host.statesLogger.trace("Defuncting " + this, e);
+        else if (Host.statesLogger.isDebugEnabled())
+            Host.statesLogger.debug("Defuncting {} because: {}", this, e.getMessage());
 
         ConnectionException ce = e instanceof ConnectionException
                                ? (ConnectionException)e
@@ -391,10 +398,12 @@ class Connection {
 
         Host host = factory.manager.metadata.getHost(address);
         if (host != null) {
-            // This will trigger onDown, including when the defunct Connection is part of a reconnection attempt, which is redundant.
-            // This is not too much of a problem since calling onDown on a node that is already down has no effect.
-            boolean isDown = factory.manager.signalConnectionFailure(host, ce, host.wasJustAdded());
-            notifyOwnerWhenDefunct(isDown);
+            boolean isDown = factory.manager.signalConnectionFailure(host, ce, isInitialized, host.wasJustAdded());
+
+            if (!isDown)
+                notifyOwnerWhenDefunct();
+            // else the driver will destroy all pools and notify the control connection as part of marking the host down,
+            // so no need to notify
         }
 
         // Force the connection to close to make sure the future completes. Otherwise force() might never get called and
@@ -405,20 +414,14 @@ class Connection {
         return e;
     }
 
-    protected void notifyOwnerWhenDefunct(boolean hostIsDown) {
+    private void notifyOwnerWhenDefunct() {
         // If an error happens during initialization, the owner will detect it and take appropriate action
         if (!isInitialized)
             return;
 
-        HostConnectionPool pool = this.poolRef.get();
-        if (pool == null)
-            return;
-
-        if (hostIsDown) {
-            pool.closeAsync().force();
-        } else {
-            pool.replaceDefunctConnection(this);
-        }
+        Owner owner = this.ownerRef.get();
+        if (owner != null)
+            owner.onConnectionDefunct(this);
     }
 
     public String keyspace() {
@@ -505,7 +508,7 @@ class Connection {
          * having set the handler, we guarantee that even if we race with defunct/close, we may
          * never leave a handler that won't get an answer or be errored out.
          */
-        if (isDefunct) {
+        if (isDefunct.get()) {
             dispatcher.removeHandler(handler, true);
             throw new ConnectionException(address, "Write attempt on defunct connection");
         }
@@ -567,13 +570,13 @@ class Connection {
         };
     }
 
-    boolean hasPool() {
-        return this.poolRef.get() != null;
+    boolean hasOwner() {
+        return this.ownerRef.get() != null;
     }
 
-    /** @return whether the connection was already associated with a pool */
-    boolean setPool(HostConnectionPool pool) {
-        return poolRef.compareAndSet(null, pool);
+    /** @return whether the connection was already associated with an owner */
+    boolean setOwner(Owner owner) {
+        return ownerRef.compareAndSet(null, owner);
     }
 
     /**
@@ -581,9 +584,9 @@ class Connection {
      * The connection should generally not be reused after that.
      */
     void release() {
-        HostConnectionPool pool = poolRef.get();
-        if (pool != null)
-            pool.returnConnection(this);
+        Owner owner = ownerRef.get();
+        if (owner instanceof HostConnectionPool)
+            ((HostConnectionPool)owner).returnConnection(this);
     }
 
     public boolean isClosed() {
@@ -610,6 +613,12 @@ class Connection {
         }
 
         logger.debug("{} closing connection", this);
+
+        if (isInitialized && !isDefunct.get()) {
+            Host host = factory.manager.metadata.getHost(address);
+            if(host != null)
+                host.convictionPolicy.signalConnectionClosed();
+        }
 
         boolean terminated = tryTerminate(false);
         if (!terminated) {
@@ -981,7 +990,7 @@ class Connection {
 
         @Override
         public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
-            if (evt instanceof IdleStateEvent && ((IdleStateEvent)evt).state() == ALL_IDLE) {
+            if (!isClosed() && evt instanceof IdleStateEvent && ((IdleStateEvent)evt).state() == ALL_IDLE) {
                 logger.debug("{} was inactive for {} seconds, sending heartbeat", Connection.this, factory.configuration.getPoolingOptions().getHeartbeatIntervalSeconds());
                 write(HEARTBEAT_CALLBACK);
             }
@@ -1285,5 +1294,10 @@ class Connection {
 
             nettyOptions.afterChannelInitialized(channel);
         }
+    }
+
+    /** A component that "owns" a connection, and should be notified when it dies. */
+    interface Owner {
+        void onConnectionDefunct(Connection connection);
     }
 }
