@@ -689,7 +689,7 @@ class Connection {
             this.nettyOptions = configuration.getNettyOptions();
             this.eventLoopGroup = nettyOptions.eventLoopGroup(manager.threadFactory("nio-worker"));
             this.channelClass = nettyOptions.channelClass();
-            this.timer = new HashedWheelTimer(manager.threadFactory("timeouter"));
+            this.timer = new HashedWheelTimer(manager.threadFactory("timeouter"), 10, TimeUnit.MILLISECONDS, 2048);
         }
 
         public int getPort() {
