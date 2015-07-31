@@ -21,13 +21,14 @@ import java.util.concurrent.TimeUnit;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 import io.netty.bootstrap.Bootstrap;
-import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.util.HashedWheelTimer;
+import io.netty.util.Timer;
 
 /**
  * A set of hooks that allow clients to customize the driver's underlying Netty layer.
@@ -198,5 +199,47 @@ public class NettyOptions {
         // Since we close the channels before shutting down the eventLoopGroup,
         // it is safe to reduce the quiet period to 0 seconds
         eventLoopGroup.shutdownGracefully(0, 15, SECONDS).syncUninterruptibly();
+    }
+
+    /**
+     * Return the {@link Timer} instance used by Read Timeouts and Speculative Execution.
+     * <p>
+     * This hook is invoked only once at {@link Cluster} initialization;
+     * the returned instance will be kept in use throughout the cluster lifecycle.
+     * <p>
+     * Typically, implementors would return a newly-created instance;
+     * it is however possible to re-use a shared instance, but in this
+     * case implementors should also override {@link #onClusterClose(Timer)}
+     * to prevent the shared instance to be closed when the cluster is closed.
+     * <p>
+     * The default implementation returns a new instance created by {@link HashedWheelTimer#HashedWheelTimer(ThreadFactory)}.
+      *
+     * @param threadFactory The {@link ThreadFactory} to use when creating a new {@link HashedWheelTimer} instance;
+     *                      The driver will provide its own internal thread factory here.
+     *                      It is safe to ignore it and use another thread factory.
+     * @return the {@link Timer} instance to use.
+     */
+    public Timer timer(ThreadFactory threadFactory) {
+        return new HashedWheelTimer(threadFactory);
+    }
+
+    /**
+     * Hook invoked when the cluster is shutting down after a call to {@link Cluster#close()}.
+     * <p>
+     * This is guaranteed to be called only after all connections have been individually
+     * closed, and their channels closed, and only once per {@link Timer} instance.
+     * <p>
+     * This gives the implementor a chance to close the {@link Timer} properly, if required.
+     * <p>
+     * The default implementation calls a {@link Timer#stop()} of the passed {@link Timer} instance.
+     * <p>
+     * Implementation note: if the {@link Timer} instance is being shared, or used for other purposes than to
+     * schedule actions for the current cluster, than it should not be stopped here;
+     * subclasses would have to override this method accordingly to take the appropriate action.
+     *
+     * @param timer the timer used by the cluster being closed
+     */
+    public void onClusterClose(Timer timer) {
+        timer.stop();
     }
 }

@@ -27,7 +27,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import com.codahale.metrics.Timer;
 import com.google.common.collect.Sets;
-import io.netty.util.HashedWheelTimer;
 import io.netty.util.Timeout;
 import io.netty.util.TimerTask;
 import org.slf4j.Logger;
@@ -56,7 +55,7 @@ class RequestHandler {
     private final Set<SpeculativeExecution> runningExecutions = Sets.newCopyOnWriteArraySet();
     private final Set<Timeout> scheduledExecutions = Sets.newCopyOnWriteArraySet();
     private final Statement statement;
-    private final HashedWheelTimer scheduler;
+    private final io.netty.util.Timer scheduler;
 
     private volatile List<Host> triedHosts;
 

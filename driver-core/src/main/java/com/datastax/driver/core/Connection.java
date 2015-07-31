@@ -37,6 +37,7 @@ import io.netty.handler.timeout.IdleStateEvent;
 import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.util.HashedWheelTimer;
 import io.netty.util.Timeout;
+import io.netty.util.Timer;
 import io.netty.util.TimerTask;
 import io.netty.util.concurrent.GlobalEventExecutor;
 import javax.net.ssl.SSLEngine;
@@ -658,7 +659,7 @@ class Connection {
 
     public static class Factory {
 
-        public final HashedWheelTimer timer;
+        public final Timer timer;
 
         private final EventLoopGroup eventLoopGroup;
         private final Class<? extends Channel> channelClass;
@@ -687,7 +688,7 @@ class Connection {
             this.nettyOptions = configuration.getNettyOptions();
             this.eventLoopGroup = nettyOptions.eventLoopGroup(manager.threadFactory("nio-worker"));
             this.channelClass = nettyOptions.channelClass();
-            this.timer = new HashedWheelTimer(manager.threadFactory("timeouter"));
+            this.timer = nettyOptions.timer(manager.threadFactory("timeouter"));
         }
 
         public int getPort() {
@@ -816,7 +817,7 @@ class Connection {
             allChannels.close().awaitUninterruptibly();
 
             nettyOptions.onClusterClose(eventLoopGroup);
-            timer.stop();
+            nettyOptions.onClusterClose(timer);
         }
     }
 
