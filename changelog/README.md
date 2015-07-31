@@ -264,6 +264,7 @@ Merged from 2.0 branch: everything up to 2.0.3 (included), and the following.
 
 ### 2.0.11 (in progress)
 
+- [improvement] Log streamid at the trace level on sending request and receiving response (JAVA-718)
 - [bug] Fix SpeculativeExecutionPolicy.init() and close() are never called (JAVA-796)
 - [improvement] Suppress unnecessary warning at shutdown (JAVA-710)
 - [improvement] Allow DNS name with multiple A-records as contact point (#340)
