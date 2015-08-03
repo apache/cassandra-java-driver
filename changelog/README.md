@@ -3,6 +3,7 @@
 ### 2.1.9 (in progress)
 
 - [bug] Fix implementation of UserType.hashCode() (JAVA-942)
+- [bug] JAVA-854: avoid early return in Cluster.init when a node doesn't support the protocol version.
 
 Merged from 2.0 branch:
 

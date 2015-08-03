@@ -1482,7 +1482,7 @@ public class Cluster implements Closeable {
 
                     if (!connectionFactory.protocolVersion.isSupportedBy(host)) {
                         logUnsupportedVersionProtocol(host, connectionFactory.protocolVersion);
-                        return;
+                        continue;
                     }
                     
                     if (!contactPointHosts.contains(host))
