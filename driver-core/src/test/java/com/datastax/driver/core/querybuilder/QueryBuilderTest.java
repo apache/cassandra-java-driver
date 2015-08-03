@@ -18,7 +18,6 @@ package com.datastax.driver.core.querybuilder;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
-import java.nio.ByteBuffer;
 import java.util.*;
 
 import org.testng.annotations.Test;
@@ -28,7 +27,6 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
-import com.datastax.driver.core.Assertions;
 import com.datastax.driver.core.ConsistencyLevel;
 import com.datastax.driver.core.RegularStatement;
 import com.datastax.driver.core.Statement;
@@ -776,4 +774,22 @@ public class QueryBuilderTest {
         assertThat(select.getQueryString()).doesNotContain("?");
         assertThat(select.getValues()).isNull();
     }
+
+    @Test(groups = "unit", expectedExceptions = { IllegalStateException.class })
+    public void should_throw_ISE_if_getObject_called_on_statement_without_values() {
+        select().from("test").where(eq("foo", 42)).getObject(0); // integers are appended to the CQL string
+    }
+
+    @Test(groups = "unit", expectedExceptions = { IndexOutOfBoundsException.class })
+    public void should_throw_IOOBE_if_getObject_called_with_wrong_index() {
+        select().from("test").where(eq("foo", new Object())).getObject(1);
+    }
+
+    @Test(groups = "unit")
+    public void should_return_object_at_ith_index() {
+        Object expected = new Object();
+        Object actual = select().from("test").where(eq("foo", expected)).getObject(0);
+        assertThat(actual).isSameAs(expected);
+    }
+
 }
