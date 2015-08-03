@@ -24,25 +24,44 @@ import org.testng.annotations.Test;
 
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.utils.Bytes;
+import com.datastax.driver.core.utils.CassandraVersion;
 
 public class TokenAwarePolicyTest {
     @Test(groups = "long")
     public void should_shuffle_replicas_when_requested() {
-        testShuffleReplicas(new TokenAwarePolicy(new RoundRobinPolicy(), true),
-                            true);
+    	CCMBridge ccm = CCMBridge.builder("test").withNodes(3).build();
+        testShuffleReplicas(new TokenAwarePolicy(new RoundRobinPolicy(), true), true, ccm, 3);
     }
 
     @Test(groups = "long")
     public void should_not_shuffle_replicas_when_not_requested() {
-        testShuffleReplicas(new TokenAwarePolicy(new RoundRobinPolicy(), false),
-                            false);
+    	CCMBridge ccm = CCMBridge.builder("test").withNodes(3).build();
+        testShuffleReplicas(new TokenAwarePolicy(new RoundRobinPolicy(), false), false, ccm, 3);
     }
 
-    private void testShuffleReplicas(TokenAwarePolicy loadBalancingPolicy, boolean expectShuffled) {
-        CCMBridge ccm = null;
+    @Test(groups = "long")
+    @CassandraVersion(major=2.1)
+    public void should_not_plan_queries_for_incompatible_protocol_versions() {
+    	CCMBridge ccm = CCMBridge.builder("test").withNodes(3).notStarted().build();
+    	// contact node is native v3 so we should not query 2.0 nodes
+        ccm.setNodeVersion(2, "2.0.16");  
+        ccm.start();
+        testShuffleReplicas(new TokenAwarePolicy(new RoundRobinPolicy(), false), null, ccm, 2);
+    }
+
+    @Test(groups = "long")
+    @CassandraVersion(major=2.1)
+    public void should_plan_queries_for_downgraded_protocol_version() {
+		CCMBridge ccm = CCMBridge.builder("test").withNodes(3).notStarted().build();
+        ccm.setNodeVersion(1, "2.0.16"); // contact node - should downgrade to native v2
+        ccm.start();
+        testShuffleReplicas(new TokenAwarePolicy(new RoundRobinPolicy(), false), null, ccm, 3);
+    }
+
+    private void testShuffleReplicas(TokenAwarePolicy loadBalancingPolicy, Boolean expectShuffled,
+    		CCMBridge ccm, int expectQueryPlans) {
         Cluster cluster = null;
         try {
-            ccm = CCMBridge.builder("test").withNodes(3).build();
             cluster = Cluster.builder()
                              .addContactPoint(CCMBridge.ipOfNode(1))
                              .withLoadBalancingPolicy(loadBalancingPolicy)
@@ -66,20 +85,25 @@ public class TokenAwarePolicyTest {
             List<Host> replicas = Lists.newArrayList(cluster.getMetadata().getReplicas(keyspace, routingKey));
             assertThat(replicas).hasSize(2);
 
-            // Run a few query plans, make sure that these two replicas come first, shuffled or not depending on
-            // what we expect
-            boolean shuffledAtLeastOnce = false;
-            for (int i = 0; i < 10; i++) {
-                List<Host> queryPlan = Lists.newArrayList(loadBalancingPolicy.newQueryPlan(null, statement));
-                assertThat(queryPlan).hasSize(3);
+            if(expectShuffled == null) {
+            	List<Host> queryPlan = Lists.newArrayList(loadBalancingPolicy.newQueryPlan(null, statement));
+                assertThat(queryPlan).hasSize(expectQueryPlans);
+            } else {
+            	// Run a few query plans, make sure that these two replicas come first, shuffled or not depending on
+                // what we expect
+            	boolean shuffledAtLeastOnce = false;
+                for (int i = 0; i < 10; i++) {
+                    List<Host> queryPlan = Lists.newArrayList(loadBalancingPolicy.newQueryPlan(null, statement));
+                    assertThat(queryPlan).hasSize(expectQueryPlans);
 
-                List<Host> firstTwo = queryPlan.subList(0, 2);
-                assertThat(firstTwo).containsAll(replicas); // order does not matter
+                    List<Host> firstTwo = queryPlan.subList(0, 2);
+                    assertThat(firstTwo).containsAll(replicas); // order does not matter
 
-                if (!firstTwo.equals(replicas))
-                    shuffledAtLeastOnce = true;
+                    if (!firstTwo.equals(replicas))
+                        shuffledAtLeastOnce = true;
+                }
+                assertThat(shuffledAtLeastOnce).isEqualTo(expectShuffled);
             }
-            assertThat(shuffledAtLeastOnce).isEqualTo(expectShuffled);
 
         } finally {
             if (cluster != null)
