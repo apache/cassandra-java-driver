@@ -43,6 +43,10 @@ public class SCassandraCluster {
     private final List<PrimingClient> primingClients;
     private final List<ActivityClient> activityClients;
 
+    public SCassandraCluster(int nodeCount) {
+        this(CCMBridge.IP_PREFIX, nodeCount);
+    }
+
     public SCassandraCluster(String ipPrefix, int nodeCount) {
         scassandras = Lists.newArrayListWithCapacity(nodeCount);
         addresses = Lists.newArrayListWithCapacity(nodeCount);

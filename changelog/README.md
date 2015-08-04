@@ -25,6 +25,7 @@
 - [bug] Handle function calls and raw strings as non-idempotent in QueryBuilder (JAVA-733)
 - [improvement] Provide API to retrieve values of a Parameterized SimpleStatement (JAVA-765)
 - [improvement] implement UPDATE ... IF EXISTS in QueryBuilder (JAVA-827)
+- [improvement] Randomize contact points list to prevent hotspots (JAVA-618)
 
 Merged from 2.0.10_fixes branch:
 
