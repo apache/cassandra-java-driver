@@ -31,7 +31,7 @@ import com.datastax.driver.core.policies.LoadBalancingPolicy;
  */
 public class SortingLoadBalancingPolicy implements LoadBalancingPolicy {
 
-    private final SortedSet<Host> hosts = new ConcurrentSkipListSet<Host>(new Comparator<Host>() {
+    final SortedSet<Host> hosts = new ConcurrentSkipListSet<Host>(new Comparator<Host>() {
         @Override
         public int compare(Host host1, Host host2) {
             byte[] address1 = host1.getAddress().getAddress();
