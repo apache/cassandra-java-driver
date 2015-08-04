@@ -24,8 +24,6 @@ import java.net.ServerSocket;
 import java.nio.ByteBuffer;
 import java.util.*;
 
-import static org.testng.Assert.fail;
-
 import org.scassandra.Scassandra;
 import org.scassandra.ScassandraFactory;
 import org.slf4j.Logger;
@@ -382,15 +380,19 @@ public abstract class TestUtils {
         }
     }
 
-    /** Utility method to find the {@code Host} object corresponding to a node in a cluster. */
     public static Host findHost(Cluster cluster, int hostNumber) {
-        String address = CCMBridge.ipOfNode(hostNumber);
-        for (Host host : cluster.getMetadata().getAllHosts()) {
+        return findHost(cluster, CCMBridge.ipOfNode(hostNumber));
+    }
+
+    public static Host findHost(Cluster cluster, String address) {
+        // Note: we can't rely on ProtocolOptions.getPort() to build an InetSocketAddress and call metadata.getHost,
+        // because the port doesn't have the correct value if addContactPointsWithPorts was used to create the Cluster
+        // (JAVA-860 will solve that)
+        for (Host host : cluster.getMetadata().allHosts()) {
             if (host.getAddress().getHostAddress().equals(address))
                 return host;
         }
-        fail(address + " not found in cluster metadata");
-        return null; // never reached
+        return null;
     }
 
     public static int numberOfLocalCoreConnections(Cluster cluster) {

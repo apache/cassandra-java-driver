@@ -30,7 +30,6 @@ import com.google.common.base.Objects;
 import com.google.common.base.Predicates;
 import com.google.common.collect.*;
 import com.google.common.util.concurrent.*;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -1259,19 +1258,27 @@ public class Cluster implements Closeable {
             try {
                 while (true) {
                     try {
+                        Collection<Host> allHosts = metadata.allHosts();
+
                         // At this stage, metadata.allHosts() only contains the contact points, that's what we want to pass to LBP.init().
                         // But the control connection will initialize first and discover more hosts, so make a copy.
-                        Set<Host> contactPointHosts = Sets.newHashSet(metadata.allHosts());
+                        Set<Host> contactPointHosts = Sets.newHashSet(allHosts);
 
                         controlConnection.connect();
                         if (connectionFactory.protocolVersion < 0)
                             connectionFactory.protocolVersion = 2;
 
-                        // The control connection can mark hosts down if it failed to connect to them, separate them
+                        // The control connection can mark hosts down if it failed to connect to them, or remove them if they weren't found
+                        // in the control host's system.peers. Separate them:
                         Set<Host> downContactPointHosts = Sets.newHashSet();
-                        for (Host host : contactPointHosts)
-                            if (host.state == Host.State.DOWN)
+                        Set<Host> removedContactPointHosts = Sets.newHashSet();
+                        for (Host host : contactPointHosts) {
+                            if (!allHosts.contains(host))
+                                removedContactPointHosts.add(host);
+                            else if (host.state == Host.State.DOWN)
                                 downContactPointHosts.add(host);
+                        }
+                        contactPointHosts.removeAll(removedContactPointHosts);
                         contactPointHosts.removeAll(downContactPointHosts);
 
                         // Now that the control connection is ready, we have all the information we need about the nodes (datacenter,
@@ -1279,13 +1286,18 @@ public class Cluster implements Closeable {
                         loadBalancingPolicy().init(Cluster.this, contactPointHosts);
                         speculativeRetryPolicy().init(Cluster.this);
 
+                        for (Host host : removedContactPointHosts) {
+                            loadBalancingPolicy().onRemove(host);
+                            for (Host.StateListener listener : listeners)
+                                listener.onRemove(host);
+                        }
                         for (Host host : downContactPointHosts) {
                             loadBalancingPolicy().onDown(host);
                             for (Host.StateListener listener : listeners)
                                 listener.onDown(host);
                         }
 
-                        for (Host host : metadata.allHosts()) {
+                        for (Host host : allHosts) {
                             // If the host is down at this stage, it's a contact point that the control connection failed to reach.
                             // Reconnection attempts are already scheduled, and the LBP and listeners have been notified above.
                             if (host.state == Host.State.DOWN) continue;
@@ -1898,7 +1910,7 @@ public class Cluster implements Closeable {
 
             if (metadata.remove(host)) {
                 if (isInitialConnection) {
-                    logger.warn("You listed {} in your contact points, but it could not be reached at startup", host);
+                    logger.warn("You listed {} in your contact points, but it wasn't found in the control host's system.peers at startup", host);
                 } else {
                     logger.info("Cassandra host {} removed", host);
                     triggerOnRemove(host);

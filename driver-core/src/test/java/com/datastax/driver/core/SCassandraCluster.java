@@ -134,7 +134,7 @@ public class SCassandraCluster {
                 .build());
     }
 
-    private static final ImmutableMap<String, ColumnTypes> SELECT_PEERS_COLUMN_TYPES =
+    static final ImmutableMap<String, ColumnTypes> SELECT_PEERS_COLUMN_TYPES =
         ImmutableMap.<String, ColumnTypes>builder()
             .put("peer", ColumnTypes.Inet)
             .put("rpc_address", ColumnTypes.Inet)
