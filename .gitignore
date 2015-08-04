@@ -13,3 +13,5 @@ notes
 *.iml
 
 /driver-core/dependency-reduced-pom.xml
+.java-version
+
