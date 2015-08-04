@@ -19,14 +19,12 @@ import java.lang.ref.WeakReference;
 import java.net.InetSocketAddress;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.MapMaker;
 import com.google.common.util.concurrent.*;
 import io.netty.bootstrap.Bootstrap;
@@ -827,8 +825,6 @@ class Connection {
         final Queue<FlushItem> queued = new ConcurrentLinkedQueue<FlushItem>();
         final AtomicBoolean running = new AtomicBoolean(false);
         final HashSet<Channel> channels = new HashSet<Channel>();
-        final List<FlushItem> flushed = Lists.newArrayListWithExpectedSize(50);
-        int runsSinceFlush = 0;
         int runsWithNoWork = 0;
 
         private Flusher(EventLoop eventLoop) {
@@ -851,20 +847,13 @@ class Connection {
             while (null != (flush = queued.poll())) {
                 channels.add(flush.channel);
                 flush.channel.write(flush.request).addListener(flush.listener);
-                flushed.add(flush);
                 doneWork = true;
             }
 
-            runsSinceFlush++;
-
-            if (!doneWork || runsSinceFlush > 2 || flushed.size() > 50) {
-                for (Channel channel : channels)
-                    channel.flush();
-
-                channels.clear();
-                flushed.clear();
-                runsSinceFlush = 0;
-            }
+            // Always flush what we have (don't artificially delay to try to coalesce more messages)
+            for (Channel channel : channels)
+                channel.flush();
+            channels.clear();
 
             if (doneWork) {
                 runsWithNoWork = 0;
@@ -878,7 +867,7 @@ class Connection {
             }
 
             EventLoop eventLoop = eventLoopRef.get();
-            if(eventLoop != null) {
+            if (eventLoop != null) {
                 eventLoop.schedule(this, 10000, TimeUnit.NANOSECONDS);
             }
         }
