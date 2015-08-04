@@ -285,7 +285,7 @@ public class QueryBuilderTest {
         assertEquals(update.toString(), query);
 
         try {
-            update = update("foo").using(ttl(-400));
+            update("foo").using(ttl(-400));
             fail();
         } catch (IllegalArgumentException e) {
             assertEquals(e.getMessage(), "Invalid ttl, must be positive");
@@ -295,10 +295,9 @@ public class QueryBuilderTest {
         query = "UPDATE foo SET x=4 WHERE k=0 IF x=1;";
         update = update("foo").with(set("x", 4)).where(eq("k", 0)).onlyIf(eq("x", 1));
         assertEquals(update.toString(), query);
-    }
-    @Test(groups = "unit")
-    public void should_handle_update_with_conditions_and_if_exists() {
-        Statement update = update("foo").with(set("x", 3)).where(eq("k", 2)).ifExists();
+
+        // IF EXISTS CAS test
+        update = update("foo").with(set("x", 3)).where(eq("k", 2)).ifExists();
         assertThat(update.toString()).isEqualTo("UPDATE foo SET x=3 WHERE k=2 IF EXISTS;");
     }
     
