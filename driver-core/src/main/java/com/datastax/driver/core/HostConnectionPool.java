@@ -58,7 +58,6 @@ class HostConnectionPool {
     @VisibleForTesting
     final Set<Connection> trash = new CopyOnWriteArraySet<Connection>();
 
-    private volatile int waiter = 0;
     private final Lock waitLock = new ReentrantLock(true);
     private final Condition hasAvailableConnection = waitLock.newCondition();
 
@@ -238,94 +237,76 @@ class HostConnectionPool {
         return leastBusy;
     }
 
-    private void awaitAvailableConnection(long timeout, TimeUnit unit) throws InterruptedException {
-        waitLock.lock();
-        waiter++;
-        try {
-            hasAvailableConnection.await(timeout, unit);
-        } finally {
-            waiter--;
-            waitLock.unlock();
-        }
-    }
-
-    private void signalAvailableConnection() {
-        // Quick check if it's worth signaling to avoid locking
-        if (waiter == 0)
-            return;
-
-        waitLock.lock();
-        try {
-            hasAvailableConnection.signal();
-        } finally {
-            waitLock.unlock();
-        }
-    }
-
-    private void signalAllAvailableConnection() {
-        // Quick check if it's worth signaling to avoid locking
-        if (waiter == 0)
-            return;
-
-        waitLock.lock();
-        try {
-            hasAvailableConnection.signalAll();
-        } finally {
-            waitLock.unlock();
-        }
-    }
 
     private Connection waitForConnection(long timeout, TimeUnit unit) throws ConnectionException, TimeoutException {
         if (timeout == 0)
             throw new TimeoutException();
 
         long start = System.nanoTime();
-        long remaining = timeout;
-        do {
-            try {
-                awaitAvailableConnection(remaining, unit);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                // If we're interrupted fine, check if there is a connection available but stop waiting otherwise
-                timeout = 0; // this will make us stop the loop if we don't get a connection right away
-            }
+        long remaining;
+        // Acquires lock there to prevent race condition when other thread release connection and call
+        // hasAvailableConnection.signal() before current thread call awaitAvailableConnection but after current thread check
+        // no free connection at current time
+        // Locking three is not problem - because we going in waitForConnection only if borrowConnection
+        // already fail to capture connection. There some sort of double checked locking idiom
+        waitLock.lock();
+        try {
+            do {
+                if (isClosed())
+                    throw new ConnectionException(host.getSocketAddress(), "Pool is shutdown");
 
-            if (isClosed())
-                throw new ConnectionException(host.getSocketAddress(), "Pool is shutdown");
-
-            int minInFlight = Integer.MAX_VALUE;
-            Connection leastBusy = null;
-            for (Connection connection : connections) {
-                int inFlight = connection.inFlight.get();
-                if (inFlight < minInFlight) {
-                    minInFlight = inFlight;
-                    leastBusy = connection;
+                int minInFlight = Integer.MAX_VALUE;
+                Connection leastBusy = null;
+                for (Connection connection : connections) {
+                    int inFlight = connection.inFlight.get();
+                    if (inFlight < minInFlight) {
+                        minInFlight = inFlight;
+                        leastBusy = connection;
+                    }
                 }
-            }
 
-            // If we race with shutdown, leastBusy could be null. In that case we just loop and we'll throw on the next
-            // iteration anyway
-            if (leastBusy != null) {
-                while (true) {
-                    int inFlight = leastBusy.inFlight.get();
+                // If we race with shutdown, leastBusy could be null. In that case we just loop and we'll throw on the next
+                // iteration anyway
+                if (leastBusy != null) {
+                    while (true) {
+                        int inFlight = leastBusy.inFlight.get();
 
-                    if (inFlight >= Math.min(leastBusy.maxAvailableStreams(), options().getMaxRequestsPerConnection(hostDistance)))
-                        break;
+                        if (inFlight >= Math.min(
+                                leastBusy.maxAvailableStreams(),
+                                options().getMaxRequestsPerConnection(hostDistance)
+                        ))
+                            break;
 
-                    if (leastBusy.inFlight.compareAndSet(inFlight, inFlight + 1))
-                        return leastBusy;
+                        if (leastBusy.inFlight.compareAndSet(inFlight, inFlight + 1))
+                            return leastBusy;
+                    }
                 }
-            }
 
-            remaining = timeout - Cluster.timeSince(start, unit);
-        } while (remaining > 0);
+                remaining = timeout - Cluster.timeSince(start, unit);
+                try {
+                    hasAvailableConnection.await(remaining, unit);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    // If we're interrupted fine, check if there is a connection available but stop waiting otherwise
+                    timeout = 0; // this will make us stop the loop if we don't get a connection right away
+                }
+            } while (remaining > 0);
+        } finally {
+            waitLock.unlock();
+        }
 
         throw new TimeoutException();
     }
 
     public void returnConnection(Connection connection) {
-        connection.inFlight.decrementAndGet();
         totalInFlight.decrementAndGet();
+        waitLock.lock();
+        try {
+            connection.inFlight.decrementAndGet();
+            hasAvailableConnection.signal();
+        } finally {
+            waitLock.unlock();
+        }
 
         if (isClosed()) {
             close(connection);
@@ -341,8 +322,6 @@ class HostConnectionPool {
         if (connection.state.get() != TRASHED) {
             if (connection.maxAvailableStreams() < minAllowedStreams) {
                 replaceConnection(connection);
-            } else {
-                signalAvailableConnection();
             }
         }
     }
@@ -408,9 +387,16 @@ class HostConnectionPool {
                 logger.debug("Creating new connection on busy pool to {}", host);
                 newConnection = manager.connectionFactory().open(this);
             }
-            connections.add(newConnection);
+            waitLock.lock();
+            try {
+                connections.add(newConnection);
+                newConnection.state.compareAndSet(RESURRECTING, OPEN); // no-op if it was already OPEN
+                // Signaling to all - because new connection can handle multiply queries
+                hasAvailableConnection.signalAll();
+            } finally {
+                waitLock.unlock();
+            }
 
-            newConnection.state.compareAndSet(RESURRECTING, OPEN); // no-op if it was already OPEN
 
             // We might have raced with pool shutdown since the last check; ensure the connection gets closed in case the pool did not do it.
             if (isClosed() && !newConnection.isClosed()) {
@@ -419,7 +405,6 @@ class HostConnectionPool {
                 return false;
             }
 
-            signalAvailableConnection();
             return true;
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -557,17 +542,21 @@ class HostConnectionPool {
         CloseFuture future = closeFuture.get();
         if (future != null)
             return future;
-
         phase.set(Phase.CLOSING);
 
-        // Wake up all threads that wait
-        signalAllAvailableConnection();
-
         future = new CloseFuture.Forwarding(discardAvailableConnections());
-
-        return closeFuture.compareAndSet(null, future)
-            ? future
-            : closeFuture.get(); // We raced, it's ok, return the future that was actually set
+        waitLock.lock();
+        try {
+            if (closeFuture.compareAndSet(null, future)) {
+                // Wake up all threads that wait
+                hasAvailableConnection.signalAll();
+                return future;
+            } else {
+                return closeFuture.get();
+            }
+        } finally {
+            waitLock.unlock();
+        }
     }
 
     public int opened() {
