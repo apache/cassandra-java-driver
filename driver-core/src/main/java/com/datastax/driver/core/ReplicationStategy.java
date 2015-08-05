@@ -18,6 +18,7 @@ package com.datastax.driver.core;
 import java.util.*;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -121,9 +122,16 @@ abstract class ReplicationStrategy {
              // This is essentially a copy of org.apache.cassandra.locator.NetworkTopologyStrategy
             Map<String, Set<String>> racks = getRacksInDcs(tokenToPrimary.values());
             Map<Token, Set<Host>> replicaMap = new HashMap<Token, Set<Host>>(tokenToPrimary.size());
-
+            Map<String, Integer> dcHostCount = Maps.newHashMapWithExpectedSize(replicationFactors.size());
             Set<String> warnedDcs = Sets.newHashSetWithExpectedSize(replicationFactors.size());
-
+            // find maximum number of nodes in each DC
+            for (Host host : Sets.newHashSet(tokenToPrimary.values())) {
+                String dc = host.getDatacenter();
+                if(dcHostCount.get(dc) == null) {
+                    dcHostCount.put(dc, 0);
+                }
+                dcHostCount.put(dc, dcHostCount.get(dc) + 1);
+            }
             for (int i = 0; i < ring.size(); i++) {
                 Map<String, Set<Host>> allDcReplicas = new HashMap<String, Set<Host>>();
                 Map<String, Set<String>> seenRacks = new HashMap<String, Set<String>>();
@@ -136,7 +144,7 @@ abstract class ReplicationStrategy {
 
                 // Preserve order - primary replica will be first
                 Set<Host> replicas = new LinkedHashSet<Host>();
-                for (int j = 0; j < ring.size() && !allDone(allDcReplicas); j++) {
+                for (int j = 0; j < ring.size() && !allDone(allDcReplicas, dcHostCount); j++) {
                     Host h = tokenToPrimary.get(getTokenWrapping(i + j, ring));
                     String dc = h.getDatacenter();
                     if (dc == null || !allDcReplicas.containsKey(dc))
@@ -183,8 +191,7 @@ abstract class ReplicationStrategy {
                     if (achievedFactor < expectedFactor && !warnedDcs.contains(dcName)) {
                         logger.warn("Error while computing token map for datacenter {}: "
                                 + "could not achieve replication factor {} (found {} replicas only), "
-                                + "check your keyspace replication settings. "
-                                + "Note that this can affect the performance of the driver.",
+                                + "check your keyspace replication settings.",
                             dcName, expectedFactor, achievedFactor);
                         // only warn once per DC
                         warnedDcs.add(dcName);
@@ -196,10 +203,13 @@ abstract class ReplicationStrategy {
             return replicaMap;
         }
 
-        private boolean allDone(Map<String, Set<Host>> map) {
-            for (Map.Entry<String, Set<Host>> entry : map.entrySet())
-                if (entry.getValue().size() < replicationFactors.get(entry.getKey()))
+        private boolean allDone(Map<String, Set<Host>> map, Map<String, Integer> dcHostCount) {
+            for (Map.Entry<String, Set<Host>> entry : map.entrySet()) {
+                String dc = entry.getKey();
+                int dcCount = dcHostCount.get(dc) == null? 0 : dcHostCount.get(dc);
+                if (entry.getValue().size() < Math.min(replicationFactors.get(dc), dcCount))
                     return false;
+            }
             return true;
         }
 

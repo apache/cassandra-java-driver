@@ -34,6 +34,7 @@
 - [improvement] Provide an option to prepare statements only on one node (JAVA-797)
 - [improvement] Provide an option to not re-prepare all statements in onUp (JAVA-658)
 - [improvement] Customizable creation of netty timer (JAVA-853)
+- [bug] Avoid quadratic ring processing with invalid replication factors (JAVA-859)
 
 Merged from 2.0.10_fixes branch:
 
