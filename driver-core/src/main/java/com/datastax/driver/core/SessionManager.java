@@ -22,12 +22,14 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.google.common.base.Function;
+import com.google.common.base.Functions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.datastax.driver.core.Message.Response;
 import com.datastax.driver.core.exceptions.DriverInternalError;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
@@ -135,8 +137,8 @@ class SessionManager extends AbstractSession {
     }
 
     private ListenableFuture<PreparedStatement> toPreparedStatement(final String query, final Connection.Future future) {
-        return Futures.transform(future, new Function<Message.Response, PreparedStatement>() {
-            public PreparedStatement apply(Message.Response response) {
+        return Futures.transform(future, new AsyncFunction<Response, PreparedStatement>() {
+            public ListenableFuture<PreparedStatement> apply(Response response) {
                 switch (response.type) {
                     case RESULT:
                         Responses.Result rm = (Responses.Result)response;
@@ -144,18 +146,20 @@ class SessionManager extends AbstractSession {
                             case PREPARED:
                                 Responses.Result.Prepared pmsg = (Responses.Result.Prepared)rm;
                                 PreparedStatement stmt = DefaultPreparedStatement.fromMessage(pmsg, cluster.getMetadata(), query, poolsState.keyspace);
-                                stmt = cluster.manager.addPrepared(stmt);
+                                final PreparedStatement cached = cluster.manager.addPrepared(stmt);
                                 // All Sessions are connected to the same nodes so it's enough to prepare only the nodes of this session.
                                 // If that changes, we'll have to make sure this propagate to other sessions too.
-                                prepare(stmt.getQueryString(), future.getAddress());
-                                return stmt;
+                                return prepare(cached, future.getAddress());
                             default:
-                                throw new DriverInternalError(String.format("%s response received when prepared statement was expected", rm.kind));
+                                return Futures.immediateFailedFuture(
+                                    new DriverInternalError(String.format("%s response received when prepared statement was expected", rm.kind)));
                         }
                     case ERROR:
-                        throw ((Responses.Error)response).asException(future.getAddress());
+                        return Futures.immediateFailedFuture(
+                            ((Responses.Error)response).asException(future.getAddress()));
                     default:
-                        throw new DriverInternalError(String.format("%s response received when prepared statement was expected", response.type));
+                        return Futures.immediateFailedFuture(
+                            new DriverInternalError(String.format("%s response received when prepared statement was expected", response.type)));
                 }
             }
         });
@@ -526,53 +530,42 @@ class SessionManager extends AbstractSession {
         new RequestHandler(this, callback, statement).sendRequest();
     }
 
-    private void prepare(final String query, InetSocketAddress toExclude) {
-        List<ListenableFuture<?>> futures = new ArrayList<ListenableFuture<?>>(pools.size());
+    private ListenableFuture<PreparedStatement> prepare(final PreparedStatement statement, InetSocketAddress toExclude) {
+        final String query = statement.getQueryString();
+        List<ListenableFuture<Response>> futures = Lists.newArrayListWithExpectedSize(pools.size());
         for (final Map.Entry<Host, HostConnectionPool> entry : pools.entrySet()) {
             if (entry.getKey().getSocketAddress().equals(toExclude))
                 continue;
-            // prepare on other nodes: we use an executor so that the query is not done in an IO thread.
-            futures.add(executor().submit(new Runnable() {
-                @Override
-                public void run() {
-                    Connection c = null;
-                    boolean timedOut = false;
-                    try {
-                        // Let's not wait too long if we can't get a connection. Things
-                        // will fix themselves once the user tries a query anyway.
-                        c = entry.getValue().borrowConnection(200, TimeUnit.MILLISECONDS);
-                        c.write(new Requests.Prepare(query)).get();
-                    } catch (ConnectionException e) {
-                        // Again, not being able to prepare the query right now is no big deal, so just ignore
-                    } catch (BusyConnectionException e) {
-                        // Same as above
-                    } catch (TimeoutException e) {
-                        // Same as above
-                    } catch (ExecutionException e) {
-                        // We shouldn't really get exception while preparing a
-                        // query, so log this (but ignore otherwise as it's not a big deal)
-                        logger.error(String.format("Unexpected error while preparing query (%s) on %s", query, entry.getKey()), e);
-                        // If the query timed out, that already released the connection
-                        timedOut = e.getCause() instanceof OperationTimedOutException;
-                    } catch (InterruptedException e) {
-                        // This method doesn't propagate interruption, at least not for now. However, if we've
-                        // interrupted preparing queries on other node it's not a problem as we'll re-prepare
-                        // later if need be. So just ignore.
-                        Thread.currentThread().interrupt();
-                    } finally {
-                        if (c != null && !timedOut)
+
+            try {
+                // Preparing is not critical: if it fails, it will fix itself later when the user tries to execute
+                // the prepared query. So don't block if no connection is available, simply abort.
+                final Connection c = entry.getValue().borrowConnection(0, TimeUnit.MILLISECONDS);
+                ListenableFuture<Response> future = c.write(new Requests.Prepare(query));
+                Futures.addCallback(future, new FutureCallback<Response>() {
+                    @Override
+                    public void onSuccess(Response result) {
+                        c.release();
+                    }
+
+                    @Override
+                    public void onFailure(Throwable t) {
+                        logger.debug(String.format("Unexpected error while preparing query (%s) on %s", query, entry.getKey()), t);
+
+                        // If the query timed out, that already released the connection, otherwise do it now
+                        if (!(t instanceof OperationTimedOutException))
                             c.release();
                     }
-                }
-            }));
+                });
+                futures.add(future);
+            } catch (Exception e) {
+                // Again, not being able to prepare the query right now is no big deal, so just ignore
+            }
         }
-        try {
-            Futures.successfulAsList(futures).get();
-        } catch (ExecutionException e) {
-            // already handled
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
+        // Return the statement when all futures are done
+        return Futures.transform(
+            Futures.successfulAsList(futures),
+            Functions.constant(statement));
     }
 
     ResultSetFuture executeQuery(Message.Request msg, Statement statement) {
