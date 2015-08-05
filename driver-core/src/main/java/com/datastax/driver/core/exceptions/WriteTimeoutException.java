@@ -15,6 +15,8 @@
  */
 package com.datastax.driver.core.exceptions;
 
+import java.net.InetSocketAddress;
+
 import com.datastax.driver.core.ConsistencyLevel;
 import com.datastax.driver.core.WriteType;
 
@@ -27,16 +29,26 @@ public class WriteTimeoutException extends QueryTimeoutException {
 
     private final WriteType writeType;
 
+    /**
+     * This constructor should only be used internally by the driver
+     * when decoding error responses.
+     */
     public WriteTimeoutException(ConsistencyLevel consistency, WriteType writeType, int received, int required) {
-        super(String.format("Cassandra timeout during write query at consistency %s (%d replica were required but only %d acknowledged the write)", consistency, required, received),
-              consistency,
-              received,
-              required);
+        this(null, consistency, writeType, received, required);
+    }
+
+    public WriteTimeoutException(InetSocketAddress address, ConsistencyLevel consistency, WriteType writeType, int received, int required) {
+        super(
+            address,
+            String.format("Cassandra timeout during write query at consistency %s (%d replica were required but only %d acknowledged the write)", consistency, required, received),
+            consistency,
+            received,
+            required);
         this.writeType = writeType;
     }
 
-    private WriteTimeoutException(String msg, Throwable cause, ConsistencyLevel consistency, WriteType writeType, int received, int required) {
-        super(msg, cause, consistency, received, required);
+    private WriteTimeoutException(InetSocketAddress address, String msg, Throwable cause, ConsistencyLevel consistency, WriteType writeType, int received, int required) {
+        super(address, msg, cause, consistency, received, required);
         this.writeType = writeType;
     }
 
@@ -51,11 +63,42 @@ public class WriteTimeoutException extends QueryTimeoutException {
 
     @Override
     public DriverException copy() {
-        return new WriteTimeoutException(getMessage(),
-                                         this,
-                                         getConsistencyLevel(),
-                                         getWriteType(),
-                                         getReceivedAcknowledgements(),
-                                         getRequiredAcknowledgements());
+        return new WriteTimeoutException(
+            getAddress(),
+            getMessage(),
+            this,
+            getConsistencyLevel(),
+            getWriteType(),
+            getReceivedAcknowledgements(),
+            getRequiredAcknowledgements()
+        );
     }
+
+    /**
+     * Create a copy of this exception with a nicer stack trace, and including the coordinator
+     * address that caused this exception to be raised.
+     * <p>
+     * This method is mainly intended for internal use by the driver and exists mainly because:
+     * <ol>
+     *   <li>the original exception was decoded from a response frame
+     *   and at that time, the coordinator address was not available; and</li>
+     *   <li>the newly-created exception will refer to the current thread in its stack trace,
+     *   which generally yields a more user-friendly stack trace that the original one.</li>
+     * </ol>
+     *
+     * @param address The full address of the host that caused this exception to be thrown.
+     * @return a copy/clone of this exception, but with the given host address instead of the original one.
+     */
+    public WriteTimeoutException copy(InetSocketAddress address) {
+        return new WriteTimeoutException(
+            address,
+            getMessage(),
+            this,
+            getConsistencyLevel(),
+            getWriteType(),
+            getReceivedAcknowledgements(),
+            getRequiredAcknowledgements()
+        );
+    }
+
 }

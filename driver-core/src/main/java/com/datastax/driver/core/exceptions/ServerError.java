@@ -19,30 +19,27 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
 /**
- * Indicates that the contacted host reported itself being overloaded.
- * This class is mainly intended for internal use;
- * client applications are not expected to deal with this exception directly,
- * because the driver would transparently retry the same query on another host;
- * but such exceptions are likely to appear occasionally in the driver logs.
+ * Indicates that the contacted host reported un expected error.
  */
-public class OverloadedException extends DriverInternalError implements CoordinatorException {
+public class ServerError extends DriverInternalError implements CoordinatorException {
 
     private static final long serialVersionUID = 0;
 
     private final InetSocketAddress address;
 
-    public OverloadedException(InetSocketAddress address, String message) {
-        super(String.format("Queried host (%s) was overloaded: %s", address, message));
+    public ServerError(InetSocketAddress address, String message) {
+        super(String.format("An unexpected error occurred server side on %s: %s", address, message));
         this.address = address;
     }
 
     /**
      * Private constructor used solely when copying exceptions.
      */
-    private OverloadedException(InetSocketAddress address, String message, OverloadedException cause) {
+    private ServerError(InetSocketAddress address, String message, ServerError cause) {
         super(message, cause);
         this.address = address;
     }
+
 
     /**
      * {@inheritDoc}
@@ -61,7 +58,7 @@ public class OverloadedException extends DriverInternalError implements Coordina
     }
 
     @Override
-    public OverloadedException copy() {
-        return new OverloadedException(address, getMessage(), this);
+    public ServerError copy() {
+        return new ServerError(address, getMessage(), this);
     }
 }

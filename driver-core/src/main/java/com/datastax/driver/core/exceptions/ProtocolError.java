@@ -19,30 +19,30 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
 /**
- * Indicates that the contacted host reported itself being overloaded.
- * This class is mainly intended for internal use;
- * client applications are not expected to deal with this exception directly,
- * because the driver would transparently retry the same query on another host;
- * but such exceptions are likely to appear occasionally in the driver logs.
+ * Indicates that the contacted host reported a protocol error.
+ * Protocol errors indicate that the client triggered a protocol
+ * violation (for instance, a QUERY message is sent before a STARTUP one has been sent).
+ * Protocol errors should be considered as a bug in the driver and reported as such.
  */
-public class OverloadedException extends DriverInternalError implements CoordinatorException {
+public class ProtocolError extends DriverInternalError implements CoordinatorException {
 
     private static final long serialVersionUID = 0;
 
     private final InetSocketAddress address;
 
-    public OverloadedException(InetSocketAddress address, String message) {
-        super(String.format("Queried host (%s) was overloaded: %s", address, message));
+    public ProtocolError(InetSocketAddress address, String message) {
+        super(String.format("An unexpected protocol error occurred on host %s. This is a bug in this library, please report: %s", address, message));
         this.address = address;
     }
 
     /**
      * Private constructor used solely when copying exceptions.
      */
-    private OverloadedException(InetSocketAddress address, String message, OverloadedException cause) {
+    private ProtocolError(InetSocketAddress address, String message, ProtocolError cause) {
         super(message, cause);
         this.address = address;
     }
+
 
     /**
      * {@inheritDoc}
@@ -61,7 +61,7 @@ public class OverloadedException extends DriverInternalError implements Coordina
     }
 
     @Override
-    public OverloadedException copy() {
-        return new OverloadedException(address, getMessage(), this);
+    public ProtocolError copy() {
+        return new ProtocolError(address, getMessage(), this);
     }
 }
