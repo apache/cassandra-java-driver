@@ -28,6 +28,7 @@
 - [improvement] Randomize contact points list to prevent hotspots (JAVA-618)
 - [improvement] Surface the coordinator used on query failure (JAVA-720)
 - [bug] Handle contact points removed during init (JAVA-792)
+- [improvement] Allow PlainTextAuthProvider to change its credentials at runtime (JAVA-719)
 
 Merged from 2.0.10_fixes branch:
 

@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
@@ -27,8 +26,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
-import com.google.common.base.Charsets;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.testng.annotations.Test;
 
@@ -96,7 +93,7 @@ public class ReconnectionTest {
                 .build();
             ccm.start(1, "-Dcassandra.superuser_setup_delay_ms=0");
 
-            DynamicPlainTextAuthProvider authProvider = new DynamicPlainTextAuthProvider("cassandra", "cassandra");
+            CountingAuthProvider authProvider = new CountingAuthProvider("cassandra", "cassandra");
             int reconnectionDelayMs = 1000;
             CountingReconnectionPolicy reconnectionPolicy = new CountingReconnectionPolicy(new ConstantReconnectionPolicy(reconnectionDelayMs));
 
@@ -113,7 +110,7 @@ public class ReconnectionTest {
             // Stop the server, set wrong credentials and restart
             ccm.stop(1);
             ccm.waitForDown(1);
-            authProvider.password = "wrongPassword";
+            authProvider.setPassword("wrongPassword");
             ccm.start(1);
             ccm.waitForUp(1);
 
@@ -128,7 +125,7 @@ public class ReconnectionTest {
             assertThat(iterations).isLessThan(maxIterations);
 
             // Fix the credentials
-            authProvider.password = "cassandra";
+            authProvider.setPassword("cassandra");
 
             // The driver should eventually reconnect to the node
             assertThat(cluster).host(1).comesUpWithin(120, SECONDS);
@@ -299,57 +296,19 @@ public class ReconnectionTest {
                 ccm.remove();
         }
     }
-    
-    /**
-     * An authentication provider that allows changing the credentials at runtime, and tracks how many times they have been requested.
-     */
-    static class DynamicPlainTextAuthProvider implements AuthProvider {
-        volatile String username;
-        volatile String password;
 
+    /** Extends the plain text auth provider to track how many times the credentials have been requested */
+    static class CountingAuthProvider extends PlainTextAuthProvider {
         final AtomicInteger count = new AtomicInteger();
 
-        public DynamicPlainTextAuthProvider(String username, String password) {
-            this.username = username;
-            this.password = password;
+        CountingAuthProvider(String username, String password) {
+            super(username, password);
         }
 
+        @Override
         public Authenticator newAuthenticator(InetSocketAddress host) {
-            return new PlainTextAuthenticator();
-        }
-
-        private class PlainTextAuthenticator extends ProtocolV1Authenticator implements Authenticator {
-
-            @Override
-            public byte[] initialResponse() {
-                count.incrementAndGet();
-
-                byte[] usernameBytes = username.getBytes(Charsets.UTF_8);
-                byte[] passwordBytes = password.getBytes(Charsets.UTF_8);
-                byte[] initialToken = new byte[usernameBytes.length + passwordBytes.length + 2];
-                initialToken[0] = 0;
-                System.arraycopy(usernameBytes, 0, initialToken, 1, usernameBytes.length);
-                initialToken[usernameBytes.length + 1] = 0;
-                System.arraycopy(passwordBytes, 0, initialToken, usernameBytes.length + 2, passwordBytes.length);
-                return initialToken;
-            }
-
-            @Override
-            public byte[] evaluateChallenge(byte[] challenge) {
-                return null;
-            }
-
-            @Override
-            public void onAuthenticationSuccess(byte[] token) {
-                // no-op, the server should send nothing anyway
-            }
-
-            @Override
-            Map<String, String> getCredentials() {
-                count.incrementAndGet();
-                return ImmutableMap.of("username", username,
-                    "password", password);
-            }
+            count.incrementAndGet();
+            return super.newAuthenticator(host);
         }
     }
 
