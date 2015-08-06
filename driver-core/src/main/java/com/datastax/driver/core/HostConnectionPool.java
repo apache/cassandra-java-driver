@@ -26,11 +26,9 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
-import com.google.common.util.concurrent.SettableFuture;
+import com.google.common.util.concurrent.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -102,6 +100,10 @@ class HostConnectionPool implements Connection.Owner {
      *                         pool.
      */
     public ListenableFuture<Void> initAsync(Connection reusedConnection) {
+        String keyspace = manager.poolsState.keyspace;
+
+        Executor initExecutor = manager.cluster.manager.configuration.getPoolingOptions().getInitializationExecutor();
+
         // Create initial core connections
         final int coreSize = options().getCoreConnectionsPerHost(hostDistance);
         final List<Connection> connections = Lists.newArrayListWithCapacity(coreSize);
@@ -119,15 +121,13 @@ class HostConnectionPool implements Connection.Owner {
             }
             reusedConnection = null;
             connections.add(connection);
-            connectionFutures.add(connectionFuture);
+            connectionFutures.add(handleErrors(setKeyspaceAsync(connectionFuture, connection, keyspace), initExecutor));
         }
 
-        Executor initExecutor = manager.cluster.manager.configuration.getPoolingOptions().getInitializationExecutor();
-
-        ListenableFuture<List<Void>> allConnectionsFuture = Futures.successfulAsList(connectionFutures);
+        ListenableFuture<List<Void>> allConnectionsFuture = Futures.allAsList(connectionFutures);
 
         final SettableFuture<Void> initFuture = SettableFuture.create();
-        Futures.addCallback(allConnectionsFuture, new MoreFutures.SuccessCallback<List<Void>>() {
+        Futures.addCallback(allConnectionsFuture, new FutureCallback<List<Void>>() {
             @Override
             public void onSuccess(List<Void> l) {
                 // Some of the connections might have failed, keep only the successful ones
@@ -151,11 +151,48 @@ class HostConnectionPool implements Connection.Owner {
                     initFuture.set(null);
                 }
             }
+
+            @Override
+            public void onFailure(Throwable t) {
+                phase.compareAndSet(Phase.INITIALIZING, Phase.INIT_FAILED);
+                forceClose(connections);
+                initFuture.setException(t);
+            }
         }, initExecutor);
         return initFuture;
     }
 
-    // Clean up if we got an error at construction time but still created part of the core connections
+    private ListenableFuture<Void> handleErrors(ListenableFuture<Void> connectionInitFuture, Executor executor) {
+        return Futures.withFallback(connectionInitFuture, new FutureFallback<Void>() {
+            @Override
+            public ListenableFuture<Void> create(Throwable t) throws Exception {
+                // Propagate these exceptions because they mean no connection will ever succeed. They will be handled
+                // accordingly in SessionManager#maybeAddPool.
+                Throwables.propagateIfInstanceOf(t, ClusterNameMismatchException.class);
+                Throwables.propagateIfInstanceOf(t, UnsupportedProtocolVersionException.class);
+                Throwables.propagateIfInstanceOf(t, SetKeyspaceException.class);
+
+                // We don't want to swallow Errors either as they probably indicate a more serious issue (OOME...)
+                Throwables.propagateIfInstanceOf(t, Error.class);
+
+                // Otherwise, return success. The pool will simply ignore this connection when it sees that it's been closed.
+                return MoreFutures.VOID_SUCCESS;
+            }
+        }, executor);
+    }
+
+    private ListenableFuture<Void> setKeyspaceAsync(ListenableFuture<Void> initFuture, final Connection connection, final String keyspace) {
+        return (keyspace == null)
+            ? initFuture
+            : Futures.transform(initFuture, new AsyncFunction<Void, Void>() {
+            @Override
+            public ListenableFuture<Void> apply(Void input) throws Exception {
+                return connection.setKeyspaceAsync(keyspace);
+            }
+        });
+    }
+
+    // Clean up if we got a fatal error at construction time but still created part of the core connections
     private void forceClose(List<Connection> connections) {
         for (Connection connection : connections) {
             connection.closeAsync().force();
@@ -423,6 +460,7 @@ class HostConnectionPool implements Connection.Owner {
                 }
                 logger.debug("Creating new connection on busy pool to {}", host);
                 newConnection = manager.connectionFactory().open(this);
+                newConnection.setKeyspace(manager.poolsState.keyspace);
             }
             connections.add(newConnection);
 
@@ -644,7 +682,11 @@ class HostConnectionPool implements Connection.Owner {
 
         volatile String keyspace;
 
-        public void setKeyspace(String keyspace) {
+        PoolState(String keyspace) {
+            this.keyspace = keyspace;
+        }
+
+        void setKeyspace(String keyspace) {
             this.keyspace = keyspace;
         }
     }

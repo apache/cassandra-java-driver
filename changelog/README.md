@@ -39,6 +39,8 @@
 - [bug] LoadBalancingPolicy.distance() called before init() (JAVA-784)
 - [new feature] Make driver-side metadata optional (JAVA-828)
 - [improvement] Allow hosts to remain partially up (JAVA-544)
+- [improvement] Remove internal blocking calls and expose async session
+  creation (JAVA-821, JAVA-822)
 
 Merged from 2.0.10_fixes branch:
 

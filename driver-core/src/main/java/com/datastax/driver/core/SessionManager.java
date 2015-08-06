@@ -22,6 +22,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.google.common.base.Function;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.*;
@@ -46,55 +47,98 @@ class SessionManager extends AbstractSession {
     final Cluster cluster;
     final ConcurrentMap<Host, HostConnectionPool> pools;
     final HostConnectionPool.PoolState poolsState;
+    private final AtomicReference<ListenableFuture<Session>> initFuture = new AtomicReference<ListenableFuture<Session>>();
     final AtomicReference<CloseFuture> closeFuture = new AtomicReference<CloseFuture>();
 
     private volatile boolean isInit;
     private volatile boolean isClosing;
 
     // Package protected, only Cluster should construct that.
-    SessionManager(Cluster cluster) {
+    SessionManager(Cluster cluster, String keyspace) {
         this.cluster = cluster;
         this.pools = new ConcurrentHashMap<Host, HostConnectionPool>();
-        this.poolsState = new HostConnectionPool.PoolState();
+        this.poolsState = new HostConnectionPool.PoolState(keyspace);
     }
 
-    public synchronized Session init() {
-        if (isInit)
-            return this;
+    public Session init() {
+        try {
+            return Uninterruptibles.getUninterruptibly(initAsync());
+        } catch (ExecutionException e) {
+            throw DriverThrowables.propagateCause(e);
+        }
+    }
 
+    public ListenableFuture<Session> initAsync() {
         // If we haven't initialized the cluster, do it now
         cluster.init();
 
-        // Create pools to initial nodes (and wait for them to be created)
-        Collection<Host> hosts = cluster.getMetadata().allHosts();
-        createPoolsInParallel(hosts);
+        ListenableFuture<Session> existing = initFuture.get();
+        if (existing != null)
+            return existing;
 
-        isInit = true;
-        updateCreatedPools();
-        return this;
+        final SettableFuture<Session> myInitFuture = SettableFuture.create();
+        if (!initFuture.compareAndSet(null, myInitFuture))
+            return initFuture.get();
+
+        Collection<Host> hosts = cluster.getMetadata().allHosts();
+        ListenableFuture<?> allPoolsCreatedFuture = createPools(hosts);
+        ListenableFuture<?> allPoolsUpdatedFuture = Futures.transform(allPoolsCreatedFuture,
+            new AsyncFunction<Object, Object>() {
+                @Override
+                @SuppressWarnings("unchecked")
+                public ListenableFuture<Object> apply(Object input) throws Exception {
+                    isInit = true;
+                    return (ListenableFuture<Object>)updateCreatedPools();
+                }
+            });
+
+        Futures.addCallback(allPoolsUpdatedFuture, new FutureCallback<Object>() {
+            @Override
+            public void onSuccess(Object result) {
+                myInitFuture.set(SessionManager.this);
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                SessionManager.this.closeAsync(); // don't leak the session
+                myInitFuture.setException(t);
+            }
+        });
+        return myInitFuture;
     }
 
-    private void createPoolsInParallel(Collection<Host> hosts) {
+    private ListenableFuture<?> createPools(Collection<Host> hosts) {
         List<ListenableFuture<Boolean>> futures = Lists.newArrayListWithCapacity(hosts.size());
         for (Host host : hosts)
             if (host.state != Host.State.DOWN)
-                futures.add(maybeAddPool(host, null));
-        try {
-            Futures.successfulAsList(futures).get();
-        } catch (ExecutionException e) {
-            // Won't happen because we used successfulAsList
-            // And if a particular pool failed, maybeAddPool already handled it
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
+                futures.add(maybeAddPool(host, null, true));
+        return Futures.allAsList(futures);
     }
 
     public String getLoggedKeyspace() {
         return poolsState.keyspace;
     }
 
-    public ResultSetFuture executeAsync(Statement statement) {
-        return executeQuery(makeRequestMessage(statement, null), statement);
+    public ResultSetFuture executeAsync(final Statement statement) {
+        if (isInit) {
+            DefaultResultSetFuture future = new DefaultResultSetFuture(this, makeRequestMessage(statement, null));
+            new RequestHandler(this, future, statement).sendRequest();
+            return future;
+        } else {
+            // If the session is not initialized, we can't call makeRequestMessage() synchronously, because it
+            // requires internal Cluster state that might not be initialized yet (like the protocol version).
+            // Because of the way the future is built, we need another 'proxy' future that we can return now.
+            final ChainedResultSetFuture chainedFuture = new ChainedResultSetFuture();
+            this.initAsync().addListener(new Runnable() {
+                @Override
+                public void run() {
+                    DefaultResultSetFuture actualFuture = new DefaultResultSetFuture(SessionManager.this, makeRequestMessage(statement, null));
+                    execute(actualFuture, statement);
+                    chainedFuture.setSource(actualFuture);
+                }
+            }, executor());
+            return chainedFuture;
+        }
     }
 
     public ListenableFuture<PreparedStatement> prepareAsync(String query) {
@@ -285,7 +329,7 @@ class SessionManager extends AbstractSession {
     }
 
     // Returns whether there was problem creating the pool
-    ListenableFuture<Boolean> maybeAddPool(final Host host, Connection reusedConnection) {
+    ListenableFuture<Boolean> maybeAddPool(final Host host, Connection reusedConnection, final boolean failOnKeyspaceError) {
         final HostDistance distance = cluster.manager.loadBalancingPolicy().distance(host);
         if (distance == HostDistance.IGNORED)
             return Futures.immediateFuture(true);
@@ -318,6 +362,9 @@ class SessionManager extends AbstractSession {
                             ClusterNameMismatchException e = (ClusterNameMismatchException)t;
                             cluster.manager.logClusterNameMismatch(host, e.expectedClusterName, e.actualClusterName);
                             cluster.manager.triggerOnDown(host, false);
+                        } else if ((t instanceof SetKeyspaceException) && failOnKeyspaceError) {
+                            future.setException(t.getCause());
+                            return;
                         } else {
                             logger.error("Error creating pool to " + host, t);
                         }
@@ -345,54 +392,48 @@ class SessionManager extends AbstractSession {
      * This method ensures that all hosts for which a pool should exist
      * have one, and hosts that shouldn't don't.
      */
-    void updateCreatedPools() {
+    ListenableFuture<?> updateCreatedPools() {
         // This method does nothing during initialization. Some hosts may be non-responsive but not yet marked DOWN; if
         // we execute the code below we would try to create their pool over and over again.
         // It's called explicitly at the end of init(), once isInit has been set to true.
         if (!isInit)
-            return;
+            return MoreFutures.VOID_SUCCESS;
 
-        try {
-            // We do 2 iterations, so that we add missing pools first, and them remove all unecessary pool second.
-            // That way, we'll avoid situation where we'll temporarily lose connectivity
-            List<Host> toRemove = new ArrayList<Host>();
-            List<ListenableFuture<?>> poolCreationFutures = new ArrayList<ListenableFuture<?>>();
+        // We do 2 iterations, so that we add missing pools first, and them remove all unecessary pool second.
+        // That way, we'll avoid situation where we'll temporarily lose connectivity
+        final List<Host> toRemove = new ArrayList<Host>();
+        List<ListenableFuture<Boolean>> poolCreatedFutures = Lists.newArrayList();
 
-            for (Host h : cluster.getMetadata().allHosts()) {
-                HostDistance dist = loadBalancingPolicy().distance(h);
-                HostConnectionPool pool = pools.get(h);
+        for (Host h : cluster.getMetadata().allHosts()) {
+            HostDistance dist = loadBalancingPolicy().distance(h);
+            HostConnectionPool pool = pools.get(h);
 
-                if (pool == null) {
-                    if (dist != HostDistance.IGNORED && h.state == Host.State.UP)
-                        poolCreationFutures.add(maybeAddPool(h, null));
-                } else if (dist != pool.hostDistance) {
-                    if (dist == HostDistance.IGNORED) {
-                        toRemove.add(h);
-                    } else {
-                        pool.hostDistance = dist;
-                        pool.ensureCoreConnections();
-                    }
+            if (pool == null) {
+                if (dist != HostDistance.IGNORED && h.state == Host.State.UP)
+                    poolCreatedFutures.add(maybeAddPool(h, null, false));
+            } else if (dist != pool.hostDistance) {
+                if (dist == HostDistance.IGNORED) {
+                    toRemove.add(h);
+                } else {
+                    pool.hostDistance = dist;
+                    pool.ensureCoreConnections();
                 }
             }
-
-            // Wait pool creation before removing, so we don't lose connectivity
-            try {
-                Futures.successfulAsList(poolCreationFutures).get();
-            } catch (ExecutionException e) {
-                // Won't happen because we used successfulAsList
-                // And if a particular pool failed, maybeAddPool already handled it
-            }
-
-            List<ListenableFuture<?>> poolRemovalFutures = new ArrayList<ListenableFuture<?>>(toRemove.size());
-            for (Host h : toRemove)
-                poolRemovalFutures.add(removePool(h));
-
-            Futures.allAsList(poolRemovalFutures).get();
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        } catch (ExecutionException e) {
-            logger.error("Unexpected error while refreshing connection pools", e.getCause());
         }
+
+        // Wait pool creation before removing, so we don't lose connectivity
+        ListenableFuture<?> allPoolsCreatedFuture = Futures.successfulAsList(poolCreatedFutures);
+
+        return Futures.transform(allPoolsCreatedFuture, new AsyncFunction<Object, List<Void>>() {
+            @Override
+            public ListenableFuture<List<Void>> apply(Object input) throws Exception {
+                List<ListenableFuture<Void>> poolRemovedFuture = Lists.newArrayListWithCapacity(toRemove.size());
+                for (Host h : toRemove)
+                    poolRemovedFuture.add(removePool(h));
+
+                return Futures.successfulAsList(poolRemovedFuture);
+            }
+        });
     }
 
     void updateCreatedPools(Host h) {
@@ -403,7 +444,7 @@ class SessionManager extends AbstractSession {
             if (pool == null) {
                 if (dist != HostDistance.IGNORED && h.state == Host.State.UP)
                     try {
-                        maybeAddPool(h, null).get();
+                        maybeAddPool(h, null, false).get();
                     } catch (ExecutionException e) {
                         // Ignore, maybeAddPool has already handled the error
                     }
@@ -426,7 +467,7 @@ class SessionManager extends AbstractSession {
         // Note that with well behaved balancing policy (that ignore dead nodes), the removePool call is not necessary
         // since updateCreatedPools should take care of it. But better protect against non well behaving policies.
         removePool(host).force().get();
-        updateCreatedPools();
+        updateCreatedPools().get();
     }
 
     void onRemove(Host host) throws InterruptedException, ExecutionException {
@@ -442,7 +483,7 @@ class SessionManager extends AbstractSession {
         } catch (TimeoutException e) {
             throw new DriverInternalError(String.format("No responses after %d milliseconds while setting current keyspace. This should not happen, unless you have setup a very low connection timeout.", timeout));
         } catch (ExecutionException e) {
-            throw DefaultResultSetFuture.extractCauseFromExecutionException(e);
+            throw DriverThrowables.propagateCause(e);
         }
     }
 
@@ -528,11 +569,16 @@ class SessionManager extends AbstractSession {
      * This method will find a suitable node to connect to using the
      * {@link LoadBalancingPolicy} and handle host failover.
      */
-    void execute(RequestHandler.Callback callback, Statement statement) {
-        // init() locks, so avoid if we know we don't need it.
-        if (!isInit)
-            init();
-        new RequestHandler(this, callback, statement).sendRequest();
+    void execute(final RequestHandler.Callback callback, final Statement statement) {
+        if (isInit)
+            new RequestHandler(this, callback, statement).sendRequest();
+        else
+            this.initAsync().addListener(new Runnable() {
+                @Override
+                public void run() {
+                    new RequestHandler(SessionManager.this, callback, statement).sendRequest();
+                }
+            }, executor());
     }
 
     private void prepare(String query, InetSocketAddress toExclude) throws InterruptedException {
@@ -567,7 +613,6 @@ class SessionManager extends AbstractSession {
     }
 
     ResultSetFuture executeQuery(Message.Request msg, Statement statement) {
-
         DefaultResultSetFuture future = new DefaultResultSetFuture(this, msg);
         execute(future, statement);
         return future;
