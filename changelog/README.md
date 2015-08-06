@@ -43,6 +43,7 @@
   creation (JAVA-821, JAVA-822)
 - [improvement] Use parallel calls when re-preparing statement on other
   hosts (JAVA-725)
+- [bug] Don't use connection timeout for unrelated internal queries (JAVA-629)
 
 Merged from 2.0.10_fixes branch:
 
