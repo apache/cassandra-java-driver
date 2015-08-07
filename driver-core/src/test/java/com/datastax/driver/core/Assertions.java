@@ -30,4 +30,12 @@ public class Assertions extends org.assertj.core.api.Assertions{
     public static TokenRangeAssert assertThat(TokenRange range) {
         return new TokenRangeAssert(range);
     }
+
+    public static KeyspaceMetadataAssert assertThat(KeyspaceMetadata metadata) {
+        return new KeyspaceMetadataAssert(metadata);
+    }
+
+    public static TableMetadataAssert assertThat(TableMetadata metadata) {
+        return new TableMetadataAssert(metadata);
+    }
 }

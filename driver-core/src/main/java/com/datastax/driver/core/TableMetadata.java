@@ -179,7 +179,6 @@ public class TableMetadata {
         for (ColumnMetadata c : otherColumns)
             columns.put(c.getName(), c);
 
-        ksm.add(tm);
         return tm;
     }
 
@@ -369,6 +368,43 @@ public class TableMetadata {
      */
     public String asCQLQuery() {
         return asCQLQuery(false);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+
+        TableMetadata that = (TableMetadata)o;
+
+        if (!name.equals(that.name))
+            return false;
+        if (!partitionKey.equals(that.partitionKey))
+            return false;
+        if (!clusteringColumns.equals(that.clusteringColumns))
+            return false;
+        if (!columns.equals(that.columns))
+            return false;
+        if (!options.equals(that.options))
+            return false;
+        if (!clusteringOrder.equals(that.clusteringOrder))
+            return false;
+        return cassandraVersion.equals(that.cassandraVersion);
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = name.hashCode();
+        result = 31 * result + partitionKey.hashCode();
+        result = 31 * result + clusteringColumns.hashCode();
+        result = 31 * result + columns.hashCode();
+        result = 31 * result + options.hashCode();
+        result = 31 * result + clusteringOrder.hashCode();
+        result = 31 * result + cassandraVersion.hashCode();
+        return result;
     }
 
     private String asCQLQuery(boolean formatted) {
@@ -694,6 +730,72 @@ public class TableMetadata {
          */
         public Map<String, String> getCompression() {
             return new HashMap<String, String>(compression);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o)
+                return true;
+            if (o == null || getClass() != o.getClass())
+                return false;
+
+            Options options = (Options)o;
+
+            if (isCompactStorage != options.isCompactStorage)
+                return false;
+            if (Double.compare(options.readRepair, readRepair) != 0)
+                return false;
+            if (Double.compare(options.localReadRepair, localReadRepair) != 0)
+                return false;
+            if (replicateOnWrite != options.replicateOnWrite)
+                return false;
+            if (gcGrace != options.gcGrace)
+                return false;
+            if (Double.compare(options.bfFpChance, bfFpChance) != 0)
+                return false;
+            if (populateCacheOnFlush != options.populateCacheOnFlush)
+                return false;
+            if (memtableFlushPeriodMs != options.memtableFlushPeriodMs)
+                return false;
+            if (defaultTTL != options.defaultTTL)
+                return false;
+            if (indexInterval != options.indexInterval)
+                return false;
+            if (comment != null ? !comment.equals(options.comment) : options.comment != null)
+                return false;
+            if (caching != null ? !caching.equals(options.caching) : options.caching != null)
+                return false;
+            if (speculativeRetry != null ? !speculativeRetry.equals(options.speculativeRetry) : options.speculativeRetry != null)
+                return false;
+            if (compaction != null ? !compaction.equals(options.compaction) : options.compaction != null)
+                return false;
+            return !(compression != null ? !compression.equals(options.compression) : options.compression != null);
+
+        }
+
+        @Override
+        public int hashCode() {
+            int result;
+            long temp;
+            result = (isCompactStorage ? 1 : 0);
+            result = 31 * result + (comment != null ? comment.hashCode() : 0);
+            temp = Double.doubleToLongBits(readRepair);
+            result = 31 * result + (int)(temp ^ (temp >>> 32));
+            temp = Double.doubleToLongBits(localReadRepair);
+            result = 31 * result + (int)(temp ^ (temp >>> 32));
+            result = 31 * result + (replicateOnWrite ? 1 : 0);
+            result = 31 * result + gcGrace;
+            temp = Double.doubleToLongBits(bfFpChance);
+            result = 31 * result + (int)(temp ^ (temp >>> 32));
+            result = 31 * result + (caching != null ? caching.hashCode() : 0);
+            result = 31 * result + (populateCacheOnFlush ? 1 : 0);
+            result = 31 * result + memtableFlushPeriodMs;
+            result = 31 * result + defaultTTL;
+            result = 31 * result + (speculativeRetry != null ? speculativeRetry.hashCode() : 0);
+            result = 31 * result + indexInterval;
+            result = 31 * result + (compaction != null ? compaction.hashCode() : 0);
+            result = 31 * result + (compression != null ? compression.hashCode() : 0);
+            return result;
         }
     }
 }

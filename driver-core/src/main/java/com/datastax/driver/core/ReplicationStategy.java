@@ -87,6 +87,24 @@ abstract class ReplicationStrategy {
             }
             return replicaMap;
         }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o)
+                return true;
+            if (o == null || getClass() != o.getClass())
+                return false;
+
+            SimpleStrategy that = (SimpleStrategy)o;
+
+            return replicationFactor == that.replicationFactor;
+
+        }
+
+        @Override
+        public int hashCode() {
+            return replicationFactor;
+        }
     }
 
     static class NetworkTopologyStrategy extends ReplicationStrategy {
@@ -197,5 +215,24 @@ abstract class ReplicationStrategy {
             }
             return result;
         }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o)
+                return true;
+            if (o == null || getClass() != o.getClass())
+                return false;
+
+            NetworkTopologyStrategy that = (NetworkTopologyStrategy)o;
+
+            return replicationFactors.equals(that.replicationFactors);
+
+        }
+
+        @Override
+        public int hashCode() {
+            return replicationFactors.hashCode();
+        }
     }
+
 }

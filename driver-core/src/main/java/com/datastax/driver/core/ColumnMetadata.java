@@ -103,6 +103,34 @@ public class ColumnMetadata {
         return isStatic;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+
+        ColumnMetadata that = (ColumnMetadata)o;
+
+        if (isStatic != that.isStatic)
+            return false;
+        if (!name.equals(that.name))
+            return false;
+        if (!type.equals(that.type))
+            return false;
+        return !(index != null ? !index.equals(that.index) : that.index != null);
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = name.hashCode();
+        result = 31 * result + type.hashCode();
+        result = 31 * result + (index != null ? index.hashCode() : 0);
+        result = 31 * result + (isStatic ? 1 : 0);
+        return result;
+    }
+
     /**
      * Metadata on a column index.
      */
@@ -175,6 +203,28 @@ public class ColumnMetadata {
             return isCustomIndex()
                  ? String.format("CREATE CUSTOM INDEX %s ON %s.%s (%s) USING '%s';", name, ksName, cfName, colName, customClassName)
                  : String.format("CREATE INDEX %s ON %s.%s (%s);", name, ksName, cfName, colName);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o)
+                return true;
+            if (o == null || getClass() != o.getClass())
+                return false;
+
+            IndexMetadata that = (IndexMetadata)o;
+
+            if (!name.equals(that.name))
+                return false;
+            return !(customClassName != null ? !customClassName.equals(that.customClassName) : that.customClassName != null);
+
+        }
+
+        @Override
+        public int hashCode() {
+            int result = name.hashCode();
+            result = 31 * result + (customClassName != null ? customClassName.hashCode() : 0);
+            return result;
         }
 
         private static IndexMetadata build(ColumnMetadata column, Map<String, String> indexColumns) {
