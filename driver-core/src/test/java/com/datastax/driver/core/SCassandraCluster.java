@@ -94,6 +94,14 @@ public class SCassandraCluster {
         return activityClients.get(node - 1).retrieveQueries();
     }
 
+    public List<PreparedStatementExecution> retrievePreparedStatementExecutions(int node){
+        return activityClients.get(node - 1).retrievePreparedStatementExecutions();
+    }
+
+    public List<PreparedStatementPreparation> retrievePreparedStatementPreparations(int node) {
+        return activityClients.get(node - 1).retrievePreparedStatementPreparations();
+    }
+
     public void clearAllPrimes() {
         for (PrimingClient primingClient : primingClients)
             primingClient.clearAllPrimes();
@@ -117,14 +125,24 @@ public class SCassandraCluster {
             if (scassandras.get(i).equals(toIgnore))
                 continue;
             InetAddress address = addresses.get(i);
-            rows.add(ImmutableMap.<String, Object>builder()
+            Map<String, ?> row = ImmutableMap.<String, Object>builder()
                 .put("peer", address)
                 .put("rpc_address", address)
                 .put("data_center", "datacenter1")
                 .put("rack", "rack1")
                 .put("release_version", "2.0.1")
                 .put("tokens", ImmutableSet.of(Long.toString(Long.MIN_VALUE + i)))
-                .build());
+                .build();
+
+            rows.add(row);
+
+            String query = "SELECT * FROM system.peers WHERE peer='" + address.toString().substring(1) + "'";
+            primingClient.prime(
+                PrimingRequest.queryBuilder()
+                    .withQuery(query)
+                    .withColumnTypes(SELECT_PEERS_COLUMN_TYPES)
+                    .withRows(row)
+                    .build());
         }
         primingClient.prime(
             PrimingRequest.queryBuilder()

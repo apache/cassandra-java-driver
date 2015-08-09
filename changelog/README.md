@@ -31,6 +31,7 @@
 - [improvement] Allow PlainTextAuthProvider to change its credentials at runtime (JAVA-719)
 - [new feature] Make it possible to register for SchemaChange Events (JAVA-151)
 - [improvement] Downgrade "Asked to rebuild table" log from ERROR to INFO level (JAVA-861)
+- [improvement] Provide an option to prepare statements only on one node (JAVA-797)
 
 Merged from 2.0.10_fixes branch:
 
