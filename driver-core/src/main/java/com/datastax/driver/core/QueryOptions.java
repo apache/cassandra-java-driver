@@ -46,6 +46,7 @@ public class QueryOptions {
     private volatile ConsistencyLevel serialConsistency = DEFAULT_SERIAL_CONSISTENCY_LEVEL;
     private volatile int fetchSize = DEFAULT_FETCH_SIZE;
     private volatile boolean defaultIdempotence = DEFAULT_IDEMPOTENCE;
+    private volatile boolean reprepareOnUp = true;
     private volatile Cluster.Manager manager;
     private volatile boolean prepareOnAllHosts = true;
 
@@ -188,9 +189,9 @@ public class QueryOptions {
      * chance of having been hit by at least one client for each statement.
      * <p>
      * On the other hand, if that assumption turns out to be wrong and one host hasn't
-     * prepared a given statement, you will pay a penalty on the first execution of this
-     * statement on this host (one extra roundtrip to resend the query to prepare, and
-     * another to retry the execution).
+     * prepared a given statement, it needs to be re-prepared on the fly the first time
+     * it gets executed; this causes a performance penalty (one extra roundtrip to resend
+     * the query to prepare, and another to retry the execution).
      *
      * @param prepareOnAllHosts the new value to set to indicate whether to prepare
      *                          statements once or on all nodes.
@@ -210,5 +211,42 @@ public class QueryOptions {
      */
     public boolean isPrepareOnAllHosts() {
         return this.prepareOnAllHosts;
+    }
+
+    /**
+     * Set whether the driver should re-prepare all cached prepared statements on a host
+     * when it marks it back up.
+     * <p>
+     * This option is enabled by default.
+     * <p>
+     * The reason why you might want to disable it is to optimize reconnection time when
+     * you believe hosts often get marked down because of temporary network issues, rather
+     * than the host really crashing. In that case, the host still has prepared statements
+     * in its cache when the driver reconnects, so re-preparing is redundant.
+     * <p>
+     * On the other hand, if that assumption turns out to be wrong and the host had
+     * really restarted, its prepared statement cache is empty, and statements need to be
+     * re-prepared on the fly the first time they get executed; this causes a performance
+     * penalty (one extra roundtrip to resend the query to prepare, and another to retry
+     * the execution).
+     *
+     * @param reprepareOnUp whether the driver should re-prepare when marking a node up.
+     * @return this {@code QueryOptions} instance.
+     */
+    public QueryOptions setReprepareOnUp(boolean reprepareOnUp){
+        this.reprepareOnUp = reprepareOnUp;
+        return this;
+    }
+
+    /**
+     * Whether the driver should re-prepare all cached prepared statements on a host
+     * when its marks that host back up.
+     *
+     * @return the value.
+     *
+     * @see #setReprepareOnUp(boolean)
+     */
+    public boolean isReprepareOnUp() {
+        return this.reprepareOnUp;
     }
 }

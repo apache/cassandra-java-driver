@@ -16,6 +16,8 @@
 package com.datastax.driver.core;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+
 import com.google.common.collect.Lists;
 import org.scassandra.http.client.PreparedStatementPreparation;
 import org.testng.annotations.*;
@@ -25,7 +27,7 @@ import static com.datastax.driver.core.Assertions.assertThat;
 public class QueryOptionsTest {
     SCassandraCluster scassandra;
 
-    QueryOptions queryOptions = new QueryOptions();
+    QueryOptions queryOptions;
 
     SortingLoadBalancingPolicy loadBalancingPolicy;
 
@@ -41,6 +43,7 @@ public class QueryOptionsTest {
 
     @BeforeMethod(groups = "short")
     public void beforeMethod() {
+        queryOptions = new QueryOptions();
         loadBalancingPolicy = new SortingLoadBalancingPolicy();
         cluster = Cluster.builder()
             .addContactPoint(CCMBridge.ipOfNode(2))
@@ -55,7 +58,7 @@ public class QueryOptionsTest {
         host3 = TestUtils.findHost(cluster, 3);
 
         // Make sure there are no prepares
-        for(int host : Lists.newArrayList(1, 2, 3)) {
+        for (int host : Lists.newArrayList(1, 2, 3)) {
             assertThat(scassandra.retrievePreparedStatementPreparations(host)).hasSize(0);
         }
     }
@@ -134,8 +137,86 @@ public class QueryOptionsTest {
         validatePrepared(true);
     }
 
+    private void valideReprepareOnUp(boolean expectReprepare) {
+        String query = "select sansa_stark from the_known_world";
+        session.prepare(query);
+
+        List<PreparedStatementPreparation> preparationOne = scassandra.retrievePreparedStatementPreparations(1);
+
+        assertThat(preparationOne).hasSize(1);
+        assertThat(preparationOne.get(0).getPreparedStatementText()).isEqualTo(query);
+
+        scassandra.clearAllRecordedActivity();
+        scassandra.stop(1);
+        assertThat(cluster).host(1).goesDownWithin(10, TimeUnit.SECONDS);
+
+        scassandra.start(1);
+        assertThat(cluster).host(1).comesUpWithin(60, TimeUnit.SECONDS);
+
+        preparationOne = scassandra.retrievePreparedStatementPreparations(1);
+        if (expectReprepare) {
+            assertThat(preparationOne).hasSize(1);
+            assertThat(preparationOne.get(0).getPreparedStatementText()).isEqualTo(query);
+        } else {
+            assertThat(preparationOne).isEmpty();
+        }
+    }
+
+    /**
+     * <p>
+     * Validates that statements are reprepared when a node comes back up when
+     * {@link QueryOptions#setReprepareOnUp(boolean)} is set to true.
+     * </p>
+     *
+     * @test_category prepared_statements:prepared
+     * @expected_result reprepare query on the restarted node.
+     * @jira_ticket JAVA-658
+     * @since 2.0.11, 2.1.8, 2.2.1
+     */
+    @Test(groups = "short")
+    public void should_reprepare_on_up_when_enabled() {
+        queryOptions.setReprepareOnUp(true);
+        valideReprepareOnUp(true);
+    }
+
+    /**
+     * <p>
+     * Validates that statements are reprepared when a node comes back up with
+     * the default configuration.
+     * </p>
+     *
+     * @test_category prepared_statements:prepared
+     * @expected_result reprepare query on the restarted node.
+     * @jira_ticket JAVA-658
+     * @since 2.0.11, 2.1.8, 2.2.1
+     */
+    @Test(groups = "short")
+    public void should_reprepare_on_up_by_default() {
+        valideReprepareOnUp(true);
+    }
+
+    /**
+     * <p>
+     * Validates that statements are not reprepared when a node comes back up when
+     * {@link QueryOptions#setReprepareOnUp(boolean)} is set to false.
+     * </p>
+     *
+     * @test_category prepared_statements:prepared
+     * @expected_result do not reprepare query on the restarted node.
+     * @jira_ticket JAVA-658
+     * @since 2.0.11, 2.1.8, 2.2.1
+     */
+    @Test(groups = "short")
+    public void should_not_reprepare_on_up_when_disabled() {
+        queryOptions.setReprepareOnUp(false);
+        valideReprepareOnUp(false);
+    }
+
     @AfterMethod(groups = "short")
     public void afterMethod() {
+        if (cluster != null)
+            cluster.close();
+
         scassandra.clearAllPrimes();
         scassandra.clearAllRecordedActivity();
     }
