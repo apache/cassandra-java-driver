@@ -85,6 +85,16 @@ public class SCassandraCluster {
             scassandra.stop();
     }
 
+    public void start(int node) {
+        int i = node - 1;
+        scassandras.get(i).start();
+        primePeers(primingClients.get(i), scassandras.get(i));
+    }
+
+    public void stop(int node) {
+        scassandras.get(node - 1).stop();
+    }
+
     public SCassandraCluster prime(int node, PrimingRequest request) {
         primingClients.get(node - 1).prime(request);
         return this;
