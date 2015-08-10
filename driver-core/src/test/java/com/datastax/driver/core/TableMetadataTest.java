@@ -112,6 +112,23 @@ public class TableMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     @Test(groups = "short")
+    public void should_parse_dense_table() {
+        // given
+        String cql = String.format("CREATE TABLE %s.dense (\n"
+            + "        k int,\n"
+            + "        c int,\n"
+            + "        PRIMARY KEY (k, c)\n"
+            + "    ) WITH COMPACT STORAGE;", keyspace);
+        // when
+        session.execute(cql);
+        TableMetadata table = cluster.getMetadata().getKeyspace(keyspace).getTable("dense");
+        // then
+        assertThat(table).isNotNull().hasName("dense").hasNumberOfColumns(2).isCompactStorage();
+        assertThat(table.getColumns().get(0)).isNotNull().hasName("k").isPartitionKey().hasType(cint());
+        assertThat(table.getColumns().get(1)).isNotNull().hasName("c").isClusteringColumn().hasType(cint());
+    }
+
+    @Test(groups = "short")
     public void should_parse_compact_dynamic_table() {
         // given
         String cql = String.format("CREATE TABLE %s.compact_dynamic (\n"
@@ -184,6 +201,7 @@ public class TableMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
         assertThat(table.getColumns().get(3)).isNotNull().hasName("i").isRegularColumn().hasType(cint());
         assertThat(table);
         VersionNumber version = TestUtils.findHost(cluster, 1).getCassandraVersion();
+
         // Cassandra 3.0 +
         if (version.getMajor() > 2) {
 
@@ -223,7 +241,7 @@ public class TableMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
                 .doesNotContain(" index_interval")
                 .doesNotContain("replicate_on_write");
 
-            // Cassandra 2.1 and 2.2
+        // Cassandra 2.1 and 2.2
         } else if (version.getMajor() == 2 && version.getMinor() > 0) {
 
             // With 2.1 we have different options, the caching option changes and replicate_on_write disappears
@@ -263,7 +281,7 @@ public class TableMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
                 .doesNotContain(" index_interval")
                 .doesNotContain("replicate_on_write");
 
-            // Cassandra 2.0
+        // Cassandra 2.0
         } else if (version.getMajor() == 2 && version.getMinor() == 0) {
 
             assertThat(table.getOptions().getReadRepairChance()).isEqualTo(0.5);
@@ -301,7 +319,7 @@ public class TableMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
                 .doesNotContain("min_index_interval") // 2.1 +
                 .doesNotContain("max_index_interval"); // 2.1 +
 
-            // Cassandra 1.2
+        // Cassandra 1.2
         } else {
 
             assertThat(table.getOptions().getReadRepairChance()).isEqualTo(0.5);
@@ -361,6 +379,6 @@ public class TableMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
     @Override
     protected Collection<String> getTableDefinitions() {
         return Collections.emptyList();
-}
+    }
 
 }
