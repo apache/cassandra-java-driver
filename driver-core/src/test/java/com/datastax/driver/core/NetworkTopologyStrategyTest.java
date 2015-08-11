@@ -22,6 +22,8 @@ import java.util.Set;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.testng.annotations.Test;
@@ -103,6 +105,18 @@ public class NetworkTopologyStrategyTest extends AbstractReplicationStrategyTest
     private static final ReplicationStrategy exampleStrategy = networkTopologyStrategy(rf(DC1, 2), rf(DC2, 2));
 
     private static final ReplicationStrategy exampleStrategyTooManyReplicas = networkTopologyStrategy(rf(DC1, 4), rf(DC2, 4));
+
+    private static final List<Token> largeRing = Lists.newArrayList();
+    private static final Map<Token, Host> largeRingTokenToPrimary = Maps.newHashMap();
+    static {
+        for (int i = 0; i < 100; i++) {
+            for (int vnodes = 0; vnodes < 256; vnodes++) {
+                Token token = token("" + ((i * 256) + vnodes));
+                largeRing.add(token);
+                largeRingTokenToPrimary.put(token, host("127.0.0." + i, DC1, RACK11));
+            }
+        }
+    }
 
     private static final List<Token> exampleRing = ImmutableList.<Token>builder()
                                                    .add(TOKEN01)
@@ -569,6 +583,23 @@ public class NetworkTopologyStrategyTest extends AbstractReplicationStrategyTest
         assertReplicaPlacement(replicaMap, TOKEN17, IP2, IP6, IP1, IP5);
         assertReplicaPlacement(replicaMap, TOKEN18, IP6, IP1, IP5, IP2);
     }
+
+    @Test(groups = "unit")
+    public void networkTopologyStrategyNoNodesInDCTest() {
+        long t1 = System.currentTimeMillis();
+        Map<Token, Set<Host>> replicaMap =  networkTopologyStrategy(rf(DC1, 2), rf(DC2, 2))
+                .computeTokenToReplicaMap(largeRingTokenToPrimary, largeRing);
+        assertThat(System.currentTimeMillis() - t1).isLessThan(10000);
+
+        for (int node = 0; node < 99; node++) { // 100th wraps so doesn't match this, check after
+            for (int vnodes = 0; vnodes < 256; vnodes++) {
+                Token token = token("" + ((node * 256) + vnodes));
+                assertReplicaPlacement(replicaMap, token, "127.0.0." + node, "127.0.0." + (node + 1));
+            }
+        }
+        assertReplicaPlacement(replicaMap, token(""+ 99 * 256), "127.0.0.99", "127.0.0.0");
+    }
+
 
     @Test(groups = "unit")
     public void networkTopologyStrategyExampleTopologyTooManyReplicasTest() {
