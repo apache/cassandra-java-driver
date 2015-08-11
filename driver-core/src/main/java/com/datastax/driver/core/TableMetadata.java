@@ -30,8 +30,8 @@ public class TableMetadata {
 
     private static final Logger logger = LoggerFactory.getLogger(TableMetadata.class);
 
-    static final String CF_NAME                      = "columnfamily_name";
-    private static final String CF_ID                = "cf_id";
+    private static final String CF_ID_V2             = "cf_id";
+    private static final String CF_ID_V3             = "id";
 
     private static final String KEY_VALIDATOR        = "key_validator";
     private static final String COMPARATOR           = "comparator";
@@ -44,6 +44,13 @@ public class TableMetadata {
     private static final String DEFAULT_KEY_ALIAS    = "key";
     private static final String DEFAULT_COLUMN_ALIAS = "column";
     private static final String DEFAULT_VALUE_ALIAS  = "value";
+
+    private static final String FLAGS                = "flags";
+    private static final String DENSE                = "dense";
+    private static final String SUPER                = "super";
+    private static final String COMPOUND             = "compound";
+
+    private static final String EMPTY_TYPE           = "org.apache.cassandra.db.marshal.EmptyType";
 
     private static final Comparator<ColumnMetadata> columnMetadataComparator = new Comparator<ColumnMetadata>() {
         public int compare(ColumnMetadata c1, ColumnMetadata c2) {
@@ -98,29 +105,64 @@ public class TableMetadata {
         this.cassandraVersion = cassandraVersion;
     }
 
-    static TableMetadata build(KeyspaceMetadata ksm, Row row, Map<String, ColumnMetadata.Raw> rawCols, VersionNumber cassandraVersion, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
+    static TableMetadata build(KeyspaceMetadata ksm, Row row, Map<String, ColumnMetadata.Raw> rawCols, String nameColumn, VersionNumber cassandraVersion, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
 
-        String name = row.getString(CF_NAME);
-        UUID id = (cassandraVersion.getMajor() > 2 || (cassandraVersion.getMajor() == 2 && cassandraVersion.getMinor() >= 1))
-                ? row.getUUID(CF_ID)
-                : null;
+        String name = row.getString(nameColumn);
 
-        CassandraTypeParser.ParseResult keyValidator = CassandraTypeParser.parseWithComposite(row.getString(KEY_VALIDATOR), protocolVersion, codecRegistry);
-        CassandraTypeParser.ParseResult comparator = CassandraTypeParser.parseWithComposite(row.getString(COMPARATOR), protocolVersion, codecRegistry);
-        List<String> columnAliases = cassandraVersion.getMajor() >= 2 || row.getString(COLUMN_ALIASES) == null
-                                   ? Collections.<String>emptyList()
-                                   : SimpleJSONParser.parseStringList(row.getString(COLUMN_ALIASES));
+        UUID id = null;
 
-        int clusteringSize = findClusteringSize(comparator, rawCols.values(), columnAliases, cassandraVersion);
-        boolean isDense = clusteringSize != comparator.types.size() - 1;
-        boolean isCompact = isDense || !comparator.isComposite;
+        if(cassandraVersion.getMajor() == 2 && cassandraVersion.getMinor() >= 1)
+            id = row.getUUID(CF_ID_V2);
+        else if(cassandraVersion.getMajor() > 2)
+            id = row.getUUID(CF_ID_V3);
 
-        List<ColumnMetadata> partitionKey = nullInitializedList(keyValidator.types.size());
+        CassandraTypeParser.ParseResult comparator = null;
+        CassandraTypeParser.ParseResult keyValidator = null;
+        List<String> columnAliases = null;
+
+        if(cassandraVersion.getMajor() <= 2) {
+            comparator = CassandraTypeParser.parseWithComposite(row.getString(COMPARATOR), protocolVersion, codecRegistry);
+            keyValidator = CassandraTypeParser.parseWithComposite(row.getString(KEY_VALIDATOR), protocolVersion, codecRegistry);
+            columnAliases = cassandraVersion.getMajor() >= 2 || row.getString(COLUMN_ALIASES) == null
+                ? Collections.<String>emptyList()
+                : SimpleJSONParser.parseStringList(row.getString(COLUMN_ALIASES));
+        }
+
+        int partitionKeySize = findPartitionKeySize(rawCols.values(), keyValidator);
+        int clusteringSize;
+
+        boolean isDense;
+        boolean isCompact;
+        if(cassandraVersion.getMajor() > 2) {
+            Set<String> flags = row.getSet(FLAGS, String.class);
+            isDense = flags.contains(DENSE);
+            boolean isSuper = flags.contains(SUPER);
+            boolean isCompound = flags.contains(COMPOUND);
+            isCompact = isSuper || isDense || !isCompound;
+            boolean isStaticCompact = !isSuper && !isDense && !isCompound;
+            if(isStaticCompact) {
+                rawCols = pruneStaticCompactTableColumns(rawCols);
+            }
+            if(isDense) {
+                rawCols = pruneDenseTableColumnsV3(rawCols);
+            }
+            clusteringSize = findClusteringSize(comparator, rawCols.values(), columnAliases, cassandraVersion);
+        } else {
+            assert comparator != null;
+            clusteringSize = findClusteringSize(comparator, rawCols.values(), columnAliases, cassandraVersion);
+            isDense = clusteringSize != comparator.types.size() - 1;
+            if(isDense) {
+                rawCols = pruneDenseTableColumnsV2(rawCols);
+            }
+            isCompact = isDense || !comparator.isComposite;
+        }
+
+        List<ColumnMetadata> partitionKey = nullInitializedList(partitionKeySize);
         List<ColumnMetadata> clusteringColumns = nullInitializedList(clusteringSize);
         List<Order> clusteringOrder = nullInitializedList(clusteringSize);
+
         // We use a linked hashmap because we will keep this in the order of a 'SELECT * FROM ...'.
         LinkedHashMap<String, ColumnMetadata> columns = new LinkedHashMap<String, ColumnMetadata>();
-
 
         Options options = null;
         try {
@@ -140,6 +182,11 @@ public class TableMetadata {
         Set<ColumnMetadata> otherColumns = new TreeSet<ColumnMetadata>(columnMetadataComparator);
 
         if (cassandraVersion.getMajor() < 2) {
+
+            assert comparator != null;
+            assert keyValidator != null;
+            assert columnAliases != null;
+
             // In C* 1.2, only the REGULAR columns are in the columns schema table, so we need to add the names from
             // the aliases (and make sure we handle default aliases).
             List<String> keyAliases = row.getString(KEY_ALIASES) == null
@@ -156,11 +203,14 @@ public class TableMetadata {
                 clusteringOrder.set(i, comparator.reversed.get(i) ? Order.DESC : Order.ASC);
             }
 
-            // We have a value alias if we're dense
+            // if we're dense, chances are that we have a single regular "value" column with an alias
             if (isDense) {
                 String alias = row.isNull(VALUE_ALIAS) ? DEFAULT_VALUE_ALIAS : row.getString(VALUE_ALIAS);
-                DataType type = CassandraTypeParser.parseOne(row.getString(VALIDATOR), protocolVersion, codecRegistry);
-                otherColumns.add(ColumnMetadata.forAlias(tm, alias, type));
+                // ...unless the table does not have any regular column, only primary key columns (JAVA-873)
+                if(!alias.isEmpty()) {
+                    DataType type = CassandraTypeParser.parseOne(row.getString(VALIDATOR), protocolVersion, codecRegistry);
+                    otherColumns.add(ColumnMetadata.forAlias(tm, alias, type));
+                }
             }
         }
 
@@ -170,7 +220,7 @@ public class TableMetadata {
                 case PARTITION_KEY:
                     partitionKey.set(rawCol.componentIndex, col);
                     break;
-                case CLUSTERING_KEY:
+                case CLUSTERING_COLUMN:
                     clusteringColumns.set(rawCol.componentIndex, col);
                     clusteringOrder.set(rawCol.componentIndex, rawCol.isReversed ? Order.DESC : Order.ASC);
                     break;
@@ -187,21 +237,86 @@ public class TableMetadata {
         for (ColumnMetadata c : otherColumns)
             columns.put(c.getName(), c);
 
-        ksm.add(tm);
         return tm;
+    }
+
+    /**
+     * Upon migration from thrift to CQL, we internally create a pair of surrogate clustering/regular columns
+     * for compact static tables. These columns shouldn't be exposed to the user but are currently returned by C*.
+     * We also need to remove the static keyword for all other columns in the table.
+     */
+    private static Map<String, ColumnMetadata.Raw> pruneStaticCompactTableColumns(Map<String, ColumnMetadata.Raw> rawCols) {
+        Collection<ColumnMetadata.Raw> cols = rawCols.values();
+        Iterator<ColumnMetadata.Raw> it = cols.iterator();
+        while(it.hasNext()) {
+            ColumnMetadata.Raw col = it.next();
+            if(col.kind == ColumnMetadata.Raw.Kind.CLUSTERING_COLUMN) {
+                // remove "column1 text" clustering column
+                it.remove();
+            } else if(col.kind == ColumnMetadata.Raw.Kind.REGULAR) {
+                // remove "value blob" regular column
+                it.remove();
+            } else if(col.kind == ColumnMetadata.Raw.Kind.STATIC) {
+                // remove "static" keyword
+                col.kind = ColumnMetadata.Raw.Kind.REGULAR;
+            }
+        }
+        return rawCols;
+    }
+
+    /**
+     * Upon migration from thrift to CQL, we internally create a surrogate column "value" of type
+     * EmptyType for dense tables. This column shouldn't be exposed to the user but is currently returned by C*.
+     */
+    private static Map<String, ColumnMetadata.Raw> pruneDenseTableColumnsV3(Map<String, ColumnMetadata.Raw> rawCols) {
+        Collection<ColumnMetadata.Raw> cols = rawCols.values();
+        Iterator<ColumnMetadata.Raw> it = cols.iterator();
+        while(it.hasNext()) {
+            ColumnMetadata.Raw col = it.next();
+            if(col.kind == ColumnMetadata.Raw.Kind.REGULAR && col.dataType instanceof DataType.CustomType && EMPTY_TYPE.equals(((DataType.CustomType)col.dataType).getCustomTypeClassName())) {
+                // remove "value EmptyType" regular column
+                it.remove();
+            }
+        }
+        return rawCols;
+    }
+
+    private static Map<String, ColumnMetadata.Raw> pruneDenseTableColumnsV2(Map<String, ColumnMetadata.Raw> rawCols) {
+        Collection<ColumnMetadata.Raw> cols = rawCols.values();
+        Iterator<ColumnMetadata.Raw> it = cols.iterator();
+        while(it.hasNext()) {
+            ColumnMetadata.Raw col = it.next();
+            if(col.kind == ColumnMetadata.Raw.Kind.COMPACT_VALUE && col.name.isEmpty()) {
+                // remove "" blob regular COMPACT_VALUE column
+                it.remove();
+            }
+        }
+        return rawCols;
+    }
+
+    private static int findPartitionKeySize(Collection<ColumnMetadata.Raw> cols, CassandraTypeParser.ParseResult keyValidator) {
+        // C* 1.2, 2.0, 2.1 and 2.2
+        if(keyValidator != null)
+            return keyValidator.types.size();
+        // C* 3.0 onwards
+        int maxId = -1;
+        for (ColumnMetadata.Raw col : cols)
+            if (col.kind == ColumnMetadata.Raw.Kind.PARTITION_KEY)
+                maxId = Math.max(maxId, col.componentIndex);
+        return maxId + 1;
     }
 
     private static int findClusteringSize(CassandraTypeParser.ParseResult comparator,
                                           Collection<ColumnMetadata.Raw> cols,
                                           List<String> columnAliases,
                                           VersionNumber cassandraVersion) {
-        // In 2.0, this is relatively easy, we just find the biggest 'componentIndex' amongst the clustering columns.
+        // In 2.0 onwards, this is relatively easy, we just find the biggest 'componentIndex' amongst the clustering columns.
         // For 1.2 however, this is slightly more subtle: we need to infer it based on whether the comparator is composite or not, and whether we have
         // regular columns or not.
         if (cassandraVersion.getMajor() >= 2) {
             int maxId = -1;
             for (ColumnMetadata.Raw col : cols)
-                if (col.kind == ColumnMetadata.Raw.Kind.CLUSTERING_KEY)
+                if (col.kind == ColumnMetadata.Raw.Kind.CLUSTERING_COLUMN)
                     maxId = Math.max(maxId, col.componentIndex);
             return maxId + 1;
         } else {
@@ -515,16 +630,17 @@ public class TableMetadata {
 
         private static final String COMMENT                     = "comment";
         private static final String READ_REPAIR                 = "read_repair_chance";
+        private static final String DCLOCAL_READ_REPAIR         = "dclocal_read_repair_chance";
         private static final String LOCAL_READ_REPAIR           = "local_read_repair_chance";
         private static final String REPLICATE_ON_WRITE          = "replicate_on_write";
         private static final String GC_GRACE                    = "gc_grace_seconds";
         private static final String BF_FP_CHANCE                = "bloom_filter_fp_chance";
         private static final String CACHING                     = "caching";
+        private static final String COMPACTION                  = "compaction";
         private static final String COMPACTION_CLASS            = "compaction_strategy_class";
         private static final String COMPACTION_OPTIONS          = "compaction_strategy_options";
-        private static final String MIN_COMPACTION_THRESHOLD    = "min_compaction_threshold";
-        private static final String MAX_COMPACTION_THRESHOLD    = "max_compaction_threshold";
         private static final String POPULATE_CACHE_ON_FLUSH     = "populate_io_cache_on_flush";
+        private static final String COMPRESSION                 = "compression";
         private static final String COMPRESSION_PARAMS          = "compression_parameters";
         private static final String MEMTABLE_FLUSH_PERIOD_MS    = "memtable_flush_period_in_ms";
         private static final String DEFAULT_TTL                 = "default_time_to_live";
@@ -559,32 +675,41 @@ public class TableMetadata {
         private final Integer indexInterval;
         private final Integer minIndexInterval;
         private final Integer maxIndexInterval;
-        private final Map<String, String> compaction = new HashMap<String, String>();
-        private final Map<String, String> compression = new HashMap<String, String>();
+        private final Map<String, String> compaction;
+        private final Map<String, String> compression;
 
         Options(Row row, boolean isCompactStorage, VersionNumber version) {
+
+            boolean is120 = version.getMajor() < 2;
+            boolean is200 = version.getMajor() == 2 && version.getMinor() == 0;
+            boolean is210 = version.getMajor() == 2 && version.getMinor() >= 1;
+            boolean is300OrHigher = version.getMajor() > 2;
+            boolean is210OrHigher = is210 || is300OrHigher;
+
             this.isCompactStorage = isCompactStorage;
             this.comment = isNullOrAbsent(row, COMMENT) ? "" : row.getString(COMMENT);
             this.readRepair = row.getDouble(READ_REPAIR);
-            this.localReadRepair = row.getDouble(LOCAL_READ_REPAIR);
-            boolean is210OrMore = version.getMajor() > 2 || (version.getMajor() == 2 && version.getMinor() >= 1);
-            this.replicateOnWrite = is210OrMore || isNullOrAbsent(row, REPLICATE_ON_WRITE) ? DEFAULT_REPLICATE_ON_WRITE : row.getBool(REPLICATE_ON_WRITE);
+
+            if(is300OrHigher)
+                this.localReadRepair = row.getDouble(DCLOCAL_READ_REPAIR);
+            else
+                this.localReadRepair = row.getDouble(LOCAL_READ_REPAIR);
+
+            this.replicateOnWrite = is210OrHigher || isNullOrAbsent(row, REPLICATE_ON_WRITE) ? DEFAULT_REPLICATE_ON_WRITE : row.getBool(REPLICATE_ON_WRITE);
             this.gcGrace = row.getInt(GC_GRACE);
             this.bfFpChance = isNullOrAbsent(row, BF_FP_CHANCE) ? DEFAULT_BF_FP_CHANCE : row.getDouble(BF_FP_CHANCE);
-            this.caching = is210OrMore
-                         ? SimpleJSONParser.parseStringMap(row.getString(CACHING))
-                         : ImmutableMap.of("keys", row.getString(CACHING));
-            this.populateCacheOnFlush = isNullOrAbsent(row, POPULATE_CACHE_ON_FLUSH) ? DEFAULT_POPULATE_CACHE_ON_FLUSH : row.getBool(POPULATE_CACHE_ON_FLUSH);
-            this.memtableFlushPeriodMs = version.getMajor() < 2 || isNullOrAbsent(row, MEMTABLE_FLUSH_PERIOD_MS) ? DEFAULT_MEMTABLE_FLUSH_PERIOD : row.getInt(MEMTABLE_FLUSH_PERIOD_MS);
-            this.defaultTTL = version.getMajor() < 2 || isNullOrAbsent(row, DEFAULT_TTL) ? DEFAULT_DEFAULT_TTL : row.getInt(DEFAULT_TTL);
-            this.speculativeRetry = version.getMajor() < 2 || isNullOrAbsent(row, SPECULATIVE_RETRY) ? DEFAULT_SPECULATIVE_RETRY : row.getString(SPECULATIVE_RETRY);
 
-            if (version.getMajor() >= 2 && !is210OrMore)
+            this.populateCacheOnFlush = isNullOrAbsent(row, POPULATE_CACHE_ON_FLUSH) ? DEFAULT_POPULATE_CACHE_ON_FLUSH : row.getBool(POPULATE_CACHE_ON_FLUSH);
+            this.memtableFlushPeriodMs = is120 || isNullOrAbsent(row, MEMTABLE_FLUSH_PERIOD_MS) ? DEFAULT_MEMTABLE_FLUSH_PERIOD : row.getInt(MEMTABLE_FLUSH_PERIOD_MS);
+            this.defaultTTL = is120 || isNullOrAbsent(row, DEFAULT_TTL) ? DEFAULT_DEFAULT_TTL : row.getInt(DEFAULT_TTL);
+            this.speculativeRetry = is120 || isNullOrAbsent(row, SPECULATIVE_RETRY) ? DEFAULT_SPECULATIVE_RETRY : row.getString(SPECULATIVE_RETRY);
+
+            if (is200)
                 this.indexInterval = isNullOrAbsent(row, INDEX_INTERVAL) ? DEFAULT_INDEX_INTERVAL : row.getInt(INDEX_INTERVAL);
             else
                 this.indexInterval = null;
 
-            if (is210OrMore) {
+            if (is210OrHigher) {
                 this.minIndexInterval = isNullOrAbsent(row, MIN_INDEX_INTERVAL)
                                       ? DEFAULT_MIN_INDEX_INTERVAL
                                       : row.getInt(MIN_INDEX_INTERVAL);
@@ -596,10 +721,27 @@ public class TableMetadata {
                 this.maxIndexInterval = null;
             }
 
-            this.compaction.put("class", row.getString(COMPACTION_CLASS));
-            this.compaction.putAll(SimpleJSONParser.parseStringMap(row.getString(COMPACTION_OPTIONS)));
+            if (is300OrHigher) {
+                this.caching = ImmutableMap.copyOf(row.getMap(CACHING, String.class, String.class));
+            } else if (is210) {
+                this.caching = ImmutableMap.copyOf(SimpleJSONParser.parseStringMap(row.getString(CACHING)));
+            } else {
+                this.caching = ImmutableMap.of("keys", row.getString(CACHING));
+            }
 
-            this.compression.putAll(SimpleJSONParser.parseStringMap(row.getString(COMPRESSION_PARAMS)));
+            if (is300OrHigher)
+                this.compaction = ImmutableMap.copyOf(row.getMap(COMPACTION, String.class, String.class));
+            else {
+                this.compaction = ImmutableMap.<String, String>builder()
+                    .put("class", row.getString(COMPACTION_CLASS))
+                    .putAll(SimpleJSONParser.parseStringMap(row.getString(COMPACTION_OPTIONS)))
+                    .build();
+            }
+
+            if(is300OrHigher)
+                this.compression = ImmutableMap.copyOf(row.getMap(COMPRESSION, String.class, String.class));
+            else
+                this.compression = ImmutableMap.copyOf(SimpleJSONParser.parseStringMap(row.getString(COMPRESSION_PARAMS)));
         }
 
         private static boolean isNullOrAbsent(Row row, String name) {
@@ -628,7 +770,7 @@ public class TableMetadata {
         /**
          * Returns the chance with which a read repair is triggered for this table.
          *
-         * @return the read repair change set for table (in [0.0, 1.0]).
+         * @return the read repair chance set for table (in [0.0, 1.0]).
          */
         public double getReadRepairChance() {
             return readRepair;
@@ -637,7 +779,7 @@ public class TableMetadata {
         /**
          * Returns the cluster local read repair chance set for this table.
          *
-         * @return the local read repair change set for table (in [0.0, 1.0]).
+         * @return the local read repair chance set for table (in [0.0, 1.0]).
          */
         public double getLocalReadRepairChance() {
             return localReadRepair;
@@ -675,7 +817,7 @@ public class TableMetadata {
         /**
          * Returns the caching options for this table.
          *
-         * @return the caching options for this table.
+         * @return an immutable map containing the caching options for this table.
          */
         public Map<String, String> getCaching() {
             return caching;
@@ -769,19 +911,19 @@ public class TableMetadata {
         /**
          * Returns the compaction options for this table.
          *
-         * @return a map containing the compaction options for this table.
+         * @return an immutable map containing the compaction options for this table.
          */
         public Map<String, String> getCompaction() {
-            return new HashMap<String, String>(compaction);
+            return compaction;
         }
 
         /**
          * Returns the compression options for this table.
          *
-         * @return a map containing the compression options for this table.
+         * @return an immutable map containing the compression options for this table.
          */
         public Map<String, String> getCompression() {
-            return new HashMap<String, String>(compression);
+            return compression;
         }
     }
 }

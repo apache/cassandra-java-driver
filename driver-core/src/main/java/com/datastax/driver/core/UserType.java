@@ -27,7 +27,7 @@ import com.google.common.collect.Iterators;
  */
 public class UserType extends DataType implements Iterable<UserType.Field>{
 
-    private static final String TYPE_NAME = "type_name";
+    private static final String TYPE_NAME  = "type_name";
     private static final String COLS_NAMES = "field_names";
     private static final String COLS_TYPES = "field_types";
 

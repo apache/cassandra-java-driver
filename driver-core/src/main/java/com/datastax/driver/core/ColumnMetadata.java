@@ -300,10 +300,41 @@ public class ColumnMetadata {
     // exposed publicly at all.
     static class Raw {
 
-        public enum Kind { PARTITION_KEY, CLUSTERING_KEY, REGULAR, COMPACT_VALUE, STATIC }
+        public enum Kind {
+
+            PARTITION_KEY     ("PARTITION_KEY" , "PARTITION_KEY"),
+            CLUSTERING_COLUMN ("CLUSTERING_KEY", "CLUSTERING"   ),
+            REGULAR           ("REGULAR"       , "REGULAR"      ),
+            COMPACT_VALUE     ("COMPACT_VALUE" , ""             ), // v2 only
+            STATIC            ("STATIC"        , "STATIC"       );
+
+            final String v2;
+            final String v3;
+
+            Kind(String v2, String v3) {
+                this.v2 = v2;
+                this.v3 = v3;
+            }
+
+            static Kind fromStringV2(String s) {
+                for (Kind kind : Kind.values()) {
+                    if(kind.v2.equalsIgnoreCase(s))
+                        return kind;
+                }
+                throw new IllegalArgumentException(s);
+            }
+
+            static Kind fromStringV3(String s) {
+                for (Kind kind : Kind.values()) {
+                    if(kind.v3.equalsIgnoreCase(s))
+                        return kind;
+                }
+                throw new IllegalArgumentException(s);
+            }
+        }
 
         public final String name;
-        public final Kind kind;
+        public Kind kind;
         public final int componentIndex;
         public final DataType dataType;
         public final boolean isReversed;
@@ -319,11 +350,15 @@ public class ColumnMetadata {
         }
 
         static Raw fromRow(Row row, VersionNumber version, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
-
             String name = row.getString(COLUMN_NAME);
-            Kind kind = version.getMajor() < 2 || row.isNull(KIND)
-                ? Kind.REGULAR
-                : Enum.valueOf(Kind.class, row.getString(KIND).toUpperCase());
+            Kind kind;
+            if(version.getMajor() < 2 || row.isNull(KIND)) {
+                kind = Kind.REGULAR;
+            } else if (version.getMajor() < 3) {
+                kind = Kind.fromStringV2(row.getString(KIND));
+            } else {
+                kind = Kind.fromStringV3(row.getString(KIND));
+            }
             int componentIndex = row.isNull(COMPONENT_INDEX) ? 0 : row.getInt(COMPONENT_INDEX);
             String validatorStr = row.getString(VALIDATOR);
             boolean reversed = CassandraTypeParser.isReversed(validatorStr);
