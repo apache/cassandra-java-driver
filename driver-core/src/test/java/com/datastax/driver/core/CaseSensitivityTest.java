@@ -15,12 +15,13 @@
  */
 package com.datastax.driver.core;
 
-import java.util.*;
-
 import org.testng.annotations.Test;
-import static org.testng.Assert.*;
 
-import static com.datastax.driver.core.TestUtils.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNull;
+
+import static com.datastax.driver.core.TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT;
 
 public class CaseSensitivityTest {
 

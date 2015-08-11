@@ -20,32 +20,29 @@ import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Pattern;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.datastax.driver.core.exceptions.DriverInternalError;
-
-import static com.datastax.driver.core.SchemaElement.KEYSPACE;
 
 /**
  * Keeps metadata on the connected cluster, including known nodes and schema definitions.
  */
 public class Metadata {
 
-    private static final Logger logger = LoggerFactory.getLogger(Metadata.class);
-
-    private final Cluster.Manager cluster;
+    final Cluster.Manager cluster;
     volatile String clusterName;
     volatile String partitioner;
     private final ConcurrentMap<InetSocketAddress, Host> hosts = new ConcurrentHashMap<InetSocketAddress, Host>();
-    private final ConcurrentMap<String, KeyspaceMetadata> keyspaces = new ConcurrentHashMap<String, KeyspaceMetadata>();
+    final ConcurrentMap<String, KeyspaceMetadata> keyspaces = new ConcurrentHashMap<String, KeyspaceMetadata>();
     volatile TokenMap tokenMap;
+
+    final ReentrantLock lock = new ReentrantLock();
 
     private static final Pattern cqlId = Pattern.compile("\\w+");
     private static final Pattern lowercaseId = Pattern.compile("[a-z][a-z0-9_]*");
@@ -54,176 +51,22 @@ public class Metadata {
         this.cluster = cluster;
     }
 
-    // Synchronized to make it easy to detect dropped keyspaces
-    synchronized void rebuildSchema(SchemaElement targetType, String targetKeyspace, String targetName,
-                                    ResultSet ks, ResultSet udts, ResultSet cfs,
-                                    ResultSet cols, ResultSet functions, ResultSet aggregates,
-                                    VersionNumber cassandraVersion) {
-
-
-        Map<String, List<Row>> udtDefs = groupByKeyspace(udts);
-        Map<String, List<Row>> cfDefs = groupByKeyspace(cfs);
-        Map<String, List<Row>> functionDefs = groupByKeyspace(functions);
-        Map<String, List<Row>> aggregateDefs = groupByKeyspace(aggregates);
-
-        // Gather columns per Cf
-        Map<String, Map<String, Map<String, ColumnMetadata.Raw>>> colsDefs = new HashMap<String, Map<String, Map<String, ColumnMetadata.Raw>>>();
-        if (cols != null) {
-            for (Row row : cols) {
-                String ksName = row.getString(KeyspaceMetadata.KS_NAME);
-                String cfName = row.getString(TableMetadata.CF_NAME);
-                Map<String, Map<String, ColumnMetadata.Raw>> colsByCf = colsDefs.get(ksName);
-                if (colsByCf == null) {
-                    colsByCf = new HashMap<String, Map<String, ColumnMetadata.Raw>>();
-                    colsDefs.put(ksName, colsByCf);
-                }
-                Map<String, ColumnMetadata.Raw> l = colsByCf.get(cfName);
-                if (l == null) {
-                    l = new HashMap<String, ColumnMetadata.Raw>();
-                    colsByCf.put(cfName, l);
-                }
-                ColumnMetadata.Raw c = ColumnMetadata.Raw.fromRow(row, cassandraVersion, cluster.protocolVersion(), cluster.configuration.getCodecRegistry());
-                l.put(c.name, c);
-            }
-        }
-
-        if (targetType == null || targetType == KEYSPACE) { // Refresh one or all keyspaces
-            assert ks != null;
-            Set<String> addedKs = new HashSet<String>();
-            for (Row ksRow : ks) {
-                String ksName = ksRow.getString(KeyspaceMetadata.KS_NAME);
-                KeyspaceMetadata ksm = KeyspaceMetadata.build(ksRow, udtDefs.get(ksName), cluster.protocolVersion(), cluster.configuration.getCodecRegistry());
-
-                if (cfDefs.containsKey(ksName)) {
-                    buildTableMetadata(ksm, cfDefs.get(ksName), colsDefs.get(ksName), cassandraVersion);
-                }
-                if (functionDefs.containsKey(ksName)) {
-                    buildFunctionMetadata(ksm, functionDefs.get(ksName), cluster.protocolVersion(), cluster.configuration.getCodecRegistry());
-                }
-                if (aggregateDefs.containsKey(ksName)) {
-                    buildAggregateMetadata(ksm, aggregateDefs.get(ksName), cluster.protocolVersion(), cluster.configuration.getCodecRegistry());
-                }
-                addedKs.add(ksName);
-                keyspaces.put(ksName, ksm);
-            }
-
-            // If keyspace is null, it means we're rebuilding from scratch, so
-            // remove anything that was not just added as it means it's a dropped keyspace
-            if (targetKeyspace == null) {
-                Iterator<String> iter = keyspaces.keySet().iterator();
-                while (iter.hasNext()) {
-                    if (!addedKs.contains(iter.next()))
-                        iter.remove();
-                }
-            }
-        } else {
-            assert targetKeyspace != null;
-            KeyspaceMetadata ksm = keyspaces.get(targetKeyspace);
-
-            // If we update a keyspace we don't know about, something went
-            // wrong. Log an error an schedule a full schema rebuilt.
-            if (ksm == null) {
-                logger.error(String.format("Asked to rebuild %s %s.%s but I don't know keyspace %s", targetType, targetKeyspace, targetName, targetKeyspace));
-                cluster.submitSchemaRefresh(null, null, null, null);
+    void rebuildTokenMap(String partitioner, Map<Host, Collection<String>> allTokens) {
+        lock.lock();
+        try {
+            if (allTokens.isEmpty())
                 return;
-            }
 
-            switch (targetType) {
-                case TABLE:
-                    if (cfDefs.containsKey(targetKeyspace))
-                        buildTableMetadata(ksm, cfDefs.get(targetKeyspace), colsDefs.get(targetKeyspace), cassandraVersion);
-                    break;
-                case TYPE:
-                    if (udtDefs.containsKey(targetKeyspace))
-                        ksm.addUserTypes(udtDefs.get(targetKeyspace), cluster.protocolVersion(), cluster.configuration.getCodecRegistry());
-                    break;
-                case FUNCTION:
-                    if (functionDefs.containsKey(targetKeyspace))
-                        buildFunctionMetadata(ksm, functionDefs.get(targetKeyspace), cluster.protocolVersion(), cluster.configuration.getCodecRegistry());
-                    break;
-                case AGGREGATE:
-                    if (functionDefs.containsKey(targetKeyspace))
-                        buildAggregateMetadata(ksm, aggregateDefs.get(targetKeyspace), cluster.protocolVersion(), cluster.configuration.getCodecRegistry());
-                    break;
-                default:
-                    logger.warn("Unexpected element type to rebuild: {}", targetType);
-            }
-        }
-    }
-
-    private Map<String, List<Row>> groupByKeyspace(ResultSet rs) {
-        if (rs == null)
-            return Collections.emptyMap();
-
-        Map<String, List<Row>> result = new HashMap<String, List<Row>>();
-        for (Row row : rs) {
-            String ksName = row.getString(KeyspaceMetadata.KS_NAME);
-            List<Row> l = result.get(ksName);
-            if (l == null) {
-                l = new ArrayList<Row>();
-                result.put(ksName, l);
-            }
-            l.add(row);
-        }
-        return result;
-    }
-
-    private void buildTableMetadata(KeyspaceMetadata ksm, List<Row> cfRows, Map<String, Map<String, ColumnMetadata.Raw>> colsDefs, VersionNumber cassandraVersion) {
-        for (Row cfRow : cfRows) {
-            String cfName = cfRow.getString(TableMetadata.CF_NAME);
-            try {
-                Map<String, ColumnMetadata.Raw> cols = colsDefs == null ? null : colsDefs.get(cfName);
-                if (cols == null || cols.isEmpty()) {
-                    if (cassandraVersion.getMajor() >= 2) {
-                        // In C* >= 2.0, we should never have no columns metadata because at the very least we should
-                        // have the metadata corresponding to the default CQL metadata. So if we don't have any columns,
-                        // that can only mean that the table got creating concurrently with our schema queries, and the
-                        // query for columns metadata reached the node before the table was persisted while the table
-                        // metadata one reached it afterwards. We could make the query to the column metadata sequential
-                        // with the table metadata instead of in parallel, but it's probably not worth making it slower
-                        // all the time to avoid this race since 1) it's very very uncommon and 2) we can just ignore the
-                        // incomplete table here for now and it'll get updated next time with no particular consequence
-                        // (if the table creation was concurrent with our querying, we'll get a notifciation later and
-                        // will reupdate the schema for it anyway). See JAVA-320 for why we need this.
-                        continue;
-                    } else {
-                        // C* 1.2 don't persists default CQL metadata, so it's possible not to have columns (for thirft
-                        // tables). But in that case TableMetadata.build() knows how to handle it.
-                        cols = Collections.<String, ColumnMetadata.Raw>emptyMap();
-                    }
-                }
-                TableMetadata.build(ksm, cfRow, cols, cassandraVersion, cluster.protocolVersion(), cluster.configuration.getCodecRegistry());
-            } catch (RuntimeException e) {
-                // See ControlConnection#refreshSchema for why we'd rather not probably this further
-                logger.error(String.format("Error parsing schema for table %s.%s: "
-                                           + "Cluster.getMetadata().getKeyspace(\"%s\").getTable(\"%s\") will be missing or incomplete",
-                                           ksm.getName(), cfName, ksm.getName(), cfName), e);
-            }
-        }
-    }
-
-    private void buildFunctionMetadata(KeyspaceMetadata ksm, List<Row> rows, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
-        for (Row row : rows)
-            FunctionMetadata.build(ksm, row, protocolVersion, codecRegistry);
-    }
-
-    private void buildAggregateMetadata(KeyspaceMetadata ksm, List<Row> rows, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
-        for (Row row : rows)
-            AggregateMetadata.build(ksm, row, protocolVersion, codecRegistry);
-    }
-
-
-    synchronized void rebuildTokenMap(String partitioner, Map<Host, Collection<String>> allTokens) {
-        if (allTokens.isEmpty())
-            return;
-
-        Token.Factory factory = partitioner == null
-                              ? (tokenMap == null ? null : tokenMap.factory)
-                              : Token.getFactory(partitioner);
-        if (factory == null)
-            return;
+            Token.Factory factory = partitioner == null
+                ? (tokenMap == null ? null : tokenMap.factory)
+                : Token.getFactory(partitioner);
+            if (factory == null)
+                return;
 
         this.tokenMap = TokenMap.build(factory, allTokens, keyspaces.values());
+        } finally {
+            lock.unlock();
+        }
     }
 
     Host add(InetSocketAddress address) {
@@ -438,14 +281,6 @@ public class Metadata {
      */
     public KeyspaceMetadata getKeyspace(String keyspace) {
         return keyspaces.get(handleId(keyspace));
-    }
-
-    /**
-     * Used when the keyspace name is unquoted and in the exact case we store it in
-     * (typically when we got it from an internal call, not from the user).
-     */
-    KeyspaceMetadata getKeyspaceInternal(String keyspace) {
-        return keyspaces.get(keyspace);
     }
 
     void removeKeyspace(String keyspace) {

@@ -27,8 +27,6 @@ import org.slf4j.LoggerFactory;
 import com.datastax.driver.core.exceptions.*;
 
 import static com.datastax.driver.core.SchemaElement.KEYSPACE;
-import static com.datastax.driver.core.SchemaElement.TABLE;
-import static com.datastax.driver.core.SchemaElement.TYPE;
 
 /**
  * Internal implementation of ResultSetFuture.
@@ -83,7 +81,7 @@ class DefaultResultSetFuture extends AbstractFuture<ResultSet> implements Result
                                     if (scc.targetType == KEYSPACE) {
                                         session.cluster.manager.metadata.removeKeyspace(scc.targetKeyspace);
                                     } else {
-                                        KeyspaceMetadata keyspace = session.cluster.manager.metadata.getKeyspaceInternal(scc.targetKeyspace);
+                                        KeyspaceMetadata keyspace = session.cluster.manager.metadata.keyspaces.get(scc.targetKeyspace);
                                         if (keyspace == null) {
                                             logger.warn("Received a DROPPED notification for {} {}.{}, but this keyspace is unknown in our metadata",
                                                 scc.targetType, scc.targetKeyspace, scc.targetName);

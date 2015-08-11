@@ -1,5 +1,21 @@
 ## Changelog
 
+### 3.3.0-alpha1
+
+- [new feature] Support new system tables in C* 3.0 (JAVA-571)
+
+Merged from 2.2 branch:
+
+- [improvement] Rename DateWithoutTime to LocalDate (JAVA-810)
+- [bug] DateCodec does not format values correctly (JAVA-816)
+- [bug] TimeCodec does not format values correctly (JAVA-817)
+- [bug] TypeCodec.getDataTypeFor() does not handle LocalDate instances (JAVA-818)
+- [improvement] Make ResultSet#fetchMoreResult return a
+  ListenableFuture<ResultSet> (JAVA-836)
+- [improvement] Disable frozen checks in mapper (JAVA-843)
+- [improvement] Allow user to register custom type codecs (JAVA-721)
+- [improvement] Support custom type codecs in mapper (JAVA-722)
+
 ### 2.2.0-rc2
 
 - [improvement] Rename DateWithoutTime to LocalDate (JAVA-810)
