@@ -15,8 +15,6 @@
  */
 package com.datastax.driver.core;
 
-import com.datastax.driver.core.ColumnMetadata.IndexMetadata;
-
 /**
  * Augment AssertJ with custom assertions for the Java driver.
  */
@@ -37,10 +35,6 @@ public class Assertions extends org.assertj.core.api.Assertions {
         return new DataTypeAssert(type);
     }
 
-    public static IndexMetadataAssert assertThat(IndexMetadata indexMetadata) {
-        return new IndexMetadataAssert(indexMetadata);
-    }
-
     public static LocalDateAssert assertThat(LocalDate localDate) {
         return new LocalDateAssert(localDate);
     }
@@ -51,6 +45,10 @@ public class Assertions extends org.assertj.core.api.Assertions {
 
     public static ColumnMetadataAssert assertThat(ColumnMetadata column) {
         return new ColumnMetadataAssert(column);
+    }
+
+    public static IndexMetadataAssert assertThat(IndexMetadata index) {
+        return new IndexMetadataAssert(index);
     }
 
     public static TypeCodecAssert assertThat(TypeCodec codec) {
