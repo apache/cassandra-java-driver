@@ -15,11 +15,9 @@
  */
 package com.datastax.driver.core;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import org.assertj.core.api.AbstractAssert;
 
-import com.datastax.driver.core.ColumnMetadata.IndexMetadata;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class IndexMetadataAssert extends AbstractAssert<IndexMetadataAssert, IndexMetadata> {
 
@@ -81,5 +79,14 @@ public class IndexMetadataAssert extends AbstractAssert<IndexMetadataAssert, Ind
         assertThat(actual.isCustomIndex()).isFalse();
         return this;
     }
-    
+
+    public IndexMetadataAssert hasColumn(ColumnMetadata column) {
+        assertThat(actual.getColumn(column.getName())).isEqualTo(column);
+        return this;
+    }
+
+    public IndexMetadataAssert hasSingleColumn(ColumnMetadata column) {
+         assertThat(actual.getColumns()).containsOnly(column);
+        return this;
+    }
 }
