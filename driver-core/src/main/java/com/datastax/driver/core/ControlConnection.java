@@ -512,6 +512,8 @@ class ControlConnection implements Host.StateListener {
     private static void refreshNodeListAndTokenMap(Connection connection, Cluster.Manager cluster, boolean isInitialConnection, boolean logMissingRpcAddresses) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
         logger.debug("[Control connection] Refreshing node list and token map");
 
+        boolean metadataEnabled = cluster.configuration.getQueryOptions().isMetadataEnabled();
+
         // Make sure we're up to date on nodes and tokens
 
         DefaultResultSetFuture localFuture = new DefaultResultSetFuture(null, new Requests.Query(SELECT_LOCAL));
@@ -540,9 +542,11 @@ class ControlConnection implements Host.StateListener {
                 logger.debug("Host in local system table ({}) unknown to us (ok if said host just got removed)", connection.address);
             } else {
                 updateInfo(host, localRow, cluster, isInitialConnection);
-                Set<String> tokens = localRow.getSet("tokens", String.class);
-                if (partitioner != null && !tokens.isEmpty())
-                    tokenMap.put(host, tokens);
+                if (metadataEnabled) {
+                    Set<String> tokens = localRow.getSet("tokens", String.class);
+                    if (partitioner != null && !tokens.isEmpty())
+                        tokenMap.put(host, tokens);
+                }
             }
         }
 
@@ -563,7 +567,8 @@ class ControlConnection implements Host.StateListener {
             racks.add(row.getString("rack"));
             cassandraVersions.add(row.getString("release_version"));
             listenAddresses.add(row.getInet("peer"));
-            allTokens.add(row.getSet("tokens", String.class));
+            if (metadataEnabled)
+                allTokens.add(row.getSet("tokens", String.class));
         }
 
         for (int i = 0; i < foundHosts.size(); i++) {
@@ -580,7 +585,7 @@ class ControlConnection implements Host.StateListener {
             if (cassandraVersions.get(i) != null)
                 host.setVersionAndListenAdress(cassandraVersions.get(i), listenAddresses.get(i));
 
-            if (partitioner != null && !allTokens.get(i).isEmpty())
+            if (metadataEnabled && partitioner != null && !allTokens.get(i).isEmpty())
                 tokenMap.put(host, allTokens.get(i));
 
             if (isNew && !isInitialConnection)
@@ -593,7 +598,8 @@ class ControlConnection implements Host.StateListener {
             if (!host.getSocketAddress().equals(connection.address) && !foundHostsSet.contains(host.getSocketAddress()))
                 cluster.removeHost(host, isInitialConnection);
 
-        cluster.metadata.rebuildTokenMap(partitioner, tokenMap);
+        if (metadataEnabled)
+            cluster.metadata.rebuildTokenMap(partitioner, tokenMap);
     }
 
     boolean waitForSchemaAgreement() throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {

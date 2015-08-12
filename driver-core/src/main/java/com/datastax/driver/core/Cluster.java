@@ -2200,6 +2200,9 @@ public class Cluster implements Closeable {
                     }
                     break;
                 case SCHEMA_CHANGE:
+                    if (!configuration.getQueryOptions().isMetadataEnabled())
+                        return;
+
                     ProtocolEvent.SchemaChange scc = (ProtocolEvent.SchemaChange)event;
                     switch (scc.change) {
                         case CREATED:

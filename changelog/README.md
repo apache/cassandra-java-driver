@@ -37,6 +37,7 @@
 - [bug] Avoid quadratic ring processing with invalid replication factors (JAVA-859)
 - [improvement] Debounce control connection queries (JAVA-657)
 - [bug] LoadBalancingPolicy.distance() called before init() (JAVA-784)
+- [new feature] Make driver-side metadata optional (JAVA-828)
 
 Merged from 2.0.10_fixes branch:
 
