@@ -25,10 +25,8 @@ import com.google.common.util.concurrent.ListenableFuture;
 import org.mockito.ArgumentCaptor;
 import org.testng.annotations.*;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.timeout;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.*;
 
 import com.datastax.driver.core.utils.Bytes;
 
@@ -50,16 +48,22 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
 
     Cluster cluster1;
     Cluster cluster2; // a second cluster to check that other clients also get notified
+    Cluster schemaDisabledCluster; // a cluster with schema metadata disabled.
 
     // The metadatas of the two clusters (we'll test that they're kept in sync)
     List<Metadata> metadatas;
 
     Session session1;
 
+    Session schemaDisabledSession;
+
     SchemaChangeListener listener1;
     SchemaChangeListener listener2;
+    SchemaChangeListener schemaDisabledListener;
 
     List<SchemaChangeListener> listeners;
+
+    ControlConnection schemaDisabledControlConnection;
 
     @Override
     protected Collection<String> getTableDefinitions() {
@@ -77,6 +81,20 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
             );
         cluster1 = builder.build();
         cluster2 = builder.build();
+        schemaDisabledCluster = spy(configure(Cluster.builder())
+            .addContactPointsWithPorts(Collections.singletonList(hostAddress))
+            .withClusterName("schema-disabled")
+            .withQueryOptions(new QueryOptions()
+                    .setRefreshNodeIntervalMillis(0)
+                    .setRefreshNodeListIntervalMillis(0)
+                    .setRefreshSchemaIntervalMillis(0)
+                    .setMetadataEnabled(false)
+            ).build());
+
+        schemaDisabledSession = schemaDisabledCluster.connect();
+
+        schemaDisabledControlConnection = spy(schemaDisabledCluster.manager.controlConnection);
+        schemaDisabledCluster.manager.controlConnection = schemaDisabledControlConnection;
 
         metadatas = Lists.newArrayList(cluster1.getMetadata(), cluster2.getMetadata());
 
@@ -85,6 +103,9 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
         cluster1.register(listener1 = mock(SchemaChangeListener.class));
         cluster1.register(listener2 = mock(SchemaChangeListener.class));
         listeners = Lists.newArrayList(listener1, listener2);
+
+        schemaDisabledCluster.register(schemaDisabledListener = mock(SchemaChangeListener.class));
+        verify(schemaDisabledListener, times(1)).onRegister(schemaDisabledCluster);
 
         execute(CREATE_KEYSPACE, "lowercase");
         execute(CREATE_KEYSPACE, "\"CaseSensitive\"");
@@ -96,6 +117,8 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
             cluster1.close();
         if (cluster2 != null)
             cluster2.close();
+        if (schemaDisabledCluster != null)
+            schemaDisabledCluster.close();
     }
 
     @DataProvider(name = "existingKeyspaceName")
@@ -113,6 +136,19 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
         for (SchemaChangeListener listener : listeners) {
             reset(listener);
         }
+        reset(schemaDisabledControlConnection);
+    }
+
+    /**
+     * Ensures that a listener registered on a Cluster that has schema metadata disabled
+     * is never invoked with schema change events.
+     *
+     * @jira_ticket JAVA-858
+     * @since 2.0.11
+     */
+    @AfterMethod(groups = "short")
+    public void verifyNoMoreInteractionsWithListener() {
+        verifyNoMoreInteractions(schemaDisabledListener);
     }
 
     @Test(groups = "short", dataProvider = "existingKeyspaceName")
@@ -125,6 +161,7 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
                 .isInKeyspace(handleId(keyspace))
                 .hasName("table1");
         }
+
         for (Metadata m : metadatas)
             assertThat(m.getKeyspace(keyspace).getTable("table1")).isNotNull();
     }
@@ -240,6 +277,119 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
         for (Metadata m : metadatas) {
             assertThat(m.getKeyspace(keyspace)).isNull();
             assertThat(m.getReplicas(keyspace, Bytes.fromHexString("0xCAFEBABE"))).isEmpty();
+        }
+    }
+
+
+    /**
+     * Ensures that calling {@link Metadata#newToken(String)} on a Cluster that has schema
+     * metadata disabled will throw a {@link IllegalStateException}.
+     *
+     * @jira_ticket JAVA-858
+     * @since 2.0.11
+     */
+    @Test(groups = "short", expectedExceptions = IllegalStateException.class)
+    public void should_throw_illegal_state_exception_on_newToken_with_metadata_disabled() {
+        Cluster cluster = configure(Cluster.builder())
+            .addContactPointsWithPorts(Collections.singletonList(hostAddress))
+            .withQueryOptions(new QueryOptions()
+                    .setRefreshNodeIntervalMillis(0)
+                    .setRefreshNodeListIntervalMillis(0)
+                    .setRefreshSchemaIntervalMillis(0)
+                    .setMetadataEnabled(false)
+            ).build();
+
+        try {
+            cluster.init();
+            cluster.getMetadata().newToken("0x00");
+        } finally {
+            cluster.close();
+        }
+    }
+
+
+    /**
+     * Ensures that calling {@link Metadata#newTokenRange(Token, Token)} on a Cluster that has schema
+     * metadata disabled will throw a {@link IllegalStateException}.
+     *
+     * @jira_ticket JAVA-858
+     * @since 2.0.11
+     */
+    @Test(groups = "short", expectedExceptions = IllegalStateException.class)
+    public void should_throw_illegal_state_exception_on_newTokenRange_with_metadata_disabled() {
+        Cluster cluster = configure(Cluster.builder())
+            .addContactPointsWithPorts(Collections.singletonList(hostAddress))
+            .withQueryOptions(new QueryOptions()
+                    .setRefreshNodeIntervalMillis(0)
+                    .setRefreshNodeListIntervalMillis(0)
+                    .setRefreshSchemaIntervalMillis(0)
+                    .setMetadataEnabled(false)
+            ).build();
+
+        try {
+            cluster.init();
+            Token.Factory factory = Token.getFactory("Murmur3Partitioner");
+            Token token = factory.fromString(Long.toString(1));
+            cluster.getMetadata().newTokenRange(token, token);
+        } finally {
+            cluster.close();
+        }
+    }
+
+    /**
+     * Ensures that executing a query causing a schema change with a Cluster that has schema metadata
+     * disabled will still wait on schema agreement, but not refresh the schema.
+     *
+     * @jira_ticket JAVA-858
+     * @since 2.0.11
+     */
+    @Test(groups = "short")
+    public void should_not_refresh_schema_on_schema_change_response() throws InterruptedException {
+        ResultSet rs = schemaDisabledSession.execute(String.format(CREATE_TABLE, keyspace));
+
+        // Should still wait on schema agreement.
+        assertThat(rs.getExecutionInfo().isSchemaInAgreement()).isTrue();
+        assertThat(schemaDisabledCluster.getMetadata().checkSchemaAgreement()).isTrue();
+
+        // Wait up to 1 second (since refreshSchema submitted in an executor) and check that refreshSchema never called.
+        verify(schemaDisabledControlConnection, after(1000).never()).refreshSchema(any(String.class), any(String.class));
+    }
+
+    /**
+     * Ensures that when schema metadata is enabled using {@link QueryOptions#setMetadataEnabled(boolean)}
+     * that a schema and nodelist refresh is submitted, but only if schema metadata is currently disabled.
+     *
+     * @jira_ticket JAVA-858
+     * @since 2.0.11
+     */
+    @Test(groups = "short")
+    public void should_refresh_schema_and_token_map_if_schema_metadata_reenabled() throws Exception {
+        try {
+            schemaDisabledCluster.getConfiguration().getQueryOptions().setMetadataEnabled(true);
+
+            verify(schemaDisabledControlConnection, after(1000)).refreshSchema(null, null);
+            // TODO: Remove atLeastOnce() if submitNodeRefresh removed from setMetadataEnabled.
+            verify(schemaDisabledControlConnection, atLeastOnce()).refreshNodeListAndTokenMap();
+
+            // Ensure that there is schema metadata.
+            assertThat(schemaDisabledCluster.getMetadata().getKeyspace(keyspace)).isNotNull();
+            Token token1 = schemaDisabledCluster.getMetadata().newToken("0");
+            Token token2 = schemaDisabledCluster.getMetadata().newToken("111111");
+            assertThat(token1).isNotNull();
+            assertThat(token2).isNotNull();
+            assertThat(schemaDisabledCluster.getMetadata().newTokenRange(token1, token2)).isNotNull();
+
+            assertThat(schemaDisabledCluster.getMetadata().getTokenRanges()).isNotNull().isNotEmpty();
+
+            // Try enabling again and ensure schema is not refreshed again.
+            reset(schemaDisabledControlConnection);
+            schemaDisabledCluster.getConfiguration().getQueryOptions().setMetadataEnabled(true);
+            verify(schemaDisabledControlConnection, after(1000).never()).refreshSchema(null, null);
+            verify(schemaDisabledControlConnection, never()).refreshNodeListAndTokenMap();
+        } finally {
+            // Reset listener mock to not count it's interactions in this test.
+            reset(schemaDisabledListener);
+            schemaDisabledCluster.getConfiguration().getQueryOptions().setMetadataEnabled(false);
         }
     }
 
