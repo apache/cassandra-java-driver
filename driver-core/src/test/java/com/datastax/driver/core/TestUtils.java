@@ -456,4 +456,13 @@ public abstract class TestUtils {
             .withLoadBalancingPolicy(new WhiteListPolicy(new RoundRobinPolicy(), singleAddress))
             .build();
     }
+
+    /**
+     * @return a {@QueryOptions} that disables debouncing by setting intervals to 0ms.
+     */
+    public static QueryOptions nonDebouncingQueryOptions() {
+        return new QueryOptions().setRefreshNodeIntervalMillis(0)
+            .setRefreshNodeListIntervalMillis(0)
+            .setRefreshSchemaIntervalMillis(0);
+    }
 }

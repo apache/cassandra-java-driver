@@ -32,6 +32,7 @@ import com.datastax.driver.core.utils.Bytes;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.Metadata.handleId;
+import static com.datastax.driver.core.TestUtils.nonDebouncingQueryOptions;
 
 public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
 
@@ -74,20 +75,13 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
     public void setup() throws InterruptedException {
         Cluster.Builder builder = configure(Cluster.builder())
             .addContactPointsWithPorts(Collections.singletonList(hostAddress))
-            .withQueryOptions(new QueryOptions()
-                    .setRefreshNodeIntervalMillis(0)
-                    .setRefreshNodeListIntervalMillis(0)
-                    .setRefreshSchemaIntervalMillis(0)
-            );
+            .withQueryOptions(nonDebouncingQueryOptions());
         cluster1 = builder.build();
         cluster2 = builder.build();
         schemaDisabledCluster = spy(configure(Cluster.builder())
             .addContactPointsWithPorts(Collections.singletonList(hostAddress))
             .withClusterName("schema-disabled")
-            .withQueryOptions(new QueryOptions()
-                    .setRefreshNodeIntervalMillis(0)
-                    .setRefreshNodeListIntervalMillis(0)
-                    .setRefreshSchemaIntervalMillis(0)
+            .withQueryOptions(nonDebouncingQueryOptions()
                     .setMetadataEnabled(false)
             ).build());
 
@@ -292,10 +286,7 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
     public void should_throw_illegal_state_exception_on_newToken_with_metadata_disabled() {
         Cluster cluster = configure(Cluster.builder())
             .addContactPointsWithPorts(Collections.singletonList(hostAddress))
-            .withQueryOptions(new QueryOptions()
-                    .setRefreshNodeIntervalMillis(0)
-                    .setRefreshNodeListIntervalMillis(0)
-                    .setRefreshSchemaIntervalMillis(0)
+            .withQueryOptions(nonDebouncingQueryOptions()
                     .setMetadataEnabled(false)
             ).build();
 
@@ -319,10 +310,7 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
     public void should_throw_illegal_state_exception_on_newTokenRange_with_metadata_disabled() {
         Cluster cluster = configure(Cluster.builder())
             .addContactPointsWithPorts(Collections.singletonList(hostAddress))
-            .withQueryOptions(new QueryOptions()
-                    .setRefreshNodeIntervalMillis(0)
-                    .setRefreshNodeListIntervalMillis(0)
-                    .setRefreshSchemaIntervalMillis(0)
+            .withQueryOptions(nonDebouncingQueryOptions()
                     .setMetadataEnabled(false)
             ).build();
 

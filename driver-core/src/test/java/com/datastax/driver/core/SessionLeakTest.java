@@ -32,7 +32,7 @@ import static org.assertj.core.api.Assertions.fail;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
 
 import static com.datastax.driver.core.Assertions.assertThat;
-
+import static com.datastax.driver.core.TestUtils.nonDebouncingQueryOptions;
 
 public class SessionLeakTest {
 
@@ -53,7 +53,9 @@ public class SessionLeakTest {
             cluster = Cluster.builder()
                     .addContactPointsWithPorts(Collections.singletonList(
                             new InetSocketAddress(CCMBridge.IP_PREFIX + '1', 9042)))
-                    .withNettyOptions(channelMonitor.nettyOptions()).build();
+                    .withNettyOptions(channelMonitor.nettyOptions())
+                    .withQueryOptions(nonDebouncingQueryOptions())
+                    .build();
 
             cluster.init();
 
