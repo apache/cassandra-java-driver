@@ -2009,8 +2009,9 @@ public abstract class TypeCodec<T> {
 
         @Override
         public UDTValue deserialize(ByteBuffer bytes, ProtocolVersion protocolVersion) {
-            if (bytes == null || bytes.remaining() == 0)
+            if (bytes == null)
                 return null;
+            // empty byte buffers will result in empty UDTValues
             ByteBuffer input = bytes.duplicate();
             UDTValue value = definition.newValue();
 
@@ -2121,8 +2122,9 @@ public abstract class TypeCodec<T> {
 
         @Override
         public TupleValue deserialize(ByteBuffer bytes, ProtocolVersion protocolVersion) {
-            if (bytes == null || bytes.remaining() == 0)
+            if (bytes == null)
                 return null;
+            // empty byte buffers will result in empty TupleValues
             ByteBuffer input = bytes.duplicate();
             TupleValue value = definition.newValue();
 
