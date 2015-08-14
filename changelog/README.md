@@ -5,6 +5,8 @@
 - [bug] Propagate CodecRegistry to nested UDTs (JAVA-847)
 - [improvement] Ability to store a default, shareable CodecRegistry
   instance (JAVA-848)
+- [bug] Treat empty ByteBuffers as empty values in TupleCodec and
+  UDTCodec (JAVA-880)
 
 
 ### 2.2.0-rc2
