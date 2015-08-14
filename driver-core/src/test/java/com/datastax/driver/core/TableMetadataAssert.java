@@ -50,4 +50,14 @@ public class TableMetadataAssert extends AbstractAssert<TableMetadataAssert, Tab
         assertThat(actual.getColumn(columnName)).isNull();
         return this;
     }
+
+    public TableMetadataAssert hasComment(String comment) {
+        assertThat(actual.getOptions().getComment()).isEqualTo(comment);
+        return this;
+    }
+
+    public TableMetadataAssert doesNotHaveComment(String comment) {
+        assertThat(actual.getOptions().getComment()).isNotEqualTo(comment);
+        return this;
+    }
 }

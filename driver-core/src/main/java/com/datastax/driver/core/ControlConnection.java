@@ -19,8 +19,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.google.common.base.Objects;
@@ -258,11 +257,14 @@ class ControlConnection implements Host.StateListener {
             // the node we're connecting to.
             refreshNodeListAndTokenMap(connection, cluster, isInitialConnection, true);
 
-            // Note that refreshing the schema will trigger refreshNodeListAndTokenMap since table == null
-            // We want that because the token map was not properly initialized by the first call above, since it requires the list of keyspaces
-            // to be loaded.
             logger.debug("[Control connection] Refreshing schema");
-            refreshSchema(connection, null, null, cluster, isInitialConnection);
+            refreshSchema(connection, null, null, cluster);
+
+            // We need to refresh the node list again;
+            // We want that because the token map was not properly initialized by the first call above,
+            // since it requires the list of keyspaces to be loaded.
+            refreshNodeListAndTokenMap(connection, cluster, false, true);
+
             return connection;
         } catch (BusyConnectionException e) {
             connection.closeAsync().force();
@@ -283,13 +285,22 @@ class ControlConnection implements Host.StateListener {
     }
 
     public void refreshSchema(String keyspace, String table) throws InterruptedException {
-        logger.debug("[Control connection] Refreshing schema for {}{}", keyspace == null ? "" : keyspace, table == null ? "" : '.' + table);
+        if(keyspace == null && table == null) {
+            logger.debug("[Control connection] Refreshing schema");
+        } else {
+            logger.debug("[Control connection] Refreshing schema for {}{}", keyspace == null ? "" : keyspace, table == null ? "" : '.' + table);
+        }
         try {
             Connection c = connectionRef.get();
             // At startup, when we add the initial nodes, this will be null, which is ok
             if (c == null)
                 return;
-            refreshSchema(c, keyspace, table, cluster, false);
+            refreshSchema(c, keyspace, table, cluster);
+            // If the table is null, we either rebuild all from scratch or have an updated keyspace. In both cases, rebuild the token map
+            // since some replication on some keyspace may have changed
+            if (table == null) {
+                cluster.submitNodeListRefresh();
+            }
         } catch (ConnectionException e) {
             logger.debug("[Control connection] Connection error while refreshing schema ({})", e.getMessage());
             signalError();
@@ -304,7 +315,7 @@ class ControlConnection implements Host.StateListener {
         }
     }
 
-    static void refreshSchema(Connection connection, String keyspace, String table, Cluster.Manager cluster, boolean isInitialConnection) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
+    static void refreshSchema(Connection connection, String keyspace, String table, Cluster.Manager cluster) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
         // Make sure we're up to date on schema
         String whereClause = "";
         if (keyspace != null) {
@@ -345,11 +356,6 @@ class ControlConnection implements Host.StateListener {
             // So log, but let things go otherwise.
             logger.error("Error parsing schema from Cassandra system tables: the schema in Cluster#getMetadata() will appear incomplete or stale", e);
         }
-
-        // If the table is null, we either rebuild all from scratch or have an updated keyspace. In both case, rebuild the token map
-        // since some replication on some keyspace may have changed
-        if (table == null)
-            refreshNodeListAndTokenMap(connection, cluster, false, false);
     }
 
     public void refreshNodeListAndTokenMap() {
@@ -358,7 +364,6 @@ class ControlConnection implements Host.StateListener {
         if (c == null)
             return;
 
-        logger.debug("[Control connection] Refreshing node list and token map");
         try {
             refreshNodeListAndTokenMap(c, cluster, false, true);
         } catch (ConnectionException e) {
@@ -507,6 +512,8 @@ class ControlConnection implements Host.StateListener {
     private static void refreshNodeListAndTokenMap(Connection connection, Cluster.Manager cluster, boolean isInitialConnection, boolean logMissingRpcAddresses) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
         logger.debug("[Control connection] Refreshing node list and token map");
 
+        boolean metadataEnabled = cluster.configuration.getQueryOptions().isMetadataEnabled();
+
         // Make sure we're up to date on nodes and tokens
 
         DefaultResultSetFuture localFuture = new DefaultResultSetFuture(null, new Requests.Query(SELECT_LOCAL));
@@ -535,9 +542,11 @@ class ControlConnection implements Host.StateListener {
                 logger.debug("Host in local system table ({}) unknown to us (ok if said host just got removed)", connection.address);
             } else {
                 updateInfo(host, localRow, cluster, isInitialConnection);
-                Set<String> tokens = localRow.getSet("tokens", String.class);
-                if (partitioner != null && !tokens.isEmpty())
-                    tokenMap.put(host, tokens);
+                if (metadataEnabled) {
+                    Set<String> tokens = localRow.getSet("tokens", String.class);
+                    if (partitioner != null && !tokens.isEmpty())
+                        tokenMap.put(host, tokens);
+                }
             }
         }
 
@@ -558,7 +567,8 @@ class ControlConnection implements Host.StateListener {
             racks.add(row.getString("rack"));
             cassandraVersions.add(row.getString("release_version"));
             listenAddresses.add(row.getInet("peer"));
-            allTokens.add(row.getSet("tokens", String.class));
+            if (metadataEnabled)
+                allTokens.add(row.getSet("tokens", String.class));
         }
 
         for (int i = 0; i < foundHosts.size(); i++) {
@@ -575,7 +585,7 @@ class ControlConnection implements Host.StateListener {
             if (cassandraVersions.get(i) != null)
                 host.setVersionAndListenAdress(cassandraVersions.get(i), listenAddresses.get(i));
 
-            if (partitioner != null && !allTokens.get(i).isEmpty())
+            if (metadataEnabled && partitioner != null && !allTokens.get(i).isEmpty())
                 tokenMap.put(host, allTokens.get(i));
 
             if (isNew && !isInitialConnection)
@@ -588,17 +598,17 @@ class ControlConnection implements Host.StateListener {
             if (!host.getSocketAddress().equals(connection.address) && !foundHostsSet.contains(host.getSocketAddress()))
                 cluster.removeHost(host, isInitialConnection);
 
-        cluster.metadata.rebuildTokenMap(partitioner, tokenMap);
+        if (metadataEnabled)
+            cluster.metadata.rebuildTokenMap(partitioner, tokenMap);
     }
 
-    static boolean waitForSchemaAgreement(Connection connection, Cluster.Manager cluster) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
-
+    boolean waitForSchemaAgreement() throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
         long start = System.nanoTime();
         long elapsed = 0;
         int maxSchemaAgreementWaitSeconds = cluster.configuration.getProtocolOptions().getMaxSchemaAgreementWaitSeconds();
         while (elapsed < maxSchemaAgreementWaitSeconds * 1000) {
 
-            if (checkSchemaAgreement(connection, cluster))
+            if (checkSchemaAgreement())
                 return true;
 
             // let's not flood the node too much
@@ -610,7 +620,11 @@ class ControlConnection implements Host.StateListener {
         return false;
     }
 
-    private static boolean checkSchemaAgreement(Connection connection, Cluster.Manager cluster) throws ConnectionException, BusyConnectionException, InterruptedException, ExecutionException {
+    boolean checkSchemaAgreement() throws ConnectionException, BusyConnectionException, InterruptedException, ExecutionException {
+        Connection connection = connectionRef.get();
+        if (connection == null || connection.isClosed())
+            return false;
+
         DefaultResultSetFuture peersFuture = new DefaultResultSetFuture(null, new Requests.Query(SELECT_SCHEMA_PEERS));
         DefaultResultSetFuture localFuture = new DefaultResultSetFuture(null, new Requests.Query(SELECT_SCHEMA_LOCAL));
         connection.write(peersFuture);
@@ -634,16 +648,6 @@ class ControlConnection implements Host.StateListener {
         }
         logger.debug("Checking for schema agreement: versions are {}", versions);
         return versions.size() <= 1;
-    }
-
-    boolean checkSchemaAgreement() {
-        Connection c = connectionRef.get();
-        try {
-            return c != null && checkSchemaAgreement(c, cluster);
-        } catch (Exception e) {
-            logger.warn("Error while checking schema agreement", e);
-            return false;
-        }
     }
 
     boolean isOpen() {
@@ -679,7 +683,7 @@ class ControlConnection implements Host.StateListener {
         // or it's not part of our computed token map
         Metadata.TokenMap tkmap = cluster.metadata.tokenMap;
         if (host.getCassandraVersion() == null || tkmap == null || !tkmap.hosts.contains(host))
-            refreshNodeListAndTokenMap();
+            cluster.submitNodeListRefresh();
     }
 
     @Override
@@ -693,6 +697,6 @@ class ControlConnection implements Host.StateListener {
             backgroundReconnect(0);
         }
 
-        refreshNodeListAndTokenMap();
+        cluster.submitNodeListRefresh();
     }
 }

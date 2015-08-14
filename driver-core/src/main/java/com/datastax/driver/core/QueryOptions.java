@@ -42,10 +42,33 @@ public class QueryOptions {
      */
     public static final boolean DEFAULT_IDEMPOTENCE = false;
 
+    public static final int DEFAULT_MAX_PENDING_REFRESH_NODE_LIST_REQUESTS = 20;
+
+    public static final int DEFAULT_MAX_PENDING_REFRESH_NODE_REQUESTS = 20;
+
+    public static final int DEFAULT_MAX_PENDING_REFRESH_SCHEMA_REQUESTS = 20;
+
+    public static final int DEFAULT_REFRESH_NODE_LIST_INTERVAL_MILLIS = 1000;
+
+    public static final int DEFAULT_REFRESH_NODE_INTERVAL_MILLIS = 1000;
+
+    public static final int DEFAULT_REFRESH_SCHEMA_INTERVAL_MILLIS = 1000;
+
     private volatile ConsistencyLevel consistency = DEFAULT_CONSISTENCY_LEVEL;
     private volatile ConsistencyLevel serialConsistency = DEFAULT_SERIAL_CONSISTENCY_LEVEL;
     private volatile int fetchSize = DEFAULT_FETCH_SIZE;
     private volatile boolean defaultIdempotence = DEFAULT_IDEMPOTENCE;
+
+    private volatile boolean metadataEnabled = true;
+
+    private volatile int maxPendingRefreshNodeListRequests = DEFAULT_MAX_PENDING_REFRESH_NODE_LIST_REQUESTS;
+    private volatile int maxPendingRefreshNodeRequests = DEFAULT_MAX_PENDING_REFRESH_NODE_REQUESTS;
+    private volatile int maxPendingRefreshSchemaRequests = DEFAULT_MAX_PENDING_REFRESH_SCHEMA_REQUESTS;
+
+    private volatile int refreshNodeListIntervalMillis = DEFAULT_REFRESH_NODE_LIST_INTERVAL_MILLIS;
+    private volatile int refreshNodeIntervalMillis = DEFAULT_REFRESH_NODE_INTERVAL_MILLIS;
+    private volatile int refreshSchemaIntervalMillis = DEFAULT_REFRESH_SCHEMA_INTERVAL_MILLIS;
+
     private volatile boolean reprepareOnUp = true;
     private volatile Cluster.Manager manager;
     private volatile boolean prepareOnAllHosts = true;
@@ -249,4 +272,205 @@ public class QueryOptions {
     public boolean isReprepareOnUp() {
         return this.reprepareOnUp;
     }
+
+    /**
+     * Toggle client-side token and schema metadata.
+     * <p>
+     * This feature is enabled by default. Some applications might wish to disable it
+     * in order to eliminate the overhead of querying the metadata and building its
+     * client-side representation. However, take note that doing so will have important
+     * consequences:
+     * <ul>
+     *     <li>most schema- or token-related methods in {@link Metadata} will return stale
+     *     or null/empty results (see the javadoc of each method for details);</li>
+     *     <li>{@link Metadata#newToken(String)} and
+     *     {@link Metadata#newTokenRange(Token, Token)} will throw an exception if metadata
+     *     was disabled before startup;</li>
+     *     <li>token-aware routing will not work properly: if metadata was never initialized,
+     *     {@link com.datastax.driver.core.policies.TokenAwarePolicy} will always delegate
+     *     to its child policy. Otherwise, it might not pick the best coordinator (i.e. chose
+     *     a host that is not a replica for the statement's routing key). In addition, statements
+     *     prepared while the metadata was disabled might also be sent to a non-optimal coordinator,
+     *     even if metadata was re-enabled later.</li>
+     * </ul>
+     *
+     * @param enabled whether metadata is enabled.
+     * @return this {@code QueryOptions} instance.
+     */
+    public QueryOptions setMetadataEnabled(boolean enabled) {
+        boolean wasEnabled = this.metadataEnabled;
+        this.metadataEnabled = enabled;
+        if (!wasEnabled && enabled && manager != null) {
+            manager.submitSchemaRefresh(null, null); // will also refresh token map
+        }
+        return this;
+    }
+
+    /**
+     * Whether client-side token and schema metadata is enabled.
+     *
+     * @return the value.
+     *
+     * @see #setMetadataEnabled(boolean)
+     */
+    public boolean isMetadataEnabled() {
+        return metadataEnabled;
+    }
+
+    /**
+     * Sets the default window size in milliseconds used to debounce node list refresh requests.
+     * <p>
+     * When the control connection receives a new schema refresh request,
+     * it puts it on hold and starts a timer, cancelling any previous running timer;
+     * when a timer expires, then the pending requests are coalesced and executed
+     * as a single request.
+     *
+     * @param refreshSchemaIntervalMillis The default window size in milliseconds used to debounce schema refresh requests.
+     */
+    public QueryOptions setRefreshSchemaIntervalMillis(int refreshSchemaIntervalMillis) {
+        this.refreshSchemaIntervalMillis = refreshSchemaIntervalMillis;
+        return this;
+    }
+
+    /**
+     * The default window size in milliseconds used to debounce schema refresh requests.
+     *
+     * @return The default window size in milliseconds used to debounce schema refresh requests.
+     */
+    public int getRefreshSchemaIntervalMillis() {
+        return refreshSchemaIntervalMillis;
+    }
+
+    /**
+     * Sets the maximum number of schema refresh requests that the control connection can accumulate
+     * before executing them.
+     * <p>
+     * When the control connection receives a new schema refresh request,
+     * it puts it on hold and starts a timer, cancelling any previous running timer;
+     * if the control connection receives too many events, is parameter allows to trigger
+     * execution of pending requests, event if the last timer is still running.
+     *
+     * @param maxPendingRefreshSchemaRequests The maximum number of schema refresh requests that the control connection can accumulate
+     * before executing them.
+     */
+    public QueryOptions setMaxPendingRefreshSchemaRequests(int maxPendingRefreshSchemaRequests) {
+        this.maxPendingRefreshSchemaRequests = maxPendingRefreshSchemaRequests;
+        return this;
+    }
+
+    /**
+     * The maximum number of schema refresh requests that the control connection can accumulate
+     * before executing them.
+     *
+     * @return The maximum number of schema refresh requests that the control connection can accumulate
+     * before executing them.
+     */
+    public int getMaxPendingRefreshSchemaRequests() {
+        return maxPendingRefreshSchemaRequests;
+    }
+
+    /**
+     * Sets the default window size in milliseconds used to debounce node list refresh requests.
+     * <p>
+     * When the control connection receives a new node list refresh request,
+     * it puts it on hold and starts a timer, cancelling any previous running timer;
+     * when a timer expires, then the pending requests are coalesced and executed
+     * as a single request.
+     *
+     * @param refreshNodeListIntervalMillis The default window size in milliseconds used to debounce node list refresh requests.
+     */
+    public QueryOptions setRefreshNodeListIntervalMillis(int refreshNodeListIntervalMillis) {
+        this.refreshNodeListIntervalMillis = refreshNodeListIntervalMillis;
+        return this;
+    }
+
+    /**
+     * The default window size in milliseconds used to debounce node list refresh requests.
+     *
+     * @return The default window size in milliseconds used to debounce node list refresh requests.
+     */
+    public int getRefreshNodeListIntervalMillis() {
+        return refreshNodeListIntervalMillis;
+    }
+
+    /**
+     * Sets the maximum number of node list refresh requests that the control connection can accumulate
+     * before executing them.
+     * <p>
+     * When the control connection receives a new node list refresh request,
+     * it puts it on hold and starts a timer, cancelling any previous running timer;
+     * if the control connection receives too many events, is parameter allows to trigger
+     * execution of pending requests, event if the last timer is still running.
+     *
+     * @param maxPendingRefreshNodeListRequests The maximum number of node list refresh requests that the control connection can accumulate
+     * before executing them.
+     */
+    public QueryOptions setMaxPendingRefreshNodeListRequests(int maxPendingRefreshNodeListRequests) {
+        this.maxPendingRefreshNodeListRequests = maxPendingRefreshNodeListRequests;
+        return this;
+    }
+
+    /**
+     * Sets the maximum number of node list refresh requests that the control connection can accumulate
+     * before executing them.
+     *
+     * @return The maximum number of node list refresh requests that the control connection can accumulate
+     * before executing them.
+     */
+    public int getMaxPendingRefreshNodeListRequests() {
+        return maxPendingRefreshNodeListRequests;
+    }
+
+    /**
+     * Sets the default window size in milliseconds used to debounce node refresh requests.
+     * <p>
+     * When the control connection receives a new node refresh request,
+     * it puts it on hold and starts a timer, cancelling any previous running timer;
+     * when a timer expires, then the pending requests are coalesced and executed
+     * as a single request.
+     *
+     * @param refreshNodeIntervalMillis The default window size in milliseconds used to debounce node refresh requests.
+     */
+    public QueryOptions setRefreshNodeIntervalMillis(int refreshNodeIntervalMillis) {
+        this.refreshNodeIntervalMillis = refreshNodeIntervalMillis;
+        return this;
+    }
+
+    /**
+     * The default window size in milliseconds used to debounce node refresh requests.
+     *
+     * @return The default window size in milliseconds used to debounce node refresh requests.
+     */
+    public int getRefreshNodeIntervalMillis() {
+        return refreshNodeIntervalMillis;
+    }
+
+    /**
+     * Sets the maximum number of node refresh requests that the control connection can accumulate
+     * before executing them.
+     * <p>
+     * When the control connection receives a new node refresh request,
+     * it puts it on hold and starts a timer, cancelling any previous running timer;
+     * if the control connection receives too many events, is parameter allows to trigger
+     * execution of pending requests, event if the last timer is still running.
+     *
+     * @param maxPendingRefreshNodeRequests The maximum number of node refresh requests that the control connection can accumulate
+     * before executing them.
+     */
+    public QueryOptions setMaxPendingRefreshNodeRequests(int maxPendingRefreshNodeRequests) {
+        this.maxPendingRefreshNodeRequests = maxPendingRefreshNodeRequests;
+        return this;
+    }
+
+    /**
+     * The maximum number of node refresh requests that the control connection can accumulate
+     * before executing them.
+     *
+     * @return The maximum number of node refresh requests that the control connection can accumulate
+     * before executing them.
+     */
+    public int getMaxPendingRefreshNodeRequests() {
+        return maxPendingRefreshNodeRequests;
+    }
+
 }

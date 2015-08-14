@@ -47,6 +47,7 @@ import static com.datastax.driver.core.FakeHost.Behavior.THROWING_CONNECT_TIMEOU
 import static com.datastax.driver.core.Host.State.DOWN;
 import static com.datastax.driver.core.Host.State.UP;
 import static com.datastax.driver.core.HostDistance.LOCAL;
+import static com.datastax.driver.core.TestUtils.nonDebouncingQueryOptions;
 
 public class ClusterInitTest {
     private static final Logger logger = LoggerFactory.getLogger(ClusterInitTest.class);
@@ -66,7 +67,7 @@ public class ClusterInitTest {
             // - 1 is an actual Scassandra instance that will accept connections:
             scassandra = TestUtils.createScassandraServer();
             scassandra.start();
-            String realHostAddress = "localhost";
+            String realHostAddress = "127.0.0.1";
             int port = scassandra.getBinaryPort();
 
             // - the remaining 4 are fake servers that will throw connect timeouts:
@@ -108,6 +109,7 @@ public class ClusterInitTest {
                 .withReconnectionPolicy(reconnectionPolicy)
                 .withPoolingOptions(poolingOptions)
                 .withProtocolVersion(TestUtils.getDesiredProtocolVersion())
+                .withQueryOptions(nonDebouncingQueryOptions())
                 .build();
             cluster.connect();
 
@@ -124,7 +126,7 @@ public class ClusterInitTest {
             verify(socketOptions, atLeast(6)).getKeepAlive();
             verify(socketOptions, atMost(7)).getKeepAlive();
 
-            assertThat(cluster).host(realHostAddress).hasState(UP);
+            assertThat(cluster).host(realHostAddress).isNotNull().hasState(UP);
             for (FakeHost failingHost : failingHosts)
                 assertThat(cluster).host(failingHost.address).hasState(DOWN);
             assertThat(cluster).host(missingHostAddress).isNull();

@@ -28,8 +28,6 @@ import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.datastax.driver.core.exceptions.DriverInternalError;
-
 /**
  * Keeps metadata on the connected cluster, including known nodes and schema definitions.
  */
@@ -355,7 +353,8 @@ public class Metadata {
      * connection, when schema or ring topology changes. It might occasionally
      * be stale.
      *
-     * @return the token ranges.
+     * @return the token ranges. Note that the result might be stale or empty if
+     * metadata was explicitly disabled with {@link QueryOptions#setMetadataEnabled(boolean)}.
      */
     public Set<TokenRange> getTokenRanges() {
         TokenMap current = tokenMap;
@@ -373,7 +372,8 @@ public class Metadata {
      * @param keyspace the name of the keyspace to get token ranges for.
      * @param host the host.
      * @return the (immutable) set of token ranges for {@code host} as known
-     * by the driver.
+     * by the driver. Note that the result might be stale or empty if metadata
+     * was explicitly disabled with {@link QueryOptions#setMetadataEnabled(boolean)}.
      */
     public Set<TokenRange> getTokenRanges(String keyspace, Host host) {
         keyspace = handleId(keyspace);
@@ -402,7 +402,8 @@ public class Metadata {
      * @param partitionKey the partition key for which to find the set of
      * replica.
      * @return the (immutable) set of replicas for {@code partitionKey} as known
-     * by the driver.
+     * by the driver. Note that the result might be stale or empty if metadata was
+     * explicitly disabled with {@link QueryOptions#setMetadataEnabled(boolean)}.
      */
     public Set<Host> getReplicas(String keyspace, ByteBuffer partitionKey) {
         keyspace = handleId(keyspace);
@@ -425,6 +426,8 @@ public class Metadata {
      * @param keyspace the name of the keyspace to get replicas for.
      * @param range the token range.
      * @return the (immutable) set of replicas for {@code range} as known by the driver.
+     * Note that the result might be stale or empty if metadata was explicitly disabled
+     * with {@link QueryOptions#setMetadataEnabled(boolean)}.
      */
     public Set<Host> getReplicas(String keyspace, TokenRange range) {
         keyspace = handleId(keyspace);
@@ -474,7 +477,12 @@ public class Metadata {
      * (for example, if the control connection is down).
      */
     public boolean checkSchemaAgreement() {
-        return cluster.controlConnection.checkSchemaAgreement();
+        try {
+            return cluster.controlConnection.checkSchemaAgreement();
+        } catch (Exception e) {
+            logger.warn("Error while checking schema agreement", e);
+            return false;
+        }
     }
 
     /**
@@ -483,7 +491,8 @@ public class Metadata {
      * @param keyspace the name of the keyspace for which metadata should be
      * returned.
      * @return the metadata of the requested keyspace or {@code null} if {@code
-     * keyspace} is not a known keyspace.
+     * keyspace} is not a known keyspace. Note that the result might be stale or null if
+     * metadata was explicitly disabled with {@link QueryOptions#setMetadataEnabled(boolean)}.
      */
     public KeyspaceMetadata getKeyspace(String keyspace) {
         return keyspaces.get(handleId(keyspace));
@@ -507,7 +516,8 @@ public class Metadata {
     /**
      * Returns a list of all the defined keyspaces.
      *
-     * @return a list of all the defined keyspaces.
+     * @return a list of all the defined keyspaces. Note that the result might be stale or empty if
+     * metadata was explicitly disabled with {@link QueryOptions#setMetadataEnabled(boolean)}.
      */
     public List<KeyspaceMetadata> getKeyspaces() {
         return new ArrayList<KeyspaceMetadata>(keyspaces.values());
@@ -522,6 +532,9 @@ public class Metadata {
      *
      * Note that the returned String is formatted to be human readable (for
      * some definition of human readable at least).
+     *
+     * It might be stale or empty if metadata was explicitly disabled with
+     * {@link QueryOptions#setMetadataEnabled(boolean)}.
      *
      * @return the CQL queries representing this cluster schema as a {code
      * String}.
@@ -541,11 +554,15 @@ public class Metadata {
      *
      * @param tokenStr the string representation.
      * @return the token.
+     *
+     * @throws IllegalStateException if the token factory was not initialized. This would typically
+     * happen if metadata was explicitly disabled with {@link QueryOptions#setMetadataEnabled(boolean)}
+     * before startup.
      */
     public Token newToken(String tokenStr) {
         TokenMap current = tokenMap;
         if (current == null)
-            throw new DriverInternalError("Token factory not set. This should only happen at initialization time");
+            throw new IllegalStateException("Token factory not set. This should only happen if metadata was explicitly disabled");
 
         return current.factory.fromString(tokenStr);
     }
@@ -556,11 +573,15 @@ public class Metadata {
      * @param start the start token.
      * @param end the end token.
      * @return the range.
+     *
+     * @throws IllegalStateException if the token factory was not initialized. This would typically
+     * happen if metadata was explicitly disabled with {@link QueryOptions#setMetadataEnabled(boolean)}
+     * before startup.
      */
     public TokenRange newTokenRange(Token start, Token end) {
         TokenMap current = tokenMap;
         if (current == null)
-            throw new DriverInternalError("Token factory not set. This should only happen at initialization time");
+            throw new IllegalStateException("Token factory not set. This should only happen if metadata was explicitly disabled");
 
         return new TokenRange(start, end, current.factory);
     }

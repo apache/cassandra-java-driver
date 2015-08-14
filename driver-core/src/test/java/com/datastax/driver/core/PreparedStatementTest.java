@@ -108,6 +108,11 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
         return defs;
     }
 
+    @Override
+    protected Cluster.Builder configure(Cluster.Builder builder) {
+        return builder.withQueryOptions(TestUtils.nonDebouncingQueryOptions());
+    }
+
     @Test(groups = "short")
     public void preparedNativeTest() {
         // Test preparing/bounding for all native types
@@ -322,12 +327,12 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
         }
     }
 
-    @Test(groups = "long")
+    @Test(groups = "long", priority = Integer.MAX_VALUE)
     public void reprepareOnNewlyUpNodeTest() throws Exception {
         reprepareOnNewlyUpNodeTest(null, session);
     }
 
-    @Test(groups = "long")
+    @Test(groups = "long", priority = Integer.MAX_VALUE)
     public void reprepareOnNewlyUpNodeNoKeyspaceTest() throws Exception {
 
         // This is the same test than reprepareOnNewlyUpNodeTest, except that the
@@ -442,10 +447,14 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
         Cluster otherCluster = Cluster.builder()
             .addContactPointsWithPorts(ImmutableList.of(hostAddress))
             .build();
-        PreparedStatement pst = otherCluster.connect().prepare("select * from system.peers where inet = ?");
-        BoundStatement bs = pst.bind().setInet(0, InetAddress.getByName("localhost"));
+        try {
+            PreparedStatement pst = otherCluster.connect().prepare("select * from system.peers where inet = ?");
+            BoundStatement bs = pst.bind().setInet(0, InetAddress.getByName("localhost"));
 
-        // We expect that the error gets detected without a roundtrip to the server, so use executeAsync
-        session.executeAsync(bs);
+            // We expect that the error gets detected without a roundtrip to the server, so use executeAsync
+            session.executeAsync(bs);
+        } finally {
+            otherCluster.close();
+        }
     }
 }

@@ -65,62 +65,66 @@ class DefaultResultSetFuture extends AbstractFuture<ResultSet> implements Result
                             set(ArrayBackedResultSet.fromMessage(rm, session, info, statement));
                             break;
                         case SCHEMA_CHANGE:
-                            Responses.Result.SchemaChange scc = (Responses.Result.SchemaChange)rm;
                             ResultSet rs = ArrayBackedResultSet.fromMessage(rm, session, info, statement);
-                            switch (scc.change) {
-                                case CREATED:
-                                    if (scc.columnFamily.isEmpty()) {
-                                        session.cluster.manager.refreshSchemaAndSignal(connection, this, rs, scc.keyspace, null);
-                                    } else {
-                                        session.cluster.manager.refreshSchemaAndSignal(connection, this, rs, scc.keyspace, scc.columnFamily);
-                                    }
-                                    break;
-                                case DROPPED:
-                                    if (scc.columnFamily.isEmpty()) {
-                                        // If that the one keyspace we are logged in, reset to null (it shouldn't really happen but ...)
-                                        // Note: Actually, Cassandra doesn't do that so we don't either as this could confuse prepared statements.
-                                        // We'll add it back if CASSANDRA-5358 changes that behavior
-                                        //if (scc.keyspace.equals(session.poolsState.keyspace))
-                                        //    session.poolsState.setKeyspace(null);
-                                        final KeyspaceMetadata removed = session.cluster.manager.metadata.removeKeyspace(scc.keyspace);
-                                        if(removed != null) {
-                                            session.cluster.manager.executor.submit(new Runnable() {
-                                                @Override
-                                                public void run() {
-                                                    session.cluster.manager.metadata.triggerOnKeyspaceRemoved(removed);
-                                                }
-                                            });
+                            final Cluster.Manager cluster = session.cluster.manager;
+                            if (!cluster.configuration.getQueryOptions().isMetadataEnabled()) {
+                                cluster.waitForSchemaAgreementAndSignal(connection, this, rs);
+                            } else {
+                                Responses.Result.SchemaChange scc = (Responses.Result.SchemaChange)rm;
+                                switch (scc.change) {
+                                    case CREATED:
+                                        if (scc.columnFamily.isEmpty()) {
+                                            cluster.refreshSchemaAndSignal(connection, this, rs, scc.keyspace, null);
+                                        } else {
+                                            cluster.refreshSchemaAndSignal(connection, this, rs, scc.keyspace, scc.columnFamily);
                                         }
-
-                                    } else {
-                                        KeyspaceMetadata keyspace = session.cluster.manager.metadata.getKeyspaceInternal(scc.keyspace);
-                                        if (keyspace == null)
-                                            logger.warn("Received a DROPPED notification for {}.{}, but this keyspace is unknown in our metadata",
-                                                scc.keyspace, scc.columnFamily);
-                                        else {
-                                            final TableMetadata removed = keyspace.removeTable(scc.columnFamily);
+                                        break;
+                                    case DROPPED:
+                                        if (scc.columnFamily.isEmpty()) {
+                                            // If that the one keyspace we are logged in, reset to null (it shouldn't really happen but ...)
+                                            // Note: Actually, Cassandra doesn't do that so we don't either as this could confuse prepared statements.
+                                            // We'll add it back if CASSANDRA-5358 changes that behavior
+                                            //if (scc.keyspace.equals(session.poolsState.keyspace))
+                                            //    session.poolsState.setKeyspace(null);
+                                            final KeyspaceMetadata removed = cluster.metadata.removeKeyspace(scc.keyspace);
                                             if (removed != null) {
-                                                session.cluster.manager.executor.submit(new Runnable() {
+                                                cluster.executor.submit(new Runnable() {
                                                     @Override
                                                     public void run() {
-                                                        session.cluster.manager.metadata.triggerOnTableRemoved(removed);
+                                                        cluster.metadata.triggerOnKeyspaceRemoved(removed);
                                                     }
                                                 });
                                             }
+                                        } else {
+                                            KeyspaceMetadata keyspace = cluster.metadata.getKeyspaceInternal(scc.keyspace);
+                                            if (keyspace == null)
+                                                logger.warn("Received a DROPPED notification for {}.{}, but this keyspace is unknown in our metadata",
+                                                    scc.keyspace, scc.columnFamily);
+                                            else {
+                                                final TableMetadata removed = keyspace.removeTable(scc.columnFamily);
+                                                if (removed != null) {
+                                                    cluster.executor.submit(new Runnable() {
+                                                        @Override
+                                                        public void run() {
+                                                            cluster.metadata.triggerOnTableRemoved(removed);
+                                                        }
+                                                    });
+                                                }
+                                            }
                                         }
-                                    }
-                                    session.cluster.manager.waitForSchemaAgreementAndSignal(connection, this, rs);
-                                    break;
-                                case UPDATED:
-                                    if (scc.columnFamily.isEmpty()) {
-                                        session.cluster.manager.refreshSchemaAndSignal(connection, this, rs, scc.keyspace, null);
-                                    } else {
-                                        session.cluster.manager.refreshSchemaAndSignal(connection, this, rs, scc.keyspace, scc.columnFamily);
-                                    }
-                                    break;
-                                default:
-                                    logger.info("Ignoring unknown schema change result");
-                                    break;
+                                        cluster.waitForSchemaAgreementAndSignal(connection, this, rs);
+                                        break;
+                                    case UPDATED:
+                                        if (scc.columnFamily.isEmpty()) {
+                                            cluster.refreshSchemaAndSignal(connection, this, rs, scc.keyspace, null);
+                                        } else {
+                                            cluster.refreshSchemaAndSignal(connection, this, rs, scc.keyspace, scc.columnFamily);
+                                        }
+                                        break;
+                                    default:
+                                        logger.info("Ignoring unknown schema change result");
+                                        break;
+                                }
                             }
                             break;
                         default:

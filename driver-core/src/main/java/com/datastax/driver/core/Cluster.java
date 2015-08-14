@@ -37,6 +37,7 @@ import com.datastax.driver.core.exceptions.AuthenticationException;
 import com.datastax.driver.core.exceptions.DriverInternalError;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.datastax.driver.core.policies.*;
+import com.datastax.driver.core.utils.MoreFutures;
 
 /**
  * Information and known state of a Cassandra cluster.
@@ -1243,6 +1244,10 @@ public class Cluster implements Closeable {
         final Set<LatencyTracker> trackers = new CopyOnWriteArraySet<LatencyTracker>();
         final Set<SchemaChangeListener> schemaChangeListeners = new  CopyOnWriteArraySet<SchemaChangeListener>();
 
+        EventDebouncer<NodeListRefreshRequest> nodeListRefreshRequestDebouncer;
+        EventDebouncer<NodeRefreshRequest> nodeRefreshRequestDebouncer;
+        EventDebouncer<SchemaRefreshRequest> schemaRefreshRequestDebouncer;
+
         private Manager(String clusterName, List<InetSocketAddress> contactPoints, Configuration configuration, Collection<Host.StateListener> listeners) {
             this.clusterName = clusterName == null ? generateClusterName() : clusterName;
             this.configuration = configuration;
@@ -1278,8 +1283,28 @@ public class Cluster implements Closeable {
             this.metrics = configuration.getMetricsOptions() == null ? null : new Metrics(this);
             this.preparedQueries = new MapMaker().weakValues().makeMap();
 
-            this.scheduledTasksExecutor.scheduleWithFixedDelay(new CleanupIdleConnectionsTask(), 10, 10, TimeUnit.SECONDS);
+            // create debouncers - at this stage, they are not running yet
+            QueryOptions queryOptions = configuration.getQueryOptions();
+            this.nodeListRefreshRequestDebouncer = new EventDebouncer<NodeListRefreshRequest>(
+                "Node list refresh",
+                scheduledTasksExecutor,
+                new NodeListRefreshRequestDeliveryCallback(),
+                queryOptions.getRefreshNodeListIntervalMillis(),
+                queryOptions.getMaxPendingRefreshNodeListRequests());
+            this.nodeRefreshRequestDebouncer = new EventDebouncer<NodeRefreshRequest>(
+                "Node refresh",
+                scheduledTasksExecutor,
+                new NodeRefreshRequestDeliveryCallback(),
+                queryOptions.getRefreshNodeIntervalMillis(),
+                queryOptions.getMaxPendingRefreshNodeRequests());
+            this.schemaRefreshRequestDebouncer = new EventDebouncer<SchemaRefreshRequest>(
+                "Schema refresh",
+                scheduledTasksExecutor,
+                new SchemaRefreshRequestDeliveryCallback(),
+                queryOptions.getRefreshSchemaIntervalMillis(),
+                queryOptions.getMaxPendingRefreshSchemaRequests());
 
+            this.scheduledTasksExecutor.scheduleWithFixedDelay(new CleanupIdleConnectionsTask(), 10, 10, TimeUnit.SECONDS);
 
             for (InetSocketAddress address : contactPoints) {
                 // We don't want to signal -- call onAdd() -- because nothing is ready
@@ -1353,6 +1378,12 @@ public class Cluster implements Closeable {
                             for (Host.StateListener listener : listeners)
                                 listener.onAdd(host);
                         }
+
+                        // start debouncers
+                        this.nodeListRefreshRequestDebouncer.start();
+                        this.schemaRefreshRequestDebouncer.start();
+                        this.nodeRefreshRequestDebouncer.start();
+
                         isFullyInit = true;
 
                         return;
@@ -1441,6 +1472,11 @@ public class Cluster implements Closeable {
 
             if (isInit) {
                 logger.debug("Shutting down");
+
+                // stop debouncers
+                nodeListRefreshRequestDebouncer.stop();
+                nodeRefreshRequestDebouncer.stop();
+                schemaRefreshRequestDebouncer.stop();
 
                 // If we're shutting down, there is no point in waiting on scheduled reconnections, nor on notifications
                 // delivery or blocking tasks so we use shutdownNow
@@ -1994,7 +2030,7 @@ public class Cluster implements Closeable {
                     : reusedConnection;
 
                 try {
-                    ControlConnection.waitForSchemaAgreement(connection, this);
+                    controlConnection.waitForSchemaAgreement();
                 } catch (ExecutionException e) {
                     // As below, just move on
                 }
@@ -2058,14 +2094,21 @@ public class Cluster implements Closeable {
             }
         }
 
-        public void submitSchemaRefresh(final String keyspace, final String table) {
-            logger.trace("Submitting schema refresh");
-            executor.submit(new ExceptionCatchingRunnable() {
-                @Override
-                public void runMayThrow() throws InterruptedException, ExecutionException {
-                    controlConnection.refreshSchema(keyspace, table);
-                }
-            });
+        ListenableFuture<Void> submitSchemaRefresh(String keyspace, String table) {
+            SchemaRefreshRequest request = new SchemaRefreshRequest(keyspace, table);
+            logger.trace("Submitting schema refresh: {}", request);
+            return schemaRefreshRequestDebouncer.eventReceived(request);
+        }
+
+        void submitNodeListRefresh() {
+            logger.trace("Submitting node list and token map refresh");
+            nodeListRefreshRequestDebouncer.eventReceived(new NodeListRefreshRequest());
+        }
+
+        void submitNodeRefresh(InetSocketAddress address, HostEvent eventType) {
+            NodeRefreshRequest request = new NodeRefreshRequest(address, eventType);
+            logger.trace("Submitting node refresh: {}", request);
+            nodeRefreshRequestDebouncer.eventReceived(request);
         }
 
         // refresh the schema using the provided connection, and notice the future with the provided resultset once done
@@ -2090,20 +2133,23 @@ public class Cluster implements Closeable {
                     try {
                         // Before refreshing the schema, wait for schema agreement so
                         // that querying a table just after having created it don't fail.
-                        schemaInAgreement = ControlConnection.waitForSchemaAgreement(connection, Manager.this);
+                        schemaInAgreement = controlConnection.waitForSchemaAgreement();
                         if (!schemaInAgreement)
                             logger.warn("No schema agreement from live replicas after {} s. The schema may not be up to date on some nodes.", configuration.getProtocolOptions().getMaxSchemaAgreementWaitSeconds());
-                        if (refreshSchema)
-                            ControlConnection.refreshSchema(connection, keyspace, table, Manager.this, false);
+
+                        ListenableFuture<Void> schemaReady = refreshSchema ? submitSchemaRefresh(keyspace, table) : MoreFutures.VOID_SUCCESS;
+                        final boolean finalSchemaInAgreement = schemaInAgreement;
+                        schemaReady.addListener(new Runnable() {
+                            @Override
+                            public void run() {
+                                rs.getExecutionInfo().setSchemaInAgreement(finalSchemaInAgreement);
+                                future.setResult(rs);
+                            }
+                        }, MoreExecutors.sameThreadExecutor());
+
                     } catch (Exception e) {
-                        if (refreshSchema) {
-                            logger.error("Error during schema refresh ({}). The schema from Cluster.getMetadata() might appear stale. Asynchronously submitting job to fix.", e.getMessage());
-                            submitSchemaRefresh(keyspace, table);
-                        } else {
-                            logger.warn("Error while waiting for schema agreement", e);
-                        }
-                    } finally {
-                        // Always sets the result, but remember if we reached schema agreement
+                        logger.warn("Error while waiting for schema agreement", e);
+                        // This is not fatal, complete the future anyway
                         rs.getExecutionInfo().setSchemaInAgreement(schemaInAgreement);
                         future.setResult(rs);
                     }
@@ -2131,36 +2177,13 @@ public class Cluster implements Closeable {
                     InetSocketAddress tpAddr = translateAddress(tpc.node.getAddress());
                     switch (tpc.change) {
                         case NEW_NODE:
-                            final Host newHost = metadata.add(tpAddr);
-                            if (newHost != null) {
-                                // Cassandra tends to send notifications for new/up nodes a bit early (it is triggered once
-                                // gossip is up, but that is before the client-side server is up), so we add a delay
-                                // (otherwise the connection will likely fail and have to be retry which is wasteful). This
-                                // probably should be fixed C* side, after which we'll be able to remove this.
-                                scheduledTasksExecutor.schedule(new ExceptionCatchingRunnable() {
-                                    @Override
-                                    public void runMayThrow() throws InterruptedException, ExecutionException {
-                                        // Make sure we have up-to-date infos on that host before adding it (so we typically
-                                        // catch that an upgraded node uses a new cassandra version).
-                                        if (controlConnection.refreshNodeInfo(newHost)) {
-                                            onAdd(newHost, null);
-                                        } else {
-                                            logger.debug("Not enough info for {}, ignoring host", newHost);
-                                        }
-                                    }
-                                }, NEW_NODE_DELAY_SECONDS, TimeUnit.SECONDS);
-                            }
+                            submitNodeRefresh(tpAddr, HostEvent.ADDED);
                             break;
                         case REMOVED_NODE:
-                            removeHost(metadata.getHost(tpAddr), false);
+                            submitNodeRefresh(tpAddr, HostEvent.REMOVED);
                             break;
                         case MOVED_NODE:
-                            executor.submit(new ExceptionCatchingRunnable() {
-                                @Override
-                                public void runMayThrow() {
-                                    controlConnection.refreshNodeListAndTokenMap();
-                                }
-                            });
+                            submitNodeListRefresh();
                             break;
                     }
                     break;
@@ -2169,55 +2192,17 @@ public class Cluster implements Closeable {
                     InetSocketAddress stAddr = translateAddress(stc.node.getAddress());
                     switch (stc.status) {
                         case UP:
-                            final Host hostUp = metadata.getHost(stAddr);
-                            if (hostUp == null) {
-                                final Host h = metadata.add(stAddr);
-                                // If hostUp is still null, it means we didn't knew about it the line before but
-                                // got beaten at adding it to the metadata by another thread. In that case, it's
-                                // fine to let the other thread win and ignore the notification here
-                                if (h == null)
-                                    return;
-
-                                // See NEW_NODE above
-                                scheduledTasksExecutor.schedule(new ExceptionCatchingRunnable() {
-                                    @Override
-                                    public void runMayThrow() throws InterruptedException, ExecutionException {
-                                        // Make sure we have up-to-date infos on that host before adding it (so we typically
-                                        // catch that an upgraded node uses a new cassandra version).
-                                        if (controlConnection.refreshNodeInfo(h)) {
-                                            onAdd(h, null);
-                                        } else {
-                                            logger.debug("Not enough info for {}, ignoring host", h);
-                                        }
-                                    }
-                                }, NEW_NODE_DELAY_SECONDS, TimeUnit.SECONDS);
-                            } else {
-                                executor.submit(new ExceptionCatchingRunnable() {
-                                    @Override
-                                    public void runMayThrow() throws InterruptedException, ExecutionException {
-                                        // Make sure we have up-to-date infos on that host before adding it (so we typically
-                                        // catch that an upgraded node uses a new cassandra version).
-                                        if (controlConnection.refreshNodeInfo(hostUp)) {
-                                            onUp(hostUp, null);
-                                        } else {
-                                            logger.debug("Not enough info for {}, ignoring host", hostUp);
-                                        }
-                                    }
-                                });
-                            }
+                            submitNodeRefresh(stAddr, HostEvent.UP);
                             break;
                         case DOWN:
-                            // Note that there is a slight risk we can receive the event late and thus
-                            // mark the host down even though we already had reconnected successfully.
-                            // But it is unlikely, and don't have too much consequence since we'll try reconnecting
-                            // right away, so we favor the detection to make the Host.isUp method more reliable.
-                            Host hostDown = metadata.getHost(stAddr);
-                            if (hostDown != null)
-                                triggerOnDown(hostDown, true);
+                            submitNodeRefresh(stAddr, HostEvent.DOWN);
                             break;
                     }
                     break;
                 case SCHEMA_CHANGE:
+                    if (!configuration.getQueryOptions().isMetadataEnabled())
+                        return;
+
                     ProtocolEvent.SchemaChange scc = (ProtocolEvent.SchemaChange)event;
                     switch (scc.change) {
                         case CREATED:
@@ -2349,6 +2334,252 @@ public class Cluster implements Closeable {
                 }
             }
         }
+
+        private class SchemaRefreshRequest {
+
+            private final String keyspace;
+
+            private final String table;
+
+            SchemaRefreshRequest(String keyspace, String table) {
+                this.keyspace = keyspace;
+                this.table = table;
+            }
+
+            /**
+             * Coalesce schema refresh requests.
+             * The algorithm is simple: if more than 2 keyspaces
+             * need refresh, then refresh the entire schema;
+             * otherwise if more than 2 tables in the same keyspace
+             * need refresh, then refresh the entire keyspace.
+             *
+             * @param that the other request to merge with the current one.
+             * @return A coalesced request
+             */
+            SchemaRefreshRequest coalesce(SchemaRefreshRequest that) {
+                if(this.keyspace == null || that.keyspace == null)
+                    return new SchemaRefreshRequest(null, null);
+                if(!this.keyspace.equals(that.keyspace))
+                    return new SchemaRefreshRequest(null, null);
+                if(this.table == null || that.table == null)
+                    return new SchemaRefreshRequest(keyspace, null);
+                if(!this.table.equals(that.table))
+                    return new SchemaRefreshRequest(keyspace, null);
+                return this;
+            }
+
+            @Override
+            public String toString() {
+                if(this.keyspace == null)
+                    return "Refresh ALL";
+                if(this.table == null)
+                    return "Refresh keyspace " + keyspace;
+                return "Refresh keyspace " + keyspace + " table " + table;
+            }
+        }
+
+        private class SchemaRefreshRequestDeliveryCallback implements EventDebouncer.DeliveryCallback<SchemaRefreshRequest> {
+
+            @Override
+            public ListenableFuture<?> deliver(final List<SchemaRefreshRequest> events) {
+                return executor.submit(new ExceptionCatchingRunnable() {
+                    @Override
+                    public void runMayThrow() throws InterruptedException, ExecutionException {
+                        SchemaRefreshRequest coalesced = null;
+                        for (SchemaRefreshRequest request : events) {
+                            coalesced = coalesced == null ? request : coalesced.coalesce(request);
+                        }
+                        assert coalesced != null;
+                        logger.trace("Coalesced schema refresh request: {}", coalesced);
+                        controlConnection.refreshSchema(coalesced.keyspace, coalesced.table);
+                    }
+                });
+            }
+
+        }
+
+        private class NodeRefreshRequest {
+
+            private final InetSocketAddress address;
+
+            private final HostEvent eventType;
+
+            private NodeRefreshRequest(InetSocketAddress address, HostEvent eventType) {
+                this.address = address;
+                this.eventType = eventType;
+            }
+
+            @Override
+            public String toString() {
+                return address + " " + eventType;
+            }
+
+        }
+
+        private class NodeRefreshRequestDeliveryCallback implements EventDebouncer.DeliveryCallback<NodeRefreshRequest> {
+
+            @Override
+            public ListenableFuture<?> deliver(List<NodeRefreshRequest> events) {
+                Map<InetSocketAddress, HostEvent> hosts = new HashMap<InetSocketAddress, HostEvent>();
+                // only keep the last event for each host
+                for (NodeRefreshRequest req : events) {
+                    hosts.put(req.address, req.eventType);
+                }
+                List<ListenableFuture<?>> futures = new ArrayList<ListenableFuture<?>>(hosts.size());
+                for (final Entry<InetSocketAddress, HostEvent> entry : hosts.entrySet()) {
+                    InetSocketAddress address = entry.getKey();
+                    HostEvent eventType = entry.getValue();
+                    switch (eventType) {
+                        case UP:
+                            Host upHost = metadata.getHost(address);
+                            if (upHost == null) {
+                                upHost = metadata.add(address);
+                                // If upHost is still null, it means we didn't know about it the line before but
+                                // got beaten at adding it to the metadata by another thread. In that case, it's
+                                // fine to let the other thread win and ignore the notification here
+                                if (upHost == null)
+                                    continue;
+                                futures.add(schedule(hostAdded(upHost)));
+                            } else {
+                                futures.add(schedule(hostUp(upHost)));
+                            }
+                            break;
+                        case ADDED:
+                            Host newHost = metadata.add(address);
+                            if (newHost != null)
+                                futures.add(schedule(hostAdded(newHost)));
+                            break;
+                        case DOWN:
+                            // Note that there is a slight risk we can receive the event late and thus
+                            // mark the host down even though we already had reconnected successfully.
+                            // But it is unlikely, and don't have too much consequence since we'll try reconnecting
+                            // right away, so we favor the detection to make the Host.isUp method more reliable.
+                            Host downHost = metadata.getHost(address);
+                            if (downHost != null)
+                                futures.add(execute(hostDown(downHost)));
+                            break;
+                        case REMOVED:
+                            Host removedHost = metadata.getHost(address);
+                            if (removedHost != null)
+                                futures.add(execute(hostRemoved(removedHost)));
+                            break;
+                    }
+                }
+                return Futures.allAsList(futures);
+            }
+
+            private ListenableFuture<?> execute(ExceptionCatchingRunnable task) {
+                return executor.submit(task);
+            }
+
+            private ListenableFuture<?> schedule(final ExceptionCatchingRunnable task) {
+                // Cassandra tends to send notifications for new/up nodes a bit early (it is triggered once
+                // gossip is up, but that is before the client-side server is up), so we add a delay
+                // (otherwise the connection will likely fail and have to be retry which is wasteful). This
+                // probably should be fixed C* side, after which we'll be able to remove this.
+                final SettableFuture<?> future = SettableFuture.create();
+                scheduledTasksExecutor.schedule(new ExceptionCatchingRunnable() {
+                    public void runMayThrow() throws Exception {
+                        ListenableFuture<?> f = execute(task);
+                        Futures.addCallback(f, new FutureCallback<Object>() {
+                            @Override
+                            public void onSuccess(Object result) {
+                                future.set(null);
+                            }
+
+                            @Override
+                            public void onFailure(Throwable t) {
+                                future.setException(t);
+                            }
+                        });
+                    }
+                }, NEW_NODE_DELAY_SECONDS, TimeUnit.SECONDS);
+                return future;
+            }
+
+            // Make sure we  call controlConnection.refreshNodeInfo(host)
+            // so that we have up-to-date infos on that host before adding it (so we typically
+            // catch that an upgraded node uses a new cassandra version).
+
+            private ExceptionCatchingRunnable hostAdded(final Host host) {
+                return new ExceptionCatchingRunnable() {
+                    @Override
+                    public void runMayThrow() throws Exception {
+                        if (controlConnection.refreshNodeInfo(host)) {
+                            onAdd(host, null);
+                        } else {
+                            logger.debug("Not enough info for {}, ignoring host", host);
+                        }
+                    }
+                };
+            }
+
+            private ExceptionCatchingRunnable hostUp(final Host host) {
+                return new ExceptionCatchingRunnable() {
+                    @Override
+                    public void runMayThrow() throws Exception {
+                        if (controlConnection.refreshNodeInfo(host)) {
+                            onUp(host, null);
+                        } else {
+                            logger.debug("Not enough info for {}, ignoring host", host);
+                        }
+                    }
+                };
+            }
+
+            private ExceptionCatchingRunnable hostDown(final Host host) {
+                return new ExceptionCatchingRunnable() {
+                    @Override
+                    public void runMayThrow() throws Exception {
+                        if (controlConnection.refreshNodeInfo(host)) {
+                            onDown(host, false, true);
+                        } else {
+                            logger.debug("Not enough info for {}, ignoring host", host);
+                        }
+                    }
+                };
+            }
+
+            private ExceptionCatchingRunnable hostRemoved(final Host host) {
+                return new ExceptionCatchingRunnable() {
+                    @Override
+                    public void runMayThrow() throws Exception {
+                        if (metadata.remove(host)) {
+                            logger.info("Cassandra host {} removed", host);
+                            onRemove(host);
+                        }
+                    }
+                };
+            }
+
+        }
+
+        private class NodeListRefreshRequest {
+            @Override
+            public String toString() {
+                return "Refresh node list and token map";
+            }
+        }
+
+        private class NodeListRefreshRequestDeliveryCallback implements EventDebouncer.DeliveryCallback<NodeListRefreshRequest> {
+
+            @Override
+            public ListenableFuture<?> deliver(List<NodeListRefreshRequest> events) {
+                // The number of received requests does not matter
+                // as long as one request is made, refresh the entire node list
+                return executor.submit(new ExceptionCatchingRunnable() {
+                    @Override
+                    public void runMayThrow() throws InterruptedException, ExecutionException {
+                        controlConnection.refreshNodeListAndTokenMap();
+                    }
+                });
+            }
+        }
+
+    }
+
+    private enum HostEvent {
+        UP, DOWN, ADDED, REMOVED
     }
 
     /**

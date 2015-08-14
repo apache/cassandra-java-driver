@@ -81,6 +81,11 @@ public abstract class TokenIntegrationTest {
         cluster = Cluster.builder()
             .addContactPoints(CCMBridge.ipOfNode(1))
             .withLoadBalancingPolicy(lbp)
+            .withQueryOptions(new QueryOptions()
+                .setRefreshNodeIntervalMillis(0)
+                .setRefreshNodeListIntervalMillis(0)
+                .setRefreshSchemaIntervalMillis(0)
+            )
             .build();
         cluster.init();
         session = cluster.connect();
