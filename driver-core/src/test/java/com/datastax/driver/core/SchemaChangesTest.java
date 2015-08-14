@@ -356,8 +356,7 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
             schemaDisabledCluster.getConfiguration().getQueryOptions().setMetadataEnabled(true);
 
             verify(schemaDisabledControlConnection, after(1000)).refreshSchema(null, null);
-            // TODO: Remove atLeastOnce() if submitNodeRefresh removed from setMetadataEnabled.
-            verify(schemaDisabledControlConnection, atLeastOnce()).refreshNodeListAndTokenMap();
+            verify(schemaDisabledControlConnection).refreshNodeListAndTokenMap();
 
             // Ensure that there is schema metadata.
             assertThat(schemaDisabledCluster.getMetadata().getKeyspace(keyspace)).isNotNull();

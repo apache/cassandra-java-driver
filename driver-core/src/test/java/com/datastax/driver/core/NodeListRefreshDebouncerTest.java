@@ -54,6 +54,7 @@ public class NodeListRefreshDebouncerTest extends CCMBridge.PerClassSingleNodeCl
         queryOptions = new QueryOptions();
         queryOptions.setRefreshNodeListIntervalMillis(DEBOUNCE_TIME);
         queryOptions.setMaxPendingRefreshNodeListRequests(5);
+        queryOptions.setRefreshSchemaIntervalMillis(0);
         // Create a separate cluster that will receive the schema events on its control connection.
         cluster2 = this.configure(Cluster.builder())
             .addContactPointsWithPorts(newArrayList(hostAddress))
@@ -108,14 +109,16 @@ public class NodeListRefreshDebouncerTest extends CCMBridge.PerClassSingleNodeCl
      */
     @Test(groups = "short")
     public void should_refresh_when_max_pending_requests_reached() {
-        // Enable and disable schema management 5 times to cause
+        // Create keyspaces 5 times to cause
         // refreshNodeListAndTokenMap to be called.
+        String prefix = "srwmprr";
         for(int i = 0; i < 5; i++) {
-            queryOptions.setMetadataEnabled(false);
-            queryOptions.setMetadataEnabled(true);
+            String keyspace = prefix + i;
+            session.execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, keyspace, 1));
+            keyspaces.add(keyspace);
         }
 
         // add a 1 second delay to account for executor submit.
-        verify(controlConnection, timeout(1000).times(1)).refreshNodeListAndTokenMap();
+        verify(controlConnection, timeout(1000)).refreshNodeListAndTokenMap();
     }
 }
