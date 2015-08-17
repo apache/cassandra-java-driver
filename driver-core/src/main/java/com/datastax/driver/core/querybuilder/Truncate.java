@@ -18,6 +18,8 @@ package com.datastax.driver.core.querybuilder;
 import java.util.List;
 
 import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.CodecRegistry;
+import com.datastax.driver.core.ProtocolVersion;
 import com.datastax.driver.core.TableMetadata;
 
 /**
@@ -27,13 +29,13 @@ public class Truncate extends BuiltStatement {
 
     private final String table;
 
-    Truncate(Cluster cluster, String keyspace, String table) {
-        super(keyspace, cluster);
+    Truncate(ProtocolVersion protocolVersion, CodecRegistry codecRegistry, String keyspace, String table) {
+        super(keyspace, protocolVersion, codecRegistry);
         this.table = table;
     }
 
-    Truncate(Cluster cluster, TableMetadata table) {
-        super(table, cluster);
+    Truncate(ProtocolVersion protocolVersion, CodecRegistry codecRegistry, TableMetadata table) {
+        super(table, protocolVersion, codecRegistry);
         this.table = escapeId(table.getName());
     }
 

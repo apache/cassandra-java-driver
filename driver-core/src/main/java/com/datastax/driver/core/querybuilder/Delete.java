@@ -20,6 +20,7 @@ import java.util.List;
 
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.CodecRegistry;
+import com.datastax.driver.core.ProtocolVersion;
 import com.datastax.driver.core.TableMetadata;
 
 /**
@@ -34,8 +35,8 @@ public class Delete extends BuiltStatement {
     private final Conditions conditions;
     private boolean ifExists;
 
-    Delete(Cluster cluster, String keyspace, String table, List<Selector> columns) {
-        super(keyspace, cluster);
+    Delete(ProtocolVersion protocolVersion, CodecRegistry codecRegistry, String keyspace, String table, List<Selector> columns) {
+        super(keyspace, protocolVersion, codecRegistry);
         this.table = table;
         this.columns = columns;
         this.where = new Where(this);
@@ -43,8 +44,8 @@ public class Delete extends BuiltStatement {
         this.conditions = new Conditions(this);
     }
 
-    Delete(Cluster cluster, TableMetadata table, List<Selector> columns) {
-        super(table, cluster);
+    Delete(ProtocolVersion protocolVersion, CodecRegistry codecRegistry, TableMetadata table, List<Selector> columns) {
+        super(table, protocolVersion, codecRegistry);
         this.table = escapeId(table.getName());
         this.columns = columns;
         this.where = new Where(this);
@@ -277,16 +278,19 @@ public class Delete extends BuiltStatement {
      */
     public static class Builder {
 
-        private final Cluster cluster;
+        private final ProtocolVersion protocolVersion;
+        private final CodecRegistry codecRegistry;
 
         List<Selector> columns = new ArrayList<Selector>();
 
-        Builder(Cluster cluster) {
-            this.cluster = cluster;
+        Builder(ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
+            this.protocolVersion = protocolVersion;
+            this.codecRegistry = codecRegistry;
         }
 
-        Builder(Cluster cluster, String... columnNames) {
-            this.cluster = cluster;
+        Builder(ProtocolVersion protocolVersion, CodecRegistry codecRegistry, String... columnNames) {
+            this.protocolVersion = protocolVersion;
+            this.codecRegistry = codecRegistry;
             for (String columnName : columnNames) {
                 this.columns.add(new Selector(columnName));
             }
@@ -310,7 +314,7 @@ public class Delete extends BuiltStatement {
          * @return a newly built DELETE statement that deletes from {@code keyspace.table}.
          */
         public Delete from(String keyspace, String table) {
-            return new Delete(cluster, keyspace, table, columns);
+            return new Delete(protocolVersion, codecRegistry, keyspace, table, columns);
         }
 
         /**
@@ -320,7 +324,7 @@ public class Delete extends BuiltStatement {
          * @return a newly built DELETE statement that deletes from {@code table}.
          */
         public Delete from(TableMetadata table) {
-            return new Delete(cluster, table, columns);
+            return new Delete(protocolVersion, codecRegistry, table, columns);
         }
     }
 
@@ -329,8 +333,8 @@ public class Delete extends BuiltStatement {
      */
     public static class Selection extends Builder {
 
-        Selection(Cluster cluster) {
-            super(cluster);
+        Selection(ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
+            super(protocolVersion, codecRegistry);
         }
 
         /**

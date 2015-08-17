@@ -20,6 +20,7 @@ import java.util.List;
 
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.CodecRegistry;
+import com.datastax.driver.core.ProtocolVersion;
 import com.datastax.driver.core.TableMetadata;
 import com.datastax.driver.core.querybuilder.Assignment.CounterAssignment;
 
@@ -34,8 +35,8 @@ public class Update extends BuiltStatement {
     private final Options usings;
     private final Conditions conditions;
 
-    Update(Cluster cluster, String keyspace, String table) {
-        super(keyspace, cluster);
+    Update(ProtocolVersion protocolVersion, CodecRegistry codecRegistry, String keyspace, String table) {
+        super(keyspace, protocolVersion, codecRegistry);
         this.table = table;
         this.assignments = new Assignments(this);
         this.where = new Where(this);
@@ -43,8 +44,8 @@ public class Update extends BuiltStatement {
         this.conditions = new Conditions(this);
     }
 
-    Update(Cluster cluster, TableMetadata table) {
-        super(table, cluster);
+    Update(ProtocolVersion protocolVersion, CodecRegistry codecRegistry, TableMetadata table) {
+        super(table, protocolVersion, codecRegistry);
         this.table = escapeId(table.getName());
         this.assignments = new Assignments(this);
         this.where = new Where(this);

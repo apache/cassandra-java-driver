@@ -41,6 +41,27 @@ public class TupleType extends DataType {
     }
 
     /**
+     * Creates a "disconnected" tuple type (<b>you should prefer
+     * {@link Metadata#newTupleType(DataType...) cluster.getMetadata().newTupleType(...)}
+     * whenever possible</b>).
+     * <p>
+     * This method is only exposed for situations where you don't have a {@code Cluster}
+     * instance available. If you create a type with this method and use it with a
+     * {@code Cluster} later, you won't be able to set tuple fields with custom codecs
+     * registered against the cluster, or you might get errors if the protocol versions don't
+     * match.
+     *
+     * @param protocolVersion the protocol version to use.
+     * @param codecRegistry the codec registry to use.
+     * @param types the types for the tuple type.
+     *
+     * @return the newly created tuple type.
+     */
+    public static TupleType of(ProtocolVersion protocolVersion, CodecRegistry codecRegistry, DataType... types) {
+        return new TupleType(Arrays.asList(types), protocolVersion, codecRegistry);
+    }
+
+    /**
      * The (immutable) list of types composing this tuple type.
      *
      * @return the (immutable) list of types composing this tuple type.
