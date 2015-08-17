@@ -31,6 +31,7 @@ import org.testng.annotations.Test;
 import static com.google.common.collect.Lists.newArrayList;
 import static org.testng.Assert.fail;
 
+import com.datastax.driver.core.TypeCodec.UDTCodec;
 import com.datastax.driver.core.UserType.Field;
 import com.datastax.driver.core.exceptions.CodecNotFoundException;
 import com.datastax.driver.core.exceptions.InvalidTypeException;
@@ -169,7 +170,7 @@ public class TypeCodecTest {
         UserType u2 = new UserType("ks", "table", newArrayList(new Field("f1", text()), new Field("f2", varchar())), V3, new CodecRegistry());
         UserType u3 = new UserType("ks", "table", newArrayList(new Field("f1", varchar()), new Field("f2", text())), V3, new CodecRegistry());
         UserType u4 = new UserType("ks", "table", newArrayList(new Field("f1", text()), new Field("f2", text())), V3, new CodecRegistry());
-        assertThat(new TypeCodec.UDTCodec(u1))
+        assertThat(new UDTCodec(u1))
             .accepts(u2)
             .accepts(u3)
             .accepts(u4);
@@ -215,6 +216,36 @@ public class TypeCodecTest {
             // ok
         }
         assertThat(codecRegistry.codecFor(list(cint()), new TypeToken<List<B>>(){})).isNotNull().isEqualTo(new TypeCodec.ListCodec<B>(bCodec));
+    }
+
+
+    @Test(groups = "unit")
+    public void should_deserialize_empty_buffer_as_tuple_with_null_values() {
+        CodecRegistry codecRegistry = CodecRegistry.DEFAULT_INSTANCE;
+        TupleType tupleType = new TupleType(newArrayList(DataType.cint(), DataType.varchar(), DataType.cfloat()), ProtocolVersion.NEWEST_SUPPORTED, codecRegistry);
+        TupleValue expected = tupleType.newValue(null, null, null);
+
+        TupleValue actual = codecRegistry.codecFor(tupleType, TupleValue.class).deserialize(ByteBuffer.allocate(0), ProtocolVersion.NEWEST_SUPPORTED);
+        assertThat(actual).isNotNull();
+        assertThat(actual).isEqualTo(expected);
+    }
+
+    @Test(groups = "unit")
+    public void should_deserialize_empty_buffer_as_udt_with_null_values() {
+        CodecRegistry codecRegistry = CodecRegistry.DEFAULT_INSTANCE;
+        UserType udt = new UserType("ks", "t", Arrays.asList(
+            new UserType.Field("t", DataType.text()),
+            new UserType.Field("i", DataType.cint()),
+            new UserType.Field("l", DataType.list(DataType.text()))
+        ), ProtocolVersion.NEWEST_SUPPORTED, codecRegistry);
+        UDTValue expected = udt.newValue();
+        expected.setString("t", null);
+        expected.setObject("i", null);
+        expected.setList("l", null);
+
+        UDTValue actual = codecRegistry.codecFor(udt, UDTValue.class).deserialize(ByteBuffer.allocate(0), ProtocolVersion.NEWEST_SUPPORTED);
+        assertThat(actual).isNotNull();
+        assertThat(actual).isEqualTo(expected);
     }
 
 
