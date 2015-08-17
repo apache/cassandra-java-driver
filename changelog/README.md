@@ -1,5 +1,10 @@
 ## Changelog
 
+### 2.2.0-rc3 (in progress)
+
+- [bug] Propagate CodecRegistry to nested UDTs (JAVA-847)
+
+
 ### 2.2.0-rc2
 
 - [improvement] Rename DateWithoutTime to LocalDate (JAVA-810)
