@@ -142,6 +142,12 @@ public class Configuration {
 
     /**
      * Returns the {@link CodecRegistry} instance for this configuration.
+     * <p>
+     * Note that this method could return {@link CodecRegistry#DEFAULT_INSTANCE}
+     * if no specific codec registry has been set on the {@link Cluster}.
+     * In this case, care should be taken when registering new codecs as they would be
+     * immediately available to other {@link Cluster} instances sharing the same default instance.
+     *
      * @return the {@link CodecRegistry} instance for this configuration.
      */
     public CodecRegistry getCodecRegistry() {
@@ -257,7 +263,7 @@ public class Configuration {
                 metricsOptions != null ? metricsOptions : new MetricsOptions(),
                 queryOptions != null ? queryOptions : new QueryOptions(),
                 nettyOptions != null ? nettyOptions : NettyOptions.DEFAULT_INSTANCE,
-                codecRegistry != null ? codecRegistry : new CodecRegistry());
+                codecRegistry != null ? codecRegistry : CodecRegistry.DEFAULT_INSTANCE);
         }
     }
 }

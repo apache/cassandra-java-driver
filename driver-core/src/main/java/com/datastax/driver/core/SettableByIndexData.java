@@ -252,10 +252,14 @@ public interface SettableByIndexData<T extends SettableByIndexData<T>> {
      * <p>
      * Note about performance: this method must perform a runtime inspection of the provided list,
      * in order to guess the best codec to serialize the list elements.
-     * The result of such inspection cannot be cached and thus must be performed for each invocation
-     * of this method, which may incur in a performance penalty.
-     * To circumvent this problem, consider using {@link #setList(int, List, Class)} or
-     * {@link #setList(int, List, TypeToken)}, which do not suffer from such symptoms.
+     * <p>
+     * Furthermore, if two or more codecs are available
+     * for the underlying CQL type ({@code list}), <em>which one will be used will depend
+     * on the actual object being serialized</em>.
+     * <p>
+     * For these reasons, it is generally preferable to use the more
+     * deterministic methods {@link #setList(int, List, Class)} or
+     * {@link #setList(int, List, TypeToken)}.
      *
      * @param i the index of the value to set.
      * @param v the value to set.
@@ -327,8 +331,14 @@ public interface SettableByIndexData<T extends SettableByIndexData<T>> {
      * in order to guess the best codec to serialize the map entries.
      * The result of such inspection cannot be cached and thus must be performed for each invocation
      * of this method, which may incur in a performance penalty.
-     * To circumvent this problem, consider using {@link #setMap(int, Map, Class, Class)} or
-     * {@link #setMap(int, Map, TypeToken, TypeToken)}, which do not suffer from such symptoms.
+     * <p>
+     * Furthermore, if two or more codecs are available
+     * for the underlying CQL type ({@code map}), <em>which one will be used will depend
+     * on the actual object being serialized</em>.
+     * <p>
+     * For these reasons, it is generally preferable to use the more
+     * deterministic methods {@link #setMap(int, Map, Class, Class)} or
+     * {@link #setMap(int, Map, TypeToken, TypeToken)}.
      *
      * @param i the index of the value to set.
      * @param v the value to set.
@@ -398,12 +408,18 @@ public interface SettableByIndexData<T extends SettableByIndexData<T>> {
      * <p>
      * Please note that {@code null} values are not supported inside collection by CQL.
      * <p>
-     * Note about performance: this method must perform a runtime inspection of the provided map,
-     * in order to guess the best codec to serialize the map entries.
+     * Note about performance: this method must perform a runtime inspection of the provided set,
+     * in order to guess the best codec to serialize the set elements.
      * The result of such inspection cannot be cached and thus must be performed for each invocation
      * of this method, which may incur in a performance penalty.
-     * To circumvent this problem, consider using {@link #setSet(int, Set, Class)} or
-     * {@link #setSet(int, Set, TypeToken)}, which do not suffer from such symptoms.
+     * <p>
+     * Furthermore, if two or more codecs are available
+     * for the underlying CQL type ({@code set}), <em>which one will be used will depend
+     * on the actual object being serialized</em>.
+     * <p>
+     * For these reasons, it is generally preferable to use the more
+     * deterministic methods {@link #setSet(int, Set, Class)} or
+     * {@link #setSet(int, Set, TypeToken)}.
      *
      * @param i the index of the value to set.
      * @param v the value to set.
@@ -506,9 +522,18 @@ public interface SettableByIndexData<T extends SettableByIndexData<T>> {
     /**
      * Sets the {@code i}th value to the provided value.
      * <p>
-     * This method is not suitable to use with custom codecs: it will always
-     * use the default ones for the underlying CQL type. If you want to use
-     * non-default codecs, use {@link #set(int, V, Class)} or {@link #set(int, V, TypeToken)} instead.
+     * Note about performance: this method must perform a runtime inspection of the provided object,
+     * in order to guess the best codec to serialize it.
+     * The result of such inspection cannot be cached and thus must be performed for each invocation
+     * of this method, which may incur in a performance penalty.
+     * <p>
+     * Furthermore, if two or more codecs are available
+     * for the underlying CQL type, <em>which one will be used will depend
+     * on the actual object being serialized</em>.
+     * <p>
+     * For these reasons, it is generally preferable to use the more
+     * deterministic methods {@link #set(int, V, Class)}
+     * or {@link #set(int, V, TypeToken)} instead.
      *
      * @param i the index of the value to set.
      * @param v the value to set; may be {@code null}.

@@ -55,7 +55,7 @@ import static com.datastax.driver.core.DataType.*;
  * <ol>
  *     <li>{@link #serialize(Object,ProtocolVersion)}: used to serialize from the codec's Java type to a
  *     {@link ByteBuffer} instance corresponding to the codec's CQL type;</li>
- *     <li>{@link #deserialize(ByteBuffer,ProtocolVersion)}}: used to deserialize a {@link ByteBuffer} instance
+ *     <li>{@link #deserialize(ByteBuffer,ProtocolVersion)}: used to deserialize a {@link ByteBuffer} instance
  *     corresponding to the codec's CQL type to the codec's Java type.</li>
  * </ol>
  *
@@ -73,9 +73,9 @@ import static com.datastax.driver.core.DataType.*;
  * Codecs also have the following inspection methods:
  *
  * <ol>
- *     <li>{@link #accepts(DataType)}}}: returns true if the codec can deserialize the given CQL type;</li>
- *     <li>{@link #accepts(TypeToken)}}: returns true if the codec can serialize the given Java type;</li>
- *     <li>{@link #accepts(Object)}}; returns true if the codec can serialize the given object.</li>
+ *     <li>{@link #accepts(DataType)}: returns true if the codec can deserialize the given CQL type;</li>
+ *     <li>{@link #accepts(TypeToken)}: returns true if the codec can serialize the given Java type;</li>
+ *     <li>{@link #accepts(Object)}; returns true if the codec can serialize the given object.</li>
  * </ol>
  *
  * <h3>Implementation notes</h3>

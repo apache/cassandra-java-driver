@@ -405,9 +405,12 @@ public interface GettableByIndexData {
     /**
      * Returns the {@code i}th value as the Java type matching its CQL type.
      * <p>
-     * This method is not suitable to use with custom codecs: it will always
-     * use the default ones for the underlying CQL type. If you want to use
-     * non-default codecs, use {@link #get(int, Class)} or {@link #get(int, TypeToken)} instead.
+     * This method uses the default codec for the underlying CQL type
+     * to perform deserialization, and is safe to be used
+     * <em>as long as only default codecs are in use</em>.
+     * If a second, custom codec for the same CQL type is registered, which one will
+     * be used is unspecified; in such cases, it is preferable to use
+     * the more deterministic methods {@link #get(int, Class)} or {@link #get(int, TypeToken)} instead.
      *
      * @param i the index to retrieve.
      * @return the value of the {@code i}th value as the Java type matching its CQL type.

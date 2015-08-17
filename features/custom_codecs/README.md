@@ -108,25 +108,31 @@ it suffers from the overhead of deserializing raw bytes into a String,
 to only then parse the String into an object.
 More advanced solutions that read the underlying byte stream directly are possible.
 
-The second step is to register your codec:
+The second step is to register your codec with a `CodecRegistry` instance:
 
 ```java
 ObjectMapper objectMapper = ...
 JsonCodec<MyPojo> myJsonCodec = new JsonCodec<MyPojo>(MyPojo.class, objectMapper);
-CodecRegistry myCodecRegistry = new CodecRegistry().register(myJsonCodec);
+CodecRegistry myCodecRegistry = cluster.getConfiguration().getCodecRegistry();
+myCodecRegistry.register(myJsonCodec);
 ```
 
-When you instantiate a `CodecRegistry`, it automatically registers all the default codecs used by the driver.
-This ensures that the registry will not lack of an essential codec. *You cannot deregister default codecs, only
-register new ones*.
+As you can see, the easiest way to do so is to access the `Cluster`'s `CodecRegistry`.
+By default, `Cluster` instances will use `CodecRegistry.DEFAULT_INSTANCE`,  
+which should be adequate for most users.
 
-The third step is to associate your `CodecRegistry` instance with your `Cluster` instance:
+It is however possible to create a `Cluster` using a different `CodecRegistry`:
 
 ```java
+CodecRegistry myCodecRegistry = new CodecRegistry();
 Cluster cluster = new Cluster.builder().withCodecRegistry(myCodecRegistry).build();
 ```
 
-From now on, your codec is fully operational. It will be used every time the driver encounters
+Note: when you instantiate a new `CodecRegistry`, it automatically registers all the default codecs used by the driver.
+This ensures that the new registry will not lack of an essential codec. *You cannot deregister default codecs, only
+register new ones*.
+
+From now on, your custom codec is fully operational. It will be used every time the driver encounters
 a `MyPojo` instance when executing queries, or when you ask it to retrieve a `MyPojo` instance from a `ResultSet`.
 
 For example, here is how to save a `MyPojo` object:
@@ -262,9 +268,11 @@ public class AddressCodec extends TypeCodec.MappingCodec<Address, UDTValue> {
 
 Again, the driver provides a convenient base class: [MappingCodec].
 
-Now, create your `CodecRegistry` and `Cluster` instances the usual way:
+Now (and only if you intend to use your own `CodecRegistry`), 
+create it and register it on your `Cluster` instance:
 
 ```java
+// only if you do not intend to use CodecRegistry.DEFAULT_INSTANCE
 CodecRegistry codecRegistry = new CodecRegistry();
 Cluster cluster = Cluster.builder()
     .addContactPoints(...)
