@@ -23,6 +23,9 @@ import static com.datastax.driver.core.CodecUtils.convert;
 /**
  * A simple {@code RegularStatement} implementation built directly from a query
  * string.
+ * <p>
+ * Use {@link Session#newSimpleStatement(String)} to create a new instance of this
+ * class.
  */
 public class SimpleStatement extends RegularStatement {
 
