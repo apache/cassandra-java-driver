@@ -123,6 +123,10 @@ public class SCassandraCluster {
             activityClient.clearAllRecordedActivity();
     }
 
+    public Scassandra instance(int node) {
+        return scassandras.get(node -1);
+    }
+
     private void primePeers() {
         for (int i = 0; i < scassandras.size(); i++)
             primePeers(primingClients.get(i), scassandras.get(i));
