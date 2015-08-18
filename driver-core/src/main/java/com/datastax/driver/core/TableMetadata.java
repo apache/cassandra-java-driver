@@ -254,11 +254,13 @@ public class TableMetadata {
         // create secondary indexes (C* >= 3.0)
         if (indexRows != null)
             for (Row indexRow : indexRows) {
-                IndexMetadata index = IndexMetadata.fromRow(tm, indexRow);
-                indexes.put(index.getName(), index);
-                // update the many-to-many relationship between indexes and columns
-                for (ColumnMetadata column : index.getColumns()) {
-                    addIndexToColumn(index, column, indexedColumns);
+                if (indexRow.getString("table_name").equals(tm.getName())) {
+                    IndexMetadata index = IndexMetadata.fromRow(tm, indexRow);
+                    indexes.put(index.getName(), index);
+                    // update the many-to-many relationship between indexes and columns
+                    for (ColumnMetadata column : index.getColumns()) {
+                        addIndexToColumn(index, column, indexedColumns);
+                    }
                 }
             }
 

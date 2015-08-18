@@ -381,4 +381,23 @@ public class TableMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
         return Collections.emptyList();
     }
 
+    @Test(groups = "short")
+    public void should_not_mix_indexes_from_different_tables() {
+        String[] statements = {
+                "CREATE TABLE test_ab (a int PRIMARY KEY, b int);",
+                "CREATE INDEX test_b on test_ab (b);",
+                "CREATE TABLE test_cd (c int PRIMARY KEY, d int);",
+                "CREATE INDEX test_d on test_cd (d);",
+        };
+        for (String statement: statements)
+            session.execute(statement);
+
+        TableMetadata table_ab = cluster.getMetadata().getKeyspace(keyspace).getTable("table_ab");
+        TableMetadata table_cd = cluster.getMetadata().getKeyspace(keyspace).getTable("table_cd");
+
+        assertThat(table_ab.getIndexes().size()).isEqualTo(1);
+        assertThat(table_ab.getIndexes().get(0).getName()).isEqualTo("test_b");
+        assertThat(table_cd.getIndexes().size()).isEqualTo(1);
+        assertThat(table_cd.getIndexes().get(0).getName()).isEqualTo("test_d");
+    }
 }
