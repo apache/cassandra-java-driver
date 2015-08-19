@@ -33,8 +33,8 @@ public class Batch extends BuiltStatement {
     // Only used when we add at last one statement that is not a BuiltStatement subclass
     private int nonBuiltStatementValues;
 
-    Batch(Cluster cluster, RegularStatement[] statements, boolean logged) {
-        super((String)null, cluster);
+    Batch(ProtocolVersion protocolVersion, CodecRegistry codecRegistry, RegularStatement[] statements, boolean logged) {
+        super((String)null, protocolVersion, codecRegistry);
         this.statements = statements.length == 0
                         ? new ArrayList<RegularStatement>()
                         : new ArrayList<RegularStatement>(statements.length);

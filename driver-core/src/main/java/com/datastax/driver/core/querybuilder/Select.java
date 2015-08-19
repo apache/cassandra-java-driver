@@ -22,6 +22,7 @@ import java.util.List;
 
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.CodecRegistry;
+import com.datastax.driver.core.ProtocolVersion;
 import com.datastax.driver.core.TableMetadata;
 
 /**
@@ -39,16 +40,16 @@ public class Select extends BuiltStatement {
     private Object limit;
     private boolean allowFiltering;
 
-    Select(Cluster cluster, String keyspace, String table, List<Object> columnNames, boolean isDistinct) {
-        super(keyspace, cluster);
+    Select(ProtocolVersion protocolVersion, CodecRegistry codecRegistry, String keyspace, String table, List<Object> columnNames, boolean isDistinct) {
+        super(keyspace, protocolVersion, codecRegistry);
         this.table = table;
         this.isDistinct = isDistinct;
         this.columnNames = columnNames;
         this.where = new Where(this);
     }
 
-    Select(Cluster cluster, TableMetadata table, List<Object> columnNames, boolean isDistinct) {
-        super(table, cluster);
+    Select(ProtocolVersion protocolVersion, CodecRegistry codecRegistry, TableMetadata table, List<Object> columnNames, boolean isDistinct) {
+        super(table, protocolVersion, codecRegistry);
         this.table = escapeId(table.getName());
         this.isDistinct = isDistinct;
         this.columnNames = columnNames;
@@ -257,16 +258,19 @@ public class Select extends BuiltStatement {
      */
     public static class Builder {
 
-        private final Cluster cluster;
+        private final ProtocolVersion protocolVersion;
+        private final CodecRegistry codecRegistry;
         List<Object> columnNames;
         boolean isDistinct;
 
-        Builder(Cluster cluster) {
-            this.cluster = cluster;
+        Builder(ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
+            this.protocolVersion = protocolVersion;
+            this.codecRegistry = codecRegistry;
         }
 
-        Builder(Cluster cluster, List<Object> columnNames) {
-            this.cluster = cluster;
+        Builder(ProtocolVersion protocolVersion, CodecRegistry codecRegistry, List<Object> columnNames) {
+            this.protocolVersion = protocolVersion;
+            this.codecRegistry = codecRegistry;
             this.columnNames = columnNames;
         }
 
@@ -298,7 +302,7 @@ public class Select extends BuiltStatement {
          * @return a newly built SELECT statement that selects from {@code keyspace.table}.
          */
         public Select from(String keyspace, String table) {
-            return new Select(cluster, keyspace, table, columnNames, isDistinct);
+            return new Select(protocolVersion, codecRegistry, keyspace, table, columnNames, isDistinct);
         }
 
         /**
@@ -308,7 +312,7 @@ public class Select extends BuiltStatement {
          * @return a newly built SELECT statement that selects from {@code table}.
          */
         public Select from(TableMetadata table) {
-            return new Select(cluster, table, columnNames, isDistinct);
+            return new Select(protocolVersion, codecRegistry, table, columnNames, isDistinct);
         }
     }
 
@@ -317,8 +321,8 @@ public class Select extends BuiltStatement {
      */
     public static abstract class Selection extends Builder {
 
-        Selection(Cluster cluster) {
-            super(cluster);
+        Selection(ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
+            super(protocolVersion, codecRegistry);
         }
 
         /**
@@ -405,8 +409,8 @@ public class Select extends BuiltStatement {
 
         private Object previousSelection;
 
-        SelectionOrAlias(Cluster cluster) {
-            super(cluster);
+        SelectionOrAlias(ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
+            super(protocolVersion, codecRegistry);
         }
 
         /**

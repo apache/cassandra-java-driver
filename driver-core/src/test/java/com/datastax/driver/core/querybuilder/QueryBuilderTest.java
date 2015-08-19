@@ -42,20 +42,7 @@ import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 
 public class QueryBuilderTest {
 
-    private QueryBuilder builder;
-
-    @BeforeMethod(groups = "unit")
-    public void setUpQueryBuilder() throws Exception {
-        CodecRegistry codecRegistry = new CodecRegistry();
-        Cluster cluster = mock(Cluster.class);
-        Configuration configuration = mock(Configuration.class);
-        ProtocolOptions protocolOptions = mock(ProtocolOptions.class);
-        when(cluster.getConfiguration()).thenReturn(configuration);
-        when(configuration.getCodecRegistry()).thenReturn(codecRegistry);
-        when(configuration.getProtocolOptions()).thenReturn(protocolOptions);
-        when(protocolOptions.getProtocolVersion()).thenReturn(TestUtils.getDesiredProtocolVersion());
-        builder = new QueryBuilder(cluster);
-    }
+    private QueryBuilder builder = new QueryBuilder(TestUtils.getDesiredProtocolVersion(), CodecRegistry.DEFAULT_INSTANCE);
 
     @Test(groups = "unit")
     public void selectTest() throws Exception {

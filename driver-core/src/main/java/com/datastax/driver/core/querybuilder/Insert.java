@@ -21,6 +21,7 @@ import java.util.List;
 
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.CodecRegistry;
+import com.datastax.driver.core.ProtocolVersion;
 import com.datastax.driver.core.TableMetadata;
 
 /**
@@ -34,14 +35,14 @@ public class Insert extends BuiltStatement {
     private final Options usings;
     private boolean ifNotExists;
 
-    Insert(Cluster cluster, String keyspace, String table) {
-        super(keyspace, cluster);
+    Insert(ProtocolVersion protocolVersion, CodecRegistry codecRegistry, String keyspace, String table) {
+        super(keyspace, protocolVersion, codecRegistry);
         this.table = table;
         this.usings = new Options(this);
     }
 
-    Insert(Cluster cluster, TableMetadata table) {
-        super(table, cluster);
+    Insert(ProtocolVersion protocolVersion, CodecRegistry codecRegistry, TableMetadata table) {
+        super(table, protocolVersion, codecRegistry);
         this.table = escapeId(table.getName());
         this.usings = new Options(this);
     }

@@ -37,7 +37,8 @@ public abstract class BuiltStatement extends RegularStatement {
     private final List<ColumnMetadata> partitionKey;
     private final List<Object> routingKeyValues;
     final String keyspace;
-    protected final Cluster cluster;
+    private final ProtocolVersion protocolVersion;
+    private final CodecRegistry codecRegistry;
 
     private boolean dirty;
     private String cache;
@@ -50,18 +51,20 @@ public abstract class BuiltStatement extends RegularStatement {
     boolean hasBindMarkers;
     private boolean forceNoValues;
 
-    BuiltStatement(String keyspace, Cluster cluster) {
+    BuiltStatement(String keyspace, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
         this.partitionKey = null;
         this.routingKeyValues = null;
         this.keyspace = keyspace;
-        this.cluster = cluster;
+        this.protocolVersion = protocolVersion;
+        this.codecRegistry = codecRegistry;
     }
 
-    BuiltStatement(TableMetadata tableMetadata, Cluster cluster) {
+    BuiltStatement(TableMetadata tableMetadata, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
         this.partitionKey = tableMetadata.getPartitionKey();
         this.routingKeyValues = Arrays.asList(new Object[tableMetadata.getPartitionKey().size()]);
         this.keyspace = escapeId(tableMetadata.getKeyspace().getName());
-        this.cluster = cluster;
+        this.protocolVersion = protocolVersion;
+        this.codecRegistry = codecRegistry;
     }
 
     // Same as Metadata.escapeId, but we don't have access to it here.
@@ -160,19 +163,13 @@ public abstract class BuiltStatement extends RegularStatement {
     }
 
     CodecRegistry getCodecRegistry(){
-        return cluster.getConfiguration().getCodecRegistry();
+        return codecRegistry;
     }
 
     ProtocolVersion getProtocolVersion() {
-        cluster.init();
-        return cluster.getConfiguration().getProtocolOptions().getProtocolVersion();
+        return protocolVersion;
     }
 
-    /**
-     * {@inheritDoc}
-     * <p>
-     * Note: Calling this method may trigger the underlying {@link Cluster} initialization.
-     */
     @Override
     public ByteBuffer getRoutingKey() {
         if (routingKeyValues == null)
@@ -278,7 +275,7 @@ public abstract class BuiltStatement extends RegularStatement {
         T statement;
 
         ForwardingStatement(T statement) {
-            super((String)null, statement.cluster);
+            super((String)null, statement.getProtocolVersion(), statement.getCodecRegistry());
             this.statement = statement;
         }
 

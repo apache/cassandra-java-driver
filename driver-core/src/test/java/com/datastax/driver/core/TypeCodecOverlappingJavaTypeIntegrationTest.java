@@ -52,7 +52,7 @@ public class TypeCodecOverlappingJavaTypeIntegrationTest extends CCMBridge.PerCl
     @Override
     protected Cluster.Builder configure(Cluster.Builder builder) {
         return builder.withCodecRegistry(
-            new CodecRegistry().register(new IntToStringCodec(), true)
+            new CodecRegistry().register(new IntToStringCodec())
         );
     }
 

@@ -298,8 +298,14 @@ public interface SettableByNameData<T extends SettableData<T>> {
      * in order to guess the best codec to serialize the list elements.
      * The result of such inspection cannot be cached and thus must be performed for each invocation
      * of this method, which may incur in a performance penalty.
-     * To circumvent this problem, consider using {@link #setList(String, List, Class)} or
-     * {@link #setList(String, List, TypeToken)}, which do not suffer from such symptoms.
+     * <p>
+     * Furthermore, if two or more codecs are available
+     * for the underlying CQL type ({@code list}), <em>which one will be used will depend
+     * on the actual object being serialized</em>.
+     * <p>
+     * For these reasons, it is generally preferable to use the more
+     * deterministic methods {@link #setList(String, List, Class)} or
+     * {@link #setList(String, List, TypeToken)}.
      *
      * @param name the name of the value to set; if {@code name} is present multiple
      * times, all its values are set.
@@ -373,8 +379,14 @@ public interface SettableByNameData<T extends SettableData<T>> {
      * in order to guess the best codec to serialize the map entries.
      * The result of such inspection cannot be cached and thus must be performed for each invocation
      * of this method, which may incur in a performance penalty.
-     * To circumvent this problem, consider using {@link #setMap(String, Map, Class, Class)} or
-     * {@link #setMap(String, Map, TypeToken, TypeToken)}, which do not suffer from such symptoms.
+     * <p>
+     * Furthermore, if two or more codecs are available
+     * for the underlying CQL type ({@code map}), <em>which one will be used will depend
+     * on the actual object being serialized</em>.
+     * <p>
+     * For these reasons, it is generally preferable to use the more
+     * deterministic methods {@link #setMap(String, Map, Class, Class)} or
+     * {@link #setMap(String, Map, TypeToken, TypeToken)}.
      *
      * @param name the name of the value to set; if {@code name} is present multiple
      * times, all its values are set.
@@ -449,11 +461,17 @@ public interface SettableByNameData<T extends SettableData<T>> {
      * Please note that {@code null} values are not supported inside collection by CQL.
      * <p>
      * Note about performance: this method must perform a runtime inspection of the provided map,
-     * in order to guess the best codec to serialize the map entries.
+     * in order to guess the best codec to serialize the set elements.
      * The result of such inspection cannot be cached and thus must be performed for each invocation
      * of this method, which may incur in a performance penalty.
-     * To circumvent this problem, consider using {@link #setSet(String, Set, Class)} or
-     * {@link #setSet(String, Set, TypeToken)}, which do not suffer from such symptoms.
+     * <p>
+     * Furthermore, if two or more codecs are available
+     * for the underlying CQL type ({@code set}), <em>which one will be used will depend
+     * on the actual object being serialized</em>.
+     * <p>
+     * For these reasons, it is generally preferable to use the more
+     * deterministic methods {@link #setSet(String, Set, Class)} or
+     * {@link #setSet(String, Set, TypeToken)}.
      *
      * @param name the name of the value to set; if {@code name} is present multiple
      * times, all its values are set.
@@ -566,9 +584,17 @@ public interface SettableByNameData<T extends SettableData<T>> {
     /**
      * Sets the value for (all occurrences of) variable {@code name} to the provided value.
      * <p>
-     * This method is not suitable to use with custom codecs: it will always
-     * use the default ones for the underlying CQL type. If you want to use
-     * non-default codecs, use {@link #set(String, V, Class)} or {@link #set(String, V, TypeToken)} instead.
+     * Note about performance: this method must perform a runtime inspection of the provided object,
+     * in order to guess the best codec to serialize it.
+     * The result of such inspection cannot be cached and thus must be performed for each invocation
+     * of this method, which may incur in a performance penalty.
+     * <p>
+     * Furthermore, if two or more codecs are available
+     * for the underlying CQL type, <em>which one will be used will depend
+     * on the actual object being serialized</em>.
+     * <p>
+     * For these reasons, it is generally preferable to use the more
+     * deterministic methods {@link #set(String, V, Class)} or {@link #set(String, V, TypeToken)} instead.
      *
      * @param name the name of the value to set; if {@code name} is present multiple
      * times, all its values are set.

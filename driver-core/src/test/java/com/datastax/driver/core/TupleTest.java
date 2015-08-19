@@ -22,6 +22,7 @@ import com.beust.jcommander.internal.Lists;
 import com.google.common.base.Joiner;
 import org.testng.annotations.Test;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
 
@@ -386,6 +387,24 @@ public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
             errorOut();
             throw e;
         }
+    }
+
+    /**
+     * Validates that tuple values generated from an attached type (cluster-provided TupleType) and
+     * a detached type (using TupleType.of) are the same.
+     *
+     * @since 2.2.0
+     */
+    @Test(groups = "short")
+    public void detachedTupleTypeTest() {
+        TupleType detachedType = TupleType.of(TestUtils.getDesiredProtocolVersion(), CodecRegistry.DEFAULT_INSTANCE,
+            DataType.cint(), DataType.text(), DataType.cfloat());
+        TupleValue detachedValue = detachedType.newValue(1, "hello", 2.0f);
+
+        TupleType attachedType = cluster.getMetadata().newTupleType(DataType.cint(), DataType.text(), DataType.cfloat());
+        TupleValue attachedValue = attachedType.newValue(1, "hello", 2.0f);
+
+        assertThat(detachedValue).isEqualTo(attachedValue);
     }
 
     /**

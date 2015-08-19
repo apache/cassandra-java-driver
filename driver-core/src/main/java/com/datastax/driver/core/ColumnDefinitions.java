@@ -286,26 +286,9 @@ public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition>
 
     void setCodecRegistry(CodecRegistry codecRegistry) {
         for (Definition definition : byIdx) {
-            setCodecRegistry(definition.type, codecRegistry);
+            CodecUtils.setCodecRegistry(definition.type, codecRegistry);
         }
         this.codecRegistry = codecRegistry;
-    }
-
-    void setCodecRegistry(DataType cqlType, CodecRegistry codecRegistry) {
-        // by the time UDT and tuple values are decoded from response messages, the
-        // codec registry is not available, so set it now;
-        // this method should be called immediately after a response
-        // is decoded into either a prepared statement or a result set.
-        if(cqlType instanceof UserType) {
-            ((UserType)cqlType).setCodecRegistry(codecRegistry);
-        }
-        if(cqlType instanceof TupleType) {
-            ((TupleType)cqlType).setCodecRegistry(codecRegistry);
-        }
-        // propagate codec registry to inner types
-        for (DataType inner : cqlType.getTypeArguments()) {
-            setCodecRegistry(inner, codecRegistry);
-        }
     }
 
     /**

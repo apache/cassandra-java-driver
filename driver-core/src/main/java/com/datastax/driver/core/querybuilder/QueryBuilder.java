@@ -17,9 +17,7 @@ package com.datastax.driver.core.querybuilder;
 
 import java.util.*;
 
-import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.RegularStatement;
-import com.datastax.driver.core.TableMetadata;
+import com.datastax.driver.core.*;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
 
 /**
@@ -40,17 +38,40 @@ import com.datastax.driver.core.exceptions.InvalidQueryException;
  */
 public final class QueryBuilder {
 
-    private final Cluster cluster;
+    private final ProtocolVersion protocolVersion;
+    private final CodecRegistry codecRegistry;
 
     /**
      * Create a new QueryBuilder instance and associate it with the given {@link Cluster}.
-     * Note: if the {@link Cluster} is not yet initialized, certain methods of the QueryBuilder API
-     * may trigger its initialization.
+     * Note: if the {@link Cluster} is not yet initialized, this method
+     * will trigger its initialization.
      *
      * @param cluster The {@link Cluster} instance this object should be attached to.
      */
     public QueryBuilder(Cluster cluster) {
-        this.cluster = cluster;
+        this(getProtocolVersion(cluster), cluster.getConfiguration().getCodecRegistry());
+    }
+
+    private static ProtocolVersion getProtocolVersion(Cluster cluster) {
+        cluster.init();
+        return cluster.getConfiguration().getProtocolOptions().getProtocolVersion();
+    }
+
+    /**
+     * Create a "disconnected" QueryBuilder instance (<b>you should prefer
+     * {@link #QueryBuilder(Cluster)} whenever possible</b>).
+     * <p>
+     * This constructor is only exposed for situations where you don't have a {@code Cluster}
+     * instance available. If you use this constructor, and use statements built from it
+     * with a {@code Cluster} later, you won't be able to rely on custom codecs registered
+     * against the cluster, or you might get errors if the protocol versions don't match.
+     *
+     * @param protocolVersion the protocol version.
+     * @param codecRegistry the codec registry.
+     */
+    public QueryBuilder(ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
+        this.protocolVersion = protocolVersion;
+        this.codecRegistry = codecRegistry;
     }
 
     /**
@@ -63,7 +84,7 @@ public final class QueryBuilder {
      * least a FROM clause to complete the query).
      */
     public Select.Builder select(String... columns) {
-        return new Select.Builder(cluster, Arrays.asList((Object[])columns));
+        return new Select.Builder(protocolVersion, codecRegistry, Arrays.asList((Object[])columns));
     }
 
     /**
@@ -74,7 +95,7 @@ public final class QueryBuilder {
      */
     public Select.Selection select() {
         // Note: the fact we return Select.Selection as return type is on purpose.
-        return new Select.SelectionOrAlias(cluster);
+        return new Select.SelectionOrAlias(protocolVersion, codecRegistry);
     }
 
     /**
@@ -84,7 +105,7 @@ public final class QueryBuilder {
      * @return an in-construction INSERT query.
      */
     public Insert insertInto(String table) {
-        return new Insert(cluster, null, table);
+        return new Insert(protocolVersion, codecRegistry, null, table);
     }
 
     /**
@@ -95,7 +116,7 @@ public final class QueryBuilder {
      * @return an in-construction INSERT query.
      */
     public Insert insertInto(String keyspace, String table) {
-        return new Insert(cluster, keyspace, table);
+        return new Insert(protocolVersion, codecRegistry, keyspace, table);
     }
 
     /**
@@ -105,7 +126,7 @@ public final class QueryBuilder {
      * @return an in-construction INSERT query.
      */
     public Insert insertInto(TableMetadata table) {
-        return new Insert(cluster, table);
+        return new Insert(protocolVersion, codecRegistry, table);
     }
 
     /**
@@ -116,7 +137,7 @@ public final class QueryBuilder {
      * clause needs to be provided to complete the query).
      */
     public Update update(String table) {
-        return new Update(cluster, null, table);
+        return new Update(protocolVersion, codecRegistry, null, table);
     }
 
     /**
@@ -128,7 +149,7 @@ public final class QueryBuilder {
      * clause needs to be provided to complete the query).
      */
     public Update update(String keyspace, String table) {
-        return new Update(cluster, keyspace, table);
+        return new Update(protocolVersion, codecRegistry, keyspace, table);
     }
 
     /**
@@ -139,7 +160,7 @@ public final class QueryBuilder {
      * clause needs to be provided to complete the query).
      */
     public Update update(TableMetadata table) {
-        return new Update(cluster, table);
+        return new Update(protocolVersion, codecRegistry, table);
     }
 
     /**
@@ -150,7 +171,7 @@ public final class QueryBuilder {
      * clause needs to be provided to complete the query).
      */
     public Delete.Builder delete(String... columns) {
-        return new Delete.Builder(cluster, columns);
+        return new Delete.Builder(protocolVersion, codecRegistry, columns);
     }
 
     /**
@@ -161,7 +182,7 @@ public final class QueryBuilder {
      * query).
      */
     public Delete.Selection delete() {
-        return new Delete.Selection(cluster);
+        return new Delete.Selection(protocolVersion, codecRegistry);
     }
 
     /**
@@ -178,7 +199,7 @@ public final class QueryBuilder {
      * @return a new {@code RegularStatement} that batch {@code statements}.
      */
     public Batch batch(RegularStatement... statements) {
-        return new Batch(cluster, statements, true);
+        return new Batch(protocolVersion, codecRegistry, statements, true);
     }
 
     /**
@@ -199,7 +220,7 @@ public final class QueryBuilder {
      * using the batch log.
      */
     public Batch unloggedBatch(RegularStatement... statements) {
-        return new Batch(cluster, statements, false);
+        return new Batch(protocolVersion, codecRegistry, statements, false);
     }
 
     /**
@@ -209,7 +230,7 @@ public final class QueryBuilder {
      * @return the truncation query.
      */
     public Truncate truncate(String table) {
-        return new Truncate(cluster, null, table);
+        return new Truncate(protocolVersion, codecRegistry, null, table);
     }
 
     /**
@@ -220,7 +241,7 @@ public final class QueryBuilder {
      * @return the truncation query.
      */
     public Truncate truncate(String keyspace, String table) {
-        return new Truncate(cluster, keyspace, table);
+        return new Truncate(protocolVersion, codecRegistry, keyspace, table);
     }
 
     /**
@@ -230,7 +251,7 @@ public final class QueryBuilder {
      * @return the truncation query.
      */
     public Truncate truncate(TableMetadata table) {
-        return new Truncate(cluster, table);
+        return new Truncate(protocolVersion, codecRegistry, table);
     }
 
     /**
