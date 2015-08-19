@@ -308,9 +308,9 @@ public class ReconnectionTest {
         }
 
         @Override
-        public Authenticator newAuthenticator(InetSocketAddress host) {
+        public Authenticator newAuthenticator(InetSocketAddress host, String authenticator) {
             count.incrementAndGet();
-            return super.newAuthenticator(host);
+            return super.newAuthenticator(host, authenticator);
         }
     }
 

@@ -34,7 +34,7 @@ public interface AuthProvider {
      * This is only useful as a placeholder when no authentication is to be used.
      */
     public static final AuthProvider NONE = new AuthProvider() {
-        public Authenticator newAuthenticator(InetSocketAddress host) {
+        public Authenticator newAuthenticator(InetSocketAddress host, String authenticator) {
             throw new AuthenticationException(host,
                 String.format("Host %s requires authentication, but no authenticator found in Cluster configuration", host));
         }
@@ -44,7 +44,8 @@ public interface AuthProvider {
      * The {@code Authenticator} to use when connecting to {@code host}
      *
      * @param host the Cassandra host to connect to.
+     * @param authenticator the configured authenticator on the host.
      * @return The authentication implementation to use.
      */
-    public Authenticator newAuthenticator(InetSocketAddress host) throws AuthenticationException;
+    public Authenticator newAuthenticator(InetSocketAddress host, String authenticator) throws AuthenticationException;
 }

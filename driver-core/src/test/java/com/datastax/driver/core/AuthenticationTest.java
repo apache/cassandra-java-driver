@@ -23,8 +23,14 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+
 import com.datastax.driver.core.exceptions.AuthenticationException;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
+
+import static com.datastax.driver.core.TestUtils.findHost;
 
 /**
  * Tests for authenticated cluster access
@@ -59,11 +65,13 @@ public class AuthenticationTest {
 
     @Test(groups = "short")
     public void should_connect_with_credentials() throws InterruptedException {
+        PlainTextAuthProvider authProvider = spy(new PlainTextAuthProvider("cassandra", "cassandra"));
         Cluster cluster = Cluster.builder().addContactPoint(CCMBridge.IP_PREFIX + '1')
-                .withCredentials("cassandra", "cassandra")
+                .withAuthProvider(authProvider)
                 .build();
         try {
             cluster.connect();
+            verify(authProvider, atLeastOnce()).newAuthenticator(findHost(cluster, 1).getSocketAddress(), "org.apache.cassandra.auth.PasswordAuthenticator");
         } catch (NoHostAvailableException e) {
             logger.error(e.getCustomMessage(1, true, true));
         } finally {
