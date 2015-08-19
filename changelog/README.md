@@ -1,5 +1,16 @@
 ## Changelog
 
+### 3.0.0-alpha2 (in progress)
+
+Merged from 2.2 branch:
+
+- [bug] Propagate CodecRegistry to nested UDTs (JAVA-847)
+- [improvement] Ability to store a default, shareable CodecRegistry
+  instance (JAVA-848)
+- [bug] Treat empty ByteBuffers as empty values in TupleCodec and
+  UDTCodec (JAVA-880)
+
+
 ### 3.0.0-alpha1
 
 - [new feature] Support new system tables in C* 3.0.0-alpha1 (JAVA-876)
@@ -15,11 +26,6 @@ Merged from 2.2 branch:
 - [improvement] Disable frozen checks in mapper (JAVA-843)
 - [improvement] Allow user to register custom type codecs (JAVA-721)
 - [improvement] Support custom type codecs in mapper (JAVA-722)
-- [bug] Propagate CodecRegistry to nested UDTs (JAVA-847)
-- [improvement] Ability to store a default, shareable CodecRegistry
-  instance (JAVA-848)
-- [bug] Treat empty ByteBuffers as empty values in TupleCodec and
-  UDTCodec (JAVA-880)
 
 
 ### 2.2.0-rc3
