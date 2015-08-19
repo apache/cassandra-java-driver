@@ -22,14 +22,14 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.google.common.base.Function;
-import com.google.common.collect.Collections2;
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static com.datastax.driver.core.Assertions.assertThat;
+import static com.datastax.driver.core.TestUtils.nonDebouncingQueryOptions;
 
 import com.datastax.driver.core.policies.DelegatingLoadBalancingPolicy;
 import com.datastax.driver.core.policies.LoadBalancingPolicy;
@@ -111,6 +111,7 @@ public class ControlConnectionTest {
 
             cluster = Cluster.builder()
                     .addContactPoint(CCMBridge.ipOfNode(1))
+                    .withQueryOptions(nonDebouncingQueryOptions())
                     .build();
             cluster.init();
 
