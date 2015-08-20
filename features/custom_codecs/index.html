@@ -61,7 +61,7 @@
           </ul>
           <form class="navbar-form form-search navbar-right dropdown visible-lg-block" ng-class="{open: hasResults}" role="search" ng-submit="submit()">
             <div class="form-group has-feedback">
-              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.2.0-rc2')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.2.0-rc3')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
             </div>
             <ul class="dropdown-menu" role="menu">
               <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
@@ -80,12 +80,14 @@
               <li>
                 <div class="dropdown">
                   <button id="current-version" class="btn btn-default btn-sm" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    2.2.0-rc2
+                    2.2.0-rc3
                     <span class="caret"></span>
                   </button>
                   <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
                   
-                    <li class="disabled"><a href="./">2.2.0-rc2</a></li>
+                    <li class="disabled"><a href="./">2.2.0-rc3</a></li>
+                  
+                    <li><a href="../../2.2.0-rc2/features/custom_codecs/">2.2.0-rc2</a></li>
                   
                     <li><a href="../../2.2.0-rc1/">2.2.0-rc1</a></li>
                   
@@ -243,19 +245,25 @@ it suffers from the overhead of deserializing raw bytes into a String,
 to only then parse the String into an object.
 More advanced solutions that read the underlying byte stream directly are possible.</p>
 
-<p>The second step is to register your codec:</p>
+<p>The second step is to register your codec with a <code>CodecRegistry</code> instance:</p>
 <pre class="highlight"><code><span class="n">ObjectMapper</span> <span class="n">objectMapper</span> <span class="o">=</span> <span class="o">...</span>
 <span class="n">JsonCodec</span><span class="o">&lt;</span><span class="n">MyPojo</span><span class="o">&gt;</span> <span class="n">myJsonCodec</span> <span class="o">=</span> <span class="k">new</span> <span class="n">JsonCodec</span><span class="o">&lt;</span><span class="n">MyPojo</span><span class="o">&gt;(</span><span class="n">MyPojo</span><span class="o">.</span><span class="na">class</span><span class="o">,</span> <span class="n">objectMapper</span><span class="o">);</span>
-<span class="n">CodecRegistry</span> <span class="n">myCodecRegistry</span> <span class="o">=</span> <span class="k">new</span> <span class="n">CodecRegistry</span><span class="o">().</span><span class="na">register</span><span class="o">(</span><span class="n">myJsonCodec</span><span class="o">);</span>
+<span class="n">CodecRegistry</span> <span class="n">myCodecRegistry</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="na">getConfiguration</span><span class="o">().</span><span class="na">getCodecRegistry</span><span class="o">();</span>
+<span class="n">myCodecRegistry</span><span class="o">.</span><span class="na">register</span><span class="o">(</span><span class="n">myJsonCodec</span><span class="o">);</span>
 </code></pre>
-<p>When you instantiate a <code>CodecRegistry</code>, it automatically registers all the default codecs used by the driver.
-This ensures that the registry will not lack of an essential codec. <em>You cannot deregister default codecs, only
+<p>As you can see, the easiest way to do so is to access the <code>Cluster</code>’s <code>CodecRegistry</code>.
+By default, <code>Cluster</code> instances will use <code>CodecRegistry.DEFAULT_INSTANCE</code>,<br>
+which should be adequate for most users.</p>
+
+<p>It is however possible to create a <code>Cluster</code> using a different <code>CodecRegistry</code>:</p>
+<pre class="highlight"><code><span class="n">CodecRegistry</span> <span class="n">myCodecRegistry</span> <span class="o">=</span> <span class="k">new</span> <span class="n">CodecRegistry</span><span class="o">();</span>
+<span class="n">Cluster</span> <span class="n">cluster</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Cluster</span><span class="o">.</span><span class="na">builder</span><span class="o">().</span><span class="na">withCodecRegistry</span><span class="o">(</span><span class="n">myCodecRegistry</span><span class="o">).</span><span class="na">build</span><span class="o">();</span>
+</code></pre>
+<p>Note: when you instantiate a new <code>CodecRegistry</code>, it automatically registers all the default codecs used by the driver.
+This ensures that the new registry will not lack of an essential codec. <em>You cannot deregister default codecs, only
 register new ones</em>.</p>
 
-<p>The third step is to associate your <code>CodecRegistry</code> instance with your <code>Cluster</code> instance:</p>
-<pre class="highlight"><code><span class="n">Cluster</span> <span class="n">cluster</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Cluster</span><span class="o">.</span><span class="na">builder</span><span class="o">().</span><span class="na">withCodecRegistry</span><span class="o">(</span><span class="n">myCodecRegistry</span><span class="o">).</span><span class="na">build</span><span class="o">();</span>
-</code></pre>
-<p>From now on, your codec is fully operational. It will be used every time the driver encounters
+<p>From now on, your custom codec is fully operational. It will be used every time the driver encounters
 a <code>MyPojo</code> instance when executing queries, or when you ask it to retrieve a <code>MyPojo</code> instance from a <code>ResultSet</code>.</p>
 
 <p>For example, here is how to save a <code>MyPojo</code> object:</p>
@@ -378,8 +386,10 @@ using the built-in codecs <a href="http://docs.datastax.com/en/drivers/java/2.2/
 </code></pre>
 <p>Again, the driver provides a convenient base class: <a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/TypeCodec.MappingCodec.html">MappingCodec</a>.</p>
 
-<p>Now, create your <code>CodecRegistry</code> and <code>Cluster</code> instances the usual way:</p>
-<pre class="highlight"><code><span class="n">CodecRegistry</span> <span class="n">codecRegistry</span> <span class="o">=</span> <span class="k">new</span> <span class="n">CodecRegistry</span><span class="o">();</span>
+<p>Now (and only if you intend to use your own <code>CodecRegistry</code>), 
+create it and register it on your <code>Cluster</code> instance:</p>
+<pre class="highlight"><code><span class="c1">// only if you do not intend to use CodecRegistry.DEFAULT_INSTANCE</span>
+<span class="n">CodecRegistry</span> <span class="n">codecRegistry</span> <span class="o">=</span> <span class="k">new</span> <span class="n">CodecRegistry</span><span class="o">();</span>
 <span class="n">Cluster</span> <span class="n">cluster</span> <span class="o">=</span> <span class="n">Cluster</span><span class="o">.</span><span class="na">builder</span><span class="o">()</span>
     <span class="o">.</span><span class="na">addContactPoints</span><span class="o">(...)</span>
     <span class="o">.</span><span class="na">withCodecRegistry</span><span class="o">(</span><span class="n">codecRegistry</span><span class="o">)</span>

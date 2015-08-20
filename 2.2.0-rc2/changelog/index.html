@@ -1,0 +1,1255 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="description" content="High performance Java client for Apache Cassandra">
+    <meta name="author" content="DataStax">
+
+    <title>Java Driver for Apache Cassandra - Changelog</title>
+
+    <link rel="icon" href="../../favicon.ico">
+    <link rel="apple-touch-icon" href="../../favicon.png">
+    <link href="../../css/style.css" rel="stylesheet">
+    <link href="../../css/pygments.css" rel="stylesheet">
+    <link href="../../css/hotkeys.css" rel="stylesheet">
+
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body ng-app="docs" data-spy="scroll" data-target=".side-nav">
+    <header class="navbar navbar-default navbar-static-top" role="navigation">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="../">Java Driver for Apache Cassandra</a>
+        </div>
+        <div class="collapse navbar-collapse" ng-controller="search">
+          <ul class="nav navbar-nav">
+            
+            
+            
+            <li>
+              <a href="../features/">Features</a>
+            </li>
+            
+            
+            <li class="active">
+              <a href="./">Changelog</a>
+            </li>
+            
+            
+            <li>
+              <a href="../upgrade_guide/">Upgrading</a>
+            </li>
+            
+            
+            <li>
+              <a href="../faq/">FAQ</a>
+            </li>
+            
+          </ul>
+          <form class="navbar-form form-search navbar-right dropdown visible-lg-block" ng-class="{open: hasResults}" role="search" ng-submit="submit()">
+            <div class="form-group has-feedback">
+              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.2.0-rc2')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+            </div>
+            <ul class="dropdown-menu" role="menu">
+              <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
+            </ul>
+          </form>
+        </div>
+      </div>
+    </header>
+
+    <div class="container" id="content">
+      <div class="row">
+        <div class="col-md-9 content">
+          <nav class="crumbs">
+            <ol class="breadcrumb">
+              
+              <li>
+                <div class="dropdown">
+                  <button id="current-version" class="btn btn-default btn-sm" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    2.2.0-rc2
+                    <span class="caret"></span>
+                  </button>
+                  <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
+                  
+                    <li><a href="../../changelog/">2.2.0-rc3</a></li>
+                  
+                    <li class="disabled"><a href="./">2.2.0-rc2</a></li>
+                  
+                    <li><a href="../../2.2.0-rc1/changelog/">2.2.0-rc1</a></li>
+                  
+                    <li><a href="../../2.1.7/changelog/">2.1.7</a></li>
+                  
+                    <li><a href="../../2.1.6/">2.1.6</a></li>
+                  
+                    <li><a href="../../2.1.5/">2.1.5</a></li>
+                  
+                    <li><a href="../../2.0.10.1/">2.0.10.1</a></li>
+                  
+                    <li><a href="../../2.0.10/">2.0.10</a></li>
+                  
+                  </ul>
+                </div>
+              </li>
+              
+              
+              
+              
+              <li><a href="../">Home</a></li>
+              
+              
+              
+              
+              
+              <li class="active">Changelog</li>
+              
+              
+              
+            </ol>
+          </nav>
+          
+
+<h2 id="changelog">Changelog<a class="anchor" href="#changelog" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h2>
+
+<h3 id="2-2-0-rc2">2.2.0-rc2<a class="anchor" href="#2-2-0-rc2" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<ul>
+<li>[improvement] Rename DateWithoutTime to LocalDate (JAVA-810)</li>
+<li>[bug] DateCodec does not format values correctly (JAVA-816)</li>
+<li>[bug] TimeCodec does not format values correctly (JAVA-817)</li>
+<li>[bug] TypeCodec.getDataTypeFor() does not handle LocalDate instances (JAVA-818)</li>
+<li>[improvement] Make ResultSet#fetchMoreResult return a
+ListenableFuture<resultset> (JAVA-836)</resultset>
+</li>
+<li>[improvement] Disable frozen checks in mapper (JAVA-843)</li>
+<li>[improvement] Allow user to register custom type codecs (JAVA-721)</li>
+<li>[improvement] Support custom type codecs in mapper (JAVA-722)</li>
+</ul>
+
+<p>Merged from 2.1 branch:</p>
+
+<ul>
+<li>[bug] Special case check for ‘null’ string in index_options column (JAVA-834)</li>
+<li>[improvement] Allow accessor methods with less parameters in case
+named bind markers are repeated (JAVA-835)</li>
+<li>[improvement] Improve QueryBuilder API for SELECT DISTINCT (JAVA-475)</li>
+<li>[improvement] Make NativeColumnType a top-level class (JAVA-715)</li>
+<li>[improvement] Expose ProtocolVersion#toInt (JAVA-700)</li>
+<li>[bug] Handle void return types in accessors (JAVA-542)</li>
+<li>[improvement] Create values() function for Insert builder using List (JAVA-225)</li>
+<li>[improvement] HashMap throws an OOM Exception when logging level is set to TRACE (JAVA-713)</li>
+<li>[bug] Support bind marker in QueryBuilder DELETE’s list index (JAVA-679)</li>
+<li>[improvement] Expose KEYS and FULL indexing options in IndexMetadata (JAVA-732)</li>
+<li>[improvement] Allow @Enumerated in Accessor method parameters (JAVA-589)</li>
+<li>[improvement] Allow access to table metadata from Mapper (JAVA-554)</li>
+<li>[improvement] Provide a way to map computed fields (JAVA-661)</li>
+<li>[improvement] Ignore missing columns in mapper (JAVA-824)</li>
+<li>[bug] Preserve default timestamp for retries and speculative executions (JAVA-724)</li>
+<li>[improvement] Use same pool implementation for protocol v2 and v3
+(JAVA-738).</li>
+<li>[improvement] Support CONTAINS / CONTAINS KEY in QueryBuilder (JAVA-677)</li>
+<li>[improvement] Add USING options in mapper for delete and save
+operations (JAVA-477/JAVA-540)</li>
+<li>[improvement] Add mapper option to configure whether to save null fields (JAVA-473)</li>
+</ul>
+
+<p>Merged from 2.0 branch:</p>
+
+<ul>
+<li>[bug] DowngradingConsistencyRetryPolicy ignores write timeouts (JAVA-737)</li>
+<li>[bug] Forbid bind marker in QueryBuilder add/append/prepend (JAVA-736)</li>
+<li>[bug] Prevent QueryBuilder.quote() from applying duplicate double quotes (JAVA-712)</li>
+<li>[bug] Prevent QueryBuilder from trying to serialize raw string (JAVA-688)</li>
+<li>[bug] Support bind marker in QueryBuilder DELETE’s list index (JAVA-679)</li>
+<li>[improvement] Improve QueryBuilder API for SELECT DISTINCT (JAVA-475)</li>
+<li>[improvement] Create values() function for Insert builder using List (JAVA-225)</li>
+<li>[improvement] Warn when ReplicationStrategy encounters invalid
+replication factors (JAVA-702)</li>
+<li>[improvement] Add PoolingOptions method to set both core and max
+connections (JAVA-662).</li>
+<li>[improvement] Do not include epoll JAR in binary distribution (JAVA-766)</li>
+<li>[improvement] Optimize internal copies of Request objects (JAVA-726)</li>
+<li>[bug] Preserve tracing across retries (JAVA-815)</li>
+<li>[improvement] New RetryDecision.tryNextHost() (JAVA-709)</li>
+<li>[bug] Handle function calls and raw strings as non-idempotent in QueryBuilder (JAVA-733)</li>
+</ul>
+
+<h3 id="2-2-0-rc1">2.2.0-rc1<a class="anchor" href="#2-2-0-rc1" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<ul>
+<li>[new feature] Protocol V4 enum support (JAVA-783)</li>
+<li>[new feature] Use PK columns in protocol v4 PREPARED response (JAVA-776)</li>
+<li>[new feature] Distinguish NULL and UNSET values (JAVA-777)</li>
+<li>[new feature] Add k/v payload for 3rd party usage (JAVA-779)</li>
+<li>[new feature] Expose server-side warnings on ExecutionInfo (JAVA-780)</li>
+<li>[new feature] Expose new read/write failure exceptions (JAVA-749)</li>
+<li>[new feature] Expose function and aggregate metadata (JAVA-747)</li>
+<li>[new feature] Add new client exception for CQL function failure (JAVA-778)</li>
+<li>[improvement] Expose ProtocolVersion#toInt (JAVA-700)</li>
+<li>[new feature] Support new C* 2.2 CQL date and time types (JAVA-404)</li>
+</ul>
+
+<p>Merged from 2.1 branch:</p>
+
+<ul>
+<li>[improvement] Unify “Target” enum for schema elements (JAVA-782)</li>
+</ul>
+
+<h3 id="2-1-7-1">2.1.7.1<a class="anchor" href="#2-1-7-1" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<ul>
+<li>[bug] Special case check for &#8216;null’ string in index_options column (JAVA-834)</li>
+<li>[improvement] Allow accessor methods with less parameters in case
+named bind markers are repeated (JAVA-835)</li>
+</ul>
+
+<h3 id="2-1-7">2.1.7<a class="anchor" href="#2-1-7" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<ul>
+<li>[improvement] Improve QueryBuilder API for SELECT DISTINCT (JAVA-475)</li>
+<li>[improvement] Make NativeColumnType a top-level class (JAVA-715)</li>
+<li>[improvement] Unify “Target” enum for schema elements (JAVA-782)</li>
+<li>[improvement] Expose ProtocolVersion#toInt (JAVA-700)</li>
+<li>[bug] Handle void return types in accessors (JAVA-542)</li>
+<li>[improvement] Create values() function for Insert builder using List (JAVA-225)</li>
+<li>[improvement] HashMap throws an OOM Exception when logging level is set to TRACE (JAVA-713)</li>
+<li>[bug] Support bind marker in QueryBuilder DELETE’s list index (JAVA-679)</li>
+<li>[improvement] Expose KEYS and FULL indexing options in IndexMetadata (JAVA-732)</li>
+<li>[improvement] Allow @Enumerated in Accessor method parameters (JAVA-589)</li>
+<li>[improvement] Allow access to table metadata from Mapper (JAVA-554)</li>
+<li>[improvement] Provide a way to map computed fields (JAVA-661)</li>
+<li>[improvement] Ignore missing columns in mapper (JAVA-824)</li>
+<li>[bug] Preserve default timestamp for retries and speculative executions (JAVA-724)</li>
+<li>[improvement] Use same pool implementation for protocol v2 and v3
+(JAVA-738).</li>
+<li>[improvement] Support CONTAINS / CONTAINS KEY in QueryBuilder (JAVA-677)</li>
+<li>[improvement] Add USING options in mapper for delete and save
+operations (JAVA-477/JAVA-540)</li>
+<li>[improvement] Add mapper option to configure whether to save null fields (JAVA-473)</li>
+</ul>
+
+<p>Merged from 2.0 branch:</p>
+
+<ul>
+<li>[bug] DowngradingConsistencyRetryPolicy ignores write timeouts (JAVA-737)</li>
+<li>[bug] Forbid bind marker in QueryBuilder add/append/prepend (JAVA-736)</li>
+<li>[bug] Prevent QueryBuilder.quote() from applying duplicate double quotes (JAVA-712)</li>
+<li>[bug] Prevent QueryBuilder from trying to serialize raw string (JAVA-688)</li>
+<li>[bug] Support bind marker in QueryBuilder DELETE’s list index (JAVA-679)</li>
+<li>[improvement] Improve QueryBuilder API for SELECT DISTINCT (JAVA-475)</li>
+<li>[improvement] Create values() function for Insert builder using List (JAVA-225)</li>
+<li>[improvement] Warn when ReplicationStrategy encounters invalid
+replication factors (JAVA-702)</li>
+<li>[improvement] Add PoolingOptions method to set both core and max
+connections (JAVA-662).</li>
+<li>[improvement] Do not include epoll JAR in binary distribution (JAVA-766)</li>
+<li>[improvement] Optimize internal copies of Request objects (JAVA-726)</li>
+<li>[bug] Preserve tracing across retries (JAVA-815)</li>
+<li>[improvement] New RetryDecision.tryNextHost() (JAVA-709)</li>
+<li>[bug] Handle function calls and raw strings as non-idempotent in QueryBuilder (JAVA-733)</li>
+</ul>
+
+<h3 id="2-1-6">2.1.6<a class="anchor" href="#2-1-6" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<p>Merged from 2.0 branch:</p>
+
+<ul>
+<li>[new feature] Add getObject to BoundStatement and Row (JAVA-584)</li>
+<li>[improvement] Improve connection pool resizing algorithm (JAVA-419)</li>
+<li>[bug] Fix race condition between pool expansion and shutdown (JAVA-599)</li>
+<li>[improvement] Upgrade Netty to 4.0.27 (JAVA-622)</li>
+<li>[improvement] Coalesce frames before flushing them to the connection
+(JAVA-562)</li>
+<li>[improvement] Rename threads to indicate that they are for the driver
+(JAVA-583)</li>
+<li>[new feature] Expose paging state (JAVA-550)</li>
+<li>[new feature] Slow Query Logger (JAVA-646)</li>
+<li>[improvement] Exclude some errors from measurements in LatencyAwarePolicy
+(JAVA-698)</li>
+<li>[bug] Fix issue when executing a PreparedStatement from another cluster
+(JAVA-641)</li>
+<li>[improvement] Log keyspace xxx does not exist at WARN level (JAVA-534)</li>
+<li>[improvement] Allow Cluster subclasses to delegate to another instance
+(JAVA-619)</li>
+<li>[new feature] Expose an API to check for schema agreement after a
+schema-altering statement (JAVA-669)</li>
+<li>[improvement] Make connection and pool creation fully async (JAVA-692)</li>
+<li>[improvement] Optimize connection use after reconnection (JAVA-505)</li>
+<li>[improvement] Remove “suspected” mechanism (JAVA-617)</li>
+<li>[improvement] Don’t mark connection defunct on client timeout (reverts
+JAVA-425)</li>
+<li>[new feature] Speculative query executions (JAVA-561)</li>
+<li>[bug] Release connection before completing the ResultSetFuture (JAVA-666)</li>
+<li>[new feature BETA] Percentile-based variant of query logger and speculative
+executions (JAVA-723)</li>
+<li>[bug] Fix buffer leaks when compression is enabled (JAVA-734).</li>
+<li>[improvement] Use Netty’s pooled ByteBufAllocator by default (JAVA-756)</li>
+<li>[improvement] Expose “unsafe” paging state API (JAVA-759)</li>
+<li>[bug] Prevent race during pool initialization (JAVA-768)</li>
+</ul>
+
+<h3 id="2-1-5">2.1.5<a class="anchor" href="#2-1-5" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<ul>
+<li>[bug] Authorize Null parameter in Accessor method (JAVA-575)</li>
+<li>[improvement] Support C* 2.1.3’s nested collections (JAVA-570)</li>
+<li>[bug] Fix checks on mapped collection types (JAVA-612)</li>
+<li>[bug] Fix QueryBuilder.putAll() when the collection contains UDTs (JAVA-672)</li>
+</ul>
+
+<p>Merged from 2.0 branch:</p>
+
+<ul>
+<li>[new feature] Add AddressTranslater for EC2 multi-region deployment (JAVA-518)</li>
+<li>[improvement] Add connection heartbeat (JAVA-533)</li>
+<li>[improvement] Reduce level of logs on missing rpc_address (JAVA-568)</li>
+<li>[improvement] Expose node token and range information (JAVA-312, JAVA-681)</li>
+<li>[bug] Fix cluster name mismatch check at startup (JAVA-595)</li>
+<li>[bug] Fix guava dependency when using OSGI (JAVA-620)</li>
+<li>[bug] Fix handling of DROP events when ks name is case-sensitive (JAVA-678)</li>
+<li>[improvement] Use List&lt;?&gt; instead of List<object> in QueryBuilder API
+(JAVA-631)</object>
+</li>
+<li>[improvement] Exclude Netty POM from META-INF in shaded JAR (JAVA-654)</li>
+<li>[bug] Quote single quotes contained in table comments in asCQLQuery method
+(JAVA-655)</li>
+<li>[bug] Empty TokenRange returned in a one token cluster (JAVA-684)</li>
+<li>[improvement] Expose TokenRange#contains (JAVA-687)</li>
+<li>[bug] Prevent race between cancellation and query completion (JAVA-614)</li>
+<li>[bug] Prevent cancel and timeout from cancelling unrelated ResponseHandler if
+streamId was already released and reused (JAVA-632).</li>
+<li>[bug] Fix issue when newly opened pool fails before we could mark the node UP
+(JAVA-642)</li>
+<li>[bug] Fix unwanted LBP notifications when a contact host is down (JAVA-613)</li>
+<li>[bug] Fix edge cases where a connection was released twice (JAVA-651).</li>
+<li>[bug] Fix edge cases in query cancellation (JAVA-653).</li>
+</ul>
+
+<h3 id="2-1-4">2.1.4<a class="anchor" href="#2-1-4" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<p>Merged from 2.0 branch:</p>
+
+<ul>
+<li>[improvement] Shade Netty dependency (JAVA-538)</li>
+<li>[improvement] Target schema refreshes more precisely (JAVA-543)</li>
+<li>[bug] Don’t check rpc_address for control host (JAVA-546)</li>
+<li>[improvement] Improve message of NoHostAvailableException (JAVA-409)</li>
+<li>[bug] Rework connection reaper to avoid deadlock (JAVA-556)</li>
+<li>[bug] Avoid deadlock when multiple connections to the same host get write
+errors (JAVA-557)</li>
+<li>[improvement] Make shuffle=true the default for TokenAwarePolicy (JAVA-504)</li>
+<li>[bug] Fix bug when SUSPECT reconnection succeeds, but one of the pooled
+connections fails while bringing the node back up (JAVA-577)</li>
+<li>[bug] Prevent faulty control connection from ignoring reconnecting hosts
+(JAVA-587)</li>
+<li>temporarily revert “Add idle timeout to the connection pool” (JAVA-419)</li>
+<li>[bug] Ensure updateCreatedPools does not add pools for suspected hosts
+(JAVA-593)</li>
+<li>[bug] Ensure state change notifications for a given host are handled serially
+(JAVA-594)</li>
+<li>[bug] Ensure control connection reconnects when control host is removed
+(JAVA-597)</li>
+</ul>
+
+<h3 id="2-1-3">2.1.3<a class="anchor" href="#2-1-3" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<ul>
+<li>[bug] Ignore static fields in mapper (JAVA-510)</li>
+<li>[bug] Fix UDT parsing at init when using the default protocol version (JAVA-509)</li>
+<li>[bug] Fix toString, equals and hashCode on accessor proxies (JAVA-495)</li>
+<li>[bug] Allow empty name on Column and Field annotations (JAVA-528)</li>
+</ul>
+
+<p>Merged from 2.0 branch:</p>
+
+<ul>
+<li>[bug] Ensure control connection does not trigger concurrent reconnects (JAVA-497)</li>
+<li>[improvement] Keep trying to reconnect on authentication errors (JAVA-472)</li>
+<li>[improvement] Expose close method on load balancing policy (JAVA-463)</li>
+<li>[improvement] Allow load balancing policy to trigger refresh for a single host (JAVA-459)</li>
+<li>[bug] Expose an API to cancel reconnection attempts (JAVA-493)</li>
+<li>[bug] Fix NPE when a connection fails during pool construction (JAVA-503)</li>
+<li>[improvement] Log datacenter name in DCAware policy’s init when it is explicitly provided
+(JAVA-423)</li>
+<li>[improvement] Shuffle the replicas in TokenAwarePolicy.newQueryPlan (JAVA-504)</li>
+<li>[improvement] Make schema agreement wait tuneable (JAVA-507)</li>
+<li>[improvement] Document how to inject the driver metrics into another registry (JAVA-494)</li>
+<li>[improvement] Add idle timeout to the connection pool (JAVA-419)</li>
+<li>[bug] LatencyAwarePolicy does not shutdown executor on invocation of close (JAVA-516)</li>
+<li>[improvement] Throw an exception when DCAwareRoundRobinPolicy is built with
+an explicit but null or empty local datacenter (JAVA-451).</li>
+<li>[bug] Fix check for local contact points in DCAware policy’s init (JAVA-511)</li>
+<li>[improvement] Make timeout on saturated pool customizable (JAVA-457)</li>
+<li>[improvement] Downgrade Guava to 14.0.1 (JAVA-521)</li>
+<li>[bug] Fix token awareness for case-sensitive keyspaces and tables (JAVA-526)</li>
+<li>[bug] Check maximum number of values passed to SimpleStatement (JAVA-515)</li>
+<li>[improvement] Expose the driver version through the API (JAVA-532)</li>
+<li>[improvement] Optimize session initialization when some hosts are not
+responsive (JAVA-522)</li>
+</ul>
+
+<h3 id="2-1-2">2.1.2<a class="anchor" href="#2-1-2" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<ul>
+<li>[improvement] Support for native protocol v3 (JAVA-361, JAVA-364, JAVA-467)</li>
+<li>[bug] Fix UDT fields of type inet in QueryBuilder (JAVA-454)</li>
+<li>[bug] Exclude transient fields from Frozen checks (JAVA-455)</li>
+<li>[bug] Fix handling of null collections in mapper (JAVA-453)</li>
+<li>[improvement] Make implicit column names case-insensitive in mapper (JAVA-452)</li>
+<li>[bug] Fix named bind markers in QueryBuilder (JAVA-433)</li>
+<li>[bug] Fix handling of BigInteger in object mapper (JAVA-458)</li>
+<li>[bug] Ignore synthetic fields in mapper (JAVA-465)</li>
+<li>[improvement] Throw an exception when DCAwareRoundRobinPolicy is built with
+an explicit but null or empty local datacenter (JAVA-451)</li>
+<li>[improvement] Add backwards-compatible DataType.serialize methods (JAVA-469)</li>
+<li>[bug] Handle null enum fields in object mapper (JAVA-487)</li>
+<li>[bug] Handle null UDT fields in object mapper (JAVA-499)</li>
+</ul>
+
+<p>Merged from 2.0 branch:</p>
+
+<ul>
+<li>[bug] Handle null pool in PooledConnection.release (JAVA-449)</li>
+<li>[improvement] Defunct connection on request timeout (JAVA-425)</li>
+<li>[improvement] Try next host when we get a SERVER_ERROR (JAVA-426)</li>
+<li>[bug] Handle race between query timeout and completion (JAVA-449, JAVA-460, JAVA-471)</li>
+<li>[bug] Fix DCAwareRoundRobinPolicy datacenter auto-discovery (JAVA-496)</li>
+</ul>
+
+<h3 id="2-1-1">2.1.1<a class="anchor" href="#2-1-1" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<ul>
+<li>[new] Support for new “frozen” keyword (JAVA-441)</li>
+</ul>
+
+<p>Merged from 2.0 branch:</p>
+
+<ul>
+<li>[bug] Check cluster name when connecting to a new node (JAVA-397)</li>
+<li>[bug] Add missing CAS delete support in QueryBuilder (JAVA-326)</li>
+<li>[bug] Add collection and data length checks during serialization (JAVA-363)</li>
+<li>[improvement] Surface number of retries in metrics (JAVA-329)</li>
+<li>[bug] Do not use a host when no rpc_address found for it (JAVA-428)</li>
+<li>[improvement] Add ResultSet.wasApplied() for conditional queries (JAVA-358)</li>
+<li>[bug] Fix negative HostConnectionPool open count (JAVA-349)</li>
+<li>[improvement] Log more connection details at trace and debug levels (JAVA-436)</li>
+<li>[bug] Fix cluster shutdown (JAVA-445)</li>
+</ul>
+
+<h3 id="2-1-0">2.1.0<a class="anchor" href="#2-1-0" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<ul>
+<li>[bug] ClusteringColumn annotation not working with specified ordering (JAVA-408)</li>
+<li>[improvement] Fail BoundStatement if null values are not set explicitly (JAVA-410)</li>
+<li>[bug] Handle UDT and tuples in BuiltStatement.toString (JAVA-416)</li>
+</ul>
+
+<p>Merged from 2.0 branch:</p>
+
+<ul>
+<li>[bug] Release connections on ResultSetFuture#cancel (JAVA-407)</li>
+<li>[bug] Fix handling of SimpleStatement with values in query builder
+batches (JAVA-393)</li>
+<li>[bug] Ensure pool is properly closed in onDown (JAVA-417)</li>
+<li>[bug] Fix tokenMap initialization at startup (JAVA-415)</li>
+<li>[bug] Avoid deadlock on close (JAVA-418)</li>
+</ul>
+
+<h3 id="2-1-0-rc1">2.1.0-rc1<a class="anchor" href="#2-1-0-rc1" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<p>Merged from 2.0 branch:</p>
+
+<ul>
+<li>[bug] Ensure defunct connections are completely closed (JAVA-394)</li>
+<li>[bug] Fix memory and resource leak on closed Sessions (JAVA-342, JAVA-390)</li>
+</ul>
+
+<h3 id="2-1-0-beta1">2.1.0-beta1<a class="anchor" href="#2-1-0-beta1" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<ul>
+<li>[new] Support for User Defined Types and tuples</li>
+<li>[new] Simple object mapper</li>
+</ul>
+
+<p>Merged from 2.0 branch: everything up to 2.0.3 (included), and the following.</p>
+
+<ul>
+<li>[improvement] Better handling of dead connections (JAVA-204)</li>
+<li>[bug] Fix potential NPE in ControlConnection (JAVA-373)</li>
+<li>[bug] Throws NPE when passed null for a contact point (JAVA-291)</li>
+<li>[bug] Avoid LoadBalancingPolicy onDown+onUp at startup (JAVA-315)</li>
+<li>[bug] Avoid classloader leak in Tomcat (JAVA-343)</li>
+<li>[bug] Avoid deadlock in onAdd/onUp (JAVA-387)</li>
+<li>[bug] Make metadata parsing more lenient (JAVA-377, JAVA-391)</li>
+</ul>
+
+<h3 id="2-0-11-in-progress">2.0.11 (in progress)<a class="anchor" href="#2-0-11-in-progress" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<ul>
+<li>[bug] Fix SpeculativeExecutionPolicy.init() and close() are never called (JAVA-796)</li>
+<li>[improvement] Suppress unnecessary warning at shutdown (JAVA-710)</li>
+<li>[improvement] Allow DNS name with multiple A-records as contact point (#340)</li>
+<li>[bug] Allow tracing across multiple result pages (JAVA-794)</li>
+<li>[bug] DowngradingConsistencyRetryPolicy ignores write timeouts (JAVA-737)</li>
+<li>[bug] Forbid bind marker in QueryBuilder add/append/prepend (JAVA-736)</li>
+<li>[bug] Prevent QueryBuilder.quote() from applying duplicate double quotes (JAVA-712)</li>
+<li>[bug] Prevent QueryBuilder from trying to serialize raw string (JAVA-688)</li>
+<li>[bug] Support bind marker in QueryBuilder DELETE’s list index (JAVA-679)</li>
+<li>[improvement] Improve QueryBuilder API for SELECT DISTINCT (JAVA-475)</li>
+<li>[improvement] Create values() function for Insert builder using List (JAVA-225)</li>
+<li>[improvement] Warn when ReplicationStrategy encounters invalid
+replication factors (JAVA-702)</li>
+<li>[improvement] Add PoolingOptions method to set both core and max
+connections (JAVA-662).</li>
+<li>[improvement] Do not include epoll JAR in binary distribution (JAVA-766)</li>
+<li>[improvement] Optimize internal copies of Request objects (JAVA-726)</li>
+<li>[bug] Preserve tracing across retries (JAVA-815)</li>
+<li>[improvement] New RetryDecision.tryNextHost() (JAVA-709)</li>
+<li>[bug] Handle function calls and raw strings as non-idempotent in QueryBuilder (JAVA-733)</li>
+</ul>
+
+<p>Merged from 2.0.10_fixes branch:</p>
+
+<ul>
+<li>[improvement] Use Netty’s pooled ByteBufAllocator by default (JAVA-756)</li>
+<li>[improvement] Expose “unsafe” paging state API (JAVA-759)</li>
+<li>[bug] Fix getObject by name (JAVA-767)</li>
+<li>[bug] Prevent race during pool initialization (JAVA-768)</li>
+</ul>
+
+<h3 id="2-0-10-1">2.0.10.1<a class="anchor" href="#2-0-10-1" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<ul>
+<li>[improvement] Use Netty’s pooled ByteBufAllocator by default (JAVA-756)</li>
+<li>[improvement] Expose “unsafe” paging state API (JAVA-759)</li>
+<li>[bug] Fix getObject by name (JAVA-767)</li>
+<li>[bug] Prevent race during pool initialization (JAVA-768)</li>
+</ul>
+
+<h3 id="2-0-10">2.0.10<a class="anchor" href="#2-0-10" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<ul>
+<li>[new feature] Add AddressTranslater for EC2 multi-region deployment (JAVA-518)</li>
+<li>[improvement] Add connection heartbeat (JAVA-533)</li>
+<li>[improvement] Reduce level of logs on missing rpc_address (JAVA-568)</li>
+<li>[improvement] Expose node token and range information (JAVA-312, JAVA-681)</li>
+<li>[bug] Fix cluster name mismatch check at startup (JAVA-595)</li>
+<li>[bug] Fix guava dependency when using OSGI (JAVA-620)</li>
+<li>[bug] Fix handling of DROP events when ks name is case-sensitive (JAVA-678)</li>
+<li>[improvement] Use List&lt;?&gt; instead of List<object> in QueryBuilder API
+(JAVA-631)</object>
+</li>
+<li>[improvement] Exclude Netty POM from META-INF in shaded JAR (JAVA-654)</li>
+<li>[bug] Quote single quotes contained in table comments in asCQLQuery method
+(JAVA-655)</li>
+<li>[bug] Empty TokenRange returned in a one token cluster (JAVA-684)</li>
+<li>[improvement] Expose TokenRange#contains (JAVA-687)</li>
+<li>[new feature] Expose values of BoundStatement (JAVA-547)</li>
+<li>[new feature] Add getObject to BoundStatement and Row (JAVA-584)</li>
+<li>[improvement] Improve connection pool resizing algorithm (JAVA-419)</li>
+<li>[bug] Fix race condition between pool expansion and shutdown (JAVA-599)</li>
+<li>[improvement] Upgrade Netty to 4.0.27 (JAVA-622)</li>
+<li>[improvement] Coalesce frames before flushing them to the connection
+(JAVA-562)</li>
+<li>[improvement] Rename threads to indicate that they are for the driver
+(JAVA-583)</li>
+<li>[new feature] Expose paging state (JAVA-550)</li>
+<li>[new feature] Slow Query Logger (JAVA-646)</li>
+<li>[improvement] Exclude some errors from measurements in LatencyAwarePolicy
+(JAVA-698)</li>
+<li>[bug] Fix issue when executing a PreparedStatement from another cluster
+(JAVA-641)</li>
+<li>[improvement] Log keyspace xxx does not exist at WARN level (JAVA-534)</li>
+<li>[improvement] Allow Cluster subclasses to delegate to another instance
+(JAVA-619)</li>
+<li>[new feature] Expose an API to check for schema agreement after a
+schema-altering statement (JAVA-669)</li>
+<li>[improvement] Make connection and pool creation fully async (JAVA-692)</li>
+<li>[improvement] Optimize connection use after reconnection (JAVA-505)</li>
+<li>[improvement] Remove “suspected” mechanism (JAVA-617)</li>
+<li>[improvement] Don’t mark connection defunct on client timeout (reverts
+JAVA-425)</li>
+<li>[new feature] Speculative query executions (JAVA-561)</li>
+<li>[bug] Release connection before completing the ResultSetFuture (JAVA-666)</li>
+<li>[new feature BETA] Percentile-based variant of query logger and speculative
+executions (JAVA-723)</li>
+<li>[bug] Fix buffer leaks when compression is enabled (JAVA-734).</li>
+</ul>
+
+<p>Merged from 2.0.9_fixes branch:</p>
+
+<ul>
+<li>[bug] Prevent race between cancellation and query completion (JAVA-614)</li>
+<li>[bug] Prevent cancel and timeout from cancelling unrelated ResponseHandler if
+streamId was already released and reused (JAVA-632).</li>
+<li>[bug] Fix issue when newly opened pool fails before we could mark the node UP
+(JAVA-642)</li>
+<li>[bug] Fix unwanted LBP notifications when a contact host is down (JAVA-613)</li>
+<li>[bug] Fix edge cases where a connection was released twice (JAVA-651).</li>
+<li>[bug] Fix edge cases in query cancellation (JAVA-653).</li>
+</ul>
+
+<h3 id="2-0-9-2">2.0.9.2<a class="anchor" href="#2-0-9-2" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<ul>
+<li>[bug] Fix edge cases where a connection was released twice (JAVA-651).</li>
+<li>[bug] Fix edge cases in query cancellation (JAVA-653).</li>
+</ul>
+
+<h3 id="2-0-9-1">2.0.9.1<a class="anchor" href="#2-0-9-1" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<ul>
+<li>[bug] Prevent race between cancellation and query completion (JAVA-614)</li>
+<li>[bug] Prevent cancel and timeout from cancelling unrelated ResponseHandler if
+streamId was already released and reused (JAVA-632).</li>
+<li>[bug] Fix issue when newly opened pool fails before we could mark the node UP
+(JAVA-642)</li>
+<li>[bug] Fix unwanted LBP notifications when a contact host is down (JAVA-613)</li>
+</ul>
+
+<h3 id="2-0-9">2.0.9<a class="anchor" href="#2-0-9" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<ul>
+<li>[improvement] Shade Netty dependency (JAVA-538)</li>
+<li>[improvement] Target schema refreshes more precisely (JAVA-543)</li>
+<li>[bug] Don’t check rpc_address for control host (JAVA-546)</li>
+<li>[improvement] Improve message of NoHostAvailableException (JAVA-409)</li>
+<li>[bug] Rework connection reaper to avoid deadlock (JAVA-556)</li>
+<li>[bug] Avoid deadlock when multiple connections to the same host get write
+errors (JAVA-557)</li>
+<li>[improvement] Make shuffle=true the default for TokenAwarePolicy (JAVA-504)</li>
+<li>[bug] Fix bug when SUSPECT reconnection succeeds, but one of the pooled
+connections fails while bringing the node back up (JAVA-577)</li>
+<li>[bug] Prevent faulty control connection from ignoring reconnecting hosts
+(JAVA-587)</li>
+<li>temporarily revert “Add idle timeout to the connection pool” (JAVA-419)</li>
+<li>[bug] Ensure updateCreatedPools does not add pools for suspected hosts
+(JAVA-593)</li>
+<li>[bug] Ensure state change notifications for a given host are handled serially
+(JAVA-594)</li>
+<li>[bug] Ensure control connection reconnects when control host is removed
+(JAVA-597)</li>
+</ul>
+
+<h3 id="2-0-8">2.0.8<a class="anchor" href="#2-0-8" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<ul>
+<li>[bug] Fix token awareness for case-sensitive keyspaces and tables (JAVA-526)</li>
+<li>[bug] Check maximum number of values passed to SimpleStatement (JAVA-515)</li>
+<li>[improvement] Expose the driver version through the API (JAVA-532)</li>
+<li>[improvement] Optimize session initialization when some hosts are not
+responsive (JAVA-522)</li>
+</ul>
+
+<h3 id="2-0-7">2.0.7<a class="anchor" href="#2-0-7" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<ul>
+<li>[bug] Handle null pool in PooledConnection.release (JAVA-449)</li>
+<li>[improvement] Defunct connection on request timeout (JAVA-425)</li>
+<li>[improvement] Try next host when we get a SERVER_ERROR (JAVA-426)</li>
+<li>[bug] Handle race between query timeout and completion (JAVA-449, JAVA-460, JAVA-471)</li>
+<li>[bug] Fix DCAwareRoundRobinPolicy datacenter auto-discovery (JAVA-496)</li>
+<li>[bug] Ensure control connection does not trigger concurrent reconnects (JAVA-497)</li>
+<li>[improvement] Keep trying to reconnect on authentication errors (JAVA-472)</li>
+<li>[improvement] Expose close method on load balancing policy (JAVA-463)</li>
+<li>[improvement] Allow load balancing policy to trigger refresh for a single host (JAVA-459)</li>
+<li>[bug] Expose an API to cancel reconnection attempts (JAVA-493)</li>
+<li>[bug] Fix NPE when a connection fails during pool construction (JAVA-503)</li>
+<li>[improvement] Log datacenter name in DCAware policy’s init when it is explicitly provided
+(JAVA-423)</li>
+<li>[improvement] Shuffle the replicas in TokenAwarePolicy.newQueryPlan (JAVA-504)</li>
+<li>[improvement] Make schema agreement wait tuneable (JAVA-507)</li>
+<li>[improvement] Document how to inject the driver metrics into another registry (JAVA-494)</li>
+<li>[improvement] Add idle timeout to the connection pool (JAVA-419)</li>
+<li>[bug] LatencyAwarePolicy does not shutdown executor on invocation of close (JAVA-516)</li>
+<li>[improvement] Throw an exception when DCAwareRoundRobinPolicy is built with
+an explicit but null or empty local datacenter (JAVA-451).</li>
+<li>[bug] Fix check for local contact points in DCAware policy’s init (JAVA-511)</li>
+<li>[improvement] Make timeout on saturated pool customizable (JAVA-457)</li>
+<li>[improvement] Downgrade Guava to 14.0.1 (JAVA-521)</li>
+</ul>
+
+<h3 id="2-0-6">2.0.6<a class="anchor" href="#2-0-6" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<ul>
+<li>[bug] Check cluster name when connecting to a new node (JAVA-397)</li>
+<li>[bug] Add missing CAS delete support in QueryBuilder (JAVA-326)</li>
+<li>[bug] Add collection and data length checks during serialization (JAVA-363)</li>
+<li>[improvement] Surface number of retries in metrics (JAVA-329)</li>
+<li>[bug] Do not use a host when no rpc_address found for it (JAVA-428)</li>
+<li>[improvement] Add ResultSet.wasApplied() for conditional queries (JAVA-358)</li>
+<li>[bug] Fix negative HostConnectionPool open count (JAVA-349)</li>
+<li>[improvement] Log more connection details at trace and debug levels (JAVA-436)</li>
+<li>[bug] Fix cluster shutdown (JAVA-445)</li>
+<li>[improvement] Expose child policy in chainable load balancing policies (JAVA-439)</li>
+</ul>
+
+<h3 id="2-0-5">2.0.5<a class="anchor" href="#2-0-5" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<ul>
+<li>[bug] Release connections on ResultSetFuture#cancel (JAVA-407)</li>
+<li>[bug] Fix handling of SimpleStatement with values in query builder
+batches (JAVA-393)</li>
+<li>[bug] Ensure pool is properly closed in onDown (JAVA-417)</li>
+<li>[bug] Fix tokenMap initialization at startup (JAVA-415)</li>
+<li>[bug] Avoid deadlock on close (JAVA-418)</li>
+</ul>
+
+<h3 id="2-0-4">2.0.4<a class="anchor" href="#2-0-4" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<ul>
+<li>[improvement] Better handling of dead connections (JAVA-204)</li>
+<li>[bug] Fix potential NPE in ControlConnection (JAVA-373)</li>
+<li>[bug] Throws NPE when passed null for a contact point (JAVA-291)</li>
+<li>[bug] Avoid LoadBalancingPolicy onDown+onUp at startup (JAVA-315)</li>
+<li>[bug] Avoid classloader leak in Tomcat (JAVA-343)</li>
+<li>[bug] Avoid deadlock in onAdd/onUp (JAVA-387)</li>
+<li>[bug] Make metadata parsing more lenient (JAVA-377, JAVA-391)</li>
+<li>[bug] Ensure defunct connections are completely closed (JAVA-394)</li>
+<li>[bug] Fix memory and resource leak on closed Sessions (JAVA-342, JAVA-390)</li>
+</ul>
+
+<h3 id="2-0-3">2.0.3<a class="anchor" href="#2-0-3" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<ul>
+<li>[new] The new AbsractSession makes mocking of Session easier.</li>
+<li>[new] Allow to trigger a refresh of connected hosts (JAVA-309)</li>
+<li>[new] New Session#getState method allows to grab information on
+which nodes a session is connected to (JAVA-265)</li>
+<li>[new] Add QueryBuilder syntax for tuples in where clauses (syntax
+introduced in Cassandra 2.0.6) (JAVA-327)</li>
+<li>[improvement] Properly validate arguments of PoolingOptions methods
+(JAVA-359)</li>
+<li>[bug] Fix bogus rejection of BigInteger in &#8216;execute with values’
+(JAVA-368)</li>
+<li>[bug] Signal connection failure sooner to avoid missing them
+(JAVA-367)</li>
+<li>[bug] Throw UnsupportedOperationException for protocol batch
+setSerialCL (JAVA-337)</li>
+</ul>
+
+<p>Merged from 1.0 branch:</p>
+
+<ul>
+<li>[bug] Fix periodic reconnection to down hosts (JAVA-325)</li>
+</ul>
+
+<h3 id="2-0-2">2.0.2<a class="anchor" href="#2-0-2" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<ul>
+<li>[api] The type of the map key returned by NoHostAvailable#getErrors has changed from
+InetAddress to InetSocketAddress. Same for Initializer#getContactPoints return and
+for AuthProvider#newAuthenticator.</li>
+<li>[api] The default load balacing policy is now DCAwareRoundRobinPolicy, and the local
+datacenter is automatically picked based on the first connected node. Furthermore,
+the TokenAwarePolicy is also used by default (JAVA-296)</li>
+<li>[new] New optional AddressTranslater (JAVA-145)</li>
+<li>[bug] Don’t remove quotes on keyspace in the query builder (JAVA-321)</li>
+<li>[bug] Fix potential NPE while cluster undergo schema changes (JAVA-320)</li>
+<li>[bug] Fix thread-safety of page fetching (JAVA-319)</li>
+<li>[bug] Fix potential NPE using fetchMoreResults (JAVA-318)</li>
+</ul>
+
+<p>Merged from 1.0 branch:</p>
+
+<ul>
+<li>[new] Expose the name of the partitioner in use in the cluster metadata (JAVA-179)</li>
+<li>[new] Add new WhiteListPolicy to limit the nodes connected to a particular list</li>
+<li>[improvement] Do not hop DC for LOCAL_* CL in DCAwareRoundRobinPolicy (JAVA-289)</li>
+<li>[bug] Revert back to longs for dates in the query builder (JAVA-313)</li>
+<li>[bug] Don’t reconnect to nodes ignored by the load balancing policy (JAVA-314)</li>
+</ul>
+
+<h3 id="2-0-1">2.0.1<a class="anchor" href="#2-0-1" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<ul>
+<li>[improvement] Handle the static columns introduced in Cassandra 2.0.6 (JAVA-278)</li>
+<li>[improvement] Add Cluster#newSession method to create Session without connecting
+right away (JAVA-208)</li>
+<li>[bug] Add missing iso8601 patterns for parsing dates (JAVA-279)</li>
+<li>[bug] Properly parse BytesType as the blob type</li>
+<li>[bug] Potential NPE when parsing schema of pre-CQL tables of C* 1.2 nodes (JAVA-280)</li>
+</ul>
+
+<p>Merged from 1.0 branch:</p>
+
+<ul>
+<li>[bug] LatencyAwarePolicy.Builder#withScale doesn’t set the scale (JAVA-275)</li>
+<li>[new] Add methods to check if a Cluster/Session instance has been closed already (JAVA-114)</li>
+</ul>
+
+<h3 id="2-0-0">2.0.0<a class="anchor" href="#2-0-0" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<ul>
+<li>[api] Case sensitive identifier by default in Metadata (JAVA-269)</li>
+<li>[bug] Fix potential NPE in Cluster#connect (JAVA-274)</li>
+</ul>
+
+<p>Merged from 1.0 branch:</p>
+
+<ul>
+<li>[bug] Always return the PreparedStatement object that is cache internally (JAVA-263)</li>
+<li>[bug] Fix race when multiple connect are done in parallel (JAVA-261)</li>
+<li>[bug] Don’t connect at all to nodes that are ignored by the load balancing
+policy (JAVA-270)</li>
+</ul>
+
+<h3 id="2-0-0-rc3">2.0.0-rc3<a class="anchor" href="#2-0-0-rc3" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<ul>
+<li>[improvement] The protocol version 1 is now supported (features only supported by the
+version 2 of the protocol throw UnsupportedFeatureException).</li>
+<li>[improvement] Make most main objects interface to facilitate testing/mocking (JAVA-195)</li>
+<li>[improvement] Adds new getStatements and clear methods to BatchStatement.</li>
+<li>[api] Renamed shutdown to closeAsync and ShutdownFuture to CloseFuture. Clustering
+and Session also now implement Closeable (JAVA-247).</li>
+<li>[bug] Fix potential thread leaks when shutting down Metrics (JAVA-232)</li>
+<li>[bug] Fix potential NPE in HostConnectionPool (JAVA-231)</li>
+<li>[bug] Avoid NPE when node is in an unconfigured DC (JAVA-244)</li>
+<li>[bug] Don’t block for scheduled reconnections on Cluster#close (JAVA-258)</li>
+</ul>
+
+<p>Merged from 1.0 branch:</p>
+
+<ul>
+<li>[new] Added Session#prepareAsync calls (JAVA-224)</li>
+<li>[new] Added Cluster#getLoggedKeyspace (JAVA-249)</li>
+<li>[improvement] Avoid preparing a statement multiple time per host with multiple sessions</li>
+<li>[bug] Make sure connections are returned to the right pools (JAVA-255)</li>
+<li>[bug] Use date string in query build to work-around CASSANDRA-6718 (JAVA-264)</li>
+</ul>
+
+<h3 id="2-0-0-rc2">2.0.0-rc2<a class="anchor" href="#2-0-0-rc2" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<ul>
+<li>[new] Add LOCAL_ONE consistency level support (requires using C* 2.0.2+) (JAVA-207)</li>
+<li>[bug] Fix parsing of counter types (JAVA-219)</li>
+<li>[bug] Fix missing whitespace for IN clause in the query builder (JAVA-218)</li>
+<li>[bug] Fix replicas computation for token aware balancing (JAVA-221)</li>
+</ul>
+
+<p>Merged from 1.0 branch:</p>
+
+<ul>
+<li>[bug] Fix regression from JAVA-201 (JAVA-213)</li>
+<li>[improvement] New getter to obtain a snapshot of the scores maintained by
+LatencyAwarePolicy.</li>
+</ul>
+
+<h3 id="2-0-0-rc1">2.0.0-rc1<a class="anchor" href="#2-0-0-rc1" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<ul>
+<li>[new] Mark compression dependencies optional in maven (JAVA-199).</li>
+<li>[api] Renamed TableMetadata#getClusteringKey to TableMetadata#getClusteringColumns.</li>
+</ul>
+
+<p>Merged from 1.0 branch:</p>
+
+<ul>
+<li>[new] OSGi bundle (JAVA-142)</li>
+<li>[improvement] Make collections returned by Row immutable (JAVA-205)</li>
+<li>[improvement] Limit internal thread pool size (JAVA-203)</li>
+<li>[bug] Don’t retain unused PreparedStatement in memory (JAVA-201)</li>
+<li>[bug] Add missing clustering order info in TableMetadata</li>
+<li>[bug] Allow bind markers for collections in the query builder (JAVA-196)</li>
+</ul>
+
+<h3 id="2-0-0-beta2">2.0.0-beta2<a class="anchor" href="#2-0-0-beta2" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<ul>
+<li>[api] BoundStatement#setX(String, X) methods now set all values (if there is
+more than one) having the provided name, not just the first occurence.</li>
+<li>[api] The Authenticator interface now has a onAuthenticationSuccess method that
+allows to handle the potential last token sent by the server.</li>
+<li>[new] The query builder don’t serialize large values to strings anymore by
+default by making use the new ability to send values alongside the query string.</li>
+<li>[new] The query builder has been updated for new CQL features (JAVA-140).</li>
+<li>[bug] Fix exception when a conditional write timeout C* side.</li>
+<li>[bug] Ensure connection is created when Cluster metadata are asked for
+(JAVA-182).</li>
+<li>[bug] Fix potential NPE during authentication (JAVA-187)</li>
+</ul>
+
+<h3 id="2-0-0-beta1">2.0.0-beta1<a class="anchor" href="#2-0-0-beta1" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<ul>
+<li>[api] The 2.0 version is an API-breaking upgrade of the driver. While most
+of the breaking changes are minor, there are too numerous to be listed here
+and you are encouraged to look at the Upgrade_guide_to_2.0 file that describe
+those changes in details.</li>
+<li>[new] LZ4 compression is supported for the protocol.</li>
+<li>[new] The driver does not depend on cassandra-all anymore (JAVA-39)</li>
+<li>[new] New BatchStatement class allows to execute batch other statements.</li>
+<li>[new] Large ResultSet are now paged (incrementally fetched) by default.</li>
+<li>[new] SimpleStatement support values for bind-variables, to allow
+prepare+execute behavior with one roundtrip.</li>
+<li>[new] Query parameters defaults (Consistency level, page size, …) can be
+configured globally.</li>
+<li>[new] New Cassandra 2.0 SERIAL and LOCAL_SERIAL consistency levels are
+supported.</li>
+<li>[new] Cluster#shutdown now waits for ongoing queries to complete by default
+(JAVA-116).</li>
+<li>[new] Generic authentication through SASL is now exposed.</li>
+<li>[bug] TokenAwarePolicy now takes all replica into account, instead of only the
+first one (JAVA-88).</li>
+</ul>
+
+<h3 id="1-0-5">1.0.5<a class="anchor" href="#1-0-5" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<ul>
+<li>[new] OSGi bundle (JAVA-142)</li>
+<li>[new] Add support for ConsistencyLevel.LOCAL_ONE; note that this
+require Cassandra 1.2.12+ (JAVA-207)</li>
+<li>[improvement] Make collections returned by Row immutable (JAVA-205)</li>
+<li>[improvement] Limit internal thread pool size (JAVA-203)</li>
+<li>[improvement] New getter to obtain a snapshot of the scores maintained by
+LatencyAwarePolicy.</li>
+<li>[improvement] Avoid synchronization when getting codec for collection
+types (JAVA-222)</li>
+<li>[bug] Don’t retain unused PreparedStatement in memory (JAVA-201, JAVA-213)</li>
+<li>[bug] Add missing clustering order info in TableMetadata</li>
+<li>[bug] Allow bind markers for collections in the query builder (JAVA-196)</li>
+</ul>
+
+<h3 id="1-0-4">1.0.4<a class="anchor" href="#1-0-4" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<ul>
+<li>[api] The Cluster.Builder#poolingOptions and Cluster.Builder#socketOptions
+are now deprecated. They are replaced by the new withPoolingOptions and
+withSocketOptions methods (JAVA-163).</li>
+<li>[new] A new LatencyAwarePolicy wrapping policy has been added, allowing to
+add latency awareness to a wrapped load balancing policy (JAVA-129).</li>
+<li>[new] Allow defering cluster initialization (Cluster.Builder#deferInitialization)
+(JAVA-161)</li>
+<li>[new] Add truncate statement in query builder (JAVA-117).</li>
+<li>[new] Support empty IN in the query builder (JAVA-106).</li>
+<li>[bug] Fix spurious “No current pool set; this should not happen” error
+message (JAVA-166)</li>
+<li>[bug] Fix potential overflow in RoundRobinPolicy and correctly errors if
+a balancing policy throws (JAVA-184)</li>
+<li>[bug] Don’t release Stream ID for timeouted queries (unless we do get back
+the response)</li>
+<li>[bug] Correctly escape identifiers and use fully qualified table names when
+exporting schema as string.</li>
+</ul>
+
+<h3 id="1-0-3">1.0.3<a class="anchor" href="#1-0-3" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<ul>
+<li>[api] The query builder now correctly throw an exception when given a value
+of a type it doesn’t know about.</li>
+<li>[new] SocketOptions#setReadTimeout allows to set a timeout on how long we
+wait for the answer of one node. See the javadoc for more details.</li>
+<li>[new] New Session#prepare method that takes a Statement.</li>
+<li>[bug] Always take per-query CL, tracing, etc. into account for QueryBuilder
+statements (JAVA-143).</li>
+<li>[bug] Temporary fixup for TimestampType when talking to C* 2.0 nodes.</li>
+</ul>
+
+<h3 id="1-0-2">1.0.2<a class="anchor" href="#1-0-2" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<ul>
+<li>[api] Host#getMonitor and all Host.HealthMonitor methods have been
+deprecated. The new Host#isUp method is now prefered to the method
+in the monitor and you should now register Host.StateListener against
+the Cluster object directly (registering against a host HealthMonitor
+was much more limited anyway).</li>
+<li>[new] New serialize/deserialize methods in DataType to serialize/deserialize
+values to/from bytes (JAVA-92).</li>
+<li>[new] New getIndexOf() method in ColumnDefinitions to find the index of
+a given column name (JAVA-128).</li>
+<li>[bug] Fix a bug when thread could get blocked while setting the current
+keyspace (JAVA-131).</li>
+<li>[bug] Quote inet addresses in the query builder since CQL3 requires it
+(JAVA-136)</li>
+</ul>
+
+<h3 id="1-0-1">1.0.1<a class="anchor" href="#1-0-1" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<ul>
+<li>[api] Function call handling in the query builder has been modified in a
+backward incompatible way. Function calls are not parsed from string values
+anymore as this wasn’t safe. Instead the new &#8216;fcall’ method should be used
+(JAVA-100).</li>
+<li>[api] Some typos in method names in PoolingOptions have been fixed in a
+backward incompatible way before the API get widespread.</li>
+<li>[bug] Don’t destroy composite partition key with BoundStatement and
+TokenAwarePolicy (JAVA-123).</li>
+<li>[new] null values support in the query builder.</li>
+<li>[new] SSL support (requires C* &gt;= 1.2.1) (JAVA-5).</li>
+<li>[new] Allow generating unlogged batch in the query builder (JAVA-113).</li>
+<li>[improvement] Better error message when no host are available.</li>
+<li>[improvement] Improves performance of the stress example application been.</li>
+</ul>
+
+<h3 id="1-0-0">1.0.0<a class="anchor" href="#1-0-0" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<ul>
+<li>[api] The AuthInfoProvider has be (temporarily) removed. Instead, the
+Cluster builder has a new withCredentials() method to provide a username
+and password for use with Cassandra’s PasswordAuthenticator. Custom
+authenticator will be re-introduced in a future version but are not
+supported at the moment.</li>
+<li>[api] The isMetricsEnabled() method in Configuration has been replaced by
+getMetricsOptions(). An option to disabled JMX reporting (on by default)
+has been added.</li>
+<li>[bug] Don’t make default load balancing policy a static singleton since it
+is stateful (JAVA-91).</li>
+</ul>
+
+<h3 id="1-0-0-rc1">1.0.0-RC1<a class="anchor" href="#1-0-0-rc1" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<ul>
+<li>[new] Null values are now supported in BoundStatement (but you will need at
+least Cassandra 1.2.3 for it to work). The API of BoundStatement has been
+slightly changed so that not binding a variable is not an error anymore,
+the variable is simply considered null by default. The isReady() method has
+been removed (JAVA-79).</li>
+<li>[improvement] The Cluster/Session shutdown methods now properly block until
+the shutdown is complete. A version with at timeout has been added (JAVA-75).</li>
+<li>[bug] Fix use of CQL3 functions in the query builder (JAVA-44).</li>
+<li>[bug] Fix case where multiple schema changes too quickly wouldn’t work
+(only triggered when 0.0.0.0 was use for the rpc_address on the Cassandra
+nodes) (JAVA-77).</li>
+<li>[bug] Fix IllegalStateException thrown due to a reconnection made on an I/O
+thread (JAVA-72).</li>
+<li>[bug] Correctly reports errors during authentication phase (JAVA-82).</li>
+</ul>
+
+<h3 id="1-0-0-beta2">1.0.0-beta2<a class="anchor" href="#1-0-0-beta2" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<ul>
+<li>[new] Support blob constants, BigInteger, BigDecimal and counter batches in
+the query builder (JAVA-51, JAVA-60, JAVA-58)</li>
+<li>[new] Basic support for custom CQL3 types (JAVA-61)</li>
+<li>[new] Add “execution infos” for a result set (this also move the query
+trace in the new ExecutionInfos object, so users of beta1 will have to
+update) (JAVA-65)</li>
+<li>[bug] Fix failover bug in DCAwareRoundRobinPolicy (JAVA-62)</li>
+<li>[bug] Fix use of bind markers for routing keys in the query builder
+(JAVA-66)</li>
+</ul>
+
+<h3 id="1-0-0-beta1">1.0.0-beta1<a class="anchor" href="#1-0-0-beta1" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<ul>
+<li>initial release</li>
+</ul>
+
+
+        </div>
+        <div class="col-md-3">
+          <div id="navigation" class="panel-group side-nav" data-spy="affix" data-offset-top="60" data-offset-bottom="80" role="tablist" aria-multiselectable="true">
+            <div id="table-of-contents-panel" class="panel panel-default">
+              <div id="table-of-contents-heading" class="panel-heading" role="tab">
+                <h4 class="panel-title">
+                  <a data-toggle="collapse" href="#table-of-contents" aria-expanded="true" aria-controls="table-of-contents">
+                    Contents<i class="pull-right glyphicon glyphicon-chevron-up"></i>
+                  </a>
+                </h4>
+              </div>
+              <div id="table-of-contents" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="table-of-contents-heading">
+                <div class="panel-body">
+                  <ol class="nav nav-pills nav-stacked toc"><li>
+<a href="#changelog">Changelog
+</a><ol class="nav nav-pills nav-stacked">
+<li><a href="#2-2-0-rc2">2.2.0-rc2
+</a></li>
+<li><a href="#2-2-0-rc1">2.2.0-rc1
+</a></li>
+<li><a href="#2-1-7-1">2.1.7.1
+</a></li>
+<li><a href="#2-1-7">2.1.7
+</a></li>
+<li><a href="#2-1-6">2.1.6
+</a></li>
+<li><a href="#2-1-5">2.1.5
+</a></li>
+<li><a href="#2-1-4">2.1.4
+</a></li>
+<li><a href="#2-1-3">2.1.3
+</a></li>
+<li><a href="#2-1-2">2.1.2
+</a></li>
+<li><a href="#2-1-1">2.1.1
+</a></li>
+<li><a href="#2-1-0">2.1.0
+</a></li>
+<li><a href="#2-1-0-rc1">2.1.0-rc1
+</a></li>
+<li><a href="#2-1-0-beta1">2.1.0-beta1
+</a></li>
+<li><a href="#2-0-11-in-progress">2.0.11 (in progress)
+</a></li>
+<li><a href="#2-0-10-1">2.0.10.1
+</a></li>
+<li><a href="#2-0-10">2.0.10
+</a></li>
+<li><a href="#2-0-9-2">2.0.9.2
+</a></li>
+<li><a href="#2-0-9-1">2.0.9.1
+</a></li>
+<li><a href="#2-0-9">2.0.9
+</a></li>
+<li><a href="#2-0-8">2.0.8
+</a></li>
+<li><a href="#2-0-7">2.0.7
+</a></li>
+<li><a href="#2-0-6">2.0.6
+</a></li>
+<li><a href="#2-0-5">2.0.5
+</a></li>
+<li><a href="#2-0-4">2.0.4
+</a></li>
+<li><a href="#2-0-3">2.0.3
+</a></li>
+<li><a href="#2-0-2">2.0.2
+</a></li>
+<li><a href="#2-0-1">2.0.1
+</a></li>
+<li><a href="#2-0-0">2.0.0
+</a></li>
+<li><a href="#2-0-0-rc3">2.0.0-rc3
+</a></li>
+<li><a href="#2-0-0-rc2">2.0.0-rc2
+</a></li>
+<li><a href="#2-0-0-rc1">2.0.0-rc1
+</a></li>
+<li><a href="#2-0-0-beta2">2.0.0-beta2
+</a></li>
+<li><a href="#2-0-0-beta1">2.0.0-beta1
+</a></li>
+<li><a href="#1-0-5">1.0.5
+</a></li>
+<li><a href="#1-0-4">1.0.4
+</a></li>
+<li><a href="#1-0-3">1.0.3
+</a></li>
+<li><a href="#1-0-2">1.0.2
+</a></li>
+<li><a href="#1-0-1">1.0.1
+</a></li>
+<li><a href="#1-0-0">1.0.0
+</a></li>
+<li><a href="#1-0-0-rc1">1.0.0-RC1
+</a></li>
+<li><a href="#1-0-0-beta2">1.0.0-beta2
+</a></li>
+<li><a href="#1-0-0-beta1">1.0.0-beta1
+</a></li>
+</ol>
+</li></ol>
+                </div>
+              </div>
+            </div>
+
+            
+          </div>
+        </div>
+      </div>
+    </div>
+
+    
+    <footer class="container text-muted">
+      <ul class="list-inline">
+      
+        
+        <li>
+          <a href="https://github.com/datastax/java-driver/">Code</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="http://datastax.github.io/java-driver/">Docs</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://datastax-oss.atlassian.net/browse/JAVA/">Issues</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://groups.google.com/a/lists.datastax.com/forum/#!forum/java-driver-user">Mailing List</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="irc://irc.freenode.net/datastax-drivers">IRC Channel</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://github.com/datastax/java-driver/releases">Releases</a>
+        </li>
+      
+      </ul>
+    </footer>
+    
+
+    <script src="../../js/jquery.js"></script>
+    <script src="../../js/bootstrap.js"></script>
+    <script src="../../js/angular.js"></script>
+    <script src="../../js/mousetrap.js"></script>
+    <script src="../../js/hotkeys.js"></script>
+    <script src="../../js/ZeroClipboard.js"></script>
+    <script src="../../js/lunr.js"></script>
+    <script src="../../js/app.js"></script>
+  </body>
+</html>
