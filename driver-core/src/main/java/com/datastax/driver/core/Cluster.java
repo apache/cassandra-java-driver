@@ -1213,7 +1213,7 @@ public class Cluster implements Closeable {
         Connection.Factory connectionFactory;
         ControlConnection controlConnection;
 
-        final ConvictionPolicy.Factory convictionPolicyFactory = new ConvictionPolicy.Simple.Factory();
+        final ConvictionPolicy.Factory convictionPolicyFactory = new ConvictionPolicy.DefaultConvictionPolicy.Factory();
 
         ScheduledThreadPoolExecutor reconnectionExecutor;
         ScheduledThreadPoolExecutor scheduledTasksExecutor;
@@ -1555,8 +1555,6 @@ public class Cluster implements Closeable {
 
         // Use triggerOnUp unless you're sure you want to run this on the current thread.
         private void onUp(final Host host, Connection reusedConnection) throws InterruptedException, ExecutionException {
-            logger.debug("Host {} is UP", host);
-
             if (isClosed())
                 return;
 
@@ -1577,6 +1575,8 @@ public class Cluster implements Closeable {
                     // We don't want to use the public Host.isUp() as this would make us skip the rest for suspected hosts
                     if (host.state == Host.State.UP)
                         return;
+
+                    Host.statesLogger.debug("[{}] marking host UP", host);
 
                     // If there is a reconnection attempt scheduled for that node, cancel it
                     Future<?> scheduledAttempt = host.reconnectionAttempt.getAndSet(null);
@@ -1650,7 +1650,7 @@ public class Cluster implements Closeable {
                 }
 
             } finally {
-                if (reusedConnection != null && !reusedConnection.hasPool())
+                if (reusedConnection != null && !reusedConnection.hasOwner())
                     reusedConnection.closeAsync();
             }
         }
@@ -1670,8 +1670,6 @@ public class Cluster implements Closeable {
 
         // Use triggerOnDown unless you're sure you want to run this on the current thread.
         private void onDown(final Host host, final boolean isHostAddition, boolean startReconnection) throws InterruptedException, ExecutionException {
-            logger.debug("Host {} is DOWN", host);
-
             if (isClosed())
                 return;
 
@@ -1691,6 +1689,8 @@ public class Cluster implements Closeable {
                     logger.debug("Aborting onDown because a reconnection is running on DOWN host {}", host);
                     return;
                 }
+
+                Host.statesLogger.debug("[{}] marking host DOWN", host);
 
                 // Remember if we care about this node at all. We must call this before
                 // we've signalled the load balancing policy, since most policy will always
@@ -1717,7 +1717,6 @@ public class Cluster implements Closeable {
                 if (distance == HostDistance.IGNORED || !startReconnection)
                     return;
 
-                logger.debug("{} is down, scheduling connection retries", host);
                 startPeriodicReconnectionAttempt(host, isHostAddition);
             } finally {
                 host.notificationsLock.unlock();
@@ -1725,7 +1724,7 @@ public class Cluster implements Closeable {
         }
 
         void startPeriodicReconnectionAttempt(final Host host, final boolean isHostAddition) {
-            new AbstractReconnectionHandler(reconnectionExecutor, reconnectionPolicy().newSchedule(), host.reconnectionAttempt) {
+            new AbstractReconnectionHandler(host.toString(), reconnectionExecutor, reconnectionPolicy().newSchedule(), host.reconnectionAttempt) {
 
                 protected Connection tryReconnect() throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
                     return connectionFactory.open(host);
@@ -1778,7 +1777,7 @@ public class Cluster implements Closeable {
             logger.debug("Scheduling one-time reconnection to {}", host);
 
             // Setting an initial delay of 0 to start immediately, and all the exception handlers return false to prevent further attempts
-            new AbstractReconnectionHandler(reconnectionExecutor, reconnectionPolicy().newSchedule(), host.reconnectionAttempt, 0) {
+            new AbstractReconnectionHandler(host.toString(), reconnectionExecutor, reconnectionPolicy().newSchedule(), host.reconnectionAttempt, 0) {
 
                 protected Connection tryReconnect() throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
                     return connectionFactory.open(host);
@@ -1834,8 +1833,6 @@ public class Cluster implements Closeable {
             if (isClosed())
                 return;
 
-            logger.info("New Cassandra host {} added", host);
-
             if (connectionFactory.protocolVersion == 2 && !supportsProtocolV2(host)) {
                 logUnsupportedVersionProtocol(host);
                 return;
@@ -1849,6 +1846,7 @@ public class Cluster implements Closeable {
                     return;
                 }
                 try {
+                    Host.statesLogger.debug("[{}] adding host", host);
 
                     // Adds to the load balancing first and foremost, as doing so might change the decision
                     // it will make for distance() on that node (not likely but we leave that possibility).
@@ -1921,7 +1919,7 @@ public class Cluster implements Closeable {
                 }
 
             } finally {
-                if (reusedConnection != null && !reusedConnection.hasPool())
+                if (reusedConnection != null && !reusedConnection.hasOwner())
                     reusedConnection.closeAsync();
             }
         }
@@ -1949,7 +1947,8 @@ public class Cluster implements Closeable {
 
                 host.setDown();
 
-                logger.debug("Removing host {}", host);
+                Host.statesLogger.debug("[{}] removing host", host);
+
                 loadBalancingPolicy().onRemove(host);
                 controlConnection.onRemove(host);
                 for (SessionManager s : sessions)
@@ -1962,13 +1961,14 @@ public class Cluster implements Closeable {
             }
         }
 
-        public boolean signalConnectionFailure(Host host, ConnectionException exception, boolean isHostAddition) {
+        public boolean signalConnectionFailure(Host host, ConnectionException exception,
+                                               boolean connectionInitialized, boolean isHostAddition) {
             // Don't signal failure until we've fully initialized the controlConnection as this might mess up with
             // the protocol detection
             if (!isFullyInit || isClosed())
                 return true;
 
-            boolean isDown = host.signalConnectionFailure(exception);
+            boolean isDown = host.convictionPolicy.signalConnectionFailure(exception, connectionInitialized);
             if (isDown)
                 triggerOnDown(host, isHostAddition, true);
             return isDown;
@@ -2175,6 +2175,7 @@ public class Cluster implements Closeable {
                 case TOPOLOGY_CHANGE:
                     ProtocolEvent.TopologyChange tpc = (ProtocolEvent.TopologyChange)event;
                     InetSocketAddress tpAddr = translateAddress(tpc.node.getAddress());
+                    Host.statesLogger.debug("[{}] received event {}", tpAddr, tpc.change);
                     switch (tpc.change) {
                         case NEW_NODE:
                             submitNodeRefresh(tpAddr, HostEvent.ADDED);
@@ -2190,6 +2191,7 @@ public class Cluster implements Closeable {
                 case STATUS_CHANGE:
                     ProtocolEvent.StatusChange stc = (ProtocolEvent.StatusChange)event;
                     InetSocketAddress stAddr = translateAddress(stc.node.getAddress());
+                    Host.statesLogger.debug("[{}] received event {}", stAddr, stc.status);
                     switch (stc.status) {
                         case UP:
                             submitNodeRefresh(stAddr, HostEvent.UP);
@@ -2256,7 +2258,7 @@ public class Cluster implements Closeable {
             // reconnecting (thus letting the loadBalancingPolicy pick a better node)
             Host ccHost = controlConnection.connectedHost();
             if (ccHost == null || loadBalancingPolicy().distance(ccHost) != HostDistance.LOCAL)
-                controlConnection.reconnect();
+                controlConnection.triggerReconnect();
 
             for (SessionManager s : sessions)
                 s.updateCreatedPools();
@@ -2266,7 +2268,7 @@ public class Cluster implements Closeable {
             // Deal with the control connection if it was using this host
             Host ccHost = controlConnection.connectedHost();
             if (ccHost == null || ccHost.equals(host) && loadBalancingPolicy().distance(ccHost) != HostDistance.LOCAL)
-                controlConnection.reconnect();
+                controlConnection.triggerReconnect();
 
             for (SessionManager s : sessions)
                 s.updateCreatedPools(host);

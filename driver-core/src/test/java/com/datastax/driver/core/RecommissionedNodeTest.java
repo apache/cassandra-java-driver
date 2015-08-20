@@ -20,6 +20,7 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 
@@ -143,6 +144,14 @@ public class RecommissionedNodeTest {
             .isNotReconnectingFromDown();
     }
 
+    @BeforeMethod(groups = "long")
+    public void clearFields() {
+        // Clear cluster and ccm instances between tests.
+        mainCluster = null;
+        mainCcm = null;
+        otherCcm = null;
+    }
+
     @AfterMethod(groups = "long")
     public void teardown() {
         if (mainCluster != null)
@@ -164,8 +173,8 @@ public class RecommissionedNodeTest {
     }
 
     private static void waitForCountUpHosts(Cluster cluster, int expectedCount) throws InterruptedException {
-        int maxRetries = 30;
-        int interval = 10;
+        int maxRetries = 10;
+        int interval = 6;
 
         for (int i = 0; i <= maxRetries; i++) {
             int actualCount = countUpHosts(cluster);

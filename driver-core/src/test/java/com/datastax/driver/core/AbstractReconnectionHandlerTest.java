@@ -52,7 +52,7 @@ public class AbstractReconnectionHandlerTest {
         schedule = new MockReconnectionSchedule();
         work = new MockReconnectionWork();
         future.set(null);
-        handler = new AbstractReconnectionHandler(executor, schedule, future) {
+        handler = new AbstractReconnectionHandler("test", executor, schedule, future) {
             @Override
             protected Connection tryReconnect() throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
                 return work.tryReconnect();
@@ -330,7 +330,7 @@ public class AbstractReconnectionHandlerTest {
     private void waitForCompletion() {
         executor.shutdown();
         try {
-            boolean shutdown = executor.awaitTermination(10, TimeUnit.SECONDS);
+            boolean shutdown = executor.awaitTermination(30, TimeUnit.SECONDS);
             if (!shutdown)
                 fail("executor ran for longer than expected");
         } catch (InterruptedException e) {

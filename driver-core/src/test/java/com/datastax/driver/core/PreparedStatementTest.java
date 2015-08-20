@@ -299,47 +299,6 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
         }
     }
 
-    private void reprepareOnNewlyUpNodeTest(String ks, Session session) throws Exception {
-
-        ks = ks == null ? "" : ks + '.';
-
-        session.execute("INSERT INTO " + ks + "test (k, i) VALUES ('123', 17)");
-        session.execute("INSERT INTO " + ks + "test (k, i) VALUES ('124', 18)");
-
-        PreparedStatement ps = session.prepare("SELECT * FROM " + ks + "test WHERE k = ?");
-
-        assertEquals(session.execute(ps.bind("123")).one().getInt("i"), 17);
-
-        ccmBridge.stop();
-        waitForDown(CCMBridge.IP_PREFIX + '1', cluster);
-
-        ccmBridge.start();
-        waitFor(CCMBridge.IP_PREFIX + '1', cluster, 120);
-
-        try
-        {
-            assertEquals(session.execute(ps.bind("124")).one().getInt("i"), 18);
-        }
-        catch (NoHostAvailableException e)
-        {
-            System.out.println(">> " + e.getErrors());
-            throw e;
-        }
-    }
-
-    @Test(groups = "long", priority = Integer.MAX_VALUE)
-    public void reprepareOnNewlyUpNodeTest() throws Exception {
-        reprepareOnNewlyUpNodeTest(null, session);
-    }
-
-    @Test(groups = "long", priority = Integer.MAX_VALUE)
-    public void reprepareOnNewlyUpNodeNoKeyspaceTest() throws Exception {
-
-        // This is the same test than reprepareOnNewlyUpNodeTest, except that the
-        // prepared statement is prepared while no current keyspace is used
-        reprepareOnNewlyUpNodeTest(keyspace, cluster.connect());
-    }
-
     @Test(groups = "short")
     public void prepareWithNullValuesTest() throws Exception {
 
