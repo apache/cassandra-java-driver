@@ -1,6 +1,6 @@
 ## Changelog
 
-### 2.2.0-rc3 (in progress)
+### 2.2.0-rc3
 
 - [bug] Propagate CodecRegistry to nested UDTs (JAVA-847)
 - [improvement] Ability to store a default, shareable CodecRegistry
