@@ -35,6 +35,7 @@
 
   <modules>
     <module>driver-core</module>
+    <module>driver-integration</module>
     <module>driver-examples</module>
     <module>driver-dse</module>
     <module>driver-dist</module>
