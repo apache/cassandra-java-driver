@@ -250,7 +250,8 @@ class Connection {
                             throw unsupportedProtocolVersionException(protocolVersion, error.serverProtocolVersion);
                         throw new TransportException(address, String.format("Error initializing connection: %s", error.message));
                     case AUTHENTICATE:
-                        Authenticator authenticator = factory.authProvider.newAuthenticator(address);
+                        Responses.Authenticate authenticate = (Responses.Authenticate)response;
+                        Authenticator authenticator = factory.authProvider.newAuthenticator(address, authenticate.authenticator);
                         switch (protocolVersion) {
                             case V1:
                                 if (authenticator instanceof ProtocolV1Authenticator)

@@ -9,4 +9,24 @@
   * add new differences if needed. Difference types are explained at http://www.mojohaus.org/clirr-maven-plugin/examples/ignored-differences.html
 -->
 <differences>
+  <difference>
+    <differenceType>7004</differenceType> <!-- api change -->
+    <className>com/datastax/driver/core/AuthProvider</className>
+    <method>com.datastax.driver.core.Authenticator newAuthenticator(java.net.InetSocketAddress)</method>
+    <justification>A change to the newAuthenticator method to allow passing the configured server authenticator</justification>
+  </difference>
+
+  <difference>
+    <differenceType>7004</differenceType> <!-- api change -->
+    <className>com/datastax/driver/core/PlainTextAuthProvider</className>
+    <method>com.datastax.driver.core.Authenticator newAuthenticator(java.net.InetSocketAddress)</method>
+    <justification>A change to the newAuthenticator method to allow passing the configured server authenticator</justification>
+  </difference>
+
+  <difference>
+    <differenceType>7004</differenceType> <!-- api change -->
+    <className>com/datastax/driver/auth/DseAuthProvider</className>
+    <method>com.datastax.driver.core.Authenticator newAuthenticator(java.net.InetSocketAddress)</method>
+    <justification>A change to the newAuthenticator method to allow passing the configured server authenticator</justification>
+  </difference>
 </differences>

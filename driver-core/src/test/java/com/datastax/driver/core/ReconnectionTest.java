@@ -316,7 +316,7 @@ public class ReconnectionTest {
             this.password = password;
         }
 
-        public Authenticator newAuthenticator(InetSocketAddress host) {
+        public Authenticator newAuthenticator(InetSocketAddress host, String authenticator) {
             return new PlainTextAuthenticator();
         }
 
