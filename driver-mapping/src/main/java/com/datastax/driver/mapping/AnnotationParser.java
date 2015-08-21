@@ -209,10 +209,6 @@ class AnnotationParser {
     }
 
     public static EnumType enumType(Field field) {
-        Class<?> type = field.getType();
-        if (!type.isEnum())
-            return null;
-
         Enumerated enumerated = field.getAnnotation(Enumerated.class);
         return (enumerated == null) ? EnumType.STRING : enumerated.value();
     }

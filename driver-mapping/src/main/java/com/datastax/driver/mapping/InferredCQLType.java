@@ -35,20 +35,22 @@ import com.datastax.driver.core.DataType;
 class InferredCQLType {
     final DataType dataType;
     final boolean containsMappedUDT;
+    final boolean containsEnum;
     final UDTMapper udtMapper;
+    final CollectionEnumMapper enumMapper;
     final List<InferredCQLType> childTypes;
 
     static InferredCQLType from(Field field, MappingManager mappingManager) {
         String name = String.format("field %s of class %s", field.getName(), field.getDeclaringClass().getName());
-        return new InferredCQLType(field.getGenericType(), name, field.getGenericType(), mappingManager);
+        return new InferredCQLType(field.getGenericType(), name, field.getGenericType(), mappingManager, AnnotationParser.enumType(field));
     }
 
     static InferredCQLType from(String className, String methodName, int idx, String paramName, Type paramType, MappingManager mappingManager) {
         String name = String.format("parameter %s of %s.%s", paramName == null ? idx : paramName, className, methodName);
-        return new InferredCQLType(paramType, name, paramType, mappingManager);
+        return new InferredCQLType(paramType, name, paramType, mappingManager, null);
     }
 
-    private InferredCQLType(Type javaType, String rootName, Type rootType, MappingManager mappingManager) {
+    private InferredCQLType(Type javaType, String rootName, Type rootType, MappingManager mappingManager, EnumType enumType) {
         if (javaType instanceof ParameterizedType) {
             ParameterizedType pt = (ParameterizedType)javaType;
             Type raw = pt.getRawType();
@@ -61,13 +63,17 @@ class InferredCQLType {
 
             childTypes = Lists.newArrayList();
             boolean childrenContainMappedUDT = false;
+            boolean childrenContainEnum = false;
             for (Type childJavaType : pt.getActualTypeArguments()) {
-                InferredCQLType child = new InferredCQLType(childJavaType, rootName, rootType, mappingManager);
+                InferredCQLType child = new InferredCQLType(childJavaType, rootName, rootType, mappingManager, enumType);
                 childrenContainMappedUDT |= child.containsMappedUDT;
+                childrenContainEnum |= child.containsEnum;
                 childTypes.add(child);
             }
             containsMappedUDT = childrenContainMappedUDT;
+            containsEnum = childrenContainEnum;
             udtMapper = null;
+            enumMapper = null;
 
             if (TypeMappings.mapsToList(klass)) {
                 dataType = DataType.list(childTypes.get(0).dataType);
@@ -80,13 +86,24 @@ class InferredCQLType {
         } else if (javaType instanceof Class) {
             Class<?> klass = (Class<?>)javaType;
             if (TypeMappings.isMappedUDT(klass)) {
+                containsEnum = false;
                 containsMappedUDT = true;
                 udtMapper = mappingManager.udtMapper(klass);
+                enumMapper = null;
                 dataType = udtMapper.getUserType();
                 childTypes = Collections.emptyList();
+            } else if (TypeMappings.mapsToEnum(klass)) {
+                containsMappedUDT = false;
+                containsEnum = true;
+                udtMapper = null;
+                enumMapper = mappingManager.enumMapper(klass);
+                dataType = enumType == EnumType.ORDINAL ? DataType.cint() : DataType.text();
+                childTypes = Collections.emptyList();
             } else {
+                containsEnum = false;
                 containsMappedUDT = false;
                 udtMapper = null;
+                enumMapper = null;
                 dataType = TypeMappings.getSimpleType(klass, rootName);
                 childTypes = Collections.emptyList();
             }

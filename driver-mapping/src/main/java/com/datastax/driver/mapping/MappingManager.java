@@ -34,6 +34,7 @@ public class MappingManager {
 
     private volatile Map<Class<?>, Mapper<?>> mappers = Collections.<Class<?>, Mapper<?>>emptyMap();
     private volatile Map<Class<?>, UDTMapper<?>> udtMappers = Collections.<Class<?>, UDTMapper<?>>emptyMap();
+    private volatile Map<Class<?>, CollectionEnumMapper<?>> enumMappers = Collections.<Class<?>, CollectionEnumMapper<?>>emptyMap();
     private volatile Map<Class<?>, Object> accessors = Collections.<Class<?>, Object>emptyMap();
 
     /**
@@ -124,6 +125,25 @@ public class MappingManager {
     }
 
     /**
+     * Creates a {@code CollectionEnumMapper} for the provided class (that must be
+     * annotated by a {@link com.datastax.driver.mapping.annotations.Enumerated} annotation).
+     *
+     * <p>
+     * The {@code MappingManager} only ever keeps one {@code CollectionEnumMapper} for each
+     * enum class, and so calling this method multiple times on the same class will
+     * always return the same object.
+     * </p>
+     *
+     * @param <T> the type of the class to map.
+     * @param klass the (annotated) class for which to return the mapper.
+     * @return the {@code UDTMapper} object for class {@code klass}.
+     */
+    public <T> CollectionEnumMapper<T> enumMapper(Class<T> klass) {
+        return getEnumMapper(klass);
+    }
+
+
+    /**
      * Creates an accessor object based on the provided interface (that must be annotated by
      * a {@link Accessor} annotation).
      * <p>
@@ -168,6 +188,23 @@ public class MappingManager {
                     Map<Class<?>, UDTMapper<?>> newMappers = new HashMap<Class<?>, UDTMapper<?>>(udtMappers);
                     newMappers.put(klass, mapper);
                     udtMappers = newMappers;
+                }
+            }
+        }
+        return mapper;
+    }
+
+    @SuppressWarnings("unchecked")
+    <T> CollectionEnumMapper<T> getEnumMapper(Class<T> klass) {
+        CollectionEnumMapper<T> mapper = (CollectionEnumMapper<T>)enumMappers.get(klass);
+        if (mapper == null) {
+            synchronized (enumMappers) {
+                mapper = (CollectionEnumMapper<T>)enumMappers.get(klass);
+                if (mapper == null) {
+                    mapper = new CollectionEnumMapper<T>(klass);
+                    Map<Class<?>, CollectionEnumMapper<?>> newMappers = new HashMap<Class<?>, CollectionEnumMapper<?>>(enumMappers);
+                    newMappers.put(klass, mapper);
+                    enumMappers = newMappers;
                 }
             }
         }

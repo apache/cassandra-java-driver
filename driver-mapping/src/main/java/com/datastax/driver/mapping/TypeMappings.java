@@ -79,6 +79,8 @@ class TypeMappings {
         return Map.class.equals(klass);
     }
 
+    static boolean mapsToEnum(Class<?> klass) { return klass.isEnum(); }
+
     static boolean mapsToCollection(Class<?> klass) {
         return mapsToList(klass) || mapsToSet(klass) || mapsToMap(klass);
     }
