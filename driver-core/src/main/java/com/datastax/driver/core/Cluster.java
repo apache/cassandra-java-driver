@@ -2448,8 +2448,15 @@ public class Cluster implements Closeable {
                             break;
                         case ADDED:
                             Host newHost = metadata.add(address);
-                            if (newHost != null)
+                            if (newHost != null) {
                                 futures.add(schedule(hostAdded(newHost)));
+                            } else {
+                                // If host already existed, retrieve it and check its state, if it's not up schedule a
+                                // hostUp event.
+                                Host existingHost = metadata.getHost(address);
+                                if(!existingHost.isUp())
+                                    futures.add(schedule(hostUp(existingHost)));
+                            }
                             break;
                         case DOWN:
                             // Note that there is a slight risk we can receive the event late and thus

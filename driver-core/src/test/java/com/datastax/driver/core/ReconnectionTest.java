@@ -69,7 +69,7 @@ public class ReconnectionTest {
             ccm.start(2);
             ccm.waitForUp(2);
 
-            assertThat(cluster).host(2).comesUpWithin(120, SECONDS);
+            assertThat(cluster).host(2).comesUpWithin(Cluster.NEW_NODE_DELAY_SECONDS*2, SECONDS);
 
             // Give the control connection a few moments to reconnect
             TimeUnit.MILLISECONDS.sleep(reconnectionDelay * 2);
@@ -128,7 +128,7 @@ public class ReconnectionTest {
             authProvider.setPassword("cassandra");
 
             // The driver should eventually reconnect to the node
-            assertThat(cluster).host(1).comesUpWithin(120, SECONDS);
+            assertThat(cluster).host(1).comesUpWithin(Cluster.NEW_NODE_DELAY_SECONDS*2, SECONDS);
         } finally {
             if (cluster != null)
                 cluster.close();
@@ -168,7 +168,7 @@ public class ReconnectionTest {
             ccm.waitForUp(2);
 
             // The driver should now see the node as UP again
-            assertThat(cluster).host(2).comesUpWithin(120, SECONDS);
+            assertThat(cluster).host(2).comesUpWithin(Cluster.NEW_NODE_DELAY_SECONDS*2, SECONDS);
 
         } finally {
             if (cluster != null)
@@ -229,7 +229,7 @@ public class ReconnectionTest {
             // Trigger another one-time reconnection attempt (this will succeed). The
             // host should be back up.
             host1.tryReconnectOnce();
-            assertThat(cluster).host(1).comesUpWithin(120, SECONDS);
+            assertThat(cluster).host(1).comesUpWithin(Cluster.NEW_NODE_DELAY_SECONDS*2, SECONDS);
         } finally {
             if (cluster != null)
                 cluster.close();
@@ -285,7 +285,7 @@ public class ReconnectionTest {
             // Reset the spy and count the number of connections attempts for 1 reconnect
             reset(socketOptions);
             host1.tryReconnectOnce();
-            assertThat(cluster).host(1).comesUpWithin(120, SECONDS);
+            assertThat(cluster).host(1).comesUpWithin(Cluster.NEW_NODE_DELAY_SECONDS*2, SECONDS);
             // Expect 1 connection from the reconnection attempt  3 for the pools (we need 4
             // but the one from the reconnection attempt gets reused).
             verify(socketOptions, times(4)).getKeepAlive();
