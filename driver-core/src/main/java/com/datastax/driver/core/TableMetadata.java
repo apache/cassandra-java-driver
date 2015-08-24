@@ -64,8 +64,10 @@ public class TableMetadata {
     private final List<ColumnMetadata> partitionKey;
     private final List<ColumnMetadata> clusteringColumns;
     private final Map<String, ColumnMetadata> columns;
+    private final Map<String, IndexMetadata> indexes;
     private final Options options;
     private final List<Order> clusteringOrder;
+
 
     private final VersionNumber cassandraVersion;
 
@@ -90,7 +92,8 @@ public class TableMetadata {
                           UUID id,
                           List<ColumnMetadata> partitionKey,
                           List<ColumnMetadata> clusteringColumns,
-                          LinkedHashMap<String, ColumnMetadata> columns,
+                          Map<String, ColumnMetadata> columns,
+                          Map<String, IndexMetadata> indexes,
                           Options options,
                           List<Order> clusteringOrder,
                           VersionNumber cassandraVersion) {
@@ -100,27 +103,28 @@ public class TableMetadata {
         this.partitionKey = partitionKey;
         this.clusteringColumns = clusteringColumns;
         this.columns = columns;
+        this.indexes = indexes;
         this.options = options;
         this.clusteringOrder = clusteringOrder;
         this.cassandraVersion = cassandraVersion;
     }
 
-    static TableMetadata build(KeyspaceMetadata ksm, Row row, Map<String, ColumnMetadata.Raw> rawCols, String nameColumn, VersionNumber cassandraVersion, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
+    static TableMetadata build(KeyspaceMetadata ksm, Row row, Map<String, ColumnMetadata.Raw> rawCols, List<Row> indexRows, String nameColumn, VersionNumber cassandraVersion, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
 
         String name = row.getString(nameColumn);
 
         UUID id = null;
 
-        if(cassandraVersion.getMajor() == 2 && cassandraVersion.getMinor() >= 1)
+        if (cassandraVersion.getMajor() == 2 && cassandraVersion.getMinor() >= 1)
             id = row.getUUID(CF_ID_V2);
-        else if(cassandraVersion.getMajor() > 2)
+        else if (cassandraVersion.getMajor() > 2)
             id = row.getUUID(CF_ID_V3);
 
         CassandraTypeParser.ParseResult comparator = null;
         CassandraTypeParser.ParseResult keyValidator = null;
         List<String> columnAliases = null;
 
-        if(cassandraVersion.getMajor() <= 2) {
+        if (cassandraVersion.getMajor() <= 2) {
             comparator = CassandraTypeParser.parseWithComposite(row.getString(COMPARATOR), protocolVersion, codecRegistry);
             keyValidator = CassandraTypeParser.parseWithComposite(row.getString(KEY_VALIDATOR), protocolVersion, codecRegistry);
             columnAliases = cassandraVersion.getMajor() >= 2 || row.getString(COLUMN_ALIASES) == null
@@ -133,17 +137,17 @@ public class TableMetadata {
 
         boolean isDense;
         boolean isCompact;
-        if(cassandraVersion.getMajor() > 2) {
+        if (cassandraVersion.getMajor() > 2) {
             Set<String> flags = row.getSet(FLAGS, String.class);
             isDense = flags.contains(DENSE);
             boolean isSuper = flags.contains(SUPER);
             boolean isCompound = flags.contains(COMPOUND);
             isCompact = isSuper || isDense || !isCompound;
             boolean isStaticCompact = !isSuper && !isDense && !isCompound;
-            if(isStaticCompact) {
+            if (isStaticCompact) {
                 rawCols = pruneStaticCompactTableColumns(rawCols);
             }
-            if(isDense) {
+            if (isDense) {
                 rawCols = pruneDenseTableColumnsV3(rawCols);
             }
             clusteringSize = findClusteringSize(comparator, rawCols.values(), columnAliases, cassandraVersion);
@@ -151,7 +155,7 @@ public class TableMetadata {
             assert comparator != null;
             clusteringSize = findClusteringSize(comparator, rawCols.values(), columnAliases, cassandraVersion);
             isDense = clusteringSize != comparator.types.size() - 1;
-            if(isDense) {
+            if (isDense) {
                 rawCols = pruneDenseTableColumnsV2(rawCols);
             }
             isCompact = isDense || !comparator.isComposite;
@@ -163,6 +167,7 @@ public class TableMetadata {
 
         // We use a linked hashmap because we will keep this in the order of a 'SELECT * FROM ...'.
         LinkedHashMap<String, ColumnMetadata> columns = new LinkedHashMap<String, ColumnMetadata>();
+        LinkedHashMap<String, IndexMetadata> indexes = new LinkedHashMap<String, IndexMetadata>();
 
         Options options = null;
         try {
@@ -171,11 +176,11 @@ public class TableMetadata {
             // See ControlConnection#refreshSchema for why we'd rather not probably this further. Since table options is one thing
             // that tends to change often in Cassandra, it's worth special casing this.
             logger.error(String.format("Error parsing schema options for table %s.%s: "
-                                       + "Cluster.getMetadata().getKeyspace(\"%s\").getTable(\"%s\").getOptions() will return null",
-                                       ksm.getName(), name, ksm.getName(), name), e);
+                    + "Cluster.getMetadata().getKeyspace(\"%s\").getTable(\"%s\").getOptions() will return null",
+                ksm.getName(), name, ksm.getName(), name), e);
         }
 
-        TableMetadata tm = new TableMetadata(ksm, name, id, partitionKey, clusteringColumns, columns, options, clusteringOrder, cassandraVersion);
+        TableMetadata tm = new TableMetadata(ksm, name, id, partitionKey, clusteringColumns, columns, indexes, options, clusteringOrder, cassandraVersion);
 
         // We use this temporary set just so non PK columns are added in lexicographical order, which is the one of a
         // 'SELECT * FROM ...'
@@ -190,8 +195,8 @@ public class TableMetadata {
             // In C* 1.2, only the REGULAR columns are in the columns schema table, so we need to add the names from
             // the aliases (and make sure we handle default aliases).
             List<String> keyAliases = row.getString(KEY_ALIASES) == null
-                                    ? Collections.<String>emptyList()
-                                    : SimpleJSONParser.parseStringList(row.getString(KEY_ALIASES));
+                ? Collections.<String>emptyList()
+                : SimpleJSONParser.parseStringList(row.getString(KEY_ALIASES));
             for (int i = 0; i < partitionKey.size(); i++) {
                 String alias = keyAliases.size() > i ? keyAliases.get(i) : (i == 0 ? DEFAULT_KEY_ALIAS : DEFAULT_KEY_ALIAS + (i + 1));
                 partitionKey.set(i, ColumnMetadata.forAlias(tm, alias, keyValidator.types.get(i)));
@@ -207,12 +212,14 @@ public class TableMetadata {
             if (isDense) {
                 String alias = row.isNull(VALUE_ALIAS) ? DEFAULT_VALUE_ALIAS : row.getString(VALUE_ALIAS);
                 // ...unless the table does not have any regular column, only primary key columns (JAVA-873)
-                if(!alias.isEmpty()) {
+                if (!alias.isEmpty()) {
                     DataType type = CassandraTypeParser.parseOne(row.getString(VALIDATOR), protocolVersion, codecRegistry);
                     otherColumns.add(ColumnMetadata.forAlias(tm, alias, type));
                 }
             }
         }
+
+        Map<ColumnMetadata, Set<IndexMetadata>> indexedColumns = new LinkedHashMap<ColumnMetadata, Set<IndexMetadata>>();
 
         for (ColumnMetadata.Raw rawCol : rawCols.values()) {
             ColumnMetadata col = ColumnMetadata.fromRaw(tm, rawCol);
@@ -228,7 +235,14 @@ public class TableMetadata {
                     otherColumns.add(col);
                     break;
             }
+            // create legacy secondary indexes (C* < 3.0)
+            IndexMetadata index = IndexMetadata.fromLegacy(col, rawCol);
+            if(index != null) {
+                indexes.put(index.getName(), index);
+                addIndexToColumn(index, col, indexedColumns);
+            }
         }
+
 
         for (ColumnMetadata c : partitionKey)
             columns.put(c.getName(), c);
@@ -237,7 +251,38 @@ public class TableMetadata {
         for (ColumnMetadata c : otherColumns)
             columns.put(c.getName(), c);
 
+        // create secondary indexes (C* >= 3.0)
+        if (indexRows != null)
+            for (Row indexRow : indexRows) {
+                IndexMetadata index = IndexMetadata.fromRow(tm, indexRow);
+                indexes.put(index.getName(), index);
+                // update the many-to-many relationship between indexes and columns
+                for (ColumnMetadata column : index.getColumns()) {
+                    addIndexToColumn(index, column, indexedColumns);
+                }
+            }
+
+        // update indexed columns
+        for (Map.Entry<ColumnMetadata, Set<IndexMetadata>> entry : indexedColumns.entrySet()) {
+            ColumnMetadata column = entry.getKey();
+            for (IndexMetadata index : entry.getValue()) {
+                // update the "reverse" side of the many-to-many relationship between indexes and columns
+                column.indexes.put(index.getName(), index);
+            }
+        }
         return tm;
+    }
+
+    /**
+     * Associate the given index with the given column and store it in the given map.
+     */
+    private static void addIndexToColumn(IndexMetadata index, ColumnMetadata column, Map<ColumnMetadata, Set<IndexMetadata>> indexedColumns) {
+        Set<IndexMetadata> indexes = indexedColumns.get(column);
+        if(indexes == null) {
+            indexes = new LinkedHashSet<IndexMetadata>();
+            indexedColumns.put(column, indexes);
+        }
+        indexes.add(index);
     }
 
     /**
@@ -372,7 +417,7 @@ public class TableMetadata {
      * @param name the name of the column to retrieve ({@code name} will be
      * interpreted as a case-insensitive identifier unless enclosed in double-quotes,
      * see {@link Metadata#quote}).
-     * @return the metadata for the {@code name} column if it exists, or
+     * @return the metadata for the column if it exists, or
      * {@code null} otherwise.
      */
     public ColumnMetadata getColumn(String name) {
@@ -433,6 +478,28 @@ public class TableMetadata {
     }
 
     /**
+     * Returns metadata on a index of this table.
+     *
+     * @param name the name of the index to retrieve ({@code name} will be
+     * interpreted as a case-insensitive identifier unless enclosed in double-quotes,
+     * see {@link Metadata#quote}).
+     * @return the metadata for the {@code name} index if it exists, or
+     * {@code null} otherwise.
+     */
+    public IndexMetadata getIndex(String name) {
+        return indexes.get(Metadata.handleId(name));
+    }
+
+    /**
+     * Returns a list containing all the indexes of this table.
+     *
+     * @return a list containing the metadata for the indexes of this table.
+     */
+    public List<IndexMetadata> getIndexes() {
+        return new ArrayList<IndexMetadata>(indexes.values());
+    }
+
+    /**
      * Returns the clustering order for this table.
      * <p>
      * The returned contains the clustering order of each clustering column. The
@@ -466,7 +533,7 @@ public class TableMetadata {
      * table and the index on it.
      * <p>
      * In other words, this method returns the queries that would allow you to
-     * recreate the schema of this table, along with the index defined on
+     * recreate the schema of this table, along with the indexes defined on
      * columns of this table.
      * <p>
      * Note that the returned String is formatted to be human readable (for
@@ -480,11 +547,7 @@ public class TableMetadata {
 
         sb.append(asCQLQuery(true));
 
-        for (ColumnMetadata column : columns.values()) {
-            ColumnMetadata.IndexMetadata index = column.getIndex();
-            if (index == null)
-                continue;
-
+        for (IndexMetadata index : indexes.values()) {
             sb.append('\n').append(index.asCQLQuery());
         }
         return sb.toString();

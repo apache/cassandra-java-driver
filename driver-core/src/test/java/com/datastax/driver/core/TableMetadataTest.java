@@ -18,6 +18,7 @@ package com.datastax.driver.core;
 import java.util.Collection;
 import java.util.Collections;
 
+import org.testng.SkipException;
 import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.entry;
@@ -172,6 +173,12 @@ public class TableMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
 
     @Test(groups = "short")
     public void should_parse_table_options() {
+        VersionNumber version = TestUtils.findHost(cluster, 1).getCassandraVersion();
+        if (version.getMajor() > 2) {
+            // TODO adapt test for C* 3.0
+            throw new SkipException("Needs adjustments to work with Cassandra 3.0");
+        }
+
         // given
         String cql = String.format("CREATE TABLE %s.with_options (\n"
                 + "    k text,\n"
@@ -200,7 +207,6 @@ public class TableMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
         assertThat(table.getColumns().get(2)).isNotNull().hasName("c2").isClusteringColumn().hasClusteringOrder(ASC).hasType(cint());
         assertThat(table.getColumns().get(3)).isNotNull().hasName("i").isRegularColumn().hasType(cint());
         assertThat(table);
-        VersionNumber version = TestUtils.findHost(cluster, 1).getCassandraVersion();
 
         // Cassandra 3.0 +
         if (version.getMajor() > 2) {
@@ -381,4 +387,23 @@ public class TableMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
         return Collections.emptyList();
     }
 
+    @Test(groups = "short")
+    public void should_not_mix_indexes_from_different_tables() {
+        String[] statements = {
+                "CREATE TABLE test_ab (a int PRIMARY KEY, b int);",
+                "CREATE INDEX test_b on test_ab (b);",
+                "CREATE TABLE test_cd (c int PRIMARY KEY, d int);",
+                "CREATE INDEX test_d on test_cd (d);",
+        };
+        for (String statement: statements)
+            session.execute(statement);
+
+        TableMetadata table_ab = cluster.getMetadata().getKeyspace(keyspace).getTable("test_ab");
+        TableMetadata table_cd = cluster.getMetadata().getKeyspace(keyspace).getTable("test_cd");
+
+        assertThat(table_ab.getIndexes().size()).isEqualTo(1);
+        assertThat(table_ab.getIndexes().get(0).getName()).isEqualTo("test_b");
+        assertThat(table_cd.getIndexes().size()).isEqualTo(1);
+        assertThat(table_cd.getIndexes().get(0).getName()).isEqualTo("test_d");
+    }
 }

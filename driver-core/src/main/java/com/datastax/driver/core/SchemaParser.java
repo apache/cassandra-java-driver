@@ -18,6 +18,8 @@ package com.datastax.driver.core;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -117,7 +119,7 @@ abstract class SchemaParser {
                             buildUserTypes(ksm, udtDefs.get(ksName), protocolVersion, codecRegistry);
                         }
                         if (cfDefs.containsKey(ksName)) {
-                            buildTableMetadata(ksm, cfDefs.get(ksName), colsDefs.get(ksName), cassandraVersion, protocolVersion, codecRegistry, CF_NAME);
+                            buildTableMetadata(ksm, cfDefs.get(ksName), colsDefs.get(ksName), null, cassandraVersion, protocolVersion, codecRegistry, CF_NAME);
                         }
                         if (functionDefs.containsKey(ksName)) {
                             buildFunctionMetadata(ksm, functionDefs.get(ksName), protocolVersion, codecRegistry);
@@ -153,7 +155,7 @@ abstract class SchemaParser {
                     switch (targetType) {
                         case TABLE:
                             if (cfDefs.containsKey(targetKeyspace))
-                                buildTableMetadata(ksm, cfDefs.get(targetKeyspace), colsDefs.get(targetKeyspace), cassandraVersion, protocolVersion, codecRegistry, CF_NAME);
+                                buildTableMetadata(ksm, cfDefs.get(targetKeyspace), colsDefs.get(targetKeyspace), null, cassandraVersion, protocolVersion, codecRegistry, CF_NAME);
                             break;
                         case TYPE:
                             if (udtDefs.containsKey(targetKeyspace))
@@ -194,6 +196,7 @@ abstract class SchemaParser {
         private static final String SELECT_USERTYPES       = "SELECT * FROM system_schema.types";
         private static final String SELECT_FUNCTIONS       = "SELECT * FROM system_schema.functions";
         private static final String SELECT_AGGREGATES      = "SELECT * FROM system_schema.aggregates";
+        private static final String SELECT_INDEXES         = "SELECT * FROM system_schema.indexes";
 
         private static final String TABLE_NAME = "table_name";
 
@@ -225,7 +228,8 @@ abstract class SchemaParser {
                 cfFuture = null,
                 colsFuture = null,
                 functionsFuture = null,
-                aggregatesFuture = null;
+                aggregatesFuture = null,
+                indexesFuture = null;
 
             if (isSchemaOrKeyspace)
                 ksFuture = queryAsync(SELECT_KEYSPACES + whereClause, connection, protocolVersion);
@@ -236,6 +240,7 @@ abstract class SchemaParser {
             if (isSchemaOrKeyspace || targetType == TABLE) {
                 cfFuture = queryAsync(SELECT_TABLES + whereClause, connection, protocolVersion);
                 colsFuture = queryAsync(SELECT_COLUMNS + whereClause, connection, protocolVersion);
+                indexesFuture = queryAsync(SELECT_INDEXES + whereClause, connection, protocolVersion);
             }
 
             if ((isSchemaOrKeyspace || targetType == FUNCTION))
@@ -250,6 +255,7 @@ abstract class SchemaParser {
             Map<String, Map<String, Map<String, ColumnMetadata.Raw>>> colsDefs = groupByKeyspaceAndCf(get(colsFuture), cassandraVersion, protocolVersion, codecRegistry, TABLE_NAME);
             Map<String, List<Row>> functionDefs = groupByKeyspace(get(functionsFuture));
             Map<String, List<Row>> aggregateDefs = groupByKeyspace(get(aggregatesFuture));
+            Map<String, Map<String, List<Row>>> indexDefs = groupByKeyspaceAndCf(get(indexesFuture), TABLE_NAME);
 
             metadata.lock.lock();
             try {
@@ -264,7 +270,7 @@ abstract class SchemaParser {
                             buildUserTypes(ksm, udtDefs.get(ksName), protocolVersion, codecRegistry);
                         }
                         if (cfDefs.containsKey(ksName)) {
-                            buildTableMetadata(ksm, cfDefs.get(ksName), colsDefs.get(ksName), cassandraVersion, protocolVersion, codecRegistry, TABLE_NAME);
+                            buildTableMetadata(ksm, cfDefs.get(ksName), colsDefs.get(ksName), indexDefs.get(ksName), cassandraVersion, protocolVersion, codecRegistry, TABLE_NAME);
                         }
                         if (functionDefs.containsKey(ksName)) {
                             buildFunctionMetadata(ksm, functionDefs.get(ksName), protocolVersion, codecRegistry);
@@ -300,7 +306,7 @@ abstract class SchemaParser {
                     switch (targetType) {
                         case TABLE:
                             if (cfDefs.containsKey(targetKeyspace))
-                                buildTableMetadata(ksm, cfDefs.get(targetKeyspace), colsDefs.get(targetKeyspace), cassandraVersion, protocolVersion, codecRegistry, TABLE_NAME);
+                                buildTableMetadata(ksm, cfDefs.get(targetKeyspace), colsDefs.get(targetKeyspace), indexDefs.get(targetKeyspace), cassandraVersion, protocolVersion, codecRegistry, TABLE_NAME);
                             break;
                         case TYPE:
                             if (udtDefs.containsKey(targetKeyspace))
@@ -324,7 +330,7 @@ abstract class SchemaParser {
         }
     };
 
-    static void buildTableMetadata(KeyspaceMetadata ksm, List<Row> cfRows, Map<String, Map<String, ColumnMetadata.Raw>> colsDefs, VersionNumber cassandraVersion, ProtocolVersion protocolVersion, CodecRegistry codecRegistry, String tableName) {
+    static void buildTableMetadata(KeyspaceMetadata ksm, List<Row> cfRows, Map<String, Map<String, ColumnMetadata.Raw>> colsDefs, Map<String, List<Row>> ksIndexes, VersionNumber cassandraVersion, ProtocolVersion protocolVersion, CodecRegistry codecRegistry, String tableName) {
         for (Row cfRow : cfRows) {
             String cfName = cfRow.getString(tableName);
             try {
@@ -348,7 +354,8 @@ abstract class SchemaParser {
                         cols = Collections.emptyMap();
                     }
                 }
-                ksm.add(TableMetadata.build(ksm, cfRow, cols, tableName, cassandraVersion, protocolVersion, codecRegistry));
+                List<Row> cfIndexes = (ksIndexes == null) ? null : ksIndexes.get(cfName);
+                ksm.add(TableMetadata.build(ksm, cfRow, cols, cfIndexes, tableName, cassandraVersion, protocolVersion, codecRegistry));
             } catch (RuntimeException e) {
             // See ControlConnection#refreshSchema for why we'd rather not probably this further
             logger.error(String.format("Error parsing schema for table %s.%s: "
@@ -384,6 +391,29 @@ abstract class SchemaParser {
             if (l == null) {
                 l = new ArrayList<Row>();
                 result.put(ksName, l);
+            }
+            l.add(row);
+        }
+        return result;
+    }
+
+    static Map<String, Map<String, List<Row>>> groupByKeyspaceAndCf(ResultSet rs, String tableName) {
+        if (rs == null)
+            return Collections.emptyMap();
+
+        Map<String, Map<String, List<Row>>> result = Maps.newHashMap();
+        for (Row row : rs) {
+            String ksName = row.getString(KeyspaceMetadata.KS_NAME);
+            String cfName = row.getString(tableName);
+            Map<String, List<Row>> rowsByCf = result.get(ksName);
+            if (rowsByCf == null) {
+                rowsByCf = Maps.newHashMap();
+                result.put(ksName, rowsByCf);
+            }
+            List<Row> l = rowsByCf.get(cfName);
+            if (l == null) {
+                l = Lists.newArrayList();
+                rowsByCf.put(cfName, l);
             }
             l.add(row);
         }

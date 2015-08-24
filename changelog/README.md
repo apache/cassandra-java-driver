@@ -2,6 +2,9 @@
 
 ### 3.0.0-alpha2 (in progress)
 
+- [new feature] Move secondary index metadata out of column definitions
+  (JAVA-875, JAVA-882).
+
 Merged from 2.2 branch:
 
 - [bug] Propagate CodecRegistry to nested UDTs (JAVA-847)
