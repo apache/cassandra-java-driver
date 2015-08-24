@@ -41,6 +41,7 @@ import static org.mockito.Mockito.verify;
 
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.datastax.driver.core.policies.ConstantReconnectionPolicy;
+import com.datastax.driver.core.utils.CassandraVersion;
 
 import static com.datastax.driver.core.Assertions.*;
 import static com.datastax.driver.core.FakeHost.Behavior.THROWING_CONNECT_TIMEOUTS;
@@ -57,6 +58,7 @@ public class ClusterInitTest {
      * causing timeouts, we want to ensure that the driver does not wait multiple times on the same host.
      */
     @Test(groups = "short")
+    @CassandraVersion(major=2.0, description = "Scassandra currently broken with protocol version 1.")
     public void should_handle_failing_or_missing_contact_points() throws UnknownHostException {
         Cluster cluster = null;
         Scassandra scassandra = null;
