@@ -1,6 +1,6 @@
 ## Changelog
 
-### 3.0.0-alpha2 (in progress)
+### 3.0.0-alpha2
 
 - [new feature] Move secondary index metadata out of column definitions
   (JAVA-875, JAVA-882).
