@@ -451,11 +451,13 @@ public final class CodecRegistry {
 
     private <T> TypeCodec<T> lookupCodec(DataType cqlType, TypeToken<T> javaType) {
         checkNotNull(cqlType, "Parameter cqlType cannot be null");
-        logger.trace("Querying cache for codec [{} <-> {}]", cqlType, javaType);
+        if(logger.isTraceEnabled())
+            logger.trace("Querying cache for codec [{} <-> {}]", cqlType, javaType);
         CacheKey cacheKey = new CacheKey(cqlType, javaType);
         try {
             TypeCodec<?> codec = cache.get(cacheKey);
-            logger.trace("Returning cached codec [{} <-> {}]", cqlType, javaType);
+            if(logger.isTraceEnabled())
+                logger.trace("Returning cached codec [{} <-> {}]", cqlType, javaType);
             return (TypeCodec<T>)codec;
         } catch (UncheckedExecutionException e) {
             if(e.getCause() instanceof CodecNotFoundException) {
@@ -469,12 +471,14 @@ public final class CodecRegistry {
 
     private <T> TypeCodec<T> findCodec(DataType cqlType, TypeToken<T> javaType) {
         checkNotNull(cqlType, "Parameter cqlType cannot be null");
-        logger.trace("Looking for codec [{} <-> {}]",
-            cqlType == null ? "ANY" : cqlType,
-            javaType == null ? "ANY" : javaType);
+        if(logger.isTraceEnabled())
+            logger.trace("Looking for codec [{} <-> {}]",
+                cqlType == null ? "ANY" : cqlType,
+                javaType == null ? "ANY" : javaType);
         for (TypeCodec<?> codec : codecs) {
             if ((cqlType == null || codec.accepts(cqlType)) && (javaType == null || codec.accepts(javaType))) {
-                logger.trace("Codec found: {}", codec);
+                if(logger.isTraceEnabled())
+                    logger.trace("Codec found: {}", codec);
                 return (TypeCodec<T>)codec;
             }
         }
@@ -483,10 +487,12 @@ public final class CodecRegistry {
 
     private <T> TypeCodec<T> findCodec(DataType cqlType, T value) {
         checkNotNull(value, "Parameter value cannot be null");
-        logger.trace("Looking for codec [{} <-> {}]", cqlType == null ? "ANY" : cqlType, value.getClass());
+        if(logger.isTraceEnabled())
+            logger.trace("Looking for codec [{} <-> {}]", cqlType == null ? "ANY" : cqlType, value.getClass());
         for (TypeCodec<?> codec : codecs) {
             if ((cqlType == null || codec.accepts(cqlType)) && codec.accepts(value)) {
-                logger.trace("Codec found: {}", codec);
+                if(logger.isTraceEnabled())
+                    logger.trace("Codec found: {}", codec);
                 return (TypeCodec<T>)codec;
             }
         }
@@ -500,7 +506,8 @@ public final class CodecRegistry {
         // double-check that the created codec satisfies the initial request
         if (!codec.accepts(cqlType) || (javaType != null && !codec.accepts(javaType)))
             throw newException(cqlType, javaType);
-        logger.trace("Codec created: {}", codec);
+        if(logger.isTraceEnabled())
+            logger.trace("Codec created: {}", codec);
         return codec;
     }
 
@@ -511,7 +518,8 @@ public final class CodecRegistry {
         // double-check that the created codec satisfies the initial request
         if((cqlType != null && !codec.accepts(cqlType)) || !codec.accepts(value))
             throw newException(cqlType, TypeToken.of(value.getClass()));
-        logger.trace("Codec created: {}", codec);
+        if(logger.isTraceEnabled())
+            logger.trace("Codec created: {}", codec);
         return codec;
     }
 

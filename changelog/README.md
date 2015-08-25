@@ -1,5 +1,8 @@
 ## Changelog
 
+### 2.2.0-rc4
+- [improvement] Use isTraceEnabled in CodecRegistry where trace is used. (JAVA-899)
+
 ### 2.2.0-rc3
 
 - [bug] Propagate CodecRegistry to nested UDTs (JAVA-847)
