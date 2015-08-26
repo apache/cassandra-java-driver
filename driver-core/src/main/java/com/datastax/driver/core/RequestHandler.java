@@ -134,7 +134,8 @@ class RequestHandler {
                 manager.executor().execute(new Runnable() {
                     @Override
                     public void run() {
-                        metrics().getErrorMetrics().getSpeculativeExecutions().inc();
+                        if (metricsEnabled())
+                            metrics().getErrorMetrics().getSpeculativeExecutions().inc();
                         startNewExecution();
                     }
                 });
