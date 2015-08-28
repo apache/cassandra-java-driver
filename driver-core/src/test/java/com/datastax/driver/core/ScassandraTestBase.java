@@ -56,9 +56,10 @@ public abstract class ScassandraTestBase {
 
     protected CurrentClient currentClient;
 
+    protected static String ip = CCMBridge.IP_PREFIX + "1";
+
     @BeforeClass(groups = { "short", "long" })
     public void startScassandra() {
-        String ip = CCMBridge.IP_PREFIX + "1";
         scassandra = ScassandraFactory.createServer(ip, BINARY_PORT, ip, ADMIN_PORT);
         scassandra.start();
         primingClient = scassandra.primingClient();
