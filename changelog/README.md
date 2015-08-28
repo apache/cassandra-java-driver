@@ -44,6 +44,8 @@
 - [improvement] Use parallel calls when re-preparing statement on other
   hosts (JAVA-725)
 - [bug] Don't use connection timeout for unrelated internal queries (JAVA-629)
+- [bug] Fix NPE in speculative executions when metrics disabled
+  (JAVA-892)
 
 Merged from 2.0.10_fixes branch:
 
