@@ -35,7 +35,6 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.timeout.IdleStateEvent;
 import io.netty.handler.timeout.IdleStateHandler;
-import io.netty.util.HashedWheelTimer;
 import io.netty.util.Timeout;
 import io.netty.util.Timer;
 import io.netty.util.TimerTask;
@@ -48,7 +47,12 @@ import static io.netty.handler.timeout.IdleState.ALL_IDLE;
 
 import com.datastax.driver.core.exceptions.AuthenticationException;
 import com.datastax.driver.core.exceptions.DriverException;
+import com.datastax.driver.core.exceptions.DriverInternalError;
+import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.utils.MoreFutures;
+
+import static com.datastax.driver.core.Message.Response.Type.ERROR;
+import static com.datastax.driver.core.Message.Response.Type.RESULT;
 
 // For LoggingHandler
 //import org.jboss.netty.handler.logging.LoggingHandler;
@@ -175,8 +179,8 @@ class Connection {
             public ListenableFuture<Void> create(Throwable t) throws Exception {
                 SettableFuture<Void> future = SettableFuture.create();
                 // Make sure the connection gets properly closed.
-                if (t instanceof ClusterNameMismatchException || t instanceof UnsupportedProtocolVersionException) {
-                    // These exceptions cause the node to be ignored, so just propagate
+                if (t instanceof ClusterNameMismatchException || t instanceof UnsupportedProtocolVersionException || t instanceof SetKeyspaceException) {
+                    // Just propagate
                     closeAsync().force();
                     future.setException(t);
                 } else {
@@ -197,7 +201,7 @@ class Connection {
             @Override
             public void onSuccess(Void result) {
                 Host host = factory.manager.metadata.getHost(address);
-                if(host != null)
+                if (host != null)
                     host.convictionPolicy.signalConnectionCreated();
                 isInitialized = true;
             }
@@ -435,28 +439,11 @@ class Connection {
         if (this.keyspace != null && this.keyspace.equals(keyspace))
             return;
 
-        Future future = null;
+        ListenableFuture<Void> future = null;
         try {
-            logger.trace("{} Setting keyspace {}", this, keyspace);
             long timeout = factory.getConnectTimeoutMillis();
-            // Note: we quote the keyspace below, because the name is the one coming from Cassandra, so it's in the right case already
-            future = write(new Requests.Query("USE \"" + keyspace + '"'));
-            Message.Response response = Uninterruptibles.getUninterruptibly(future, timeout, TimeUnit.MILLISECONDS);
-            switch (response.type) {
-                case RESULT:
-                    this.keyspace = keyspace;
-                    break;
-                default:
-                    // The code set the keyspace only when a successful 'use'
-                    // has been perform, so there shouldn't be any error here.
-                    // It can happen however that the node we're connecting to
-                    // is not up on the schema yet. In that case, defuncting
-                    // the connection is not a bad choice.
-                    String message = String.format("Problem while setting keyspace, got %s as response", response);
-                    logger.warn("{} {}", this, message);
-                    defunct(new ConnectionException(address, message));
-                    break;
-            }
+            future = setKeyspaceAsync(keyspace);
+            Uninterruptibles.getUninterruptibly(future, timeout, TimeUnit.MILLISECONDS);
         } catch (ConnectionException e) {
             throw defunct(e);
         } catch (TimeoutException e) {
@@ -471,8 +458,36 @@ class Connection {
             logger.warn(String.format("Tried to set the keyspace on busy connection to %s. This should not happen but is not critical (it will retried)", address));
             throw new ConnectionException(address, "Tried to set the keyspace on busy connection");
         } catch (ExecutionException e) {
-            throw defunct(new ConnectionException(address, "Error while setting keyspace", e));
+            throw defunct(new ConnectionException(address, "Error while setting keyspace", e.getCause()));
         }
+    }
+
+    ListenableFuture<Void> setKeyspaceAsync(final String keyspace) throws ConnectionException, BusyConnectionException {
+        logger.trace("{} Setting keyspace {}", this, keyspace);
+        // Note: we quote the keyspace below, because the name is the one coming from Cassandra, so it's in the right case already
+        Future future = write(new Requests.Query("USE \"" + keyspace + '"'));
+        return Futures.transform(future, new AsyncFunction<Message.Response, Void>() {
+            @Override
+            public ListenableFuture<Void> apply(Message.Response response) throws Exception {
+                if (response.type == RESULT) {
+                    Connection.this.keyspace = keyspace;
+                    return MoreFutures.VOID_SUCCESS;
+                } else if (response.type == ERROR) {
+                    closeAsync().force();
+                    Responses.Error error = (Responses.Error)response;
+                    Exception e = error.asException(address);
+                    if (e instanceof InvalidQueryException) {
+                        // Most likely means that the keyspace name is wrong. Wrap that in a specific exception, because we want
+                        // to treat it specially in case of a Session init.
+                        e = new SetKeyspaceException(e);
+                    }
+                    throw e;
+                } else {
+                    closeAsync().force();
+                    throw new DriverInternalError("Unexpected response while setting keyspace: " + response);
+                }
+            }
+        }, factory.manager.configuration.getPoolingOptions().getInitializationExecutor());
     }
 
     /**

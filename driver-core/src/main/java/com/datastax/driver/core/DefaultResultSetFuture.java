@@ -198,7 +198,7 @@ class DefaultResultSetFuture extends AbstractFuture<ResultSet> implements Result
         try {
             return Uninterruptibles.getUninterruptibly(this);
         } catch (ExecutionException e) {
-            throw extractCauseFromExecutionException(e);
+            throw DriverThrowables.propagateCause(e);
         }
     }
 
@@ -230,7 +230,7 @@ class DefaultResultSetFuture extends AbstractFuture<ResultSet> implements Result
         try {
             return Uninterruptibles.getUninterruptibly(this, timeout, unit);
         } catch (ExecutionException e) {
-            throw extractCauseFromExecutionException(e);
+            throw DriverThrowables.propagateCause(e);
         }
     }
 
@@ -275,18 +275,6 @@ class DefaultResultSetFuture extends AbstractFuture<ResultSet> implements Result
             handler.cancel();
         }
         return true;
-    }
-
-    static RuntimeException extractCauseFromExecutionException(ExecutionException e) {
-        // We could just rethrow e.getCause(). However, the cause of the ExecutionException has likely been
-        // created on the I/O thread receiving the response. Which means that the stacktrace associated
-        // with said cause will make no mention of the current thread. This is painful for say, finding
-        // out which execute() statement actually raised the exception. So instead, we re-create the
-        // exception.
-        if (e.getCause() instanceof DriverException)
-            throw ((DriverException)e.getCause()).copy();
-        else
-            throw new DriverInternalError("Unexpected exception thrown", e.getCause());
     }
 
     @Override

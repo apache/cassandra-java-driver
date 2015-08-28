@@ -276,7 +276,7 @@ abstract class ArrayBackedResultSet implements ResultSet {
                 try {
                     Uninterruptibles.getUninterruptibly(fetchMoreResults());
                 } catch (ExecutionException e) {
-                    throw DefaultResultSetFuture.extractCauseFromExecutionException(e);
+                    throw DriverThrowables.propagateCause(e);
                 }
             }
         }

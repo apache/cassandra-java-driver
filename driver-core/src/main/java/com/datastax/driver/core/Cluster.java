@@ -28,6 +28,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Objects;
 import com.google.common.base.Predicates;
+import com.google.common.base.Throwables;
 import com.google.common.collect.*;
 import com.google.common.util.concurrent.*;
 import org.slf4j.Logger;
@@ -220,7 +221,7 @@ public class Cluster implements Closeable {
      */
     public Session newSession() {
         checkNotClosed(manager);
-        return manager.newSession();
+        return manager.newSession(null);
     }
 
     /**
@@ -244,11 +245,11 @@ public class Cluster implements Closeable {
      * Cluster.
      */
     public Session connect() {
-        checkNotClosed(manager);
-        init();
-        Session session = manager.newSession();
-        session.init();
-        return session;
+        try {
+            return Uninterruptibles.getUninterruptibly(connectAsync());
+        } catch (ExecutionException e) {
+            throw DriverThrowables.propagateCause(e);
+        }
     }
 
     /**
@@ -277,23 +278,65 @@ public class Cluster implements Closeable {
      * Cluster.
      */
     public Session connect(String keyspace) {
-        long timeout = getConfiguration().getSocketOptions().getConnectTimeoutMillis();
-        Session session = connect();
         try {
-            try {
-                ResultSetFuture future = session.executeAsync("USE " + keyspace);
-                // Note: using the connection timeout isn't perfectly correct, we should probably change that someday
-                Uninterruptibles.getUninterruptibly(future, timeout, TimeUnit.MILLISECONDS);
-                return session;
-            } catch (TimeoutException e) {
-                throw new DriverInternalError(String.format("No responses after %d milliseconds while setting current keyspace. This should not happen, unless you have setup a very low connection timeout.", timeout));
-            } catch (ExecutionException e) {
-                throw DefaultResultSetFuture.extractCauseFromExecutionException(e);
-            }
-        } catch (RuntimeException e) {
-            session.close();
-            throw e;
+            return Uninterruptibles.getUninterruptibly(connectAsync(keyspace));
+        } catch (ExecutionException e) {
+            throw DriverThrowables.propagateCause(e);
         }
+    }
+
+    /**
+     * Creates a new session on this cluster and initializes it asynchronously.
+     *
+     * This will also initialize the {@code Cluster} if needed; note that cluster
+     * initialization happens synchronously on the thread that called this method.
+     * Therefore it is recommended to initialize the cluster at application
+     * startup, and not rely on this method to do it.
+     *
+     * @return a future that will complete when the session is fully initialized.
+     *
+     * @throws NoHostAvailableException if the Cluster has not been initialized
+     * yet ({@link #init} has not been called and this is the first connect call)
+     * and no host amongst the contact points can be reached.
+     *
+     * @throws IllegalStateException if the Cluster was closed prior to calling
+     * this method. This can occur either directly (through {@link #close()} or
+     * {@link #closeAsync()}), or as a result of an error while initializing the
+     * Cluster.
+     *
+     * @see #connect()
+     */
+    public ListenableFuture<Session> connectAsync() {
+        return connectAsync(null);
+    }
+
+    /**
+     * Creates a new session on this cluster, and initializes it to the given
+     * keyspace asynchronously.
+     *
+     * This will also initialize the {@code Cluster} if needed; note that cluster
+     * initialization happens synchronously on the thread that called this method.
+     * Therefore it is recommended to initialize the cluster at application
+     * startup, and not rely on this method to do it.
+     *
+     * @param keyspace The name of the keyspace to use for the created
+     * {@code Session}.
+     * @return a future that will complete when the session is fully initialized.
+     *
+     * @throws NoHostAvailableException if the Cluster has not been initialized
+     * yet ({@link #init} has not been called and this is the first connect call)
+     * and no host amongst the contact points can be reached.
+     *
+     * @throws IllegalStateException if the Cluster was closed prior to calling
+     * this method. This can occur either directly (through {@link #close()} or
+     * {@link #closeAsync()}), or as a result of an error while initializing the
+     * Cluster.
+     */
+    public ListenableFuture<Session> connectAsync(String keyspace) {
+        checkNotClosed(manager);
+        init();
+        AsyncInitSession session = manager.newSession(keyspace);
+        return session.initAsync();
     }
 
     /**
@@ -500,7 +543,7 @@ public class Cluster implements Closeable {
         try {
             closeAsync().get();
         } catch (ExecutionException e) {
-            throw DefaultResultSetFuture.extractCauseFromExecutionException(e);
+            throw DriverThrowables.propagateCause(e);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
@@ -1444,8 +1487,8 @@ public class Cluster implements Closeable {
             return translated == null ? sa : translated;
         }
 
-        private Session newSession() {
-            SessionManager session = new SessionManager(Cluster.this);
+        private AsyncInitSession newSession(String keyspace) {
+            SessionManager session = new SessionManager(Cluster.this, keyspace);
             sessions.add(session);
             return session;
         }
@@ -1643,7 +1686,7 @@ public class Cluster implements Closeable {
                     // Now, check if there isn't pools to create/remove following the addition.
                     // We do that now only so that it's not called before we've set the node up.
                     for (SessionManager s : sessions)
-                        s.updateCreatedPools();
+                        s.updateCreatedPools().get();
 
                 } finally {
                     host.notificationsLock.unlock();
@@ -1882,7 +1925,7 @@ public class Cluster implements Closeable {
 
                     List<ListenableFuture<Boolean>> futures = Lists.newArrayListWithCapacity(sessions.size());
                     for (SessionManager s : sessions)
-                        futures.add(s.maybeAddPool(host, reusedConnection));
+                        futures.add(s.maybeAddPool(host, reusedConnection, false));
 
                     try {
                         // Only mark the node up once all session have added their pool (if the load-balancing
@@ -1912,7 +1955,7 @@ public class Cluster implements Closeable {
                     // Now, check if there isn't pools to create/remove following the addition.
                     // We do that now only so that it's not called before we've set the node up.
                     for (SessionManager s : sessions)
-                        s.updateCreatedPools();
+                        s.updateCreatedPools().get();
 
                 } finally {
                     host.notificationsLock.unlock();
@@ -2260,8 +2303,12 @@ public class Cluster implements Closeable {
             if (ccHost == null || loadBalancingPolicy().distance(ccHost) != HostDistance.LOCAL)
                 controlConnection.triggerReconnect();
 
-            for (SessionManager s : sessions)
-                s.updateCreatedPools();
+            try {
+                for (SessionManager s : sessions)
+                    Uninterruptibles.getUninterruptibly(s.updateCreatedPools());
+            } catch (ExecutionException e) {
+                throw DriverThrowables.propagateCause(e);
+            }
         }
 
         void refreshConnectedHost(Host host) {
