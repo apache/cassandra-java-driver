@@ -439,26 +439,28 @@ class Connection {
         if (this.keyspace != null && this.keyspace.equals(keyspace))
             return;
 
-        ListenableFuture<Void> future = null;
         try {
-            long timeout = factory.getConnectTimeoutMillis();
-            future = setKeyspaceAsync(keyspace);
-            Uninterruptibles.getUninterruptibly(future, timeout, TimeUnit.MILLISECONDS);
+            Uninterruptibles.getUninterruptibly(setKeyspaceAsync(keyspace));
         } catch (ConnectionException e) {
             throw defunct(e);
-        } catch (TimeoutException e) {
-            // We've given up waiting on the future, but it's still running. Cancel to make sure that the request timeout logic
-            // (readTimeout) will not kick in, because that would release the connection. This will work since connectTimeout is
-            // generally lower than readTimeout (and if not, we'll get an ExecutionException and defunct below).
-            future.cancel(true);
-            logger.warn(String.format("Timeout while setting keyspace on connection to %s. This should not happen but is not critical (it will retried)", address));
-            // Rethrow so that the caller will not try to use the connection, but do not defunct as we don't want to mark down
-            throw new ConnectionException(address, "Timeout while setting keyspace on connection");
         } catch (BusyConnectionException e) {
-            logger.warn(String.format("Tried to set the keyspace on busy connection to %s. This should not happen but is not critical (it will retried)", address));
+            logger.warn("Tried to set the keyspace on busy connection to {}. "
+                + "This should not happen but is not critical (it will be retried)", address);
             throw new ConnectionException(address, "Tried to set the keyspace on busy connection");
         } catch (ExecutionException e) {
-            throw defunct(new ConnectionException(address, "Error while setting keyspace", e.getCause()));
+            Throwable cause = e.getCause();
+            if (cause instanceof OperationTimedOutException) {
+                // The timeout logic released the connection, but that's wrong since we did not borrow it in the first place.
+                // JAVA-901 will fix this, in the meantime make sure the inFlight count is not off by one.
+                inFlight.incrementAndGet();
+
+                // Rethrow so that the caller doesn't try to use the connection, but do not defunct as we don't want to mark down
+                logger.warn("Timeout while setting keyspace on connection to {}. "
+                    + "This should not happen but is not critical (it will be retried)", address);
+                throw new ConnectionException(address, "Timeout while setting keyspace on connection");
+            } else {
+                throw defunct(new ConnectionException(address, "Error while setting keyspace", cause));
+            }
         }
     }
 
@@ -791,10 +793,6 @@ class Connection {
                     g = old;
             }
             return g;
-        }
-
-        public long getConnectTimeoutMillis() {
-            return configuration.getSocketOptions().getConnectTimeoutMillis();
         }
 
         public long getReadTimeoutMillis() {

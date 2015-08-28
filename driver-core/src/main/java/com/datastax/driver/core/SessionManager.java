@@ -473,19 +473,6 @@ class SessionManager extends AbstractSession {
         onDown(host);
     }
 
-    void setKeyspace(String keyspace) {
-        long timeout = configuration().getSocketOptions().getConnectTimeoutMillis();
-        try {
-            Future<?> future = executeQuery(new Requests.Query("use " + keyspace), Statement.DEFAULT);
-            // Note: using the connection timeout isn't perfectly correct, we should probably change that someday
-            Uninterruptibles.getUninterruptibly(future, timeout, TimeUnit.MILLISECONDS);
-        } catch (TimeoutException e) {
-            throw new DriverInternalError(String.format("No responses after %d milliseconds while setting current keyspace. This should not happen, unless you have setup a very low connection timeout.", timeout));
-        } catch (ExecutionException e) {
-            throw DriverThrowables.propagateCause(e);
-        }
-    }
-
     Message.Request makeRequestMessage(Statement statement, ByteBuffer pagingState) {
 
         ConsistencyLevel consistency = statement.getConsistencyLevel();
