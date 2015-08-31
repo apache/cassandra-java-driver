@@ -35,6 +35,8 @@ import com.datastax.driver.core.Host;
 import com.datastax.driver.core.HostDistance;
 import com.datastax.driver.core.Statement;
 
+import java.util.ArrayList;
+
 /**
  * A data-center aware Round-robin load balancing policy.
  * <p>
@@ -67,6 +69,8 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy, CloseableLo
 
     private volatile Configuration configuration;
 
+    private final List<String> forbiddenDcs;
+
     /**
      * Creates a new datacenter aware round robin policy that auto-discover
      * the local data-center.
@@ -82,7 +86,7 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy, CloseableLo
      * and as such will ignore all hosts in remote data-centers.
      */
     public DCAwareRoundRobinPolicy() {
-        this(null, 0, false, true);
+        this(null, 0, false, true, new ArrayList<String>());
     }
 
     /**
@@ -100,7 +104,7 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy, CloseableLo
      * data-center of the first node connected to.
      */
     public DCAwareRoundRobinPolicy(String localDc) {
-        this(localDc, 0, false, false);
+        this(localDc, 0, false, false, new ArrayList<String>());
     }
 
     /**
@@ -132,7 +136,7 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy, CloseableLo
      * connections to them will be maintained).
      */
     public DCAwareRoundRobinPolicy(String localDc, int usedHostsPerRemoteDc) {
-        this(localDc, usedHostsPerRemoteDc, false, false);
+        this(localDc, usedHostsPerRemoteDc, false, false, new ArrayList<String>());
     }
 
     /**
@@ -165,15 +169,24 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy, CloseableLo
      * having consitency {@code LOCAL_ONE} and {@code LOCAL_QUORUM}.
      */
     public DCAwareRoundRobinPolicy(String localDc, int usedHostsPerRemoteDc, boolean allowRemoteDCsForLocalConsistencyLevel) {
-        this(localDc, usedHostsPerRemoteDc, allowRemoteDCsForLocalConsistencyLevel, false);
+        this(localDc, usedHostsPerRemoteDc, allowRemoteDCsForLocalConsistencyLevel, false, new ArrayList<String>());
     }
 
-    private DCAwareRoundRobinPolicy(String localDc, int usedHostsPerRemoteDc, boolean allowRemoteDCsForLocalConsistencyLevel, boolean allowEmptyLocalDc) {
+    public DCAwareRoundRobinPolicy(String localDc, int usedHostsPerRemoteDc,
+                                                       boolean allowRemoteDCsForLocalConsistencyLevel,
+                                                       List<String> forbiddenDcs) {
+        this(localDc, usedHostsPerRemoteDc, allowRemoteDCsForLocalConsistencyLevel, false, forbiddenDcs);
+    }
+
+    public DCAwareRoundRobinPolicy(String localDc, int usedHostsPerRemoteDc,
+                                                       boolean allowRemoteDCsForLocalConsistencyLevel,
+                                                       boolean allowEmptyLocalDc, List<String> forbiddenDcs) {
         if (!allowEmptyLocalDc && Strings.isNullOrEmpty(localDc))
             throw new IllegalArgumentException("Null or empty data center specified for DC-aware policy");
         this.localDc = localDc == null ? UNSET : localDc;
         this.usedHostsPerRemoteDc = usedHostsPerRemoteDc;
         this.dontHopForLocalCL = !allowRemoteDCsForLocalConsistencyLevel;
+        this.forbiddenDcs = forbiddenDcs;
     }
 
     @Override
@@ -212,6 +225,14 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy, CloseableLo
 
     }
 
+    public boolean isForbiddenDc(String dc){
+        for (String string : forbiddenDcs){
+            if (string.equalsIgnoreCase(dc)){
+                return true;
+            }
+        }
+        return false;
+    }
     private String dc(Host host) {
         String dc = host.getDatacenter();
         return dc == null ? localDc : dc;
@@ -226,7 +247,7 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy, CloseableLo
      * Return the HostDistance for the provided host.
      * <p>
      * This policy consider nodes in the local datacenter as {@code LOCAL}.
-     * For each remote datacenter, it considers a configurable number of
+     * For each allowed remote datacenter, it considers a configurable number of
      * hosts as {@code REMOTE} and the rest is {@code IGNORED}.
      * <p>
      * To configure how many host in each remote datacenter is considered
@@ -247,7 +268,7 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy, CloseableLo
 
         // We need to clone, otherwise our subList call is not thread safe
         dcHosts = cloneList(dcHosts);
-        return dcHosts.subList(0, Math.min(dcHosts.size(), usedHostsPerRemoteDc)).contains(host)
+        return !isForbiddenDc(dc) && dcHosts.subList(0, Math.min(dcHosts.size(), usedHostsPerRemoteDc)).contains(host)
              ? HostDistance.REMOTE
              : HostDistance.IGNORED;
     }
@@ -322,12 +343,15 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy, CloseableLo
                         break;
 
                     String nextRemoteDc = remoteDcs.next();
-                    CopyOnWriteArrayList<Host> nextDcHosts = perDcLiveHosts.get(nextRemoteDc);
-                    if (nextDcHosts != null) {
-                        // Clone for thread safety
-                        List<Host> dcHosts = cloneList(nextDcHosts);
-                        currentDcHosts = dcHosts.subList(0, Math.min(dcHosts.size(), usedHostsPerRemoteDc));
-                        currentDcRemaining = currentDcHosts.size();
+
+                    if (!isForbiddenDc(nextRemoteDc)) {
+                        CopyOnWriteArrayList<Host> nextDcHosts = perDcLiveHosts.get(nextRemoteDc);
+                        if (nextDcHosts != null) {
+                            // Clone for thread safety
+                            List<Host> dcHosts = cloneList(nextDcHosts);
+                            currentDcHosts = dcHosts.subList(0, Math.min(dcHosts.size(), usedHostsPerRemoteDc));
+                            currentDcRemaining = currentDcHosts.size();
+                        }
                     }
                 }
                 return endOfData();
