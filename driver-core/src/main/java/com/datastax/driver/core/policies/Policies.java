@@ -15,8 +15,18 @@
  */
 package com.datastax.driver.core.policies;
 
+import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+
+import com.google.common.base.Predicates;
+import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.base.Objects;
 
+import com.datastax.driver.core.Host;
 import com.datastax.driver.core.ServerSideTimestampGenerator;
 import com.datastax.driver.core.TimestampGenerator;
 
@@ -216,6 +226,12 @@ public class Policies {
         private TimestampGenerator timestampGenerator;
         private SpeculativeExecutionPolicy speculativeExecutionPolicy;
 
+        private Collection<InetSocketAddress> blackListedHosts;
+        private Collection<InetSocketAddress> whiteListedHosts;
+
+        private Collection<String> blackListedDCs;
+        private Collection<String> whiteListedDCs;
+
         /**
          * Sets the load balancing policy.
          *
@@ -283,6 +299,50 @@ public class Policies {
         }
 
         /**
+         * Sets the black listed hosts.
+         *
+         * @param hosts hosts addresses.
+         * @return this builder.
+         */
+        public Builder withBlackListedHosts(Collection<InetSocketAddress> hosts) {
+            this.blackListedHosts = hosts;
+            return this;
+        }
+
+        /**
+         * Sets the white listed hosts.
+         *
+         * @param hosts hosts addresses.
+         * @return this builder.
+         */
+        public Builder withWhiteListedHosts(Collection<InetSocketAddress> hosts) {
+            this.whiteListedHosts = hosts;
+            return this;
+        }
+
+        /**
+         * Sets the black listed data centers.
+         *
+         * @param dcs data centers.
+         * @return this builder.
+         */
+        public Builder withBlackListedDCs(Collection<String> dcs) {
+            this.blackListedDCs = dcs;
+            return this;
+        }
+
+        /**
+         * Sets the white listed data centers.
+         *
+         * @param dcs data centers.
+         * @return this builder.
+         */
+        public Builder withWhiteListedDCs(Collection<String> dcs) {
+            this.whiteListedDCs = dcs;
+            return this;
+        }
+
+        /**
          * Builds the final object from this builder.
          * <p>
          * Any field that hasn't been set explicitly will get its default value.
@@ -290,14 +350,36 @@ public class Policies {
          * @return the object.
          */
         public Policies build() {
+            // create if necessary the host access filter policy
+            List<Predicate<Host>> predicates = new ArrayList<Predicate<Host>>();
+            if (blackListedDCs != null)
+                predicates.add(Predicates.not(HostFilterPolicy.mkHostDCPredicate(blackListedDCs, false)));
+
+            if (whiteListedDCs != null)
+                predicates.add(HostFilterPolicy.mkHostDCPredicate(whiteListedDCs, true));
+
+            if (blackListedHosts != null)
+                predicates.add(Predicates.not(HostFilterPolicy.mkHostAddressPredicate(blackListedHosts)));
+            
+            if (whiteListedHosts != null)
+                predicates.add(HostFilterPolicy.mkHostAddressPredicate(whiteListedHosts));
+
+            // combine load-balancing policies according to white/black listed hosts/DCs
+            LoadBalancingPolicy lbpolicy = loadBalancingPolicy == null ? Policies.defaultLoadBalancingPolicy() : loadBalancingPolicy;
+            
+            if( ! predicates.isEmpty()){
+                lbpolicy = new HostFilterPolicy(lbpolicy, Predicates.and(predicates));
+            }
+
             return new Policies(
-                loadBalancingPolicy == null ? Policies.defaultLoadBalancingPolicy() : loadBalancingPolicy,
+                lbpolicy,
                 Objects.firstNonNull(reconnectionPolicy, Policies.defaultReconnectionPolicy()),
                 Objects.firstNonNull(retryPolicy, Policies.defaultRetryPolicy()),
                 Objects.firstNonNull(addressTranslater, Policies.defaultAddressTranslater()),
                 Objects.firstNonNull(timestampGenerator, Policies.defaultTimestampGenerator()),
                 Objects.firstNonNull(speculativeExecutionPolicy, Policies.defaultSpeculativeExecutionPolicy()));
         }
+        
     }
 
     /*
