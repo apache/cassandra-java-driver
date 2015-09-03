@@ -156,7 +156,8 @@ public class Cluster implements Closeable {
      * Cluster.
      */
     public Cluster init() {
-        this.manager.init();
+        if(!manager.isInitialized())
+            this.manager.init();
         return this;
     }
 
@@ -378,7 +379,8 @@ public class Cluster implements Closeable {
      * Cluster.
      */
     public Metadata getMetadata() {
-        manager.init();
+        if(!manager.isInitialized())
+            manager.init();
         return manager.metadata;
     }
 
@@ -1242,7 +1244,7 @@ public class Cluster implements Closeable {
     class Manager implements Connection.DefaultResponseHandler {
 
         final String clusterName;
-        private boolean isInit;
+        private volatile boolean isInit;
         private volatile boolean isFullyInit;
 
         // Initial contacts point
@@ -1296,6 +1298,11 @@ public class Cluster implements Closeable {
             this.configuration = configuration;
             this.contactPoints = contactPoints;
             this.listeners = new CopyOnWriteArraySet<Host.StateListener>(listeners);
+        }
+
+        // Can be used to check if we are inizialied before calling the synchronized init() method.
+        boolean isInitialized() {
+            return isInit;
         }
 
         // Initialization is not too performance intensive and in practice there shouldn't be contention
