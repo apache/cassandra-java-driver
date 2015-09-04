@@ -2,6 +2,7 @@
 
 ### 2.1.7.1
 
+- [bug] Fix Cluster.Manager.init() might silently fail to add all nodes (JAVA-907)
 - [bug] Special case check for 'null' string in index_options column (JAVA-834)
 - [improvement] Allow accessor methods with less parameters in case
   named bind markers are repeated (JAVA-835)
