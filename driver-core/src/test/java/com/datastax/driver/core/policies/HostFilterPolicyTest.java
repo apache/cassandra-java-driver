@@ -20,9 +20,6 @@ import java.net.InetSocketAddress;
 import java.util.Arrays;
 import java.util.List;
 
-import org.apache.log4j.Logger;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
 import org.mockito.Matchers;
 import com.google.common.base.Predicates;
 import com.google.common.base.Predicate;
@@ -38,7 +35,6 @@ import com.datastax.driver.core.CCMBridge;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Host;
 import com.datastax.driver.core.HostDistance;
-import com.datastax.driver.core.MemoryAppender;
 import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
@@ -54,22 +50,7 @@ public class HostFilterPolicyTest extends AbstractPoliciesTest {
 
     private final List<String> dcs = ImmutableList.of("dc0", "dc1");
 
-    Logger policyLogger = Logger.getLogger(DCAwareRoundRobinPolicy.class);
-    MemoryAppender logs;
-    CCMBridge ccm;
-
-    @BeforeClass(groups = "short")
-    public void createCcm() {
-        // Two-DC cluster with one host in each DC
-        ccm = CCMBridge.builder("test").withNodes(1, 1).build();
-    }
-
-    @AfterClass(groups = "short")
-    public void deleteCcm() {
-        if (ccm != null)
-            ccm.remove();
-    }
-
+    @SuppressWarnings("deprecation")
     @Test(groups = "unit")
     public void testHostFilterPolicy() {
         

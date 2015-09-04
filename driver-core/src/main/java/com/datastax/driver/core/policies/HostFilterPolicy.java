@@ -13,6 +13,7 @@
  *   See the License for the specific language governing permissions and
  *   limitations under the License.
  */
+
 package com.datastax.driver.core.policies;
 
 import java.net.InetSocketAddress;
@@ -131,6 +132,7 @@ public class HostFilterPolicy implements ChainableLoadBalancingPolicy, Closeable
             childPolicy.onUp(host);
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public void onSuspected(Host host) {
         if (predicate.apply(host))
