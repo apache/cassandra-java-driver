@@ -46,7 +46,7 @@ public class AbstractReconnectionHandlerTest {
     final AtomicReference<ListenableFuture<?>> future = new AtomicReference<ListenableFuture<?>>();
     AbstractReconnectionHandler handler;
 
-    @BeforeMethod(groups = "unit")
+    @BeforeMethod(groups = {"unit", "short"})
     public void setup() {
         executor = Executors.newScheduledThreadPool(2);
         schedule = new MockReconnectionSchedule();
@@ -65,7 +65,7 @@ public class AbstractReconnectionHandlerTest {
         };
     }
 
-    @AfterMethod(groups = "unit")
+    @AfterMethod(groups = {"unit", "short"})
     public void tearDown() {
         if (future.get() != null)
             future.get().cancel(false);
@@ -115,10 +115,9 @@ public class AbstractReconnectionHandlerTest {
     }
 
     @Test(groups = "unit")
-    public void should_stop_if_cancelled_between_attempts() {
-        handler.start();
-
+    public void should_stop_if_cancelled_before_first_attempt() {
         schedule.delay = 10 * 1000; // give ourselves time to cancel
+        handler.start();
         schedule.tick();
 
         future.get().cancel(false);
@@ -128,6 +127,33 @@ public class AbstractReconnectionHandlerTest {
         assertThat(work.success).isFalse();
         assertThat(work.tries).isEqualTo(0);
         assertThat(future.get().isCancelled()).isTrue();
+    }
+
+    @Test(groups = "short")
+    public void should_stop_if_cancelled_between_attempts() {
+        handler.start();
+
+        // Force a failed reconnect.
+        schedule.tick();
+        work.nextReconnect = ReconnectBehavior.THROW_EXCEPTION;
+        // Tick work, should trigger the barrier in tryReconnect.
+        work.tick();
+
+        // Tick schedule, should cause nextDelayMs to proceed, reconnect handler will call reschedule.
+        schedule.delay = 3000;
+        schedule.tick();
+
+        // At this point the reconnect should be scheduled but not executed yet, cancel the future.
+        future.get().cancel(false);
+
+        // Should block until scheduler runs, detects cancel and exits.
+        waitForCompletion();
+
+        assertThat(work.success).isFalse();
+        // Should have had 1 failed attempt, no second attempt since cancelled.
+        assertThat(work.tries).isEqualTo(1);
+        // The future will be marked null once it is detected as cancelled.
+        assertThat(future.get()).isNull();
     }
 
     @Test(groups = "unit")
