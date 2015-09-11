@@ -16,11 +16,6 @@
 package com.datastax.driver.core;
 
 import java.util.*;
-import java.util.Map.Entry;
-
-import com.google.common.base.Function;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 
 /**
  * Describes a Column.
@@ -28,9 +23,15 @@ import com.google.common.collect.Maps;
 public class ColumnMetadata {
 
     static final String COLUMN_NAME = "column_name";
-    static final String VALIDATOR = "validator";
-    static final String COMPONENT_INDEX = "component_index";
-    static final String KIND = "type";
+
+    static final String VALIDATOR = "validator"; // v2 only
+    static final String TYPE = "type"; // replaces validator, v3 onwards
+
+    static final String COMPONENT_INDEX = "component_index"; // v2 only
+    static final String POSITION = "position"; // replaces component_index, v3 onwards
+
+    static final String KIND_V2 = "type"; // v2 only
+    static final String KIND_V3 = "kind"; // replaces type, v3 onwards
 
     static final String INDEX_TYPE = "index_type";
     static final String INDEX_OPTIONS = "index_options";
@@ -163,35 +164,50 @@ public class ColumnMetadata {
 
         public final String name;
         public Kind kind;
-        public final int componentIndex;
+        public final int position;
         public final DataType dataType;
         public final boolean isReversed;
 
         public final Map<String, String> indexColumns = new HashMap<String, String>();
 
-        Raw(String name, Kind kind, int componentIndex, DataType dataType, boolean isReversed) {
+        Raw(String name, Kind kind, int position, DataType dataType, boolean isReversed) {
             this.name = name;
             this.kind = kind;
-            this.componentIndex = componentIndex;
+            this.position = position;
             this.dataType = dataType;
             this.isReversed = isReversed;
         }
 
         static Raw fromRow(Row row, VersionNumber version, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
             String name = row.getString(COLUMN_NAME);
+
             Kind kind;
-            if(version.getMajor() < 2 || row.isNull(KIND)) {
+            if(version.getMajor() < 2) {
                 kind = Kind.REGULAR;
             } else if (version.getMajor() < 3) {
-                kind = Kind.fromStringV2(row.getString(KIND));
+                kind = row.isNull(KIND_V2) ? Kind.REGULAR : Kind.fromStringV2(row.getString(KIND_V2));
             } else {
-                kind = Kind.fromStringV3(row.getString(KIND));
+                kind = row.isNull(KIND_V3) ? Kind.REGULAR : Kind.fromStringV3(row.getString(KIND_V3));
             }
-            int componentIndex = row.isNull(COMPONENT_INDEX) ? 0 : row.getInt(COMPONENT_INDEX);
-            String validatorStr = row.getString(VALIDATOR);
-            boolean reversed = CassandraTypeParser.isReversed(validatorStr);
-            DataType dataType = CassandraTypeParser.parseOne(validatorStr, protocolVersion, codecRegistry);
-            Raw c = new Raw(name, kind, componentIndex, dataType, reversed);
+
+            int position;
+            if(version.getMajor() >= 3) {
+                position = row.getInt(POSITION); // cannot be null, -1 is used as a special value instead of null to avoid tombstones
+                if(position == -1) position = 0;
+            } else {
+                position = row.isNull(COMPONENT_INDEX) ? 0 : row.getInt(COMPONENT_INDEX);
+            }
+
+            String dataTypeStr;
+            if(version.getMajor() >= 3) {
+                dataTypeStr = row.getString(TYPE);
+            } else {
+                dataTypeStr = row.getString(VALIDATOR);
+            }
+            DataType dataType = CassandraTypeParser.parseOne(dataTypeStr, protocolVersion, codecRegistry);
+            boolean reversed = CassandraTypeParser.isReversed(dataTypeStr);
+
+            Raw c = new Raw(name, kind, position, dataType, reversed);
 
             // secondary indexes (C* < 3.0.0)
             // from C* 3.0 onwards 2i are defined in a separate table

@@ -41,7 +41,7 @@ public class IndexMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
     private static final ColumnDefinitions defs = new ColumnDefinitions(new ColumnDefinitions.Definition[]{
         definition(COLUMN_NAME, text()),
         definition(COMPONENT_INDEX, cint()),
-        definition(KIND, text()),
+        definition(KIND_V2, text()),
         definition(INDEX_NAME, text()),
         definition(INDEX_TYPE, text()),
         definition(VALIDATOR, text()),

@@ -225,11 +225,11 @@ public class TableMetadata {
             ColumnMetadata col = ColumnMetadata.fromRaw(tm, rawCol);
             switch (rawCol.kind) {
                 case PARTITION_KEY:
-                    partitionKey.set(rawCol.componentIndex, col);
+                    partitionKey.set(rawCol.position, col);
                     break;
                 case CLUSTERING_COLUMN:
-                    clusteringColumns.set(rawCol.componentIndex, col);
-                    clusteringOrder.set(rawCol.componentIndex, rawCol.isReversed ? Order.DESC : Order.ASC);
+                    clusteringColumns.set(rawCol.position, col);
+                    clusteringOrder.set(rawCol.position, rawCol.isReversed ? Order.DESC : Order.ASC);
                     break;
                 default:
                     otherColumns.add(col);
@@ -347,7 +347,7 @@ public class TableMetadata {
         int maxId = -1;
         for (ColumnMetadata.Raw col : cols)
             if (col.kind == ColumnMetadata.Raw.Kind.PARTITION_KEY)
-                maxId = Math.max(maxId, col.componentIndex);
+                maxId = Math.max(maxId, col.position);
         return maxId + 1;
     }
 
@@ -355,14 +355,14 @@ public class TableMetadata {
                                           Collection<ColumnMetadata.Raw> cols,
                                           List<String> columnAliases,
                                           VersionNumber cassandraVersion) {
-        // In 2.0 onwards, this is relatively easy, we just find the biggest 'componentIndex' amongst the clustering columns.
+        // In 2.0 onwards, this is relatively easy, we just find the biggest 'position' amongst the clustering columns.
         // For 1.2 however, this is slightly more subtle: we need to infer it based on whether the comparator is composite or not, and whether we have
         // regular columns or not.
         if (cassandraVersion.getMajor() >= 2) {
             int maxId = -1;
             for (ColumnMetadata.Raw col : cols)
                 if (col.kind == ColumnMetadata.Raw.Kind.CLUSTERING_COLUMN)
-                    maxId = Math.max(maxId, col.componentIndex);
+                    maxId = Math.max(maxId, col.position);
             return maxId + 1;
         } else {
             int size = comparator.types.size();

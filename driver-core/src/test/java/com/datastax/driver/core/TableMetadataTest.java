@@ -174,32 +174,57 @@ public class TableMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
     @Test(groups = "short")
     public void should_parse_table_options() {
         VersionNumber version = TestUtils.findHost(cluster, 1).getCassandraVersion();
-        if (version.getMajor() > 2) {
-            // TODO adapt test for C* 3.0
-            throw new SkipException("Needs adjustments to work with Cassandra 3.0");
-        }
 
         // given
-        String cql = String.format("CREATE TABLE %s.with_options (\n"
-                + "    k text,\n"
-                + "    c1 int,\n"
-                + "    c2 int,\n"
-                + "    i int,\n"
-                + "    PRIMARY KEY (k, c1, c2)\n"
-                + ") WITH CLUSTERING ORDER BY (c1 DESC, c2 ASC)\n"
-                + "   AND read_repair_chance = 0.5\n"
-                + "   AND dclocal_read_repair_chance = 0.6\n"
-                + "   AND replicate_on_write = true\n"
-                + "   AND gc_grace_seconds = 42\n"
-                + "   AND bloom_filter_fp_chance = 0.01\n"
-                + "   AND caching = 'ALL'\n"
-                + "   AND comment = 'My awesome table'\n"
-                + "   AND compaction = { 'class' : 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'sstable_size_in_mb' : 15 }\n"
-                + "   AND compression = { 'sstable_compression' : 'org.apache.cassandra.io.compress.SnappyCompressor', 'chunk_length_kb' : 128 };",
-            keyspace);
+        String cql;
+
+        // Cassandra 3.0 +
+        if (version.getMajor() > 2) {
+            cql = String.format("CREATE TABLE %s.with_options (\n"
+                    + "    k text,\n"
+                    + "    c1 int,\n"
+                    + "    c2 int,\n"
+                    + "    i int,\n"
+                    + "    PRIMARY KEY (k, c1, c2)\n"
+                    + ") WITH CLUSTERING ORDER BY (c1 DESC, c2 ASC)\n"
+                    + "   AND read_repair_chance = 0.5\n"
+                    + "   AND dclocal_read_repair_chance = 0.6\n"
+                    + "   AND speculative_retry = '99.9PERCENTILE'\n"
+                    // replicate_on_write not supported anymore in 3.0
+                    + "   AND gc_grace_seconds = 42\n"
+                    + "   AND bloom_filter_fp_chance = 0.01\n"
+                    // older caching formats not supported anymore in 3.0
+                    + "   AND caching =  { 'keys' : 'ALL', 'rows_per_partition' : 10 }\n"
+                    + "   AND comment = 'My awesome table'\n"
+                    + "   AND compaction = { 'class' : 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'sstable_size_in_mb' : 15 }\n"
+                    + "   AND compression = { 'sstable_compression' : 'org.apache.cassandra.io.compress.SnappyCompressor', 'chunk_length_kb' : 128 };",
+                keyspace);
+
+        // older versions
+        } else {
+            cql = String.format("CREATE TABLE %s.with_options (\n"
+                    + "    k text,\n"
+                    + "    c1 int,\n"
+                    + "    c2 int,\n"
+                    + "    i int,\n"
+                    + "    PRIMARY KEY (k, c1, c2)\n"
+                    + ") WITH CLUSTERING ORDER BY (c1 DESC, c2 ASC)\n"
+                    + "   AND read_repair_chance = 0.5\n"
+                    + "   AND dclocal_read_repair_chance = 0.6\n"
+                    + "   AND replicate_on_write = true\n"
+                    + "   AND gc_grace_seconds = 42\n"
+                    + "   AND bloom_filter_fp_chance = 0.01\n"
+                    + "   AND caching = 'ALL'\n"
+                    + "   AND comment = 'My awesome table'\n"
+                    + "   AND compaction = { 'class' : 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'sstable_size_in_mb' : 15 }\n"
+                    + "   AND compression = { 'sstable_compression' : 'org.apache.cassandra.io.compress.SnappyCompressor', 'chunk_length_kb' : 128 };",
+                keyspace);
+        }
+
         // when
         session.execute(cql);
         TableMetadata table = cluster.getMetadata().getKeyspace(keyspace).getTable("with_options");
+
         // then
         assertThat(table).isNotNull().hasName("with_options").hasNumberOfColumns(4).isNotCompactStorage();
         assertThat(table.getColumns().get(0)).isNotNull().hasName("k").isPartitionKey().hasType(text());
@@ -217,13 +242,13 @@ public class TableMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
             assertThat(table.getOptions().getBloomFilterFalsePositiveChance()).isEqualTo(0.01);
             assertThat(table.getOptions().getComment()).isEqualTo("My awesome table");
             assertThat(table.getOptions().getCaching()).contains(entry("keys", "ALL" ));
-            assertThat(table.getOptions().getCaching()).contains(entry("rows_per_partition", "ALL"));
+            assertThat(table.getOptions().getCaching()).contains(entry("rows_per_partition", "10"));
             assertThat(table.getOptions().getCompaction()).contains(entry("class", "org.apache.cassandra.db.compaction.LeveledCompactionStrategy"));
             assertThat(table.getOptions().getCompaction()).contains(entry("sstable_size_in_mb", "15"));
             assertThat(table.getOptions().getCompression()).contains(entry("class", "org.apache.cassandra.io.compress.SnappyCompressor")); // sstable_compression becomes class
             assertThat(table.getOptions().getCompression()).contains(entry("chunk_length_in_kb", "128")); // note the "in" prefix
             assertThat(table.getOptions().getDefaultTimeToLive()).isEqualTo(0);
-            assertThat(table.getOptions().getSpeculativeRetry()).isEqualTo("99.0PERCENTILE");
+            assertThat(table.getOptions().getSpeculativeRetry()).isEqualTo("99.9PERCENTILE");
             assertThat(table.getOptions().getIndexInterval()).isNull();
             assertThat(table.getOptions().getMinIndexInterval()).isEqualTo(128);
             assertThat(table.getOptions().getMaxIndexInterval()).isEqualTo(2048);
@@ -235,13 +260,13 @@ public class TableMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
                 .contains("bloom_filter_fp_chance = 0.01")
                 .contains("comment = 'My awesome table'")
                 .contains("'keys' : 'ALL'")
-                .contains("'rows_per_partition' : 'ALL'")
+                .contains("'rows_per_partition' : 10")
                 .contains("'class' : 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy'")
                 .contains("'sstable_size_in_mb' : 15")
                 .contains("'class' : 'org.apache.cassandra.io.compress.SnappyCompressor'") // sstable_compression becomes class
                 .contains("'chunk_length_in_kb' : 128") // note the "in" prefix
                 .contains("default_time_to_live = 0")
-                .contains("speculative_retry = '99.0PERCENTILE'")
+                .contains("speculative_retry = '99.9PERCENTILE'")
                 .contains("min_index_interval = 128")
                 .contains("max_index_interval = 2048")
                 .doesNotContain(" index_interval")
