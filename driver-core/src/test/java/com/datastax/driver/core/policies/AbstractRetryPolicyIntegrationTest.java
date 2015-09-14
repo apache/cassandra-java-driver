@@ -21,6 +21,7 @@ import java.util.Map;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.mockito.Mockito;
+import org.scassandra.Scassandra;
 import org.scassandra.http.client.PrimingRequest;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
@@ -35,6 +36,8 @@ import static org.mockito.Mockito.times;
 
 import com.datastax.driver.core.*;
 
+import static com.datastax.driver.core.TestUtils.nonQuietClusterCloseOptions;
+
 /**
  * Base class for retry policy integration tests.
  *
@@ -46,7 +49,7 @@ import com.datastax.driver.core.*;
  * tests in child classes.
  */
 public class AbstractRetryPolicyIntegrationTest {
-    protected SCassandraCluster scassandras;
+    protected ScassandraCluster scassandras;
     protected Cluster cluster = null;
     protected Metrics.Errors errors;
     protected Host host1, host2, host3;
@@ -58,17 +61,16 @@ public class AbstractRetryPolicyIntegrationTest {
         this.retryPolicy = Mockito.spy(retryPolicy);
     }
 
-    @BeforeClass(groups = "short")
-    public void beforeClass() {
-        scassandras = new SCassandraCluster(CCMBridge.IP_PREFIX, 3);
-    }
-
     @BeforeMethod(groups = "short")
     public void beforeMethod() {
+        scassandras = ScassandraCluster.builder().withNodes(3).build();
+        scassandras.init();
+
         cluster = Cluster.builder()
             .addContactPoint(CCMBridge.ipOfNode(1))
             .withRetryPolicy(retryPolicy)
             .withLoadBalancingPolicy(new SortingLoadBalancingPolicy())
+            .withNettyOptions(nonQuietClusterCloseOptions)
             .build();
 
         session = cluster.connect();
@@ -80,21 +82,21 @@ public class AbstractRetryPolicyIntegrationTest {
         errors = cluster.getMetrics().getErrorMetrics();
 
         Mockito.reset(retryPolicy);
-        scassandras.clearAllPrimes();
-        scassandras.clearAllRecordedActivity();
+
+        for(Scassandra node : scassandras.nodes()) {
+            node.activityClient().clearAllRecordedActivity();
+        }
     }
 
     protected void simulateError(int hostNumber, PrimingRequest.Result result) {
-        scassandras
-            .prime(hostNumber, PrimingRequest.queryBuilder()
-                .withQuery("mock query")
-                .withResult(result)
-                .build());
+        scassandras.node(hostNumber).primingClient().prime(PrimingRequest.queryBuilder()
+                    .withQuery("mock query")
+                    .withResult(result)
+                    .build());
     }
 
     protected void simulateNormalResponse(int hostNumber) {
-        scassandras
-            .prime(hostNumber, PrimingRequest.queryBuilder()
+        scassandras.node(hostNumber).primingClient().prime(PrimingRequest.queryBuilder()
                 .withQuery("mock query")
                 .withRows(row("result", "result1"))
                 .build());
@@ -129,18 +131,13 @@ public class AbstractRetryPolicyIntegrationTest {
     }
 
     protected void assertQueried(int hostNumber, int times) {
-        assertThat(scassandras.retrieveQueries(hostNumber)).hasSize(times);
+        assertThat(scassandras.node(hostNumber).activityClient().retrieveQueries()).hasSize(times);
     }
 
     @AfterMethod(groups = "short")
     public void afterMethod() {
-        scassandras.clearAllPrimes();
         if (cluster != null)
             cluster.close();
-    }
-
-    @AfterClass(groups = "short")
-    public void afterClass() {
         if (scassandras != null)
             scassandras.stop();
     }
