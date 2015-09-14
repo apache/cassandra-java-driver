@@ -8,7 +8,7 @@ not yet have been released. You can find the documentation for latest
 version through [Java driver
 docs](http://datastax.github.io/java-driver/) or via the release tags,
 [e.g.
-2.0.10.1](https://github.com/datastax/java-driver/tree/2.0.10.1).*
+2.0.11](https://github.com/datastax/java-driver/tree/2.0.11).*
 
 A modern, [feature-rich](features/) and highly tunable Java client
 library for Apache Cassandra (1.2+) and DataStax Enterprise (3.1+) using
@@ -70,7 +70,7 @@ it in your application using the following Maven dependency:
 <dependency>
   <groupId>com.datastax.cassandra</groupId>
   <artifactId>cassandra-driver-core</artifactId>
-  <version>2.0.10.1</version>
+  <version>2.0.11</version>
 </dependency>
 ```
 
