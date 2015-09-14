@@ -22,52 +22,47 @@
       <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
     <![endif]-->
   </head>
-  <body ng-app="docs" data-spy="scroll" data-target=".side-nav">
-    <header class="navbar navbar-default navbar-static-top" role="navigation">
-      <div class="container">
-        <div class="navbar-header">
-          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
-            <span class="sr-only">Toggle navigation</span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </button>
-          <a class="navbar-brand" href="../../">Java Driver for Apache Cassandra</a>
+  <body ng-app="docs" data-spy="scroll" data-target="#table-of-contents" data-offset="69">
+    <header class="container-fluid navbar">
+      <div class="row">
+        <div class="col-sm-4">
+          <a class="navbar-brand" href="../../"><img alt="Brand" src="../../../img/logo.png">Java Driver for Apache Cassandra</a>
         </div>
-        <div class="collapse navbar-collapse" ng-controller="search">
-          <ul class="nav navbar-nav">
-            
-            
-            
-            <li class="active">
-              <a href="../">Features</a>
-            </li>
-            
-            
-            
-            
-          </ul>
-          <form class="navbar-form form-search navbar-right dropdown visible-lg-block" ng-class="{open: hasResults}" role="search" ng-submit="submit()">
-            <div class="form-group has-feedback">
-              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.0.10.1')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+        <div class="col-md-4 col-md-offset-4">
+          <div class="row">
+            <div class="col-md-12">
+              <ul class="list-inline" role="nav">
+                <li><a href="https://academy.datastax.com/" class="navbar-link">DataStax Academy</a></li>
+                <li><a href="http://www.datastax.com/dev/blog" class="navbar-link">Tech Blog</a></li>
+                <li><a href="http://www.datastax.com/what-we-offer/products-services/support" class="navbar-link">Support</a></li>
+              </ul>
             </div>
-            <ul class="dropdown-menu" role="menu">
-              <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
-            </ul>
-          </form>
+          </div>
+          <div class="row">
+            <div class="col-md-8">
+              <form id="search" class="form-search dropdown visible-lg-block" ng-controller="search" ng-class="{open: hasResults}" role="search" ng-submit="submit()" data-spy="affix" data-offset-top="130">
+                <div class="form-group has-feedback">
+                  <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.0.10.1')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+                </div>
+                <ul class="dropdown-menu search-results" role="menu">
+                  <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
+                </ul>
+              </form>
+            </div>
+            <div class="col-md-4">
+              <a href="http://www.datastax.com/download" class="btn btn-primary btn-sm">Download</a>
+            </div>
+          </div>
         </div>
       </div>
-    </header>
-
-    <div class="container" id="content">
-      <div class="row">
-        <div class="col-md-9 content">
-          <nav class="crumbs">
+      <div class="row crumbs-wrapper">
+        <div class="col-md-12">
+          <nav id="crumbs" data-spy="affix" data-offset-top="130">
             <ol class="breadcrumb">
               
               <li>
-                <div class="dropdown">
-                  <button id="current-version" class="btn btn-default btn-sm" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <div class="btn-group">
+                  <button id="current-version" class="btn btn-default btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                     2.0.10.1
                     <span class="caret"></span>
                   </button>
@@ -84,6 +79,8 @@
                     <li><a href="../../../2.1.6/features/pooling/">2.1.6</a></li>
                   
                     <li><a href="../../../2.1.5/">2.1.5</a></li>
+                  
+                    <li><a href="../../../2.0.11/features/pooling/">2.0.11</a></li>
                   
                     <li class="disabled"><a href="./">2.0.10.1</a></li>
                   
@@ -109,17 +106,116 @@
               
               
               <li class="active">Connection pooling</li>
+              <li class="dropdown" id="table-of-contents">
+                <div class="btn-group">
+                  <button id="current-section" type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
+                    Jump to&#8230; <span class="caret"></span><span class="sr-only">Table of Contents</span>
+                  </button>
+                  <ul class="dropdown-menu nav nav-pills nav-stacked">
+                    <li>
+<a href="#connection-pooling">Connection pooling
+</a><ul class="nav nav-pills nav-stacked">
+<li><a href="#basics">Basics
+</a></li>
+<li>
+<a href="#configuring-the-connection-pool">Configuring the connection pool
+</a><ul class="nav nav-pills nav-stacked">
+<li><a href="#pool-size">Pool size
+</a></li>
+<li><a href="#heartbeat">Heartbeat
+</a></li>
+<li><a href="#acquisition-timeout">Acquisition timeout
+</a></li>
+</ul>
+</li>
+<li><a href="#monitoring-and-tuning-the-pool">Monitoring and tuning the pool
+</a></li>
+</ul>
+</li>
+                  </ul>
+                </div>
+              </li>
               
               
               
             </ol>
           </nav>
+        </div>
+      </div>
+    </header>
+
+    <div class="container-fluid" id="content">
+      <div class="row">
+        <div class="col-md-3">
+          <div id="navigation" class="side-nav" role="tablist" aria-multiselectable="true">
+            <h3>Contents</h3>
+            <ul class="nav nav-pills nav-stacked">
+  
+  
+  
+  <li class="active">
+    <a href="../">Features <small>page</small></a>
+    <ul class="nav nav-pills nav-stacked">
+  
+  
+  
+  <li><a href="../address_resolution/">Address resolution <small>page</small></a></li>
+  
+  
+  
+  
+  <li class="active">
+    <a href="./" class="current">Connection pooling <small>page</small></a>
+    
+  </li>
+  
+  
+  
+  
+  <li><a href="../logging/">Logging <small>page</small></a></li>
+  
+  
+  
+  
+  <li><a href="../metadata/">Metadata <small>page</small></a></li>
+  
+  
+  
+  
+  <li><a href="../native_protocol/">Native protocol <small>page</small></a></li>
+  
+  
+  
+  
+  <li><a href="../paging/">Paging <small>page</small></a></li>
+  
+  
+  
+  
+  <li><a href="../speculative_execution/">Speculative query execution <small>page</small></a></li>
+  
+  
+  
+  
+  <li><a href="../shaded_jar/">Using the shaded JAR <small>page</small></a></li>
+  
+  
+</ul>
+
+  </li>
+  
+  
+</ul>
+
+          </div>
+        </div>
+        <div class="col-md-9 content">
           
 
-<h2 id="connection-pooling">Connection pooling<a class="anchor" href="#connection-pooling" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h2 id="connection-pooling" class="target">Connection pooling<a class="anchor" href="#connection-pooling" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h2>
 
-<h3 id="basics">Basics<a class="anchor" href="#basics" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h3 id="basics" class="target">Basics<a class="anchor" href="#basics" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h3>
 
 <p>The driver communicates with Cassandra over TCP, using the Cassandra
@@ -152,7 +248,7 @@ object, there is one connection pool per connected host</strong>. The number of
 connections per pool depends on the configuration, this will be
 described in the next section.</p>
 <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAsYAAABiCAIAAADcGIIzAAAO+klEQVR42u2d%0Ae2wUZReHsS1tAZGKIiCIWihfCqGIVFOUCmK9EKuI/IGfBqMhCPGCmhqpUTQh%0AVsQbDVFQMdZbilVpa8EVQ6xaaNASa7VAQYKwUilWW5fepLr9/E44cbLZ7Ux3%0AW3a7u/M8f+37zuzOvuf3njO/ue0O+AcAAACgzwwgBAAAAIClAAAAgDCzFP8D%0AAAAACBAsBQAAAGApAAAAAEsBAAAAWAoAAAAALAUAAABgKQAAAABLAQAAAFgK%0AAAAAACwFAAAAYCkAAAAASwEAAABYCgAAAAAsBQAAAGApAAAAAEsBAAAAWAoA%0AAAAALAUAAABgKQAAAABLAQAAAFgKLAUAAABgKQAAAABLAQAAAFgKAAAAwFJg%0AKQAAAABLAQAAAFgKG9Dc3FxaWvrwww/X1tYSDTQikoD6Qd3cgQMHCgoKli9f%0AvmDBgpdffvnw4cNeb/zzzz8dDse999571113FRYWyuegHZYiMsjIyIiJiRlw%0AioqKCgKCRkQSUD+om5s3b15cXNysWbNmzpwZGxsrK7zwwgvG0ra2trS0tISE%0AhFtuueWKK66QpampqWIyUBBLEQHk5+fv3r37oosuosiiEZEE1A/B5qT/jz/+%0AMFaTFYYNG9bV1aU9JSUl0vPII49oc86cOdKsrq5GQSxFxJCcnBzKIrtixYoZ%0AM2YUFxdv3LgxPT1dnLi8RgU0IpIQZer3uLny8nJZYciQISdPntSe7du3S09G%0ARkZLS4taCjEcxlLAUpBm3sybN082J3X2zDPPnDx5srxOSkoiZ9CISILdLMWy%0AZctkhfnz5xs9nZ2dmZmZ0jlu3LilS5cmJiZu3boV4bAUpFkPRXb8+PHHjx+X%0A5nnnnSfNzz//HCHQiEiCfSzF+++/HxMTk5qa2tDQ4NlfVVVl3Idx6aWXNjY2%0AIlz4WooB9iM8i+wrr7yizenTp0uzrKwMjdCISEI0qW+xOYfDER8fP2XKlGPH%0Ajnn2V1ZWJiUlzZ49u7S0VJyonq5wOp3sy/zRt38sxT92QsbrcrlaW1s7Ojo6%0AOzvdbneYFNkNGzZYFFk0QiMiCZGuvtnmNm/eHBcXJ75Bb5jw5MYbb5S37Nu3%0AT17L0ptuukmaq1atYl/mj75YilDIIA63oaGhqalJxBAlKLJoFMWWgkja2VKE%0Am/rdbq68vDwhISElJaW9vd33LcOHD5e3GD9l4XA4pHnHHXewL/NHXyxFKGSQ%0A2Xnw4MH6+npRQvydZzR27dpVWVl5/vnny2rr16+X17/99htFFo0i11IQSTtb%0AivBR32Jzej/N5MmTF3pg/PKEnpbIysr6+uuvv/vuO32ItKioiH2Ztb5YitDJ%0AsHPnzpqaGlFC/J2YO89oDB482OtiVbdzlyKLRpFiKYiknS1F+KhvsTnfRUJb%0AW5subWxsXLx4sXoRYfjw4fn5+ezLetQXSxE6GRwOhygh/s7pdLpcrvC/LxeN%0A0IhIgh3Ut+CHH37Ys2ePxe9mUiexFP0jw6ZNm7Zt21ZVVSXmrqmpiSKLRlFs%0AKYiknS1FxKnPzAmlvmFtKY4cOSIuUkZFmpEqaBRs/Ew3IomlwFKgb1hbitra%0A2ry8vDvvvDM7O3vZsmWrV6+uqKiQfr1E+uqrr5Jm/ZUqeg9Ubm7uzTff/MAD%0AD6xdu/b0hu7++++fNGlSUVERGgWq0Ycffpj3L+vWrSsrK/vrr7/6EiI/080O%0AlsKsIoUt5FF/zRzPNHzttdcOHTqEpehPSyEr5+TkxMXF6Y/fzZ49+9xzz9Xn%0AeU6XpWhubpboHDhwgDQLVCNZTZyErHnWWWdlZmYmJSWdccYZpzd0UrVHjBjx%0A1ltvUQoD1UizY+DAgZo+QkpKisvlwlIEryKFCb41jTzqr5mjWRMfH2/8Fufc%0AuXPDyiUEtAeMeEsh9Uv3WFu2bDE6f/rpp+rq6tNlKfQH3p988knSLFCN9uzZ%0AI6slJiYeP35cml1dXd9//z0nbMPKUrz44osdHR3FxcXi9qT55ptvYimCV5HC%0AhBDUNCxFQJbi3XffbWlpKSoqUldRW1sbobMlsi3F33//LQe+svIzzzzjT427%0A5557ZsyY8eWXX2pz/vz50ty7d682T5w4IZ+TlZU1cuTISy65ZN26ddL53nvv%0ASVM+ZOzYsbKylAYd4Nq1a9PT00ePHn3NNdcYxUL/z7CkpEQ+JzU19YsvvrC5%0ApZDYymrivr/99lvfg7luY9itChb9RsyNT5ad4pVXXimrTZs27bHHHpP9pdea%0Ab7zxhv7bpOe77GwptDllyhRpPvfcc9ZhtFiEpeixIvV6flovNcsmobCwcNas%0AWdKfkpKSnZ1tVtPIo363FNq88MIL9QFma2Xdbvfjjz/+n1OsWbNGBBJRduzY%0A4c+eLqDa2+1siVpL8eOPP6qnM7v+5FXjJCLS3Lx5szbHjRsnzW+++Uabd999%0AtzSvv/769evXL1++XK/6iyoSXOmXzHn00Uf1aPvBBx+UnpkzZ65cuVIOR4YO%0AHaqni3Vz06dPl53ohAkTysvLuZciLS1N1kxISMjLyzt58qTRbxbDblWw6PeS%0AODc3V5rnnHOOfOykSZP07yW7urqMNb3+bbKzsxNLoeeT9CzFp59+ah3GHiNs%0AZ0vRY0Xq9fy0XmqWTU888YT0x8bG3nbbbZI1V111lVlNI4/CwVJs2bJF/0W9%0Avb3dWllRU/pFAnF4YgJ01n388cf+7OkCqr3dzpaotRSffPKJrCml0Oy2soAs%0AhYTM8yjN7LSP0+mMPcXvv/8uzSVLlsjS119/3djcxIkT6+vrufBhnPLVw1+N%0AzK5du6xjaKaCWb+nxBJ2vYZdWVkpTZkVknIaW2PN8ePH//rrr9LUX8ezs+3T%0AgMgh7LXXXhsfH6+/BijvsgijPxG2s6Wwrkh9mZ8WS82yydjcBx980OOpbPKo%0Afy2FFMkxY8bIi5EjR2rYLZSVphykGQcAshW1ff5Yil7UXhtd+JDQ676qsbGx%0A75Zi48aN+mnTpk0rKChwu93dBrSsrEya4uz+ewp1cGLfjM1t2LChF9cXIxE/%0ARycl6dlnn9Vfoxs0aFBdXZ1FDM1UMOv3lHjr1q26CaOgy85SenJycow1xYDr%0AIv2FRM8L3nbTSAMybNiw5OTkOXPmyEGJnkayCKM/EfbHUkTrbLeuSH2ZnxZL%0AzbJJ/U1iYqJxyOunpSCPQjlzNJ5paWlTp06VF7feequxyEzZHTt26MmnlpYW%0ATxX8sRS9qL02shTydTUEZhM6IEshVFRUXHbZZfqZhrReAS0uLtZ8W7FiRe6/%0AfPTRR325G9QOj9Xt379/1KhR8q6VK1daxNBMBbN+z5jLJ+iP4xrzcsGCBdJz%0A3333+arTi1IY3fdSGFiEMaAI23C2W1ekvsxPi6Vm2aSbE8voe8rE2lKQR/1y%0A4ePEiROjR4+W12+//bb1vkasg14fMfb6/luKXtReG1kK4YYbbtCzRoZfs7AU%0AmZmZ0hQvppeIBg4c6GUpFFFCz14ePXrUuPL00EMP6VIJk0bcuBcm0Dve7Wkp%0A9C4hedftt99uEUMzFcz6PWNeV1enH2vciDR27FjjiApL4aelsAhjQBG252y3%0AqEh9mZ8WS82yydjcZ5995vVNvGoaeRQm91IUFhbq40KHDx+2ULa6ulr79QG6%0AY8eO6eUnw1JY7Ol6UXt9Z0s0W4pDhw4NHTpU1r/44otfeuklmdlr1qyZO3eu%0A6OQ7+/VmpZSUlKVLl44ZM0YvEBqWYsmSJfIJ0nznnXekf/Dgwa2trdIv0ZGm%0AGD3xd3pzyqJFi6QnOTl51apVJSUlTz31lN4ci6XwQmZtdnb2888/L9M6Pz9f%0AL9hL2ljE0EwFs36vmIuzlmZGRoYEU831BRdc0O2aWAozS2EdRv8jbE9LYV2R%0Aej0/rZeaZZNubtSoUXl5ebKyHGjqtS3fmkYehYOlEK6++mppiifQm2G7Vdbt%0Adk+cOFGVlf39hAkTzj77bE9LYb2nC7T2+s6WaLYUws8//yyqGD/XI45s6tSp%0ATz/9tO/slxFefvnl+jxMRUWF14WPrKysIUOG6OMJ11133fbt243HdRYuXKiq%0AlJaWSk97e3tOTs6gQYN0iyNGjNCTQlgKL8rLy2NjY41rijLvxV7oIrMYmqlg%0A1u8Vc5fLtXjxYnXlMTExkp/79+/3pyhjKTyxCKP/EbbtOTmLitTr+Wm91Cyb%0AZHOyn1Arr7f+6bOgvjWNPAoTS7Fv3z4N++rVqy2U3b17t5g8fdymoKDA68KH%0A9Z4u0NrrO1ui3FIY9wDu3bu3pqamx8eZLHyWbPro0aNtbW2+i8Td//LLL14r%0AHzlypLm5+Z8+E91P6kuUKisr6+rqPB8itYihmQoW6vhuVA4WPX9KAY16gUUY%0A+xJhm0TSoiIFY35aVCTdnO+FGN+aRh6FWw5a10kxr3o7hZel6HFPF2jt9We2%0ARJuliGj4IyU0so9GRNLOYCmCQbeWIkL1xVJQZNEIjYgkYCn6beYsWrQoPT39%0Aq6++wlKQwBRZNMJSEEnyCEuBvlgKiiwaoRGRBCwFMwdLQZqhERoRSWY76jNz%0AsBTIQKqgEZaC2U4eMXOwFMhAkUUjLAWRxFJgKdAXS0GaoREaEUnAUjBzIsZS%0A2I1ILLJohEZEEqJefWZOKPUNiqUQXC6X0+msra3duXOnw+HYFO3IGGWkMl4Z%0AtYw9IrIFjdCISIId1GfmhEzfYFmK1tbWhoYGsTk1NTXy/bZFOzJGGamMV0Yt%0AY4+IVEEjNCKSYAf1mTkh0zdYlqKjo6Opqam+vl6+mfidqmhHxigjlfHKqGXs%0AEZEqaIRGRBLsoD4zJ2T6BstSdHZ2isGR7yROx+l0Hox2ZIwyUhmvjFrGHhGp%0AgkZoRCTBDuozc0Kmb7Ashdvtlm8jHke+lsvlaop2ZIwyUhmvjFrGHhGpgkZo%0ARCTBDuozc0Kmb7AsBQAAANgKLAUAAABgKQAAAABLAQAAAFgKAAAAACwFAAAA%0AYCkAAAAASwEAAABYCgAAAAAsBQAAAGApAAAAAEsBAAAAWAoAAAAALAUAAABg%0AKQAAAABLAQAAAFgKAAAAACwFAAAAYCkAAAAASwEAAABYCiwFAAAAYCkAAAAA%0ASwEAAABYCgAAAMBSYCkAAAAASwEAAADhZykAAAAAeg2WAgAAALAUAAAAEB78%0AH/KZylsL3zH8AAAAAElFTkSuQmCC%0A" alt="Text Diagram" class="img-rounded img-thumbnail center-block ditaa">
-<h3 id="configuring-the-connection-pool">Configuring the connection pool<a class="anchor" href="#configuring-the-connection-pool" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h3 id="configuring-the-connection-pool" class="target">Configuring the connection pool<a class="anchor" href="#configuring-the-connection-pool" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h3>
 
 <p>Connections pools are configured with a <a href="http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/PoolingOptions.html">PoolingOptions</a> object, which 
@@ -171,7 +267,7 @@ reference to the <code>PoolingOptions</code> instance, here’s how you can get 
 <pre class="highlight"><code><span class="n">PoolingOptions</span> <span class="n">poolingOptions</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="na">getConfiguration</span><span class="o">().</span><span class="na">getPoolingOptions</span><span class="o">();</span>
 <span class="c1">// customize options...</span>
 </code></pre>
-<h4 id="pool-size">Pool size<a class="anchor" href="#pool-size" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h4 id="pool-size" class="target">Pool size<a class="anchor" href="#pool-size" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h4>
 
 <p>Connection pools have a variable size, which gets adjusted automatically
@@ -197,7 +293,7 @@ connection, but only determines the threshold that triggers the creation
 of a new connection when the pool is not at its maximum capacity. In
 general, you shouldn’t have to change its default value.</p>
 
-<h4 id="heartbeat">Heartbeat<a class="anchor" href="#heartbeat" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h4 id="heartbeat" class="target">Heartbeat<a class="anchor" href="#heartbeat" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h4>
 
 <p>If connections stay idle for too long, they might be dropped by
@@ -229,7 +325,7 @@ idle before it has elapsed.</p>
 <a href="https://github.com/apache/cassandra/blob/trunk/doc/native_protocol_v3.spec#L278">OPTIONS</a>
 message.</p>
 
-<h4 id="acquisition-timeout">Acquisition timeout<a class="anchor" href="#acquisition-timeout" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h4 id="acquisition-timeout" class="target">Acquisition timeout<a class="anchor" href="#acquisition-timeout" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h4>
 
 <p>When the driver tries to send a request to a host, it will first try to
@@ -249,7 +345,7 @@ set the pool timeout to 0. If all hosts are busy, you will get a
 <a href="http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/exceptions/NoHostAvailableException.html">NoHostAvailableException</a> (if you look at the exception’s details, you
 will see a <code>java.util.concurrent.TimeoutException</code> for each host).</p>
 
-<h3 id="monitoring-and-tuning-the-pool">Monitoring and tuning the pool<a class="anchor" href="#monitoring-and-tuning-the-pool" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h3 id="monitoring-and-tuning-the-pool" class="target">Monitoring and tuning the pool<a class="anchor" href="#monitoring-and-tuning-the-pool" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h3>
 
 <p>The easiest way to monitor pool usage is with <a href="http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/Session.html#getState()">Session.getState</a>. Here’s
@@ -280,45 +376,6 @@ the load is often less than core * 128, your pools are underused and you
 could get away with less core connections.</p>
 
 
-        </div>
-        <div class="col-md-3">
-          <div id="navigation" class="panel-group side-nav" data-spy="affix" data-offset-top="60" data-offset-bottom="80" role="tablist" aria-multiselectable="true">
-            <div id="table-of-contents-panel" class="panel panel-default">
-              <div id="table-of-contents-heading" class="panel-heading" role="tab">
-                <h4 class="panel-title">
-                  <a data-toggle="collapse" href="#table-of-contents" aria-expanded="true" aria-controls="table-of-contents">
-                    Contents<i class="pull-right glyphicon glyphicon-chevron-up"></i>
-                  </a>
-                </h4>
-              </div>
-              <div id="table-of-contents" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="table-of-contents-heading">
-                <div class="panel-body">
-                  <ol class="nav nav-pills nav-stacked toc"><li>
-<a href="#connection-pooling">Connection pooling
-</a><ol class="nav nav-pills nav-stacked">
-<li><a href="#basics">Basics
-</a></li>
-<li>
-<a href="#configuring-the-connection-pool">Configuring the connection pool
-</a><ol class="nav nav-pills nav-stacked">
-<li><a href="#pool-size">Pool size
-</a></li>
-<li><a href="#heartbeat">Heartbeat
-</a></li>
-<li><a href="#acquisition-timeout">Acquisition timeout
-</a></li>
-</ol>
-</li>
-<li><a href="#monitoring-and-tuning-the-pool">Monitoring and tuning the pool
-</a></li>
-</ol>
-</li></ol>
-                </div>
-              </div>
-            </div>
-
-            
-          </div>
         </div>
       </div>
     </div>

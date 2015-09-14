@@ -22,64 +22,47 @@
       <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
     <![endif]-->
   </head>
-  <body ng-app="docs" data-spy="scroll" data-target=".side-nav">
-    <header class="navbar navbar-default navbar-static-top" role="navigation">
-      <div class="container">
-        <div class="navbar-header">
-          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
-            <span class="sr-only">Toggle navigation</span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </button>
-          <a class="navbar-brand" href="../../">Java Driver for Apache Cassandra</a>
+  <body ng-app="docs" data-spy="scroll" data-target="#table-of-contents" data-offset="69">
+    <header class="container-fluid navbar">
+      <div class="row">
+        <div class="col-sm-4">
+          <a class="navbar-brand" href="../../"><img alt="Brand" src="../../../img/logo.png">Java Driver for Apache Cassandra</a>
         </div>
-        <div class="collapse navbar-collapse" ng-controller="search">
-          <ul class="nav navbar-nav">
-            
-            
-            
-            <li class="active">
-              <a href="../">Features</a>
-            </li>
-            
-            
-            <li>
-              <a href="../../changelog/">Changelog</a>
-            </li>
-            
-            
-            <li>
-              <a href="../../upgrade_guide/">Upgrading</a>
-            </li>
-            
-            
-            <li>
-              <a href="../../faq/">FAQ</a>
-            </li>
-            
-          </ul>
-          <form class="navbar-form form-search navbar-right dropdown visible-lg-block" ng-class="{open: hasResults}" role="search" ng-submit="submit()">
-            <div class="form-group has-feedback">
-              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.2.0-rc2')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+        <div class="col-md-4 col-md-offset-4">
+          <div class="row">
+            <div class="col-md-12">
+              <ul class="list-inline" role="nav">
+                <li><a href="https://academy.datastax.com/" class="navbar-link">DataStax Academy</a></li>
+                <li><a href="http://www.datastax.com/dev/blog" class="navbar-link">Tech Blog</a></li>
+                <li><a href="http://www.datastax.com/what-we-offer/products-services/support" class="navbar-link">Support</a></li>
+              </ul>
             </div>
-            <ul class="dropdown-menu" role="menu">
-              <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
-            </ul>
-          </form>
+          </div>
+          <div class="row">
+            <div class="col-md-8">
+              <form id="search" class="form-search dropdown visible-lg-block" ng-controller="search" ng-class="{open: hasResults}" role="search" ng-submit="submit()" data-spy="affix" data-offset-top="130">
+                <div class="form-group has-feedback">
+                  <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.2.0-rc2')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+                </div>
+                <ul class="dropdown-menu search-results" role="menu">
+                  <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
+                </ul>
+              </form>
+            </div>
+            <div class="col-md-4">
+              <a href="http://www.datastax.com/download" class="btn btn-primary btn-sm">Download</a>
+            </div>
+          </div>
         </div>
       </div>
-    </header>
-
-    <div class="container" id="content">
-      <div class="row">
-        <div class="col-md-9 content">
-          <nav class="crumbs">
+      <div class="row crumbs-wrapper">
+        <div class="col-md-12">
+          <nav id="crumbs" data-spy="affix" data-offset-top="130">
             <ol class="breadcrumb">
               
               <li>
-                <div class="dropdown">
-                  <button id="current-version" class="btn btn-default btn-sm" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <div class="btn-group">
+                  <button id="current-version" class="btn btn-default btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                     2.2.0-rc2
                     <span class="caret"></span>
                   </button>
@@ -96,6 +79,8 @@
                     <li><a href="../../../2.1.6/">2.1.6</a></li>
                   
                     <li><a href="../../../2.1.5/">2.1.5</a></li>
+                  
+                    <li><a href="../../../2.0.11/">2.0.11</a></li>
                   
                     <li><a href="../../../2.0.10.1/">2.0.10.1</a></li>
                   
@@ -121,14 +106,159 @@
               
               
               <li class="active">Custom Codecs</li>
+              <li class="dropdown" id="table-of-contents">
+                <div class="btn-group">
+                  <button id="current-section" type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
+                    Jump to&#8230; <span class="caret"></span><span class="sr-only">Table of Contents</span>
+                  </button>
+                  <ul class="dropdown-menu nav nav-pills nav-stacked">
+                    <li>
+<a href="#custom-codecs">Custom Codecs
+</a><ul class="nav nav-pills nav-stacked">
+<li><a href="#overview-of-the-serialization-mechanism">Overview of the serialization mechanism
+</a></li>
+<li><a href="#implementing-and-using-custom-codecs">Implementing and using custom codecs
+</a></li>
+<li><a href="#support-for-parameterized-types">Support for parameterized types
+</a></li>
+<li><a href="#support-for-collections-user-types-tuples-and-java-enums">Support for collections, user types, tuples and Java Enums
+</a></li>
+<li><a href="#using-custom-codecs-with-user-types-and-tuples">Using custom codecs with user types and tuples
+</a></li>
+<li>
+<a href="#limitations">Limitations
+</a><ul class="nav nav-pills nav-stacked">
+<li><a href="#generics">Generics
+</a></li>
+<li><a href="#type-inheritance">Type inheritance
+</a></li>
+</ul>
+</li>
+<li><a href="#performance-considerations">Performance considerations
+</a></li>
+</ul>
+</li>
+                  </ul>
+                </div>
+              </li>
               
               
               
             </ol>
           </nav>
+        </div>
+      </div>
+    </header>
+
+    <div class="container-fluid" id="content">
+      <div class="row">
+        <div class="col-md-3">
+          <div id="navigation" class="side-nav" role="tablist" aria-multiselectable="true">
+            <h3>Contents</h3>
+            <ul class="nav nav-pills nav-stacked">
+  
+  
+  
+  <li><a href="../../changelog/">Changelog <small>page</small></a></li>
+  
+  
+  
+  
+  <li class="active">
+    <a href="../">Features <small>page</small></a>
+    <ul class="nav nav-pills nav-stacked">
+  
+  
+  
+  <li><a href="../address_resolution/">Address resolution <small>page</small></a></li>
+  
+  
+  
+  
+  <li><a href="../compression/">Compression <small>page</small></a></li>
+  
+  
+  
+  
+  <li><a href="../pooling/">Connection pooling <small>page</small></a></li>
+  
+  
+  
+  
+  <li class="active">
+    <a href="./" class="current">Custom Codecs <small>page</small></a>
+    
+  </li>
+  
+  
+  
+  
+  <li><a href="../custom_payloads/">Custom Payloads <small>page</small></a></li>
+  
+  
+  
+  
+  <li><a href="../logging/">Logging <small>page</small></a></li>
+  
+  
+  
+  
+  <li><a href="../metadata/">Metadata <small>page</small></a></li>
+  
+  
+  
+  
+  <li><a href="../native_protocol/">Native protocol <small>page</small></a></li>
+  
+  
+  
+  
+  <li><a href="../object_mapper/">Object Mapper <small>page</small></a></li>
+  
+  
+  
+  
+  <li><a href="../paging/">Paging <small>page</small></a></li>
+  
+  
+  
+  
+  <li><a href="../query_timestamps/">Query timestamps <small>page</small></a></li>
+  
+  
+  
+  
+  <li><a href="../speculative_execution/">Speculative query execution <small>page</small></a></li>
+  
+  
+  
+  
+  <li><a href="../shaded_jar/">Using the shaded JAR <small>page</small></a></li>
+  
+  
+</ul>
+
+  </li>
+  
+  
+  
+  
+  <li><a href="../../faq/">Frequently Asked Questions <small>page</small></a></li>
+  
+  
+  
+  
+  <li><a href="../../upgrade_guide/">Upgrade guide <small>page</small></a></li>
+  
+  
+</ul>
+
+          </div>
+        </div>
+        <div class="col-md-9 content">
           
 
-<h2 id="custom-codecs">Custom Codecs<a class="anchor" href="#custom-codecs" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h2 id="custom-codecs" class="target">Custom Codecs<a class="anchor" href="#custom-codecs" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h2>
 
 <p>Custom codecs support transparent, user-configurable mapping of CQL types to arbitrary Java objects.</p>
@@ -144,7 +274,7 @@
 <li>etc.</li>
 </ul>
 
-<h3 id="overview-of-the-serialization-mechanism">Overview of the serialization mechanism<a class="anchor" href="#overview-of-the-serialization-mechanism" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h3 id="overview-of-the-serialization-mechanism" class="target">Overview of the serialization mechanism<a class="anchor" href="#overview-of-the-serialization-mechanism" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h3>
 
 <p>The central piece in the serialization mechanism is <a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/TypeCodec.html">TypeCodec</a>.</p>
@@ -183,7 +313,7 @@ It also caches codec lookup results for faster execution whenever possible.</p>
 
 <p>Refer to the <a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/CodecRegistry.html">javadocs</a> of User <code>CodecRegistry</code> for more information.</p>
 
-<h3 id="implementing-and-using-custom-codecs">Implementing and using custom codecs<a class="anchor" href="#implementing-and-using-custom-codecs" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h3 id="implementing-and-using-custom-codecs" class="target">Implementing and using custom codecs<a class="anchor" href="#implementing-and-using-custom-codecs" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h3>
 
 <p>Let’s consider the following scenario: a user has JSON documents stored in a varchar column, and wants
@@ -291,7 +421,7 @@ make sure that you use preferably the <code>get()</code> and <code>set()</code> 
 avoid any ambiguity by requiring the user to explicitly specify the desired Java type,
 thus forcing the driver to pick the right codec for the right task.</p>
 
-<h3 id="support-for-parameterized-types">Support for parameterized types<a class="anchor" href="#support-for-parameterized-types" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h3 id="support-for-parameterized-types" class="target">Support for parameterized types<a class="anchor" href="#support-for-parameterized-types" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h3>
 
 <p><code>get()</code> and <code>set()</code> can even be used to retrieve collections or other
@@ -302,7 +432,7 @@ take Guava’s <a href="http://docs.guava-libraries.googlecode.com/git/javadoc/c
 <span class="c1">// or alternatively, the following also works for collections:</span>
 <span class="n">List</span><span class="o">&lt;</span><span class="n">MyPojo</span><span class="o">&gt;</span> <span class="n">myPojos</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="na">getList</span><span class="o">(</span><span class="s">"jsonList"</span><span class="o">,</span> <span class="n">MyPojo</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
 </code></pre>
-<h3 id="support-for-collections-user-types-tuples-and-java-enums">Support for collections, user types, tuples and Java Enums<a class="anchor" href="#support-for-collections-user-types-tuples-and-java-enums" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h3 id="support-for-collections-user-types-tuples-and-java-enums" class="target">Support for collections, user types, tuples and Java Enums<a class="anchor" href="#support-for-collections-user-types-tuples-and-java-enums" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h3>
 
 <p><code>CodecRegistry</code> instances not only store default codecs and user-defined codecs;
@@ -330,7 +460,7 @@ manually, otherwise Enums would be converted using <a href="http://docs.datastax
 <a href="https://github.com/apache/cassandra/blob/trunk/src/java/org/apache/cassandra/db/marshal/AbstractType.java">Cassandra custom types</a>;
 to be able to deserialize values of such types, you need to manually register an appropriate codec.</p>
 
-<h3 id="using-custom-codecs-with-user-types-and-tuples">Using custom codecs with user types and tuples<a class="anchor" href="#using-custom-codecs-with-user-types-and-tuples" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h3 id="using-custom-codecs-with-user-types-and-tuples" class="target">Using custom codecs with user types and tuples<a class="anchor" href="#using-custom-codecs-with-user-types-and-tuples" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h3>
 
 <p>By default, the driver maps user-defined type values and tuple values to <a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/UDTValue.html">UDTValue</a> and <a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/TupleValue.html">TupleValue</a>,
@@ -412,10 +542,10 @@ mapper to generate UDT codecs for you; see
 <a href="../object_mapper/custom_codecs/#implicit-udt-codecs">this page</a> for more
 information.</p>
 
-<h3 id="limitations">Limitations<a class="anchor" href="#limitations" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h3 id="limitations" class="target">Limitations<a class="anchor" href="#limitations" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h3>
 
-<h4 id="generics">Generics<a class="anchor" href="#generics" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h4 id="generics" class="target">Generics<a class="anchor" href="#generics" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h4>
 
 <p>Java generic types are fully supported, through Guava’s <a href="http://docs.guava-libraries.googlecode.com/git/javadoc/com/google/common/reflect/TypeToken.html">TypeToken</a> API. 
@@ -426,7 +556,7 @@ that take a <code>TypeToken</code> argument:</p>
 <span class="c1">// this does not work due to type erasure</span>
 <span class="n">Foo</span><span class="o">&lt;</span><span class="n">Bar</span><span class="o">&gt;</span> <span class="n">foo</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="mi">0</span><span class="o">,</span> <span class="n">Foo</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
 </code></pre>
-<h4 id="type-inheritance">Type inheritance<a class="anchor" href="#type-inheritance" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h4 id="type-inheritance" class="target">Type inheritance<a class="anchor" href="#type-inheritance" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h4>
 
 <p>If a codec accepts a Java type that is assignable to the
@@ -468,7 +598,7 @@ because no codec matches <code>A.class</code> exactly:</p>
 </code></pre>
 <p>The same apply for interfaces.</p>
 
-<h3 id="performance-considerations">Performance considerations<a class="anchor" href="#performance-considerations" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h3 id="performance-considerations" class="target">Performance considerations<a class="anchor" href="#performance-considerations" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h3>
 
 <p>A codec lookup operation may be costly; to mitigate this, the <code>CodecRegistry</code> caches lookup results whenever possible.</p>
@@ -488,51 +618,6 @@ to serialize, so the driver performs the same heuristic to guess which codec to 
 consider using prepared statements all the time, and avoid calling ambiguous methods (prefer <code>get()</code> and <code>set()</code>).</p>
 
 
-        </div>
-        <div class="col-md-3">
-          <div id="navigation" class="panel-group side-nav" data-spy="affix" data-offset-top="60" data-offset-bottom="80" role="tablist" aria-multiselectable="true">
-            <div id="table-of-contents-panel" class="panel panel-default">
-              <div id="table-of-contents-heading" class="panel-heading" role="tab">
-                <h4 class="panel-title">
-                  <a data-toggle="collapse" href="#table-of-contents" aria-expanded="true" aria-controls="table-of-contents">
-                    Contents<i class="pull-right glyphicon glyphicon-chevron-up"></i>
-                  </a>
-                </h4>
-              </div>
-              <div id="table-of-contents" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="table-of-contents-heading">
-                <div class="panel-body">
-                  <ol class="nav nav-pills nav-stacked toc"><li>
-<a href="#custom-codecs">Custom Codecs
-</a><ol class="nav nav-pills nav-stacked">
-<li><a href="#overview-of-the-serialization-mechanism">Overview of the serialization mechanism
-</a></li>
-<li><a href="#implementing-and-using-custom-codecs">Implementing and using custom codecs
-</a></li>
-<li><a href="#support-for-parameterized-types">Support for parameterized types
-</a></li>
-<li><a href="#support-for-collections-user-types-tuples-and-java-enums">Support for collections, user types, tuples and Java Enums
-</a></li>
-<li><a href="#using-custom-codecs-with-user-types-and-tuples">Using custom codecs with user types and tuples
-</a></li>
-<li>
-<a href="#limitations">Limitations
-</a><ol class="nav nav-pills nav-stacked">
-<li><a href="#generics">Generics
-</a></li>
-<li><a href="#type-inheritance">Type inheritance
-</a></li>
-</ol>
-</li>
-<li><a href="#performance-considerations">Performance considerations
-</a></li>
-</ol>
-</li></ol>
-                </div>
-              </div>
-            </div>
-
-            
-          </div>
         </div>
       </div>
     </div>

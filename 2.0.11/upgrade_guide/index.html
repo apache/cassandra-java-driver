@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="description" content="High performance Java client for Apache Cassandra">
+    <meta name="author" content="DataStax">
+
+    <title>Java Driver for Apache Cassandra - Upgrade guide</title>
+
+    <link rel="icon" href="../../favicon.ico">
+    <link rel="apple-touch-icon" href="../../favicon.png">
+    <link href="../../css/style.css" rel="stylesheet">
+    <link href="../../css/pygments.css" rel="stylesheet">
+    <link href="../../css/hotkeys.css" rel="stylesheet">
+
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body ng-app="docs" data-spy="scroll" data-target="#table-of-contents" data-offset="69">
+    <header class="container-fluid navbar">
+      <div class="row">
+        <div class="col-sm-4">
+          <a class="navbar-brand" href="../"><img alt="Brand" src="../../img/logo.png">Java Driver for Apache Cassandra</a>
+        </div>
+        <div class="col-md-4 col-md-offset-4">
+          <div class="row">
+            <div class="col-md-12">
+              <ul class="list-inline" role="nav">
+                <li><a href="https://academy.datastax.com/" class="navbar-link">DataStax Academy</a></li>
+                <li><a href="http://www.datastax.com/dev/blog" class="navbar-link">Tech Blog</a></li>
+                <li><a href="http://www.datastax.com/what-we-offer/products-services/support" class="navbar-link">Support</a></li>
+              </ul>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-8">
+              <form id="search" class="form-search dropdown visible-lg-block" ng-controller="search" ng-class="{open: hasResults}" role="search" ng-submit="submit()" data-spy="affix" data-offset-top="130">
+                <div class="form-group has-feedback">
+                  <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.0.11')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+                </div>
+                <ul class="dropdown-menu search-results" role="menu">
+                  <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
+                </ul>
+              </form>
+            </div>
+            <div class="col-md-4">
+              <a href="http://www.datastax.com/download" class="btn btn-primary btn-sm">Download</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row crumbs-wrapper">
+        <div class="col-md-12">
+          <nav id="crumbs" data-spy="affix" data-offset-top="130">
+            <ol class="breadcrumb">
+              
+              <li>
+                <div class="btn-group">
+                  <button id="current-version" class="btn btn-default btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    2.0.11
+                    <span class="caret"></span>
+                  </button>
+                  <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
+                  
+                    <li><a href="../../upgrade_guide/">2.2.0-rc3</a></li>
+                  
+                    <li><a href="../../2.2.0-rc2/upgrade_guide/">2.2.0-rc2</a></li>
+                  
+                    <li><a href="../../2.2.0-rc1/upgrade_guide/">2.2.0-rc1</a></li>
+                  
+                    <li><a href="../../2.1.7/upgrade_guide/">2.1.7</a></li>
+                  
+                    <li><a href="../../2.1.6/">2.1.6</a></li>
+                  
+                    <li><a href="../../2.1.5/">2.1.5</a></li>
+                  
+                    <li class="disabled"><a href="./">2.0.11</a></li>
+                  
+                    <li><a href="../../2.0.10.1/">2.0.10.1</a></li>
+                  
+                    <li><a href="../../2.0.10/">2.0.10</a></li>
+                  
+                  </ul>
+                </div>
+              </li>
+              
+              
+              
+              
+              <li><a href="../">Home</a></li>
+              
+              
+              
+              
+              
+              <li class="active">Upgrade guide</li>
+              <li class="dropdown" id="table-of-contents">
+                <div class="btn-group">
+                  <button id="current-section" type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
+                    Jump to&#8230; <span class="caret"></span><span class="sr-only">Table of Contents</span>
+                  </button>
+                  <ul class="dropdown-menu nav nav-pills nav-stacked">
+                    <li>
+<a href="#upgrade-guide">Upgrade guide
+</a><ul class="nav nav-pills nav-stacked">
+<li><a href="#2-0-11">2.0.11
+</a></li>
+<li><a href="#2-0-x-to-2-0-10">2.0.x to 2.0.10
+</a></li>
+<li>
+<a href="#1-0-to-2-0">1.0 to 2.0
+</a><ul class="nav nav-pills nav-stacked">
+<li><a href="#main-api-changes">Main API changes
+</a></li>
+<li><a href="#other-api-changes">Other API Changes
+</a></li>
+<li><a href="#features-available-only-with-cassandra-2-0">Features available only with Cassandra 2.0
+</a></li>
+</ul>
+</li>
+</ul>
+</li>
+                  </ul>
+                </div>
+              </li>
+              
+              
+              
+            </ol>
+          </nav>
+        </div>
+      </div>
+    </header>
+
+    <div class="container-fluid" id="content">
+      <div class="row">
+        <div class="col-md-3">
+          <div id="navigation" class="side-nav" role="tablist" aria-multiselectable="true">
+            <h3>Contents</h3>
+            <ul class="nav nav-pills nav-stacked">
+  
+  
+  
+  <li><a href="../changelog/">Changelog <small>page</small></a></li>
+  
+  
+  
+  
+  <li><a href="../features/">Features <small>page</small></a></li>
+  
+  
+  
+  
+  <li><a href="../faq/">Frequently Asked Questions <small>page</small></a></li>
+  
+  
+  
+  
+  <li class="active">
+    <a href="./" class="current">Upgrade guide <small>page</small></a>
+    
+  </li>
+  
+  
+</ul>
+
+          </div>
+        </div>
+        <div class="col-md-9 content">
+          
+
+<h2 id="upgrade-guide" class="target">Upgrade guide<a class="anchor" href="#upgrade-guide" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h2>
+
+<p>The purpose of this guide is to detail changes made by successive
+versions of the Java driver.</p>
+
+<h3 id="2-0-11" class="target">2.0.11<a class="anchor" href="#2-0-11" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<p>2.0.11 preserves binary compatibility with previous versions. There are a few
+changes in the driver’s behavior:</p>
+
+<ol>
+<li><p>The <code>DefaultRetryPolicy</code>’s behaviour has changed in the case of an Unavailable
+exception received from a request. The new behaviour will cause the driver to
+process a Retry on a different node at most once, otherwise an exception will
+be thrown. This change makes sense in the case where the node tried initially
+for the request happens to be isolated from the rest of the cluster (e.g.
+because of a network partition) but can still answer to the client normally.
+In this case, trying another node has a chance of success.
+The previous behaviour was to always throw an exception.</p></li>
+<li><p>A <code>BuiltStatement</code> is now considered non-idempotent whenever a <code>fcall()</code>
+or <code>raw()</code> is used to build a value to be inserted in the database.
+If you know that the CQL functions or expressions are safe, use
+<code>setIdempotent(true)</code> on the statement.</p></li>
+<li><p>The list of contact points provided at startup is now shuffled before trying
+to open the control connection, so that multiple clients with the same contact
+points don’t all pick the same control host. As a result, you can’t assume that
+the driver will try contact points in a deterministic order. In particular, if
+you use the <code>DCAwareRoundRobinPolicy</code> without specifying a primary datacenter
+name, make sure that you only provide local hosts as contact points.</p></li>
+</ol>
+
+<h3 id="2-0-x-to-2-0-10" class="target">2.0.x to 2.0.10<a class="anchor" href="#2-0-x-to-2-0-10" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<p>We try to avoid breaking changes within a branch (2.0.x to 2.0.y), but
+2.0.10 saw a lot of new features and internal improvements. There is one
+breaking change:</p>
+
+<ol>
+<li>
+<code>LatencyTracker#update</code> now has a different signature and takes two new
+parameters: the statement that has been executed (never null), and the exception
+thrown while executing the query (or null, if the query executed successfully).
+Existing implementations of this interface, once upgraded to the new method
+signature, should continue to work as before.</li>
+</ol>
+
+<p>The following might also be of interest:</p>
+
+<ol>
+<li><p><code>SocketOptions#getTcpNoDelay()</code> is now TRUE by default (it was previously undefined).
+This reflects the new behavior of Netty (which was upgraded from version 3.9.0 to
+4.0.27): <code>TCP_NODELAY</code> is now turned on by default, instead of depending on the OS
+default like in previous versions.</p></li>
+<li><p>Netty is not shaded anymore in the default Maven artifact. However we publish a
+<a href="../features/shaded_jar/">shaded artifact</a> under a different classifier.</p></li>
+<li><p>The internal initialization sequence of the Cluster object has been slightly changed:
+some fields that were previously initialized in the constructor are now set when
+the <code>init()</code> method is called. This is unlikely to affect regular driver users.</p></li>
+</ol>
+
+<h3 id="1-0-to-2-0" class="target">1.0 to 2.0<a class="anchor" href="#1-0-to-2-0" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<p>We used the opportunity of a major version bump to incorporate your feedback
+and improve the API, to fix a number of inconsistencies and remove cruft.
+Unfortunately this means there are some breaking changes, but the new API should
+be both simpler and more complete.</p>
+
+<p>The following describes the changes for 2.0 that are breaking changes of the
+1.0 API. For ease of use, we distinguish two categories of API changes: the “main”
+ones and the “other” ones.</p>
+
+<p>The “main” API changes are the ones that are either
+likely to affect most upgraded apps or are incompatible changes that, even if minor,
+will not be detected at compile time. Upgraders are highly encouraged to check
+this list of “main” changes while upgrading their application to 2.0 (even
+though most applications are likely to be affected by only a handful of
+changes).</p>
+
+<p>The “other” list is, well, other changes: those that are likely to
+affect a minor number of applications and will be detected by compile time
+errors anyway. It is ok to skip those initially and only come back to them if
+you have trouble compiling your application after an upgrade.</p>
+
+<h4 id="main-api-changes" class="target">Main API changes<a class="anchor" href="#main-api-changes" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h4>
+
+<ol>
+<li><p>The <code>Query</code> class has been renamed into <code>Statement</code> (it was confusing
+to some that the <code>BoundStatement</code> was not a <code>Statement</code>). To allow
+this, the old <code>Statement</code> class has been renamed to <code>RegularStatement</code>.</p></li>
+<li><p>The <code>Cluster</code> and <code>Session</code> shutdown API has changed. There is now a
+<code>closeAsync</code> that is asynchronous but returns a <code>Future</code> on the
+completion of the shutdown process.  There is also a <code>close</code> shortcut
+that does the same but blocks.  Also, <code>close</code> now waits for ongoing
+queries to complete by default (but you can force the closing of all
+connections if you want to).</p></li>
+<li><p><code>NoHostAvailableException#getErrors</code> now returns the full exception objects for
+each node instead of just a message. In other words, it returns a
+<code>Map&lt;InetAddress, Throwable&gt;</code> instead of a <code>Map&lt;InetAddress, String&gt;</code>.</p></li>
+<li><p><code>Statement#getConsistencyLevel</code> (previously <code>Query#getConsistencyLevel</code>, see
+first point) will now return <code>null</code> by default (instead of <code>CL.ONE</code>), with the
+meaning of “use the default consistency level”.
+The default consistency level can now be configured through the new <code>QueryOptions</code>
+object in the cluster <code>Configuration</code>.</p></li>
+<li><p>The <code>Metrics</code> class now uses the Codahale metrics library version 3 (version 2 was
+used previously). This new major version of the library has many API changes
+compared to its version 2 (see the <a href="https://dropwizard.github.io/metrics/3.1.0/about/release-notes/">release notes</a> for details),
+which can thus impact consumers of the Metrics class.
+Furthermore, the default <code>JmxReporter</code> now includes a name specific to the
+cluster instance (to avoid conflicts when multiple Cluster instances are created
+in the same JVM). As a result, tools that were polling JMX info will
+have to be updated accordingly.</p></li>
+<li><p>The <code>QueryBuilder#in</code> method now has the following special case: using
+<code>QueryBuilder.in(QueryBuilder.bindMarker())</code> will generate the string <code>IN ?</code>,
+not <code>IN (?)</code> as was the case in 1.0. The reasoning being that the former
+syntax, made valid by <a href="https://issues.apache.org/jira/browse/CASSANDRA-4210">CASSANDRA-4210</a>
+is a lot more useful than <code>IN (?)</code>, as the latter can more simply use an
+equality.
+Note that if you really want to output <code>IN (?)</code> with the query
+builder, you can use <code>QueryBuilder.in(QueryBuilder.raw("?"))</code>.</p></li>
+<li><p>When binding values by name in <code>BoundStatement</code> (i.e. using the
+<code>setX(String, X)</code> methods), if more than one variable have the same name,
+then all values corresponding to that variable
+name are set instead of just the first occurrence.</p></li>
+<li><p>The <code>QueryBuilder#raw</code> method does not automatically add quotes anymore, but
+rather output its result without any change (as the raw name implies).
+This means for instance that <code>eq("x", raw(foo))</code> will output <code>x = foo</code>,
+not <code>x = 'foo'</code> (you don’t need the raw method to output the latter string).</p></li>
+<li><p>The <code>QueryBuilder</code> will now sometimes use the new ability to send value as
+bytes instead of serializing everything to string. In general the QueryBuilder
+will do the right thing, but if you were calling the <code>getQueryString()</code> method
+on a Statement created with a QueryBuilder (for other reasons than to prepare a query)
+then the returned string may contain bind markers in place of some of the values
+provided (and in that case, <code>getValues()</code> will contain the values corresponding
+to those markers). If need be, it is possible to force the old behavior by
+using the new <code>setForceNoValues()</code> method.</p></li>
+</ol>
+
+<h4 id="other-api-changes" class="target">Other API Changes<a class="anchor" href="#other-api-changes" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h4>
+
+<ol>
+<li><p>Creating a Cluster instance (through <code>Cluster#buildFrom</code> or the
+<code>Cluster.Builder#build</code> method) <strong>does not create any connection right away
+anymore</strong> (and thus cannot throw a <code>NoHostAvailableException</code> or an
+<code>AuthenticationException</code>). Instead, the initial contact points are checked
+the first time a call to <code>Cluster#connect</code> is done. If for some reason you
+want to emulate the previous behavior, you can use the new method
+<code>Cluster#init</code>: <code>Cluster.builder().build()</code> in 1.0 is equivalent to
+<code>Cluster.builder().build().init()</code> in 2.0.</p></li>
+<li><p>Methods from <code>Metadata</code>, <code>KeyspaceMetadata</code> and <code>TableMetadata</code> now use by default
+case insensitive identifiers (for keyspace, table and column names in
+parameter). You can double-quote an identifier if you want it to be a
+case sensitive one (as you would do in CQL) and there is a <code>Metadata.quote</code>
+helper method for that.</p></li>
+<li><p>The <code>TableMetadata#getClusteringKey</code> method has been renamed
+<code>TableMetadata#getClusteringColumns</code> to match the “official” vocabulary.</p></li>
+<li><p>The <code>UnavailableException#getConsistency</code> method has been renamed to
+<code>UnavailableException#getConsistencyLevel</code> for consistency with the method of
+<code>QueryTimeoutException</code>.</p></li>
+<li><p>The <code>RegularStatement</code> class (ex-<code>Statement</code> class, see above) must now
+implement two additional methods: <code>RegularStatement#getKeyspace</code> and
+<code>RegularStatement#getValues</code>. If you had extended this class, you will have to
+implement those new methods, but both can return null if they are not useful
+in your case.</p></li>
+<li><p>The <code>Cluster.Initializer</code> interface should now implement 2 new methods:
+<code>Cluster.Initializer#getInitialListeners</code> (which can return an empty
+collection) and <code>Cluster.Initializer#getClusterName</code> (which can return null).</p></li>
+<li><p>The <code>Metadata#getReplicas</code> method now takes 2 arguments. On top of the
+partition key, you must now provide the keyspace too. The previous behavior
+was buggy: it’s impossible to properly return the full list of replica for a
+partition key without knowing the keyspace since replication may depend on
+the keyspace).</p></li>
+<li><p>The method <code>LoadBalancingPolicy#newQueryPlan()</code> method now takes the currently
+logged keyspace as 2nd argument. This information is necessary to do proper
+token aware balancing (see preceding point).</p></li>
+<li><p>The <code>ResultSetFuture#set</code> and <code>ResultSetFuture#setException</code> methods have been
+removed (from the public API at least). They were never meant to be exposed
+publicly: a <code>resultSetFuture</code> is always set by the driver itself and should
+not be set manually.</p></li>
+<li><p>The deprecated since 1.0.2 <code>Host.HealthMonitor</code> class has been removed. You
+will now need to use <code>Host#isUp</code> and <code>Cluster#register</code> if you were using that
+class.</p></li>
+</ol>
+
+<h4 id="features-available-only-with-cassandra-2-0" class="target">Features available only with Cassandra 2.0<a class="anchor" href="#features-available-only-with-cassandra-2-0" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h4>
+
+<p>This section details the biggest additions to 2.0 API wise. It is not an
+exhaustive list of new features in 2.0.</p>
+
+<ol>
+<li>
+<p>The new <code>BatchStatement</code> class allows to group any type of insert Statements
+(<code>BoundStatement</code> or <code>RegularStatement</code>) for execution as a batch. For instance,
+you can do something like:</p>
+<pre class="highlight"><code><span class="n">List</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="n">values</span> <span class="o">=</span> <span class="o">...;</span>
+<span class="n">PreparedStatement</span> <span class="n">ps</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="na">prepare</span><span class="o">(</span><span class="s">"INSERT INTO myTable(value) VALUES (?)"</span><span class="o">);</span>
+<span class="n">BatchStatement</span> <span class="n">bs</span> <span class="o">=</span> <span class="k">new</span> <span class="n">BatchStatement</span><span class="o">();</span>
+<span class="k">for</span> <span class="o">(</span><span class="n">String</span> <span class="n">value</span> <span class="o">:</span> <span class="n">values</span><span class="o">)</span>
+   <span class="n">bs</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">ps</span><span class="o">.</span><span class="na">bind</span><span class="o">(</span><span class="n">value</span><span class="o">));</span>
+<span class="n">session</span><span class="o">.</span><span class="na">execute</span><span class="o">(</span><span class="n">bs</span><span class="o">);</span>
+</code></pre>
+</li>
+<li>
+<p><code>SimpleStatement</code> can now take a list of values in addition to the query. This
+allows to do the equivalent of a prepare+execute but with only one round-trip
+to the server and without keeping the prepared statement after the
+execution.</p>
+
+<p>This is typically useful if a given query should be executed only
+once (i.e. you don’t want to prepare it) but you also don’t want to
+serialize all values into strings. Shortcut <code>Session#execute()</code> and
+<code>Session#executeAsync()</code> methods are also provided so you that you can do:</p>
+<pre class="highlight"><code><span class="n">String</span> <span class="n">imgName</span> <span class="o">=</span> <span class="o">...;</span>
+<span class="n">ByteBuffer</span> <span class="n">imgBytes</span> <span class="o">=</span> <span class="o">...;</span>
+<span class="n">session</span><span class="o">.</span><span class="na">execute</span><span class="o">(</span><span class="s">"INSERT INTO images(name, bytes) VALUES (?, ?)"</span><span class="o">,</span> <span class="n">imgName</span><span class="o">,</span> <span class="n">imgBytes</span><span class="o">);</span>
+</code></pre>
+</li>
+<li>
+<p>SELECT queries are now “paged” under the hood. In other words, if a query
+yields a very large result, only the beginning of the <code>ResultSet</code> will be fetched
+initially, the rest being fetched “on-demand”. In practice, this means that:</p>
+<pre class="highlight"><code><span class="k">for</span> <span class="o">(</span><span class="n">Row</span> <span class="n">r</span> <span class="o">:</span> <span class="n">session</span><span class="o">.</span><span class="na">execute</span><span class="o">(</span><span class="s">"SELECT * FROM mytable"</span><span class="o">))</span>
+   <span class="o">...</span> <span class="n">process</span> <span class="n">r</span> <span class="o">...</span>
+</code></pre>
+<p>should not timeout or OOM the server anymore even if “mytable” contains a lot
+of data. In general paging should be transparent for the application (as in
+the example above), but the implementation provides a number of knobs to
+fine tune the behavior of that paging:</p>
+</li>
+</ol>
+
+<ul>
+<li>the size of each “page” can be set per-query (<code>Statement#setFetchSize()</code>)</li>
+<li>the <code>ResultSet</code> object provides 2 methods to check the state of paging
+ (<code>ResultSet#getAvailableWithoutFetching</code> and <code>ResultSet#isFullyFetched</code>)
+ as well as a mean to force the pre-fetching of the next page (<code>ResultSet#fetchMoreResults</code>).</li>
+</ul>
+
+
+        </div>
+      </div>
+    </div>
+
+    
+    <footer class="container text-muted">
+      <ul class="list-inline">
+      
+        
+        <li>
+          <a href="https://github.com/datastax/java-driver/">Code</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="http://datastax.github.io/java-driver/">Docs</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://datastax-oss.atlassian.net/browse/JAVA/">Issues</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://groups.google.com/a/lists.datastax.com/forum/#!forum/java-driver-user">Mailing List</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="irc://irc.freenode.net/datastax-drivers">IRC Channel</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://github.com/datastax/java-driver/releases">Releases</a>
+        </li>
+      
+      </ul>
+    </footer>
+    
+
+    <script src="../../js/jquery.js"></script>
+    <script src="../../js/bootstrap.js"></script>
+    <script src="../../js/angular.js"></script>
+    <script src="../../js/mousetrap.js"></script>
+    <script src="../../js/hotkeys.js"></script>
+    <script src="../../js/ZeroClipboard.js"></script>
+    <script src="../../js/lunr.js"></script>
+    <script src="../../js/app.js"></script>
+  </body>
+</html>

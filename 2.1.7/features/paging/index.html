@@ -22,64 +22,47 @@
       <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
     <![endif]-->
   </head>
-  <body ng-app="docs" data-spy="scroll" data-target=".side-nav">
-    <header class="navbar navbar-default navbar-static-top" role="navigation">
-      <div class="container">
-        <div class="navbar-header">
-          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
-            <span class="sr-only">Toggle navigation</span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </button>
-          <a class="navbar-brand" href="../../">Java Driver for Apache Cassandra</a>
+  <body ng-app="docs" data-spy="scroll" data-target="#table-of-contents" data-offset="69">
+    <header class="container-fluid navbar">
+      <div class="row">
+        <div class="col-sm-4">
+          <a class="navbar-brand" href="../../"><img alt="Brand" src="../../../img/logo.png">Java Driver for Apache Cassandra</a>
         </div>
-        <div class="collapse navbar-collapse" ng-controller="search">
-          <ul class="nav navbar-nav">
-            
-            
-            
-            <li class="active">
-              <a href="../">Features</a>
-            </li>
-            
-            
-            <li>
-              <a href="../../changelog/">Changelog</a>
-            </li>
-            
-            
-            <li>
-              <a href="../../upgrade_guide/">Upgrading</a>
-            </li>
-            
-            
-            <li>
-              <a href="../../faq/">FAQ</a>
-            </li>
-            
-          </ul>
-          <form class="navbar-form form-search navbar-right dropdown visible-lg-block" ng-class="{open: hasResults}" role="search" ng-submit="submit()">
-            <div class="form-group has-feedback">
-              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.1.7')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+        <div class="col-md-4 col-md-offset-4">
+          <div class="row">
+            <div class="col-md-12">
+              <ul class="list-inline" role="nav">
+                <li><a href="https://academy.datastax.com/" class="navbar-link">DataStax Academy</a></li>
+                <li><a href="http://www.datastax.com/dev/blog" class="navbar-link">Tech Blog</a></li>
+                <li><a href="http://www.datastax.com/what-we-offer/products-services/support" class="navbar-link">Support</a></li>
+              </ul>
             </div>
-            <ul class="dropdown-menu" role="menu">
-              <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
-            </ul>
-          </form>
+          </div>
+          <div class="row">
+            <div class="col-md-8">
+              <form id="search" class="form-search dropdown visible-lg-block" ng-controller="search" ng-class="{open: hasResults}" role="search" ng-submit="submit()" data-spy="affix" data-offset-top="130">
+                <div class="form-group has-feedback">
+                  <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.1.7')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+                </div>
+                <ul class="dropdown-menu search-results" role="menu">
+                  <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
+                </ul>
+              </form>
+            </div>
+            <div class="col-md-4">
+              <a href="http://www.datastax.com/download" class="btn btn-primary btn-sm">Download</a>
+            </div>
+          </div>
         </div>
       </div>
-    </header>
-
-    <div class="container" id="content">
-      <div class="row">
-        <div class="col-md-9 content">
-          <nav class="crumbs">
+      <div class="row crumbs-wrapper">
+        <div class="col-md-12">
+          <nav id="crumbs" data-spy="affix" data-offset-top="130">
             <ol class="breadcrumb">
               
               <li>
-                <div class="dropdown">
-                  <button id="current-version" class="btn btn-default btn-sm" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <div class="btn-group">
+                  <button id="current-version" class="btn btn-default btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                     2.1.7
                     <span class="caret"></span>
                   </button>
@@ -96,6 +79,8 @@
                     <li><a href="../../../2.1.6/features/paging/">2.1.6</a></li>
                   
                     <li><a href="../../../2.1.5/">2.1.5</a></li>
+                  
+                    <li><a href="../../../2.0.11/features/paging/">2.0.11</a></li>
                   
                     <li><a href="../../../2.0.10.1/features/paging/">2.0.10.1</a></li>
                   
@@ -121,21 +106,146 @@
               
               
               <li class="active">Paging</li>
+              <li class="dropdown" id="table-of-contents">
+                <div class="btn-group">
+                  <button id="current-section" type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
+                    Jump to&#8230; <span class="caret"></span><span class="sr-only">Table of Contents</span>
+                  </button>
+                  <ul class="dropdown-menu nav nav-pills nav-stacked">
+                    <li>
+<a href="#paging">Paging
+</a><ul class="nav nav-pills nav-stacked">
+<li><a href="#setting-the-fetch-size">Setting the fetch size
+</a></li>
+<li><a href="#result-set-iteration">Result set iteration
+</a></li>
+<li>
+<a href="#saving-and-reusing-the-paging-state">Saving and reusing the paging state
+</a><ul class="nav nav-pills nav-stacked"><li><a href="#unsafe-api">Unsafe API
+</a></li></ul>
+</li>
+<li><a href="#offset-queries">Offset queries
+</a></li>
+</ul>
+</li>
+                  </ul>
+                </div>
+              </li>
               
               
               
             </ol>
           </nav>
+        </div>
+      </div>
+    </header>
+
+    <div class="container-fluid" id="content">
+      <div class="row">
+        <div class="col-md-3">
+          <div id="navigation" class="side-nav" role="tablist" aria-multiselectable="true">
+            <h3>Contents</h3>
+            <ul class="nav nav-pills nav-stacked">
+  
+  
+  
+  <li><a href="../../changelog/">Changelog <small>page</small></a></li>
+  
+  
+  
+  
+  <li class="active">
+    <a href="../">Features <small>page</small></a>
+    <ul class="nav nav-pills nav-stacked">
+  
+  
+  
+  <li><a href="../address_resolution/">Address resolution <small>page</small></a></li>
+  
+  
+  
+  
+  <li><a href="../compression/">Compression <small>page</small></a></li>
+  
+  
+  
+  
+  <li><a href="../pooling/">Connection pooling <small>page</small></a></li>
+  
+  
+  
+  
+  <li><a href="../logging/">Logging <small>page</small></a></li>
+  
+  
+  
+  
+  <li><a href="../metadata/">Metadata <small>page</small></a></li>
+  
+  
+  
+  
+  <li><a href="../native_protocol/">Native protocol <small>page</small></a></li>
+  
+  
+  
+  
+  <li><a href="../object_mapper/">Object Mapper <small>page</small></a></li>
+  
+  
+  
+  
+  <li class="active">
+    <a href="./" class="current">Paging <small>page</small></a>
+    
+  </li>
+  
+  
+  
+  
+  <li><a href="../query_timestamps/">Query timestamps <small>page</small></a></li>
+  
+  
+  
+  
+  <li><a href="../speculative_execution/">Speculative query execution <small>page</small></a></li>
+  
+  
+  
+  
+  <li><a href="../shaded_jar/">Using the shaded JAR <small>page</small></a></li>
+  
+  
+</ul>
+
+  </li>
+  
+  
+  
+  
+  <li><a href="../../faq/">Frequently Asked Questions <small>page</small></a></li>
+  
+  
+  
+  
+  <li><a href="../../upgrade_guide/">Upgrade guide <small>page</small></a></li>
+  
+  
+</ul>
+
+          </div>
+        </div>
+        <div class="col-md-9 content">
           
 
-<h2 id="paging">Paging<a class="anchor" href="#paging" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h2 id="paging" class="target">Paging<a class="anchor" href="#paging" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h2>
 
 <p>When a query returns many rows, it would be inefficient to return them
 as a single response message. Instead, the driver breaks the results
 into <em>pages</em> which get returned as they are needed.</p>
 
-<h3 id="setting-the-fetch-size">Setting the fetch size<a class="anchor" href="#setting-the-fetch-size" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h3 id="setting-the-fetch-size" class="target">Setting the fetch size<a class="anchor" href="#setting-the-fetch-size" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h3>
 
 <p>The <em>fetch size</em> specifies how many rows will be returned at once by
@@ -162,7 +272,7 @@ otherwise, the cluster-wide value (which defaults to 5000) will be used.</p>
 return the exact number of rows, it is possible that it returns slightly
 more or less results.</p>
 
-<h3 id="result-set-iteration">Result set iteration<a class="anchor" href="#result-set-iteration" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h3 id="result-set-iteration" class="target">Result set iteration<a class="anchor" href="#result-set-iteration" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h3>
 
 <p>The fetch size limits the number of results that are returned in one
@@ -191,7 +301,7 @@ advance, in order to avoid the performance hit at the end of each page:</p>
     <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">row</span><span class="o">);</span>
 <span class="o">}</span>
 </code></pre>
-<h3 id="saving-and-reusing-the-paging-state">Saving and reusing the paging state<a class="anchor" href="#saving-and-reusing-the-paging-state" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h3 id="saving-and-reusing-the-paging-state" class="target">Saving and reusing the paging state<a class="anchor" href="#saving-and-reusing-the-paging-state" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h3>
 
 <p>Sometimes it is convenient to save the paging state in order to restore
@@ -276,7 +386,7 @@ serialized with protocol v2, so trying to reuse it will fail.</li>
 <p>If this is not acceptable for you, you might want to consider the unsafe
 API described in the next section.</p>
 
-<h4 id="unsafe-api">Unsafe API<a class="anchor" href="#unsafe-api" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h4 id="unsafe-api" class="target">Unsafe API<a class="anchor" href="#unsafe-api" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h4>
 
 <p>As an alternative to the standard API, there are two methods that
@@ -304,7 +414,7 @@ implementing your own validation logic (for example, signing the raw
 state with a private key).</li>
 </ul>
 
-<h3 id="offset-queries">Offset queries<a class="anchor" href="#offset-queries" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h3 id="offset-queries" class="target">Offset queries<a class="anchor" href="#offset-queries" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h3>
 
 <p>Saving the paging state works well when you only let the user move from
@@ -355,41 +465,6 @@ of rows.</li>
 </ul>
 
 
-        </div>
-        <div class="col-md-3">
-          <div id="navigation" class="panel-group side-nav" data-spy="affix" data-offset-top="60" data-offset-bottom="80" role="tablist" aria-multiselectable="true">
-            <div id="table-of-contents-panel" class="panel panel-default">
-              <div id="table-of-contents-heading" class="panel-heading" role="tab">
-                <h4 class="panel-title">
-                  <a data-toggle="collapse" href="#table-of-contents" aria-expanded="true" aria-controls="table-of-contents">
-                    Contents<i class="pull-right glyphicon glyphicon-chevron-up"></i>
-                  </a>
-                </h4>
-              </div>
-              <div id="table-of-contents" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="table-of-contents-heading">
-                <div class="panel-body">
-                  <ol class="nav nav-pills nav-stacked toc"><li>
-<a href="#paging">Paging
-</a><ol class="nav nav-pills nav-stacked">
-<li><a href="#setting-the-fetch-size">Setting the fetch size
-</a></li>
-<li><a href="#result-set-iteration">Result set iteration
-</a></li>
-<li>
-<a href="#saving-and-reusing-the-paging-state">Saving and reusing the paging state
-</a><ol class="nav nav-pills nav-stacked"><li><a href="#unsafe-api">Unsafe API
-</a></li></ol>
-</li>
-<li><a href="#offset-queries">Offset queries
-</a></li>
-</ol>
-</li></ol>
-                </div>
-              </div>
-            </div>
-
-            
-          </div>
         </div>
       </div>
     </div>

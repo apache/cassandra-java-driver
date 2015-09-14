@@ -22,64 +22,47 @@
       <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
     <![endif]-->
   </head>
-  <body ng-app="docs" data-spy="scroll" data-target=".side-nav">
-    <header class="navbar navbar-default navbar-static-top" role="navigation">
-      <div class="container">
-        <div class="navbar-header">
-          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
-            <span class="sr-only">Toggle navigation</span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </button>
-          <a class="navbar-brand" href="../../">Java Driver for Apache Cassandra</a>
+  <body ng-app="docs" data-spy="scroll" data-target="#table-of-contents" data-offset="69">
+    <header class="container-fluid navbar">
+      <div class="row">
+        <div class="col-sm-4">
+          <a class="navbar-brand" href="../../"><img alt="Brand" src="../../../img/logo.png">Java Driver for Apache Cassandra</a>
         </div>
-        <div class="collapse navbar-collapse" ng-controller="search">
-          <ul class="nav navbar-nav">
-            
-            
-            
-            <li class="active">
-              <a href="../">Features</a>
-            </li>
-            
-            
-            <li>
-              <a href="../../changelog/">Changelog</a>
-            </li>
-            
-            
-            <li>
-              <a href="../../upgrade_guide/">Upgrading</a>
-            </li>
-            
-            
-            <li>
-              <a href="../../faq/">FAQ</a>
-            </li>
-            
-          </ul>
-          <form class="navbar-form form-search navbar-right dropdown visible-lg-block" ng-class="{open: hasResults}" role="search" ng-submit="submit()">
-            <div class="form-group has-feedback">
-              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.2.0-rc1')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+        <div class="col-md-4 col-md-offset-4">
+          <div class="row">
+            <div class="col-md-12">
+              <ul class="list-inline" role="nav">
+                <li><a href="https://academy.datastax.com/" class="navbar-link">DataStax Academy</a></li>
+                <li><a href="http://www.datastax.com/dev/blog" class="navbar-link">Tech Blog</a></li>
+                <li><a href="http://www.datastax.com/what-we-offer/products-services/support" class="navbar-link">Support</a></li>
+              </ul>
             </div>
-            <ul class="dropdown-menu" role="menu">
-              <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
-            </ul>
-          </form>
+          </div>
+          <div class="row">
+            <div class="col-md-8">
+              <form id="search" class="form-search dropdown visible-lg-block" ng-controller="search" ng-class="{open: hasResults}" role="search" ng-submit="submit()" data-spy="affix" data-offset-top="130">
+                <div class="form-group has-feedback">
+                  <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.2.0-rc1')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+                </div>
+                <ul class="dropdown-menu search-results" role="menu">
+                  <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
+                </ul>
+              </form>
+            </div>
+            <div class="col-md-4">
+              <a href="http://www.datastax.com/download" class="btn btn-primary btn-sm">Download</a>
+            </div>
+          </div>
         </div>
       </div>
-    </header>
-
-    <div class="container" id="content">
-      <div class="row">
-        <div class="col-md-9 content">
-          <nav class="crumbs">
+      <div class="row crumbs-wrapper">
+        <div class="col-md-12">
+          <nav id="crumbs" data-spy="affix" data-offset-top="130">
             <ol class="breadcrumb">
               
               <li>
-                <div class="dropdown">
-                  <button id="current-version" class="btn btn-default btn-sm" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <div class="btn-group">
+                  <button id="current-version" class="btn btn-default btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                     2.2.0-rc1
                     <span class="caret"></span>
                   </button>
@@ -96,6 +79,8 @@
                     <li><a href="../../../2.1.6/features/speculative_execution/">2.1.6</a></li>
                   
                     <li><a href="../../../2.1.5/">2.1.5</a></li>
+                  
+                    <li><a href="../../../2.0.11/features/speculative_execution/">2.0.11</a></li>
                   
                     <li><a href="../../../2.0.10.1/features/speculative_execution/">2.0.10.1</a></li>
                   
@@ -121,14 +106,149 @@
               
               
               <li class="active">Speculative query execution</li>
+              <li class="dropdown" id="table-of-contents">
+                <div class="btn-group">
+                  <button id="current-section" type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
+                    Jump to&#8230; <span class="caret"></span><span class="sr-only">Table of Contents</span>
+                  </button>
+                  <ul class="dropdown-menu nav nav-pills nav-stacked">
+                    <li>
+<a href="#speculative-query-execution">Speculative query execution
+</a><ul class="nav nav-pills nav-stacked">
+<li><a href="#query-idempotence">Query idempotence
+</a></li>
+<li>
+<a href="#enabling-speculative-executions">Enabling speculative executions
+</a><ul class="nav nav-pills nav-stacked">
+<li><a href="#constant-speculative-execution-policy">
+ConstantSpeculativeExecutionPolicy
+</a></li>
+<li><a href="#percentile-speculative-execution-policy">
+PercentileSpeculativeExecutionPolicy
+</a></li>
+<li><a href="#using-your-own">Using your own
+</a></li>
+</ul>
+</li>
+<li><a href="#how-speculative-executions-affect-retries">How speculative executions affect retries
+</a></li>
+<li>
+<a href="#tuning-and-practical-details">Tuning and practical details
+</a><ul class="nav nav-pills nav-stacked">
+<li><a href="#stream-id-exhaustion">Stream id exhaustion
+</a></li>
+<li><a href="#request-ordering-and-client-timestamps">Request ordering and client timestamps
+</a></li>
+</ul>
+</li>
+</ul>
+</li>
+                  </ul>
+                </div>
+              </li>
               
               
               
             </ol>
           </nav>
+        </div>
+      </div>
+    </header>
+
+    <div class="container-fluid" id="content">
+      <div class="row">
+        <div class="col-md-3">
+          <div id="navigation" class="side-nav" role="tablist" aria-multiselectable="true">
+            <h3>Contents</h3>
+            <ul class="nav nav-pills nav-stacked">
+  
+  
+  
+  <li><a href="../../changelog/">Changelog <small>page</small></a></li>
+  
+  
+  
+  
+  <li class="active">
+    <a href="../">Features <small>page</small></a>
+    <ul class="nav nav-pills nav-stacked">
+  
+  
+  
+  <li><a href="../address_resolution/">Address resolution <small>page</small></a></li>
+  
+  
+  
+  
+  <li><a href="../pooling/">Connection pooling <small>page</small></a></li>
+  
+  
+  
+  
+  <li><a href="../custom_payloads/">Custom Payloads <small>page</small></a></li>
+  
+  
+  
+  
+  <li><a href="../logging/">Logging <small>page</small></a></li>
+  
+  
+  
+  
+  <li><a href="../metadata/">Metadata <small>page</small></a></li>
+  
+  
+  
+  
+  <li><a href="../native_protocol/">Native protocol <small>page</small></a></li>
+  
+  
+  
+  
+  <li><a href="../paging/">Paging <small>page</small></a></li>
+  
+  
+  
+  
+  <li><a href="../query_timestamps/">Query timestamps <small>page</small></a></li>
+  
+  
+  
+  
+  <li class="active">
+    <a href="./" class="current">Speculative query execution <small>page</small></a>
+    
+  </li>
+  
+  
+  
+  
+  <li><a href="../shaded_jar/">Using the shaded JAR <small>page</small></a></li>
+  
+  
+</ul>
+
+  </li>
+  
+  
+  
+  
+  <li><a href="../../faq/">Frequently Asked Questions <small>page</small></a></li>
+  
+  
+  
+  
+  <li><a href="../../upgrade_guide/">Upgrade guide <small>page</small></a></li>
+  
+  
+</ul>
+
+          </div>
+        </div>
+        <div class="col-md-9 content">
           
 
-<h2 id="speculative-query-execution">Speculative query execution<a class="anchor" href="#speculative-query-execution" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h2 id="speculative-query-execution" class="target">Speculative query execution<a class="anchor" href="#speculative-query-execution" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h2>
 
 <p>Sometimes a Cassandra node might be experiencing difficulties (ex: long
@@ -147,7 +267,7 @@ whichever node replies faster “wins” and completes the client query:</p>
 <p>Speculative executions are <strong>disabled</strong> by default. The following
 sections cover the practical details and how to enable them.</p>
 
-<h3 id="query-idempotence">Query idempotence<a class="anchor" href="#query-idempotence" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h3 id="query-idempotence" class="target">Query idempotence<a class="anchor" href="#query-idempotence" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h3>
 
 <p>One important aspect to consider is whether queries are idempotent, i.e.
@@ -196,7 +316,7 @@ default cluster-wide:</p>
 <pre class="highlight"><code><span class="c1">// Make all statements idempotent by default:</span>
 <span class="n">cluster</span><span class="o">.</span><span class="na">getConfiguration</span><span class="o">().</span><span class="na">getQueryOptions</span><span class="o">().</span><span class="na">setDefaultIdempotence</span><span class="o">(</span><span class="kc">true</span><span class="o">);</span>
 </code></pre>
-<h3 id="enabling-speculative-executions">Enabling speculative executions<a class="anchor" href="#enabling-speculative-executions" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h3 id="enabling-speculative-executions" class="target">Enabling speculative executions<a class="anchor" href="#enabling-speculative-executions" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h3>
 
 <p>Speculative executions are controlled by an instance of
@@ -206,7 +326,7 @@ speculative execution will be triggered.</p>
 
 <p>Two implementations are provided with the driver:</p>
 
-<h4 id="constant-speculative-execution-policy">
+<h4 id="constant-speculative-execution-policy" class="target">
 <a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/policies/ConstantSpeculativeExecutionPolicy.html">ConstantSpeculativeExecutionPolicy</a><a class="anchor" href="#constant-speculative-execution-policy" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h4>
 
@@ -231,7 +351,7 @@ speculative execution on another node;</li>
 another speculative execution on a third node.</li>
 </ul>
 
-<h4 id="percentile-speculative-execution-policy">
+<h4 id="percentile-speculative-execution-policy" class="target">
 <a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/policies/PercentileSpeculativeExecutionPolicy.html">PercentileSpeculativeExecutionPolicy</a><a class="anchor" href="#percentile-speculative-execution-policy" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h4>
 
@@ -280,13 +400,13 @@ policy does not do this itself):</p>
 logger (see the <a href="../logging/">Logging</a> section). In that case, you would
 create a single tracker object and share it with both components.</p>
 
-<h4 id="using-your-own">Using your own<a class="anchor" href="#using-your-own" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h4 id="using-your-own" class="target">Using your own<a class="anchor" href="#using-your-own" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h4>
 
 <p>As with all policies, you are free to provide your own by implementing
 <code>SpeculativeExecutionPolicy</code>.</p>
 
-<h3 id="how-speculative-executions-affect-retries">How speculative executions affect retries<a class="anchor" href="#how-speculative-executions-affect-retries" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h3 id="how-speculative-executions-affect-retries" class="target">How speculative executions affect retries<a class="anchor" href="#how-speculative-executions-affect-retries" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h3>
 
 <p>Regardless of speculative executions, the driver has a retry mechanism:</p>
@@ -305,7 +425,7 @@ parallel execution will trigger retries independently:</p>
 <p>The only impact is that all executions of the same query always share
 the same query plan, so each host will be used by at most one execution.</p>
 
-<h3 id="tuning-and-practical-details">Tuning and practical details<a class="anchor" href="#tuning-and-practical-details" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h3 id="tuning-and-practical-details" class="target">Tuning and practical details<a class="anchor" href="#tuning-and-practical-details" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h3>
 
 <p>The goal of speculative executions is to improve overall latency (the
@@ -319,7 +439,7 @@ individual requests, so throughput will not necessarily improve.</p>
 It should only be a few percents of the total number of requests
 (<a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/Metrics.html#getRequestsTimer()">cluster.getMetrics().getRequestsTimer().getCount()</a>).</p>
 
-<h4 id="stream-id-exhaustion">Stream id exhaustion<a class="anchor" href="#stream-id-exhaustion" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h4 id="stream-id-exhaustion" class="target">Stream id exhaustion<a class="anchor" href="#stream-id-exhaustion" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h4>
 
 <p>One side-effect of speculative executions is that many requests are
@@ -347,7 +467,7 @@ sustained. If you’re unsure of which native protocol version you’re
 using, you can check with
 <a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/ProtocolOptions.html#getProtocolVersion()">cluster.getConfiguration().getProtocolOptions().getProtocolVersion()</a>.</p>
 
-<h4 id="request-ordering-and-client-timestamps">Request ordering and client timestamps<a class="anchor" href="#request-ordering-and-client-timestamps" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h4 id="request-ordering-and-client-timestamps" class="target">Request ordering and client timestamps<a class="anchor" href="#request-ordering-and-client-timestamps" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h4>
 
 <p>Another issue that might arise is that you get unintuitive results
@@ -375,56 +495,6 @@ you’re using native protocol v3 or more, the driver already does this
 automatically.</p>
 
 
-        </div>
-        <div class="col-md-3">
-          <div id="navigation" class="panel-group side-nav" data-spy="affix" data-offset-top="60" data-offset-bottom="80" role="tablist" aria-multiselectable="true">
-            <div id="table-of-contents-panel" class="panel panel-default">
-              <div id="table-of-contents-heading" class="panel-heading" role="tab">
-                <h4 class="panel-title">
-                  <a data-toggle="collapse" href="#table-of-contents" aria-expanded="true" aria-controls="table-of-contents">
-                    Contents<i class="pull-right glyphicon glyphicon-chevron-up"></i>
-                  </a>
-                </h4>
-              </div>
-              <div id="table-of-contents" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="table-of-contents-heading">
-                <div class="panel-body">
-                  <ol class="nav nav-pills nav-stacked toc"><li>
-<a href="#speculative-query-execution">Speculative query execution
-</a><ol class="nav nav-pills nav-stacked">
-<li><a href="#query-idempotence">Query idempotence
-</a></li>
-<li>
-<a href="#enabling-speculative-executions">Enabling speculative executions
-</a><ol class="nav nav-pills nav-stacked">
-<li><a href="#constant-speculative-execution-policy">
-ConstantSpeculativeExecutionPolicy
-</a></li>
-<li><a href="#percentile-speculative-execution-policy">
-PercentileSpeculativeExecutionPolicy
-</a></li>
-<li><a href="#using-your-own">Using your own
-</a></li>
-</ol>
-</li>
-<li><a href="#how-speculative-executions-affect-retries">How speculative executions affect retries
-</a></li>
-<li>
-<a href="#tuning-and-practical-details">Tuning and practical details
-</a><ol class="nav nav-pills nav-stacked">
-<li><a href="#stream-id-exhaustion">Stream id exhaustion
-</a></li>
-<li><a href="#request-ordering-and-client-timestamps">Request ordering and client timestamps
-</a></li>
-</ol>
-</li>
-</ol>
-</li></ol>
-                </div>
-              </div>
-            </div>
-
-            
-          </div>
         </div>
       </div>
     </div>

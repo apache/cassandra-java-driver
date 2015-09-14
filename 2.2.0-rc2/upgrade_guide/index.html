@@ -22,64 +22,47 @@
       <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
     <![endif]-->
   </head>
-  <body ng-app="docs" data-spy="scroll" data-target=".side-nav">
-    <header class="navbar navbar-default navbar-static-top" role="navigation">
-      <div class="container">
-        <div class="navbar-header">
-          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
-            <span class="sr-only">Toggle navigation</span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </button>
-          <a class="navbar-brand" href="../">Java Driver for Apache Cassandra</a>
+  <body ng-app="docs" data-spy="scroll" data-target="#table-of-contents" data-offset="69">
+    <header class="container-fluid navbar">
+      <div class="row">
+        <div class="col-sm-4">
+          <a class="navbar-brand" href="../"><img alt="Brand" src="../../img/logo.png">Java Driver for Apache Cassandra</a>
         </div>
-        <div class="collapse navbar-collapse" ng-controller="search">
-          <ul class="nav navbar-nav">
-            
-            
-            
-            <li>
-              <a href="../features/">Features</a>
-            </li>
-            
-            
-            <li>
-              <a href="../changelog/">Changelog</a>
-            </li>
-            
-            
-            <li class="active">
-              <a href="./">Upgrading</a>
-            </li>
-            
-            
-            <li>
-              <a href="../faq/">FAQ</a>
-            </li>
-            
-          </ul>
-          <form class="navbar-form form-search navbar-right dropdown visible-lg-block" ng-class="{open: hasResults}" role="search" ng-submit="submit()">
-            <div class="form-group has-feedback">
-              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.2.0-rc2')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+        <div class="col-md-4 col-md-offset-4">
+          <div class="row">
+            <div class="col-md-12">
+              <ul class="list-inline" role="nav">
+                <li><a href="https://academy.datastax.com/" class="navbar-link">DataStax Academy</a></li>
+                <li><a href="http://www.datastax.com/dev/blog" class="navbar-link">Tech Blog</a></li>
+                <li><a href="http://www.datastax.com/what-we-offer/products-services/support" class="navbar-link">Support</a></li>
+              </ul>
             </div>
-            <ul class="dropdown-menu" role="menu">
-              <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
-            </ul>
-          </form>
+          </div>
+          <div class="row">
+            <div class="col-md-8">
+              <form id="search" class="form-search dropdown visible-lg-block" ng-controller="search" ng-class="{open: hasResults}" role="search" ng-submit="submit()" data-spy="affix" data-offset-top="130">
+                <div class="form-group has-feedback">
+                  <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.2.0-rc2')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+                </div>
+                <ul class="dropdown-menu search-results" role="menu">
+                  <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
+                </ul>
+              </form>
+            </div>
+            <div class="col-md-4">
+              <a href="http://www.datastax.com/download" class="btn btn-primary btn-sm">Download</a>
+            </div>
+          </div>
         </div>
       </div>
-    </header>
-
-    <div class="container" id="content">
-      <div class="row">
-        <div class="col-md-9 content">
-          <nav class="crumbs">
+      <div class="row crumbs-wrapper">
+        <div class="col-md-12">
+          <nav id="crumbs" data-spy="affix" data-offset-top="130">
             <ol class="breadcrumb">
               
               <li>
-                <div class="dropdown">
-                  <button id="current-version" class="btn btn-default btn-sm" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <div class="btn-group">
+                  <button id="current-version" class="btn btn-default btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                     2.2.0-rc2
                     <span class="caret"></span>
                   </button>
@@ -96,6 +79,8 @@
                     <li><a href="../../2.1.6/">2.1.6</a></li>
                   
                     <li><a href="../../2.1.5/">2.1.5</a></li>
+                  
+                    <li><a href="../../2.0.11/upgrade_guide/">2.0.11</a></li>
                   
                     <li><a href="../../2.0.10.1/">2.0.10.1</a></li>
                   
@@ -115,20 +100,120 @@
               
               
               <li class="active">Upgrade guide</li>
+              <li class="dropdown" id="table-of-contents">
+                <div class="btn-group">
+                  <button id="current-section" type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
+                    Jump to&#8230; <span class="caret"></span><span class="sr-only">Table of Contents</span>
+                  </button>
+                  <ul class="dropdown-menu nav nav-pills nav-stacked">
+                    <li>
+<a href="#upgrade-guide">Upgrade guide
+</a><ul class="nav nav-pills nav-stacked">
+<li><a href="#2-2-0">2.2.0
+</a></li>
+<li><a href="#2-1-7">2.1.7
+</a></li>
+<li><a href="#2-1-6">2.1.6
+</a></li>
+<li>
+<a href="#2-1-2">2.1.2
+</a><ul class="nav nav-pills nav-stacked">
+<li><a href="#user-api-changes">User API Changes
+</a></li>
+<li><a href="#internal-api-changes">Internal API Changes
+</a></li>
+<li><a href="#new-features">New features
+</a></li>
+</ul>
+</li>
+<li>
+<a href="#2-1-1">2.1.1
+</a><ul class="nav nav-pills nav-stacked"><li><a href="#internal-api-changes">Internal API Changes
+</a></li></ul>
+</li>
+<li>
+<a href="#2-1-0">2.1.0
+</a><ul class="nav nav-pills nav-stacked">
+<li><a href="#user-api-changes">User API Changes
+</a></li>
+<li><a href="#internal-api-changes">Internal API Changes
+</a></li>
+</ul>
+</li>
+<li><a href="#2-0-11">2.0.11
+</a></li>
+<li><a href="#2-0-x-to-2-0-10">
+2.0.x to 2.0.10
+</a></li>
+<li>
+<a href="#1-0-to-2-0">1.0 to 2.0
+</a><ul class="nav nav-pills nav-stacked">
+<li><a href="#main-api-changes">Main API changes
+</a></li>
+<li><a href="#other-api-changes">Other API Changes
+</a></li>
+<li><a href="#features-available-only-with-cassandra-2-0">Features available only with Cassandra 2.0
+</a></li>
+</ul>
+</li>
+</ul>
+</li>
+                  </ul>
+                </div>
+              </li>
               
               
               
             </ol>
           </nav>
+        </div>
+      </div>
+    </header>
+
+    <div class="container-fluid" id="content">
+      <div class="row">
+        <div class="col-md-3">
+          <div id="navigation" class="side-nav" role="tablist" aria-multiselectable="true">
+            <h3>Contents</h3>
+            <ul class="nav nav-pills nav-stacked">
+  
+  
+  
+  <li><a href="../changelog/">Changelog <small>page</small></a></li>
+  
+  
+  
+  
+  <li><a href="../features/">Features <small>page</small></a></li>
+  
+  
+  
+  
+  <li><a href="../faq/">Frequently Asked Questions <small>page</small></a></li>
+  
+  
+  
+  
+  <li class="active">
+    <a href="./" class="current">Upgrade guide <small>page</small></a>
+    
+  </li>
+  
+  
+</ul>
+
+          </div>
+        </div>
+        <div class="col-md-9 content">
           
 
-<h2 id="upgrade-guide">Upgrade guide<a class="anchor" href="#upgrade-guide" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h2 id="upgrade-guide" class="target">Upgrade guide<a class="anchor" href="#upgrade-guide" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h2>
 
 <p>The purpose of this guide is to detail changes made by successive
 versions of the Java driver.</p>
 
-<h3 id="2-2-0">2.2.0<a class="anchor" href="#2-2-0" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h3 id="2-2-0" class="target">2.2.0<a class="anchor" href="#2-2-0" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h3>
 
 <p>This version brings parity with Cassandra 2.2.</p>
@@ -429,7 +514,7 @@ they match the schema, in anticipation for the schema generation features
 that will be added in a future version.</p></li>
 </ol>
 
-<h3 id="2-1-7">2.1.7<a class="anchor" href="#2-1-7" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h3 id="2-1-7" class="target">2.1.7<a class="anchor" href="#2-1-7" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h3>
 
 <p>This version brings a few changes in the driver’s behavior; none of them break
@@ -491,18 +576,18 @@ If you know that the CQL functions or expressions are safe, use
 <code>setIdempotent(true)</code> on the statement.</li>
 </ol>
 
-<h3 id="2-1-6">2.1.6<a class="anchor" href="#2-1-6" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h3 id="2-1-6" class="target">2.1.6<a class="anchor" href="#2-1-6" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h3>
 
 <p>See <a href="#2-0-x-to-2-0-10">2.0.10</a>.</p>
 
-<h3 id="2-1-2">2.1.2<a class="anchor" href="#2-1-2" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h3 id="2-1-2" class="target">2.1.2<a class="anchor" href="#2-1-2" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h3>
 
 <p>2.1.2 brings important internal changes with native protocol v3 support, but
 the impact on the public API has been kept as low as possible.</p>
 
-<h4 id="user-api-changes">User API Changes<a class="anchor" href="#user-api-changes" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h4 id="user-api-changes" class="target">User API Changes<a class="anchor" href="#user-api-changes" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h4>
 
 <ol>
@@ -512,7 +597,7 @@ version that takes an <code>int</code> (the exception being <code>RegularStateme
 described below). For new code, prefer the enum version.</li>
 </ol>
 
-<h4 id="internal-api-changes">Internal API Changes<a class="anchor" href="#internal-api-changes" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h4 id="internal-api-changes" class="target">Internal API Changes<a class="anchor" href="#internal-api-changes" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h4>
 
 <ol>
@@ -529,7 +614,7 @@ your child class).</p></li>
 hardly any reason to build instances of that class from client code.</p></li>
 </ol>
 
-<h4 id="new-features">New features<a class="anchor" href="#new-features" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h4 id="new-features" class="target">New features<a class="anchor" href="#new-features" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h4>
 
 <p>These features are only active when the native protocol v3 is in use.</p>
@@ -554,10 +639,10 @@ Cassandra unless <code>USING TIMESTAMP</code> was specified).</p></li>
 it will honor the serial consistency level for the batch.</p></li>
 </ol>
 
-<h3 id="2-1-1">2.1.1<a class="anchor" href="#2-1-1" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h3 id="2-1-1" class="target">2.1.1<a class="anchor" href="#2-1-1" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h3>
 
-<h4 id="internal-api-changes">Internal API Changes<a class="anchor" href="#internal-api-changes" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h4 id="internal-api-changes" class="target">Internal API Changes<a class="anchor" href="#internal-api-changes" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h4>
 
 <ol>
@@ -565,10 +650,10 @@ it will honor the serial consistency level for the batch.</p></li>
 only affect clients that provide their own implementation of this interface.</li>
 </ol>
 
-<h3 id="2-1-0">2.1.0<a class="anchor" href="#2-1-0" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h3 id="2-1-0" class="target">2.1.0<a class="anchor" href="#2-1-0" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h3>
 
-<h4 id="user-api-changes">User API Changes<a class="anchor" href="#user-api-changes" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h4 id="user-api-changes" class="target">User API Changes<a class="anchor" href="#user-api-changes" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h4>
 
 <ol>
@@ -586,7 +671,7 @@ and null variables, so we don’t want clients relying on the “leave unset to
 set to <code>null</code>” behavior.</p></li>
 </ol>
 
-<h4 id="internal-api-changes">Internal API Changes<a class="anchor" href="#internal-api-changes" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h4 id="internal-api-changes" class="target">Internal API Changes<a class="anchor" href="#internal-api-changes" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h4>
 
 <p>The changes listed in this section should normally not impact end users of the
@@ -607,7 +692,7 @@ the protocol version in use
 (<code>cluster.getConfiguration().getProtocolOptions().getProtocolVersion()</code>).</p></li>
 </ol>
 
-<h3 id="2-0-11">2.0.11<a class="anchor" href="#2-0-11" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h3 id="2-0-11" class="target">2.0.11<a class="anchor" href="#2-0-11" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h3>
 
 <ol>
@@ -625,7 +710,7 @@ If you know that the CQL functions or expressions are safe, use
 <code>setIdempotent(true)</code> on the statement.</li>
 </ol>
 
-<h3 id="2-0-x-to-2-0-10">
+<h3 id="2-0-x-to-2-0-10" class="target">
 <a name="2-0-x-to-2-0-10"></a>2.0.x to 2.0.10<a class="anchor" href="#2-0-x-to-2-0-10" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h3>
 
@@ -656,7 +741,7 @@ some fields that were previously initialized in the constructor are now set when
 the <code>init()</code> method is called. This is unlikely to affect regular driver users.</p></li>
 </ol>
 
-<h3 id="1-0-to-2-0">1.0 to 2.0<a class="anchor" href="#1-0-to-2-0" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h3 id="1-0-to-2-0" class="target">1.0 to 2.0<a class="anchor" href="#1-0-to-2-0" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h3>
 
 <p>We used the opportunity of a major version bump to incorporate your feedback
@@ -680,7 +765,7 @@ affect a minor number of applications and will be detected by compile time
 errors anyway. It is ok to skip those initially and only come back to them if
 you have trouble compiling your application after an upgrade.</p>
 
-<h4 id="main-api-changes">Main API changes<a class="anchor" href="#main-api-changes" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h4 id="main-api-changes" class="target">Main API changes<a class="anchor" href="#main-api-changes" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h4>
 
 <ol>
@@ -735,7 +820,7 @@ to those markers). If need be, it is possible to force the old behavior by
 using the new <code>setForceNoValues()</code> method.</p></li>
 </ol>
 
-<h4 id="other-api-changes">Other API Changes<a class="anchor" href="#other-api-changes" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h4 id="other-api-changes" class="target">Other API Changes<a class="anchor" href="#other-api-changes" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h4>
 
 <ol>
@@ -782,7 +867,7 @@ will now need to use <code>Host#isUp</code> and <code>Cluster#register</code> if
 class.</p></li>
 </ol>
 
-<h4 id="features-available-only-with-cassandra-2-0">Features available only with Cassandra 2.0<a class="anchor" href="#features-available-only-with-cassandra-2-0" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h4 id="features-available-only-with-cassandra-2-0" class="target">Features available only with Cassandra 2.0<a class="anchor" href="#features-available-only-with-cassandra-2-0" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h4>
 
 <p>This section details the biggest additions to 2.0 API wise. It is not an
@@ -838,77 +923,6 @@ as well as a mean to force the pre-fetching of the next page (<code>ResultSet#fe
 </ol>
 
 
-        </div>
-        <div class="col-md-3">
-          <div id="navigation" class="panel-group side-nav" data-spy="affix" data-offset-top="60" data-offset-bottom="80" role="tablist" aria-multiselectable="true">
-            <div id="table-of-contents-panel" class="panel panel-default">
-              <div id="table-of-contents-heading" class="panel-heading" role="tab">
-                <h4 class="panel-title">
-                  <a data-toggle="collapse" href="#table-of-contents" aria-expanded="true" aria-controls="table-of-contents">
-                    Contents<i class="pull-right glyphicon glyphicon-chevron-up"></i>
-                  </a>
-                </h4>
-              </div>
-              <div id="table-of-contents" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="table-of-contents-heading">
-                <div class="panel-body">
-                  <ol class="nav nav-pills nav-stacked toc"><li>
-<a href="#upgrade-guide">Upgrade guide
-</a><ol class="nav nav-pills nav-stacked">
-<li><a href="#2-2-0">2.2.0
-</a></li>
-<li><a href="#2-1-7">2.1.7
-</a></li>
-<li><a href="#2-1-6">2.1.6
-</a></li>
-<li>
-<a href="#2-1-2">2.1.2
-</a><ol class="nav nav-pills nav-stacked">
-<li><a href="#user-api-changes">User API Changes
-</a></li>
-<li><a href="#internal-api-changes">Internal API Changes
-</a></li>
-<li><a href="#new-features">New features
-</a></li>
-</ol>
-</li>
-<li>
-<a href="#2-1-1">2.1.1
-</a><ol class="nav nav-pills nav-stacked"><li><a href="#internal-api-changes">Internal API Changes
-</a></li></ol>
-</li>
-<li>
-<a href="#2-1-0">2.1.0
-</a><ol class="nav nav-pills nav-stacked">
-<li><a href="#user-api-changes">User API Changes
-</a></li>
-<li><a href="#internal-api-changes">Internal API Changes
-</a></li>
-</ol>
-</li>
-<li><a href="#2-0-11">2.0.11
-</a></li>
-<li><a href="#2-0-x-to-2-0-10">
-2.0.x to 2.0.10
-</a></li>
-<li>
-<a href="#1-0-to-2-0">1.0 to 2.0
-</a><ol class="nav nav-pills nav-stacked">
-<li><a href="#main-api-changes">Main API changes
-</a></li>
-<li><a href="#other-api-changes">Other API Changes
-</a></li>
-<li><a href="#features-available-only-with-cassandra-2-0">Features available only with Cassandra 2.0
-</a></li>
-</ol>
-</li>
-</ol>
-</li></ol>
-                </div>
-              </div>
-            </div>
-
-            
-          </div>
         </div>
       </div>
     </div>

@@ -22,64 +22,47 @@
       <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
     <![endif]-->
   </head>
-  <body ng-app="docs" data-spy="scroll" data-target=".side-nav">
-    <header class="navbar navbar-default navbar-static-top" role="navigation">
-      <div class="container">
-        <div class="navbar-header">
-          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
-            <span class="sr-only">Toggle navigation</span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </button>
-          <a class="navbar-brand" href="../../../">Java Driver for Apache Cassandra</a>
+  <body ng-app="docs" data-spy="scroll" data-target="#table-of-contents" data-offset="69">
+    <header class="container-fluid navbar">
+      <div class="row">
+        <div class="col-sm-4">
+          <a class="navbar-brand" href="../../../"><img alt="Brand" src="../../../img/logo.png">Java Driver for Apache Cassandra</a>
         </div>
-        <div class="collapse navbar-collapse" ng-controller="search">
-          <ul class="nav navbar-nav">
-            
-            
-            
-            <li class="active">
-              <a href="../../">Features</a>
-            </li>
-            
-            
-            <li>
-              <a href="../../../changelog/">Changelog</a>
-            </li>
-            
-            
-            <li>
-              <a href="../../../upgrade_guide/">Upgrading</a>
-            </li>
-            
-            
-            <li>
-              <a href="../../../faq/">FAQ</a>
-            </li>
-            
-          </ul>
-          <form class="navbar-form form-search navbar-right dropdown visible-lg-block" ng-class="{open: hasResults}" role="search" ng-submit="submit()">
-            <div class="form-group has-feedback">
-              <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.2.0-rc3')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+        <div class="col-md-4 col-md-offset-4">
+          <div class="row">
+            <div class="col-md-12">
+              <ul class="list-inline" role="nav">
+                <li><a href="https://academy.datastax.com/" class="navbar-link">DataStax Academy</a></li>
+                <li><a href="http://www.datastax.com/dev/blog" class="navbar-link">Tech Blog</a></li>
+                <li><a href="http://www.datastax.com/what-we-offer/products-services/support" class="navbar-link">Support</a></li>
+              </ul>
             </div>
-            <ul class="dropdown-menu" role="menu">
-              <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
-            </ul>
-          </form>
+          </div>
+          <div class="row">
+            <div class="col-md-8">
+              <form id="search" class="form-search dropdown visible-lg-block" ng-controller="search" ng-class="{open: hasResults}" role="search" ng-submit="submit()" data-spy="affix" data-offset-top="130">
+                <div class="form-group has-feedback">
+                  <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.2.0-rc3')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+                </div>
+                <ul class="dropdown-menu search-results" role="menu">
+                  <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
+                </ul>
+              </form>
+            </div>
+            <div class="col-md-4">
+              <a href="http://www.datastax.com/download" class="btn btn-primary btn-sm">Download</a>
+            </div>
+          </div>
         </div>
       </div>
-    </header>
-
-    <div class="container" id="content">
-      <div class="row">
-        <div class="col-md-9 content">
-          <nav class="crumbs">
+      <div class="row crumbs-wrapper">
+        <div class="col-md-12">
+          <nav id="crumbs" data-spy="affix" data-offset-top="130">
             <ol class="breadcrumb">
               
               <li>
-                <div class="dropdown">
-                  <button id="current-version" class="btn btn-default btn-sm" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <div class="btn-group">
+                  <button id="current-version" class="btn btn-default btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                     2.2.0-rc3
                     <span class="caret"></span>
                   </button>
@@ -96,6 +79,8 @@
                     <li><a href="../../../2.1.6/">2.1.6</a></li>
                   
                     <li><a href="../../../2.1.5/">2.1.5</a></li>
+                  
+                    <li><a href="../../../2.0.11/">2.0.11</a></li>
                   
                     <li><a href="../../../2.0.10.1/">2.0.10.1</a></li>
                   
@@ -127,14 +112,183 @@
               
               
               <li class="active">Using the mapper</li>
+              <li class="dropdown" id="table-of-contents">
+                <div class="btn-group">
+                  <button id="current-section" type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
+                    Jump to&#8230; <span class="caret"></span><span class="sr-only">Table of Contents</span>
+                  </button>
+                  <ul class="dropdown-menu nav nav-pills nav-stacked">
+                    <li>
+<a href="#using-the-mapper">Using the mapper
+</a><ul class="nav nav-pills nav-stacked">
+<li>
+<a href="#entity-mappers">Entity mappers
+</a><ul class="nav nav-pills nav-stacked">
+<li><a href="#basic-crud-operations">Basic CRUD operations
+</a></li>
+<li><a href="#mapper-options">Mapper options
+</a></li>
+<li><a href="#access-to-underlying-statements">Access to underlying Statements
+</a></li>
+<li><a href="#manual-mapping">Manual mapping
+</a></li>
+</ul>
+</li>
+<li>
+<a href="#accessors">Accessors
+</a><ul class="nav nav-pills nav-stacked">
+<li><a href="#parameters">Parameters
+</a></li>
+<li><a href="#return-type">Return type
+</a></li>
+<li><a href="#customizing-the-statement">Customizing the statement
+</a></li>
+</ul>
+</li>
+</ul>
+</li>
+                  </ul>
+                </div>
+              </li>
               
               
               
             </ol>
           </nav>
+        </div>
+      </div>
+    </header>
+
+    <div class="container-fluid" id="content">
+      <div class="row">
+        <div class="col-md-3">
+          <div id="navigation" class="side-nav" role="tablist" aria-multiselectable="true">
+            <h3>Contents</h3>
+            <ul class="nav nav-pills nav-stacked">
+  
+  
+  
+  <li><a href="../../../changelog/">Changelog <small>page</small></a></li>
+  
+  
+  
+  
+  <li class="active">
+    <a href="../../">Features <small>page</small></a>
+    <ul class="nav nav-pills nav-stacked">
+  
+  
+  
+  <li><a href="../../address_resolution/">Address resolution <small>page</small></a></li>
+  
+  
+  
+  
+  <li><a href="../../compression/">Compression <small>page</small></a></li>
+  
+  
+  
+  
+  <li><a href="../../pooling/">Connection pooling <small>page</small></a></li>
+  
+  
+  
+  
+  <li><a href="../../custom_codecs/">Custom Codecs <small>page</small></a></li>
+  
+  
+  
+  
+  <li><a href="../../custom_payloads/">Custom Payloads <small>page</small></a></li>
+  
+  
+  
+  
+  <li><a href="../../logging/">Logging <small>page</small></a></li>
+  
+  
+  
+  
+  <li><a href="../../metadata/">Metadata <small>page</small></a></li>
+  
+  
+  
+  
+  <li><a href="../../native_protocol/">Native protocol <small>page</small></a></li>
+  
+  
+  
+  
+  <li class="active">
+    <a href="../">Object Mapper <small>page</small></a>
+    <ul class="nav nav-pills nav-stacked">
+  
+  
+  
+  <li><a href="../creating/">Definition of mapped classes <small>page</small></a></li>
+  
+  
+  
+  
+  <li class="active">
+    <a href="./" class="current">Using the mapper <small>page</small></a>
+    
+  </li>
+  
+  
+  
+  
+  <li><a href="../custom_codecs/">Using custom codecs <small>page</small></a></li>
+  
+  
+</ul>
+
+  </li>
+  
+  
+  
+  
+  <li><a href="../../paging/">Paging <small>page</small></a></li>
+  
+  
+  
+  
+  <li><a href="../../query_timestamps/">Query timestamps <small>page</small></a></li>
+  
+  
+  
+  
+  <li><a href="../../speculative_execution/">Speculative query execution <small>page</small></a></li>
+  
+  
+  
+  
+  <li><a href="../../shaded_jar/">Using the shaded JAR <small>page</small></a></li>
+  
+  
+</ul>
+
+  </li>
+  
+  
+  
+  
+  <li><a href="../../../faq/">Frequently Asked Questions <small>page</small></a></li>
+  
+  
+  
+  
+  <li><a href="../../../upgrade_guide/">Upgrade guide <small>page</small></a></li>
+  
+  
+</ul>
+
+          </div>
+        </div>
+        <div class="col-md-9 content">
           
 
-<h2 id="using-the-mapper">Using the mapper<a class="anchor" href="#using-the-mapper" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h2 id="using-the-mapper" class="target">Using the mapper<a class="anchor" href="#using-the-mapper" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h2>
 
 <p>First, create a <a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/mapping/MappingManager.html">MappingManager</a>. It wraps an existing <a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/Session.html">Session</a>
@@ -149,7 +303,7 @@ after your <code>Session</code>.</p>
 previously done (this was not the case in previous driver versions; if
 this is a problem for you, see <code>MappingManager(session, protocolVersion)</code>).</p>
 
-<h3 id="entity-mappers">Entity mappers<a class="anchor" href="#entity-mappers" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h3 id="entity-mappers" class="target">Entity mappers<a class="anchor" href="#entity-mappers" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h3>
 
 <p>Each entity class (annotated with <code>@Table</code>) is managed by a dedicated
@@ -160,7 +314,7 @@ this is a problem for you, see <code>MappingManager(session, protocolVersion)</c
 calling <code>manager#mapper</code> more than once for the same class will return
 the previously generated mapper.</p>
 
-<h4 id="basic-crud-operations">Basic CRUD operations<a class="anchor" href="#basic-crud-operations" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h4 id="basic-crud-operations" class="target">Basic CRUD operations<a class="anchor" href="#basic-crud-operations" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h4>
 
 <p>To save an object, use <code>Mapper#save</code>:</p>
@@ -193,7 +347,7 @@ their asynchronous equivalents:</p>
 <span class="n">ListenableFuture</span><span class="o">&lt;</span><span class="n">User</span><span class="o">&gt;</span> <span class="n">userFuture</span> <span class="o">=</span> <span class="n">mapper</span><span class="o">.</span><span class="na">getAsync</span><span class="o">(</span><span class="n">userId</span><span class="o">);</span>
 <span class="n">ListenableFuture</span><span class="o">&lt;</span><span class="n">Void</span><span class="o">&gt;</span> <span class="n">deleteFuture</span> <span class="o">=</span> <span class="n">mapper</span><span class="o">.</span><span class="na">deleteAsync</span><span class="o">(</span><span class="n">userId</span><span class="o">);</span>
 </code></pre>
-<h4 id="mapper-options">Mapper options<a class="anchor" href="#mapper-options" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h4 id="mapper-options" class="target">Mapper options<a class="anchor" href="#mapper-options" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h4>
 
 <p>The basic CRUD operations accept additional options to customize the
@@ -251,7 +405,7 @@ annotation.</p>
 <span class="n">mapper</span><span class="o">.</span><span class="na">resetDefaultSaveOption</span><span class="o">();</span>
 <span class="n">mapper</span><span class="o">.</span><span class="na">resetDefaultDeleteOption</span><span class="o">();</span>
 </code></pre>
-<h4 id="access-to-underlying-statements">Access to underlying <code>Statement</code>s<a class="anchor" href="#access-to-underlying-statements" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h4 id="access-to-underlying-statements" class="target">Access to underlying <code>Statement</code>s<a class="anchor" href="#access-to-underlying-statements" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h4>
 
 <p>Instead of performing an operation directly, it’s possible to ask the
@@ -272,7 +426,7 @@ database given the <code>userId</code> provided. This method can also accept a
 mapped object instance.</li>
 </ul>
 
-<h4 id="manual-mapping">Manual mapping<a class="anchor" href="#manual-mapping" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h4 id="manual-mapping" class="target">Manual mapping<a class="anchor" href="#manual-mapping" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h4>
 
 <p><code>Mapper#map</code> provides a way to converts the results of a regular query:</p>
@@ -296,7 +450,7 @@ It provides methods <code>one()</code>, <code>all()</code>, <code>iterator()</co
 and <code>isExhausted()</code>. Note that iterating the <code>Result</code> will consume the
 <code>ResultSet</code>, and vice-versa.</p>
 
-<h3 id="accessors">Accessors<a class="anchor" href="#accessors" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h3 id="accessors" class="target">Accessors<a class="anchor" href="#accessors" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h3>
 
 <p><code>Accessor</code>s provide a way to map custom queries not supported by the
@@ -318,7 +472,7 @@ implementation:</p>
 <p>Like mappers, accessors are cached at the manager level and thus, are
 thread-safe/sharable.</p>
 
-<h4 id="parameters">Parameters<a class="anchor" href="#parameters" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h4 id="parameters" class="target">Parameters<a class="anchor" href="#parameters" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h4>
 
 <p>A query can have bind markers, that will be set with the method’s
@@ -340,7 +494,7 @@ the same as in <a href="http://localhost:9090/features/object_mapper/creating/#e
 <pre class="highlight"><code><span class="nd">@Query</span><span class="o">(</span><span class="s">"insert into user (key, gender) values (?,?)"</span><span class="o">)</span>
 <span class="n">ResultSet</span> <span class="nf">addUser</span><span class="p">(</span><span class="kt">int</span> <span class="n">key</span><span class="o">,</span> <span class="nd">@Enumerated</span><span class="o">(</span><span class="n">EnumType</span><span class="o">.</span><span class="na">ORDINAL</span><span class="o">)</span> <span class="n">Enum</span> <span class="n">value</span><span class="o">);</span>
 </code></pre>
-<h4 id="return-type">Return type<a class="anchor" href="#return-type" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h4 id="return-type" class="target">Return type<a class="anchor" href="#return-type" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h4>
 
 <p>The declared return type of each method affects how the query will get
@@ -386,7 +540,7 @@ executed:</p>
 <pre class="highlight"><code><span class="nd">@Query</span><span class="o">(</span><span class="s">"SELECT * FROM user"</span><span class="o">)</span>
 <span class="kd">public</span> <span class="n">ListenableFuture</span><span class="o">&lt;</span><span class="n">Result</span><span class="o">&lt;</span><span class="n">User</span><span class="o">&gt;&gt;</span> <span class="n">getAllAsync</span><span class="o">();</span>
 </code></pre>
-<h4 id="customizing-the-statement">Customizing the statement<a class="anchor" href="#customizing-the-statement" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h4 id="customizing-the-statement" class="target">Customizing the statement<a class="anchor" href="#customizing-the-statement" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h4>
 
 <p>It is possible to customize query parameters to include in a <code>Accessor</code>
@@ -398,54 +552,6 @@ query with the annotation <a href="http://docs.datastax.com/en/drivers/java/2.2/
 </code></pre>
 
 
-        </div>
-        <div class="col-md-3">
-          <div id="navigation" class="panel-group side-nav" data-spy="affix" data-offset-top="60" data-offset-bottom="80" role="tablist" aria-multiselectable="true">
-            <div id="table-of-contents-panel" class="panel panel-default">
-              <div id="table-of-contents-heading" class="panel-heading" role="tab">
-                <h4 class="panel-title">
-                  <a data-toggle="collapse" href="#table-of-contents" aria-expanded="true" aria-controls="table-of-contents">
-                    Contents<i class="pull-right glyphicon glyphicon-chevron-up"></i>
-                  </a>
-                </h4>
-              </div>
-              <div id="table-of-contents" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="table-of-contents-heading">
-                <div class="panel-body">
-                  <ol class="nav nav-pills nav-stacked toc"><li>
-<a href="#using-the-mapper">Using the mapper
-</a><ol class="nav nav-pills nav-stacked">
-<li>
-<a href="#entity-mappers">Entity mappers
-</a><ol class="nav nav-pills nav-stacked">
-<li><a href="#basic-crud-operations">Basic CRUD operations
-</a></li>
-<li><a href="#mapper-options">Mapper options
-</a></li>
-<li><a href="#access-to-underlying-statements">Access to underlying Statements
-</a></li>
-<li><a href="#manual-mapping">Manual mapping
-</a></li>
-</ol>
-</li>
-<li>
-<a href="#accessors">Accessors
-</a><ol class="nav nav-pills nav-stacked">
-<li><a href="#parameters">Parameters
-</a></li>
-<li><a href="#return-type">Return type
-</a></li>
-<li><a href="#customizing-the-statement">Customizing the statement
-</a></li>
-</ol>
-</li>
-</ol>
-</li></ol>
-                </div>
-              </div>
-            </div>
-
-            
-          </div>
         </div>
       </div>
     </div>
