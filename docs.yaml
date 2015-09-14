@@ -49,6 +49,8 @@ versions:
     ref: '2.1.6'
   - name: 2.1.5
     ref: '2.1.5'
+  - name: 2.0.11
+    ref: '2.0.11'
   - name: 2.0.10.1
     ref: '12f8840'
   - name: 2.0.10
