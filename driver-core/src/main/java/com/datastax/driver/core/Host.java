@@ -36,6 +36,7 @@ public class Host {
 
     private static final Logger logger = LoggerFactory.getLogger(Host.class);
 
+    static final Logger statesLogger = LoggerFactory.getLogger(Host.class.getName() + ".STATES");
 
     private final InetSocketAddress address;
 
@@ -44,7 +45,7 @@ public class Host {
     /** Ensures state change notifications for that host are handled serially */
     final ReentrantLock notificationsLock = new ReentrantLock(true);
 
-    private final ConvictionPolicy policy;
+    final ConvictionPolicy convictionPolicy;
     private final Cluster.Manager manager;
 
     // Tracks later reconnection attempts to that host so we avoid adding multiple tasks.
@@ -67,12 +68,12 @@ public class Host {
     // ClusterMetadata keeps one Host object per inet address and we rely on this (more precisely,
     // we rely on the fact that we can use Object equality as a valid equality), so don't use
     // that constructor but ClusterMetadata.getHost instead.
-    Host(InetSocketAddress address, ConvictionPolicy.Factory policy, Cluster.Manager manager) {
-        if (address == null || policy == null)
+    Host(InetSocketAddress address, ConvictionPolicy.Factory convictionPolicyFactory, Cluster.Manager manager) {
+        if (address == null || convictionPolicyFactory == null)
             throw new NullPointerException();
 
         this.address = address;
-        this.policy = policy.create(this);
+        this.convictionPolicy = convictionPolicyFactory.create(this, manager.reconnectionPolicy());
         this.manager = manager;
         this.defaultExecutionInfo = new ExecutionInfo(ImmutableList.of(this));
         this.state = State.ADDED;
@@ -274,15 +275,11 @@ public class Host {
 
     void setDown() {
         state = State.DOWN;
+        convictionPolicy.reset();
     }
 
     void setUp() {
-        policy.reset();
         state = State.UP;
-    }
-
-    boolean signalConnectionFailure(ConnectionException exception) {
-        return policy.addFailure(exception);
     }
 
     /**
@@ -312,26 +309,7 @@ public class Host {
         public void onUp(Host host);
 
         /**
-         * Called when a node is suspected to be dead.
-         * <p>
-         * A node is suspected to be dead when an error occurs on one of it's
-         * opened connection. As soon as an host is suspected, a connection attempt
-         * to that host is immediately tried. If this succeed, then it means that
-         * the connection was disfunctional but that the node was not really down.
-         * If this fails however, this means the node is truly dead, onDown() is
-         * called and further reconnection attempts are scheduled according to the
-         * {@link com.datastax.driver.core.policies.ReconnectionPolicy} in place.
-         * <p>
-         * When this event is triggered, it is possible to call the host
-         * {@link #getInitialReconnectionAttemptFuture} method to wait until the
-         * initial and immediate reconnection attempt succeed or fail.
-         * <p>
-         * Note that some StateListener may ignore that event. If a node that
-         * that is suspected down turns out to be truly down (that is, the driver
-         * cannot successfully connect to it right away), then {@link #onDown} will
-         * be called.
-         *
-         * @deprecated the suspicion mechanism has been disabled. This will never
+         * @deprecated the "suspicion" mechanism has been deprecated. This will never
          * get called.
          */
         @Deprecated

@@ -77,10 +77,7 @@ public class SimpleStatement extends RegularStatement {
      *
      * @param query the query string.
      * @param values values required for the execution of {@code query}.
-     *
-     * @throws IllegalArgumentException if one of {@code values} is not of a type
-     * corresponding to a CQL3 type, i.e. is not a Class that could be returned
-     * by {@link DataType#asJavaClass}.
+     * @throws IllegalArgumentException if the number of values is greater than 65535.
      */
     public SimpleStatement(String query, Object... values) {
         if (values.length > 65535)
@@ -133,6 +130,23 @@ public class SimpleStatement extends RegularStatement {
     @Override
     public boolean hasValues() {
         return values != null && values.length > 0;
+    }
+    
+    /**
+     * Returns the {@code i}th value as the Java type matching its CQL type.
+     *
+     * @param i the index to retrieve.
+     * @return the value of the {@code i}th value of this statement.
+     *
+     * @throws IllegalStateException if this statement does not have values.
+     * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
+     */
+    public Object getObject(int i) {
+        if (values == null)
+            throw new IllegalStateException("This statement does not have values");
+        if (i < 0 || i >= values.length)
+            throw new ArrayIndexOutOfBoundsException(i);
+        return values[i];
     }
 
     /**

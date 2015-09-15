@@ -160,6 +160,9 @@ driver, but rather third-party frameworks and tools.
 
 ### 2.0.11
 
+2.0.11 preserves binary compatibility with previous versions. There are a few
+changes in the driver's behavior:
+
 1. The `DefaultRetryPolicy`'s behaviour has changed in the case of an Unavailable
    exception received from a request. The new behaviour will cause the driver to
    process a Retry on a different node at most once, otherwise an exception will
@@ -168,10 +171,19 @@ driver, but rather third-party frameworks and tools.
    because of a network partition) but can still answer to the client normally.
    In this case, trying another node has a chance of success.
    The previous behaviour was to always throw an exception.
+
 2. A `BuiltStatement` is now considered non-idempotent whenever a `fcall()`
    or `raw()` is used to build a value to be inserted in the database.
    If you know that the CQL functions or expressions are safe, use
    `setIdempotent(true)` on the statement.
+
+3. The list of contact points provided at startup is now shuffled before trying
+   to open the control connection, so that multiple clients with the same contact
+   points don't all pick the same control host. As a result, you can't assume that
+   the driver will try contact points in a deterministic order. In particular, if
+   you use the `DCAwareRoundRobinPolicy` without specifying a primary datacenter
+   name, make sure that you only provide local hosts as contact points.
+
 
 ### <a name="2-0-x-to-2-0-10"></a>2.0.x to 2.0.10
 

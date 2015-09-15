@@ -15,7 +15,6 @@
  */
 package com.datastax.driver.core.querybuilder;
 
-import java.nio.ByteBuffer;
 import java.util.List;
 
 import static com.datastax.driver.core.querybuilder.Utils.appendName;

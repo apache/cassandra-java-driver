@@ -16,6 +16,7 @@
 package com.datastax.driver.core;
 
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
+import com.datastax.driver.core.policies.ConstantReconnectionPolicy;
 import com.datastax.driver.core.utils.SocketChannelMonitor;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.FutureCallback;
@@ -36,7 +37,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static com.datastax.driver.core.Assertions.assertThat;
 
 public class TimeoutStressTest {
 
@@ -73,9 +74,9 @@ public class TimeoutStressTest {
         ccmBridge = CCMBridge.builder("test").withNodes(3).build();
         channelMonitor = new SocketChannelMonitor();
         nodes = Lists.newArrayList(
-                new InetSocketAddress(CCMBridge.IP_PREFIX + '1', 9042),
-                new InetSocketAddress(CCMBridge.IP_PREFIX + '2', 9042),
-                new InetSocketAddress(CCMBridge.IP_PREFIX + '3', 9042)
+            new InetSocketAddress(CCMBridge.IP_PREFIX + '1', 9042),
+            new InetSocketAddress(CCMBridge.IP_PREFIX + '2', 9042),
+            new InetSocketAddress(CCMBridge.IP_PREFIX + '3', 9042)
         );
 
         PoolingOptions poolingOptions = new PoolingOptions().setConnectionsPerHost(HostDistance.LOCAL, 8, 8);
@@ -84,6 +85,7 @@ public class TimeoutStressTest {
                 .addContactPointsWithPorts(nodes)
                 .withPoolingOptions(poolingOptions)
                 .withNettyOptions(channelMonitor.nettyOptions())
+                .withReconnectionPolicy(new ConstantReconnectionPolicy(1000))
                 .build();
     }
 
@@ -177,13 +179,18 @@ public class TimeoutStressTest {
                     .setReadTimeoutMillis(SocketOptions.DEFAULT_READ_TIMEOUT_MILLIS);
 
             logger.debug("Sleeping 20 seconds to allow connection reaper to clean up connections " +
-                    "and for the pools to recover.");
+                "and for the pools to recover.");
             Uninterruptibles.sleepUninterruptibly(20, TimeUnit.SECONDS);
 
             Collection<SocketChannel> openChannels = channelMonitor.openChannels(nodes);
             assertThat(openChannels.size())
                     .as("Number of open connections does not meet expected: %s", openChannels)
-                    .isEqualTo(maxConnections);
+                    .isLessThanOrEqualTo(maxConnections);
+
+            // Each host should be in an up state.
+            assertThat(cluster).host(1).comesUpWithin(0, TimeUnit.SECONDS);
+            assertThat(cluster).host(2).comesUpWithin(0, TimeUnit.SECONDS);
+            assertThat(cluster).host(3).comesUpWithin(0, TimeUnit.SECONDS);
 
             session.close();
 

@@ -32,6 +32,15 @@ public class SchemaTest extends CCMBridge.PerClassSingleNodeCluster {
     private static String withOptions;
 
     @Override
+    protected Cluster.Builder configure(Cluster.Builder builder) {
+        return builder.withQueryOptions(new QueryOptions()
+            .setRefreshNodeIntervalMillis(0)
+            .setRefreshNodeListIntervalMillis(0)
+            .setRefreshSchemaIntervalMillis(0)
+        );
+    }
+
+    @Override
     protected Collection<String> getTableDefinitions() {
 
         String sparse = String.format("CREATE TABLE %s.sparse (\n"

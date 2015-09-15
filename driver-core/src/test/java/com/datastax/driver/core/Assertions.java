@@ -40,4 +40,12 @@ public class Assertions extends org.assertj.core.api.Assertions{
     public static IndexMetadataAssert assertThat(IndexMetadata indexMetadata) {
         return new IndexMetadataAssert(indexMetadata);
     }
+
+    public static KeyspaceMetadataAssert assertThat(KeyspaceMetadata metadata) {
+        return new KeyspaceMetadataAssert(metadata);
+    }
+
+    public static TableMetadataAssert assertThat(TableMetadata metadata) {
+        return new TableMetadataAssert(metadata);
+    }
 }

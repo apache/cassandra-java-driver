@@ -88,20 +88,20 @@ class Responses {
 
         public DriverException asException(InetSocketAddress host) {
             switch (code) {
-                case SERVER_ERROR:     return new DriverInternalError(String.format("An unexpected error occurred server side on %s: %s", host, message));
-                case PROTOCOL_ERROR:   return new DriverInternalError("An unexpected protocol error occurred. This is a bug in this library, please report: " + message);
+                case SERVER_ERROR:     return new ServerError(host, message);
+                case PROTOCOL_ERROR:   return new ProtocolError(host, message);
                 case BAD_CREDENTIALS:  return new AuthenticationException(host, message);
-                case UNAVAILABLE:      return ((UnavailableException)infos).copy(); // We copy to have a nice stack trace
+                case UNAVAILABLE:      return ((UnavailableException)infos).copy(host); // We copy to have a nice stack trace
                 case OVERLOADED:       return new OverloadedException(host, message);
                 case IS_BOOTSTRAPPING: return new BootstrappingException(host, message);
-                case TRUNCATE_ERROR:   return new TruncateException(message);
-                case WRITE_TIMEOUT:    return ((WriteTimeoutException)infos).copy();
-                case READ_TIMEOUT:     return ((ReadTimeoutException)infos).copy();
-                case SYNTAX_ERROR:     return new SyntaxError(message);
-                case UNAUTHORIZED:     return new UnauthorizedException(message);
-                case INVALID:          return new InvalidQueryException(message);
-                case CONFIG_ERROR:     return new InvalidConfigurationInQueryException(message);
-                case ALREADY_EXISTS:   return ((AlreadyExistsException)infos).copy();
+                case TRUNCATE_ERROR:   return new TruncateException(host, message);
+                case WRITE_TIMEOUT:    return ((WriteTimeoutException)infos).copy(host);
+                case READ_TIMEOUT:     return ((ReadTimeoutException)infos).copy(host);
+                case SYNTAX_ERROR:     return new SyntaxError(host, message);
+                case UNAUTHORIZED:     return new UnauthorizedException(host, message);
+                case INVALID:          return new InvalidQueryException(host, message);
+                case CONFIG_ERROR:     return new InvalidConfigurationInQueryException(host, message);
+                case ALREADY_EXISTS:   return ((AlreadyExistsException)infos).copy(host);
                 case UNPREPARED:       return new UnpreparedException(host, message);
                 default:               return new DriverInternalError(String.format("Unknown protocol error code %s returned by %s. The error message was: %s", code, host, message));
             }

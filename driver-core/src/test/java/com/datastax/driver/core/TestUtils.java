@@ -24,8 +24,7 @@ import java.net.ServerSocket;
 import java.nio.ByteBuffer;
 import java.util.*;
 
-import static org.testng.Assert.fail;
-
+import com.google.common.util.concurrent.Futures;
 import org.scassandra.Scassandra;
 import org.scassandra.ScassandraFactory;
 import org.slf4j.Logger;
@@ -325,8 +324,9 @@ public abstract class TestUtils {
         // tried doing an actual query, the driver won't realize that last node is dead until
         // keep alive kicks in, but that's a fairly long time. So we cheat and trigger a force
         // the detection by forcing a request.
-        if (waitForDead || waitForOut)
-            cluster.manager.submitSchemaRefresh(null, null, null);
+        if (waitForDead || waitForOut) {
+            Futures.getUnchecked(cluster.manager.submitSchemaRefresh(null, null, null));
+        }
 
         InetAddress address;
         try {
@@ -382,15 +382,19 @@ public abstract class TestUtils {
         }
     }
 
-    /** Utility method to find the {@code Host} object corresponding to a node in a cluster. */
     public static Host findHost(Cluster cluster, int hostNumber) {
-        String address = CCMBridge.ipOfNode(hostNumber);
-        for (Host host : cluster.getMetadata().getAllHosts()) {
+        return findHost(cluster, CCMBridge.ipOfNode(hostNumber));
+    }
+
+    public static Host findHost(Cluster cluster, String address) {
+        // Note: we can't rely on ProtocolOptions.getPort() to build an InetSocketAddress and call metadata.getHost,
+        // because the port doesn't have the correct value if addContactPointsWithPorts was used to create the Cluster
+        // (JAVA-860 will solve that)
+        for (Host host : cluster.getMetadata().allHosts()) {
             if (host.getAddress().getHostAddress().equals(address))
                 return host;
         }
-        fail(address + " not found in cluster metadata");
-        return null; // never reached
+        return null;
     }
 
     public static int numberOfLocalCoreConnections(Cluster cluster) {
@@ -454,5 +458,14 @@ public abstract class TestUtils {
             .addContactPointsWithPorts(singleAddress)
             .withLoadBalancingPolicy(new WhiteListPolicy(new RoundRobinPolicy(), singleAddress))
             .build();
+    }
+
+    /**
+     * @return a {@QueryOptions} that disables debouncing by setting intervals to 0ms.
+     */
+    public static QueryOptions nonDebouncingQueryOptions() {
+        return new QueryOptions().setRefreshNodeIntervalMillis(0)
+            .setRefreshNodeListIntervalMillis(0)
+            .setRefreshSchemaIntervalMillis(0);
     }
 }

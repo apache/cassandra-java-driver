@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core;
 
+import java.net.InetSocketAddress;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.TreeSet;
@@ -44,9 +45,17 @@ public class ClusterAssert extends AbstractAssert<ClusterAssert, Cluster> {
     public HostAssert host(int hostNumber) {
         // TODO at some point this won't work anymore if we have assertions that wait for a node to
         // join the cluster, e.g. assertThat(cluster).node(3).comesUp().
-        Host host = TestUtils.findHost(actual, hostNumber);
+        return new HostAssert(
+            TestUtils.findHost(actual, hostNumber),
+            actual);
+    }
 
-        return new HostAssert(host, actual);
+    public HostAssert host(String hostAddress) {
+        // TODO at some point this won't work anymore if we have assertions that wait for a node to
+        // join the cluster, e.g. assertThat(cluster).node(3).comesUp().
+        return new HostAssert(
+            TestUtils.findHost(actual, hostAddress),
+            actual);
     }
 
     /**

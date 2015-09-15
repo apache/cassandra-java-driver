@@ -21,6 +21,7 @@ import com.google.common.collect.Maps;
 import org.testng.annotations.Test;
 
 import static com.datastax.driver.core.Assertions.assertThat;
+import static com.datastax.driver.core.TestUtils.nonDebouncingQueryOptions;
 import static com.datastax.driver.core.TestUtils.waitFor;
 
 public class MetadataTest {
@@ -58,6 +59,7 @@ public class MetadataTest {
 
             cluster = Cluster.builder()
                 .addContactPoint(CCMBridge.ipOfNode(1))
+                .withQueryOptions(nonDebouncingQueryOptions())
                 .build();
             Session session = cluster.connect();
 

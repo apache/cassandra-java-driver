@@ -40,6 +40,7 @@ abstract class AbstractReconnectionHandler implements Runnable {
 
     private static final Logger logger = LoggerFactory.getLogger(AbstractReconnectionHandler.class);
 
+    private final String name;
     private final ScheduledExecutorService executor;
     private final ReconnectionPolicy.ReconnectionSchedule schedule;
     /**
@@ -53,11 +54,12 @@ abstract class AbstractReconnectionHandler implements Runnable {
 
     private final CountDownLatch ready = new CountDownLatch(1);
 
-    public AbstractReconnectionHandler(ScheduledExecutorService executor, ReconnectionPolicy.ReconnectionSchedule schedule, AtomicReference<ListenableFuture<?>> currentAttempt) {
-        this(executor, schedule, currentAttempt, -1);
+    public AbstractReconnectionHandler(String name, ScheduledExecutorService executor, ReconnectionPolicy.ReconnectionSchedule schedule, AtomicReference<ListenableFuture<?>> currentAttempt) {
+        this(name, executor, schedule, currentAttempt, -1);
     }
 
-    public AbstractReconnectionHandler(ScheduledExecutorService executor, ReconnectionPolicy.ReconnectionSchedule schedule, AtomicReference<ListenableFuture<?>> currentAttempt, long initialDelayMs) {
+    public AbstractReconnectionHandler(String name, ScheduledExecutorService executor, ReconnectionPolicy.ReconnectionSchedule schedule, AtomicReference<ListenableFuture<?>> currentAttempt, long initialDelayMs) {
+        this.name = name;
         this.executor = executor;
         this.schedule = schedule;
         this.currentAttempt = currentAttempt;
@@ -92,7 +94,7 @@ abstract class AbstractReconnectionHandler implements Runnable {
                     break;
                 }
                 if (currentAttempt.compareAndSet(previous, handlerFuture)) {
-                    logger.debug("Becoming the active handler");
+                    Host.statesLogger.debug("[{}] starting reconnection attempt", name);
                     break;
                 }
             }
@@ -176,6 +178,7 @@ abstract class AbstractReconnectionHandler implements Runnable {
             return;
         }
 
+        Host.statesLogger.debug("[{}] next reconnection attempt in {} ms", name, nextDelay);
         handlerFuture.nextTry = executor.schedule(this, nextDelay, TimeUnit.MILLISECONDS);
     }
 

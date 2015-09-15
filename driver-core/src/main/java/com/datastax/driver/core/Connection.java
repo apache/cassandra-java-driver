@@ -19,14 +19,12 @@ import java.lang.ref.WeakReference;
 import java.net.InetSocketAddress;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.MapMaker;
 import com.google.common.util.concurrent.*;
 import io.netty.bootstrap.Bootstrap;
@@ -37,8 +35,8 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.timeout.IdleStateEvent;
 import io.netty.handler.timeout.IdleStateHandler;
-import io.netty.util.HashedWheelTimer;
 import io.netty.util.Timeout;
+import io.netty.util.Timer;
 import io.netty.util.TimerTask;
 import io.netty.util.concurrent.GlobalEventExecutor;
 import javax.net.ssl.SSLEngine;
@@ -50,7 +48,11 @@ import static io.netty.handler.timeout.IdleState.ALL_IDLE;
 import com.datastax.driver.core.exceptions.AuthenticationException;
 import com.datastax.driver.core.exceptions.DriverException;
 import com.datastax.driver.core.exceptions.DriverInternalError;
+import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.utils.MoreFutures;
+
+import static com.datastax.driver.core.Message.Response.Type.ERROR;
+import static com.datastax.driver.core.Message.Response.Type.RESULT;
 
 // For LoggingHandler
 //import org.jboss.netty.handler.logging.LoggingHandler;
@@ -87,11 +89,11 @@ class Connection {
     private volatile String keyspace;
 
     private volatile boolean isInitialized;
-    private volatile boolean isDefunct;
+    private final AtomicBoolean isDefunct = new AtomicBoolean();
 
     private final AtomicReference<ConnectionCloseFuture> closeFuture = new AtomicReference<ConnectionCloseFuture>();
 
-    private final AtomicReference<HostConnectionPool> poolRef = new AtomicReference<HostConnectionPool>();
+    private final AtomicReference<Owner> ownerRef = new AtomicReference<Owner>();
 
     /**
      /**
@@ -100,15 +102,15 @@ class Connection {
      * @param name the connection name
      * @param address the remote address
      * @param factory the connection factory to use
-     * @param pool the pool this connection belongs to. May be null if this connection does not belong to a pool.
-     *             Note that an existing connection can also be associated to a pool later with {@link #setPool(HostConnectionPool)}.
+     * @param owner the component owning this connection (may be null).
+     *              Note that an existing connection can also be associated to an owner later with {@link #setOwner(Owner)}.
      */
-    protected Connection(String name, InetSocketAddress address, Factory factory, HostConnectionPool pool) {
+    protected Connection(String name, InetSocketAddress address, Factory factory, Owner owner) {
         this.address = address;
         this.factory = factory;
         this.dispatcher = new Dispatcher();
         this.name = name;
-        this.poolRef.set(pool);
+        this.ownerRef.set(owner);
     }
 
     /**
@@ -178,8 +180,8 @@ class Connection {
             public ListenableFuture<Void> create(Throwable t) throws Exception {
                 SettableFuture<Void> future = SettableFuture.create();
                 // Make sure the connection gets properly closed.
-                if (t instanceof ClusterNameMismatchException || t instanceof UnsupportedProtocolVersionException) {
-                    // These exceptions cause the node to be ignored, so just propagate
+                if (t instanceof ClusterNameMismatchException || t instanceof UnsupportedProtocolVersionException || t instanceof SetKeyspaceException) {
+                    // Just propagate
                     closeAsync().force();
                     future.setException(t);
                 } else {
@@ -199,6 +201,9 @@ class Connection {
         Futures.addCallback(initFuture, new FutureCallback<Void>() {
             @Override
             public void onSuccess(Void result) {
+                Host host = factory.manager.metadata.getHost(address);
+                if (host != null)
+                    host.convictionPolicy.signalConnectionCreated();
                 isInitialized = true;
             }
 
@@ -379,7 +384,7 @@ class Connection {
     }
 
     public boolean isDefunct() {
-        return isDefunct;
+        return isDefunct.get();
     }
 
     public int maxAvailableStreams() {
@@ -387,9 +392,13 @@ class Connection {
     }
 
     <E extends Exception> E defunct(E e) {
-        if (logger.isDebugEnabled())
-            logger.debug("Defuncting connection to " + address, e);
-        isDefunct = true;
+        if (!isDefunct.compareAndSet(false, true))
+            return e;
+
+        if (Host.statesLogger.isTraceEnabled())
+            Host.statesLogger.trace("Defuncting " + this, e);
+        else if (Host.statesLogger.isDebugEnabled())
+            Host.statesLogger.debug("Defuncting {} because: {}", this, e.getMessage());
 
         ConnectionException ce = e instanceof ConnectionException
                                ? (ConnectionException)e
@@ -397,10 +406,12 @@ class Connection {
 
         Host host = factory.manager.metadata.getHost(address);
         if (host != null) {
-            // This will trigger onDown, including when the defunct Connection is part of a reconnection attempt, which is redundant.
-            // This is not too much of a problem since calling onDown on a node that is already down has no effect.
-            boolean isDown = factory.manager.signalConnectionFailure(host, ce, host.wasJustAdded());
-            notifyOwnerWhenDefunct(isDown);
+            boolean isDown = factory.manager.signalConnectionFailure(host, ce, isInitialized, host.wasJustAdded());
+
+            if (!isDown)
+                notifyOwnerWhenDefunct();
+            // else the driver will destroy all pools and notify the control connection as part of marking the host down,
+            // so no need to notify
         }
 
         // Force the connection to close to make sure the future completes. Otherwise force() might never get called and
@@ -411,20 +422,14 @@ class Connection {
         return e;
     }
 
-    protected void notifyOwnerWhenDefunct(boolean hostIsDown) {
+    private void notifyOwnerWhenDefunct() {
         // If an error happens during initialization, the owner will detect it and take appropriate action
         if (!isInitialized)
             return;
 
-        HostConnectionPool pool = this.poolRef.get();
-        if (pool == null)
-            return;
-
-        if (hostIsDown) {
-            pool.closeAsync().force();
-        } else {
-            pool.replaceDefunctConnection(this);
-        }
+        Owner owner = this.ownerRef.get();
+        if (owner != null)
+            owner.onConnectionDefunct(this);
     }
 
     public String keyspace() {
@@ -438,44 +443,57 @@ class Connection {
         if (this.keyspace != null && this.keyspace.equals(keyspace))
             return;
 
-        Future future = null;
         try {
-            logger.trace("{} Setting keyspace {}", this, keyspace);
-            long timeout = factory.getConnectTimeoutMillis();
-            // Note: we quote the keyspace below, because the name is the one coming from Cassandra, so it's in the right case already
-            future = write(new Requests.Query("USE \"" + keyspace + '"'));
-            Message.Response response = Uninterruptibles.getUninterruptibly(future, timeout, TimeUnit.MILLISECONDS);
-            switch (response.type) {
-                case RESULT:
-                    this.keyspace = keyspace;
-                    break;
-                default:
-                    // The code set the keyspace only when a successful 'use'
-                    // has been perform, so there shouldn't be any error here.
-                    // It can happen however that the node we're connecting to
-                    // is not up on the schema yet. In that case, defuncting
-                    // the connection is not a bad choice.
-                    String message = String.format("Problem while setting keyspace, got %s as response", response);
-                    logger.warn("{} {}", this, message);
-                    defunct(new ConnectionException(address, message));
-                    break;
-            }
+            Uninterruptibles.getUninterruptibly(setKeyspaceAsync(keyspace));
         } catch (ConnectionException e) {
             throw defunct(e);
-        } catch (TimeoutException e) {
-            // We've given up waiting on the future, but it's still running. Cancel to make sure that the request timeout logic
-            // (readTimeout) will not kick in, because that would release the connection. This will work since connectTimeout is
-            // generally lower than readTimeout (and if not, we'll get an ExecutionException and defunct below).
-            future.cancel(true);
-            logger.warn(String.format("Timeout while setting keyspace on connection to %s. This should not happen but is not critical (it will retried)", address));
-            // Rethrow so that the caller will not try to use the connection, but do not defunct as we don't want to mark down
-            throw new ConnectionException(address, "Timeout while setting keyspace on connection");
         } catch (BusyConnectionException e) {
-            logger.warn(String.format("Tried to set the keyspace on busy connection to %s. This should not happen but is not critical (it will retried)", address));
+            logger.warn("Tried to set the keyspace on busy connection to {}. "
+                + "This should not happen but is not critical (it will be retried)", address);
             throw new ConnectionException(address, "Tried to set the keyspace on busy connection");
         } catch (ExecutionException e) {
-            throw defunct(new ConnectionException(address, "Error while setting keyspace", e));
+            Throwable cause = e.getCause();
+            if (cause instanceof OperationTimedOutException) {
+                // The timeout logic released the connection, but that's wrong since we did not borrow it in the first place.
+                // JAVA-901 will fix this, in the meantime make sure the inFlight count is not off by one.
+                inFlight.incrementAndGet();
+
+                // Rethrow so that the caller doesn't try to use the connection, but do not defunct as we don't want to mark down
+                logger.warn("Timeout while setting keyspace on connection to {}. "
+                    + "This should not happen but is not critical (it will be retried)", address);
+                throw new ConnectionException(address, "Timeout while setting keyspace on connection");
+            } else {
+                throw defunct(new ConnectionException(address, "Error while setting keyspace", cause));
+            }
         }
+    }
+
+    ListenableFuture<Void> setKeyspaceAsync(final String keyspace) throws ConnectionException, BusyConnectionException {
+        logger.trace("{} Setting keyspace {}", this, keyspace);
+        // Note: we quote the keyspace below, because the name is the one coming from Cassandra, so it's in the right case already
+        Future future = write(new Requests.Query("USE \"" + keyspace + '"'));
+        return Futures.transform(future, new AsyncFunction<Message.Response, Void>() {
+            @Override
+            public ListenableFuture<Void> apply(Message.Response response) throws Exception {
+                if (response.type == RESULT) {
+                    Connection.this.keyspace = keyspace;
+                    return MoreFutures.VOID_SUCCESS;
+                } else if (response.type == ERROR) {
+                    closeAsync().force();
+                    Responses.Error error = (Responses.Error)response;
+                    Exception e = error.asException(address);
+                    if (e instanceof InvalidQueryException) {
+                        // Most likely means that the keyspace name is wrong. Wrap that in a specific exception, because we want
+                        // to treat it specially in case of a Session init.
+                        e = new SetKeyspaceException(e);
+                    }
+                    throw e;
+                } else {
+                    closeAsync().force();
+                    throw new DriverInternalError("Unexpected response while setting keyspace: " + response);
+                }
+            }
+        }, factory.manager.configuration.getPoolingOptions().getInitializationExecutor());
     }
 
     /**
@@ -511,7 +529,7 @@ class Connection {
          * having set the handler, we guarantee that even if we race with defunct/close, we may
          * never leave a handler that won't get an answer or be errored out.
          */
-        if (isDefunct) {
+        if (isDefunct.get()) {
             dispatcher.removeHandler(handler, true);
             throw new ConnectionException(address, "Write attempt on defunct connection");
         }
@@ -521,7 +539,7 @@ class Connection {
             throw new ConnectionException(address, "Connection has been closed");
         }
 
-        logger.trace("{} writing request {}", this, request);
+        logger.trace("{}, stream {}, writing request {}", this, request.getStreamId(), request);
         writer.incrementAndGet();
 
         if (DISABLE_COALESCING) {
@@ -543,7 +561,7 @@ class Connection {
                 writer.decrementAndGet();
 
                 if (!writeFuture.isSuccess()) {
-                    logger.debug("{} Error writing request {}", Connection.this, request);
+                    logger.debug("{}, stream {}, Error writing request {}", Connection.this, request.getStreamId(), request);
                     // Remove this handler from the dispatcher so it don't get notified of the error
                     // twice (we will fail that method already)
                     dispatcher.removeHandler(handler, true);
@@ -567,19 +585,19 @@ class Connection {
                         }
                     });
                 } else {
-                    logger.trace("{} request sent successfully", Connection.this);
+                    logger.trace("{}, stream {}, request sent successfully", Connection.this, request.getStreamId());
                 }
             }
         };
     }
 
-    boolean hasPool() {
-        return this.poolRef.get() != null;
+    boolean hasOwner() {
+        return this.ownerRef.get() != null;
     }
 
-    /** @return whether the connection was already associated with a pool */
-    boolean setPool(HostConnectionPool pool) {
-        return poolRef.compareAndSet(null, pool);
+    /** @return whether the connection was already associated with an owner */
+    boolean setOwner(Owner owner) {
+        return ownerRef.compareAndSet(null, owner);
     }
 
     /**
@@ -587,9 +605,9 @@ class Connection {
      * The connection should generally not be reused after that.
      */
     void release() {
-        HostConnectionPool pool = poolRef.get();
-        if (pool != null)
-            pool.returnConnection(this);
+        Owner owner = ownerRef.get();
+        if (owner instanceof HostConnectionPool)
+            ((HostConnectionPool)owner).returnConnection(this);
     }
 
     public boolean isClosed() {
@@ -616,6 +634,12 @@ class Connection {
         }
 
         logger.debug("{} closing connection", this);
+
+        if (isInitialized && !isDefunct.get()) {
+            Host host = factory.manager.metadata.getHost(address);
+            if(host != null)
+                host.convictionPolicy.signalConnectionClosed();
+        }
 
         boolean terminated = tryTerminate(false);
         if (!terminated) {
@@ -665,7 +689,7 @@ class Connection {
 
     public static class Factory {
 
-        public final HashedWheelTimer timer;
+        public final Timer timer;
 
         private final EventLoopGroup eventLoopGroup;
         private final Class<? extends Channel> channelClass;
@@ -694,7 +718,7 @@ class Connection {
             this.nettyOptions = configuration.getNettyOptions();
             this.eventLoopGroup = nettyOptions.eventLoopGroup(manager.threadFactory("nio-worker"));
             this.channelClass = nettyOptions.channelClass();
-            this.timer = new HashedWheelTimer(manager.threadFactory("timeouter"));
+            this.timer = nettyOptions.timer(manager.threadFactory("timeouter"));
         }
 
         public int getPort() {
@@ -775,10 +799,6 @@ class Connection {
             return g;
         }
 
-        public long getConnectTimeoutMillis() {
-            return configuration.getSocketOptions().getConnectTimeoutMillis();
-        }
-
         public long getReadTimeoutMillis() {
             return configuration.getSocketOptions().getReadTimeoutMillis();
         }
@@ -823,7 +843,7 @@ class Connection {
             allChannels.close().awaitUninterruptibly();
 
             nettyOptions.onClusterClose(eventLoopGroup);
-            timer.stop();
+            nettyOptions.onClusterClose(timer);
         }
     }
 
@@ -874,7 +894,7 @@ class Connection {
             }
 
             EventLoop eventLoop = eventLoopRef.get();
-            if(eventLoop != null) {
+            if (eventLoop != null) {
                 eventLoop.schedule(this, 10000, TimeUnit.NANOSECONDS);
             }
         }
@@ -920,7 +940,6 @@ class Connection {
             if (protocolVersion == null) {
                 // This happens for the first control connection because the protocol version has not been
                 // negociated yet.
-                assert !Connection.this.hasPool();
                 protocolVersion = ProtocolVersion.V2;
             }
             streamIdHandler = StreamIdGenerator.newInstance(protocolVersion);
@@ -962,7 +981,7 @@ class Connection {
             int streamId = response.getStreamId();
 
             if(logger.isTraceEnabled())
-                logger.trace("{} received: {}", Connection.this, asDebugString(response));
+                logger.trace("{}, stream {}, received: {}", Connection.this, streamId, asDebugString(response));
 
             if (streamId < 0) {
                 factory.defaultHandler.handle(response);
@@ -998,7 +1017,7 @@ class Connection {
 
         @Override
         public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
-            if (evt instanceof IdleStateEvent && ((IdleStateEvent)evt).state() == ALL_IDLE) {
+            if (!isClosed() && evt instanceof IdleStateEvent && ((IdleStateEvent)evt).state() == ALL_IDLE) {
                 logger.debug("{} was inactive for {} seconds, sending heartbeat", Connection.this, factory.configuration.getPoolingOptions().getHeartbeatIntervalSeconds());
                 write(HEARTBEAT_CALLBACK);
             }
@@ -1316,5 +1335,10 @@ class Connection {
                     throw new DriverInternalError("Unsupported protocol version " + protocolVersion);
             }
         }
+    }
+
+    /** A component that "owns" a connection, and should be notified when it dies. */
+    interface Owner {
+        void onConnectionDefunct(Connection connection);
     }
 }

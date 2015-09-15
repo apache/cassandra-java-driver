@@ -39,6 +39,15 @@ public class QueryBuilderRoutingKeyTest extends CCMBridge.PerClassSingleNodeClus
                              String.format("CREATE TABLE %s (k int PRIMARY KEY, a int, b int)", TABLE_INT));
     }
 
+    @Override
+    protected Cluster.Builder configure(Cluster.Builder builder) {
+        return builder.withQueryOptions(new QueryOptions()
+            .setRefreshNodeIntervalMillis(0)
+            .setRefreshNodeListIntervalMillis(0)
+            .setRefreshSchemaIntervalMillis(0)
+        );
+    }
+
     @Test(groups = "short")
     public void textRoutingKeyTest() throws Exception {
 

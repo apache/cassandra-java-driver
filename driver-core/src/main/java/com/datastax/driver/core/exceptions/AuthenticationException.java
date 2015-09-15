@@ -21,7 +21,7 @@ import java.net.InetSocketAddress;
 /**
  * Indicates an error during the authentication phase while connecting to a node.
  */
-public class AuthenticationException extends DriverException {
+public class AuthenticationException extends DriverException implements CoordinatorException {
 
     private static final long serialVersionUID = 0;
 
@@ -32,34 +32,29 @@ public class AuthenticationException extends DriverException {
         this.address = address;
     }
 
-    private AuthenticationException(String message, Throwable cause, InetSocketAddress address)
-    {
+    private AuthenticationException(InetSocketAddress address, String message, Throwable cause) {
         super(message, cause);
         this.address = address;
     }
 
     /**
-     * The host for which the authentication failed.
-     * <p>
-     * This is a shortcut for {@code getAddress().getAddress()}.
-     *
-     * @return the host for which the authentication failed.
+     * {@inheritDoc}
      */
+    @Override
     public InetAddress getHost() {
         return address.getAddress();
     }
 
     /**
-     * The full address of the host for which the authentication failed.
-     *
-     * @return the host for which the authentication failed.
+     * {@inheritDoc}
      */
+    @Override
     public InetSocketAddress getAddress() {
         return address;
     }
 
     @Override
     public DriverException copy() {
-        return new AuthenticationException(getMessage(), this, address);
+        return new AuthenticationException(address, getMessage(), this);
     }
 }

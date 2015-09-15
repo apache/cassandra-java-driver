@@ -26,7 +26,7 @@ import com.google.common.util.concurrent.*;
  *
  * This is primarly intended to make mocking easier.
  */
-public abstract class AbstractSession implements Session {
+public abstract class AbstractSession implements Session, AsyncInitSession {
 
     /**
      * {@inheritDoc}
@@ -76,7 +76,7 @@ public abstract class AbstractSession implements Session {
         try {
             return Uninterruptibles.getUninterruptibly(prepareAsync(query));
         } catch (ExecutionException e) {
-            throw DefaultResultSetFuture.extractCauseFromExecutionException(e);
+            throw DriverThrowables.propagateCause(e);
         }
     }
 
@@ -88,7 +88,7 @@ public abstract class AbstractSession implements Session {
         try {
             return Uninterruptibles.getUninterruptibly(prepareAsync(statement));
         } catch (ExecutionException e) {
-            throw DefaultResultSetFuture.extractCauseFromExecutionException(e);
+            throw DriverThrowables.propagateCause(e);
         }
     }
 
@@ -125,7 +125,7 @@ public abstract class AbstractSession implements Session {
         try {
             closeAsync().get();
         } catch (ExecutionException e) {
-            throw DefaultResultSetFuture.extractCauseFromExecutionException(e);
+            throw DriverThrowables.propagateCause(e);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }

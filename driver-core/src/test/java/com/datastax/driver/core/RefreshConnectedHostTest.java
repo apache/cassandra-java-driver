@@ -53,6 +53,7 @@ public class RefreshConnectedHostTest {
                              .withPoolingOptions(poolingOptions)
                              .withLoadBalancingPolicy(loadBalancingPolicy)
                              .withReconnectionPolicy(new ConstantReconnectionPolicy(1000))
+                             .withQueryOptions(TestUtils.nonDebouncingQueryOptions())
                              .build();
 
             Session session = cluster.connect();

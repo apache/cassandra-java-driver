@@ -43,6 +43,10 @@ public class SCassandraCluster {
     private final List<PrimingClient> primingClients;
     private final List<ActivityClient> activityClients;
 
+    public SCassandraCluster(int nodeCount) {
+        this(CCMBridge.IP_PREFIX, nodeCount);
+    }
+
     public SCassandraCluster(String ipPrefix, int nodeCount) {
         scassandras = Lists.newArrayListWithCapacity(nodeCount);
         addresses = Lists.newArrayListWithCapacity(nodeCount);
@@ -81,6 +85,16 @@ public class SCassandraCluster {
             scassandra.stop();
     }
 
+    public void start(int node) {
+        int i = node - 1;
+        scassandras.get(i).start();
+        primePeers(primingClients.get(i), scassandras.get(i));
+    }
+
+    public void stop(int node) {
+        scassandras.get(node - 1).stop();
+    }
+
     public SCassandraCluster prime(int node, PrimingRequest request) {
         primingClients.get(node - 1).prime(request);
         return this;
@@ -88,6 +102,14 @@ public class SCassandraCluster {
 
     public List<Query> retrieveQueries(int node) {
         return activityClients.get(node - 1).retrieveQueries();
+    }
+
+    public List<PreparedStatementExecution> retrievePreparedStatementExecutions(int node){
+        return activityClients.get(node - 1).retrievePreparedStatementExecutions();
+    }
+
+    public List<PreparedStatementPreparation> retrievePreparedStatementPreparations(int node) {
+        return activityClients.get(node - 1).retrievePreparedStatementPreparations();
     }
 
     public void clearAllPrimes() {
@@ -113,14 +135,24 @@ public class SCassandraCluster {
             if (scassandras.get(i).equals(toIgnore))
                 continue;
             InetAddress address = addresses.get(i);
-            rows.add(ImmutableMap.<String, Object>builder()
+            Map<String, ?> row = ImmutableMap.<String, Object>builder()
                 .put("peer", address)
                 .put("rpc_address", address)
                 .put("data_center", "datacenter1")
                 .put("rack", "rack1")
                 .put("release_version", "2.0.1")
                 .put("tokens", ImmutableSet.of(Long.toString(Long.MIN_VALUE + i)))
-                .build());
+                .build();
+
+            rows.add(row);
+
+            String query = "SELECT * FROM system.peers WHERE peer='" + address.toString().substring(1) + "'";
+            primingClient.prime(
+                PrimingRequest.queryBuilder()
+                    .withQuery(query)
+                    .withColumnTypes(SELECT_PEERS_COLUMN_TYPES)
+                    .withRows(row)
+                    .build());
         }
         primingClient.prime(
             PrimingRequest.queryBuilder()
@@ -130,7 +162,7 @@ public class SCassandraCluster {
                 .build());
     }
 
-    private static final ImmutableMap<String, ColumnTypes> SELECT_PEERS_COLUMN_TYPES =
+    static final ImmutableMap<String, ColumnTypes> SELECT_PEERS_COLUMN_TYPES =
         ImmutableMap.<String, ColumnTypes>builder()
             .put("peer", ColumnTypes.Inet)
             .put("rpc_address", ColumnTypes.Inet)
