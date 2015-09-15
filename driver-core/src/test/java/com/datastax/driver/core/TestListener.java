@@ -30,7 +30,7 @@ public class TestListener extends TestListenerAdapter implements IInvokedMethodL
     private int test_index = 0;
 
     static {
-        System.out.println("[CCMBridge] Using Cassandra version: " + CCMBridge.CASSANDRA_VERSION);
+        System.out.println("[CCMBridge] Using Cassandra version: " + CCMBridge.CASSANDRA_VERSION + " (install arguments: " + CCMBridge.CASSANDRA_INSTALL_ARGS + ")");
     }
 
     @Override

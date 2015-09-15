@@ -53,9 +53,9 @@ public class CCMBridge {
 
     public static final String IP_PREFIX;
 
-    private static final String CASSANDRA_VERSION_REGEXP = "\\d\\.\\d\\.\\d+(-\\w+)?";
-    static final File CASSANDRA_DIR;
     static final String CASSANDRA_VERSION;
+
+    static final String CASSANDRA_INSTALL_ARGS;
 
     public static final String DEFAULT_CLIENT_TRUSTSTORE_PASSWORD = "cassandra1sfun";
     public static final String DEFAULT_CLIENT_TRUSTSTORE_PATH = "/client.truststore";
@@ -89,13 +89,15 @@ public class CCMBridge {
     private static final String CCM_COMMAND;
 
     static {
-        String version = System.getProperty("cassandra.version");
-        if (version.matches(CASSANDRA_VERSION_REGEXP)) {
-            CASSANDRA_DIR = null;
-            CASSANDRA_VERSION = "-v " + version;
+        CASSANDRA_VERSION = System.getProperty("cassandra.version");
+        String installDirectory = System.getProperty("cassandra.directory");
+        String branch = System.getProperty("cassandra.branch");
+        if (installDirectory != null && !installDirectory.trim().isEmpty()) {
+            CASSANDRA_INSTALL_ARGS = "--install-dir=" + new File(installDirectory).getAbsolutePath();
+        } else if(branch != null && !branch.trim().isEmpty()) {
+            CASSANDRA_INSTALL_ARGS = "-v git:" + branch;
         } else {
-            CASSANDRA_DIR = new File(version);
-            CASSANDRA_VERSION = "";
+            CASSANDRA_INSTALL_ARGS = "-v " + CASSANDRA_VERSION;
         }
 
         String ip_prefix = System.getProperty("ipprefix");
@@ -286,7 +288,6 @@ public class CCMBridge {
             logger.debug("Executing: " + fullCommand);
             CommandLine cli = CommandLine.parse(fullCommand);
             Executor executor = new DefaultExecutor();
-            executor.setWorkingDirectory(CASSANDRA_DIR);
 
             LogOutputStream outStream = new LogOutputStream() {
                 @Override protected void processLine(String line, int logLevel) {
@@ -594,7 +595,7 @@ public class CCMBridge {
         private final String clusterName;
         private Integer[] nodes = { 1 };
         private boolean start = true;
-        private String cassandraVersion = CASSANDRA_VERSION;
+        private String cassandraInstallArgs = CASSANDRA_INSTALL_ARGS;
         private String[] startOptions = new String[0];
         private Map<String, String> cassandraConfiguration = Maps.newHashMap();
 
@@ -634,7 +635,7 @@ public class CCMBridge {
 
         /** Defaults to system property cassandra.version */
         public Builder withCassandraVersion(String cassandraVersion) {
-            this.cassandraVersion = "-v " + cassandraVersion;
+            this.cassandraInstallArgs = "-v " + cassandraVersion;
             return this;
         }
 
@@ -663,7 +664,7 @@ public class CCMBridge {
             StringBuilder result = new StringBuilder(CCM_COMMAND + " create");
             result.append(" " + clusterName);
             result.append(" -i" + IP_PREFIX);
-            result.append(" " + cassandraVersion);
+            result.append(" " + cassandraInstallArgs);
             if (nodes.length > 0)
                 result.append(" -n " + Joiner.on(":").join(nodes));
             if (startOptions.length > 0)
