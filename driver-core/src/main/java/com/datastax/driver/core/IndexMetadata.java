@@ -116,7 +116,7 @@ public class IndexMetadata {
         } else {
             options = SimpleJSONParser.parseStringMap(indexOptionsCol);
         }
-        return new IndexMetadata(column.getTable(), indexName, columns, indexType, TargetType.COLUMN, options);
+        return new IndexMetadata((TableMetadata)column.getParent(), indexName, columns, indexType, TargetType.COLUMN, options);
     }
 
     /**

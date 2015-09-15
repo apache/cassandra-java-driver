@@ -42,6 +42,7 @@ public class KeyspaceMetadata {
     private final Map<String, String> replication;
 
     private final Map<String, TableMetadata> tables = new ConcurrentHashMap<String, TableMetadata>();
+    private final Map<String, MaterializedViewMetadata> views = new ConcurrentHashMap<String, MaterializedViewMetadata>();
     private final Map<String, UserType> userTypes = new ConcurrentHashMap<String, UserType>();
     final Map<String, FunctionMetadata> functions = new ConcurrentHashMap<String, FunctionMetadata>();
     private final Map<String, AggregateMetadata> aggregates = new ConcurrentHashMap<String, AggregateMetadata>();
@@ -121,6 +122,31 @@ public class KeyspaceMetadata {
      */
     public Collection<TableMetadata> getTables() {
         return Collections.<TableMetadata>unmodifiableCollection(tables.values());
+    }
+
+    /**
+     * Returns the metadata for a materialized view contained in this keyspace.
+     *
+     * @param name the name of materialized view to retrieve
+     * @return the metadata for materialized view {@code name} if it exists in this keyspace,
+     * {@code null} otherwise.
+     */
+    public MaterializedViewMetadata getMaterializedView(String name) {
+        return views.get(Metadata.handleId(name));
+    }
+
+    void removeMaterializedView(String materializedView) {
+        views.remove(materializedView);
+    }
+
+    /**
+     * Returns the materialized views defined in this keyspace.
+     *
+     * @return a collection of the metadata for the materialized views defined in this
+     * keyspace.
+     */
+    public Collection<MaterializedViewMetadata> getMaterializedViews() {
+        return Collections.unmodifiableCollection(views.values());
     }
 
     /**
@@ -289,6 +315,10 @@ public class KeyspaceMetadata {
 
     void add(TableMetadata tm) {
         tables.put(tm.getName(), tm);
+    }
+
+    void add(MaterializedViewMetadata view) {
+        views.put(view.getName(), view);
     }
 
     void add(FunctionMetadata function) {

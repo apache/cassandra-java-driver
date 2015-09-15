@@ -18,15 +18,14 @@ package com.datastax.driver.core;
 import java.util.Collection;
 import java.util.Collections;
 
-import org.testng.SkipException;
 import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.entry;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.DataType.*;
-import static com.datastax.driver.core.TableMetadata.Order.ASC;
-import static com.datastax.driver.core.TableMetadata.Order.DESC;
+import static com.datastax.driver.core.TableOrView.Order.ASC;
+import static com.datastax.driver.core.TableOrView.Order.DESC;
 
 public class TableMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
 
@@ -61,7 +60,7 @@ public class TableMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
             + "    l list<text>,\n"
             + "    v int,\n"
             + "    PRIMARY KEY (k, c1, c2)\n"
-            + ");", keyspace);
+            + ") WITH CLUSTERING ORDER BY (c1 ASC, c2 DESC);", keyspace);
         // when
         session.execute(cql);
         TableMetadata table = cluster.getMetadata().getKeyspace(keyspace).getTable("sparse");
@@ -69,7 +68,7 @@ public class TableMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
         assertThat(table).isNotNull().hasName("sparse").hasNumberOfColumns(5).isNotCompactStorage();
         assertThat(table.getColumns().get(0)).isNotNull().hasName("k").isPartitionKey().hasType(text());
         assertThat(table.getColumns().get(1)).isNotNull().hasName("c1").isClusteringColumn().hasClusteringOrder(ASC).hasType(cint());
-        assertThat(table.getColumns().get(2)).isNotNull().hasName("c2").isClusteringColumn().hasClusteringOrder(ASC).hasType(cfloat());
+        assertThat(table.getColumns().get(2)).isNotNull().hasName("c2").isClusteringColumn().hasClusteringOrder(DESC).hasType(cfloat());
         assertThat(table.getColumns().get(3)).isNotNull().hasName("l").isRegularColumn().hasType(list(text()));
         assertThat(table.getColumns().get(4)).isNotNull().hasName("v").isRegularColumn().hasType(cint());
     }

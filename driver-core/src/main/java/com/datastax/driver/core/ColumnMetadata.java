@@ -37,7 +37,7 @@ public class ColumnMetadata {
     static final String INDEX_OPTIONS = "index_options";
     static final String INDEX_NAME = "index_name";
 
-    private final TableMetadata table;
+    private final TableOrView parent;
     private final String name;
     private final DataType type;
     private final boolean isStatic;
@@ -46,14 +46,14 @@ public class ColumnMetadata {
     // between columns and indexes, and is updated only after the column is created
     final Map<String, IndexMetadata> indexes = new LinkedHashMap<String, IndexMetadata>();
 
-    private ColumnMetadata(TableMetadata table, String name, DataType type, boolean isStatic) {
-        this.table = table;
+    private ColumnMetadata(TableOrView parent, String name, DataType type, boolean isStatic) {
+        this.parent = parent;
         this.name = name;
         this.type = type;
         this.isStatic = isStatic;
     }
 
-    static ColumnMetadata fromRaw(TableMetadata tm, Raw raw) {
+    static ColumnMetadata fromRaw(TableOrView tm, Raw raw) {
         return new ColumnMetadata(tm, raw.name, raw.dataType, raw.kind == Raw.Kind.STATIC);
     }
 
@@ -71,12 +71,13 @@ public class ColumnMetadata {
     }
 
     /**
-     * Returns the metadata of the table this column is part of.
+     * Returns the parent object of this column. This can be a {@link TableMetadata}
+     * or a {@link MaterializedViewMetadata} object.
      *
-     * @return the {@code TableMetadata} for the table this column is part of.
+     * @return the parent object of this column.
      */
-    public TableMetadata getTable() {
-        return table;
+    public TableOrView getParent() {
+        return parent;
     }
 
     /**

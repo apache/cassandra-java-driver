@@ -55,4 +55,8 @@ public class Assertions extends org.assertj.core.api.Assertions {
         return new TypeCodecAssert(codec);
     }
 
+    public static MaterializedViewMetadataAssert assertThat(MaterializedViewMetadata view) {
+        return new MaterializedViewMetadataAssert(view);
+    }
+
 }
