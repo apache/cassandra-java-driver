@@ -387,6 +387,7 @@ abstract class SchemaParser {
                 Map<String, ColumnMetadata.Raw> cols = colsDefs.get(viewName);
                 if (cols == null || cols.isEmpty())
                     continue; // we probably raced, we will update the metadata next time
+
                 MaterializedViewMetadata view = MaterializedViewMetadata.build(ksm, viewRow, cols, cassandraVersion);
                 if(view != null)
                     ksm.add(view);

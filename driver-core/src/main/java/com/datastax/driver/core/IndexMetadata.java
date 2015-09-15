@@ -15,65 +15,62 @@
  */
 package com.datastax.driver.core;
 
-import java.util.*;
+import java.util.Iterator;
+import java.util.Map;
 
-import com.google.common.base.Function;
 import com.google.common.base.Objects;
+import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Iterables;
 
 /**
  * An immutable representation of secondary index metadata.
  */
 public class IndexMetadata {
 
-    public enum IndexType {
+    public enum Kind {
         KEYS,
         CUSTOM,
         COMPOSITES
     }
 
-    public enum TargetType {
-        COLUMN, ROW
-    }
+    static final String NAME = "index_name";
 
-    public static final Function<IndexMetadata, String> INDEX_NAME = new Function<IndexMetadata, String>() {
-        @Override
-        public String apply(IndexMetadata input) {
-            return input.getName();
-        }
-    };
+    static final String KIND = "kind";
 
+    static final String OPTIONS = "options";
+
+    /**
+     * The name of the option used to specify the index target (Cassandra 3.0 onwards).
+     */
+    public static final String TARGET_OPTION_NAME = "target";
+
+    /**
+     * The name of the option used to specify a custom index class name.
+     */
     public static final String CUSTOM_INDEX_OPTION_NAME = "class_name";
 
     /**
-     * The name of the option used to specify that the index is on the collection keys.
+     * The name of the option used to specify that the index is on the collection (map) keys.
      */
     public static final String INDEX_KEYS_OPTION_NAME = "index_keys";
-
-    /**
-     * The name of the option used to specify that the index is on the collection values.
-     */
-    public static final String INDEX_VALUES_OPTION_NAME = "index_values";
 
     /**
      * The name of the option used to specify that the index is on the collection (map) entries.
      */
     public static final String INDEX_ENTRIES_OPTION_NAME = "index_keys_and_values";
 
-
     private final TableMetadata table;
     private final String name;
-    private final Map<String, ColumnMetadata> columns;
-    private final IndexType indexType;
-    private final TargetType targetType;
+    private final Kind kind;
+    private final String target;
     private final Map<String, String> options;
 
-    private IndexMetadata(TableMetadata table, String name, Map<String, ColumnMetadata> columns, IndexType indexType, TargetType targetType, Map<String, String> options) {
+    private IndexMetadata(TableMetadata table, String name, Kind kind, String target, Map<String, String> options) {
         this.table = table;
         this.name = name;
-        this.columns = columns;
-        this.indexType = indexType;
-        this.targetType = targetType;
+        this.kind = kind;
+        this.target = target;
         this.options = options;
     }
 
@@ -81,16 +78,11 @@ public class IndexMetadata {
      * Build an IndexMetadata from a system_schema.indexes row.
      */
     static IndexMetadata fromRow(TableMetadata table, Row indexRow) {
-        String name = indexRow.getString("index_name");
-        Set<String> targetColumnNames = indexRow.getSet("target_columns", String.class);
-        LinkedHashMap<String, ColumnMetadata> targetColumns = new LinkedHashMap<String, ColumnMetadata>(targetColumnNames.size());
-        for (String targetColumnName : targetColumnNames) {
-            targetColumns.put(targetColumnName, table.getColumn(targetColumnName));
-        }
-        IndexMetadata.IndexType indexType = IndexMetadata.IndexType.valueOf(indexRow.getString("index_type"));
-        IndexMetadata.TargetType targetType = IndexMetadata.TargetType.valueOf(indexRow.getString("target_type"));
-        Map<String, String> options = indexRow.getMap("options", String.class, String.class);
-        return new IndexMetadata(table, name, targetColumns, indexType, targetType, options);
+        String name = indexRow.getString(NAME);
+        Kind kind = Kind.valueOf(indexRow.getString(KIND));
+        Map<String, String> options = indexRow.getMap(OPTIONS, String.class, String.class);
+        String target = options.get(TARGET_OPTION_NAME);
+        return new IndexMetadata(table, name, kind, target, options);
     }
 
     /**
@@ -98,31 +90,44 @@ public class IndexMetadata {
      * along with indexed column).
      */
     static IndexMetadata fromLegacy(ColumnMetadata column, ColumnMetadata.Raw raw) {
-        if (raw.indexColumns.isEmpty())
+        Map<String, String> indexColumns = raw.indexColumns;
+        if (indexColumns.isEmpty())
             return null;
-        String type = raw.indexColumns.get(ColumnMetadata.INDEX_TYPE);
+        String type = indexColumns.get(ColumnMetadata.INDEX_TYPE);
         if (type == null)
             return null;
-        String indexName = raw.indexColumns.get(ColumnMetadata.INDEX_NAME);
-        String indexTypeStr = raw.indexColumns.get(ColumnMetadata.INDEX_TYPE);
-        IndexType indexType = indexTypeStr == null ? null : IndexType.valueOf(indexTypeStr);
+        String indexName = indexColumns.get(ColumnMetadata.INDEX_NAME);
+        String kindStr = indexColumns.get(ColumnMetadata.INDEX_TYPE);
+        Kind kind = kindStr == null ? null : Kind.valueOf(kindStr);
         // Special case check for the value of the index_options column being a string with value 'null' as this
         // column appears to be set this way (JAVA-834).
-        String indexOptionsCol = raw.indexColumns.get(ColumnMetadata.INDEX_OPTIONS);
-        ImmutableMap<String, ColumnMetadata> columns = ImmutableMap.of(column.getName(), column);
+        String indexOptionsCol = indexColumns.get(ColumnMetadata.INDEX_OPTIONS);
         Map<String, String> options;
         if (indexOptionsCol == null || indexOptionsCol.isEmpty() || indexOptionsCol.equals("null")) {
             options = ImmutableMap.of();
         } else {
             options = SimpleJSONParser.parseStringMap(indexOptionsCol);
         }
-        return new IndexMetadata((TableMetadata)column.getParent(), indexName, columns, indexType, TargetType.COLUMN, options);
+        String target = targetFromLegacyOptions(column, options);
+        return new IndexMetadata((TableMetadata)column.getParent(), indexName, kind, target, options);
+    }
+
+    private static String targetFromLegacyOptions(ColumnMetadata column, Map<String, String> options) {
+        String columnName = Metadata.escapeId(column.getName());
+        if(options.containsKey(INDEX_KEYS_OPTION_NAME))
+            return String.format("keys(%s)", columnName);
+        if(options.containsKey(INDEX_ENTRIES_OPTION_NAME))
+            return String.format("entries(%s)", columnName);
+        if(column.getType() instanceof DataType.CollectionType && column.getType().isFrozen())
+            return String.format("full(%s)", columnName);
+        // Note: the keyword 'values' is not accepted as a valid index target function until 3.0
+        return columnName;
     }
 
     /**
-     * Returns the metadata of the table this column is part of.
+     * Returns the metadata of the table this index is part of.
      *
-     * @return the {@code TableMetadata} for the table this column is part of.
+     * @return the table this index is part of.
      */
     public TableMetadata getTable() {
         return table;
@@ -138,47 +143,21 @@ public class IndexMetadata {
     }
 
     /**
-     * Returns metadata on a column of this index.
+     * Returns the index kind.
      *
-     * @param name the name of the column to retrieve ({@code name} will be
-     * interpreted as a case-insensitive identifier unless enclosed in double-quotes,
-     * see {@link Metadata#quote}).
-     * @return the metadata for the column if it exists, or
-     * {@code null} otherwise.
+     * @return the index kind.
      */
-    public ColumnMetadata getColumn(String name) {
-        return columns.get(Metadata.handleId(name));
+    public Kind getKind() {
+        return kind;
     }
 
     /**
-     * Returns a list containing all the columns of this index.
+     * Returns the index target.
      *
-     * The order of the columns in the list is consistent with
-     * the order of the columns in the index.
-     *
-     * @return a list containing the metadata for the columns of this table.
+     * @return the index target.
      */
-    public List<ColumnMetadata> getColumns() {
-        return new ArrayList<ColumnMetadata>(columns.values());
-    }
-
-    /**
-     * Returns the index type.
-     *
-     * @return the index type.
-     */
-    public IndexType getIndexType() {
-        return indexType;
-    }
-
-    /**
-     * Returns the index target type.
-     * Note: for legacy indexes, this is always {@link TargetType#COLUMN}.
-     *
-     * @return the index target type.
-     */
-    public TargetType getTargetType() {
-        return targetType;
+    public String getTarget() {
+        return target;
     }
 
     /**
@@ -205,56 +184,6 @@ public class IndexMetadata {
     }
 
     /**
-     * Return whether this index is a 'KEYS' index on a map, e.g.,
-     * CREATE INDEX ON mytable (KEYS(mymap))
-     *
-     * @return {@code true} if this is a 'KEYS' index on a map.
-     */
-    public boolean isKeys() {
-        return getOption(INDEX_KEYS_OPTION_NAME) != null;
-    }
-
-    /**
-     * Return whether this index is a 'VALUES' index on a map, e.g.,
-     * CREATE INDEX ON mytable (VALUES(mymap))
-     *
-     * @return {@code true} if this is an 'VALUES' index on a map.
-     */
-    public boolean isValues() {
-        return getOption(INDEX_VALUES_OPTION_NAME) != null;
-    }
-
-    /**
-     * Return whether this index is a 'ENTRIES' index on a map, e.g.,
-     * CREATE INDEX ON mytable (ENTRIES(mymap))
-     *
-     * @return {@code true} if this is an 'ENTRIES' index on a map.
-     */
-    public boolean isEntries() {
-        return getOption(INDEX_ENTRIES_OPTION_NAME) != null;
-    }
-
-    /**
-     * Return whether this index is a 'FULL' index on a frozen collection, e.g.,
-     * CREATE INDEX ON mytable (FULL(mymap))
-     *
-     * @return {@code true} if this is a 'FULL' index on a frozen collection.
-     */
-    public boolean isFull() {
-        /*
-         * This check is analogous to the Cassandra counterpart
-         * in IndexTarget.
-         */
-        ColumnMetadata column = columns.values().iterator().next();
-        return
-            !isKeys()
-            && !isValues()
-            && !isEntries()
-            && column.getType() instanceof DataType.CollectionType
-            && column.getType().isFrozen();
-    }
-
-    /**
      * Return the value for the given option name.
      *
      * @param name Option name
@@ -273,14 +202,12 @@ public class IndexMetadata {
      * @return the 'CREATE INDEX' query corresponding to this index.
      */
     public String asCQLQuery() {
-        TableMetadata table = getTable();
-        String ksName = Metadata.escapeId(table.getKeyspace().getName());
-        String cfName = Metadata.escapeId(table.getName());
-        // TODO indexes on multiple columns
-        String colName = Metadata.escapeId(columns.keySet().iterator().next());
+        String keyspaceName = Metadata.escapeId(table.getKeyspace().getName());
+        String tableName = Metadata.escapeId(table.getName());
+        String indexName = Metadata.escapeId(this.name);
         return isCustomIndex()
-            ? String.format("CREATE CUSTOM INDEX %s ON %s.%s (%s) USING '%s' WITH OPTIONS = %s;", name, ksName, cfName, colName, getIndexClassName(), getOptionsAsCql())
-            : String.format("CREATE INDEX %s ON %s.%s (%s);", name, ksName, cfName, getIndexFunction(colName));
+            ? String.format("CREATE CUSTOM INDEX %s ON %s.%s (%s) USING '%s' %s;", indexName, keyspaceName, tableName, getTarget(), getIndexClassName(), getOptionsAsCql())
+            : String.format("CREATE INDEX %s ON %s.%s (%s);", indexName, keyspaceName, tableName, getTarget());
     }
 
     /**
@@ -290,9 +217,18 @@ public class IndexMetadata {
      *         the 'index_options' column of the 'schema_columns' table in the 'system' keyspace.
      */
     private String getOptionsAsCql() {
+        Iterable<Map.Entry<String, String>> filtered = Iterables.filter(options.entrySet(), new Predicate<Map.Entry<String, String>>() {
+            @Override
+            public boolean apply(Map.Entry<String, String> input) {
+                return
+                    !input.getKey().equals(TARGET_OPTION_NAME) &&
+                    !input.getKey().equals(CUSTOM_INDEX_OPTION_NAME);
+            }
+        });
+        if(Iterables.isEmpty(filtered)) return "";
         StringBuilder builder = new StringBuilder();
-        builder.append("{");
-        Iterator<Map.Entry<String, String>> it = options.entrySet().iterator();
+        builder.append("WITH OPTIONS = {");
+        Iterator<Map.Entry<String, String>> it = filtered.iterator();
         while (it.hasNext()) {
             Map.Entry<String, String> option = it.next();
             builder.append(String.format("'%s' : '%s'", option.getKey(), option.getValue()));
@@ -303,24 +239,8 @@ public class IndexMetadata {
         return builder.toString();
     }
 
-    /**
-     * Wraps the column name with the appropriate index function (KEYS, FULL, ENTRIES),
-     * if necessary.
-     *
-     * @return Column name wrapped with the appropriate index function.
-     */
-    private String getIndexFunction(String colName) {
-        if (isKeys())
-            return String.format("KEYS(%s)", colName);
-        else if (isFull())
-            return String.format("FULL(%s)", colName);
-        else if (isEntries())
-            return String.format("ENTRIES(%s)", colName);
-        return colName;
-    }
-
     public int hashCode() {
-        return Objects.hashCode(name, columns, indexType, targetType, options);
+        return Objects.hashCode(name, kind, target, options);
     }
 
     public boolean equals(Object obj) {
@@ -333,9 +253,8 @@ public class IndexMetadata {
         IndexMetadata other = (IndexMetadata)obj;
 
         return Objects.equal(name, other.name)
-            && Objects.equal(columns, other.columns)
-            && Objects.equal(indexType, other.indexType)
-            && Objects.equal(targetType, other.targetType)
+            && Objects.equal(kind, other.kind)
+            && Objects.equal(target, other.target)
             && Objects.equal(options, other.options);
     }
 

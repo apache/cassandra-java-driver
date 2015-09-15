@@ -50,6 +50,7 @@ public class TableMetadata extends TableOrView {
     private static final String EMPTY_TYPE           = "org.apache.cassandra.db.marshal.EmptyType";
 
     private final Map<String, IndexMetadata> indexes;
+
     private final Map<String, MaterializedViewMetadata> views;
 
     private TableMetadata(KeyspaceMetadata keyspace,
@@ -177,8 +178,6 @@ public class TableMetadata extends TableOrView {
             }
         }
 
-        Map<ColumnMetadata, Set<IndexMetadata>> indexedColumns = new LinkedHashMap<ColumnMetadata, Set<IndexMetadata>>();
-
         for (ColumnMetadata.Raw rawCol : rawCols.values()) {
             ColumnMetadata col = ColumnMetadata.fromRaw(tm, rawCol);
             switch (rawCol.kind) {
@@ -193,14 +192,12 @@ public class TableMetadata extends TableOrView {
                     otherColumns.add(col);
                     break;
             }
-            // create legacy secondary indexes (C* < 3.0)
-            IndexMetadata index = IndexMetadata.fromLegacy(col, rawCol);
-            if(index != null) {
-                indexes.put(index.getName(), index);
-                addIndexToColumn(index, col, indexedColumns);
-            }
-        }
 
+            // legacy secondary indexes (C* < 3.0)
+            IndexMetadata index = IndexMetadata.fromLegacy(col, rawCol);
+            if(index != null)
+                indexes.put(index.getName(), index);
+        }
 
         for (ColumnMetadata c : partitionKey)
             columns.put(c.getName(), c);
@@ -214,34 +211,9 @@ public class TableMetadata extends TableOrView {
             for (Row indexRow : indexRows) {
                 IndexMetadata index = IndexMetadata.fromRow(tm, indexRow);
                 indexes.put(index.getName(), index);
-                // update the many-to-many relationship between indexes and columns
-                for (ColumnMetadata column : index.getColumns()) {
-                    addIndexToColumn(index, column, indexedColumns);
-                }
             }
-
-        // update indexed columns
-        for (Map.Entry<ColumnMetadata, Set<IndexMetadata>> entry : indexedColumns.entrySet()) {
-            ColumnMetadata column = entry.getKey();
-            for (IndexMetadata index : entry.getValue()) {
-                // update the "reverse" side of the many-to-many relationship between indexes and columns
-                column.indexes.put(index.getName(), index);
-            }
-        }
 
         return tm;
-    }
-
-    /**
-     * Associate the given index with the given column and store it in the given map.
-     */
-    private static void addIndexToColumn(IndexMetadata index, ColumnMetadata column, Map<ColumnMetadata, Set<IndexMetadata>> indexedColumns) {
-        Set<IndexMetadata> indexes = indexedColumns.get(column);
-        if(indexes == null) {
-            indexes = new LinkedHashSet<IndexMetadata>();
-            indexedColumns.put(column, indexes);
-        }
-        indexes.add(index);
     }
 
     /**
@@ -405,8 +377,8 @@ public class TableMetadata extends TableOrView {
             sb.append('\n').append(index.asCQLQuery());
         }
 
-        for (MaterializedViewMetadata index : views.values()) {
-            sb.append('\n').append(index.asCQLQuery());
+        for (MaterializedViewMetadata view : views.values()) {
+            sb.append('\n').append(view.asCQLQuery());
         }
 
         return sb.toString();
