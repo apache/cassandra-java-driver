@@ -103,7 +103,7 @@ public class CCMBridge {
         if (installDirectory != null && !installDirectory.trim().isEmpty()) {
             CASSANDRA_INSTALL_ARGS = "--install-dir=" + new File(installDirectory).getAbsolutePath();
         } else if(branch != null && !branch.trim().isEmpty()) {
-            CASSANDRA_INSTALL_ARGS = "-v git:" + branch;
+            CASSANDRA_INSTALL_ARGS = "-v " + branch.replaceAll("\"", "");
         } else {
             CASSANDRA_INSTALL_ARGS = "-v " + CASSANDRA_VERSION;
         }

@@ -15,167 +15,134 @@
  */
 package com.datastax.driver.core;
 
-import java.nio.ByteBuffer;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
-import com.google.common.collect.ImmutableList;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import com.datastax.driver.core.utils.CassandraVersion;
 
 import static com.datastax.driver.core.Assertions.assertThat;
+import static com.datastax.driver.core.DataType.cint;
+import static com.datastax.driver.core.DataType.text;
 
-public class AggregateMetadataTest {
+@CassandraVersion(major = 2.2)
+public class AggregateMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
 
-    // These tests needs a protocol version to (de)serialize INITCONDs. Since we're using basic types, I don't think the binary format
-    // is going to change at any time in the future, so the actual version does not matter.
-    private static final ProtocolVersion PROTOCOL_VERSION = ProtocolVersion.NEWEST_SUPPORTED;
-    private CodecRegistry codecRegistry = new CodecRegistry();
-
-    KeyspaceMetadata keyspace;
-
-    @BeforeMethod(groups = "unit")
-    public void setup() {
-        keyspace = new KeyspaceMetadata("ks", false, Collections.<String, String>emptyMap());
-    }
-
-    @Test(groups = "unit")
+    @Test(groups = "short")
     public void should_parse_and_format_aggregate_with_initcond_and_no_finalfunc() {
-        FunctionMetadata stateFunc = mock(FunctionMetadata.class);
-        keyspace.functions.put("cat(text,int)", stateFunc);
-
-        AggregateMetadata aggregate = AggregateMetadata.build(keyspace, SYSTEM_ROW_CAT_TOS, PROTOCOL_VERSION, codecRegistry);
-
+        // given
+        String cqlFunction = String.format("CREATE FUNCTION %s.cat(s text,v int) RETURNS NULL ON NULL INPUT RETURNS text LANGUAGE java AS 'return s+v;';", keyspace);
+        String cqlAggregate = String.format("CREATE AGGREGATE %s.cat_tos(int) SFUNC cat STYPE text INITCOND '0';", keyspace);
+        // when
+        session.execute(cqlFunction);
+        session.execute(cqlAggregate);
+        // then
+        KeyspaceMetadata keyspace = cluster.getMetadata().getKeyspace(this.keyspace);
+        FunctionMetadata stateFunc = keyspace.getFunction("cat", text(), cint());
+        AggregateMetadata aggregate = keyspace.getAggregate("cat_tos", cint());
         assertThat(aggregate).isNotNull();
         assertThat(aggregate.getFullName()).isEqualTo("cat_tos(int)");
         assertThat(aggregate.getSimpleName()).isEqualTo("cat_tos");
-        assertThat(aggregate.getArgumentTypes()).containsExactly(DataType.cint());
+        assertThat(aggregate.getArgumentTypes()).containsExactly(cint());
         assertThat(aggregate.getFinalFunc()).isNull();
         assertThat(aggregate.getInitCond()).isEqualTo("0");
-        assertThat(aggregate.getReturnType()).isEqualTo(DataType.text());
+        assertThat(aggregate.getReturnType()).isEqualTo(text());
         assertThat(aggregate.getStateFunc()).isEqualTo(stateFunc);
-        assertThat(aggregate.getStateType()).isEqualTo(DataType.text());
-
-        assertThat(keyspace.getAggregate("cat_tos", DataType.cint())).isEqualTo(aggregate);
-
-        assertThat(aggregate.toString()).isEqualTo("CREATE AGGREGATE ks.cat_tos(int) SFUNC cat STYPE text INITCOND '0';");
-
-        assertThat(aggregate.exportAsString()).isEqualTo("CREATE AGGREGATE ks.cat_tos(int)\n"
+        assertThat(aggregate.getStateType()).isEqualTo(text());
+        assertThat(aggregate.toString()).isEqualTo(cqlAggregate);
+        assertThat(aggregate.exportAsString()).isEqualTo(String.format("CREATE AGGREGATE %s.cat_tos(int)\n"
             + "SFUNC cat STYPE text\n"
-            + "INITCOND '0';");
+            + "INITCOND '0';", this.keyspace));
     }
 
-    @Test(groups = "unit")
+    @Test(groups = "short")
     public void should_parse_and_format_aggregate_with_no_arguments() {
-        FunctionMetadata stateFunc = mock(FunctionMetadata.class);
-        keyspace.functions.put("inc(int)", stateFunc);
-
-        AggregateMetadata aggregate = AggregateMetadata.build(keyspace, SYSTEM_ROW_MYCOUNT, PROTOCOL_VERSION, codecRegistry);
-
+        // given
+        String cqlFunction = String.format("CREATE FUNCTION %s.inc(i int) RETURNS NULL ON NULL INPUT RETURNS int LANGUAGE java AS 'return i+1;';", keyspace);
+        String cqlAggregate = String.format("CREATE AGGREGATE %s.mycount() SFUNC inc STYPE int INITCOND 0;", keyspace);
+        // when
+        session.execute(cqlFunction);
+        session.execute(cqlAggregate);
+        // then
+        KeyspaceMetadata keyspace = cluster.getMetadata().getKeyspace(this.keyspace);
+        FunctionMetadata stateFunc = keyspace.getFunction("inc", cint());
+        AggregateMetadata aggregate = keyspace.getAggregate("mycount");
         assertThat(aggregate).isNotNull();
         assertThat(aggregate.getFullName()).isEqualTo("mycount()");
         assertThat(aggregate.getSimpleName()).isEqualTo("mycount");
         assertThat(aggregate.getArgumentTypes()).isEmpty();
         assertThat(aggregate.getFinalFunc()).isNull();
         assertThat(aggregate.getInitCond()).isEqualTo(0);
-        assertThat(aggregate.getReturnType()).isEqualTo(DataType.cint());
+        assertThat(aggregate.getReturnType()).isEqualTo(cint());
         assertThat(aggregate.getStateFunc()).isEqualTo(stateFunc);
-        assertThat(aggregate.getStateType()).isEqualTo(DataType.cint());
-
-        assertThat(keyspace.getAggregate("mycount")).isEqualTo(aggregate);
-
-        assertThat(aggregate.toString()).isEqualTo("CREATE AGGREGATE ks.mycount() SFUNC inc STYPE int INITCOND 0;");
-
-        assertThat(aggregate.exportAsString()).isEqualTo("CREATE AGGREGATE ks.mycount()\n"
+        assertThat(aggregate.getStateType()).isEqualTo(cint());
+        assertThat(aggregate.toString()).isEqualTo(cqlAggregate);
+        assertThat(aggregate.exportAsString()).isEqualTo(String.format("CREATE AGGREGATE %s.mycount()\n"
             + "SFUNC inc STYPE int\n"
-            + "INITCOND 0;");
+            + "INITCOND 0;", this.keyspace));
     }
 
-    @Test(groups = "unit")
+    @Test(groups = "short")
     public void should_parse_and_format_aggregate_with_final_function() {
-        FunctionMetadata stateFunc = mock(FunctionMetadata.class);
-        keyspace.functions.put("plus(int,int)", stateFunc);
-        FunctionMetadata finalFunc = mock(FunctionMetadata.class);
-        keyspace.functions.put("announce(int)", finalFunc);
-
-        AggregateMetadata aggregate = AggregateMetadata.build(keyspace, SYSTEM_ROW_PRETTYSUM, PROTOCOL_VERSION, codecRegistry);
-
+        // given
+        String cqlFunction1 = String.format("CREATE FUNCTION %s.plus(i int, j int) RETURNS NULL ON NULL INPUT RETURNS int LANGUAGE java AS 'return i+j;';", keyspace);
+        String cqlFunction2 = String.format("CREATE FUNCTION %s.announce(i int) RETURNS NULL ON NULL INPUT RETURNS int LANGUAGE java AS 'return i;';", keyspace);
+        String cqlAggregate = String.format("CREATE AGGREGATE %s.prettysum(int) SFUNC plus STYPE int FINALFUNC announce INITCOND 0;", keyspace);
+        // when
+        session.execute(cqlFunction1);
+        session.execute(cqlFunction2);
+        session.execute(cqlAggregate);
+        // then
+        KeyspaceMetadata keyspace = cluster.getMetadata().getKeyspace(this.keyspace);
+        FunctionMetadata stateFunc = keyspace.getFunction("plus", cint(), cint());
+        FunctionMetadata finalFunc = keyspace.getFunction("announce", cint());
+        AggregateMetadata aggregate = keyspace.getAggregate("prettysum", cint());
         assertThat(aggregate).isNotNull();
         assertThat(aggregate.getFullName()).isEqualTo("prettysum(int)");
         assertThat(aggregate.getSimpleName()).isEqualTo("prettysum");
-        assertThat(aggregate.getArgumentTypes()).containsExactly(DataType.cint());
+        assertThat(aggregate.getArgumentTypes()).containsExactly(cint());
         assertThat(aggregate.getFinalFunc()).isEqualTo(finalFunc);
         assertThat(aggregate.getInitCond()).isEqualTo(0);
-        assertThat(aggregate.getReturnType()).isEqualTo(DataType.text());
+        assertThat(aggregate.getReturnType()).isEqualTo(cint());
         assertThat(aggregate.getStateFunc()).isEqualTo(stateFunc);
-        assertThat(aggregate.getStateType()).isEqualTo(DataType.cint());
-
-        assertThat(keyspace.getAggregate("prettysum", DataType.cint())).isEqualTo(aggregate);
-
-        assertThat(aggregate.toString()).isEqualTo("CREATE AGGREGATE ks.prettysum(int) SFUNC plus STYPE int FINALFUNC announce INITCOND 0;");
-
-        assertThat(aggregate.exportAsString()).isEqualTo("CREATE AGGREGATE ks.prettysum(int)\n"
+        assertThat(aggregate.getStateType()).isEqualTo(cint());
+        assertThat(aggregate.toString()).isEqualTo(cqlAggregate);
+        assertThat(aggregate.exportAsString()).isEqualTo(String.format("CREATE AGGREGATE %s.prettysum(int)\n"
             + "SFUNC plus STYPE int\n"
             + "FINALFUNC announce\n"
-            + "INITCOND 0;");
+            + "INITCOND 0;", this.keyspace));
     }
 
-    @Test(groups = "unit")
+    @Test(groups = "short")
     public void should_parse_and_format_aggregate_with_no_initcond() {
-        FunctionMetadata stateFunc = mock(FunctionMetadata.class);
-        keyspace.functions.put("plus(int,int)", stateFunc);
-
-        AggregateMetadata aggregate = AggregateMetadata.build(keyspace, SYSTEM_ROW_SUM, PROTOCOL_VERSION, codecRegistry);
-
+        // given
+        String cqlFunction = String.format("CREATE FUNCTION %s.plus2(i int, j int) CALLED ON NULL INPUT RETURNS int LANGUAGE java AS 'return i+j;';", keyspace);
+        String cqlAggregate = String.format("CREATE AGGREGATE %s.sum(int) SFUNC plus2 STYPE int;", keyspace);
+        // when
+        session.execute(cqlFunction);
+        session.execute(cqlAggregate);
+        // then
+        KeyspaceMetadata keyspace = cluster.getMetadata().getKeyspace(this.keyspace);
+        FunctionMetadata stateFunc = keyspace.getFunction("plus2", cint(), cint());
+        AggregateMetadata aggregate = keyspace.getAggregate("sum", cint());
         assertThat(aggregate).isNotNull();
         assertThat(aggregate.getFullName()).isEqualTo("sum(int)");
         assertThat(aggregate.getSimpleName()).isEqualTo("sum");
-        assertThat(aggregate.getArgumentTypes()).containsExactly(DataType.cint());
+        assertThat(aggregate.getArgumentTypes()).containsExactly(cint());
         assertThat(aggregate.getFinalFunc()).isNull();
         assertThat(aggregate.getInitCond()).isNull();
-        assertThat(aggregate.getReturnType()).isEqualTo(DataType.cint());
+        assertThat(aggregate.getReturnType()).isEqualTo(cint());
         assertThat(aggregate.getStateFunc()).isEqualTo(stateFunc);
-        assertThat(aggregate.getStateType()).isEqualTo(DataType.cint());
-
-        assertThat(keyspace.getAggregate("sum", DataType.cint())).isEqualTo(aggregate);
-
-        assertThat(aggregate.toString()).isEqualTo("CREATE AGGREGATE ks.sum(int) SFUNC plus STYPE int;");
-
-        assertThat(aggregate.exportAsString()).isEqualTo("CREATE AGGREGATE ks.sum(int)\n"
-            + "SFUNC plus STYPE int;");
+        assertThat(aggregate.getStateType()).isEqualTo(cint());
+        assertThat(aggregate.toString()).isEqualTo(cqlAggregate);
+        assertThat(aggregate.exportAsString()).isEqualTo(String.format("CREATE AGGREGATE %s.sum(int)\n"
+            + "SFUNC plus2 STYPE int;", this.keyspace));
     }
 
-    private static final String INT = "org.apache.cassandra.db.marshal.Int32Type";
-    private static final String TEXT = "org.apache.cassandra.db.marshal.UTF8Type";
-
-    private static final Row SYSTEM_ROW_CAT_TOS = mockRow("cat_tos", ImmutableList.of("int"), ImmutableList.of(INT),
-        null, TypeCodec.varchar().serialize("0", PROTOCOL_VERSION), TEXT, "cat", TEXT);
-
-    private static final Row SYSTEM_ROW_MYCOUNT = mockRow("mycount", Collections.<String>emptyList(), Collections.<String>emptyList(),
-        null, TypeCodec.cint().serialize(0, PROTOCOL_VERSION), INT, "inc", INT);
-
-    private static final Row SYSTEM_ROW_PRETTYSUM = mockRow("prettysum", ImmutableList.of("int"), ImmutableList.of(INT),
-        "announce", TypeCodec.cint().serialize(0, PROTOCOL_VERSION), TEXT, "plus", INT);
-
-    private static final Row SYSTEM_ROW_SUM = mockRow("sum", ImmutableList.of("int"), ImmutableList.of(INT),
-        null, null, INT, "plus", INT);
-
-    private static Row mockRow(String aggregateName, List<String> signature, List<String> argumentTypes, String finalFunc,
-                               ByteBuffer initCond, String returnType, String stateFunc, String stateType) {
-        Row row = mock(Row.class);
-
-        when(row.getString("aggregate_name")).thenReturn(aggregateName);
-        when(row.getList("signature", String.class)).thenReturn(signature);
-        when(row.getList("argument_types", String.class)).thenReturn(argumentTypes);
-        when(row.getString("final_func")).thenReturn(finalFunc);
-        when(row.getBytes("initcond")).thenReturn(initCond);
-        when(row.getString("return_type")).thenReturn(returnType);
-        when(row.getString("state_func")).thenReturn(stateFunc);
-        when(row.getString("state_type")).thenReturn(stateType);
-
-        return row;
+    @Override
+    protected Collection<String> getTableDefinitions() {
+        return Collections.emptyList();
     }
+
 }

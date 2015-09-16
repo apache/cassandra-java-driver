@@ -80,7 +80,7 @@ public final class CodecUtils {
         if(cqlType instanceof UserType) {
             UserType userType = (UserType)cqlType;
             userType.setCodecRegistry(codecRegistry);
-            for (UserType.Field field : userType.byIdx) {
+            for (UserType.Field field : userType.getFields()) {
                 setCodecRegistry(field.getType(), codecRegistry);
             }
         }

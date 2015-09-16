@@ -35,6 +35,15 @@ public class Assertions extends org.assertj.core.api.Assertions {
         return new DataTypeAssert(type);
     }
 
+    /**
+     * This method is here only to disambiguate
+     * calls to assertThat with a UserType instance,
+     * because UserType also implements Iterable.
+     */
+    public static DataTypeAssert assertThat(UserType type) {
+        return new DataTypeAssert(type);
+    }
+
     public static LocalDateAssert assertThat(LocalDate localDate) {
         return new LocalDateAssert(localDate);
     }

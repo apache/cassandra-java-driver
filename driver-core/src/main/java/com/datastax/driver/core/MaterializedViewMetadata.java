@@ -56,7 +56,7 @@ public class MaterializedViewMetadata extends TableOrView {
         this.whereClause = whereClause;
     }
 
-    static MaterializedViewMetadata build(KeyspaceMetadata keyspace, Row row, Map<String, ColumnMetadata.Raw> rawCols, VersionNumber cassandraVersion) {
+    static MaterializedViewMetadata build(KeyspaceMetadata keyspace, Row row, Map<String, ColumnMetadata.Raw> rawCols, VersionNumber cassandraVersion, Cluster cluster) {
 
         String name = row.getString("view_name");
         String tableName = row.getString("base_table_name");
@@ -101,7 +101,15 @@ public class MaterializedViewMetadata extends TableOrView {
         // 'SELECT * FROM ...'
         Set<ColumnMetadata> otherColumns = new TreeSet<ColumnMetadata>(columnMetadataComparator);
         for (ColumnMetadata.Raw rawCol : rawCols.values()) {
-            ColumnMetadata col = ColumnMetadata.fromRaw(view, rawCol);
+            DataType dataType;
+            if(cassandraVersion.getMajor() >= 3) {
+                dataType = DataTypeCqlNameParser.parse(rawCol.dataType, cluster, keyspace.getName(), keyspace.userTypes, keyspace.userTypes, false, false);
+            } else {
+                ProtocolVersion protocolVersion = cluster.getConfiguration().getProtocolOptions().getProtocolVersion();
+                CodecRegistry codecRegistry = cluster.getConfiguration().getCodecRegistry();
+                dataType = DataTypeClassNameParser.parseOne(rawCol.dataType, protocolVersion, codecRegistry);
+            }
+            ColumnMetadata col = ColumnMetadata.fromRaw(view, rawCol, dataType);
             switch (rawCol.kind) {
                 case PARTITION_KEY:
                     partitionKey.set(rawCol.position, col);
