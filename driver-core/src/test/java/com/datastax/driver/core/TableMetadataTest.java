@@ -18,7 +18,6 @@ package com.datastax.driver.core;
 import java.util.Collection;
 import java.util.Collections;
 
-import org.testng.SkipException;
 import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.entry;

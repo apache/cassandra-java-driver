@@ -15,63 +15,57 @@
  */
 package com.datastax.driver.core;
 
+import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
-import com.google.common.collect.ImmutableList;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 import static com.datastax.driver.core.Assertions.assertThat;
+import static com.datastax.driver.core.DataType.cint;
 
-public class FunctionMetadataTest {
-    KeyspaceMetadata keyspace;
-    private ProtocolVersion protocolVersion = TestUtils.getDesiredProtocolVersion();
-    private CodecRegistry codecRegistry = new CodecRegistry();
+public class FunctionMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
 
-    @BeforeMethod(groups = "unit")
-    public void setup() {
-        keyspace = new KeyspaceMetadata("ks", false, Collections.<String, String>emptyMap());
-    }
-
-    @Test(groups = "unit")
+    @Test(groups = "short")
     public void should_parse_and_format_simple_function() {
-        FunctionMetadata function = FunctionMetadata.build(keyspace, SYSTEM_ROW_PLUS, protocolVersion, codecRegistry);
-
+        // given
+        String cql = String.format("CREATE FUNCTION %s.plus(s int,v int) RETURNS NULL ON NULL INPUT RETURNS int LANGUAGE java AS 'return s+v;';", keyspace);
+        // when
+        session.execute(cql);
+        // then
+        KeyspaceMetadata keyspace = cluster.getMetadata().getKeyspace(this.keyspace);
+        FunctionMetadata function = keyspace.getFunction("plus", cint(), cint());
         assertThat(function).isNotNull();
         assertThat(function.getKeyspace()).isEqualTo(keyspace);
         assertThat(function.getFullName()).isEqualTo("plus(int,int)");
         assertThat(function.getSimpleName()).isEqualTo("plus");
-        assertThat(function.getReturnType()).isEqualTo(DataType.cint());
+        assertThat(function.getReturnType()).isEqualTo(cint());
         assertThat(function.getArguments())
-            .containsEntry("s", DataType.cint())
-            .containsEntry("v", DataType.cint());
+            .containsEntry("s", cint())
+            .containsEntry("v", cint());
         assertThat(function.getLanguage()).isEqualTo("java");
         assertThat(function.getBody()).isEqualTo("return s+v;");
         assertThat(function.isCalledOnNullInput()).isFalse();
-
-        assertThat(keyspace.getFunction("plus", DataType.cint(), DataType.cint())).isEqualTo(function);
-
         assertThat(function.toString())
-            .isEqualTo("CREATE FUNCTION ks.plus(s int,v int) RETURNS NULL ON NULL INPUT RETURNS int LANGUAGE java AS 'return s+v;';");
-
+            .isEqualTo(cql);
         assertThat(function.exportAsString())
-            .isEqualTo("CREATE FUNCTION ks.plus(\n"
+            .isEqualTo(String.format("CREATE FUNCTION %s.plus(\n"
                 + "    s int,\n"
                 + "    v int)\n"
                 + "RETURNS NULL ON NULL INPUT\n"
                 + "RETURNS int\n"
                 + "LANGUAGE java\n"
-                + "AS 'return s+v;';");
+                + "AS 'return s+v;';", this.keyspace));
     }
 
-    @Test(groups = "unit")
+    @Test(groups = "short")
     public void should_parse_and_format_function_with_no_arguments() {
-        FunctionMetadata function = FunctionMetadata.build(keyspace, SYSTEM_ROW_PI, protocolVersion, codecRegistry);
-
+        // given
+        String cql = String.format("CREATE FUNCTION %s.pi() CALLED ON NULL INPUT RETURNS double LANGUAGE java AS 'return Math.PI;';", keyspace);
+        // when
+        session.execute(cql);
+        // then
+        KeyspaceMetadata keyspace = cluster.getMetadata().getKeyspace(this.keyspace);
+        FunctionMetadata function = keyspace.getFunction("pi");
         assertThat(function).isNotNull();
         assertThat(function.getKeyspace()).isEqualTo(keyspace);
         assertThat(function.getFullName()).isEqualTo("pi()");
@@ -81,45 +75,20 @@ public class FunctionMetadataTest {
         assertThat(function.getLanguage()).isEqualTo("java");
         assertThat(function.getBody()).isEqualTo("return Math.PI;");
         assertThat(function.isCalledOnNullInput()).isTrue();
-
         assertThat(keyspace.getFunction("pi")).isEqualTo(function);
-
         assertThat(function.toString())
-            .isEqualTo("CREATE FUNCTION ks.pi() CALLED ON NULL INPUT RETURNS double LANGUAGE java AS 'return Math.PI;';");
-
+            .isEqualTo(cql);
         assertThat(function.exportAsString())
-            .isEqualTo("CREATE FUNCTION ks.pi()\n"
+            .isEqualTo(String.format("CREATE FUNCTION %s.pi()\n"
                 + "CALLED ON NULL INPUT\n"
                 + "RETURNS double\n"
                 + "LANGUAGE java\n"
-                + "AS 'return Math.PI;';");
+                + "AS 'return Math.PI;';", this.keyspace));
     }
 
-    private static final String INT = "org.apache.cassandra.db.marshal.Int32Type";
-    private static final String DOUBLE = "org.apache.cassandra.db.marshal.DoubleType";
-
-    private static final Row SYSTEM_ROW_PLUS = mockRow("plus",
-        ImmutableList.of("int", "int"), ImmutableList.of("s", "v"), ImmutableList.of(INT, INT),
-        "return s+v;", false, "java", INT
-    );
-
-    private static final Row SYSTEM_ROW_PI = mockRow("pi",
-        Collections.<String>emptyList(), Collections.<String>emptyList(), Collections.<String>emptyList(),
-        "return Math.PI;", true, "java", DOUBLE);
-
-    private static Row mockRow(String functionName, List<String> signature, List<String> argumentNames, List<String> argumentTypes,
-                               String body, boolean calledOnNullInput, String language, String returnType) {
-        Row row = mock(Row.class);
-
-        when(row.getString("function_name")).thenReturn(functionName);
-        when(row.getList("signature", String.class)).thenReturn(signature);
-        when(row.getList("argument_names", String.class)).thenReturn(argumentNames);
-        when(row.getList("argument_types", String.class)).thenReturn(argumentTypes);
-        when(row.getString("body")).thenReturn(body);
-        when(row.getBool("called_on_null_input")).thenReturn(calledOnNullInput);
-        when(row.getString("language")).thenReturn(language);
-        when(row.getString("return_type")).thenReturn(returnType);
-
-        return row;
+    @Override
+    protected Collection<String> getTableDefinitions() {
+        return Collections.emptyList();
     }
+
 }

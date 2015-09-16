@@ -327,7 +327,17 @@ public class Metadata {
      * @return the newly created tuple type.
      */
     public TupleType newTupleType(DataType... types) {
-        return new TupleType(Arrays.asList(types), cluster.protocolVersion(), cluster.configuration.getCodecRegistry());
+        return newTupleType(Arrays.asList(types));
+    }
+
+    /**
+     * Creates a tuple type given a list of types.
+     *
+     * @param types the types for the tuple type.
+     * @return the newly created tuple type.
+     */
+    public TupleType newTupleType(List<DataType> types) {
+        return new TupleType(types, cluster.protocolVersion(), cluster.configuration.getCodecRegistry());
     }
 
     /**

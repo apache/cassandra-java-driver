@@ -36,7 +36,7 @@ abstract class SchemaParser {
         return V2_PARSER;
     }
 
-    abstract void refresh(Metadata metadata,
+    abstract void refresh(Cluster cluster,
                           SchemaElement targetType, String targetKeyspace, String targetName, List<String> targetSignature,
                           Connection connection, VersionNumber cassandraVersion)
         throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException;
@@ -53,11 +53,12 @@ abstract class SchemaParser {
         private static final String CF_NAME                = "columnfamily_name";
 
         @Override
-        void refresh(Metadata metadata,
+        void refresh(Cluster cluster,
                      SchemaElement targetType, String targetKeyspace, String targetName, List<String> targetSignature,
                      Connection connection, VersionNumber cassandraVersion)
             throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
 
+            Metadata metadata = cluster.getMetadata();
             boolean isSchemaOrKeyspace = (targetType == null || targetType == KEYSPACE);
             ProtocolVersion protocolVersion = metadata.cluster.protocolVersion();
             CodecRegistry codecRegistry = metadata.cluster.configuration.getCodecRegistry();
@@ -102,7 +103,7 @@ abstract class SchemaParser {
             ResultSet ks = get(ksFuture);
             Map<String, List<Row>> udtDefs = groupByKeyspace(get(udtFuture));
             Map<String, List<Row>> cfDefs = groupByKeyspace(get(cfFuture));
-            Map<String, Map<String, Map<String, ColumnMetadata.Raw>>> colsDefs = groupByKeyspaceAndCf(get(colsFuture), cassandraVersion, protocolVersion, codecRegistry, CF_NAME);
+            Map<String, Map<String, Map<String, ColumnMetadata.Raw>>> colsDefs = groupByKeyspaceAndCf(get(colsFuture), cassandraVersion, cluster, CF_NAME);
             Map<String, List<Row>> functionDefs = groupByKeyspace(get(functionsFuture));
             Map<String, List<Row>> aggregateDefs = groupByKeyspace(get(aggregatesFuture));
 
@@ -122,10 +123,10 @@ abstract class SchemaParser {
                             buildTableMetadata(ksm, cfDefs.get(ksName), colsDefs.get(ksName), null, cassandraVersion, protocolVersion, codecRegistry, CF_NAME);
                         }
                         if (functionDefs.containsKey(ksName)) {
-                            buildFunctionMetadata(ksm, functionDefs.get(ksName), protocolVersion, codecRegistry);
+                            buildFunctionMetadata(ksm, functionDefs.get(ksName), cluster);
                         }
                         if (aggregateDefs.containsKey(ksName)) {
-                            buildAggregateMetadata(ksm, aggregateDefs.get(ksName), protocolVersion, codecRegistry);
+                            buildAggregateMetadata(ksm, aggregateDefs.get(ksName), cluster);
                         }
                         addedKs.add(ksName);
                         metadata.keyspaces.put(ksName, ksm);
@@ -163,11 +164,11 @@ abstract class SchemaParser {
                             break;
                         case FUNCTION:
                             if (functionDefs.containsKey(targetKeyspace))
-                                buildFunctionMetadata(ksm, functionDefs.get(targetKeyspace), protocolVersion, codecRegistry);
+                                buildFunctionMetadata(ksm, functionDefs.get(targetKeyspace), cluster);
                             break;
                         case AGGREGATE:
                             if (functionDefs.containsKey(targetKeyspace))
-                                buildAggregateMetadata(ksm, aggregateDefs.get(targetKeyspace), protocolVersion, codecRegistry);
+                                buildAggregateMetadata(ksm, aggregateDefs.get(targetKeyspace), cluster);
                             break;
                         default:
                             logger.warn("Unexpected element type to rebuild: {}", targetType);
@@ -201,11 +202,12 @@ abstract class SchemaParser {
         private static final String TABLE_NAME = "table_name";
 
         @Override
-        void refresh(Metadata metadata,
+        void refresh(Cluster cluster,
                      SchemaElement targetType, String targetKeyspace, String targetName, List<String> targetSignature,
                      Connection connection, VersionNumber cassandraVersion)
             throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
 
+            Metadata metadata = cluster.getMetadata();
             boolean isSchemaOrKeyspace = (targetType == null || targetType == KEYSPACE);
             ProtocolVersion protocolVersion = metadata.cluster.protocolVersion();
             CodecRegistry codecRegistry = metadata.cluster.configuration.getCodecRegistry();
@@ -252,7 +254,7 @@ abstract class SchemaParser {
             ResultSet ks = get(ksFuture);
             Map<String, List<Row>> udtDefs = groupByKeyspace(get(udtFuture));
             Map<String, List<Row>> cfDefs = groupByKeyspace(get(cfFuture));
-            Map<String, Map<String, Map<String, ColumnMetadata.Raw>>> colsDefs = groupByKeyspaceAndCf(get(colsFuture), cassandraVersion, protocolVersion, codecRegistry, TABLE_NAME);
+            Map<String, Map<String, Map<String, ColumnMetadata.Raw>>> colsDefs = groupByKeyspaceAndCf(get(colsFuture), cassandraVersion, cluster, TABLE_NAME);
             Map<String, List<Row>> functionDefs = groupByKeyspace(get(functionsFuture));
             Map<String, List<Row>> aggregateDefs = groupByKeyspace(get(aggregatesFuture));
             Map<String, Map<String, List<Row>>> indexDefs = groupByKeyspaceAndCf(get(indexesFuture), TABLE_NAME);
@@ -273,10 +275,10 @@ abstract class SchemaParser {
                             buildTableMetadata(ksm, cfDefs.get(ksName), colsDefs.get(ksName), indexDefs.get(ksName), cassandraVersion, protocolVersion, codecRegistry, TABLE_NAME);
                         }
                         if (functionDefs.containsKey(ksName)) {
-                            buildFunctionMetadata(ksm, functionDefs.get(ksName), protocolVersion, codecRegistry);
+                            buildFunctionMetadata(ksm, functionDefs.get(ksName), cluster);
                         }
                         if (aggregateDefs.containsKey(ksName)) {
-                            buildAggregateMetadata(ksm, aggregateDefs.get(ksName), protocolVersion, codecRegistry);
+                            buildAggregateMetadata(ksm, aggregateDefs.get(ksName), cluster);
                         }
                         addedKs.add(ksName);
                         metadata.keyspaces.put(ksName, ksm);
@@ -314,11 +316,11 @@ abstract class SchemaParser {
                             break;
                         case FUNCTION:
                             if (functionDefs.containsKey(targetKeyspace))
-                                buildFunctionMetadata(ksm, functionDefs.get(targetKeyspace), protocolVersion, codecRegistry);
+                                buildFunctionMetadata(ksm, functionDefs.get(targetKeyspace), cluster);
                             break;
                         case AGGREGATE:
                             if (functionDefs.containsKey(targetKeyspace))
-                                buildAggregateMetadata(ksm, aggregateDefs.get(targetKeyspace), protocolVersion, codecRegistry);
+                                buildAggregateMetadata(ksm, aggregateDefs.get(targetKeyspace), cluster);
                             break;
                         default:
                             logger.warn("Unexpected element type to rebuild: {}", targetType);
@@ -370,14 +372,14 @@ abstract class SchemaParser {
             ksm.add(UserType.build(row, protocolVersion, codecRegistry));
     }
 
-    static void buildFunctionMetadata(KeyspaceMetadata ksm, List<Row> rows, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
+    static void buildFunctionMetadata(KeyspaceMetadata ksm, List<Row> rows, Cluster cluster) {
         for (Row row : rows)
-            ksm.add(FunctionMetadata.build(ksm, row, protocolVersion, codecRegistry));
+            ksm.add(FunctionMetadata.build(ksm, row, cluster));
     }
 
-    static void buildAggregateMetadata(KeyspaceMetadata ksm, List<Row> rows, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
+    static void buildAggregateMetadata(KeyspaceMetadata ksm, List<Row> rows, Cluster cluster) {
         for (Row row : rows)
-            ksm.add(AggregateMetadata.build(ksm, row, protocolVersion, codecRegistry));
+            ksm.add(AggregateMetadata.build(ksm, row, cluster));
     }
 
     static Map<String, List<Row>> groupByKeyspace(ResultSet rs) {
@@ -420,7 +422,7 @@ abstract class SchemaParser {
         return result;
     }
 
-    static Map<String, Map<String, Map<String, ColumnMetadata.Raw>>> groupByKeyspaceAndCf(ResultSet rs, VersionNumber cassandraVersion, ProtocolVersion protocolVersion, CodecRegistry codecRegistry, String tableName) {
+    static Map<String, Map<String, Map<String, ColumnMetadata.Raw>>> groupByKeyspaceAndCf(ResultSet rs, VersionNumber cassandraVersion, Cluster cluster, String tableName) {
         if (rs == null)
             return Collections.emptyMap();
 
@@ -439,7 +441,7 @@ abstract class SchemaParser {
                 l = new HashMap<String, ColumnMetadata.Raw>();
                 colsByCf.put(cfName, l);
             }
-            ColumnMetadata.Raw c = ColumnMetadata.Raw.fromRow(row, cassandraVersion, protocolVersion, codecRegistry);
+            ColumnMetadata.Raw c = ColumnMetadata.Raw.fromRow(row, cassandraVersion, cluster);
             l.put(c.name, c);
         }
         return result;

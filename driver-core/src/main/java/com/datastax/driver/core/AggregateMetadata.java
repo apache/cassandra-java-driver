@@ -69,17 +69,19 @@ public class AggregateMetadata {
     //     state_type text,
     //     PRIMARY KEY (keyspace_name, aggregate_name, signature)
     // ) WITH CLUSTERING ORDER BY (aggregate_name ASC, signature ASC)
-    static AggregateMetadata build(KeyspaceMetadata ksm, Row row, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
+    static AggregateMetadata build(KeyspaceMetadata ksm, Row row, Cluster cluster) {
         String simpleName = row.getString("aggregate_name");
         List<String> signature = row.getList("signature", String.class);
         String fullName = Metadata.fullFunctionName(simpleName, signature);
-        List<DataType> argumentTypes = parseTypes(row.getList("argument_types", String.class), protocolVersion, codecRegistry);
+        List<DataType> argumentTypes = parseTypes(signature, cluster.getMetadata());
         String finalFuncSimpleName = row.getString("final_func");
-        DataType returnType = CassandraTypeParser.parseOne(row.getString("return_type"), protocolVersion, codecRegistry);
+        DataType returnType = DataTypeParser.parse(row.getString("return_type"), cluster.getMetadata());
         String stateFuncSimpleName = row.getString("state_func");
         String stateTypeName = row.getString("state_type");
-        DataType stateType = CassandraTypeParser.parseOne(stateTypeName, protocolVersion, codecRegistry);
+        DataType stateType = DataTypeParser.parse(stateTypeName, cluster.getMetadata());
         ByteBuffer rawInitCond = row.getBytes("initcond");
+        CodecRegistry codecRegistry = cluster.getConfiguration().getCodecRegistry();
+        ProtocolVersion protocolVersion = cluster.getConfiguration().getProtocolOptions().getProtocolVersion();
         Object initCond = rawInitCond == null ? null : codecRegistry.codecFor(stateType).deserialize(rawInitCond, protocolVersion);
 
         String finalFuncFullName = finalFuncSimpleName == null ? null : String.format("%s(%s)", finalFuncSimpleName, stateType);
@@ -98,13 +100,13 @@ public class AggregateMetadata {
         return Metadata.fullFunctionName(stateFuncSimpleName, args);
     }
 
-    private static List<DataType> parseTypes(List<String> names, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
+    private static List<DataType> parseTypes(List<String> names, Metadata metadata) {
         if (names.isEmpty())
             return Collections.emptyList();
 
         ImmutableList.Builder<DataType> builder = ImmutableList.builder();
         for (String name : names) {
-            DataType type = CassandraTypeParser.parseOne(name, protocolVersion, codecRegistry);
+            DataType type = DataTypeParser.parse(name, metadata);
             builder.add(type);
         }
         return builder.build();

@@ -320,7 +320,7 @@ class ControlConnection {
         }
 
         SchemaParser.forVersion(cassandraVersion)
-            .refresh(cluster.metadata,
+            .refresh(cluster.getCluster(),
                 targetType, targetKeyspace, targetName, targetSignature,
                 connection, cassandraVersion);
 
