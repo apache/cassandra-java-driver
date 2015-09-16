@@ -33,6 +33,9 @@ public class ColumnMetadata {
     static final String KIND_V2 = "type"; // v2 only
     static final String KIND_V3 = "kind"; // replaces type, v3 onwards
 
+    static final String CLUSTERING_ORDER = "clustering_order";
+    static final String DESC = "desc";
+
     static final String INDEX_TYPE = "index_type";
     static final String INDEX_OPTIONS = "index_options";
     static final String INDEX_NAME = "index_name";
@@ -130,6 +133,7 @@ public class ColumnMetadata {
     // exposed publicly at all.
     static class Raw {
 
+
         public enum Kind {
 
             PARTITION_KEY     ("PARTITION_KEY" , "PARTITION_KEY"),
@@ -179,7 +183,7 @@ public class ColumnMetadata {
             this.isReversed = isReversed;
         }
 
-        static Raw fromRow(Row row, VersionNumber version, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
+        static Raw fromRow(Row row, VersionNumber version, Cluster cluster) {
             String name = row.getString(COLUMN_NAME);
 
             Kind kind;
@@ -199,14 +203,20 @@ public class ColumnMetadata {
                 position = row.isNull(COMPONENT_INDEX) ? 0 : row.getInt(COMPONENT_INDEX);
             }
 
-            String dataTypeStr;
+            DataType dataType;
+            boolean reversed;
             if(version.getMajor() >= 3) {
-                dataTypeStr = row.getString(TYPE);
+                String dataTypeStr = row.getString(TYPE);
+                dataType = DataTypeParser.parse(dataTypeStr, cluster.getMetadata());
+                String clusteringOrderStr = row.getString(CLUSTERING_ORDER);
+                reversed = clusteringOrderStr.equals(DESC);
             } else {
-                dataTypeStr = row.getString(VALIDATOR);
+                String dataTypeStr = row.getString(VALIDATOR);
+                ProtocolVersion protocolVersion = cluster.getConfiguration().getProtocolOptions().getProtocolVersion();
+                CodecRegistry codecRegistry = cluster.getConfiguration().getCodecRegistry();
+                dataType = CassandraTypeParser.parseOne(dataTypeStr, protocolVersion, codecRegistry);
+                reversed = CassandraTypeParser.isReversed(dataTypeStr);
             }
-            DataType dataType = CassandraTypeParser.parseOne(dataTypeStr, protocolVersion, codecRegistry);
-            boolean reversed = CassandraTypeParser.isReversed(dataTypeStr);
 
             Raw c = new Raw(name, kind, position, dataType, reversed);
 

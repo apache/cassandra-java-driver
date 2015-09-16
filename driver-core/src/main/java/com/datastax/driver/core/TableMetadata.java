@@ -47,7 +47,7 @@ public class TableMetadata extends TableOrView {
     private static final String SUPER                = "super";
     private static final String COMPOUND             = "compound";
 
-    private static final String EMPTY_TYPE           = "org.apache.cassandra.db.marshal.EmptyType";
+    private static final String EMPTY_TYPE           = "empty";
 
     private final Map<String, IndexMetadata> indexes;
     private final Map<String, MaterializedViewMetadata> views;
@@ -277,7 +277,9 @@ public class TableMetadata extends TableOrView {
         Iterator<ColumnMetadata.Raw> it = cols.iterator();
         while(it.hasNext()) {
             ColumnMetadata.Raw col = it.next();
-            if(col.kind == ColumnMetadata.Raw.Kind.REGULAR && col.dataType instanceof DataType.CustomType && EMPTY_TYPE.equals(((DataType.CustomType)col.dataType).getCustomTypeClassName())) {
+            if (col.kind == ColumnMetadata.Raw.Kind.REGULAR
+                && col.dataType instanceof DataType.CustomType
+                && ((DataType.CustomType)col.dataType).getCustomTypeClassName().equals(EMPTY_TYPE)) {
                 // remove "value EmptyType" regular column
                 it.remove();
             }
