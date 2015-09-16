@@ -197,6 +197,7 @@ abstract class SchemaParser {
         private static final String SELECT_FUNCTIONS       = "SELECT * FROM system_schema.functions";
         private static final String SELECT_AGGREGATES      = "SELECT * FROM system_schema.aggregates";
         private static final String SELECT_INDEXES         = "SELECT * FROM system_schema.indexes";
+        private static final String SELECT_VIEWS           = "SELECT * FROM system_schema.views";
 
         private static final String TABLE_NAME = "table_name";
 
@@ -210,44 +211,33 @@ abstract class SchemaParser {
             ProtocolVersion protocolVersion = metadata.cluster.protocolVersion();
             CodecRegistry codecRegistry = metadata.cluster.configuration.getCodecRegistry();
 
-            String whereClause = "";
-            if (targetType != null) {
-                whereClause = " WHERE keyspace_name = '" + targetKeyspace + '\'';
-                if (targetType == TABLE)
-                    whereClause += " AND table_name = '" + targetName + '\'';
-                else if (targetType == TYPE)
-                    whereClause += " AND type_name = '" + targetName + '\'';
-                else if (targetType == FUNCTION)
-                    whereClause += " AND function_name = '" + targetName + "' AND signature = " + LIST_OF_TEXT_CODEC.format(targetSignature);
-                else if (targetType == AGGREGATE)
-                    whereClause += " AND aggregate_name = '" + targetName + "' AND signature = " + LIST_OF_TEXT_CODEC.format(targetSignature);
-            }
-
             ResultSetFuture ksFuture = null,
                 udtFuture = null,
                 cfFuture = null,
                 colsFuture = null,
                 functionsFuture = null,
                 aggregatesFuture = null,
-                indexesFuture = null;
+                indexesFuture = null,
+                viewsFuture = null;
 
             if (isSchemaOrKeyspace)
-                ksFuture = queryAsync(SELECT_KEYSPACES + whereClause, connection, protocolVersion);
+                ksFuture = queryAsync(SELECT_KEYSPACES + whereClause(targetType, targetKeyspace, targetName, targetSignature), connection, protocolVersion);
 
             if (isSchemaOrKeyspace || targetType == TYPE)
-                udtFuture = queryAsync(SELECT_USERTYPES + whereClause, connection, protocolVersion);
+                udtFuture = queryAsync(SELECT_USERTYPES + whereClause(targetType, targetKeyspace, targetName, targetSignature), connection, protocolVersion);
 
             if (isSchemaOrKeyspace || targetType == TABLE) {
-                cfFuture = queryAsync(SELECT_TABLES + whereClause, connection, protocolVersion);
-                colsFuture = queryAsync(SELECT_COLUMNS + whereClause, connection, protocolVersion);
-                indexesFuture = queryAsync(SELECT_INDEXES + whereClause, connection, protocolVersion);
+                cfFuture = queryAsync(SELECT_TABLES + whereClause(targetType, targetKeyspace, targetName, targetSignature), connection, protocolVersion);
+                colsFuture = queryAsync(SELECT_COLUMNS + whereClause(targetType, targetKeyspace, targetName, targetSignature), connection, protocolVersion);
+                indexesFuture = queryAsync(SELECT_INDEXES + whereClause(targetType, targetKeyspace, targetName, targetSignature), connection, protocolVersion);
+                viewsFuture = queryAsync(SELECT_VIEWS + whereClause(targetType == null ? null : VIEW, targetKeyspace, targetName, targetSignature), connection, protocolVersion);
             }
 
-            if ((isSchemaOrKeyspace || targetType == FUNCTION))
-                functionsFuture = queryAsync(SELECT_FUNCTIONS + whereClause, connection, protocolVersion);
+            if (isSchemaOrKeyspace || targetType == FUNCTION)
+                functionsFuture = queryAsync(SELECT_FUNCTIONS + whereClause(targetType, targetKeyspace, targetName, targetSignature), connection, protocolVersion);
 
             if (isSchemaOrKeyspace || targetType == AGGREGATE)
-                aggregatesFuture = queryAsync(SELECT_AGGREGATES + whereClause, connection, protocolVersion);
+                aggregatesFuture = queryAsync(SELECT_AGGREGATES + whereClause(targetType, targetKeyspace, targetName, targetSignature), connection, protocolVersion);
 
             ResultSet ks = get(ksFuture);
             Map<String, List<Row>> udtDefs = groupByKeyspace(get(udtFuture));
@@ -255,6 +245,7 @@ abstract class SchemaParser {
             Map<String, Map<String, Map<String, ColumnMetadata.Raw>>> colsDefs = groupByKeyspaceAndCf(get(colsFuture), cassandraVersion, protocolVersion, codecRegistry, TABLE_NAME);
             Map<String, List<Row>> functionDefs = groupByKeyspace(get(functionsFuture));
             Map<String, List<Row>> aggregateDefs = groupByKeyspace(get(aggregatesFuture));
+            Map<String, List<Row>> viewDefs = groupByKeyspace(get(viewsFuture));
             Map<String, Map<String, List<Row>>> indexDefs = groupByKeyspaceAndCf(get(indexesFuture), TABLE_NAME);
 
             metadata.lock.lock();
@@ -271,6 +262,9 @@ abstract class SchemaParser {
                         }
                         if (cfDefs.containsKey(ksName)) {
                             buildTableMetadata(ksm, cfDefs.get(ksName), colsDefs.get(ksName), indexDefs.get(ksName), cassandraVersion, protocolVersion, codecRegistry, TABLE_NAME);
+                        }
+                        if (viewDefs.containsKey(ksName)) {
+                            buildViewMetadata(ksm, viewDefs.get(ksName), colsDefs.get(ksName), cassandraVersion);
                         }
                         if (functionDefs.containsKey(ksName)) {
                             buildFunctionMetadata(ksm, functionDefs.get(ksName), protocolVersion, codecRegistry);
@@ -307,6 +301,8 @@ abstract class SchemaParser {
                         case TABLE:
                             if (cfDefs.containsKey(targetKeyspace))
                                 buildTableMetadata(ksm, cfDefs.get(targetKeyspace), colsDefs.get(targetKeyspace), indexDefs.get(targetKeyspace), cassandraVersion, protocolVersion, codecRegistry, TABLE_NAME);
+                            if (viewDefs.containsKey(targetKeyspace))
+                                buildViewMetadata(ksm, viewDefs.get(targetKeyspace), colsDefs.get(targetKeyspace), cassandraVersion);
                             break;
                         case TYPE:
                             if (udtDefs.containsKey(targetKeyspace))
@@ -328,6 +324,25 @@ abstract class SchemaParser {
                 metadata.lock.unlock();
             }
         }
+
+        private String whereClause(SchemaElement targetType, String targetKeyspace, String targetName, List<String> targetSignature) {
+            String whereClause = "";
+            if (targetType != null) {
+                whereClause = " WHERE keyspace_name = '" + targetKeyspace + '\'';
+                if (targetType == TABLE)
+                    whereClause += " AND table_name = '" + targetName + '\'';
+                else if (targetType == VIEW)
+                    whereClause += " AND view_name = '" + targetName + '\'';
+                else if (targetType == TYPE)
+                    whereClause += " AND type_name = '" + targetName + '\'';
+                else if (targetType == FUNCTION)
+                    whereClause += " AND function_name = '" + targetName + "' AND signature = " + LIST_OF_TEXT_CODEC.format(targetSignature);
+                else if (targetType == AGGREGATE)
+                    whereClause += " AND aggregate_name = '" + targetName + "' AND signature = " + LIST_OF_TEXT_CODEC.format(targetSignature);
+            }
+            return whereClause;
+        }
+
     };
 
     static void buildTableMetadata(KeyspaceMetadata ksm, List<Row> cfRows, Map<String, Map<String, ColumnMetadata.Raw>> colsDefs, Map<String, List<Row>> ksIndexes, VersionNumber cassandraVersion, ProtocolVersion protocolVersion, CodecRegistry codecRegistry, String tableName) {
@@ -365,6 +380,24 @@ abstract class SchemaParser {
         }
     }
 
+    static void buildViewMetadata(KeyspaceMetadata ksm, List<Row> viewRows, Map<String, Map<String, ColumnMetadata.Raw>> colsDefs, VersionNumber cassandraVersion) {
+        for (Row viewRow : viewRows) {
+            String viewName = viewRow.getString("view_name");
+            try {
+                Map<String, ColumnMetadata.Raw> cols = colsDefs.get(viewName);
+                if (cols == null || cols.isEmpty())
+                    continue; // we probably raced, we will update the metadata next time
+                MaterializedViewMetadata view = MaterializedViewMetadata.build(ksm, viewRow, cols, cassandraVersion);
+                if(view != null)
+                    ksm.add(view);
+            } catch (RuntimeException e) {
+                // See ControlConnection#refreshSchema for why we'd rather not probably this further
+                logger.error(String.format("Error parsing schema for view %s.%s: "
+                        + "Cluster.getMetadata().getKeyspace(\"%s\").getView(\"%s\") will be missing or incomplete",
+                    ksm.getName(), viewName, ksm.getName(), viewName), e);
+            }
+        }
+    }
     static void buildUserTypes(KeyspaceMetadata ksm, List<Row> rows, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
         for (Row row : rows)
             ksm.add(UserType.build(row, protocolVersion, codecRegistry));
