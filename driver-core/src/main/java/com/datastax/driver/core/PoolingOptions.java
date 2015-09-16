@@ -485,6 +485,10 @@ public class PoolingOptions {
      * Requests the driver to re-evaluate the {@link HostDistance} (through the configured
      * {@link com.datastax.driver.core.policies.LoadBalancingPolicy#distance}) for every known
      * hosts and to drop/add connections to each hosts according to the computed distance.
+     * <p>
+     * Note that, due to backward compatibility issues, this method is not interruptible. If the
+     * caller thread gets interrupted, the method will complete and only then re-interrupt the
+     * thread (which you can check with {@code Thread.currentThread().isInterrupted()}).
      */
     public void refreshConnectedHosts() {
         manager.refreshConnectedHosts();

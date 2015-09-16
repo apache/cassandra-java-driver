@@ -339,8 +339,12 @@ public class QueryBuilderTest {
         query = "UPDATE foo SET x=4 WHERE k=0 IF x=1;";
         update = builder.update("foo").with(set("x", 4)).where(eq("k", 0)).onlyIf(eq("x", 1));
         assertEquals(update.toString(), query);
-    }
 
+        // IF EXISTS CAS test
+        update = builder.update("foo").with(set("x", 3)).where(eq("k", 2)).ifExists();
+        assertThat(update.toString()).isEqualTo("UPDATE foo SET x=3 WHERE k=2 IF EXISTS;");
+    }
+    
     @Test(groups = "unit")
     public void deleteTest() throws Exception {
 
@@ -863,4 +867,22 @@ public class QueryBuilderTest {
         assertThat(select.getQueryString()).doesNotContain("?");
         assertThat(select.getValues()).isNull();
     }
+
+    @Test(groups = "unit", expectedExceptions = { IllegalStateException.class })
+    public void should_throw_ISE_if_getObject_called_on_statement_without_values() {
+        builder.select().from("test").where(eq("foo", 42)).getObject(0); // integers are appended to the CQL string
+    }
+
+    @Test(groups = "unit", expectedExceptions = { IndexOutOfBoundsException.class })
+    public void should_throw_IOOBE_if_getObject_called_with_wrong_index() {
+        builder.select().from("test").where(eq("foo", new Object())).getObject(1);
+    }
+
+    @Test(groups = "unit")
+    public void should_return_object_at_ith_index() {
+        Object expected = new Object();
+        Object actual = builder.select().from("test").where(eq("foo", expected)).getObject(0);
+        assertThat(actual).isSameAs(expected);
+    }
+
 }

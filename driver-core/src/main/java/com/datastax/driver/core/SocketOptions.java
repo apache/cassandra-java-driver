@@ -85,7 +85,7 @@ public class SocketOptions {
      * <p>
      * Please note that this is not the maximum time a call to {@link Session#execute} may block;
      * this is the maximum time that call will wait for one particular
-     * Cassandra host, but other hosts will be tried if one of them timeout. In
+     * Cassandra host, but other hosts will be tried if one of them times out. In
      * other words, a {@link Session#execute} call may theoretically wait up to
      * {@code getReadTimeoutMillis() * <number_of_cassandra_hosts>} (though the
      * total number of hosts tried for a given query also depends on the
@@ -110,10 +110,8 @@ public class SocketOptions {
      * <p>
      * When setting this value, keep in mind the following:
      * <ul>
-     *   <li>the timeout settings used on the Cassandra side ({@code *_request_timeout_in_ms}
-     *   in {@code cassandra.yaml}) should be taken into account when picking a value for this
-     *   read timeout. In particular, if this read timeout option is lower than Cassandra's
-     *   timeout, <b>the driver might assume that the host is not responsive and mark it down.</b></li>
+     *   <li>it should be higher than the timeout settings used on the Cassandra side
+     *   ({@code *_request_timeout_in_ms} in {@code cassandra.yaml}).</li>
      *   <li>the read timeout is only approximate and only control the timeout to one Cassandra
      *   host, not the full query (see {@link #getReadTimeoutMillis} for more details). If a
      *   high level of precision on the timeout to a request is required, you should use

@@ -114,6 +114,11 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
         return defs;
     }
 
+    @Override
+    protected Cluster.Builder configure(Cluster.Builder builder) {
+        return builder.withQueryOptions(TestUtils.nonDebouncingQueryOptions());
+    }
+
     @Test(groups = "short")
     public void preparedNativeTest() {
         // Test preparing/bounding for all native types
@@ -300,47 +305,6 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
         }
     }
 
-    private void reprepareOnNewlyUpNodeTest(String ks, Session session) throws Exception {
-
-        ks = ks == null ? "" : ks + '.';
-
-        session.execute("INSERT INTO " + ks + "test (k, i) VALUES ('123', 17)");
-        session.execute("INSERT INTO " + ks + "test (k, i) VALUES ('124', 18)");
-
-        PreparedStatement ps = session.prepare("SELECT * FROM " + ks + "test WHERE k = ?");
-
-        assertEquals(session.execute(ps.bind("123")).one().getInt("i"), 17);
-
-        ccmBridge.stop();
-        waitForDown(CCMBridge.IP_PREFIX + '1', cluster);
-
-        ccmBridge.start();
-        waitFor(CCMBridge.IP_PREFIX + '1', cluster, 120);
-
-        try
-        {
-            assertEquals(session.execute(ps.bind("124")).one().getInt("i"), 18);
-        }
-        catch (NoHostAvailableException e)
-        {
-            System.out.println(">> " + e.getErrors());
-            throw e;
-        }
-    }
-
-    @Test(groups = "long")
-    public void reprepareOnNewlyUpNodeTest() throws Exception {
-        reprepareOnNewlyUpNodeTest(null, session);
-    }
-
-    @Test(groups = "long")
-    public void reprepareOnNewlyUpNodeNoKeyspaceTest() throws Exception {
-
-        // This is the same test than reprepareOnNewlyUpNodeTest, except that the
-        // prepared statement is prepared while no current keyspace is used
-        reprepareOnNewlyUpNodeTest(keyspace, cluster.connect());
-    }
-
     @Test(groups = "short")
     public void prepareWithNullValuesTest() throws Exception {
 
@@ -448,11 +412,15 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
         Cluster otherCluster = Cluster.builder()
             .addContactPointsWithPorts(ImmutableList.of(hostAddress))
             .build();
-        PreparedStatement pst = otherCluster.connect().prepare("select * from system.peers where inet = ?");
-        BoundStatement bs = pst.bind().setInet(0, InetAddress.getByName("localhost"));
+        try {
+            PreparedStatement pst = otherCluster.connect().prepare("select * from system.peers where inet = ?");
+            BoundStatement bs = pst.bind().setInet(0, InetAddress.getByName("localhost"));
 
-        // We expect that the error gets detected without a roundtrip to the server, so use executeAsync
-        session.executeAsync(bs);
+            // We expect that the error gets detected without a roundtrip to the server, so use executeAsync
+            session.executeAsync(bs);
+        } finally {
+            otherCluster.close();
+        }
     }
 
     /**

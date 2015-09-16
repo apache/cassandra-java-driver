@@ -23,6 +23,8 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
+import io.netty.util.HashedWheelTimer;
+import io.netty.util.Timer;
 import org.mockito.ArgumentCaptor;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -52,7 +54,9 @@ public class NettyOptionsTest {
         try {
             NettyOptions nettyOptions = mock(NettyOptions.class, CALLS_REAL_METHODS.get());
             EventLoopGroup eventLoopGroup = new NioEventLoopGroup();
-            when(nettyOptions.eventLoopGroup(any(ThreadFactory.class))).thenReturn(eventLoopGroup);
+            Timer timer = new HashedWheelTimer();
+            doReturn(eventLoopGroup).when(nettyOptions).eventLoopGroup(any(ThreadFactory.class));
+            doReturn(timer).when(nettyOptions).timer(any(ThreadFactory.class));
             final ChannelHandler handler = mock(ChannelHandler.class);
             doAnswer(new Answer() {
                 @Override
@@ -80,17 +84,18 @@ public class NettyOptionsTest {
 
             cluster.close();
             // then
-            ArgumentCaptor<EventLoopGroup> captor = ArgumentCaptor.forClass(EventLoopGroup.class);
             verify(nettyOptions, times(1)).eventLoopGroup(any(ThreadFactory.class));
             verify(nettyOptions, times(1)).channelClass();
+            verify(nettyOptions, times(1)).timer(any(ThreadFactory.class));
             // per-connection hooks will be called coreConnections * hosts + 1 times:
             // the extra call is for the control connection
             verify(nettyOptions, times(expectedNumberOfCalls)).afterBootstrapInitialized(any(Bootstrap.class));
             verify(nettyOptions, times(expectedNumberOfCalls)).afterChannelInitialized(any(SocketChannel.class));
             verify(handler, times(expectedNumberOfCalls)).handlerAdded(any(ChannelHandlerContext.class));
             verify(handler, times(expectedNumberOfCalls)).handlerRemoved(any(ChannelHandlerContext.class));
-            verify(nettyOptions, times(1)).onClusterClose(captor.capture());
-            assertThat(captor.getValue()).isSameAs(eventLoopGroup);
+            verify(nettyOptions, times(1)).onClusterClose(eventLoopGroup);
+            verify(nettyOptions, times(1)).onClusterClose(timer);
+            verifyNoMoreInteractions(nettyOptions);
         } finally {
             if (cluster != null)
                 cluster.close();

@@ -28,6 +28,10 @@ import static com.datastax.driver.core.TableMetadata.Order.ASC;
 import static com.datastax.driver.core.TableMetadata.Order.DESC;
 
 public class TableMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
+    @Override
+    protected Collection<String> getTableDefinitions() {
+        return Collections.emptyList();
+    }
 
     @Test(groups = "short")
     public void should_parse_table_without_clustering_columns() {
@@ -48,6 +52,15 @@ public class TableMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
         assertThat(table.getColumns().get(1)).isNotNull().hasName("i").isRegularColumn().hasType(cint());
         assertThat(table.getColumns().get(2)).isNotNull().hasName("m").isRegularColumn().hasType(map(text(), timeuuid()));
         assertThat(table.getColumns().get(3)).isNotNull().hasName("v").isRegularColumn().hasType(cint());
+    }
+
+    @Override
+    protected Cluster.Builder configure(Cluster.Builder builder) {
+        return builder.withQueryOptions(new QueryOptions()
+            .setRefreshNodeIntervalMillis(0)
+            .setRefreshNodeListIntervalMillis(0)
+            .setRefreshSchemaIntervalMillis(0)
+        );
     }
 
     @Test(groups = "short")
@@ -357,10 +370,4 @@ public class TableMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
         assertThat(table.getOptions().getComment()).isEqualTo("comment with single quote ' should work");
         assertThat(table.asCQLQuery()).contains("comment = 'comment with single quote '' should work'");
     }
-
-    @Override
-    protected Collection<String> getTableDefinitions() {
-        return Collections.emptyList();
-}
-
 }

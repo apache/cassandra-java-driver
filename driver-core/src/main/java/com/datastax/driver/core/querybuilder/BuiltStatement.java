@@ -79,6 +79,24 @@ public abstract class BuiltStatement extends RegularStatement {
         return cache;
     }
 
+    /**
+     * Returns the {@code i}th value as the Java type matching its CQL type.
+     *
+     * @param i the index to retrieve.
+     * @return the value of the {@code i}th value of this statement.
+     *
+     * @throws IllegalStateException if this statement does not have values.
+     * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
+     */
+    public Object getObject(int i) {
+        maybeRebuildCache();
+        if (values == null || values.isEmpty())
+            throw new IllegalStateException("This statement does not have values");
+        if (i < 0 || i >= values.size())
+            throw new ArrayIndexOutOfBoundsException(i);
+        return values.get(i);
+    }
+
     private void maybeRebuildCache() {
         if (!dirty && cache != null)
             return;

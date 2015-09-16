@@ -15,24 +15,55 @@
  */
 package com.datastax.driver.core.exceptions;
 
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+
 /**
  * Indicates that a query cannot be performed due to the authorization
  * restrictions of the logged user.
  */
-public class UnauthorizedException extends QueryValidationException {
+public class UnauthorizedException extends QueryValidationException implements CoordinatorException {
 
     private static final long serialVersionUID = 0;
 
+    private final InetSocketAddress address;
+
+    /**
+     * @deprecated This constructor is kept for backwards compatibility.
+     */
+    @Deprecated
     public UnauthorizedException(String msg) {
-        super(msg);
+        this(null, msg);
     }
 
-    private UnauthorizedException(String msg, Throwable cause) {
+    public UnauthorizedException(InetSocketAddress address, String msg) {
+        super(msg);
+        this.address = address;
+    }
+
+    private UnauthorizedException(InetSocketAddress address, String msg, Throwable cause) {
         super(msg, cause);
+        this.address = address;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public InetAddress getHost() {
+        return address.getAddress();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public InetSocketAddress getAddress() {
+        return address;
     }
 
     @Override
     public DriverException copy() {
-        return new UnauthorizedException(getMessage(), this);
+        return new UnauthorizedException(getAddress(), getMessage(), this);
     }
 }

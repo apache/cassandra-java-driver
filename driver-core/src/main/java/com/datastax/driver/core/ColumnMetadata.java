@@ -22,6 +22,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.google.common.base.Objects;
+
 /**
  * Describes a Column.
  */
@@ -105,6 +107,34 @@ public class ColumnMetadata {
      */
     public boolean isStatic() {
         return isStatic;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+
+        ColumnMetadata that = (ColumnMetadata)o;
+
+        if (isStatic != that.isStatic)
+            return false;
+        if (!name.equals(that.name))
+            return false;
+        if (!type.equals(that.type))
+            return false;
+        return !(index != null ? !index.equals(that.index) : that.index != null);
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = name.hashCode();
+        result = 31 * result + type.hashCode();
+        result = 31 * result + (index != null ? index.hashCode() : 0);
+        result = 31 * result + (isStatic ? 1 : 0);
+        return result;
     }
 
     /**
@@ -267,6 +297,24 @@ public class ColumnMetadata {
             else if (isEntries())
                 return String.format("ENTRIES(%s)", colName);
             return colName;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o)
+                return true;
+            if (o == null || getClass() != o.getClass())
+                return false;
+
+            IndexMetadata that = (IndexMetadata)o;
+
+            return this.name.equals(that.name)
+                && Objects.equal(this.indexOptions, that.indexOptions);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hashCode(name, indexOptions);
         }
 
         private static IndexMetadata build(ColumnMetadata column, Map<String, String> indexColumns) {

@@ -27,7 +27,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import com.codahale.metrics.Timer;
 import com.google.common.collect.Sets;
-import io.netty.util.HashedWheelTimer;
 import io.netty.util.Timeout;
 import io.netty.util.TimerTask;
 import org.slf4j.Logger;
@@ -56,7 +55,7 @@ class RequestHandler {
     private final Set<SpeculativeExecution> runningExecutions = Sets.newCopyOnWriteArraySet();
     private final Set<Timeout> scheduledExecutions = Sets.newCopyOnWriteArraySet();
     private final Statement statement;
-    private final HashedWheelTimer scheduler;
+    private final io.netty.util.Timer scheduler;
 
     private volatile List<Host> triedHosts;
 
@@ -135,7 +134,8 @@ class RequestHandler {
                 manager.executor().execute(new Runnable() {
                     @Override
                     public void run() {
-                        metrics().getErrorMetrics().getSpeculativeExecutions().inc();
+                        if (metricsEnabled())
+                            metrics().getErrorMetrics().getSpeculativeExecutions().inc();
                         startNewExecution();
                     }
                 });
@@ -317,7 +317,7 @@ class RequestHandler {
                 return false;
             } catch (TimeoutException e) {
                 // We timeout, log it but move to the next node.
-                logError(host.getSocketAddress(), new DriverException("Timeout while trying to acquire available connection (you may want to increase the driver number of per-host connections)"));
+                logError(host.getSocketAddress(), new DriverException("Timeout while trying to acquire available connection (you may want to increase the driver number of per-host connections)", e));
                 return false;
             } catch (RuntimeException e) {
                 if (connection != null)

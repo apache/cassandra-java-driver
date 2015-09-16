@@ -31,7 +31,7 @@ import static org.assertj.core.api.Assertions.fail;
 public class FakeHost {
     public enum Behavior {THROWING_CONNECT_TIMEOUTS, THROWING_OPERATION_TIMEOUTS}
 
-    private final String address;
+    final String address;
     private final int port;
     private final Behavior behavior;
     private final ExecutorService executor;

@@ -15,7 +15,6 @@
  */
 package com.datastax.driver.core;
 
-import javax.security.sasl.SaslException;
 import java.net.InetSocketAddress;
 import java.util.Map;
 
@@ -28,13 +27,13 @@ import com.google.common.collect.ImmutableMap;
  * This provider allows to programmatically define authentication
  * information that will then apply to all hosts. The
  * PlainTextAuthenticator instances it returns support SASL
- * authentication using the PLAIN mechanism for version 2 of the
+ * authentication using the PLAIN mechanism for version 2 (or above) of the
  * CQL native protocol.
  */
 public class PlainTextAuthProvider implements AuthProvider {
 
-    private final String username;
-    private final String password;
+    private volatile String username;
+    private volatile String password;
 
     /**
      * Creates a new simple authentication information provider with the
@@ -44,6 +43,28 @@ public class PlainTextAuthProvider implements AuthProvider {
      */
     public PlainTextAuthProvider(String username, String password) {
         this.username = username;
+        this.password = password;
+    }
+
+    /**
+     * Changes the user name.
+     *
+     * The new credentials will be used for all connections initiated after this method was called.
+     *
+     * @param username the new name.
+     */
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    /**
+     * Changes the password.
+     *
+     * The new credentials will be used for all connections initiated after this method was called.
+     *
+     * @param password the new password.
+     */
+    public void setPassword(String password) {
         this.password = password;
     }
 

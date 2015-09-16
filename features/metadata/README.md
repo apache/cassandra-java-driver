@@ -27,6 +27,29 @@ Schema metadata gets refreshed in the following circumstances:
   via a push notification. It refreshes the schema directly (there is no
   need to wait for schema agreement since Cassandra has already done it).
 
+#### Subscribing to schema changes
+
+Users interested in being notified of schema changes can implement the 
+[SchemaChangeListener][SchemaChangeListener] interface.
+
+Every listener must [be registered][registerListener] against a `Cluster` instance:
+
+```java
+Cluster cluster = ...
+SchemaChangeListener myListener = ...
+cluster.register(myListener);
+```
+
+Once registered, the listener will be notified of all schema changes detected by the driver,
+regardless of where they originate from.
+
+Note that it is preferable to register a listener only *after* the cluster is fully initialized,
+otherwise the listener could be notified with a great deal of "Added" events as
+the driver builds the schema metadata from scratch for the first time.
+
+[SchemaChangeListener]: http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/SchemaChangeListener.html
+[registerListener]: http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/Cluster.html#register(com.datastax.driver.core.SchemaChangeListener)
+
 #### Schema agreement
 
 Schema changes need to be propagated to all nodes in the cluster. Once

@@ -37,10 +37,10 @@ public class KeyspaceMetadata {
     private final ReplicationStrategy strategy;
     private final Map<String, String> replication;
 
-    private final Map<String, TableMetadata> tables = new ConcurrentHashMap<String, TableMetadata>();
-    private final Map<String, UserType> userTypes = new ConcurrentHashMap<String, UserType>();
+    final Map<String, TableMetadata> tables = new ConcurrentHashMap<String, TableMetadata>();
+    final Map<String, UserType> userTypes = new ConcurrentHashMap<String, UserType>();
     final Map<String, FunctionMetadata> functions = new ConcurrentHashMap<String, FunctionMetadata>();
-    private final Map<String, AggregateMetadata> aggregates = new ConcurrentHashMap<String, AggregateMetadata>();
+    final Map<String, AggregateMetadata> aggregates = new ConcurrentHashMap<String, AggregateMetadata>();
 
     @VisibleForTesting
     KeyspaceMetadata(String name, boolean durableWrites, Map<String, String> replication) {
@@ -50,7 +50,7 @@ public class KeyspaceMetadata {
         this.strategy = ReplicationStrategy.create(replication);
     }
 
-    static KeyspaceMetadata build(Row row, List<Row> udtRows, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
+    static KeyspaceMetadata build(Row row, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
 
         String name = row.getString(KS_NAME);
         boolean durableWrites = row.getBool(DURABLE_WRITES);
@@ -60,11 +60,6 @@ public class KeyspaceMetadata {
         replicationOptions.putAll(SimpleJSONParser.parseStringMap(row.getString(STRATEGY_OPTIONS)));
 
         KeyspaceMetadata ksm = new KeyspaceMetadata(name, durableWrites, replicationOptions);
-
-        if (udtRows == null)
-            return ksm;
-
-        ksm.addUserTypes(udtRows, protocolVersion, codecRegistry);
 
         return ksm;
     }
@@ -108,8 +103,8 @@ public class KeyspaceMetadata {
         return tables.get(Metadata.handleId(name));
     }
 
-    void removeTable(String table) {
-        tables.remove(table);
+    TableMetadata removeTable(String table) {
+        return tables.remove(table);
     }
 
     /**
@@ -143,15 +138,8 @@ public class KeyspaceMetadata {
         return Collections.unmodifiableCollection(userTypes.values());
     }
 
-    void addUserTypes(List<Row> udtRows, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
-        for (Row r : udtRows) {
-            UserType def = UserType.build(r, protocolVersion, codecRegistry);
-            userTypes.put(def.getTypeName(), def);
-        }
-    }
-
-    void removeUserType(String userType) {
-        userTypes.remove(userType);
+    UserType removeUserType(String userType) {
+        return userTypes.remove(userType);
     }
 
     /**
@@ -188,8 +176,8 @@ public class KeyspaceMetadata {
         return Collections.unmodifiableCollection(functions.values());
     }
 
-    void removeFunction(String fullName) {
-        functions.remove(fullName);
+    FunctionMetadata removeFunction(String fullName) {
+        return functions.remove(fullName);
     }
 
     /**
@@ -226,8 +214,8 @@ public class KeyspaceMetadata {
         return Collections.unmodifiableCollection(aggregates.values());
     }
 
-    void removeAggregate(String fullName) {
-        functions.remove(fullName);
+    AggregateMetadata removeAggregate(String fullName) {
+        return aggregates.remove(fullName);
     }
 
     /**
@@ -293,6 +281,37 @@ public class KeyspaceMetadata {
         return asCQLQuery();
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+
+        KeyspaceMetadata that = (KeyspaceMetadata)o;
+
+        if (durableWrites != that.durableWrites)
+            return false;
+        if (!name.equals(that.name))
+            return false;
+        if (strategy != null ? !strategy.equals(that.strategy) : that.strategy != null)
+            return false;
+        if (!replication.equals(that.replication))
+            return false;
+        return tables.equals(that.tables);
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = name.hashCode();
+        result = 31 * result + (durableWrites ? 1 : 0);
+        result = 31 * result + (strategy != null ? strategy.hashCode() : 0);
+        result = 31 * result + replication.hashCode();
+        result = 31 * result + tables.hashCode();
+        return result;
+    }
+
     void add(TableMetadata tm) {
         tables.put(tm.getName(), tm);
     }
@@ -305,7 +324,12 @@ public class KeyspaceMetadata {
         aggregates.put(aggregate.getFullName(), aggregate);
     }
 
+    void add(UserType type) {
+        userTypes.put(type.getTypeName(), type);
+    }
+
     ReplicationStrategy replicationStrategy() {
         return strategy;
     }
+
 }

@@ -20,6 +20,7 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 
@@ -28,7 +29,7 @@ import com.datastax.driver.core.utils.CassandraVersion;
 import static com.datastax.driver.core.Assertions.*;
 import static com.datastax.driver.core.Host.State.DOWN;
 import static com.datastax.driver.core.Host.State.UP;
-
+import static com.datastax.driver.core.TestUtils.nonDebouncingQueryOptions;
 
 /**
  * Due to C* gossip bugs, system.peers may report nodes that are gone from the cluster.
@@ -50,7 +51,8 @@ public class RecommissionedNodeTest {
         mainCcm.waitForDown(1);
 
         // Now start the driver that will connect to node2 and node3, and consider node1 down
-        mainCluster = Cluster.builder().addContactPoint(CCMBridge.IP_PREFIX + "2").build();
+        mainCluster = Cluster.builder().addContactPoint(CCMBridge.IP_PREFIX + "2")
+            .withQueryOptions(nonDebouncingQueryOptions()).build();
         mainCluster.connect();
         waitForCountUpHosts(mainCluster, 2);
         // From that point, reconnections to node1 have been scheduled.
@@ -72,7 +74,8 @@ public class RecommissionedNodeTest {
         mainCcm.waitForDown(1);
 
         // Start the driver, the control connection will be on node2
-        mainCluster = Cluster.builder().addContactPoint(CCMBridge.IP_PREFIX + "2").build();
+        mainCluster = Cluster.builder().addContactPoint(CCMBridge.IP_PREFIX + "2")
+            .withQueryOptions(nonDebouncingQueryOptions()).build();
         mainCluster.connect();
         waitForCountUpHosts(mainCluster, 1);
 
@@ -99,7 +102,8 @@ public class RecommissionedNodeTest {
         otherCcm.waitForUp(1);
 
         // Start the driver, it should only connect to node 2
-        mainCluster = Cluster.builder().addContactPoint(CCMBridge.IP_PREFIX + "2").build();
+        mainCluster = Cluster.builder().addContactPoint(CCMBridge.IP_PREFIX + "2")
+            .withQueryOptions(nonDebouncingQueryOptions()).build();
 
         // When we first initialize the Cluster, all hosts are marked UP
         assertThat(mainCluster).host(2).hasState(UP);
@@ -127,7 +131,8 @@ public class RecommissionedNodeTest {
         otherCcm.waitForUp(1);
 
         // Start the driver, it should only connect to node 2
-        mainCluster = Cluster.builder().addContactPoint(CCMBridge.IP_PREFIX + "2").build();
+        mainCluster = Cluster.builder().addContactPoint(CCMBridge.IP_PREFIX + "2")
+            .withQueryOptions(nonDebouncingQueryOptions()).build();
 
         // Create a session. This will try to open a pool to node 1 and find that it doesn't support protocol version.
         mainCluster.connect();
@@ -137,6 +142,14 @@ public class RecommissionedNodeTest {
             .goesDownWithin(10, TimeUnit.SECONDS)
             .hasState(DOWN)
             .isNotReconnectingFromDown();
+    }
+
+    @BeforeMethod(groups = "long")
+    public void clearFields() {
+        // Clear cluster and ccm instances between tests.
+        mainCluster = null;
+        mainCcm = null;
+        otherCcm = null;
     }
 
     @AfterMethod(groups = "long")
@@ -160,8 +173,8 @@ public class RecommissionedNodeTest {
     }
 
     private static void waitForCountUpHosts(Cluster cluster, int expectedCount) throws InterruptedException {
-        int maxRetries = 30;
-        int interval = 10;
+        int maxRetries = 10;
+        int interval = 6;
 
         for (int i = 0; i <= maxRetries; i++) {
             int actualCount = countUpHosts(cluster);

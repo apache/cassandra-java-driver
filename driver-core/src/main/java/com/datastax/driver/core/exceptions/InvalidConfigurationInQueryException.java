@@ -15,6 +15,9 @@
  */
 package com.datastax.driver.core.exceptions;
 
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+
 /**
  * A specific invalid query exception that indicates that the query is invalid
  * because of some configuration problem.
@@ -22,11 +25,24 @@ package com.datastax.driver.core.exceptions;
  * This is generally throw by query that manipulate the schema (CREATE and
  * ALTER) when the required configuration options are invalid.
  */
-public class InvalidConfigurationInQueryException extends InvalidQueryException {
+public class InvalidConfigurationInQueryException extends InvalidQueryException implements CoordinatorException {
 
     private static final long serialVersionUID = 0;
 
+    /**
+     * @deprecated This constructor is kept for backwards compatibility.
+     */
+    @Deprecated
     public InvalidConfigurationInQueryException(String msg) {
-        super(msg);
+        this(null, msg);
+    }
+
+    public InvalidConfigurationInQueryException(InetSocketAddress address, String msg) {
+        super(address, msg);
+    }
+
+    @Override
+    public InvalidConfigurationInQueryException copy() {
+        return new InvalidConfigurationInQueryException(getAddress(), getMessage());
     }
 }

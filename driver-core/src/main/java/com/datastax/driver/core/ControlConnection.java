@@ -19,8 +19,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.google.common.base.Objects;
@@ -34,15 +33,15 @@ import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
 import static com.datastax.driver.core.SchemaElement.*;
 
-class ControlConnection {
+class ControlConnection implements Connection.Owner {
 
     private static final Logger logger = LoggerFactory.getLogger(ControlConnection.class);
 
     private static final TypeCodec.ListCodec<String> LIST_OF_TEXT_CODEC = new TypeCodec.ListCodec<String>(TypeCodec.VarcharCodec.instance);
 
     private static final InetAddress bindAllAddress;
-    static
-    {
+
+    static {
         try {
             bindAllAddress = InetAddress.getByAddress(new byte[4]);
         } catch (UnknownHostException e) {
@@ -76,15 +75,18 @@ class ControlConnection {
     }
 
     // Only for the initial connection. Does not schedule retries if it fails
-    public void connect() throws UnsupportedProtocolVersionException {
+    void connect() throws UnsupportedProtocolVersionException {
         if (isShutdown)
             return;
 
         // NB: at this stage, allHosts() only contains the initial contact points
-        setNewConnection(reconnectInternal(cluster.metadata.allHosts().iterator(), true));
+        List<Host> hosts = new ArrayList<Host>(cluster.metadata.allHosts());
+        // shuffle so that multiple clients with the same contact points don't all pick the same control host
+        Collections.shuffle(hosts);
+        setNewConnection(reconnectInternal(hosts.iterator(), true));
     }
 
-    public CloseFuture closeAsync() {
+    CloseFuture closeAsync() {
         // We don't have to be fancy here. We just set a flag so that we stop trying to reconnect (and thus change the
         // connection used) and shutdown the current one.
         isShutdown = true;
@@ -100,26 +102,13 @@ class ControlConnection {
 
     Host connectedHost() {
         Connection current = connectionRef.get();
-        return cluster.metadata.getHost(current.address);
+        return (current == null)
+            ? null
+            : cluster.metadata.getHost(current.address);
     }
 
-    void reconnect() {
-        if (isShutdown)
-            return;
-
-        try {
-            setNewConnection(reconnectInternal(queryPlan(), false));
-        } catch (NoHostAvailableException e) {
-            logger.error("[Control connection] Cannot connect to any host, scheduling retry");
-            backgroundReconnect(-1);
-        } catch (UnsupportedProtocolVersionException e) {
-            // reconnectInternal only propagate those if we've not decided on the protocol version yet,
-            // which should only happen on the initial connection and thus in connect() but never here.
-            throw new AssertionError();
-        } catch (Exception e) {
-            logger.error("[Control connection] Unknown error during reconnection, scheduling retry", e);
-            backgroundReconnect(-1);
-        }
+    void triggerReconnect() {
+        backgroundReconnect(0);
     }
 
     /**
@@ -129,7 +118,14 @@ class ControlConnection {
         if (isShutdown)
             return;
 
-        new AbstractReconnectionHandler(cluster.reconnectionExecutor, cluster.reconnectionPolicy().newSchedule(), reconnectionAttempt, initialDelayMs) {
+        // Abort if a reconnection is already in progress. This is not thread-safe: two threads might race through this and both
+        // schedule a reconnection; in that case AbstractReconnectionHandler knows how to deal with it correctly.
+        // But this cheap check can help us avoid creating the object unnecessarily.
+        ListenableFuture<?> reconnection = reconnectionAttempt.get();
+        if (reconnection != null && !reconnection.isDone())
+            return;
+
+        new AbstractReconnectionHandler("Control connection", cluster.reconnectionExecutor, cluster.reconnectionPolicy().newSchedule(), reconnectionAttempt, initialDelayMs) {
             @Override
             protected Connection tryReconnect() throws ConnectionException {
                 try {
@@ -168,17 +164,17 @@ class ControlConnection {
 
     private void signalError() {
         Connection connection = connectionRef.get();
-        if (connection != null && connection.isDefunct() && cluster.metadata.getHost(connection.address) != null) {
-            // If the connection was marked as defunct and the host hadn't left, this already reported the
-            // host down, which will trigger a reconnect.
-            return;
-        }
-        // If the connection is not defunct, or the host has left, just reconnect manually
+        if (connection != null)
+            connection.closeAsync();
+
+        // If the error caused the host to go down, onDown might have already triggered a reconnect.
+        // But backgroundReconnect knows how to deal with that.
         backgroundReconnect(0);
     }
 
     private void setNewConnection(Connection newConnection) {
-        logger.debug("[Control connection] Successfully connected to {}", newConnection.address);
+        Host.statesLogger.debug("[Control connection] established to {}", newConnection.address);
+        newConnection.setOwner(this);
         Connection old = connectionRef.getAndSet(newConnection);
         if (old != null && !old.isClosed())
             old.closeAsync();
@@ -192,6 +188,8 @@ class ControlConnection {
         try {
             while (iter.hasNext()) {
                 host = iter.next();
+                if (!host.convictionPolicy.canReconnectNow())
+                    continue;
                 try {
                     return tryConnect(host, isInitialConnection);
                 } catch (ConnectionException e) {
@@ -245,8 +243,7 @@ class ControlConnection {
         return errors;
     }
 
-    private Connection tryConnect(Host host, boolean isInitialConnection) throws ConnectionException, ExecutionException, InterruptedException, UnsupportedProtocolVersionException, ClusterNameMismatchException
-    {
+    private Connection tryConnect(Host host, boolean isInitialConnection) throws ConnectionException, ExecutionException, InterruptedException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
         Connection connection = cluster.connectionFactory.open(host);
 
         // If no protocol version was specified, set the default as soon as a connection succeeds (it's needed to parse UDTs in refreshSchema)
@@ -266,11 +263,14 @@ class ControlConnection {
             // the node we're connecting to.
             refreshNodeListAndTokenMap(connection, cluster, isInitialConnection, true);
 
-            // Note that refreshing the schema will trigger refreshNodeListAndTokenMap since table == null
-            // We want that because the token map was not properly initialized by the first call above, since it requires the list of keyspaces
-            // to be loaded.
             logger.debug("[Control connection] Refreshing schema");
-            refreshSchema(connection, null, null, null, null, cluster, isInitialConnection);
+            refreshSchema(connection, null, null, null, null, cluster);
+
+            // We need to refresh the node list again;
+            // We want that because the token map was not properly initialized by the first call above,
+            // since it requires the list of keyspaces to be loaded.
+            refreshNodeListAndTokenMap(connection, cluster, false, true);
+
             return connection;
         } catch (BusyConnectionException e) {
             connection.closeAsync().force();
@@ -297,9 +297,14 @@ class ControlConnection {
         try {
             Connection c = connectionRef.get();
             // At startup, when we add the initial nodes, this will be null, which is ok
-            if (c == null)
+            if (c == null || c.isClosed())
                 return;
-            refreshSchema(c, targetType, targetKeyspace, targetName, signature, cluster, false);
+            refreshSchema(c, targetType, targetKeyspace, targetName, signature, cluster);
+            // If we rebuild all from scratch or have an updated keyspace, rebuild the token map
+            // since some replication on some keyspace may have changed
+            if ((targetType == null || targetType == KEYSPACE)) {
+                cluster.submitNodeListRefresh();
+            }
         } catch (ConnectionException e) {
             logger.debug("[Control connection] Connection error while refreshing schema ({})", e.getMessage());
             signalError();
@@ -314,7 +319,7 @@ class ControlConnection {
         }
     }
 
-    static void refreshSchema(Connection connection, SchemaElement targetType, String targetKeyspace, String targetName, List<String> targetSignature, Cluster.Manager cluster, boolean isInitialConnection) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
+    static void refreshSchema(Connection connection, SchemaElement targetType, String targetKeyspace, String targetName, List<String> targetSignature, Cluster.Manager cluster) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
         Host host = cluster.metadata.getHost(connection.address);
         // Neither host, nor it's version should be null. But instead of dying if there is a race or something, we can kind of try to infer
         // a Cassandra version from the protocol version (this is not full proof, we can have the protocol 1 against C* 2.0+, but it's worth
@@ -323,7 +328,7 @@ class ControlConnection {
         if (host == null || host.getCassandraVersion() == null) {
             cassandraVersion = cluster.protocolVersion().minCassandraVersion();
             logger.warn("Cannot find Cassandra version for host {} to parse the schema, using {} based on protocol version in use. "
-                      + "If parsing the schema fails, this could be the cause", connection.address, cassandraVersion);
+                + "If parsing the schema fails, this could be the cause", connection.address, cassandraVersion);
         } else {
             cassandraVersion = host.getCassandraVersion();
         }
@@ -390,11 +395,6 @@ class ControlConnection {
             // So log, but let things go otherwise.
             logger.error("Error parsing schema from Cassandra system tables: the schema in Cluster#getMetadata() will appear incomplete or stale", e);
         }
-
-        // If we rebuild all from scratch or have an updated keyspace, rebuild the token map since some replication on some keyspace
-        // may have changed
-        if (isSchemaOrKeyspace)
-            refreshNodeListAndTokenMap(connection, cluster, false, false);
     }
 
     private static boolean supportsUdts(VersionNumber cassandraVersion) {
@@ -405,13 +405,12 @@ class ControlConnection {
         return cassandraVersion.getMajor() > 2 || (cassandraVersion.getMajor() == 2 && cassandraVersion.getMinor() >= 2);
     }
 
-    public void refreshNodeListAndTokenMap() {
+    void refreshNodeListAndTokenMap() {
         Connection c = connectionRef.get();
         // At startup, when we add the initial nodes, this will be null, which is ok
-        if (c == null)
+        if (c == null || c.isClosed())
             return;
 
-        logger.debug("[Control connection] Refreshing node list and token map");
         try {
             refreshNodeListAndTokenMap(c, cluster, false, true);
         } catch (ConnectionException e) {
@@ -475,11 +474,11 @@ class ControlConnection {
     /**
      * @return whether we have enough information to bring the node back up
      */
-    public boolean refreshNodeInfo(Host host) {
+    boolean refreshNodeInfo(Host host) {
 
         Connection c = connectionRef.get();
         // At startup, when we add the initial nodes, this will be null, which is ok
-        if (c == null)
+        if (c == null || c.isClosed())
             return true;
 
         logger.debug("[Control connection] Refreshing node info on {}", host);
@@ -537,8 +536,8 @@ class ControlConnection {
         String version = row.getString("release_version");
         // We don't know if it's a 'local' or a 'peers' row, and only 'peers' rows have the 'peer' field.
         InetAddress listenAddress = row.getColumnDefinitions().contains("peer")
-                                  ? row.getInet("peer")
-                                  : null;
+            ? row.getInet("peer")
+            : null;
 
         host.setVersionAndListenAdress(version, listenAddress);
     }
@@ -559,6 +558,8 @@ class ControlConnection {
 
     private static void refreshNodeListAndTokenMap(Connection connection, Cluster.Manager cluster, boolean isInitialConnection, boolean logMissingRpcAddresses) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
         logger.debug("[Control connection] Refreshing node list and token map");
+
+        boolean metadataEnabled = cluster.configuration.getQueryOptions().isMetadataEnabled();
 
         // Make sure we're up to date on nodes and tokens
 
@@ -588,9 +589,11 @@ class ControlConnection {
                 logger.debug("Host in local system table ({}) unknown to us (ok if said host just got removed)", connection.address);
             } else {
                 updateInfo(host, localRow, cluster, isInitialConnection);
-                Set<String> tokens = localRow.getSet("tokens", String.class);
-                if (partitioner != null && !tokens.isEmpty())
-                    tokenMap.put(host, tokens);
+                if (metadataEnabled) {
+                    Set<String> tokens = localRow.getSet("tokens", String.class);
+                    if (partitioner != null && !tokens.isEmpty())
+                        tokenMap.put(host, tokens);
+                }
             }
         }
 
@@ -611,7 +614,8 @@ class ControlConnection {
             racks.add(row.getString("rack"));
             cassandraVersions.add(row.getString("release_version"));
             listenAddresses.add(row.getInet("peer"));
-            allTokens.add(row.getSet("tokens", String.class));
+            if (metadataEnabled)
+                allTokens.add(row.getSet("tokens", String.class));
         }
 
         for (int i = 0; i < foundHosts.size(); i++) {
@@ -628,7 +632,7 @@ class ControlConnection {
             if (cassandraVersions.get(i) != null)
                 host.setVersionAndListenAdress(cassandraVersions.get(i), listenAddresses.get(i));
 
-            if (partitioner != null && !allTokens.get(i).isEmpty())
+            if (metadataEnabled && partitioner != null && !allTokens.get(i).isEmpty())
                 tokenMap.put(host, allTokens.get(i));
 
             if (isNew && !isInitialConnection)
@@ -641,17 +645,17 @@ class ControlConnection {
             if (!host.getSocketAddress().equals(connection.address) && !foundHostsSet.contains(host.getSocketAddress()))
                 cluster.removeHost(host, isInitialConnection);
 
-        cluster.metadata.rebuildTokenMap(partitioner, tokenMap);
+        if (metadataEnabled)
+            cluster.metadata.rebuildTokenMap(partitioner, tokenMap);
     }
 
-    static boolean waitForSchemaAgreement(Connection connection, Cluster.Manager cluster) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
-
+    boolean waitForSchemaAgreement() throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
         long start = System.nanoTime();
         long elapsed = 0;
         int maxSchemaAgreementWaitSeconds = cluster.configuration.getProtocolOptions().getMaxSchemaAgreementWaitSeconds();
         while (elapsed < maxSchemaAgreementWaitSeconds * 1000) {
 
-            if (checkSchemaAgreement(connection, cluster))
+            if (checkSchemaAgreement())
                 return true;
 
             // let's not flood the node too much
@@ -663,7 +667,11 @@ class ControlConnection {
         return false;
     }
 
-    private static boolean checkSchemaAgreement(Connection connection, Cluster.Manager cluster) throws ConnectionException, BusyConnectionException, InterruptedException, ExecutionException {
+    boolean checkSchemaAgreement() throws ConnectionException, BusyConnectionException, InterruptedException, ExecutionException {
+        Connection connection = connectionRef.get();
+        if (connection == null || connection.isClosed())
+            return false;
+
         DefaultResultSetFuture peersFuture = new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_SCHEMA_PEERS));
         DefaultResultSetFuture localFuture = new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_SCHEMA_LOCAL));
         connection.write(peersFuture);
@@ -689,16 +697,6 @@ class ControlConnection {
         return versions.size() <= 1;
     }
 
-    boolean checkSchemaAgreement() {
-        Connection c = connectionRef.get();
-        try {
-            return c != null && checkSchemaAgreement(c, cluster);
-        } catch (Exception e) {
-            logger.warn("Error while checking schema agreement", e);
-            return false;
-        }
-    }
-
     boolean isOpen() {
         Connection c = connectionRef.get();
         return c != null && !c.isClosed();
@@ -708,16 +706,30 @@ class ControlConnection {
     }
 
     public void onDown(Host host) {
-        // If that's the host we're connected to, and we haven't yet schedule a reconnection, preemptively start one
+        onHostGone(host);
+    }
+
+    public void onRemove(Host host) {
+        onHostGone(host);
+        cluster.submitNodeListRefresh();
+    }
+
+    private void onHostGone(Host host) {
         Connection current = connectionRef.get();
-        if (logger.isDebugEnabled())
-            logger.debug("[Control connection] {} is down, currently connected to {}", host, current == null ? "nobody" : current.address);
 
         if (current != null && current.address.equals(host.getSocketAddress())) {
-            // This starts an AbstractReconnectionHandler, which will take care of checking if another reconnection is
-            // already in progress
+            logger.debug("[Control connection] {} is down/removed and it was the control host, triggering reconnect",
+                current.address);
+            if (!current.isClosed())
+                current.closeAsync();
             backgroundReconnect(0);
         }
+    }
+
+    @Override
+    public void onConnectionDefunct(Connection connection) {
+        if (connection == connectionRef.get())
+            backgroundReconnect(0);
     }
 
     public void onAdd(Host host) {
@@ -725,19 +737,6 @@ class ControlConnection {
         // or it's not part of our computed token map
         Metadata.TokenMap tkmap = cluster.metadata.tokenMap;
         if (host.getCassandraVersion() == null || tkmap == null || !tkmap.hosts.contains(host))
-            refreshNodeListAndTokenMap();
-    }
-
-    public void onRemove(Host host) {
-        Connection current = connectionRef.get();
-        if (logger.isDebugEnabled())
-            logger.debug("[Control connection] {} has been removed, currently connected to {}", host, current == null ? "nobody" : current.address);
-
-        // Schedule a reconnection if that was our control host
-        if (current != null && current.address.equals(host.getSocketAddress())) {
-            backgroundReconnect(0);
-        }
-
-        refreshNodeListAndTokenMap();
+            cluster.submitNodeListRefresh();
     }
 }
