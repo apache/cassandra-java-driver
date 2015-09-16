@@ -29,6 +29,12 @@ import static com.datastax.driver.core.TableOrView.Order.DESC;
 @CassandraVersion(major = 3)
 public class MaterializedViewMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
 
+    /**
+     * Validates that a materialized view is properly retrieved and parsed.
+     *
+     * @test_category metadata,materialized_view
+     * @jira_ticket JAVA-825
+     */
     @Test(groups = "short")
     public void should_create_view_metadata() {
 
@@ -75,27 +81,31 @@ public class MaterializedViewMetadataTest extends CCMBridge.PerClassSingleNodeCl
         assertThat(mv.getColumns().get(3)).isNotNull().hasName("score").isClusteringColumn().hasClusteringOrder(DESC);
         assertThat(mv.getColumns().get(4)).isNotNull().hasName("user").isClusteringColumn();
         assertThat(mv.getColumns().get(5)).isNotNull().hasName("day").isClusteringColumn();
-
         assertThat(mv.asCQLQuery(false)).contains(createMV);
-
     }
 
+    /**
+     * Validates that a materialized view is properly retrieved and parsed when using quoted identifiers.
+     *
+     * @test_category metadata,materialized_view
+     * @jira_ticket JAVA-825
+     */
     @Test(groups = "short")
-    public void should_create_view_metadata_with_case_sensitive_column_names() {
+    public void should_create_view_metadata_with_quoted_identifiers() {
         // given
         String createTable = String.format(
             "CREATE TABLE %s.t1 ("
                 + "\"theKey\" int, "
-                + "\"theClustering\" int, "
-                + "\"theValue\" int, "
-                + "PRIMARY KEY (\"theKey\", \"theClustering\"))",
+                + "\"the;Clustering\" int, "
+                + "\"the Value\" int, "
+                + "PRIMARY KEY (\"theKey\", \"the;Clustering\"))",
             keyspace);
         String createMV = String.format(
             "CREATE MATERIALIZED VIEW %s.mv1 AS "
-                + "SELECT \"theKey\", \"theClustering\", \"theValue\" "
+                + "SELECT \"theKey\", \"the;Clustering\", \"the Value\" "
                 + "FROM %s.t1 "
-                + "WHERE \"theKey\" IS NOT NULL AND \"theClustering\" IS NOT NULL AND \"theValue\" IS NOT NULL "
-                + "PRIMARY KEY (\"theKey\", \"theClustering\")",
+                + "WHERE \"theKey\" IS NOT NULL AND \"the;Clustering\" IS NOT NULL AND \"the Value\" IS NOT NULL "
+                + "PRIMARY KEY (\"theKey\", \"the;Clustering\")",
             keyspace, keyspace);
         // when
         session.execute(createTable);
@@ -105,12 +115,13 @@ public class MaterializedViewMetadataTest extends CCMBridge.PerClassSingleNodeCl
         MaterializedViewMetadata mv = cluster.getMetadata().getKeyspace(keyspace).getMaterializedView("mv1");
         assertThat(table).isNotNull().hasName("t1").hasMaterializedView(mv).hasNumberOfColumns(3);
         assertThat(table.getColumns().get(0)).isNotNull().hasName("theKey").isPartitionKey().hasType(cint());
-        assertThat(table.getColumns().get(1)).isNotNull().hasName("theClustering").isClusteringColumn().hasType(cint());
-        assertThat(table.getColumns().get(2)).isNotNull().hasName("theValue").isRegularColumn().hasType(cint());
+        assertThat(table.getColumns().get(1)).isNotNull().hasName("the;Clustering").isClusteringColumn().hasType(cint());
+        assertThat(table.getColumns().get(2)).isNotNull().hasName("the Value").isRegularColumn().hasType(cint());
         assertThat(mv).isNotNull().hasName("mv1").hasBaseTable(table).hasNumberOfColumns(3);
         assertThat(mv.getColumns().get(0)).isNotNull().hasName("theKey").isPartitionKey().hasType(cint());
-        assertThat(mv.getColumns().get(1)).isNotNull().hasName("theClustering").isClusteringColumn().hasType(cint());
-        assertThat(mv.getColumns().get(2)).isNotNull().hasName("theValue").isRegularColumn().hasType(cint());
+        assertThat(mv.getColumns().get(1)).isNotNull().hasName("the;Clustering").isClusteringColumn().hasType(cint());
+        assertThat(mv.getColumns().get(2)).isNotNull().hasName("the Value").isRegularColumn().hasType(cint());
+        assertThat(mv.asCQLQuery(false)).contains(createMV);
     }
 
     @Override
