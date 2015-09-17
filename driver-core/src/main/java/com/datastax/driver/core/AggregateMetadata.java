@@ -293,6 +293,9 @@ public class AggregateMetadata {
 
     @Override
     public boolean equals(Object other) {
+        if (other == this)
+            return true;
+        
         if (other instanceof AggregateMetadata) {
             AggregateMetadata that = (AggregateMetadata)other;
             return this.keyspace.getName().equals(that.keyspace.getName()) &&

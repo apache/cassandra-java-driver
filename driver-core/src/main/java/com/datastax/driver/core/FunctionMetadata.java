@@ -272,6 +272,9 @@ public class FunctionMetadata {
 
     @Override
     public boolean equals(Object other) {
+        if (other == this)
+            return true;
+
         if (other instanceof FunctionMetadata) {
             FunctionMetadata that = (FunctionMetadata)other;
             return this.keyspace.getName().equals(that.keyspace.getName()) &&
