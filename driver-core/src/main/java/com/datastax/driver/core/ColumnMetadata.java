@@ -35,6 +35,9 @@ public class ColumnMetadata {
     static final String KIND_V2 = "type"; // v2 only
     static final String KIND_V3 = "kind"; // replaces type, v3 onwards
 
+    static final String CLUSTERING_ORDER = "clustering_order";
+    static final String DESC = "desc";
+
     static final String INDEX_TYPE = "index_type";
     static final String INDEX_OPTIONS = "index_options";
     static final String INDEX_NAME = "index_name";
@@ -176,13 +179,16 @@ public class ColumnMetadata {
             }
 
             String dataTypeStr;
+            boolean reversed;
             if(version.getMajor() >= 3) {
                 dataTypeStr = row.getString(TYPE);
+                String clusteringOrderStr = row.getString(CLUSTERING_ORDER);
+                reversed = clusteringOrderStr.equals(DESC);
             } else {
                 dataTypeStr = row.getString(VALIDATOR);
+                reversed = CassandraTypeParser.isReversed(dataTypeStr);
             }
             DataType dataType = CassandraTypeParser.parseOne(dataTypeStr, protocolVersion, codecRegistry);
-            boolean reversed = CassandraTypeParser.isReversed(dataTypeStr);
 
             Raw c = new Raw(name, kind, position, dataType, reversed);
 
