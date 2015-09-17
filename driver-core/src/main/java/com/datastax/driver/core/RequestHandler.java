@@ -353,7 +353,8 @@ class RequestHandler {
             // missed the new value of connectionHandler. So make sure that cancelHandler() gets called here (we might call it twice,
             // but it knows how to deal with it).
             if (queryStateRef.get() == QueryState.CANCELLED_WHILE_IN_PROGRESS)
-                connectionHandler.cancelHandler();
+                if(connectionHandler.cancelHandler())
+                    connectionHandler.connection.release();
         }
 
         private void retry(final boolean retryCurrent, ConsistencyLevel newConsistencyLevel) {
@@ -392,7 +393,8 @@ class RequestHandler {
                     // The connectionHandler should be non-null, but we might miss the update if we're racing with write().
                     // If it's still null, this will be handled by re-checking queryStateRef at the end of write().
                     if (connectionHandler != null)
-                        connectionHandler.cancelHandler();
+                        if(connectionHandler.cancelHandler())
+                            connectionHandler.connection.release();
                     return;
                 } else if (!previous.inProgress && queryStateRef.compareAndSet(previous, QueryState.CANCELLED_WHILE_COMPLETE)) {
                     if(logger.isTraceEnabled())
@@ -672,6 +674,7 @@ class RequestHandler {
                         return false;
                     }
                     logError(connection.address, new DriverException("Timeout waiting for response to prepare message"));
+                    connection.release();
                     retry(false, null);
                     return true;
                 }
@@ -724,6 +727,7 @@ class RequestHandler {
             OperationTimedOutException timeoutException = new OperationTimedOutException(connection.address);
             try {
                 logError(connection.address, timeoutException);
+                connection.release();
                 retry(false, null);
             } catch (Exception e) {
                 // This shouldn't happen, but if it does, we want to signal the callback, not let it hang indefinitely

@@ -2,6 +2,8 @@
 
 ### 2.1.8 (in progress)
 
+- [improvement] Move call to connection.release() out of cancelHandler (JAVA-901)
+
 Merged from 2.0 branch:
 
 - [improvement] Log streamid at the trace level on sending request and receiving response (JAVA-718)
