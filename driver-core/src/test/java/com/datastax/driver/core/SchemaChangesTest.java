@@ -219,6 +219,42 @@ public class SchemaChangesTest {
                 .isNull();
     }
 
+    @Test(groups = "short", dataProvider = "existingKeyspaceName")
+    @CassandraVersion(major = 3.0)
+    public void should_notify_of_view_creation(String keyspace) {
+        session.execute(String.format("CREATE TABLE %s.table1 (pk int PRIMARY KEY, c int)", keyspace));
+        session.execute(String.format("CREATE MATERIALIZED VIEW %s.mv1 AS SELECT c FROM %s.table1 WHERE c IS NOT NULL PRIMARY KEY (pk, c)", keyspace, keyspace));
+
+        for (Metadata m : metadatas)
+            assertThat(m.getKeyspace(keyspace).getMaterializedView("mv1")).isNotNull();
+    }
+
+    @Test(groups = "short", dataProvider = "existingKeyspaceName")
+    @CassandraVersion(major = 3.0)
+    public void should_notify_of_view_update(String keyspace) {
+        session.execute(String.format("CREATE TABLE %s.table1 (pk int PRIMARY KEY, c int)", keyspace));
+        session.execute(String.format("CREATE MATERIALIZED VIEW %s.mv1 AS SELECT c FROM %s.table1 WHERE c IS NOT NULL PRIMARY KEY (pk, c) WITH compaction = { 'class' : 'SizeTieredCompactionStrategy' }", keyspace, keyspace));
+
+        for (Metadata m : metadatas)
+            assertThat(m.getKeyspace(keyspace).getMaterializedView("mv1").getOptions().getCompaction().get("class")).contains("SizeTieredCompactionStrategy");
+
+        session.execute(String.format("ALTER MATERIALIZED VIEW %s.mv1 WITH compaction = { 'class' : 'LeveledCompactionStrategy' }", keyspace));
+
+        for (Metadata m : metadatas)
+            assertThat(m.getKeyspace(keyspace).getMaterializedView("mv1").getOptions().getCompaction().get("class")).contains("LeveledCompactionStrategy");
+    }
+
+    @Test(groups = "short", dataProvider = "existingKeyspaceName")
+    @CassandraVersion(major = 3.0)
+    public void should_notify_of_view_drop(String keyspace) {
+        session.execute(String.format("CREATE TABLE %s.table1 (pk int PRIMARY KEY, c int)", keyspace));
+        session.execute(String.format("CREATE MATERIALIZED VIEW %s.mv1 AS SELECT c FROM %s.table1 WHERE c IS NOT NULL PRIMARY KEY (pk, c)", keyspace, keyspace));
+        session.execute(String.format("DROP MATERIALIZED VIEW %s.mv1", keyspace));
+
+        for (Metadata m : metadatas)
+            assertThat(m.getKeyspace(keyspace).getMaterializedView("mv1")).isNull();
+    }
+
     @DataProvider(name = "newKeyspaceName")
     public static Object[][] newKeyspaceName() {
         return new Object[][]{ { "lowercase2" }, { "\"CaseSensitive2\"" } };
@@ -276,6 +312,8 @@ public class SchemaChangesTest {
             session.executeAsync("DROP FUNCTION \"CaseSensitive\".plus"),
             session.executeAsync("DROP AGGREGATE lowercase.sum"),
             session.executeAsync("DROP AGGREGATE \"CaseSensitive\".sum"),
+            session.executeAsync("DROP MATERIALIZED VIEW lowercase.mv1"),
+            session.executeAsync("DROP MATERIALIZED VIEW \"CaseSensitive\".mv1"),
             session.executeAsync("DROP KEYSPACE lowercase2"),
             session.executeAsync("DROP KEYSPACE \"CaseSensitive2\"")
         ));
