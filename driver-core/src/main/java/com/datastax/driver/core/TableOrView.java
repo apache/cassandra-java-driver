@@ -225,7 +225,11 @@ abstract class TableOrView {
      * String}.
      */
     public String exportAsString() {
-        return asCQLQuery(true);
+        StringBuilder sb = new StringBuilder();
+
+        sb.append(asCQLQuery(true));
+
+        return sb.toString();
     }
 
     /**

@@ -72,12 +72,12 @@ public class MaterializedViewMetadata extends TableOrView {
         int clusteringSize = findCollectionSize(rawCols.values(), ColumnMetadata.Raw.Kind.CLUSTERING_COLUMN);
         List<ColumnMetadata> partitionKey = nullInitializedList(partitionKeySize);
         List<ColumnMetadata> clusteringColumns = nullInitializedList(clusteringSize);
-        List<TableMetadata.Order> clusteringOrder = nullInitializedList(clusteringSize);
+        List<Order> clusteringOrder = nullInitializedList(clusteringSize);
 
         // We use a linked hashmap because we will keep this in the order of a 'SELECT * FROM ...'.
         LinkedHashMap<String, ColumnMetadata> columns = new LinkedHashMap<String, ColumnMetadata>();
 
-        TableMetadata.Options options = null;
+        Options options = null;
         try {
             options = new Options(row, false, cassandraVersion);
         } catch (RuntimeException e) {

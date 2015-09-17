@@ -46,10 +46,10 @@ public class MaterializedViewMetadataTest extends CCMBridge.PerClassSingleNodeCl
             keyspace);
         String createMV = String.format(
             "CREATE MATERIALIZED VIEW %s.monthlyhigh AS "
-                + "SELECT user FROM %s.scores "
+                + "SELECT game, year, month, score, user, day FROM %s.scores "
                 + "WHERE game IS NOT NULL AND year IS NOT NULL AND month IS NOT NULL AND score IS NOT NULL AND user IS NOT NULL AND day IS NOT NULL "
                 + "PRIMARY KEY ((game, year, month), score, user, day) "
-                + "WITH CLUSTERING ORDER BY (score DESC)",
+                + "WITH CLUSTERING ORDER BY (score DESC, user ASC, day ASC)",
             keyspace, keyspace);
 
         // when

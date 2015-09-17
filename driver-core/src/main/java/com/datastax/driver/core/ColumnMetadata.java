@@ -15,7 +15,9 @@
  */
 package com.datastax.driver.core;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Describes a Column.
@@ -41,10 +43,6 @@ public class ColumnMetadata {
     private final String name;
     private final DataType type;
     private final boolean isStatic;
-
-    // this is the "reverse" side of the many-to-many relationship
-    // between columns and indexes, and is updated only after the column is created
-    final Map<String, IndexMetadata> indexes = new LinkedHashMap<String, IndexMetadata>();
 
     private ColumnMetadata(TableOrView parent, String name, DataType type, boolean isStatic) {
         this.parent = parent;
@@ -96,28 +94,6 @@ public class ColumnMetadata {
      */
     public boolean isStatic() {
         return isStatic;
-    }
-
-    /**
-     * Returns metadata on a index on this column.
-     *
-     * @param name the name of the index to retrieve ({@code name} will be
-     * interpreted as a case-insensitive identifier unless enclosed in double-quotes,
-     * see {@link Metadata#quote}).
-     * @return the metadata for the {@code name} index if it exists, or
-     * {@code null} otherwise.
-     */
-    public IndexMetadata getIndex(String name) {
-        return indexes.get(Metadata.handleId(name));
-    }
-
-    /**
-     * Returns a list containing all the indexes on this column.
-     *
-     * @return a list containing the metadata for the indexes on this column.
-     */
-    public List<IndexMetadata> getIndexes() {
-        return new ArrayList<IndexMetadata>(indexes.values());
     }
 
     @Override

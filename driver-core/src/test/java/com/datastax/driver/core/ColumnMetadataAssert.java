@@ -70,14 +70,4 @@ public class ColumnMetadataAssert extends AbstractAssert<ColumnMetadataAssert, C
         return this;
     }
 
-    public ColumnMetadataAssert hasIndex(IndexMetadata index) {
-        assertThat(actual.getIndex(index.getName())).isEqualTo(index);
-        return this;
-    }
-
-    public ColumnMetadataAssert hasSingleIndex(IndexMetadata index) {
-         assertThat(actual.getIndexes()).containsOnly(index);
-        return this;
-    }
-
 }
