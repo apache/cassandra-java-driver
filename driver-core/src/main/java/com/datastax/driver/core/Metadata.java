@@ -28,8 +28,6 @@ import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.datastax.driver.core.exceptions.DriverInternalError;
-
 import static com.datastax.driver.core.SchemaElement.KEYSPACE;
 import static com.datastax.driver.core.SchemaElement.TABLE;
 import static com.datastax.driver.core.SchemaElement.TYPE;
@@ -88,7 +86,7 @@ public class Metadata {
                 return;
             }
             if (udtRows.containsKey(targetKeyspace)) {
-                Map<String, UserType> userTypes = buildUserTypes(keyspace, udtRows.get(targetKeyspace), cassandraVersion);
+                Map<String, UserType> userTypes = buildUserTypes(udtRows.get(targetKeyspace));
                 updateUserTypes(keyspace.userTypes, userTypes, targetName);
             }
         }
@@ -147,7 +145,7 @@ public class Metadata {
             for (TableMetadata table : tables.values()) {
                 keyspace.add(table);
             }
-            Map<String, UserType> userTypes = buildUserTypes(keyspace, udtRows.get(keyspace.getName()), cassandraVersion);
+            Map<String, UserType> userTypes = buildUserTypes(udtRows.get(keyspace.getName()));
             for (UserType userType : userTypes.values()) {
                 keyspace.add(userType);
             }
@@ -195,7 +193,7 @@ public class Metadata {
         return tables;
     }
 
-    private Map<String, UserType> buildUserTypes(KeyspaceMetadata keyspace, List<Row> udtRows, VersionNumber cassandraVersion) {
+    private Map<String, UserType> buildUserTypes(List<Row> udtRows) {
         Map<String, UserType> userTypes = new LinkedHashMap<String, UserType>();
         if (udtRows != null) {
             for (Row udtRow : udtRows) {
@@ -237,8 +235,9 @@ public class Metadata {
                 triggerOnKeyspaceChanged(newKeyspace, oldKeyspace);
             }
             Map<String, TableMetadata> oldTables = oldKeyspace == null ? new HashMap<String, TableMetadata>() : oldKeyspace.tables;
-            Map<String, TableMetadata> newTables = newKeyspace.tables;
-            updateTables(oldTables, newTables, null);
+            updateTables(oldTables, newKeyspace.tables, null);
+            Map<String, UserType> oldTypes = oldKeyspace == null ? new HashMap<String, UserType>() : oldKeyspace.userTypes;
+            updateUserTypes(oldTypes, newKeyspace.userTypes, null);
         }
     }
 
