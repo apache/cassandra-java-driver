@@ -2195,7 +2195,11 @@ public class Cluster implements Closeable {
                                 } else {
                                     switch (scc.targetType) {
                                         case TABLE:
+                                            // we can't tell whether it's a table or a view,
+                                            // but since two objects cannot have the same name,
+                                            // try removing both
                                             keyspace.removeTable(scc.targetName);
+                                            keyspace.removeMaterializedView(scc.targetName);
                                             break;
                                         case TYPE:
                                             keyspace.removeUserType(scc.targetName);
