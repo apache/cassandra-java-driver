@@ -22,6 +22,8 @@ import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.entry;
 
+import com.datastax.driver.core.utils.CassandraVersion;
+
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.DataType.*;
 import static com.datastax.driver.core.TableOrView.Order.ASC;
@@ -389,6 +391,37 @@ public class TableMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
 
         }
 
+    }
+
+    /**
+     * Validates that metadata is appropriately parsed when using the new compression options format introduced
+     * in 3.0.0-alpha1.   Since compression options are parsed as a String map, this should behave exactly as
+     * the old style compression options used in {@link #should_parse_table_options}.
+     *
+     * @jira_ticket CASSANDRA-9424
+     */
+    @Test(groups="short")
+    @CassandraVersion(major=3.0)
+    public void should_parse_new_compression_options() {
+        // given
+        String cql = String.format("CREATE TABLE %s.new_compression_options (\n"
+                + "    k text,\n"
+                + "    c1 int,\n"
+                + "    c2 int,\n"
+                + "    i int,\n"
+                + "    PRIMARY KEY (k, c1, c2)\n"
+                + ") WITH CLUSTERING ORDER BY (c1 DESC, c2 ASC)\n"
+                + "   AND compression = { 'class' : 'DeflateCompressor', 'chunk_length_in_kb' : 128 };",
+            keyspace);
+
+        // when
+        session.execute(cql);
+        TableMetadata table = cluster.getMetadata().getKeyspace(keyspace).getTable("new_compression_options");
+
+        // then
+        assertThat(table.getOptions().getCompression())
+            .contains(entry("class", "org.apache.cassandra.io.compress.DeflateCompressor"))
+            .contains(entry("chunk_length_in_kb", "128"));
     }
 
     @Test(groups = "short")
