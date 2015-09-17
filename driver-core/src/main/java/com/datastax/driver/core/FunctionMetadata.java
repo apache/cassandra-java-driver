@@ -20,6 +20,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -267,5 +268,28 @@ public class FunctionMetadata {
      */
     public DataType getReturnType() {
         return returnType;
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (other == this)
+            return true;
+
+        if (other instanceof FunctionMetadata) {
+            FunctionMetadata that = (FunctionMetadata)other;
+            return this.keyspace.getName().equals(that.keyspace.getName()) &&
+                this.fullName.equals(that.fullName) &&
+                this.arguments.equals(that.arguments) &&
+                this.body.equals(that.body) &&
+                this.calledOnNullInput == that.calledOnNullInput &&
+                this.language.equals(that.language) &&
+                this.returnType.equals(that.returnType);
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(keyspace.getName(), fullName, arguments, body, calledOnNullInput, language, returnType);
     }
 }

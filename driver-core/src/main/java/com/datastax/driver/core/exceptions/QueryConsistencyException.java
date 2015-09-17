@@ -15,6 +15,9 @@
  */
 package com.datastax.driver.core.exceptions;
 
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+
 import com.datastax.driver.core.ConsistencyLevel;
 
 /**
@@ -29,21 +32,24 @@ import com.datastax.driver.core.ConsistencyLevel;
  * </ul>.
  */
 @SuppressWarnings("serial")
-public abstract class QueryConsistencyException extends QueryExecutionException {
+public abstract class QueryConsistencyException extends QueryExecutionException implements CoordinatorException {
 
+    private final InetSocketAddress address;
     private final ConsistencyLevel consistency;
     private final int received;
     private final int required;
 
-    protected QueryConsistencyException(String msg, ConsistencyLevel consistency, int received, int required) {
+    protected QueryConsistencyException(InetSocketAddress address, String msg, ConsistencyLevel consistency, int received, int required) {
         super(msg);
+        this.address = address;
         this.consistency = consistency;
         this.received = received;
         this.required = required;
     }
 
-    protected QueryConsistencyException(String msg, Throwable cause, ConsistencyLevel consistency, int received, int required) {
+    protected QueryConsistencyException(InetSocketAddress address, String msg, Throwable cause, ConsistencyLevel consistency, int received, int required) {
         super(msg, cause);
+        this.address = address;
         this.consistency = consistency;
         this.received = received;
         this.required = required;
@@ -78,5 +84,28 @@ public abstract class QueryConsistencyException extends QueryExecutionException 
      */
     public int getRequiredAcknowledgements() {
         return required;
+    }
+
+    /**
+     * The coordinator host that caused this exception to be thrown.
+     * Note that this is the query coordinator host, <em>not</em> the host which timed out.
+     *
+     * @return The coordinator host that caused this exception to be thrown, or {@code null} if this exception has been generated driver-side.
+     */
+    @Override
+    public InetAddress getHost() {
+        return address.getAddress();
+    }
+
+    /**
+     * The full address of the coordinator host that caused this exception to be thrown.
+     * Note that this is the query coordinator host, <em>not</em> the host which timed out.
+     *
+     * @return the full address of the coordinator host that caused this exception to be thrown,
+     * or {@code null} if this exception has been generated driver-side.
+     */
+    @Override
+    public InetSocketAddress getAddress() {
+        return address;
     }
 }

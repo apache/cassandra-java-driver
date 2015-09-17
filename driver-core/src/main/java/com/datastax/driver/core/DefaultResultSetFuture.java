@@ -69,48 +69,106 @@ class DefaultResultSetFuture extends AbstractFuture<ResultSet> implements Result
                             set(ArrayBackedResultSet.fromMessage(rm, session, protocolVersion, info, statement));
                             break;
                         case SCHEMA_CHANGE:
-                            Responses.Result.SchemaChange scc = (Responses.Result.SchemaChange)rm;
-                            logger.debug("Applying {}", scc);
                             ResultSet rs = ArrayBackedResultSet.fromMessage(rm, session, protocolVersion, info, statement);
-                            switch (scc.change) {
-                                case CREATED:
-                                case UPDATED:
-                                    session.cluster.manager.refreshSchemaAndSignal(connection, this, rs, scc.targetType, scc.targetKeyspace, scc.targetName, scc.targetSignature);
-                                    break;
-                                case DROPPED:
-                                    if (scc.targetType == KEYSPACE) {
-                                        session.cluster.manager.metadata.removeKeyspace(scc.targetKeyspace);
-                                    } else {
-                                        KeyspaceMetadata keyspace = session.cluster.manager.metadata.keyspaces.get(scc.targetKeyspace);
-                                        if (keyspace == null) {
-                                            logger.warn("Received a DROPPED notification for {} {}.{}, but this keyspace is unknown in our metadata",
-                                                scc.targetType, scc.targetKeyspace, scc.targetName);
+                            final Cluster.Manager cluster = session.cluster.manager;
+                            if (!cluster.configuration.getQueryOptions().isMetadataEnabled()) {
+                                cluster.waitForSchemaAgreementAndSignal(connection, this, rs);
+                            } else {
+                                Responses.Result.SchemaChange scc = (Responses.Result.SchemaChange)rm;
+                                switch (scc.change) {
+                                    case CREATED:
+                                    case UPDATED:
+                                        cluster.refreshSchemaAndSignal(connection, this, rs, scc.targetType, scc.targetKeyspace, scc.targetName, scc.targetSignature);
+                                        break;
+                                    case DROPPED:
+                                        if (scc.targetType == KEYSPACE) {
+                                            // If that the one keyspace we are logged in, reset to null (it shouldn't really happen but ...)
+                                            // Note: Actually, Cassandra doesn't do that so we don't either as this could confuse prepared statements.
+                                            // We'll add it back if CASSANDRA-5358 changes that behavior
+                                            //if (scc.keyspace.equals(session.poolsState.keyspace))
+                                            //    session.poolsState.setKeyspace(null);
+                                            final KeyspaceMetadata removedKeyspace = cluster.metadata.removeKeyspace(scc.targetKeyspace);
+                                            if (removedKeyspace != null) {
+                                                cluster.executor.submit(new Runnable() {
+                                                    @Override
+                                                    public void run() {
+                                                        cluster.metadata.triggerOnKeyspaceRemoved(removedKeyspace);
+                                                    }
+                                                });
+                                            }
                                         } else {
-                                            switch (scc.targetType) {
-                                                case TABLE:
-                                                    // we can't tell whether it's a table or a view,
-                                                    // but since two objects cannot have the same name,
-                                                    // try removing both
-                                                    keyspace.removeTable(scc.targetName);
-                                                    keyspace.removeMaterializedView(scc.targetName);
-                                                    break;
-                                                case TYPE:
-                                                    keyspace.removeUserType(scc.targetName);
-                                                    break;
-                                                case FUNCTION:
-                                                    keyspace.removeFunction(Metadata.fullFunctionName(scc.targetName, scc.targetSignature));
-                                                    break;
-                                                case AGGREGATE:
-                                                    keyspace.removeAggregate(Metadata.fullFunctionName(scc.targetName, scc.targetSignature));
-                                                    break;
+                                            KeyspaceMetadata keyspace = session.cluster.manager.metadata.keyspaces.get(scc.targetKeyspace);
+                                            if (keyspace == null) {
+                                                logger.warn("Received a DROPPED notification for {} {}.{}, but this keyspace is unknown in our metadata",
+                                                    scc.targetType, scc.targetKeyspace, scc.targetName);
+                                            } else {
+                                                switch (scc.targetType) {
+                                                    case TABLE:
+                                                        // we can't tell whether it's a table or a view,
+                                                        // but since two objects cannot have the same name,
+                                                        // try removing both
+                                                        final TableMetadata removedTable = keyspace.removeTable(scc.targetName);
+                                                        if (removedTable != null) {
+                                                            cluster.executor.submit(new Runnable() {
+                                                                @Override
+                                                                public void run() {
+                                                                    cluster.metadata.triggerOnTableRemoved(removedTable);
+                                                                }
+                                                            });
+                                                        } else {
+                                                            final MaterializedViewMetadata removedView = keyspace.removeMaterializedView(scc.targetName);
+                                                            if (removedView != null) {
+                                                                cluster.executor.submit(new Runnable() {
+                                                                    @Override
+                                                                    public void run() {
+                                                                        cluster.metadata.triggerOnMaterializedViewRemoved(removedView);
+                                                                    }
+                                                                });
+                                                            }
+                                                        }
+                                                        break;
+                                                    case TYPE:
+                                                        final UserType removedType = keyspace.removeUserType(scc.targetName);
+                                                        if (removedType != null) {
+                                                            cluster.executor.submit(new Runnable() {
+                                                                @Override
+                                                                public void run() {
+                                                                    cluster.metadata.triggerOnUserTypeRemoved(removedType);
+                                                                }
+                                                            });
+                                                        }
+                                                        break;
+                                                    case FUNCTION:
+                                                        final FunctionMetadata removedFunction = keyspace.removeFunction(Metadata.fullFunctionName(scc.targetName, scc.targetSignature));
+                                                        if (removedFunction != null) {
+                                                            cluster.executor.submit(new Runnable() {
+                                                                @Override
+                                                                public void run() {
+                                                                    cluster.metadata.triggerOnFunctionRemoved(removedFunction);
+                                                                }
+                                                            });
+                                                        }
+                                                        break;
+                                                    case AGGREGATE:
+                                                        final AggregateMetadata removedAggregate = keyspace.removeAggregate(Metadata.fullFunctionName(scc.targetName, scc.targetSignature));
+                                                        if (removedAggregate != null) {
+                                                            cluster.executor.submit(new Runnable() {
+                                                                @Override
+                                                                public void run() {
+                                                                    cluster.metadata.triggerOnAggregateRemoved(removedAggregate);
+                                                                }
+                                                            });
+                                                        }
+                                                        break;
+                                                }
                                             }
                                         }
-                                    }
-                                    session.cluster.manager.waitForSchemaAgreementAndSignal(connection, this, rs);
-                                    break;
-                                default:
-                                    logger.info("Ignoring unknown schema change result");
-                                    break;
+                                        session.cluster.manager.waitForSchemaAgreementAndSignal(connection, this, rs);
+                                        break;
+                                    default:
+                                        logger.info("Ignoring unknown schema change result");
+                                        break;
+                                }
                             }
                             break;
                         default:
@@ -184,7 +242,7 @@ class DefaultResultSetFuture extends AbstractFuture<ResultSet> implements Result
         try {
             return Uninterruptibles.getUninterruptibly(this);
         } catch (ExecutionException e) {
-            throw extractCauseFromExecutionException(e);
+            throw DriverThrowables.propagateCause(e);
         }
     }
 
@@ -216,7 +274,7 @@ class DefaultResultSetFuture extends AbstractFuture<ResultSet> implements Result
         try {
             return Uninterruptibles.getUninterruptibly(this, timeout, unit);
         } catch (ExecutionException e) {
-            throw extractCauseFromExecutionException(e);
+            throw DriverThrowables.propagateCause(e);
         }
     }
 
@@ -261,18 +319,6 @@ class DefaultResultSetFuture extends AbstractFuture<ResultSet> implements Result
             handler.cancel();
         }
         return true;
-    }
-
-    static RuntimeException extractCauseFromExecutionException(ExecutionException e) {
-        // We could just rethrow e.getCause(). However, the cause of the ExecutionException has likely been
-        // created on the I/O thread receiving the response. Which means that the stacktrace associated
-        // with said cause will make no mention of the current thread. This is painful for say, finding
-        // out which execute() statement actually raised the exception. So instead, we re-create the
-        // exception.
-        if (e.getCause() instanceof DriverException)
-            throw ((DriverException)e.getCause()).copy();
-        else
-            throw new DriverInternalError("Unexpected exception thrown", e.getCause());
     }
 
     @Override

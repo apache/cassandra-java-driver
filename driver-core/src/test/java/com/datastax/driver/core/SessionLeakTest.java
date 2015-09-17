@@ -31,6 +31,7 @@ import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.utils.SocketChannelMonitor;
 
 import static com.datastax.driver.core.Assertions.assertThat;
+import static com.datastax.driver.core.TestUtils.nonDebouncingQueryOptions;
 
 public class SessionLeakTest {
 
@@ -49,9 +50,11 @@ public class SessionLeakTest {
         channelMonitor.reportAtFixedInterval(1, TimeUnit.SECONDS);
         try {
             cluster = Cluster.builder()
-                .addContactPointsWithPorts(Collections.singletonList(
-                    new InetSocketAddress(CCMBridge.IP_PREFIX + '1', 9042)))
-                .withNettyOptions(channelMonitor.nettyOptions()).build();
+                    .addContactPointsWithPorts(Collections.singletonList(
+                            new InetSocketAddress(CCMBridge.IP_PREFIX + '1', 9042)))
+                    .withNettyOptions(channelMonitor.nettyOptions())
+                    .withQueryOptions(nonDebouncingQueryOptions())
+                    .build();
 
             cluster.init();
 

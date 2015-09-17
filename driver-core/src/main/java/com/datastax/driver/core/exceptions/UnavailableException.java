@@ -15,29 +15,43 @@
  */
 package com.datastax.driver.core.exceptions;
 
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+
 import com.datastax.driver.core.ConsistencyLevel;
 
 /**
  * Exception thrown when the coordinator knows there is not enough replica
  * alive to perform a query with the requested consistency level.
  */
-public class UnavailableException extends QueryExecutionException {
+public class UnavailableException extends QueryExecutionException implements CoordinatorException {
 
     private static final long serialVersionUID = 0;
 
+    private final InetSocketAddress address;
     private final ConsistencyLevel consistency;
     private final int required;
     private final int alive;
 
+    /**
+     * This constructor should only be used internally by the driver
+     * when decoding error responses.
+     */
     public UnavailableException(ConsistencyLevel consistency, int required, int alive) {
-        super(String.format("Not enough replica available for query at consistency %s (%d required but only %d alive)", consistency, required, alive));
+        this(null, consistency, required, alive);
+    }
+
+    public UnavailableException(InetSocketAddress address, ConsistencyLevel consistency, int required, int alive) {
+        super(String.format("Not enough replicas available for query at consistency %s (%d required but only %d alive)", consistency, required, alive));
+        this.address = address;
         this.consistency = consistency;
         this.required = required;
         this.alive = alive;
     }
 
-    private UnavailableException(String message, Throwable cause, ConsistencyLevel consistency, int required, int alive) {
+    private UnavailableException(InetSocketAddress address, String message, Throwable cause, ConsistencyLevel consistency, int required, int alive) {
         super(message, cause);
+        this.address = address;
         this.consistency = consistency;
         this.required = required;
         this.alive = alive;
@@ -74,8 +88,43 @@ public class UnavailableException extends QueryExecutionException {
         return alive;
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public InetAddress getHost() {
+        return address.getAddress();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public InetSocketAddress getAddress() {
+        return address;
+    }
+
     @Override
     public DriverException copy() {
-        return new UnavailableException(getMessage(), this, consistency, required, alive);
+        return new UnavailableException(getAddress(), getMessage(), this, consistency, required, alive);
+    }
+
+    /**
+     * Create a copy of this exception with a nicer stack trace, and including the coordinator
+     * address that caused this exception to be raised.
+     * <p>
+     * This method is mainly intended for internal use by the driver and exists mainly because:
+     * <ol>
+     *   <li>the original exception was decoded from a response frame
+     *   and at that time, the coordinator address was not available; and</li>
+     *   <li>the newly-created exception will refer to the current thread in its stack trace,
+     *   which generally yields a more user-friendly stack trace that the original one.</li>
+     * </ol>
+     *
+     * @param address The full address of the host that caused this exception to be thrown.
+     * @return a copy/clone of this exception, but with the given host address instead of the original one.
+     */
+    public UnavailableException copy(InetSocketAddress address) {
+        return new UnavailableException(address, getMessage(), this, consistency, required, alive);
     }
 }

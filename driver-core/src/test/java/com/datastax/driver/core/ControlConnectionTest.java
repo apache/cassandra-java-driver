@@ -15,18 +15,29 @@
  */
 package com.datastax.driver.core;
 
+import java.net.InetAddress;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.google.common.base.Function;
+import com.google.common.collect.HashMultiset;
+import com.google.common.collect.Maps;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testng.annotations.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static com.datastax.driver.core.Assertions.assertThat;
+import static com.datastax.driver.core.TestUtils.nonDebouncingQueryOptions;
 
 import com.datastax.driver.core.policies.*;
 import com.datastax.driver.core.utils.CassandraVersion;
 
 public class ControlConnectionTest {
+
+    static final Logger logger = LoggerFactory.getLogger(ControlConnectionTest.class);
+
     @Test(groups = "short")
     public void should_prevent_simultaneous_reconnection_attempts() throws InterruptedException {
         CCMBridge ccm = null;
@@ -122,8 +133,9 @@ public class ControlConnectionTest {
             ccm = CCMBridge.builder("test").withNodes(3).build();
 
             cluster = Cluster.builder()
-                .addContactPoint(CCMBridge.ipOfNode(1))
-                .build();
+                    .addContactPoint(CCMBridge.ipOfNode(1))
+                    .withQueryOptions(nonDebouncingQueryOptions())
+                    .build();
             cluster.init();
 
             // Ensure the control connection host is that of the first node.
@@ -143,6 +155,61 @@ public class ControlConnectionTest {
             if (ccm != null)
                 ccm.remove();
         }
+    }
+
+    /**
+     * <p>
+     * Ensures that contact points are randomized when determining the initial control connection
+     * by default.  Initializes a cluster with 5 contact points 100 times and ensures that all 5
+     * were used.
+     * </p>
+     *
+     * @jira_ticket JAVA-618
+     * @expected_result All 5 hosts were chosen within 100 attempts.  There is a very small possibility
+     *  that this may not be the case and this is not actually an error.
+     * @test_category control_connection
+     * @since 2.0.11, 2.1.8, 2.2.0
+     */
+    @Test(groups = "short")
+    public void should_randomize_contact_points_when_determining_control_connection() {
+        int hostCount = 5;
+        int iterations = 100;
+        SCassandraCluster scassandras = new SCassandraCluster(hostCount);
+
+        try {
+            final HashMultiset<InetAddress> occurrencesByHost = HashMultiset.create(hostCount);
+            for(int i = 0; i < iterations; i++) {
+                Cluster cluster = Cluster.builder()
+                    .addContactPoints(scassandras.addresses())
+                    .build();
+
+                try {
+                    cluster.init();
+                    occurrencesByHost.add(cluster.manager.controlConnection.connectedHost().getAddress());
+                } finally {
+                    cluster.close();
+                }
+            }
+            if(logger.isDebugEnabled()) {
+                Map<InetAddress, Integer> hostCounts = Maps.toMap(occurrencesByHost.elementSet(), new Function<InetAddress, Integer>() {
+                    @Override
+                    public Integer apply(InetAddress input) {
+                        return occurrencesByHost.count(input);
+                    }
+                });
+                logger.debug("Control Connection Use Counts by Host: {}", hostCounts);
+            }
+            // There is an incredibly low chance that a host may not be used based on randomness.
+            // This probability is very low however.
+            assertThat(occurrencesByHost.elementSet().size())
+                .as("Not all hosts were used as contact points.  There is a very small chance"
+                    + " of this happening based on randomness, investigate whether or not this"
+                    + " is a bug.")
+                .isEqualTo(hostCount);
+        } finally {
+            scassandras.stop();
+        }
+
     }
 
    static class QueryPlanCountingPolicy extends DelegatingLoadBalancingPolicy {

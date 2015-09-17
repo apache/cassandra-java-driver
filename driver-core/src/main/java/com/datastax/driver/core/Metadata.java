@@ -27,13 +27,15 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
-
-import com.datastax.driver.core.exceptions.DriverInternalError;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Keeps metadata on the connected cluster, including known nodes and schema definitions.
  */
 public class Metadata {
+
+    private static final Logger logger = LoggerFactory.getLogger(Metadata.class);
 
     final Cluster.Manager cluster;
     volatile String clusterName;
@@ -149,7 +151,8 @@ public class Metadata {
      * connection, when schema or ring topology changes. It might occasionally
      * be stale.
      *
-     * @return the token ranges.
+     * @return the token ranges. Note that the result might be stale or empty if
+     * metadata was explicitly disabled with {@link QueryOptions#setMetadataEnabled(boolean)}.
      */
     public Set<TokenRange> getTokenRanges() {
         TokenMap current = tokenMap;
@@ -167,7 +170,8 @@ public class Metadata {
      * @param keyspace the name of the keyspace to get token ranges for.
      * @param host the host.
      * @return the (immutable) set of token ranges for {@code host} as known
-     * by the driver.
+     * by the driver. Note that the result might be stale or empty if metadata
+     * was explicitly disabled with {@link QueryOptions#setMetadataEnabled(boolean)}.
      */
     public Set<TokenRange> getTokenRanges(String keyspace, Host host) {
         keyspace = handleId(keyspace);
@@ -196,7 +200,8 @@ public class Metadata {
      * @param partitionKey the partition key for which to find the set of
      * replica.
      * @return the (immutable) set of replicas for {@code partitionKey} as known
-     * by the driver.
+     * by the driver. Note that the result might be stale or empty if metadata was
+     * explicitly disabled with {@link QueryOptions#setMetadataEnabled(boolean)}.
      */
     public Set<Host> getReplicas(String keyspace, ByteBuffer partitionKey) {
         keyspace = handleId(keyspace);
@@ -219,6 +224,8 @@ public class Metadata {
      * @param keyspace the name of the keyspace to get replicas for.
      * @param range the token range.
      * @return the (immutable) set of replicas for {@code range} as known by the driver.
+     * Note that the result might be stale or empty if metadata was explicitly disabled
+     * with {@link QueryOptions#setMetadataEnabled(boolean)}.
      */
     public Set<Host> getReplicas(String keyspace, TokenRange range) {
         keyspace = handleId(keyspace);
@@ -268,7 +275,12 @@ public class Metadata {
      * (for example, if the control connection is down).
      */
     public boolean checkSchemaAgreement() {
-        return cluster.controlConnection.checkSchemaAgreement();
+        try {
+            return cluster.controlConnection.checkSchemaAgreement();
+        } catch (Exception e) {
+            logger.warn("Error while checking schema agreement", e);
+            return false;
+        }
     }
 
     /**
@@ -277,22 +289,25 @@ public class Metadata {
      * @param keyspace the name of the keyspace for which metadata should be
      * returned.
      * @return the metadata of the requested keyspace or {@code null} if {@code
-     * keyspace} is not a known keyspace.
+     * keyspace} is not a known keyspace. Note that the result might be stale or null if
+     * metadata was explicitly disabled with {@link QueryOptions#setMetadataEnabled(boolean)}.
      */
     public KeyspaceMetadata getKeyspace(String keyspace) {
         return keyspaces.get(handleId(keyspace));
     }
 
-    void removeKeyspace(String keyspace) {
-        keyspaces.remove(keyspace);
+    KeyspaceMetadata removeKeyspace(String keyspace) {
+        KeyspaceMetadata removed = keyspaces.remove(keyspace);
         if (tokenMap != null)
             tokenMap.tokenToHosts.remove(keyspace);
+        return removed;
     }
 
     /**
      * Returns a list of all the defined keyspaces.
      *
-     * @return a list of all the defined keyspaces.
+     * @return a list of all the defined keyspaces. Note that the result might be stale or empty if
+     * metadata was explicitly disabled with {@link QueryOptions#setMetadataEnabled(boolean)}.
      */
     public List<KeyspaceMetadata> getKeyspaces() {
         return new ArrayList<KeyspaceMetadata>(keyspaces.values());
@@ -307,6 +322,9 @@ public class Metadata {
      *
      * Note that the returned String is formatted to be human readable (for
      * some definition of human readable at least).
+     *
+     * It might be stale or empty if metadata was explicitly disabled with
+     * {@link QueryOptions#setMetadataEnabled(boolean)}.
      *
      * @return the CQL queries representing this cluster schema as a {code
      * String}.
@@ -336,12 +354,15 @@ public class Metadata {
      *
      * @param tokenStr the string representation.
      * @return the token.
+     *
+     * @throws IllegalStateException if the token factory was not initialized. This would typically
+     * happen if metadata was explicitly disabled with {@link QueryOptions#setMetadataEnabled(boolean)}
+     * before startup.
      */
     public Token newToken(String tokenStr) {
         TokenMap current = tokenMap;
         if (current == null)
-            throw new DriverInternalError("Token factory not set. This should only happen at initialization time");
-
+            throw new IllegalStateException("Token factory not set. This should only happen if metadata was explicitly disabled");
         return current.factory.fromString(tokenStr);
     }
 
@@ -351,11 +372,15 @@ public class Metadata {
      * @param start the start token.
      * @param end the end token.
      * @return the range.
+     *
+     * @throws IllegalStateException if the token factory was not initialized. This would typically
+     * happen if metadata was explicitly disabled with {@link QueryOptions#setMetadataEnabled(boolean)}
+     * before startup.
      */
     public TokenRange newTokenRange(Token start, Token end) {
         TokenMap current = tokenMap;
         if (current == null)
-            throw new DriverInternalError("Token factory not set. This should only happen at initialization time");
+            throw new IllegalStateException("Token factory not set. This should only happen if metadata was explicitly disabled");
 
         return new TokenRange(start, end, current.factory);
     }
@@ -363,6 +388,114 @@ public class Metadata {
     Token.Factory tokenFactory() {
         TokenMap current = tokenMap;
         return (current == null) ? null : current.factory;
+    }
+
+    void triggerOnKeyspaceAdded(KeyspaceMetadata keyspace) {
+        for (SchemaChangeListener listener : cluster.schemaChangeListeners) {
+            listener.onKeyspaceAdded(keyspace);
+        }
+    }
+
+    void triggerOnKeyspaceChanged(KeyspaceMetadata current, KeyspaceMetadata previous) {
+        for (SchemaChangeListener listener : cluster.schemaChangeListeners) {
+            listener.onKeyspaceChanged(current, previous);
+        }
+    }
+
+    void triggerOnKeyspaceRemoved(KeyspaceMetadata keyspace) {
+        for (SchemaChangeListener listener : cluster.schemaChangeListeners) {
+            listener.onKeyspaceRemoved(keyspace);
+        }
+    }
+
+    void triggerOnTableAdded(TableMetadata table) {
+        for (SchemaChangeListener listener : cluster.schemaChangeListeners) {
+            listener.onTableAdded(table);
+        }
+    }
+
+    void triggerOnTableChanged(TableMetadata current, TableMetadata previous) {
+        for (SchemaChangeListener listener : cluster.schemaChangeListeners) {
+            listener.onTableChanged(current, previous);
+        }
+    }
+
+    void triggerOnTableRemoved(TableMetadata table) {
+        for (SchemaChangeListener listener : cluster.schemaChangeListeners) {
+            listener.onTableRemoved(table);
+        }
+    }
+
+    void triggerOnUserTypeAdded(UserType type) {
+        for (SchemaChangeListener listener : cluster.schemaChangeListeners) {
+            listener.onUserTypeAdded(type);
+        }
+    }
+
+    void triggerOnUserTypeChanged(UserType current, UserType previous) {
+        for (SchemaChangeListener listener : cluster.schemaChangeListeners) {
+            listener.onUserTypeChanged(current, previous);
+        }
+    }
+
+    void triggerOnUserTypeRemoved(UserType type) {
+        for (SchemaChangeListener listener : cluster.schemaChangeListeners) {
+            listener.onUserTypeRemoved(type);
+        }
+    }
+
+    void triggerOnFunctionAdded(FunctionMetadata function) {
+        for (SchemaChangeListener listener : cluster.schemaChangeListeners) {
+            listener.onFunctionAdded(function);
+        }
+    }
+
+    void triggerOnFunctionChanged(FunctionMetadata current, FunctionMetadata previous) {
+        for (SchemaChangeListener listener : cluster.schemaChangeListeners) {
+            listener.onFunctionChanged(current, previous);
+        }
+    }
+
+    void triggerOnFunctionRemoved(FunctionMetadata function) {
+        for (SchemaChangeListener listener : cluster.schemaChangeListeners) {
+            listener.onFunctionRemoved(function);
+        }
+    }
+
+    void triggerOnAggregateAdded(AggregateMetadata aggregate) {
+        for (SchemaChangeListener listener : cluster.schemaChangeListeners) {
+            listener.onAggregateAdded(aggregate);
+        }
+    }
+
+    void triggerOnAggregateChanged(AggregateMetadata current, AggregateMetadata previous) {
+        for (SchemaChangeListener listener : cluster.schemaChangeListeners) {
+            listener.onAggregateChanged(current, previous);
+        }
+    }
+
+    void triggerOnAggregateRemoved(AggregateMetadata aggregate) {
+        for (SchemaChangeListener listener : cluster.schemaChangeListeners) {
+            listener.onAggregateRemoved(aggregate);
+        }
+    }
+
+    void triggerOnMaterializedViewAdded(MaterializedViewMetadata view) {
+        for (SchemaChangeListener listener : cluster.schemaChangeListeners) {
+            listener.onMaterializedViewAdded(view);
+        }
+    }
+
+    void triggerOnMaterializedViewChanged(MaterializedViewMetadata current, MaterializedViewMetadata previous) {
+        for (SchemaChangeListener listener : cluster.schemaChangeListeners) {
+            listener.onMaterializedViewChanged(current, previous);
+        }
+    }
+
+    void triggerOnMaterializedViewRemoved(MaterializedViewMetadata view) {
+        for (SchemaChangeListener listener : cluster.schemaChangeListeners) {
+            listener.onMaterializedViewRemoved(view);
+        }
     }
 
     static class TokenMap {

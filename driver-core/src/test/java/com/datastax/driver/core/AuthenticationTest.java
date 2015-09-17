@@ -59,36 +59,42 @@ public class AuthenticationTest {
 
     @Test(groups = "short")
     public void should_connect_with_credentials() throws InterruptedException {
+        Cluster cluster = Cluster.builder().addContactPoint(CCMBridge.IP_PREFIX + '1')
+                .withCredentials("cassandra", "cassandra")
+                .build();
         try {
-            Cluster.builder().addContactPoint(CCMBridge.IP_PREFIX + '1')
-                                                .withCredentials("cassandra", "cassandra")
-                                                .build()
-                                                .connect();
+            cluster.connect();
         } catch (NoHostAvailableException e) {
             logger.error(e.getCustomMessage(1, true, true));
+        } finally {
+            cluster.close();
         }
     }
 
     @Test(groups = "short", expectedExceptions = AuthenticationException.class)
     public void should_fail_to_connect_with_wrong_credentials() throws InterruptedException {
+        Cluster cluster = Cluster.builder().addContactPoint(CCMBridge.IP_PREFIX + '1')
+                .withCredentials("bogus", "bogus")
+                .build();
         try {
-            Cluster.builder().addContactPoint(CCMBridge.IP_PREFIX + '1')
-                   .withCredentials("bogus", "bogus")
-                   .build()
-                   .connect();
+            cluster.connect();
         } catch (NoHostAvailableException e) {
             logger.error(e.getCustomMessage(1, true, true));
+        } finally {
+            cluster.close();
         }
     }
 
     @Test(groups = "short", expectedExceptions = AuthenticationException.class)
     public void should_fail_to_connect_without_credentials() throws InterruptedException {
+        Cluster cluster = Cluster.builder().addContactPoint(CCMBridge.IP_PREFIX + '1')
+                .build();
         try {
-            Cluster.builder().addContactPoint(CCMBridge.IP_PREFIX + '1')
-                              .build()
-                              .connect();
+            cluster.connect();
         } catch (NoHostAvailableException e) {
             logger.error(e.getCustomMessage(1, true, true));
+        } finally {
+            cluster.close();
         }
     }
 }

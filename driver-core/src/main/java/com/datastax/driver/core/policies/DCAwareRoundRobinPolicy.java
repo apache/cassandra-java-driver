@@ -208,6 +208,9 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
             String nonLocalHosts = Joiner.on(",").join(notInLocalDC);
             logger.warn("Some contact points don't match local data center. Local DC = {}. Non-conforming contact points: {}", localDc, nonLocalHosts);
         }
+
+        this.index.set(new Random().nextInt(Math.max(hosts.size(), 1)));
+
     }
 
     private String dc(Host host) {

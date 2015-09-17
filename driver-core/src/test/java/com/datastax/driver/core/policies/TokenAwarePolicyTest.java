@@ -25,6 +25,8 @@ import org.testng.annotations.Test;
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.utils.Bytes;
 
+import static com.datastax.driver.core.TestUtils.nonDebouncingQueryOptions;
+
 public class TokenAwarePolicyTest {
     @Test(groups = "long")
     public void should_shuffle_replicas_when_requested() {
@@ -46,6 +48,7 @@ public class TokenAwarePolicyTest {
             cluster = Cluster.builder()
                              .addContactPoint(CCMBridge.ipOfNode(1))
                              .withLoadBalancingPolicy(loadBalancingPolicy)
+                             .withQueryOptions(nonDebouncingQueryOptions())
                              .build();
 
             String keyspace = "ks";

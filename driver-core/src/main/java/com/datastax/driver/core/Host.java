@@ -35,6 +35,7 @@ public class Host {
 
     private static final Logger logger = LoggerFactory.getLogger(Host.class);
 
+    static final Logger statesLogger = LoggerFactory.getLogger(Host.class.getName() + ".STATES");
 
     private final InetSocketAddress address;
 
@@ -43,7 +44,7 @@ public class Host {
     /** Ensures state change notifications for that host are handled serially */
     final ReentrantLock notificationsLock = new ReentrantLock(true);
 
-    private final ConvictionPolicy policy;
+    final ConvictionPolicy convictionPolicy;
     private final Cluster.Manager manager;
 
     // Tracks later reconnection attempts to that host so we avoid adding multiple tasks.
@@ -66,12 +67,12 @@ public class Host {
     // ClusterMetadata keeps one Host object per inet address and we rely on this (more precisely,
     // we rely on the fact that we can use Object equality as a valid equality), so don't use
     // that constructor but ClusterMetadata.getHost instead.
-    Host(InetSocketAddress address, ConvictionPolicy.Factory policy, Cluster.Manager manager) {
-        if (address == null || policy == null)
+    Host(InetSocketAddress address, ConvictionPolicy.Factory convictionPolicyFactory, Cluster.Manager manager) {
+        if (address == null || convictionPolicyFactory == null)
             throw new NullPointerException();
 
         this.address = address;
-        this.policy = policy.create(this);
+        this.convictionPolicy = convictionPolicyFactory.create(this, manager.reconnectionPolicy());
         this.manager = manager;
         this.defaultExecutionInfo = new ExecutionInfo(ImmutableList.of(this));
         this.state = State.ADDED;
@@ -256,15 +257,11 @@ public class Host {
 
     void setDown() {
         state = State.DOWN;
+        convictionPolicy.reset();
     }
 
     void setUp() {
-        policy.reset();
         state = State.UP;
-    }
-
-    boolean signalConnectionFailure(ConnectionException exception) {
-        return policy.addFailure(exception);
     }
 
     /**

@@ -15,6 +15,8 @@
  */
 package com.datastax.driver.core.exceptions;
 
+import java.net.InetSocketAddress;
+
 import com.datastax.driver.core.ConsistencyLevel;
 import com.datastax.driver.core.WriteType;
 
@@ -28,8 +30,16 @@ public class WriteFailureException extends QueryConsistencyException {
     private final WriteType writeType;
     private final int failed;
 
+    /**
+     * This constructor should only be used internally by the driver
+     * when decoding error responses.
+     */
     public WriteFailureException(ConsistencyLevel consistency, WriteType writeType, int received, int required, int failed) {
-        super(String.format("Cassandra failure during write query at consistency %s "
+        this(null, consistency, writeType, received, required, failed);
+    }
+
+    public WriteFailureException(InetSocketAddress address, ConsistencyLevel consistency, WriteType writeType, int received, int required, int failed) {
+        super(address, String.format("Cassandra failure during write query at consistency %s "
                     + "(%d responses were required but only %d replica responded, %d failed)",
                 consistency, required, received, failed),
             consistency,
@@ -39,9 +49,9 @@ public class WriteFailureException extends QueryConsistencyException {
         this.failed = failed;
     }
 
-    private WriteFailureException(String msg, Throwable cause,
+    private WriteFailureException(InetSocketAddress address, String msg, Throwable cause,
                                   ConsistencyLevel consistency, WriteType writeType, int received, int required, int failed) {
-        super(msg, cause, consistency, received, required);
+        super(address, msg, cause, consistency, received, required);
         this.writeType = writeType;
         this.failed = failed;
     }
@@ -66,7 +76,19 @@ public class WriteFailureException extends QueryConsistencyException {
 
     @Override
     public DriverException copy() {
-        return new WriteFailureException(getMessage(), this, getConsistencyLevel(), getWriteType(),
+        return new WriteFailureException(getAddress(), getMessage(), this, getConsistencyLevel(), getWriteType(),
             getReceivedAcknowledgements(), getRequiredAcknowledgements(), getFailures());
+    }
+
+    public DriverException copy(InetSocketAddress address) {
+        return new WriteFailureException(
+            address,
+            getMessage(),
+            this,
+            getConsistencyLevel(),
+            getWriteType(),
+            getReceivedAcknowledgements(),
+            getRequiredAcknowledgements(),
+            failed);
     }
 }

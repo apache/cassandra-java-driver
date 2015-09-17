@@ -19,6 +19,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.google.common.base.Objects;
+
 /**
  * Describes a Column.
  */
@@ -97,6 +99,24 @@ public class ColumnMetadata {
      */
     public boolean isStatic() {
         return isStatic;
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (other == this)
+            return true;
+        if (!(other instanceof ColumnMetadata))
+            return false;
+
+        ColumnMetadata that = (ColumnMetadata)other;
+        return this.name.equals(that.name) &&
+            this.isStatic == that.isStatic &&
+            this.type.equals(that.type);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(name, isStatic, type);
     }
 
     @Override

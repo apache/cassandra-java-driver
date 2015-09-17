@@ -19,6 +19,7 @@ import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.List;
 
+import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
@@ -288,5 +289,33 @@ public class AggregateMetadata {
      */
     public DataType getStateType() {
         return stateType;
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (other == this)
+            return true;
+        
+        if (other instanceof AggregateMetadata) {
+            AggregateMetadata that = (AggregateMetadata)other;
+            return this.keyspace.getName().equals(that.keyspace.getName()) &&
+                this.fullName.equals(that.fullName) &&
+                this.argumentTypes.equals(that.argumentTypes) &&
+                Objects.equal(this.finalFuncFullName, that.finalFuncFullName) &&
+                // Note: this might be a problem if a custom codec has been registered for the initCond's type, with a target Java type that
+                // does not properly implement equals. We don't have any control over this, at worst this would lead to spurious change
+                // notifications.
+                Objects.equal(this.initCond, that.initCond) &&
+                this.returnType.equals(that.returnType) &&
+                this.stateFuncFullName.equals(that.stateFuncFullName) &&
+                this.stateType.equals(that.stateType);
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(this.keyspace.getName(), this.fullName, this.argumentTypes,
+            this.finalFuncFullName, this.initCond, this.returnType, this.stateFuncFullName, this.stateType);
     }
 }

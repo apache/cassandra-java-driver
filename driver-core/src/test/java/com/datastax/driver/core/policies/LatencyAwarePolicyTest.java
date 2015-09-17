@@ -76,23 +76,27 @@ public class LatencyAwarePolicyTest extends ScassandraTestBase {
         Cluster.Builder builder = super.createClusterBuilder();
         builder.withLoadBalancingPolicy(latencyAwarePolicy);
         Cluster cluster = builder.build();
-        cluster.init(); // force initialization of latency aware policy
-        LatencyTrackerBarrier barrier = new LatencyTrackerBarrier(1);
-        cluster.register(barrier); // add barrier to synchronize latency tracker threads with the current thread
-        Session session = cluster.connect();
-        // when
-        session.execute(query);
-        // then
-        // wait until trackers have been notified
-        barrier.await();
-        // make sure the updater is called at least once
-        latencyAwarePolicy.new Updater().run();
-        LatencyAwarePolicy.Snapshot snapshot = latencyAwarePolicy.getScoresSnapshot();
-        assertThat(snapshot.getAllStats()).hasSize(1);
-        LatencyAwarePolicy.Snapshot.Stats stats = snapshot.getStats(retrieveSingleHost(cluster));
-        assertThat(stats).isNotNull();
-        assertThat(stats.getMeasurementsCount()).isEqualTo(1);
-        assertThat(stats.getLatencyScore()).isNotEqualTo(-1);
+        try {
+            cluster.init(); // force initialization of latency aware policy
+            LatencyTrackerBarrier barrier = new LatencyTrackerBarrier(1);
+            cluster.register(barrier); // add barrier to synchronize latency tracker threads with the current thread
+            Session session = cluster.connect();
+            // when
+            session.execute(query);
+            // then
+            // wait until trackers have been notified
+            barrier.await();
+            // make sure the updater is called at least once
+            latencyAwarePolicy.new Updater().run();
+            LatencyAwarePolicy.Snapshot snapshot = latencyAwarePolicy.getScoresSnapshot();
+            assertThat(snapshot.getAllStats()).hasSize(1);
+            LatencyAwarePolicy.Snapshot.Stats stats = snapshot.getStats(retrieveSingleHost(cluster));
+            assertThat(stats).isNotNull();
+            assertThat(stats.getMeasurementsCount()).isEqualTo(1);
+            assertThat(stats.getLatencyScore()).isNotEqualTo(-1);
+        } finally {
+            cluster.close();
+        }
     }
 
     @Test(groups = "short")
@@ -111,29 +115,33 @@ public class LatencyAwarePolicyTest extends ScassandraTestBase {
         Cluster.Builder builder = super.createClusterBuilder();
         builder.withLoadBalancingPolicy(latencyAwarePolicy);
         Cluster cluster = builder.build();
-        cluster.init(); // force initialization of latency aware policy
-        LatencyTrackerBarrier barrier = new LatencyTrackerBarrier(1);
-        cluster.register(barrier);
-        Session session = cluster.connect();
-        // when
         try {
-            session.execute(query);
-            fail("Should have thrown NoHostAvailableException");
-        } catch(NoHostAvailableException e) {
-            // ok
-            Throwable error = e.getErrors().get(hostAddress);
-            assertThat(error).isNotNull();
-            assertThat(error).isInstanceOf(UnavailableException.class);
+            cluster.init(); // force initialization of latency aware policy
+            LatencyTrackerBarrier barrier = new LatencyTrackerBarrier(1);
+            cluster.register(barrier);
+            Session session = cluster.connect();
+            // when
+            try {
+                session.execute(query);
+                fail("Should have thrown NoHostAvailableException");
+            } catch (NoHostAvailableException e) {
+                // ok
+                Throwable error = e.getErrors().get(hostAddress);
+                assertThat(error).isNotNull();
+                assertThat(error).isInstanceOf(UnavailableException.class);
+            }
+            // then
+            // wait until trackers have been notified
+            barrier.await();
+            // make sure the updater is called at least once
+            latencyAwarePolicy.new Updater().run();
+            LatencyAwarePolicy.Snapshot snapshot = latencyAwarePolicy.getScoresSnapshot();
+            assertThat(snapshot.getAllStats()).isEmpty();
+            LatencyAwarePolicy.Snapshot.Stats stats = snapshot.getStats(retrieveSingleHost(cluster));
+            assertThat(stats).isNull();
+        } finally {
+            cluster.close();
         }
-        // then
-        // wait until trackers have been notified
-        barrier.await();
-        // make sure the updater is called at least once
-        latencyAwarePolicy.new Updater().run();
-        LatencyAwarePolicy.Snapshot snapshot = latencyAwarePolicy.getScoresSnapshot();
-        assertThat(snapshot.getAllStats()).isEmpty();
-        LatencyAwarePolicy.Snapshot.Stats stats = snapshot.getStats(retrieveSingleHost(cluster));
-        assertThat(stats).isNull();
     }
 
     @Test(groups= "short")
@@ -153,28 +161,32 @@ public class LatencyAwarePolicyTest extends ScassandraTestBase {
         builder.withLoadBalancingPolicy(latencyAwarePolicy);
         builder.withRetryPolicy(FallthroughRetryPolicy.INSTANCE);
         Cluster cluster = builder.build();
-        cluster.init(); // force initialization of latency aware policy
-        LatencyTrackerBarrier barrier = new LatencyTrackerBarrier(1);
-        cluster.register(barrier);
-        Session session = cluster.connect();
-        // when
         try {
-            session.execute(query);
-            fail("Should have thrown ReadTimeoutException");
-        } catch(ReadTimeoutException e) {
-            // ok
+            cluster.init(); // force initialization of latency aware policy
+            LatencyTrackerBarrier barrier = new LatencyTrackerBarrier(1);
+            cluster.register(barrier);
+            Session session = cluster.connect();
+            // when
+            try {
+                session.execute(query);
+                fail("Should have thrown ReadTimeoutException");
+            } catch (ReadTimeoutException e) {
+                // ok
+            }
+            // then
+            // wait until trackers have been notified
+            barrier.await();
+            // make sure the updater is called at least once
+            latencyAwarePolicy.new Updater().run();
+            LatencyAwarePolicy.Snapshot snapshot = latencyAwarePolicy.getScoresSnapshot();
+            assertThat(snapshot.getAllStats()).hasSize(1);
+            LatencyAwarePolicy.Snapshot.Stats stats = snapshot.getStats(retrieveSingleHost(cluster));
+            assertThat(stats).isNotNull();
+            assertThat(stats.getMeasurementsCount()).isEqualTo(1);
+            assertThat(stats.getLatencyScore()).isNotEqualTo(-1);
+        } finally {
+            cluster.close();
         }
-        // then
-        // wait until trackers have been notified
-        barrier.await();
-        // make sure the updater is called at least once
-        latencyAwarePolicy.new Updater().run();
-        LatencyAwarePolicy.Snapshot snapshot = latencyAwarePolicy.getScoresSnapshot();
-        assertThat(snapshot.getAllStats()).hasSize(1);
-        LatencyAwarePolicy.Snapshot.Stats stats = snapshot.getStats(retrieveSingleHost(cluster));
-        assertThat(stats).isNotNull();
-        assertThat(stats.getMeasurementsCount()).isEqualTo(1);
-        assertThat(stats.getLatencyScore()).isNotEqualTo(-1);
     }
 
 }

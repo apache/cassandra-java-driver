@@ -18,6 +18,8 @@ package com.datastax.driver.core;
 import java.net.InetSocketAddress;
 import java.util.Collections;
 
+import com.google.common.util.concurrent.ListenableFuture;
+
 /**
  * Base class for custom {@link Cluster} implementations that wrap another instance (delegate / decorator pattern).
  */
@@ -72,6 +74,16 @@ public abstract class DelegatingCluster extends Cluster {
     @Override
     public Session connect(String keyspace) {
         return delegate().connect(keyspace);
+    }
+
+    @Override
+    public ListenableFuture<Session> connectAsync() {
+        return delegate().connectAsync();
+    }
+
+    @Override
+    public ListenableFuture<Session> connectAsync(String keyspace) {
+        return delegate().connectAsync(keyspace);
     }
 
     @Override

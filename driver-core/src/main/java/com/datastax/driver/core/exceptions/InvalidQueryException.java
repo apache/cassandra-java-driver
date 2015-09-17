@@ -15,23 +15,48 @@
  */
 package com.datastax.driver.core.exceptions;
 
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+
 /**
  * Indicates a syntactically correct but invalid query.
  */
-public class InvalidQueryException extends QueryValidationException {
+public class InvalidQueryException extends QueryValidationException implements CoordinatorException {
 
     private static final long serialVersionUID = 0;
 
+    private final InetSocketAddress address;
+
     public InvalidQueryException(String msg) {
-        super(msg);
+        this(null, msg);
     }
 
-    private InvalidQueryException(String msg, Throwable cause) {
+    public InvalidQueryException(InetSocketAddress address, String msg) {
+        super(msg);
+        this.address = address;
+    }
+
+    public InvalidQueryException(String msg, Throwable cause) {
+        this(null, msg, cause);
+    }
+
+    public InvalidQueryException(InetSocketAddress address, String msg, Throwable cause) {
         super(msg, cause);
+        this.address = address;
     }
 
     @Override
     public DriverException copy() {
-        return new InvalidQueryException(getMessage(), this);
+        return new InvalidQueryException(getAddress(), getMessage(), this);
+    }
+
+    @Override
+    public InetAddress getHost() {
+        return address != null ? address.getAddress() : null;
+    }
+
+    @Override
+    public InetSocketAddress getAddress() {
+        return address;
     }
 }

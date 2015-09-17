@@ -25,7 +25,12 @@ import java.util.Set;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
+import org.mockito.Mockito;
+
+import static org.mockito.Mockito.mock;
 import static org.testng.Assert.*;
+
+import com.datastax.driver.core.policies.ExponentialReconnectionPolicy;
 
 /**
  * Base class for replication strategy tests. Currently only supports testing
@@ -38,13 +43,13 @@ public class AbstractReplicationStrategyTest {
     protected static class HostMock extends Host {
         private final String address;
 
-        private HostMock(String address) throws UnknownHostException {
-            super(new InetSocketAddress(InetAddress.getByName(address), 9042), new ConvictionPolicy.Simple.Factory(), new Cluster("test", null, Configuration.builder().build()).manager);
+        private HostMock(String address, Cluster.Manager manager) throws UnknownHostException {
+            super(new InetSocketAddress(InetAddress.getByName(address), 9042), new ConvictionPolicy.DefaultConvictionPolicy.Factory(), manager);
             this.address = address;
         }
 
-        private HostMock(String address, String dc, String rack) throws UnknownHostException {
-            this(address);
+        private HostMock(String address, String dc, String rack, Cluster.Manager manager) throws UnknownHostException {
+            this(address, manager);
             this.setLocationInfo(dc, rack);
         }
 
@@ -81,7 +86,7 @@ public class AbstractReplicationStrategyTest {
      */
     protected static HostMock host(String address) {
         try {
-            return new HostMock(address);
+            return new HostMock(address, mock(Cluster.Manager.class));
         } catch (UnknownHostException ex) {
             throw new RuntimeException(ex); //wrap to avoid declarations
         }
@@ -93,7 +98,7 @@ public class AbstractReplicationStrategyTest {
      */
     protected static HostMock host(String address, String dc, String rack) {
         try {
-            return new HostMock(address, dc, rack);
+            return new HostMock(address, dc, rack, mock(Cluster.Manager.class));
         } catch (UnknownHostException ex) {
             throw new RuntimeException(ex); //wrap to avoid declarations
         }

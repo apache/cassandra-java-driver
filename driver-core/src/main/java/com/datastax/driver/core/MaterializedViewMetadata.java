@@ -15,10 +15,12 @@
  */
 package com.datastax.driver.core;
 
+
 import java.util.*;
 
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
+import com.google.common.base.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -215,4 +217,28 @@ public class MaterializedViewMetadata extends TableOrView {
 
     }
 
+    @Override
+    public boolean equals(Object other) {
+        if (other == this)
+            return true;
+        if (!(other instanceof MaterializedViewMetadata))
+            return false;
+
+        MaterializedViewMetadata that = (MaterializedViewMetadata)other;
+        return Objects.equal(this.name, that.name) &&
+            Objects.equal(this.id, that.id) &&
+            Objects.equal(this.partitionKey, that.partitionKey) &&
+            Objects.equal(this.clusteringColumns, that.clusteringColumns) &&
+            Objects.equal(this.columns, that.columns) &&
+            Objects.equal(this.options, that.options) &&
+            Objects.equal(this.clusteringOrder, that.clusteringOrder) &&
+            Objects.equal(this.baseTable.getName(), that.baseTable.getName()) &&
+            this.includeAllColumns == that.includeAllColumns;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(name, id, partitionKey, clusteringColumns, columns, options, clusteringOrder,
+            baseTable.getName(), includeAllColumns);
+    }
 }

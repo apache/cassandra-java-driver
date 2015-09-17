@@ -15,8 +15,10 @@
  */
 package com.datastax.driver.core;
 
+
 import java.util.*;
 
+import com.google.common.base.Objects;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
@@ -641,6 +643,40 @@ abstract class TableOrView {
          */
         public Map<String, String> getCompression() {
             return compression;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (other == this)
+                return true;
+            if (!(other instanceof Options))
+                return false;
+
+            Options that = (Options)other;
+            return this.isCompactStorage == that.isCompactStorage &&
+                Objects.equal(this.comment, that.comment) &&
+                this.readRepair == that.readRepair &&
+                this.localReadRepair == that.localReadRepair &&
+                this.replicateOnWrite == that.replicateOnWrite &&
+                this.gcGrace == that.gcGrace &&
+                this.bfFpChance == that.bfFpChance &&
+                Objects.equal(this.caching, that.caching) &&
+                this.populateCacheOnFlush == that.populateCacheOnFlush &&
+                this.memtableFlushPeriodMs == that.memtableFlushPeriodMs &&
+                this.defaultTTL == that.defaultTTL &&
+                Objects.equal(this.speculativeRetry, that.speculativeRetry) &&
+                Objects.equal(this.indexInterval, that.indexInterval) &&
+                Objects.equal(this.minIndexInterval, that.minIndexInterval) &&
+                Objects.equal(this.maxIndexInterval, that.maxIndexInterval) &&
+                Objects.equal(this.compaction, that.compaction) &&
+                Objects.equal(this.compression, that.compression);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hashCode(isCompactStorage, comment, readRepair, localReadRepair, replicateOnWrite, gcGrace,
+                bfFpChance, caching, populateCacheOnFlush, memtableFlushPeriodMs, defaultTTL, speculativeRetry,
+                indexInterval, minIndexInterval, maxIndexInterval, compaction, compression);
         }
     }
 }

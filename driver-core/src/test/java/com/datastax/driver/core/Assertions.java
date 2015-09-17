@@ -39,12 +39,24 @@ public class Assertions extends org.assertj.core.api.Assertions {
         return new LocalDateAssert(localDate);
     }
 
+    public static KeyspaceMetadataAssert assertThat(KeyspaceMetadata metadata) {
+        return new KeyspaceMetadataAssert(metadata);
+    }
+
     public static TableMetadataAssert assertThat(TableMetadata table) {
         return new TableMetadataAssert(table);
     }
 
     public static ColumnMetadataAssert assertThat(ColumnMetadata column) {
         return new ColumnMetadataAssert(column);
+    }
+
+    public static FunctionMetadataAssert assertThat(FunctionMetadata function) {
+        return new FunctionMetadataAssert(function);
+    }
+
+    public static AggregateMetadataAssert assertThat(AggregateMetadata aggregate) {
+        return new AggregateMetadataAssert(aggregate);
     }
 
     public static IndexMetadataAssert assertThat(IndexMetadata index) {

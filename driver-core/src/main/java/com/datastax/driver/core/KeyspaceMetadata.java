@@ -41,11 +41,11 @@ public class KeyspaceMetadata {
     private final ReplicationStrategy strategy;
     private final Map<String, String> replication;
 
-    private final Map<String, TableMetadata> tables = new ConcurrentHashMap<String, TableMetadata>();
-    private final Map<String, MaterializedViewMetadata> views = new ConcurrentHashMap<String, MaterializedViewMetadata>();
-    private final Map<String, UserType> userTypes = new ConcurrentHashMap<String, UserType>();
+    final Map<String, TableMetadata> tables = new ConcurrentHashMap<String, TableMetadata>();
+    final Map<String, MaterializedViewMetadata> views = new ConcurrentHashMap<String, MaterializedViewMetadata>();
+    final Map<String, UserType> userTypes = new ConcurrentHashMap<String, UserType>();
     final Map<String, FunctionMetadata> functions = new ConcurrentHashMap<String, FunctionMetadata>();
-    private final Map<String, AggregateMetadata> aggregates = new ConcurrentHashMap<String, AggregateMetadata>();
+    final Map<String, AggregateMetadata> aggregates = new ConcurrentHashMap<String, AggregateMetadata>();
 
     @VisibleForTesting
     KeyspaceMetadata(String name, boolean durableWrites, Map<String, String> replication) {
@@ -55,20 +55,20 @@ public class KeyspaceMetadata {
         this.strategy = ReplicationStrategy.create(replication);
     }
 
-    static KeyspaceMetadata buildV2(Row row) {
-        String name = row.getString(KS_NAME);
-        boolean durableWrites = row.getBool(DURABLE_WRITES);
-        Map<String, String> replicationOptions;
-        replicationOptions = new HashMap<String, String>();
-        replicationOptions.put("class", row.getString(STRATEGY_CLASS));
-        replicationOptions.putAll(SimpleJSONParser.parseStringMap(row.getString(STRATEGY_OPTIONS)));
-        return new KeyspaceMetadata(name, durableWrites, replicationOptions);
-    }
-
-    static KeyspaceMetadata buildV3(Row row) {
-        String name = row.getString(KS_NAME);
-        boolean durableWrites = row.getBool(DURABLE_WRITES);
-        return new KeyspaceMetadata(name, durableWrites, row.getMap(REPLICATION, String.class, String.class));
+    static KeyspaceMetadata build(Row row, VersionNumber cassandraVersion) {
+        if (cassandraVersion.getMajor() <= 2) {
+            String name = row.getString(KS_NAME);
+            boolean durableWrites = row.getBool(DURABLE_WRITES);
+            Map<String, String> replicationOptions;
+            replicationOptions = new HashMap<String, String>();
+            replicationOptions.put("class", row.getString(STRATEGY_CLASS));
+            replicationOptions.putAll(SimpleJSONParser.parseStringMap(row.getString(STRATEGY_OPTIONS)));
+            return new KeyspaceMetadata(name, durableWrites, replicationOptions);
+        } else {
+            String name = row.getString(KS_NAME);
+            boolean durableWrites = row.getBool(DURABLE_WRITES);
+            return new KeyspaceMetadata(name, durableWrites, row.getMap(REPLICATION, String.class, String.class));
+        }
     }
 
     /**
@@ -110,8 +110,8 @@ public class KeyspaceMetadata {
         return tables.get(Metadata.handleId(name));
     }
 
-    void removeTable(String table) {
-        tables.remove(table);
+    TableMetadata removeTable(String table) {
+        return tables.remove(table);
     }
 
     /**
@@ -135,8 +135,8 @@ public class KeyspaceMetadata {
         return views.get(Metadata.handleId(name));
     }
 
-    void removeMaterializedView(String materializedView) {
-        views.remove(materializedView);
+    MaterializedViewMetadata removeMaterializedView(String materializedView) {
+        return views.remove(materializedView);
     }
 
     /**
@@ -170,8 +170,8 @@ public class KeyspaceMetadata {
         return Collections.unmodifiableCollection(userTypes.values());
     }
 
-    void removeUserType(String userType) {
-        userTypes.remove(userType);
+    UserType removeUserType(String userType) {
+        return userTypes.remove(userType);
     }
 
     /**
@@ -208,8 +208,8 @@ public class KeyspaceMetadata {
         return Collections.unmodifiableCollection(functions.values());
     }
 
-    void removeFunction(String fullName) {
-        functions.remove(fullName);
+    FunctionMetadata removeFunction(String fullName) {
+        return functions.remove(fullName);
     }
 
     /**
@@ -246,8 +246,8 @@ public class KeyspaceMetadata {
         return Collections.unmodifiableCollection(aggregates.values());
     }
 
-    void removeAggregate(String fullName) {
-        functions.remove(fullName);
+    AggregateMetadata removeAggregate(String fullName) {
+        return aggregates.remove(fullName);
     }
 
     /**
@@ -313,6 +313,37 @@ public class KeyspaceMetadata {
         return asCQLQuery();
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
+
+        KeyspaceMetadata that = (KeyspaceMetadata)o;
+
+        if (durableWrites != that.durableWrites)
+            return false;
+        if (!name.equals(that.name))
+            return false;
+        if (strategy != null ? !strategy.equals(that.strategy) : that.strategy != null)
+            return false;
+        if (!replication.equals(that.replication))
+            return false;
+        return tables.equals(that.tables);
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = name.hashCode();
+        result = 31 * result + (durableWrites ? 1 : 0);
+        result = 31 * result + (strategy != null ? strategy.hashCode() : 0);
+        result = 31 * result + replication.hashCode();
+        result = 31 * result + tables.hashCode();
+        return result;
+    }
+
     void add(TableMetadata tm) {
         tables.put(tm.getName(), tm);
     }
@@ -329,11 +360,12 @@ public class KeyspaceMetadata {
         aggregates.put(aggregate.getFullName(), aggregate);
     }
 
-    void add(UserType userType) {
-        userTypes.put(userType.getTypeName(), userType);
+    void add(UserType type) {
+        userTypes.put(type.getTypeName(), type);
     }
 
     ReplicationStrategy replicationStrategy() {
         return strategy;
     }
+
 }

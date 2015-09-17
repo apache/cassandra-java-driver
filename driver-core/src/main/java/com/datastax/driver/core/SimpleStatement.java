@@ -83,6 +83,23 @@ public class SimpleStatement extends RegularStatement {
     public boolean hasValues() {
         return values != null && values.length > 0;
     }
+    
+    /**
+     * Returns the {@code i}th value as the Java type matching its CQL type.
+     *
+     * @param i the index to retrieve.
+     * @return the value of the {@code i}th value of this statement.
+     *
+     * @throws IllegalStateException if this statement does not have values.
+     * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
+     */
+    public Object getObject(int i) {
+        if (values == null)
+            throw new IllegalStateException("This statement does not have values");
+        if (i < 0 || i >= values.length)
+            throw new ArrayIndexOutOfBoundsException(i);
+        return values[i];
+    }
 
     /**
      * Returns the routing key for the query.

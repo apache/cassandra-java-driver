@@ -15,8 +15,11 @@
  */
 package com.datastax.driver.core;
 
+
 import java.util.*;
 
+import com.google.common.base.*;
+import com.google.common.base.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -416,5 +419,30 @@ public class TableMetadata extends TableOrView {
         sb.append(")");
         appendOptions(sb, formatted);
         return sb.toString();
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (other == this)
+            return true;
+        if (!(other instanceof TableMetadata))
+            return false;
+
+        TableMetadata that = (TableMetadata)other;
+
+        return Objects.equal(this.name, that.name) &&
+            Objects.equal(this.id, that.id) &&
+            Objects.equal(this.partitionKey, that.partitionKey) &&
+            Objects.equal(this.clusteringColumns, that.clusteringColumns) &&
+            Objects.equal(this.columns, that.columns) &&
+            Objects.equal(this.options, that.options) &&
+            Objects.equal(this.clusteringOrder, that.clusteringOrder) &&
+            Objects.equal(this.indexes, that.indexes) &&
+            Objects.equal(this.views, that.views);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(name, id, partitionKey, clusteringColumns, columns, options, clusteringOrder, indexes, views);
     }
 }

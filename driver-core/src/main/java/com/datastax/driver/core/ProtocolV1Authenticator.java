@@ -17,8 +17,16 @@ package com.datastax.driver.core;
 
 import java.util.Map;
 
-// Not an interface because we don't want to expose it. We only support password authentication
-// for the protocol V1 similarly to what the driver 1.x branch do.
+/**
+ * Parent class for {@link Authenticator} implementations that support native protocol v1 authentication.
+ *
+ * Protocol v1 uses simple, credentials-based authentication (as opposed to SASL for later protocol versions).
+ * In order to support protocol v1, an authenticator must extend this class.
+ *
+ * We use an abstract class instead of an interface because we don't want to expose {@link #getCredentials()}.
+ *
+ * @see <a href="https://github.com/apache/cassandra/blob/trunk/doc/native_protocol_v1.spec">Native protocol v1 specification</a>
+ */
 abstract class ProtocolV1Authenticator {
     abstract Map<String, String> getCredentials();
 }

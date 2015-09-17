@@ -15,6 +15,8 @@
  */
 package com.datastax.driver.core.exceptions;
 
+import java.net.InetSocketAddress;
+
 import com.datastax.driver.core.ConsistencyLevel;
 
 /**
@@ -28,8 +30,16 @@ public class ReadFailureException extends QueryConsistencyException {
     private final int failed;
     private final boolean dataPresent;
 
+    /**
+     * This constructor should only be used internally by the driver
+     * when decoding error responses.
+     */
     public ReadFailureException(ConsistencyLevel consistency, int received, int required, int failed, boolean dataPresent) {
-        super(String.format("Cassandra failure during read query at consistency %s "
+        this(null, consistency, received, required, failed, dataPresent);
+    }
+
+    public ReadFailureException(InetSocketAddress address, ConsistencyLevel consistency, int received, int required, int failed, boolean dataPresent) {
+        super(address, String.format("Cassandra failure during read query at consistency %s "
                     + "(%d responses were required but only %d replica responded, %d failed)",
                 consistency, required, received, failed),
             consistency,
@@ -39,8 +49,8 @@ public class ReadFailureException extends QueryConsistencyException {
         this.dataPresent = dataPresent;
     }
 
-    private ReadFailureException(String msg, Throwable cause, ConsistencyLevel consistency, int received, int required, int failed, boolean dataPresent) {
-        super(msg, cause, consistency, received, required);
+    private ReadFailureException(InetSocketAddress address, String msg, Throwable cause, ConsistencyLevel consistency, int received, int required, int failed, boolean dataPresent) {
+        super(address, msg, cause, consistency, received, required);
         this.failed = failed;
         this.dataPresent = dataPresent;
     }
@@ -71,7 +81,19 @@ public class ReadFailureException extends QueryConsistencyException {
 
     @Override
     public DriverException copy() {
-        return new ReadFailureException(getMessage(), this, getConsistencyLevel(), getReceivedAcknowledgements(),
+        return new ReadFailureException(getAddress(), getMessage(), this, getConsistencyLevel(), getReceivedAcknowledgements(),
             getRequiredAcknowledgements(), getFailures(), wasDataRetrieved());
+    }
+
+    public DriverException copy(InetSocketAddress address) {
+        return new ReadFailureException(
+            address,
+            getMessage(),
+            this,
+            getConsistencyLevel(),
+            getReceivedAcknowledgements(),
+            getRequiredAcknowledgements(),
+            failed,
+            dataPresent);
     }
 }
