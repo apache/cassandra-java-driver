@@ -281,6 +281,9 @@ abstract class TableOrView {
             and(sb, formatted).append("min_index_interval = ").append(options.minIndexInterval);
             and(sb, formatted).append("max_index_interval = ").append(options.maxIndexInterval);
         }
+        if (cassandraVersion.getMajor() > 2) {
+            and(sb, formatted).append("crc_check_chance = ").append(options.crcCheckChance);
+        }
         sb.append(';');
         return sb;
     }
@@ -365,6 +368,7 @@ abstract class TableOrView {
         private static final String INDEX_INTERVAL              = "index_interval";
         private static final String MIN_INDEX_INTERVAL          = "min_index_interval";
         private static final String MAX_INDEX_INTERVAL          = "max_index_interval";
+        private static final String CRC_CHECK_CHANCE            = "crc_check_chance";
 
         private static final boolean DEFAULT_REPLICATE_ON_WRITE = true;
         private static final double DEFAULT_BF_FP_CHANCE = 0.01;
@@ -375,6 +379,7 @@ abstract class TableOrView {
         private static final int DEFAULT_INDEX_INTERVAL = 128;
         private static final int DEFAULT_MIN_INDEX_INTERVAL = 128;
         private static final int DEFAULT_MAX_INDEX_INTERVAL = 2048;
+        private static final double DEFAULT_CRC_CHECK_CHANCE = 1.0;
 
         private final boolean isCompactStorage;
 
@@ -394,6 +399,7 @@ abstract class TableOrView {
         private final Integer maxIndexInterval;
         private final Map<String, String> compaction;
         private final Map<String, String> compression;
+        private final Double crcCheckChance;
 
         Options(Row row, boolean isCompactStorage, VersionNumber version) {
 
@@ -459,6 +465,13 @@ abstract class TableOrView {
                 this.compression = ImmutableMap.copyOf(row.getMap(COMPRESSION, String.class, String.class));
             else
                 this.compression = ImmutableMap.copyOf(SimpleJSONParser.parseStringMap(row.getString(COMPRESSION_PARAMS)));
+
+            if(is300OrHigher)
+                this.crcCheckChance = isNullOrAbsent(row, CRC_CHECK_CHANCE)
+                    ? DEFAULT_CRC_CHECK_CHANCE
+                    : row.getDouble(CRC_CHECK_CHANCE);
+            else
+                this.crcCheckChance = null;
         }
 
         private static boolean isNullOrAbsent(Row row, String name) {
@@ -623,6 +636,23 @@ abstract class TableOrView {
          */
         public Integer getMaxIndexInterval() {
             return maxIndexInterval;
+        }
+
+        /**
+         * When compression is enabled, this option defines the probability
+         * with which checksums for compressed blocks are checked during reads.
+         * The default value for this options is 1.0 (always check).
+         * <p>
+         * Note that this option is available in Cassandra 3.0.0 and above, when it
+         * became a "top-level" table option, whereas previously it was a suboption
+         * of the {@link #getCompression() compression} option.
+         * <p>
+         * For Cassandra versions prior to 3.0.0, this method always returns {@code null}.
+         *
+         * @return the probability with which checksums for compressed blocks are checked during reads
+         */
+        public Double getCrcCheckChance() {
+            return crcCheckChance;
         }
 
         /**

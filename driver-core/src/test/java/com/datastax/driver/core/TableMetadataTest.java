@@ -196,7 +196,8 @@ public class TableMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
                     + "   AND caching =  { 'keys' : 'ALL', 'rows_per_partition' : 10 }\n"
                     + "   AND comment = 'My awesome table'\n"
                     + "   AND compaction = { 'class' : 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'sstable_size_in_mb' : 15 }\n"
-                    + "   AND compression = { 'sstable_compression' : 'org.apache.cassandra.io.compress.SnappyCompressor', 'chunk_length_kb' : 128 };",
+                    + "   AND compression = { 'sstable_compression' : 'org.apache.cassandra.io.compress.SnappyCompressor', 'chunk_length_kb' : 128 }\n"
+                    + "   AND crc_check_chance = 0.5;", // available from C* 3.0
                 keyspace);
 
         // older versions
@@ -252,6 +253,7 @@ public class TableMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
             assertThat(table.getOptions().getMinIndexInterval()).isEqualTo(128);
             assertThat(table.getOptions().getMaxIndexInterval()).isEqualTo(2048);
             assertThat(table.getOptions().getReplicateOnWrite()).isTrue(); // default
+            assertThat(table.getOptions().getCrcCheckChance()).isEqualTo(0.5);
             assertThat(table.asCQLQuery())
                 .contains("read_repair_chance = 0.5")
                 .contains("dclocal_read_repair_chance = 0.6")
@@ -268,6 +270,7 @@ public class TableMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
                 .contains("speculative_retry = '99.9PERCENTILE'")
                 .contains("min_index_interval = 128")
                 .contains("max_index_interval = 2048")
+                .contains("crc_check_chance = 0.5")
                 .doesNotContain(" index_interval")
                 .doesNotContain("replicate_on_write");
 
