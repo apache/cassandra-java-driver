@@ -609,7 +609,7 @@ abstract class SchemaParser {
                 cfFuture = queryAsync(SELECT_TABLES + whereClause(targetType, targetKeyspace, targetName, targetSignature), connection, protocolVersion);
                 colsFuture = queryAsync(SELECT_COLUMNS + whereClause(targetType, targetKeyspace, targetName, targetSignature), connection, protocolVersion);
                 indexesFuture = queryAsync(SELECT_INDEXES + whereClause(targetType, targetKeyspace, targetName, targetSignature), connection, protocolVersion);
-                viewsFuture = queryAsync(SELECT_VIEWS + whereClause(targetType == null ? null : VIEW, targetKeyspace, targetName, targetSignature), connection, protocolVersion);
+                viewsFuture = queryAsync(SELECT_VIEWS + whereClause(targetType == TABLE ? VIEW : targetType, targetKeyspace, targetName, targetSignature), connection, protocolVersion);
             }
 
             if (isSchemaOrKeyspace || targetType == FUNCTION)
