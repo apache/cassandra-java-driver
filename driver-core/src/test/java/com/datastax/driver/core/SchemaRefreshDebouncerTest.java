@@ -16,6 +16,7 @@
 package com.datastax.driver.core;
 
 import java.util.Collection;
+import java.util.Collections;
 
 import org.mockito.ArgumentCaptor;
 import org.testng.SkipException;
@@ -248,7 +249,7 @@ public class SchemaRefreshDebouncerTest extends CCMBridge.PerClassSingleNodeClus
             .doesNotHaveComment(comment);
 
         // Verify a refresh of the table was executed, but only once.
-        verify(controlConnection, times(1)).refreshSchema(TABLE, keyspace, table, null);
+        verify(controlConnection, times(1)).refreshSchema(TABLE, keyspace, table, Collections.<String>emptyList());
 
         KeyspaceMetadata ksm = cluster2.getMetadata().getKeyspace(keyspace);
         assertThat(ksm).isNotNull();
