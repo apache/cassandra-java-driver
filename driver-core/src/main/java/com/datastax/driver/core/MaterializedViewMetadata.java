@@ -18,13 +18,10 @@ package com.datastax.driver.core;
 
 import java.util.*;
 
-import com.google.common.base.Function;
-import com.google.common.base.Joiner;
 import com.google.common.base.Objects;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import static com.google.common.collect.Iterables.transform;
 
 /**
  *  An immutable representation of a materialized view.
@@ -38,6 +35,8 @@ public class MaterializedViewMetadata extends TableOrView {
 
     private final boolean includeAllColumns;
 
+    private final String whereClause;
+
     private MaterializedViewMetadata(
         KeyspaceMetadata keyspace,
         TableMetadata baseTable,
@@ -47,12 +46,14 @@ public class MaterializedViewMetadata extends TableOrView {
         List<ColumnMetadata> clusteringColumns,
         Map<String, ColumnMetadata> columns,
         boolean includeAllColumns,
+        String whereClause,
         Options options,
         List<Order> clusteringOrder,
         VersionNumber cassandraVersion) {
         super(keyspace, name, id, partitionKey, clusteringColumns, columns, options, clusteringOrder, cassandraVersion);
         this.baseTable = baseTable;
         this.includeAllColumns = includeAllColumns;
+        this.whereClause = whereClause;
     }
 
     static MaterializedViewMetadata build(KeyspaceMetadata keyspace, Row row, Map<String, ColumnMetadata.Raw> rawCols, VersionNumber cassandraVersion) {
@@ -69,6 +70,7 @@ public class MaterializedViewMetadata extends TableOrView {
 
         UUID id = row.getUUID("id");
         boolean includeAllColumns = row.getBool("include_all_columns");
+        String whereClause = row.getString("where_clause");
 
         int partitionKeySize = findCollectionSize(rawCols.values(), ColumnMetadata.Raw.Kind.PARTITION_KEY);
         int clusteringSize = findCollectionSize(rawCols.values(), ColumnMetadata.Raw.Kind.CLUSTERING_COLUMN);
@@ -92,7 +94,7 @@ public class MaterializedViewMetadata extends TableOrView {
 
         MaterializedViewMetadata view = new MaterializedViewMetadata(
             keyspace, baseTable, name, id, partitionKey, clusteringColumns, columns,
-            includeAllColumns, options, clusteringOrder, cassandraVersion);
+            includeAllColumns, whereClause, options, clusteringOrder, cassandraVersion);
 
         // We use this temporary set just so non PK columns are added in lexicographical order, which is the one of a
         // 'SELECT * FROM ...'
@@ -147,13 +149,6 @@ public class MaterializedViewMetadata extends TableOrView {
         String keyspaceName = Metadata.escapeId(keyspace.getName());
         String baseTableName = Metadata.escapeId(baseTable.getName());
         String viewName = Metadata.escapeId(name);
-        String whereClause = Joiner.on(" AND ").join(transform(getPartitionKey(), new Function<ColumnMetadata, String>() {
-            @Override
-            public String apply(ColumnMetadata input) {
-                return Metadata.escapeId(input.getName()) + " IS NOT NULL";
-            }
-        }));
-
 
         StringBuilder sb = new StringBuilder();
         sb.append("CREATE MATERIALIZED VIEW ")
@@ -180,21 +175,14 @@ public class MaterializedViewMetadata extends TableOrView {
         newLine(sb.append("FROM ").append(keyspaceName).append('.').append(baseTableName).append(" "), formatted);
 
         // WHERE
-        newLine(sb.append("WHERE "), formatted);
-        Iterator<ColumnMetadata> it = getPrimaryKey().iterator();
-        while(it.hasNext()) {
-            ColumnMetadata column = it.next();
-            sb.append(spaces(4, formatted)).append(Metadata.escapeId(column.getName()));
-            sb.append(" IS NOT NULL");
-            if(it.hasNext()) sb.append(" AND");
-            sb.append(" ");
-            newLine(sb, formatted);
-        }
+        // the CQL grammar allows missing WHERE clauses, although C* currently disallows it
+        if (whereClause != null && !whereClause.isEmpty())
+            newLine(sb.append("WHERE ").append(whereClause).append(' '), formatted);
 
         // PK
         sb.append("PRIMARY KEY (");
         if (partitionKey.size() == 1) {
-            sb.append(partitionKey.get(0).getName());
+            sb.append(Metadata.escapeId(partitionKey.get(0).getName()));
         } else {
             sb.append('(');
             boolean first = true;
@@ -210,7 +198,6 @@ public class MaterializedViewMetadata extends TableOrView {
         for (ColumnMetadata cm : clusteringColumns)
             sb.append(", ").append(Metadata.escapeId(cm.getName()));
         sb.append(')');
-        newLine(sb, formatted);
 
         appendOptions(sb, formatted);
         return sb.toString();
