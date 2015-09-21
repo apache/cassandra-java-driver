@@ -8,7 +8,7 @@ not yet have been released. You can find the documentation for latest
 version through [Java driver
 docs](http://datastax.github.io/java-driver/) or via the release tags,
 [e.g.
-3.0.0-alpha2](https://github.com/datastax/java-driver/tree/3.0.0-alpha2).*
+3.0.0-alpha3](https://github.com/datastax/java-driver/tree/3.0.0-alpha3).*
 
 A modern, [feature-rich](features/) and highly tunable Java client
 library for Apache Cassandra (1.2+) and DataStax Enterprise (3.1+) using
@@ -64,7 +64,7 @@ The driver contains the following modules:
 
 **Feeback requested:** help us focus our efforts, provide your input on the [Platform and Runtime Survey](http://goo.gl/forms/qwUE6qnL7U) (we kept it short).  
 
-## What's new in 3.0.0-alpha2
+## What's new in 3.0.0-alpha3
 
 * Support for new system tables in C* 3.0.
 
@@ -82,7 +82,7 @@ it in your application using the following Maven dependency:
 <dependency>
   <groupId>com.datastax.cassandra</groupId>
   <artifactId>cassandra-driver-core</artifactId>
-  <version>3.0.0-alpha2</version>
+  <version>3.0.0-alpha3</version>
 </dependency>
 ```
 
@@ -92,7 +92,7 @@ Note that the object mapper is published as a separate artifact:
 <dependency>
   <groupId>com.datastax.cassandra</groupId>
   <artifactId>cassandra-driver-mapping</artifactId>
-  <version>3.0.0-alpha2</version>
+  <version>3.0.0-alpha3</version>
 </dependency>
 ```
 

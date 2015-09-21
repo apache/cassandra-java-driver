@@ -1,6 +1,9 @@
 ## Changelog
 
-### 3.0.0-alpha3 (in progress)
+### 3.0.0-alpha3
+
+- [new feature] Support new system tables in C* 3.0 (JAVA-571)
+- [improvement] Move crc_check_chance out of compressions options (JAVA-919)
 
 Merged from 2.0 branch:
 
