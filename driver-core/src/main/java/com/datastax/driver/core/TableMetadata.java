@@ -842,7 +842,11 @@ public class TableMetadata {
                 return false;
             if (defaultTTL != options.defaultTTL)
                 return false;
-            if (indexInterval != options.indexInterval)
+            if (indexInterval != null ? !indexInterval.equals(options.indexInterval) : options.indexInterval != null)
+                return false;
+            if (minIndexInterval != null ? !minIndexInterval.equals(options.minIndexInterval) : options.minIndexInterval != null)
+                return false;
+            if (maxIndexInterval != null ? !maxIndexInterval.equals(options.maxIndexInterval) : options.maxIndexInterval != null)
                 return false;
             if (comment != null ? !comment.equals(options.comment) : options.comment != null)
                 return false;
@@ -875,7 +879,9 @@ public class TableMetadata {
             result = 31 * result + memtableFlushPeriodMs;
             result = 31 * result + defaultTTL;
             result = 31 * result + (speculativeRetry != null ? speculativeRetry.hashCode() : 0);
-            result = 31 * result + indexInterval;
+            result = 31 * result + (indexInterval != null ? indexInterval.hashCode() : 0);
+            result = 31 * result + (minIndexInterval != null ? minIndexInterval.hashCode() : 0);
+            result = 31 * result + (maxIndexInterval != null ? maxIndexInterval.hashCode() : 0);
             result = 31 * result + (compaction != null ? compaction.hashCode() : 0);
             result = 31 * result + (compression != null ? compression.hashCode() : 0);
             return result;
