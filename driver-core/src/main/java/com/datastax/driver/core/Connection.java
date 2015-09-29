@@ -452,10 +452,6 @@ class Connection {
         } catch (ExecutionException e) {
             Throwable cause = e.getCause();
             if (cause instanceof OperationTimedOutException) {
-                // The timeout logic released the connection, but that's wrong since we did not borrow it in the first place.
-                // JAVA-901 will fix this, in the meantime make sure the inFlight count is not off by one.
-                inFlight.incrementAndGet();
-
                 // Rethrow so that the caller doesn't try to use the connection, but do not defunct as we don't want to mark down
                 logger.warn("Timeout while setting keyspace on connection to {}. "
                     + "This should not happen but is not critical (it will be retried)", address);
@@ -1227,16 +1223,16 @@ class Connection {
                 timeout.cancel();
         }
 
-        public void cancelHandler() {
+        public boolean cancelHandler() {
             if (!isCancelled.compareAndSet(false, true))
-                return;
+                return false;
 
             // We haven't really received a response: we want to remove the handle because we gave up on that
             // request and there is no point in holding the handler, but we don't release the streamId. If we
             // were, a new request could reuse that ID but get the answer to the request we just gave up on instead
             // of its own answer, and we would have no way to detect that.
             connection.dispatcher.removeHandler(this, false);
-            connection.release();
+            return true;
         }
 
         private TimerTask onTimeoutTask() {
