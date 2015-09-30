@@ -25,12 +25,11 @@ import java.util.Set;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableList.Builder;
-import org.mockito.Mockito;
 
 import static org.mockito.Mockito.mock;
-import static org.testng.Assert.*;
-
-import com.datastax.driver.core.policies.ExponentialReconnectionPolicy;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
 
 /**
  * Base class for replication strategy tests. Currently only supports testing
@@ -40,25 +39,27 @@ public class AbstractReplicationStrategyTest {
 
     private static final Token.Factory partitioner = Token.getFactory("Murmur3Partitioner");
 
-    protected static class HostMock extends Host {
-        private final String address;
+    private static final Cluster.Manager mockManager = mock(Cluster.Manager.class);
 
-        private HostMock(String address, Cluster.Manager manager) throws UnknownHostException {
-            super(new InetSocketAddress(InetAddress.getByName(address), 9042), new ConvictionPolicy.DefaultConvictionPolicy.Factory(), manager);
+    protected static class HostMock extends Host {
+        private final InetSocketAddress address;
+
+        private HostMock(InetSocketAddress address, Cluster.Manager manager) {
+            super(address, new ConvictionPolicy.DefaultConvictionPolicy.Factory(), manager);
             this.address = address;
         }
 
-        private HostMock(String address, String dc, String rack, Cluster.Manager manager) throws UnknownHostException {
+        private HostMock(InetSocketAddress address, String dc, String rack, Cluster.Manager manager) {
             this(address, manager);
             this.setLocationInfo(dc, rack);
         }
 
         @Override
         public String toString() {
-            return address;
+            return address.getHostName();
         }
 
-        public String getMockAddress() {
+        public InetSocketAddress getMockAddress() {
             return address;
         }
 
@@ -84,24 +85,16 @@ public class AbstractReplicationStrategyTest {
      * Convenience method to quickly create a mock host by a given address.
      * Specified address must be accessible, otherwise a RuntimeException is thrown
      */
-    protected static HostMock host(String address) {
-        try {
-            return new HostMock(address, mock(Cluster.Manager.class));
-        } catch (UnknownHostException ex) {
-            throw new RuntimeException(ex); //wrap to avoid declarations
-        }
+    protected static HostMock host(InetSocketAddress address) {
+        return new HostMock(address, mockManager);
     }
 
     /**
      * Convenience method to quickly create a mock host by the given address
      * located in the given datacenter/rack
      */
-    protected static HostMock host(String address, String dc, String rack) {
-        try {
-            return new HostMock(address, dc, rack, mock(Cluster.Manager.class));
-        } catch (UnknownHostException ex) {
-            throw new RuntimeException(ex); //wrap to avoid declarations
-        }
+    protected static HostMock host(InetSocketAddress address, String dc, String rack) {
+        return new HostMock(address, dc, rack, mockManager);
     }
 
     /**
@@ -117,7 +110,7 @@ public class AbstractReplicationStrategyTest {
      * if created by the <code>host(...)</code> methods. Returns null if
      * given host is not a mock.
      */
-    protected static String mockAddress(Host host) {
+    protected static InetSocketAddress mockAddress(Host host) {
         HostMock mock = asMock(host);
         return mock == null ? null : mock.getMockAddress();
     }
@@ -138,7 +131,7 @@ public class AbstractReplicationStrategyTest {
      * Asserts that the replica map for a given token contains the expected list of replica hosts.
      * Hosts are checked in order, replica placement should be an ordered set
      */
-    protected static void assertReplicaPlacement(Map<Token, Set<Host>> replicaMap, Token token, String... expected) {
+    protected static void assertReplicaPlacement(Map<Token, Set<Host>> replicaMap, Token token, InetSocketAddress... expected) {
         Set<Host> replicaSet = replicaMap.get(token);
         assertNotNull(replicaSet);
         assertReplicasForToken(replicaSet, expected);
@@ -147,7 +140,7 @@ public class AbstractReplicationStrategyTest {
     /**
      * Checks if a given ordered set of replicas matches the expected list of replica hosts
      */
-    protected static void assertReplicasForToken(Set<Host> replicaSet, String... expected) {
+    protected static void assertReplicasForToken(Set<Host> replicaSet, InetSocketAddress... expected) {
         final String message = "Contents of replica set: " + replicaSet + " do not match expected hosts: " + Arrays.toString(expected);
         assertEquals(replicaSet.size(), expected.length, message);
 
@@ -159,6 +152,14 @@ public class AbstractReplicationStrategyTest {
                 match = false;
             }
             assertTrue(match, message);
+        }
+    }
+
+    protected static InetSocketAddress socketAddress(String address) {
+        try {
+            return new InetSocketAddress(InetAddress.getByName(address), 9042);
+        } catch(UnknownHostException ex) {
+            throw new RuntimeException(ex);
         }
     }
 }

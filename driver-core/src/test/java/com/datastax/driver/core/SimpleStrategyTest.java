@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core;
 
+import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -60,12 +61,12 @@ public class SimpleStrategyTest extends AbstractReplicationStrategyTest {
     private static final Token TOKEN18 = token("8000000000000000000");
     private static final Token TOKEN19 = token("9000000000000000000");
 
-    private static final String IP1 = "127.0.0.101";
-    private static final String IP2 = "127.0.0.102";
-    private static final String IP3 = "127.0.0.103";
-    private static final String IP4 = "127.0.0.104";
-    private static final String IP5 = "127.0.0.105";
-    private static final String IP6 = "127.0.0.106";
+    private static final InetSocketAddress IP1 = socketAddress("127.0.0.101");
+    private static final InetSocketAddress IP2 = socketAddress("127.0.0.102");
+    private static final InetSocketAddress IP3 = socketAddress("127.0.0.103");
+    private static final InetSocketAddress IP4 = socketAddress("127.0.0.104");
+    private static final InetSocketAddress IP5 = socketAddress("127.0.0.105");
+    private static final InetSocketAddress IP6 = socketAddress("127.0.0.106");
 
     private static final ReplicationStrategy exampleStrategy = simpleStrategy(3);
 

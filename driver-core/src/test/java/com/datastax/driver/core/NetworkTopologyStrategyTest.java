@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core;
 
+import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -93,14 +94,14 @@ public class NetworkTopologyStrategyTest extends AbstractReplicationStrategyTest
     private static final Token TOKEN18 = token("8000000000000000000");
     private static final Token TOKEN19 = token("9000000000000000000");
 
-    private static final String IP1 = "127.0.0.101";
-    private static final String IP2 = "127.0.0.102";
-    private static final String IP3 = "127.0.0.103";
-    private static final String IP4 = "127.0.0.104";
-    private static final String IP5 = "127.0.0.105";
-    private static final String IP6 = "127.0.0.106";
-    private static final String IP7 = "127.0.0.107";
-    private static final String IP8 = "127.0.0.108";
+    private static final InetSocketAddress IP1 = socketAddress("127.0.0.101");
+    private static final InetSocketAddress IP2 = socketAddress("127.0.0.102");
+    private static final InetSocketAddress IP3 = socketAddress("127.0.0.103");
+    private static final InetSocketAddress IP4 = socketAddress("127.0.0.104");
+    private static final InetSocketAddress IP5 = socketAddress("127.0.0.105");
+    private static final InetSocketAddress IP6 = socketAddress("127.0.0.106");
+    private static final InetSocketAddress IP7 = socketAddress("127.0.0.107");
+    private static final InetSocketAddress IP8 = socketAddress("127.0.0.108");
 
     private static final ReplicationStrategy exampleStrategy = networkTopologyStrategy(rf(DC1, 2), rf(DC2, 2));
 
@@ -110,10 +111,11 @@ public class NetworkTopologyStrategyTest extends AbstractReplicationStrategyTest
     private static final Map<Token, Host> largeRingTokenToPrimary = Maps.newHashMap();
     static {
         for (int i = 0; i < 100; i++) {
+            InetSocketAddress address = socketAddress("127.0.0." + i);
             for (int vnodes = 0; vnodes < 256; vnodes++) {
                 Token token = token("" + ((i * 256) + vnodes));
                 largeRing.add(token);
-                largeRingTokenToPrimary.put(token, host("127.0.0." + i, DC1, RACK11));
+                largeRingTokenToPrimary.put(token, host(address, DC1, RACK11));
             }
         }
     }
@@ -591,13 +593,20 @@ public class NetworkTopologyStrategyTest extends AbstractReplicationStrategyTest
                 .computeTokenToReplicaMap(largeRingTokenToPrimary, largeRing);
         assertThat(System.currentTimeMillis() - t1).isLessThan(10000);
 
+        InetSocketAddress currNode = null;
+        InetSocketAddress nextNode;
         for (int node = 0; node < 99; node++) { // 100th wraps so doesn't match this, check after
+            if(currNode == null) {
+                currNode = socketAddress("127.0.0." + node);
+            }
+            nextNode = socketAddress("127.0.0." + (node+1));
             for (int vnodes = 0; vnodes < 256; vnodes++) {
                 Token token = token("" + ((node * 256) + vnodes));
-                assertReplicaPlacement(replicaMap, token, "127.0.0." + node, "127.0.0." + (node + 1));
+                assertReplicaPlacement(replicaMap, token, currNode, nextNode);
             }
+            currNode = nextNode;
         }
-        assertReplicaPlacement(replicaMap, token(""+ 99 * 256), "127.0.0.99", "127.0.0.0");
+        assertReplicaPlacement(replicaMap, token(""+ 99 * 256), currNode, socketAddress("127.0.0.0"));
     }
 
 

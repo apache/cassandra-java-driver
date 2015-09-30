@@ -15,15 +15,14 @@
  */
 package com.datastax.driver.core;
 
-import java.net.InetSocketAddress;
+import com.google.common.collect.Iterators;
+import org.assertj.core.api.AbstractAssert;
+
 import java.util.Iterator;
 import java.util.Set;
 import java.util.TreeSet;
 
 import static org.assertj.core.api.Assertions.assertThat;
-
-import com.google.common.collect.Iterators;
-import org.assertj.core.api.AbstractAssert;
 
 public class ClusterAssert extends AbstractAssert<ClusterAssert, Cluster> {
     protected ClusterAssert(Cluster actual) {
@@ -39,6 +38,11 @@ public class ClusterAssert extends AbstractAssert<ClusterAssert, Cluster> {
 
     public ClusterAssert hasClosedControlConnection() {
         assertThat(actual.manager.controlConnection.isOpen()).isFalse();
+        return this;
+    }
+
+    public ClusterAssert hasOpenControlConnection() {
+        assertThat(actual.manager.controlConnection.isOpen()).isTrue();
         return this;
     }
 

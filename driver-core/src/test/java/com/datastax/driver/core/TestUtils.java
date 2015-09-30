@@ -397,6 +397,11 @@ public abstract class TestUtils {
         return null;
     }
 
+    public static HostConnectionPool poolOf(Session session, int hostNumber) {
+        SessionManager sessionManager = (SessionManager)session;
+        return sessionManager.pools.get(findHost(session.getCluster(), hostNumber));
+    }
+
     public static int numberOfLocalCoreConnections(Cluster cluster) {
         Configuration configuration = cluster.getConfiguration();
         return configuration.getPoolingOptions().getCoreConnectionsPerHost(HostDistance.LOCAL);

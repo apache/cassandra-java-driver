@@ -22,6 +22,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Objects;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.slf4j.Logger;
@@ -60,7 +61,8 @@ class ControlConnection implements Host.StateListener, Connection.Owner {
     private static final String SELECT_SCHEMA_PEERS = "SELECT peer, rpc_address, schema_version FROM system.peers";
     private static final String SELECT_SCHEMA_LOCAL = "SELECT schema_version FROM system.local WHERE key='local'";
 
-    private final AtomicReference<Connection> connectionRef = new AtomicReference<Connection>();
+    @VisibleForTesting
+    final AtomicReference<Connection> connectionRef = new AtomicReference<Connection>();
 
     private final Cluster.Manager cluster;
 

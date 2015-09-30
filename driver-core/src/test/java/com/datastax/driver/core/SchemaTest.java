@@ -18,6 +18,8 @@ package com.datastax.driver.core;
 import java.net.InetSocketAddress;
 import java.util.*;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testng.annotations.Test;
 import static org.testng.Assert.assertEquals;
 
@@ -25,6 +27,7 @@ import static org.testng.Assert.assertEquals;
  * Test we correctly process and print schema.
  */
 public class SchemaTest extends CCMBridge.PerClassSingleNodeCluster {
+    static final Logger logger = LoggerFactory.getLogger(SchemaTest.class);
 
     private static final Map<String, String> cql3 = new HashMap<String, String>();
     private static final Map<String, String> compact = new HashMap<String, String>();
@@ -97,6 +100,24 @@ public class SchemaTest extends CCMBridge.PerClassSingleNodeCluster {
         compact.put("compact_dynamic", compactDynamic);
         compact.put("compact_composite", compactComposite);
 
+        Properties properties = System.getProperties();
+        String vmVersion = properties.getProperty("java.vm.specification.version");
+        double javaVersion = 1.6;
+        if(vmVersion != null) {
+            try {
+                javaVersion = Double.parseDouble(vmVersion);
+            } catch (NumberFormatException e) {
+                logger.warn("Could not parse java version from {}.  Assuming {}.", vmVersion, javaVersion);
+            }
+        }
+
+        // Ordering of compaction options will be dependent on JDK.  See schemaOptionsTest comments for explanation of why this is needed.
+        String compactionOptions;
+        if(javaVersion >= 1.8)
+            compactionOptions = "   AND compaction = { 'sstable_size_in_mb' : 15, 'class' : 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy' }\n";
+        else
+            compactionOptions = "   AND compaction = { 'class' : 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'sstable_size_in_mb' : 15 }\n";
+
         withOptions = String.format("CREATE TABLE %s.with_options (\n"
                     + "    k text,\n"
                     + "    v1 int,\n"
@@ -111,7 +132,7 @@ public class SchemaTest extends CCMBridge.PerClassSingleNodeCluster {
                     + "   AND bloom_filter_fp_chance = 0.01\n"
                     + "   AND caching = 'ALL'\n"
                     + "   AND comment = 'My awesome table'\n"
-                    + "   AND compaction = { 'class' : 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'sstable_size_in_mb' : 15 }\n"
+                    + compactionOptions
                     + "   AND compression = { 'sstable_compression' : 'org.apache.cassandra.io.compress.SnappyCompressor', 'chunk_length_kb' : 128 };", keyspace);
 
         List<String> allDefs = new ArrayList<String>();

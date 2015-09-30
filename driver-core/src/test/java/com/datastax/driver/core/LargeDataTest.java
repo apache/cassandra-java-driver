@@ -181,7 +181,7 @@ public class LargeDataTest {
      * Test a wide row of size 1,000,000
      * @throws Throwable
      */
-    @Test(groups = "long")
+    @Test(groups = "stress")
     @CassandraVersion(major=2.0, minor=0, description="< 2.0 is skipped as 1.2 does not handle reading wide rows well.")
     public void wideRows() throws Throwable {
         Cluster.Builder builder = Cluster.builder();
@@ -205,7 +205,7 @@ public class LargeDataTest {
      * Test a batch that writes a row of size 10,000
      * @throws Throwable
      */
-    @Test(groups = "short")
+    @Test(groups = "stress")
     @CassandraVersion(major=2.0, minor=0, description="< 2.0 is skipped as 1.2 does not handle large batches well.")
     public void wideBatchRows() throws Throwable {
         Cluster.Builder builder = Cluster.builder();
@@ -229,7 +229,7 @@ public class LargeDataTest {
      * Test a wide row of size 1,000,000 consisting of a ByteBuffer
      * @throws Throwable
      */
-    @Test(groups = "long")
+    @Test(groups = "stress")
     public void wideByteRows() throws Throwable {
         Cluster.Builder builder = Cluster.builder();
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(1, builder);
@@ -252,7 +252,7 @@ public class LargeDataTest {
      * Test a row with a single extra large text value
      * @throws Throwable
      */
-    @Test(groups = "short")
+    @Test(groups = "stress")
     public void largeText() throws Throwable {
         Cluster.Builder builder = Cluster.builder();
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(1, builder);
@@ -275,7 +275,7 @@ public class LargeDataTest {
      * Creates a table with 330 columns
      * @throws Throwable
      */
-    @Test(groups = "short")
+    @Test(groups = "stress")
     public void wideTable() throws Throwable {
         Cluster.Builder builder = Cluster.builder();
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(1, builder);
