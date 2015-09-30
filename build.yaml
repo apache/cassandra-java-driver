@@ -7,6 +7,7 @@ os:
 cassandra:
   - 1.2
   - 2.0
+  - 2.1
 build:
   - type: maven
     version: 3.2.5
