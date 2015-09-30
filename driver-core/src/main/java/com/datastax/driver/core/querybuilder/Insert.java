@@ -139,7 +139,7 @@ public class Insert extends BuiltStatement {
      * Sets the 'IF NOT EXISTS' option for this INSERT statement.
      * <p>
      * An insert with that option will not succeed unless the row does not
-     * exist at the time the insertion is execution. The existence check and
+     * exist at the time the insertion is executed. The existence check and
      * insertions are done transactionally in the sense that if multiple
      * clients attempt to create a given row with this option, then at most one
      * may succeed.
