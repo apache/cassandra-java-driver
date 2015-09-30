@@ -11,6 +11,7 @@
 - [new feature] Add BoundStatement#unset (JAVA-930)
 - [bug] Make table metadata options class visible (JAVA-946)
 - [bug] Add crcCheckChance to TableOptionsMetadata#equals/hashCode (JAVA-939)
+- [bug] Make TypeCodec return mutable collections (JAVA-922)
 
 
 ### 3.0.0-alpha3
