@@ -192,9 +192,10 @@ public abstract class TypeCodec<T> {
      *     <li>Null or empty buffers should be gracefully handled and no exception should be raised;
      *     these should be considered as the equivalent of a NULL CQL value and, in most cases, should
      *     map to {@code null} or a default value for the corresponding Java type, if applicable;</li>
-     *     <li>Codecs for CQL collection types should return unmodifiable collections;</li>
+     *     <li>Codecs for CQL collection types should clearly document whether they return immutable collections or not
+     *     (note that the driver's default collection codecs return <em>mutable</em> collections);</li>
      *     <li>Codecs for CQL collection types should avoid returning {@code null};
-     *     they should return empty collections instead.</li>
+     *     they should return empty collections instead (the driver's default collection codecs all comply with this rule).</li>
      * </ol>
      *
      * @param bytes A {@link ByteBuffer} instance containing the serialized form of T;
@@ -1598,7 +1599,7 @@ public abstract class TypeCodec<T> {
         @Override
         public C deserialize(ByteBuffer bytes, ProtocolVersion protocolVersion) {
             if (bytes == null || bytes.remaining() == 0)
-                return unmodifiable(newInstance(0));
+                return newInstance(0);
             try {
                 ByteBuffer input = bytes.duplicate();
                 int n = CodecUtils.readCollectionSize(input, protocolVersion);
@@ -1607,7 +1608,7 @@ public abstract class TypeCodec<T> {
                     ByteBuffer databb = CodecUtils.readCollectionValue(input, protocolVersion);
                     coll.add(eltCodec.deserialize(databb, protocolVersion));
                 }
-                return unmodifiable(coll);
+                return coll;
             } catch (BufferUnderflowException e) {
                 throw new InvalidTypeException("Not enough bytes to deserialize list");
             }
@@ -1681,8 +1682,6 @@ public abstract class TypeCodec<T> {
 
         protected abstract C newInstance(int capacity);
 
-        protected abstract C unmodifiable(C coll);
-
         protected abstract char getOpeningChar();
 
         protected abstract char getClosingChar();
@@ -1691,6 +1690,7 @@ public abstract class TypeCodec<T> {
 
     /**
      * This codec maps a CQL {@link DataType#list(DataType) list type} to a Java {@link List}.
+     * Implementation note: this codec returns mutable, non thread-safe {@link ArrayList} instances.
      */
     public static class ListCodec<T> extends CollectionCodec<T, List<T>> {
 
@@ -1701,11 +1701,6 @@ public abstract class TypeCodec<T> {
         @Override
         protected List<T> newInstance(int capacity) {
             return new ArrayList<T>(capacity);
-        }
-
-        @Override
-        protected List<T> unmodifiable(List<T> coll) {
-            return Collections.unmodifiableList(coll);
         }
 
         @Override
@@ -1722,6 +1717,7 @@ public abstract class TypeCodec<T> {
 
     /**
      * This codec maps a CQL {@link DataType#set(DataType) set type} to a Java {@link Set}.
+     * Implementation note: this codec returns mutable, non thread-safe {@link LinkedHashSet} instances.
      */
     public static class SetCodec<T> extends CollectionCodec<T, Set<T>> {
 
@@ -1732,11 +1728,6 @@ public abstract class TypeCodec<T> {
         @Override
         protected Set<T> newInstance(int capacity) {
             return new LinkedHashSet<T>(capacity);
-        }
-
-        @Override
-        protected Set<T> unmodifiable(Set<T> coll) {
-            return Collections.unmodifiableSet(coll);
         }
 
         @Override
@@ -1752,6 +1743,7 @@ public abstract class TypeCodec<T> {
 
     /**
      * This codec maps a CQL {@link DataType#map(DataType, DataType) map type} to a Java {@link Map}.
+     * Implementation note: this codec returns mutable, non thread-safe {@link LinkedHashMap} instances.
      */
     public static class MapCodec<K, V> extends TypeCodec<Map<K, V>> {
 
@@ -1790,7 +1782,7 @@ public abstract class TypeCodec<T> {
             idx = ParseUtils.skipSpaces(value, idx);
 
             if (value.charAt(idx) == '}')
-                return Collections.emptyMap();
+                return new LinkedHashMap<K, V>(0);
 
             Map<K, V> m = new HashMap<K, V>();
             while (idx < value.length()) {
@@ -1885,7 +1877,7 @@ public abstract class TypeCodec<T> {
         @Override
         public Map<K, V> deserialize(ByteBuffer bytes, ProtocolVersion protocolVersion) {
             if (bytes == null || bytes.remaining() == 0)
-                return Collections.emptyMap();
+                return new LinkedHashMap<K, V>(0);
             try {
                 ByteBuffer input = bytes.duplicate();
                 int n = CodecUtils.readCollectionSize(input, protocolVersion);
@@ -1895,7 +1887,7 @@ public abstract class TypeCodec<T> {
                     ByteBuffer vbb = CodecUtils.readCollectionValue(input, protocolVersion);
                     m.put(keyCodec.deserialize(kbb, protocolVersion), valueCodec.deserialize(vbb, protocolVersion));
                 }
-                return Collections.unmodifiableMap(m);
+                return m;
             } catch (BufferUnderflowException e) {
                 throw new InvalidTypeException("Not enough bytes to deserialize a map");
             }

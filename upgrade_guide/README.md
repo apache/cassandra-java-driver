@@ -60,6 +60,9 @@ We've also seized the opportunity to remove code that was deprecated in 2.1.
         * `TupleType of(DataType... types)`; users should now use `Metadata.newTupleType(DataType...)`.
 
     <p>The driver runtime behavior changes in the following situations:</p>
+    * By default, the driver now returns _mutable_, _non thread-safe_ instances for CQL collection types;
+      This affects methods `getList`, `getSet`, `getMap`, `getObject` and `get` for all instances of 
+      `GettableByIndexData` and `GettableByNameData` (`Row`, `BoundStatement`, `TupleValue` and `UDTValue`)
     * `RuntimeException`s thrown during serialization or deserialization might not be
       the same ones as before, due to the newly-introduced `CodecNotFoundException`
       and to the dynamic nature of codec search introduced by JAVA-721.
