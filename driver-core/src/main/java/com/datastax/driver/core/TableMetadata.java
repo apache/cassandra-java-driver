@@ -63,7 +63,7 @@ public class TableMetadata extends TableOrView {
                           List<ColumnMetadata> clusteringColumns,
                           Map<String, ColumnMetadata> columns,
                           Map<String, IndexMetadata> indexes,
-                          Options options,
+                          TableOptionsMetadata options,
                           List<Order> clusteringOrder,
                           VersionNumber cassandraVersion) {
         super(keyspace, name, id, partitionKey, clusteringColumns, columns, options, clusteringOrder, cassandraVersion);
@@ -131,9 +131,9 @@ public class TableMetadata extends TableOrView {
         LinkedHashMap<String, ColumnMetadata> columns = new LinkedHashMap<String, ColumnMetadata>();
         LinkedHashMap<String, IndexMetadata> indexes = new LinkedHashMap<String, IndexMetadata>();
 
-        Options options = null;
+        TableOptionsMetadata options = null;
         try {
-            options = new Options(row, isCompact, cassandraVersion);
+            options = new TableOptionsMetadata(row, isCompact, cassandraVersion);
         } catch (RuntimeException e) {
             // See ControlConnection#refreshSchema for why we'd rather not probably this further. Since table options is one thing
             // that tends to change often in Cassandra, it's worth special casing this.

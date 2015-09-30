@@ -47,7 +47,7 @@ public class MaterializedViewMetadata extends TableOrView {
         Map<String, ColumnMetadata> columns,
         boolean includeAllColumns,
         String whereClause,
-        Options options,
+        TableOptionsMetadata options,
         List<Order> clusteringOrder,
         VersionNumber cassandraVersion) {
         super(keyspace, name, id, partitionKey, clusteringColumns, columns, options, clusteringOrder, cassandraVersion);
@@ -81,9 +81,9 @@ public class MaterializedViewMetadata extends TableOrView {
         // We use a linked hashmap because we will keep this in the order of a 'SELECT * FROM ...'.
         LinkedHashMap<String, ColumnMetadata> columns = new LinkedHashMap<String, ColumnMetadata>();
 
-        Options options = null;
+        TableOptionsMetadata options = null;
         try {
-            options = new Options(row, false, cassandraVersion);
+            options = new TableOptionsMetadata(row, false, cassandraVersion);
         } catch (RuntimeException e) {
             // See ControlConnection#refreshSchema for why we'd rather not probably this further. Since table options is one thing
             // that tends to change often in Cassandra, it's worth special casing this.
