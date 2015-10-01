@@ -15,10 +15,8 @@
  */
 package com.datastax.driver.core;
 
-
 import java.util.*;
 
-import com.google.common.base.*;
 import com.google.common.base.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -123,9 +121,9 @@ public class TableMetadata extends TableOrView {
             isCompact = isDense || !comparator.isComposite;
         }
 
-        List<ColumnMetadata> partitionKey = nullInitializedList(partitionKeySize);
-        List<ColumnMetadata> clusteringColumns = nullInitializedList(clusteringSize);
-        List<Order> clusteringOrder = nullInitializedList(clusteringSize);
+        List<ColumnMetadata> partitionKey = new ArrayList<ColumnMetadata>(Collections.<ColumnMetadata>nCopies(partitionKeySize, null));
+        List<ColumnMetadata> clusteringColumns = new ArrayList<ColumnMetadata>(Collections.<ColumnMetadata>nCopies(clusteringSize, null));
+        List<Order> clusteringOrder = new ArrayList<Order>(Collections.<Order>nCopies(clusteringSize, null));
 
         // We use a linked hashmap because we will keep this in the order of a 'SELECT * FROM ...'.
         LinkedHashMap<String, ColumnMetadata> columns = new LinkedHashMap<String, ColumnMetadata>();

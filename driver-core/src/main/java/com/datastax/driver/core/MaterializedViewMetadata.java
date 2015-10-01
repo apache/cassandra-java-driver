@@ -74,9 +74,10 @@ public class MaterializedViewMetadata extends TableOrView {
 
         int partitionKeySize = findCollectionSize(rawCols.values(), ColumnMetadata.Raw.Kind.PARTITION_KEY);
         int clusteringSize = findCollectionSize(rawCols.values(), ColumnMetadata.Raw.Kind.CLUSTERING_COLUMN);
-        List<ColumnMetadata> partitionKey = nullInitializedList(partitionKeySize);
-        List<ColumnMetadata> clusteringColumns = nullInitializedList(clusteringSize);
-        List<Order> clusteringOrder = nullInitializedList(clusteringSize);
+
+        List<ColumnMetadata> partitionKey = new ArrayList<ColumnMetadata>(Collections.<ColumnMetadata>nCopies(partitionKeySize, null));
+        List<ColumnMetadata> clusteringColumns = new ArrayList<ColumnMetadata>(Collections.<ColumnMetadata>nCopies(clusteringSize, null));
+        List<Order> clusteringOrder = new ArrayList<Order>(Collections.<Order>nCopies(clusteringSize, null));
 
         // We use a linked hashmap because we will keep this in the order of a 'SELECT * FROM ...'.
         LinkedHashMap<String, ColumnMetadata> columns = new LinkedHashMap<String, ColumnMetadata>();
