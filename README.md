@@ -56,7 +56,10 @@ The driver contains the following modules:
 - JIRA: https://datastax-oss.atlassian.net/browse/JAVA
 - MAILING LIST: https://groups.google.com/a/lists.datastax.com/forum/#!forum/java-driver-user
 - IRC: #datastax-drivers on [irc.freenode.net](http://freenode.net)
-- TWITTER: Follow the latest news about DataStax Drivers - [@olim7t](http://twitter.com/olim7t), [@mfiguiere](http://twitter.com/mfiguiere)
+- TWITTER: [@dsJavaDriver](https://twitter.com/dsJavaDriver) tweets Java
+  driver releases and important announcements (low frequency).
+  [@DataStaxEng](https://twitter.com/datastaxeng) has more news including
+  other drivers, Cassandra, and DSE.
 - DOCS: the [user guide](http://docs.datastax.com/en/developer/java-driver/2.1/java-driver/whatsNew2.html)
   has introductory material. We are progressively migrating the doc
   [here](features/) with more technical details.
