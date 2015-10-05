@@ -4,6 +4,7 @@
 
 - [improvement] Change default consistency level to LOCAL_QUORUM (JAVA-926)
 - [bug] Fix implementation of UserType.hashCode() (JAVA-942)
+- [improvement] Don't delay UP/ADDED notifications if protocol version = V4 (JAVA-877)
 
 
 ### 3.0.0-alpha3
