@@ -3,6 +3,19 @@
 The purpose of this guide is to detail changes made by successive
 versions of the Java driver.
 
+### 2.1.8
+
+2.1.8 is binary-compatible with 2.1.7 but introduces a small change in the 
+driver's behavior:
+
+1. The list of contact points provided at startup is now shuffled before trying
+   to open the control connection, so that multiple clients with the same contact
+   points don't all pick the same control host. As a result, you can't assume that
+   the driver will try contact points in a deterministic order. In particular, if
+   you use the `DCAwareRoundRobinPolicy` without specifying a primary datacenter
+   name, make sure that you only provide local hosts as contact points.
+
+
 ### 2.1.7
 
 This version brings a few changes in the driver's behavior; none of them break
@@ -40,14 +53,6 @@ binary compatibility.
    or `raw()` is used to build a value to be inserted in the database.
    If you know that the CQL functions or expressions are safe, use
    `setIdempotent(true)` on the statement.
-
-5. The list of contact points provided at startup is now shuffled before trying
-   to open the control connection, so that multiple clients with the same contact
-   points don't all pick the same control host. As a result, you can't assume that
-   the driver will try contact points in a deterministic order. In particular, if
-   you use the `DCAwareRoundRobinPolicy` without specifying a primary datacenter
-   name, make sure that you only provide local hosts as contact points.
-
 
 ### 2.1.6
 
