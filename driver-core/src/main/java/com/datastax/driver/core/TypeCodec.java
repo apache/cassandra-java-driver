@@ -308,12 +308,12 @@ public abstract class TypeCodec<T> {
         if (!(o instanceof TypeCodec))
             return false;
         TypeCodec<?> typeCodec = (TypeCodec<?>)o;
-        return Objects.equal(javaType, typeCodec.javaType) && Objects.equal(cqlType, typeCodec.cqlType);
+        return Objects.equal(cqlType, typeCodec.cqlType) && Objects.equal(javaType, typeCodec.javaType);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(javaType, cqlType);
+        return Objects.hashCode(cqlType, javaType);
     }
 
     @Override

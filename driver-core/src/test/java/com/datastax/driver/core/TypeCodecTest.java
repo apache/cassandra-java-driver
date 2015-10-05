@@ -16,14 +16,13 @@
 package com.datastax.driver.core;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.util.*;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.base.Function;
-import com.google.common.base.Joiner;
+import com.google.common.base.*;
 import com.google.common.base.Objects;
-import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import org.testng.annotations.Test;
@@ -248,6 +247,16 @@ public class TypeCodecTest {
         assertThat(actual).isEqualTo(expected);
     }
 
+    @Test(groups = "unit")
+    public void should_override_codec() {
+        CodecRegistry codecRegistry = new CodecRegistry(); // use a custom instance
+        MyOwnPrivateVarcharCodec codec = new MyOwnPrivateVarcharCodec();
+        codecRegistry.register(codec);
+        assertThat(codecRegistry.codecFor("foo")).isSameAs(codec);
+        assertThat(codecRegistry.codecFor(varchar())).isSameAs(codec);
+        assertThat(codecRegistry.codecFor(varchar(), String.class)).isSameAs(codec);
+        assertThat(codecRegistry.codecFor(varchar(), TypeToken.of(String.class))).isSameAs(codec);
+    }
 
     private class ListVarcharToListListInteger extends TypeCodec<List<List<Integer>>> {
 
@@ -290,6 +299,13 @@ public class TypeCodecTest {
         @Override
         public String format(List<List<Integer>> value) {
             throw new UnsupportedOperationException();
+        }
+    }
+
+    private class MyOwnPrivateVarcharCodec extends TypeCodec.StringCodec {
+
+        public MyOwnPrivateVarcharCodec() {
+            super(varchar(), Charsets.UTF_8);
         }
     }
 
