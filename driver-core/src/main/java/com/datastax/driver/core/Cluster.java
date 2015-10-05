@@ -2586,26 +2586,31 @@ public class Cluster implements Closeable {
             private ListenableFuture<?> schedule(final ExceptionCatchingRunnable task) {
                 // Cassandra tends to send notifications for new/up nodes a bit early (it is triggered once
                 // gossip is up, but that is before the client-side server is up), so we add a delay
-                // (otherwise the connection will likely fail and have to be retry which is wasteful). This
-                // probably should be fixed C* side, after which we'll be able to remove this.
-                final SettableFuture<?> future = SettableFuture.create();
-                scheduledTasksExecutor.schedule(new ExceptionCatchingRunnable() {
-                    public void runMayThrow() throws Exception {
-                        ListenableFuture<?> f = execute(task);
-                        Futures.addCallback(f, new FutureCallback<Object>() {
-                            @Override
-                            public void onSuccess(Object result) {
-                                future.set(null);
-                            }
+                // (otherwise the connection will likely fail and have to be retry which is wasteful).
+                // This has been fixed by CASSANDRA-8236 and does not apply to protocol versions >= 4
+                // and C* versions >= 2.2.0
+                if (protocolVersion().compareTo(ProtocolVersion.V4) < 0) {
+                    final SettableFuture<?> future = SettableFuture.create();
+                    scheduledTasksExecutor.schedule(new ExceptionCatchingRunnable() {
+                        public void runMayThrow() throws Exception {
+                            ListenableFuture<?> f = execute(task);
+                            Futures.addCallback(f, new FutureCallback<Object>() {
+                                @Override
+                                public void onSuccess(Object result) {
+                                    future.set(null);
+                                }
 
-                            @Override
-                            public void onFailure(Throwable t) {
-                                future.setException(t);
-                            }
-                        });
-                    }
-                }, NEW_NODE_DELAY_SECONDS, TimeUnit.SECONDS);
-                return future;
+                                @Override
+                                public void onFailure(Throwable t) {
+                                    future.setException(t);
+                                }
+                            });
+                        }
+                    }, NEW_NODE_DELAY_SECONDS, TimeUnit.SECONDS);
+                    return future;
+                } else {
+                    return execute(task);
+                }
             }
 
             // Make sure we  call controlConnection.refreshNodeInfo(host)
