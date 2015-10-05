@@ -44,6 +44,8 @@ versions:
     ref: '4adddcf'
   - name: 2.2.0-rc1
     ref: '2.2.0-rc1'
+  - name: 2.1.8
+    ref: '2.1.8'
   - name: 2.1.7
     ref: '2.1.7'
   - name: 2.1.6
