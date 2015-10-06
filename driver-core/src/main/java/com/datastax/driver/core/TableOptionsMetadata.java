@@ -391,6 +391,7 @@ public class TableOptionsMetadata {
             Objects.equal(this.maxIndexInterval, that.maxIndexInterval) &&
             Objects.equal(this.compaction, that.compaction) &&
             Objects.equal(this.compression, that.compression) &&
+            Objects.equal(this.crcCheckChance, that.crcCheckChance) &&
             Objects.equal(this.extensions, that.extensions);
     }
 
@@ -398,6 +399,6 @@ public class TableOptionsMetadata {
     public int hashCode() {
         return Objects.hashCode(isCompactStorage, comment, readRepair, localReadRepair, replicateOnWrite, gcGrace,
             bfFpChance, caching, populateCacheOnFlush, memtableFlushPeriodMs, defaultTTL, speculativeRetry,
-            indexInterval, minIndexInterval, maxIndexInterval, compaction, compression, extensions);
+            indexInterval, minIndexInterval, maxIndexInterval, compaction, compression, crcCheckChance, extensions);
     }
 }
