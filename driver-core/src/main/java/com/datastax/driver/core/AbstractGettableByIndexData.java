@@ -110,7 +110,7 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
         if (value == null || value.remaining() == 0)
             return false;
 
-        return TypeCodec.BooleanCodec.instance.deserializeNoBoxing(value);
+        return TypeCodec.booleanCodec.deserializeNoBoxing(value);
     }
 
     /**
@@ -124,7 +124,7 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
         if (value == null || value.remaining() == 0)
             return 0;
 
-        return TypeCodec.IntCodec.instance.deserializeNoBoxing(value);
+        return TypeCodec.intCodec.deserializeNoBoxing(value);
     }
 
     /**
@@ -138,7 +138,7 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
         if (value == null || value.remaining() == 0)
             return 0L;
 
-        return TypeCodec.LongCodec.instance.deserializeNoBoxing(value);
+        return TypeCodec.longCodec.deserializeNoBoxing(value);
     }
 
     /**
@@ -152,7 +152,7 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
         if (value == null || value.remaining() == 0)
             return null;
 
-        return TypeCodec.DateCodec.instance.deserialize(value);
+        return TypeCodec.dateCodec.deserialize(value);
     }
 
     /**
@@ -166,7 +166,7 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
         if (value == null || value.remaining() == 0)
             return 0.0f;
 
-        return TypeCodec.FloatCodec.instance.deserializeNoBoxing(value);
+        return TypeCodec.floatCodec.deserializeNoBoxing(value);
     }
 
     /**
@@ -180,7 +180,7 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
         if (value == null || value.remaining() == 0)
             return 0.0;
 
-        return TypeCodec.DoubleCodec.instance.deserializeNoBoxing(value);
+        return TypeCodec.doubleCodec.deserializeNoBoxing(value);
     }
 
     /**
@@ -218,8 +218,8 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
             return null;
 
         return type == DataType.Name.ASCII
-             ? TypeCodec.StringCodec.asciiInstance.deserialize(value)
-             : TypeCodec.StringCodec.utf8Instance.deserialize(value);
+             ? TypeCodec.asciiStringCodec.deserialize(value)
+             : TypeCodec.utf8StringCodec.deserialize(value);
     }
 
     /**
@@ -233,7 +233,7 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
         if (value == null || value.remaining() == 0)
             return null;
 
-        return TypeCodec.BigIntegerCodec.instance.deserialize(value);
+        return TypeCodec.bigIntegerCodec.deserialize(value);
     }
 
     /**
@@ -247,7 +247,7 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
         if (value == null || value.remaining() == 0)
             return null;
 
-        return TypeCodec.DecimalCodec.instance.deserialize(value);
+        return TypeCodec.decimalCodec.deserialize(value);
     }
 
     /**
@@ -262,8 +262,8 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
             return null;
 
         return type == DataType.Name.UUID
-             ? TypeCodec.UUIDCodec.instance.deserialize(value)
-             : TypeCodec.TimeUUIDCodec.instance.deserialize(value);
+             ? TypeCodec.uuidCodec.deserialize(value)
+             : TypeCodec.timeUuidCodec.deserialize(value);
     }
 
     /**
@@ -277,7 +277,7 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
         if (value == null || value.remaining() == 0)
             return null;
 
-        return TypeCodec.InetCodec.instance.deserialize(value);
+        return TypeCodec.inetCodec.deserialize(value);
     }
 
     /**

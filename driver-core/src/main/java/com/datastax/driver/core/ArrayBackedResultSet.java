@@ -430,6 +430,6 @@ abstract class ArrayBackedResultSet implements ResultSet {
         if (value == null || value.remaining() == 0)
             return false;
 
-        return TypeCodec.BooleanCodec.instance.deserializeNoBoxing(value);
+        return TypeCodec.booleanCodec.deserializeNoBoxing(value);
     }
 }
