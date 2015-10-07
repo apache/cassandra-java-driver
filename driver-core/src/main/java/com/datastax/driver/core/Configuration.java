@@ -35,6 +35,9 @@ public class Configuration {
 
     /**
      * Returns a builder to create a new {@code Configuration} object.
+     * <p>
+     * You only need this if you are building the configuration yourself. If you
+     * use {@link Cluster#builder()}, it will be done under the hood for you.
      *
      * @return the builder.
      */
@@ -209,6 +212,12 @@ public class Configuration {
         
         /**
          * Sets the metrics options for this cluster.
+         * <p>
+         * If this method doesn't get called, the configuration will use the
+         * defaults: metrics enabled with JMX reporting enabled.
+         * To disable metrics, call this method with an instance where
+         * {@link MetricsOptions#isEnabled() isEnabled()} returns false.
+         *
          * @param metricsOptions the metrics options.
          * @return this builder.
          */
