@@ -15,7 +15,6 @@
  */
 package com.datastax.driver.core;
 
-import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.List;
 
@@ -30,7 +29,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 import com.datastax.driver.core.CodecFactory.DefaultCodecFactory;
-import com.datastax.driver.core.exceptions.InvalidTypeException;
 
 import static com.datastax.driver.core.DataType.cint;
 import static com.datastax.driver.core.DataType.list;
@@ -41,7 +39,7 @@ public class TypeCodecOverridingIntegrationTest extends CCMBridge.PerClassSingle
 
     private CodecRegistry registry;
 
-    private MockIntCodec codec;
+    private TypeCodec.IntCodec intCodec;
 
     private DefaultCodecFactory factory;
 
@@ -64,10 +62,10 @@ public class TypeCodecOverridingIntegrationTest extends CCMBridge.PerClassSingle
     @Override
     @SuppressWarnings("unchecked")
     protected Cluster.Builder configure(Cluster.Builder builder) {
-        codec = new MockIntCodec();
-        listCodec = spy(new TypeCodec.ListCodec<Integer>(codec));
+        intCodec = spy(TypeCodec.IntCodec.instance);
+        listCodec = spy(new TypeCodec.ListCodec<Integer>(intCodec));
         factory = spy((DefaultCodecFactory)DefaultCodecFactory.DEFAULT_INSTANCE);
-        registry = new CodecRegistry(factory).register(codec);
+        registry = new CodecRegistry(factory).register(intCodec);
         return builder.withCodecRegistry(registry);
     }
 
@@ -83,15 +81,15 @@ public class TypeCodecOverridingIntegrationTest extends CCMBridge.PerClassSingle
 
     @BeforeMethod(groups = "short")
     public void prepareMocks() {
-        doReturn(listCodec).when(factory).newListCodec(codec);
+        doReturn(listCodec).when(factory).newListCodec(intCodec);
     }
 
     @AfterMethod(groups = "short", alwaysRun = true)
     @SuppressWarnings("unchecked")
     public void resetMocks() {
-        codec.reset();
-        reset(factory);
+        reset(intCodec);
         reset(listCodec);
+        reset(factory);
     }
 
     @Test(groups = "short")
@@ -124,56 +122,11 @@ public class TypeCodecOverridingIntegrationTest extends CCMBridge.PerClassSingle
     }
 
     private void assertMocksInvoked() {
-        assertThat(codec.actualValue).isEqualTo(42);
-        assertThat(registry.codecFor(cint(), TypeToken.of(Integer.class))).isSameAs(codec);
+        assertThat(registry.codecFor(cint(), TypeToken.of(Integer.class))).isSameAs(intCodec);
         assertThat(registry.codecFor(list(cint()), new TypeToken<List<Integer>>(){})).isSameAs(listCodec);
+        verify(intCodec, times(2)).serializeNoBoxing(42, protocolVersion);
         verify(listCodec).serialize(newArrayList(42), protocolVersion);
-        verify(factory).newListCodec(codec);
-    }
-
-    // can't spy or mock this as we need the original equals() method to be invoked
-    private class MockIntCodec extends TypeCodec<Integer> implements TypeCodec.PrimitiveIntCodec {
-
-        private Integer actualValue = null;
-
-        private MockIntCodec() {
-            super(cint(), Integer.class);
-        }
-
-        private void reset() {
-            actualValue = null;
-        }
-
-        @Override
-        public ByteBuffer serializeNoBoxing(int v, ProtocolVersion protocolVersion) {
-            actualValue = v;
-            return IntCodec.instance.serializeNoBoxing(v, protocolVersion);
-        }
-
-        @Override
-        public int deserializeNoBoxing(ByteBuffer v, ProtocolVersion protocolVersion) {
-            return IntCodec.instance.deserializeNoBoxing(v, protocolVersion);
-        }
-
-        @Override
-        public ByteBuffer serialize(Integer value, ProtocolVersion protocolVersion) throws InvalidTypeException {
-            return serializeNoBoxing(value, protocolVersion);
-        }
-
-        @Override
-        public Integer deserialize(ByteBuffer bytes, ProtocolVersion protocolVersion) throws InvalidTypeException {
-            return deserializeNoBoxing(bytes, protocolVersion);
-        }
-
-        @Override
-        public Integer parse(String value) throws InvalidTypeException {
-            return IntCodec.instance.parse(value);
-        }
-
-        @Override
-        public String format(Integer value) throws InvalidTypeException {
-            return IntCodec.instance.format(value);
-        }
+        verify(factory).newListCodec(intCodec);
     }
 
 }

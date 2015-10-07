@@ -15,14 +15,14 @@
  */
 package com.datastax.driver.core;
 
-import java.util.Arrays;
-import java.util.Collections;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 
 import com.google.common.base.Objects;
 import com.google.common.cache.*;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.UnmodifiableIterator;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 import org.slf4j.Logger;
@@ -342,23 +342,36 @@ public final class CodecRegistry {
      * @return this Builder (for method chaining).
      */
     public CodecRegistry register(Iterable<? extends TypeCodec<?>> codecs) {
-        for (TypeCodec<?> codec : codecs) {
-            // protect against the check-then-act idiom;
-            // a synchronized block is enough since this method
-            // is not meant to be called very often,
-            // and this is the only place where the collection is updated
-            synchronized (this.codecs) {
-                int i = this.codecs.indexOf(codec);
-                if (i != -1) {
-                    // override existing codec
+        // protect against the check-then-act idiom;
+        // a synchronized block is enough since this method
+        // is not meant to be called very often,
+        // and this is the only place where the collection is updated
+        synchronized (this.codecs) {
+            for (TypeCodec<?> codec : codecs) {
+                int i = indexOf(codec, this.codecs);
+                if (i == -1) {
+                    this.codecs.add(codec);
+                } else {
+                    // new codec is overriding existing codec
                     TypeCodec<?> old = this.codecs.set(i, codec);
                     logger.warn("{} is overriding {}", codec, old);
-                } else {
-                    this.codecs.add(codec);
                 }
             }
         }
         return this;
+    }
+
+    /**
+     * Check for a codec handling the same CQL-to-Java mapping.
+     */
+    private static int indexOf(TypeCodec<?> codec, List<TypeCodec<?>> codecs) {
+        for (int i = 0; i < codecs.size(); i++) {
+            TypeCodec<?> old = codecs.get(i);
+            if(old.getCqlType().equals(codec.getCqlType()) && old.getJavaType().equals(codec.getJavaType())) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     /**
