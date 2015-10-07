@@ -28,12 +28,13 @@ import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
 import com.datastax.driver.core.exceptions.InvalidQueryException;
-import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
 import com.datastax.driver.core.utils.CassandraVersion;
 
-import static com.datastax.driver.core.ProtocolVersion.V3;
-import static com.datastax.driver.core.TestUtils.*;
+import static com.datastax.driver.core.TestUtils.getFixedValue;
+import static com.datastax.driver.core.TestUtils.getFixedValue2;
+import static com.datastax.driver.core.TestUtils.getValue;
+import static com.datastax.driver.core.TestUtils.setBoundValue;
 
 /**
  * Prepared statement tests.
@@ -169,7 +170,8 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
 
             String name = "c_list_" + rawType;
             DataType type = DataType.list(rawType);
-            List<Object> value = (List<Object>)getFixedValue(type);;
+            List<Object> value = (List<Object>)getFixedValue(type);
+            ;
             PreparedStatement ps = session.prepare(String.format("INSERT INTO %s(k, %s) VALUES ('prepared_list', ?)", ALL_LIST_TABLE, name));
             BoundStatement bs = ps.bind();
             session.execute(setBoundValue(bs, name, type, value));
@@ -193,7 +195,8 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
 
             String name = "c_list_" + rawType;
             DataType type = DataType.list(rawType);
-            List<Object> value = (List<Object>)getFixedValue2(type);;
+            List<Object> value = (List<Object>)getFixedValue2(type);
+            ;
             PreparedStatement ps = session.prepare(String.format("INSERT INTO %s(k, %s) VALUES ('prepared_list', ?)", ALL_LIST_TABLE, name));
             BoundStatement bs = ps.bind();
             session.execute(setBoundValue(bs, name, type, value));
@@ -214,7 +217,8 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
 
             String name = "c_set_" + rawType;
             DataType type = DataType.set(rawType);
-            Set<Object> value = (Set<Object>)getFixedValue(type);;
+            Set<Object> value = (Set<Object>)getFixedValue(type);
+            ;
             PreparedStatement ps = session.prepare(String.format("INSERT INTO %s(k, %s) VALUES ('prepared_set', ?)", ALL_SET_TABLE, name));
             BoundStatement bs = ps.bind();
             session.execute(setBoundValue(bs, name, type, value));
@@ -238,7 +242,8 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
 
             String name = "c_set_" + rawType;
             DataType type = DataType.set(rawType);
-            Set<Object> value = (Set<Object>)getFixedValue2(type);;
+            Set<Object> value = (Set<Object>)getFixedValue2(type);
+            ;
             PreparedStatement ps = session.prepare(String.format("INSERT INTO %s(k, %s) VALUES ('prepared_set', ?)", ALL_SET_TABLE, name));
             BoundStatement bs = ps.bind();
             session.execute(setBoundValue(bs, name, type, value));
@@ -264,7 +269,8 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
 
                 String name = "c_map_" + rawKeyType + '_' + rawValueType;
                 DataType type = DataType.map(rawKeyType, rawValueType);
-                Map<Object, Object> value = (Map<Object, Object>)getFixedValue(type);;
+                Map<Object, Object> value = (Map<Object, Object>)getFixedValue(type);
+                ;
                 PreparedStatement ps = session.prepare(String.format("INSERT INTO %s(k, %s) VALUES ('prepared_map', ?)", ALL_MAP_TABLE, name));
                 BoundStatement bs = ps.bind();
                 session.execute(setBoundValue(bs, name, type, value));
@@ -294,7 +300,8 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
 
                 String name = "c_map_" + rawKeyType + '_' + rawValueType;
                 DataType type = DataType.map(rawKeyType, rawValueType);
-                Map<Object, Object> value = (Map<Object, Object>)getFixedValue2(type);;
+                Map<Object, Object> value = (Map<Object, Object>)getFixedValue2(type);
+                ;
                 PreparedStatement ps = session.prepare(String.format("INSERT INTO %s(k, %s) VALUES ('prepared_map', ?)", ALL_MAP_TABLE, name));
                 BoundStatement bs = ps.bind();
                 session.execute(setBoundValue(bs, name, type, value));
@@ -385,16 +392,16 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
         }
     }
 
-    @Test(groups="short")
+    @Test(groups = "short")
     public void should_set_routing_key_on_case_insensitive_keyspace_and_table() {
-        session.execute(String.format("CREATE TABLE %s.foo (i int PRIMARY KEY)",keyspace));
+        session.execute(String.format("CREATE TABLE %s.foo (i int PRIMARY KEY)", keyspace));
 
-        PreparedStatement ps = session.prepare(String.format("INSERT INTO %s.foo (i) VALUES (?)",keyspace));
+        PreparedStatement ps = session.prepare(String.format("INSERT INTO %s.foo (i) VALUES (?)", keyspace));
         BoundStatement bs = ps.bind(1);
         assertThat(bs.getRoutingKey()).isNotNull();
     }
 
-    @Test(groups="short")
+    @Test(groups = "short")
     public void should_set_routing_key_on_case_sensitive_keyspace_and_table() {
         session.execute("CREATE KEYSPACE \"Test\" WITH replication = { "
             + "  'class': 'SimpleStrategy',"
@@ -407,7 +414,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
         assertThat(bs.getRoutingKey()).isNotNull();
     }
 
-    @Test(groups="short", expectedExceptions = InvalidQueryException.class)
+    @Test(groups = "short", expectedExceptions = InvalidQueryException.class)
     public void should_fail_when_prepared_on_another_cluster() throws Exception {
         Cluster otherCluster = Cluster.builder()
             .addContactPointsWithPorts(ImmutableList.of(hostAddress))
@@ -465,7 +472,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
      * @jira_ticket JAVA-777
      */
     @Test(groups = "short")
-    @CassandraVersion(major=2.0)
+    @CassandraVersion(major = 2.0)
     public void should_not_allow_unbound_value_on_batch_statement_when_protocol_lesser_than_v4() {
         Cluster cluster = Cluster.builder()
             .addContactPointsWithPorts(Collections.singleton(hostAddress))
@@ -473,7 +480,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
             .build();
         Session session = cluster.connect();
         try {
-            PreparedStatement ps = session.prepare("INSERT INTO " + keyspace + "."  + SIMPLE_TABLE + " (k, i) VALUES (?, ?)");
+            PreparedStatement ps = session.prepare("INSERT INTO " + keyspace + "." + SIMPLE_TABLE + " (k, i) VALUES (?, ?)");
             BatchStatement batch = new BatchStatement();
             batch.add(ps.bind("foo"));
             // i is UNSET
@@ -513,7 +520,65 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
         ResultSet rows = session.execute(st3);
         assertThat(rows.one().getInt("i")).isEqualTo(1234);
         QueryTrace queryTrace = rows.getExecutionInfo().getQueryTrace();
-        checkEventsContain(queryTrace, "0 tombstone");
+        assertEventsContain(queryTrace, "0 tombstone");
+    }
+
+    /**
+     * Tests that a value that was previously set on a bound statement can be unset by index.
+     * This only works from protocol V4 onwards.
+     *
+     * @since 2.2.0
+     * @test_category prepared_statements:binding
+     * @jira_ticket JAVA-930
+     */
+    @Test(groups = "short")
+    @CassandraVersion(major = 2.2)
+    public void should_unset_value_by_index() {
+        PreparedStatement prepared = session.prepare("INSERT INTO " + SIMPLE_TABLE + " (k, i) VALUES (?, ?)");
+        BoundStatement bound = prepared.bind();
+        bound.setString(0, "foo");
+        bound.setInt(1, 1234);
+
+        bound.unset(1);
+        assertThat(bound.isSet(1)).isFalse();
+        session.execute(bound);
+
+        ResultSet rows = session.execute(
+            session.newSimpleStatement("SELECT i from " + SIMPLE_TABLE + " where k = 'foo'")
+                .enableTracing());
+
+        assertThat(rows.one().isNull("i"));
+        QueryTrace queryTrace = rows.getExecutionInfo().getQueryTrace();
+        assertEventsContain(queryTrace, "0 tombstone");
+    }
+
+    /**
+     * Tests that a value that was previously set on a bound statement can be unset by name.
+     * This only works from protocol V4 onwards.
+     *
+     * @since 2.2.0
+     * @test_category prepared_statements:binding
+     * @jira_ticket JAVA-930
+     */
+    @Test(groups = "short")
+    @CassandraVersion(major = 2.2)
+    public void should_unset_value_by_name() {
+        PreparedStatement prepared = session.prepare("INSERT INTO " + SIMPLE_TABLE + " (k, i) VALUES (:k, :i)");
+        BoundStatement bound = prepared.bind();
+        bound.setString("k", "foo");
+        bound.setInt("i", 1234);
+
+        bound.unset("i");
+        assertThat(bound.isSet("i")).isFalse();
+        session.execute(bound);
+
+        ResultSet rows = session.execute(
+            session.newSimpleStatement("SELECT i from " + SIMPLE_TABLE + " where k = 'foo'")
+                .enableTracing());
+
+        assertThat(rows.one().isNull("i"));
+        QueryTrace queryTrace = rows.getExecutionInfo().getQueryTrace();
+        assertEventsContain(queryTrace, "0 tombstone");
     }
 
     /**
@@ -542,7 +607,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
         ResultSet rows = session.execute(st3);
         assertThat(rows.one().getInt("i")).isEqualTo(1234);
         QueryTrace queryTrace = rows.getExecutionInfo().getQueryTrace();
-        checkEventsContain(queryTrace, "0 tombstone");
+        assertEventsContain(queryTrace, "0 tombstone");
     }
 
     /**
@@ -564,7 +629,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
         ResultSet rows = session.execute(st2);
         assertThat(rows.one().isNull(0)).isTrue();
         QueryTrace queryTrace = rows.getExecutionInfo().getQueryTrace();
-        checkEventsContain(queryTrace, "1 tombstone");
+        assertEventsContain(queryTrace, "1 tombstone");
     }
 
     /**
@@ -575,7 +640,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
      * @jira_ticket JAVA-777
      */
     @Test(groups = "short")
-    @CassandraVersion(major=2.0)
+    @CassandraVersion(major = 2.0)
     public void should_create_tombstone_when_null_value_on_batch_statement() {
         PreparedStatement prepared = session.prepare("INSERT INTO " + SIMPLE_TABLE + " (k, i) VALUES (?, ?)");
         BoundStatement st1 = prepared.bind();
@@ -587,14 +652,14 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
         ResultSet rows = session.execute(st2);
         assertThat(rows.one().isNull(0)).isTrue();
         QueryTrace queryTrace = rows.getExecutionInfo().getQueryTrace();
-        checkEventsContain(queryTrace, "1 tombstone");
+        assertEventsContain(queryTrace, "1 tombstone");
     }
 
-    private boolean checkEventsContain(QueryTrace queryTrace, String toFind) {
+    private void assertEventsContain(QueryTrace queryTrace, String toFind) {
         for (QueryTrace.Event event : queryTrace.getEvents()) {
             if (event.getDescription().contains(toFind))
-                return true;
+                return;
         }
-        return false;
+        fail("Did not find '" + toFind + "' in trace");
     }
 }
