@@ -293,33 +293,12 @@ public final class CodecRegistry {
     }
 
     /**
-     * Creates a CodecRegistry instance with the provided cache builder
-     * and the default codec factory.
-     */
-    public CodecRegistry(CacheBuilder<TypeCodecCacheKey, TypeCodec<?>> cacheBuilder) {
-        this(cacheBuilder, CodecFactory.DEFAULT_INSTANCE);
-    }
-
-    /**
      * Creates a default CodecRegistry instance with default cache options
      * and the provided codec factory.
      */
     public CodecRegistry(CodecFactory codecFactory) {
         this.codecs = new CopyOnWriteArrayList<TypeCodec<?>>(PRIMITIVE_CODECS);
         this.cache = defaultCacheBuilder().build(new TypeCodecCacheLoader());
-        this.codecFactory = codecFactory;
-    }
-
-    /**
-     * Creates a CodecRegistry instance with the provided cache builder and the provided
-     * codec factory.
-     *
-     * @param cacheBuilder The codec cache builder.
-     * @param codecFactory The codec factory.
-     */
-    public CodecRegistry(CacheBuilder<TypeCodecCacheKey, TypeCodec<?>> cacheBuilder, CodecFactory codecFactory) {
-        this.codecs = new CopyOnWriteArrayList<TypeCodec<?>>(PRIMITIVE_CODECS);
-        this.cache = cacheBuilder.build(new TypeCodecCacheLoader());
         this.codecFactory = codecFactory;
     }
 
