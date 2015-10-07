@@ -178,7 +178,7 @@ public class TypeCodecTest {
 
     @Test(groups = "unit")
     public void test_enum() {
-        TypeCodec.EnumStringCodec<FooBarQix> codec = new TypeCodec.EnumStringCodec<FooBarQix>(FooBarQix.class);
+        EnumStringCodec<FooBarQix> codec = new EnumStringCodec<FooBarQix>(FooBarQix.class);
         assertThat(codec)
             .canSerialize(FooBarQix.FOO);
     }

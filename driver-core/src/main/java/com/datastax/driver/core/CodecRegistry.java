@@ -119,7 +119,6 @@ import static com.datastax.driver.core.DataType.Name.*;
  * <p>
  * Note that {@link CodecRegistry} instances can only create codecs in very limited situations:
  * <ol>
- *     <li>Codecs for Enums are created on the fly using {@link EnumStringCodec};</li>
  *     <li>Codecs for {@link UserType user types} are created on the fly using  {@link UDTCodec};</li>
  *     <li>Codecs for {@link TupleType tuple types} are created on the fly using  {@link TupleCodec};</li>
  *     <li>Codecs for collections are created on the fly using {@link ListCodec}, {@link SetCodec} and
@@ -518,10 +517,6 @@ public final class CodecRegistry {
     private <T> TypeCodec<T> maybeCreateCodec(DataType cqlType, TypeToken<T> javaType) {
         checkNotNull(cqlType);
 
-        if ((cqlType.getName() == VARCHAR || cqlType.getName() == TEXT) && javaType != null && Enum.class.isAssignableFrom(javaType.getRawType())) {
-            return new EnumStringCodec(javaType.getRawType());
-        }
-
         if (cqlType.getName() == LIST && (javaType == null || List.class.isAssignableFrom(javaType.getRawType()))) {
             TypeToken<?> elementType = null;
             if (javaType != null && javaType.getType() instanceof ParameterizedType) {
@@ -568,10 +563,6 @@ public final class CodecRegistry {
 
     private <T> TypeCodec<T> maybeCreateCodec(DataType cqlType, T value) {
         checkNotNull(value);
-
-        if ((cqlType == null || cqlType.getName() == VARCHAR || cqlType.getName() == TEXT) && value instanceof Enum) {
-            return new EnumStringCodec(value.getClass());
-        }
 
         if ((cqlType == null || cqlType.getName() == LIST) && value instanceof List) {
             List list = (List)value;
