@@ -1,5 +1,10 @@
 ## Changelog
 
+### 3.0.0-beta1
+
+- [bug] Fix Configuration builder to allow disabled metrics (JAVA-900)
+
+
 ### 3.0.0-alpha3
 
 - [new feature] Support new system tables in C* 3.0 (JAVA-571)
