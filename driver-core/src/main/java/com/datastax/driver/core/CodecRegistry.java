@@ -308,8 +308,7 @@ public final class CodecRegistry {
             // so let's start with roughly 1/4 of that
             .initialCapacity(100)
             .weigher(new TypeCodecWeigher())
-            .maximumWeight(1000)
-            .concurrencyLevel(Runtime.getRuntime().availableProcessors() * 4);
+            .maximumWeight(1000);
         if (logger.isTraceEnabled())
             // do not bother adding a listener if it will be ineffective
             builder = builder.removalListener(new TypeCodecRemovalListener());
