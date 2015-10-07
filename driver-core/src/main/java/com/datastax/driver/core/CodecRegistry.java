@@ -355,8 +355,7 @@ public final class CodecRegistry {
      */
     public <T> TypeCodec<T> codecFor(T value) {
         checkNotNull(value, "Parameter value cannot be null");
-        TypeCodec<T> codec = findCodec(null, value);
-        return codec;
+        return findCodec(null, value);
     }
 
     /**
@@ -448,6 +447,7 @@ public final class CodecRegistry {
         return findCodec(cqlType, value);
     }
 
+    @SuppressWarnings("unchecked")
     private <T> TypeCodec<T> lookupCodec(DataType cqlType, TypeToken<T> javaType) {
         checkNotNull(cqlType, "Parameter cqlType cannot be null");
         logger.trace("Querying cache for codec [{} <-> {}]", cqlType, javaType);
@@ -466,13 +466,14 @@ public final class CodecRegistry {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private <T> TypeCodec<T> findCodec(DataType cqlType, TypeToken<T> javaType) {
         checkNotNull(cqlType, "Parameter cqlType cannot be null");
         logger.trace("Looking for codec [{} <-> {}]",
-            cqlType == null ? "ANY" : cqlType,
+            cqlType,
             javaType == null ? "ANY" : javaType);
         for (TypeCodec<?> codec : codecs) {
-            if ((cqlType == null || codec.accepts(cqlType)) && (javaType == null || codec.accepts(javaType))) {
+            if (codec.accepts(cqlType) && (javaType == null || codec.accepts(javaType))) {
                 logger.trace("Codec found: {}", codec);
                 return (TypeCodec<T>)codec;
             }
@@ -480,6 +481,7 @@ public final class CodecRegistry {
         return createCodec(cqlType, javaType);
     }
 
+    @SuppressWarnings("unchecked")
     private <T> TypeCodec<T> findCodec(DataType cqlType, T value) {
         checkNotNull(value, "Parameter value cannot be null");
         logger.trace("Looking for codec [{} <-> {}]", cqlType == null ? "ANY" : cqlType, value.getClass());
@@ -514,6 +516,7 @@ public final class CodecRegistry {
         return codec;
     }
 
+    @SuppressWarnings("unchecked")
     private <T> TypeCodec<T> maybeCreateCodec(DataType cqlType, TypeToken<T> javaType) {
         checkNotNull(cqlType);
 
@@ -561,6 +564,7 @@ public final class CodecRegistry {
         return null;
     }
 
+    @SuppressWarnings("unchecked")
     private <T> TypeCodec<T> maybeCreateCodec(DataType cqlType, T value) {
         checkNotNull(value);
 

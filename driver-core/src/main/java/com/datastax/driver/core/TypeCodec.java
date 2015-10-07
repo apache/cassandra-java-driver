@@ -52,9 +52,9 @@ import static com.datastax.driver.core.DataType.*;
  * Two methods handle the serialization and deserialization of Java types into
  * CQL types according to the native protocol specifications:
  * <ol>
- *     <li>{@link #serialize(Object,ProtocolVersion)}: used to serialize from the codec's Java type to a
+ *     <li>{@link #serialize(Object, ProtocolVersion)}: used to serialize from the codec's Java type to a
  *     {@link ByteBuffer} instance corresponding to the codec's CQL type;</li>
- *     <li>{@link #deserialize(ByteBuffer,ProtocolVersion)}: used to deserialize a {@link ByteBuffer} instance
+ *     <li>{@link #deserialize(ByteBuffer, ProtocolVersion)}: used to deserialize a {@link ByteBuffer} instance
  *     corresponding to the codec's CQL type to the codec's Java type.</li>
  * </ol>
  *
@@ -104,7 +104,6 @@ import static com.datastax.driver.core.DataType.*;
  *
  * @param <T> The codec's Java type
  */
-@SuppressWarnings("all")
 public abstract class TypeCodec<T> {
 
     private static final Map<TypeToken<?>, TypeToken<?>> primitiveToWrapperMap = ImmutableMap.<TypeToken<?>, TypeToken<?>>builder()
@@ -536,7 +535,7 @@ public abstract class TypeCodec<T> {
      */
     public boolean accepts(TypeToken javaType) {
         checkNotNull(javaType);
-        if(javaType.isPrimitive()) {
+        if (javaType.isPrimitive()) {
             javaType = primitiveToWrapperMap.get(javaType);
         }
         // TODO accept generics type covariance, i.e. a codec for List<Number> should accept List<Integer>
@@ -601,6 +600,7 @@ public abstract class TypeCodec<T> {
     public interface PrimitiveBooleanCodec {
 
         ByteBuffer serializeNoBoxing(boolean v, ProtocolVersion protocolVersion);
+
         boolean deserializeNoBoxing(ByteBuffer v, ProtocolVersion protocolVersion);
 
     }
@@ -612,6 +612,7 @@ public abstract class TypeCodec<T> {
     public interface PrimitiveByteCodec {
 
         ByteBuffer serializeNoBoxing(byte v, ProtocolVersion protocolVersion);
+
         byte deserializeNoBoxing(ByteBuffer v, ProtocolVersion protocolVersion);
 
     }
@@ -623,6 +624,7 @@ public abstract class TypeCodec<T> {
     public interface PrimitiveShortCodec {
 
         ByteBuffer serializeNoBoxing(short v, ProtocolVersion protocolVersion);
+
         short deserializeNoBoxing(ByteBuffer v, ProtocolVersion protocolVersion);
 
     }
@@ -634,6 +636,7 @@ public abstract class TypeCodec<T> {
     public interface PrimitiveIntCodec {
 
         ByteBuffer serializeNoBoxing(int v, ProtocolVersion protocolVersion);
+
         int deserializeNoBoxing(ByteBuffer v, ProtocolVersion protocolVersion);
 
     }
@@ -645,6 +648,7 @@ public abstract class TypeCodec<T> {
     public interface PrimitiveLongCodec {
 
         ByteBuffer serializeNoBoxing(long v, ProtocolVersion protocolVersion);
+
         long deserializeNoBoxing(ByteBuffer v, ProtocolVersion protocolVersion);
 
     }
@@ -656,6 +660,7 @@ public abstract class TypeCodec<T> {
     public interface PrimitiveFloatCodec {
 
         ByteBuffer serializeNoBoxing(float v, ProtocolVersion protocolVersion);
+
         float deserializeNoBoxing(ByteBuffer v, ProtocolVersion protocolVersion);
 
     }
@@ -667,6 +672,7 @@ public abstract class TypeCodec<T> {
     public interface PrimitiveDoubleCodec {
 
         ByteBuffer serializeNoBoxing(double v, ProtocolVersion protocolVersion);
+
         double deserializeNoBoxing(ByteBuffer v, ProtocolVersion protocolVersion);
 
     }
@@ -686,7 +692,8 @@ public abstract class TypeCodec<T> {
 
         @Override
         public String parse(String value) {
-            if (value == null || value.isEmpty() || value.equals(NULL)) return null;
+            if (value == null || value.isEmpty() || value.equals(NULL))
+                return null;
             if (value.charAt(0) != '\'' || value.charAt(value.length() - 1) != '\'')
                 throw new InvalidTypeException("text or varchar values must be enclosed by single quotes");
 
@@ -747,7 +754,7 @@ public abstract class TypeCodec<T> {
         public String deserialize(ByteBuffer bytes, ProtocolVersion protocolVersion) {
             if (bytes == null)
                 return null;
-            if(bytes.remaining() == 0)
+            if (bytes.remaining() == 0)
                 return "";
             return new String(Bytes.getArray(bytes), charset);
         }
@@ -783,10 +790,7 @@ public abstract class TypeCodec<T> {
 
         @Override
         public boolean accepts(Object value) {
-            if (value instanceof String) {
-                return ASCII_PATTERN.matcher((String)value).matches();
-            }
-            return false;
+            return value instanceof String && ASCII_PATTERN.matcher((String)value).matches();
         }
 
     }
@@ -906,7 +910,7 @@ public abstract class TypeCodec<T> {
     }
 
     /**
-     * This codec maps a CQL {@link DataType#custom(String)} to a Java {@link ByteBuffer}.
+     * This codec maps a CQL {@link DataType#custom(String) custom} type to a Java {@link ByteBuffer}.
      * Note that no instance of this codec is part of the default set of codecs used by the Java driver;
      * instances of this codec must be manually registered.
      */
@@ -1424,14 +1428,12 @@ public abstract class TypeCodec<T> {
 
             ParsePosition pos = new ParsePosition(0);
             for (String parsePattern : parsePatterns) {
-                String pattern = parsePattern;
 
-                parser.applyPattern(pattern);
+                parser.applyPattern(parsePattern);
                 pos.setIndex(0);
 
-                String str2 = str;
-                Date date = parser.parse(str2, pos);
-                if (date != null && pos.getIndex() == str2.length()) {
+                Date date = parser.parse(str, pos);
+                if (date != null && pos.getIndex() == str.length()) {
                     return date;
                 }
             }
@@ -1523,7 +1525,6 @@ public abstract class TypeCodec<T> {
 
                 return LocalDate.fromDaysSinceEpoch(days);
             }
-
 
             SimpleDateFormat parser = new SimpleDateFormat(pattern);
             parser.setLenient(false);
@@ -1682,7 +1683,7 @@ public abstract class TypeCodec<T> {
             int hours = (int)(value % 24);
             value -= hours;
             value /= 24;
-            assert(value == 0);
+            assert (value == 0);
             StringBuilder sb = new StringBuilder("'");
             leftPadZeros(hours, 2, sb);
             sb.append(":");
@@ -1728,7 +1729,7 @@ public abstract class TypeCodec<T> {
 
         @Override
         public ByteBuffer serialize(UUID value, ProtocolVersion protocolVersion) {
-            if(value == null)
+            if (value == null)
                 return null;
             ByteBuffer bb = ByteBuffer.allocate(16);
             bb.putLong(0, value.getMostSignificantBits());
@@ -1783,7 +1784,7 @@ public abstract class TypeCodec<T> {
 
         @Override
         public ByteBuffer serialize(UUID value, ProtocolVersion protocolVersion) {
-            if(value == null)
+            if (value == null)
                 return null;
             if (value.version() != 1)
                 throw new InvalidTypeException(String.format("%s is not a Type 1 (time-based) UUID", value));
@@ -1845,7 +1846,7 @@ public abstract class TypeCodec<T> {
 
         @Override
         public ByteBuffer serialize(C value, ProtocolVersion protocolVersion) {
-            if(value == null)
+            if (value == null)
                 return null;
             List<ByteBuffer> bbs = new ArrayList<ByteBuffer>(value.size());
             for (E elt : value) {
@@ -2186,10 +2187,7 @@ public abstract class TypeCodec<T> {
 
         @Override
         public boolean accepts(Object value) {
-            if(value instanceof UDTValue) {
-                return ((UDTValue) value).getType().equals(definition);
-            }
-            return false;
+            return value instanceof UDTValue && ((UDTValue)value).getType().equals(definition);
         }
 
         @Override
@@ -2317,7 +2315,7 @@ public abstract class TypeCodec<T> {
         public boolean accepts(Object value) {
             // a tuple codec should accept tuple values of a different type,
             // provided that the latter is contained in this codec's type.
-            return value instanceof TupleValue && definition.contains(((TupleValue) value).getType());
+            return value instanceof TupleValue && definition.contains(((TupleValue)value).getType());
         }
 
         @Override
