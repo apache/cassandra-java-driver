@@ -59,9 +59,6 @@ BoundStatement bound = ps2.bind()
   .setString("d", "LCD screen");
 ```
 
-If you don't set a parameter, it is sent as `null` (note that this
-behavior changes in the 2.1 branch of the driver).
-
 You can use named setters even if the query uses anonymous parameters;
 Cassandra will name the parameters after the column they apply to:
 
@@ -74,6 +71,25 @@ BoundStatement bound = ps1.bind()
 This can be ambiguous if the query uses the same column multiple times,
 for example: `select * from sales where sku = ? and date > ? and date <
 ?`. In these situations, use positional setters or named parameters.
+
+For native protocol V3 or below, all variables must be bound.  With native
+protocol V4 or above, variables can be left unset, in which case they
+will be ignored server side (no tombstones will be generated).  If you're 
+reusing a bound statement you can use the `unset` method to unset variables
+that were previously set:
+
+```java
+BoundStatement bound = ps1.bind()
+  .setString("sku", "324378")
+  .setString("description", "LCD screen")
+
+// Using the unset method to unset previously set value.
+// Positional setter:
+bound.unset("description");
+
+// Named setter:
+bound.unset(1);
+```
 
 A bound statement also has getters to retrieve the values. Note that
 this has a small performance overhead since values are stored in their
