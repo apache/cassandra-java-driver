@@ -30,12 +30,13 @@ import static org.mockito.Mockito.*;
 
 import com.datastax.driver.core.CodecFactory.DefaultCodecFactory;
 
-import static com.datastax.driver.core.DataType.cint;
 import static com.datastax.driver.core.DataType.list;
 
 public class TypeCodecOverridingIntegrationTest extends CCMBridge.PerClassSingleNodeCluster {
 
     private static final String query = "INSERT INTO \"myTable\" (c_int, l_int) VALUES (?, ?)";
+
+    private static final TypeToken<List<Integer>> LIST_OF_INTEGERS = new TypeToken<List<Integer>>(){};
 
     private CodecRegistry registry;
 
@@ -92,6 +93,12 @@ public class TypeCodecOverridingIntegrationTest extends CCMBridge.PerClassSingle
         reset(factory);
     }
 
+    @AfterMethod(groups = "short", alwaysRun = true)
+    @SuppressWarnings("unchecked")
+    public void resetCodecsCache() {
+        registry.reset();
+    }
+
     @Test(groups = "short")
     public void should_use_overriding_codecs_with_simple_statements() {
         session.execute(query,
@@ -121,9 +128,17 @@ public class TypeCodecOverridingIntegrationTest extends CCMBridge.PerClassSingle
         assertMocksInvoked();
     }
 
+    @Test(groups = "short")
+    public void should_use_overriding_codecs_with_prepared_statements_3() {
+        session.execute(
+            ps.bind()
+                .set(0, 42, Integer.class)
+                .set(1, newArrayList(42), LIST_OF_INTEGERS)
+        );
+        assertMocksInvoked();
+    }
+
     private void assertMocksInvoked() {
-        assertThat(registry.codecFor(cint(), TypeToken.of(Integer.class))).isSameAs(intCodec);
-        assertThat(registry.codecFor(list(cint()), new TypeToken<List<Integer>>(){})).isSameAs(listCodec);
         verify(intCodec, times(2)).serializeNoBoxing(42, protocolVersion);
         verify(listCodec).serialize(newArrayList(42), protocolVersion);
         verify(factory).newListCodec(intCodec);

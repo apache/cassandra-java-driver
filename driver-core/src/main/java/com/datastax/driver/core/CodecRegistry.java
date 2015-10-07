@@ -19,6 +19,7 @@ import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Objects;
 import com.google.common.cache.*;
 import com.google.common.collect.ImmutableSet;
@@ -561,4 +562,9 @@ public final class CodecRegistry {
         return new CodecNotFoundException(msg, cqlType, javaType);
     }
 
+    @VisibleForTesting void reset() {
+        cache.invalidateAll();
+        codecs.clear();
+        codecs.addAll(PRIMITIVE_CODECS);
+    }
 }
