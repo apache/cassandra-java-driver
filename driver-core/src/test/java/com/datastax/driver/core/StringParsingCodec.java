@@ -36,7 +36,7 @@ public abstract class StringParsingCodec<T> extends TypeCodec<T> {
     }
 
     public StringParsingCodec(TypeToken<T> javaType) {
-        this(VarcharCodec.instance, javaType);
+        this(TypeCodec.varcharCodec(), javaType);
     }
 
     public StringParsingCodec(TypeCodec<String> innerCodec, Class<T> javaType) {

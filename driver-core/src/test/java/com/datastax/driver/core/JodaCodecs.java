@@ -63,7 +63,7 @@ public class JodaCodecs {
         public static final LocalTimeCodec instance = new LocalTimeCodec();
 
         private LocalTimeCodec() {
-            super(TimeCodec.instance, LocalTime.class);
+            super(TypeCodec.timeCodec(), LocalTime.class);
         }
 
         @Override
@@ -92,7 +92,7 @@ public class JodaCodecs {
         public static final LocalDateCodec instance = new LocalDateCodec();
 
         private LocalDateCodec() {
-            super(DateCodec.instance, org.joda.time.LocalDate.class);
+            super(TypeCodec.dateCodec(), org.joda.time.LocalDate.class);
         }
 
         @Override
@@ -125,7 +125,7 @@ public class JodaCodecs {
         public static final DateTimeCodec instance = new DateTimeCodec();
 
         private DateTimeCodec() {
-            super(TimestampCodec.instance, DateTime.class);
+            super(TypeCodec.timestampCodec(), DateTime.class);
         }
 
         @Override

@@ -29,12 +29,12 @@ import org.testng.annotations.Test;
 import static com.google.common.collect.Lists.newArrayList;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.datastax.driver.core.TypeCodec.*;
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 import com.datastax.driver.core.querybuilder.BuiltStatement;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.utils.CassandraVersion;
 
+import static com.datastax.driver.core.TypeCodec.*;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.bindMarker;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
 
@@ -74,12 +74,12 @@ public class TypeCodecEncapsulationIntegrationTest extends CCMBridge.PerClassSin
         return builder.withCodecRegistry(
             new CodecRegistry()
                 .register(
-                    new NumberBoxCodec<Integer>(IntCodec.instance),
-                    new NumberBoxCodec<Long>(BigintCodec.instance),
-                    new NumberBoxCodec<Float>(FloatCodec.instance),
-                    new NumberBoxCodec<Double>(DoubleCodec.instance),
-                    new NumberBoxCodec<BigInteger>(VarintCodec.instance),
-                    new NumberBoxCodec<BigDecimal>(DecimalCodec.instance)
+                    new NumberBoxCodec<Integer>(intCodec()),
+                    new NumberBoxCodec<Long>(bigintCodec()),
+                    new NumberBoxCodec<Float>(floatCodec()),
+                    new NumberBoxCodec<Double>(doubleCodec()),
+                    new NumberBoxCodec<BigInteger>(varintCodec()),
+                    new NumberBoxCodec<BigDecimal>(decimalCodec())
                 )
         );
     }

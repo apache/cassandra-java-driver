@@ -138,31 +138,31 @@ import static com.datastax.driver.core.DataType.Name.*;
  * {@link CodecRegistry} instances are thread-safe.
  *
  */
-@SuppressWarnings("all")
 public final class CodecRegistry {
 
     private static final Logger logger = LoggerFactory.getLogger(CodecRegistry.class);
 
+    @SuppressWarnings("unchecked")
     private static final ImmutableSet<TypeCodec<?>> PRIMITIVE_CODECS = ImmutableSet.of(
-        BlobCodec.instance,
-        BooleanCodec.instance,
-        SmallIntCodec.instance,
-        TinyIntCodec.instance,
-        IntCodec.instance,
-        BigintCodec.instance,
-        CounterCodec.instance,
-        DoubleCodec.instance,
-        FloatCodec.instance,
-        VarintCodec.instance,
-        DecimalCodec.instance,
-        VarcharCodec.instance, // must be declared before AsciiCodec so it gets chosen when CQL type not available
-        AsciiCodec.instance,
-        TimestampCodec.instance,
-        DateCodec.instance,
-        TimeCodec.instance,
-        UUIDCodec.instance, // must be declared before TimeUUIDCodec so it gets chosen when CQL type not available
-        TimeUUIDCodec.instance,
-        InetCodec.instance
+        TypeCodec.blobCodec(),
+        TypeCodec.booleanCodec(),
+        TypeCodec.smallIntCodec(),
+        TypeCodec.tinyIntCodec(),
+        TypeCodec.intCodec(),
+        TypeCodec.bigintCodec(),
+        TypeCodec.counterCodec(),
+        TypeCodec.doubleCodec(),
+        TypeCodec.floatCodec(),
+        TypeCodec.varintCodec(),
+        TypeCodec.decimalCodec(),
+        TypeCodec.varcharCodec(), // must be declared before AsciiCodec so it gets chosen when CQL type not available
+        TypeCodec.asciiCodec(),
+        TypeCodec.timestampCodec(),
+        TypeCodec.dateCodec(),
+        TypeCodec.timeCodec(),
+        TypeCodec.uuidCodec(), // must be declared before TimeUUIDCodec so it gets chosen when CQL type not available
+        TypeCodec.timeUUIDCodec(),
+        TypeCodec.inetCodec()
     );
 
     /**
@@ -524,7 +524,7 @@ public final class CodecRegistry {
                 elementType = TypeToken.of(typeArguments[0]);
             }
             TypeCodec<?> eltCodec = findCodec(cqlType.getTypeArguments().get(0), elementType);
-            return new ListCodec(eltCodec);
+            return (TypeCodec<T>)TypeCodec.listCodec(eltCodec);
         }
 
         if (cqlType.getName() == SET && (javaType == null || Set.class.isAssignableFrom(javaType.getRawType()))) {
@@ -534,7 +534,7 @@ public final class CodecRegistry {
                 elementType = TypeToken.of(typeArguments[0]);
             }
             TypeCodec<?> eltCodec = findCodec(cqlType.getTypeArguments().get(0), elementType);
-            return new SetCodec(eltCodec);
+            return (TypeCodec<T>)TypeCodec.setCodec(eltCodec);
         }
 
         if (cqlType.getName() == MAP && (javaType == null || Map.class.isAssignableFrom(javaType.getRawType()))) {
@@ -547,15 +547,15 @@ public final class CodecRegistry {
             }
             TypeCodec<?> keyCodec = findCodec(cqlType.getTypeArguments().get(0), keyType);
             TypeCodec<?> valueCodec = findCodec(cqlType.getTypeArguments().get(1), valueType);
-            return new MapCodec(keyCodec, valueCodec);
+            return (TypeCodec<T>)TypeCodec.mapCodec(keyCodec, valueCodec);
         }
 
         if (cqlType instanceof TupleType && (javaType == null || TupleValue.class.isAssignableFrom(javaType.getRawType()))) {
-            return (TypeCodec<T>)new TupleCodec((TupleType)cqlType);
+            return (TypeCodec<T>)TypeCodec.tupleCodec((TupleType)cqlType);
         }
 
         if (cqlType instanceof UserType && (javaType == null || UDTValue.class.isAssignableFrom(javaType.getRawType()))) {
-            return (TypeCodec<T>)new UDTCodec((UserType)cqlType);
+            return (TypeCodec<T>)TypeCodec.userTypeCodec((UserType)cqlType);
         }
 
         return null;
@@ -570,12 +570,12 @@ public final class CodecRegistry {
                 DataType elementType = (cqlType == null || cqlType.getTypeArguments().isEmpty())
                     ? DataType.blob()
                     : cqlType.getTypeArguments().get(0);
-                return new ListCodec(findCodec(elementType, (TypeToken)null));
+                return TypeCodec.listCodec(findCodec(elementType, (TypeToken)null));
             } else {
                 DataType elementType = (cqlType == null || cqlType.getTypeArguments().isEmpty())
                     ? null
                     : cqlType.getTypeArguments().get(0);
-                return new ListCodec(findCodec(elementType, list.iterator().next()));
+                return (TypeCodec<T>)TypeCodec.listCodec(findCodec(elementType, list.iterator().next()));
             }
         }
 
@@ -585,12 +585,12 @@ public final class CodecRegistry {
                 DataType elementType = (cqlType == null || cqlType.getTypeArguments().isEmpty())
                     ? DataType.blob()
                     : cqlType.getTypeArguments().get(0);
-                return new SetCodec(findCodec(elementType, (TypeToken)null));
+                return TypeCodec.setCodec(findCodec(elementType, (TypeToken)null));
             } else {
                 DataType elementType = (cqlType == null || cqlType.getTypeArguments().isEmpty())
                     ? null
                     : cqlType.getTypeArguments().get(0);
-                return new SetCodec(findCodec(elementType, set.iterator().next()));
+                return (TypeCodec<T>)TypeCodec.setCodec(findCodec(elementType, set.iterator().next()));
             }
         }
 
@@ -603,7 +603,7 @@ public final class CodecRegistry {
                 DataType valueType = (cqlType == null || cqlType.getTypeArguments().size() < 2)
                     ? DataType.blob() :
                     cqlType.getTypeArguments().get(1);
-                return new MapCodec(
+                return TypeCodec.mapCodec(
                     findCodec(keyType, (TypeToken)null),
                     findCodec(valueType, (TypeToken)null));
             } else {
@@ -614,18 +614,18 @@ public final class CodecRegistry {
                     ? null
                     : cqlType.getTypeArguments().get(1);
                 Map.Entry entry = (Map.Entry)map.entrySet().iterator().next();
-                return new MapCodec(
+                return (TypeCodec<T>)TypeCodec.mapCodec(
                     findCodec(keyType, entry.getKey()),
                     findCodec(valueType, entry.getValue()));
             }
         }
 
         if ((cqlType == null || cqlType.getName() == DataType.Name.TUPLE) && value instanceof TupleValue) {
-            return (TypeCodec<T>)new TupleCodec(cqlType == null ? ((TupleValue)value).getType() : (TupleType) cqlType);
+            return (TypeCodec<T>)TypeCodec.tupleCodec(cqlType == null ? ((TupleValue)value).getType() : (TupleType)cqlType);
         }
 
         if ((cqlType == null || cqlType.getName() == DataType.Name.UDT) && value instanceof UDTValue) {
-            return (TypeCodec<T>)new UDTCodec(cqlType == null ? ((UDTValue)value).getType() : (UserType) cqlType);
+            return (TypeCodec<T>)TypeCodec.userTypeCodec(cqlType == null ? ((UDTValue)value).getType() : (UserType)cqlType);
         }
 
         return null;

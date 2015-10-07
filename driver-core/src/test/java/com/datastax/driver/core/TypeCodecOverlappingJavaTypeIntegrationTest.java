@@ -104,12 +104,12 @@ public class TypeCodecOverlappingJavaTypeIntegrationTest extends CCMBridge.PerCl
 
         @Override
         public ByteBuffer serialize(String value, ProtocolVersion protocolVersion) throws InvalidTypeException {
-            return IntCodec.instance.serialize(value == null ? null : Integer.parseInt(value), protocolVersion);
+            return TypeCodec.intCodec().serialize(value == null ? null : Integer.parseInt(value), protocolVersion);
         }
 
         @Override
         public String deserialize(ByteBuffer bytes, ProtocolVersion protocolVersion) throws InvalidTypeException {
-            Integer i = IntCodec.instance.deserialize(bytes, protocolVersion);
+            Integer i = TypeCodec.intCodec().deserialize(bytes, protocolVersion);
             return i == null ? null : Integer.toString(i);
         }
 

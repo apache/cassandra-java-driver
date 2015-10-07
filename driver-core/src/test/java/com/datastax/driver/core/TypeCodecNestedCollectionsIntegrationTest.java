@@ -202,12 +202,12 @@ public class TypeCodecNestedCollectionsIntegrationTest extends CCMBridge.PerClas
 
         @Override
         public ByteBuffer serialize(MyInt value, ProtocolVersion protocolVersion) throws InvalidTypeException {
-            return IntCodec.instance.serialize(value.i, protocolVersion);
+            return TypeCodec.intCodec().serialize(value.i, protocolVersion);
         }
 
         @Override
         public MyInt deserialize(ByteBuffer bytes, ProtocolVersion protocolVersion) throws InvalidTypeException {
-            return new MyInt(IntCodec.instance.deserialize(bytes, protocolVersion));
+            return new MyInt(TypeCodec.intCodec().deserialize(bytes, protocolVersion));
         }
 
         @Override

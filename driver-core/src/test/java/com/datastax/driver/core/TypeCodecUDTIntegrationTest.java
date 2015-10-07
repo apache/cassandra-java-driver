@@ -88,8 +88,8 @@ public class TypeCodecUDTIntegrationTest extends CCMBridge.PerClassSingleNodeClu
         try {
             Session session = cluster.connect(keyspace);
             setUpUserTypes(cluster);
-            TypeCodec<UDTValue> addressTypeCodec = new TypeCodec.UDTCodec(addressType);
-            TypeCodec<UDTValue> phoneTypeCodec = new TypeCodec.UDTCodec(phoneType);
+            TypeCodec<UDTValue> addressTypeCodec = TypeCodec.userTypeCodec(addressType);
+            TypeCodec<UDTValue> phoneTypeCodec = TypeCodec.userTypeCodec(phoneType);
             codecRegistry
                 .register(new AddressCodec(addressTypeCodec, Address.class))
                 .register(new PhoneCodec(phoneTypeCodec, Phone.class))

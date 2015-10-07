@@ -152,13 +152,13 @@ public class AggregateMetadataTest {
     private static final String TEXT = "org.apache.cassandra.db.marshal.UTF8Type";
 
     private static final Row SYSTEM_ROW_CAT_TOS = mockRow("cat_tos", ImmutableList.of("int"), ImmutableList.of(INT),
-        null, TypeCodec.VarcharCodec.instance.serialize("0", PROTOCOL_VERSION), TEXT, "cat", TEXT);
+        null, TypeCodec.varcharCodec().serialize("0", PROTOCOL_VERSION), TEXT, "cat", TEXT);
 
     private static final Row SYSTEM_ROW_MYCOUNT = mockRow("mycount", Collections.<String>emptyList(), Collections.<String>emptyList(),
-        null, TypeCodec.IntCodec.instance.serialize(0, PROTOCOL_VERSION), INT, "inc", INT);
+        null, TypeCodec.intCodec().serialize(0, PROTOCOL_VERSION), INT, "inc", INT);
 
     private static final Row SYSTEM_ROW_PRETTYSUM = mockRow("prettysum", ImmutableList.of("int"), ImmutableList.of(INT),
-        "announce", TypeCodec.IntCodec.instance.serialize(0, PROTOCOL_VERSION), TEXT, "plus", INT);
+        "announce", TypeCodec.intCodec().serialize(0, PROTOCOL_VERSION), TEXT, "plus", INT);
 
     private static final Row SYSTEM_ROW_SUM = mockRow("sum", ImmutableList.of("int"), ImmutableList.of(INT),
         null, null, INT, "plus", INT);

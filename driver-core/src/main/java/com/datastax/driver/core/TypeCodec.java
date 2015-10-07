@@ -119,7 +119,291 @@ public abstract class TypeCodec<T> {
     /**
      * The CQL keyword {@code NULL}.
      */
-    private static final String NULL = "NULL";
+    public static final String NULL = "NULL";
+
+    /**
+     * Return the default codec for the CQL type {@code boolean}.
+     * The returned codec maps the CQL type {@code boolean} into the Java type {@link Boolean}.
+     * The returned codec implements {@link PrimitiveBooleanCodec}.
+     * The returned instance is a singleton.
+     * @return the default codec for CQL type {@code boolean}.
+     **/
+    @SuppressWarnings("unchecked")
+    public static <C extends TypeCodec<Boolean> & PrimitiveBooleanCodec> C booleanCodec() {
+        return (C)BooleanCodec.instance;
+    }
+
+    /**
+     * Return the default codec for the CQL type {@code tinyint}.
+     * The returned codec maps the CQL type {@code tinyint} into the Java type {@link Byte}.
+     * The returned codec implements {@link PrimitiveByteCodec}.
+     * The returned instance is a singleton.
+     * @return the default codec for CQL type {@code tinyint}.
+     **/
+    @SuppressWarnings("unchecked")
+    public static <C extends TypeCodec<Byte> & PrimitiveByteCodec> C tinyIntCodec() {
+        return (C)TinyIntCodec.instance;
+    }
+
+    /**
+     * Return the default codec for the CQL type {@code smallint}.
+     * The returned codec maps the CQL type {@code smallint} into the Java type {@link Short}.
+     * The returned codec implements {@link PrimitiveShortCodec}.
+     * The returned instance is a singleton.
+     * @return the default codec for CQL type {@code smallint}.
+     **/
+    @SuppressWarnings("unchecked")
+    public static <C extends TypeCodec<Short> & PrimitiveShortCodec> C smallIntCodec() {
+        return (C)SmallIntCodec.instance;
+    }
+
+    /**
+     * Return the default codec for the CQL type {@code int}.
+     * The returned codec maps the CQL type {@code int} into the Java type {@link Integer}.
+     * The returned codec implements {@link PrimitiveIntCodec}.
+     * The returned instance is a singleton.
+     * @return the default codec for CQL type {@code int}.
+     **/
+    @SuppressWarnings("unchecked")
+    public static <C extends TypeCodec<Integer> & PrimitiveIntCodec> C intCodec() {
+        return (C)IntCodec.instance;
+    }
+
+    /**
+     * Return the default codec for the CQL type {@code bigint}.
+     * The returned codec maps the CQL type {@code bigint} into the Java type {@link Long}.
+     * The returned codec implements {@link PrimitiveLongCodec}.
+     * The returned instance is a singleton.
+     * @return the default codec for CQL type {@code bigint}.
+     **/
+    @SuppressWarnings("unchecked")
+    public static <C extends TypeCodec<Long> & PrimitiveLongCodec> C bigintCodec() {
+        return (C)BigintCodec.instance;
+    }
+
+    /**
+     * Return the default codec for the CQL type {@code counter}.
+     * The returned codec maps the CQL type {@code counter} into the Java type {@link Long}.
+     * The returned codec implements {@link PrimitiveLongCodec}.
+     * The returned instance is a singleton.
+     * @return the default codec for CQL type {@code counter}.
+     **/
+    @SuppressWarnings("unchecked")
+    public static <C extends TypeCodec<Long> & PrimitiveLongCodec> C counterCodec() {
+        return (C)CounterCodec.instance;
+    }
+
+    /**
+     * Return the default codec for the CQL type {@code float}.
+     * The returned codec maps the CQL type {@code float} into the Java type {@link Float}.
+     * The returned codec implements {@link PrimitiveFloatCodec}.
+     * The returned instance is a singleton.
+     * @return the default codec for CQL type {@code float}.
+     **/
+    @SuppressWarnings("unchecked")
+    public static <C extends TypeCodec<Float> & PrimitiveFloatCodec> C floatCodec() {
+        return (C)FloatCodec.instance;
+    }
+
+    /**
+     * Return the default codec for the CQL type {@code double}.
+     * The returned codec maps the CQL type {@code double} into the Java type {@link Double}.
+     * The returned codec implements {@link PrimitiveDoubleCodec}.
+     * The returned instance is a singleton.
+     * @return the default codec for CQL type {@code double}.
+     **/
+    @SuppressWarnings("unchecked")
+    public static <C extends TypeCodec<Double> & PrimitiveDoubleCodec> C doubleCodec() {
+        return (C)DoubleCodec.instance;
+    }
+
+    /**
+     * Return the default codec for the CQL type {@code varint}.
+     * The returned codec maps the CQL type {@code varint} into the Java type {@link BigInteger}.
+     * The returned instance is a singleton.
+     * @return the default codec for CQL type {@code varint}.
+     **/
+    public static TypeCodec<BigInteger> varintCodec() {
+        return VarintCodec.instance;
+    }
+
+    /**
+     * Return the default codec for the CQL type {@code decimal}.
+     * The returned codec maps the CQL type {@code decimal} into the Java type {@link BigDecimal}.
+     * The returned instance is a singleton.
+     * @return the default codec for CQL type {@code decimal}.
+     **/
+    public static TypeCodec<BigDecimal> decimalCodec() {
+        return DecimalCodec.instance;
+    }
+
+    /**
+     * Return the default codec for the CQL type {@code ascii}.
+     * The returned codec maps the CQL type {@code ascii} into the Java type {@link String}.
+     * The returned instance is a singleton.
+     * @return the default codec for CQL type {@code ascii}.
+     **/
+    public static TypeCodec<String> asciiCodec() {
+        return AsciiCodec.instance;
+    }
+
+    /**
+     * Return the default codec for the CQL type {@code varchar}.
+     * The returned codec maps the CQL type {@code varchar} into the Java type {@link String}.
+     * The returned instance is a singleton.
+     * @return the default codec for CQL type {@code varchar}.
+     **/
+    public static TypeCodec<String> varcharCodec() {
+        return VarcharCodec.instance;
+    }
+
+    /**
+     * Return the default codec for the CQL type {@code blob}.
+     * The returned codec maps the CQL type {@code blob} into the Java type {@link ByteBuffer}.
+     * The returned instance is a singleton.
+     * @return the default codec for CQL type {@code blob}.
+     **/
+    public static TypeCodec<ByteBuffer> blobCodec() {
+        return BlobCodec.instance;
+    }
+
+    /**
+     * Return the default codec for the CQL type {@code date}.
+     * The returned codec maps the CQL type {@code date} into the Java type {@link LocalDate}.
+     * The returned instance is a singleton.
+     * @return the default codec for CQL type {@code date}.
+     **/
+    public static TypeCodec<LocalDate> dateCodec() {
+        return DateCodec.instance;
+    }
+
+    /**
+     * Return the default codec for the CQL type {@code time}.
+     * The returned codec maps the CQL type {@code time} into the Java type {@link Long}.
+     * The returned instance is a singleton.
+     * @return the default codec for CQL type {@code time}.
+     **/
+    public static TypeCodec<Long> timeCodec() {
+        return TimeCodec.instance;
+    }
+
+    /**
+     * Return the default codec for the CQL type {@code timestamp}.
+     * The returned codec maps the CQL type {@code timestamp} into the Java type {@link Date}.
+     * The returned instance is a singleton.
+     * @return the default codec for CQL type {@code timestamp}.
+     **/
+    public static TypeCodec<Date> timestampCodec() {
+        return TimestampCodec.instance;
+    }
+
+    /**
+     * Return the default codec for the CQL type {@code uuid}.
+     * The returned codec maps the CQL type {@code uuid} into the Java type {@link UUID}.
+     * The returned instance is a singleton.
+     * @return the default codec for CQL type {@code uuid}.
+     **/
+    public static TypeCodec<UUID> uuidCodec() {
+        return UUIDCodec.instance;
+    }
+
+    /**
+     * Return the default codec for the CQL type {@code timeuuid}.
+     * The returned codec maps the CQL type {@code timeuuid} into the Java type {@link UUID}.
+     * The returned instance is a singleton.
+     * @return the default codec for CQL type {@code timeuuid}.
+     **/
+    public static TypeCodec<UUID> timeUUIDCodec() {
+        return TimeUUIDCodec.instance;
+    }
+
+    /**
+     * Return the default codec for the CQL type {@code inet}.
+     * The returned codec maps the CQL type {@code inet} into the Java type {@link InetAddress}.
+     * The returned instance is a singleton.
+     * @return the default codec for CQL type {@code inet}.
+     **/
+    public static TypeCodec<InetAddress> inetCodec() {
+        return InetCodec.instance;
+    }
+
+    /**
+     * Return a newly-created codec for the CQL type {@code list} whose element type
+     * is determined by the given element codec.
+     * The returned codec maps the CQL type {@code list} into the Java type {@link List}.
+     * This method does not cache returned instances and returns a newly-allocated object
+     * at each invocation.
+     * @param elementCodec the codec that will handle elements of this list.
+     * @return A newly-created codec for CQL type {@code list}.
+     **/
+    public static <T> TypeCodec<List<T>> listCodec(TypeCodec<T> elementCodec) {
+        return new ListCodec<T>(elementCodec);
+    }
+
+    /**
+     * Return a newly-created codec for the CQL type {@code set} whose element type
+     * is determined by the given element codec.
+     * The returned codec maps the CQL type {@code set} into the Java type {@link Set}.
+     * This method does not cache returned instances and returns a newly-allocated object
+     * at each invocation.
+     * @param elementCodec the codec that will handle elements of this set.
+     * @return A newly-created codec for CQL type {@code set}.
+     **/
+    public static <T> TypeCodec<Set<T>> setCodec(TypeCodec<T> elementCodec) {
+        return new SetCodec<T>(elementCodec);
+    }
+
+    /**
+     * Return a newly-created codec for the CQL type {@code map} whose key type
+     * and value type are determined by the given codecs.
+     * The returned codec maps the CQL type {@code map} into the Java type {@link Map}.
+     * This method does not cache returned instances and returns a newly-allocated object
+     * at each invocation.
+     * @param keyCodec the codec that will handle keys of this map.
+     * @param valueCodec the codec that will handle values of this map.
+     * @return A newly-created codec for CQL type {@code map}.
+     **/
+    public static <K, V> TypeCodec<Map<K, V>> mapCodec(TypeCodec<K> keyCodec, TypeCodec<V> valueCodec) {
+        return new MapCodec<K, V>(keyCodec, valueCodec);
+    }
+
+    /**
+     * Return a newly-created codec for the given user-defined CQL type.
+     * The returned codec maps the user-defined type into the Java type {@link UDTValue}.
+     * This method does not cache returned instances and returns a newly-allocated object
+     * at each invocation.
+     * @param type the user-defined type this codec should handle.
+     * @return A newly-created codec for the given user-defined CQL type.
+     **/
+    public static TypeCodec<UDTValue> userTypeCodec(UserType type) {
+        return new UDTCodec(type);
+    }
+
+    /**
+     * Return a newly-created codec for the given CQL tuple type.
+     * The returned codec maps the tuple type into the Java type {@link TupleValue}.
+     * This method does not cache returned instances and returns a newly-allocated object
+     * at each invocation.
+     * @param type the tuple type this codec should handle.
+     * @return A newly-created codec for the given CQL tuple type.
+     **/
+    public static TypeCodec<TupleValue> tupleCodec(TupleType type) {
+        return new TupleCodec(type);
+    }
+
+    /**
+     * Return a newly-created codec for the given CQL custom type.
+     * The returned codec maps the custom type into the Java type {@link ByteBuffer}.
+     * This method provides a (very lightweight) support for Cassandra
+     * types that do not have a CQL equivalent.
+     * This method does not cache returned instances and returns a newly-allocated object
+     * at each invocation.
+     * @param type the custom type this codec should handle.
+     * @return A newly-created codec for the given CQL custom type.
+     **/
+    public static TypeCodec<ByteBuffer> customCodec(DataType type) {
+        return new CustomCodec(type);
+    }
 
     protected final TypeToken<T> javaType;
 
@@ -386,11 +670,11 @@ public abstract class TypeCodec<T> {
      * Base class for codecs handling CQL string types such as {@link DataType#varchar()},
      * {@link DataType#text()} or {@link DataType#ascii()}.
      */
-    public static abstract class StringCodec extends TypeCodec<String> {
+    private static abstract class StringCodec extends TypeCodec<String> {
 
         private final Charset charset;
 
-        public StringCodec(DataType cqlType, Charset charset) {
+        private StringCodec(DataType cqlType, Charset charset) {
             super(cqlType, String.class);
             this.charset = charset;
         }
@@ -413,7 +697,7 @@ public abstract class TypeCodec<T> {
 
         // Simple method to replace a single character. String.replace is a bit too
         // inefficient (see JAVA-67)
-        static String replace(String text, char search, String replacement) {
+        private static String replace(String text, char search, String replacement) {
             if (text == null || text.isEmpty())
                 return text;
 
@@ -469,9 +753,9 @@ public abstract class TypeCodec<T> {
      * Note that this codec also handles {@link DataType#text()}, which is merely
      * an alias for {@link DataType#varchar()}.
      */
-    public static class VarcharCodec extends StringCodec {
+    private static class VarcharCodec extends StringCodec {
 
-        public static final VarcharCodec instance = new VarcharCodec();
+        private static final VarcharCodec instance = new VarcharCodec();
 
         private VarcharCodec() {
             super(varchar(), Charset.forName("UTF-8"));
@@ -482,9 +766,9 @@ public abstract class TypeCodec<T> {
     /**
      * This codec maps a CQL {@link DataType#ascii()} to a Java {@link String}.
      */
-    public static class AsciiCodec extends StringCodec {
+    private static class AsciiCodec extends StringCodec {
 
-        public static final AsciiCodec instance = new AsciiCodec();
+        private static final AsciiCodec instance = new AsciiCodec();
 
         private static final Pattern ASCII_PATTERN = Pattern.compile("^\\p{ASCII}*$");
 
@@ -506,9 +790,9 @@ public abstract class TypeCodec<T> {
      * Base class for codecs handling CQL 8-byte integer types such as {@link DataType#bigint()},
      * {@link DataType#counter()} or {@link DataType#time()}.
      */
-    public abstract static class LongCodec extends TypeCodec<Long> implements PrimitiveLongCodec {
+    private abstract static class LongCodec extends TypeCodec<Long> implements PrimitiveLongCodec {
 
-        public LongCodec(DataType cqlType) {
+        private LongCodec(DataType cqlType) {
             super(cqlType, Long.class);
         }
 
@@ -559,9 +843,9 @@ public abstract class TypeCodec<T> {
     /**
      * This codec maps a CQL {@link DataType#bigint()} to a Java {@link Long}.
      */
-    public static class BigintCodec extends LongCodec {
+    private static class BigintCodec extends LongCodec {
 
-        public static final BigintCodec instance = new BigintCodec();
+        private static final BigintCodec instance = new BigintCodec();
 
         private BigintCodec() {
             super(bigint());
@@ -572,9 +856,9 @@ public abstract class TypeCodec<T> {
     /**
      * This codec maps a CQL {@link DataType#counter()} to a Java {@link Long}.
      */
-    public static class CounterCodec extends LongCodec {
+    private static class CounterCodec extends LongCodec {
 
-        public static final CounterCodec instance = new CounterCodec();
+        private static final CounterCodec instance = new CounterCodec();
 
         private CounterCodec() {
             super(counter());
@@ -585,9 +869,9 @@ public abstract class TypeCodec<T> {
     /**
      * This codec maps a CQL {@link DataType#blob()} to a Java {@link ByteBuffer}.
      */
-    public static class BlobCodec extends TypeCodec<ByteBuffer> {
+    private static class BlobCodec extends TypeCodec<ByteBuffer> {
 
-        public static final BlobCodec instance = new BlobCodec();
+        private static final BlobCodec instance = new BlobCodec();
 
         private BlobCodec() {
             super(blob(), ByteBuffer.class);
@@ -621,9 +905,9 @@ public abstract class TypeCodec<T> {
      * Note that no instance of this codec is part of the default set of codecs used by the Java driver;
      * instances of this codec must be manually registered.
      */
-    public static class CustomCodec extends TypeCodec<ByteBuffer> {
+    private static class CustomCodec extends TypeCodec<ByteBuffer> {
 
-        public CustomCodec(DataType custom) {
+        private CustomCodec(DataType custom) {
             super(custom, ByteBuffer.class);
             assert custom.getName() == Name.CUSTOM;
         }
@@ -654,12 +938,12 @@ public abstract class TypeCodec<T> {
     /**
      * This codec maps a CQL {@link DataType#cboolean()} to a Java {@link Boolean}.
      */
-    public static class BooleanCodec extends TypeCodec<Boolean> implements PrimitiveBooleanCodec {
+    private static class BooleanCodec extends TypeCodec<Boolean> implements PrimitiveBooleanCodec {
 
         private static final ByteBuffer TRUE = ByteBuffer.wrap(new byte[]{ 1 });
         private static final ByteBuffer FALSE = ByteBuffer.wrap(new byte[]{ 0 });
 
-        public static final BooleanCodec instance = new BooleanCodec();
+        private static final BooleanCodec instance = new BooleanCodec();
 
         private BooleanCodec() {
             super(cboolean(), Boolean.class);
@@ -713,9 +997,9 @@ public abstract class TypeCodec<T> {
     /**
      * This codec maps a CQL {@link DataType#decimal()} to a Java {@link BigDecimal}.
      */
-    public static class DecimalCodec extends TypeCodec<BigDecimal> {
+    private static class DecimalCodec extends TypeCodec<BigDecimal> {
 
-        public static final DecimalCodec instance = new DecimalCodec();
+        private static final DecimalCodec instance = new DecimalCodec();
 
         private DecimalCodec() {
             super(decimal(), BigDecimal.class);
@@ -772,9 +1056,9 @@ public abstract class TypeCodec<T> {
     /**
      * This codec maps a CQL {@link DataType#cdouble()} to a Java {@link Double}.
      */
-    public static class DoubleCodec extends TypeCodec<Double> implements PrimitiveDoubleCodec {
+    private static class DoubleCodec extends TypeCodec<Double> implements PrimitiveDoubleCodec {
 
-        public static final DoubleCodec instance = new DoubleCodec();
+        private static final DoubleCodec instance = new DoubleCodec();
 
         private DoubleCodec() {
             super(cdouble(), Double.class);
@@ -827,9 +1111,9 @@ public abstract class TypeCodec<T> {
     /**
      * This codec maps a CQL {@link DataType#cfloat()} to a Java {@link Float}.
      */
-    public static class FloatCodec extends TypeCodec<Float> implements PrimitiveFloatCodec {
+    private static class FloatCodec extends TypeCodec<Float> implements PrimitiveFloatCodec {
 
-        public static final FloatCodec instance = new FloatCodec();
+        private static final FloatCodec instance = new FloatCodec();
 
         private FloatCodec() {
             super(cfloat(), Float.class);
@@ -882,9 +1166,9 @@ public abstract class TypeCodec<T> {
     /**
      * This codec maps a CQL {@link DataType#inet()} to a Java {@link InetAddress}.
      */
-    public static class InetCodec extends TypeCodec<InetAddress> {
+    private static class InetCodec extends TypeCodec<InetAddress> {
 
-        public static final InetCodec instance = new InetCodec();
+        private static final InetCodec instance = new InetCodec();
 
         private InetCodec() {
             super(inet(), InetAddress.class);
@@ -932,9 +1216,9 @@ public abstract class TypeCodec<T> {
     /**
      * This codec maps a CQL {@link DataType#tinyint()} to a Java {@link Byte}.
      */
-    public static class TinyIntCodec extends TypeCodec<Byte> implements PrimitiveByteCodec {
+    private static class TinyIntCodec extends TypeCodec<Byte> implements PrimitiveByteCodec {
 
-        public static final TinyIntCodec instance = new TinyIntCodec();
+        private static final TinyIntCodec instance = new TinyIntCodec();
 
         private TinyIntCodec() {
             super(tinyint(), Byte.class);
@@ -987,9 +1271,9 @@ public abstract class TypeCodec<T> {
     /**
      * This codec maps a CQL {@link DataType#smallint()} to a Java {@link Short}.
      */
-    public static class SmallIntCodec extends TypeCodec<Short> implements PrimitiveShortCodec {
+    private static class SmallIntCodec extends TypeCodec<Short> implements PrimitiveShortCodec {
 
-        public static final SmallIntCodec instance = new SmallIntCodec();
+        private static final SmallIntCodec instance = new SmallIntCodec();
 
         private SmallIntCodec() {
             super(smallint(), Short.class);
@@ -1042,9 +1326,9 @@ public abstract class TypeCodec<T> {
     /**
      * This codec maps a CQL {@link DataType#cint()} to a Java {@link Integer}.
      */
-    public static class IntCodec extends TypeCodec<Integer> implements PrimitiveIntCodec {
+    private static class IntCodec extends TypeCodec<Integer> implements PrimitiveIntCodec {
 
-        public static final IntCodec instance = new IntCodec();
+        private static final IntCodec instance = new IntCodec();
 
         private IntCodec() {
             super(cint(), Integer.class);
@@ -1097,7 +1381,7 @@ public abstract class TypeCodec<T> {
     /**
      * This codec maps a CQL {@link DataType#timestamp()} to a Java {@link Date}.
      */
-    public static class TimestampCodec extends TypeCodec<Date> {
+    private static class TimestampCodec extends TypeCodec<Date> {
 
         private static final String[] iso8601Patterns = new String[]{
             "yyyy-MM-dd HH:mm",
@@ -1116,7 +1400,7 @@ public abstract class TypeCodec<T> {
             "yyyy-MM-ddZ"
         };
 
-        public static final TimestampCodec instance = new TimestampCodec();
+        private static final TimestampCodec instance = new TimestampCodec();
 
         private static final Pattern IS_LONG_PATTERN = Pattern.compile("^-?\\d+$");
 
@@ -1194,9 +1478,9 @@ public abstract class TypeCodec<T> {
     /**
      * This codec maps a CQL {@link DataType#date()} to the custom {@link LocalDate} class.
      */
-    public static class DateCodec extends TypeCodec<LocalDate> {
+    private static class DateCodec extends TypeCodec<LocalDate> {
 
-        public static final DateCodec instance = new DateCodec();
+        private static final DateCodec instance = new DateCodec();
 
         private static final Pattern IS_LONG_PATTERN = Pattern.compile("^-?\\d+$");
         private static final String pattern = "yyyy-MM-dd";
@@ -1281,11 +1565,11 @@ public abstract class TypeCodec<T> {
     /**
      * This codec maps a CQL {@link DataType#time()} to a Java {@link Long}.
      */
-    public static class TimeCodec extends LongCodec {
+    private static class TimeCodec extends LongCodec {
 
         private static final Pattern IS_LONG_PATTERN = Pattern.compile("^-?\\d+$");
 
-        public static final TimeCodec instance = new TimeCodec();
+        private static final TimeCodec instance = new TimeCodec();
 
         private TimeCodec() {
             super(time());
@@ -1415,7 +1699,7 @@ public abstract class TypeCodec<T> {
     /**
      * Base class for codecs handling CQL UUID types such as {@link DataType#uuid()} and {@link DataType#timeuuid()}.
      */
-    public static abstract class AbstractUUIDCodec extends TypeCodec<UUID> {
+    private static abstract class AbstractUUIDCodec extends TypeCodec<UUID> {
 
         private AbstractUUIDCodec(DataType cqlType) {
             super(cqlType, UUID.class);
@@ -1456,9 +1740,9 @@ public abstract class TypeCodec<T> {
     /**
      * This codec maps a CQL {@link DataType#uuid()} to a Java {@link UUID}.
      */
-    public static class UUIDCodec extends AbstractUUIDCodec {
+    private static class UUIDCodec extends AbstractUUIDCodec {
 
-        public static final UUIDCodec instance = new UUIDCodec();
+        private static final UUIDCodec instance = new UUIDCodec();
 
         private UUIDCodec() {
             super(uuid());
@@ -1469,9 +1753,9 @@ public abstract class TypeCodec<T> {
     /**
      * This codec maps a CQL {@link DataType#timeuuid()} to a Java {@link UUID}.
      */
-    public static class TimeUUIDCodec extends AbstractUUIDCodec {
+    private static class TimeUUIDCodec extends AbstractUUIDCodec {
 
-        public static final TimeUUIDCodec instance = new TimeUUIDCodec();
+        private static final TimeUUIDCodec instance = new TimeUUIDCodec();
 
         private TimeUUIDCodec() {
             super(timeuuid());
@@ -1479,11 +1763,8 @@ public abstract class TypeCodec<T> {
 
         @Override
         public boolean accepts(Object value) {
-            if (super.accepts(value)) {
-                // only accept time-based uuids
-                return ((UUID)value).version() == 1;
-            }
-            return false;
+            // only accept time-based uuids
+            return super.accepts(value) && ((UUID)value).version() == 1;
         }
 
         @Override
@@ -1508,9 +1789,9 @@ public abstract class TypeCodec<T> {
     /**
      * This codec maps a CQL {@link DataType#varint()} to a Java {@link BigInteger}.
      */
-    public static class VarintCodec extends TypeCodec<BigInteger> {
+    private static class VarintCodec extends TypeCodec<BigInteger> {
 
-        public static final VarintCodec instance = new VarintCodec();
+        private static final VarintCodec instance = new VarintCodec();
 
         private VarintCodec() {
             super(varint(), BigInteger.class);
@@ -1548,11 +1829,11 @@ public abstract class TypeCodec<T> {
      * or {@link DataType#set(DataType)}.
      * Note that for practical reasons, {@link MapCodec} does not inherit from this class.
      */
-    public abstract static class CollectionCodec<E, C extends Collection<E>> extends TypeCodec<C> {
+    private abstract static class CollectionCodec<E, C extends Collection<E>> extends TypeCodec<C> {
 
         protected final TypeCodec<E> eltCodec;
 
-        public CollectionCodec(CollectionType cqlType, TypeToken<C> javaType, TypeCodec<E> eltCodec) {
+        private CollectionCodec(CollectionType cqlType, TypeToken<C> javaType, TypeCodec<E> eltCodec) {
             super(cqlType, javaType);
             this.eltCodec = eltCodec;
         }
@@ -1676,9 +1957,9 @@ public abstract class TypeCodec<T> {
     /**
      * This codec maps a CQL {@link DataType#list(DataType) list type} to a Java {@link List}.
      */
-    public static class ListCodec<T> extends CollectionCodec<T, List<T>> {
+    private static class ListCodec<T> extends CollectionCodec<T, List<T>> {
 
-        public ListCodec(TypeCodec<T> eltCodec) {
+        private ListCodec(TypeCodec<T> eltCodec) {
             super(list(eltCodec.getCqlType()), listOf(eltCodec.getJavaType()), eltCodec);
         }
 
@@ -1707,9 +1988,9 @@ public abstract class TypeCodec<T> {
     /**
      * This codec maps a CQL {@link DataType#set(DataType) set type} to a Java {@link Set}.
      */
-    public static class SetCodec<T> extends CollectionCodec<T, Set<T>> {
+    private static class SetCodec<T> extends CollectionCodec<T, Set<T>> {
 
-        public SetCodec(TypeCodec<T> eltCodec) {
+        private SetCodec(TypeCodec<T> eltCodec) {
             super(set(eltCodec.cqlType), setOf(eltCodec.getJavaType()), eltCodec);
         }
 
@@ -1737,13 +2018,13 @@ public abstract class TypeCodec<T> {
     /**
      * This codec maps a CQL {@link DataType#map(DataType, DataType) map type} to a Java {@link Map}.
      */
-    public static class MapCodec<K, V> extends TypeCodec<Map<K, V>> {
+    private static class MapCodec<K, V> extends TypeCodec<Map<K, V>> {
 
         private final TypeCodec<K> keyCodec;
 
         private final TypeCodec<V> valueCodec;
 
-        public MapCodec(TypeCodec<K> keyCodec, TypeCodec<V> valueCodec) {
+        private MapCodec(TypeCodec<K> keyCodec, TypeCodec<V> valueCodec) {
             super(map(keyCodec.getCqlType(), valueCodec.getCqlType()), mapOf(keyCodec.getJavaType(), valueCodec.getJavaType()));
             this.keyCodec = keyCodec;
             this.valueCodec = valueCodec;
@@ -1889,11 +2170,11 @@ public abstract class TypeCodec<T> {
     /**
      * This codec maps a CQL {@link UserType} to a {@link UDTValue}.
      */
-    public static class UDTCodec extends TypeCodec<UDTValue> {
+    private static class UDTCodec extends TypeCodec<UDTValue> {
 
         private final UserType definition;
 
-        public UDTCodec(UserType definition) {
+        private UDTCodec(UserType definition) {
             super(definition, UDTValue.class);
             this.definition = definition;
         }
@@ -2011,11 +2292,11 @@ public abstract class TypeCodec<T> {
     /**
      * This codec maps a CQL {@link TupleType} to a {@link TupleValue}.
      */
-    public static class TupleCodec extends TypeCodec<TupleValue> {
+    private static class TupleCodec extends TypeCodec<TupleValue> {
 
         private final TupleType definition;
 
-        public TupleCodec(TupleType definition) {
+        private TupleCodec(TupleType definition) {
             super(definition, TupleValue.class);
             this.definition = definition;
         }

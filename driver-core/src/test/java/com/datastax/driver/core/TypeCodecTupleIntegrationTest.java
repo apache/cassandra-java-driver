@@ -114,7 +114,7 @@ public class TypeCodecTupleIntegrationTest extends CCMBridge.PerClassSingleNodeC
             Session session = cluster.connect(keyspace);
             setUpTupleTypes(cluster);
             codecRegistry
-                .register(new LocationCodec(new TypeCodec.TupleCodec(locationType)))
+                .register(new LocationCodec(TypeCodec.tupleCodec(locationType)))
             ;
             session.execute(insertQuery, uuid, "John Doe", locationValue);
             ResultSet rows = session.execute(selectQuery, uuid);
@@ -150,7 +150,7 @@ public class TypeCodecTupleIntegrationTest extends CCMBridge.PerClassSingleNodeC
             Session session = cluster.connect(keyspace);
             setUpTupleTypes(cluster);
             codecRegistry
-                .register(new LocationCodec(new TypeCodec.TupleCodec(locationType)))
+                .register(new LocationCodec(TypeCodec.tupleCodec(locationType)))
             ;
             session.execute(insertQuery, uuid, "John Doe", partialLocationValueInserted);
             ResultSet rows = session.execute(selectQuery, uuid);

@@ -32,12 +32,14 @@ import com.datastax.driver.core.exceptions.DriverInternalError;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
 import static com.datastax.driver.core.SchemaElement.*;
+import static com.datastax.driver.core.TypeCodec.listCodec;
+import static com.datastax.driver.core.TypeCodec.varcharCodec;
 
 class ControlConnection implements Connection.Owner {
 
     private static final Logger logger = LoggerFactory.getLogger(ControlConnection.class);
 
-    private static final TypeCodec.ListCodec<String> LIST_OF_TEXT_CODEC = new TypeCodec.ListCodec<String>(TypeCodec.VarcharCodec.instance);
+    private static final TypeCodec<List<String>> LIST_OF_TEXT_CODEC = listCodec(varcharCodec());
 
     private static final InetAddress bindAllAddress;
 
