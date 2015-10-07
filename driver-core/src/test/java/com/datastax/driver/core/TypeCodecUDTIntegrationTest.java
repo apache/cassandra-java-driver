@@ -143,7 +143,7 @@ public class TypeCodecUDTIntegrationTest extends CCMBridge.PerClassSingleNodeClu
             .setList("phones", Lists.newArrayList(phone1Value, phone2Value));
     }
 
-    static class AddressCodec extends TypeCodec.MappingCodec<Address, UDTValue> {
+    static class AddressCodec extends MappingCodec<Address, UDTValue> {
 
         private final UserType userType;
 
@@ -163,7 +163,7 @@ public class TypeCodecUDTIntegrationTest extends CCMBridge.PerClassSingleNodeClu
         }
     }
 
-    static class PhoneCodec extends TypeCodec.MappingCodec<Phone, UDTValue> {
+    static class PhoneCodec extends MappingCodec<Phone, UDTValue> {
 
         private final UserType userType;
 

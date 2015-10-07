@@ -2122,125 +2122,6 @@ public abstract class TypeCodec<T> {
     }
 
     /**
-     * An abstract TypeCodec that actually stores objects as serialized strings.
-     * This can serve as a base for codecs dealing with XML or JSON formats.
-     *
-     * @param <T> The Java type this codec serializes from and deserializes to.
-     */
-    public abstract static class StringParsingCodec<T> extends TypeCodec<T> {
-
-        private final TypeCodec<String> innerCodec;
-
-        public StringParsingCodec(Class<T> javaType) {
-            this(TypeToken.of(javaType));
-        }
-
-        public StringParsingCodec(TypeToken<T> javaType) {
-            this(VarcharCodec.instance, javaType);
-        }
-
-        public StringParsingCodec(TypeCodec<String> innerCodec, Class<T> javaType) {
-            this(innerCodec, TypeToken.of(javaType));
-        }
-
-        public StringParsingCodec(TypeCodec<String> innerCodec, TypeToken<T> javaType) {
-            super(innerCodec.getCqlType(), javaType);
-            this.innerCodec = innerCodec;
-        }
-
-        @Override
-        public ByteBuffer serialize(T value, ProtocolVersion protocolVersion) throws InvalidTypeException {
-            return value == null ? null : innerCodec.serialize(toString(value), protocolVersion);
-        }
-
-        @Override
-        public T deserialize(ByteBuffer bytes, ProtocolVersion protocolVersion) throws InvalidTypeException {
-            String value = innerCodec.deserialize(bytes, protocolVersion);
-            return value == null ? null : fromString(value);
-        }
-
-        @Override
-        public String format(T value) throws InvalidTypeException {
-            return value == null ? null : innerCodec.format(toString(value));
-        }
-
-        @Override
-        public T parse(String value) throws InvalidTypeException {
-            return value == null || value.isEmpty() || value.equals(NULL) ? null : fromString(innerCodec.parse(value));
-        }
-
-        /**
-         * Return the String representation of the given object;
-         * no special CQL quoting should be applied here.
-         * Null values should be accepted; in most cases, implementors
-         * should return null for null inputs.
-         *
-         * @param value the value to convert into a string
-         * @return the String representation of the given object
-         */
-        protected abstract String toString(T value);
-
-        /**
-         * Parse the given string into an object;
-         * no special CQL unquoting should be applied here.
-         * Null values should be accepted; in most cases, implementors
-         * should return null for null inputs.
-         *
-         * @param value the string to parse
-         * @return the parsed object.
-         */
-        protected abstract T fromString(String value);
-
-    }
-
-    /**
-     * An abstract TypeCodec that maps a Java Pojo to another Java object
-     * that can in turn be serialized into a CQL type.
-     * This can serve as a base for libraries dealing with Pojo mappings.
-     *
-     * @param <T> The outer Java type
-     * @param <U> The inner Java type
-     */
-    public abstract static class MappingCodec<T, U> extends TypeCodec<T> {
-
-        protected final TypeCodec<U> innerCodec;
-
-        public MappingCodec(TypeCodec<U> innerCodec, Class<T> javaType) {
-            this(innerCodec, TypeToken.of(javaType));
-        }
-
-        public MappingCodec(TypeCodec<U> innerCodec, TypeToken<T> javaType) {
-            super(innerCodec.getCqlType(), javaType);
-            this.innerCodec = innerCodec;
-        }
-
-        @Override
-        public ByteBuffer serialize(T value, ProtocolVersion protocolVersion) throws InvalidTypeException {
-            return innerCodec.serialize(serialize(value), protocolVersion);
-        }
-
-        @Override
-        public T deserialize(ByteBuffer bytes, ProtocolVersion protocolVersion) throws InvalidTypeException {
-            return deserialize(innerCodec.deserialize(bytes, protocolVersion));
-        }
-
-        @Override
-        public T parse(String value) throws InvalidTypeException {
-            return value == null || value.isEmpty() || value.equals(NULL) ? null : deserialize(innerCodec.parse(value));
-        }
-
-        @Override
-        public String format(T value) throws InvalidTypeException {
-            return value == null ? null : innerCodec.format(serialize(value));
-        }
-
-        protected abstract T deserialize(U value);
-
-        protected abstract U serialize(T value);
-
-    }
-
-    /**
      * A codec that serializes {@link Enum} instances as CQL {@link DataType#varchar() varchar}s
      * representing their programmatic names as returned by {@link Enum#name()}.
      * <p>
@@ -2249,28 +2130,43 @@ public abstract class TypeCodec<T> {
      *
      * @param <E> The Enum class this codec serializes from and deserializes to.
      */
-    public static class EnumStringCodec<E extends Enum<E>> extends StringParsingCodec<E> {
+    public static class EnumStringCodec<E extends Enum<E>> extends TypeCodec<E> {
 
         private final Class<E> enumClass;
 
+        private final TypeCodec<String> innerCodec;
+
         public EnumStringCodec(Class<E> enumClass) {
-            super(enumClass);
-            this.enumClass = enumClass;
+            this(VarcharCodec.instance, enumClass);
         }
 
         public EnumStringCodec(TypeCodec<String> innerCodec, Class<E> enumClass) {
-            super(innerCodec, enumClass);
+            super(innerCodec.getCqlType(), enumClass);
+            this.innerCodec = innerCodec;
             this.enumClass = enumClass;
         }
 
         @Override
-        protected String toString(E value) {
-            return value == null ? null : value.name();
+        public ByteBuffer serialize(E value, ProtocolVersion protocolVersion) throws InvalidTypeException {
+            return value == null ? null : innerCodec.serialize(value.name(), protocolVersion);
         }
 
         @Override
-        protected E fromString(String value) {
+        public E deserialize(ByteBuffer bytes, ProtocolVersion protocolVersion) throws InvalidTypeException {
+            String value = innerCodec.deserialize(bytes, protocolVersion);
             return value == null ? null : Enum.valueOf(enumClass, value);
+        }
+
+        @Override
+        public String format(E value) throws InvalidTypeException {
+            if (value == null)
+                return NULL;
+            return innerCodec.format(value.name());
+        }
+
+        @Override
+        public E parse(String value) throws InvalidTypeException {
+            return value == null || value.isEmpty() || value.equals(NULL) ? null : Enum.valueOf(enumClass, innerCodec.parse(value));
         }
 
     }
@@ -2307,25 +2203,27 @@ public abstract class TypeCodec<T> {
 
         @Override
         public ByteBuffer serialize(E value, ProtocolVersion protocolVersion) throws InvalidTypeException {
-            return innerCodec.serialize(value.ordinal(), protocolVersion);
+            return value == null ? null : innerCodec.serialize(value.ordinal(), protocolVersion);
         }
 
         @Override
         public E deserialize(ByteBuffer bytes, ProtocolVersion protocolVersion) throws InvalidTypeException {
-            return enumConstants[innerCodec.deserialize(bytes, protocolVersion)];
-        }
-
-        @Override
-        public E parse(String value) throws InvalidTypeException {
-            return value == null || value.isEmpty() || value.equals(NULL) ? null : enumConstants[Integer.parseInt(value)];
+            Integer value = innerCodec.deserialize(bytes, protocolVersion);
+            return value == null ? null : enumConstants[value];
         }
 
         @Override
         public String format(E value) throws InvalidTypeException {
             if (value == null)
                 return NULL;
-            return Integer.toString(value.ordinal());
+            return innerCodec.format(value.ordinal());
         }
+
+        @Override
+        public E parse(String value) throws InvalidTypeException {
+            return value == null || value.isEmpty() || value.equals(NULL) ? null : enumConstants[innerCodec.parse(value)];
+        }
+
     }
 
 }

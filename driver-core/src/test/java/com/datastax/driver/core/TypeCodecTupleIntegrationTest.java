@@ -211,7 +211,7 @@ public class TypeCodecTupleIntegrationTest extends CCMBridge.PerClassSingleNodeC
         partialLocation = new Location(37.387224f, 0.0f);
     }
 
-    static class LocationCodec extends TypeCodec.MappingCodec<Location, TupleValue> {
+    static class LocationCodec extends MappingCodec<Location, TupleValue> {
 
         private final TupleType tupleType;
 
@@ -251,9 +251,7 @@ public class TypeCodecTupleIntegrationTest extends CCMBridge.PerClassSingleNodeC
 
             Location location = (Location)o;
 
-            if (Float.compare(location.latitude, latitude) != 0)
-                return false;
-            return Float.compare(location.longitude, longitude) == 0;
+            return Float.compare(location.latitude, latitude) == 0 && Float.compare(location.longitude, longitude) == 0;
 
         }
 
