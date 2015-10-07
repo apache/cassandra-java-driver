@@ -29,7 +29,7 @@ import com.google.common.util.concurrent.Uninterruptibles;
  *
  * This is primarly intended to make mocking easier.
  */
-public abstract class AbstractSession implements Session, AsyncInitSession {
+public abstract class AbstractSession implements Session {
 
     /**
      * {@inheritDoc}
