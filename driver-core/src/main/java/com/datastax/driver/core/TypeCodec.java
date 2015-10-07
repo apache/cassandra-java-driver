@@ -98,6 +98,8 @@ import static com.datastax.driver.core.DataType.*;
  *     <li>TypeCodec implementations that wish to handle Java primitive types <em>must</em> be instantiated with
  *         the wrapper Java class instead, and implement the appropriate interface (see {@link BooleanCodec}
  *         for an example).</li>
+ *     <li>TypeCodec implementations should not consume {@link ByteBuffer} instances by performing read operations
+ *         that modify their current position; if necessary, codecs should {@link ByteBuffer#duplicate()} duplicate} them.</li>
  * </ol>
  *
  * @param <T> The codec's Java type
@@ -478,6 +480,9 @@ public abstract class TypeCodec<T> {
      *     <li>Codecs for CQL collection types should return unmodifiable collections;</li>
      *     <li>Codecs for CQL collection types should avoid returning {@code null};
      *     they should return empty collections instead.</li>
+     *     <li>The provided {@link ByteBuffer} should never be consumed by read operations that
+     *     modify its current position; if necessary,
+     *     {@link ByteBuffer#duplicate()} duplicate} it before consuming.</li>
      * </ol>
      *
      * @param bytes A {@link ByteBuffer} instance containing the serialized form of T;
