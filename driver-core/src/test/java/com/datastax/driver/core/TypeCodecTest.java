@@ -191,7 +191,10 @@ public class TypeCodecTest {
         assertThat(codecRegistry.codecFor(cint(), A.class)).isNotNull().isSameAs(aCodec);
         // inheritance works: B is assignable to A
         assertThat(codecRegistry.codecFor(cint(), B.class)).isNotNull().isSameAs(aCodec);
-        assertThat(codecRegistry.codecFor(list(cint()), new TypeToken<List<A>>(){})).isNotNull().isEqualTo(new TypeCodec.ListCodec<A>(aCodec));
+        TypeCodec.ListCodec<A> expected = new TypeCodec.ListCodec<A>(aCodec);
+        TypeCodec<List<A>> actual = codecRegistry.codecFor(list(cint()), new TypeToken<List<A>>(){});
+        assertThat(actual.getCqlType()).isEqualTo(expected.getCqlType());
+        assertThat(actual.getJavaType()).isEqualTo(expected.getJavaType());
         // cannot work: List<B> is not assignable to List<A>
         try {
             codecRegistry.codecFor(list(cint()), new TypeToken<List<B>>(){});
@@ -215,7 +218,10 @@ public class TypeCodecTest {
         } catch (CodecNotFoundException e) {
             // ok
         }
-        assertThat(codecRegistry.codecFor(list(cint()), new TypeToken<List<B>>(){})).isNotNull().isEqualTo(new TypeCodec.ListCodec<B>(bCodec));
+        TypeCodec<List<B>> actualB = codecRegistry.codecFor(list(cint()), new TypeToken<List<B>>(){});
+        TypeCodec.ListCodec<B> expectedB = new TypeCodec.ListCodec<B>(bCodec);
+        assertThat(actualB.getCqlType()).isEqualTo(expectedB.getCqlType());
+        assertThat(actualB.getJavaType()).isEqualTo(expectedB.getJavaType());
     }
 
 
