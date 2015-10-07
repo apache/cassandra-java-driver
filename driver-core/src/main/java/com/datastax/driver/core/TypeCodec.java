@@ -29,7 +29,6 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
-import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
 
@@ -299,21 +298,6 @@ public abstract class TypeCodec<T> {
     public boolean accepts(Object value) {
         checkNotNull(value);
         return accepts(TypeToken.of(value.getClass()));
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o)
-            return true;
-        if (!(o instanceof TypeCodec))
-            return false;
-        TypeCodec<?> typeCodec = (TypeCodec<?>)o;
-        return Objects.equal(cqlType, typeCodec.cqlType) && Objects.equal(javaType, typeCodec.javaType);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(cqlType, javaType);
     }
 
     @Override
