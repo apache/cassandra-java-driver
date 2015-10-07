@@ -510,20 +510,6 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
     }
 
     @Override
-    public <V> T setObject(int i, V v) {
-        TypeCodec<V> codec = v == null ? this.<V>codecFor(i) : codecFor(i, v);
-        return set(i, v, codec);
-    }
-
-    @Override
-    public <V> T setObject(String name, V v) {
-        for (int i : getAllIndexesOf(name)) {
-            setObject(i, v);
-        }
-        return wrapped;
-    }
-
-    @Override
     public <V> T set(int i, V v, Class<V> targetClass) {
         return set(i, v, codecFor(i, targetClass));
     }

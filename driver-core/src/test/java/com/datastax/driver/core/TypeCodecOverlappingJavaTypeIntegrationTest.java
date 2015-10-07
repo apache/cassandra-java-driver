@@ -67,20 +67,13 @@ public class TypeCodecOverlappingJavaTypeIntegrationTest extends CCMBridge.PerCl
         );
         session.execute(
             ps.bind()
-                .setObject(0, 42)
-                .setObject(1, newArrayList(42))
-                .setObject(2, "42") // here we have the CQL type so VarcharCodec will be used even if IntToStringCodec accepts it
-        );
-        session.execute(
-            ps.bind()
-                .setObject(0, "42")
-                .setObject(1, newArrayList("42"))
-                .setObject(2, "42") // here we have the CQL type so VarcharCodec will be used even if IntToStringCodec accepts it
+                .setString(0, "42")
+                .setList(1, newArrayList("42"))
+                .setString(2, "42") // here we have the CQL type so VarcharCodec will be used even if IntToStringCodec accepts it
         );
         ps = session.prepare(selectQuery);
         assertRow(session.execute(ps.bind().setInt(0, 42)).one());
-        assertRow(session.execute(ps.bind().setObject(0, 42)).one());
-        assertRow(session.execute(ps.bind().setObject(0, "42")).one());
+        assertRow(session.execute(ps.bind().setString(0, "42")).one());
     }
 
     private void assertRow(Row row) {
@@ -104,12 +97,12 @@ public class TypeCodecOverlappingJavaTypeIntegrationTest extends CCMBridge.PerCl
 
         @Override
         public ByteBuffer serialize(String value, ProtocolVersion protocolVersion) throws InvalidTypeException {
-            return IntCodec.instance.serialize(value == null ? null : Integer.parseInt(value), protocolVersion);
+            return TypeCodec.cint().serialize(value == null ? null : Integer.parseInt(value), protocolVersion);
         }
 
         @Override
         public String deserialize(ByteBuffer bytes, ProtocolVersion protocolVersion) throws InvalidTypeException {
-            Integer i = IntCodec.instance.deserialize(bytes, protocolVersion);
+            Integer i = TypeCodec.cint().deserialize(bytes, protocolVersion);
             return i == null ? null : Integer.toString(i);
         }
 

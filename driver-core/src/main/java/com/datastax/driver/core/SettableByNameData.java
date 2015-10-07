@@ -582,38 +582,10 @@ public interface SettableByNameData<T extends SettableData<T>> {
     public T setToNull(String name);
 
     /**
-     * Sets the value for (all occurrences of) variable {@code name} to the provided value.
-     * <p>
-     * Note about performance: this method must perform a runtime inspection of the provided object,
-     * in order to guess the best codec to serialize it.
-     * The result of such inspection cannot be cached and thus must be performed for each invocation
-     * of this method, which may incur in a performance penalty.
-     * <p>
-     * Furthermore, if two or more codecs are available
-     * for the underlying CQL type, <em>which one will be used will depend
-     * on the actual object being serialized</em>.
-     * <p>
-     * For these reasons, it is generally preferable to use the more
-     * deterministic methods {@link #set(String, V, Class)} or {@link #set(String, V, TypeToken)} instead.
-     *
-     * @param name the name of the value to set; if {@code name} is present multiple
-     * times, all its values are set.
-     * @param v the value to set; may be {@code null}.
-     * @return this object.
-     * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     */
-    <V> T setObject(String name, V v);
-
-    /**
      * Sets the value for (all occurrences of) variable {@code name} to the provided value of the provided Java class.
      * <p>
      * A suitable {@link TypeCodec} instance for the underlying CQL type and the provided class must
      * have been previously registered with the {@link CodecRegistry} currently in use.
-     * <p>
-     * This method should be used instead of {@link #setObject(String, Object)} in cases
-     * where more than one codec is registered for the same CQL type; specifying the Java class
-     * allows the {@link CodecRegistry} to narrow down the search and return only an exactly-matching codec (if any),
-     * thus avoiding any risk of ambiguity.
      *
      * @param name the name of the value to set; if {@code name} is present multiple
      * times, all its values are set.
@@ -629,11 +601,6 @@ public interface SettableByNameData<T extends SettableData<T>> {
      * <p>
      * A suitable {@link TypeCodec} instance for the underlying CQL type and the provided class must
      * have been previously registered with the {@link CodecRegistry} currently in use.
-     * <p>
-     * This method should be used instead of {@link #setObject(String, Object)} in cases
-     * where more than one codec is registered for the same CQL type; specifying the Java class
-     * allows the {@link CodecRegistry} to narrow down the search and return only an exactly-matching codec (if any),
-     * thus avoiding any risk of ambiguity.
      *
      * @param name the name of the value to set; if {@code name} is present multiple
      * times, all its values are set.

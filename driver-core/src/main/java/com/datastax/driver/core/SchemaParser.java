@@ -29,7 +29,7 @@ abstract class SchemaParser {
     
     private static final Logger logger = LoggerFactory.getLogger(SchemaParser.class);
 
-    private static final TypeCodec.ListCodec<String> LIST_OF_TEXT_CODEC = new TypeCodec.ListCodec<String>(TypeCodec.VarcharCodec.instance);
+    private static final TypeCodec<List<String>> LIST_OF_TEXT_CODEC = TypeCodec.list(TypeCodec.varchar());
 
     private static final SchemaParser V2_PARSER = new V2SchemaParser();
     private static final SchemaParser V3_PARSER = new V3SchemaParser();

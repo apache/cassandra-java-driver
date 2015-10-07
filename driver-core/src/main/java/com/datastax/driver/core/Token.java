@@ -223,7 +223,7 @@ public abstract class Token implements Comparable<Token> {
 
             @Override
             Token deserialize(ByteBuffer buffer, ProtocolVersion protocolVersion) {
-                return new M3PToken(TypeCodec.BigintCodec.instance.deserialize(buffer, protocolVersion));
+                return new M3PToken(TypeCodec.bigint().deserialize(buffer, protocolVersion));
             }
 
             @Override
@@ -276,7 +276,7 @@ public abstract class Token implements Comparable<Token> {
 
         @Override
         public ByteBuffer serialize(ProtocolVersion protocolVersion) {
-            return TypeCodec.BigintCodec.instance.serialize(value, protocolVersion);
+            return TypeCodec.bigint().serialize(value, protocolVersion);
         }
 
         @Override
@@ -483,7 +483,7 @@ public abstract class Token implements Comparable<Token> {
 
         @Override
         public ByteBuffer serialize(ProtocolVersion protocolVersion) {
-            return TypeCodec.BlobCodec.instance.serialize(value, protocolVersion);
+            return TypeCodec.blob().serialize(value, protocolVersion);
         }
 
         @Override
@@ -552,7 +552,7 @@ public abstract class Token implements Comparable<Token> {
 
             @Override
             Token deserialize(ByteBuffer buffer, ProtocolVersion protocolVersion) {
-                return new RPToken(TypeCodec.VarintCodec.instance.deserialize(buffer, protocolVersion));
+                return new RPToken(TypeCodec.varint().deserialize(buffer, protocolVersion));
             }
 
             @Override
@@ -604,7 +604,7 @@ public abstract class Token implements Comparable<Token> {
 
         @Override
         public ByteBuffer serialize(ProtocolVersion protocolVersion) {
-            return TypeCodec.VarintCodec.instance.serialize(value, protocolVersion);
+            return TypeCodec.varint().serialize(value, protocolVersion);
         }
 
         @Override

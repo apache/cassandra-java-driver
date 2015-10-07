@@ -135,15 +135,6 @@ public class TypeCodecJsonIntegrationTest extends CCMBridge.PerClassSingleNodeCl
         );
         Row row = rows.one();
         assertRow(row);
-        rows = session.execute(ps.bind()
-            .setString(0, notAJsonString)
-            // here we lost information about the java type of alice
-            // so the registry will look for a codec accepting varchar <-> ANY
-            // and will find jsonCodec because it is the only matching one
-            .setObject(1, alice)
-        );
-        row = rows.one();
-        assertRow(row);
     }
 
     private void assertRow(Row row) {

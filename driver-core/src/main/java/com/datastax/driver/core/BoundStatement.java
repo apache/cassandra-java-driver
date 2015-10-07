@@ -842,22 +842,6 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * {@inheritDoc}
      */
     @Override
-    public <V> BoundStatement setObject(int i, V v) {
-        return wrapper.setObject(i, v);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public <V> BoundStatement setObject(String name, V v) {
-        return wrapper.setObject(name, v);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
     public <V> BoundStatement set(int i, V v, Class<V> targetClass) {
         return wrapper.set(i, v, targetClass);
     }

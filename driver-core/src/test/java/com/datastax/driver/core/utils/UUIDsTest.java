@@ -24,7 +24,6 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
-import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.ProtocolVersion;
 import com.datastax.driver.core.TypeCodec;
 
@@ -111,9 +110,9 @@ public class UUIDsTest {
     }
 
     private static void assertWithin(UUID uuid, UUID lowerBound, UUID upperBound) {
-        ByteBuffer uuidBytes = TypeCodec.UUIDCodec.instance.serialize(uuid, ProtocolVersion.V1);
-        ByteBuffer lb = TypeCodec.UUIDCodec.instance.serialize(lowerBound, ProtocolVersion.V1);
-        ByteBuffer ub = TypeCodec.UUIDCodec.instance.serialize(upperBound, ProtocolVersion.V1);
+        ByteBuffer uuidBytes = TypeCodec.uuid().serialize(uuid, ProtocolVersion.V1);
+        ByteBuffer lb = TypeCodec.uuid().serialize(lowerBound, ProtocolVersion.V1);
+        ByteBuffer ub = TypeCodec.uuid().serialize(upperBound, ProtocolVersion.V1);
         assertTrue(compareTimestampBytes(lb, uuidBytes) <= 0);
         assertTrue(compareTimestampBytes(ub, uuidBytes) >= 0);
     }

@@ -128,25 +128,6 @@ public class TypeCodecCollectionsIntegrationTest extends CCMBridge.PerClassSingl
     public void should_use_collection_codecs_with_prepared_statements_3() {
         session.execute(session.prepare(insertQuery).bind()
             .setInt(0, n_int)
-            .setObject(1, l_int)
-            .setObject(2, l_bigint)
-            .setObject(3, s_float)
-            .setObject(4, s_double)
-            .setObject(5, m_varint)
-            .setObject(6, m_decimal)
-        );
-        PreparedStatement ps = session.prepare(selectQuery);
-        ResultSet rows = session.execute(ps.bind()
-            .setInt(0, n_int)
-        );
-        Row row = rows.one();
-        assertRow(row);
-    }
-
-    @Test(groups = "short")
-    public void should_use_collection_codecs_with_prepared_statements_4() {
-        session.execute(session.prepare(insertQuery).bind()
-            .setInt(0, n_int)
             .set(1, l_int, listOf(Integer.class))
             .set(2, l_bigint, listOf(Long.class))
             .set(3, s_float, setOf(Float.class))

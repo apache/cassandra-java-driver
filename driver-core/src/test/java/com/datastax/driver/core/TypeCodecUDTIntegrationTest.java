@@ -70,11 +70,6 @@ public class TypeCodecUDTIntegrationTest extends CCMBridge.PerClassSingleNodeClu
         rows = session.execute(selectQuery, uuid);
         row = rows.one();
         assertRow(row);
-        // bound with setObject
-        session.execute(ps.bind().setUUID(0, uuid).setString(1, "John Doe").setObject(2, addressValue));
-        rows = session.execute(selectQuery, uuid);
-        row = rows.one();
-        assertRow(row);
     }
 
     @Test(groups = "short")
@@ -88,8 +83,8 @@ public class TypeCodecUDTIntegrationTest extends CCMBridge.PerClassSingleNodeClu
         try {
             Session session = cluster.connect(keyspace);
             setUpUserTypes(cluster);
-            TypeCodec<UDTValue> addressTypeCodec = new TypeCodec.UDTCodec(addressType);
-            TypeCodec<UDTValue> phoneTypeCodec = new TypeCodec.UDTCodec(phoneType);
+            TypeCodec<UDTValue> addressTypeCodec = TypeCodec.userType(addressType);
+            TypeCodec<UDTValue> phoneTypeCodec = TypeCodec.userType(phoneType);
             codecRegistry
                 .register(new AddressCodec(addressTypeCodec, Address.class))
                 .register(new PhoneCodec(phoneTypeCodec, Phone.class))
@@ -136,14 +131,14 @@ public class TypeCodecUDTIntegrationTest extends CCMBridge.PerClassSingleNodeClu
             .setSet("tags", phone1.tags);
         UDTValue phone2Value = phoneType.newValue()
             .setString("number", phone2.number)
-            .setObject("tags", phone2.tags);
+            .setSet("tags", phone2.tags);
         addressValue = addressType.newValue()
             .setString("street", address.street)
             .setInt(1, address.zipcode)
             .setList("phones", Lists.newArrayList(phone1Value, phone2Value));
     }
 
-    static class AddressCodec extends TypeCodec.MappingCodec<Address, UDTValue> {
+    static class AddressCodec extends MappingCodec<Address, UDTValue> {
 
         private final UserType userType;
 
@@ -163,7 +158,7 @@ public class TypeCodecUDTIntegrationTest extends CCMBridge.PerClassSingleNodeClu
         }
     }
 
-    static class PhoneCodec extends TypeCodec.MappingCodec<Phone, UDTValue> {
+    static class PhoneCodec extends MappingCodec<Phone, UDTValue> {
 
         private final UserType userType;
 
