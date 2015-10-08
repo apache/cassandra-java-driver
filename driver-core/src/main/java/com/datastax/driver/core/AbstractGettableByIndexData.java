@@ -126,11 +126,7 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
     @Override
     public boolean getBool(int i) {
         checkType(i, BOOLEAN);
-
         ByteBuffer value = getValue(i);
-        if (value == null || value.remaining() == 0)
-            return false;
-
         TypeCodec<Boolean> codec = codecFor(i, Boolean.class);
         if(codec instanceof TypeCodec.PrimitiveBooleanCodec)
             return ((TypeCodec.PrimitiveBooleanCodec) codec).deserializeNoBoxing(value, protocolVersion);
