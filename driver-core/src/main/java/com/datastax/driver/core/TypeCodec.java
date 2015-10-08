@@ -394,7 +394,7 @@ public abstract class TypeCodec<T> {
      * @param type the custom type this codec should handle.
      * @return A newly-created codec for the given CQL custom type.
      **/
-    public static TypeCodec<ByteBuffer> customCodec(DataType type) {
+    public static TypeCodec<ByteBuffer> customCodec(CustomType type) {
         return new CustomCodec(type);
     }
 

@@ -45,10 +45,7 @@ public class TypeCodecTest {
 
     public static final DataType CUSTOM_FOO = DataType.custom("com.example.FooBar");
 
-    public static final TypeCodec<?> CUSTOM_FOO_CODEC = TypeCodec.customCodec(CUSTOM_FOO);
-
-    private CodecRegistry codecRegistry = new CodecRegistry()
-        .register(CUSTOM_FOO_CODEC);
+    private CodecRegistry codecRegistry = new CodecRegistry();
 
     @Test(groups = "unit")
     public void testCustomList() throws Exception {

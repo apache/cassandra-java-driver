@@ -17,6 +17,7 @@ package com.datastax.driver.core;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
@@ -31,7 +32,6 @@ import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.datastax.driver.core.TypeCodec.*;
 import com.datastax.driver.core.exceptions.CodecNotFoundException;
 
 import static com.datastax.driver.core.DataType.Name.LIST;
@@ -130,6 +130,7 @@ import static com.datastax.driver.core.DataType.Name.SET;
  *     <li>Codecs for collections are created on the fly using {@link TypeCodec#listCodec(TypeCodec)}}, {@link TypeCodec#setCodec(TypeCodec)}} and
  *     {@link TypeCodec#mapCodec(TypeCodec, TypeCodec)}}, if their element types can be handled by existing codecs (or codecs that can
  *     themselves be generated).</li>
+ *     <li>Codecs for {@link com.datastax.driver.core.DataType.CustomType custom types} are created on the fly using {@link TypeCodec#customCodec(DataType.CustomType)};</li>
  * </ol>
  * Other combinations of Java and CQL types cannot have their codecs created on the fly;
  * such codecs must be manually registered.
@@ -138,11 +139,6 @@ import static com.datastax.driver.core.DataType.Name.SET;
  * <strong>Debugging the codec registry</strong>: it is possible to turn on log messages
  * by setting the {@code com.datastax.driver.core.CodecRegistry} logger level to {@code TRACE}.
  * Beware that the registry can be very verbose at this log level.
- *
- * <p>
- * <strong>Custom CQL types</strong>: Note that the default set of codecs has no support for
- * <a href="https://github.com/apache/cassandra/blob/trunk/src/java/org/apache/cassandra/db/marshal/AbstractType.java">custom CQL types</a>;
- * to be able to deserialize values of such types, you need to manually register an appropriate codec.
  *
  * <p>
  * <strong>Thread-safety</strong>: {@link CodecRegistry} instances are thread-safe.
@@ -580,6 +576,10 @@ public final class CodecRegistry {
             return (TypeCodec<T>)TypeCodec.userTypeCodec((UserType)cqlType);
         }
 
+        if(cqlType instanceof DataType.CustomType && (javaType == null || ByteBuffer.class.isAssignableFrom(javaType.getRawType()))) {
+            return (TypeCodec<T>)TypeCodec.customCodec((DataType.CustomType)cqlType);
+        }
+
         return null;
     }
 
@@ -649,6 +649,10 @@ public final class CodecRegistry {
 
         if ((cqlType == null || cqlType.getName() == DataType.Name.UDT) && value instanceof UDTValue) {
             return (TypeCodec<T>)TypeCodec.userTypeCodec(cqlType == null ? ((UDTValue)value).getType() : (UserType)cqlType);
+        }
+
+        if((cqlType != null && cqlType instanceof DataType.CustomType) && value instanceof ByteBuffer) {
+            return (TypeCodec<T>)TypeCodec.customCodec((DataType.CustomType)cqlType);
         }
 
         return null;
