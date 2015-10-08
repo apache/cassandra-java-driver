@@ -171,7 +171,6 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
             String name = "c_list_" + rawType;
             DataType type = DataType.list(rawType);
             List<Object> value = (List<Object>)getFixedValue(type);
-            ;
             PreparedStatement ps = session.prepare(String.format("INSERT INTO %s(k, %s) VALUES ('prepared_list', ?)", ALL_LIST_TABLE, name));
             BoundStatement bs = ps.bind();
             session.execute(setBoundValue(bs, name, type, value));
@@ -196,7 +195,6 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
             String name = "c_list_" + rawType;
             DataType type = DataType.list(rawType);
             List<Object> value = (List<Object>)getFixedValue2(type);
-            ;
             PreparedStatement ps = session.prepare(String.format("INSERT INTO %s(k, %s) VALUES ('prepared_list', ?)", ALL_LIST_TABLE, name));
             BoundStatement bs = ps.bind();
             session.execute(setBoundValue(bs, name, type, value));
@@ -218,7 +216,6 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
             String name = "c_set_" + rawType;
             DataType type = DataType.set(rawType);
             Set<Object> value = (Set<Object>)getFixedValue(type);
-            ;
             PreparedStatement ps = session.prepare(String.format("INSERT INTO %s(k, %s) VALUES ('prepared_set', ?)", ALL_SET_TABLE, name));
             BoundStatement bs = ps.bind();
             session.execute(setBoundValue(bs, name, type, value));
@@ -243,7 +240,6 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
             String name = "c_set_" + rawType;
             DataType type = DataType.set(rawType);
             Set<Object> value = (Set<Object>)getFixedValue2(type);
-            ;
             PreparedStatement ps = session.prepare(String.format("INSERT INTO %s(k, %s) VALUES ('prepared_set', ?)", ALL_SET_TABLE, name));
             BoundStatement bs = ps.bind();
             session.execute(setBoundValue(bs, name, type, value));
@@ -270,7 +266,6 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
                 String name = "c_map_" + rawKeyType + '_' + rawValueType;
                 DataType type = DataType.map(rawKeyType, rawValueType);
                 Map<Object, Object> value = (Map<Object, Object>)getFixedValue(type);
-                ;
                 PreparedStatement ps = session.prepare(String.format("INSERT INTO %s(k, %s) VALUES ('prepared_map', ?)", ALL_MAP_TABLE, name));
                 BoundStatement bs = ps.bind();
                 session.execute(setBoundValue(bs, name, type, value));
@@ -301,7 +296,6 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
                 String name = "c_map_" + rawKeyType + '_' + rawValueType;
                 DataType type = DataType.map(rawKeyType, rawValueType);
                 Map<Object, Object> value = (Map<Object, Object>)getFixedValue2(type);
-                ;
                 PreparedStatement ps = session.prepare(String.format("INSERT INTO %s(k, %s) VALUES ('prepared_map', ?)", ALL_MAP_TABLE, name));
                 BoundStatement bs = ps.bind();
                 session.execute(setBoundValue(bs, name, type, value));
