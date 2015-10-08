@@ -1,5 +1,5 @@
 /*
- *      Copyright (C) 2012-2015 DataStax Inc.
+ *      Copyright  2012-2015 DataStax Inc.
  *
  *   Licensed under the Apache License, Version 2.0 (the "License");
  *   you may not use this file except in compliance with the License.
@@ -129,9 +129,8 @@ public abstract class TypeCodec<T> {
      * The returned instance is a singleton.
      * @return the default codec for CQL type {@code boolean}.
      **/
-    @SuppressWarnings("unchecked")
-    public static <C extends TypeCodec<Boolean> & PrimitiveBooleanCodec> C booleanCodec() {
-        return (C)BooleanCodec.instance;
+    public static TypeCodec<Boolean> booleanCodec() {
+        return BooleanCodec.instance;
     }
 
     /**
@@ -141,9 +140,8 @@ public abstract class TypeCodec<T> {
      * The returned instance is a singleton.
      * @return the default codec for CQL type {@code tinyint}.
      **/
-    @SuppressWarnings("unchecked")
-    public static <C extends TypeCodec<Byte> & PrimitiveByteCodec> C tinyIntCodec() {
-        return (C)TinyIntCodec.instance;
+    public static TypeCodec<Byte> tinyIntCodec() {
+        return TinyIntCodec.instance;
     }
 
     /**
@@ -153,9 +151,8 @@ public abstract class TypeCodec<T> {
      * The returned instance is a singleton.
      * @return the default codec for CQL type {@code smallint}.
      **/
-    @SuppressWarnings("unchecked")
-    public static <C extends TypeCodec<Short> & PrimitiveShortCodec> C smallIntCodec() {
-        return (C)SmallIntCodec.instance;
+    public static TypeCodec<Short> smallIntCodec() {
+        return SmallIntCodec.instance;
     }
 
     /**
@@ -165,9 +162,8 @@ public abstract class TypeCodec<T> {
      * The returned instance is a singleton.
      * @return the default codec for CQL type {@code int}.
      **/
-    @SuppressWarnings("unchecked")
-    public static <C extends TypeCodec<Integer> & PrimitiveIntCodec> C intCodec() {
-        return (C)IntCodec.instance;
+    public static TypeCodec<Integer> intCodec() {
+        return IntCodec.instance;
     }
 
     /**
@@ -177,9 +173,8 @@ public abstract class TypeCodec<T> {
      * The returned instance is a singleton.
      * @return the default codec for CQL type {@code bigint}.
      **/
-    @SuppressWarnings("unchecked")
-    public static <C extends TypeCodec<Long> & PrimitiveLongCodec> C bigintCodec() {
-        return (C)BigintCodec.instance;
+    public static TypeCodec<Long> bigintCodec() {
+        return BigintCodec.instance;
     }
 
     /**
@@ -189,9 +184,8 @@ public abstract class TypeCodec<T> {
      * The returned instance is a singleton.
      * @return the default codec for CQL type {@code counter}.
      **/
-    @SuppressWarnings("unchecked")
-    public static <C extends TypeCodec<Long> & PrimitiveLongCodec> C counterCodec() {
-        return (C)CounterCodec.instance;
+    public static TypeCodec<Long> counterCodec() {
+        return CounterCodec.instance;
     }
 
     /**
@@ -201,9 +195,8 @@ public abstract class TypeCodec<T> {
      * The returned instance is a singleton.
      * @return the default codec for CQL type {@code float}.
      **/
-    @SuppressWarnings("unchecked")
-    public static <C extends TypeCodec<Float> & PrimitiveFloatCodec> C floatCodec() {
-        return (C)FloatCodec.instance;
+    public static TypeCodec<Float> floatCodec() {
+        return FloatCodec.instance;
     }
 
     /**
@@ -213,9 +206,8 @@ public abstract class TypeCodec<T> {
      * The returned instance is a singleton.
      * @return the default codec for CQL type {@code double}.
      **/
-    @SuppressWarnings("unchecked")
-    public static <C extends TypeCodec<Double> & PrimitiveDoubleCodec> C doubleCodec() {
-        return (C)DoubleCodec.instance;
+    public static TypeCodec<Double> doubleCodec() {
+        return DoubleCodec.instance;
     }
 
     /**
