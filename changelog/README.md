@@ -1,5 +1,10 @@
 ## Changelog
 
+### 2.1.9 (in progress)
+
+- [bug] Fix implementation of UserType.hashCode() (JAVA-942)
+
+
 ### 2.1.8
 
 Merged from 2.0 branch:
