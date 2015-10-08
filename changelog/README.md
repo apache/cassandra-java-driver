@@ -13,6 +13,7 @@
 - [bug] Add crcCheckChance to TableOptionsMetadata#equals/hashCode (JAVA-939)
 - [bug] Make TypeCodec return mutable collections (JAVA-922)
 - [improvement] Limit visibility of codec internals (JAVA-932)
+- [improvement] Warn if a custom codec collides with an existing one (JAVA-934)
 
 
 ### 3.0.0-alpha3
