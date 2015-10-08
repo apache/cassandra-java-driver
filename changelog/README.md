@@ -2,6 +2,8 @@
 
 ### 2.2.0-rc4 (in progress)
 
+- [improvement] Warn if a custom codec collides with an existing one (JAVA-934)
+
 Merged from 2.0 branch:
 
 - [improvement] Log streamid at the trace level on sending request and receiving response (JAVA-718)
