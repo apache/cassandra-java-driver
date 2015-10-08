@@ -123,7 +123,7 @@ public class TypeCodecJsonIntegrationTest extends CCMBridge.PerClassSingleNodeCl
         session.execute(session.prepare(insertQuery).bind()
             .setString(0, notAJsonString)
             .set(1, alice, User.class)
-            .setList(2, bobAndCharlie)
+            .setList(2, bobAndCharlie, User.class)
         );
         PreparedStatement ps = session.prepare(selectQuery);
         ResultSet rows = session.execute(ps.bind()

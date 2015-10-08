@@ -14,6 +14,7 @@
 - [bug] Make TypeCodec return mutable collections (JAVA-922)
 - [improvement] Limit visibility of codec internals (JAVA-932)
 - [improvement] Warn if a custom codec collides with an existing one (JAVA-934)
+- [improvement] Allow typed getters/setters to target any CQL type (JAVA-940)
 
 
 ### 3.0.0-alpha3

@@ -440,14 +440,13 @@ A codec lookup operation may be costly; to mitigate this, the `CodecRegistry` ca
 
 The following situations are exceptions where it is not possible to cache lookup results:
 
-* With [SimpleStatement] instances and [BuiltStatement] instances (created via the Query Builder); in these places, the driver has
-  no way to determine the right CQL type to use, so it performs a best-effort heuristic to guess which codec to use.
-* When using "ambiguous" methods of `BoundStatement` and `Row`, such as [setList()][setList],
-  [setSet()][setSet], [setMap()][setMap], [setObject()][setObject];
-  these methods are "ambiguous" because they do not convey enough compile-time information about the object
-  to serialize, so the driver performs the same heuristic to guess which codec to use.
+* With [SimpleStatement] instances;
+* With [BuiltStatement] instances (created via the Query Builder).
+ 
+In these places, the driver has no way to determine the right CQL type to use, so it performs 
+a best-effort heuristic to guess which codec to use. 
 
-Beware that in these cases the lookup performs in average 10x worse. If performance is a key factor for your application,
+Beware that in these cases, the lookup performs in average 10x worse. If performance is a key factor for your application,
 consider using prepared statements all the time, and avoid calling ambiguous methods (prefer `get()` and `set()`).
 
 [JAVA-721]: https://datastax-oss.atlassian.net/browse/JAVA-721

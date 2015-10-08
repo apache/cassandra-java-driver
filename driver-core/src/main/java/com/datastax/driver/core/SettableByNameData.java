@@ -40,7 +40,6 @@ public interface SettableByNameData<T extends SettableData<T>> {
      * @return this object.
      *
      * @throws IllegalArgumentException if {@code name} is not a valid name for this object.
-     * @throws InvalidTypeException if (any one occurrence of) {@code name} is not of type BOOLEAN.
      */
     public T setBool(String name, boolean v);
 
@@ -54,7 +53,6 @@ public interface SettableByNameData<T extends SettableData<T>> {
      * @return this object.
      *
      * @throws IllegalArgumentException if {@code name} is not a valid name for this object.
-     * @throws InvalidTypeException if (any one occurrence of) {@code name} is not of type TINYINT.
      */
     public T setByte(String name, byte v);
 
@@ -68,7 +66,6 @@ public interface SettableByNameData<T extends SettableData<T>> {
      * @return this object.
      *
      * @throws IllegalArgumentException if {@code name} is not a valid name for this object.
-     * @throws InvalidTypeException if (any one occurrence of) {@code name} is not of type SMALLINT.
      */
     public T setShort(String name, short v);
 
@@ -82,7 +79,6 @@ public interface SettableByNameData<T extends SettableData<T>> {
      * @return this object.
      *
      * @throws IllegalArgumentException if {@code name} is not a valid name for this object.
-     * @throws InvalidTypeException if (any one occurrence of) {@code name} is not of type INT.
      */
     public T setInt(String name, int v);
 
@@ -96,8 +92,6 @@ public interface SettableByNameData<T extends SettableData<T>> {
      * @return this object.
      *
      * @throws IllegalArgumentException if {@code name} is not a valid name for this object.
-     * @throws InvalidTypeException if (any occurrence of) {@code name} is
-     * not of type BIGINT or COUNTER.
      */
     public T setLong(String name, long v);
 
@@ -111,8 +105,6 @@ public interface SettableByNameData<T extends SettableData<T>> {
      * @return this object.
      *
      * @throws IllegalArgumentException if {@code name} is not a valid name for this object.
-     * @throws InvalidTypeException if (any occurrence of) {@code name} is
-     * not of type TIMESTAMP.
      */
     public T setTimestamp(String name, Date v);
 
@@ -126,8 +118,6 @@ public interface SettableByNameData<T extends SettableData<T>> {
      * @return this object.
      *
      * @throws IllegalArgumentException if {@code name} is not a valid name for this object.
-     * @throws InvalidTypeException if (any occurrence of) {@code name} is
-     * not of type DATE.
      */
     public T setDate(String name, LocalDate v);
 
@@ -141,8 +131,6 @@ public interface SettableByNameData<T extends SettableData<T>> {
      * @return this object.
      *
      * @throws IllegalArgumentException if {@code name} is not a valid name for this object.
-     * @throws InvalidTypeException if (any occurrence of) {@code name} is
-     * not of type TIME.
      */
     public T setTime(String name, long v);
 
@@ -156,8 +144,6 @@ public interface SettableByNameData<T extends SettableData<T>> {
      * @return this object.
      *
      * @throws IllegalArgumentException if {@code name} is not a valid name for this object.
-     * @throws InvalidTypeException if (any occurrence of) {@code name} is
-     * not of type FLOAT.
      */
     public T setFloat(String name, float v);
 
@@ -171,8 +157,6 @@ public interface SettableByNameData<T extends SettableData<T>> {
      * @return this object.
      *
      * @throws IllegalArgumentException if {@code name} is not a valid name for this object.
-     * @throws InvalidTypeException if (any occurrence of) {@code name} is
-     * not of type DOUBLE.
      */
     public T setDouble(String name, double v);
 
@@ -186,8 +170,6 @@ public interface SettableByNameData<T extends SettableData<T>> {
      * @return this object.
      *
      * @throws IllegalArgumentException if {@code name} is not a valid name for this object.
-     * @throws InvalidTypeException if (any occurrence of) {@code name} is
-     * of neither of the following types: VARCHAR, TEXT or ASCII.
      */
     public T setString(String name, String v);
 
@@ -205,7 +187,6 @@ public interface SettableByNameData<T extends SettableData<T>> {
      * @return this object.
      *
      * @throws IllegalArgumentException if {@code name} is not a valid name for this object.
-     * @throws InvalidTypeException if (any occurrence of) {@code name} is not of type BLOB.
      */
     public T setBytes(String name, ByteBuffer v);
 
@@ -237,8 +218,6 @@ public interface SettableByNameData<T extends SettableData<T>> {
      * @return this object.
      *
      * @throws IllegalArgumentException if {@code name} is not a valid name for this object.
-     * @throws InvalidTypeException if (any occurrence of) {@code name} is
-     * not of type VARINT.
      */
     public T setVarint(String name, BigInteger v);
 
@@ -252,8 +231,6 @@ public interface SettableByNameData<T extends SettableData<T>> {
      * @return this object.
      *
      * @throws IllegalArgumentException if {@code name} is not a valid name for this object.
-     * @throws InvalidTypeException if (any occurrence of) {@code name} is
-     * not of type DECIMAL.
      */
     public T setDecimal(String name, BigDecimal v);
 
@@ -267,9 +244,6 @@ public interface SettableByNameData<T extends SettableData<T>> {
      * @return this object.
      *
      * @throws IllegalArgumentException if {@code name} is not a valid name for this object.
-     * @throws InvalidTypeException if (any occurrence of) {@code name} is
-     * not of type UUID or TIMEUUID, or if value {@code name} is of type
-     * TIMEUUID but {@code v} is not a type 1 UUID.
      */
     public T setUUID(String name, UUID v);
 
@@ -283,8 +257,6 @@ public interface SettableByNameData<T extends SettableData<T>> {
      * @return this object.
      *
      * @throws IllegalArgumentException if {@code name} is not a valid name for this object.
-     * @throws InvalidTypeException if (any occurrence of) {@code name} is
-     * not of type INET.
      */
     public T setInet(String name, InetAddress v);
 
@@ -294,14 +266,9 @@ public interface SettableByNameData<T extends SettableData<T>> {
      * <p>
      * Please note that {@code null} values inside collections are not supported by CQL.
      * <p>
-     * Note about performance: this method must perform a runtime inspection of the provided list,
-     * in order to guess the best codec to serialize the list elements.
-     * The result of such inspection cannot be cached and thus must be performed for each invocation
-     * of this method, which may incur in a performance penalty.
-     * <p>
-     * Furthermore, if two or more codecs are available
-     * for the underlying CQL type ({@code list}), <em>which one will be used will depend
-     * on the actual object being serialized</em>.
+     * Note: if two or more codecs are available
+     * for the underlying CQL type, <em>the one that will be used will be
+     * the first one to be registered.</em>.
      * <p>
      * For these reasons, it is generally preferable to use the more
      * deterministic methods {@link #setList(String, List, Class)} or
@@ -313,9 +280,6 @@ public interface SettableByNameData<T extends SettableData<T>> {
      * @return this object.
      *
      * @throws IllegalArgumentException if {@code name} is not a valid name for this object.
-     * @throws InvalidTypeException if (any occurrence of) {@code name} is
-     * not a list type or if the elements of {@code v} are not of the type of
-     * the elements of column {@code name}.
      * @throws NullPointerException if {@code v} contains null values. Nulls are not supported in collections
      * by CQL.
      */
@@ -336,10 +300,7 @@ public interface SettableByNameData<T extends SettableData<T>> {
      * @param elementsClass the class for the elements of the list.
      * @return this object.
      *
-     * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not a list type or
-     * if the elements of {@code v} are not of the type of the elements of
-     * column {@code i}.
+     * @throws IllegalArgumentException if {@code name} is not a valid name for this object.
      * @throws NullPointerException if {@code v} contains null values. Nulls are not supported in collections
      * by CQL.
      */
@@ -360,10 +321,7 @@ public interface SettableByNameData<T extends SettableData<T>> {
      * @param elementsType the type for the elements of the list.
      * @return this object.
      *
-     * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not a list type or
-     * if the elements of {@code v} are not of the type of the elements of
-     * column {@code i}.
+     * @throws IllegalArgumentException if {@code name} is not a valid name for this object.
      * @throws NullPointerException if {@code v} contains null values. Nulls are not supported in collections
      * by CQL.
      */
@@ -375,14 +333,10 @@ public interface SettableByNameData<T extends SettableData<T>> {
      * <p>
      * Please note that {@code null} values are not supported inside collection by CQL.
      * <p>
-     * Note about performance: this method must perform a runtime inspection of the provided map,
-     * in order to guess the best codec to serialize the map entries.
-     * The result of such inspection cannot be cached and thus must be performed for each invocation
-     * of this method, which may incur in a performance penalty.
      * <p>
-     * Furthermore, if two or more codecs are available
-     * for the underlying CQL type ({@code map}), <em>which one will be used will depend
-     * on the actual object being serialized</em>.
+     * Note: if two or more codecs are available
+     * for the underlying CQL type, <em>the one that will be used will be
+     * the first one to be registered.</em>.
      * <p>
      * For these reasons, it is generally preferable to use the more
      * deterministic methods {@link #setMap(String, Map, Class, Class)} or
@@ -394,9 +348,6 @@ public interface SettableByNameData<T extends SettableData<T>> {
      * @return this object.
      *
      * @throws IllegalArgumentException if {@code name} is not a valid name for this object.
-     * @throws InvalidTypeException if (any occurrence of) {@code name} is
-     * not a map type or if the elements (keys or values) of {@code v} are not of
-     * the type of the elements of column {@code name}.
      * @throws NullPointerException if {@code v} contains null values. Nulls are not supported in collections
      * by CQL.
      */
@@ -420,9 +371,6 @@ public interface SettableByNameData<T extends SettableData<T>> {
      * @return this object.
      *
      * @throws IllegalArgumentException if {@code name} is not a valid name for this object.
-     * @throws InvalidTypeException if (any occurrence of) {@code name} is
-     * not a map type or if the elements (keys or values) of {@code v} are not of
-     * the type of the elements of column {@code name}.
      * @throws NullPointerException if {@code v} contains null values. Nulls are not supported in collections
      * by CQL.
      */
@@ -446,9 +394,6 @@ public interface SettableByNameData<T extends SettableData<T>> {
      * @return this object.
      *
      * @throws IllegalArgumentException if {@code name} is not a valid name for this object.
-     * @throws InvalidTypeException if (any occurrence of) {@code name} is
-     * not a map type or if the elements (keys or values) of {@code v} are not of
-     * the type of the elements of column {@code name}.
      * @throws NullPointerException if {@code v} contains null values. Nulls are not supported in collections
      * by CQL.
      */
@@ -460,14 +405,9 @@ public interface SettableByNameData<T extends SettableData<T>> {
      * <p>
      * Please note that {@code null} values are not supported inside collection by CQL.
      * <p>
-     * Note about performance: this method must perform a runtime inspection of the provided map,
-     * in order to guess the best codec to serialize the set elements.
-     * The result of such inspection cannot be cached and thus must be performed for each invocation
-     * of this method, which may incur in a performance penalty.
-     * <p>
-     * Furthermore, if two or more codecs are available
-     * for the underlying CQL type ({@code set}), <em>which one will be used will depend
-     * on the actual object being serialized</em>.
+     * Note: if two or more codecs are available
+     * for the underlying CQL type, <em>the one that will be used will be
+     * the first one to be registered.</em>.
      * <p>
      * For these reasons, it is generally preferable to use the more
      * deterministic methods {@link #setSet(String, Set, Class)} or
@@ -479,9 +419,6 @@ public interface SettableByNameData<T extends SettableData<T>> {
      * @return this object.
      *
      * @throws IllegalArgumentException if {@code name} is not a valid name for this object.
-     * @throws InvalidTypeException if (any occurrence of) {@code name} is
-     * not a map type or if the elements of {@code v} are not of the type of
-     * the elements of column {@code name}.
      * @throws NullPointerException if {@code v} contains null values. Nulls are not supported in collections
      * by CQL.
      */
@@ -503,9 +440,6 @@ public interface SettableByNameData<T extends SettableData<T>> {
      * @return this object.
      *
      * @throws IllegalArgumentException if {@code name} is not a valid name for this object.
-     * @throws InvalidTypeException if (any occurrence of) {@code name} is
-     * not a map type or if the elements (keys or values) of {@code v} are not of
-     * the type of the elements of column {@code name}.
      * @throws NullPointerException if {@code v} contains null values. Nulls are not supported in collections
      * by CQL.
      */
@@ -527,9 +461,6 @@ public interface SettableByNameData<T extends SettableData<T>> {
      * @return this object.
      *
      * @throws IllegalArgumentException if {@code name} is not a valid name for this object.
-     * @throws InvalidTypeException if (any occurrence of) {@code name} is
-     * not a map type or if the elements (keys or values) of {@code v} are not of
-     * the type of the elements of column {@code name}.
      * @throws NullPointerException if {@code v} contains null values. Nulls are not supported in collections
      * by CQL.
      */
@@ -545,11 +476,6 @@ public interface SettableByNameData<T extends SettableData<T>> {
      * @return this object.
      *
      * @throws IllegalArgumentException if {@code name} is not a valid name for this object.
-     * @throws InvalidTypeException if value {@code i} is not a UDT value or if its definition
-     * does not correspond to the one of {@code v}.
-     * @throws InvalidTypeException if (any occurrence of) {@code name} is
-     * not a UDT value or if the definition of column {@code name} does not correspond to
-     * the one of {@code v}.
      */
     public T setUDTValue(String name, UDTValue v);
 
@@ -563,9 +489,6 @@ public interface SettableByNameData<T extends SettableData<T>> {
      * @return this object.
      *
      * @throws IllegalArgumentException if {@code name} is not a valid name for this object.
-     * @throws InvalidTypeException if (any occurrence of) {@code name} is
-     * not a tuple value or if the types of column {@code name} do not correspond to
-     * the ones of {@code v}.
      */
     public T setTupleValue(String name, TupleValue v);
 
@@ -592,7 +515,7 @@ public interface SettableByNameData<T extends SettableData<T>> {
      * @param v the value to set; may be {@code null}.
      * @param targetClass The Java class to convert to; must not be {@code null};
      * @return this object.
-     * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
+     * @throws IllegalArgumentException if {@code name} is not a valid name for this object.
      */
     <V> T set(String name, V v, Class<V> targetClass);
 
@@ -607,7 +530,7 @@ public interface SettableByNameData<T extends SettableData<T>> {
      * @param v the value to set; may be {@code null}.
      * @param targetType The Java type to convert to; must not be {@code null};
      * @return this object.
-     * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
+     * @throws IllegalArgumentException if {@code name} is not a valid name for this object.
      */
     <V> T set(String name, V v, TypeToken<V> targetType);
 
@@ -627,9 +550,8 @@ public interface SettableByNameData<T extends SettableData<T>> {
      * @param codec The {@link TypeCodec} to use to serialize the value; may not be {@code null}.
      * @return this object.
      * @throws InvalidTypeException if the given codec does not {@link TypeCodec#accepts(DataType) accept} the underlying CQL type.
-     * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
+     * @throws IllegalArgumentException if {@code name} is not a valid name for this object.
      */
     <V> T set(String name, V v, TypeCodec<V> codec);
-
 
 }

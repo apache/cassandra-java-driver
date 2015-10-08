@@ -38,7 +38,6 @@ public interface SettableByIndexData<T extends SettableByIndexData<T>> {
      * @return this object.
      *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not of type BOOLEAN.
      */
     public T setBool(int i, boolean v);
 
@@ -50,7 +49,6 @@ public interface SettableByIndexData<T extends SettableByIndexData<T>> {
      * @return this object.
      *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not of type TINYINT.
      */
     public T setByte(int i, byte v);
 
@@ -62,7 +60,6 @@ public interface SettableByIndexData<T extends SettableByIndexData<T>> {
      * @return this object.
      *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not of type SMALLINT.
      */
     public T setShort(int i, short v);
 
@@ -74,7 +71,6 @@ public interface SettableByIndexData<T extends SettableByIndexData<T>> {
      * @return this object.
      *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not of type INT.
      */
     public T setInt(int i, int v);
 
@@ -86,7 +82,6 @@ public interface SettableByIndexData<T extends SettableByIndexData<T>> {
      * @return this object.
      *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not of type BIGINT or COUNTER.
      */
     public T setLong(int i, long v);
 
@@ -98,7 +93,6 @@ public interface SettableByIndexData<T extends SettableByIndexData<T>> {
      * @return this object.
      *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not of type TIMESTAMP.
      */
     public T setTimestamp(int i, Date v);
 
@@ -110,7 +104,6 @@ public interface SettableByIndexData<T extends SettableByIndexData<T>> {
      * @return this object.
      *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not of type DATE.
      */
     public T setDate(int i, LocalDate v);
 
@@ -122,7 +115,6 @@ public interface SettableByIndexData<T extends SettableByIndexData<T>> {
      * @return this object.
      *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not of type TIME.
      */
     public T setTime(int i, long v);
 
@@ -134,7 +126,6 @@ public interface SettableByIndexData<T extends SettableByIndexData<T>> {
      * @return this object.
      *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not of type FLOAT.
      */
     public T setFloat(int i, float v);
 
@@ -146,7 +137,6 @@ public interface SettableByIndexData<T extends SettableByIndexData<T>> {
      * @return this object.
      *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not of type DOUBLE.
      */
     public T setDouble(int i, double v);
 
@@ -158,8 +148,6 @@ public interface SettableByIndexData<T extends SettableByIndexData<T>> {
      * @return this object.
      *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is of neither of the
-     * following types: VARCHAR, TEXT or ASCII.
      */
     public T setString(int i, String v);
 
@@ -175,7 +163,6 @@ public interface SettableByIndexData<T extends SettableByIndexData<T>> {
      * @return this object.
      *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not of type BLOB.
      */
     public T setBytes(int i, ByteBuffer v);
 
@@ -203,7 +190,6 @@ public interface SettableByIndexData<T extends SettableByIndexData<T>> {
      * @return this object.
      *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not of type VARINT.
      */
     public T setVarint(int i, BigInteger v);
 
@@ -215,7 +201,6 @@ public interface SettableByIndexData<T extends SettableByIndexData<T>> {
      * @return this object.
      *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not of type DECIMAL.
      */
     public T setDecimal(int i, BigDecimal v);
 
@@ -227,9 +212,6 @@ public interface SettableByIndexData<T extends SettableByIndexData<T>> {
      * @return this object.
      *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not of type UUID or
-     * TIMEUUID, or if value {@code i} is of type TIMEUUID but {@code v} is
-     * not a type 1 UUID.
      */
     public T setUUID(int i, UUID v);
 
@@ -241,7 +223,6 @@ public interface SettableByIndexData<T extends SettableByIndexData<T>> {
      * @return this object.
      *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not of type INET.
      */
     public T setInet(int i, InetAddress v);
 
@@ -250,12 +231,9 @@ public interface SettableByIndexData<T extends SettableByIndexData<T>> {
      * <p>
      * Please note that {@code null} values inside collections are not supported by CQL.
      * <p>
-     * Note about performance: this method must perform a runtime inspection of the provided list,
-     * in order to guess the best codec to serialize the list elements.
-     * <p>
-     * Furthermore, if two or more codecs are available
-     * for the underlying CQL type ({@code list}), <em>which one will be used will depend
-     * on the actual object being serialized</em>.
+     * Note: if two or more codecs are available
+     * for the underlying CQL type, <em>the one that will be used will be
+     * the first one to be registered.</em>.
      * <p>
      * For these reasons, it is generally preferable to use the more
      * deterministic methods {@link #setList(int, List, Class)} or
@@ -266,9 +244,6 @@ public interface SettableByIndexData<T extends SettableByIndexData<T>> {
      * @return this object.
      *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not a list type or
-     * if the elements of {@code v} are not of the type of the elements of
-     * column {@code i}.
      * @throws NullPointerException if {@code v} contains null values. Nulls are not supported in collections
      * by CQL.
      */
@@ -290,9 +265,6 @@ public interface SettableByIndexData<T extends SettableByIndexData<T>> {
      * @return this object.
      *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not a list type or
-     * if the elements of {@code v} are not of the type of the elements of
-     * column {@code i}.
      * @throws NullPointerException if {@code v} contains null values. Nulls are not supported in collections
      * by CQL.
      */
@@ -314,9 +286,6 @@ public interface SettableByIndexData<T extends SettableByIndexData<T>> {
      * @return this object.
      *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not a list type or
-     * if the elements of {@code v} are not of the type of the elements of
-     * column {@code i}.
      * @throws NullPointerException if {@code v} contains null values. Nulls are not supported in collections
      * by CQL.
      */
@@ -327,14 +296,9 @@ public interface SettableByIndexData<T extends SettableByIndexData<T>> {
      * <p>
      * Please note that {@code null} values are not supported inside collection by CQL.
      * <p>
-     * Note about performance: this method must perform a runtime inspection of the provided map,
-     * in order to guess the best codec to serialize the map entries.
-     * The result of such inspection cannot be cached and thus must be performed for each invocation
-     * of this method, which may incur in a performance penalty.
-     * <p>
-     * Furthermore, if two or more codecs are available
-     * for the underlying CQL type ({@code map}), <em>which one will be used will depend
-     * on the actual object being serialized</em>.
+     * Note: if two or more codecs are available
+     * for the underlying CQL type, <em>the one that will be used will be
+     * the first one to be registered.</em>.
      * <p>
      * For these reasons, it is generally preferable to use the more
      * deterministic methods {@link #setMap(int, Map, Class, Class)} or
@@ -345,9 +309,6 @@ public interface SettableByIndexData<T extends SettableByIndexData<T>> {
      * @return this object.
      *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not a map type or
-     * if the elements (keys or values) of {@code v} are not of the type of the
-     * elements of column {@code i}.
      * @throws NullPointerException if {@code v} contains null values. Nulls are not supported in collections
      * by CQL.
      */
@@ -370,9 +331,6 @@ public interface SettableByIndexData<T extends SettableByIndexData<T>> {
      * @return this object.
      *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not a map type or
-     * if the elements of {@code v} are not of the type of the elements of
-     * column {@code i}.
      * @throws NullPointerException if {@code v} contains null values. Nulls are not supported in collections
      * by CQL.
      */
@@ -395,9 +353,6 @@ public interface SettableByIndexData<T extends SettableByIndexData<T>> {
      * @return this object.
      *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not a map type or
-     * if the elements of {@code v} are not of the type of the elements of
-     * column {@code i}.
      * @throws NullPointerException if {@code v} contains null values. Nulls are not supported in collections
      * by CQL.
      */
@@ -408,14 +363,9 @@ public interface SettableByIndexData<T extends SettableByIndexData<T>> {
      * <p>
      * Please note that {@code null} values are not supported inside collection by CQL.
      * <p>
-     * Note about performance: this method must perform a runtime inspection of the provided set,
-     * in order to guess the best codec to serialize the set elements.
-     * The result of such inspection cannot be cached and thus must be performed for each invocation
-     * of this method, which may incur in a performance penalty.
-     * <p>
-     * Furthermore, if two or more codecs are available
-     * for the underlying CQL type ({@code set}), <em>which one will be used will depend
-     * on the actual object being serialized</em>.
+     * Note: if two or more codecs are available
+     * for the underlying CQL type, <em>the one that will be used will be
+     * the first one to be registered.</em>.
      * <p>
      * For these reasons, it is generally preferable to use the more
      * deterministic methods {@link #setSet(int, Set, Class)} or
@@ -426,9 +376,6 @@ public interface SettableByIndexData<T extends SettableByIndexData<T>> {
      * @return this object.
      *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not a set type or
-     * if the elements of {@code v} are not of the type of the elements of
-     * column {@code i}.
      * @throws NullPointerException if {@code v} contains null values. Nulls are not supported in collections
      * by CQL.
      */
@@ -450,9 +397,6 @@ public interface SettableByIndexData<T extends SettableByIndexData<T>> {
      * @return this object.
      *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not a set type or
-     * if the elements of {@code v} are not of the type of the elements of
-     * column {@code i}.
      * @throws NullPointerException if {@code v} contains null values. Nulls are not supported in collections
      * by CQL.
      */
@@ -474,9 +418,6 @@ public interface SettableByIndexData<T extends SettableByIndexData<T>> {
      * @return this object.
      *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not a set type or
-     * if the elements of {@code v} are not of the type of the elements of
-     * column {@code i}.
      * @throws NullPointerException if {@code v} contains null values. Nulls are not supported in collections
      * by CQL.
      */
@@ -490,8 +431,6 @@ public interface SettableByIndexData<T extends SettableByIndexData<T>> {
      * @return this object.
      *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not a UDT value or if its definition
-     * does not correspond to the one of {@code v}.
      */
     public T setUDTValue(int i, UDTValue v);
 
@@ -503,8 +442,6 @@ public interface SettableByIndexData<T extends SettableByIndexData<T>> {
      * @return this object.
      *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not a tuple value or if its types
-     * do not correspond to the ones of {@code v}.
      */
     public T setTupleValue(int i, TupleValue v);
 

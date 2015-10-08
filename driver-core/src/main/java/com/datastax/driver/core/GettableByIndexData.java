@@ -49,7 +49,6 @@ public interface GettableByIndexData {
      * value is NULL, {@code false} is returned.
      *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not of type BOOLEAN.
      */
     public boolean getBool(int i);
 
@@ -61,7 +60,6 @@ public interface GettableByIndexData {
      * value is NULL, {@code 0} is returned.
      *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not of type TINYINT.
      */
     public byte getByte(int i);
 
@@ -73,7 +71,6 @@ public interface GettableByIndexData {
      * value is NULL, {@code 0} is returned.
      *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not of type SMALLINT.
      */
     public short getShort(int i);
 
@@ -85,7 +82,6 @@ public interface GettableByIndexData {
      * value is NULL, {@code 0} is returned.
      *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not of type INT.
      */
     public int getInt(int i);
 
@@ -97,7 +93,6 @@ public interface GettableByIndexData {
      * value is NULL, {@code 0L} is returned.
      *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not of type BIGINT or COUNTER.
      */
     public long getLong(int i);
 
@@ -109,7 +104,6 @@ public interface GettableByIndexData {
      * value is NULL, {@code null} is returned.
      *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not of type TIMESTAMP.
      */
     public Date getTimestamp(int i);
 
@@ -121,7 +115,6 @@ public interface GettableByIndexData {
      * value is NULL, {@code null} is returned.
      *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not of type DATE.
      */
     public LocalDate getDate(int i);
 
@@ -133,7 +126,6 @@ public interface GettableByIndexData {
      * value is NULL, {@code 0L} is returned.
      *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not of type TIME.
      */
     public long getTime(int i);
 
@@ -145,7 +137,6 @@ public interface GettableByIndexData {
      * value is NULL, {@code 0.0f} is returned.
      *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not of type FLOAT.
      */
     public float getFloat(int i);
 
@@ -157,7 +148,6 @@ public interface GettableByIndexData {
      * value is NULL, {@code 0.0} is returned.
      *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not of type DOUBLE.
      */
     public double getDouble(int i);
 
@@ -188,7 +178,6 @@ public interface GettableByIndexData {
      * value is NULL, {@code null} is returned.
      *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} type is not of type BLOB.
      */
     public ByteBuffer getBytes(int i);
 
@@ -200,8 +189,6 @@ public interface GettableByIndexData {
      * value is NULL, {@code null} is returned.
      *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} type is none of:
-     * VARCHAR, TEXT or ASCII.
      */
     public String getString(int i);
 
@@ -213,7 +200,6 @@ public interface GettableByIndexData {
      * length integer. If the value is NULL, {@code null} is returned.
      *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not of type VARINT.
      */
     public BigInteger getVarint(int i);
 
@@ -225,7 +211,6 @@ public interface GettableByIndexData {
      * length decimal. If the value is NULL, {@code null} is returned.
      *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not of type DECIMAL.
      */
     public BigDecimal getDecimal(int i);
 
@@ -237,8 +222,6 @@ public interface GettableByIndexData {
      * If the value is NULL, {@code null} is returned.
      *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not of type UUID
-     * or TIMEUUID.
      */
     public UUID getUUID(int i);
 
@@ -250,7 +233,6 @@ public interface GettableByIndexData {
      * If the value is NULL, {@code null} is returned.
      *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not of type INET.
      */
     public InetAddress getInet(int i);
 
@@ -273,8 +255,6 @@ public interface GettableByIndexData {
      * {@code T} objects.
      *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not a list or if its
-     * elements are not of class {@code T}.
      */
     public <T> List<T> getList(int i, Class<T> elementsClass);
 
@@ -300,8 +280,6 @@ public interface GettableByIndexData {
      * {@code T} objects.
      *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not a list or if its
-     * elements are not of class {@code T}.
      */
     public <T> List<T> getList(int i, TypeToken<T> elementsType);
 
@@ -324,8 +302,6 @@ public interface GettableByIndexData {
      * {@code T} objects.
      *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not a set or if its
-     * elements are not of class {@code T}.
      */
     public <T> Set<T> getSet(int i, Class<T> elementsClass);
 
@@ -351,8 +327,6 @@ public interface GettableByIndexData {
      * {@code T} objects.
      *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not a set or if its
-     * elements are not of class {@code T}.
      */
     public <T> Set<T> getSet(int i, TypeToken<T> elementsType);
 
@@ -376,9 +350,6 @@ public interface GettableByIndexData {
      * {@code K} to {@code V} objects.
      *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not a map, if its
-     * keys are not of class {@code K} or if its values are not of
-     * class {@code V}.
      */
     public <K, V> Map<K, V> getMap(int i, Class<K> keysClass, Class<V> valuesClass);
 
@@ -406,9 +377,6 @@ public interface GettableByIndexData {
      * {@code K} to {@code V} objects.
      *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not a map, if its
-     * keys are not of class {@code K} or if its values are not of
-     * class {@code V}.
      */
     public <K, V> Map<K, V> getMap(int i, TypeToken<K> keysType, TypeToken<V> valuesType);
 
@@ -420,7 +388,6 @@ public interface GettableByIndexData {
      * then {@code null} will be returned.
      *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not a UDT value.
      */
     public UDTValue getUDTValue(int i);
 
@@ -432,26 +399,18 @@ public interface GettableByIndexData {
      * then {@code null} will be returned.
      *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not a tuple value.
      */
     public TupleValue getTupleValue(int i);
 
     /**
      * Returns the {@code i}th value as the Java type matching its CQL type.
      * <p>
-     * This method uses the default codec for the underlying CQL type
-     * to perform deserialization, and is safe to be used
-     * <em>as long as only default codecs are in use</em>.
-     * If a second, custom codec for the same CQL type is registered, which one will
-     * be used is unspecified; in such cases, it is preferable to use
-     * the more deterministic methods {@link #get(int, Class)} or {@link #get(int, TypeToken)} instead.
+     * Note: if two or more codecs are available
+     * for the underlying CQL type, <em>the one that will be used will be
+     * the first one to be registered.</em>.
      * <p>
-     * Implementation note: the actual object returned by this method will depend
-     * on the {@link TypeCodec codec} being used; therefore, callers should
-     * make no assumptions concerning its mutability nor its thread-safety.
-     * Furthermore, the behavior of this method in respect to CQL {@code NULL} values is also
-     * codec-dependent; by default, a CQL {@code NULL} value translates to {@code null} for
-     * simple types, UDTs and tuples, and to empty collections for all CQL collection types.
+     * For these reasons, it is generally preferable to use the more
+     * deterministic methods {@link #get(int, Class)} or {@link #get(int, TypeToken)} instead.
      *
      * @param i the index to retrieve.
      * @return the value of the {@code i}th value as the Java type matching its CQL type.
