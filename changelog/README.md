@@ -2,6 +2,8 @@
 
 ### 2.2.0-rc4 (in progress)
 
+-[improvement] GettableData "Old API" methods should not check for CQL type (JAVA-940)
+
 Merged from 2.0 branch:
 
 - [improvement] Log streamid at the trace level on sending request and receiving response (JAVA-718)
