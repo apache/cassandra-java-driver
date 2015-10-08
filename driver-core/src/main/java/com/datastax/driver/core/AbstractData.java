@@ -27,7 +27,6 @@ import com.google.common.reflect.TypeToken;
 import static com.datastax.driver.core.CodecUtils.listOf;
 import static com.datastax.driver.core.CodecUtils.mapOf;
 import static com.datastax.driver.core.CodecUtils.setOf;
-import static com.datastax.driver.core.DataType.Name.*;
 
 // We don't want to expose this one: it's less useful externally and it's a bit ugly to expose anyway (but it's convenient).
 abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableData implements SettableData<T> {
@@ -70,7 +69,6 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
     }
 
     public T setBool(int i, boolean v) {
-        checkType(i, BOOLEAN);
         TypeCodec<Boolean> codec = codecFor(i, Boolean.class);
         ByteBuffer bb;
         if(codec instanceof TypeCodec.PrimitiveBooleanCodec)
@@ -88,7 +86,6 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
     }
 
     public T setByte(int i, byte v) {
-        checkType(i, TINYINT);
         TypeCodec<Byte> codec = codecFor(i, Byte.class);
         ByteBuffer bb;
         if(codec instanceof TypeCodec.PrimitiveByteCodec)
@@ -106,7 +103,6 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
     }
 
     public T setShort(int i, short v) {
-        checkType(i, SMALLINT);
         TypeCodec<Short> codec = codecFor(i, Short.class);
         ByteBuffer bb;
         if(codec instanceof TypeCodec.PrimitiveShortCodec)
@@ -124,7 +120,6 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
     }
 
     public T setInt(int i, int v) {
-        checkType(i, INT);
         TypeCodec<Integer> codec = codecFor(i, Integer.class);
         ByteBuffer bb;
         if(codec instanceof TypeCodec.PrimitiveIntCodec)
@@ -142,7 +137,6 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
     }
 
     public T setLong(int i, long v) {
-        checkType(i, BIGINT, COUNTER);
         TypeCodec<Long> codec = codecFor(i, Long.class);
         ByteBuffer bb;
         if(codec instanceof TypeCodec.PrimitiveLongCodec)
@@ -160,7 +154,6 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
     }
 
     public T setTimestamp(int i, Date v) {
-        checkType(i, TIMESTAMP);
         return setValue(i, codecFor(i, Date.class).serialize(v, protocolVersion));
     }
 
@@ -172,7 +165,6 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
     }
 
     public T setDate(int i, LocalDate v) {
-        checkType(i, DATE);
         return setValue(i, codecFor(i, LocalDate.class).serialize(v, protocolVersion));
     }
 
@@ -184,7 +176,6 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
     }
 
     public T setTime(int i, long v) {
-        checkType(i, TIME);
         TypeCodec<Long> codec = codecFor(i, Long.class);
         ByteBuffer bb;
         if(codec instanceof TypeCodec.PrimitiveLongCodec)
@@ -202,7 +193,6 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
     }
 
     public T setFloat(int i, float v) {
-        checkType(i, FLOAT);
         TypeCodec<Float> codec = codecFor(i, Float.class);
         ByteBuffer bb;
         if(codec instanceof TypeCodec.PrimitiveFloatCodec)
@@ -220,7 +210,6 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
     }
 
     public T setDouble(int i, double v) {
-        checkType(i, DOUBLE);
         TypeCodec<Double> codec = codecFor(i, Double.class);
         ByteBuffer bb;
         if(codec instanceof TypeCodec.PrimitiveDoubleCodec)
@@ -238,7 +227,6 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
     }
 
     public T setString(int i, String v) {
-        checkType(i, VARCHAR, TEXT, ASCII);
         return setValue(i, codecFor(i, String.class).serialize(v, protocolVersion));
     }
 
@@ -250,7 +238,6 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
     }
 
     public T setBytes(int i, ByteBuffer v) {
-        checkType(i, BLOB);
         return setValue(i, codecFor(i, ByteBuffer.class).serialize(v, protocolVersion));
     }
 
@@ -274,7 +261,6 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
     }
 
     public T setVarint(int i, BigInteger v) {
-        checkType(i, VARINT);
         return setValue(i, codecFor(i, BigInteger.class).serialize(v, protocolVersion));
     }
 
@@ -286,7 +272,6 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
     }
 
     public T setDecimal(int i, BigDecimal v) {
-        checkType(i, DECIMAL);
         return setValue(i, codecFor(i, BigDecimal.class).serialize(v, protocolVersion));
     }
 
@@ -298,7 +283,6 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
     }
 
     public T setUUID(int i, UUID v) {
-        checkType(i, UUID, TIMEUUID);
         return setValue(i, codecFor(i, UUID.class).serialize(v, protocolVersion));
     }
 
@@ -310,7 +294,6 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
     }
 
     public T setInet(int i, InetAddress v) {
-        checkType(i, INET);
         return setValue(i, codecFor(i, InetAddress.class).serialize(v, protocolVersion));
     }
 
@@ -339,16 +322,7 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
 
     @SuppressWarnings("unchecked")
     public <E> T setList(int i, List<E> v) {
-        checkType(i, LIST);
-        if(v == null || v.isEmpty()) {
-            // no runtime inspection possible, rely on the underlying metadata
-            return setValue(i, codecFor(i).serialize(v, protocolVersion));
-        } else {
-            // inspect the first element and locate a codec that accepts both the underlying CQL type and the actual Java type
-            DataType eltCqlType = getType(i).getTypeArguments().get(0);
-            TypeToken<E> eltJavaType = getCodecRegistry().codecFor(eltCqlType, v.iterator().next()).getJavaType();
-            return setValue(i, codecFor(i, listOf(eltJavaType)).serialize(v, protocolVersion));
-        }
+        return setValue(i, codecFor(i).serialize(v, protocolVersion));
     }
 
     @Override
@@ -388,19 +362,7 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
     @SuppressWarnings("unchecked")
     @Override
     public <K, V> T setMap(int i, Map<K, V> v) {
-        checkType(i, MAP);
-        if(v == null || v.isEmpty()) {
-            // no runtime inspection possible, rely on the underlying metadata
-            return setValue(i, codecFor(i).serialize(v, protocolVersion));
-        } else {
-            // inspect the first element and locate a codec that accepts both the underlying CQL type and the actual Java types for keys and values
-            DataType keysCqlType = getType(i).getTypeArguments().get(0);
-            DataType valuesCqlType = getType(i).getTypeArguments().get(1);
-            Map.Entry<K, V> entry = v.entrySet().iterator().next();
-            TypeToken<K> keysType = getCodecRegistry().codecFor(keysCqlType, entry.getKey()).getJavaType();
-            TypeToken<V> valuesType = getCodecRegistry().codecFor(valuesCqlType, entry.getValue()).getJavaType();
-            return setValue(i, codecFor(i, mapOf(keysType, valuesType)).serialize(v, protocolVersion));
-        }
+        return setValue(i, codecFor(i).serialize(v, protocolVersion));
     }
     
     @Override
@@ -439,16 +401,7 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
 
     @SuppressWarnings("unchecked")
     public <E> T setSet(int i, Set<E> v) {
-        checkType(i, SET);
-        if(v == null || v.isEmpty()) {
-            // no runtime inspection possible, rely on the underlying metadata
-            return setValue(i, codecFor(i).serialize(v, protocolVersion));
-        } else {
-            // inspect the first element and locate a codec that accepts both the underlying CQL type and the actual Java type
-            DataType eltCqlType = getType(i).getTypeArguments().get(0);
-            TypeToken<E> eltJavaType = getCodecRegistry().codecFor(eltCqlType, v.iterator().next()).getJavaType();
-            return setValue(i, codecFor(i, setOf(eltJavaType)).serialize(v, protocolVersion));
-        }
+        return setValue(i, codecFor(i).serialize(v, protocolVersion));
     }
     
     @Override
@@ -486,7 +439,6 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
     }
 
     public T setUDTValue(int i, UDTValue v) {
-        checkType(i, UDT);
         return setValue(i, codecFor(i, UDTValue.class).serialize(v, protocolVersion));
     }
 
@@ -498,7 +450,6 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
     }
 
     public T setTupleValue(int i, TupleValue v) {
-        checkType(i, TUPLE);
         return setValue(i, codecFor(i, TupleValue.class).serialize(v, protocolVersion));
     }
 

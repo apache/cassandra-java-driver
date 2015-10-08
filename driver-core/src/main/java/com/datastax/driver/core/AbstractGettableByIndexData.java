@@ -19,23 +19,15 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 import com.google.common.reflect.TypeToken;
-
-import static com.google.common.collect.Sets.newHashSet;
-import static com.google.common.collect.Sets.newLinkedHashSet;
 
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 
 import static com.datastax.driver.core.CodecUtils.listOf;
 import static com.datastax.driver.core.CodecUtils.mapOf;
 import static com.datastax.driver.core.CodecUtils.setOf;
-import static com.datastax.driver.core.DataType.Name.*;
 
 abstract class AbstractGettableByIndexData implements GettableByIndexData {
 
@@ -93,23 +85,10 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
         return getCodecRegistry().codecFor(getType(i), value);
     }
 
-    // Note: we avoid having a vararg method to avoid the array allocation that comes with it.
     protected void checkType(int i, DataType.Name actual) {
         DataType.Name expected = getType(i).getName();
         if (!actual.isCompatibleWith(expected))
             throw new InvalidTypeException(String.format("Value %s is of type %s, not %s", getName(i), expected, actual));
-    }
-
-    protected void checkType(int i, DataType.Name actual1, DataType.Name actual2) {
-        DataType.Name expected = getType(i).getName();
-        if (!actual1.isCompatibleWith(expected) && !actual2.isCompatibleWith(expected))
-            throw new InvalidTypeException(String.format("Value %s is of type %s, not any of [%s, %s]", getName(i), expected, actual1, actual2));
-    }
-
-    protected void checkType(int i, DataType.Name actual1, DataType.Name actual2, DataType.Name actual3) {
-        DataType.Name expected = getType(i).getName();
-        if (!actual1.isCompatibleWith(expected) && !actual2.isCompatibleWith(expected) && !actual3.isCompatibleWith(expected))
-            throw new InvalidTypeException(String.format("Value %s is of type %s, not any of [%s, %s, %s]", getName(i), expected, actual1, actual2, actual3));
     }
 
     /**
@@ -125,7 +104,6 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
      */
     @Override
     public boolean getBool(int i) {
-        checkType(i, BOOLEAN);
         ByteBuffer value = getValue(i);
         TypeCodec<Boolean> codec = codecFor(i, Boolean.class);
         if(codec instanceof TypeCodec.PrimitiveBooleanCodec)
@@ -139,7 +117,6 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
      */
     @Override
     public byte getByte(int i) {
-        checkType(i, TINYINT);
         ByteBuffer value = getValue(i);
         TypeCodec<Byte> codec = codecFor(i, Byte.class);
         if(codec instanceof TypeCodec.PrimitiveByteCodec)
@@ -153,7 +130,6 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
      */
     @Override
     public short getShort(int i) {
-        checkType(i, SMALLINT);
         ByteBuffer value = getValue(i);
         TypeCodec<Short> codec = codecFor(i, Short.class);
         if(codec instanceof TypeCodec.PrimitiveShortCodec)
@@ -167,7 +143,6 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
      */
     @Override
     public int getInt(int i) {
-        checkType(i, INT);
         ByteBuffer value = getValue(i);
         TypeCodec<Integer> codec = codecFor(i, Integer.class);
         if(codec instanceof TypeCodec.PrimitiveIntCodec)
@@ -181,7 +156,6 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
      */
     @Override
     public long getLong(int i) {
-        checkType(i, BIGINT, COUNTER);
         ByteBuffer value = getValue(i);
         TypeCodec<Long> codec = codecFor(i, Long.class);
         if(codec instanceof TypeCodec.PrimitiveLongCodec)
@@ -195,7 +169,6 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
      */
     @Override
     public Date getTimestamp(int i) {
-        checkType(i, TIMESTAMP);
         ByteBuffer value = getValue(i);
         return codecFor(i, Date.class).deserialize(value, protocolVersion);
     }
@@ -205,7 +178,6 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
      */
     @Override
     public LocalDate getDate(int i) {
-        checkType(i, DATE);
         ByteBuffer value = getValue(i);
         return codecFor(i, LocalDate.class).deserialize(value, protocolVersion);
     }
@@ -215,7 +187,6 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
      */
     @Override
     public long getTime(int i) {
-        checkType(i, TIME);
         ByteBuffer value = getValue(i);
         TypeCodec<Long> codec = codecFor(i, Long.class);
         if(codec instanceof TypeCodec.PrimitiveLongCodec)
@@ -229,7 +200,6 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
      */
     @Override
     public float getFloat(int i) {
-        checkType(i, FLOAT);
         ByteBuffer value = getValue(i);
         TypeCodec<Float> codec = codecFor(i, Float.class);
         if(codec instanceof TypeCodec.PrimitiveFloatCodec)
@@ -243,7 +213,6 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
      */
     @Override
     public double getDouble(int i) {
-        checkType(i, DOUBLE);
         ByteBuffer value = getValue(i);
         TypeCodec<Double> codec = codecFor(i, Double.class);
         if(codec instanceof TypeCodec.PrimitiveDoubleCodec)
@@ -268,7 +237,6 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
      */
     @Override
     public ByteBuffer getBytes(int i) {
-        checkType(i, BLOB);
         ByteBuffer value = getValue(i);
         return codecFor(i, ByteBuffer.class).deserialize(value, protocolVersion);
     }
@@ -278,7 +246,6 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
      */
     @Override
     public String getString(int i) {
-        checkType(i, VARCHAR, ASCII);
         ByteBuffer value = getValue(i);
         return codecFor(i, String.class).deserialize(value, protocolVersion);
     }
@@ -288,7 +255,6 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
      */
     @Override
     public BigInteger getVarint(int i) {
-        checkType(i, VARINT);
         ByteBuffer value = getValue(i);
         return codecFor(i, BigInteger.class).deserialize(value, protocolVersion);
     }
@@ -298,7 +264,6 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
      */
     @Override
     public BigDecimal getDecimal(int i) {
-        checkType(i, DECIMAL);
         ByteBuffer value = getValue(i);
         return codecFor(i, BigDecimal.class).deserialize(value, protocolVersion);
     }
@@ -308,7 +273,6 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
      */
     @Override
     public UUID getUUID(int i) {
-        checkType(i, UUID, TIMEUUID);
         ByteBuffer value = getValue(i);
         return codecFor(i, UUID.class).deserialize(value, protocolVersion);
     }
@@ -318,7 +282,6 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
      */
     @Override
     public InetAddress getInet(int i) {
-        checkType(i, INET);
         ByteBuffer value = getValue(i);
         return codecFor(i, InetAddress.class).deserialize(value, protocolVersion);
     }
@@ -338,7 +301,6 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
     @Override
     @SuppressWarnings("unchecked")
     public <T> List<T> getList(int i, TypeToken<T> elementsType) {
-        checkType(i, LIST);
         ByteBuffer value = getValue(i);
         TypeToken<List<T>> javaType = listOf(elementsType);
         return codecFor(i, javaType).deserialize(value, protocolVersion);
@@ -359,7 +321,6 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
     @Override
     @SuppressWarnings("unchecked")
     public <T> Set<T> getSet(int i, TypeToken<T> elementsType) {
-        checkType(i, SET);
         ByteBuffer value = getValue(i);
         TypeToken<Set<T>> javaType = setOf(elementsType);
         return codecFor(i, javaType).deserialize(value, protocolVersion);
@@ -380,7 +341,6 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
     @Override
     @SuppressWarnings("unchecked")
     public <K, V> Map<K, V> getMap(int i, TypeToken<K> keysType, TypeToken<V> valuesType) {
-        checkType(i, MAP);
         ByteBuffer value = getValue(i);
         TypeToken<Map<K, V>> javaType = mapOf(keysType, valuesType);
         return codecFor(i, javaType).deserialize(value, protocolVersion);
@@ -392,7 +352,6 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
     @Override
     @SuppressWarnings("unchecked")
     public UDTValue getUDTValue(int i) {
-        checkType(i, UDT);
         ByteBuffer value = getValue(i);
         return codecFor(i, UDTValue.class).deserialize(value, protocolVersion);
     }
@@ -403,7 +362,6 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
     @Override
     @SuppressWarnings("unchecked")
     public TupleValue getTupleValue(int i) {
-        checkType(i, TUPLE);
         ByteBuffer value = getValue(i);
         return codecFor(i, TupleValue.class).deserialize(value, protocolVersion);
     }
