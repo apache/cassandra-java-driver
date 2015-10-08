@@ -170,8 +170,12 @@ public class UserType extends DataType implements Iterable<UserType.Field>{
     }
 
     @Override
-    public final int hashCode() {
-        return Arrays.hashCode(new Object[]{ name, keyspace, typeName, byIdx });
+    public int hashCode() {
+        int result = name.hashCode();
+        result = 31 * result + keyspace.hashCode();
+        result = 31 * result + typeName.hashCode();
+        result = 31 * result + Arrays.hashCode(byIdx);
+        return result;
     }
 
     @Override
@@ -183,7 +187,8 @@ public class UserType extends DataType implements Iterable<UserType.Field>{
 
         // Note: we don't test byName because it's redundant with byIdx in practice,
         // but also because the map holds 'int[]' which don't have proper equal.
-        return keyspace.equals(other.keyspace)
+        return name.equals(other.name)
+            && keyspace.equals(other.keyspace)
             && typeName.equals(other.typeName)
             && Arrays.equals(byIdx, other.byIdx);
     }
