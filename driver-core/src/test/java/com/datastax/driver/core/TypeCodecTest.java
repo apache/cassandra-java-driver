@@ -244,7 +244,7 @@ public class TypeCodecTest {
         ), ProtocolVersion.NEWEST_SUPPORTED, codecRegistry);
         UDTValue expected = udt.newValue();
         expected.setString("t", null);
-        expected.setObject("i", null);
+        expected.setToNull("i");
         expected.setList("l", null);
 
         UDTValue actual = codecRegistry.codecFor(udt, UDTValue.class).deserialize(ByteBuffer.allocate(0), ProtocolVersion.NEWEST_SUPPORTED);

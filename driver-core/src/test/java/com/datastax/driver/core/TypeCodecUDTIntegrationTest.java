@@ -70,11 +70,6 @@ public class TypeCodecUDTIntegrationTest extends CCMBridge.PerClassSingleNodeClu
         rows = session.execute(selectQuery, uuid);
         row = rows.one();
         assertRow(row);
-        // bound with setObject
-        session.execute(ps.bind().setUUID(0, uuid).setString(1, "John Doe").setObject(2, addressValue));
-        rows = session.execute(selectQuery, uuid);
-        row = rows.one();
-        assertRow(row);
     }
 
     @Test(groups = "short")
@@ -136,7 +131,7 @@ public class TypeCodecUDTIntegrationTest extends CCMBridge.PerClassSingleNodeClu
             .setSet("tags", phone1.tags);
         UDTValue phone2Value = phoneType.newValue()
             .setString("number", phone2.number)
-            .setObject("tags", phone2.tags);
+            .setSet("tags", phone2.tags);
         addressValue = addressType.newValue()
             .setString("street", address.street)
             .setInt(1, address.zipcode)

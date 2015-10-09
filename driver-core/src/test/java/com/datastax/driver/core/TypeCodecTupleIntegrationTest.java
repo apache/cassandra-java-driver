@@ -69,11 +69,6 @@ public class TypeCodecTupleIntegrationTest extends CCMBridge.PerClassSingleNodeC
         rows = session.execute(selectQuery, uuid);
         row = rows.one();
         assertRow(row);
-        // bound with setObject
-        session.execute(ps.bind().setUUID(0, uuid).setString(1, "John Doe").setObject(2, locationValue));
-        rows = session.execute(selectQuery, uuid);
-        row = rows.one();
-        assertRow(row);
     }
 
     @Test(groups = "short")
@@ -92,11 +87,6 @@ public class TypeCodecTupleIntegrationTest extends CCMBridge.PerClassSingleNodeC
         assertPartialRow(row);
         // bound with setTupleValue
         session.execute(ps.bind().setUUID(0, uuid).setString(1, "John Doe").setTupleValue("location", partialLocationValueInserted));
-        rows = session.execute(selectQuery, uuid);
-        row = rows.one();
-        assertPartialRow(row);
-        // bound with setObject
-        session.execute(ps.bind().setUUID(0, uuid).setString(1, "John Doe").setObject(2, partialLocationValueInserted));
         rows = session.execute(selectQuery, uuid);
         row = rows.one();
         assertPartialRow(row);

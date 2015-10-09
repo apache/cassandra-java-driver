@@ -127,20 +127,6 @@ public class TypeCodecNestedCollectionsIntegrationTest extends CCMBridge.PerClas
     public void should_work_with_prepared_statements_3() {
         session.execute(session.prepare(insertQuery).bind()
             .setInt(0, pk)
-            .setObject(1, v)
-        );
-        PreparedStatement ps = session.prepare(selectQuery);
-        ResultSet rows = session.execute(ps.bind()
-            .setInt(0, pk)
-        );
-        Row row = rows.one();
-        assertRow(row);
-    }
-
-    @Test(groups = "short")
-    public void should_work_with_prepared_statements_4() {
-        session.execute(session.prepare(insertQuery).bind()
-            .setInt(0, pk)
             .set(1, v, listType)
         );
         PreparedStatement ps = session.prepare(selectQuery);

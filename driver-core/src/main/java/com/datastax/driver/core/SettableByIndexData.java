@@ -520,38 +520,10 @@ public interface SettableByIndexData<T extends SettableByIndexData<T>> {
     public T setToNull(int i);
 
     /**
-     * Sets the {@code i}th value to the provided value.
-     * <p>
-     * Note about performance: this method must perform a runtime inspection of the provided object,
-     * in order to guess the best codec to serialize it.
-     * The result of such inspection cannot be cached and thus must be performed for each invocation
-     * of this method, which may incur in a performance penalty.
-     * <p>
-     * Furthermore, if two or more codecs are available
-     * for the underlying CQL type, <em>which one will be used will depend
-     * on the actual object being serialized</em>.
-     * <p>
-     * For these reasons, it is generally preferable to use the more
-     * deterministic methods {@link #set(int, V, Class)}
-     * or {@link #set(int, V, TypeToken)} instead.
-     *
-     * @param i the index of the value to set.
-     * @param v the value to set; may be {@code null}.
-     * @return this object.
-     * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     */
-    <V> T setObject(int i, V v);
-
-    /**
      * Sets the {@code i}th value to the provided value of the provided Java class.
      * <p>
      * A suitable {@link TypeCodec} instance for the underlying CQL type and the provided class must
      * have been previously registered with the {@link CodecRegistry} currently in use.
-     * <p>
-     * This method should be used instead of {@link #setObject(int, Object)} in cases
-     * where more than one codec is registered for the same CQL type; specifying the Java class
-     * allows the {@link CodecRegistry} to narrow down the search and return only an exactly-matching codec (if any),
-     * thus avoiding any risk of ambiguity.
      *
      * @param i the index of the value to set.
      * @param v the value to set; may be {@code null}.
@@ -566,11 +538,6 @@ public interface SettableByIndexData<T extends SettableByIndexData<T>> {
      * <p>
      * A suitable {@link TypeCodec} instance for the underlying CQL type and the provided class must
      * have been previously registered with the {@link CodecRegistry} currently in use.
-     * <p>
-     * This method should be used instead of {@link #setObject(int, Object)} in cases
-     * where more than one codec is registered for the same CQL type; specifying the Java class
-     * allows the {@link CodecRegistry} to narrow down the search and return only an exactly-matching codec (if any),
-     * thus avoiding any risk of ambiguity.
      *
      * @param i the index of the value to set.
      * @param v the value to set; may be {@code null}.

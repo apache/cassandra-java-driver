@@ -266,12 +266,6 @@ abstract class AbstractAddressableByIndexData<T extends SettableByIndexData<T>> 
     }
 
     @Override
-    public <V> T setObject(int i, V v) {
-        TypeCodec<V> codec = v == null ? this.<V>codecFor(i) : codecFor(i, v);
-        return set(i, v, codec);
-    }
-
-    @Override
     public <V> T set(int i, V v, Class<V> targetClass) {
         return set(i, v, codecFor(i, targetClass));
     }

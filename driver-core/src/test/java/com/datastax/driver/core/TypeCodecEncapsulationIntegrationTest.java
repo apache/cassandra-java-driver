@@ -132,25 +132,6 @@ public class TypeCodecEncapsulationIntegrationTest extends CCMBridge.PerClassSin
     @Test(groups = "short")
     public void should_use_custom_codecs_with_prepared_statements_2() {
         session.execute(session.prepare(insertQuery).bind()
-            .setObject(0, new NumberBox<Integer>(n_int))
-            .setObject(1, new NumberBox<Long>(n_bigint))
-            .setObject(2, new NumberBox<Float>(n_float))
-            .setObject(3, new NumberBox<Double>(n_double))
-            .setObject(4, new NumberBox<BigInteger>(n_varint))
-            .setObject(5, new NumberBox<BigDecimal>(n_decimal))
-        );
-        PreparedStatement ps = session.prepare(selectQuery);
-        ResultSet rows = session.execute(ps.bind()
-            .setObject(0, new NumberBox<Integer>(n_int))
-            .setObject(1, new NumberBox<Long>(n_bigint))
-        );
-        Row row = rows.one();
-        assertRow(row);
-    }
-
-    @Test(groups = "short")
-    public void should_use_custom_codecs_with_prepared_statements_3() {
-        session.execute(session.prepare(insertQuery).bind()
             .set(0, new NumberBox<Integer>(n_int), new TypeToken<NumberBox<Integer>>() {})
             .set(1, new NumberBox<Long>(n_bigint), new TypeToken<NumberBox<Long>>() {})
             .set(2, new NumberBox<Float>(n_float), new TypeToken<NumberBox<Float>>() {})
@@ -184,25 +165,6 @@ public class TypeCodecEncapsulationIntegrationTest extends CCMBridge.PerClassSin
 
     @Test(groups = "short")
     public void should_use_custom_codecs_with_built_statements_2() {
-        session.execute(session.prepare(insertStmt).bind()
-            .setObject(0, new NumberBox<Integer>(n_int))
-            .setObject(1, new NumberBox<Long>(n_bigint))
-            .setObject(2, new NumberBox<Float>(n_float))
-            .setObject(3, new NumberBox<Double>(n_double))
-            .setObject(4, new NumberBox<BigInteger>(n_varint))
-            .setObject(5, new NumberBox<BigDecimal>(n_decimal))
-        );
-        PreparedStatement ps = session.prepare(selectStmt);
-        ResultSet rows = session.execute(ps.bind()
-            .setObject(0, new NumberBox<Integer>(n_int))
-            .setObject(1, new NumberBox<Long>(n_bigint))
-        );
-        Row row = rows.one();
-        assertRow(row);
-    }
-
-    @Test(groups = "short")
-    public void should_use_custom_codecs_with_built_statements_3() {
         session.execute(session.prepare(insertStmt).bind()
             .set(0, new NumberBox<Integer>(n_int), new TypeToken<NumberBox<Integer>>() {})
             .set(1, new NumberBox<Long>(n_bigint), new TypeToken<NumberBox<Long>>() {})
