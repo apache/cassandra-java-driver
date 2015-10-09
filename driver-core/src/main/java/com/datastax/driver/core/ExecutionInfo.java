@@ -20,6 +20,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+
 import com.datastax.driver.core.utils.Bytes;
 
 /**
@@ -132,13 +135,31 @@ public class ExecutionInfo {
     }
 
     /**
-     * The query trace if tracing was enabled on this query.
+     * Return the query trace if tracing was enabled on this query.
+     * <p>
+     * Note that accessing the fields of the the returned object will trigger a
+     * <b>blocking</b> background query.
      *
      * @return the {@code QueryTrace} object for this query if tracing was
      * enable for this query, or {@code null} otherwise.
      */
     public QueryTrace getQueryTrace() {
         return trace;
+    }
+
+    /**
+     * Placeholder for async query trace retrieval (not implemented yet).
+     * <p>
+     * Async query trace retrieval will be implemented in a future version. This method
+     * is added now to avoid breaking binary compatibility later.
+     * The current implementation merely wraps the result of {@link #getQueryTrace()} in
+     * an immediate future; it will still trigger a blocking query when the query
+     * trace's fields are accessed.
+     *
+     * @return currently, an immediate future containing the result of {@link #getQueryTrace()}.
+     */
+    public ListenableFuture<QueryTrace> getQueryTraceAsync() {
+        return Futures.immediateFuture(trace);
     }
 
     /**
