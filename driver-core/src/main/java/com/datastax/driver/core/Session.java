@@ -49,7 +49,7 @@ public interface Session extends Closeable {
      * @return the name of the keyspace to which this Session is currently
      * logged in, or {@code null} if the session is logged to no keyspace.
      */
-    public String getLoggedKeyspace();
+    String getLoggedKeyspace();
 
     /**
      * Force the initialization of this Session instance if it hasn't been
@@ -82,7 +82,16 @@ public interface Session extends Closeable {
      * Cluster initialization and an authentication error occurs while contacting
      * the initial contact points.
      */
-    public Session init();
+    Session init();
+
+    /**
+     * Initialize this session asynchronously.
+     *
+     * @return a future that will complete when the session is fully initialized.
+     *
+     * @see #init()
+     */
+    ListenableFuture<Session> initAsync();
 
     /**
      * Executes the provided query.
@@ -101,7 +110,7 @@ public interface Session extends Closeable {
      * @throws QueryValidationException if the query if invalid (syntax error,
      * unauthorized or any other validation problem).
      */
-    public ResultSet execute(String query);
+    ResultSet execute(String query);
 
     /**
      * Executes the provided query using the provided value.
@@ -125,7 +134,7 @@ public interface Session extends Closeable {
      * is in use (i.e. if you've force version 1 through {@link Cluster.Builder#withProtocolVersion}
      * or you use Cassandra 1.2).
      */
-    public ResultSet execute(String query, Object... values);
+    ResultSet execute(String query, Object... values);
 
     /**
      * Executes the provided query.
@@ -153,7 +162,7 @@ public interface Session extends Closeable {
      * the version protocol 1 include: BatchStatement, ResultSet paging and binary
      * values in RegularStatement.
      */
-    public ResultSet execute(Statement statement);
+    ResultSet execute(Statement statement);
 
     /**
      * Executes the provided query asynchronously.
@@ -163,7 +172,7 @@ public interface Session extends Closeable {
      * @param query the CQL query to execute.
      * @return a future on the result of the query.
      */
-    public ResultSetFuture executeAsync(String query);
+    ResultSetFuture executeAsync(String query);
 
     /**
      * Executes the provided query asynchronously using the provided values.
@@ -179,7 +188,7 @@ public interface Session extends Closeable {
      * is in use (i.e. if you've force version 1 through {@link Cluster.Builder#withProtocolVersion}
      * or you use Cassandra 1.2).
      */
-    public ResultSetFuture executeAsync(String query, Object... values);
+    ResultSetFuture executeAsync(String query, Object... values);
 
     /**
      * Builds, but does not execute, a simple statement containing the provided query.
@@ -191,7 +200,7 @@ public interface Session extends Closeable {
      * @param query the CQL query to execute.
      * @return the simple statement.
      */
-    public SimpleStatement newSimpleStatement(String query);
+    SimpleStatement newSimpleStatement(String query);
 
     /**
      * Builds, but does not execute, a simple statement containing the provided query with
@@ -241,7 +250,7 @@ public interface Session extends Closeable {
      * @param values values required for the execution of {@code query}.
      * @return the simple statement.
      */
-    public SimpleStatement newSimpleStatement(String query, Object... values);
+    SimpleStatement newSimpleStatement(String query, Object... values);
 
     /**
      * Executes the provided query asynchronously.
@@ -264,7 +273,7 @@ public interface Session extends Closeable {
      * the version protocol 1 include: BatchStatement, ResultSet paging and binary
      * values in RegularStatement.
      */
-    public ResultSetFuture executeAsync(Statement statement);
+    ResultSetFuture executeAsync(Statement statement);
 
     /**
      * Prepares the provided query string.
@@ -275,7 +284,7 @@ public interface Session extends Closeable {
      * @throws NoHostAvailableException if no host in the cluster can be
      * contacted successfully to prepare this query.
      */
-    public PreparedStatement prepare(String query);
+    PreparedStatement prepare(String query);
 
     /**
      * Prepares the provided query.
@@ -305,7 +314,7 @@ public interface Session extends Closeable {
      * though the {@link PreparedStatement#bind} method or through a corresponding
      * {@link BoundStatement}).
      */
-    public PreparedStatement prepare(RegularStatement statement);
+    PreparedStatement prepare(RegularStatement statement);
 
     /**
      * Prepares the provided query string asynchronously.
@@ -317,7 +326,7 @@ public interface Session extends Closeable {
      * @param query the CQL query string to prepare
      * @return a future on the prepared statement corresponding to {@code query}.
      */
-    public ListenableFuture<PreparedStatement> prepareAsync(String query);
+    ListenableFuture<PreparedStatement> prepareAsync(String query);
 
     /**
      * Prepares the provided query asynchronously.
@@ -346,7 +355,7 @@ public interface Session extends Closeable {
      * though the {@link PreparedStatement#bind} method or through a corresponding
      * {@link BoundStatement}).
      */
-    public ListenableFuture<PreparedStatement> prepareAsync(RegularStatement statement);
+    ListenableFuture<PreparedStatement> prepareAsync(RegularStatement statement);
 
     /**
      * Initiates a shutdown of this session instance.
@@ -372,7 +381,7 @@ public interface Session extends Closeable {
      *
      * @return a future on the completion of the shutdown process.
      */
-    public CloseFuture closeAsync();
+    CloseFuture closeAsync();
 
     /**
      * Initiates a shutdown of this session instance and blocks until
@@ -387,7 +396,7 @@ public interface Session extends Closeable {
      * If you want to do so, use {@link Cluster#close}, but note that it will
      * close all sessions created from that cluster.
      */
-    public void close();
+    void close();
 
     /**
      * Whether this Session instance has been closed.
@@ -401,14 +410,14 @@ public interface Session extends Closeable {
      * @return {@code true} if this Session instance has been closed, {@code false}
      * otherwise.
      */
-    public boolean isClosed();
+    boolean isClosed();
 
     /**
      * Returns the {@code Cluster} object this session is part of.
      *
      * @return the {@code Cluster} object this session is part of.
      */
-    public Cluster getCluster();
+    Cluster getCluster();
 
     /**
      * Return a snapshot of the state of this Session.
@@ -420,7 +429,7 @@ public interface Session extends Closeable {
      *
      * @return a snapshot of the state of this Session.
      */
-    public State getState();
+    State getState();
 
     /**
      * The state of a Session.
@@ -428,13 +437,13 @@ public interface Session extends Closeable {
      * This mostly exposes information on the connections maintained by a Session:
      * which host it is connected to, how many connection is has for each host, etc...
      */
-    public interface State {
+    interface State {
         /**
          * The Session to which this State corresponds to.
          *
          * @return the Session to which this State corresponds to.
          */
-        public Session getSession();
+        Session getSession();
 
         /**
          * The hosts to which the session is currently connected (more precisely, at the time
@@ -447,7 +456,7 @@ public interface Session extends Closeable {
          *
          * @return an immutable collection of the hosts to which the session is connected.
          */
-        public Collection<Host> getConnectedHosts();
+        Collection<Host> getConnectedHosts();
 
         /**
          * The number of open connections to a given host.
@@ -459,7 +468,7 @@ public interface Session extends Closeable {
          * @return The number of open connections to {@code host}. If the session
          * is not connected to that host, 0 is returned.
          */
-        public int getOpenConnections(Host host);
+        int getOpenConnections(Host host);
 
         /**
          * The number of "trashed" connections to a given host.
@@ -473,7 +482,7 @@ public interface Session extends Closeable {
          * @return The number of trashed connections to {@code host}. If the session
          * is not connected to that host, 0 is returned.
          */
-        public int getTrashedConnections(Host host);
+        int getTrashedConnections(Host host);
 
         /**
          * The number of queries that are currently being executed though a given host.
@@ -487,6 +496,6 @@ public interface Session extends Closeable {
          * @return the number of currently (as in 'at the time the state was grabbed') executing
          * queries to {@code host}.
          */
-        public int getInFlightQueries(Host host);
+        int getInFlightQueries(Host host);
     }
 }

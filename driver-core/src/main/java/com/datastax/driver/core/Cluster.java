@@ -336,7 +336,7 @@ public class Cluster implements Closeable {
     public ListenableFuture<Session> connectAsync(String keyspace) {
         checkNotClosed(manager);
         init();
-        AsyncInitSession session = manager.newSession(keyspace);
+        Session session = manager.newSession(keyspace);
         return session.initAsync();
     }
 
@@ -1499,7 +1499,7 @@ public class Cluster implements Closeable {
             return translated == null ? sa : translated;
         }
 
-        private AsyncInitSession newSession(String keyspace) {
+        private Session newSession(String keyspace) {
             SessionManager session = new SessionManager(Cluster.this, keyspace);
             sessions.add(session);
             return session;

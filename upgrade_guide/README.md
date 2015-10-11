@@ -197,6 +197,10 @@ We've also seized the opportunity to remove code that was deprecated in 2.1.
     they match the schema, in anticipation for the schema generation features
     that will be added in a future version.
 
+18. `AsyncInitSession` has been removed, `initAsync()` is now part of the
+    `Session` interface (the only purpose of the extra interface was to preserve
+    binary compatibility on the 2.1 branch).
+
 
 ### 2.1.7
 

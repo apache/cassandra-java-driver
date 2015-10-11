@@ -402,10 +402,11 @@ public class CCMBridge {
     // One cluster for the whole test class
     public static abstract class PerClassSingleNodeCluster {
 
-        protected static CCMBridge ccmBridge;
+        private static CCMBridge ccmBridge;
         private static boolean erroredOut;
         private static boolean clusterInitialized=false;
         private static AtomicLong ksNumber;
+        private static final String jvmArgs = "-Dcassandra.custom_query_handler_class=org.apache.cassandra.cql3.CustomPayloadMirroringQueryHandler";
         protected String keyspace;
 
         protected static InetSocketAddress hostAddress;
@@ -463,8 +464,7 @@ public class CCMBridge {
                         ports[i] = TestUtils.findAvailablePort(11000 + i);
                     }
 
-                    ccmBridge.bootstrapNodeWithPorts(1, ports[0], ports[1], ports[2], ports[3], ports[4],
-                        "-Dcassandra.custom_query_handler_class=org.apache.cassandra.cql3.CustomPayloadMirroringQueryHandler");
+                    ccmBridge.bootstrapNodeWithPorts(1, ports[0], ports[1], ports[2], ports[3], ports[4], jvmArgs);
                     ksNumber = new AtomicLong(0);
                     erroredOut = false;
                     hostAddress = new InetSocketAddress(InetAddress.getByName(IP_PREFIX + 1), ports[2]);
@@ -526,6 +526,14 @@ public class CCMBridge {
                     cluster.getConfiguration().getSocketOptions().setReadTimeoutMillis(currentTimeout);
                 }
             }
+        }
+
+        protected void stop() {
+            ccmBridge.stop();
+        }
+
+        protected void start() {
+            ccmBridge.start(1, jvmArgs);
         }
 
     }
