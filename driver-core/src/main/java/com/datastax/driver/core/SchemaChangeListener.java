@@ -139,6 +139,28 @@ public interface SchemaChangeListener {
     void onAggregateChanged(AggregateMetadata current, AggregateMetadata previous);
 
     /**
+     * Called when a materialized view has been added.
+     *
+     * @param view the materialized view that has been newly added.
+     */
+    void onMaterializedViewAdded(MaterializedViewMetadata view);
+
+    /**
+     * Called when a materialized view has been removed.
+     *
+     * @param view the materialized view that has been removed.
+     */
+    void onMaterializedViewRemoved(MaterializedViewMetadata view);
+
+    /**
+     * Called when a materialized view has changed.
+     *
+     * @param current the materialized view that has changed, in its current form (after the change).
+     * @param previous the materialized view that has changed, in its previous form (before the change).
+     */
+    void onMaterializedViewChanged(MaterializedViewMetadata current, MaterializedViewMetadata previous);
+
+    /**
      * Gets invoked when the listener is registered with a cluster.
      *
      * @param cluster the cluster that this tracker is registered with.

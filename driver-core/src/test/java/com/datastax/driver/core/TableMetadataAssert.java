@@ -75,4 +75,14 @@ public class TableMetadataAssert extends AbstractAssert<TableMetadataAssert, Tab
         assertThat(actual.getColumns().size()).isEqualTo(expected);
         return this;
     }
+
+    public TableMetadataAssert hasMaterializedView(MaterializedViewMetadata expected) {
+        assertThat(actual.getView(expected.getName())).isNotNull().isEqualTo(expected);
+        return this;
+    }
+
+    public TableMetadataAssert hasIndex(IndexMetadata index) {
+        assertThat(actual.getIndexes()).contains(index);
+        return this;
+    }
 }
