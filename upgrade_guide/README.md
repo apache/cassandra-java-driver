@@ -3,15 +3,16 @@
 The purpose of this guide is to detail changes made by successive
 versions of the Java driver.
 
-### 2.2.0
+### 3.0
 
-This version brings parity with Cassandra 2.2.
+This version brings parity with Cassandra 2.2 and 3.0.
 
 It is **not binary compatible** with the driver's 2.1 branch.
 The main changes were introduced by the custom codecs feature (see below).
 We've also seized the opportunity to remove code that was deprecated in 2.1.
 
-1.  [Custom codecs](../features/custom_codecs/)
+1.  The default consistency level in `QueryOptions` is now `LOCAL_QUORUM`.
+2.  [Custom codecs](../features/custom_codecs/)
     ([JAVA-721](https://datastax-oss.atlassian.net/browse/JAVA-721))
     introduce several breaking changes and also modify a few runtime behaviors.
 
@@ -66,18 +67,18 @@ We've also seized the opportunity to remove code that was deprecated in 2.1.
     * `TypeCodec.format(Object)` now returns the CQL keyword `"NULL"` instead of a `null` reference
       for `null` inputs.
 
-2.  The driver now depends on Guava 16.0.1 (instead of 14.0.1).
+3.  The driver now depends on Guava 16.0.1 (instead of 14.0.1).
     This update has been mainly motivated by Guava's [Issue #1635](https://code.google.com/p/guava-libraries/issues/detail?id=1635),
     which affects `TypeToken`, and hence all `TypeCodec` implementations handling parameterized types.
 
-3.  `UDTMapper` (the type previously used to convert `@UDT`-annotated
+4.  `UDTMapper` (the type previously used to convert `@UDT`-annotated
     classes to their CQL counterpart) was removed, as well as the
     corresponding method `MappingManager#udtMapper`.
 
     The mapper now uses custom codecs to convert UDTs. See more
     explanations [here](../features/object_mapper/custom_codecs/#implicit-udt-codecs).
 
-4.  All methods that took the protocol version as an `int` or assumed a
+5.  All methods that took the protocol version as an `int` or assumed a
     default version have been removed (they were already deprecated in
     2.1):
     * `AbstractGettableData(int)`
@@ -91,19 +92,19 @@ We've also seized the opportunity to remove code that was deprecated in 2.1.
     enum. In addition, `ProtocolOptions#getProtocolVersionEnum` has been
     renamed to `ProtocolOptions#getProtocolVersion`.
 
-5.  All methods related to the "suspected" host state have been removed
+6.  All methods related to the "suspected" host state have been removed
     (they had been deprecated in 2.1.6 when the suspicion mechanism was
     removed):
     * `Host.StateListener#onSuspected()` (was inherited by
       `LoadBalancingPolicy`)
     * `Host#getInitialReconnectionAttemptFuture()`
 
-6.  `PoolingOptions#setMinSimultaneousRequestsPerConnectionThreshold(HostDistance,
+7.  `PoolingOptions#setMinSimultaneousRequestsPerConnectionThreshold(HostDistance,
     int)` has been removed. The new connection pool resizing algorithm introduced by
     [JAVA-419](https://datastax-oss.atlassian.net/browse/JAVA-419) does not need this
     threshold anymore.
 
-7.  `AddressTranslater` has been renamed to `AddressTranslator`. All
+8.  `AddressTranslater` has been renamed to `AddressTranslator`. All
     related methods and classes have also been renamed.
 
     In addition, the `close()` method has been pulled up into
@@ -111,12 +112,12 @@ We've also seized the opportunity to remove code that was deprecated in 2.1.
     Existing third-party `AddressTranslator` implementations only need
     to add an empty `close()` method.
 
-8.  The `close()` method has been pulled up into `LoadBalancingPolicy`,
+9.  The `close()` method has been pulled up into `LoadBalancingPolicy`,
     and `CloseableLoadBalancingPolicy` has been removed. Existing third-party
     `LoadBalancingPolicy` implementations only need to add an empty
     `close()` method.
 
-9.  All pluggable components now have callbacks to detect when they get
+10. All pluggable components now have callbacks to detect when they get
     associated with a `Cluster` instance:
     * `ReconnectionPolicy`, `RetryPolicy`, `AddressTranslator`,
       and `TimestampGenerator`:
@@ -130,22 +131,22 @@ We've also seized the opportunity to remove code that was deprecated in 2.1.
     initialization / cleanup tasks. Existing third-party implementations
     only need to add empty methods.
 
-10. `LoadBalancingPolicy` does not extend `Host.StateListener` anymore:
+11. `LoadBalancingPolicy` does not extend `Host.StateListener` anymore:
     callback methods (`onUp`, `onDown`, etc.) have been duplicated. This
     is unlikely to affect clients.
 
-11. [Client-side timestamp generation](../features/query_timestamps/) is
+12. [Client-side timestamp generation](../features/query_timestamps/) is
     now the default (provided that [native
     protocol](../features/native_protocol) v3 or higher is in use). The
     generator used is `AtomicMonotonicTimestampGenerator`.
 
-12. If a DNS name resolves to multiple A-records,
+13. If a DNS name resolves to multiple A-records,
     `Cluster.Builder#addContactPoint(String)` will now use all of these
     addresses as contact points. This gives you the possibility of
     maintaining contact points in DNS configuration, and having a single,
     static contact point in your Java code.
 
-13. The following methods were added for [Custom payloads](../features/custom_payloads):
+14. The following methods were added for [Custom payloads](../features/custom_payloads):
     * in `PreparedStatement`: `getIncomingPayload()`,
       `getOutgoingPayload()` and
       `setOutgoingPayload(Map<String,ByteBuffer>)`
@@ -158,7 +159,7 @@ We've also seized the opportunity to remove code that was deprecated in 2.1.
     This breaks binary compatibility for these two classes; if you have
     custom implementations, you will have to adapt them accordingly.
 
-14. Getters and setters have been added to "data-container" classes for
+15. Getters and setters have been added to "data-container" classes for
     new CQL types:
     * `getByte`/`setByte` for the `TINYINT` type
     * `getShort`/`setShort` for the `SMALLINT` type
@@ -170,7 +171,7 @@ We've also seized the opportunity to remove code that was deprecated in 2.1.
 
     This affects `Row`, `BoundStatement`, `TupleValue` and `UDTValue`.
 
-15. New exception types have been added to handle additional server-side
+16. New exception types have been added to handle additional server-side
     errors introduced in Cassandra 2.2:
     * `ReadFailureException`
     * `WriteFailureException`
@@ -185,19 +186,19 @@ We've also seized the opportunity to remove code that was deprecated in 2.1.
     exception hierarchy, it now has new child classes that are not
     related to timeouts).
 
-16. `ResultSet#fetchMoreResults()` now returns a `ListenableFuture<ResultSet>`.
+17. `ResultSet#fetchMoreResults()` now returns a `ListenableFuture<ResultSet>`.
     This makes the API more friendly if you chain transformations on an async
     query to process all pages (see `AsyncResultSetTest` in the sources for an
     example).
 
-17. `Frozen` annotations in the mapper are no longer checked at runtime (see
+18. `Frozen` annotations in the mapper are no longer checked at runtime (see
     [JAVA-843](https://datastax-oss.atlassian.net/browse/JAVA-843) for more
     explanations). So they become purely informational at this stage.
     However it is a good idea to keep using these annotations and make sure
     they match the schema, in anticipation for the schema generation features
     that will be added in a future version.
 
-18. `AsyncInitSession` has been removed, `initAsync()` is now part of the
+19. `AsyncInitSession` has been removed, `initAsync()` is now part of the
     `Session` interface (the only purpose of the extra interface was to preserve
     binary compatibility on the 2.1 branch).
 
