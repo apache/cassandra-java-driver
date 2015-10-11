@@ -180,17 +180,14 @@ public class CustomPayloadTest extends CCMBridge.PerClassSingleNodeCluster {
      */
     @Test(groups = "short")
     public void should_echo_custom_payload_when_paginating() throws Exception {
-        session.execute("INSERT INTO t1 (c1) VALUES (1)");
-        session.execute("INSERT INTO t1 (c1) VALUES (2)");
-        Statement statement = session.newSimpleStatement("SELECT c2 FROM t1 where c1 IN (1,2)");
+        session.execute("INSERT INTO t1 (c1, c2) VALUES (1, 'a')");
+        session.execute("INSERT INTO t1 (c1, c2) VALUES (1, 'b')");
+        Statement statement = session.newSimpleStatement("SELECT c2 FROM t1 where c1 = 1");
         statement.setFetchSize(1);
         statement.setOutgoingPayload(payload1);
         ResultSet rows = session.execute(statement);
         rows.all();
-        for (ExecutionInfo info : rows.getAllExecutionInfo()) {
-            Map<String, ByteBuffer> actual = info.getIncomingPayload();
-            assertThat(actual).isEqualTo(payload1);
-        }
+        assertThat(rows.getAllExecutionInfo()).extracting("incomingPayload").containsOnly(payload1);
     }
 
     // TODO retries, spec execs
@@ -298,7 +295,7 @@ public class CustomPayloadTest extends CCMBridge.PerClassSingleNodeCluster {
 
     @Override
     protected Collection<String> getTableDefinitions() {
-        return Collections.singletonList("CREATE TABLE t1 (c1 int PRIMARY KEY, c2 text)");
+        return Collections.singletonList("CREATE TABLE t1 (c1 int, c2 text,  PRIMARY KEY (c1, c2))");
     }
 
 }

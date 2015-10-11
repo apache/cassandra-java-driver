@@ -16,11 +16,8 @@
 package com.datastax.driver.core;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import com.google.common.base.Objects;
 
@@ -30,37 +27,41 @@ import com.google.common.base.Objects;
 public class ColumnMetadata {
 
     static final String COLUMN_NAME = "column_name";
-    static final String VALIDATOR = "validator";
-    static final String COMPONENT_INDEX = "component_index";
-    static final String KIND = "type";
+
+    static final String VALIDATOR = "validator"; // v2 only
+    static final String TYPE = "type"; // replaces validator, v3 onwards
+
+    static final String COMPONENT_INDEX = "component_index"; // v2 only
+    static final String POSITION = "position"; // replaces component_index, v3 onwards
+
+    static final String KIND_V2 = "type"; // v2 only
+    static final String KIND_V3 = "kind"; // replaces type, v3 onwards
+
+    static final String CLUSTERING_ORDER = "clustering_order";
+    static final String DESC = "desc";
 
     static final String INDEX_TYPE = "index_type";
     static final String INDEX_OPTIONS = "index_options";
     static final String INDEX_NAME = "index_name";
-    private static final String CUSTOM_INDEX_CLASS = "class_name";
 
-    private static final String INDEX_MAP_KEYS = "index_keys";
-    private static final String INDEX_MAP_ENTRIES = "index_keys_and_values";
-    private final TableMetadata table;
+    private final TableOrView parent;
     private final String name;
     private final DataType type;
-    private final IndexMetadata index;
     private final boolean isStatic;
 
-    private ColumnMetadata(TableMetadata table, String name, DataType type, boolean isStatic, Map<String, String> indexColumns) {
-        this.table = table;
+    private ColumnMetadata(TableOrView parent, String name, DataType type, boolean isStatic) {
+        this.parent = parent;
         this.name = name;
         this.type = type;
         this.isStatic = isStatic;
-        this.index = IndexMetadata.build(this, indexColumns);
     }
 
-    static ColumnMetadata fromRaw(TableMetadata tm, Raw raw) {
-        return new ColumnMetadata(tm, raw.name, raw.dataType, raw.kind == Raw.Kind.STATIC, raw.indexColumns);
+    static ColumnMetadata fromRaw(TableOrView tm, Raw raw) {
+        return new ColumnMetadata(tm, raw.name, raw.dataType, raw.kind == Raw.Kind.STATIC);
     }
 
     static ColumnMetadata forAlias(TableMetadata tm, String name, DataType type) {
-        return new ColumnMetadata(tm, name, type, false, Collections.<String, String>emptyMap());
+        return new ColumnMetadata(tm, name, type, false);
     }
 
     /**
@@ -73,12 +74,13 @@ public class ColumnMetadata {
     }
 
     /**
-     * Returns the metadata of the table this column is part of.
+     * Returns the parent object of this column. This can be a {@link TableMetadata}
+     * or a {@link MaterializedViewMetadata} object.
      *
-     * @return the {@code TableMetadata} for the table this column is part of.
+     * @return the parent object of this column.
      */
-    public TableMetadata getTable() {
-        return table;
+    public TableOrView getParent() {
+        return parent;
     }
 
     /**
@@ -91,16 +93,6 @@ public class ColumnMetadata {
     }
 
     /**
-     * Returns the indexing metadata on this column if the column is indexed.
-     *
-     * @return the metadata on the column index if the column is indexed,
-     * {@code null} otherwise.
-     */
-    public IndexMetadata getIndex() {
-        return index;
-    }
-
-    /**
      * Whether this column is a static column.
      *
      * @return Whether this column is a static column or not.
@@ -110,232 +102,21 @@ public class ColumnMetadata {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o)
+    public boolean equals(Object other) {
+        if (other == this)
             return true;
-        if (o == null || getClass() != o.getClass())
+        if (!(other instanceof ColumnMetadata))
             return false;
 
-        ColumnMetadata that = (ColumnMetadata)o;
-
-        if (isStatic != that.isStatic)
-            return false;
-        if (!name.equals(that.name))
-            return false;
-        if (!type.equals(that.type))
-            return false;
-        return !(index != null ? !index.equals(that.index) : that.index != null);
-
+        ColumnMetadata that = (ColumnMetadata)other;
+        return this.name.equals(that.name) &&
+            this.isStatic == that.isStatic &&
+            this.type.equals(that.type);
     }
 
     @Override
     public int hashCode() {
-        int result = name.hashCode();
-        result = 31 * result + type.hashCode();
-        result = 31 * result + (index != null ? index.hashCode() : 0);
-        result = 31 * result + (isStatic ? 1 : 0);
-        return result;
-    }
-
-    /**
-     * Metadata on a column index.
-     */
-    public static class IndexMetadata {
-
-        private final ColumnMetadata column;
-        private final String name;
-        private final Map<String, String> indexOptions;
-
-        private IndexMetadata(ColumnMetadata column, String name) {
-            this(column, name, null);
-        }
-
-        private IndexMetadata(ColumnMetadata column, String name, Map<String, String> indexOptions) {
-            this.column = column;
-            this.name = name;
-            this.indexOptions = indexOptions;
-        }
-
-        /**
-         * Returns the column this index metadata refers to.
-         *
-         * @return the column this index metadata refers to.
-         */
-        public ColumnMetadata getIndexedColumn() {
-            return column;
-        }
-
-        /**
-         * Returns the index name.
-         *
-         * @return the index name.
-         */
-        public String getName() {
-            return name;
-        }
-
-        /**
-         * Returns whether this index is a custom one.
-         * <p>
-         * If it is indeed a custom index, {@link #getIndexClassName} will
-         * return the name of the class used in Cassandra to implement that
-         * index.
-         *
-         * @return {@code true} if this metadata represents a custom index.
-         */
-        public boolean isCustomIndex() {
-            return getIndexClassName() != null;
-        }
-
-        /**
-         * The name of the class used to implement the custom index, if it is one.
-         *
-         * @return the name of the class used Cassandra side to implement this
-         * custom index if {@code isCustomIndex() == true}, {@code null} otherwise.
-         */
-        public String getIndexClassName() {
-            return getOption(CUSTOM_INDEX_CLASS);
-        }
-
-        /**
-         * Return whether this index is a 'KEYS' index on a map, e.g.,
-         * CREATE INDEX ON mytable (KEYS(mymap))
-         * 
-         * @return {@code true} if this is a 'KEYS' index on a map.
-         */
-        public boolean isKeys() {
-            return getOption(INDEX_MAP_KEYS) != null;
-        }
-
-        /**
-         * Return whether this index is a 'FULL' index on a frozen collection, e.g.,
-         * CREATE INDEX ON mytable (FULL(mymap))
-         * 
-         * @return {@code true} if this is a 'FULL' index on a frozen collection.
-         */
-        public boolean isFull() {
-            /*
-             * This check is analogous to the Cassandra counterpart
-             * in IndexTarget#fromColumnDefinition.
-             */
-            return !isKeys()
-                && !isEntries()
-                && column.getType() instanceof DataType.CollectionType
-                && column.getType().isFrozen();
-        }
-
-        /**
-         * Return whether this index is a 'ENTRIES' index on a map, e.g.,
-         * CREATE INDEX ON mytable (ENTRIES(mymap))
-         * 
-         * @return {@code true} if this is an 'ENTRIES' index on a map.
-         */
-        public boolean isEntries() {
-            return getOption(INDEX_MAP_ENTRIES) != null;
-        }
-
-        /**
-         * Return the value for the given option name.
-         * 
-         * @param name Option name
-         * @return Option value
-         */
-        public String getOption(String name) {
-            return indexOptions != null ? indexOptions.get(name) : null;
-        }
-
-        /**
-         * Returns a CQL query representing this index.
-         *
-         * This method returns a single 'CREATE INDEX' query corresponding to
-         * this index definition.
-         *
-         * @return the 'CREATE INDEX' query corresponding to this index.
-         */
-        public String asCQLQuery() {
-            TableMetadata table = column.getTable();
-            String ksName = Metadata.escapeId(table.getKeyspace().getName());
-            String cfName = Metadata.escapeId(table.getName());
-            String colName = Metadata.escapeId(column.getName());
-            return isCustomIndex()
-                ? String.format("CREATE CUSTOM INDEX %s ON %s.%s (%s) USING '%s' WITH OPTIONS = %s;",
-                    name, ksName, cfName, colName, getIndexClassName(), getOptionsAsCql())
-                : String.format("CREATE INDEX %s ON %s.%s (%s);", name, ksName, cfName, getIndexFunction(colName));
-        }
-
-        /**
-         * Builds a string representation of the custom index options.
-         * 
-         * @return String representation of the custom index options, similar to what Cassandra stores in
-         *         the 'index_options' column of the 'schema_columns' table in the 'system' keyspace.
-         */
-        private String getOptionsAsCql() {
-            StringBuilder builder = new StringBuilder();
-            builder.append("{");
-            Iterator<Entry<String, String>> it = indexOptions.entrySet().iterator();
-            while (it.hasNext()) {
-                Entry<String, String> option = it.next();
-                builder.append(String.format("'%s' : '%s'", option.getKey(), option.getValue()));
-                if (it.hasNext())
-                    builder.append(", ");
-            }
-            builder.append("}");
-            return builder.toString();
-        }
-
-        /**
-         * Wraps the column name with the appropriate index function (KEYS, FULL, ENTRIES),
-         * if necessary.
-         * 
-         * @return Column name wrapped with the appropriate index function.
-         */
-        private String getIndexFunction(String colName) {
-            if (isKeys())
-                return String.format("KEYS(%s)", colName);
-            else if (isFull())
-                return String.format("FULL(%s)", colName);
-            else if (isEntries())
-                return String.format("ENTRIES(%s)", colName);
-            return colName;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o)
-                return true;
-            if (o == null || getClass() != o.getClass())
-                return false;
-
-            IndexMetadata that = (IndexMetadata)o;
-
-            return this.name.equals(that.name)
-                && Objects.equal(this.indexOptions, that.indexOptions);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hashCode(name, indexOptions);
-        }
-
-        private static IndexMetadata build(ColumnMetadata column, Map<String, String> indexColumns) {
-            if (indexColumns.isEmpty())
-                return null;
-
-            String type = indexColumns.get(INDEX_TYPE);
-            if (type == null)
-                return null;
-
-            // Special case check for the value of the index_options column being a string with value 'null' as this
-            // column appears to be set this way (JAVA-834).
-            String indexOptionsCol = indexColumns.get(INDEX_OPTIONS);
-            if (indexOptionsCol == null || indexOptionsCol.isEmpty() || indexOptionsCol.equals("null"))
-                return new IndexMetadata(column, indexColumns.get(INDEX_NAME));
-            else {
-                Map<String, String> indexOptions = SimpleJSONParser.parseStringMap(indexOptionsCol);
-                return new IndexMetadata(column, indexColumns.get(INDEX_NAME), indexOptions);
-            }
-
-        }
+        return Objects.hashCode(name, isStatic, type);
     }
 
     @Override
@@ -348,38 +129,93 @@ public class ColumnMetadata {
     // exposed publicly at all.
     static class Raw {
 
-        public enum Kind { PARTITION_KEY, CLUSTERING_KEY, REGULAR, COMPACT_VALUE, STATIC }
+        public enum Kind {
+
+            PARTITION_KEY     ("PARTITION_KEY" , "PARTITION_KEY"),
+            CLUSTERING_COLUMN ("CLUSTERING_KEY", "CLUSTERING"   ),
+            REGULAR           ("REGULAR"       , "REGULAR"      ),
+            COMPACT_VALUE     ("COMPACT_VALUE" , ""             ), // v2 only
+            STATIC            ("STATIC"        , "STATIC"       );
+
+            final String v2;
+            final String v3;
+
+            Kind(String v2, String v3) {
+                this.v2 = v2;
+                this.v3 = v3;
+            }
+
+            static Kind fromStringV2(String s) {
+                for (Kind kind : Kind.values()) {
+                    if(kind.v2.equalsIgnoreCase(s))
+                        return kind;
+                }
+                throw new IllegalArgumentException(s);
+            }
+
+            static Kind fromStringV3(String s) {
+                for (Kind kind : Kind.values()) {
+                    if(kind.v3.equalsIgnoreCase(s))
+                        return kind;
+                }
+                throw new IllegalArgumentException(s);
+            }
+        }
 
         public final String name;
-        public final Kind kind;
-        public final int componentIndex;
+        public Kind kind;
+        public final int position;
         public final DataType dataType;
         public final boolean isReversed;
 
         public final Map<String, String> indexColumns = new HashMap<String, String>();
 
-        Raw(String name, Kind kind, int componentIndex, DataType dataType, boolean isReversed) {
+        Raw(String name, Kind kind, int position, DataType dataType, boolean isReversed) {
             this.name = name;
             this.kind = kind;
-            this.componentIndex = componentIndex;
+            this.position = position;
             this.dataType = dataType;
             this.isReversed = isReversed;
         }
 
         static Raw fromRow(Row row, VersionNumber version, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
-
             String name = row.getString(COLUMN_NAME);
-            Kind kind = version.getMajor() < 2 || row.isNull(KIND)
-                ? Kind.REGULAR
-                : Enum.valueOf(Kind.class, row.getString(KIND).toUpperCase());
-            int componentIndex = row.isNull(COMPONENT_INDEX) ? 0 : row.getInt(COMPONENT_INDEX);
-            String validatorStr = row.getString(VALIDATOR);
-            boolean reversed = CassandraTypeParser.isReversed(validatorStr);
-            DataType dataType = CassandraTypeParser.parseOne(validatorStr, protocolVersion, codecRegistry);
-            Raw c = new Raw(name, kind, componentIndex, dataType, reversed);
 
+            Kind kind;
+            if(version.getMajor() < 2) {
+                kind = Kind.REGULAR;
+            } else if (version.getMajor() < 3) {
+                kind = row.isNull(KIND_V2) ? Kind.REGULAR : Kind.fromStringV2(row.getString(KIND_V2));
+            } else {
+                kind = row.isNull(KIND_V3) ? Kind.REGULAR : Kind.fromStringV3(row.getString(KIND_V3));
+            }
+
+            int position;
+            if(version.getMajor() >= 3) {
+                position = row.getInt(POSITION); // cannot be null, -1 is used as a special value instead of null to avoid tombstones
+                if(position == -1) position = 0;
+            } else {
+                position = row.isNull(COMPONENT_INDEX) ? 0 : row.getInt(COMPONENT_INDEX);
+            }
+
+            String dataTypeStr;
+            boolean reversed;
+            if(version.getMajor() >= 3) {
+                dataTypeStr = row.getString(TYPE);
+                String clusteringOrderStr = row.getString(CLUSTERING_ORDER);
+                reversed = clusteringOrderStr.equals(DESC);
+            } else {
+                dataTypeStr = row.getString(VALIDATOR);
+                reversed = CassandraTypeParser.isReversed(dataTypeStr);
+            }
+            DataType dataType = CassandraTypeParser.parseOne(dataTypeStr, protocolVersion, codecRegistry);
+
+            Raw c = new Raw(name, kind, position, dataType, reversed);
+
+            // secondary indexes (C* < 3.0.0)
+            // from C* 3.0 onwards 2i are defined in a separate table
             for (String str : Arrays.asList(INDEX_TYPE, INDEX_NAME, INDEX_OPTIONS))
-                if (!row.isNull(str))
+                if (row.getColumnDefinitions().contains(str) && !row.isNull(str))
                     c.indexColumns.put(str, row.getString(str));
 
             return c;

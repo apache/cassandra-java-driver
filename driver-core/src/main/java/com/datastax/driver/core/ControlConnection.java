@@ -31,13 +31,11 @@ import com.datastax.driver.core.exceptions.DriverException;
 import com.datastax.driver.core.exceptions.DriverInternalError;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
-import static com.datastax.driver.core.SchemaElement.*;
+import static com.datastax.driver.core.SchemaElement.KEYSPACE;
 
 class ControlConnection implements Connection.Owner {
 
     private static final Logger logger = LoggerFactory.getLogger(ControlConnection.class);
-
-    private static final TypeCodec.ListCodec<String> LIST_OF_TEXT_CODEC = new TypeCodec.ListCodec<String>(TypeCodec.VarcharCodec.instance);
 
     private static final InetAddress bindAllAddress;
 
@@ -48,13 +46,6 @@ class ControlConnection implements Connection.Owner {
             throw new RuntimeException(e);
         }
     }
-
-    private static final String SELECT_KEYSPACES = "SELECT * FROM system.schema_keyspaces";
-    private static final String SELECT_COLUMN_FAMILIES = "SELECT * FROM system.schema_columnfamilies";
-    private static final String SELECT_COLUMNS = "SELECT * FROM system.schema_columns";
-    private static final String SELECT_USERTYPES = "SELECT * FROM system.schema_usertypes";
-    private static final String SELECT_FUNCTIONS = "SELECT * FROM system.schema_functions";
-    private static final String SELECT_AGGREGATES = "SELECT * FROM system.schema_aggregates";
 
     private static final String SELECT_PEERS = "SELECT * FROM system.peers";
     private static final String SELECT_LOCAL = "SELECT * FROM system.local WHERE key='local'";
@@ -333,76 +324,10 @@ class ControlConnection implements Connection.Owner {
             cassandraVersion = host.getCassandraVersion();
         }
 
-        // Make sure we're up to date on schema
-        String whereClause = "";
-        if (targetType != null) {
-            whereClause = " WHERE keyspace_name = '" + targetKeyspace + '\'';
-            if (targetType == TABLE)
-                whereClause += " AND columnfamily_name = '" + targetName + '\'';
-            else if (targetType == TYPE)
-                whereClause += " AND type_name = '" + targetName + '\'';
-            else if (targetType == FUNCTION)
-                whereClause += " AND function_name = '" + targetName + "' AND signature = " + LIST_OF_TEXT_CODEC.format(targetSignature);
-            else if (targetType == AGGREGATE)
-                whereClause += " AND aggregate_name = '" + targetName + "' AND signature = " + LIST_OF_TEXT_CODEC.format(targetSignature);
-        }
-
-        boolean isSchemaOrKeyspace = (targetType == null || targetType == KEYSPACE);
-        DefaultResultSetFuture ksFuture = isSchemaOrKeyspace
-            ? new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_KEYSPACES + whereClause))
-            : null;
-        DefaultResultSetFuture udtFuture = (isSchemaOrKeyspace && supportsUdts(cassandraVersion) || targetType == TYPE)
-            ? new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_USERTYPES + whereClause))
-            : null;
-        DefaultResultSetFuture cfFuture = (isSchemaOrKeyspace || targetType == TABLE)
-            ? new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_COLUMN_FAMILIES + whereClause))
-            : null;
-        DefaultResultSetFuture colsFuture = (isSchemaOrKeyspace || targetType == TABLE)
-            ? new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_COLUMNS + whereClause))
-            : null;
-        DefaultResultSetFuture functionsFuture = (isSchemaOrKeyspace && supportsUdfs(cassandraVersion) || targetType == FUNCTION)
-            ? new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_FUNCTIONS + whereClause))
-            : null;
-        DefaultResultSetFuture aggregatesFuture = (isSchemaOrKeyspace && supportsUdfs(cassandraVersion) || targetType == AGGREGATE)
-            ? new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_AGGREGATES + whereClause))
-            : null;
-
-        if (ksFuture != null)
-            connection.write(ksFuture);
-        if (udtFuture != null)
-            connection.write(udtFuture);
-        if (cfFuture != null)
-            connection.write(cfFuture);
-        if (colsFuture != null)
-            connection.write(colsFuture);
-        if (functionsFuture != null)
-            connection.write(functionsFuture);
-        if (aggregatesFuture != null)
-            connection.write(aggregatesFuture);
-
-        try {
-            cluster.metadata.rebuildSchema(targetType, targetKeyspace, targetName,
-                ksFuture == null ? null : ksFuture.get(),
-                udtFuture == null ? null : udtFuture.get(),
-                cfFuture == null ? null : cfFuture.get(),
-                colsFuture == null ? null : colsFuture.get(),
-                functionsFuture == null ? null : functionsFuture.get(),
-                aggregatesFuture == null ? null : aggregatesFuture.get(),
-                cassandraVersion);
-        } catch (RuntimeException e) {
-            // Failure to parse the schema is definitively wrong so log a full-on error, but this won't generally prevent queries to
-            // work and this can happen when new Cassandra versions modify stuff in the schema and the driver hasn't yet be modified.
-            // So log, but let things go otherwise.
-            logger.error("Error parsing schema from Cassandra system tables: the schema in Cluster#getMetadata() will appear incomplete or stale", e);
-        }
-    }
-
-    private static boolean supportsUdts(VersionNumber cassandraVersion) {
-        return cassandraVersion.getMajor() > 2 || (cassandraVersion.getMajor() == 2 && cassandraVersion.getMinor() >= 1);
-    }
-
-    private static boolean supportsUdfs(VersionNumber cassandraVersion) {
-        return cassandraVersion.getMajor() > 2 || (cassandraVersion.getMajor() == 2 && cassandraVersion.getMinor() >= 2);
+        SchemaParser.forVersion(cassandraVersion)
+            .refresh(cluster.metadata,
+                targetType, targetKeyspace, targetName, targetSignature,
+                connection, cassandraVersion);
     }
 
     void refreshNodeListAndTokenMap() {

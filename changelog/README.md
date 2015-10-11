@@ -1,5 +1,94 @@
 ## Changelog
 
+### 3.0.0-beta1
+
+- [bug] Fix Configuration builder to allow disabled metrics (JAVA-900)
+
+
+### 3.0.0-alpha3
+
+- [new feature] Support new system tables in C* 3.0 (JAVA-571)
+- [improvement] Move crc_check_chance out of compressions options (JAVA-919)
+
+Merged from 2.0 branch:
+
+- [improvement] Log streamid at the trace level on sending request and receiving response (JAVA-718)
+- [bug] Fix SpeculativeExecutionPolicy.init() and close() are never called (JAVA-796)
+- [improvement] Suppress unnecessary warning at shutdown (JAVA-710)
+- [improvement] Allow DNS name with multiple A-records as contact point (#340)
+- [bug] Allow tracing across multiple result pages (JAVA-794)
+- [bug] DowngradingConsistencyRetryPolicy ignores write timeouts (JAVA-737)
+- [bug] Forbid bind marker in QueryBuilder add/append/prepend (JAVA-736)
+- [bug] Prevent QueryBuilder.quote() from applying duplicate double quotes (JAVA-712)
+- [bug] Prevent QueryBuilder from trying to serialize raw string (JAVA-688)
+- [bug] Support bind marker in QueryBuilder DELETE's list index (JAVA-679)
+- [improvement] Improve QueryBuilder API for SELECT DISTINCT (JAVA-475)
+- [improvement] Create values() function for Insert builder using List (JAVA-225)
+- [improvement] Warn when ReplicationStrategy encounters invalid
+  replication factors (JAVA-702)
+- [improvement] Add PoolingOptions method to set both core and max
+  connections (JAVA-662).
+- [improvement] Do not include epoll JAR in binary distribution (JAVA-766)
+- [improvement] Optimize internal copies of Request objects (JAVA-726)
+- [bug] Preserve tracing across retries (JAVA-815)
+- [improvement] New RetryDecision.tryNextHost() (JAVA-709)
+- [bug] Handle function calls and raw strings as non-idempotent in QueryBuilder (JAVA-733)
+- [improvement] Provide API to retrieve values of a Parameterized SimpleStatement (JAVA-765)
+- [improvement] implement UPDATE ... IF EXISTS in QueryBuilder (JAVA-827)
+- [improvement] Randomize contact points list to prevent hotspots (JAVA-618)
+- [improvement] Surface the coordinator used on query failure (JAVA-720)
+- [bug] Handle contact points removed during init (JAVA-792)
+- [improvement] Allow PlainTextAuthProvider to change its credentials at runtime (JAVA-719)
+- [new feature] Make it possible to register for SchemaChange Events (JAVA-151)
+- [improvement] Downgrade "Asked to rebuild table" log from ERROR to INFO level (JAVA-861)
+- [improvement] Provide an option to prepare statements only on one node (JAVA-797)
+- [improvement] Provide an option to not re-prepare all statements in onUp (JAVA-658)
+- [improvement] Customizable creation of netty timer (JAVA-853)
+- [bug] Avoid quadratic ring processing with invalid replication factors (JAVA-859)
+- [improvement] Debounce control connection queries (JAVA-657)
+- [bug] LoadBalancingPolicy.distance() called before init() (JAVA-784)
+- [new feature] Make driver-side metadata optional (JAVA-828)
+- [improvement] Allow hosts to remain partially up (JAVA-544)
+- [improvement] Remove internal blocking calls and expose async session
+  creation (JAVA-821, JAVA-822)
+- [improvement] Use parallel calls when re-preparing statement on other
+  hosts (JAVA-725)
+- [bug] Don't use connection timeout for unrelated internal queries (JAVA-629)
+- [bug] Fix NPE in speculative executions when metrics disabled
+  (JAVA-892)
+
+
+### 3.0.0-alpha2
+
+- [new feature] Move secondary index metadata out of column definitions
+  (JAVA-875, JAVA-882).
+
+Merged from 2.2 branch:
+
+- [bug] Propagate CodecRegistry to nested UDTs (JAVA-847)
+- [improvement] Ability to store a default, shareable CodecRegistry
+  instance (JAVA-848)
+- [bug] Treat empty ByteBuffers as empty values in TupleCodec and
+  UDTCodec (JAVA-880)
+
+
+### 3.0.0-alpha1
+
+- [new feature] Support new system tables in C* 3.0.0-alpha1 (JAVA-876)
+
+Merged from 2.2 branch:
+
+- [improvement] Rename DateWithoutTime to LocalDate (JAVA-810)
+- [bug] DateCodec does not format values correctly (JAVA-816)
+- [bug] TimeCodec does not format values correctly (JAVA-817)
+- [bug] TypeCodec.getDataTypeFor() does not handle LocalDate instances (JAVA-818)
+- [improvement] Make ResultSet#fetchMoreResult return a
+  ListenableFuture<ResultSet> (JAVA-836)
+- [improvement] Disable frozen checks in mapper (JAVA-843)
+- [improvement] Allow user to register custom type codecs (JAVA-721)
+- [improvement] Support custom type codecs in mapper (JAVA-722)
+
+
 ### 2.2.0-rc4 (in progress)
 
 Merged from 2.0 branch:

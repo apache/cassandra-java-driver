@@ -221,7 +221,7 @@ class RequestHandler {
     }
 
     private boolean metricsEnabled() {
-        return manager.configuration().getMetricsOptions() != null;
+        return manager.configuration().getMetricsOptions().isEnabled();
     }
 
     private Metrics metrics() {

@@ -396,8 +396,8 @@ public class Cluster implements Closeable {
      * The cluster metrics.
      *
      * @return the cluster metrics, or {@code null} if metrics collection has
-     * been disabled (that is if {@link Configuration#getMetricsOptions}
-     * returns {@code null}).
+     * been disabled (that is if {@code cluster.getConfiguration().getMetricsOptions().isEnabled()}
+     * returns {@code false}).
      */
     public Metrics getMetrics() {
         checkNotClosed(manager);
@@ -1202,7 +1202,8 @@ public class Cluster implements Closeable {
         public Configuration getConfiguration() {
             ProtocolOptions protocolOptions = new ProtocolOptions(port, protocolVersion, maxSchemaAgreementWaitSeconds, sslOptions, authProvider)
                 .setCompression(compression);
-            MetricsOptions metricsOptions = metricsEnabled ? new MetricsOptions(jmxEnabled) : null;
+
+            MetricsOptions metricsOptions = new MetricsOptions(metricsEnabled, jmxEnabled);
 
             return configurationBuilder
                 .withProtocolOptions(protocolOptions)
@@ -1328,7 +1329,7 @@ public class Cluster implements Closeable {
             this.metadata = new Metadata(this);
             this.connectionFactory = new Connection.Factory(this, configuration);
             this.controlConnection = new ControlConnection(this);
-            this.metrics = configuration.getMetricsOptions() == null ? null : new Metrics(this);
+            this.metrics = configuration.getMetricsOptions().isEnabled() ? new Metrics(this) : null;
             this.preparedQueries = new MapMaker().weakValues().makeMap();
 
             // create debouncers - at this stage, they are not running yet
@@ -2276,13 +2277,16 @@ public class Cluster implements Closeable {
                                     });
                                 }
                             } else {
-                                KeyspaceMetadata keyspace = manager.metadata.getKeyspaceInternal(scc.targetKeyspace);
+                                KeyspaceMetadata keyspace = manager.metadata.keyspaces.get(scc.targetKeyspace);
                                 if (keyspace == null) {
                                     logger.warn("Received a DROPPED notification for {} {}.{}, but this keyspace is unknown in our metadata",
                                         scc.targetType, scc.targetKeyspace, scc.targetName);
                                 } else {
                                     switch (scc.targetType) {
                                         case TABLE:
+                                            // we can't tell whether it's a table or a view,
+                                            // but since two objects cannot have the same name,
+                                            // try removing both
                                             final TableMetadata removedTable = keyspace.removeTable(scc.targetName);
                                             if (removedTable != null) {
                                                 executor.submit(new Runnable() {
@@ -2291,6 +2295,16 @@ public class Cluster implements Closeable {
                                                         manager.metadata.triggerOnTableRemoved(removedTable);
                                                     }
                                                 });
+                                            } else {
+                                                final MaterializedViewMetadata removedView = keyspace.removeMaterializedView(scc.targetName);
+                                                if (removedView != null) {
+                                                    executor.submit(new Runnable() {
+                                                        @Override
+                                                        public void run() {
+                                                            manager.metadata.triggerOnMaterializedViewRemoved(removedView);
+                                                        }
+                                                    });
+                                                }
                                             }
                                             break;
                                         case TYPE:

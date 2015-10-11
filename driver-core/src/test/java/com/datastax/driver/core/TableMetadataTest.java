@@ -22,10 +22,12 @@ import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.entry;
 
+import com.datastax.driver.core.utils.CassandraVersion;
+
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.DataType.*;
-import static com.datastax.driver.core.TableMetadata.Order.ASC;
-import static com.datastax.driver.core.TableMetadata.Order.DESC;
+import static com.datastax.driver.core.TableOrView.Order.ASC;
+import static com.datastax.driver.core.TableOrView.Order.DESC;
 
 public class TableMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
     @Override
@@ -73,7 +75,7 @@ public class TableMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
             + "    l list<text>,\n"
             + "    v int,\n"
             + "    PRIMARY KEY (k, c1, c2)\n"
-            + ");", keyspace);
+            + ") WITH CLUSTERING ORDER BY (c1 ASC, c2 DESC);", keyspace);
         // when
         session.execute(cql);
         TableMetadata table = cluster.getMetadata().getKeyspace(keyspace).getTable("sparse");
@@ -81,7 +83,7 @@ public class TableMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
         assertThat(table).isNotNull().hasName("sparse").hasNumberOfColumns(5).isNotCompactStorage();
         assertThat(table.getColumns().get(0)).isNotNull().hasName("k").isPartitionKey().hasType(text());
         assertThat(table.getColumns().get(1)).isNotNull().hasName("c1").isClusteringColumn().hasClusteringOrder(ASC).hasType(cint());
-        assertThat(table.getColumns().get(2)).isNotNull().hasName("c2").isClusteringColumn().hasClusteringOrder(ASC).hasType(cfloat());
+        assertThat(table.getColumns().get(2)).isNotNull().hasName("c2").isClusteringColumn().hasClusteringOrder(DESC).hasType(cfloat());
         assertThat(table.getColumns().get(3)).isNotNull().hasName("l").isRegularColumn().hasType(list(text()));
         assertThat(table.getColumns().get(4)).isNotNull().hasName("v").isRegularColumn().hasType(cint());
     }
@@ -122,6 +124,23 @@ public class TableMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
         assertThat(table.getColumns().get(1)).isNotNull().hasName("i").isRegularColumn().hasType(cint());
         assertThat(table.getColumns().get(2)).isNotNull().hasName("t").isRegularColumn().hasType(timeuuid());
         assertThat(table.getColumns().get(3)).isNotNull().hasName("v").isRegularColumn().hasType(cint());
+    }
+
+    @Test(groups = "short")
+    public void should_parse_dense_table() {
+        // given
+        String cql = String.format("CREATE TABLE %s.dense (\n"
+            + "        k int,\n"
+            + "        c int,\n"
+            + "        PRIMARY KEY (k, c)\n"
+            + "    ) WITH COMPACT STORAGE;", keyspace);
+        // when
+        session.execute(cql);
+        TableMetadata table = cluster.getMetadata().getKeyspace(keyspace).getTable("dense");
+        // then
+        assertThat(table).isNotNull().hasName("dense").hasNumberOfColumns(2).isCompactStorage();
+        assertThat(table.getColumns().get(0)).isNotNull().hasName("k").isPartitionKey().hasType(cint());
+        assertThat(table.getColumns().get(1)).isNotNull().hasName("c").isClusteringColumn().hasType(cint());
     }
 
     @Test(groups = "short")
@@ -168,27 +187,59 @@ public class TableMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
 
     @Test(groups = "short")
     public void should_parse_table_options() {
+        VersionNumber version = TestUtils.findHost(cluster, 1).getCassandraVersion();
+
         // given
-        String cql = String.format("CREATE TABLE %s.with_options (\n"
-                + "    k text,\n"
-                + "    c1 int,\n"
-                + "    c2 int,\n"
-                + "    i int,\n"
-                + "    PRIMARY KEY (k, c1, c2)\n"
-                + ") WITH CLUSTERING ORDER BY (c1 DESC, c2 ASC)\n"
-                + "   AND read_repair_chance = 0.5\n"
-                + "   AND dclocal_read_repair_chance = 0.6\n"
-                + "   AND replicate_on_write = true\n"
-                + "   AND gc_grace_seconds = 42\n"
-                + "   AND bloom_filter_fp_chance = 0.01\n"
-                + "   AND caching = 'ALL'\n"
-                + "   AND comment = 'My awesome table'\n"
-                + "   AND compaction = { 'class' : 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'sstable_size_in_mb' : 15 }\n"
-                + "   AND compression = { 'sstable_compression' : 'org.apache.cassandra.io.compress.SnappyCompressor', 'chunk_length_kb' : 128 };",
-            keyspace);
+        String cql;
+
+        // Cassandra 3.0 +
+        if (version.getMajor() > 2) {
+            cql = String.format("CREATE TABLE %s.with_options (\n"
+                    + "    k text,\n"
+                    + "    c1 int,\n"
+                    + "    c2 int,\n"
+                    + "    i int,\n"
+                    + "    PRIMARY KEY (k, c1, c2)\n"
+                    + ") WITH CLUSTERING ORDER BY (c1 DESC, c2 ASC)\n"
+                    + "   AND read_repair_chance = 0.5\n"
+                    + "   AND dclocal_read_repair_chance = 0.6\n"
+                    + "   AND speculative_retry = '99.9PERCENTILE'\n"
+                    // replicate_on_write not supported anymore in 3.0
+                    + "   AND gc_grace_seconds = 42\n"
+                    + "   AND bloom_filter_fp_chance = 0.01\n"
+                    // older caching formats not supported anymore in 3.0
+                    + "   AND caching =  { 'keys' : 'ALL', 'rows_per_partition' : 10 }\n"
+                    + "   AND comment = 'My awesome table'\n"
+                    + "   AND compaction = { 'class' : 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'sstable_size_in_mb' : 15 }\n"
+                    + "   AND compression = { 'sstable_compression' : 'org.apache.cassandra.io.compress.SnappyCompressor', 'chunk_length_kb' : 128 }\n"
+                    + "   AND crc_check_chance = 0.5;", // available from C* 3.0
+                keyspace);
+
+        // older versions
+        } else {
+            cql = String.format("CREATE TABLE %s.with_options (\n"
+                    + "    k text,\n"
+                    + "    c1 int,\n"
+                    + "    c2 int,\n"
+                    + "    i int,\n"
+                    + "    PRIMARY KEY (k, c1, c2)\n"
+                    + ") WITH CLUSTERING ORDER BY (c1 DESC, c2 ASC)\n"
+                    + "   AND read_repair_chance = 0.5\n"
+                    + "   AND dclocal_read_repair_chance = 0.6\n"
+                    + "   AND replicate_on_write = true\n"
+                    + "   AND gc_grace_seconds = 42\n"
+                    + "   AND bloom_filter_fp_chance = 0.01\n"
+                    + "   AND caching = 'ALL'\n"
+                    + "   AND comment = 'My awesome table'\n"
+                    + "   AND compaction = { 'class' : 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'sstable_size_in_mb' : 15 }\n"
+                    + "   AND compression = { 'sstable_compression' : 'org.apache.cassandra.io.compress.SnappyCompressor', 'chunk_length_kb' : 128 };",
+                keyspace);
+        }
+
         // when
         session.execute(cql);
         TableMetadata table = cluster.getMetadata().getKeyspace(keyspace).getTable("with_options");
+
         // then
         assertThat(table).isNotNull().hasName("with_options").hasNumberOfColumns(4).isNotCompactStorage();
         assertThat(table.getColumns().get(0)).isNotNull().hasName("k").isPartitionKey().hasType(text());
@@ -196,7 +247,7 @@ public class TableMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
         assertThat(table.getColumns().get(2)).isNotNull().hasName("c2").isClusteringColumn().hasClusteringOrder(ASC).hasType(cint());
         assertThat(table.getColumns().get(3)).isNotNull().hasName("i").isRegularColumn().hasType(cint());
         assertThat(table);
-        VersionNumber version = TestUtils.findHost(cluster, 1).getCassandraVersion();
+
         // Cassandra 3.0 +
         if (version.getMajor() > 2) {
 
@@ -206,17 +257,18 @@ public class TableMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
             assertThat(table.getOptions().getBloomFilterFalsePositiveChance()).isEqualTo(0.01);
             assertThat(table.getOptions().getComment()).isEqualTo("My awesome table");
             assertThat(table.getOptions().getCaching()).contains(entry("keys", "ALL" ));
-            assertThat(table.getOptions().getCaching()).contains(entry("rows_per_partition", "ALL"));
+            assertThat(table.getOptions().getCaching()).contains(entry("rows_per_partition", "10"));
             assertThat(table.getOptions().getCompaction()).contains(entry("class", "org.apache.cassandra.db.compaction.LeveledCompactionStrategy"));
             assertThat(table.getOptions().getCompaction()).contains(entry("sstable_size_in_mb", "15"));
             assertThat(table.getOptions().getCompression()).contains(entry("class", "org.apache.cassandra.io.compress.SnappyCompressor")); // sstable_compression becomes class
             assertThat(table.getOptions().getCompression()).contains(entry("chunk_length_in_kb", "128")); // note the "in" prefix
             assertThat(table.getOptions().getDefaultTimeToLive()).isEqualTo(0);
-            assertThat(table.getOptions().getSpeculativeRetry()).isEqualTo("99.0PERCENTILE");
+            assertThat(table.getOptions().getSpeculativeRetry()).isEqualTo("99.9PERCENTILE");
             assertThat(table.getOptions().getIndexInterval()).isNull();
             assertThat(table.getOptions().getMinIndexInterval()).isEqualTo(128);
             assertThat(table.getOptions().getMaxIndexInterval()).isEqualTo(2048);
             assertThat(table.getOptions().getReplicateOnWrite()).isTrue(); // default
+            assertThat(table.getOptions().getCrcCheckChance()).isEqualTo(0.5);
             assertThat(table.asCQLQuery())
                 .contains("read_repair_chance = 0.5")
                 .contains("dclocal_read_repair_chance = 0.6")
@@ -224,19 +276,20 @@ public class TableMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
                 .contains("bloom_filter_fp_chance = 0.01")
                 .contains("comment = 'My awesome table'")
                 .contains("'keys' : 'ALL'")
-                .contains("'rows_per_partition' : 'ALL'")
+                .contains("'rows_per_partition' : 10")
                 .contains("'class' : 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy'")
                 .contains("'sstable_size_in_mb' : 15")
                 .contains("'class' : 'org.apache.cassandra.io.compress.SnappyCompressor'") // sstable_compression becomes class
                 .contains("'chunk_length_in_kb' : 128") // note the "in" prefix
                 .contains("default_time_to_live = 0")
-                .contains("speculative_retry = '99.0PERCENTILE'")
+                .contains("speculative_retry = '99.9PERCENTILE'")
                 .contains("min_index_interval = 128")
                 .contains("max_index_interval = 2048")
+                .contains("crc_check_chance = 0.5")
                 .doesNotContain(" index_interval")
                 .doesNotContain("replicate_on_write");
 
-            // Cassandra 2.1 and 2.2
+        // Cassandra 2.1 and 2.2
         } else if (version.getMajor() == 2 && version.getMinor() > 0) {
 
             // With 2.1 we have different options, the caching option changes and replicate_on_write disappears
@@ -276,7 +329,7 @@ public class TableMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
                 .doesNotContain(" index_interval")
                 .doesNotContain("replicate_on_write");
 
-            // Cassandra 2.0
+        // Cassandra 2.0
         } else if (version.getMajor() == 2 && version.getMinor() == 0) {
 
             assertThat(table.getOptions().getReadRepairChance()).isEqualTo(0.5);
@@ -314,7 +367,7 @@ public class TableMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
                 .doesNotContain("min_index_interval") // 2.1 +
                 .doesNotContain("max_index_interval"); // 2.1 +
 
-            // Cassandra 1.2
+        // Cassandra 1.2
         } else {
 
             assertThat(table.getOptions().getReadRepairChance()).isEqualTo(0.5);
@@ -356,6 +409,37 @@ public class TableMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
 
     }
 
+    /**
+     * Validates that metadata is appropriately parsed when using the new compression options format introduced
+     * in 3.0.0-alpha1.   Since compression options are parsed as a String map, this should behave exactly as
+     * the old style compression options used in {@link #should_parse_table_options}.
+     *
+     * @jira_ticket CASSANDRA-9424
+     */
+    @Test(groups="short")
+    @CassandraVersion(major=3.0)
+    public void should_parse_new_compression_options() {
+        // given
+        String cql = String.format("CREATE TABLE %s.new_compression_options (\n"
+                + "    k text,\n"
+                + "    c1 int,\n"
+                + "    c2 int,\n"
+                + "    i int,\n"
+                + "    PRIMARY KEY (k, c1, c2)\n"
+                + ") WITH CLUSTERING ORDER BY (c1 DESC, c2 ASC)\n"
+                + "   AND compression = { 'class' : 'DeflateCompressor', 'chunk_length_in_kb' : 128 };",
+            keyspace);
+
+        // when
+        session.execute(cql);
+        TableMetadata table = cluster.getMetadata().getKeyspace(keyspace).getTable("new_compression_options");
+
+        // then
+        assertThat(table.getOptions().getCompression())
+            .contains(entry("class", "org.apache.cassandra.io.compress.DeflateCompressor"))
+            .contains(entry("chunk_length_in_kb", "128"));
+    }
+
     @Test(groups = "short")
     public void should_escape_single_quote_table_comment() {
         // given
@@ -369,5 +453,25 @@ public class TableMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
         // then
         assertThat(table.getOptions().getComment()).isEqualTo("comment with single quote ' should work");
         assertThat(table.asCQLQuery()).contains("comment = 'comment with single quote '' should work'");
+    }
+
+    @Test(groups = "short")
+    public void should_not_mix_indexes_from_different_tables() {
+        String[] statements = {
+                "CREATE TABLE test_ab (a int PRIMARY KEY, b int);",
+                "CREATE INDEX test_b on test_ab (b);",
+                "CREATE TABLE test_cd (c int PRIMARY KEY, d int);",
+                "CREATE INDEX test_d on test_cd (d);",
+        };
+        for (String statement: statements)
+            session.execute(statement);
+
+        TableMetadata table_ab = cluster.getMetadata().getKeyspace(keyspace).getTable("test_ab");
+        TableMetadata table_cd = cluster.getMetadata().getKeyspace(keyspace).getTable("test_cd");
+
+        assertThat(table_ab.getIndexes().size()).isEqualTo(1);
+        assertThat(table_ab.getIndexes().get(0).getName()).isEqualTo("test_b");
+        assertThat(table_cd.getIndexes().size()).isEqualTo(1);
+        assertThat(table_cd.getIndexes().get(0).getName()).isEqualTo("test_d");
     }
 }

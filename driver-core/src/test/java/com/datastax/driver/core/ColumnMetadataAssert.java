@@ -36,27 +36,27 @@ public class ColumnMetadataAssert extends AbstractAssert<ColumnMetadataAssert, C
     }
 
     public ColumnMetadataAssert isPrimaryKey() {
-        assertThat(actual.getTable().getPrimaryKey().contains(actual));
+        assertThat(actual.getParent().getPrimaryKey().contains(actual));
         return this;
     }
 
     public ColumnMetadataAssert isPartitionKey() {
-        assertThat(actual.getTable().getPartitionKey().contains(actual));
+        assertThat(actual.getParent().getPartitionKey().contains(actual));
         return this;
     }
 
     public ColumnMetadataAssert isClusteringColumn() {
-        assertThat(actual.getTable().getClusteringColumns().contains(actual));
+        assertThat(actual.getParent().getClusteringColumns().contains(actual));
         return this;
     }
 
     public ColumnMetadataAssert isRegularColumn() {
-        assertThat(!actual.getTable().getPrimaryKey().contains(actual));
+        assertThat(!actual.getParent().getPrimaryKey().contains(actual));
         return this;
     }
 
-    public ColumnMetadataAssert hasClusteringOrder(TableMetadata.Order order) {
-        assertThat(actual.getTable().getClusteringOrder().get(actual.getTable().getClusteringColumns().indexOf(actual))).isEqualTo(order);
+    public ColumnMetadataAssert hasClusteringOrder(TableOrView.Order order) {
+        assertThat(actual.getParent().getClusteringOrder().get(actual.getParent().getClusteringColumns().indexOf(actual))).isEqualTo(order);
         return this;
     }
 
