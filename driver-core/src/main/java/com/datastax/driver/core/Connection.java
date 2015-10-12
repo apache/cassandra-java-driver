@@ -1243,16 +1243,16 @@ class Connection {
                 timeout.cancel();
         }
 
-        public void cancelHandler() {
+        public boolean cancelHandler() {
             if (!isCancelled.compareAndSet(false, true))
-                return;
+                return false;
 
             // We haven't really received a response: we want to remove the handle because we gave up on that
             // request and there is no point in holding the handler, but we don't release the streamId. If we
             // were, a new request could reuse that ID but get the answer to the request we just gave up on instead
             // of its own answer, and we would have no way to detect that.
             connection.dispatcher.removeHandler(this, false);
-            connection.release();
+            return true;
         }
 
         private TimerTask onTimeoutTask() {
@@ -1260,7 +1260,8 @@ class Connection {
                 @Override
                 public void run(Timeout timeout) {
                     if (callback.onTimeout(connection, System.nanoTime() - startTime, retryCount))
-                        cancelHandler();
+                        if(cancelHandler())
+                            connection.release();
                 }
             };
         }

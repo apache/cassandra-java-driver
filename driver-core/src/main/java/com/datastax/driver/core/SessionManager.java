@@ -608,9 +608,7 @@ class SessionManager extends AbstractSession {
                     public void onFailure(Throwable t) {
                         logger.debug(String.format("Unexpected error while preparing query (%s) on %s", query, entry.getKey()), t);
 
-                        // If the query timed out, that already released the connection, otherwise do it now
-                        if (!(t instanceof OperationTimedOutException))
-                            c.release();
+                        c.release();
                     }
                 });
                 futures.add(future);
