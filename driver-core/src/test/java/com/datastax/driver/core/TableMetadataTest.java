@@ -15,9 +15,11 @@
  */
 package com.datastax.driver.core;
 
+import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.Collections;
 
+import com.google.common.collect.ImmutableMap;
 import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.entry;
@@ -269,6 +271,7 @@ public class TableMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
             assertThat(table.getOptions().getMaxIndexInterval()).isEqualTo(2048);
             assertThat(table.getOptions().getReplicateOnWrite()).isTrue(); // default
             assertThat(table.getOptions().getCrcCheckChance()).isEqualTo(0.5);
+            assertThat(table.getOptions().getExtensions()).isEmpty(); // default
             assertThat(table.asCQLQuery())
                 .contains("read_repair_chance = 0.5")
                 .contains("dclocal_read_repair_chance = 0.6")
@@ -310,6 +313,7 @@ public class TableMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
             assertThat(table.getOptions().getMinIndexInterval()).isEqualTo(128);
             assertThat(table.getOptions().getMaxIndexInterval()).isEqualTo(2048);
             assertThat(table.getOptions().getReplicateOnWrite()).isTrue(); // default
+            assertThat(table.getOptions().getExtensions()).isEmpty();
             assertThat(table.asCQLQuery())
                 .contains("read_repair_chance = 0.5")
                 .contains("dclocal_read_repair_chance = 0.6")
@@ -349,6 +353,7 @@ public class TableMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
             assertThat(table.getOptions().getMinIndexInterval()).isNull();
             assertThat(table.getOptions().getMaxIndexInterval()).isNull();
             assertThat(table.getOptions().getReplicateOnWrite()).isTrue(); // explicitly set
+            assertThat(table.getOptions().getExtensions()).isEmpty();
             assertThat(table.asCQLQuery())
                 .contains("read_repair_chance = 0.5")
                 .contains("dclocal_read_repair_chance = 0.6")
@@ -387,6 +392,7 @@ public class TableMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
             assertThat(table.getOptions().getMinIndexInterval()).isNull();
             assertThat(table.getOptions().getMaxIndexInterval()).isNull();
             assertThat(table.getOptions().getReplicateOnWrite()).isTrue(); // explicitly set
+            assertThat(table.getOptions().getExtensions()).isEmpty();
             assertThat(table.asCQLQuery())
                 .contains("read_repair_chance = 0.5")
                 .contains("dclocal_read_repair_chance = 0.6")
@@ -473,5 +479,38 @@ public class TableMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
         assertThat(table_ab.getIndexes().get(0).getName()).isEqualTo("test_b");
         assertThat(table_cd.getIndexes().size()).isEqualTo(1);
         assertThat(table_cd.getIndexes().get(0).getName()).isEqualTo("test_d");
+    }
+
+    /**
+     * Validates that the 'extensions' option is properly parsed when set on a table.
+     * This value is currently not modifiable via CQL so we fake out a table containing
+     * populated extensions by updating the extensions column in system_schema.tables
+     * and forcing a schema refresh on it.
+     *
+     * @jira_ticket JAVA-938, CASSANDRA-9426
+     * @test_category metadata
+     */
+    @Test(groups = "short")
+    @CassandraVersion(major=3.0)
+    public void should_parse_extensions_from_table_options() throws Exception {
+        // given
+        // create a simple table and retrieve it's metadata from system_schema.tables.
+        String cql = String.format("CREATE TABLE %s.table_with_extensions (\n"
+            + "    k text,\n"
+            + "    c int,\n"
+            + "    v timeuuid,\n"
+            + "    PRIMARY KEY (k, c)\n"
+            + ");", keyspace);
+        session.execute(cql);
+
+        // Manually change column value in system_schema.tables and force a schema refresh on that table.
+        ImmutableMap<String, ByteBuffer> extensions = ImmutableMap.of("Hello", ByteBuffer.wrap("World".getBytes("UTF-8")));
+        session.execute("update system_schema.tables set extensions=? where keyspace_name=? and table_name=?", extensions, keyspace, "table_with_extensions");
+        cluster.manager.controlConnection.refreshSchema(SchemaElement.TABLE, keyspace, "table_with_extensions", null);
+
+        // when retrieving the table's metadata.
+        TableMetadata table = cluster.getMetadata().getKeyspace(keyspace).getTable("table_with_extensions");
+        // then the table's options should contain populated extensions.
+        assertThat(table.getOptions().getExtensions()).isEqualTo(extensions);
     }
 }

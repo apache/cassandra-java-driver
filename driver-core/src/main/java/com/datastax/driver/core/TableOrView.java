@@ -16,6 +16,7 @@
 package com.datastax.driver.core;
 
 
+import java.nio.ByteBuffer;
 import java.util.*;
 
 import com.google.common.base.Objects;
@@ -371,6 +372,7 @@ abstract class TableOrView {
         private static final String MIN_INDEX_INTERVAL          = "min_index_interval";
         private static final String MAX_INDEX_INTERVAL          = "max_index_interval";
         private static final String CRC_CHECK_CHANCE            = "crc_check_chance";
+        private static final String EXTENSIONS                  = "extensions";
 
         private static final boolean DEFAULT_REPLICATE_ON_WRITE = true;
         private static final double DEFAULT_BF_FP_CHANCE = 0.01;
@@ -402,6 +404,7 @@ abstract class TableOrView {
         private final Map<String, String> compaction;
         private final Map<String, String> compression;
         private final Double crcCheckChance;
+        private final Map<String, ByteBuffer> extensions;
 
         Options(Row row, boolean isCompactStorage, VersionNumber version) {
 
@@ -474,6 +477,11 @@ abstract class TableOrView {
                     : row.getDouble(CRC_CHECK_CHANCE);
             else
                 this.crcCheckChance = null;
+
+            if(is300OrHigher)
+                this.extensions = ImmutableMap.copyOf(row.getMap(EXTENSIONS, String.class, ByteBuffer.class));
+            else
+                this.extensions = ImmutableMap.of();
         }
 
         private static boolean isNullOrAbsent(Row row, String name) {
@@ -675,6 +683,17 @@ abstract class TableOrView {
             return compression;
         }
 
+        /**
+         * Returns the extension options for this table.
+         * <p>
+         * For Cassandra versions prior to 3.0.0, this method always returns an empty map.
+         *
+         * @return an immutable map containing the extension options for this table.
+         */
+        public Map<String, ByteBuffer> getExtensions() {
+            return extensions;
+        }
+
         @Override
         public boolean equals(Object other) {
             if (other == this)
@@ -699,14 +718,15 @@ abstract class TableOrView {
                 Objects.equal(this.minIndexInterval, that.minIndexInterval) &&
                 Objects.equal(this.maxIndexInterval, that.maxIndexInterval) &&
                 Objects.equal(this.compaction, that.compaction) &&
-                Objects.equal(this.compression, that.compression);
+                Objects.equal(this.compression, that.compression) &&
+                Objects.equal(this.extensions, that.extensions);
         }
 
         @Override
         public int hashCode() {
             return Objects.hashCode(isCompactStorage, comment, readRepair, localReadRepair, replicateOnWrite, gcGrace,
                 bfFpChance, caching, populateCacheOnFlush, memtableFlushPeriodMs, defaultTTL, speculativeRetry,
-                indexInterval, minIndexInterval, maxIndexInterval, compaction, compression);
+                indexInterval, minIndexInterval, maxIndexInterval, compaction, compression, extensions);
         }
     }
 }
