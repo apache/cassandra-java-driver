@@ -16,9 +16,12 @@
 package com.datastax.driver.core;
 
 import java.net.InetSocketAddress;
+import java.util.Collections;
 
 import org.scassandra.Scassandra;
+import org.scassandra.ScassandraFactory;
 import org.scassandra.http.client.ActivityClient;
+import org.scassandra.http.client.CurrentClient;
 import org.scassandra.http.client.PrimingClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,6 +41,8 @@ import static org.assertj.core.api.Assertions.fail;
  * consider using {@link com.datastax.driver.core.ScassandraTestBase.PerClassCluster} instead.
  */
 public abstract class ScassandraTestBase {
+    private static final int BINARY_PORT = 9042;
+    private static final int ADMIN_PORT = 9052;
 
     private static final Logger logger = LoggerFactory.getLogger(ScassandraTestBase.class);
 
@@ -49,13 +54,18 @@ public abstract class ScassandraTestBase {
 
     protected ActivityClient activityClient;
 
+    protected CurrentClient currentClient;
+
+    protected static String ip = CCMBridge.IP_PREFIX + "1";
+
     @BeforeClass(groups = { "short", "long" })
     public void startScassandra() {
-        scassandra = TestUtils.createScassandraServer();
+        scassandra = ScassandraFactory.createServer(ip, BINARY_PORT, ip, ADMIN_PORT);
         scassandra.start();
         primingClient = scassandra.primingClient();
         activityClient = scassandra.activityClient();
-        hostAddress = new InetSocketAddress("127.0.0.1", scassandra.getBinaryPort());
+        currentClient = scassandra.currentClient();
+        hostAddress = new InetSocketAddress(ip, scassandra.getBinaryPort());
     }
 
     @AfterClass(groups = { "short", "long" })
@@ -69,11 +79,12 @@ public abstract class ScassandraTestBase {
     public void resetClients() {
         activityClient.clearAllRecordedActivity();
         primingClient.clearAllPrimes();
+        currentClient.enableListener();
     }
 
     protected Cluster.Builder createClusterBuilder() {
         Cluster.Builder builder = Cluster.builder()
-            .addContactPoint("127.0.0.1")
+            .addContactPointsWithPorts(Collections.singletonList(hostAddress))
             // Scassandra does not support V3 yet, and V4 may cause the server to crash
             .withProtocolVersion(ProtocolVersion.V2)
             .withPoolingOptions(new PoolingOptions()
@@ -82,6 +93,16 @@ public abstract class ScassandraTestBase {
                 .setHeartbeatIntervalSeconds(0))
             .withPort(scassandra.getBinaryPort());
         return builder;
+    }
+
+    /**
+     * An overrideable method for building on to the Cluster.Builder used for this
+     * class.
+     * @param builder
+     * @return
+     */
+    protected Cluster.Builder configure(Cluster.Builder builder) {
+       return builder;
     }
 
     protected Host retrieveSingleHost(Cluster cluster) {

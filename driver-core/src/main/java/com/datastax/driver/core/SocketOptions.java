@@ -68,6 +68,8 @@ public class SocketOptions {
 
     /**
      * Sets the connection timeout in milliseconds.
+     * <p>
+     * The default value is {@link #DEFAULT_CONNECT_TIMEOUT_MILLIS}.
      *
      * @param connectTimeoutMillis the timeout to set.
      * @return this {@code SocketOptions}.
@@ -120,6 +122,8 @@ public class SocketOptions {
      * </ul>
      * <p>
      * Setting a value of 0 disables read timeouts.
+     * <p>
+     * The default value is {@link #DEFAULT_READ_TIMEOUT_MILLIS}.
      *
      * @param readTimeoutMillis the timeout to set.
      * @return this {@code SocketOptions}.

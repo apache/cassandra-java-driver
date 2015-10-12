@@ -16,23 +16,21 @@
 package com.datastax.driver.core;
 
 import org.apache.log4j.Logger;
+import org.scassandra.http.client.PrimingRequest;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import static org.apache.log4j.Level.DEBUG;
 import static org.apache.log4j.Level.INFO;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
-import static org.scassandra.http.client.PrimingRequest.Result.read_request_timeout;
-import static org.scassandra.http.client.PrimingRequest.Result.unavailable;
-import static org.scassandra.http.client.PrimingRequest.Result.write_request_timeout;
+import static org.scassandra.http.client.PrimingRequest.Result.*;
 import static org.scassandra.http.client.PrimingRequest.queryBuilder;
+import static org.scassandra.http.client.PrimingRequest.then;
 
-import com.datastax.driver.core.exceptions.NoHostAvailableException;
-import com.datastax.driver.core.exceptions.ReadTimeoutException;
-import com.datastax.driver.core.exceptions.UnavailableException;
-import com.datastax.driver.core.exceptions.WriteTimeoutException;
+import com.datastax.driver.core.exceptions.*;
 
 import static com.datastax.driver.core.QueryLogger.builder;
 
@@ -49,38 +47,34 @@ public class QueryLoggerErrorsTest extends ScassandraTestBase.PerClassCluster {
     private MemoryAppender slowAppender;
     private MemoryAppender errorAppender;
 
-    private QueryLogger queryLogger;
+    private Cluster cluster = null;
+    private Session session = null;
+    private QueryLogger queryLogger = null;
 
     @BeforeMethod(groups = { "short", "unit" })
-    public void startCapturingLogs() {
+    public void setUp() {
+        slow.setLevel(INFO);
+        error.setLevel(INFO);
         slow.addAppender(slowAppender = new MemoryAppender());
         error.addAppender(errorAppender = new MemoryAppender());
+
+        queryLogger = null;
+
+        cluster = createClusterBuilder().build();
+        session = cluster.connect();
     }
 
     @AfterMethod(groups = { "short", "unit" })
-    public void stopCapturingLogs() {
+    public void tearDown() {
         slow.setLevel(null);
         error.setLevel(null);
         slow.removeAppender(slowAppender);
         error.removeAppender(errorAppender);
-    }
 
-    @BeforeMethod(groups = { "short", "unit" })
-    @AfterMethod(groups = { "short", "unit" })
-    public void resetLogLevels() {
-        slow.setLevel(INFO);
-        error.setLevel(INFO);
-    }
-
-    @BeforeMethod(groups = { "short", "unit" })
-    public void resetQueryLogger() {
         queryLogger = null;
-    }
 
-    @AfterMethod(groups = { "short", "unit" })
-    public void unregisterQueryLogger() {
-        if(cluster != null && queryLogger != null) {
-            cluster.unregister(queryLogger);
+        if(cluster != null) {
+            cluster.close();
         }
     }
 
@@ -96,7 +90,7 @@ public class QueryLoggerErrorsTest extends ScassandraTestBase.PerClassCluster {
         primingClient.prime(
             queryBuilder()
                 .withQuery(query)
-                .withFixedDelay(100)
+                .withThen(then().withFixedDelay(100L))
                 .build()
         );
         // when
@@ -105,7 +99,7 @@ public class QueryLoggerErrorsTest extends ScassandraTestBase.PerClassCluster {
         String line = slowAppender.waitAndGet(5000);
         assertThat(line)
             .contains("Query too slow")
-            .contains("127.0.0.1")
+            .contains(ip)
             .contains(query);
     }
 
@@ -120,7 +114,7 @@ public class QueryLoggerErrorsTest extends ScassandraTestBase.PerClassCluster {
         primingClient.prime(
             queryBuilder()
                 .withQuery(query)
-                .withFixedDelay(100)
+                .withThen(then().withFixedDelay(100L))
                 .build()
         );
         // when
@@ -134,14 +128,34 @@ public class QueryLoggerErrorsTest extends ScassandraTestBase.PerClassCluster {
         String line = errorAppender.waitAndGet(5000);
         assertThat(line)
             .contains("Query error")
-            .contains("127.0.0.1")
+            .contains(ip)
             .contains(Integer.toString(scassandra.getBinaryPort()))
             .contains(query)
             .contains(OperationTimedOutException.class.getName());
     }
 
-    @Test(groups = "short")
-    public void should_log_read_timeout_errors() throws Exception {
+    @DataProvider(name="errors")
+    public static Object[][] createErrors() {
+        return new Object[][] {
+            { unavailable, NoHostAvailableException.class, UnavailableException.class },
+            { write_request_timeout, WriteTimeoutException.class, WriteTimeoutException.class },
+            { read_request_timeout, ReadTimeoutException.class, ReadTimeoutException.class },
+            { server_error, NoHostAvailableException.class, ServerError.class },
+            { protocol_error, ProtocolError.class, ProtocolError.class },
+            { bad_credentials, AuthenticationException.class, AuthenticationException.class },
+            { overloaded, NoHostAvailableException.class, OverloadedException.class },
+            { is_bootstrapping, NoHostAvailableException.class, BootstrappingException.class },
+            { truncate_error, TruncateException.class, TruncateException.class },
+            { syntax_error, SyntaxError.class, SyntaxError.class },
+            { invalid, InvalidQueryException.class, InvalidQueryException.class },
+            { config_error, InvalidConfigurationInQueryException.class, InvalidConfigurationInQueryException.class },
+            { already_exists, AlreadyExistsException.class, AlreadyExistsException.class },
+            { unprepared, DriverInternalError.class, UnpreparedException.class }
+        };
+    }
+
+    @Test(groups = "short", dataProvider="errors")
+    public void should_log_exception_from_the_given_result(PrimingRequest.Result result, Class<? extends Exception> expectedException, Class<? extends Exception> loggedException) throws Exception {
         // given
         error.setLevel(DEBUG);
         queryLogger = builder().build();
@@ -150,88 +164,36 @@ public class QueryLoggerErrorsTest extends ScassandraTestBase.PerClassCluster {
         primingClient.prime(
             queryBuilder()
                 .withQuery(query)
-                .withResult(read_request_timeout)
+                .withThen(then().withResult(result))
                 .build()
         );
-        // when
-        try {
-            session.execute(query);
-            fail("Should have thrown ReadTimeoutException");
-        } catch (ReadTimeoutException e) {
-            // ok
-        }
-        // then
-        String line = errorAppender.waitAndGet(5000);
-        assertThat(line)
-            .contains("Query error")
-            .contains("127.0.0.1")
-            .contains(Integer.toString(scassandra.getBinaryPort()))
-            .contains(query)
-            .contains(ReadTimeoutException.class.getName());
-    }
-
-    @Test(groups = "short")
-    public void should_log_write_timeout_errors() throws Exception {
-        // given
-        error.setLevel(DEBUG);
-        queryLogger = builder().build();
-        cluster.register(queryLogger);
-        String query = "UPDATE test SET foo = 'bar' where qix = ?";
-        primingClient.prime(
-            queryBuilder()
-                .withQuery(query)
-                .withResult(write_request_timeout)
-                .build()
-        );
-        // when
-        try {
-            session.execute(query);
-            fail("Should have thrown WriteTimeoutException");
-        } catch (WriteTimeoutException e) {
-            // ok
-        }
-        // then
-        String line = errorAppender.waitAndGet(5000);
-        assertThat(line)
-            .contains("Query error")
-            .contains("127.0.0.1")
-            .contains(Integer.toString(scassandra.getBinaryPort()))
-            .contains(query)
-            .contains(WriteTimeoutException.class.getName());
-    }
-
-    @Test(groups = "short")
-    public void should_log_unavailable_errors() throws Exception {
-        // given
-        error.setLevel(DEBUG);
-        queryLogger = builder().build();
-        cluster.register(queryLogger);
-        String query = "SELECT foo FROM bar";
-        primingClient.prime(
-            queryBuilder()
-                .withQuery(query)
-                .withResult(unavailable)
-                .build()
-        );
-        // when
         // when
         try {
             session.execute(query);
             fail("Should have thrown NoHostAvailableException");
-        } catch(NoHostAvailableException e) {
-            // ok
-            Throwable error = e.getErrors().get(hostAddress);
-            assertThat(error).isNotNull();
-            assertThat(error).isInstanceOf(UnavailableException.class);
+        } catch(Exception e) {
+            if(e instanceof NoHostAvailableException) {
+                assertThat(expectedException).isEqualTo(NoHostAvailableException.class);
+                // ok
+                Throwable error = ((NoHostAvailableException)e).getErrors().get(hostAddress);
+                assertThat(error).isNotNull();
+                if(loggedException.getSuperclass() == DriverInternalError.class) {
+                    assertThat(error).isOfAnyClassIn(DriverException.class);
+                } else {
+                    assertThat(error).isOfAnyClassIn(loggedException);
+                }
+            } else {
+                assertThat(e).isInstanceOf(expectedException);
+            }
         }
         // then
         String line = errorAppender.waitAndGet(5000);
         assertThat(line)
             .contains("Query error")
-            .contains("127.0.0.1")
+            .contains(ip)
             .contains(Integer.toString(scassandra.getBinaryPort()))
             .contains(query)
-            .contains(UnavailableException.class.getName());
+            .contains(loggedException.getName());
     }
 
 }

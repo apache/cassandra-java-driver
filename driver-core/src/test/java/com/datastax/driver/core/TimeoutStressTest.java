@@ -69,7 +69,7 @@ public class TimeoutStressTest {
 
     static List<InetSocketAddress> nodes;
 
-    @BeforeClass(groups = "long")
+    @BeforeClass(groups = "stress")
     public void beforeClass() throws Exception {
         ccmBridge = CCMBridge.builder("test").withNodes(3).build();
         channelMonitor = new SocketChannelMonitor();
@@ -89,7 +89,7 @@ public class TimeoutStressTest {
                 .build();
     }
 
-    @AfterClass(groups = "long")
+    @AfterClass(groups = "stress")
     public void afterClass() {
         if(ccmBridge != null) {
             ccmBridge.stop();
@@ -125,7 +125,7 @@ public class TimeoutStressTest {
      * @jira_ticket JAVA-692
      * @since 2.0.10, 2.1.6
      */
-    @Test(groups = "long")
+    @Test(groups = "stress")
     public void host_state_should_be_maintained_with_timeouts() throws Exception {
         // Setup schema and insert records.
         Session session = cluster.connect();

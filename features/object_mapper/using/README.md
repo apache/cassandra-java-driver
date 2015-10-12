@@ -86,9 +86,10 @@ underlying query:
 - `consistencyLevel`: specify a consistency level.
 - `tracing`: set tracing flag for the query.
 - `saveNullFields`: if set to true, fields with value `null` in an
-  instance that is to be persisted, will be explicitly written as `null`
+  instance that is to be persisted will be explicitly written as `null`
   in the query. If set to false, fields with null value won't be included
-  in the write query (thus avoiding tombstones).
+  in the write query (thus avoiding tombstones).  If not specified, the 
+  default behavior is to persist `null` fields.
 
 To use options, add them to the mapper call after regular parameters:
 

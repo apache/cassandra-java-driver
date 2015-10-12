@@ -154,7 +154,7 @@ public class ClusterInitTest {
      * @test_category connection
      * @expected_result Cluster closes within 1 second.
      */
-    @Test(groups = "unit")
+    @Test(groups = "short")
     public void should_be_able_to_close_cluster_that_never_successfully_connected() throws Exception {
         Cluster cluster = Cluster.builder()
             .addContactPointsWithPorts(Collections.singleton(new InetSocketAddress("127.0.0.1", 65534)))

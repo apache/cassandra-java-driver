@@ -37,7 +37,7 @@ import static com.datastax.driver.core.HostDistance.REMOTE;
  * With {@code ProtocolVersion#V2} or below, there are at most 128 simultaneous
  * requests per connection, so the pool defaults to a variable size. You will
  * typically raise the maximum capacity by adding more connections with
- * {@link #setMaxRequestsPerConnection(HostDistance, int)}.
+ * {@link #setMaxConnectionsPerHost(HostDistance, int)}.
  * <p>
  * With {@code ProtocolVersion#V3} or above, there are up to 32768 requests per
  * connection, and the pool defaults to a fixed size of 1. You will typically

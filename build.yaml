@@ -1,0 +1,22 @@
+java:
+  - openjdk6
+  - oraclejdk7
+  - oraclejdk8
+os:
+  - ubuntu/trusty64
+cassandra:
+  - 1.2
+  - 2.0
+  - 2.1
+build:
+  - type: maven
+    version: 3.2.5
+    goals: clean compile test --fail-never -Plong
+    properties: |
+      com.datastax.driver.TEST_BASE_NODE_WAIT=120
+      com.datastax.driver.NEW_NODE_DELAY_SECONDS=100
+      cassandra.version=$CCM_CASSANDRA_VERSION
+      ccm.java.home=$CCM_JAVA_HOME
+  - xunit:
+    - "**/target/surefire-reports/TEST-*.xml"
+    - "**/target/failsafe-reports/TEST-*.xml" 

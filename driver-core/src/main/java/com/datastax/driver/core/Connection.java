@@ -25,6 +25,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.MapMaker;
 import com.google.common.util.concurrent.*;
 import io.netty.bootstrap.Bootstrap;
@@ -77,10 +78,12 @@ class Connection {
     public final InetSocketAddress address;
     private final String name;
 
-    private volatile Channel channel;
+    @VisibleForTesting
+    volatile Channel channel;
     private final Factory factory;
 
-    private final Dispatcher dispatcher;
+    @VisibleForTesting
+    final Dispatcher dispatcher;
 
     // Used by connection pooling to count how many requests are "in flight" on that connection.
     public final AtomicInteger inFlight = new AtomicInteger(0);
@@ -933,7 +936,7 @@ class Connection {
         flusher.start();
     }
 
-    private class Dispatcher extends SimpleChannelInboundHandler<Message.Response> {
+    class Dispatcher extends SimpleChannelInboundHandler<Message.Response> {
 
         public final StreamIdGenerator streamIdHandler;
         private final ConcurrentMap<Integer, ResponseHandler> pending = new ConcurrentHashMap<Integer, ResponseHandler>();
