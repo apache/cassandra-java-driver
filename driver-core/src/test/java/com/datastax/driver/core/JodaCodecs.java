@@ -164,7 +164,7 @@ public class JodaCodecs {
             tupleType = (TupleType)innerCodec.getCqlType();
             List<DataType> types = tupleType.getComponentTypes();
             checkArgument(
-                types.size() == 2 && types.get(0).equals(timestamp()) && types.get(1).equals(varchar()),
+                types.size() == 2 && types.get(0).equals(DataType.timestamp()) && types.get(1).equals(DataType.varchar()),
                 "Expected tuple<timestamp,varchar>, got %s",
                 tupleType);
         }
