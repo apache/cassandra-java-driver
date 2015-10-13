@@ -6,6 +6,7 @@
 - [bug] Fix implementation of UserType.hashCode() (JAVA-942)
 - [improvement] Don't delay UP/ADDED notifications if protocol version = V4 (JAVA-877)
 - [improvement] Parse 'extensions' column in table metadata (JAVA-938)
+- [bug] Fix Configuration builder to allow disabled metrics (JAVA-900)
 
 
 ### 3.0.0-alpha3
