@@ -310,8 +310,8 @@ public final class CodecRegistry {
             // 19 primitive codecs + collections thereof = 19*3 + 19*19 = 418 codecs,
             // so let's start with roughly 1/4 of that
             .initialCapacity(100)
-            .weigher(new TypeCodecWeigher())
-            .maximumWeight(1000);
+            .maximumWeight(1000)
+            .weigher(new TypeCodecWeigher());
         if (logger.isTraceEnabled())
             // do not bother adding a listener if it will be ineffective
             builder = builder.removalListener(new TypeCodecRemovalListener());
