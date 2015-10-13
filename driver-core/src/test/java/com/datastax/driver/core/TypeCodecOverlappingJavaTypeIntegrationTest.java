@@ -68,7 +68,7 @@ public class TypeCodecOverlappingJavaTypeIntegrationTest extends CCMBridge.PerCl
         session.execute(
             ps.bind()
                 .setString(0, "42")
-                .setList(1, newArrayList("42"))
+                .setList(1, newArrayList("42"), String.class)
                 .setString(2, "42") // here we have the CQL type so VarcharCodec will be used even if IntToStringCodec accepts it
         );
         ps = session.prepare(selectQuery);

@@ -25,7 +25,7 @@ import org.testng.annotations.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
-import com.datastax.driver.core.exceptions.InvalidTypeException;
+import com.datastax.driver.core.exceptions.CodecNotFoundException;
 
 public class BoundStatementTest extends CCMBridge.PerClassSingleNodeCluster {
 
@@ -60,8 +60,8 @@ public class BoundStatementTest extends CCMBridge.PerClassSingleNodeCluster {
 
         try {
             statement.getString(0);
-            fail("Expected type error");
-        } catch (InvalidTypeException e) { /* expected */ }
+            fail("Expected codec not found error");
+        } catch (CodecNotFoundException e) { /* expected */ }
 
         try {
             statement.getString(3);
