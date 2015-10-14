@@ -15,10 +15,8 @@
  */
 package com.datastax.driver.core;
 
-
 import java.util.*;
 
-import com.google.common.base.*;
 import com.google.common.base.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,7 +61,7 @@ public class TableMetadata extends TableOrView {
                           List<ColumnMetadata> clusteringColumns,
                           Map<String, ColumnMetadata> columns,
                           Map<String, IndexMetadata> indexes,
-                          Options options,
+                          TableOptionsMetadata options,
                           List<Order> clusteringOrder,
                           VersionNumber cassandraVersion) {
         super(keyspace, name, id, partitionKey, clusteringColumns, columns, options, clusteringOrder, cassandraVersion);
@@ -123,17 +121,17 @@ public class TableMetadata extends TableOrView {
             isCompact = isDense || !comparator.isComposite;
         }
 
-        List<ColumnMetadata> partitionKey = nullInitializedList(partitionKeySize);
-        List<ColumnMetadata> clusteringColumns = nullInitializedList(clusteringSize);
-        List<Order> clusteringOrder = nullInitializedList(clusteringSize);
+        List<ColumnMetadata> partitionKey = new ArrayList<ColumnMetadata>(Collections.<ColumnMetadata>nCopies(partitionKeySize, null));
+        List<ColumnMetadata> clusteringColumns = new ArrayList<ColumnMetadata>(Collections.<ColumnMetadata>nCopies(clusteringSize, null));
+        List<Order> clusteringOrder = new ArrayList<Order>(Collections.<Order>nCopies(clusteringSize, null));
 
         // We use a linked hashmap because we will keep this in the order of a 'SELECT * FROM ...'.
         LinkedHashMap<String, ColumnMetadata> columns = new LinkedHashMap<String, ColumnMetadata>();
         LinkedHashMap<String, IndexMetadata> indexes = new LinkedHashMap<String, IndexMetadata>();
 
-        Options options = null;
+        TableOptionsMetadata options = null;
         try {
-            options = new Options(row, isCompact, cassandraVersion);
+            options = new TableOptionsMetadata(row, isCompact, cassandraVersion);
         } catch (RuntimeException e) {
             // See ControlConnection#refreshSchema for why we'd rather not probably this further. Since table options is one thing
             // that tends to change often in Cassandra, it's worth special casing this.

@@ -202,6 +202,9 @@ We've also seized the opportunity to remove code that was deprecated in 2.1.
     `Session` interface (the only purpose of the extra interface was to preserve
     binary compatibility on the 2.1 branch).
 
+20. `TableMetadata.Options` has been made a top-level class and renamed to
+    `TableOptionsMetadata`. It is now also used by `MaterializedViewMetadata`.
+
 
 ### 2.1.8
 
