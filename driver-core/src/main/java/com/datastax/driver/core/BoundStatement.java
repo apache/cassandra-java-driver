@@ -38,10 +38,15 @@ import com.datastax.driver.core.exceptions.InvalidTypeException;
  * variables have the same name, setting that name will set <b>all</b> the
  * variables for that name.
  * <p>
- * All the variables of the statement must be bound. If you don't explicitly
- * set a value for a variable, an {@code IllegalStateException} will be
- * thrown when submitting the statement. If you want to set a variable to
+ * With native protocol V3 or below, all variables of the statement must be bound.
+ * If you don't explicitly set a value for a variable, an {@code IllegalStateException}
+ * will be thrown when submitting the statement. If you want to set a variable to
  * {@code null}, use {@link #setToNull(int) setToNull}.
+ * <p>
+ * With native protocol V4 or above, variables can be left unset, in which case they
+ * will be ignored server side (no tombstones will be generated). If you're reusing
+ * a bound statement, you can {@link #unset(int) unset} variables that were previously
+ * set.
  */
 public class BoundStatement extends Statement implements SettableData<BoundStatement>, GettableData {
     static final ByteBuffer UNSET = ByteBuffer.allocate(0);
@@ -118,6 +123,39 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      */
     public boolean isSet(String name) {
         return wrapper.getValue(wrapper.getIndexOf(name)) != UNSET;
+    }
+
+    /**
+     * Unsets the {@code i}th variable. This will leave the statement in the same state as if no setter was
+     * ever called for this variable.
+     * <p>
+     * The treatment of unset variables depends on the native protocol version, see {@link BoundStatement}
+     * for explanations.
+     *
+     * @param i the index of the variable.
+     *
+     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
+     */
+    public void unset(int i) {
+        wrapper.setValue(i, UNSET);
+    }
+
+    /**
+     * Unsets all occurrences of variable {@code name}.  This will leave the statement in the same state
+     * as if no setter was ever called for this variable.
+     * <p>
+     * The treatment of unset variables depends on the native protocol version, see {@link BoundStatement}
+     * for explanations.
+     *
+     * @param name the name of the variable.
+     *
+     * @throws IllegalArgumentException if {@code name} is not a prepared
+     * variable, that is if {@code !this.preparedStatement().variables().names().contains(name)}.
+     */
+    public void unset(String name) {
+        for (int i : wrapper.getAllIndexesOf(name)) {
+            wrapper.setValue(i, UNSET);
+        }
     }
 
     /**

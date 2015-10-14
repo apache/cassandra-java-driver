@@ -8,6 +8,7 @@
 - [improvement] Parse 'extensions' column in table metadata (JAVA-938)
 - [bug] Fix Configuration builder to allow disabled metrics (JAVA-900)
 - [new feature] Prepare API for async query trace (JAVA-902)
+- [new feature] Add BoundStatement#unset (JAVA-930)
 
 
 ### 3.0.0-alpha3
