@@ -46,14 +46,11 @@ import org.slf4j.LoggerFactory;
 
 import static io.netty.handler.timeout.IdleState.ALL_IDLE;
 
-import com.datastax.driver.core.exceptions.AuthenticationException;
-import com.datastax.driver.core.exceptions.DriverException;
-import com.datastax.driver.core.exceptions.DriverInternalError;
-import com.datastax.driver.core.exceptions.InvalidQueryException;
+import com.datastax.driver.core.Responses.Result.SetKeyspace;
+import com.datastax.driver.core.exceptions.*;
 import com.datastax.driver.core.utils.MoreFutures;
 
 import static com.datastax.driver.core.Message.Response.Type.ERROR;
-import static com.datastax.driver.core.Message.Response.Type.RESULT;
 
 // For LoggingHandler
 //import org.jboss.netty.handler.logging.LoggingHandler;
@@ -182,7 +179,7 @@ class Connection {
             public ListenableFuture<Void> create(Throwable t) throws Exception {
                 SettableFuture<Void> future = SettableFuture.create();
                 // Make sure the connection gets properly closed.
-                if (t instanceof ClusterNameMismatchException || t instanceof UnsupportedProtocolVersionException || t instanceof SetKeyspaceException) {
+                if (t instanceof ClusterNameMismatchException || t instanceof UnsupportedProtocolVersionException) {
                     // Just propagate
                     closeAsync().force();
                     future.setException(t);
@@ -474,19 +471,13 @@ class Connection {
         return Futures.transform(future, new AsyncFunction<Message.Response, Void>() {
             @Override
             public ListenableFuture<Void> apply(Message.Response response) throws Exception {
-                if (response.type == RESULT) {
-                    Connection.this.keyspace = keyspace;
+                if (response instanceof SetKeyspace) {
+                    Connection.this.keyspace = ((SetKeyspace)response).keyspace;
                     return MoreFutures.VOID_SUCCESS;
                 } else if (response.type == ERROR) {
                     closeAsync().force();
                     Responses.Error error = (Responses.Error)response;
-                    Exception e = error.asException(address);
-                    if (e instanceof InvalidQueryException) {
-                        // Most likely means that the keyspace name is wrong. Wrap that in a specific exception, because we want
-                        // to treat it specially in case of a Session init.
-                        e = new SetKeyspaceException(e);
-                    }
-                    throw e;
+                    throw error.asException(address);
                 } else {
                     closeAsync().force();
                     throw new DriverInternalError("Unexpected response while setting keyspace: " + response);
