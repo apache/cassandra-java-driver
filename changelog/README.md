@@ -7,6 +7,7 @@
 - [improvement] Don't delay UP/ADDED notifications if protocol version = V4 (JAVA-877)
 - [improvement] Parse 'extensions' column in table metadata (JAVA-938)
 - [bug] Fix Configuration builder to allow disabled metrics (JAVA-900)
+- [new feature] Prepare API for async query trace (JAVA-902)
 
 
 ### 3.0.0-alpha3
