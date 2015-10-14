@@ -26,6 +26,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Functions;
 import com.google.common.base.Predicates;
 import com.google.common.base.Strings;
 import com.google.common.collect.*;
@@ -35,6 +36,7 @@ import org.slf4j.LoggerFactory;
 
 import com.datastax.driver.core.exceptions.AuthenticationException;
 import com.datastax.driver.core.exceptions.DriverInternalError;
+import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.datastax.driver.core.policies.*;
 import com.datastax.driver.core.utils.MoreFutures;
@@ -222,7 +224,7 @@ public class Cluster implements Closeable {
      */
     public Session newSession() {
         checkNotClosed(manager);
-        return manager.newSession(null);
+        return manager.newSession();
     }
 
     /**
@@ -273,6 +275,7 @@ public class Cluster implements Closeable {
      * be contacted to set the {@code keyspace}.
      * @throws AuthenticationException if an authentication error occurs while
      * contacting the initial contact points.
+     * @throws InvalidQueryException if the keyspace does not exists.
      * @throws IllegalStateException if the Cluster was closed prior to calling
      * this method. This can occur either directly (through {@link #close()} or
      * {@link #closeAsync()}), or as a result of an error while initializing the
@@ -333,11 +336,28 @@ public class Cluster implements Closeable {
      * {@link #closeAsync()}), or as a result of an error while initializing the
      * Cluster.
      */
-    public ListenableFuture<Session> connectAsync(String keyspace) {
+    public ListenableFuture<Session> connectAsync(final String keyspace) {
         checkNotClosed(manager);
         init();
-        Session session = manager.newSession(keyspace);
-        return session.initAsync();
+        final Session session = manager.newSession();
+        ListenableFuture<Session> sessionInitialized = session.initAsync();
+        if (keyspace == null) {
+            return sessionInitialized;
+        } else {
+            ListenableFuture<ResultSet> keyspaceSet = Futures.transform(sessionInitialized, new AsyncFunction<Session, ResultSet>() {
+                @Override
+                public ListenableFuture<ResultSet> apply(Session session) throws Exception {
+                    return session.executeAsync("USE " + keyspace);
+                }
+            });
+            Futures.addCallback(keyspaceSet, new MoreFutures.FailureCallback<ResultSet>() {
+                @Override
+                public void onFailure(Throwable t) {
+                    session.closeAsync();
+                }
+            });
+            return Futures.transform(keyspaceSet, Functions.constant(session));
+        }
     }
 
     /**
@@ -1500,8 +1520,8 @@ public class Cluster implements Closeable {
             return translated == null ? sa : translated;
         }
 
-        private Session newSession(String keyspace) {
-            SessionManager session = new SessionManager(Cluster.this, keyspace);
+        private Session newSession() {
+            SessionManager session = new SessionManager(Cluster.this);
             sessions.add(session);
             return session;
         }
@@ -1935,7 +1955,7 @@ public class Cluster implements Closeable {
 
                     List<ListenableFuture<Boolean>> futures = Lists.newArrayListWithCapacity(sessions.size());
                     for (SessionManager s : sessions)
-                        futures.add(s.maybeAddPool(host, reusedConnection, false));
+                        futures.add(s.maybeAddPool(host, reusedConnection));
 
                     try {
                         // Only mark the node up once all session have added their pool (if the load-balancing
