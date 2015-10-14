@@ -95,25 +95,6 @@ public class TypeCodecNumbersIntegrationTest extends CCMBridge.PerClassSingleNod
     @Test(groups = "short")
     public void should_use_default_codecs_with_prepared_statements_3() {
         session.execute(session.prepare(insertQuery).bind()
-            .setObject(0, n_int)
-            .setObject(1, n_bigint)
-            .setObject(2, n_float)
-            .setObject(3, n_double)
-            .setObject(4, n_varint)
-            .setObject(5, n_decimal)
-        );
-        PreparedStatement ps = session.prepare(selectQuery);
-        ResultSet rows = session.execute(ps.bind()
-            .setInt(0, n_int)
-            .setLong(1, n_bigint)
-        );
-        Row row = rows.one();
-        assertRow(row);
-    }
-
-    @Test(groups = "short")
-    public void should_use_default_codecs_with_prepared_statements_4() {
-        session.execute(session.prepare(insertQuery).bind()
             .set(0, n_int, Integer.class)
             .set(1, n_bigint, Long.class)
             .set(2, n_float, Float.class)

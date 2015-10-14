@@ -151,7 +151,7 @@ public class TypeCodecJodaIntegrationTest extends CCMBridge.PerClassSingleNodeCl
     public void should_map_tuple_to_datetime() {
         // Register codec that maps DateTime <-> tuple<timestamp,varchar>
         TupleType dateWithTimeZoneType = cluster.getMetadata().newTupleType(timestamp(), varchar());
-        JodaCodecs.TimeZonePreservingDateTimeCodec dateTimeCodec = new JodaCodecs.TimeZonePreservingDateTimeCodec(new TypeCodec.TupleCodec(dateWithTimeZoneType));
+        JodaCodecs.TimeZonePreservingDateTimeCodec dateTimeCodec = new JodaCodecs.TimeZonePreservingDateTimeCodec(TypeCodec.tuple(dateWithTimeZoneType));
         cluster.getConfiguration().getCodecRegistry().register(dateTimeCodec);
 
         DateTime dateTime = DateTime.parse("2010-06-30T01:20+05:30");

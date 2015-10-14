@@ -29,7 +29,6 @@ import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Sets.newHashSet;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.datastax.driver.core.TypeCodec.EnumIntCodec;
 import com.datastax.driver.core.utils.CassandraVersion;
 
 import static com.datastax.driver.core.DataType.cint;
@@ -79,10 +78,10 @@ public class TypeCodecEnumIntegrationTest extends CCMBridge.PerClassSingleNodeCl
 
     @Override
     protected Cluster.Builder configure(Cluster.Builder builder) {
-        // explicitly register an EnumIntCodec for Foo enums
-        // Bar enums will use the default EnumStringCodec so it doesn't need to be explicitly registered.
         return builder.withCodecRegistry(
-            new CodecRegistry().register(new EnumIntCodec<Foo>(Foo.class))
+            new CodecRegistry()
+                .register(new EnumIntCodec<Foo>(Foo.class))
+                .register(new EnumStringCodec<Bar>(Bar.class))
         );
     }
 

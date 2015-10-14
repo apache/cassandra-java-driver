@@ -34,7 +34,7 @@ import com.datastax.driver.core.utils.CassandraVersion;
 import static com.datastax.driver.core.TestUtils.getFixedValue;
 import static com.datastax.driver.core.TestUtils.getFixedValue2;
 import static com.datastax.driver.core.TestUtils.getValue;
-import static com.datastax.driver.core.TestUtils.setBoundValue;
+import static com.datastax.driver.core.TestUtils.setValue;
 
 /**
  * Prepared statement tests.
@@ -131,7 +131,8 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
             String name = "c_" + type;
             PreparedStatement ps = session.prepare(String.format("INSERT INTO %s(k, %s) VALUES ('prepared_native', ?)", ALL_NATIVE_TABLE, name));
             BoundStatement bs = ps.bind();
-            session.execute(setBoundValue(bs, name, type, getFixedValue(type)));
+            setValue(bs, name, type, getFixedValue(type));
+            session.execute(bs);
 
             Row row = session.execute(String.format("SELECT %s FROM %s WHERE k='prepared_native'", name, ALL_NATIVE_TABLE)).one();
             assertEquals(getValue(row, name, type, cluster.getConfiguration().getCodecRegistry()), getFixedValue(type), "For type " + type);
@@ -152,7 +153,8 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
             String name = "c_" + type;
             PreparedStatement ps = session.prepare(String.format("INSERT INTO %s(k, %s) VALUES ('prepared_native', ?)", ALL_NATIVE_TABLE, name));
             BoundStatement bs = ps.bind();
-            session.execute(setBoundValue(bs, name, type, getFixedValue2(type)));
+            setValue(bs, name, type, getFixedValue2(type));
+            session.execute(bs);
 
             Row row = session.execute(String.format("SELECT %s FROM %s WHERE k='prepared_native'", name, ALL_NATIVE_TABLE)).one();
             assertEquals(getValue(row, name, type, cluster.getConfiguration().getCodecRegistry()), getFixedValue2(type), "For type " + type);
@@ -173,7 +175,8 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
             List<Object> value = (List<Object>)getFixedValue(type);
             PreparedStatement ps = session.prepare(String.format("INSERT INTO %s(k, %s) VALUES ('prepared_list', ?)", ALL_LIST_TABLE, name));
             BoundStatement bs = ps.bind();
-            session.execute(setBoundValue(bs, name, type, value));
+            setValue(bs, name, type, value);
+            session.execute(bs);
 
             Row row = session.execute(String.format("SELECT %s FROM %s WHERE k='prepared_list'", name, ALL_LIST_TABLE)).one();
             assertEquals(getValue(row, name, type, cluster.getConfiguration().getCodecRegistry()), value, "For type " + type);
@@ -197,7 +200,8 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
             List<Object> value = (List<Object>)getFixedValue2(type);
             PreparedStatement ps = session.prepare(String.format("INSERT INTO %s(k, %s) VALUES ('prepared_list', ?)", ALL_LIST_TABLE, name));
             BoundStatement bs = ps.bind();
-            session.execute(setBoundValue(bs, name, type, value));
+            setValue(bs, name, type, value);
+            session.execute(bs);
 
             Row row = session.execute(String.format("SELECT %s FROM %s WHERE k='prepared_list'", name, ALL_LIST_TABLE)).one();
             assertEquals(getValue(row, name, type, cluster.getConfiguration().getCodecRegistry()), value, "For type " + type);
@@ -218,7 +222,8 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
             Set<Object> value = (Set<Object>)getFixedValue(type);
             PreparedStatement ps = session.prepare(String.format("INSERT INTO %s(k, %s) VALUES ('prepared_set', ?)", ALL_SET_TABLE, name));
             BoundStatement bs = ps.bind();
-            session.execute(setBoundValue(bs, name, type, value));
+            setValue(bs, name, type, value);
+            session.execute(bs);
 
             Row row = session.execute(String.format("SELECT %s FROM %s WHERE k='prepared_set'", name, ALL_SET_TABLE)).one();
             assertEquals(getValue(row, name, type, cluster.getConfiguration().getCodecRegistry()), value, "For type " + type);
@@ -242,7 +247,8 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
             Set<Object> value = (Set<Object>)getFixedValue2(type);
             PreparedStatement ps = session.prepare(String.format("INSERT INTO %s(k, %s) VALUES ('prepared_set', ?)", ALL_SET_TABLE, name));
             BoundStatement bs = ps.bind();
-            session.execute(setBoundValue(bs, name, type, value));
+            setValue(bs, name, type, value);
+            session.execute(bs);
 
             Row row = session.execute(String.format("SELECT %s FROM %s WHERE k='prepared_set'", name, ALL_SET_TABLE)).one();
             assertEquals(getValue(row, name, type, cluster.getConfiguration().getCodecRegistry()), value, "For type " + type);
@@ -268,7 +274,8 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
                 Map<Object, Object> value = (Map<Object, Object>)getFixedValue(type);
                 PreparedStatement ps = session.prepare(String.format("INSERT INTO %s(k, %s) VALUES ('prepared_map', ?)", ALL_MAP_TABLE, name));
                 BoundStatement bs = ps.bind();
-                session.execute(setBoundValue(bs, name, type, value));
+                setValue(bs, name, type, value);
+                session.execute(bs);
 
                 Row row = session.execute(String.format("SELECT %s FROM %s WHERE k='prepared_map'", name, ALL_MAP_TABLE)).one();
                 assertEquals(getValue(row, name, type, cluster.getConfiguration().getCodecRegistry()), value, "For type " + type);
@@ -298,7 +305,8 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
                 Map<Object, Object> value = (Map<Object, Object>)getFixedValue2(type);
                 PreparedStatement ps = session.prepare(String.format("INSERT INTO %s(k, %s) VALUES ('prepared_map', ?)", ALL_MAP_TABLE, name));
                 BoundStatement bs = ps.bind();
-                session.execute(setBoundValue(bs, name, type, value));
+                setValue(bs, name, type, value);
+                session.execute(bs);
 
                 Row row = session.execute(String.format("SELECT %s FROM %s WHERE k='prepared_map'", name, ALL_MAP_TABLE)).one();
                 assertEquals(getValue(row, name, type, cluster.getConfiguration().getCodecRegistry()), value, "For type " + type);

@@ -55,7 +55,7 @@ public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
         assertEquals(v.getString(1), "a");
         assertEquals(v.getFloat(2), 1.0f);
 
-        assertEquals(new TypeCodec.TupleCodec(t).format(v), "(1, 'a', 1.0)");
+        assertEquals(TypeCodec.tuple(t).format(v), "(1, 'a', 1.0)");
     }
 
     @Test(groups = "short")

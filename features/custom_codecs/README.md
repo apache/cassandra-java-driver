@@ -61,52 +61,79 @@ The first step is to implement a suitable codec. Using Jackson, here is what a J
 /**
  * A simple Json codec.
  */
-public class JsonCodec<T> extends TypeCodec.StringParsingCodec<T> {
+public class JsonCodec<T> extends TypeCodec<T> {
 
-    private final ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public JsonCodec(Class<T> javaType, ObjectMapper objectMapper) {
-        super(javaType);
-        this.objectMapper = objectMapper;
+    public JsonCodec(Class<T> javaType) {
+        super(DataType.varchar(), javaType);
+    }
+
+    @Override
+    public ByteBuffer serialize(T value, ProtocolVersion protocolVersion) throws InvalidTypeException {
+        if (value == null)
+            return null;
+        try {
+            return ByteBuffer.wrap(objectMapper.writeValueAsBytes(value));
+        } catch (JsonProcessingException e) {
+            throw new InvalidTypeException(e.getMessage(), e);
+        }
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public T fromString(String value) {
-        if (value == null)
+    public T deserialize(ByteBuffer bytes, ProtocolVersion protocolVersion) throws InvalidTypeException {
+        if (bytes == null)
             return null;
         try {
-            return (T) objectMapper.readValue(value, getJavaType().getRawType());
+            byte[] b = new byte[bytes.remaining()];
+            bytes.duplicate().get(b);
+            return (T)objectMapper.readValue(b, toJacksonJavaType());
         } catch (IOException e) {
             throw new InvalidTypeException(e.getMessage(), e);
         }
     }
 
     @Override
-    public String toString(T value) {
+    public String format(T value) throws InvalidTypeException {
         if (value == null)
-            return null;
+            return NULL;
+        String json;
         try {
-            return objectMapper.writeValueAsString(value);
-        } catch (JsonProcessingException e) {
+            json = objectMapper.writeValueAsString(value);
+        } catch (IOException e) {
+            throw new InvalidTypeException(e.getMessage(), e);
+        }
+        return '\'' + json.replace("\'", "''") + '\'';
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public T parse(String value) throws InvalidTypeException {
+        if (value == null || value.isEmpty() || value.equals(NULL))
+            return null;
+        if (value.charAt(0) != '\'' || value.charAt(value.length() - 1) != '\'')
+            throw new InvalidTypeException("JSON strings must be enclosed by single quotes");
+        String json = value.substring(1, value.length() - 1).replace("''", "'");
+        try {
+            return (T)objectMapper.readValue(json, toJacksonJavaType());
+        } catch (IOException e) {
             throw new InvalidTypeException(e.getMessage(), e);
         }
     }
+
+    protected JavaType toJacksonJavaType() {
+        return TypeFactory.defaultInstance().constructType(getJavaType().getType());
+    }
+    
 }
 ```
-
-As you can see, the driver already provides a convenient base class: [StringParsingCodec][StringParsingCodec].
 
 A few implementation guidelines:
 
 * Your codecs should be thread-safe, or better yet, immutable;
 * Your codecs should be fast: do not forget that codecs are executed often and are usually very "hot" pieces of code;
 * Your codecs should never block.
-
-Note: the code above is an example and is not particularly efficient;
-it suffers from the overhead of deserializing raw bytes into a String,
-to only then parse the String into an object.
-More advanced solutions that read the underlying byte stream directly are possible.
 
 The second step is to register your codec with a `CodecRegistry` instance:
 
@@ -242,31 +269,58 @@ public class Address {
 }
 ```
 
-First of all, create a codec for this class:
+First of all, create a codec that knows how to serialize this class; one possible solution 
+(but not necessarily the most efficient one) would be to convert `Address` instances into `UDTValue`
+instances, then serialize them with another codec:
+
 
 ```java
-public class AddressCodec extends TypeCodec.MappingCodec<Address, UDTValue> {
+public class AddressCodec extends TypeCodec<Address> {
 
+    private final TypeCodec<UDTValue> innerCodec;
+    
     private final UserType userType;
 
     public AddressCodec(TypeCodec<UDTValue> innerCodec, Class<Address> javaType) {
-        super(innerCodec, javaType);
-        userType = (UserType) innerCodec.getCqlType();
+        super(innerCodec.getCqlType(), javaType);
+        this.innerCodec = innerCodec;
+        this.userType = (UserType)innerCodec.getCqlType();
     }
 
     @Override
-    protected Address deserialize(UDTValue value) {
-        return value == null ? null : new Address(value.getString("street"), value.getInt("zipcode"));
+    public ByteBuffer serialize(Address value, ProtocolVersion protocolVersion) throws InvalidTypeException {
+        return innerCodec.serialize(toUDTValue(value), protocolVersion);
     }
 
     @Override
-    protected UDTValue serialize(Address address) {
-        return address == null ? null : userType.newValue().setString("street", address.getStreet()).setInt("zipcode", address.getZipcode());
+    public Address deserialize(ByteBuffer bytes, ProtocolVersion protocolVersion) throws InvalidTypeException {
+        return toAddress(innerCodec.deserialize(bytes, protocolVersion));
+    }
+
+    @Override
+    public Address parse(String value) throws InvalidTypeException {
+        return value == null || value.isEmpty() || value.equals(NULL) ? null : toAddress(innerCodec.parse(value));
+    }
+
+    @Override
+    public String format(Address value) throws InvalidTypeException {
+        return value == null ? null : innerCodec.format(toUDTValue(value));
+    }
+
+    protected Address toAddress(UDTValue value) {
+        return value == null ? null : new Address(
+            value.getString("street"), 
+            value.getInt("zipcode")
+        );
+    }
+
+    protected UDTValue toUDTValue(Address value) {
+        return value == null ? null : userType.newValue()
+            .setString("street", value.getStreet())
+            .setInt("zipcode", value.getZipcode());
     }
 }
 ```
-
-Again, the driver provides a convenient base class: [MappingCodec].
 
 Now (and only if you intend to use your own `CodecRegistry`), 
 create it and register it on your `Cluster` instance:
@@ -284,6 +338,7 @@ Now, retrieve the metadata for type `address`:
 
 ```java
 UserType addressType = cluster.getMetadata().getKeyspace(...).getUserType("address");
+TypeCodec<UDTValue> addressTypeCodec = codecRegistry.codecFor(addressType);
 ```
 
 And finally, register your `AddressCodec` with the `CodecRegistry`. Note that
@@ -291,7 +346,7 @@ your codec simply delegates the hard work to an inner codec that knows how to de
 user type values:
 
 ```java
-AddressCodec addressCodec = new AddressCodec(new TypeCodec.UDTCodec(addressType), Address.class);
+AddressCodec addressCodec = new AddressCodec(addressTypeCodec, Address.class);
 codecRegistry.register(addressCodec);
 ```
 
@@ -385,14 +440,13 @@ A codec lookup operation may be costly; to mitigate this, the `CodecRegistry` ca
 
 The following situations are exceptions where it is not possible to cache lookup results:
 
-* With [SimpleStatement] instances and [BuiltStatement] instances (created via the Query Builder); in these places, the driver has
-  no way to determine the right CQL type to use, so it performs a best-effort heuristic to guess which codec to use.
-* When using "ambiguous" methods of `BoundStatement` and `Row`, such as [setList()][setList],
-  [setSet()][setSet], [setMap()][setMap], [setObject()][setObject];
-  these methods are "ambiguous" because they do not convey enough compile-time information about the object
-  to serialize, so the driver performs the same heuristic to guess which codec to use.
+* With [SimpleStatement] instances;
+* With [BuiltStatement] instances (created via the Query Builder).
+ 
+In these places, the driver has no way to determine the right CQL type to use, so it performs 
+a best-effort heuristic to guess which codec to use. 
 
-Beware that in these cases the lookup performs in average 10x worse. If performance is a key factor for your application,
+Beware that in these cases, the lookup performs in average 10x worse. If performance is a key factor for your application,
 consider using prepared statements all the time, and avoid calling ambiguous methods (prefer `get()` and `set()`).
 
 [JAVA-721]: https://datastax-oss.atlassian.net/browse/JAVA-721

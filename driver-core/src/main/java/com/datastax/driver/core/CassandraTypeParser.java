@@ -105,7 +105,7 @@ class CassandraTypeParser {
 
             String keyspace = parser.readOne();
             parser.skipBlankAndComma();
-            String typeName = TypeCodec.VarcharCodec.instance.deserialize(Bytes.fromHexString("0x" + parser.readOne()), protocolVersion);
+            String typeName = TypeCodec.varchar().deserialize(Bytes.fromHexString("0x" + parser.readOne()), protocolVersion);
             parser.skipBlankAndComma();
             Map<String, String> rawFields = parser.getNameAndTypeParameters();
             List<UserType.Field> fields = new ArrayList<UserType.Field>(rawFields.size());
@@ -319,7 +319,7 @@ class CassandraTypeParser {
                 String bbHex = readNextIdentifier();
                 String name = null;
                 try {
-                    name = TypeCodec.VarcharCodec.instance.deserialize(Bytes.fromHexString("0x" + bbHex), ProtocolVersion.NEWEST_SUPPORTED);
+                    name = TypeCodec.varchar().deserialize(Bytes.fromHexString("0x" + bbHex), ProtocolVersion.NEWEST_SUPPORTED);
                 } catch (NumberFormatException e) {
                     throwSyntaxError(e.getMessage());
                 }

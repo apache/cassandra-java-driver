@@ -18,6 +18,7 @@ package com.datastax.driver.core;
 import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -60,7 +61,7 @@ public class IndexMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
         definition(IndexMetadata.KIND, text()),
         definition(IndexMetadata.OPTIONS, map(text(), text()))
     });
-    public static final TypeCodec.MapCodec<String, String> MAP_CODEC = new TypeCodec.MapCodec<String, String>(TypeCodec.VarcharCodec.instance, TypeCodec.VarcharCodec.instance);
+    public static final TypeCodec<Map<String, String>> MAP_CODEC = TypeCodec.map(TypeCodec.varchar(), TypeCodec.varchar());
 
     private static ProtocolVersion protocolVersion;
     private static CodecRegistry codecRegistry;

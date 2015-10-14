@@ -23,9 +23,10 @@ import com.google.common.base.Predicate;
 import com.google.common.reflect.TypeParameter;
 import com.google.common.reflect.TypeToken;
 
-import static com.google.common.base.Predicates.*;
+import static com.google.common.base.Predicates.isNull;
+import static com.google.common.base.Predicates.or;
 
-public class OptionalCodec<T> extends TypeCodec.MappingCodec<Optional<T>, T> {
+public class OptionalCodec<T> extends MappingCodec<Optional<T>, T> {
 
     private final Predicate<T> isAbsent;
 

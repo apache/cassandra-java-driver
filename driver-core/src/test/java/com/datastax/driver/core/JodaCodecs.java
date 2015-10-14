@@ -25,9 +25,6 @@ import java.util.concurrent.TimeUnit;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import static com.datastax.driver.core.DataType.timestamp;
-import static com.datastax.driver.core.DataType.varchar;
-
 /**
  * A collection of convenience {@link TypeCodec} instances useful for
  * serializing between CQL types and Joda types like {@link DateTime}.
@@ -58,12 +55,12 @@ public class JodaCodecs {
      * IMPORTANT: {@link LocalTime} as millisecond precision; nanoseconds below one millisecond will be lost
      * during deserialization.
      */
-    public static class LocalTimeCodec extends TypeCodec.MappingCodec<LocalTime, Long> {
+    public static class LocalTimeCodec extends MappingCodec<LocalTime, Long> {
 
         public static final LocalTimeCodec instance = new LocalTimeCodec();
 
         private LocalTimeCodec() {
-            super(TimeCodec.instance, LocalTime.class);
+            super(TypeCodec.time(), LocalTime.class);
         }
 
         @Override
@@ -87,12 +84,12 @@ public class JodaCodecs {
      * setting and retrieval of <code>date</code> columns as
      * {@link org.joda.time.LocalDate} instances.
      */
-    public static class LocalDateCodec extends TypeCodec.MappingCodec<org.joda.time.LocalDate, LocalDate> {
+    public static class LocalDateCodec extends MappingCodec<org.joda.time.LocalDate, LocalDate> {
 
         public static final LocalDateCodec instance = new LocalDateCodec();
 
         private LocalDateCodec() {
-            super(DateCodec.instance, org.joda.time.LocalDate.class);
+            super(TypeCodec.date(), org.joda.time.LocalDate.class);
         }
 
         @Override
@@ -120,12 +117,12 @@ public class JodaCodecs {
      *
      * @see TimeZonePreservingDateTimeCodec
      */
-    public static class DateTimeCodec extends TypeCodec.MappingCodec<DateTime, Date> {
+    public static class DateTimeCodec extends MappingCodec<DateTime, Date> {
 
         public static final DateTimeCodec instance = new DateTimeCodec();
 
         private DateTimeCodec() {
-            super(TimestampCodec.instance, DateTime.class);
+            super(TypeCodec.timestamp(), DateTime.class);
         }
 
         @Override
@@ -158,7 +155,7 @@ public class JodaCodecs {
      * </p>
      *
      */
-    public static class TimeZonePreservingDateTimeCodec extends TypeCodec.MappingCodec<DateTime, TupleValue> {
+    public static class TimeZonePreservingDateTimeCodec extends MappingCodec<DateTime, TupleValue> {
 
         private final TupleType tupleType;
 
@@ -167,7 +164,7 @@ public class JodaCodecs {
             tupleType = (TupleType)innerCodec.getCqlType();
             List<DataType> types = tupleType.getComponentTypes();
             checkArgument(
-                types.size() == 2 && types.get(0).equals(timestamp()) && types.get(1).equals(varchar()),
+                types.size() == 2 && types.get(0).equals(DataType.timestamp()) && types.get(1).equals(DataType.varchar()),
                 "Expected tuple<timestamp,varchar>, got %s",
                 tupleType);
         }

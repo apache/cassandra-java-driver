@@ -17,6 +17,7 @@ package com.datastax.driver.core;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
@@ -31,29 +32,28 @@ import org.slf4j.LoggerFactory;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.datastax.driver.core.TypeCodec.*;
 import com.datastax.driver.core.exceptions.CodecNotFoundException;
 
-import static com.datastax.driver.core.DataType.Name.*;
+import static com.datastax.driver.core.DataType.Name.LIST;
+import static com.datastax.driver.core.DataType.Name.MAP;
+import static com.datastax.driver.core.DataType.Name.SET;
 
 /**
- * A registry for {@link TypeCodec}s. When the driver
+ * A registry for {@link TypeCodec codec}s. When the driver
  * needs to serialize or deserialize an object,
- * it will lookup in the {@link CodecRegistry} for
+ * it will lookup in the registry for
  * a suitable codec.
  *
  * <h3>Usage</h3>
  *
  * <p>
- * Most users won't need to manipulate {@link CodecRegistry} instances directly.
- * Only those willing to register user-defined codecs are required to do so.
- * By default, the driver uses {@link CodecRegistry#DEFAULT_INSTANCE}, a shareable
- * instance that initially contains all the built-in codecs required by the driver.
+ * By default, the driver uses the CodecRegistry's {@link CodecRegistry#DEFAULT_INSTANCE},
+ * a shareable instance that initially contains all the built-in codecs required by the driver.
  *
  * <p>
- * Users willing to customize their {@link CodecRegistry} can do so by {@code register registering}
- * new {@link TypeCodec}s either on {@link CodecRegistry#DEFAULT_INSTANCE},
- * or on a newly-crated one:
+ * For most users, the default instance is good enough and
+ * they won't need to manipulate {@link CodecRegistry} instances directly.
+ * Only those willing to {@link #register(TypeCodec) register} user-defined codecs are required to do so:
  *
  * <pre>
  * CodecRegistry myCodecRegistry;
@@ -61,18 +61,9 @@ import static com.datastax.driver.core.DataType.Name.*;
  * myCodecRegistry = CodecRegistry.DEFAULT_INSTANCE;
  * // or alternatively, create a new one
  * myCodecRegistry = new CodecRegistry();
- * // then
+ * // then register additional codecs
  * myCodecRegistry.register(myCodec1, myCodec2, myCodec3);
  * </pre>
- *
- * <p>
- * Note that the order in which codecs are registered matters;
- * if a codec is registered while another codec already handles the same
- * CQL-to-Java mapping, that codec will never be used (unless
- * the user forces its usage through e.g. {@link GettableByIndexData#get(int, TypeCodec)}).
- * In order words, it is not possible to replace an existing codec,
- * specially the built-in ones; it is only possible to enrich the initial
- * set of codecs with new ones.
  *
  * <p>
  * To be used by the driver, {@link CodecRegistry} instances must then
@@ -90,20 +81,21 @@ import static com.datastax.driver.core.DataType.Name.*;
  * CodecRegistry registry = cluster.getConfiguration().getCodecRegistry();
  * </pre>
  *
- * <p>
- * By default, {@link Cluster} instances will use {@link CodecRegistry#DEFAULT_INSTANCE}.
- *
  * <h3>Example</h3>
  *
  * <p>
- * E.g. let's suppose you want to have all your CQL timestamps
- * deserialized as {@code java.time.DateTime} instances:
+ * Suppose that one wants to have all CQL timestamps seamlessly
+ * converted to {@code java.time.DateTime} instances and vice versa; the following
+ * code contains the necessary steps to achieve this:
  *
  * <pre>
+ * // 1. Instantiate the custom codec
  * TypeCodec&lt;DateTime> timestampCodec = ...
- * CodecRegistry myCodecRegistry = new CodecRegistry().register(timestampCodec);
+ * // 2. Register the codec
+ * CodecRegistry.DEFAULT_INSTANCE.register(timestampCodec);
  * </pre>
  *
+ * <p>
  * Read the
  * <a href="http://datastax.github.io/java-driver/features/custom_codecs">online documentation</a>
  * for more examples.
@@ -111,59 +103,72 @@ import static com.datastax.driver.core.DataType.Name.*;
  * <h3>Notes</h3>
  *
  * <p>
- * When a {@link CodecRegistry} cannot find a suitable codec among all registered codecs,
- * it will attempt to create a suitable codec.
+ * <strong>Registration order</strong>: the order in which codecs are registered matters:
+ * when looking for a suitable codec, the registry will consider
+ * all registered codecs <em>in the order they were registered</em>, and
+ * will pick the first matching one.
+ *
  * <p>
- * If the creation succeeds, that codec is added to the list of known codecs and is returned;
+ * If a codec is registered while another codec already handles the <em>exact same</em>
+ * CQL-to-Java mapping, that codec will never be used (unless
+ * the user forces its usage through e.g. {@link GettableByIndexData#get(int, TypeCodec)}).
+ * In order words, it is not possible to replace an existing codec,
+ * specially the built-in ones; it is only possible to enrich the initial
+ * set of codecs with new ones.
+ *
+ * <p>
+ * <strong>On-the-fly codec instantiation</strong>: When a {@link CodecRegistry}
+ * cannot find a suitable codec among all registered codecs,
+ * it will attempt to create such a codec on-the-fly. If the creation succeeds, that codec is returned;
  * otherwise, a {@link CodecNotFoundException} is thrown.
+ *
  * <p>
  * Note that {@link CodecRegistry} instances can only create codecs in very limited situations:
  * <ol>
- *     <li>Codecs for Enums are created on the fly using {@link EnumStringCodec};</li>
- *     <li>Codecs for {@link UserType user types} are created on the fly using  {@link UDTCodec};</li>
- *     <li>Codecs for {@link TupleType tuple types} are created on the fly using  {@link TupleCodec};</li>
- *     <li>Codecs for collections are created on the fly using {@link ListCodec}, {@link SetCodec} and
- *     {@link MapCodec}, if their element types can be handled by existing codecs (or codecs that can
+ *     <li>Codecs for {@link UserType user types} are created on the fly using {@link TypeCodec#userType(UserType)};</li>
+ *     <li>Codecs for {@link TupleType tuple types} are created on the fly using {@link TypeCodec#tuple(TupleType)}};</li>
+ *     <li>Codecs for collections are created on the fly using {@link TypeCodec#list(TypeCodec)}}, {@link TypeCodec#set(TypeCodec)}} and
+ *     {@link TypeCodec#map(TypeCodec, TypeCodec)}}, if their element types can be handled by existing codecs (or codecs that can
  *     themselves be generated).</li>
+ *     <li>Codecs for {@link com.datastax.driver.core.DataType.CustomType custom types} are created on the fly using {@link TypeCodec#custom(DataType.CustomType)};</li>
  * </ol>
  * Other combinations of Java and CQL types cannot have their codecs created on the fly;
  * such codecs must be manually registered.
  * <p>
- * Note that the default set of codecs has no support for
- * <a href="https://github.com/apache/cassandra/blob/trunk/src/java/org/apache/cassandra/db/marshal/AbstractType.java">Cassandra custom types</a>;
- * to be able to deserialize values of such types, you need to manually register an appropriate codec.
+ *
+ * <strong>Debugging the codec registry</strong>: it is possible to turn on log messages
+ * by setting the {@code com.datastax.driver.core.CodecRegistry} logger level to {@code TRACE}.
+ * Beware that the registry can be very verbose at this log level.
+ *
  * <p>
- * {@link CodecRegistry} instances are not meant to be shared between two or more {@link Cluster} instances; doing so
- * could yield unexpected results.
- * <p>
- * {@link CodecRegistry} instances are thread-safe.
+ * <strong>Thread-safety</strong>: {@link CodecRegistry} instances are thread-safe.
  *
  */
-@SuppressWarnings("all")
 public final class CodecRegistry {
 
     private static final Logger logger = LoggerFactory.getLogger(CodecRegistry.class);
 
+    @SuppressWarnings("unchecked")
     private static final ImmutableSet<TypeCodec<?>> PRIMITIVE_CODECS = ImmutableSet.of(
-        BlobCodec.instance,
-        BooleanCodec.instance,
-        SmallIntCodec.instance,
-        TinyIntCodec.instance,
-        IntCodec.instance,
-        BigintCodec.instance,
-        CounterCodec.instance,
-        DoubleCodec.instance,
-        FloatCodec.instance,
-        VarintCodec.instance,
-        DecimalCodec.instance,
-        VarcharCodec.instance, // must be declared before AsciiCodec so it gets chosen when CQL type not available
-        AsciiCodec.instance,
-        TimestampCodec.instance,
-        DateCodec.instance,
-        TimeCodec.instance,
-        UUIDCodec.instance, // must be declared before TimeUUIDCodec so it gets chosen when CQL type not available
-        TimeUUIDCodec.instance,
-        InetCodec.instance
+        TypeCodec.blob(),
+        TypeCodec.cboolean(),
+        TypeCodec.smallInt(),
+        TypeCodec.tinyInt(),
+        TypeCodec.cint(),
+        TypeCodec.bigint(),
+        TypeCodec.counter(),
+        TypeCodec.cdouble(),
+        TypeCodec.cfloat(),
+        TypeCodec.varint(),
+        TypeCodec.decimal(),
+        TypeCodec.varchar(), // must be declared before AsciiCodec so it gets chosen when CQL type not available
+        TypeCodec.ascii(),
+        TypeCodec.timestamp(),
+        TypeCodec.date(),
+        TypeCodec.time(),
+        TypeCodec.uuid(), // must be declared before TimeUUIDCodec so it gets chosen when CQL type not available
+        TypeCodec.timeUUID(),
+        TypeCodec.inet()
     );
 
     /**
@@ -174,6 +179,9 @@ public final class CodecRegistry {
      */
     public static final CodecRegistry DEFAULT_INSTANCE = new CodecRegistry();
 
+    /**
+     * Cache key for the codecs cache.
+     */
     private static final class CacheKey {
 
         private final DataType cqlType;
@@ -197,12 +205,23 @@ public final class CodecRegistry {
 
         @Override
         public int hashCode() {
-            return Objects.hashCode(javaType, cqlType);
+            return Objects.hashCode(cqlType, javaType);
+        }
+
+    }
+
+    /**
+     * Cache loader for the codecs cache.
+     */
+    private class TypeCodecCacheLoader extends CacheLoader<CacheKey, TypeCodec<?>> {
+        @Override
+        public TypeCodec<?> load(CacheKey cacheKey) {
+            return findCodec(cacheKey.cqlType, cacheKey.javaType);
         }
     }
 
     /**
-     * A complexity-based weigher.
+     * A complexity-based weigher for the codecs cache.
      * Weights are computed mainly according to the CQL type:
      * <ol>
      * <li>Manually-registered codecs always weigh 0;
@@ -254,6 +273,10 @@ public final class CodecRegistry {
         }
     }
 
+    /**
+     * Simple removal listener for the codec cache (can be used for debugging purposes
+     * by setting the {@code com.datastax.driver.core.CodecRegistry} logger level to {@code TRACE}.
+     */
     private class TypeCodecRemovalListener implements RemovalListener<CacheKey, TypeCodec<?>> {
         @Override
         public void onRemoval(RemovalNotification<CacheKey, TypeCodec<?>> notification) {
@@ -262,7 +285,7 @@ public final class CodecRegistry {
     }
 
     /**
-     * The list of all known codecs.
+     * The list of registered codecs.
      * This list is initialized with the built-in codecs;
      * User-defined codecs are appended to the list.
      */
@@ -279,32 +302,50 @@ public final class CodecRegistry {
      */
     public CodecRegistry() {
         this.codecs = new CopyOnWriteArrayList<TypeCodec<?>>(PRIMITIVE_CODECS);
-        this.cache = CacheBuilder.newBuilder()
+        this.cache = defaultCacheBuilder().build(new TypeCodecCacheLoader());
+    }
+
+    private CacheBuilder<CacheKey, TypeCodec<?>> defaultCacheBuilder() {
+        CacheBuilder<CacheKey, TypeCodec<?>> builder = CacheBuilder.newBuilder()
             // 19 primitive codecs + collections thereof = 19*3 + 19*19 = 418 codecs,
             // so let's start with roughly 1/4 of that
             .initialCapacity(100)
-            .weigher(new TypeCodecWeigher())
-            // a cache with all 418 "basic" codecs weighs 399 (19*2 + 19*19),
-            // so let's cap at roughly 2.5x this size
             .maximumWeight(1000)
-            .concurrencyLevel(Runtime.getRuntime().availableProcessors() * 4)
-            .removalListener(new TypeCodecRemovalListener())
-            .build(
-                new CacheLoader<CacheKey, TypeCodec<?>>() {
-                    public TypeCodec<?> load(CacheKey cacheKey) {
-                        return findCodec(cacheKey.cqlType, cacheKey.javaType);
-                    }
-                });
+            .weigher(new TypeCodecWeigher());
+        if (logger.isTraceEnabled())
+            // do not bother adding a listener if it will be ineffective
+            builder = builder.removalListener(new TypeCodecRemovalListener());
+        return builder;
     }
 
     /**
      * Register the given codec with this registry.
+     * <p>
+     * This method will log a warning and ignore the codec if it collides with a previously registered one.
+     * Note that this check is not done in a completely thread-safe manner; codecs should typically be registered
+     * at application startup, not in a highly concurrent context (if a race condition occurs, the worst outcome
+     * is that no warning gets logged, and the codec gets registered but will never actually be used).
      *
-     * @param codec The codec to add to the registry.
+     * @param newCodec The codec to add to the registry.
      * @return this CodecRegistry (for method chaining).
      */
-    public CodecRegistry register(TypeCodec<?> codec) {
-        return register(Collections.singleton(codec));
+    public CodecRegistry register(TypeCodec<?> newCodec) {
+        for (TypeCodec<?> oldCodec : codecs) {
+            if (oldCodec.accepts(newCodec.getCqlType()) && oldCodec.accepts(newCodec.getJavaType())) {
+                logger.warn("Ignoring codec {} because it collides with previously registered codec {}", newCodec, oldCodec);
+                return this;
+            }
+        }
+
+        CacheKey key = new CacheKey(newCodec.getCqlType(), newCodec.getJavaType());
+        TypeCodec<?> existing = cache.getIfPresent(key);
+        if (existing != null) {
+            logger.warn("Ignoring codec {} because it collides with previously generated codec {}", newCodec, existing);
+            return this;
+        }
+
+        this.codecs.add(newCodec);
+        return this;
     }
 
     /**
@@ -312,9 +353,13 @@ public final class CodecRegistry {
      *
      * @param codecs The codecs to add to the registry.
      * @return this Builder (for method chaining).
+     *
+     * @see #register(TypeCodec)
      */
     public CodecRegistry register(TypeCodec<?>... codecs) {
-        return register(Arrays.asList(codecs));
+        for (TypeCodec<?> codec : codecs)
+            register(codec);
+        return this;
     }
 
     /**
@@ -322,11 +367,12 @@ public final class CodecRegistry {
      *
      * @param codecs The codecs to add to the registry.
      * @return this Builder (for method chaining).
+     *
+     * @see #register(TypeCodec)
      */
     public CodecRegistry register(Iterable<? extends TypeCodec<?>> codecs) {
-        for (TypeCodec<?> codec : codecs) {
-            this.codecs.add(codec);
-        }
+        for (TypeCodec<?> codec : codecs)
+            register(codec);
         return this;
     }
 
@@ -355,9 +401,7 @@ public final class CodecRegistry {
      * @throws CodecNotFoundException if a suitable codec cannot be found.
      */
     public <T> TypeCodec<T> codecFor(T value) {
-        checkNotNull(value, "Parameter value cannot be null");
-        TypeCodec<T> codec = findCodec(null, value);
-        return codec;
+        return findCodec(null, value);
     }
 
     /**
@@ -394,7 +438,7 @@ public final class CodecRegistry {
      * Codecs returned by this method are cached.
      *
      * @param cqlType The {@link DataType CQL type} the codec should accept; must not be {@code null}.
-     * @param javaType The Java type the codec should accept; must not be {@code null}.
+     * @param javaType The Java type the codec should accept; can be {@code null}.
      * @return A suitable codec.
      * @throws CodecNotFoundException if a suitable codec cannot be found.
      */
@@ -416,13 +460,11 @@ public final class CodecRegistry {
      * Codecs returned by this method are cached.
      *
      * @param cqlType The {@link DataType CQL type} the codec should accept; must not be {@code null}.
-     * @param javaType The {@link TypeToken Java type} the codec should accept; must not be {@code null}.
+     * @param javaType The {@link TypeToken Java type} the codec should accept; can be {@code null}.
      * @return A suitable codec.
      * @throws CodecNotFoundException if a suitable codec cannot be found.
      */
     public <T> TypeCodec<T> codecFor(DataType cqlType, TypeToken<T> javaType) throws CodecNotFoundException {
-        checkNotNull(cqlType, "Parameter cqlType cannot be null");
-        checkNotNull(javaType, "Parameter javaType cannot be null");
         return lookupCodec(cqlType, javaType);
     }
 
@@ -438,24 +480,23 @@ public final class CodecRegistry {
      * <p>
      * Codecs returned by this method are <em>NOT</em> cached.
      *
-     * @param cqlType The {@link DataType CQL type} the codec should accept; must not be {@code null}.
+     * @param cqlType The {@link DataType CQL type} the codec should accept; can be {@code null}.
      * @param value The value the codec should accept; must not be {@code null}.
      * @return A suitable codec.
      * @throws CodecNotFoundException if a suitable codec cannot be found.
      */
     public <T> TypeCodec<T> codecFor(DataType cqlType, T value) {
-        checkNotNull(cqlType, "Parameter cqlType cannot be null");
-        checkNotNull(value, "Parameter value cannot be null");
         return findCodec(cqlType, value);
     }
 
+    @SuppressWarnings("unchecked")
     private <T> TypeCodec<T> lookupCodec(DataType cqlType, TypeToken<T> javaType) {
         checkNotNull(cqlType, "Parameter cqlType cannot be null");
-        logger.trace("Querying cache for codec [{} <-> {}]", cqlType, javaType);
+        logger.trace("Querying cache for codec [{} <-> {}]", cqlType, javaType == null ? "ANY" : javaType);
         CacheKey cacheKey = new CacheKey(cqlType, javaType);
         try {
             TypeCodec<?> codec = cache.get(cacheKey);
-            logger.trace("Returning cached codec [{} <-> {}]", cqlType, javaType);
+            logger.trace("Returning cached codec {}", codec);
             return (TypeCodec<T>)codec;
         } catch (UncheckedExecutionException e) {
             if(e.getCause() instanceof CodecNotFoundException) {
@@ -467,13 +508,12 @@ public final class CodecRegistry {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private <T> TypeCodec<T> findCodec(DataType cqlType, TypeToken<T> javaType) {
         checkNotNull(cqlType, "Parameter cqlType cannot be null");
-        logger.trace("Looking for codec [{} <-> {}]",
-            cqlType == null ? "ANY" : cqlType,
-            javaType == null ? "ANY" : javaType);
+        logger.trace("Looking for codec [{} <-> {}]", cqlType, javaType == null ? "ANY" : javaType);
         for (TypeCodec<?> codec : codecs) {
-            if ((cqlType == null || codec.accepts(cqlType)) && (javaType == null || codec.accepts(javaType))) {
+            if (codec.accepts(cqlType) && (javaType == null || codec.accepts(javaType))) {
                 logger.trace("Codec found: {}", codec);
                 return (TypeCodec<T>)codec;
             }
@@ -481,6 +521,7 @@ public final class CodecRegistry {
         return createCodec(cqlType, javaType);
     }
 
+    @SuppressWarnings("unchecked")
     private <T> TypeCodec<T> findCodec(DataType cqlType, T value) {
         checkNotNull(value, "Parameter value cannot be null");
         logger.trace("Looking for codec [{} <-> {}]", cqlType == null ? "ANY" : cqlType, value.getClass());
@@ -496,10 +537,10 @@ public final class CodecRegistry {
     private <T> TypeCodec<T> createCodec(DataType cqlType, TypeToken<T> javaType) {
         TypeCodec<T> codec = maybeCreateCodec(cqlType, javaType);
         if (codec == null)
-            throw newException(cqlType, javaType);
+            throw notFound(cqlType, javaType);
         // double-check that the created codec satisfies the initial request
         if (!codec.accepts(cqlType) || (javaType != null && !codec.accepts(javaType)))
-            throw newException(cqlType, javaType);
+            throw notFound(cqlType, javaType);
         logger.trace("Codec created: {}", codec);
         return codec;
     }
@@ -507,20 +548,17 @@ public final class CodecRegistry {
     private <T> TypeCodec<T> createCodec(DataType cqlType, T value) {
         TypeCodec<T> codec = maybeCreateCodec(cqlType, value);
         if(codec == null)
-            throw newException(cqlType, TypeToken.of(value.getClass()));
+            throw notFound(cqlType, TypeToken.of(value.getClass()));
         // double-check that the created codec satisfies the initial request
         if((cqlType != null && !codec.accepts(cqlType)) || !codec.accepts(value))
-            throw newException(cqlType, TypeToken.of(value.getClass()));
+            throw notFound(cqlType, TypeToken.of(value.getClass()));
         logger.trace("Codec created: {}", codec);
         return codec;
     }
 
+    @SuppressWarnings("unchecked")
     private <T> TypeCodec<T> maybeCreateCodec(DataType cqlType, TypeToken<T> javaType) {
         checkNotNull(cqlType);
-
-        if ((cqlType.getName() == VARCHAR || cqlType.getName() == TEXT) && javaType != null && Enum.class.isAssignableFrom(javaType.getRawType())) {
-            return new EnumStringCodec(javaType.getRawType());
-        }
 
         if (cqlType.getName() == LIST && (javaType == null || List.class.isAssignableFrom(javaType.getRawType()))) {
             TypeToken<?> elementType = null;
@@ -529,7 +567,7 @@ public final class CodecRegistry {
                 elementType = TypeToken.of(typeArguments[0]);
             }
             TypeCodec<?> eltCodec = findCodec(cqlType.getTypeArguments().get(0), elementType);
-            return new ListCodec(eltCodec);
+            return (TypeCodec<T>)TypeCodec.list(eltCodec);
         }
 
         if (cqlType.getName() == SET && (javaType == null || Set.class.isAssignableFrom(javaType.getRawType()))) {
@@ -539,7 +577,7 @@ public final class CodecRegistry {
                 elementType = TypeToken.of(typeArguments[0]);
             }
             TypeCodec<?> eltCodec = findCodec(cqlType.getTypeArguments().get(0), elementType);
-            return new SetCodec(eltCodec);
+            return (TypeCodec<T>)TypeCodec.set(eltCodec);
         }
 
         if (cqlType.getName() == MAP && (javaType == null || Map.class.isAssignableFrom(javaType.getRawType()))) {
@@ -552,26 +590,27 @@ public final class CodecRegistry {
             }
             TypeCodec<?> keyCodec = findCodec(cqlType.getTypeArguments().get(0), keyType);
             TypeCodec<?> valueCodec = findCodec(cqlType.getTypeArguments().get(1), valueType);
-            return new MapCodec(keyCodec, valueCodec);
+            return (TypeCodec<T>)TypeCodec.map(keyCodec, valueCodec);
         }
 
         if (cqlType instanceof TupleType && (javaType == null || TupleValue.class.isAssignableFrom(javaType.getRawType()))) {
-            return (TypeCodec<T>)new TupleCodec((TupleType)cqlType);
+            return (TypeCodec<T>)TypeCodec.tuple((TupleType)cqlType);
         }
 
         if (cqlType instanceof UserType && (javaType == null || UDTValue.class.isAssignableFrom(javaType.getRawType()))) {
-            return (TypeCodec<T>)new UDTCodec((UserType)cqlType);
+            return (TypeCodec<T>)TypeCodec.userType((UserType)cqlType);
+        }
+
+        if(cqlType instanceof DataType.CustomType && (javaType == null || ByteBuffer.class.isAssignableFrom(javaType.getRawType()))) {
+            return (TypeCodec<T>)TypeCodec.custom((DataType.CustomType)cqlType);
         }
 
         return null;
     }
 
+    @SuppressWarnings("unchecked")
     private <T> TypeCodec<T> maybeCreateCodec(DataType cqlType, T value) {
         checkNotNull(value);
-
-        if ((cqlType == null || cqlType.getName() == VARCHAR || cqlType.getName() == TEXT) && value instanceof Enum) {
-            return new EnumStringCodec(value.getClass());
-        }
 
         if ((cqlType == null || cqlType.getName() == LIST) && value instanceof List) {
             List list = (List)value;
@@ -579,12 +618,12 @@ public final class CodecRegistry {
                 DataType elementType = (cqlType == null || cqlType.getTypeArguments().isEmpty())
                     ? DataType.blob()
                     : cqlType.getTypeArguments().get(0);
-                return new ListCodec(findCodec(elementType, (TypeToken)null));
+                return TypeCodec.list(findCodec(elementType, (TypeToken)null));
             } else {
                 DataType elementType = (cqlType == null || cqlType.getTypeArguments().isEmpty())
                     ? null
                     : cqlType.getTypeArguments().get(0);
-                return new ListCodec(findCodec(elementType, list.iterator().next()));
+                return (TypeCodec<T>)TypeCodec.list(findCodec(elementType, list.iterator().next()));
             }
         }
 
@@ -594,12 +633,12 @@ public final class CodecRegistry {
                 DataType elementType = (cqlType == null || cqlType.getTypeArguments().isEmpty())
                     ? DataType.blob()
                     : cqlType.getTypeArguments().get(0);
-                return new SetCodec(findCodec(elementType, (TypeToken)null));
+                return TypeCodec.set(findCodec(elementType, (TypeToken)null));
             } else {
                 DataType elementType = (cqlType == null || cqlType.getTypeArguments().isEmpty())
                     ? null
                     : cqlType.getTypeArguments().get(0);
-                return new SetCodec(findCodec(elementType, set.iterator().next()));
+                return (TypeCodec<T>)TypeCodec.set(findCodec(elementType, set.iterator().next()));
             }
         }
 
@@ -612,7 +651,7 @@ public final class CodecRegistry {
                 DataType valueType = (cqlType == null || cqlType.getTypeArguments().size() < 2)
                     ? DataType.blob() :
                     cqlType.getTypeArguments().get(1);
-                return new MapCodec(
+                return TypeCodec.map(
                     findCodec(keyType, (TypeToken)null),
                     findCodec(valueType, (TypeToken)null));
             } else {
@@ -623,24 +662,28 @@ public final class CodecRegistry {
                     ? null
                     : cqlType.getTypeArguments().get(1);
                 Map.Entry entry = (Map.Entry)map.entrySet().iterator().next();
-                return new MapCodec(
+                return (TypeCodec<T>)TypeCodec.map(
                     findCodec(keyType, entry.getKey()),
                     findCodec(valueType, entry.getValue()));
             }
         }
 
         if ((cqlType == null || cqlType.getName() == DataType.Name.TUPLE) && value instanceof TupleValue) {
-            return (TypeCodec<T>)new TupleCodec(cqlType == null ? ((TupleValue)value).getType() : (TupleType) cqlType);
+            return (TypeCodec<T>)TypeCodec.tuple(cqlType == null ? ((TupleValue)value).getType() : (TupleType)cqlType);
         }
 
         if ((cqlType == null || cqlType.getName() == DataType.Name.UDT) && value instanceof UDTValue) {
-            return (TypeCodec<T>)new UDTCodec(cqlType == null ? ((UDTValue)value).getType() : (UserType) cqlType);
+            return (TypeCodec<T>)TypeCodec.userType(cqlType == null ? ((UDTValue)value).getType() : (UserType)cqlType);
+        }
+
+        if((cqlType != null && cqlType instanceof DataType.CustomType) && value instanceof ByteBuffer) {
+            return (TypeCodec<T>)TypeCodec.custom((DataType.CustomType)cqlType);
         }
 
         return null;
     }
 
-    private static CodecNotFoundException newException(DataType cqlType, TypeToken<?> javaType) {
+    private static CodecNotFoundException notFound(DataType cqlType, TypeToken<?> javaType) {
         String msg = String.format("Codec not found for requested operation: [%s <-> %s]",
             cqlType == null ? "ANY" : cqlType,
             javaType == null ? "ANY" : javaType);

@@ -51,136 +51,267 @@ public abstract class TestUtils {
 
     public static final int TEST_BASE_NODE_WAIT = SystemProperties.getInt("com.datastax.driver.TEST_BASE_NODE_WAIT", 60);
 
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    public static BoundStatement setBoundValue(BoundStatement bs, String name, DataType type, Object value) {
+    public static void setValue(SettableByIndexData<?> data, int i, DataType type, Object value) {
         switch (type.getName()) {
             case ASCII:
-                bs.setString(name, (String)value);
+                data.setString(i, (String)value);
                 break;
             case BIGINT:
-                bs.setLong(name, (Long)value);
+                data.setLong(i, (Long)value);
                 break;
             case BLOB:
-                bs.setBytes(name, (ByteBuffer)value);
+                data.setBytes(i, (ByteBuffer)value);
                 break;
             case BOOLEAN:
-                bs.setBool(name, (Boolean)value);
+                data.setBool(i, (Boolean)value);
                 break;
             case COUNTER:
                 // Just a no-op, we shouldn't handle counters the same way than other types
                 break;
             case DECIMAL:
-                bs.setDecimal(name, (BigDecimal)value);
+                data.setDecimal(i, (BigDecimal)value);
                 break;
             case DOUBLE:
-                bs.setDouble(name, (Double)value);
+                data.setDouble(i, (Double)value);
                 break;
             case FLOAT:
-                bs.setFloat(name, (Float)value);
+                data.setFloat(i, (Float)value);
                 break;
             case INET:
-                bs.setInet(name, (InetAddress)value);
+                data.setInet(i, (InetAddress)value);
                 break;
             case TINYINT:
-                bs.setByte(name, (Byte) value);
+                data.setByte(i, (Byte) value);
                 break;
             case SMALLINT:
-                bs.setShort(name, (Short) value);
+                data.setShort(i, (Short) value);
                 break;
             case INT:
-                bs.setInt(name, (Integer) value);
+                data.setInt(i, (Integer) value);
                 break;
             case TEXT:
-                bs.setString(name, (String) value);
+                data.setString(i, (String) value);
                 break;
             case TIMESTAMP:
-                bs.setTimestamp(name, (Date) value);
+                data.setTimestamp(i, (Date) value);
                 break;
             case DATE:
-                bs.setDate(name, (LocalDate)value);
+                data.setDate(i, (LocalDate)value);
                 break;
             case TIME:
-                bs.setTime(name, (Long) value);
+                data.setTime(i, (Long) value);
                 break;
             case UUID:
-                bs.setUUID(name, (UUID)value);
+                data.setUUID(i, (UUID)value);
                 break;
             case VARCHAR:
-                bs.setString(name, (String)value);
+                data.setString(i, (String)value);
                 break;
             case VARINT:
-                bs.setVarint(name, (BigInteger)value);
+                data.setVarint(i, (BigInteger)value);
                 break;
             case TIMEUUID:
-                bs.setUUID(name, (UUID)value);
+                data.setUUID(i, (UUID)value);
                 break;
             case LIST:
-                bs.setList(name, (List)value);
+                data.setList(i, (List)value);
                 break;
             case SET:
-                bs.setSet(name, (Set)value);
+                data.setSet(i, (Set)value);
                 break;
             case MAP:
-                bs.setMap(name, (Map)value);
+                data.setMap(i, (Map)value);
                 break;
             default:
                 throw new RuntimeException("Missing handling of " + type);
         }
-        return bs;
     }
 
-    public static Object getValue(Row row, String name, DataType type, CodecRegistry codecRegistry) {
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public static void setValue(SettableByNameData<?> data, String name, DataType type, Object value) {
         switch (type.getName()) {
             case ASCII:
-                return row.getString(name);
+                data.setString(name, (String)value);
+                break;
             case BIGINT:
-                return row.getLong(name);
+                data.setLong(name, (Long)value);
+                break;
             case BLOB:
-                return row.getBytes(name);
+                data.setBytes(name, (ByteBuffer)value);
+                break;
             case BOOLEAN:
-                return row.getBool(name);
+                data.setBool(name, (Boolean)value);
+                break;
             case COUNTER:
-                return row.getLong(name);
+                // Just a no-op, we shouldn't handle counters the same way than other types
+                break;
             case DECIMAL:
-                return row.getDecimal(name);
+                data.setDecimal(name, (BigDecimal)value);
+                break;
             case DOUBLE:
-                return row.getDouble(name);
+                data.setDouble(name, (Double)value);
+                break;
             case FLOAT:
-                return row.getFloat(name);
+                data.setFloat(name, (Float)value);
+                break;
             case INET:
-                return row.getInet(name);
+                data.setInet(name, (InetAddress)value);
+                break;
             case TINYINT:
-                return row.getByte(name);
+                data.setByte(name, (Byte) value);
+                break;
             case SMALLINT:
-                return row.getShort(name);
+                data.setShort(name, (Short) value);
+                break;
             case INT:
-                return row.getInt(name);
+                data.setInt(name, (Integer) value);
+                break;
             case TEXT:
-                return row.getString(name);
+                data.setString(name, (String) value);
+                break;
             case TIMESTAMP:
-                return row.getTimestamp(name);
+                data.setTimestamp(name, (Date) value);
+                break;
             case DATE:
-                return row.getDate(name);
+                data.setDate(name, (LocalDate)value);
+                break;
             case TIME:
-                return row.getTime(name);
+                data.setTime(name, (Long) value);
+                break;
             case UUID:
-                return row.getUUID(name);
+                data.setUUID(name, (UUID)value);
+                break;
             case VARCHAR:
-                return row.getString(name);
+                data.setString(name, (String)value);
+                break;
             case VARINT:
-                return row.getVarint(name);
+                data.setVarint(name, (BigInteger)value);
+                break;
             case TIMEUUID:
-                return row.getUUID(name);
+                data.setUUID(name, (UUID)value);
+                break;
+            case LIST:
+                data.setList(name, (List)value);
+                break;
+            case SET:
+                data.setSet(name, (Set)value);
+                break;
+            case MAP:
+                data.setMap(name, (Map)value);
+                break;
+            default:
+                throw new RuntimeException("Missing handling of " + type);
+        }
+    }
+
+    public static Object getValue(GettableByIndexData data, int i, DataType type, CodecRegistry codecRegistry) {
+        switch (type.getName()) {
+            case ASCII:
+                return data.getString(i);
+            case BIGINT:
+                return data.getLong(i);
+            case BLOB:
+                return data.getBytes(i);
+            case BOOLEAN:
+                return data.getBool(i);
+            case COUNTER:
+                return data.getLong(i);
+            case DECIMAL:
+                return data.getDecimal(i);
+            case DOUBLE:
+                return data.getDouble(i);
+            case FLOAT:
+                return data.getFloat(i);
+            case INET:
+                return data.getInet(i);
+            case TINYINT:
+                return data.getByte(i);
+            case SMALLINT:
+                return data.getShort(i);
+            case INT:
+                return data.getInt(i);
+            case TEXT:
+                return data.getString(i);
+            case TIMESTAMP:
+                return data.getTimestamp(i);
+            case DATE:
+                return data.getDate(i);
+            case TIME:
+                return data.getTime(i);
+            case UUID:
+                return data.getUUID(i);
+            case VARCHAR:
+                return data.getString(i);
+            case VARINT:
+                return data.getVarint(i);
+            case TIMEUUID:
+                return data.getUUID(i);
             case LIST:
                 Class<?> listEltClass = codecRegistry.codecFor(type.getTypeArguments().get(0)).getJavaType().getRawType();
-                return row.getList(name, listEltClass);
+                return data.getList(i, listEltClass);
             case SET:
                 Class<?> setEltClass = codecRegistry.codecFor(type.getTypeArguments().get(0)).getJavaType().getRawType();
-                return row.getSet(name, setEltClass);
+                return data.getSet(i, setEltClass);
             case MAP:
                 Class<?> keyClass = codecRegistry.codecFor(type.getTypeArguments().get(0)).getJavaType().getRawType();
                 Class<?> valueClass = codecRegistry.codecFor(type.getTypeArguments().get(1)).getJavaType().getRawType();
-                return row.getMap(name, keyClass, valueClass);
+                return data.getMap(i, keyClass, valueClass);
+        }
+        throw new RuntimeException("Missing handling of " + type);
+    }
+
+    public static Object getValue(GettableByNameData data, String name, DataType type, CodecRegistry codecRegistry) {
+        switch (type.getName()) {
+            case ASCII:
+                return data.getString(name);
+            case BIGINT:
+                return data.getLong(name);
+            case BLOB:
+                return data.getBytes(name);
+            case BOOLEAN:
+                return data.getBool(name);
+            case COUNTER:
+                return data.getLong(name);
+            case DECIMAL:
+                return data.getDecimal(name);
+            case DOUBLE:
+                return data.getDouble(name);
+            case FLOAT:
+                return data.getFloat(name);
+            case INET:
+                return data.getInet(name);
+            case TINYINT:
+                return data.getByte(name);
+            case SMALLINT:
+                return data.getShort(name);
+            case INT:
+                return data.getInt(name);
+            case TEXT:
+                return data.getString(name);
+            case TIMESTAMP:
+                return data.getTimestamp(name);
+            case DATE:
+                return data.getDate(name);
+            case TIME:
+                return data.getTime(name);
+            case UUID:
+                return data.getUUID(name);
+            case VARCHAR:
+                return data.getString(name);
+            case VARINT:
+                return data.getVarint(name);
+            case TIMEUUID:
+                return data.getUUID(name);
+            case LIST:
+                Class<?> listEltClass = codecRegistry.codecFor(type.getTypeArguments().get(0)).getJavaType().getRawType();
+                return data.getList(name, listEltClass);
+            case SET:
+                Class<?> setEltClass = codecRegistry.codecFor(type.getTypeArguments().get(0)).getJavaType().getRawType();
+                return data.getSet(name, setEltClass);
+            case MAP:
+                Class<?> keyClass = codecRegistry.codecFor(type.getTypeArguments().get(0)).getJavaType().getRawType();
+                Class<?> valueClass = codecRegistry.codecFor(type.getTypeArguments().get(1)).getJavaType().getRawType();
+                return data.getMap(name, keyClass, valueClass);
         }
         throw new RuntimeException("Missing handling of " + type);
     }
