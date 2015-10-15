@@ -15,6 +15,7 @@
 - [improvement] Limit visibility of codec internals (JAVA-932)
 - [improvement] Warn if a custom codec collides with an existing one (JAVA-934)
 - [improvement] Allow typed getters/setters to target any CQL type (JAVA-940)
+- [bug] Fix Cluster.connect with a case-sensitive keyspace (JAVA-950)
 
 
 ### 3.0.0-alpha3

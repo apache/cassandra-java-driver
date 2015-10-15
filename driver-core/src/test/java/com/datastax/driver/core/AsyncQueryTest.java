@@ -16,15 +16,13 @@
 package com.datastax.driver.core;
 
 import java.util.Collection;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
+import java.util.List;
+import java.util.concurrent.*;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.AsyncFunction;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.Uninterruptibles;
+import com.google.common.util.concurrent.*;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -35,12 +33,24 @@ import com.datastax.driver.core.exceptions.InvalidQueryException;
 
 public class AsyncQueryTest extends CCMBridge.PerClassSingleNodeCluster {
 
+    @DataProvider(name="keyspace")
+    public static Object[][] keyspace() {
+        return new Object[][]{ { "asyncquerytest" }, { "\"AsyncQueryTest\"" } };
+    }
+
     @Override
     protected Collection<String> getTableDefinitions() {
-        return Lists.newArrayList(
-            "create table foo(k int primary key, v int)",
-            "insert into foo (k, v) values (1, 1)"
-        );
+        List<String> definitions = Lists.newArrayList();
+
+        for (Object[] objects : keyspace()) {
+            String keyspace = (String)objects[0];
+
+            definitions.add(String.format("create keyspace %s WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1}", keyspace));
+            definitions.add(String.format("create table %s.foo(k int primary key, v int)", keyspace));
+            definitions.add(String.format("insert into %s.foo (k, v) values (1, 1)", keyspace));
+        }
+
+        return definitions;
     }
 
     /**
@@ -76,27 +86,40 @@ public class AsyncQueryTest extends CCMBridge.PerClassSingleNodeCluster {
             // Neither cluster2 nor session2 are initialized at this point
             assertThat(cluster2.manager.metadata).isNull();
 
-            ResultSetFuture future = session2.executeAsync(String.format("select v from %s.foo where k = 1", keyspace));
+            ResultSetFuture future = session2.executeAsync("select release_version from system.local");
             Row row = Uninterruptibles.getUninterruptibly(future).one();
 
-            assertThat(row.getInt(0)).isEqualTo(1);
+            assertThat(row.getString(0)).isNotEmpty();
         } finally {
             if (cluster2 != null)
                 cluster2.close();
         }
     }
 
-    @Test(groups = "short")
-    public void should_chain_query_on_async_session_init() throws Exception {
-        ListenableFuture<Integer> resultFuture = connectAndQuery(this.keyspace);
+    @Test(groups = "short", dataProvider = "keyspace", enabled = false,
+        description = "disabled because the blocking USE call in the current pool implementation makes it deadlock")
+    public void should_chain_query_on_async_session_init_with_same_executor(String keyspace) throws Exception {
+        ListenableFuture<Integer> resultFuture = connectAndQuery(keyspace, MoreExecutors.sameThreadExecutor());
 
         Integer result = Uninterruptibles.getUninterruptibly(resultFuture);
         assertThat(result).isEqualTo(1);
     }
 
+    @Test(groups = "short", dataProvider = "keyspace")
+    public void should_chain_query_on_async_session_init_with_different_executor(String keyspace) throws Exception {
+        ExecutorService executor = Executors.newFixedThreadPool(1);
+
+        ListenableFuture<Integer> resultFuture = connectAndQuery(keyspace, executor);
+
+        Integer result = Uninterruptibles.getUninterruptibly(resultFuture);
+        assertThat(result).isEqualTo(1);
+
+        executor.shutdownNow();
+    }
+
     @Test(groups = "short")
     public void should_propagate_error_to_chained_query_if_session_init_fails() throws Exception {
-        ListenableFuture<Integer> resultFuture = connectAndQuery("wrong_keyspace");
+        ListenableFuture<Integer> resultFuture = connectAndQuery("wrong_keyspace", MoreExecutors.sameThreadExecutor());
 
         try {
             Uninterruptibles.getUninterruptibly(resultFuture);
@@ -107,20 +130,20 @@ public class AsyncQueryTest extends CCMBridge.PerClassSingleNodeCluster {
         }
     }
 
-    private ListenableFuture<Integer> connectAndQuery(String keyspace) {
+    private ListenableFuture<Integer> connectAndQuery(String keyspace, Executor executor) {
         ListenableFuture<Session> sessionFuture = cluster.connectAsync(keyspace);
         ListenableFuture<ResultSet> queryFuture = Futures.transform(sessionFuture, new AsyncFunction<Session, ResultSet>() {
             @Override
             public ListenableFuture<ResultSet> apply(Session session) throws Exception {
                 return session.executeAsync("select v from foo where k = 1");
             }
-        });
+        }, executor);
         return Futures.transform(queryFuture, new Function<ResultSet, Integer>() {
             @Override
             public Integer apply(ResultSet rs) {
                 return rs.one().getInt(0);
             }
-        });
+        }, executor);
     }
 
     private static HostConnectionPool getPool(Session session) {
