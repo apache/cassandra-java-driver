@@ -17,6 +17,7 @@ package com.datastax.driver.core;
 
 import java.util.*;
 
+import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterators;
 
@@ -170,10 +171,8 @@ public class UserType extends DataType implements Iterable<UserType.Field>{
     }
 
     @Override
-    public int hashCode() {
-        int result = name.hashCode();
-        result = 31 * result + keyspace.hashCode();
-        result = 31 * result + typeName.hashCode();
+    public final int hashCode() {
+        int result = Objects.hashCode(name, keyspace, typeName);
         result = 31 * result + Arrays.hashCode(byIdx);
         return result;
     }
@@ -187,9 +186,9 @@ public class UserType extends DataType implements Iterable<UserType.Field>{
 
         // Note: we don't test byName because it's redundant with byIdx in practice,
         // but also because the map holds 'int[]' which don't have proper equal.
-        return name.equals(other.name)
-            && keyspace.equals(other.keyspace)
-            && typeName.equals(other.typeName)
+        return Objects.equal(name, other.name)
+            && Objects.equal(keyspace, other.keyspace)
+            && Objects.equal(typeName, other.typeName)
             && Arrays.equals(byIdx, other.byIdx);
     }
 
@@ -305,8 +304,8 @@ public class UserType extends DataType implements Iterable<UserType.Field>{
                 return false;
 
             Field other = (Field)o;
-            return name.equals(other.name)
-                && type.equals(other.type);
+            return Objects.equal(name, other.name)
+                && Objects.equal(type, other.type);
         }
 
         @Override

@@ -292,30 +292,36 @@ public class AggregateMetadata {
     }
 
     @Override
-    public boolean equals(Object other) {
+    public final boolean equals(Object other) {
         if (other == this)
             return true;
         
         if (other instanceof AggregateMetadata) {
             AggregateMetadata that = (AggregateMetadata)other;
-            return this.keyspace.getName().equals(that.keyspace.getName()) &&
-                this.fullName.equals(that.fullName) &&
-                this.argumentTypes.equals(that.argumentTypes) &&
+
+            boolean keyspaceCmp = this.keyspace == that.keyspace;
+            if(!keyspaceCmp && this.keyspace != null && that.keyspace != null) {
+                keyspaceCmp = Objects.equal(this.keyspace.getName(), that.keyspace.getName());
+            }
+
+            return keyspaceCmp &&
+                Objects.equal(this.fullName, that.fullName) &&
+                Objects.equal(this.argumentTypes, that.argumentTypes) &&
                 Objects.equal(this.finalFuncFullName, that.finalFuncFullName) &&
                 // Note: this might be a problem if a custom codec has been registered for the initCond's type, with a target Java type that
                 // does not properly implement equals. We don't have any control over this, at worst this would lead to spurious change
                 // notifications.
                 Objects.equal(this.initCond, that.initCond) &&
-                this.returnType.equals(that.returnType) &&
-                this.stateFuncFullName.equals(that.stateFuncFullName) &&
-                this.stateType.equals(that.stateType);
+                Objects.equal(this.returnType, that.returnType) &&
+                Objects.equal(this.stateFuncFullName, that.stateFuncFullName) &&
+                Objects.equal(this.stateType, that.stateType);
         }
         return false;
     }
 
     @Override
-    public int hashCode() {
-        return Objects.hashCode(this.keyspace.getName(), this.fullName, this.argumentTypes,
+    public final int hashCode() {
+        return Objects.hashCode(this.keyspace == null ? null : this.keyspace.getName(), this.fullName, this.argumentTypes,
             this.finalFuncFullName, this.initCond, this.returnType, this.stateFuncFullName, this.stateType);
     }
 }

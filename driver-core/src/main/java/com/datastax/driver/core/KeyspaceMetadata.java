@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
 
 /**
@@ -314,34 +315,24 @@ public class KeyspaceMetadata {
     }
 
     @Override
-    public boolean equals(Object o) {
+    public final boolean equals(Object o) {
         if (this == o)
             return true;
-        if (o == null || getClass() != o.getClass())
+        if (!(o instanceof KeyspaceMetadata))
             return false;
 
         KeyspaceMetadata that = (KeyspaceMetadata)o;
 
-        if (durableWrites != that.durableWrites)
-            return false;
-        if (!name.equals(that.name))
-            return false;
-        if (strategy != null ? !strategy.equals(that.strategy) : that.strategy != null)
-            return false;
-        if (!replication.equals(that.replication))
-            return false;
-        return tables.equals(that.tables);
-
+        return durableWrites == that.durableWrites &&
+            Objects.equal(name, that.name) &&
+            Objects.equal(strategy, that.strategy) &&
+            Objects.equal(replication, that.replication) &&
+            Objects.equal(tables, that.tables);
     }
 
     @Override
-    public int hashCode() {
-        int result = name.hashCode();
-        result = 31 * result + (durableWrites ? 1 : 0);
-        result = 31 * result + (strategy != null ? strategy.hashCode() : 0);
-        result = 31 * result + replication.hashCode();
-        result = 31 * result + tables.hashCode();
-        return result;
+    public final int hashCode() {
+        return Objects.hashCode(name, durableWrites, strategy, replication, tables);
     }
 
     void add(TableMetadata tm) {

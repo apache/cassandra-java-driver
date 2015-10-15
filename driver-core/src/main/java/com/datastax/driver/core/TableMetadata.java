@@ -420,7 +420,7 @@ public class TableMetadata extends TableOrView {
     }
 
     @Override
-    public boolean equals(Object other) {
+    public final boolean equals(Object other) {
         if (other == this)
             return true;
         if (!(other instanceof TableMetadata))
@@ -440,7 +440,7 @@ public class TableMetadata extends TableOrView {
     }
 
     @Override
-    public int hashCode() {
+    public final int hashCode() {
         return Objects.hashCode(name, id, partitionKey, clusteringColumns, columns, options, clusteringOrder, indexes, views);
     }
 }

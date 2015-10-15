@@ -18,6 +18,7 @@ package com.datastax.driver.core;
 import java.util.Collection;
 import java.util.Collections;
 
+import nl.jqno.equalsverifier.EqualsVerifier;
 import org.testng.annotations.Test;
 
 import com.datastax.driver.core.utils.CassandraVersion;
@@ -28,6 +29,13 @@ import static com.datastax.driver.core.TableOrView.Order.DESC;
 
 @CassandraVersion(major = 3)
 public class MaterializedViewMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
+
+    @Test(groups = "unit")
+    public void should_use_all_fields_in_equals_and_hashCode() {
+        EqualsVerifier.forClass(MaterializedViewMetadata.class)
+            .allFieldsShouldBeUsedExcept("cassandraVersion", "keyspace")
+            .verify();
+    }
 
     /**
      * Validates that a materialized view is properly retrieved and parsed.

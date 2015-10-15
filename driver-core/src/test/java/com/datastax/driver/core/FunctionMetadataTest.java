@@ -19,6 +19,7 @@ import java.util.Collections;
 import java.util.List;
 
 import com.google.common.collect.ImmutableList;
+import nl.jqno.equalsverifier.EqualsVerifier;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -35,6 +36,13 @@ public class FunctionMetadataTest {
     @BeforeMethod(groups = "unit")
     public void setup() {
         keyspace = new KeyspaceMetadata("ks", false, Collections.<String, String>emptyMap());
+    }
+
+    @Test(groups = "unit")
+    public void should_use_all_fields_in_equals_and_hashCode() {
+        EqualsVerifier.forClass(FunctionMetadata.class)
+            .allFieldsShouldBeUsedExcept("simpleName")
+            .verify();
     }
 
     @Test(groups = "unit")

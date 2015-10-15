@@ -271,25 +271,31 @@ public class FunctionMetadata {
     }
 
     @Override
-    public boolean equals(Object other) {
+    public final boolean equals(Object other) {
         if (other == this)
             return true;
 
         if (other instanceof FunctionMetadata) {
             FunctionMetadata that = (FunctionMetadata)other;
-            return this.keyspace.getName().equals(that.keyspace.getName()) &&
-                this.fullName.equals(that.fullName) &&
-                this.arguments.equals(that.arguments) &&
-                this.body.equals(that.body) &&
-                this.calledOnNullInput == that.calledOnNullInput &&
-                this.language.equals(that.language) &&
-                this.returnType.equals(that.returnType);
+
+            boolean keyspaceCmp = this.keyspace == that.keyspace;
+            if(!keyspaceCmp && this.keyspace != null && that.keyspace != null) {
+                keyspaceCmp = Objects.equal(this.keyspace.getName(), that.keyspace.getName());
+            }
+
+            return keyspaceCmp &&
+                Objects.equal(fullName, that.fullName) &&
+                Objects.equal(arguments, that.arguments) &&
+                Objects.equal(body, that.body) &&
+                Objects.equal(calledOnNullInput, that.calledOnNullInput) &&
+                Objects.equal(language, that.language) &&
+                Objects.equal(returnType, that.returnType);
         }
         return false;
     }
 
     @Override
-    public int hashCode() {
-        return Objects.hashCode(keyspace.getName(), fullName, arguments, body, calledOnNullInput, language, returnType);
+    public final int hashCode() {
+        return Objects.hashCode(keyspace == null ? null : keyspace.getName(), fullName, arguments, body, calledOnNullInput, language, returnType);
     }
 }

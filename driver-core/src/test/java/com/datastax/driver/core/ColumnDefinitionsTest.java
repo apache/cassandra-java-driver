@@ -15,10 +15,16 @@
  */
 package com.datastax.driver.core;
 
+import nl.jqno.equalsverifier.EqualsVerifier;
 import org.testng.annotations.Test;
 import static org.testng.Assert.assertTrue;
 
 public class ColumnDefinitionsTest {
+
+    @Test(groups = "unit")
+    public void should_use_all_fields_in_equals_and_hashCode() {
+        EqualsVerifier.forClass(ColumnDefinitions.Definition.class).allFieldsShouldBeUsed().verify();
+    }
 
     @Test(groups = "unit")
     public void caseTest() {
