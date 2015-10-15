@@ -39,110 +39,113 @@ import static com.datastax.driver.core.DataType.Name.MAP;
 import static com.datastax.driver.core.DataType.Name.SET;
 
 /**
- * A registry for {@link TypeCodec codec}s. When the driver
- * needs to serialize or deserialize an object,
- * it will lookup in the registry for
- * a suitable codec.
+ * A registry for {@link TypeCodec}s. When the driver needs to serialize or deserialize a Java type to/from CQL,
+ * it will lookup in the registry for a suitable codec. The registry is initialized with default codecs that handle
+ * basic conversions (e.g. CQL {@code text} to {@code java.lang.String}), and users can add their own. Complex
+ * codecs can also be generated on-the-fly from simpler ones (more details below).
  *
- * <h3>Usage</h3>
- *
- * <p>
- * By default, the driver uses the CodecRegistry's {@link CodecRegistry#DEFAULT_INSTANCE},
- * a shareable instance that initially contains all the built-in codecs required by the driver.
+ * <h3>Creating a registry</h3>
  *
  * <p>
- * For most users, the default instance is good enough and
- * they won't need to manipulate {@link CodecRegistry} instances directly.
- * Only those willing to {@link #register(TypeCodec) register} user-defined codecs are required to do so:
+ * By default, the driver uses {@link CodecRegistry#DEFAULT_INSTANCE}, a shareable, JVM-wide instance initialized with
+ * built-in codecs for all the base CQL types.
+ * The only reason to create your own instances is if you have multiple {@code Cluster} objects that use different
+ * sets of codecs. In that case, use {@link com.datastax.driver.core.Cluster.Builder#withCodecRegistry(CodecRegistry)}
+ * to associate the registry with the cluster:
  *
  * <pre>
- * CodecRegistry myCodecRegistry;
- * // use the default instance
- * myCodecRegistry = CodecRegistry.DEFAULT_INSTANCE;
- * // or alternatively, create a new one
- * myCodecRegistry = new CodecRegistry();
- * // then register additional codecs
+ * {@code
+ * CodecRegistry myCodecRegistry = new CodecRegistry();
  * myCodecRegistry.register(myCodec1, myCodec2, myCodec3);
- * </pre>
- *
- * <p>
- * To be used by the driver, {@link CodecRegistry} instances must then
- * be associated with a {@link Cluster} instance:
- *
- * <pre>
- * CodecRegistry myCodecRegistry = ...
  * Cluster cluster = Cluster.builder().withCodecRegistry(myCodecRegistry).build();
- * </pre>
  *
- * To retrieve the {@link CodecRegistry} instance associated with a Cluster, do the
- * following:
- *
- * <pre>
+ * // To retrieve the registry later:
  * CodecRegistry registry = cluster.getConfiguration().getCodecRegistry();
- * </pre>
+ * }</pre>
  *
- * <h3>Example</h3>
+ * {@code CodecRegistry} instances are thread-safe.
  *
  * <p>
- * Suppose that one wants to have all CQL timestamps seamlessly
- * converted to {@code java.time.DateTime} instances and vice versa; the following
- * code contains the necessary steps to achieve this:
+ * It is possible to turn on log messages by setting the {@code com.datastax.driver.core.CodecRegistry} logger
+ * level to {@code TRACE}. Beware that the registry can be very verbose at this log level.
+ *
+ * <h3>Registering and using custom codecs</h3>
+ *
+ * To create a custom codec, write a class that extends {@link TypeCodec}, create an instance, and pass it to one of
+ * the {@link #register(TypeCodec) register} methods:
  *
  * <pre>
- * // 1. Instantiate the custom codec
- * TypeCodec&lt;DateTime> timestampCodec = ...
- * // 2. Register the codec
- * CodecRegistry.DEFAULT_INSTANCE.register(timestampCodec);
- * </pre>
+ * {@code
+ * // A codec that maps timestamps to JDK8's LocalDate
+ * class LocalDateCodec extends TypeCodec<LocalDate> {
+ *    ...
+ * }
+ * myCodecRegistry.register(new LocalDateCodec());
+ * }</pre>
  *
- * <p>
- * Read the
- * <a href="http://datastax.github.io/java-driver/features/custom_codecs">online documentation</a>
- * for more examples.
+ * The conversion will be available to:
+ * <ul>
+ *     <li>all driver types that implement {@link GettableByIndexData}, {@link GettableByNameData},
+ *     {@link SettableByIndexData} and/or {@link SettableByNameData}. Namely: {@link Row},
+ *     {@link BoundStatement}, {@link UDTValue} and {@link TupleValue};</li>
+ *     <li>{@link Session#newSimpleStatement(String, Object...) simple statements}.</li>
+ * </ul>
  *
- * <h3>Notes</h3>
+ * Example:
+ * <pre>
+ * {@code
+ * Row row = session.executeQuery("select date from some_table where pk = 1").one();
+ * LocalDate date = row.get(0, LocalDate.class); // uses LocalDateCodec registered above
+ * }</pre>
  *
- * <p>
- * <strong>Registration order</strong>: the order in which codecs are registered matters:
- * when looking for a suitable codec, the registry will consider
- * all registered codecs <em>in the order they were registered</em>, and
- * will pick the first matching one.
+ * You can also bypass the codec registry by passing a standalone codec instance to methods such as
+ * {@link GettableByIndexData#get(int, TypeCodec)}.
  *
- * <p>
- * If a codec is registered while another codec already handles the <em>exact same</em>
- * CQL-to-Java mapping, that codec will never be used (unless
- * the user forces its usage through e.g. {@link GettableByIndexData#get(int, TypeCodec)}).
- * In order words, it is not possible to replace an existing codec,
- * specially the built-in ones; it is only possible to enrich the initial
- * set of codecs with new ones.
+ * <h3>Codec generation</h3>
  *
- * <p>
- * <strong>On-the-fly codec instantiation</strong>: When a {@link CodecRegistry}
- * cannot find a suitable codec among all registered codecs,
- * it will attempt to create such a codec on-the-fly. If the creation succeeds, that codec is returned;
- * otherwise, a {@link CodecNotFoundException} is thrown.
+ * When a {@code CodecRegistry} cannot find a suitable codec among existing ones, it will attempt to create it on-the-fly:
+ * It can manage:
  *
- * <p>
- * Note that {@link CodecRegistry} instances can only create codecs in very limited situations:
+ * <ul>
+ *     <li>collections of known types. For example, if you registered a {@code TypeCodec<LocalDate>}, you get
+ *     {@code List<LocalDate>>} handled for free. This works recursively for nested collections;</li>
+ *     <li>{@link UserType user types}, mapped to {@link UDTValue} objects. Custom codecs are available recursively
+ *     to the UDT's fields, so if one of your fields is a {@code timestamp} you can use your {@code LocaDateCodec} to retrieve
+ *     it as a {@code LocalDate};</li>
+ *     <li>{@link TupleType tuple types}, mapped to {@link TupleValue} (with the same rules for nested fields);</li>
+ *     <li>{@link com.datastax.driver.core.DataType.CustomType custom types}, mapped to {@code ByteBuffer}.</li>
+ * </ul>
+ *
+ * If the codec registry encounters a mapping that it can't handle automatically, a {@link CodecNotFoundException} is thrown;
+ * you'll need to register a custom codec for it.
+ *
+ * <h3>Performance and caching</h3>
+ *
+ * Whenever possible, the registry will cache the result of a codec lookup for a specific type mapping, including any generated
+ * codec. For example, if you registered {@code LocalDateCodec} and ask the registry for a codec to convert a CQL
+ * {@code list<timestamp>} to a Java {@code List<LocalDate>}:
  * <ol>
- *     <li>Codecs for {@link UserType user types} are created on the fly using {@link TypeCodec#userType(UserType)};</li>
- *     <li>Codecs for {@link TupleType tuple types} are created on the fly using {@link TypeCodec#tuple(TupleType)}};</li>
- *     <li>Codecs for collections are created on the fly using {@link TypeCodec#list(TypeCodec)}}, {@link TypeCodec#set(TypeCodec)}} and
- *     {@link TypeCodec#map(TypeCodec, TypeCodec)}}, if their element types can be handled by existing codecs (or codecs that can
- *     themselves be generated).</li>
- *     <li>Codecs for {@link com.datastax.driver.core.DataType.CustomType custom types} are created on the fly using {@link TypeCodec#custom(DataType.CustomType)};</li>
+ *     <li>the first lookup will generate a {@code TypeCodec<List<LocalDate>>} from {@code LocalDateCodec}, and put it in
+ *     the cache;</li>
+ *     <li>the second lookup will hit the cache directly, and reuse the previously generated instance.</li>
  * </ol>
- * Other combinations of Java and CQL types cannot have their codecs created on the fly;
- * such codecs must be manually registered.
- * <p>
  *
- * <strong>Debugging the codec registry</strong>: it is possible to turn on log messages
- * by setting the {@code com.datastax.driver.core.CodecRegistry} logger level to {@code TRACE}.
- * Beware that the registry can be very verbose at this log level.
+ * The javadoc for each {@link #codecFor(DataType) codecFor} variant specifies whether the result can be cached or not.
  *
- * <p>
- * <strong>Thread-safety</strong>: {@link CodecRegistry} instances are thread-safe.
+ * <h3>Codec order</h3>
  *
+ * When the registry looks up a codec, the rules of precedence are:
+ *
+ * <ul>
+ *     <li>if a result was previously cached for that mapping, it is returned;</li>
+ *     <li>otherwise, the registry checks the list of "basic" codecs: the default ones, and the ones that were explicitly
+ *     registered (in the order that they were registered). It calls each codec's {@code accepts} methods to determine if
+ *     it can handle the mapping, and if so returns it;</li>
+ *     <li>otherwise, the registry tries to generate a codec, according to the rules outlined above.</li>
+ * </ul>
+ *
+ * It is currently impossible to override an existing codec. If you try to do so, {@link #register(TypeCodec)} will log a
+ * warning and ignore it.
  */
 public final class CodecRegistry {
 
@@ -172,10 +175,9 @@ public final class CodecRegistry {
     );
 
     /**
-     * A default instance of CodecRegistry.
-     * For most applications, sharing a single instance of CodecRegistry is fine.
-     * But note that any codec registered with this instance will immediately
-     * be available for all its clients.
+     * The default {@code CodecRegistry} instance.
+     *
+     * It will be shared among all {@link Cluster} instances that were not explicitly built with a different instance.
      */
     public static final CodecRegistry DEFAULT_INSTANCE = new CodecRegistry();
 
@@ -298,7 +300,7 @@ public final class CodecRegistry {
     private final LoadingCache<CacheKey, TypeCodec<?>> cache;
 
     /**
-     * Creates a default CodecRegistry instance with default cache options.
+     * Creates a new instance initialized with built-in codecs for all the base CQL types.
      */
     public CodecRegistry() {
         this.codecs = new CopyOnWriteArrayList<TypeCodec<?>>(PRIMITIVE_CODECS);
@@ -323,8 +325,8 @@ public final class CodecRegistry {
      * <p>
      * This method will log a warning and ignore the codec if it collides with a previously registered one.
      * Note that this check is not done in a completely thread-safe manner; codecs should typically be registered
-     * at application startup, not in a highly concurrent context (if a race condition occurs, the worst outcome
-     * is that no warning gets logged, and the codec gets registered but will never actually be used).
+     * at application startup, not in a highly concurrent context (if a race condition occurs, the worst possible
+     * outcome is that no warning gets logged, and the codec gets registered but will never actually be used).
      *
      * @param newCodec The codec to add to the registry.
      * @return this CodecRegistry (for method chaining).
@@ -379,22 +381,20 @@ public final class CodecRegistry {
     /**
      * Returns a {@link TypeCodec codec} that accepts the given value.
      * <p>
-     * This method takes an actual Java object and tries to locate a suitable codec for it.
-     * For this reason, codecs must perform a {@link TypeCodec#accepts(Object) "manual" inspection}
-     * of the object to determine if they can accept it or not, which, depending on the implementations,
-     * can be an expensive operation; besides, the resulting codec cannot be cached.
+     * This method takes an arbitrary Java object and tries to locate a suitable codec for it.
+     * Codecs must perform a {@link TypeCodec#accepts(Object) runtime inspection} of the object to determine
+     * if they can accept it or not, which, depending on the implementations, can be expensive; besides, the
+     * resulting codec cannot be cached.
      * Therefore there might be a performance penalty when using this method.
      * <p>
-     * Furthermore, this method would return the first matching codec, regardless of its accepted {@link DataType CQL type}.
-     * For this reason, this method might not return the most accurate codec and should be
-     * reserved for situations where the target CQL type is not available or unknown.
-     * In the Java driver, this happens mainly when serializing a value in a {@link SimpleStatement}
-     * or in the {@link com.datastax.driver.core.querybuilder.QueryBuilder}, where no CQL type information
-     * is available.
+     * Furthermore, this method returns the first matching codec, regardless of its accepted CQL type.
+     * It should be reserved for situations where the target CQL type is not available or unknown.
+     * In the Java driver, this happens mainly when serializing a value in a
+     * {@link Session#newSimpleStatement(String, Object...) SimpleStatement} or in the
+     * {@link com.datastax.driver.core.querybuilder.QueryBuilder}, where no CQL type information is available.
      * <p>
-     * Regular application code should avoid using this method.
-     * <p>
-     * Codecs returned by this method are <em>NOT</em> cached.
+     * Codecs returned by this method are <em>NOT</em> cached (see the {@link CodecRegistry top-level documentation}
+     * of this class for more explanations about caching).
      *
      * @param value The value the codec should accept; must not be {@code null}.
      * @return A suitable codec.
@@ -407,13 +407,13 @@ public final class CodecRegistry {
     /**
      * Returns a {@link TypeCodec codec} that accepts the given {@link DataType CQL type}.
      * <p>
-     * This method would return the first matching codec, regardless of its accepted Java type.
-     * For this reason, this method might not return the most accurate codec and should be
-     * reserved for situations where the runtime type is not available or unknown.
+     * This method returns the first matching codec, regardless of its accepted Java type.
+     * It should be reserved for situations where the Java type is not available or unknown.
      * In the Java driver, this happens mainly when deserializing a value using the
-     * {@link AbstractGettableData#getObject(int)} method.
+     * {@link GettableByIndexData#getObject(int) getObject} method.
      * <p>
-     * Codecs returned by this method are cached.
+     * Codecs returned by this method are cached (see the {@link CodecRegistry top-level documentation}
+     * of this class for more explanations about caching).
      *
      * @param cqlType The {@link DataType CQL type} the codec should accept; must not be {@code null}.
      * @return A suitable codec.
@@ -430,12 +430,8 @@ public final class CodecRegistry {
      * This method can only handle raw (non-parameterized) Java types.
      * For parameterized types, use {@link #codecFor(DataType, TypeToken)} instead.
      * <p>
-     * Note that type inheritance needs special care.
-     * If a codec accepts a Java type that is assignable to the
-     * given Java type, that codec may be returned if it is found first
-     * in the registry, <em>even if another codec is a better match</em>.
-     * <p>
-     * Codecs returned by this method are cached.
+     * Codecs returned by this method are cached (see the {@link CodecRegistry top-level documentation}
+     * of this class for more explanations about caching).
      *
      * @param cqlType The {@link DataType CQL type} the codec should accept; must not be {@code null}.
      * @param javaType The Java type the codec should accept; can be {@code null}.
@@ -452,12 +448,8 @@ public final class CodecRegistry {
      * <p>
      * This method handles parameterized types thanks to Guava's {@link TypeToken} API.
      * <p>
-     * Note that type inheritance needs special care.
-     * If a codec accepts a Java type that is assignable to the
-     * given Java type, that codec may be returned if it is found first
-     * in the registry, <em>even if another codec is a better match</em>.
-     * <p>
-     * Codecs returned by this method are cached.
+     * Codecs returned by this method are cached (see the {@link CodecRegistry top-level documentation}
+     * of this class for more explanations about caching).
      *
      * @param cqlType The {@link DataType CQL type} the codec should accept; must not be {@code null}.
      * @param javaType The {@link TypeToken Java type} the codec should accept; can be {@code null}.
@@ -472,13 +464,14 @@ public final class CodecRegistry {
      * Returns a {@link TypeCodec codec} that accepts the given {@link DataType CQL type}
      * and the given value.
      * <p>
-     * This method takes an actual Java object and tries to locate a suitable codec for it.
-     * For this reason, codecs must perform a {@link TypeCodec#accepts(Object) "manual" inspection}
-     * of the object to determine if they can accept it or not, which, depending on the implementations,
-     * can be an expensive operation; besides, the resulting codec cannot be cached.
+     * This method takes an arbitrary Java object and tries to locate a suitable codec for it.
+     * Codecs must perform a {@link TypeCodec#accepts(Object) runtime inspection} of the object to determine
+     * if they can accept it or not, which, depending on the implementations, can be expensive; besides, the
+     * resulting codec cannot be cached.
      * Therefore there might be a performance penalty when using this method.
      * <p>
-     * Codecs returned by this method are <em>NOT</em> cached.
+     * Codecs returned by this method are <em>NOT</em> cached (see the {@link CodecRegistry top-level documentation}
+     * of this class for more explanations about caching).
      *
      * @param cqlType The {@link DataType CQL type} the codec should accept; can be {@code null}.
      * @param value The value the codec should accept; must not be {@code null}.

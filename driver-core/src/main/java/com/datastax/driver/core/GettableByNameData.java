@@ -23,6 +23,7 @@ import java.util.*;
 
 import com.google.common.reflect.TypeToken;
 
+import com.datastax.driver.core.exceptions.CodecNotFoundException;
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 
 /**
@@ -42,116 +43,172 @@ public interface GettableByNameData {
 
     /**
      * Returns the value for {@code name} as a boolean.
+     * <p>
+     * This method uses the {@link CodecRegistry} to find a codec to convert the underlying CQL type to a Java {@code boolean}
+     * (for CQL type {@code boolean}, this will be the built-in codec).
      *
      * @param name the name to retrieve.
-     * @return the boolean value for {@code name}. If the value is NULL,
-     * {@code false} is returned.
+     * @return the boolean value for {@code name}. If the value is NULL, {@code false} is returned.
+     * If you need to distinguish NULL and false values, check first with {@link #isNull(String)} or use {@code get(name, Boolean.class)}.
      *
      * @throws IllegalArgumentException if {@code name} is not valid name for this object.
+     * @throws CodecNotFoundException if there is no registered codec to convert the underlying CQL
+     * type to a boolean.
      */
     public boolean getBool(String name);
 
     /**
      * Returns the value for {@code name} as a byte.
+     * <p>
+     * This method uses the {@link CodecRegistry} to find a codec to convert the underlying CQL type to a Java {@code byte}
+     * (for CQL type {@code tinyint}, this will be the built-in codec).
      *
      * @param name the name to retrieve.
-     * @return the value for {@code name} as a byte. If the value is NULL,
+     * @return the value for {@code name} as a byte. If the value is NULL, {@code 0} is returned.
+     * If you need to distinguish NULL and 0, check first with {@link #isNull(String)} or use {@code get(name, Byte.class)}.
      * {@code 0} is returned.
      *
      * @throws IllegalArgumentException if {@code name} is not valid name for this object.
+     * @throws CodecNotFoundException if there is no registered codec to convert the underlying CQL
+     * type to a byte.
      */
     public byte getByte(String name);
 
     /**
      * Returns the value for {@code name} as a short.
+     * <p>
+     * This method uses the {@link CodecRegistry} to find a codec to convert the underlying CQL type to a Java {@code short}
+     * (for CQL type {@code smallint}, this will be the built-in codec).
      *
      * @param name the name to retrieve.
-     * @return the value for {@code name} as a short. If the value is NULL,
+     * @return the value for {@code name} as a short. If the value is NULL, {@code 0} is returned.
+     * If you need to distinguish NULL and 0, check first with {@link #isNull(String)} or use {@code get(name, Short.class)}.
      * {@code 0} is returned.
      *
      * @throws IllegalArgumentException if {@code name} is not valid name for this object.
+     * @throws CodecNotFoundException if there is no registered codec to convert the underlying CQL
+     * type to a short.
      */
     public short getShort(String name);
 
     /**
      * Returns the value for {@code name} as an integer.
+     * <p>
+     * This method uses the {@link CodecRegistry} to find a codec to convert the underlying CQL type to a Java {@code int}
+     * (for CQL type {@code int}, this will be the built-in codec).
      *
      * @param name the name to retrieve.
-     * @return the value for {@code name} as an integer. If the value is NULL,
+     * @return the value for {@code name} as an integer. If the value is NULL, {@code 0} is returned.
+     * If you need to distinguish NULL and 0, check first with {@link #isNull(String)} or use {@code get(name, Integer.class)}.
      * {@code 0} is returned.
      *
      * @throws IllegalArgumentException if {@code name} is not valid name for this object.
+     * @throws CodecNotFoundException if there is no registered codec to convert the underlying CQL
+     * type to an int.
      */
     public int getInt(String name);
 
     /**
      * Returns the value for {@code name} as a long.
+     * <p>
+     * This method uses the {@link CodecRegistry} to find a codec to convert the underlying CQL type to a Java {@code byte}
+     * (for CQL types {@code bigint} and {@code counter}, this will be the built-in codec).
      *
      * @param name the name to retrieve.
-     * @return the value for {@code name} as a long. If the value is NULL,
-     * {@code 0L} is returned.
+     * @return the value for {@code name} as a long. If the value is NULL, {@code 0L} is returned.
+     * If you need to distinguish NULL and 0L, check first with {@link #isNull(String)} or use {@code get(name, Long.class)}.
      *
      * @throws IllegalArgumentException if {@code name} is not valid name for this object.
+     * @throws CodecNotFoundException if there is no registered codec to convert the underlying CQL
+     * type to a long.
      */
     public long getLong(String name);
 
     /**
      * Returns the value for {@code name} as a date.
+     * <p>
+     * This method uses the {@link CodecRegistry} to find a codec to convert the underlying CQL type to a {@code Date}
+     * (for CQL type {@code timestamp}, this will be the built-in codec).
      *
      * @param name the name to retrieve.
      * @return the value for {@code name} as a date. If the value is NULL,
      * {@code null} is returned.
      *
      * @throws IllegalArgumentException if {@code name} is not valid name for this object.
+     * @throws CodecNotFoundException if there is no registered codec to convert the underlying CQL
+     * type to a {@code Date}.
      */
     public Date getTimestamp(String name);
 
     /**
      * Returns the value for {@code name} as a date (without time).
+     * <p>
+     * This method uses the {@link CodecRegistry} to find a codec to convert the underlying CQL type to a {@link LocalDate}
+     * (for CQL type {@code date}, this will be the built-in codec).
      *
      * @param name the name to retrieve.
      * @return the value for {@code name} as a date. If the value is NULL,
      * {@code null} is returned.
      *
      * @throws IllegalArgumentException if {@code name} is not valid name for this object.
+     * @throws CodecNotFoundException if there is no registered codec to convert the underlying CQL
+     * type to a {@code LocalDate}.
      */
     public LocalDate getDate(String name);
 
     /**
      * Returns the value for {@code name} as a long in nanoseconds since midnight.
+     * <p>
+     * This method uses the {@link CodecRegistry} to find a codec to convert the underlying CQL type to a Java {@code long}
+     * (for CQL type {@code time}, this will be the built-in codec).
      *
      * @param name the name to retrieve.
      * @return the value for {@code name} as a long. If the value is NULL,
      * {@code 0L} is returned.
      *
      * @throws IllegalArgumentException if {@code name} is not valid name for this object.
+     * @throws CodecNotFoundException if there is no registered codec to convert the underlying CQL
+     * type to a long.
      */
     public long getTime(String name);
 
     /**
      * Returns the value for {@code name} as a float.
+     * <p>
+     * This method uses the {@link CodecRegistry} to find a codec to convert the underlying CQL type to a Java {@code float}
+     * (for CQL type {@code float}, this will be the built-in codec).
      *
      * @param name the name to retrieve.
-     * @return the value for {@code name} as a float. If the value is NULL,
-     * {@code 0.0f} is returned.
+     * @return the value for {@code name} as a float. If the value is NULL, {@code 0.0f} is returned.
+     * If you need to distinguish NULL and 0.0f, check first with {@link #isNull(String)} or use {@code get(name, Float.class)}.
      *
      * @throws IllegalArgumentException if {@code name} is not valid name for this object.
+     * @throws CodecNotFoundException if there is no registered codec to convert the underlying CQL
+     * type to a float.
      */
     public float getFloat(String name);
 
     /**
      * Returns the value for {@code name} as a double.
+     * <p>
+     * This method uses the {@link CodecRegistry} to find a codec to convert the underlying CQL type to a Java {@code double}
+     * (for CQL type {@code double}, this will be the built-in codec).
      *
      * @param name the name to retrieve.
-     * @return the value for {@code name} as a double. If the value is NULL,
-     * {@code 0.0} is returned.
+     * @return the value for {@code name} as a double. If the value is NULL, {@code 0.0} is returned.
+     * If you need to distinguish NULL and 0.0, check first with {@link #isNull(String)} or use {@code get(name, Double.class)}.
      *
      * @throws IllegalArgumentException if {@code name} is not valid name for this object.
+     * @throws CodecNotFoundException if there is no registered codec to convert the underlying CQL
+     * type to a double.
      */
     public double getDouble(String name);
 
     /**
      * Returns the value for {@code name} as a ByteBuffer.
+     * <p>
+     * This method does not use any codec; it returns a copy of the binary representation of the value. It is up to the
+     * caller to convert the returned value appropriately.
      *
      * Note: this method always return the bytes composing the value, even if
      * the column is not of type BLOB. That is, this method never throw an
@@ -169,74 +226,103 @@ public interface GettableByNameData {
     /**
      * Returns the value for {@code name} as a byte array.
      * <p>
-     * Note that this method validate that the column is of type BLOB. If you want to retrieve
-     * the bytes for any type, use {@link #getBytesUnsafe(String)} instead.
+     * This method uses the {@link CodecRegistry} to find a codec to convert the underlying CQL type to a Java {@code ByteBuffer}
+     * (for CQL type {@code blob}, this will be the built-in codec).
      *
      * @param name the name to retrieve.
      * @return the value for {@code name} as a byte array. If the value is NULL,
      * {@code null} is returned.
      *
      * @throws IllegalArgumentException if {@code name} is not valid name for this object.
+     * @throws CodecNotFoundException if there is no registered codec to convert the underlying CQL
+     * type to a {@code ByteBuffer}.
      */
     public ByteBuffer getBytes(String name);
 
     /**
      * Returns the value for {@code name} as a string.
+     * <p>
+     * This method uses the {@link CodecRegistry} to find a codec to convert the underlying CQL type to a Java string
+     * (for CQL types {@code text}, {@code varchar} and {@code ascii}, this will be the built-in codec).
      *
      * @param name the name to retrieve.
      * @return the value for {@code name} as a string. If the value is NULL,
      * {@code null} is returned.
      *
      * @throws IllegalArgumentException if {@code name} is not valid name for this object.
+     * @throws CodecNotFoundException if there is no registered codec to convert the underlying CQL
+     * type to a string.
      */
     public String getString(String name);
 
     /**
      * Returns the value for {@code name} as a variable length integer.
+     * <p>
+     * This method uses the {@link CodecRegistry} to find a codec to convert the underlying CQL type to a {@code BigInteger}
+     * (for CQL type {@code varint}, this will be the built-in codec).
      *
      * @param name the name to retrieve.
      * @return the value for {@code name} as a variable length integer.
      * If the value is NULL, {@code null} is returned.
      *
      * @throws IllegalArgumentException if {@code name} is not valid name for this object.
+     * @throws CodecNotFoundException if there is no registered codec to convert the underlying CQL
+     * type to a {@code BigInteger}.
      */
     public BigInteger getVarint(String name);
 
     /**
      * Returns the value for {@code name} as a variable length decimal.
+     * <p>
+     * This method uses the {@link CodecRegistry} to find a codec to convert the underlying CQL type to a {@code BigDecimal}
+     * (for CQL type {@code decimal}, this will be the built-in codec).
      *
      * @param name the name to retrieve.
      * @return the value for {@code name} as a variable length decimal.
      * If the value is NULL, {@code null} is returned.
      *
      * @throws IllegalArgumentException if {@code name} is not valid name for this object.
+     * @throws CodecNotFoundException if there is no registered codec to convert the underlying CQL
+     * type to a {@code BigDecimal}.
      */
     public BigDecimal getDecimal(String name);
 
     /**
      * Returns the value for {@code name} as a UUID.
+     * <p>
+     * This method uses the {@link CodecRegistry} to find a codec to convert the underlying CQL type to a {@code UUID}
+     * (for CQL types {@code uuid} and {@code timeuuid}, this will be the built-in codec).
      *
      * @param name the name to retrieve.
      * @return the value for {@code name} as a UUID.
      * If the value is NULL, {@code null} is returned.
      *
      * @throws IllegalArgumentException if {@code name} is not valid name for this object.
+     * @throws CodecNotFoundException if there is no registered codec to convert the underlying CQL
+     * type to a {@code UUID}.
      */
     public UUID getUUID(String name);
 
     /**
      * Returns the value for {@code name} as an InetAddress.
+     * <p>
+     * This method uses the {@link CodecRegistry} to find a codec to convert the underlying CQL type to an {@code InetAddress}
+     * (for CQL type {@code inet}, this will be the built-in codec).
      *
      * @param name the name to retrieve.
      * @return the value for {@code name} as an InetAddress.
      * If the value is NULL, {@code null} is returned.
      *
      * @throws IllegalArgumentException if {@code name} is not valid name for this object.
+     * @throws CodecNotFoundException if there is no registered codec to convert the underlying CQL
+     * type to a {@code InetAddress}.
      */
     public InetAddress getInet(String name);
 
     /**
      * Returns the value for {@code name} as a list.
+     * <p>
+     * This method uses the {@link CodecRegistry} to find a codec to convert the underlying CQL type to a list of the specified type.
      * <p>
      * If the type of the elements is generic, use {@link #getList(String, TypeToken)}.
      * <p>
@@ -254,11 +340,15 @@ public interface GettableByNameData {
      * {@code T} objects.
      *
      * @throws IllegalArgumentException if {@code name} is not valid name for this object.
+     * @throws CodecNotFoundException if there is no registered codec to convert the underlying CQL
+     * type to a list.
      */
     public <T> List<T> getList(String name, Class<T> elementsClass);
 
     /**
      * Returns the value for {@code name} as a list.
+     * <p>
+     * This method uses the {@link CodecRegistry} to find a codec to convert the underlying CQL type to a list of the specified type.
      * <p>
      * Use this variant with nested collections, which produce a generic element type:
      * <pre>
@@ -279,11 +369,15 @@ public interface GettableByNameData {
      * {@code T} objects.
      *
      * @throws IllegalArgumentException if {@code name} is not valid name for this object.
+     * @throws CodecNotFoundException if there is no registered codec to convert the underlying CQL
+     * type to a list.
      */
     public <T> List<T> getList(String name, TypeToken<T> elementsType);
 
     /**
      * Returns the value for {@code name} as a set.
+     * <p>
+     * This method uses the {@link CodecRegistry} to find a codec to convert the underlying CQL type to a set of the specified type.
      * <p>
      * If the type of the elements is generic, use {@link #getSet(String, TypeToken)}.
      * <p>
@@ -301,11 +395,15 @@ public interface GettableByNameData {
      * {@code T} objects.
      *
      * @throws IllegalArgumentException if {@code name} is not valid name for this object.
+     * @throws CodecNotFoundException if there is no registered codec to convert the underlying CQL
+     * type to a set.
      */
     public <T> Set<T> getSet(String name, Class<T> elementsClass);
 
     /**
      * Returns the value for {@code name} as a set.
+     * <p>
+     * This method uses the {@link CodecRegistry} to find a codec to convert the underlying CQL type to a set of the specified type.
      * <p>
      * Use this variant with nested collections, which produce a generic element type:
      * <pre>
@@ -326,11 +424,15 @@ public interface GettableByNameData {
      * {@code T} objects.
      *
      * @throws IllegalArgumentException if {@code name} is not valid name for this object.
+     * @throws CodecNotFoundException if there is no registered codec to convert the underlying CQL
+     * type to a set.
      */
     public <T> Set<T> getSet(String name, TypeToken<T> elementsType);
 
     /**
      * Returns the value for {@code name} as a map.
+     * <p>
+     * This method uses the {@link CodecRegistry} to find a codec to convert the underlying CQL type to a map of the specified types.
      * <p>
      * If the type of the keys and/or values is generic, use {@link #getMap(String, TypeToken, TypeToken)}.
      * <p>
@@ -349,11 +451,15 @@ public interface GettableByNameData {
      * {@code K} to {@code V} objects.
      *
      * @throws IllegalArgumentException if {@code name} is not valid name for this object.
+     * @throws CodecNotFoundException if there is no registered codec to convert the underlying CQL
+     * type to a map.
      */
     public <K, V> Map<K, V> getMap(String name, Class<K> keysClass, Class<V> valuesClass);
 
     /**
      * Returns the value for {@code name} as a map.
+     * <p>
+     * This method uses the {@link CodecRegistry} to find a codec to convert the underlying CQL type to a map of the specified types.
      * <p>
      * Use this variant with nested collections, which produce a generic element type:
      * <pre>
@@ -375,40 +481,53 @@ public interface GettableByNameData {
      * {@code K} to {@code V} objects.
      *
      * @throws IllegalArgumentException if {@code name} is not valid name for this object.
+     * @throws CodecNotFoundException if there is no registered codec to convert the underlying CQL
+     * type to a map.
      */
     public <K, V> Map<K, V> getMap(String name, TypeToken<K> keysType, TypeToken<V> valuesType);
 
     /**
      * Return the value for {@code name} as a UDT value.
+     * <p>
+     * This method uses the {@link CodecRegistry} to find a codec to convert the underlying CQL type to a {@code UDTValue}
+     * (if the CQL type is a UDT, the registry will generate a codec automatically).
      *
      * @param name the name to retrieve.
      * @return the value of {@code name} as a UDT value. If the value is NULL,
      * then {@code null} will be returned.
      *
      * @throws IllegalArgumentException if {@code name} is not valid name for this object.
+     * @throws CodecNotFoundException if there is no registered codec to convert the underlying CQL
+     * type to a {@code UDTValue}.
      */
     public UDTValue getUDTValue(String name);
 
     /**
      * Return the value for {@code name} as a tuple value.
+     * <p>
+     * This method uses the {@link CodecRegistry} to find a codec to convert the underlying CQL type to a {@code TupleValue}
+     * (if the CQL type is a tuple, the registry will generate a codec automatically).
      *
      * @param name the name to retrieve.
      * @return the value of {@code name} as a tuple value. If the value is NULL,
      * then {@code null} will be returned.
      *
      * @throws IllegalArgumentException if {@code name} is not valid name for this object.
+     * @throws CodecNotFoundException if there is no registered codec to convert the underlying CQL
+     * type to a {@code TupleValue}.
      */
     public TupleValue getTupleValue(String name);
 
     /**
      * Returns the value for {@code name} as the Java type matching its CQL type.
      * <p>
-     * Note: if two or more codecs are available
-     * for the underlying CQL type, <em>the one that will be used will be
-     * the first one to be registered.</em>.
+     * This method uses the {@link CodecRegistry} to find the first codec that handles the underlying CQL type. The Java type
+     * of the returned object will be determined by the codec that was selected.
      * <p>
-     * For these reasons, it is generally preferable to use the more
-     * deterministic methods {@link #get(String, Class)} or {@link #get(String, TypeToken)} instead.
+     * Use this method to dynamically inspect elements when types aren't known in advance, for instance if you're writing a
+     * generic row logger. If you know the target Java type, it is generally preferable to use typed getters, such as the
+     * ones for built-in types ({@link #getBool(String)}, {@link #getInt(String)}, etc.), or {@link #get(String, Class)} and
+     * {@link #get(String, TypeToken)} for custom types.
      *
      * @param name the name to retrieve.
      * @return the value of {@code name} as the Java type matching its CQL type.
@@ -416,19 +535,17 @@ public interface GettableByNameData {
      * If it is NULL and is a collection type, an empty (immutable) collection is returned.
      *
      * @throws IllegalArgumentException if {@code name} is not a valid name for this object.
+     *
+     * @see CodecRegistry#codecFor(DataType)
      */
     Object getObject(String name);
 
     /**
      * Returns the value for {@code name} converted to the given Java type.
      * <p>
-     * A suitable {@link TypeCodec} instance for for the underlying CQL type and {@code targetClass} must
-     * have been previously registered with the {@link CodecRegistry} currently in use.
+     * This method uses the {@link CodecRegistry} to find a codec to convert the underlying CQL type to the given Java type.
      * <p>
-     * This method should be used instead of {@link #getObject(String)} in cases
-     * where more than one codec is registered for the same CQL type; specifying the Java class
-     * allows the {@link CodecRegistry} to narrow down the search and return only an exactly-matching codec (if any),
-     * thus avoiding any risk of ambiguity.
+     * If the target type is generic, use {@link #get(String, TypeToken)}.
      * <p>
      * Implementation note: the actual object returned by this method will depend
      * on the {@link TypeCodec codec} being used; therefore, callers should
@@ -441,22 +558,15 @@ public interface GettableByNameData {
      * @param targetClass The Java type the value should be converted to.
      * @return the value for {@code name} value converted to the given Java type.
      * @throws IllegalArgumentException if {@code name} is not a valid name for this object.
-     * @throws com.datastax.driver.core.exceptions.CodecNotFoundException
-     * if no {@link TypeCodec} instance for {@code targetClass} could be found
-     * by the {@link CodecRegistry} currently in use.
+     * @throws CodecNotFoundException if there is no registered codec to convert the underlying CQL
+     * type to {@code targetClass}.
      */
     <T> T get(String name, Class<T> targetClass);
 
     /**
      * Returns the value for {@code name} converted to the given Java type.
      * <p>
-     * A suitable {@link TypeCodec} instance for for the underlying CQL type and {@code targetType} must
-     * have been previously registered with the {@link CodecRegistry} currently in use.
-     * <p>
-     * This method should be used instead of {@link #getObject(String)} in cases
-     * where more than one codec is registered for the same CQL type; specifying the Java class
-     * allows the {@link CodecRegistry} to narrow down the search and return only an exactly-matching codec (if any),
-     * thus avoiding any risk of ambiguity.
+     * This method uses the {@link CodecRegistry} to find a codec to convert the underlying CQL type to the given Java type.
      * <p>
      * Implementation note: the actual object returned by this method will depend
      * on the {@link TypeCodec codec} being used; therefore, callers should
@@ -469,17 +579,17 @@ public interface GettableByNameData {
      * @param targetType The Java type the value should be converted to.
      * @return the value for {@code name} value converted to the given Java type.
      * @throws IllegalArgumentException if {@code name} is not a valid name for this object.
-     * @throws com.datastax.driver.core.exceptions.CodecNotFoundException
-     * if no {@link TypeCodec} instance for {@code targetType} could be found
-     * by the {@link CodecRegistry} currently in use.
+     * @throws CodecNotFoundException if there is no registered codec to convert the underlying CQL
+     * type to {@code targetType}.
      */
     <T> T get(String name, TypeToken<T> targetType);
 
     /**
      * Returns the value for {@code name} converted using the given {@link TypeCodec}.
      * <p>
-     * Note that this method allows to entirely bypass the {@link CodecRegistry} currently in use
-     * and forces the driver to use the given codec instead.
+     * This method entirely bypasses the {@link CodecRegistry} and forces the driver to use the given codec instead.
+     * This can be useful if the codec would collide with a previously registered one, or if you want to use the
+     * codec just once without registering it.
      * <p>
      * It is the caller's responsibility to ensure that the given codec {@link TypeCodec#accepts(DataType) accepts}
      * the underlying CQL type; failing to do so may result in {@link InvalidTypeException}s being thrown.
