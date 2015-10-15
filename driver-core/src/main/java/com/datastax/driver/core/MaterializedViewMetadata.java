@@ -206,13 +206,19 @@ public class MaterializedViewMetadata extends TableOrView {
     }
 
     @Override
-    public boolean equals(Object other) {
+    public final boolean equals(Object other) {
         if (other == this)
             return true;
         if (!(other instanceof MaterializedViewMetadata))
             return false;
 
         MaterializedViewMetadata that = (MaterializedViewMetadata)other;
+
+        boolean tableCmp = this.baseTable == that.baseTable;
+        if(!tableCmp && this.baseTable != null && that.baseTable != null) {
+            tableCmp = Objects.equal(this.baseTable.getName(), that.baseTable.getName());
+        }
+
         return Objects.equal(this.name, that.name) &&
             Objects.equal(this.id, that.id) &&
             Objects.equal(this.partitionKey, that.partitionKey) &&
@@ -220,13 +226,14 @@ public class MaterializedViewMetadata extends TableOrView {
             Objects.equal(this.columns, that.columns) &&
             Objects.equal(this.options, that.options) &&
             Objects.equal(this.clusteringOrder, that.clusteringOrder) &&
-            Objects.equal(this.baseTable.getName(), that.baseTable.getName()) &&
+            tableCmp &&
+            Objects.equal(this.whereClause, that.whereClause) &&
             this.includeAllColumns == that.includeAllColumns;
     }
 
     @Override
-    public int hashCode() {
-        return Objects.hashCode(name, id, partitionKey, clusteringColumns, columns, options, clusteringOrder,
-            baseTable.getName(), includeAllColumns);
+    public final int hashCode() {
+        return Objects.hashCode(name, id, partitionKey, clusteringColumns, columns, options, clusteringOrder, whereClause,
+            baseTable == null ? null : baseTable.getName(), includeAllColumns);
     }
 }
