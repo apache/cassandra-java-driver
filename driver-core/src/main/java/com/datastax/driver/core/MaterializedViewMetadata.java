@@ -60,7 +60,7 @@ public class MaterializedViewMetadata extends TableOrView {
 
         String name = row.getString("view_name");
         String tableName = row.getString("base_table_name");
-        TableMetadata baseTable = keyspace.getTable(tableName);
+        TableMetadata baseTable = keyspace.tables.get(tableName);
         if(baseTable == null) {
             logger.trace(String.format("Cannot find base table %s for materialized view %s.%s: "
                     + "Cluster.getMetadata().getKeyspace(\"%s\").getView(\"%s\") will return null",
