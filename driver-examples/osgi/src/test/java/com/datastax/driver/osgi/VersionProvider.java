@@ -15,6 +15,9 @@
  */
 package com.datastax.driver.osgi;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import com.jcabi.manifests.Manifests;
 
 /**
@@ -25,11 +28,23 @@ import com.jcabi.manifests.Manifests;
  */
 public class VersionProvider {
 
+    private static final Pattern versionPattern = Pattern.compile(("(\\d+.\\d+\\.\\d+)(.*)"));
+
     private static String PROJECT_VERSION;
     static {
         String bundleName = Manifests.read("Bundle-SymbolicName");
         if (bundleName.equals("com.datastax.driver.osgi")) {
-            PROJECT_VERSION = Manifests.read("Bundle-Version").replaceAll("\\.SNAPSHOT", "-SNAPSHOT");
+            String bundleVersion = Manifests.read("Bundle-Version");
+            Matcher matcher = versionPattern.matcher(bundleVersion);
+            if(matcher.matches() && matcher.groupCount() == 2) {
+                String majorVersion = matcher.group(1);
+                // Replace all instances of '.' after the main version with '-' to properly
+                // resolve the correct version.
+                String rest = matcher.group(2).replaceAll("\\.", "-");
+                PROJECT_VERSION = majorVersion + rest;
+            } else {
+                PROJECT_VERSION = Manifests.read("Bundle-Version");
+            }
         } else {
             throw new RuntimeException("Couldn't resolve bundle manifest (try building with mvn compile)");
         }
