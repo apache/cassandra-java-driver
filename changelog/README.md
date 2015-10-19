@@ -3,6 +3,7 @@
 ### 2.0.12 (in progress)
 
 - [bug] Fix Cluster.connect with a case-sensitive keyspace (JAVA-950)
+- [bug] Don't trigger reconnection before initialization complete (JAVA-954)
 
 
 ### 2.0.11
