@@ -2,6 +2,8 @@
 
 ### 2.0.11.1 (in progress)
 
+- [bug] Don't trigger reconnection before initialization complete (JAVA-954)
+
 
 ### 2.0.11
 

@@ -1396,6 +1396,7 @@ public class Cluster implements Closeable {
                             loadBalancingPolicy().onDown(host);
                             for (Host.StateListener listener : listeners)
                                 listener.onDown(host);
+                            startPeriodicReconnectionAttempt(host, true);
                         }
 
                         for (Host host : allHosts) {
