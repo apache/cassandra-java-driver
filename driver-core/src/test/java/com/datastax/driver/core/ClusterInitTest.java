@@ -129,8 +129,10 @@ public class ClusterInitTest {
             verify(socketOptions, atMost(7)).getKeepAlive();
 
             assertThat(cluster).host(realHostAddress).isNotNull().hasState(UP);
-            for (FakeHost failingHost : failingHosts)
+            for (FakeHost failingHost : failingHosts) {
                 assertThat(cluster).host(failingHost.address).hasState(DOWN);
+                assertThat(cluster).host(failingHost.address).isReconnectingFromDown();
+            }
             assertThat(cluster).host(missingHostAddress).isNull();
 
         } finally {
@@ -141,6 +143,39 @@ public class ClusterInitTest {
             if (scassandra != null)
                 scassandra.stop();
         }
+    }
+
+    /**
+     * Validates that if hosts are unreachable during Cluster initialization, no background reconnection to them
+     * is scheduled before the initialization is complete.
+     *
+     * @test_category connection
+     * @jira_ticket JAVA-954
+     * @expected_result No reconnection scheduled.
+     */
+    @Test(groups="short", expectedExceptions = NoHostAvailableException.class)
+    public void should_not_schedule_reconnections_before_init_complete() {
+        // Both contact points time out so we're sure we'll try both of them and init will never complete.
+        List<FakeHost> hosts = Lists.newArrayList(
+            new FakeHost(CCMBridge.ipOfNode(0), 9042, THROWING_CONNECT_TIMEOUTS),
+            new FakeHost(CCMBridge.ipOfNode(0), 9042, THROWING_CONNECT_TIMEOUTS));
+        // Use a low reconnection interval and keep the default connect timeout (5 seconds). So if a reconnection was scheduled,
+        // we would see a call to the reconnection policy.
+        CountingReconnectionPolicy reconnectionPolicy = new CountingReconnectionPolicy(new ConstantReconnectionPolicy(100));
+        Cluster cluster = Cluster.builder()
+            .addContactPoints(hosts.get(0).address, hosts.get(1).address)
+            .withReconnectionPolicy(reconnectionPolicy)
+            .build();
+        try {
+            cluster.init();
+        } finally {
+            assertThat(reconnectionPolicy.count.get()).isEqualTo(0);
+            for (FakeHost fakeHost : hosts) {
+                fakeHost.stop();
+            }
+        }
+        // We don't test that reconnections are scheduled if init succeeds, but that's covered in
+        // should_handle_failing_or_missing_contact_points
     }
 
     /**
