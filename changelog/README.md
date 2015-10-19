@@ -16,6 +16,7 @@
 - [improvement] Warn if a custom codec collides with an existing one (JAVA-934)
 - [improvement] Allow typed getters/setters to target any CQL type (JAVA-940)
 - [bug] Fix Cluster.connect with a case-sensitive keyspace (JAVA-950)
+- [bug] Fix MaterializedViewMetadata when base table name is case sensitive (JAVA-953)
 
 
 ### 3.0.0-alpha3

@@ -77,7 +77,7 @@ public class TableMetadataAssert extends AbstractAssert<TableMetadataAssert, Tab
     }
 
     public TableMetadataAssert hasMaterializedView(MaterializedViewMetadata expected) {
-        assertThat(actual.getView(expected.getName())).isNotNull().isEqualTo(expected);
+        assertThat(actual.getView(Metadata.quote(expected.getName()))).isNotNull().isEqualTo(expected);
         return this;
     }
 

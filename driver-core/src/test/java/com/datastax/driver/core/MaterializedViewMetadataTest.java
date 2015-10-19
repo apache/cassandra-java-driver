@@ -94,16 +94,16 @@ public class MaterializedViewMetadataTest extends CCMBridge.PerClassSingleNodeCl
     public void should_create_view_metadata_with_quoted_identifiers() {
         // given
         String createTable = String.format(
-            "CREATE TABLE %s.t1 ("
+            "CREATE TABLE %s.\"T1\" ("
                 + "\"theKey\" int, "
                 + "\"the;Clustering\" int, "
                 + "\"the Value\" int, "
                 + "PRIMARY KEY (\"theKey\", \"the;Clustering\"))",
             keyspace);
         String createMV = String.format(
-            "CREATE MATERIALIZED VIEW %s.mv1 AS "
+            "CREATE MATERIALIZED VIEW %s.\"Mv1\" AS "
                 + "SELECT \"theKey\", \"the;Clustering\", \"the Value\" "
-                + "FROM %s.t1 "
+                + "FROM %s.\"T1\" "
                 + "WHERE \"theKey\" IS NOT NULL AND \"the;Clustering\" IS NOT NULL AND \"the Value\" IS NOT NULL "
                 + "PRIMARY KEY (\"theKey\", \"the;Clustering\")",
             keyspace, keyspace);
@@ -111,13 +111,13 @@ public class MaterializedViewMetadataTest extends CCMBridge.PerClassSingleNodeCl
         session.execute(createTable);
         session.execute(createMV);
         // then
-        TableMetadata table = cluster.getMetadata().getKeyspace(keyspace).getTable("t1");
-        MaterializedViewMetadata mv = cluster.getMetadata().getKeyspace(keyspace).getMaterializedView("mv1");
-        assertThat(table).isNotNull().hasName("t1").hasMaterializedView(mv).hasNumberOfColumns(3);
+        TableMetadata table = cluster.getMetadata().getKeyspace(keyspace).getTable("\"T1\"");
+        MaterializedViewMetadata mv = cluster.getMetadata().getKeyspace(keyspace).getMaterializedView("\"Mv1\"");
+        assertThat(table).isNotNull().hasName("T1").hasMaterializedView(mv).hasNumberOfColumns(3);
         assertThat(table.getColumns().get(0)).isNotNull().hasName("theKey").isPartitionKey().hasType(cint());
         assertThat(table.getColumns().get(1)).isNotNull().hasName("the;Clustering").isClusteringColumn().hasType(cint());
         assertThat(table.getColumns().get(2)).isNotNull().hasName("the Value").isRegularColumn().hasType(cint());
-        assertThat(mv).isNotNull().hasName("mv1").hasBaseTable(table).hasNumberOfColumns(3);
+        assertThat(mv).isNotNull().hasName("Mv1").hasBaseTable(table).hasNumberOfColumns(3);
         assertThat(mv.getColumns().get(0)).isNotNull().hasName("theKey").isPartitionKey().hasType(cint());
         assertThat(mv.getColumns().get(1)).isNotNull().hasName("the;Clustering").isClusteringColumn().hasType(cint());
         assertThat(mv.getColumns().get(2)).isNotNull().hasName("the Value").isRegularColumn().hasType(cint());
