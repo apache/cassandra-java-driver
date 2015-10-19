@@ -41,7 +41,7 @@ it will lookup for an appropriate codec in a `CodecRegistry`.
 `CodecRegistry` is also used to manually register user-created codecs (see below for detailed instructions).
 It also caches codec lookup results for faster execution whenever possible.
 
-Refer to the [javadocs][CodecRegistry] of User `CodecRegistry` for more information.
+Refer to the [javadocs][CodecRegistry] of `CodecRegistry` for more information.
 
 ### Implementing and using custom codecs
 
@@ -55,7 +55,7 @@ The (admittedly simplistic) table structure is as follows:
 CREATE TABLE t (id int PRIMARY KEY, json VARCHAR);
 ```
 
-The first step is to implement a suitable codec. Using Jackson, here is what a Json codec could like like:
+The first step is to implement a suitable codec. Using Jackson, here is what a Json codec could look like:
 
 ```java
 /**
@@ -87,6 +87,7 @@ public class JsonCodec<T> extends TypeCodec<T> {
             return null;
         try {
             byte[] b = new byte[bytes.remaining()];
+            // always duplicate the ByteBuffer instance before consuming it!
             bytes.duplicate().get(b);
             return (T)objectMapper.readValue(b, toJacksonJavaType());
         } catch (IOException e) {
@@ -145,7 +146,7 @@ myCodecRegistry.register(myJsonCodec);
 ```
 
 As you can see, the easiest way to do so is to access the `Cluster`'s `CodecRegistry`.
-By default, `Cluster` instances will use `CodecRegistry.DEFAULT_INSTANCE`,  
+By default, `Cluster` instances will use `CodecRegistry.DEFAULT_INSTANCE`, 
 which should be adequate for most users.
 
 It is however possible to create a `Cluster` using a different `CodecRegistry`:
@@ -156,8 +157,9 @@ Cluster cluster = new Cluster.builder().withCodecRegistry(myCodecRegistry).build
 ```
 
 Note: when you instantiate a new `CodecRegistry`, it automatically registers all the default codecs used by the driver.
-This ensures that the new registry will not lack of an essential codec. *You cannot deregister default codecs, only
-register new ones*.
+This ensures that the new registry will not lack of an essential codec. *You cannot deregister nor override 
+an already-registered codec, only register new ones*. If you try to register a codec that would override
+an existing one, the driver will log a warning and ignore it.
 
 From now on, your custom codec is fully operational. It will be used every time the driver encounters
 a `MyPojo` instance when executing queries, or when you ask it to retrieve a `MyPojo` instance from a `ResultSet`.
@@ -199,50 +201,41 @@ make sure that you use preferably the `get()` and `set()` methods: they
 avoid any ambiguity by requiring the user to explicitly specify the desired Java type,
 thus forcing the driver to pick the right codec for the right task.
 
-### Support for parameterized types
-
-`get()` and `set()` can even be used to retrieve collections or other
-user-defined parameterized types; simply use the `get()` and `set()` variants that
-take Guava's [TypeToken] parameter:
-
-```java
-Row row = ...
-List<MyPojo> myPojos = row.get("jsonList", new TypeToken<List<MyPojo>>(){});
-// or alternatively, the following also works for collections:
-List<MyPojo> myPojos = row.getList("jsonList", MyPojo.class);
-```
-
-### Support for collections, user types, tuples and Java Enums
+### On-the-fly codec generation
 
 `CodecRegistry` instances not only store default codecs and user-defined codecs;
 they can also create new codecs on the fly, based on the set of codecs they currently hold.
+They can manage the following mappings:
 
-* Codecs for [UserType] instances are created on the fly using [UDTCodec];
-* Codecs for [TupleType] instances are created on the fly using [TupleCodec];
-* Codecs for Java Enums are created on the fly using [EnumStringCodec];
-* Codecs for collections are created on the fly using [ListCodec],
-  [SetCodec] and [MapCodec], if their element types can be handled by
-  existing codecs (or codecs that can themselves be generated).
+* Collections (list, sets and maps) of known types. For example, if you registered a `TypeCodec<A>`, you get `List<A>>` handled for free. This works recursively for nested collections;
+* [UserType] instances are automatically mapped to [UDTValue] objects. All registered codecs are available recursively to the UDT's fields;
+* [TupleType] instances are automatically mapped to [TupleValue] objects (with the same rules for nested fields);
+* [CustomType] instances are automatically mapped to [ByteBuffer] instances.
 
 This way, the user does not have to manually register all derived codecs for a given "base" codec.
 However, other combinations of Java and CQL types not listed above cannot have their codecs created on the fly;
 such codecs must be manually registered.
 
-The driver also provides another codec for Enums that converts Enum instances to CQL ints
-representing their ordinal position: [EnumIntCodec]. If you plan to use this codec, make sure to register it
-manually, otherwise Enums would be converted using [EnumStringCodec].
-_It is not possible to mix both codecs in the same `CodecRegistry`_.
+If the codec registry encounters a mapping that it can't handle automatically, a [CodecNotFoundException]
+is thrown.
 
-Note that the default set of codecs has no support for
-[Cassandra custom types][AbstractType];
-to be able to deserialize values of such types, you need to manually register an appropriate codec.
+Thanks to on-the-fly codec generation, it is possible to leverage the `JsonCodec` from our previous
+example to retrieve lists of `MyPojo` objects stored in a CQL column of type `list<text>`, without
+the need to explicitly declare a codec for this specific CQL type:
 
-### Using custom codecs with user types and tuples
+```java
+JsonCodec<MyPojo> myJsonCodec = new JsonCodec<MyPojo>(MyPojo.class, objectMapper);
+myCodecRegistry.register(myJsonCodec);
+Row row = ...
+List<MyPojo> myPojos = row.getList("jsonList", MyPojo.class); // works out of the box!
+```
 
-By default, the driver maps user-defined type values and tuple values to [UDTValue] and [TupleValue],
-using the built-in codecs [UDTCodec] and [TupleCodec] respectively.
+### Creating custom codecs for user-defined types (UDTs)
 
-If you want to register a custom codec for a specific user type, follow these steps:
+By default, the driver maps user-defined type values to [UDTValue] instances.
+
+If you want to register a custom codec for a specific user-defined type, 
+follow these steps:
 
 Let's suppose you have a keyspace containing the following type and table:
 
@@ -369,13 +362,10 @@ mapper to generate UDT codecs for you; see
 [this page](../object_mapper/custom_codecs/#implicit-udt-codecs) for more
 information.
 
-### Limitations
+### Support for generic (parameterized) types
 
-#### Generics
-
-Java generic types are fully supported, through Guava's [TypeToken] API. 
-Be sure to only use `get()` and `set()` methods
-that take a `TypeToken` argument:
+Java generic (parameterized) types are fully supported, through Guava's [TypeToken] API. 
+Be sure to only use `get()` and `set()` methods that take a `TypeToken` argument:
 
 ```java
 // this works
@@ -384,98 +374,56 @@ Foo<Bar> foo = row.get(0, new TypeToken<Foo<Bar>>(){})
 Foo<Bar> foo = row.get(0, Foo.class);
 ```
 
-#### Type inheritance
-
-If a codec accepts a Java type that is assignable to the
-desired Java type, that codec may be returned if it is found first
-in the registry, *even if another codec is a better match*.
-
-As a consequence, type inheritance and interfaces should be used with care. 
-Let's consider an example and assume that class `B` extends class `A`:
- 
-1) If you register a codec for `A`, you can pass `B` as the target type,
-because `B` instances are assignable to `A`, and the driver is capable
-of detecting that:
-
-```java
-codecRegistry.register(new ACodec());
-// all work
-A a1 = row.get(0, A.class);
-B b  = row.get(0, B.class);
-A a2 = row.get(0, B.class);
-```
-
-However, because `List<B>` is *not* assignable to `List<A>`:
-
-```java
-codecRegistry.register(new ACodec());
-// this works
-List<A> as1 = row.getList(0, A.class);
-// but this throws CodecNotFoundException
-List<B> bs = row.getList(0, B.class);
-List<? extends A> as2 = row.getList(0, B.class);
-```
-
-2) If you register a codec for `B`, you can't pass `A` as the target type, 
-because no codec matches `A.class` exactly:
-
-```java
-codecRegistry.register(new BCodec());
-// this works
-A a1 = row.get(0, B.class);
-B b  = row.get(0, B.class);
-// but this throws CodecNotFoundException
-A a2 = row.get(0, A.class);
-// and with collections, this works
-List<B> bs = row.getList(0, B.class);
-// but this throws CodecNotFoundException
-List<A> as = row.getList(0, A.class);
-```
-
-The same apply for interfaces.
-
 ### Performance considerations
 
-A codec lookup operation may be costly; to mitigate this, the `CodecRegistry` caches lookup results whenever possible.
+A codec lookup operation may be costly; to mitigate this, the `CodecRegistry` 
+caches lookup results whenever possible.
 
-The following situations are exceptions where it is not possible to cache lookup results:
+When the cache can be used and the registry looks up a codec, the following rules apply:
+
+1. if a result was previously cached for that mapping, it is returned;
+2. otherwise, the registry checks the list of "basic" codecs: the default ones, 
+and the ones that were explicitly registered (in the order that they were registered). 
+It calls each codec's [accepts] methods to determine if it can handle the mapping, 
+and if so, adds it to the cache and returns it;
+3. otherwise, the registry tries to generate a codec on the fly, according to the rules outlined above;
+4. if the creation succeeds, the registry adds the created codec to the cache and returns it;
+5. otherwise, the registry throws [CodecNotFoundException].
+
+The cache can be used as long as _at least the CQL type is known_. The following situations 
+are exceptions where it is _not_ possible to cache lookup results:
 
 * With [SimpleStatement] instances;
 * With [BuiltStatement] instances (created via the Query Builder).
  
 In these places, the driver has no way to determine the right CQL type to use, so it performs 
-a best-effort heuristic to guess which codec to use. 
+a best-effort heuristic to guess which codec to use. The result of this heuristic is never cached.
 
 Beware that in these cases, the lookup performs in average 10x worse. If performance is a key factor for your application,
-consider using prepared statements all the time, and avoid calling ambiguous methods (prefer `get()` and `set()`).
+consider using prepared statements all the time.
 
 [JAVA-721]: https://datastax-oss.atlassian.net/browse/JAVA-721
-[TypeCodec]: http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/TypeCodec.html
-[LocalDate]: http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/LocalDate.html
-[serialize]: http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/TypeCodec.html#serialize(T,%20com.datastax.driver.core.ProtocolVersion)
-[deserialize]: http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/TypeCodec.html#deserialize(java.nio.ByteBuffer,%20com.datastax.driver.core.ProtocolVersion)
-[TypeCodec.format]: http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/TypeCodec.html#format(T)
-[TypeCodec.parse]: http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/TypeCodec.html#parse(java.lang.String)
-[CodecRegistry]: http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/CodecRegistry.html
+[TypeCodec]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/TypeCodec.html
+[LocalDate]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/LocalDate.html
+[ByteBuffer]: http://docs.oracle.com/javase/8/docs/api/java/nio/ByteBuffer.html
+[serialize]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/TypeCodec.html#serialize(T,%20com.datastax.driver.core.ProtocolVersion)
+[deserialize]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/TypeCodec.html#deserialize(java.nio.ByteBuffer,%20com.datastax.driver.core.ProtocolVersion)
+[TypeCodec.format]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/TypeCodec.html#format(T)
+[TypeCodec.parse]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/TypeCodec.html#parse(java.lang.String)
+[accepts]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/TypeCodec.html#accepts-com.datastax.driver.core.DataType-
+[CodecRegistry]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/CodecRegistry.html
+[CodecNotFoundException]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/exceptions/CodecNotFoundException.html
 [Jackson]: http://wiki.fasterxml.com/JacksonHome
 [AbstractType]: https://github.com/apache/cassandra/blob/trunk/src/java/org/apache/cassandra/db/marshal/AbstractType.java
-[EnumStringCodec]: http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/TypeCodec.EnumStringCodec.html
-[EnumIntCodec]: http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/TypeCodec.EnumIntCodec.html
-[UserType]: http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/UserType.html
-[UDTValue]: http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/UDTValue.html
-[UDTCodec]: http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/TypeCodec.UDTCodec.html
-[TupleType]: http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/TupleType.html
-[TupleValue]: http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/TupleValue.html
-[TupleCodec]: http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/TypeCodec.TupleCodec.html
-[ListCodec]: http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/TypeCodec.ListCodec.html
-[SetCodec]: http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/TypeCodec.SetCodec.html
-[MapCodec]: http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/TypeCodec.MapCodec.html
+[UserType]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/UserType.html
+[UDTValue]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/UDTValue.html
+[TupleType]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/TupleType.html
+[TupleValue]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/TupleValue.html
+[CustomType]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/DataType.CustomType.html
 [TypeToken]: http://docs.guava-libraries.googlecode.com/git/javadoc/com/google/common/reflect/TypeToken.html
-[MappingCodec]: http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/TypeCodec.MappingCodec.html
-[StringParsingCodec]: http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/TypeCodec.StringParsingCodec.html
-[SimpleStatement]: http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/SimpleStatement.html
-[BuiltStatement]: http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/BuiltStatement.html
-[setList]: http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/SettableByIndexData.html#setList(int,%20java.util.List)
-[setSet]: http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/SettableByIndexData.html#setSet(int,%20java.util.Set)
-[setMap]: http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/SettableByIndexData.html#setMap(int,%20java.util.Map)
-[setObject]: http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/SettableByIndexData.html#setObject(int,%20V)
+[SimpleStatement]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/SimpleStatement.html
+[BuiltStatement]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/BuiltStatement.html
+[setList]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/SettableByIndexData.html#setList(int,%20java.util.List)
+[setSet]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/SettableByIndexData.html#setSet(int,%20java.util.Set)
+[setMap]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/SettableByIndexData.html#setMap(int,%20java.util.Map)
+[setObject]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/SettableByIndexData.html#setObject(int,%20V)
