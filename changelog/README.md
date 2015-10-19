@@ -1,5 +1,8 @@
 ## Changelog
 
+### 2.0.11.1 (in progress)
+
+
 ### 2.0.11
 
 - [improvement] Log streamid at the trace level on sending request and receiving response (JAVA-718)
