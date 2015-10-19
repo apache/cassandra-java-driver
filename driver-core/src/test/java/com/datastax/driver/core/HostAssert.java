@@ -47,6 +47,12 @@ public class HostAssert extends AbstractAssert<HostAssert, Host> {
         return this;
     }
 
+    public HostAssert isReconnectingFromDown() {
+        assertThat(actual.getReconnectionAttemptFuture() != null && !actual.getReconnectionAttemptFuture().isDone())
+            .isTrue();
+        return this;
+    }
+
     public HostAssert isNotReconnectingFromDown() {
         assertThat(actual.getReconnectionAttemptFuture() != null && !actual.getReconnectionAttemptFuture().isDone())
             .isFalse();
