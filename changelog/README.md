@@ -1,6 +1,6 @@
 ## Changelog
 
-### 3.0.0-beta1 (in progress)
+### 3.0.0-alpha4
 
 - [improvement] Change default consistency level to LOCAL_QUORUM (JAVA-926)
 - [bug] Fix implementation of UserType.hashCode() (JAVA-942)
