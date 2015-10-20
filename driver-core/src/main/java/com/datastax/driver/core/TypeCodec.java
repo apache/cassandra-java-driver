@@ -96,8 +96,9 @@ import static com.datastax.driver.core.DataType.*;
  *         In any case, the codec's behavior in respect to {@code null} values and empty ByteBuffers
  *         should be clearly documented.</li>
  *     <li>TypeCodec implementations that wish to handle Java primitive types <em>must</em> be instantiated with
- *         the wrapper Java class instead, and implement the appropriate interface (see {@link BooleanCodec}
- *         for an example).</li>
+ *         the wrapper Java class instead, and implement the appropriate interface
+ *         (e.g. {@link com.datastax.driver.core.TypeCodec.PrimitiveBooleanCodec} for primitive {@code boolean} types;
+ *         there is one such interface for each Java primitive type).</li>
  *     <li>TypeCodec implementations should not consume {@link ByteBuffer} instances by performing read operations
  *         that modify their current position; if necessary, codecs should {@link ByteBuffer#duplicate()} duplicate} them.</li>
  * </ol>
@@ -518,7 +519,6 @@ public abstract class TypeCodec<T> {
         if (javaType.isPrimitive()) {
             javaType = primitiveToWrapperMap.get(javaType);
         }
-        // TODO accept generics type covariance, i.e. a codec for List<Number> should accept List<Integer>
         return this.javaType.isAssignableFrom(javaType);
     }
 

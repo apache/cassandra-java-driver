@@ -72,12 +72,12 @@ import static com.datastax.driver.core.DataType.Name.SET;
  * <h3>Registering and using custom codecs</h3>
  *
  * To create a custom codec, write a class that extends {@link TypeCodec}, create an instance, and pass it to one of
- * the {@link #register(TypeCodec) register} methods:
+ * the {@link #register(TypeCodec) register} methods; for example, one could create a codec that maps CQL
+ * timestamps to JDK8's {@code java.time.LocalDate}:
  *
  * <pre>
  * {@code
- * // A codec that maps timestamps to JDK8's LocalDate
- * class LocalDateCodec extends TypeCodec<LocalDate> {
+ * class LocalDateCodec extends TypeCodec<java.time.LocalDate> {
  *    ...
  * }
  * myCodecRegistry.register(new LocalDateCodec());
@@ -88,14 +88,14 @@ import static com.datastax.driver.core.DataType.Name.SET;
  *     <li>all driver types that implement {@link GettableByIndexData}, {@link GettableByNameData},
  *     {@link SettableByIndexData} and/or {@link SettableByNameData}. Namely: {@link Row},
  *     {@link BoundStatement}, {@link UDTValue} and {@link TupleValue};</li>
- *     <li>{@link Session#newSimpleStatement(String, Object...) simple statements}.</li>
+ *     <li>{@link Session#newSimpleStatement(String, Object...) simple statements};</li>
+ *     <li>statements created with the {@link com.datastax.driver.core.querybuilder.QueryBuilder#QueryBuilder(Cluster) Query builder}.</li>
  * </ul>
  *
  * Example:
- * <pre>
- * {@code
+ * <pre>{@code
  * Row row = session.executeQuery("select date from some_table where pk = 1").one();
- * LocalDate date = row.get(0, LocalDate.class); // uses LocalDateCodec registered above
+ * java.time.LocalDate date = row.get(0, java.time.LocalDate.class); // uses LocalDateCodec registered above
  * }</pre>
  *
  * You can also bypass the codec registry by passing a standalone codec instance to methods such as
@@ -103,15 +103,18 @@ import static com.datastax.driver.core.DataType.Name.SET;
  *
  * <h3>Codec generation</h3>
  *
- * When a {@code CodecRegistry} cannot find a suitable codec among existing ones, it will attempt to create it on-the-fly:
+ * When a {@code CodecRegistry} cannot find a suitable codec among existing ones, it will attempt to create it on-the-fly.
  * It can manage:
  *
  * <ul>
- *     <li>collections of known types. For example, if you registered a {@code TypeCodec<LocalDate>}, you get
- *     {@code List<LocalDate>>} handled for free. This works recursively for nested collections;</li>
+ *     <li>collections (lists, sets and maps) of known types. For example,
+ *     if you registered a codec for JDK8's {@code java.time.LocalDate} like in the example above, you get
+ *     {@code List<LocalDate>>} and {@code Set<LocalDate>>} handled for free,
+ *     as well as all {@code Map} types whose keys and/or values are {@code java.time.LocalDate}.
+ *     This works recursively for nested collections;</li>
  *     <li>{@link UserType user types}, mapped to {@link UDTValue} objects. Custom codecs are available recursively
  *     to the UDT's fields, so if one of your fields is a {@code timestamp} you can use your {@code LocaDateCodec} to retrieve
- *     it as a {@code LocalDate};</li>
+ *     it as a {@code java.time.LocalDate};</li>
  *     <li>{@link TupleType tuple types}, mapped to {@link TupleValue} (with the same rules for nested fields);</li>
  *     <li>{@link com.datastax.driver.core.DataType.CustomType custom types}, mapped to {@code ByteBuffer}.</li>
  * </ul>
@@ -354,7 +357,7 @@ public final class CodecRegistry {
      * Register the given codecs with this registry.
      *
      * @param codecs The codecs to add to the registry.
-     * @return this Builder (for method chaining).
+     * @return this CodecRegistry (for method chaining).
      *
      * @see #register(TypeCodec)
      */
@@ -368,7 +371,7 @@ public final class CodecRegistry {
      * Register the given codecs with this registry.
      *
      * @param codecs The codecs to add to the registry.
-     * @return this Builder (for method chaining).
+     * @return this CodecRegistry (for method chaining).
      *
      * @see #register(TypeCodec)
      */
@@ -532,6 +535,9 @@ public final class CodecRegistry {
         if (codec == null)
             throw notFound(cqlType, javaType);
         // double-check that the created codec satisfies the initial request
+        // this check can fail specially when creating codecs for collections
+        // e.g. if B extends A and there is a codec registered for A and
+        // we request a codec for List<B>, the registry would generate a codec for List<A>
         if (!codec.accepts(cqlType) || (javaType != null && !codec.accepts(javaType)))
             throw notFound(cqlType, javaType);
         logger.trace("Codec created: {}", codec);
