@@ -43,9 +43,9 @@ The class must provide a default constructor, and all fields (except the
 ones annotated `@Transient`) must have corresponding setters and
 getters.
 
-[table]:http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/mapping/annotations/Table.html
+[table]:http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/annotations/Table.html
 [case-sensitive]:http://docs.datastax.com/en/cql/3.3/cql/cql_reference/ucase-lcase_r.html
-[consistency level]:http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/ConsistencyLevel.html
+[consistency level]:http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/ConsistencyLevel.html
 
 #### Column names
 
@@ -54,7 +54,7 @@ case insensitive column of the same name. If you want to use a different
 name, or [case-sensitive] names, use the [@Column][column] annotation on
 the field.
 
-[column]:http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/mapping/annotations/Column.html
+[column]:http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/annotations/Column.html
 
 #### Primary key fields
 
@@ -78,8 +78,8 @@ private String areaCode;
 The order of the indices must match that of the columns in the table
 declaration.
 
-[pk]:http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/mapping/annotations/PartitionKey.html
-[cc]:http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/mapping/annotations/ClusteringColumn.html
+[pk]:http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/annotations/PartitionKey.html
+[cc]:http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/annotations/ClusteringColumn.html
 [pks]:http://thelastpickle.com/blog/2013/01/11/primary-keys-in-cql.html
 
 #### Enumerations
@@ -105,7 +105,7 @@ CREATE TABLE person (id uuid PRIMARY KEY, name text, gender int);
 private Gender gender;
 ```
 
-[enum]:http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/mapping/annotations/Enumerated.html
+[enum]:http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/annotations/Enumerated.html
 
 #### Computed fields
 
@@ -140,13 +140,13 @@ version (see
 [JAVA-832](https://datastax-oss.atlassian.net/browse/JAVA-832)).
 
 [User Defined Functions]:http://www.planetcassandra.org/blog/user-defined-functions-in-cassandra-3-0/
-[computed]:http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/mapping/annotations/Computed.html
+[computed]:http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/annotations/Computed.html
 
 #### Transient fields
 
 [@Transient][transient] can be used to prevent a field from being mapped.
 
-[transient]:http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/mapping/annotations/Transient.html
+[transient]:http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/annotations/Transient.html
 
 ### Mapping User Types
 
@@ -207,8 +207,8 @@ public static class Company {
 arbitrary level of nesting)
 
 [User Defined Types]:http://docs.datastax.com/en/developer/java-driver/2.1/java-driver/reference/userDefinedTypes.html
-[udt]:http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/mapping/annotations/UDT.html
-[field]:http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/mapping/annotations/Field.html
+[udt]:http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/annotations/UDT.html
+[field]:http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/annotations/Field.html
 
 ### Mapping collections
 
@@ -244,6 +244,6 @@ private Map<Address, List<String>> frozenKeyValueMap;
 private Map<String, List<Address>> frozenValueMap;
 ```
 
-[frozen]:http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/mapping/annotations/Frozen.html
-[frozenkey]:http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/mapping/annotations/FrozenKey.html
-[frozenvalue]:http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/mapping/annotations/FrozenValue.html
+[frozen]:http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/annotations/Frozen.html
+[frozenkey]:http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/annotations/FrozenKey.html
+[frozenvalue]:http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/annotations/FrozenValue.html

@@ -303,4 +303,4 @@ It also turns on slow query tracing as described above.
 </log4j:configuration>
 ```
 
-[query_logger]:http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/QueryLogger.html
+[query_logger]:http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/QueryLogger.html
