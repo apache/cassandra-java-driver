@@ -38,6 +38,8 @@ links:
     href:  https://github.com/datastax/java-driver/releases
 
 versions:
+  - name: 3.0.0-alpha4
+    ref: '3.0.0-alpha4'
   - name: 2.2.0-rc3
     ref: '2.2.0-rc3'
   - name: 2.2.0-rc2
