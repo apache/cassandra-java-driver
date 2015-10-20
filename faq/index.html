@@ -42,7 +42,7 @@
             <div class="col-md-8">
               <form id="search" class="form-search dropdown visible-lg-block" ng-controller="search" ng-class="{open: hasResults}" role="search" ng-submit="submit()" data-spy="affix" data-offset-top="130">
                 <div class="form-group has-feedback">
-                  <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.2.0-rc3')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+                  <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('3.0.0-alpha4')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
                 </div>
                 <ul class="dropdown-menu search-results" role="menu">
                   <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
@@ -63,12 +63,14 @@
               <li>
                 <div class="btn-group">
                   <button id="current-version" class="btn btn-default btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    2.2.0-rc3
+                    3.0.0-alpha4
                     <span class="caret"></span>
                   </button>
                   <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
                   
-                    <li class="disabled"><a href="./">2.2.0-rc3</a></li>
+                    <li class="disabled"><a href="./">3.0.0-alpha4</a></li>
+                  
+                    <li><a href="../2.2.0-rc3/faq/">2.2.0-rc3</a></li>
                   
                     <li><a href="../2.2.0-rc2/faq/">2.2.0-rc2</a></li>
                   
@@ -95,7 +97,7 @@
               
               
               
-              <li><a href="../">Home</a></li>
+              <li><a href="../">Datastax Java Driver for Apache Cassandra</a></li>
               
               
               
@@ -134,12 +136,16 @@
   
   
   
-  <li><a href="../changelog/">Changelog <small>page</small></a></li>
+  <li>
+    <a href="../changelog/">Changelog <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../features/">Features <small>page</small></a></li>
+  <li>
+    <a href="../features/">Features <small>page</small></a>
+  </li>
   
   
   
@@ -152,7 +158,9 @@
   
   
   
-  <li><a href="../upgrade_guide/">Upgrade guide <small>page</small></a></li>
+  <li>
+    <a href="../upgrade_guide/">Upgrade guide <small>page</small></a>
+  </li>
   
   
 </ul>

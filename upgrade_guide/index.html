@@ -42,7 +42,7 @@
             <div class="col-md-8">
               <form id="search" class="form-search dropdown visible-lg-block" ng-controller="search" ng-class="{open: hasResults}" role="search" ng-submit="submit()" data-spy="affix" data-offset-top="130">
                 <div class="form-group has-feedback">
-                  <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.2.0-rc3')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+                  <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('3.0.0-alpha4')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
                 </div>
                 <ul class="dropdown-menu search-results" role="menu">
                   <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
@@ -63,12 +63,14 @@
               <li>
                 <div class="btn-group">
                   <button id="current-version" class="btn btn-default btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    2.2.0-rc3
+                    3.0.0-alpha4
                     <span class="caret"></span>
                   </button>
                   <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
                   
-                    <li class="disabled"><a href="./">2.2.0-rc3</a></li>
+                    <li class="disabled"><a href="./">3.0.0-alpha4</a></li>
+                  
+                    <li><a href="../2.2.0-rc3/upgrade_guide/">2.2.0-rc3</a></li>
                   
                     <li><a href="../2.2.0-rc2/upgrade_guide/">2.2.0-rc2</a></li>
                   
@@ -95,7 +97,7 @@
               
               
               
-              <li><a href="../">Home</a></li>
+              <li><a href="../">Datastax Java Driver for Apache Cassandra</a></li>
               
               
               
@@ -111,7 +113,9 @@
                     <li>
 <a href="#upgrade-guide">Upgrade guide
 </a><ul class="nav nav-pills nav-stacked">
-<li><a href="#2-2-0">2.2.0
+<li><a href="#3-0">3.0
+</a></li>
+<li><a href="#2-1-8">2.1.8
 </a></li>
 <li><a href="#2-1-7">2.1.7
 </a></li>
@@ -181,17 +185,23 @@
   
   
   
-  <li><a href="../changelog/">Changelog <small>page</small></a></li>
+  <li>
+    <a href="../changelog/">Changelog <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../features/">Features <small>page</small></a></li>
+  <li>
+    <a href="../features/">Features <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../faq/">Frequently Asked Questions <small>page</small></a></li>
+  <li>
+    <a href="../faq/">Frequently Asked Questions <small>page</small></a>
+  </li>
   
   
   
@@ -215,16 +225,17 @@
 <p>The purpose of this guide is to detail changes made by successive
 versions of the Java driver.</p>
 
-<h3 id="2-2-0" class="target">2.2.0<a class="anchor" href="#2-2-0" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h3 id="3-0" class="target">3.0<a class="anchor" href="#3-0" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h3>
 
-<p>This version brings parity with Cassandra 2.2.</p>
+<p>This version brings parity with Cassandra 2.2 and 3.0.</p>
 
 <p>It is <strong>not binary compatible</strong> with the driver’s 2.1 branch.
 The main changes were introduced by the custom codecs feature (see below).
 We’ve also seized the opportunity to remove code that was deprecated in 2.1.</p>
 
 <ol>
+<li> The default consistency level in <code>QueryOptions</code> is now <code>LOCAL_QUORUM</code>.</li>
 <li>
 <p><a href="../features/custom_codecs/">Custom codecs</a>
 (<a href="https://datastax-oss.atlassian.net/browse/JAVA-721">JAVA-721</a>)
@@ -335,6 +346,9 @@ All methods that start a query are now instance methods instead of static ones.<
 <p>The driver runtime behavior changes in the following situations:</p>
 
 <ul>
+<li>By default, the driver now returns <u>mutable</u>, <u>non thread-safe</u> instances for CQL collection types;
+This affects methods <code>getList</code>, <code>getSet</code>, <code>getMap</code>, <code>getObject</code> and <code>get</code> for all instances of 
+<code>GettableByIndexData</code> and <code>GettableByNameData</code> (<code>Row</code>, <code>BoundStatement</code>, <code>TupleValue</code> and <code>UDTValue</code>)</li>
 <li>
 <code>RuntimeException</code>s thrown during serialization or deserialization might not be
 the same ones as before, due to the newly-introduced <code>CodecNotFoundException</code>
@@ -514,6 +528,26 @@ explanations). So they become purely informational at this stage.
 However it is a good idea to keep using these annotations and make sure
 they match the schema, in anticipation for the schema generation features
 that will be added in a future version.</p></li>
+<li><p><code>AsyncInitSession</code> has been removed, <code>initAsync()</code> is now part of the
+<code>Session</code> interface (the only purpose of the extra interface was to preserve
+binary compatibility on the 2.1 branch).</p></li>
+<li><p><code>TableMetadata.Options</code> has been made a top-level class and renamed to
+<code>TableOptionsMetadata</code>. It is now also used by <code>MaterializedViewMetadata</code>.</p></li>
+</ol>
+
+<h3 id="2-1-8" class="target">2.1.8<a class="anchor" href="#2-1-8" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<p>2.1.8 is binary-compatible with 2.1.7 but introduces a small change in the 
+driver’s behavior:</p>
+
+<ol>
+<li>The list of contact points provided at startup is now shuffled before trying
+to open the control connection, so that multiple clients with the same contact
+points don’t all pick the same control host. As a result, you can’t assume that
+the driver will try contact points in a deterministic order. In particular, if
+you use the <code>DCAwareRoundRobinPolicy</code> without specifying a primary datacenter
+name, make sure that you only provide local hosts as contact points.</li>
 </ol>
 
 <h3 id="2-1-7" class="target">2.1.7<a class="anchor" href="#2-1-7" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
@@ -559,23 +593,10 @@ it would only get initialized on the first request.</p>
 <p>If this is a problem for you, <code>MappingManager(Session, ProtocolVersion)</code>
 preserves the previous behavior (see the API docs for more details).</p>
 </li>
-</ol>
-
-<p>Merged from 2.0.11:</p>
-
-<ol>
-<li>The <code>DefaultRetryPolicy</code>’s behaviour has changed in the case of an Unavailable
-exception received from a request. The new behaviour will cause the driver to
-process a Retry on a different node at most once, otherwise an exception will
-be thrown. This change makes sense in the case where the node tried initially
-for the request happens to be isolated from the rest of the cluster (e.g.
-because of a network partition) but can still answer to the client normally.
-In this case, trying another node has a chance of success.
-The previous behaviour was to always throw an exception.</li>
-<li>A <code>BuiltStatement</code> is now considered non-idempotent whenever a <code>fcall()</code>
+<li><p>A <code>BuiltStatement</code> is now considered non-idempotent whenever a <code>fcall()</code>
 or <code>raw()</code> is used to build a value to be inserted in the database.
 If you know that the CQL functions or expressions are safe, use
-<code>setIdempotent(true)</code> on the statement.</li>
+<code>setIdempotent(true)</code> on the statement.</p></li>
 </ol>
 
 <h3 id="2-1-6" class="target">2.1.6<a class="anchor" href="#2-1-6" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
@@ -697,19 +718,28 @@ the protocol version in use
 <h3 id="2-0-11" class="target">2.0.11<a class="anchor" href="#2-0-11" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h3>
 
+<p>2.0.11 preserves binary compatibility with previous versions. There are a few
+changes in the driver’s behavior:</p>
+
 <ol>
-<li>The <code>DefaultRetryPolicy</code>’s behaviour has changed in the case of an Unavailable
+<li><p>The <code>DefaultRetryPolicy</code>’s behaviour has changed in the case of an Unavailable
 exception received from a request. The new behaviour will cause the driver to
 process a Retry on a different node at most once, otherwise an exception will
 be thrown. This change makes sense in the case where the node tried initially
 for the request happens to be isolated from the rest of the cluster (e.g.
 because of a network partition) but can still answer to the client normally.
 In this case, trying another node has a chance of success.
-The previous behaviour was to always throw an exception.</li>
-<li>A <code>BuiltStatement</code> is now considered non-idempotent whenever a <code>fcall()</code>
+The previous behaviour was to always throw an exception.</p></li>
+<li><p>A <code>BuiltStatement</code> is now considered non-idempotent whenever a <code>fcall()</code>
 or <code>raw()</code> is used to build a value to be inserted in the database.
 If you know that the CQL functions or expressions are safe, use
-<code>setIdempotent(true)</code> on the statement.</li>
+<code>setIdempotent(true)</code> on the statement.</p></li>
+<li><p>The list of contact points provided at startup is now shuffled before trying
+to open the control connection, so that multiple clients with the same contact
+points don’t all pick the same control host. As a result, you can’t assume that
+the driver will try contact points in a deterministic order. In particular, if
+you use the <code>DCAwareRoundRobinPolicy</code> without specifying a primary datacenter
+name, make sure that you only provide local hosts as contact points.</p></li>
 </ol>
 
 <h3 id="2-0-x-to-2-0-10" class="target">
