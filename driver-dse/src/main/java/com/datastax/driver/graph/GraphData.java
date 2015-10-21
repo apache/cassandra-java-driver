@@ -18,26 +18,39 @@ package com.datastax.driver.graph;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import com.datastax.driver.core.DataType;
+
 public class GraphData {
 
-    Object maybeJsonObject;
+    private Object maybeJsonObject;
 
-    GraphData(Object object) {
+    public GraphData(Object object) {
         this.maybeJsonObject = object;
     }
 
     public GraphData get(Object what) {
         if (this.maybeJsonObject instanceof JSONArray) {
             JSONArray jArray = (JSONArray) this.maybeJsonObject;
-            return new GraphData(jArray.get((Integer) what));
+            return new GraphData(jArray.get((Integer)what));
         }
         if (this.maybeJsonObject instanceof JSONObject) {
-            JSONObject jObj = (JSONObject)this.maybeJsonObject;
+            JSONObject jObj = (JSONObject) this.maybeJsonObject;
+            GraphData gd = new GraphData(jObj.get(what));
             return new GraphData(jObj.get(what));
         } else {
             return null;
         }
     }
+
+    public Object getObject() {
+        return this.maybeJsonObject;
+    }
+
+    public String getAsString() {
+        return (String) this.maybeJsonObject;
+    }
+
+    //TODO: Maybe add getAsVertex(), getAsEdge(), and stuff
 
     @Override
     public String toString() {

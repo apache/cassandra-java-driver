@@ -20,36 +20,36 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 
 import com.datastax.driver.core.RegularStatement;
+import com.datastax.driver.core.exceptions.InvalidQueryException;
 
 abstract class AbstractGraphStatement extends RegularStatement {
 
-    protected Map<String, ByteBuffer> payload;
+    final Map<String, ByteBuffer> payload;
 
     // Add static DefaultPayload for Graph
-    static ImmutableMap<String, ByteBuffer> DEFAULT_GRAPH_PAYLOAD;
-    static String DEFAULT_GRAPH_LANGUAGE;
+    final static Map<String, ByteBuffer> DEFAULT_GRAPH_PAYLOAD;
+    final static String DEFAULT_GRAPH_LANGUAGE;
 
     static {
         DEFAULT_GRAPH_LANGUAGE = "gremlin-groovy";
         DEFAULT_GRAPH_PAYLOAD = ImmutableMap.of(
-            "graph-language"    , ByteBuffer.wrap(DEFAULT_GRAPH_LANGUAGE.getBytes()),
+            "graph-language", ByteBuffer.wrap(DEFAULT_GRAPH_LANGUAGE.getBytes()),
 //            Cannot set a default on that
-            "graph-keyspace"    , ByteBuffer.wrap("modern".getBytes()),
+            "graph-keyspace", ByteBuffer.wrap("modern".getBytes()),
 //            If not present, the default configured for the Keyspace
-            "graph-source"      , ByteBuffer.wrap("default".getBytes())
-//            If not present, graph traversal will be named "g"
-//            "graph-rebinding"   , ByteBuffer.allocate(0)
+            "graph-source", ByteBuffer.wrap("default".getBytes())
         );
     }
 
     AbstractGraphStatement() {
+        this.payload = Maps.newHashMap(DEFAULT_GRAPH_PAYLOAD);
         configure();
     }
 
     void configure() {
-        this.payload = DEFAULT_GRAPH_PAYLOAD;
         this.setOutgoingPayload(this.payload);
     }
 
@@ -68,6 +68,10 @@ abstract class AbstractGraphStatement extends RegularStatement {
     }
 
     public AbstractGraphStatement setGraphKeyspace(String graphKeyspace) {
+        if (graphKeyspace == null || graphKeyspace.isEmpty()) {
+            // TODO: check to return another type of exception since IQE is not really appropriate.
+            throw new InvalidQueryException("You cannot set null value or empty string to the keyspace for the Graph, this field is mandatory");
+        }
         this.payload.put("graph-keyspace", ByteBuffer.wrap(graphKeyspace.getBytes()));
         return this;
     }

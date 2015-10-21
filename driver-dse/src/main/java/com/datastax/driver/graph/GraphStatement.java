@@ -43,7 +43,7 @@ public class GraphStatement extends AbstractGraphStatement {
 
     @Override
     public boolean hasValues() {
-        // TODO when Graph works : Same as above
+        // TODO when Graph works : Same as getValues()
         return false;
     }
 

@@ -30,6 +30,7 @@ public class GraphResultSet implements Iterable<GraphTraversalResult> {
 
     GraphResultSet(ResultSet rs) {
         this.rs = rs;
+//        System.out.println("rs.one().getString(\"gremlin\") = " + );
     }
 
 
