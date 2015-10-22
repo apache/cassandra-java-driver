@@ -15,45 +15,47 @@
  */
 package com.datastax.driver.graph;
 
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-
-import com.datastax.driver.core.DataType;
+import com.fasterxml.jackson.databind.JsonNode;
 
 public class GraphData {
 
-    private Object maybeJsonObject;
+    private JsonNode jsonNode;
 
-    public GraphData(Object object) {
-        this.maybeJsonObject = object;
+    public GraphData(JsonNode jsonNode) {
+        this.jsonNode = jsonNode;
     }
 
     public GraphData get(Object what) {
-        if (this.maybeJsonObject instanceof JSONArray) {
-            JSONArray jArray = (JSONArray) this.maybeJsonObject;
-            return new GraphData(jArray.get((Integer)what));
-        }
-        if (this.maybeJsonObject instanceof JSONObject) {
-            JSONObject jObj = (JSONObject) this.maybeJsonObject;
-            GraphData gd = new GraphData(jObj.get(what));
-            return new GraphData(jObj.get(what));
+        JsonNode jsN;
+        if (what instanceof Integer) {
+             jsN = this.jsonNode.get((Integer)what);
         } else {
-            return null;
+            assert what instanceof String;
+            jsN = this.jsonNode.get((String) what);
         }
+        return new GraphData(jsN);
     }
 
-    public Object getObject() {
-        return this.maybeJsonObject;
+    public Object getJsonObject() {
+        return this.jsonNode;
     }
 
-    public String getAsString() {
-        return (String) this.maybeJsonObject;
+    public String asString() {
+        return this.jsonNode.asText();
+    }
+
+    public int asInt() {
+        return this.jsonNode.asInt();
+    }
+
+    public boolean asBool() {
+        return this.jsonNode.asBoolean();
     }
 
     //TODO: Maybe add getAsVertex(), getAsEdge(), and stuff
 
     @Override
     public String toString() {
-        return this.maybeJsonObject.toString();
+        return this.jsonNode.toString();
     }
 }

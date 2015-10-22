@@ -17,8 +17,6 @@ package com.datastax.driver.graph;
 
 import java.nio.ByteBuffer;
 
-import com.datastax.driver.core.*;
-
 public class GraphStatement extends AbstractGraphStatement {
 
     private final String query;

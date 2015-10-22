@@ -15,7 +15,6 @@
  */
 package com.datastax.driver.graph;
 
-import com.datastax.driver.core.DefaultPreparedStatement;
 import com.datastax.driver.core.PreparedStatement;
 
 public class PreparedGraphStatement {
@@ -33,7 +32,6 @@ public class PreparedGraphStatement {
     }
 
     BoundGraphStatement bind() {
-        //do stuff
         BoundGraphStatement bgs = new BoundGraphStatement(ps.bind());
 
         /*

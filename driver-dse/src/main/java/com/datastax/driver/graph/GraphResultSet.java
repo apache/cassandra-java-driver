@@ -23,7 +23,9 @@ import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
-import com.datastax.driver.core.*;
+import com.datastax.driver.core.ExecutionInfo;
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.Row;
 
 public class GraphResultSet implements Iterable<GraphTraversalResult> {
     private final ResultSet rs;

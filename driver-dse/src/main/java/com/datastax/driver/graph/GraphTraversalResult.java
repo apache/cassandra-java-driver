@@ -15,20 +15,28 @@
  */
 package com.datastax.driver.graph;
 
-import com.datastax.driver.core.Row;
+import java.io.IOException;
 
-import org.json.simple.JSONObject;
-import org.json.simple.JSONValue;
-import org.json.simple.parser.ParseException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import com.datastax.driver.core.Row;
+import com.datastax.driver.core.exceptions.DriverException;
 
 public class GraphTraversalResult {
     private final String jsonString;
-    private final JSONObject jsonObject;
 
-    // TODO: remove public (only made for temporary tests)
-    public GraphTraversalResult(String result) {
+    private JsonNode rootNode;
+
+    GraphTraversalResult(String result) {
         this.jsonString = result;
-        this.jsonObject = (JSONObject)JSONValue.parse(this.jsonString);
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            this.rootNode = objectMapper.readTree(this.jsonString);
+        } catch (IOException e) {
+            throw new DriverException("Could not parse the result returned by the Graph server as a JSON string : " + this.jsonString);
+        }
     }
 
     public String getResultString() {
@@ -36,12 +44,11 @@ public class GraphTraversalResult {
     }
 
     public GraphData get(String name) {
-        Object result = this.jsonObject.get(name);
-        return new GraphData(result);
+        return new GraphData(this.rootNode.get(name));
     }
 
     public GraphData get() {
-        return new GraphData(this.jsonObject);
+        return new GraphData(this.rootNode);
     }
 
     static public GraphTraversalResult fromRow(Row row) {
