@@ -123,7 +123,6 @@ public class TypeCodecTest {
             .doesNotAccept(varchar())
             .doesNotAccept(text())
             .accepts(ascii)
-            .doesNotAccept(utf8)
             .canSerialize(ascii)
             .cannotSerialize(utf8);
         assertThat(utf8Codec)
@@ -249,6 +248,24 @@ public class TypeCodecTest {
         UDTValue actual = codecRegistry.codecFor(udt, UDTValue.class).deserialize(ByteBuffer.allocate(0), ProtocolVersion.NEWEST_SUPPORTED);
         assertThat(actual).isNotNull();
         assertThat(actual).isEqualTo(expected);
+    }
+
+    /**
+     * Ensures that {@link TypeCodec#timeUUID()} is resolved for all UUIDs and throws an
+     * {@link InvalidTypeException} when attempting to serialize or format a non-type 1
+     * UUID.
+     *
+     * @jira_ticket JAVA-965
+     */
+    @Test(groups = "unit")
+    public void should_resolve_timeuuid_codec_for_all_uuids_and_fail_to_serialize_non_type1_uuid() {
+        UUID type4UUID = UUID.randomUUID();
+        TypeCodec<UUID> codec = codecRegistry.codecFor(DataType.timeuuid(), type4UUID);
+        // Should resolve the TimeUUIDCodec, but not serialize/format a type4 uuid with it.
+        assertThat(codec).isSameAs(TypeCodec.timeUUID())
+            .accepts(UUID.class)
+            .cannotSerialize(type4UUID)
+            .cannotFormat(type4UUID);
     }
 
 

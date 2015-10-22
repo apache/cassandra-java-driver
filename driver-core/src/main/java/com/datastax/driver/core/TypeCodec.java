@@ -860,10 +860,20 @@ public abstract class TypeCodec<T> {
         }
 
         @Override
-        public boolean accepts(Object value) {
-            return value instanceof String && ASCII_PATTERN.matcher((String)value).matches();
+        public ByteBuffer serialize(String value, ProtocolVersion protocolVersion) {
+            if (value != null && !ASCII_PATTERN.matcher(value).matches()) {
+                throw new InvalidTypeException(String.format("%s is not a valid ASCII String", value));
+            }
+            return super.serialize(value, protocolVersion);
         }
 
+        @Override
+        public String format(String value) {
+            if (value != null && !ASCII_PATTERN.matcher(value).matches()) {
+                throw new InvalidTypeException(String.format("%s is not a valid ASCII String", value));
+            }
+            return super.format(value);
+        }
     }
 
     /**
@@ -1766,12 +1776,6 @@ public abstract class TypeCodec<T> {
 
         private TimeUUIDCodec() {
             super(timeuuid());
-        }
-
-        @Override
-        public boolean accepts(Object value) {
-            // only accept time-based uuids
-            return super.accepts(value) && ((UUID)value).version() == 1;
         }
 
         @Override
