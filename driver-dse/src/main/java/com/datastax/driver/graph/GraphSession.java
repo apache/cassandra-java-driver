@@ -27,8 +27,8 @@ public class GraphSession {
     }
 
     public GraphResultSet execute(GraphStatement gst) {
-        if (!checkStatement(gst)) {
-            throw new InvalidQueryException("Invalid Graph Statement, you need to at least set the keyspace containing the Graph data.");
+        if (!AbstractGraphStatement.checkStatement(gst)) {
+            throw new InvalidQueryException("Invalid Graph Statement, you need to specify at least the keyspace containing the Graph data.");
         }
         return new GraphResultSet(session.execute(gst));
     }
@@ -38,8 +38,8 @@ public class GraphSession {
     }
 
     public GraphResultSet execute(BoundGraphStatement bst) {
-        if (!checkStatement(bst)) {
-            throw new InvalidQueryException("Invalid Graph Statement, you need to at least set the keyspace containing the Graph data.");
+        if (!AbstractGraphStatement.checkStatement(bst)) {
+            throw new InvalidQueryException("Invalid Graph Statement, you need to specify at least the keyspace containing the Graph data.");
         }
         return new GraphResultSet(session.execute(bst.boundStatement()));
     }
@@ -54,18 +54,5 @@ public class GraphSession {
 
     public Session getSession() {
         return this.session;
-    }
-
-    /* TODO: probably make more advanced checks on the statement
-     *
-     * As of right now, mandatory fields for DSE Graph are :
-     * - graph-keyspace
-     *
-     */
-    static boolean checkStatement(AbstractGraphStatement graphStatement) {
-        return graphStatement.getOutgoingPayload().containsKey("graph-language")
-            && graphStatement.getOutgoingPayload().containsKey("graph-keyspace")
-            && graphStatement.getOutgoingPayload().containsKey("graph-source");
-
     }
 }

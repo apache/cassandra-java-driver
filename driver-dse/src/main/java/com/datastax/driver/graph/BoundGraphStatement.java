@@ -19,7 +19,6 @@ import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.json.simple.JSONObject;
 
 import com.datastax.driver.core.BoundStatement;
 
@@ -39,11 +38,12 @@ public class BoundGraphStatement extends AbstractGraphStatement {
 
     String getJsonArgs() {
         // Constructs the JSON string argument according to the arguments Map
-        JSONObject obj = new JSONObject();
-        for (Map.Entry<String, String> argument : arguments.entrySet()) {
-            obj.put(argument.getKey(), argument.getValue());
-        }
-        return obj.toJSONString();
+//        JSONObject obj = new JSONObject();
+//        for (Map.Entry<String, String> argument : arguments.entrySet()) {
+//            obj.put(argument.getKey(), argument.getValue());
+//        }
+//        return obj.toJSONString();
+        return null;
     }
 
     /**
@@ -74,7 +74,6 @@ public class BoundGraphStatement extends AbstractGraphStatement {
     @Override
     public ByteBuffer[] getValues() {
         // TODO when Graph works: Do we want to expose that.
-        // Need to check if binding values on simple GraphStatements is legit.
         return new ByteBuffer[0];
     }
 

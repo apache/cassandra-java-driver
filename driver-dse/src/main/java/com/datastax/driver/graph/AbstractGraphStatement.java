@@ -36,8 +36,6 @@ abstract class AbstractGraphStatement extends RegularStatement {
         DEFAULT_GRAPH_LANGUAGE = "gremlin-groovy";
         DEFAULT_GRAPH_PAYLOAD = ImmutableMap.of(
             "graph-language", ByteBuffer.wrap(DEFAULT_GRAPH_LANGUAGE.getBytes()),
-//            Cannot set a default on that
-            "graph-keyspace", ByteBuffer.wrap("modern".getBytes()),
 //            If not present, the default configured for the Keyspace
             "graph-source", ByteBuffer.wrap("default".getBytes())
         );
@@ -83,6 +81,19 @@ abstract class AbstractGraphStatement extends RegularStatement {
     public AbstractGraphStatement setGraphRebinding(String graphRebinding) {
         this.payload.put("graph-rebinding", ByteBuffer.wrap(graphRebinding.getBytes()));
         return this;
+    }
+
+    /* TODO: probably make more advanced checks on the statement
+     *
+     * As of right now, mandatory fields for DSE Graph are :
+     * - graph-keyspace
+     *
+     */
+    static boolean checkStatement(AbstractGraphStatement graphStatement) {
+        return graphStatement.getOutgoingPayload().containsKey("graph-language")
+            && graphStatement.getOutgoingPayload().containsKey("graph-keyspace")
+            && graphStatement.getOutgoingPayload().containsKey("graph-source");
+
     }
 }
 
