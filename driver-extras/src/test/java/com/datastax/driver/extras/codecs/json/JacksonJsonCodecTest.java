@@ -13,47 +13,51 @@
  *   See the License for the specific language governing permissions and
  *   limitations under the License.
  */
-package com.datastax.driver.core;
+package com.datastax.driver.extras.codecs.json;
 
 import java.util.ArrayList;
 import java.util.Collection;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
 import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.datastax.driver.core.TypeCodecTest.User;
+import com.datastax.driver.core.*;
 import com.datastax.driver.core.querybuilder.BuiltStatement;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.utils.CassandraVersion;
+import com.datastax.driver.extras.codecs.json.JacksonJsonCodec;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.bindMarker;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
 
-public class TypeCodecJsonIntegrationTest extends CCMBridge.PerClassSingleNodeCluster {
+public class JacksonJsonCodecTest extends CCMBridge.PerClassSingleNodeCluster {
 
-    private static final JsonCodec<User> jsonCodec = new JsonCodec<User>(User.class);
+    private static final JacksonJsonCodec<User> jsonCodec = new JacksonJsonCodec<User>(User.class);
 
-    private static final User alice = new User(1, "Alice");
-    private static final User bob = new User(2, "Bob");
+    private static final User alice   = new User(1, "Alice");
+    private static final User bob     = new User(2, "Bob");
     private static final User charlie = new User(3, "Charlie");
 
-    private static final String bobJson = "{\"id\":2,\"name\":\"Bob\"}";
+    private static final String bobJson     = "{\"id\":2,\"name\":\"Bob\"}";
     private static final String charlieJson = "{\"id\":3,\"name\":\"Charlie\"}";
-    private static final String aliceJson = "{\"id\":1,\"name\":\"Alice\"}";
+    private static final String aliceJson   = "{\"id\":1,\"name\":\"Alice\"}";
 
     private static final ArrayList<User> bobAndCharlie = Lists.newArrayList(bob, charlie);
 
-    private static final String insertQuery = "INSERT INTO \"myTable\" (c1, c2, c3) VALUES (?, ?, ?)";
-    private static final String selectQuery = "SELECT c1, c2, c3 FROM \"myTable\" WHERE c1 = ? and c2 = ?";
+    private static final String insertQuery = "INSERT INTO t1 (c1, c2, c3) VALUES (?, ?, ?)";
+    private static final String selectQuery = "SELECT c1, c2, c3 FROM t1 WHERE c1 = ? and c2 = ?";
 
     private static final String notAJsonString = "this text is not json";
 
     @Override
     protected Collection<String> getTableDefinitions() {
         return Lists.newArrayList(
-            "CREATE TABLE \"myTable\" (c1 text, c2 text, c3 list<text>, PRIMARY KEY (c1, c2))"
+            "CREATE TABLE t1 (c1 text, c2 text, c3 list<text>, PRIMARY KEY (c1, c2))"
         );
     }
 
@@ -62,6 +66,24 @@ public class TypeCodecJsonIntegrationTest extends CCMBridge.PerClassSingleNodeCl
         return builder.withCodecRegistry(
             new CodecRegistry().register(jsonCodec) // global User <-> varchar codec
         );
+    }
+
+    @Test(groups = "unit")
+    public void test_cql_text_to_json() {
+        JacksonJsonCodec<User> codec = new JacksonJsonCodec<User>(User.class);
+        // the codec is expected to format json objects as json strings enclosed in single quotes,
+        // as it is required for CQL literals of varchar type.
+        String json = "'{\"id\":1,\"name\":\"John Doe\"}'";
+        User user = new User(1, "John Doe");
+        assertThat(codec.format(user)).isEqualTo(json);
+        assertThat(codec.parse(json)).isEqualToComparingFieldByField(user);
+    }
+
+    @Test(groups = "unit")
+    public void test_nulls() {
+        JacksonJsonCodec<User> codec = new JacksonJsonCodec<User>(User.class);
+        assertThat(codec.format(null)).isEqualTo("NULL");
+        assertThat(codec.parse(null)).isNull();
     }
 
     @Test(groups = "short")
@@ -75,12 +97,12 @@ public class TypeCodecJsonIntegrationTest extends CCMBridge.PerClassSingleNodeCl
 
     @Test(groups = "short")
     public void should_use_custom_codec_with_built_statements_1() {
-        BuiltStatement insertStmt = new QueryBuilder(cluster).insertInto("\"myTable\"")
+        BuiltStatement insertStmt = new QueryBuilder(cluster).insertInto("t1")
             .value("c1", bindMarker())
             .value("c2", bindMarker())
             .value("c3", bindMarker());
         BuiltStatement selectStmt = new QueryBuilder(cluster).select("c1", "c2", "c3")
-            .from("\"myTable\"")
+            .from("t1")
             .where(eq("c1", bindMarker()))
             .and(eq("c2", bindMarker()));
         session.execute(session.prepare(insertStmt).bind(notAJsonString, alice, bobAndCharlie));
@@ -91,13 +113,13 @@ public class TypeCodecJsonIntegrationTest extends CCMBridge.PerClassSingleNodeCl
 
     @Test(groups = "short")
     public void should_use_custom_codec_with_built_statements_2() {
-        BuiltStatement insertStmt = new QueryBuilder(cluster).insertInto("\"myTable\"")
+        BuiltStatement insertStmt = new QueryBuilder(cluster).insertInto("t1")
             .value("c1", notAJsonString)
             .value("c2", alice)
             .value("c3", bobAndCharlie);
         BuiltStatement selectStmt =
             new QueryBuilder(cluster).select("c1", "c2", "c3")
-                .from("\"myTable\"")
+                .from("t1")
                 .where(eq("c1", notAJsonString))
                 .and(eq("c2", alice));
         session.execute(insertStmt);
@@ -150,5 +172,51 @@ public class TypeCodecJsonIntegrationTest extends CCMBridge.PerClassSingleNodeCl
         assertThat(row.getList(2, User.class)).containsExactly(bob, charlie);
         // we still can get the column as a List<String>
         assertThat(row.getList(2, String.class)).containsExactly(bobJson, charlieJson);
+    }
+
+    @SuppressWarnings("unused")
+    public static class User {
+
+        private int id;
+
+        private String name;
+
+        @JsonCreator
+        public User(@JsonProperty("id") int id, @JsonProperty("name") String name) {
+            this.id = id;
+            this.name = name;
+        }
+
+        public int getId() {
+            return id;
+        }
+
+        public void setId(int id) {
+            this.id = id;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o)
+                return true;
+            if (o == null || getClass() != o.getClass())
+                return false;
+            User user = (User)o;
+            return Objects.equal(id, user.id) &&
+                Objects.equal(name, user.name);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hashCode(id, name);
+        }
     }
 }
