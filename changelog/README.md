@@ -1,5 +1,9 @@
 ## Changelog
 
+### 3.0.0-beta1 (in progress)
+
+- [improvement] Provide functionality required by C* UDF implementation (JAVA-502)
+
 ### 3.0.0-alpha4
 
 - [improvement] Change default consistency level to LOCAL_QUORUM (JAVA-926)

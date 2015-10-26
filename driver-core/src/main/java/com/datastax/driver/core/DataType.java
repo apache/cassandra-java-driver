@@ -503,6 +503,23 @@ public abstract class DataType {
     }
 
     /**
+     * Parses a Cassandra internal type name to a {@link com.datastax.driver.core.DataType}.
+     * <p>
+     * This method is intentionally marked as deprecated since users should not rely on this functionality.
+     * Note that Cassandra internal type names may disappear in future versions of Cassandra.
+     *
+     * @param cassandraInternalTypeName Cassandra internal type name (those that extend C* class {@code AbstractType})
+     * @param protocolVersion The protocol version to use
+     * @param codecRegistry The {@link CodecRegistry} to use
+     * @return parsed data type
+     * @deprecated Users should not rely on this functionality. Note that Cassandra internal type names may disappear in future versions of Cassandra.
+     */
+    @Deprecated
+    public static DataType parseCassandraInternalTypeName(String cassandraInternalTypeName, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
+        return CassandraTypeParser.parseOne(cassandraInternalTypeName, protocolVersion, codecRegistry);
+    }
+
+    /**
      * Returns the name of that type.
      *
      * @return the name of that type.
