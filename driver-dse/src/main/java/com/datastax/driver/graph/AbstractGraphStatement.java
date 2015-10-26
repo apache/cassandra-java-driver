@@ -67,7 +67,7 @@ abstract class AbstractGraphStatement extends RegularStatement {
     public AbstractGraphStatement setGraphKeyspace(String graphKeyspace) {
         if (graphKeyspace == null || graphKeyspace.isEmpty()) {
             // TODO: check to return another type of exception since IQE is not really appropriate.
-            throw new InvalidQueryException("You cannot set null value or empty string to the keyspace for the Graph, this field is mandatory");
+            throw new InvalidQueryException("You cannot set null value or empty string to the keyspace for the Graph, this field is mandatory.");
         }
         this.payload.put("graph-keyspace", ByteBuffer.wrap(graphKeyspace.getBytes()));
         return this;

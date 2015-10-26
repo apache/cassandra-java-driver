@@ -30,6 +30,8 @@ public class GraphSession {
         if (!AbstractGraphStatement.checkStatement(gst)) {
             throw new InvalidQueryException("Invalid Graph Statement, you need to specify at least the keyspace containing the Graph data.");
         }
+        // This is mandatory now to apply changes on the statement (payload).
+        gst.configure();
         return new GraphResultSet(session.execute(gst));
     }
 
@@ -41,6 +43,8 @@ public class GraphSession {
         if (!AbstractGraphStatement.checkStatement(bst)) {
             throw new InvalidQueryException("Invalid Graph Statement, you need to specify at least the keyspace containing the Graph data.");
         }
+        // This is mandatory now to apply changes on the statement (payload).
+        bst.configure();
         return new GraphResultSet(session.execute(bst.boundStatement()));
     }
 

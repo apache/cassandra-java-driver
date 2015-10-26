@@ -87,10 +87,12 @@ public class GraphStatement extends AbstractGraphStatement {
         return null;
     }
 
+    // TODO : mechanism to not do this if the params haven't changed since last execution.
     private void processValues() {
         JsonNodeFactory factory = new JsonNodeFactory(false);
         JsonFactory jsonFactory = new JsonFactory();
         ObjectMapper objectMapper = new ObjectMapper();
+        this.JsonParams.clear();
         try {
             for (Map.Entry<String, Object> param : this.valuesMap.entrySet()) {
                 StringWriter stringWriter = new StringWriter();
