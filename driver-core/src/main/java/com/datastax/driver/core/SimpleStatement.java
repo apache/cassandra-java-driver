@@ -17,8 +17,7 @@ package com.datastax.driver.core;
 
 import java.nio.ByteBuffer;
 
-import static com.datastax.driver.core.CodecUtils.compose;
-import static com.datastax.driver.core.CodecUtils.convert;
+import com.datastax.driver.core.exceptions.InvalidTypeException;
 
 /**
  * A simple {@code RegularStatement} implementation built directly from a query
@@ -193,6 +192,83 @@ public class SimpleStatement extends RegularStatement {
     public SimpleStatement setRoutingKey(ByteBuffer... routingKeyComponents) {
         this.routingKey = compose(routingKeyComponents);
         return this;
+    }
+
+    /**
+     * <p>
+     * Utility method to serialize user-provided values.
+     * <p>
+     * This method is useful in situations where there is no metadata available and the underlying CQL
+     * type for the values is not known.
+     * <p>
+     * This situation happens when a {@link SimpleStatement}
+     * or a {@link com.datastax.driver.core.querybuilder.BuiltStatement} (Query Builder) contain values;
+     * in these places, the driver has no way to determine the right CQL type to use.
+     * <p>
+     * This method performs a best-effort heuristic to guess which codec to use.
+     * Note that this is not particularly efficient as the codec registry needs to iterate over
+     * the registered codecs until it finds a suitable one.
+     *
+     * @param values The values to convert.
+     * @param protocolVersion The protocol version to use.
+     * @param codecRegistry The {@link CodecRegistry} to use.
+     * @return The converted values.
+     */
+    public static ByteBuffer[] convert(Object[] values, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
+        ByteBuffer[] serializedValues = new ByteBuffer[values.length];
+        for (int i = 0; i < values.length; i++) {
+            Object value = values[i];
+            if (value == null) {
+                // impossible to locate the right codec when object is null,
+                // so forcing the result to null
+                serializedValues[i] = null;
+            } else {
+                if (value instanceof Token) {
+                    // bypass CodecRegistry for Token instances
+                    serializedValues[i] = ((Token)value).serialize(protocolVersion);
+                } else {
+                    try {
+                        TypeCodec<Object> codec = codecRegistry.codecFor(value);
+                        serializedValues[i] = codec.serialize(value, protocolVersion);
+                    } catch (Exception e) {
+                        // Catch and rethrow to provide a more helpful error message (one that include which value is bad)
+                        throw new InvalidTypeException(String.format("Value %d of type %s does not correspond to any CQL3 type", i, value.getClass()), e);
+                    }
+                }
+            }
+        }
+        return serializedValues;
+    }
+
+    /**
+     * Utility method to assemble different routing key components into a single {@link ByteBuffer}.
+     * Mainly intended for statements that need to generate a routing key out of their current values.
+     *
+     * @param buffers the components of the routing key.
+     * @return A ByteBuffer containing the serialized routing key
+     */
+    static ByteBuffer compose(ByteBuffer... buffers) {
+        if (buffers.length == 1)
+            return buffers[0];
+
+        int totalLength = 0;
+        for (ByteBuffer bb : buffers)
+            totalLength += 2 + bb.remaining() + 1;
+
+        ByteBuffer out = ByteBuffer.allocate(totalLength);
+        for (ByteBuffer buffer : buffers) {
+            ByteBuffer bb = buffer.duplicate();
+            putShortLength(out, bb.remaining());
+            out.put(bb);
+            out.put((byte)0);
+        }
+        out.flip();
+        return out;
+    }
+
+    static void putShortLength(ByteBuffer bb, int length) {
+        bb.put((byte)((length >> 8) & 0xFF));
+        bb.put((byte)(length & 0xFF));
     }
 
 }

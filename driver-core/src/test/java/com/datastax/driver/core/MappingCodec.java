@@ -19,51 +19,49 @@ import java.nio.ByteBuffer;
 
 import com.google.common.reflect.TypeToken;
 
+import com.datastax.driver.core.ProtocolVersion;
+import com.datastax.driver.core.TypeCodec;
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 
 /**
- * An abstract TypeCodec that maps a Java Pojo to another Java object
- * that can in turn be serialized into a CQL type.
- * This can serve as a base for libraries dealing with Pojo mappings.
- *
- * @param <T> The outer Java type
- * @param <U> The inner Java type
+ * This class is a copy of MappingCodec declared in the extras module,
+ * to avoid circular dependencies between Maven modules.
  */
-public abstract class MappingCodec<T, U> extends TypeCodec<T> {
+public abstract class MappingCodec<O, I> extends TypeCodec<O> {
 
-    protected final TypeCodec<U> innerCodec;
+    protected final TypeCodec<I> innerCodec;
 
-    public MappingCodec(TypeCodec<U> innerCodec, Class<T> javaType) {
+    public MappingCodec(TypeCodec<I> innerCodec, Class<O> javaType) {
         this(innerCodec, TypeToken.of(javaType));
     }
 
-    public MappingCodec(TypeCodec<U> innerCodec, TypeToken<T> javaType) {
+    public MappingCodec(TypeCodec<I> innerCodec, TypeToken<O> javaType) {
         super(innerCodec.getCqlType(), javaType);
         this.innerCodec = innerCodec;
     }
 
     @Override
-    public ByteBuffer serialize(T value, ProtocolVersion protocolVersion) throws InvalidTypeException {
+    public ByteBuffer serialize(O value, ProtocolVersion protocolVersion) throws InvalidTypeException {
         return innerCodec.serialize(serialize(value), protocolVersion);
     }
 
     @Override
-    public T deserialize(ByteBuffer bytes, ProtocolVersion protocolVersion) throws InvalidTypeException {
+    public O deserialize(ByteBuffer bytes, ProtocolVersion protocolVersion) throws InvalidTypeException {
         return deserialize(innerCodec.deserialize(bytes, protocolVersion));
     }
 
     @Override
-    public T parse(String value) throws InvalidTypeException {
+    public O parse(String value) throws InvalidTypeException {
         return value == null || value.isEmpty() || value.equalsIgnoreCase("NULL") ? null : deserialize(innerCodec.parse(value));
     }
 
     @Override
-    public String format(T value) throws InvalidTypeException {
+    public String format(O value) throws InvalidTypeException {
         return value == null ? null : innerCodec.format(serialize(value));
     }
 
-    protected abstract T deserialize(U value);
+    protected abstract O deserialize(I value);
 
-    protected abstract U serialize(T value);
+    protected abstract I serialize(O value);
 
 }

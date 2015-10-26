@@ -13,32 +13,42 @@
  *   See the License for the specific language governing permissions and
  *   limitations under the License.
  */
-package com.datastax.driver.core;
-
-import com.datastax.driver.core.querybuilder.BuiltStatement;
-import com.datastax.driver.core.querybuilder.QueryBuilder;
-import com.datastax.driver.core.utils.CassandraVersion;
-import com.google.common.base.Optional;
-import com.google.common.collect.Lists;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
+package com.datastax.driver.extras.codecs.guava;
 
 import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
+import com.google.common.base.Optional;
+import com.google.common.collect.Lists;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class TypeCodecOptionalIntegrationTest extends CCMBridge.PerClassSingleNodeCluster {
+import com.datastax.driver.core.*;
+import com.datastax.driver.core.CCMBridge.PerClassSingleNodeCluster;
+import com.datastax.driver.core.querybuilder.BuiltStatement;
+import com.datastax.driver.core.querybuilder.QueryBuilder;
+import com.datastax.driver.core.utils.CassandraVersion;
+
+import static com.datastax.driver.core.TypeCodec.bigint;
+import static com.datastax.driver.core.TypeCodec.decimal;
+import static com.datastax.driver.core.TypeCodec.list;
+import static com.datastax.driver.core.TypeCodec.varchar;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.bindMarker;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
+
+public class OptionalCodecTest extends PerClassSingleNodeCluster {
+
+    private final OptionalCodec<List<String>> optionalCodec = new OptionalCodec<List<String>>(list(varchar()));
+
+    private final CodecRegistry registry = new CodecRegistry().register(optionalCodec);
 
     private BuiltStatement insertStmt;
-    private BuiltStatement selectStmt;
 
-    TypeCodec<List<String>> codec = new CodecRegistry().codecFor(DataType.list(DataType.text()));
-    OptionalCodec<List<String>> optionalCodec = new OptionalCodec<List<String>>(codec);
-    CodecRegistry registry = new CodecRegistry().register(optionalCodec);
+    private BuiltStatement selectStmt;
 
     @Override
     protected Collection<String> getTableDefinitions() {
@@ -65,7 +75,7 @@ public class TypeCodecOptionalIntegrationTest extends CCMBridge.PerClassSingleNo
      *
      * @test_category data_types:serialization
      * @expected_result an absent value.
-     * @jira_ticket JAVA-721
+     * @jira_ticket JAVA-846
      * @since 2.2.0
      */
     @Test(groups="short")
@@ -95,7 +105,7 @@ public class TypeCodecOptionalIntegrationTest extends CCMBridge.PerClassSingleNo
      *
      * @test_category data_types:serialization
      * @expected_result an absent value.
-     * @jira_ticket JAVA-721
+     * @jira_ticket JAVA-846
      * @since 2.2.0
      */
     @Test(groups="short")
@@ -106,7 +116,7 @@ public class TypeCodecOptionalIntegrationTest extends CCMBridge.PerClassSingleNo
         BoundStatement bs = insertPrep.bind();
         bs.setString(0, "should_map_absent_null_value_to_absent");
         bs.setString(1, "1");
-        bs.set(2, Optional.<List<String>>absent(), optionalCodec.javaType);
+        bs.set(2, Optional.<List<String>>absent(), optionalCodec.getJavaType());
         session.execute(bs);
 
         ResultSet results = session.execute(selectPrep.bind("should_map_absent_null_value_to_absent"));
@@ -127,7 +137,7 @@ public class TypeCodecOptionalIntegrationTest extends CCMBridge.PerClassSingleNo
      *
      * @test_category data_types:serialization
      * @expected_result The options value is stored appropriately and is retrievable with and without OptionalCodec.
-     * @jira_ticket JAVA-721
+     * @jira_ticket JAVA-846
      * @since 2.2.0
      */
     @Test(groups="short")
@@ -140,7 +150,7 @@ public class TypeCodecOptionalIntegrationTest extends CCMBridge.PerClassSingleNo
         BoundStatement bs = insertPrep.bind();
         bs.setString(0, "should_map_some_back_to_itself");
         bs.setString(1, "1");
-        bs.set(2, Optional.of(data), optionalCodec.javaType);
+        bs.set(2, Optional.of(data), optionalCodec.getJavaType());
         session.execute(bs);
 
         ResultSet results = session.execute(selectPrep.bind("should_map_some_back_to_itself"));
@@ -160,8 +170,7 @@ public class TypeCodecOptionalIntegrationTest extends CCMBridge.PerClassSingleNo
 
     @Test(groups="short")
     public void should_map_a_primitive_type_to_absent() {
-        TypeCodec<Long> bigintCodec = registry.codecFor(DataType.bigint());
-        OptionalCodec<Long> optionalLongCodec = new OptionalCodec<Long>(bigintCodec);
+        OptionalCodec<Long> optionalLongCodec = new OptionalCodec<Long>(bigint());
         cluster.getConfiguration().getCodecRegistry().register(optionalLongCodec);
 
         PreparedStatement stmt = session.prepare("insert into foo (c1, c2, c4) values (?,?,?)");
@@ -169,7 +178,7 @@ public class TypeCodecOptionalIntegrationTest extends CCMBridge.PerClassSingleNo
         BoundStatement bs = stmt.bind();
         bs.setString(0, "should_map_a_primitive_type_to_absent");
         bs.setString(1, "1");
-        bs.set(2, Optional.<Long>absent(), optionalLongCodec.javaType);
+        bs.set(2, Optional.<Long>absent(), optionalLongCodec.getJavaType());
         session.execute(bs);
 
         PreparedStatement selectBigint = session.prepare("select c1, c4 from foo where c1=?");
@@ -185,8 +194,7 @@ public class TypeCodecOptionalIntegrationTest extends CCMBridge.PerClassSingleNo
 
     @Test(groups="short")
     public void should_map_a_nullable_type_to_absent() {
-        TypeCodec<BigDecimal> decimalCodec = registry.codecFor(DataType.decimal());
-        OptionalCodec<BigDecimal> optionalDecimalCodec = new OptionalCodec<BigDecimal>(decimalCodec);
+        OptionalCodec<BigDecimal> optionalDecimalCodec = new OptionalCodec<BigDecimal>(decimal());
         cluster.getConfiguration().getCodecRegistry().register(optionalDecimalCodec);
 
         PreparedStatement stmt = session.prepare("insert into foo (c1, c2, c5) values (?,?,?)");
@@ -194,7 +202,7 @@ public class TypeCodecOptionalIntegrationTest extends CCMBridge.PerClassSingleNo
         BoundStatement bs = stmt.bind();
         bs.setString(0, "should_map_a_nullable_type_to_absent");
         bs.setString(1, "1");
-        bs.set(2, Optional.<BigDecimal>absent(), optionalDecimalCodec.javaType);
+        bs.set(2, Optional.<BigDecimal>absent(), optionalDecimalCodec.getJavaType());
         session.execute(bs);
 
         PreparedStatement selectDecimal = session.prepare("select c1, c5 from foo where c1=?");

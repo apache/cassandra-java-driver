@@ -242,7 +242,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
                         return null;
                     components[i] = value;
                 }
-                return CodecUtils.compose(components);
+                return SimpleStatement.compose(components);
             }
         }
         return null;

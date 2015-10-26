@@ -35,9 +35,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.driver.core.querybuilder.BuiltStatement;
 
-import static com.datastax.driver.core.CodecUtils.listOf;
-import static com.datastax.driver.core.CodecUtils.mapOf;
-import static com.datastax.driver.core.CodecUtils.setOf;
+import static com.datastax.driver.core.TypeTokens.listOf;
+import static com.datastax.driver.core.TypeTokens.mapOf;
+import static com.datastax.driver.core.TypeTokens.setOf;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.bindMarker;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
 
@@ -128,12 +128,12 @@ public class TypeCodecCollectionsIntegrationTest extends CCMBridge.PerClassSingl
     public void should_use_collection_codecs_with_prepared_statements_3() {
         session.execute(session.prepare(insertQuery).bind()
             .setInt(0, n_int)
-            .set(1, l_int, listOf(Integer.class))
-            .set(2, l_bigint, listOf(Long.class))
-            .set(3, s_float, setOf(Float.class))
-            .set(4, s_double, setOf(Double.class))
-            .set(5, m_varint, mapOf(Integer.class, BigInteger.class))
-            .set(6, m_decimal, mapOf(Integer.class, BigDecimal.class))
+            .set(1, l_int, TypeTokens.listOf(Integer.class))
+            .set(2, l_bigint, TypeTokens.listOf(Long.class))
+            .set(3, s_float, TypeTokens.setOf(Float.class))
+            .set(4, s_double, TypeTokens.setOf(Double.class))
+            .set(5, m_varint, TypeTokens.mapOf(Integer.class, BigInteger.class))
+            .set(6, m_decimal, TypeTokens.mapOf(Integer.class, BigDecimal.class))
         );
         PreparedStatement ps = session.prepare(selectQuery);
         ResultSet rows = session.execute(ps.bind()
@@ -147,12 +147,12 @@ public class TypeCodecCollectionsIntegrationTest extends CCMBridge.PerClassSingl
     public void should_use_collection_codecs_with_built_statements() {
         session.execute(session.prepare(insertStmt).bind()
             .setInt(0, n_int)
-            .set(1, l_int, listOf(Integer.class))
-            .set(2, l_bigint, listOf(Long.class))
-            .set(3, s_float, setOf(Float.class))
-            .set(4, s_double, setOf(Double.class))
-            .set(5, m_varint, mapOf(Integer.class, BigInteger.class))
-            .set(6, m_decimal, mapOf(Integer.class, BigDecimal.class))
+            .set(1, l_int, TypeTokens.listOf(Integer.class))
+            .set(2, l_bigint, TypeTokens.listOf(Long.class))
+            .set(3, s_float, TypeTokens.setOf(Float.class))
+            .set(4, s_double, TypeTokens.setOf(Double.class))
+            .set(5, m_varint, TypeTokens.mapOf(Integer.class, BigInteger.class))
+            .set(6, m_decimal, TypeTokens.mapOf(Integer.class, BigDecimal.class))
         );
         PreparedStatement ps = session.prepare(selectStmt);
         ResultSet rows = session.execute(ps.bind()
@@ -170,12 +170,12 @@ public class TypeCodecCollectionsIntegrationTest extends CCMBridge.PerClassSingl
         assertThat(row.getMap(5, Integer.class, BigInteger.class)).isEqualTo(m_varint);
         assertThat(row.getMap(6, Integer.class, BigDecimal.class)).isEqualTo(m_decimal);
         // with get + type
-        assertThat(row.get(1, listOf(Integer.class))).isEqualTo(l_int);
-        assertThat(row.get(2, listOf(Long.class))).isEqualTo(l_bigint);
-        assertThat(row.get(3, setOf(Float.class))).isEqualTo(s_float);
-        assertThat(row.get(4, setOf(Double.class))).isEqualTo(s_double);
-        assertThat(row.get(5, mapOf(Integer.class, BigInteger.class))).isEqualTo(m_varint);
-        assertThat(row.get(6, mapOf(Integer.class, BigDecimal.class))).isEqualTo(m_decimal);
+        assertThat(row.get(1, TypeTokens.listOf(Integer.class))).isEqualTo(l_int);
+        assertThat(row.get(2, TypeTokens.listOf(Long.class))).isEqualTo(l_bigint);
+        assertThat(row.get(3, TypeTokens.setOf(Float.class))).isEqualTo(s_float);
+        assertThat(row.get(4, TypeTokens.setOf(Double.class))).isEqualTo(s_double);
+        assertThat(row.get(5, TypeTokens.mapOf(Integer.class, BigInteger.class))).isEqualTo(m_varint);
+        assertThat(row.get(6, TypeTokens.mapOf(Integer.class, BigDecimal.class))).isEqualTo(m_decimal);
         // with getObject
         assertThat(row.getObject(1)).isEqualTo(l_int);
         assertThat(row.getObject(2)).isEqualTo(l_bigint);

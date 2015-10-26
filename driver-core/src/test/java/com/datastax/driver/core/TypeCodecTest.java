@@ -36,7 +36,7 @@ import com.datastax.driver.core.exceptions.CodecNotFoundException;
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 
 import static com.datastax.driver.core.Assertions.assertThat;
-import static com.datastax.driver.core.CodecUtils.listOf;
+import static com.datastax.driver.core.TypeTokens.listOf;
 import static com.datastax.driver.core.DataType.*;
 import static com.datastax.driver.core.ProtocolVersion.V3;
 
@@ -172,13 +172,6 @@ public class TypeCodecTest {
     }
 
     @Test(groups = "unit")
-    public void test_enum() {
-        EnumStringCodec<FooBarQix> codec = new EnumStringCodec<FooBarQix>(FooBarQix.class);
-        assertThat(codec)
-            .canSerialize(FooBarQix.FOO);
-    }
-
-    @Test(groups = "unit")
     public void test_inheritance() {
         CodecRegistry codecRegistry = new CodecRegistry();
         ACodec aCodec = new ACodec();
@@ -227,7 +220,7 @@ public class TypeCodecTest {
 
     @Test(groups = "unit")
     public void should_deserialize_empty_buffer_as_tuple_with_null_values() {
-        CodecRegistry codecRegistry = CodecRegistry.DEFAULT_INSTANCE;
+        CodecRegistry codecRegistry = new CodecRegistry();
         TupleType tupleType = new TupleType(newArrayList(DataType.cint(), DataType.varchar(), DataType.cfloat()), ProtocolVersion.NEWEST_SUPPORTED, codecRegistry);
         TupleValue expected = tupleType.newValue(null, null, null);
 
@@ -238,7 +231,7 @@ public class TypeCodecTest {
 
     @Test(groups = "unit")
     public void should_deserialize_empty_buffer_as_udt_with_null_values() {
-        CodecRegistry codecRegistry = CodecRegistry.DEFAULT_INSTANCE;
+        CodecRegistry codecRegistry = new CodecRegistry();
         UserType udt = new UserType("ks", "t", Arrays.asList(
             new UserType.Field("t", DataType.text()),
             new UserType.Field("i", DataType.cint()),
@@ -278,7 +271,7 @@ public class TypeCodecTest {
         private final TypeCodec<List<String>> codec = TypeCodec.list(TypeCodec.varchar());
 
         protected ListVarcharToListListInteger() {
-            super(DataType.list(DataType.varchar()), listOf(listOf(Integer.class)));
+            super(DataType.list(DataType.varchar()), TypeTokens.listOf(TypeTokens.listOf(Integer.class)));
         }
 
         @Override
@@ -361,10 +354,6 @@ public class TypeCodecTest {
         public int hashCode() {
             return Objects.hashCode(id, name);
         }
-    }
-
-    enum FooBarQix {
-        FOO, BAR, QIX
     }
 
     class A {

@@ -55,7 +55,7 @@ public class QueryBuilderTupleExecutionTest extends CCMBridge.PerClassSingleNode
     public void should_handle_collections_of_tuples() {
         String query;
         BuiltStatement statement;
-        query = "UPDATE foo SET l=[(1, 2)] WHERE k=1;";
+        query = "UPDATE foo SET l=[(1,2)] WHERE k=1;";
         TupleType tupleType = cluster.getMetadata().newTupleType(cint(), cint());
         List<TupleValue> list = ImmutableList.of(tupleType.newValue(1, 2));
         statement = new QueryBuilder(cluster).update("foo").with(set("l", list)).where(eq("k", 1));

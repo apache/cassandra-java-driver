@@ -39,7 +39,7 @@ import com.datastax.driver.mapping.annotations.*;
 public class MapperUDTTest extends CCMBridge.PerClassSingleNodeCluster {
 
     protected Collection<String> getTableDefinitions() {
-        return Arrays.asList("CREATE TYPE address (street text, city text, zip_code int, phones set<text>)",
+        return Arrays.asList("CREATE TYPE address (street text, city text, \"ZIP_code\" int, phones set<text>)",
                              "CREATE TABLE users (user_id uuid PRIMARY KEY, name text, mainaddress frozen<address>, other_addresses map<text,frozen<address>>)");
     }
 
@@ -135,7 +135,7 @@ public class MapperUDTTest extends CCMBridge.PerClassSingleNodeCluster {
         @Field // not strictly required, but we want to check that the annotation works without a name
         private String city;
 
-        @Field(name = "zip_code")
+        @Field(name = "ZIP_code", caseSensitive = true)
         private int zipCode;
 
         private Set<String> phones;
@@ -286,9 +286,9 @@ public class MapperUDTTest extends CCMBridge.PerClassSingleNodeCluster {
             UUID userId = UUIDs.random();
 
             // Create a user.
-            session.execute("update users SET other_addresses['condo']={street: '101 Ocean Ln', city: 'Jacksonville, FL', zip_code: 89898, phones: {'8675309'}} " +
+            session.execute("update users SET other_addresses['condo']={street: '101 Ocean Ln', city: 'Jacksonville, FL', \"ZIP_code\": 89898, phones: {'8675309'}} " +
                     " WHERE user_id=" + TypeCodec.uuid().format(userId));
-            session.execute("update users SET mainaddress={street: '42 Middle of Nowhere', city: 'Lake of the Woods', zip_code: 49553, phones: {'8675039'}} " +
+            session.execute("update users SET mainaddress={street: '42 Middle of Nowhere', city: 'Lake of the Woods', \"ZIP_code\": 49553, phones: {'8675039'}} " +
                     " WHERE user_Id=" + TypeCodec.uuid().format(userId));
 
             // Get the user.

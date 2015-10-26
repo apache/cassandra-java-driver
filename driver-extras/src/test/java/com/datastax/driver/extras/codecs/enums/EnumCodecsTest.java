@@ -13,7 +13,7 @@
  *   See the License for the specific language governing permissions and
  *   limitations under the License.
  */
-package com.datastax.driver.core;
+package com.datastax.driver.extras.codecs.enums;
 
 import java.util.Collection;
 import java.util.List;
@@ -29,24 +29,32 @@ import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Sets.newHashSet;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.datastax.driver.core.*;
 import com.datastax.driver.core.utils.CassandraVersion;
+import com.datastax.driver.mapping.EnumType;
+import com.datastax.driver.mapping.Mapper;
+import com.datastax.driver.mapping.MappingManager;
+import com.datastax.driver.mapping.annotations.Enumerated;
+import com.datastax.driver.mapping.annotations.PartitionKey;
+import com.datastax.driver.mapping.annotations.Table;
 
 import static com.datastax.driver.core.DataType.cint;
 import static com.datastax.driver.core.DataType.text;
-import static com.datastax.driver.core.TypeCodecEnumIntegrationTest.Foo.*;
-import static com.datastax.driver.core.TypeCodecEnumIntegrationTest.Bar.*;
+import static com.datastax.driver.extras.codecs.enums.EnumCodecsTest.Bar.BAR_1;
+import static com.datastax.driver.extras.codecs.enums.EnumCodecsTest.Bar.BAR_2;
+import static com.datastax.driver.extras.codecs.enums.EnumCodecsTest.Foo.FOO_1;
+import static com.datastax.driver.extras.codecs.enums.EnumCodecsTest.Foo.FOO_2;
 
 /**
- * A test that validates that Enums are correctly mapped to varchars (with the default EnumStringCodec)
- * or alternatively to ints (with the alternative EnumIntCodec).
+ * A test that validates that Enums are correctly mapped to varchars (with EnumNameCodec)
+ * and ints (with EnumOrdinalCodec).
  * It also validates that both codecs may coexist in the same CodecRegistry.
  */
 @CassandraVersion(major=2.1)
-public class TypeCodecEnumIntegrationTest extends CCMBridge.PerClassSingleNodeCluster {
+public class EnumCodecsTest extends CCMBridge.PerClassSingleNodeCluster {
 
-    private final String insertQuery = "INSERT INTO \"myTable\" (pk, foo, foos, bar, bars, foobars, tup, udt) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
-
-    private final String selectQuery = "SELECT pk, foo, foos, bar, bars, foobars, tup, udt FROM \"myTable\" WHERE pk = ?";
+    private final String insertQuery = "INSERT INTO t1 (pk, foo, foos, bar, bars, foobars, tup, udt) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+    private final String selectQuery = "SELECT pk, foo, foos, bar, bars, foobars, tup, udt FROM t1 WHERE pk = ?";
 
     private final int pk = 42;
 
@@ -60,10 +68,10 @@ public class TypeCodecEnumIntegrationTest extends CCMBridge.PerClassSingleNodeCl
     @Override
     protected Collection<String> getTableDefinitions() {
         return newArrayList(
-            "CREATE TYPE IF NOT EXISTS \"myType\" ("
+            "CREATE TYPE IF NOT EXISTS udt1 ("
                 + "foo int,"
                 + "bar text)",
-            "CREATE TABLE IF NOT EXISTS \"myTable\" ("
+            "CREATE TABLE IF NOT EXISTS t1 ("
                 + "pk int PRIMARY KEY, "
                 + "foo int, "
                 + "foos list<int>, "
@@ -71,7 +79,7 @@ public class TypeCodecEnumIntegrationTest extends CCMBridge.PerClassSingleNodeCl
                 + "bars set<text>, "
                 + "foobars map<int,text>, "
                 + "tup frozen<tuple<int,varchar>>, "
-                + "udt frozen<\"myType\">"
+                + "udt frozen<udt1>"
                 + ")"
         );
     }
@@ -80,8 +88,8 @@ public class TypeCodecEnumIntegrationTest extends CCMBridge.PerClassSingleNodeCl
     protected Cluster.Builder configure(Cluster.Builder builder) {
         return builder.withCodecRegistry(
             new CodecRegistry()
-                .register(new EnumIntCodec<Foo>(Foo.class))
-                .register(new EnumStringCodec<Bar>(Bar.class))
+                .register(new EnumOrdinalCodec<Foo>(Foo.class))
+                .register(new EnumNameCodec<Bar>(Bar.class))
         );
     }
 
@@ -91,7 +99,7 @@ public class TypeCodecEnumIntegrationTest extends CCMBridge.PerClassSingleNodeCl
         tupleValue = tup.newValue()
             .set(0, FOO_1, Foo.class)
             .set(1, BAR_1, Bar.class);
-        UserType udt = cluster.getMetadata().getKeyspace(keyspace).getUserType("\"myType\"");
+        UserType udt = cluster.getMetadata().getKeyspace(keyspace).getUserType("udt1");
         udtValue = udt.newValue()
             .set("foo", FOO_1, Foo.class)
             .set("bar", BAR_1, Bar.class);
@@ -134,6 +142,19 @@ public class TypeCodecEnumIntegrationTest extends CCMBridge.PerClassSingleNodeCl
         assertRow(row);
     }
 
+    @Test(groups = "short")
+    public void should_use_mapper_to_store_and_retrieve_values_with_enum_codecs() {
+        // given
+        MappingManager manager = new MappingManager(session);
+        Mapper<Mapped> mapper = manager.mapper(Mapped.class);
+        // when
+        Mapped pojo = new Mapped();
+        mapper.save(pojo);
+        Mapped actual = mapper.get(42);
+        // then
+        assertThat(actual).isEqualToComparingFieldByField(pojo);
+    }
+
     private void assertRow(Row row) {
 
         assertThat(row.getInt(0)).isEqualTo(pk);
@@ -141,7 +162,7 @@ public class TypeCodecEnumIntegrationTest extends CCMBridge.PerClassSingleNodeCl
         assertThat(row.getObject(1)).isEqualTo(FOO_1.ordinal()); // uses the built-in IntCodec because CQL type is int
         assertThat(row.getInt("foo")).isEqualTo(FOO_1.ordinal()); // uses the built-in IntCodec
         assertThat(row.get(1, Integer.class)).isEqualTo(FOO_1.ordinal()); // forces IntCodec
-        assertThat(row.get("foo", Foo.class)).isEqualTo(FOO_1);  // forces EnumIntCodec
+        assertThat(row.get("foo", Foo.class)).isEqualTo(FOO_1);  // forces EnumOrdinalCodec
 
         assertThat(row.getObject(2)).isEqualTo(newArrayList(FOO_1.ordinal(), FOO_2.ordinal())); // uses the built-in ListCodec(IntCodec) because CQL type is list<int>
         assertThat(row.getList(2, Integer.class)).isEqualTo(newArrayList(FOO_1.ordinal(), FOO_2.ordinal()));
@@ -152,7 +173,7 @@ public class TypeCodecEnumIntegrationTest extends CCMBridge.PerClassSingleNodeCl
         assertThat(row.getObject(3)).isEqualTo(BAR_1.name()); // uses the built-in VarcharCodec because CQL type is varchar
         assertThat(row.getString("bar")).isEqualTo(BAR_1.name()); // forces VarcharCodec
         assertThat(row.get(3, String.class)).isEqualTo(BAR_1.name()); // forces VarcharCodec
-        assertThat(row.get("bar", Bar.class)).isEqualTo(BAR_1); // forces EnumStringCodec
+        assertThat(row.get("bar", Bar.class)).isEqualTo(BAR_1); // forces EnumNameCodec
 
         assertThat(row.getObject(4)).isEqualTo(newHashSet(BAR_1.name(), BAR_2.name())); // uses the built-in SetCodec(VarcharCodec) because CQL type is set<varchar>
         assertThat(row.getSet(4, String.class)).isEqualTo(newHashSet(BAR_1.name(), BAR_2.name()));
@@ -185,6 +206,85 @@ public class TypeCodecEnumIntegrationTest extends CCMBridge.PerClassSingleNodeCl
         assertThat(row.getUDTValue("udt").getString("bar")).isEqualTo(BAR_1.name());
         assertThat(row.get("udt", UDTValue.class).get("bar", Bar.class)).isEqualTo(BAR_1);
 
+    }
+
+    @SuppressWarnings("unused")
+    @Table(name = "t1")
+    public static class Mapped {
+
+        @PartitionKey
+        private int pk;
+
+        // note that we need to specify @Enumerated here
+        // because the mapper already has a partial support for enums
+        // that kicks in for fields of type Enum
+        @Enumerated(EnumType.ORDINAL)
+        private Foo foo;
+
+        private List<Foo> foos;
+
+        private Bar bar;
+
+        private Set<Bar> bars;
+
+        private Map<Foo, Bar> foobars;
+
+        public Mapped(){
+            pk = 42;
+            foo = FOO_1;
+            bar = BAR_1;
+            foos = newArrayList(FOO_2, FOO_1);
+            bars = newHashSet(BAR_1, BAR_2);
+            foobars = ImmutableMap.of(FOO_1, BAR_2);
+        }
+
+        public int getPk() {
+            return pk;
+        }
+
+        public void setPk(int pk) {
+            this.pk = pk;
+        }
+
+        public Foo getFoo() {
+            return foo;
+        }
+
+        public void setFoo(Foo foo) {
+            this.foo = foo;
+        }
+
+        public List<Foo> getFoos() {
+            return foos;
+        }
+
+        public void setFoos(List<Foo> foos) {
+            this.foos = foos;
+        }
+
+        public Bar getBar() {
+            return bar;
+        }
+
+        public void setBar(Bar bar) {
+            this.bar = bar;
+        }
+
+        public Set<Bar> getBars() {
+            return bars;
+        }
+
+        public void setBars(Set<Bar> bars) {
+            this.bars = bars;
+        }
+
+        public Map<Foo, Bar> getFoobars() {
+            return foobars;
+        }
+
+        public void setFoobars(Map<Foo, Bar> foobars) {
+            this.foobars = foobars;
+        }
     }
 
     enum Foo {

@@ -17,15 +17,15 @@ package com.datastax.driver.mapping;
 
 import java.util.Collection;
 
-import com.datastax.driver.mapping.annotations.Enumerated;
-import com.datastax.driver.mapping.annotations.PartitionKey;
-import com.datastax.driver.mapping.annotations.Table;
 import com.google.common.collect.Lists;
 import org.testng.annotations.Test;
 
-import static org.junit.Assert.assertNull;
+import static org.testng.Assert.assertNull;
 
 import com.datastax.driver.core.CCMBridge;
+import com.datastax.driver.mapping.annotations.Enumerated;
+import com.datastax.driver.mapping.annotations.PartitionKey;
+import com.datastax.driver.mapping.annotations.Table;
 
 /**
  * Covers handling of enum fields by the mapper.

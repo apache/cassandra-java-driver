@@ -47,7 +47,7 @@ class SanityChecks {
      */
     static void checkGuava() {
         boolean resolved = false;
-        TypeToken<Map<String,String>> mapOfString = CodecUtils.mapOf(String.class, String.class);
+        TypeToken<Map<String,String>> mapOfString = TypeTokens.mapOf(String.class, String.class);
         Type type = mapOfString.getType();
         if(type instanceof ParameterizedType) {
             ParameterizedType pType = (ParameterizedType)type;

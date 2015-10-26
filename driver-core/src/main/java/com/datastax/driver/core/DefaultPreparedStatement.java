@@ -136,7 +136,7 @@ public class DefaultPreparedStatement implements PreparedStatement {
     }
 
     public PreparedStatement setRoutingKey(ByteBuffer... routingKeyComponents) {
-        this.routingKey = CodecUtils.compose(routingKeyComponents);
+        this.routingKey = SimpleStatement.compose(routingKeyComponents);
         return this;
     }
 

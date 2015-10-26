@@ -13,7 +13,7 @@
  *   See the License for the specific language governing permissions and
  *   limitations under the License.
  */
-package com.datastax.driver.core;
+package com.datastax.driver.extras.codecs.guava;
 
 import java.util.Collection;
 import java.util.Map;
@@ -23,24 +23,25 @@ import com.google.common.base.Predicate;
 import com.google.common.reflect.TypeParameter;
 import com.google.common.reflect.TypeToken;
 
-import static com.google.common.base.Predicates.isNull;
-import static com.google.common.base.Predicates.or;
+import com.datastax.driver.core.TypeCodec;
+import com.datastax.driver.extras.codecs.MappingCodec;
 
+/**
+ * A codec that wraps other codecs around Guava's {@link Optional} API.
+ *
+ * @param <T> The wrapped Java type
+ */
 public class OptionalCodec<T> extends MappingCodec<Optional<T>, T> {
 
     private final Predicate<T> isAbsent;
 
-    @SuppressWarnings("unchecked")
     public OptionalCodec(TypeCodec<T> codec) {
-        this(codec, (Predicate<T>) isAbsent());
-    }
-
-    private static <T> Predicate<T> isAbsent() {
-        return or(isNull(), new Predicate<T>() {
+        this(codec, new Predicate<T>() {
             @Override
             public boolean apply(T input) {
-                return (input instanceof Collection && ((Collection)input).isEmpty()) ||
-                    (input instanceof Map && ((Map)input).isEmpty());
+                return input == null
+                    || input instanceof Collection && ((Collection)input).isEmpty()
+                    || input instanceof Map && ((Map)input).isEmpty();
             }
         });
     }
@@ -52,7 +53,7 @@ public class OptionalCodec<T> extends MappingCodec<Optional<T>, T> {
 
     @Override
     protected Optional<T> deserialize(T value) {
-        return isAbsent(value) ? Optional.<T>absent() : Optional.of(value);
+        return isAbsent(value) ? Optional.<T>absent() : Optional.fromNullable(value);
     }
 
     @Override
@@ -67,6 +68,5 @@ public class OptionalCodec<T> extends MappingCodec<Optional<T>, T> {
     protected boolean isAbsent(T value) {
         return isAbsent.apply(value);
     }
-
 
 }
