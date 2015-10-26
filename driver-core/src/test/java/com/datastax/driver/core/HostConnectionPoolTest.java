@@ -530,7 +530,7 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
             // 2 attempts for connection.open (reconnect control connection and initial connection for host state).
             verify(factory, after(reconnectInterval*2).atLeast(2)).open(host);
             // 7 attempts for core connections after first initial connection.
-            verify(factory, timeout(reconnectInterval*2).times(7)).newConnection(any(HostConnectionPool.class));
+            verify(factory, timeout(reconnectInterval*2)).newConnections(any(HostConnectionPool.class), eq(7));
 
             // Wait some reasonable amount of time for connection to reestablish.
             Uninterruptibles.sleepUninterruptibly(readTimeout, TimeUnit.MILLISECONDS);

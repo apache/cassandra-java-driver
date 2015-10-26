@@ -2024,14 +2024,15 @@ public class Cluster implements Closeable {
             }
         }
 
-        public boolean signalConnectionFailure(Host host, ConnectionException exception,
-                                               boolean connectionInitialized, boolean isHostAddition) {
-            // Don't signal failure until we've fully initialized the controlConnection as this might mess up with
+        public boolean signalConnectionFailure(Host host, Connection connection,
+                                               boolean isHostAddition) {
+            boolean isDown = host.convictionPolicy.signalConnectionFailure(connection);
+
+            // Don't mark the node down until we've fully initialized the controlConnection as this might mess up with
             // the protocol detection
             if (!isFullyInit || isClosed())
                 return true;
 
-            boolean isDown = host.convictionPolicy.signalConnectionFailure(exception, connectionInitialized);
             if (isDown)
                 triggerOnDown(host, isHostAddition, true);
             return isDown;

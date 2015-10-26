@@ -106,19 +106,19 @@ class HostConnectionPool implements Connection.Owner {
         final int coreSize = options().getCoreConnectionsPerHost(hostDistance);
         final List<Connection> connections = Lists.newArrayListWithCapacity(coreSize);
         final List<ListenableFuture<Void>> connectionFutures = Lists.newArrayListWithCapacity(coreSize);
-        for (int i = 0; i < coreSize; i++) {
-            Connection connection;
-            ListenableFuture<Void> connectionFuture;
-            // reuse the existing connection only once
-            if (reusedConnection != null && reusedConnection.setOwner(this)) {
-                connection = reusedConnection;
-                connectionFuture = MoreFutures.VOID_SUCCESS;
-            } else {
-                connection = manager.connectionFactory().newConnection(this);
-                connectionFuture = connection.initAsync();
-            }
-            reusedConnection = null;
-            connections.add(connection);
+
+        int toCreate = coreSize;
+
+        if (reusedConnection != null && reusedConnection.setOwner(this)) {
+            toCreate -= 1;
+            connections.add(reusedConnection);
+            connectionFutures.add(MoreFutures.VOID_SUCCESS);
+        }
+
+        List<Connection> newConnections = manager.connectionFactory().newConnections(this, toCreate);
+        connections.addAll(newConnections);
+        for (Connection connection : newConnections) {
+            ListenableFuture<Void> connectionFuture = connection.initAsync();
             connectionFutures.add(handleErrors(connectionFuture, initExecutor));
         }
 

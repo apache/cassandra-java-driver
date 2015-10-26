@@ -33,30 +33,25 @@ import com.datastax.driver.core.policies.ReconnectionPolicy;
 abstract class ConvictionPolicy {
 
     /**
-     * Called when a new connection to the host has been successfully opened.
+     * Called when new connections to the host are about to be created.
+     *
+     * @param count the number of connections
      */
-    abstract void signalConnectionCreated();
+    abstract void signalConnectionsOpening(int count);
 
     /**
      * Called when a connection closed normally.
      */
-    abstract void signalConnectionClosed();
+    abstract void signalConnectionClosed(Connection connection);
 
     /**
      * Called when a connection error occurs on a connection to the host this policy applies to.
      *
-     * @param exception the connection error that occurred.
-     * @param connectionInitialized whether the connection was initialized.
      * @return whether the host should be considered down.
      */
-    abstract boolean signalConnectionFailure(ConnectionException exception, boolean connectionInitialized);
+    abstract boolean signalConnectionFailure(Connection connection);
 
     abstract boolean canReconnectNow();
-
-    /**
-     * Called when the host goes down.
-     */
-    abstract void reset();
 
     /**
      * Simple factory interface to allow creating {@link ConvictionPolicy} instances.
@@ -86,33 +81,27 @@ abstract class ConvictionPolicy {
         }
 
         @Override
-        void signalConnectionCreated() {
-            int newCount = openConnections.incrementAndGet();
-            Host.statesLogger.debug("[{}] new connection created, total = {}", host, newCount);
+        void signalConnectionsOpening(int count) {
+            int newTotal = openConnections.addAndGet(count);
+            Host.statesLogger.debug("[{}] preparing to open {} new connections, total = {}", host, count, newTotal);
             resetReconnectionTime();
         }
 
         @Override
-        void signalConnectionClosed() {
-            if (host.state == Host.State.DOWN)
-                return;
+        void signalConnectionClosed(Connection connection) {
             int remaining = openConnections.decrementAndGet();
             assert remaining >= 0;
-            Host.statesLogger.debug("[{}] connection closed, remaining = {}", host, remaining);
+            Host.statesLogger.debug("[{}] {} closed, remaining = {}", host, connection, remaining);
         }
 
         @Override
-        boolean signalConnectionFailure(ConnectionException exception, boolean wasFullyInitialized) {
-            if (host.state == Host.State.DOWN)
-                return false;
+        boolean signalConnectionFailure(Connection connection) {
+            if (host.state != Host.State.DOWN)
+                updateReconnectionTime();
 
-            updateReconnectionTime();
-            int remaining = (wasFullyInitialized)
-                ? openConnections.decrementAndGet()
-                : openConnections.get();
-
+            int remaining = openConnections.decrementAndGet();
             assert remaining >= 0;
-            Host.statesLogger.debug("[{}] remaining connections = {}", host, remaining);
+            Host.statesLogger.debug("[{}] {} failed, remaining = {}", host, connection, remaining);
             return remaining == 0;
         }
 
@@ -139,12 +128,6 @@ abstract class ConvictionPolicy {
         boolean canReconnectNow() {
             return nextReconnectionTime == Long.MIN_VALUE ||
                 System.nanoTime() >= nextReconnectionTime;
-        }
-
-        @Override
-        synchronized void reset() {
-            openConnections.set(0);
-            resetReconnectionTime();
         }
 
         static class Factory implements ConvictionPolicy.Factory {
