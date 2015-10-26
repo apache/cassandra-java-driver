@@ -41,12 +41,10 @@ import static org.mockito.Mockito.verify;
 
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.datastax.driver.core.policies.ConstantReconnectionPolicy;
-import com.datastax.driver.core.utils.CassandraVersion;
 
-import static com.datastax.driver.core.Assertions.*;
+import static com.datastax.driver.core.Assertions.assertThat;
+import static com.datastax.driver.core.Assertions.fail;
 import static com.datastax.driver.core.FakeHost.Behavior.THROWING_CONNECT_TIMEOUTS;
-import static com.datastax.driver.core.Host.State.DOWN;
-import static com.datastax.driver.core.Host.State.UP;
 import static com.datastax.driver.core.HostDistance.LOCAL;
 import static com.datastax.driver.core.TestUtils.nonDebouncingQueryOptions;
 
@@ -58,7 +56,6 @@ public class ClusterInitTest {
      * causing timeouts, we want to ensure that the driver does not wait multiple times on the same host.
      */
     @Test(groups = "short")
-    @CassandraVersion(major=2.0, description = "Scassandra currently broken with protocol version 1.")
     public void should_handle_failing_or_missing_contact_points() throws UnknownHostException {
         Cluster cluster = null;
         Scassandra scassandra = null;
@@ -128,9 +125,12 @@ public class ClusterInitTest {
             verify(socketOptions, atLeast(6)).getKeepAlive();
             verify(socketOptions, atMost(7)).getKeepAlive();
 
-            assertThat(cluster).host(realHostAddress).isNotNull().hasState(UP);
+            assertThat(cluster).host(realHostAddress).isNotNull().isUp();
+            // It is likely but not guaranteed that a host is marked down at this point.
+            // It should eventually be marked down as Cluster.Manager.triggerOnDown should be
+            // called and submit a task that marks the host down.
             for (FakeHost failingHost : failingHosts) {
-                assertThat(cluster).host(failingHost.address).hasState(DOWN);
+                assertThat(cluster).host(failingHost.address).goesDownWithin(10, TimeUnit.SECONDS);
                 assertThat(cluster).host(failingHost.address).isReconnectingFromDown();
             }
             assertThat(cluster).host(missingHostAddress).isNull();
