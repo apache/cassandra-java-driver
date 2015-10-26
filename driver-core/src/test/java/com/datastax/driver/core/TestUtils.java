@@ -23,6 +23,7 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.nio.ByteBuffer;
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.util.concurrent.Futures;
@@ -382,6 +383,38 @@ public abstract class TestUtils {
         if (major < majorCheck || (major == majorCheck && minor < minorCheck)) {
             throw new SkipException("Version >= " + majorCheck + "." + minorCheck + " required.  Description: " + skipString);
         }
+    }
+
+    public static Host findOrWaitForHost(Cluster cluster, int node, long duration, TimeUnit unit) {
+        return findOrWaitForHost(cluster, CCMBridge.ipOfNode(node), duration, unit);
+    }
+
+    public static Host findOrWaitForHost(final Cluster cluster, final String address, long duration, TimeUnit unit) {
+        Host host = findHost(cluster, address);
+        if(host == null) {
+            final CountDownLatch addSignal = new CountDownLatch(1);
+            Host.StateListener addListener = new StateListenerBase() {
+                @Override
+                public void onAdd(Host host) {
+                    if(host.getAddress().getHostAddress().equals(address)) {
+                        // for a new node, because of this we also listen for add events.
+                        addSignal.countDown();
+                    }
+                }
+            };
+            cluster.register(addListener);
+            try {
+                // Wait until an add event occurs or we timeout.
+                if (addSignal.await(duration, unit)) {
+                    host = findHost(cluster, address);
+                }
+            } catch (InterruptedException e) {
+                return null;
+            } finally {
+                cluster.unregister(addListener);
+            }
+        }
+        return host;
     }
 
     public static Host findHost(Cluster cluster, int hostNumber) {

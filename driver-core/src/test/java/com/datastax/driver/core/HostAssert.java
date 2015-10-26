@@ -120,26 +120,4 @@ public class HostAssert extends AbstractAssert<HostAssert, Host> {
         fail(actual + " did not go down within " + duration + " " + unit);
         return this;
     }
-
-    public static class StateListenerBase implements StateListener {
-        @Override
-        public void onAdd(Host host) {
-        }
-
-        @Override
-        public void onUp(Host host) {
-        }
-
-        @Override
-        public void onSuspected(Host host) {
-        }
-
-        @Override
-        public void onDown(Host host) {
-        }
-
-        @Override
-        public void onRemove(Host host) {
-        }
-    }
 }
