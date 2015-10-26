@@ -24,7 +24,7 @@ import com.datastax.driver.core.utils.CassandraVersion;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.DataType.*;
-import static com.datastax.driver.core.TableOrView.Order.DESC;
+import static com.datastax.driver.core.ClusteringOrder.DESC;
 
 @CassandraVersion(major = 3)
 public class MaterializedViewMetadataTest extends CCMBridge.PerClassSingleNodeCluster {

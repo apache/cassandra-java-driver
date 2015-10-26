@@ -48,7 +48,7 @@ public class MaterializedViewMetadata extends TableOrView {
         boolean includeAllColumns,
         String whereClause,
         TableOptionsMetadata options,
-        List<Order> clusteringOrder,
+        List<ClusteringOrder> clusteringOrder,
         VersionNumber cassandraVersion) {
         super(keyspace, name, id, partitionKey, clusteringColumns, columns, options, clusteringOrder, cassandraVersion);
         this.baseTable = baseTable;
@@ -77,7 +77,7 @@ public class MaterializedViewMetadata extends TableOrView {
 
         List<ColumnMetadata> partitionKey = new ArrayList<ColumnMetadata>(Collections.<ColumnMetadata>nCopies(partitionKeySize, null));
         List<ColumnMetadata> clusteringColumns = new ArrayList<ColumnMetadata>(Collections.<ColumnMetadata>nCopies(clusteringSize, null));
-        List<Order> clusteringOrder = new ArrayList<Order>(Collections.<Order>nCopies(clusteringSize, null));
+        List<ClusteringOrder> clusteringOrder = new ArrayList<ClusteringOrder>(Collections.<ClusteringOrder>nCopies(clusteringSize, null));
 
         // We use a linked hashmap because we will keep this in the order of a 'SELECT * FROM ...'.
         LinkedHashMap<String, ColumnMetadata> columns = new LinkedHashMap<String, ColumnMetadata>();
@@ -108,7 +108,7 @@ public class MaterializedViewMetadata extends TableOrView {
                     break;
                 case CLUSTERING_COLUMN:
                     clusteringColumns.set(rawCol.position, col);
-                    clusteringOrder.set(rawCol.position, rawCol.isReversed ? Order.DESC : Order.ASC);
+                    clusteringOrder.set(rawCol.position, rawCol.isReversed ? ClusteringOrder.DESC : ClusteringOrder.ASC);
                     break;
                 default:
                     otherColumns.add(col);

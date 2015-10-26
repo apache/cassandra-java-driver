@@ -55,8 +55,8 @@ public class ColumnMetadataAssert extends AbstractAssert<ColumnMetadataAssert, C
         return this;
     }
 
-    public ColumnMetadataAssert hasClusteringOrder(TableOrView.Order order) {
-        assertThat(actual.getParent().getClusteringOrder().get(actual.getParent().getClusteringColumns().indexOf(actual))).isEqualTo(order);
+    public ColumnMetadataAssert hasClusteringOrder(ClusteringOrder clusteringOrder) {
+        assertThat(actual.getParent().getClusteringOrder().get(actual.getParent().getClusteringColumns().indexOf(actual))).isEqualTo(clusteringOrder);
         return this;
     }
 

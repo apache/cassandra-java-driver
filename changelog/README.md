@@ -1,5 +1,10 @@
 ## Changelog
 
+### 3.0.0-beta1 (in progress)
+
+ - [improvement] JAVA-958: Make TableOrView.Order visible.
+ - [improvement] JAVA-968: Update metrics to the latest version.
+
 ### 3.0.0-alpha4
 
 - [improvement] Change default consistency level to LOCAL_QUORUM (JAVA-926)

@@ -62,7 +62,7 @@ public class TableMetadata extends TableOrView {
                           Map<String, ColumnMetadata> columns,
                           Map<String, IndexMetadata> indexes,
                           TableOptionsMetadata options,
-                          List<Order> clusteringOrder,
+                          List<ClusteringOrder> clusteringOrder,
                           VersionNumber cassandraVersion) {
         super(keyspace, name, id, partitionKey, clusteringColumns, columns, options, clusteringOrder, cassandraVersion);
         this.indexes = indexes;
@@ -123,7 +123,7 @@ public class TableMetadata extends TableOrView {
 
         List<ColumnMetadata> partitionKey = new ArrayList<ColumnMetadata>(Collections.<ColumnMetadata>nCopies(partitionKeySize, null));
         List<ColumnMetadata> clusteringColumns = new ArrayList<ColumnMetadata>(Collections.<ColumnMetadata>nCopies(clusteringSize, null));
-        List<Order> clusteringOrder = new ArrayList<Order>(Collections.<Order>nCopies(clusteringSize, null));
+        List<ClusteringOrder> clusteringOrder = new ArrayList<ClusteringOrder>(Collections.<ClusteringOrder>nCopies(clusteringSize, null));
 
         // We use a linked hashmap because we will keep this in the order of a 'SELECT * FROM ...'.
         LinkedHashMap<String, ColumnMetadata> columns = new LinkedHashMap<String, ColumnMetadata>();
@@ -165,7 +165,7 @@ public class TableMetadata extends TableOrView {
             for (int i = 0; i < clusteringSize; i++) {
                 String alias = columnAliases.size() > i ? columnAliases.get(i) : DEFAULT_COLUMN_ALIAS + (i + 1);
                 clusteringColumns.set(i, ColumnMetadata.forAlias(tm, alias, comparator.types.get(i)));
-                clusteringOrder.set(i, comparator.reversed.get(i) ? Order.DESC : Order.ASC);
+                clusteringOrder.set(i, comparator.reversed.get(i) ? ClusteringOrder.DESC : ClusteringOrder.ASC);
             }
 
             // if we're dense, chances are that we have a single regular "value" column with an alias
@@ -187,7 +187,7 @@ public class TableMetadata extends TableOrView {
                     break;
                 case CLUSTERING_COLUMN:
                     clusteringColumns.set(rawCol.position, col);
-                    clusteringOrder.set(rawCol.position, rawCol.isReversed ? Order.DESC : Order.ASC);
+                    clusteringOrder.set(rawCol.position, rawCol.isReversed ? ClusteringOrder.DESC : ClusteringOrder.ASC);
                     break;
                 default:
                     otherColumns.add(col);
