@@ -290,7 +290,7 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
             startLatch.countDown();
 
             executor.shutdown();
-            boolean normalShutdown = executor.awaitTermination(1, TimeUnit.SECONDS);
+            boolean normalShutdown = executor.awaitTermination(5, TimeUnit.SECONDS);
             assertTrue(normalShutdown);
 
             // The deadlock occurred here before JAVA-418
