@@ -17,6 +17,7 @@
 - [new feature] JAVA-846: Provide custom codecs library as an extra module.
 - [new feature] JAVA-742: Codec Support for JSON.
 - [new feature] JAVA-606: Codec support for Java 8.
+- [new feature] JAVA-565: Codec support for Java arrays.
 
 Merged from 2.1 branch:
 
