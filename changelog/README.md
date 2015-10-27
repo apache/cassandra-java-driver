@@ -16,6 +16,7 @@
 - [improvement] JAVA-936: Adapt schema metadata parsing logic to new storage format of CQL types in C* 3.0.
 - [new feature] JAVA-846: Provide custom codecs library as an extra module.
 - [new feature] JAVA-742: Codec Support for JSON.
+- [new feature] JAVA-606: Codec support for Java 8.
 
 Merged from 2.1 branch:
 
