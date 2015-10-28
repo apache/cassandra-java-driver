@@ -48,4 +48,14 @@ public class SimpleStatementTest {
         assertThat(actual).isSameAs(expected);
     }
 
+    @Test(groups = "unit")
+    public void should_return_number_of_values() {
+        assertThat(
+            new SimpleStatement("doesn't matter").getValuesCount()
+        ).isEqualTo(0);
+        assertThat(
+            new SimpleStatement("doesn't matter", 1, 2).getValuesCount()
+        ).isEqualTo(2);
+    }
+
 }
