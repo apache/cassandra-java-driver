@@ -54,7 +54,7 @@ public class MailboxServiceIT {
     }
 
     private MavenArtifactProvisionOption guavaBundle() {
-        return mavenBundle("com.google.guava", "guava", "14.0.1");
+        return mavenBundle("com.google.guava", "guava", "16.0.1");
     }
 
     private CompositeOption nettyBundles() {
@@ -105,26 +105,6 @@ public class MailboxServiceIT {
             driverBundle(),
             guavaBundle(),
             nettyBundles(),
-            defaultOptions()
-        );
-    }
-
-    @Configuration
-    public Option[] guava15Config() {
-        return options(
-            driverBundle(),
-            nettyBundles(),
-            guavaBundle().version("15.0"),
-            defaultOptions()
-        );
-    }
-
-    @Configuration
-    public Option[] guava16Config() {
-        return options(
-            driverBundle(),
-            nettyBundles(),
-            guavaBundle().version("16.0.1"),
             defaultOptions()
         );
     }
