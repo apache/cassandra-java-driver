@@ -76,7 +76,7 @@ public class JsonCodec<T> extends TypeCodec<T> {
     @Override
     @SuppressWarnings("unchecked")
     public T parse(String value) throws InvalidTypeException {
-        if (value == null || value.isEmpty() || value.equals("NULL"))
+        if (value == null || value.isEmpty() || value.equalsIgnoreCase("NULL"))
             return null;
         if (value.charAt(0) != '\'' || value.charAt(value.length() - 1) != '\'')
             throw new InvalidTypeException("JSON strings must be enclosed by single quotes");

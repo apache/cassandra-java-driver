@@ -54,7 +54,7 @@ public abstract class MappingCodec<T, U> extends TypeCodec<T> {
 
     @Override
     public T parse(String value) throws InvalidTypeException {
-        return value == null || value.isEmpty() || value.equals("NULL") ? null : deserialize(innerCodec.parse(value));
+        return value == null || value.isEmpty() || value.equalsIgnoreCase("NULL") ? null : deserialize(innerCodec.parse(value));
     }
 
     @Override
