@@ -83,7 +83,7 @@ abstract class AbstractGraphStatement extends RegularStatement {
         return this;
     }
 
-    /* TODO: probably make more advanced checks on the statement
+    /* TODO: eventually make more advanced checks on the statement
      *
      * As of right now, mandatory fields for DSE Graph are :
      * - graph-keyspace

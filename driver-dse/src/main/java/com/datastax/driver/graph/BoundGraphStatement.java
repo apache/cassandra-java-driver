@@ -15,35 +15,33 @@
  */
 package com.datastax.driver.graph;
 
+import java.io.IOException;
+import java.io.StringWriter;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import com.datastax.driver.core.BoundStatement;
+import com.datastax.driver.core.exceptions.DriverException;
 
 public class BoundGraphStatement extends AbstractGraphStatement {
 
     //  "name", "value"
-    Map<String, String> arguments;
+    Map<String, Object> valuesMap;
 
     BoundStatement bs;
 
     BoundGraphStatement(BoundStatement bs) {
         super();
         this.bs = bs;
-        this.arguments = new HashMap<String, String>();
+        this.valuesMap = new HashMap<String, Object>();
         //do stuff
-    }
-
-    String getJsonArgs() {
-        // Constructs the JSON string argument according to the arguments Map
-//        JSONObject obj = new JSONObject();
-//        for (Map.Entry<String, String> argument : arguments.entrySet()) {
-//            obj.put(argument.getKey(), argument.getValue());
-//        }
-//        return obj.toJSONString();
-        return null;
     }
 
     /**
@@ -51,18 +49,51 @@ public class BoundGraphStatement extends AbstractGraphStatement {
      * @param name
      * @param value
      */
-    public void setValue(String name, String value) {
-        this.arguments.put(name, value);
+    public void set(String name, Object value) {
+        this.valuesMap.put(name, value);
     }
 
 
     // Bind variable in the PreparedStatement
     BoundStatement boundStatement() {
-        String jsonArguments = this.getJsonArgs();
-
-        // The name of the required parameter to use is not defined yet
-        this.bs.setString("jsonArguments", jsonArguments);
-
+        JsonNodeFactory factory = new JsonNodeFactory(false);
+        JsonFactory jsonFactory = new JsonFactory();
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            int paramNumber = 0;
+            for (Map.Entry<String, Object> param : this.valuesMap.entrySet()) {
+                StringWriter stringWriter = new StringWriter();
+                JsonGenerator generator = jsonFactory.createGenerator(stringWriter);
+                ObjectNode parameter = factory.objectNode();
+                String name = param.getKey();
+                Object value = param.getValue();
+                if (value instanceof Integer) {
+                    parameter.put("name", name);
+                    parameter.put("value", (Integer)value);
+                } else if (value instanceof String) {
+                    parameter.put("name", name);
+                    parameter.put("value", (String)value);
+                } else if (value instanceof Float) {
+                    parameter.put("name", name);
+                    parameter.put("value", (Float)value);
+                } else if (value instanceof Double) {
+                    parameter.put("name", name);
+                    parameter.put("value", (Double)value);
+                } else if (value instanceof Boolean) {
+                    parameter.put("name", name);
+                    parameter.put("value", (Boolean)value);
+                } else if (value instanceof Long) {
+                    parameter.put("name", name);
+                    parameter.put("value", (Long)value);
+                } else {
+                    throw new DriverException("Parameter : " + value + ", is not in a valid format to be sent as Gremlin parameter.");
+                }
+                objectMapper.writeTree(generator, parameter);
+                this.bs.setString(paramNumber++, stringWriter.toString());
+            }
+        } catch (IOException e) {
+            throw new DriverException("Some values are not in a compatible type to be serialized in a Gremlin Query.");
+        }
         return this.bs;
     }
 
@@ -91,7 +122,7 @@ public class BoundGraphStatement extends AbstractGraphStatement {
 
     @Override
     public String getKeyspace() {
-        // TODO: find potential conflicts in using this option and the setGraphKeyspace()
+        // Conflicting with the Graph keyspace property, this will not be used with Graph statements.
         return null;
     }
 }

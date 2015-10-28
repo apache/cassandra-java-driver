@@ -48,6 +48,16 @@ public class GraphSession {
         return new GraphResultSet(session.execute(bst.boundStatement()));
     }
 
+    public GraphResultSet execute(AbstractGraphStatement statement) {
+        if (statement instanceof GraphStatement) {
+            return execute((GraphStatement) statement);
+        } else if (statement instanceof BoundGraphStatement) {
+            return execute((BoundGraphStatement) statement);
+        } else {
+            return new GraphResultSet(session.execute(statement));
+        }
+    }
+
     public PreparedGraphStatement prepare(GraphStatement gst) {
         return new PreparedGraphStatement(session.prepare(gst), gst);
     }

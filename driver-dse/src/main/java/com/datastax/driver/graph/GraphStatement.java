@@ -18,17 +18,16 @@ package com.datastax.driver.graph;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.nio.ByteBuffer;
-import java.sql.Driver;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.collect.Lists;
 
 import com.datastax.driver.core.exceptions.DriverException;
 
@@ -37,6 +36,8 @@ public class GraphStatement extends AbstractGraphStatement {
     private final String query;
     private final Map<String, Object> valuesMap;
     private List<ByteBuffer> JsonParams;
+    private int paramsHash;
+    private volatile ByteBuffer routingKey;
 
     public GraphStatement(String query) {
         this(query, (Object[])null);
@@ -48,6 +49,7 @@ public class GraphStatement extends AbstractGraphStatement {
         this.valuesMap = new HashMap<String, Object>();
         this.JsonParams = new ArrayList<ByteBuffer>();
         addValuesMap(values);
+        this.routingKey = null;
     }
 
     @Override
@@ -75,10 +77,15 @@ public class GraphStatement extends AbstractGraphStatement {
         return this.valuesMap.size() > 0;
     }
 
+    public GraphStatement setRoutingKey(ByteBuffer routingKey) {
+        this.routingKey = routingKey;
+        return this;
+    }
+
     @Override
     public ByteBuffer getRoutingKey() {
-        // TODO: Use the graph routing key mechanism.
-        return null;
+        // Still possible to override the routing key mechanism
+        return this.routingKey;
     }
 
     @Override
@@ -87,11 +94,14 @@ public class GraphStatement extends AbstractGraphStatement {
         return null;
     }
 
-    // TODO : mechanism to not do this if the params haven't changed since last execution.
     private void processValues() {
         JsonNodeFactory factory = new JsonNodeFactory(false);
         JsonFactory jsonFactory = new JsonFactory();
         ObjectMapper objectMapper = new ObjectMapper();
+        if (this.paramsHash == this.valuesMap.hashCode()) {
+            // Avoids regenerating the Json params if the params haven't changed.
+            return;
+        }
         this.JsonParams.clear();
         try {
             for (Map.Entry<String, Object> param : this.valuesMap.entrySet()) {
@@ -124,6 +134,7 @@ public class GraphStatement extends AbstractGraphStatement {
                 objectMapper.writeTree(generator, parameter);
                 this.JsonParams.add(ByteBuffer.wrap(stringWriter.toString().getBytes()));
             }
+            this.paramsHash = this.valuesMap.hashCode();
         } catch (IOException e) {
             throw new DriverException("Some values are not in a compatible type to be serialized in a Gremlin Query.");
         }
