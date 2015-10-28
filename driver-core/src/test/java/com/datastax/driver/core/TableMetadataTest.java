@@ -28,8 +28,8 @@ import com.datastax.driver.core.utils.CassandraVersion;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.DataType.*;
-import static com.datastax.driver.core.TableOrView.Order.ASC;
-import static com.datastax.driver.core.TableOrView.Order.DESC;
+import static com.datastax.driver.core.ClusteringOrder.ASC;
+import static com.datastax.driver.core.ClusteringOrder.DESC;
 
 public class TableMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
     @Override

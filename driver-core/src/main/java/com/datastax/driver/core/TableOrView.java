@@ -32,6 +32,12 @@ abstract class TableOrView {
         }
     };
 
+    static final Predicate<ClusteringOrder> isAscending = new Predicate<ClusteringOrder>() {
+        public boolean apply(ClusteringOrder o) {
+            return o == ClusteringOrder.ASC;
+        }
+    };
+
     protected final KeyspaceMetadata keyspace;
     protected final String name;
     protected final UUID id;
@@ -39,24 +45,8 @@ abstract class TableOrView {
     protected final List<ColumnMetadata> clusteringColumns;
     protected final Map<String, ColumnMetadata> columns;
     protected final TableOptionsMetadata options;
-    protected final List<Order> clusteringOrder;
+    protected final List<ClusteringOrder> clusteringOrder;
     protected final VersionNumber cassandraVersion;
-
-    /**
-     * Clustering orders.
-     * <p>
-     * This is used by {@link #getClusteringOrder} to indicate the clustering
-     * order of a table.
-     */
-    public enum Order {
-        ASC, DESC;
-
-        static final Predicate<Order> isAscending = new Predicate<Order>() {
-            public boolean apply(Order o) {
-                return o == ASC;
-            }
-        };
-    }
 
     TableOrView(KeyspaceMetadata keyspace,
                         String name,
@@ -65,7 +55,7 @@ abstract class TableOrView {
                         List<ColumnMetadata> clusteringColumns,
                         Map<String, ColumnMetadata> columns,
                         TableOptionsMetadata options,
-                        List<Order> clusteringOrder,
+                        List<ClusteringOrder> clusteringOrder,
                         VersionNumber cassandraVersion) {
         this.keyspace = keyspace;
         this.name = name;
@@ -182,11 +172,11 @@ abstract class TableOrView {
      * descending) of the {@code i}th clustering column (see
      * {@link #getClusteringColumns}). Note that a table defined without any
      * particular clustering order is equivalent to one for which all the
-     * clustering key are in ascending order.
+     * clustering keys are in ascending order.
      *
      * @return a list with the clustering order for each clustering column.
      */
-    public List<Order> getClusteringOrder() {
+    public List<ClusteringOrder> getClusteringOrder() {
         return clusteringOrder;
     }
 
@@ -248,7 +238,7 @@ abstract class TableOrView {
         sb.append(" WITH ");
         if (options.isCompactStorage())
             and(sb.append("COMPACT STORAGE"), formatted);
-        if (!Iterables.all(clusteringOrder, Order.isAscending))
+        if (!Iterables.all(clusteringOrder, isAscending))
             and(appendClusteringOrder(sb), formatted);
         sb.append("read_repair_chance = ").append(options.getReadRepairChance());
         and(sb, formatted).append("dclocal_read_repair_chance = ").append(options.getLocalReadRepairChance());
