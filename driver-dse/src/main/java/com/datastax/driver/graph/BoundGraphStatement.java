@@ -17,7 +17,6 @@ package com.datastax.driver.graph;
 
 import java.io.IOException;
 import java.io.StringWriter;
-import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -30,7 +29,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.exceptions.DriverException;
 
-public class BoundGraphStatement extends AbstractGraphStatement {
+public class BoundGraphStatement extends AbstractGraphStatement<BoundStatement> {
 
     //  "name", "value"
     Map<String, Object> valuesMap;
@@ -98,31 +97,8 @@ public class BoundGraphStatement extends AbstractGraphStatement {
     }
 
     @Override
-    public String getQueryString() {
-        return this.bs.preparedStatement().getQueryString();
-    }
-
-    @Override
-    public ByteBuffer[] getValues() {
-        // TODO when Graph works: Do we want to expose that.
-        return new ByteBuffer[0];
-    }
-
-    @Override
-    public boolean hasValues() {
-        // TODO when Graph works : Same as above
-        return false;
-    }
-
-    @Override
-    public ByteBuffer getRoutingKey() {
-        // TODO: Use the graph routing key mechanism.
-        return null;
-    }
-
-    @Override
-    public String getKeyspace() {
-        // Conflicting with the Graph keyspace property, this will not be used with Graph statements.
+    BoundStatement configureAndGetWrappedStatement() {
+        // TODO
         return null;
     }
 }

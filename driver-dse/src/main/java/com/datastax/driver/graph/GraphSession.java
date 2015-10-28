@@ -16,7 +16,10 @@
 package com.datastax.driver.graph;
 
 
+import com.datastax.driver.core.RegularStatement;
 import com.datastax.driver.core.Session;
+import com.datastax.driver.core.SimpleStatement;
+import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
 
 public class GraphSession {
@@ -26,47 +29,28 @@ public class GraphSession {
         this.session = session;
     }
 
-    public GraphResultSet execute(GraphStatement gst) {
-        if (!AbstractGraphStatement.checkStatement(gst)) {
-            throw new InvalidQueryException("Invalid Graph Statement, you need to specify at least the keyspace containing the Graph data.");
-        }
-        // This is mandatory now to apply changes on the statement (payload).
-        gst.configure();
-        return new GraphResultSet(session.execute(gst));
-    }
-
-    public GraphResultSet execute(String query) {
-        return new GraphResultSet(session.execute(new GraphStatement(query)));
-    }
-
-    public GraphResultSet execute(BoundGraphStatement bst) {
-        if (!AbstractGraphStatement.checkStatement(bst)) {
-            throw new InvalidQueryException("Invalid Graph Statement, you need to specify at least the keyspace containing the Graph data.");
-        }
-        // This is mandatory now to apply changes on the statement (payload).
-        bst.configure();
-        return new GraphResultSet(session.execute(bst.boundStatement()));
-    }
-
     public GraphResultSet execute(AbstractGraphStatement statement) {
-        if (statement instanceof GraphStatement) {
-            return execute((GraphStatement) statement);
-        } else if (statement instanceof BoundGraphStatement) {
-            return execute((BoundGraphStatement) statement);
-        } else {
-            return new GraphResultSet(session.execute(statement));
+        if (!AbstractGraphStatement.checkStatement(statement)) {
+            throw new InvalidQueryException("Invalid Graph Statement, you need to specify at least the keyspace containing the Graph data.");
         }
+        Statement st = statement.configureAndGetWrappedStatement();
+        return new GraphResultSet(session.execute(st));
     }
 
-    public PreparedGraphStatement prepare(GraphStatement gst) {
-        return new PreparedGraphStatement(session.prepare(gst), gst);
-    }
+//    public PreparedGraphStatement prepare(GraphStatement gst) {
+//        return new PreparedGraphStatement(session.prepare(gst), gst);
+//    }
 
-    public PreparedGraphStatement prepare(String query) {
-        return new PreparedGraphStatement(session.prepare(new GraphStatement(query)));
-    }
+//    public PreparedGraphStatement prepare(String query) {
+//        return new PreparedGraphStatement(session.prepare(new GraphStatement(query)));
+//    }
 
     public Session getSession() {
         return this.session;
+    }
+
+
+    public GraphStatement newGraphStatement(String query, Object... objects) {
+        return new GraphStatement(query, this, objects);
     }
 }

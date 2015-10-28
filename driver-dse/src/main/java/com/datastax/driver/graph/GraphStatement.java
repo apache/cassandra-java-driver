@@ -29,77 +29,44 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import com.datastax.driver.core.*;
 import com.datastax.driver.core.exceptions.DriverException;
 
-public class GraphStatement extends AbstractGraphStatement {
+public class GraphStatement extends AbstractGraphStatement<SimpleStatement> {
 
     private final String query;
     private final Map<String, Object> valuesMap;
-    private List<ByteBuffer> JsonParams;
+    private List<String> JsonParams;
     private int paramsHash;
     private volatile ByteBuffer routingKey;
+    private final GraphSession session;
 
-    public GraphStatement(String query) {
-        this(query, (Object[])null);
-    }
-
-    public GraphStatement(String query, Object... values) {
+    protected GraphStatement(String query, GraphSession session, Object... values) {
         super();
+
         this.query = query;
         this.valuesMap = new HashMap<String, Object>();
-        this.JsonParams = new ArrayList<ByteBuffer>();
-        addValuesMap(values);
+        this.JsonParams = new ArrayList<String>();
         this.routingKey = null;
+
+        addValuesMap(values);
+        this.session = session;
     }
 
-    @Override
-    public String getQueryString() {
-        return this.query;
+    public boolean hasValues() {
+        return this.valuesMap.size() > 0;
     }
 
     /*
     Parameter values are supposed to be sent as JSON string in a particular format.
     The format is : {"parameterName":parameterValue}
      */
-    @Override
-    public ByteBuffer[] getValues() {
-        if (hasValues()) {
-            processValues();
-            ByteBuffer[] bbArray = new ByteBuffer[this.JsonParams.size()];
-            this.JsonParams.toArray(bbArray);
-            return bbArray;
-        }
-        return null;
-    }
-
-    @Override
-    public boolean hasValues() {
-        return this.valuesMap.size() > 0;
-    }
-
-    public GraphStatement setRoutingKey(ByteBuffer routingKey) {
-        this.routingKey = routingKey;
-        return this;
-    }
-
-    @Override
-    public ByteBuffer getRoutingKey() {
-        // Still possible to override the routing key mechanism
-        return this.routingKey;
-    }
-
-    @Override
-    public String getKeyspace() {
-        // Conflicting with the Graph keyspace property, this will not be used with Graph statements.
-        return null;
-    }
-
     private void processValues() {
         JsonNodeFactory factory = new JsonNodeFactory(false);
         JsonFactory jsonFactory = new JsonFactory();
         ObjectMapper objectMapper = new ObjectMapper();
         if (this.paramsHash == this.valuesMap.hashCode()) {
-            // Avoids regenerating the Json params if the params haven't changed.
+//            Avoids regenerating the Json params if the params haven't changed.
             return;
         }
         this.JsonParams.clear();
@@ -132,7 +99,7 @@ public class GraphStatement extends AbstractGraphStatement {
                     throw new DriverException("Parameter : " + value + ", is not in a valid format to be sent as Gremlin parameter.");
                 }
                 objectMapper.writeTree(generator, parameter);
-                this.JsonParams.add(ByteBuffer.wrap(stringWriter.toString().getBytes()));
+                this.JsonParams.add(stringWriter.toString());
             }
             this.paramsHash = this.valuesMap.hashCode();
         } catch (IOException e) {
@@ -153,5 +120,15 @@ public class GraphStatement extends AbstractGraphStatement {
 
     public void set(String name, Object value) {
         this.valuesMap.put(name, value);
+    }
+
+    @Override
+    SimpleStatement configureAndGetWrappedStatement() {
+        if (hasValues()) {
+            processValues();
+        }
+        this.wrappedStatement = session.getSession().newSimpleStatement(this.query, this.JsonParams.toArray());
+        configure();
+        return this.wrappedStatement;
     }
 }

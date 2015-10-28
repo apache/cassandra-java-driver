@@ -21,10 +21,10 @@ import java.util.Map;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 
-import com.datastax.driver.core.RegularStatement;
+import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
 
-abstract class AbstractGraphStatement extends RegularStatement {
+abstract class AbstractGraphStatement<T extends Statement> {
 
     final Map<String, ByteBuffer> payload;
 
@@ -32,27 +32,45 @@ abstract class AbstractGraphStatement extends RegularStatement {
     final static Map<String, ByteBuffer> DEFAULT_GRAPH_PAYLOAD;
     final static String DEFAULT_GRAPH_LANGUAGE;
 
+    T wrappedStatement;
+
     static {
         DEFAULT_GRAPH_LANGUAGE = "gremlin-groovy";
         DEFAULT_GRAPH_PAYLOAD = ImmutableMap.of(
             "graph-language", ByteBuffer.wrap(DEFAULT_GRAPH_LANGUAGE.getBytes()),
 //            If not present, the default configured for the Keyspace
             "graph-source", ByteBuffer.wrap("default".getBytes())
+
         );
     }
 
     AbstractGraphStatement() {
         this.payload = Maps.newHashMap(DEFAULT_GRAPH_PAYLOAD);
-        configure();
     }
 
-    void configure() {
-        this.setOutgoingPayload(this.payload);
+    /* TODO: eventually make more advanced checks on the statement
+     *
+     * As of right now, mandatory fields for DSE Graph are :
+     * - graph-keyspace
+     *
+     */
+    static boolean checkStatement(AbstractGraphStatement graphStatement) {
+        return graphStatement.getOutgoingPayload().containsKey("graph-language")
+            && graphStatement.getOutgoingPayload().containsKey("graph-keyspace")
+            && graphStatement.getOutgoingPayload().containsKey("graph-source");
+
     }
 
     static void configureFromStatement(AbstractGraphStatement from, AbstractGraphStatement to) {
-        to.setOutgoingPayload(from == null ? AbstractGraphStatement.DEFAULT_GRAPH_PAYLOAD : from.getOutgoingPayload());
+        to.wrappedStatement.setOutgoingPayload(from == null ? AbstractGraphStatement.DEFAULT_GRAPH_PAYLOAD : from.getOutgoingPayload());
         // Maybe later additional stuff will need to be done.
+    }
+
+    abstract T configureAndGetWrappedStatement();
+
+    void configure() {
+        // Apply the graph specific operations here.
+        this.wrappedStatement.setOutgoingPayload(this.payload);
     }
 
     public Map<String, ByteBuffer> getOutgoingPayload() {
@@ -83,17 +101,5 @@ abstract class AbstractGraphStatement extends RegularStatement {
         return this;
     }
 
-    /* TODO: eventually make more advanced checks on the statement
-     *
-     * As of right now, mandatory fields for DSE Graph are :
-     * - graph-keyspace
-     *
-     */
-    static boolean checkStatement(AbstractGraphStatement graphStatement) {
-        return graphStatement.getOutgoingPayload().containsKey("graph-language")
-            && graphStatement.getOutgoingPayload().containsKey("graph-keyspace")
-            && graphStatement.getOutgoingPayload().containsKey("graph-source");
-
-    }
 }
 
