@@ -21,25 +21,13 @@ public class PreparedGraphStatement {
     final PreparedStatement ps;
     final GraphStatement gst;
 
-    PreparedGraphStatement(PreparedStatement ps) {
-        this.ps = ps;
-        this.gst = null;
-    }
-
     PreparedGraphStatement(PreparedStatement ps, GraphStatement gst) {
         this.ps = ps;
         this.gst = gst;
     }
 
     BoundGraphStatement bind() {
-        BoundGraphStatement bgs = new BoundGraphStatement(ps.bind());
-
-        /*
-        Need to keep the configuration from the Prepared statement to
-        the created BoundStatement, so users don't have to re configure the payload and such
-         */
-        AbstractGraphStatement.configureFromStatement(gst, bgs);
-        return bgs;
+        return new BoundGraphStatement(ps.bind(), gst);
     }
 
     public String getQueryString() {

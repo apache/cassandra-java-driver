@@ -27,25 +27,12 @@ import com.datastax.driver.core.exceptions.InvalidQueryException;
 abstract class AbstractGraphStatement<T extends Statement> {
 
     final Map<String, ByteBuffer> payload;
-
-    // Add static DefaultPayload for Graph
-    final static Map<String, ByteBuffer> DEFAULT_GRAPH_PAYLOAD;
-    final static String DEFAULT_GRAPH_LANGUAGE;
-
     T wrappedStatement;
+    final GraphSession session;
 
-    static {
-        DEFAULT_GRAPH_LANGUAGE = "gremlin-groovy";
-        DEFAULT_GRAPH_PAYLOAD = ImmutableMap.of(
-            "graph-language", ByteBuffer.wrap(DEFAULT_GRAPH_LANGUAGE.getBytes()),
-//            If not present, the default configured for the Keyspace
-            "graph-source", ByteBuffer.wrap("default".getBytes())
-
-        );
-    }
-
-    AbstractGraphStatement() {
-        this.payload = Maps.newHashMap(DEFAULT_GRAPH_PAYLOAD);
+    AbstractGraphStatement(GraphSession session) {
+        this.session = session;
+        this.payload = Maps.newHashMap(session.getCustomDefaultPayload());
     }
 
     /* TODO: eventually make more advanced checks on the statement
@@ -55,14 +42,14 @@ abstract class AbstractGraphStatement<T extends Statement> {
      *
      */
     static boolean checkStatement(AbstractGraphStatement graphStatement) {
-        return graphStatement.getOutgoingPayload().containsKey("graph-language")
-            && graphStatement.getOutgoingPayload().containsKey("graph-keyspace")
-            && graphStatement.getOutgoingPayload().containsKey("graph-source");
+        return graphStatement.getOutgoingPayload().containsKey(GraphSession.GRAPH_LANGUAGE_KEY)
+            && graphStatement.getOutgoingPayload().containsKey(GraphSession.GRAPH_LANGUAGE_KEY)
+            && graphStatement.getOutgoingPayload().containsKey(GraphSession.GRAPH_SOURCE_KEY);
 
     }
 
-    static void configureFromStatement(AbstractGraphStatement from, AbstractGraphStatement to) {
-        to.wrappedStatement.setOutgoingPayload(from == null ? AbstractGraphStatement.DEFAULT_GRAPH_PAYLOAD : from.getOutgoingPayload());
+    static void copyConfiguration(AbstractGraphStatement from, AbstractGraphStatement to) {
+        to.wrappedStatement.setOutgoingPayload(from == null ? GraphSession.DEFAULT_GRAPH_PAYLOAD : from.getOutgoingPayload());
         // Maybe later additional stuff will need to be done.
     }
 
@@ -73,12 +60,16 @@ abstract class AbstractGraphStatement<T extends Statement> {
         this.wrappedStatement.setOutgoingPayload(this.payload);
     }
 
+    GraphSession getSession() {
+        return this.session;
+    }
+
     public Map<String, ByteBuffer> getOutgoingPayload() {
         return this.payload;
     }
 
     public AbstractGraphStatement setGraphLanguage(String language) {
-        this.payload.put("graph-language", ByteBuffer.wrap(language.getBytes()));
+        this.payload.put(GraphSession.GRAPH_LANGUAGE_KEY, ByteBuffer.wrap(language.getBytes()));
         return this;
     }
 
@@ -87,19 +78,18 @@ abstract class AbstractGraphStatement<T extends Statement> {
             // TODO: check to return another type of exception since IQE is not really appropriate.
             throw new InvalidQueryException("You cannot set null value or empty string to the keyspace for the Graph, this field is mandatory.");
         }
-        this.payload.put("graph-keyspace", ByteBuffer.wrap(graphKeyspace.getBytes()));
+        this.payload.put(GraphSession.GRAPH_LANGUAGE_KEY, ByteBuffer.wrap(graphKeyspace.getBytes()));
         return this;
     }
 
-    public AbstractGraphStatement setGraphTraversalSource(String graphTraversalSource) {
-        this.payload.put("graph-source", ByteBuffer.wrap(graphTraversalSource.getBytes()));
+    public AbstractGraphStatement setGraphSource(String graphTraversalSource) {
+        this.payload.put(GraphSession.GRAPH_SOURCE_KEY, ByteBuffer.wrap(graphTraversalSource.getBytes()));
         return this;
     }
 
     public AbstractGraphStatement setGraphRebinding(String graphRebinding) {
-        this.payload.put("graph-rebinding", ByteBuffer.wrap(graphRebinding.getBytes()));
+        this.payload.put(GraphSession.GRAPH_REBINDING_KEY, ByteBuffer.wrap(graphRebinding.getBytes()));
         return this;
     }
-
 }
 

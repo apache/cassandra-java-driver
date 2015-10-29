@@ -39,10 +39,9 @@ public class GraphStatement extends AbstractGraphStatement<SimpleStatement> {
     private List<String> JsonParams;
     private int paramsHash;
     private volatile ByteBuffer routingKey;
-    private final GraphSession session;
 
     protected GraphStatement(String query, GraphSession session, Object... values) {
-        super();
+        super(session);
 
         this.query = query;
         this.valuesMap = new HashMap<String, Object>();
@@ -50,7 +49,6 @@ public class GraphStatement extends AbstractGraphStatement<SimpleStatement> {
         this.routingKey = null;
 
         addValuesMap(values);
-        this.session = session;
     }
 
     public boolean hasValues() {

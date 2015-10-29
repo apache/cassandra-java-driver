@@ -34,13 +34,20 @@ public class BoundGraphStatement extends AbstractGraphStatement<BoundStatement> 
     //  "name", "value"
     Map<String, Object> valuesMap;
 
-    BoundStatement bs;
-
-    BoundGraphStatement(BoundStatement bs) {
-        super();
-        this.bs = bs;
+    BoundGraphStatement(BoundStatement bs, GraphStatement gst) {
+        super(gst.getSession());
+        this.wrappedStatement = bs;
         this.valuesMap = new HashMap<String, Object>();
-        //do stuff
+
+        /*
+        Need to keep the configuration from the Prepared statement to
+        the created BoundStatement, so users don't have to re configure the payload and such.
+         */
+        copyConfigFromStatement(gst);
+    }
+
+    void copyConfigFromStatement(GraphStatement gst) {
+        this.wrappedStatement.setOutgoingPayload(gst.getOutgoingPayload() == null ? this.session.getCustomDefaultPayload() : gst.getOutgoingPayload());
     }
 
     /**
@@ -52,9 +59,10 @@ public class BoundGraphStatement extends AbstractGraphStatement<BoundStatement> 
         this.valuesMap.put(name, value);
     }
 
-
-    // Bind variable in the PreparedStatement
-    BoundStatement boundStatement() {
+    // Bind variables in the PreparedStatement
+    @Override
+    BoundStatement configureAndGetWrappedStatement() {
+        // TODO
         JsonNodeFactory factory = new JsonNodeFactory(false);
         JsonFactory jsonFactory = new JsonFactory();
         ObjectMapper objectMapper = new ObjectMapper();
@@ -88,17 +96,11 @@ public class BoundGraphStatement extends AbstractGraphStatement<BoundStatement> 
                     throw new DriverException("Parameter : " + value + ", is not in a valid format to be sent as Gremlin parameter.");
                 }
                 objectMapper.writeTree(generator, parameter);
-                this.bs.setString(paramNumber++, stringWriter.toString());
+                this.wrappedStatement.setString(paramNumber++, stringWriter.toString());
             }
         } catch (IOException e) {
             throw new DriverException("Some values are not in a compatible type to be serialized in a Gremlin Query.");
         }
-        return this.bs;
-    }
-
-    @Override
-    BoundStatement configureAndGetWrappedStatement() {
-        // TODO
-        return null;
+        return this.wrappedStatement;
     }
 }
