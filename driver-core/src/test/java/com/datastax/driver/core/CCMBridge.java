@@ -60,12 +60,12 @@ public class CCMBridge {
     public static final String DEFAULT_CLIENT_TRUSTSTORE_PASSWORD = "cassandra1sfun";
     public static final String DEFAULT_CLIENT_TRUSTSTORE_PATH = "/client.truststore";
 
-    public static final File DEFAULT_CLIENT_TRUSTSTORE_FILE = createTempStore(DEFAULT_CLIENT_TRUSTSTORE_PATH);
-
     public static final String DEFAULT_CLIENT_KEYSTORE_PASSWORD = "cassandra1sfun";
     public static final String DEFAULT_CLIENT_KEYSTORE_PATH = "/client.keystore";
 
-    public static final File DEFAULT_CLIENT_KEYSTORE_FILE = createTempStore(DEFAULT_CLIENT_KEYSTORE_PATH);
+    // Contain the same keypair as the client keystore, but in format usable by OpenSSL
+    public static final File DEFAULT_CLIENT_PRIVATE_KEY_FILE = createTempStore("/client.key");
+    public static final File DEFAULT_CLIENT_CERT_CHAIN_FILE = createTempStore("/client.crt");
 
     public static final String DEFAULT_SERVER_TRUSTSTORE_PASSWORD = "cassandra1sfun";
     public static final String DEFAULT_SERVER_TRUSTSTORE_PATH = "/server.truststore";
@@ -492,9 +492,7 @@ public class CCMBridge {
 
                 builder = configure(builder);
 
-                cluster = builder.addContactPointsWithPorts(Collections.singletonList(hostAddress))
-                    .withNettyOptions(TestUtils.nonQuietClusterCloseOptions)
-                    .build();
+                cluster = builder.addContactPointsWithPorts(Collections.singletonList(hostAddress)).build();
                 session = cluster.connect();
                 keyspace = SIMPLE_KEYSPACE + "_" + ksNumber.incrementAndGet();
                 session.execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, keyspace, 1));
@@ -522,24 +520,12 @@ public class CCMBridge {
 
         private void clearSimpleKeyspace() {
             if(keyspace != null) {
-                logger.debug("Removing keyspace {}.", keyspace);
-                // Temporarily extend read timeout to 1 minute to accommodate dropping keyspaces and
-                // tables being slow, particularly in a CI environment.
+                // Temporarily extend read timeout to 1 minute to accommodate keyspaces with many tables.
+                // This should be more than enough although some tests create many tables, so dropping a keyspace
+                // could take as long as 12 seconds on restricted hardware.
                 int currentTimeout = cluster.getConfiguration().getSocketOptions().getReadTimeoutMillis();
                 cluster.getConfiguration().getSocketOptions().setReadTimeoutMillis(60000);
                 try {
-                    KeyspaceMetadata ksm = cluster.getMetadata().getKeyspace(keyspace);
-                    if (ksm != null) {
-                        // drop each table individually as this seems to be more dependable than dropping
-                        // the entire keyspace at once if it has many tables.
-                        if(ksm.getTables().size() > 10) {
-                            for (TableMetadata table : ksm.getTables()) {
-                                logger.debug("Dropping table {}.{}.", keyspace, table.getName());
-                                session.execute("DROP TABLE " + keyspace + "." + table.getName());
-                            }
-                        }
-                    }
-                    logger.debug("Dropping keyspace {}.", keyspace);
                     session.execute("DROP KEYSPACE " + keyspace);
                 } finally {
                     cluster.getConfiguration().getSocketOptions().setReadTimeoutMillis(currentTimeout);

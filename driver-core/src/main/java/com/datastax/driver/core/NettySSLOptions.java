@@ -16,27 +16,28 @@
 package com.datastax.driver.core;
 
 import io.netty.channel.socket.SocketChannel;
+import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslHandler;
 
 /**
- * Defines how the driver configures SSL connections.
- *
- * @see JdkSSLOptions
- * @see NettySSLOptions
+ * {@link SSLOptions} implementation based on Netty's SSL context.
+ * <p>
+ * Netty has the ability to use OpenSSL if available, instead of the JDK's built-in engine. This yields better performance.
  */
-public interface SSLOptions {
+public class NettySSLOptions implements SSLOptions {
+    private final SslContext context;
 
     /**
-     * Creates a new SSL handler for the given Netty channel.
-     * <p>
-     * This gets called each time the driver opens a new connection to a Cassandra host. The newly created handler will be added
-     * to the channel's pipeline to provide SSL support for the connection.
-     * <p>
-     * You don't necessarily need to implement this method directly; see the provided implementations: {@link JdkSSLOptions} and
-     * {@link NettySSLOptions}.
+     * Create a new instance from a given context.
      *
-     * @param channel the channel.
-     * @return the handler.
+     * @param context the Netty context. {@code SslContextBuilder.forClient()} provides a fluent API to build it.
      */
-    SslHandler newSSLHandler(SocketChannel channel);
+    public NettySSLOptions(SslContext context) {
+        this.context = context;
+    }
+
+    @Override
+    public SslHandler newSSLHandler(SocketChannel channel) {
+        return context.newHandler(channel.alloc());
+    }
 }

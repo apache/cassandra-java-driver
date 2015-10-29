@@ -35,14 +35,12 @@ import io.netty.channel.*;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.channel.socket.SocketChannel;
-import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.timeout.IdleStateEvent;
 import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.util.Timeout;
 import io.netty.util.Timer;
 import io.netty.util.TimerTask;
 import io.netty.util.concurrent.GlobalEventExecutor;
-import javax.net.ssl.SSLEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -1299,11 +1297,7 @@ class Connection {
             ChannelPipeline pipeline = channel.pipeline();
 
             if (sslOptions != null) {
-                SSLEngine engine = sslOptions.context.createSSLEngine();
-                engine.setUseClientMode(true);
-                engine.setEnabledCipherSuites(sslOptions.cipherSuites);
-                SslHandler handler = new SslHandler(engine);
-                pipeline.addLast("ssl", handler);
+                pipeline.addLast("ssl", sslOptions.newSSLHandler(channel));
             }
 
 //            pipeline.addLast("debug", new LoggingHandler(LogLevel.INFO));
