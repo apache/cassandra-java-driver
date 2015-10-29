@@ -509,7 +509,7 @@ class HostConnectionPool implements Connection.Owner {
     }
 
     private void maybeSpawnNewConnection() {
-        if (!host.convictionPolicy.canReconnectNow())
+        if (isClosed() || !host.convictionPolicy.canReconnectNow())
             return;
 
         while (true) {
