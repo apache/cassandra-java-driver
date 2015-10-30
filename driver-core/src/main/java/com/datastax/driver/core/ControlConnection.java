@@ -574,8 +574,15 @@ class ControlConnection implements Host.StateListener, Connection.Owner {
             if (host == null) {
                 // We don't know that node, create the Host object but wait until we've set the known
                 // info before signaling the addition.
-                host = cluster.metadata.add(foundHosts.get(i));
-                isNew = true;
+                Host newHost = cluster.metadata.newHost(foundHosts.get(i));
+                Host existing = cluster.metadata.addIfAbsent(newHost);
+                if (existing == null) {
+                    host = newHost;
+                    isNew = true;
+                } else {
+                    host = existing;
+                    isNew = false;
+                }
             }
             if (dcs.get(i) != null || racks.get(i) != null)
                 updateLocationInfo(host, dcs.get(i), racks.get(i), isInitialConnection, cluster);
