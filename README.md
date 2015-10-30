@@ -64,9 +64,9 @@ The driver contains the following modules:
 **Feeback requested:** help us focus our efforts, provide your input on the [Platform and Runtime Survey](http://goo.gl/forms/qwUE6qnL7U) (we kept it short).
 
 
-## Maven
+## Getting the driver
 
-The last release of the driver is available on Maven Central. You can install
+The latest release of the driver is available on Maven Central. You can install
 it in your application using the following Maven dependency:
 
 ```xml
@@ -79,6 +79,10 @@ it in your application using the following Maven dependency:
 
 We also provide a [shaded JAR](http://datastax.github.io/java-driver/features/shaded_jar/)
 to avoid the explicit dependency to Netty.
+
+If you can't use a dependency management tool, a
+[binary tarball](http://downloads.datastax.com/java-driver/cassandra-java-driver-2.0.11.tar.gz)
+is available for download.
 
 ## Compatibility
 
