@@ -30,6 +30,7 @@ import org.testng.annotations.Test;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.TestUtils.nonDebouncingQueryOptions;
+import static com.datastax.driver.core.TestUtils.nonQuietClusterCloseOptions;
 
 import com.datastax.driver.core.policies.DelegatingLoadBalancingPolicy;
 import com.datastax.driver.core.policies.LoadBalancingPolicy;
@@ -158,6 +159,7 @@ public class ControlConnectionTest {
             for(int i = 0; i < iterations; i++) {
                 Cluster cluster = Cluster.builder()
                     .addContactPoints(scassandras.addresses())
+                    .withNettyOptions(nonQuietClusterCloseOptions)
                     .build();
 
                 try {

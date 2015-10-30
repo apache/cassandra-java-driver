@@ -183,22 +183,17 @@ public class NettyOptions {
      * <p>
      * This gives the implementor a chance to close the {@link EventLoopGroup} properly, if required.
      * <p>
-     * The default implementation initiates a {@link EventLoopGroup#shutdownGracefully(long, long, TimeUnit) graceful shutdown}
-     * of the passed {@link EventLoopGroup} instance with no "quiet period" and a timeout of 15 seconds;
-     * then waits uninterruptibly for the shutdown to complete, or the timeout to occur, whichever happens first.
+     * The default implementation initiates a {@link EventLoopGroup#shutdownGracefully() graceful shutdown}
+     * of the passed {@link EventLoopGroup}, then waits uninterruptibly for the shutdown to complete or timeout.
      * <p>
      * Implementation note: if the {@link EventLoopGroup} instance is being shared, or used for other purposes than to
-     * coordinate Netty events for the current cluster, than it should not be shut down here;
+     * coordinate Netty events for the current cluster, then it should not be shut down here;
      * subclasses would have to override this method accordingly to take the appropriate action.
      *
      * @param eventLoopGroup the event loop group used by the cluster being closed
      */
     public void onClusterClose(EventLoopGroup eventLoopGroup) {
-        // shutdownGracefully with default parameters employs a quiet period of 2 seconds
-        // where in pre-Netty4 versions, closing a cluster instance was very quick (milliseconds).
-        // Since we close the channels before shutting down the eventLoopGroup,
-        // it is safe to reduce the quiet period to 0 seconds
-        eventLoopGroup.shutdownGracefully(0, 15, SECONDS).syncUninterruptibly();
+        eventLoopGroup.shutdownGracefully().syncUninterruptibly();
     }
 
     /**

@@ -47,7 +47,9 @@ import org.slf4j.LoggerFactory;
 import static io.netty.handler.timeout.IdleState.ALL_IDLE;
 
 import com.datastax.driver.core.Responses.Result.SetKeyspace;
-import com.datastax.driver.core.exceptions.*;
+import com.datastax.driver.core.exceptions.AuthenticationException;
+import com.datastax.driver.core.exceptions.DriverException;
+import com.datastax.driver.core.exceptions.DriverInternalError;
 import com.datastax.driver.core.utils.MoreFutures;
 
 import static com.datastax.driver.core.Message.Response.Type.ERROR;
@@ -568,12 +570,14 @@ class Connection {
                     // requires its writeLock.
                     // Therefore if multiple connections in the same pool get a write error, they could deadlock;
                     // we run defunct on a separate thread to avoid that.
-                    factory.manager.executor.execute(new Runnable() {
-                        @Override
-                        public void run() {
-                            handler.callback.onException(Connection.this, defunct(ce), latency, handler.retryCount);
-                        }
-                    });
+                    ListeningExecutorService executor = factory.manager.executor;
+                    if (!executor.isShutdown())
+                        executor.execute(new Runnable() {
+                            @Override
+                            public void run() {
+                                handler.callback.onException(Connection.this, defunct(ce), latency, handler.retryCount);
+                            }
+                        });
                 } else {
                     logger.trace("{}, stream {}, request sent successfully", Connection.this, request.getStreamId());
                 }
@@ -862,9 +866,12 @@ class Connection {
             boolean doneWork = false;
             FlushItem flush;
             while (null != (flush = queued.poll())) {
-                channels.add(flush.channel);
-                flush.channel.write(flush.request).addListener(flush.listener);
-                doneWork = true;
+                Channel channel = flush.channel;
+                if (channel.isActive()) {
+                    channels.add(channel);
+                    channel.write(flush.request).addListener(flush.listener);
+                    doneWork = true;
+                }
             }
 
             // Always flush what we have (don't artificially delay to try to coalesce more messages)
@@ -884,7 +891,7 @@ class Connection {
             }
 
             EventLoop eventLoop = eventLoopRef.get();
-            if (eventLoop != null) {
+            if (eventLoop != null && !eventLoop.isShuttingDown()) {
                 eventLoop.schedule(this, 10000, TimeUnit.NANOSECONDS);
             }
         }
