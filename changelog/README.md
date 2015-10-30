@@ -7,6 +7,7 @@
 - [bug] JAVA-954: Don't trigger reconnection before initialization complete.
 - [improvement] JAVA-914: Avoid rejected tasks at shutdown.
 - [improvement] JAVA-921: Add SimpleStatement.getValuesCount().
+- [bug] JAVA-901: Move call to connection.release() out of cancelHandler.
 
 
 ### 2.0.11
