@@ -476,7 +476,9 @@ public class CCMBridge {
 
                 builder = configure(builder);
 
-                cluster = builder.addContactPointsWithPorts(Collections.singletonList(hostAddress)).build();
+                cluster = builder.addContactPointsWithPorts(Collections.singletonList(hostAddress))
+                    .withNettyOptions(TestUtils.nonQuietClusterCloseOptions)
+                    .build();
                 session = cluster.connect();
                 keyspace = SIMPLE_KEYSPACE + "_" + ksNumber.incrementAndGet();
                 session.execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, keyspace, 1));
