@@ -23,8 +23,10 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.nio.ByteBuffer;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 import com.google.common.util.concurrent.Futures;
+import io.netty.channel.EventLoopGroup;
 import org.scassandra.Scassandra;
 import org.scassandra.ScassandraFactory;
 import org.slf4j.Logger;
@@ -470,4 +472,16 @@ public abstract class TestUtils {
             .setRefreshNodeListIntervalMillis(0)
             .setRefreshSchemaIntervalMillis(0);
     }
+
+    /**
+     * A custom {@link NettyOptions} that shuts down the {@link EventLoopGroup} after
+     * no quiet time.  This is useful for tests that consistently close clusters as
+     * otherwise there is a 2 second delay (from JAVA-914).
+     */
+    public static NettyOptions nonQuietClusterCloseOptions = new NettyOptions() {
+        @Override
+        public void onClusterClose(EventLoopGroup eventLoopGroup) {
+            eventLoopGroup.shutdownGracefully(0, 15, TimeUnit.SECONDS).syncUninterruptibly();
+        }
+    };
 }

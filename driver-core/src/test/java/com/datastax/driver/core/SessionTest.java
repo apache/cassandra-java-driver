@@ -33,7 +33,7 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
-
+import static com.datastax.driver.core.TestUtils.nonQuietClusterCloseOptions;
 
 /**
  * Simple test of the Sessions methods against a one node cluster.
@@ -206,7 +206,7 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
             // ensure sessions.size() returns to 0 with only 1 active connection
             session.close();
             assertEquals(cluster.manager.sessions.size(), 0);
-            assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1);
+            assertEquals((int)cluster.getMetrics().getOpenConnections().getValue(), 1);
             assertEquals(channelMonitor.openChannels(contactPoints).size(), 1);
 
             // give the driver time to close sessions
@@ -251,7 +251,10 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
 
             // Use our own cluster and session (not the ones provided by the parent class) because we want an uninitialized cluster
             // (note the use of newSession below)
-            final Cluster cluster = Cluster.builder().addContactPointsWithPorts(Collections.singletonList(hostAddress)).build();
+            final Cluster cluster = Cluster.builder()
+                .addContactPointsWithPorts(Collections.singletonList(hostAddress))
+                .withNettyOptions(nonQuietClusterCloseOptions)
+                .build();
             final Session session = cluster.newSession();
 
             // Spawn two threads to simulate the race
