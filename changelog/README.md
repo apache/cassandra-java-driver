@@ -8,6 +8,7 @@
 - [improvement] JAVA-914: Avoid rejected tasks at shutdown.
 - [improvement] JAVA-921: Add SimpleStatement.getValuesCount().
 - [bug] JAVA-901: Move call to connection.release() out of cancelHandler.
+- [bug] JAVA-960: Avoid race in control connection shutdown.
 
 
 ### 2.0.11
