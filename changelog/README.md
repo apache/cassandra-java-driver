@@ -6,6 +6,7 @@
 - [improvement] JAVA-920: Downgrade "error creating pool" message to WARN.
 - [bug] JAVA-954: Don't trigger reconnection before initialization complete.
 - [improvement] JAVA-914: Avoid rejected tasks at shutdown.
+- [improvement] JAVA-921: Add SimpleStatement.getValuesCount().
 
 
 ### 2.0.11

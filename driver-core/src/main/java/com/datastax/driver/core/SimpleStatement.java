@@ -118,6 +118,18 @@ public class SimpleStatement extends RegularStatement {
     }
 
     /**
+     * Returns the number of values provided for this statement.
+     * <p>
+     * This is more efficient than calling {@link #getValues()} and getting the length
+     * of the returned array, because {@code getValues()} does some internal conversions.
+     *
+     * @return the number of values.
+     */
+    public int getValuesCount() {
+        return values == null ? 0 : values.length;
+    }
+
+    /**
      * Returns the {@code i}th value as the Java type matching its CQL type.
      *
      * @param i the index to retrieve.
