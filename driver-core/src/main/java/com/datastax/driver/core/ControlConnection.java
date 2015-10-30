@@ -123,6 +123,9 @@ class ControlConnection implements Host.StateListener, Connection.Owner {
         new AbstractReconnectionHandler("Control connection", cluster.reconnectionExecutor, cluster.reconnectionPolicy().newSchedule(), reconnectionAttempt, initialDelayMs) {
             @Override
             protected Connection tryReconnect() throws ConnectionException {
+                if (isShutdown)
+                    throw new ConnectionException(null, "Control connection was shut down");
+
                 try {
                     return reconnectInternal(queryPlan(), false);
                 } catch (NoHostAvailableException e) {
@@ -136,17 +139,28 @@ class ControlConnection implements Host.StateListener, Connection.Owner {
 
             @Override
             protected void onReconnection(Connection connection) {
+                if (isShutdown) {
+                    connection.closeAsync();
+                    return;
+                }
+
                 setNewConnection(connection);
             }
 
             @Override
             protected boolean onConnectionException(ConnectionException e, long nextDelayMs) {
+                if (isShutdown)
+                    return false;
+
                 logger.error("[Control connection] Cannot connect to any host, scheduling retry in {} milliseconds", nextDelayMs);
                 return true;
             }
 
             @Override
             protected boolean onUnknownException(Exception e, long nextDelayMs) {
+                if (isShutdown)
+                    return false;
+
                 logger.error(String.format("[Control connection] Unknown error during reconnection, scheduling retry in %d milliseconds", nextDelayMs), e);
                 return true;
             }
