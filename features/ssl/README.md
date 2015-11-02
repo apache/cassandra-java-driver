@@ -71,7 +71,11 @@ if you've followed the steps for inter-node encryption).
 
 ### Driver configuration
 
-#### Property-based
+The base class to configure SSL is [SSLOptions]. It's very generic, but
+you don't necessarily need to deal with it directly: the default
+instance, or the provided subclasses, might be enough for your needs.
+
+#### JSSE, Property-based
 
 `withSSL()` gives you a basic JSSE configuration:
 
@@ -94,16 +98,17 @@ for specific details, like keystore locations and passwords:
 -Djavax.net.ssl.keyStorePassword=password123
 ```
 
-#### Programmatic
+#### JSSE, programmatic
 
 If you need more control than what system properties allow, you can
-configure SSL programmatically by creating an [SSLOptions] instance:
+configure SSL programmatically with [JdkSSLOptions]:
 
 ```java
 SSLContext sslContext = ... // create and configure SSL context
-String[] cipherSuites = ...
 
-SSLOptions sslOptions = new SSLOptions(sslContext, cipherSuites);
+JdkSSLOptions sslOptions = JdkSSLOptions.builder()
+  .withSSLContext(context)
+  .build();
 
 Cluster cluster = Cluster.builder()
   .addContactPoint("127.0.0.1")
@@ -111,70 +116,67 @@ Cluster cluster = Cluster.builder()
   .build();
 ```
 
-A known limitation of the current API is that you can't customize the
-`SSLEngine`, which prevents advanced features like hostname
-verification. This will be fixed in 3.0 (see
-[JAVA-841](https://datastax-oss.atlassian.net/browse/JAVA-841)), in the
-meantime see below for a workaround.
+Note that you can also extend the class and override
+[newSSLEngine(SocketChannel)][newSSLEngine] if you need specific
+configuration on the `SSLEngine` (for example hostname verification).
 
+[newSSLEngine]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/JdkSSLOptions.html#newSSLEngine(io.netty.channel.socket.SocketChannel)
 
-### Bypassing `SSLOptions`
+#### Netty
 
-For advanced use cases, it's possible to bypass `SSLOptions` entirely:
-since the driver provides a hook into the Netty pipeline (by way of
-[NettyOptions]), you can add the SSL handler yourself:
+[NettySSLOptions] allows you to use Netty's `SslContext` instead of
+the JDK directly. The advantage is that Netty can use OpenSSL if
+available, which provides better performance.
+
+##### Converting your client certificates for OpenSSL
+
+OpenSSL doesn't use keystores, so if you use client authentication and
+generated your certificates with keytool, you need to convert them.
+
+* use this command to extract the public certificate chain:
+
+    ```
+    keytool -export -keystore client.keystore -alias client -rfc -file client.crt
+    ```
+* follow
+  [this tutorial](http://www.herongyang.com/crypto/Migrating_Keys_keytool_to_OpenSSL_3.html)
+  to extract your client's private key from `client.keystore` to a text
+  file `client.key` in PEM format.
+
+##### Updating your dependencies
+
+Netty-tcnative provides the native integration with OpenSSL. Follow
+[these instructions](http://netty.io/wiki/forked-tomcat-native.html) to
+add it to your dependencies.
+
+##### Configuring the context
+
+Use the following Java code to configure OpenSSL with your certificates:
 
 ```java
-import io.netty.handler.ssl.SslHandler;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLEngine;
+KeyStore ks = KeyStore.getInstance("JKS");
+// make sure you close this stream properly (not shown here for brevity)
+InputStream trustStore = new FileInputStream("client.truststore");
+ks.load(trustStore, "password123".toCharArray());
+TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+tmf.init(ks);
 
-// Base implementation: each time a connection is established, create an SSL handler
-// and add it to the pipeline:
-public abstract class SslNettyOptions extends NettyOptions {
-  @Override
-  public void afterChannelInitialized(SocketChannel channel) throws Exception {
-    channel.pipeline().addFirst("ssl", createSslHandler(channel));
-  }
+SslContextBuilder builder = SslContextBuilder
+  .forClient()
+  .sslProvider(SslProvider.OPENSSL)
+  .trustManager(tmf);
+  // only if you use client authentication
+  .keyManager(new File("client.crt"), new File("client.key"));
 
-  protected abstract SslHandler createSslHandler(SocketChannel channel);
-}
+SSLOptions sslOptions = new NettySSLOptions(builder.build());
 
-// Concrete implementation based on JSSE
-public class MyNettyOptions extends SslNettyOptions {
-
-  private final SSLContext sslContext = createContext();
-
-  protected SslHandler createSslHandler(SocketChannel channel) {
-    return new SslHandler(createEngine(sslContext, channel));
-  }
-
-  private static SSLContext createContext() {
-    ... // create and configure context
-  }
-
-  private static SSLEngine createEngine(SSLContext sslContext, SocketChannel channel) {
-    SSLEngine engine = sslContext.createSSLEngine();
-    engine.setUseClientMode(true);
-    ... // any extra configuration
-    return engine;
-  }
-}
-
-cluster = Cluster.builder()
+Cluster cluster = Cluster.builder()
   .addContactPoint("127.0.0.1")
-  .withNettyOptions(new MyNettyOptions())
+  .withSSL(sslOptions)
   .build();
 ```
 
-This could be used for the following use cases:
-
-* fine control over JSSE configuration, for example tuning the SSL
-  engine for hostname verification;
-* bypassing JSSE altogether in favor of another SSL implementation:
-  recent Netty versions support
-  [OpenSSL](http://netty.io/wiki/forked-tomcat-native.html)
-  for improved performance.
-
-[SSLOptions]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/SSLOptions.html
-[NettyOptions]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/NettyOptions.html
+[SSLOptions]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/SSLOptions.html
+[JdkSSLOptions]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/JdkSSLOptions.html
+[NettySSLOptions]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/NettySSLOptions.html
+[NettyOptions]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/NettyOptions.html
