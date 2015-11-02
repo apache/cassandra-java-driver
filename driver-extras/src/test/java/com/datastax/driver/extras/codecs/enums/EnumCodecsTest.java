@@ -31,12 +31,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.utils.CassandraVersion;
-import com.datastax.driver.mapping.EnumType;
 import com.datastax.driver.mapping.Mapper;
 import com.datastax.driver.mapping.MappingManager;
-import com.datastax.driver.mapping.annotations.Enumerated;
-import com.datastax.driver.mapping.annotations.PartitionKey;
-import com.datastax.driver.mapping.annotations.Table;
+import com.datastax.driver.mapping.annotations.*;
 
 import static com.datastax.driver.core.DataType.cint;
 import static com.datastax.driver.core.DataType.text;
@@ -72,15 +69,15 @@ public class EnumCodecsTest extends CCMBridge.PerClassSingleNodeCluster {
                 + "foo int,"
                 + "bar text)",
             "CREATE TABLE IF NOT EXISTS t1 ("
-                + "pk int PRIMARY KEY, "
+                + "pk int, "
                 + "foo int, "
                 + "foos list<int>, "
                 + "bar text, "
                 + "bars set<text>, "
                 + "foobars map<int,text>, "
                 + "tup frozen<tuple<int,varchar>>, "
-                + "udt frozen<udt1>"
-                + ")"
+                + "udt frozen<udt1>,"
+                + "primary key (pk, foo))"
         );
     }
 
@@ -143,16 +140,52 @@ public class EnumCodecsTest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     @Test(groups = "short")
+    public void should_use_mapper_to_store_and_retrieve_nulls_with_enum_codecs() {
+        // given
+        MappingManager manager = new MappingManager(session);
+        Mapper<Mapped> mapper = manager.mapper(Mapped.class);
+        Mapped pojo = new Mapped();
+        pojo.pk = 42;
+        pojo.foo = FOO_1;
+        // when
+        mapper.save(pojo);
+        Mapped actual = mapper.get(42, FOO_1);
+        // then
+        assertThat(actual).isEqualToComparingFieldByField(pojo);
+    }
+
+    @Test(groups = "short")
     public void should_use_mapper_to_store_and_retrieve_values_with_enum_codecs() {
         // given
         MappingManager manager = new MappingManager(session);
         Mapper<Mapped> mapper = manager.mapper(Mapped.class);
-        // when
         Mapped pojo = new Mapped();
+        pojo.pk = 42;
+        pojo.foo = FOO_1;
+        pojo.bar = BAR_1;
+        pojo.foos = newArrayList(FOO_2, FOO_1);
+        pojo.bars = newHashSet(BAR_1, BAR_2);
+        pojo.foobars = ImmutableMap.of(FOO_1, BAR_2);
+        // when
         mapper.save(pojo);
-        Mapped actual = mapper.get(42);
+        Mapped actual = mapper.get(42, FOO_1);
         // then
         assertThat(actual).isEqualToComparingFieldByField(pojo);
+    }
+
+    @Test(groups = "short")
+    public void should_use_accessor_to_store_and_retrieve_values_with_enum_codecs() {
+        // given
+        MappedAccessor accessor = new MappingManager(session).createAccessor(MappedAccessor.class);
+        Mapped expected = new Mapped();
+        expected.pk = 42;
+        expected.foo = FOO_1;
+        expected.bar = BAR_2;
+        // when
+        accessor.insert(42, FOO_1, BAR_2);
+        Mapped result = accessor.getByFoo(42, FOO_1);
+        // then
+        assertThat(result).isEqualToComparingFieldByField(expected);
     }
 
     private void assertRow(Row row) {
@@ -215,10 +248,7 @@ public class EnumCodecsTest extends CCMBridge.PerClassSingleNodeCluster {
         @PartitionKey
         private int pk;
 
-        // note that we need to specify @Enumerated here
-        // because the mapper already has a partial support for enums
-        // that kicks in for fields of type Enum
-        @Enumerated(EnumType.ORDINAL)
+        @ClusteringColumn
         private Foo foo;
 
         private List<Foo> foos;
@@ -228,15 +258,6 @@ public class EnumCodecsTest extends CCMBridge.PerClassSingleNodeCluster {
         private Set<Bar> bars;
 
         private Map<Foo, Bar> foobars;
-
-        public Mapped(){
-            pk = 42;
-            foo = FOO_1;
-            bar = BAR_1;
-            foos = newArrayList(FOO_2, FOO_1);
-            bars = newHashSet(BAR_1, BAR_2);
-            foobars = ImmutableMap.of(FOO_1, BAR_2);
-        }
 
         public int getPk() {
             return pk;
@@ -286,6 +307,18 @@ public class EnumCodecsTest extends CCMBridge.PerClassSingleNodeCluster {
             this.foobars = foobars;
         }
     }
+
+    @Accessor
+    public interface MappedAccessor {
+
+        @Query("select * from t1 where pk=? and foo=?")
+        Mapped getByFoo(int pk, Foo foo);
+
+        @Query("insert into t1 (pk, foo, bar) values (?,?,?)")
+        ResultSet insert(int pk, Foo foo, Bar bar);
+
+    }
+
 
     enum Foo {
         FOO_1, FOO_2

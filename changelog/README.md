@@ -18,6 +18,7 @@
 - [new feature] JAVA-742: Codec Support for JSON.
 - [new feature] JAVA-606: Codec support for Java 8.
 - [new feature] JAVA-565: Codec support for Java arrays.
+- [new feature] JAVA-605: Codec support for Java enums.
 
 Merged from 2.1 branch:
 

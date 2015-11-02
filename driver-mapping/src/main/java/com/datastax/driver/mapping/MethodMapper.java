@@ -143,7 +143,7 @@ class MethodMapper {
 
         ProtocolVersion protocolVersion = session.getCluster().getConfiguration().getProtocolOptions().getProtocolVersion();
         for (int i = 0; i < args.length; i++) {
-            paramMappers[i].setValue(bs, args[i], protocolVersion);
+            paramMappers[i].setValue(bs, args[i]);
         }
 
         if (consistency != null)
@@ -196,7 +196,7 @@ class MethodMapper {
             }
         }
 
-        void setValue(BoundStatement boundStatement, Object arg, ProtocolVersion protocolVersion) {
+        void setValue(BoundStatement boundStatement, Object arg) {
             if (paramName == null) {
                 if (codec == null)
                     boundStatement.set(paramIdx, arg, paramType);
@@ -211,32 +211,4 @@ class MethodMapper {
         }
     }
 
-    static class EnumParamMapper extends ParamMapper {
-
-        private final EnumType enumType;
-
-        public EnumParamMapper(String paramName, int paramIdx, EnumType enumType) {
-            super(paramName, paramIdx, enumType.pivotType, null);
-            this.enumType = enumType;
-        }
-
-        @Override
-        void setValue(BoundStatement boundStatement, Object arg, ProtocolVersion protocolVersion) {
-            super.setValue(boundStatement, convert(arg), protocolVersion);
-        }
-
-        @SuppressWarnings("rawtypes")
-        private Object convert(Object arg) {
-            if(arg == null)
-                return arg;
-
-            switch (enumType) {
-            case STRING:
-                return arg.toString();
-            case ORDINAL:
-                return ((Enum) arg).ordinal();
-            }
-            throw new AssertionError();
-        }
-    }
 }

@@ -226,7 +226,7 @@ public class Mapper<T> {
         if (customCodec != null)
             bs.set(i, value, customCodec);
         else
-            bs.set(i, value, mapper.getPivotType());
+            bs.set(i, value, mapper.getJavaType());
     }
 
     /**

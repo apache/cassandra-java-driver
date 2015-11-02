@@ -52,7 +52,7 @@ class MappedUDTCodec<T> extends TypeCodec<T> {
             Object value = cm.getValue(sourceObject);
             TypeCodec<Object> codec = cm.getCustomCodec();
             if (codec == null)
-                codec = codecRegistry.codecFor(cqlUserType.getFieldType(cm.getColumnName()), cm.getPivotType());
+                codec = codecRegistry.codecFor(cqlUserType.getFieldType(cm.getColumnName()), cm.getJavaType());
             ByteBuffer serializedField = codec.serialize(value, protocolVersion);
             size += 4 + (serializedField == null ? 0 : serializedField.remaining());
             serializedFields.add(serializedField);
@@ -83,7 +83,7 @@ class MappedUDTCodec<T> extends TypeCodec<T> {
             ByteBuffer serialized = (size < 0) ? null : CodecUtils.readBytes(input, size);
             TypeCodec<Object> codec = cm.getCustomCodec();
             if (codec == null)
-                codec = codecRegistry.codecFor(cqlUserType.getFieldType(cm.getColumnName()), cm.getPivotType());
+                codec = codecRegistry.codecFor(cqlUserType.getFieldType(cm.getColumnName()), cm.getJavaType());
             cm.setValue(targetObject, codec.deserialize(serialized, protocolVersion));
         }
 

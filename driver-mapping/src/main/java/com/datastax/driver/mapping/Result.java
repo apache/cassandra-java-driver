@@ -52,7 +52,7 @@ public class Result<T> implements Iterable<T> {
             if (customCodec != null)
                 value = row.get(name, customCodec);
             else
-                value = row.get(name, cm.getPivotType());
+                value = row.get(name, cm.getJavaType());
 
             if (shouldSetValue(value)) {
                 cm.setValue(entity, value);

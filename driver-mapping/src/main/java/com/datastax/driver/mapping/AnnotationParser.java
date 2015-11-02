@@ -30,7 +30,6 @@ import com.google.common.reflect.TypeToken;
 import com.datastax.driver.core.ConsistencyLevel;
 import com.datastax.driver.core.TypeCodec;
 import com.datastax.driver.core.UserType;
-import com.datastax.driver.mapping.MethodMapper.EnumParamMapper;
 import com.datastax.driver.mapping.MethodMapper.ParamMapper;
 import com.datastax.driver.mapping.annotations.*;
 
@@ -80,7 +79,7 @@ class AnnotationParser {
                 throw new UnsupportedOperationException("Computed fields are not supported with native protocol v1");
 
             AnnotationChecks.validateAnnotations(field, "entity",
-                                                 Column.class, ClusteringColumn.class, Enumerated.class, Frozen.class, FrozenKey.class,
+                                                 Column.class, ClusteringColumn.class, Frozen.class, FrozenKey.class,
                                                  FrozenValue.class, PartitionKey.class, Transient.class, Computed.class);
 
             if (field.getAnnotation(Transient.class) != null)
@@ -139,7 +138,7 @@ class AnnotationParser {
 
             AnnotationChecks.validateAnnotations(field, "UDT",
                 com.datastax.driver.mapping.annotations.Field.class, Frozen.class, FrozenKey.class,
-                FrozenValue.class, Enumerated.class, Transient.class);
+                FrozenValue.class, Transient.class);
 
             if (field.getAnnotation(Transient.class) != null)
                 continue;
@@ -206,15 +205,6 @@ class AnnotationParser {
             return ColumnMapper.Kind.COMPUTED;
         }
         return ColumnMapper.Kind.REGULAR;
-    }
-
-    public static EnumType enumType(Field field) {
-        Class<?> type = field.getType();
-        if (!type.isEnum())
-            return null;
-
-        Enumerated enumerated = field.getAnnotation(Enumerated.class);
-        return (enumerated == null) ? EnumType.STRING : enumerated.value();
     }
 
     public static String columnName(Field field) {
@@ -337,16 +327,6 @@ class AnnotationParser {
     private static ParamMapper newParamMapper(String className, String methodName, int idx, String paramName, Class<? extends TypeCodec<?>> codecClass, Type paramType, Annotation[] paramAnnotations, MappingManager mappingManager) {
         if (paramType instanceof Class) {
             Class<?> paramClass = (Class<?>) paramType;
-            if (paramClass.isEnum()) {
-                EnumType enumType = EnumType.STRING;
-                for (Annotation annotation : paramAnnotations) {
-                    if (annotation instanceof Enumerated) {
-                        enumType = ((Enumerated) annotation).value();
-                    }
-                }
-                return new EnumParamMapper(paramName, idx, enumType);
-            }
-
             if (TypeMappings.isMappedUDT(paramClass))
                 mappingManager.getUDTCodec(paramClass);
 

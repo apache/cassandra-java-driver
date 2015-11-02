@@ -69,10 +69,9 @@ abstract class ColumnMapper<T> {
     }
 
     /**
-     * The Java type that will get passed to the codec.
-     * This might be different from the field type if the column mapper does a transformation.
+     * The Java type of this column.
      */
-    public TypeToken<Object> getPivotType() {
+    public TypeToken<Object> getJavaType() {
         return fieldType;
     }
 }
