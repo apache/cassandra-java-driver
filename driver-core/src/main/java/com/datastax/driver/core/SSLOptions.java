@@ -24,8 +24,6 @@ import java.security.NoSuchAlgorithmException;
  */
 public class SSLOptions {
 
-    private static final String SSL_PROTOCOL = "TLS";
-
     /**
      * The default SSL cipher suites.
      */
@@ -63,12 +61,8 @@ public class SSLOptions {
 
     private static SSLContext makeDefaultContext() throws IllegalStateException {
         try {
-            SSLContext ctx = SSLContext.getInstance(SSL_PROTOCOL);
-            ctx.init(null, null, null); // use defaults
-            return ctx;
+            return SSLContext.getDefault();
         } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("This JVM doesn't support TLS, this shouldn't happen");
-        } catch (KeyManagementException e) {
             throw new IllegalStateException("Cannot initialize SSL Context", e);
         }
     }
