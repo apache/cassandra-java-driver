@@ -80,7 +80,7 @@ import java.net.InetSocketAddress;
 public class DseAuthProvider implements AuthProvider
 {
     @Override
-    public Authenticator newAuthenticator(InetSocketAddress host) throws AuthenticationException
+    public Authenticator newAuthenticator(InetSocketAddress host, String authenticator) throws AuthenticationException
     {
         return new KerberosAuthenticator(host);
     }
