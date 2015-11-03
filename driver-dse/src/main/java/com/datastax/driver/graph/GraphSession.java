@@ -18,6 +18,8 @@ package com.datastax.driver.graph;
 
 import java.nio.ByteBuffer;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -28,7 +30,7 @@ import com.datastax.driver.core.exceptions.InvalidQueryException;
 
 public class GraphSession {
     private final Session session;
-    private final Map<String, ByteBuffer> defaultGraphPayload;
+    private final ConcurrentMap<String, ByteBuffer> defaultGraphPayload;
 
     // Static keys for the Custom Payload map
     final static String GRAPH_SOURCE_KEY;
@@ -61,7 +63,7 @@ public class GraphSession {
 
     public GraphSession(Session session) {
         this.session = session;
-        this.defaultGraphPayload = Maps.newHashMap(DEFAULT_GRAPH_PAYLOAD);
+        this.defaultGraphPayload = new ConcurrentHashMap<String, ByteBuffer>(DEFAULT_GRAPH_PAYLOAD);
     }
 
     public GraphResultSet execute(AbstractGraphStatement statement) {

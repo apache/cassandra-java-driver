@@ -52,10 +52,13 @@ public class GraphData {
         return this.jsonNode.asBoolean();
     }
 
-    //TODO: Maybe add getAsVertex(), getAsEdge(), and stuff
+    public Long asLong() {
+        return this.jsonNode.asLong();
+    }
 
     @Override
     public String toString() {
         return this.jsonNode.toString();
     }
 }
+

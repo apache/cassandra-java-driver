@@ -16,9 +16,12 @@
 package com.datastax.driver.graph;
 
 import java.io.IOException;
+import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.exceptions.DriverException;
@@ -27,13 +30,18 @@ public class GraphTraversalResult {
     private final String jsonString;
 
     private JsonNode rootNode;
+    private ObjectMapper objectMapper;
 
-    GraphTraversalResult(String result) {
-        this.jsonString = result;
+    private Row row;
 
-        ObjectMapper objectMapper = new ObjectMapper();
+    GraphTraversalResult(Row row) {
+        this.jsonString = row.getString("gremlin");
+
+        this.row = row;
+
+        this.objectMapper = new ObjectMapper();
         try {
-            this.rootNode = objectMapper.readTree(this.jsonString);
+            this.rootNode = this.objectMapper.readTree(this.jsonString);
         } catch (IOException e) {
             throw new DriverException("Could not parse the result returned by the Graph server as a JSON string : " + this.jsonString);
         }
@@ -52,6 +60,37 @@ public class GraphTraversalResult {
     }
 
     static public GraphTraversalResult fromRow(Row row) {
-        return row == null ? null : new GraphTraversalResult(row.getString("gremlin"));
+        return row == null ? null : new GraphTraversalResult(row);
+    }
+
+    public <T extends Vertex> T asVertex(Class<T> clas) {
+        try {
+            // TODO check performance of that
+            return this.objectMapper.readValue(this.rootNode.get("result").toString(), clas);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public Vertex asVertex() {
+        return asVertex(Vertex.class);
+    }
+
+    public <T extends Edge> T asEdge(Class<T> clas) {
+        try {
+            // TODO check performance of that
+            return this.objectMapper.readValue(this.rootNode.get("result").toString(), clas);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public Edge asEdge() {
+        return asEdge(Edge.class);
     }
 }
+
