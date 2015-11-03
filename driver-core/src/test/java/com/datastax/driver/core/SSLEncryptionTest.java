@@ -23,8 +23,7 @@ import org.testng.annotations.Test;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
 import static com.datastax.driver.core.Assertions.assertThat;
-import static com.datastax.driver.core.CCMBridge.DEFAULT_CLIENT_KEYSTORE_PATH;
-import static com.datastax.driver.core.CCMBridge.DEFAULT_CLIENT_TRUSTSTORE_PATH;
+import static com.datastax.driver.core.CCMBridge.*;
 
 public class SSLEncryptionTest extends SSLTestBase {
 
@@ -116,6 +115,26 @@ public class SSLEncryptionTest extends SSLTestBase {
         } finally {
             if (cluster != null)
                 cluster.close();
+        }
+    }
+
+    /**
+     * <p>
+     * Validates that SSL connectivity can be configured via the standard javax.net.ssl System properties.
+     * </p>
+     *
+     * @test_category connection:ssl
+     * @expected_result Connection can be established.
+     */
+    @Test(groups="short")
+    public void should_use_system_properties_with_default_ssl_options() throws Exception {
+        try {
+            System.setProperty("javax.net.ssl.trustStore", DEFAULT_CLIENT_TRUSTSTORE_FILE.getAbsolutePath());
+            System.setProperty("javax.net.ssl.trustStorePassword", DEFAULT_CLIENT_TRUSTSTORE_PASSWORD);
+
+            connectWithSSL();
+        } finally {
+            clearSystemProperties();
         }
     }
 }
