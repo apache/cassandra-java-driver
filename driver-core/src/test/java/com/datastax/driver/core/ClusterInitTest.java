@@ -47,6 +47,7 @@ import static com.datastax.driver.core.Assertions.fail;
 import static com.datastax.driver.core.FakeHost.Behavior.THROWING_CONNECT_TIMEOUTS;
 import static com.datastax.driver.core.HostDistance.LOCAL;
 import static com.datastax.driver.core.TestUtils.nonDebouncingQueryOptions;
+import static com.datastax.driver.core.TestUtils.nonQuietClusterCloseOptions;
 
 public class ClusterInitTest {
     private static final Logger logger = LoggerFactory.getLogger(ClusterInitTest.class);
@@ -189,6 +190,7 @@ public class ClusterInitTest {
     public void should_be_able_to_close_cluster_that_never_successfully_connected() throws Exception {
         Cluster cluster = Cluster.builder()
             .addContactPointsWithPorts(Collections.singleton(new InetSocketAddress("127.0.0.1", 65534)))
+            .withNettyOptions(nonQuietClusterCloseOptions)
             .build();
         try {
             cluster.connect();
