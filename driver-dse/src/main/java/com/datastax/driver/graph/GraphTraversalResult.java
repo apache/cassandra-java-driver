@@ -34,12 +34,12 @@ public class GraphTraversalResult {
 
     private Row row;
 
-    GraphTraversalResult(Row row) {
+    GraphTraversalResult(Row row, ObjectMapper objectMapper) {
         this.jsonString = row.getString("gremlin");
 
         this.row = row;
 
-        this.objectMapper = new ObjectMapper();
+        this.objectMapper = objectMapper;
         try {
             this.rootNode = this.objectMapper.readTree(this.jsonString);
         } catch (IOException e) {
@@ -59,8 +59,8 @@ public class GraphTraversalResult {
         return new GraphData(this.rootNode);
     }
 
-    static public GraphTraversalResult fromRow(Row row) {
-        return row == null ? null : new GraphTraversalResult(row);
+    static public GraphTraversalResult fromRow(Row row, ObjectMapper objectMapper) {
+        return row == null ? null : new GraphTraversalResult(row, objectMapper);
     }
 
     public <T extends Vertex> T asVertex(Class<T> clas) {

@@ -32,8 +32,8 @@ public abstract class GraphJsonDeserializer<T> extends JsonDeserializer<T>{
     @Override
     public abstract T deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException;
 
-    // The properties map is stored in a specific (weird) structure (array of Maps of Maps)
-    // This creates a map of the property's name as key and property's value as value.
+    // The properties map is stored in a specific (weird) structure (Map<String, Array[Map<String, String]>)
+    // This creates a map of the property's name as key and property's value as value as a Map<String, GraphData>.
     public Map<String, GraphData> transformVertexProperties(JsonNode jsonProps) {
         Map<String, GraphData> properties = new HashMap<String, GraphData>();
         Iterator<Map.Entry<String, JsonNode>> jsonPropsIterator = jsonProps.fields();

@@ -18,6 +18,7 @@ package com.datastax.driver.graph;
 import java.util.Iterator;
 import java.util.List;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
@@ -29,10 +30,11 @@ import com.datastax.driver.core.Row;
 
 public class GraphResultSet implements Iterable<GraphTraversalResult> {
     private final ResultSet rs;
+    private final ObjectMapper objectMapper;
 
     GraphResultSet(ResultSet rs) {
         this.rs = rs;
-//        System.out.println("rs.one().getString(\"gremlin\") = " + );
+        this.objectMapper = new ObjectMapper();
     }
 
 
@@ -41,14 +43,14 @@ public class GraphResultSet implements Iterable<GraphTraversalResult> {
     }
 
     public GraphTraversalResult one() {
-        return GraphTraversalResult.fromRow(rs.one());
+        return GraphTraversalResult.fromRow(rs.one(), this.objectMapper);
     }
 
     public List<GraphTraversalResult> all() {
         return Lists.transform(rs.all(), new Function<Row, GraphTraversalResult>() {
             @Override
             public GraphTraversalResult apply(Row input) {
-                return GraphTraversalResult.fromRow(input);
+                return GraphTraversalResult.fromRow(input, objectMapper);
             }
         });
     }
