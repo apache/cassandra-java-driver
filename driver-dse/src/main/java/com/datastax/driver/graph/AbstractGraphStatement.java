@@ -18,7 +18,6 @@ package com.datastax.driver.graph;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 
 import com.datastax.driver.core.Statement;

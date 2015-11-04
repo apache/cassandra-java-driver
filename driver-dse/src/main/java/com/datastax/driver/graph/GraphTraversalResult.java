@@ -16,12 +16,9 @@
 package com.datastax.driver.graph;
 
 import java.io.IOException;
-import java.util.Map;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.exceptions.DriverException;
@@ -36,12 +33,10 @@ public class GraphTraversalResult {
 
     GraphTraversalResult(Row row, ObjectMapper objectMapper) {
         this.jsonString = row.getString("gremlin");
-
         this.row = row;
-
         this.objectMapper = objectMapper;
         try {
-            this.rootNode = this.objectMapper.readTree(this.jsonString);
+            this.rootNode = this.objectMapper.readTree(this.jsonString).get("result");
         } catch (IOException e) {
             throw new DriverException("Could not parse the result returned by the Graph server as a JSON string : " + this.jsonString);
         }
@@ -52,45 +47,24 @@ public class GraphTraversalResult {
     }
 
     public GraphData get(String name) {
-        return new GraphData(this.rootNode.get(name));
+        return new GraphData(name, this.rootNode.get(name), this.objectMapper);
     }
 
     public GraphData get() {
-        return new GraphData(this.rootNode);
+        // The key for the first result is 'result', we put it hardcoded because the GraphData needs it to inform user if an Exception.
+        return new GraphData("result", this.rootNode, this.objectMapper);
     }
 
     static public GraphTraversalResult fromRow(Row row, ObjectMapper objectMapper) {
         return row == null ? null : new GraphTraversalResult(row, objectMapper);
     }
 
-    public <T extends Vertex> T asVertex(Class<T> clas) {
-        try {
-            // TODO check performance of that
-            return this.objectMapper.readValue(this.rootNode.get("result").toString(), clas);
-
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
+    @Override
+    public String toString() {
+        if (this.rootNode != null) {
+            return this.rootNode.toString();
         }
-    }
-
-    public Vertex asVertex() {
-        return asVertex(Vertex.class);
-    }
-
-    public <T extends Edge> T asEdge(Class<T> clas) {
-        try {
-            // TODO check performance of that
-            return this.objectMapper.readValue(this.rootNode.get("result").toString(), clas);
-
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    public Edge asEdge() {
-        return asEdge(Edge.class);
+        return null;
     }
 }
 
