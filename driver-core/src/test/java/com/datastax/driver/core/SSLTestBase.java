@@ -25,7 +25,9 @@ import javax.net.ssl.TrustManagerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 
+import static com.datastax.driver.core.CCMBridge.DEFAULT_CLIENT_KEYSTORE_FILE;
 import static com.datastax.driver.core.CCMBridge.DEFAULT_CLIENT_KEYSTORE_PASSWORD;
+import static com.datastax.driver.core.CCMBridge.DEFAULT_CLIENT_TRUSTSTORE_FILE;
 import static com.datastax.driver.core.CCMBridge.DEFAULT_CLIENT_TRUSTSTORE_PASSWORD;
 public abstract class SSLTestBase {
 
@@ -72,6 +74,40 @@ public abstract class SSLTestBase {
             if (cluster != null)
                 cluster.close();
         }
+    }
+
+    /**
+     * <p>
+     * Attempts to connect to a cassandra cluster with using {@link Cluster.Builder#withSSL} with no
+     * provided {@link SSLOptions} and then closes the created {@link Cluster} instance.
+     * </p>
+     *
+     * @throws Exception A {@link com.datastax.driver.core.exceptions.NoHostAvailableException} will be
+     *  raised here if connection cannot be established.
+     */
+    protected void connectWithSSL() throws Exception {
+        Cluster cluster = null;
+        try {
+            cluster = Cluster.builder()
+                .addContactPoint(CCMBridge.IP_PREFIX + '1')
+                .withSSL()
+                .build();
+
+            cluster.connect();
+        } finally {
+            if (cluster != null)
+                cluster.close();
+        }
+    }
+
+    /**
+     * Clears all System properties associated with SSL key and trust stores.
+     */
+    protected void clearSystemProperties() {
+        System.clearProperty("javax.net.ssl.keyStore");
+        System.clearProperty("javax.net.ssl.keyStorePassword");
+        System.clearProperty("javax.net.ssl.trustStore");
+        System.clearProperty("javax.net.ssl.trustStorePassword");
     }
 
     /**

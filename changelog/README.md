@@ -11,6 +11,7 @@
 - [bug] JAVA-960: Avoid race in control connection shutdown.
 - [bug] JAVA-656: Fix NPE in ControlConnection.updateLocationInfo.
 - [bug] JAVA-966: Count uninitialized connections in conviction policy.
+- [improvement] JAVA-917: Document SSL configuration.
 
 
 ### 2.0.11
