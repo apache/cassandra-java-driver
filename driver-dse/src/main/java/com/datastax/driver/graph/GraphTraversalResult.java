@@ -42,6 +42,14 @@ public class GraphTraversalResult {
         }
     }
 
+    static GraphTraversalResult fromRow(Row row, ObjectMapper objectMapper) {
+        return row == null ? null : new GraphTraversalResult(row, objectMapper);
+    }
+
+    /**
+     * API
+     */
+
     public String getResultString() {
         return this.jsonString;
     }
@@ -53,10 +61,6 @@ public class GraphTraversalResult {
     public GraphData get() {
         // The key for the first result is 'result', we put it hardcoded because the GraphData needs it to inform user if an Exception.
         return new GraphData("result", this.rootNode, this.objectMapper);
-    }
-
-    static public GraphTraversalResult fromRow(Row row, ObjectMapper objectMapper) {
-        return row == null ? null : new GraphTraversalResult(row, objectMapper);
     }
 
     @Override

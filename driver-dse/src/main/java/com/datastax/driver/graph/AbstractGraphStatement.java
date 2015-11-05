@@ -37,11 +37,13 @@ abstract class AbstractGraphStatement<T extends Statement> {
     /* TODO: eventually make more advanced checks on the statement
      *
      * As of right now, mandatory fields for DSE Graph are :
-     * - graph-keyspace
+     * - graph-keyspace : Must be set by users
+     * - graph-source : default is "default"
+     * - graph-language : default is "gremlin-groovy"
      *
      */
     static boolean checkStatement(AbstractGraphStatement graphStatement) {
-        return graphStatement.getOutgoingPayload().containsKey(GraphSession.GRAPH_LANGUAGE_KEY)
+        return graphStatement.getOutgoingPayload().containsKey(GraphSession.GRAPH_SOURCE_KEY)
             && graphStatement.getOutgoingPayload().containsKey(GraphSession.GRAPH_LANGUAGE_KEY)
             && graphStatement.getOutgoingPayload().containsKey(GraphSession.GRAPH_SOURCE_KEY);
 
@@ -63,6 +65,10 @@ abstract class AbstractGraphStatement<T extends Statement> {
         return this.session;
     }
 
+    /**
+     * API
+     */
+
     public Map<String, ByteBuffer> getOutgoingPayload() {
         return this.payload;
     }
@@ -74,7 +80,6 @@ abstract class AbstractGraphStatement<T extends Statement> {
 
     public AbstractGraphStatement setGraphKeyspace(String graphKeyspace) {
         if (graphKeyspace == null || graphKeyspace.isEmpty()) {
-            // TODO: check to return another type of exception since IQE is not really appropriate.
             throw new InvalidQueryException("You cannot set null value or empty string to the keyspace for the Graph, this field is mandatory.");
         }
         this.payload.put(GraphSession.GRAPH_LANGUAGE_KEY, ByteBuffer.wrap(graphKeyspace.getBytes()));

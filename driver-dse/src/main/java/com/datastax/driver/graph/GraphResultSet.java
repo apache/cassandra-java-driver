@@ -32,31 +32,30 @@ import com.datastax.driver.core.Row;
 public class GraphResultSet implements Iterable<GraphTraversalResult> {
     private final ResultSet rs;
     private final ObjectMapper objectMapper;
-    private JsonParser jp;
 
     GraphResultSet(ResultSet rs) {
         this.rs = rs;
         this.objectMapper = new ObjectMapper();
     }
 
+    /**
+     * API
+     */
+
     public boolean isExhausted() {
         return rs.isExhausted();
     }
 
     public GraphTraversalResult one() {
-        GraphTraversalResult grs = GraphTraversalResult.fromRow(rs.one(), this.objectMapper);
-        return grs;
-//        Row row = rs.one();
-//        String json = row.getString("gremlin");
-//        return new GraphTraversalResult(row, this.objectMapper);
+        return GraphTraversalResult.fromRow(rs.one(), this.objectMapper);
     }
 
     public List<GraphTraversalResult> all() {
         return Lists.transform(rs.all(), new Function<Row, GraphTraversalResult>() {
             @Override
             public GraphTraversalResult apply(Row input) {
-                GraphTraversalResult grs = GraphTraversalResult.fromRow(rs.one(), objectMapper);
-                return grs;            }
+                return GraphTraversalResult.fromRow(input, objectMapper);
+            }
         });
     }
 

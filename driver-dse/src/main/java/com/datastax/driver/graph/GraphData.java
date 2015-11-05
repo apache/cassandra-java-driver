@@ -54,6 +54,10 @@ public class GraphData {
         return new GraphData(keyOrIndex, jsN, this.objectMapper);
     }
 
+    /**
+     * API
+     */
+
     public Object getJsonObject() {
         return this.jsonNode;
     }

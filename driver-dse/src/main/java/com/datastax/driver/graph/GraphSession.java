@@ -58,6 +58,10 @@ public class GraphSession {
         );
     }
 
+    /**
+     * API
+     */
+
     public GraphSession(Session session) {
         this.session = session;
         this.defaultGraphPayload = new ConcurrentHashMap<String, ByteBuffer>(DEFAULT_GRAPH_PAYLOAD);

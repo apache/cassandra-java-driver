@@ -50,19 +50,9 @@ public class BoundGraphStatement extends AbstractGraphStatement<BoundStatement> 
         this.wrappedStatement.setOutgoingPayload(gst.getOutgoingPayload() == null ? this.session.getCustomDefaultPayload() : gst.getOutgoingPayload());
     }
 
-    /**
-     * Bind Graph parameters values
-     * @param name
-     * @param value
-     */
-    public void set(String name, Object value) {
-        this.valuesMap.put(name, value);
-    }
-
     // Bind variables in the PreparedStatement
     @Override
     BoundStatement configureAndGetWrappedStatement() {
-        // TODO
         JsonNodeFactory factory = new JsonNodeFactory(false);
         JsonFactory jsonFactory = new JsonFactory();
         ObjectMapper objectMapper = new ObjectMapper();
@@ -102,5 +92,18 @@ public class BoundGraphStatement extends AbstractGraphStatement<BoundStatement> 
             throw new DriverException("Some values are not in a compatible type to be serialized in a Gremlin Query.");
         }
         return this.wrappedStatement;
+    }
+
+    /**
+     * API
+     */
+
+    /**
+     * Bind Graph parameters values
+     * @param name
+     * @param value
+     */
+    public void set(String name, Object value) {
+        this.valuesMap.put(name, value);
     }
 }

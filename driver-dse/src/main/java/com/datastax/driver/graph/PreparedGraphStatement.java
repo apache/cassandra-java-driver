@@ -26,7 +26,11 @@ public class PreparedGraphStatement {
         this.gst = gst;
     }
 
-    BoundGraphStatement bind() {
+    /**
+     * API
+     */
+
+    public BoundGraphStatement bind() {
         return new BoundGraphStatement(ps.bind(), gst);
     }
 

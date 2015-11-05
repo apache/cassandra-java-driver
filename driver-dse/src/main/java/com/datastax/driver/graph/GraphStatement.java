@@ -116,10 +116,6 @@ public class GraphStatement extends AbstractGraphStatement<SimpleStatement> {
         }
     }
 
-    public void set(String name, Object value) {
-        this.valuesMap.put(name, value);
-    }
-
     @Override
     SimpleStatement configureAndGetWrappedStatement() {
         if (hasValues()) {
@@ -128,5 +124,13 @@ public class GraphStatement extends AbstractGraphStatement<SimpleStatement> {
         this.wrappedStatement = session.getSession().newSimpleStatement(this.query, this.JsonParams.toArray());
         configure();
         return this.wrappedStatement;
+    }
+
+    /**
+     * API
+     */
+
+    public void set(String name, Object value) {
+        this.valuesMap.put(name, value);
     }
 }
