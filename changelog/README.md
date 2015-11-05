@@ -12,6 +12,8 @@
 - [bug] JAVA-656: Fix NPE in ControlConnection.updateLocationInfo.
 - [bug] JAVA-966: Count uninitialized connections in conviction policy.
 - [improvement] JAVA-917: Document SSL configuration.
+- [improvement] JAVA-652: Add DCAwareRoundRobinPolicy builder.
+- [improvement] JAVA-808: Add generic filtering policy that can be used to exclude specific DCs.
 
 
 ### 2.0.11

@@ -22,8 +22,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Joiner;
-import com.google.common.base.Strings;
+import com.google.common.base.*;
 import com.google.common.collect.AbstractIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,15 +45,23 @@ import com.datastax.driver.core.Statement;
  * data center can be reached.
  * <p>
  * If used with a single data center, this policy is equivalent to the
- * {@code LoadBalancingPolicy.RoundRobin} policy, but its DC awareness
- * incurs a slight overhead so the {@code LoadBalancingPolicy.RoundRobin}
- * policy could be preferred to this policy in that case.
+ * {@link RoundRobinPolicy}, but its DC awareness incurs a slight overhead
+ * so the latter should be preferred to this policy in that case.
  */
 public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy, CloseableLoadBalancingPolicy {
 
     private static final Logger logger = LoggerFactory.getLogger(DCAwareRoundRobinPolicy.class);
 
-    private final String UNSET = "";
+    /**
+     * Returns a builder to create a new instance.
+     *
+     * @return the builder.
+     */
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    private static final String UNSET = "";
 
     private final ConcurrentMap<String, CopyOnWriteArrayList<Host>> perDcLiveHosts = new ConcurrentHashMap<String, CopyOnWriteArrayList<Host>>();
     private final AtomicInteger index = new AtomicInteger();
@@ -68,101 +75,35 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy, CloseableLo
     private volatile Configuration configuration;
 
     /**
-     * Creates a new datacenter aware round robin policy that auto-discover
-     * the local data-center.
-     * <p>
-     * If this constructor is used, the data-center used as local will the
-     * data-center of the first Cassandra node the driver connects to. This
-     * will always be ok if all the contact points use at {@code Cluster}
-     * creation are in the local data-center. If it's not the case, you should
-     * provide the local data-center name yourself by using one of the other
-     * constructor of this class.
-     * <p>
-     * This constructor is a shortcut for {@code new DCAwareRoundRobinPolicy(null)},
-     * and as such will ignore all hosts in remote data-centers.
+     * @deprecated {@link #builder()} is the recommended way to build instances of this class. This constructor was preserved for
+     * backward-compatibility purposes, it is equivalent to {@code DCAwareRoundRobinPolicy.builder().build()}.
      */
+    @Deprecated
     public DCAwareRoundRobinPolicy() {
         this(null, 0, false, true);
     }
 
     /**
-     * Creates a new datacenter aware round robin policy given the name of
-     * the local datacenter.
-     * <p>
-     * The name of the local datacenter provided must be the local
-     * datacenter name as known by Cassandra.
-     * <p>
-     * The policy created will ignore all remote hosts. In other words,
-     * this is equivalent to {@code new DCAwareRoundRobinPolicy(localDc, 0)}.
-     *
-     * @param localDc the name of the local datacenter (as known by
-     * Cassandra). If this is {@code null}, the policy will default to the
-     * data-center of the first node connected to.
+     * @deprecated {@link #builder()} is the recommended way to build instances of this class. This constructor was preserved for
+     * backward-compatibility purposes, it is equivalent to {@code DCAwareRoundRobinPolicy.builder().withLocalDc(localDc).build()}.
      */
     public DCAwareRoundRobinPolicy(String localDc) {
         this(localDc, 0, false, false);
     }
 
     /**
-     * Creates a new DCAwareRoundRobin policy given the name of the local
-     * datacenter and that uses the provided number of host per remote
-     * datacenter as failover for the local hosts.
-     * <p>
-     * The name of the local datacenter provided must be the local
-     * datacenter name as known by Cassandra.
-     * <p>
-     * If {@code usedHostsPerRemoteDc > 0}, then if for a query no host
-     * in the local datacenter can be reached and if the consistency
-     * level of the query is not {@code LOCAL_ONE} or {@code LOCAL_QUORUM},
-     * then up to {@code usedHostsPerRemoteDc} host per remote data-center
-     * will be tried by the policy as a fallback. Please note that no
-     * remote host will be used for {@code LOCAL_ONE} and {@code LOCAL_QUORUM}
-     * since this would change the meaning of the consistency level (and
-     * thus somewhat break the consistency contract).
-     *
-     * @param localDc the name of the local datacenter (as known by
-     * Cassandra). If this is {@code null}, the policy will default to the
-     * data-center of the first node connected to.
-     * @param usedHostsPerRemoteDc the number of host per remote
-     * datacenter that policies created by the returned factory should
-     * consider. Created policies {@code distance} method will return a
-     * {@code HostDistance.REMOTE} distance for only {@code
-     * usedHostsPerRemoteDc} hosts per remote datacenter. Other hosts
-     * of the remote datacenters will be ignored (and thus no
-     * connections to them will be maintained).
+     * @deprecated {@link #builder()} is the recommended way to build instances of this class. This constructor was preserved for
+     * backward-compatibility purposes, it is equivalent to
+     * {@code DCAwareRoundRobinPolicy.builder().withLocalDc(localDc).withUsedHostsPerRemoteDc(usedHostsPerRemoteDc).build()}.
      */
     public DCAwareRoundRobinPolicy(String localDc, int usedHostsPerRemoteDc) {
         this(localDc, usedHostsPerRemoteDc, false, false);
     }
 
     /**
-     * Creates a new DCAwareRoundRobin policy given the name of the local
-     * datacenter and that uses the provided number of host per remote
-     * datacenter as failover for the local hosts.
-     * <p>
-     * This constructor is equivalent to {@link #DCAwareRoundRobinPolicy(String, int)}
-     * but allows to override the policy of never using remote data-center
-     * nodes for {@code LOCAL_ONE} and {@code LOCAL_QUORUM} queries. It is
-     * however inadvisable to do so in almost all cases, as this would
-     * potentially break consistency guarantees and if you are fine with that,
-     * it's probably better to use a weaker consitency like {@code ONE}, {@code
-     * TWO} or {@code THREE}. As such, this constructor should generally
-     * be avoided in favor of {@link #DCAwareRoundRobinPolicy(String, int)}.
-     * Use it only if you know and understand what you do.
-     *
-     * @param localDc the name of the local datacenter (as known by
-     * Cassandra). If this is {@code null}, the policy will default to the
-     * data-center of the first node connected to.
-     * @param usedHostsPerRemoteDc the number of host per remote
-     * datacenter that policies created by the returned factory should
-     * consider. Created policies {@code distance} method will return a
-     * {@code HostDistance.REMOTE} distance for only {@code
-     * usedHostsPerRemoteDc} hosts per remote datacenter. Other hosts
-     * of the remote datacenters will be ignored (and thus no
-     * connections to them will be maintained).
-     * @param allowRemoteDCsForLocalConsistencyLevel whether or not the
-     * policy may return remote host when building query plan for query
-     * having consitency {@code LOCAL_ONE} and {@code LOCAL_QUORUM}.
+     * @deprecated {@link #builder()} is the recommended way to build instances of this class. This constructor was preserved for
+     * backward-compatibility purposes, it is equivalent to
+     * {@code DCAwareRoundRobinPolicy.builder().withLocalDc(localDc).withUsedHostsPerRemoteDc(usedHostsPerRemoteDc).allowRemoteDCsForLocalConsistencyLevel().build()}.
      */
     public DCAwareRoundRobinPolicy(String localDc, int usedHostsPerRemoteDc, boolean allowRemoteDCsForLocalConsistencyLevel) {
         this(localDc, usedHostsPerRemoteDc, allowRemoteDCsForLocalConsistencyLevel, false);
@@ -380,5 +321,86 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy, CloseableLo
     @Override
     public void close() {
         // nothing to do
+    }
+
+    /**
+     * Helper class to build the policy.
+     */
+    public static class Builder {
+        private String localDc;
+        private int usedHostsPerRemoteDc;
+        private boolean allowRemoteDCsForLocalConsistencyLevel;
+
+        /**
+         * Sets the name of the datacenter that will be considered "local" by the policy.
+         * <p>
+         * This must be the name as known by Cassandra (in other words, the name in that appears in
+         * {@code system.peers}, or in the output of admin tools like nodetool).
+         * <p>
+         * If this method isn't called, the policy will default to the datacenter of the first node
+         * connected to. This will always be ok if all the contact points use at {@code Cluster}
+         * creation are in the local data-center. Otherwise, you should provide the name yourself
+         * with this method.
+         *
+         * @param localDc the name of the datacenter. It should not be {@code null}.
+         * @return this builder.
+         */
+        public Builder withLocalDc(String localDc) {
+            Preconditions.checkArgument(!Strings.isNullOrEmpty(localDc),
+                "localDc name can't be null or empty. If you want to let the policy autodetect the datacenter, don't call Builder.withLocalDC");
+            this.localDc = localDc;
+            return this;
+        }
+
+        /**
+         * Sets the number of hosts per remote datacenter that the policy should consider.
+         * <p>
+         * The policy's {@code distance()} method will return a {@code HostDistance.REMOTE} distance for only {@code usedHostsPerRemoteDc}
+         * hosts per remote datacenter. Other hosts of the remote datacenters will be ignored (and thus no connections to them will be
+         * maintained).
+         * <p>
+         * If {@code usedHostsPerRemoteDc > 0}, then if for a query no host in the local datacenter can be reached and if the consistency
+         * level of the query is not {@code LOCAL_ONE} or {@code LOCAL_QUORUM}, then up to {@code usedHostsPerRemoteDc} hosts per remote
+         * datacenter will be tried by the policy as a fallback. By default, no remote host will be used for {@code LOCAL_ONE} and
+         * {@code LOCAL_QUORUM}, since this would change the meaning of the consistency level, somewhat breaking the consistency contract
+         * (this can be overridden with {@link #allowRemoteDCsForLocalConsistencyLevel()}).
+         * <p>
+         * If this method isn't called, the policy will default to 0.
+         *
+         * @param usedHostsPerRemoteDc the number.
+         * @return this builder.
+         */
+        public Builder withUsedHostsPerRemoteDc(int usedHostsPerRemoteDc) {
+            Preconditions.checkArgument(usedHostsPerRemoteDc >= 0,
+                "usedHostsPerRemoteDc must be equal or greater than 0");
+            this.usedHostsPerRemoteDc = usedHostsPerRemoteDc;
+            return this;
+        }
+
+        /**
+         * Allows the policy to return remote hosts when building query plans for queries having consistency level {@code LOCAL_ONE}
+         * or {@code LOCAL_QUORUM}.
+         * <p>
+         * When used in conjunction with {@link #withUsedHostsPerRemoteDc(int) usedHostsPerRemoteDc} > 0, this overrides the policy of
+         * never using remote datacenter nodes for {@code LOCAL_ONE} and {@code LOCAL_QUORUM} queries. It is however inadvisable to do
+         * so in almost all cases, as this would potentially break consistency guarantees and if you are fine with that, it's probably
+         * better to use a weaker consitency like {@code ONE}, {@code TWO} or {@code THREE}. As such, this method should generally be
+         * avoided; use it only if you know and understand what you do.
+         *
+         * @return this builder.
+         */
+        public Builder allowRemoteDCsForLocalConsistencyLevel() {
+            this.allowRemoteDCsForLocalConsistencyLevel = true;
+            return this;
+        }
+
+        /**
+         * Builds the policy configured by this builder.
+         *
+         * @return the policy.
+         */
+        public DCAwareRoundRobinPolicy build() {
+            return new DCAwareRoundRobinPolicy(localDc, usedHostsPerRemoteDc, allowRemoteDCsForLocalConsistencyLevel, true);
+        }
     }
 }
