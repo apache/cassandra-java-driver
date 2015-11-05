@@ -170,7 +170,9 @@ public class ClusterInitTest {
         try {
             cluster.init();
         } finally {
-            assertThat(reconnectionPolicy.count.get()).isEqualTo(0);
+            // We expect a nextDelay invocation from the ConvictionPolicy for each host, but that will
+            // not trigger a reconnection.
+            assertThat(reconnectionPolicy.count.get()).isEqualTo(2);
             for (FakeHost fakeHost : hosts) {
                 fakeHost.stop();
             }
