@@ -22,78 +22,29 @@ import java.util.GregorianCalendar;
 import javax.inject.Inject;
 import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
-import org.ops4j.pax.exam.options.CompositeOption;
-import org.ops4j.pax.exam.options.MavenArtifactProvisionOption;
-import org.ops4j.pax.exam.options.UrlProvisionOption;
 import org.ops4j.pax.exam.testng.listener.PaxExam;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
-import static org.ops4j.pax.exam.CoreOptions.*;
+import static org.ops4j.pax.exam.CoreOptions.options;
 import static org.testng.Assert.assertEquals;
 
-import com.datastax.driver.core.CCMBridge;
 import com.datastax.driver.osgi.api.MailboxException;
 import com.datastax.driver.osgi.api.MailboxMessage;
 import com.datastax.driver.osgi.api.MailboxService;
 
-import static com.datastax.driver.osgi.VersionProvider.projectVersion;
+import static com.datastax.driver.osgi.BundleOptions.*;
 
 @Listeners({CCMBridgeListener.class, PaxExam.class})
 @Test(groups="short")
 public class MailboxServiceIT {
     @Inject MailboxService service;
 
-    private UrlProvisionOption driverBundle() {
-        return driverBundle(false);
-    }
-
-    private UrlProvisionOption driverBundle(boolean useShaded) {
-        String classifier = useShaded ? "-shaded" : "";
-        return bundle("reference:file:../../driver-core/target/cassandra-driver-core-" + projectVersion() + classifier + ".jar");
-    }
-
-    private MavenArtifactProvisionOption guavaBundle() {
-        return mavenBundle("com.google.guava", "guava", "16.0.1");
-    }
-
-    private CompositeOption nettyBundles() {
-        final String nettyVersion = "4.0.27.Final";
-        return new CompositeOption() {
-
-            @Override public Option[] getOptions() {
-                return options(
-                    mavenBundle("io.netty", "netty-buffer", nettyVersion),
-                    mavenBundle("io.netty", "netty-codec", nettyVersion),
-                    mavenBundle("io.netty", "netty-common", nettyVersion),
-                    mavenBundle("io.netty", "netty-handler", nettyVersion),
-                    mavenBundle("io.netty", "netty-transport", nettyVersion)
-                );
-            }
-        };
-    }
-
-    private CompositeOption defaultOptions() {
-        return new CompositeOption() {
-
-            @Override public Option[] getOptions() {
-                return options(
-                    systemProperty("cassandra.contactpoints").value(CCMBridge.IP_PREFIX + 1),
-                    bundle("reference:file:target/classes"),
-                    mavenBundle("com.codahale.metrics", "metrics-core", "3.0.2"),
-                    mavenBundle("org.slf4j", "slf4j-api", "1.7.5"),
-                    mavenBundle("org.slf4j", "slf4j-simple", "1.7.5").noStart(),
-                    systemPackages("org.testng", "org.junit", "org.junit.runner", "org.junit.runner.manipulation",
-                        "org.junit.runner.notification", "com.jcabi.manifests")
-                );
-            }
-        };
-    }
-
     @Configuration
     public Option[] shadedConfig() {
         return options(
             driverBundle(true),
+            mailboxBundle(),
             guavaBundle(),
             defaultOptions()
         );
@@ -103,6 +54,7 @@ public class MailboxServiceIT {
     public Option[] defaultConfig() {
         return options(
             driverBundle(),
+            mailboxBundle(),
             guavaBundle(),
             nettyBundles(),
             defaultOptions()
@@ -113,6 +65,7 @@ public class MailboxServiceIT {
     public Option[] guava17Config() {
         return options(
             driverBundle(),
+            mailboxBundle(),
             nettyBundles(),
             guavaBundle().version("17.0"),
             defaultOptions()
@@ -123,6 +76,7 @@ public class MailboxServiceIT {
     public Option[] guava18Config() {
         return options(
             driverBundle(),
+            mailboxBundle(),
             nettyBundles(),
             guavaBundle().version("18.0"),
             defaultOptions()
@@ -139,8 +93,7 @@ public class MailboxServiceIT {
      * <ol>
      *   <li>Default bundle (Driver with all of it's dependencies)</li>
      *   <li>Shaded bundle (Driver with netty shaded)</li>
-     *   <li>With Guava 15</li>
-     *   <li>With Guava 16</li>
+     *   <li>With Guava 16.0.1</li>
      *   <li>With Guava 17</li>
      *   <li>With Guava 18</li>
      * </ol>

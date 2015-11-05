@@ -66,6 +66,11 @@ public class Cluster implements Closeable {
 
     private static final Logger logger = LoggerFactory.getLogger(Cluster.class);
 
+    static {
+        // Perform sanity checks to inform user of possible environment misconfiguration.
+        SanityChecks.check();
+    }
+
     @VisibleForTesting
     static final int NEW_NODE_DELAY_SECONDS = SystemProperties.getInt("com.datastax.driver.NEW_NODE_DELAY_SECONDS", 1);
     private static final int NON_BLOCKING_EXECUTOR_SIZE = SystemProperties.getInt("com.datastax.driver.NON_BLOCKING_EXECUTOR_SIZE",
