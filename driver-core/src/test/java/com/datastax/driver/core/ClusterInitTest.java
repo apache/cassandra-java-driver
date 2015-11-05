@@ -27,6 +27,7 @@ import java.util.concurrent.TimeoutException;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.Uninterruptibles;
 import org.scassandra.Scassandra;
 import org.scassandra.http.client.PrimingClient;
 import org.scassandra.http.client.PrimingRequest;
@@ -41,14 +42,13 @@ import static org.mockito.Mockito.verify;
 
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.datastax.driver.core.policies.ConstantReconnectionPolicy;
-import com.datastax.driver.core.utils.CassandraVersion;
 
-import static com.datastax.driver.core.Assertions.*;
+import static com.datastax.driver.core.Assertions.assertThat;
+import static com.datastax.driver.core.Assertions.fail;
 import static com.datastax.driver.core.FakeHost.Behavior.THROWING_CONNECT_TIMEOUTS;
-import static com.datastax.driver.core.Host.State.DOWN;
-import static com.datastax.driver.core.Host.State.UP;
 import static com.datastax.driver.core.HostDistance.LOCAL;
 import static com.datastax.driver.core.TestUtils.nonDebouncingQueryOptions;
+import static com.datastax.driver.core.TestUtils.nonQuietClusterCloseOptions;
 
 public class ClusterInitTest {
     private static final Logger logger = LoggerFactory.getLogger(ClusterInitTest.class);
@@ -58,7 +58,6 @@ public class ClusterInitTest {
      * causing timeouts, we want to ensure that the driver does not wait multiple times on the same host.
      */
     @Test(groups = "short")
-    @CassandraVersion(major=2.0, description = "Scassandra currently broken with protocol version 1.")
     public void should_handle_failing_or_missing_contact_points() throws UnknownHostException {
         Cluster cluster = null;
         Scassandra scassandra = null;
@@ -128,9 +127,20 @@ public class ClusterInitTest {
             verify(socketOptions, atLeast(6)).getKeepAlive();
             verify(socketOptions, atMost(7)).getKeepAlive();
 
-            assertThat(cluster).host(realHostAddress).isNotNull().hasState(UP);
+            assertThat(cluster).host(realHostAddress).isNotNull().isUp();
+            // It is likely but not guaranteed that a host is marked down at this point.
+            // It should eventually be marked down as Cluster.Manager.triggerOnDown should be
+            // called and submit a task that marks the host down.
             for (FakeHost failingHost : failingHosts) {
-                assertThat(cluster).host(failingHost.address).hasState(DOWN);
+                assertThat(cluster).host(failingHost.address).goesDownWithin(10, TimeUnit.SECONDS);
+                Host host = TestUtils.findHost(cluster, failingHost.address);
+                // There is a possible race here in that the host is marked down in a separate Executor in onDown
+                // and then starts a periodic reconnection attempt shortly after.  Since setDown is called before
+                // startPeriodicReconnectionAttempt, we add a slight delay here if the future isn't set yet.
+                if(host.getReconnectionAttemptFuture() == null || host.getReconnectionAttemptFuture().isDone()) {
+                    logger.warn("Periodic Reconnection Attempt hasn't started yet for {}, waiting 1 second and then checking.", host);
+                    Uninterruptibles.sleepUninterruptibly(1, TimeUnit.SECONDS);
+                }
                 assertThat(cluster).host(failingHost.address).isReconnectingFromDown();
             }
             assertThat(cluster).host(missingHostAddress).isNull();
@@ -169,7 +179,9 @@ public class ClusterInitTest {
         try {
             cluster.init();
         } finally {
-            assertThat(reconnectionPolicy.count.get()).isEqualTo(0);
+            // We expect a nextDelay invocation from the ConvictionPolicy for each host, but that will
+            // not trigger a reconnection.
+            assertThat(reconnectionPolicy.count.get()).isEqualTo(2);
             for (FakeHost fakeHost : hosts) {
                 fakeHost.stop();
             }
@@ -189,6 +201,7 @@ public class ClusterInitTest {
     public void should_be_able_to_close_cluster_that_never_successfully_connected() throws Exception {
         Cluster cluster = Cluster.builder()
             .addContactPointsWithPorts(Collections.singleton(new InetSocketAddress("127.0.0.1", 65534)))
+            .withNettyOptions(nonQuietClusterCloseOptions)
             .build();
         try {
             cluster.connect();

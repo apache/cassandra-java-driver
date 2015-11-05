@@ -15,12 +15,13 @@
  */
 package com.datastax.driver.core;
 
-import com.google.common.collect.Iterators;
-import org.assertj.core.api.AbstractAssert;
-
 import java.util.Iterator;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.TimeUnit;
+
+import com.google.common.collect.Iterators;
+import org.assertj.core.api.AbstractAssert;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -47,19 +48,17 @@ public class ClusterAssert extends AbstractAssert<ClusterAssert, Cluster> {
     }
 
     public HostAssert host(int hostNumber) {
-        // TODO at some point this won't work anymore if we have assertions that wait for a node to
-        // join the cluster, e.g. assertThat(cluster).node(3).comesUp().
-        return new HostAssert(
-            TestUtils.findHost(actual, hostNumber),
-            actual);
+        // Wait for the node to be added if it's not already known.
+        // In 2.2+ C* does not send an added event until the node is ready so we wait a long time.
+        Host host = TestUtils.findOrWaitForHost(actual, hostNumber,
+            60 + Cluster.NEW_NODE_DELAY_SECONDS, TimeUnit.SECONDS);
+        return new HostAssert(host, actual);
     }
 
     public HostAssert host(String hostAddress) {
-        // TODO at some point this won't work anymore if we have assertions that wait for a node to
-        // join the cluster, e.g. assertThat(cluster).node(3).comesUp().
-        return new HostAssert(
-            TestUtils.findHost(actual, hostAddress),
-            actual);
+        Host host = TestUtils.findOrWaitForHost(actual, hostAddress,
+            60 + Cluster.NEW_NODE_DELAY_SECONDS, TimeUnit.SECONDS);
+        return new HostAssert(host, actual);
     }
 
     /**
