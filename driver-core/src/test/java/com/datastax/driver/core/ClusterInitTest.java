@@ -27,6 +27,7 @@ import java.util.concurrent.TimeoutException;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.Uninterruptibles;
 import org.scassandra.Scassandra;
 import org.scassandra.http.client.PrimingClient;
 import org.scassandra.http.client.PrimingRequest;
@@ -132,6 +133,14 @@ public class ClusterInitTest {
             // called and submit a task that marks the host down.
             for (FakeHost failingHost : failingHosts) {
                 assertThat(cluster).host(failingHost.address).goesDownWithin(10, TimeUnit.SECONDS);
+                Host host = TestUtils.findHost(cluster, failingHost.address);
+                // There is a possible race here in that the host is marked down in a separate Executor in onDown
+                // and then starts a periodic reconnection attempt shortly after.  Since setDown is called before
+                // startPeriodicReconnectionAttempt, we add a slight delay here if the future isn't set yet.
+                if(host.getReconnectionAttemptFuture() == null || host.getReconnectionAttemptFuture().isDone()) {
+                    logger.warn("Periodic Reconnection Attempt hasn't started yet for {}, waiting 1 second and then checking.", host);
+                    Uninterruptibles.sleepUninterruptibly(1, TimeUnit.SECONDS);
+                }
                 assertThat(cluster).host(failingHost.address).isReconnectingFromDown();
             }
             assertThat(cluster).host(missingHostAddress).isNull();
