@@ -27,6 +27,7 @@ import java.util.concurrent.TimeoutException;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Uninterruptibles;
 import org.scassandra.Scassandra;
 import org.scassandra.http.client.PrimingClient;
@@ -217,6 +218,43 @@ public class ClusterInitTest {
             closeFuture.get(1, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
             fail("Close Future did not complete quickly.");
+        }
+    }
+
+    /**
+     * Ensures that if a node is detected that does not support the protocol version in use on init that
+     * the node is not marked up and the all other hosts are appropriately marked up.
+     *
+     * @jira_ticket JAVA-854
+     * @test_category host:state
+     */
+    @Test(groups="short")
+    public void should_not_abort_init_if_host_does_not_support_protocol_version() {
+        Map<Integer,Map<String,Object>> nodeProperties = Maps.newHashMap();
+        // Configure node 2 to run with an older version which uses protocol v1.
+        nodeProperties.put(2, ImmutableMap.<String,Object>of("release_version", "1.2.19"));
+        SCassandraCluster scassandraCluster = new SCassandraCluster(CCMBridge.IP_PREFIX, 5, nodeProperties);
+        Cluster cluster = Cluster.builder()
+            .addContactPoints(scassandraCluster.addresses().get(0))
+            .withNettyOptions(nonQuietClusterCloseOptions)
+            .build();
+
+        try {
+            cluster.init();
+            for(int i = 0; i < scassandraCluster.addresses().size(); i++) {
+                String hostAddress = scassandraCluster.addresses().get(i).getHostAddress();
+                if (i == 2) {
+                    // As this host is at an older protocol version, it should not be marked added.
+                    assertThat(cluster).host(hostAddress).hasState(Host.State.ADDED);
+                } else {
+                    // All hosts should be set as 'UP' as part of cluster.init() if they are
+                    // in added state it's possible that cluster.init() did not fully complete.
+                    assertThat(cluster).host(hostAddress).hasState(Host.State.UP);
+                }
+            }
+        } finally {
+            cluster.close();
+            scassandraCluster.stop();
         }
     }
 
