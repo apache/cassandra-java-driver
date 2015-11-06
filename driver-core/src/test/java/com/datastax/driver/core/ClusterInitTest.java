@@ -223,7 +223,7 @@ public class ClusterInitTest {
 
     /**
      * Ensures that if a node is detected that does not support the protocol version in use on init that
-     * the node is not marked up and the all other hosts are appropriately marked up.
+     * the node is ignored and remains in an added state and the all other hosts are appropriately marked up.
      *
      * @jira_ticket JAVA-854
      * @test_category host:state
@@ -244,11 +244,11 @@ public class ClusterInitTest {
             for(int i = 0; i < scassandraCluster.addresses().size(); i++) {
                 String hostAddress = scassandraCluster.addresses().get(i).getHostAddress();
                 if (i == 2) {
-                    // As this host is at an older protocol version, it should not be marked added.
+                    // As this host is at an older protocol version, it should be ignored and not marked up.
                     assertThat(cluster).host(hostAddress).hasState(Host.State.ADDED);
                 } else {
-                    // All hosts should be set as 'UP' as part of cluster.init() if they are
-                    // in added state it's possible that cluster.init() did not fully complete.
+                    // All hosts should be set as 'UP' as part of cluster.init().  If they are
+                    // in 'ADDED' state it's possible that cluster.init() did not fully complete.
                     assertThat(cluster).host(hostAddress).hasState(Host.State.UP);
                 }
             }
