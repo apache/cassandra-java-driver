@@ -51,10 +51,10 @@ public class SimpleStatementTest {
     @Test(groups = "unit")
     public void should_return_number_of_values() {
         assertThat(
-            new SimpleStatement("doesn't matter").getValuesCount()
+            new SimpleStatement("doesn't matter").valuesCount()
         ).isEqualTo(0);
         assertThat(
-            new SimpleStatement("doesn't matter", 1, 2).getValuesCount()
+            new SimpleStatement("doesn't matter", 1, 2).valuesCount()
         ).isEqualTo(2);
     }
 

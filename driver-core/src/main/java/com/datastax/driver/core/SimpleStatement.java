@@ -125,7 +125,7 @@ public class SimpleStatement extends RegularStatement {
      *
      * @return the number of values.
      */
-    public int getValuesCount() {
+    public int valuesCount() {
         return values == null ? 0 : values.length;
     }
 
