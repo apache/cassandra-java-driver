@@ -15,9 +15,26 @@
  */
 package com.datastax.driver.core;
 
-@SuppressWarnings("serial")
-class SetKeyspaceException extends Exception {
-    SetKeyspaceException(Exception cause) {
-        super(cause);
+public class StateListenerBase implements Host.StateListener {
+    @Override
+    public void onAdd(Host host) {
     }
+
+    @Override
+    public void onUp(Host host) {
+    }
+
+    @Override
+    public void onSuspected(Host host) {
+
+    }
+
+    @Override
+    public void onDown(Host host) {
+    }
+
+    @Override
+    public void onRemove(Host host) {
+    }
+
 }

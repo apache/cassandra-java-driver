@@ -105,28 +105,26 @@ class HostConnectionPool implements Connection.Owner {
      *                         pool.
      */
     ListenableFuture<Void> initAsync(Connection reusedConnection) {
-        String keyspace = manager.poolsState.keyspace;
-
         Executor initExecutor = manager.cluster.manager.configuration.getPoolingOptions().getInitializationExecutor();
 
         // Create initial core connections
         final int coreSize = options().getCoreConnectionsPerHost(hostDistance);
         final List<Connection> connections = Lists.newArrayListWithCapacity(coreSize);
         final List<ListenableFuture<Void>> connectionFutures = Lists.newArrayListWithCapacity(coreSize);
-        for (int i = 0; i < coreSize; i++) {
-            Connection connection;
-            ListenableFuture<Void> connectionFuture;
-            // reuse the existing connection only once
-            if (reusedConnection != null && reusedConnection.setOwner(this)) {
-                connection = reusedConnection;
-                connectionFuture = MoreFutures.VOID_SUCCESS;
-            } else {
-                connection = manager.connectionFactory().newConnection(this);
-                connectionFuture = connection.initAsync();
-            }
-            reusedConnection = null;
-            connections.add(connection);
-            connectionFutures.add(handleErrors(setKeyspaceAsync(connectionFuture, connection, keyspace), initExecutor));
+
+        int toCreate = coreSize;
+
+        if (reusedConnection != null && reusedConnection.setOwner(this)) {
+            toCreate -= 1;
+            connections.add(reusedConnection);
+            connectionFutures.add(MoreFutures.VOID_SUCCESS);
+        }
+
+        List<Connection> newConnections = manager.connectionFactory().newConnections(this, toCreate);
+        connections.addAll(newConnections);
+        for (Connection connection : newConnections) {
+            ListenableFuture<Void> connectionFuture = connection.initAsync();
+            connectionFutures.add(handleErrors(connectionFuture, initExecutor));
         }
 
         ListenableFuture<List<Void>> allConnectionsFuture = Futures.allAsList(connectionFutures);
@@ -175,7 +173,6 @@ class HostConnectionPool implements Connection.Owner {
                 // accordingly in SessionManager#maybeAddPool.
                 Throwables.propagateIfInstanceOf(t, ClusterNameMismatchException.class);
                 Throwables.propagateIfInstanceOf(t, UnsupportedProtocolVersionException.class);
-                Throwables.propagateIfInstanceOf(t, SetKeyspaceException.class);
 
                 // We don't want to swallow Errors either as they probably indicate a more serious issue (OOME...)
                 Throwables.propagateIfInstanceOf(t, Error.class);
@@ -184,17 +181,6 @@ class HostConnectionPool implements Connection.Owner {
                 return MoreFutures.VOID_SUCCESS;
             }
         }, executor);
-    }
-
-    private ListenableFuture<Void> setKeyspaceAsync(ListenableFuture<Void> initFuture, final Connection connection, final String keyspace) {
-        return (keyspace == null)
-            ? initFuture
-            : Futures.transform(initFuture, new AsyncFunction<Void, Void>() {
-            @Override
-            public ListenableFuture<Void> apply(Void input) throws Exception {
-                return connection.setKeyspaceAsync(keyspace);
-            }
-        });
     }
 
     // Clean up if we got a fatal error at construction time but still created part of the core connections
@@ -528,7 +514,7 @@ class HostConnectionPool implements Connection.Owner {
     }
 
     private void maybeSpawnNewConnection() {
-        if (!host.convictionPolicy.canReconnectNow())
+        if (isClosed() || !host.convictionPolicy.canReconnectNow())
             return;
 
         while (true) {
@@ -686,10 +672,6 @@ class HostConnectionPool implements Connection.Owner {
 
     static class PoolState {
         volatile String keyspace;
-
-        PoolState(String keyspace) {
-            this.keyspace = keyspace;
-        }
 
         void setKeyspace(String keyspace) {
             this.keyspace = keyspace;

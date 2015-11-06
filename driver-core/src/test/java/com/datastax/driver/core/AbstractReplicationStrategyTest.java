@@ -56,7 +56,7 @@ public class AbstractReplicationStrategyTest {
 
         @Override
         public String toString() {
-            return address.getHostName();
+            return address.toString();
         }
 
         public InetSocketAddress getMockAddress() {

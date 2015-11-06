@@ -22,6 +22,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.MapMaker;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import io.netty.channel.EventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,9 +54,15 @@ public class SocketChannelMonitor implements Runnable {
     private final AtomicLong channelsCreated = new AtomicLong(0);
 
     private final NettyOptions nettyOptions = new NettyOptions() {
+        @Override
         public void afterChannelInitialized(SocketChannel channel) throws Exception {
             channels.add(channel);
             channelsCreated.incrementAndGet();
+        }
+
+        @Override
+        public void onClusterClose(EventLoopGroup eventLoopGroup) {
+            eventLoopGroup.shutdownGracefully(0, 15, TimeUnit.SECONDS).syncUninterruptibly();
         }
     };
 

@@ -57,6 +57,12 @@ public class HostAssert extends AbstractAssert<HostAssert, Host> {
         return this;
     }
 
+    public HostAssert isReconnectingFromDown() {
+        assertThat(actual.getReconnectionAttemptFuture() != null && !actual.getReconnectionAttemptFuture().isDone())
+            .isTrue();
+        return this;
+    }
+
     public HostAssert isNotReconnectingFromDown() {
         assertThat(actual.getReconnectionAttemptFuture() != null && !actual.getReconnectionAttemptFuture().isDone())
             .isFalse();
@@ -113,27 +119,5 @@ public class HostAssert extends AbstractAssert<HostAssert, Host> {
         }
         fail(actual + " did not go down within " + duration + " " + unit);
         return this;
-    }
-
-    public static class StateListenerBase implements StateListener {
-        @Override
-        public void onAdd(Host host) {
-        }
-
-        @Override
-        public void onUp(Host host) {
-        }
-
-        @Override
-        public void onSuspected(Host host) {
-        }
-
-        @Override
-        public void onDown(Host host) {
-        }
-
-        @Override
-        public void onRemove(Host host) {
-        }
     }
 }

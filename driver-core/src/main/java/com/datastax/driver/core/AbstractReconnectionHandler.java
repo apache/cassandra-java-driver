@@ -18,6 +18,7 @@ package com.datastax.driver.core;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.AbstractFuture;
 import org.slf4j.Logger;
@@ -183,7 +184,8 @@ abstract class AbstractReconnectionHandler implements Runnable {
     }
 
     // The future that the handler exposes to its clients via currentAttempt
-    private static class HandlerFuture extends AbstractFuture<Void> {
+    @VisibleForTesting
+    static class HandlerFuture extends AbstractFuture<Void> {
         // A future representing completion of the next task submitted to the executor
         volatile ScheduledFuture<?> nextTry;
 

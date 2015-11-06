@@ -4,6 +4,21 @@
 
 - [bug] Fix implementation of UserType.hashCode() (JAVA-942)
 
+Merged from 2.0 branch:
+
+- [bug] JAVA-950: Fix Cluster.connect with a case-sensitive keyspace.
+- [improvement] JAVA-920: Downgrade "error creating pool" message to WARN.
+- [bug] JAVA-954: Don't trigger reconnection before initialization complete.
+- [improvement] JAVA-914: Avoid rejected tasks at shutdown.
+- [improvement] JAVA-921: Add SimpleStatement.getValuesCount().
+- [bug] JAVA-901: Move call to connection.release() out of cancelHandler.
+- [bug] JAVA-960: Avoid race in control connection shutdown.
+- [bug] JAVA-656: Fix NPE in ControlConnection.updateLocationInfo.
+- [bug] JAVA-966: Count uninitialized connections in conviction policy.
+- [improvement] JAVA-917: Document SSL configuration.
+- [improvement] JAVA-652: Add DCAwareRoundRobinPolicy builder.
+- [improvement] JAVA-808: Add generic filtering policy that can be used to exclude specific DCs.
+
 
 ### 2.1.8
 
@@ -316,6 +331,22 @@ Merged from 2.0 branch: everything up to 2.0.3 (included), and the following.
 - [bug] Avoid classloader leak in Tomcat (JAVA-343)
 - [bug] Avoid deadlock in onAdd/onUp (JAVA-387)
 - [bug] Make metadata parsing more lenient (JAVA-377, JAVA-391)
+
+
+### 2.0.12 (in progress)
+
+- [bug] JAVA-950: Fix Cluster.connect with a case-sensitive keyspace.
+- [improvement] JAVA-920: Downgrade "error creating pool" message to WARN.
+- [bug] JAVA-954: Don't trigger reconnection before initialization complete.
+- [improvement] JAVA-914: Avoid rejected tasks at shutdown.
+- [improvement] JAVA-921: Add SimpleStatement.getValuesCount().
+- [bug] JAVA-901: Move call to connection.release() out of cancelHandler.
+- [bug] JAVA-960: Avoid race in control connection shutdown.
+- [bug] JAVA-656: Fix NPE in ControlConnection.updateLocationInfo.
+- [bug] JAVA-966: Count uninitialized connections in conviction policy.
+- [improvement] JAVA-917: Document SSL configuration.
+- [improvement] JAVA-652: Add DCAwareRoundRobinPolicy builder.
+- [improvement] JAVA-808: Add generic filtering policy that can be used to exclude specific DCs.
 
 
 ### 2.0.11

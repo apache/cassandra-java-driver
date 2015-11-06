@@ -352,8 +352,8 @@ class RequestHandler {
             // If cancel() was called after we set the state to "in progress", but before connection.write had completed, it might have
             // missed the new value of connectionHandler. So make sure that cancelHandler() gets called here (we might call it twice,
             // but it knows how to deal with it).
-            if (queryStateRef.get() == QueryState.CANCELLED_WHILE_IN_PROGRESS)
-                connectionHandler.cancelHandler();
+            if (queryStateRef.get() == QueryState.CANCELLED_WHILE_IN_PROGRESS && connectionHandler.cancelHandler())
+                connection.release();
         }
 
         private void retry(final boolean retryCurrent, ConsistencyLevel newConsistencyLevel) {
@@ -391,8 +391,8 @@ class RequestHandler {
                         logger.trace("[{}] Cancelled while in progress", id);
                     // The connectionHandler should be non-null, but we might miss the update if we're racing with write().
                     // If it's still null, this will be handled by re-checking queryStateRef at the end of write().
-                    if (connectionHandler != null)
-                        connectionHandler.cancelHandler();
+                    if (connectionHandler != null && connectionHandler.cancelHandler())
+                        connectionHandler.connection.release();
                     return;
                 } else if (!previous.inProgress && queryStateRef.compareAndSet(previous, QueryState.CANCELLED_WHILE_COMPLETE)) {
                     if(logger.isTraceEnabled())
@@ -671,6 +671,7 @@ class RequestHandler {
                             retryCount, queryState, queryStateRef.get());
                         return false;
                     }
+                    connection.release();
                     logError(connection.address, new DriverException("Timeout waiting for response to prepare message"));
                     retry(false, null);
                     return true;
@@ -723,6 +724,8 @@ class RequestHandler {
             Host queriedHost = current;
             OperationTimedOutException timeoutException = new OperationTimedOutException(connection.address);
             try {
+                connection.release();
+
                 logError(connection.address, timeoutException);
                 retry(false, null);
             } catch (Exception e) {

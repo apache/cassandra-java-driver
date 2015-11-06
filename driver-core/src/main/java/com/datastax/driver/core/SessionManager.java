@@ -21,9 +21,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 
-import com.google.common.base.Function;
 import com.google.common.base.Functions;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.*;
@@ -56,10 +54,10 @@ class SessionManager extends AbstractSession {
     private volatile boolean isClosing;
 
     // Package protected, only Cluster should construct that.
-    SessionManager(Cluster cluster, String keyspace) {
+    SessionManager(Cluster cluster) {
         this.cluster = cluster;
         this.pools = new ConcurrentHashMap<Host, HostConnectionPool>();
-        this.poolsState = new HostConnectionPool.PoolState(keyspace);
+        this.poolsState = new HostConnectionPool.PoolState();
     }
 
     public Session init() {
@@ -113,7 +111,7 @@ class SessionManager extends AbstractSession {
         List<ListenableFuture<Boolean>> futures = Lists.newArrayListWithCapacity(hosts.size());
         for (Host host : hosts)
             if (host.state != Host.State.DOWN)
-                futures.add(maybeAddPool(host, null, true));
+                futures.add(maybeAddPool(host, null));
         return Futures.allAsList(futures);
     }
 
@@ -278,7 +276,7 @@ class SessionManager extends AbstractSession {
 
             @Override
             public void onFailure(Throwable t) {
-                logger.error("Error creating pool to " + host, t);
+                logger.warn("Error creating pool to " + host, t);
                 future.set(false);
             }
         });
@@ -328,7 +326,7 @@ class SessionManager extends AbstractSession {
     }
 
     // Returns whether there was problem creating the pool
-    ListenableFuture<Boolean> maybeAddPool(final Host host, Connection reusedConnection, final boolean failOnKeyspaceError) {
+    ListenableFuture<Boolean> maybeAddPool(final Host host, Connection reusedConnection) {
         final HostDistance distance = cluster.manager.loadBalancingPolicy().distance(host);
         if (distance == HostDistance.IGNORED)
             return Futures.immediateFuture(true);
@@ -361,11 +359,8 @@ class SessionManager extends AbstractSession {
                             ClusterNameMismatchException e = (ClusterNameMismatchException)t;
                             cluster.manager.logClusterNameMismatch(host, e.expectedClusterName, e.actualClusterName);
                             cluster.manager.triggerOnDown(host, false);
-                        } else if ((t instanceof SetKeyspaceException) && failOnKeyspaceError) {
-                            future.setException(t.getCause());
-                            return;
                         } else {
-                            logger.error("Error creating pool to " + host, t);
+                            logger.warn("Error creating pool to " + host, t);
                         }
                         future.set(false);
                     }
@@ -409,7 +404,7 @@ class SessionManager extends AbstractSession {
 
             if (pool == null) {
                 if (dist != HostDistance.IGNORED && h.state == Host.State.UP)
-                    poolCreatedFutures.add(maybeAddPool(h, null, false));
+                    poolCreatedFutures.add(maybeAddPool(h, null));
             } else if (dist != pool.hostDistance) {
                 if (dist == HostDistance.IGNORED) {
                     toRemove.add(h);
@@ -443,7 +438,7 @@ class SessionManager extends AbstractSession {
             if (pool == null) {
                 if (dist != HostDistance.IGNORED && h.state == Host.State.UP)
                     try {
-                        maybeAddPool(h, null, false).get();
+                        maybeAddPool(h, null).get();
                     } catch (ExecutionException e) {
                         // Ignore, maybeAddPool has already handled the error
                     }
@@ -607,10 +602,7 @@ class SessionManager extends AbstractSession {
                     @Override
                     public void onFailure(Throwable t) {
                         logger.debug(String.format("Unexpected error while preparing query (%s) on %s", query, entry.getKey()), t);
-
-                        // If the query timed out, that already released the connection, otherwise do it now
-                        if (!(t instanceof OperationTimedOutException))
-                            c.release();
+                        c.release();
                     }
                 });
                 futures.add(future);

@@ -315,37 +315,6 @@ public class ReconnectionTest {
     }
 
     /**
-     * A reconnection policy that tracks how many times its schedule has been invoked.
-     */
-    public static class CountingReconnectionPolicy implements ReconnectionPolicy {
-        public final AtomicInteger count = new AtomicInteger();
-        private final ReconnectionPolicy childPolicy;
-
-        public CountingReconnectionPolicy(ReconnectionPolicy childPolicy) {
-            this.childPolicy = childPolicy;
-        }
-
-        @Override
-        public ReconnectionSchedule newSchedule() {
-            return new CountingSchedule(childPolicy.newSchedule());
-        }
-
-        class CountingSchedule implements ReconnectionSchedule {
-            private final ReconnectionSchedule childSchedule;
-
-            public CountingSchedule(ReconnectionSchedule childSchedule) {
-                this.childSchedule = childSchedule;
-            }
-
-            @Override
-            public long nextDelayMs() {
-                count.incrementAndGet();
-                return childSchedule.nextDelayMs();
-            }
-        }
-    }
-
-    /**
      * A load balancing policy that:
      * - can be "disabled" by having its query plan return no hosts.
      * - can be instructed to return a specific distance for some hosts.
