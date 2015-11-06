@@ -285,6 +285,10 @@ public class CCMBridge {
         execute(CCM_COMMAND + " updateconf " + confStr);
     }
 
+    public void setNodeVersion(int n, String version) {
+        execute(CCM_COMMAND + " setdir -v %s -n node%d", version, n);
+    }
+    
     private void execute(String command, Object... args) {
 
         String fullCommand = String.format(command, args) + " --config-dir=" + ccmDir;
