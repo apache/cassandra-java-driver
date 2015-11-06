@@ -419,6 +419,18 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
         session.execute("delete from posts where user_id = " + u1.getUserId());
     }
 
+
+    @Test(groups="short")
+    public void should_tableMetaData_not_null() throws Exception {
+        MappingManager manager = new MappingManager(session);
+
+        Mapper<Post> m = manager.mapper(Post.class);
+
+        assertThat(m.getTableMetadata()).isNotNull();
+        assertThat(m.getTableMetadata().getName()).isEqualTo("posts");
+        assertThat(m.getTableMetadata().getPartitionKey()).hasSize(1);
+    }
+
     @Test(groups="short")
     public void should_not_initialize_session_when_protocol_version_provided() {
         Session newSession = cluster.newSession();
