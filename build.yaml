@@ -10,12 +10,24 @@ cassandra:
 build:
   - type: maven
     version: 3.2.5
-    goals: clean compile test --fail-never -Plong
+    goals: verify --fail-never -Plong
     properties: |
       com.datastax.driver.TEST_BASE_NODE_WAIT=120
       com.datastax.driver.NEW_NODE_DELAY_SECONDS=100
       cassandra.version=$CCM_CASSANDRA_VERSION
       ccm.java.home=$CCM_JAVA_HOME
+      failIfNoTests=false
+      maven.test.failure.ignore=true
+  - type: maven
+    version: 3.2.5
+    goals: verify --fail-never -Pisolated
+    properties: |
+      com.datastax.driver.TEST_BASE_NODE_WAIT=120
+      com.datastax.driver.NEW_NODE_DELAY_SECONDS=100
+      cassandra.version=$CCM_CASSANDRA_VERSION
+      ccm.java.home=$CCM_JAVA_HOME
+      failIfNoTests=false
+      maven.test.failure.ignore=true
   - xunit:
     - "**/target/surefire-reports/TEST-*.xml"
     - "**/target/failsafe-reports/TEST-*.xml" 
