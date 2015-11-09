@@ -66,7 +66,7 @@ public abstract class StringParsingCodec<T> extends TypeCodec<T> {
 
     @Override
     public T parse(String value) throws InvalidTypeException {
-        return value == null || value.isEmpty() || value.equals("NULL") ? null : fromString(innerCodec.parse(value));
+        return value == null || value.isEmpty() || value.equalsIgnoreCase("NULL") ? null : fromString(innerCodec.parse(value));
     }
 
     /**

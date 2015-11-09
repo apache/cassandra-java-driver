@@ -21,7 +21,6 @@ import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
 
-import com.google.common.collect.Lists;
 import org.testng.annotations.Test;
 
 import static com.google.common.collect.Lists.newArrayList;
@@ -70,13 +69,13 @@ public class DataTypeTest {
                 return new TestValue[]{
                     new TestValue("foo", "'foo'", "'foo'"),
                     new TestValue("fo'o", "'fo''o'", "'fo''o'"),
-                    new TestValue(null, null, "NULL") };
+                    new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL") };
             case BIGINT:
                 return new TestValue[]{
                     new TestValue(42L, "42", "42"),
                     new TestValue(91294377723L, "91294377723", "91294377723"),
                     new TestValue(-133L, "-133", "-133"),
-                    new TestValue(null, null, "NULL") };
+                    new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL") };
             case TIMESTAMP:
                 // input: single quotes are optional for long literals, mandatory for date patterns
                 return new TestValue[]{
@@ -84,7 +83,7 @@ public class DataTypeTest {
                     new TestValue(new Date(91294377723L), "91294377723", "91294377723"),
                     new TestValue(new Date(-133L), "-133", "-133"),
                     new TestValue(new Date(784041330999L), "'1994-11-05T14:15:30.999+0100'", "784041330999"),
-                    new TestValue(null, null, "NULL") };
+                    new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL") };
             case DATE:
                 // input: single quotes are optional for long literals, mandatory for date patterns
                 return new TestValue[]{
@@ -92,43 +91,43 @@ public class DataTypeTest {
                     new TestValue(LocalDate.fromDaysSinceEpoch(0), "'1970-01-01'", "'1970-01-01'"),
                     new TestValue(LocalDate.fromDaysSinceEpoch((int)(2147483648L - (1L << 31))), "'2147483648'", "'1970-01-01'"),
                     new TestValue(LocalDate.fromDaysSinceEpoch((int)(0 - (1L << 31))), "0", "'-5877641-06-23'"),
-                    new TestValue(null, null, "NULL") };
+                    new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL") };
             case TIME:
                 // input: all literals must by enclosed in single quotes
                 return new TestValue[]{
                     new TestValue(54012123450000L, "'54012123450000'", "'15:00:12.123450000'"),
                     new TestValue(0L, "'0'", "'00:00:00.000000000'"),
                     new TestValue(54012012345000L, "'15:00:12.012345000'", "'15:00:12.012345000'"),
-                    new TestValue(null, null, "NULL") };
+                    new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL") };
             case BLOB:
                 return new TestValue[]{
                     new TestValue(Bytes.fromHexString("0x2450"), "0x2450", "0x2450"),
                     new TestValue(ByteBuffer.allocate(0), "0x", "0x"),
-                    new TestValue(null, null, "NULL") };
+                    new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL") };
             case BOOLEAN:
                 return new TestValue[]{
                     new TestValue(true, "true", "true"),
                     new TestValue(false, "false", "false"),
-                    new TestValue(null, null, "NULL") };
+                    new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL") };
             case DECIMAL:
                 return new TestValue[]{
                     new TestValue(new BigDecimal("1.23E+8"), "1.23E+8", "1.23E+8"),
-                    new TestValue(null, null, "NULL") };
+                    new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL") };
             case DOUBLE:
                 return new TestValue[]{
                     new TestValue(2.39324324, "2.39324324", "2.39324324"),
                     new TestValue(-12., "-12.0", "-12.0"),
-                    new TestValue(null, null, "NULL") };
+                    new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL") };
             case FLOAT:
                 return new TestValue[]{
                     new TestValue(2.39f, "2.39", "2.39"),
                     new TestValue(-12.f, "-12.0", "-12.0"),
-                    new TestValue(null, null, "NULL") };
+                    new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL") };
             case INET:
                 try {
                     return new TestValue[]{
                         new TestValue(InetAddress.getByName("128.2.12.3"), "'128.2.12.3'", "'128.2.12.3'"),
-                        new TestValue(null, null, "NULL") };
+                        new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL") };
                 } catch (java.net.UnknownHostException e) {
                     throw new RuntimeException();
                 }
@@ -136,30 +135,30 @@ public class DataTypeTest {
                 return new TestValue[]{
                     new TestValue((byte)-4, "-4", "-4"),
                     new TestValue((byte)44, "44", "44"),
-                    new TestValue(null, null, "NULL") };
+                    new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL") };
             case SMALLINT:
                 return new TestValue[]{
                     new TestValue((short)-3, "-3", "-3"),
                     new TestValue((short)43, "43", "43"),
-                    new TestValue(null, null, "NULL") };
+                    new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL") };
             case INT:
                 return new TestValue[]{
                     new TestValue(-2, "-2", "-2"),
                     new TestValue(42, "42", "42"),
-                    new TestValue(null, null, "NULL") };
+                    new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL") };
             case TIMEUUID:
                 return new TestValue[]{
                     new TestValue(UUID.fromString("FE2B4360-28C6-11E2-81C1-0800200C9A66"), "fe2b4360-28c6-11e2-81c1-0800200c9a66", "fe2b4360-28c6-11e2-81c1-0800200c9a66"),
-                    new TestValue(null, null, "NULL") };
+                    new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL") };
             case UUID:
                 return new TestValue[]{
                     new TestValue(UUID.fromString("FE2B4360-28C6-11E2-81C1-0800200C9A66"), "fe2b4360-28c6-11e2-81c1-0800200c9a66", "fe2b4360-28c6-11e2-81c1-0800200c9a66"),
                     new TestValue(UUID.fromString("067e6162-3b6f-4ae2-a171-2470b63dff00"), "067e6162-3b6f-4ae2-a171-2470b63dff00", "067e6162-3b6f-4ae2-a171-2470b63dff00"),
-                    new TestValue(null, null, "NULL") };
+                    new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL") };
             case VARINT:
                 return new TestValue[]{
                     new TestValue(new BigInteger("12387290982347987032483422342432"), "12387290982347987032483422342432", "12387290982347987032483422342432"),
-                    new TestValue(null, null, "NULL") };
+                    new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL") };
             default:
                 throw new RuntimeException("Missing handling of " + dt);
         }
@@ -204,8 +203,11 @@ public class DataTypeTest {
     @Test(groups = "unit")
     public void parseFormatSetTest() {
         String toParse = "{'Foo','Bar','Foo''bar'}";
-        Set<String> toFormat = new LinkedHashSet<String>() {{ add("Foo");
-            add("Bar"); add("Foo'bar"); }};
+        Set<String> toFormat = new LinkedHashSet<String>() {{
+            add("Foo");
+            add("Bar");
+            add("Foo'bar");
+        }};
         DataType dt = DataType.set(DataType.text());
         assertEquals(codecRegistry.codecFor(dt).parse(toParse), toFormat);
         assertEquals(codecRegistry.codecFor(dt).format(toFormat), toParse);
@@ -215,7 +217,11 @@ public class DataTypeTest {
     @Test(groups = "unit")
     public void parseFormatMapTest() {
         String toParse = "{'Foo':3,'Bar':42,'Foo''bar':-24}";
-        Map<String, Integer> toFormat = new LinkedHashMap<String, Integer>(){{ put("Foo", 3); put("Bar", 42); put("Foo'bar", -24); }};
+        Map<String, Integer> toFormat = new LinkedHashMap<String, Integer>() {{
+            put("Foo", 3);
+            put("Bar", 42);
+            put("Foo'bar", -24);
+        }};
         DataType dt = DataType.map(DataType.text(), DataType.cint());
         assertEquals(codecRegistry.codecFor(dt).parse(toParse), toFormat);
         assertEquals(codecRegistry.codecFor(dt).format(toFormat), toParse);
@@ -239,7 +245,9 @@ public class DataTypeTest {
         toFormat.setString("t", "fo'o");
         toFormat.setInt("i", 3);
         toFormat.setList("l", Arrays.<String>asList("a", "b"));
-        toFormat.setMap("s", new HashMap<Integer, UDTValue>(){{ put(3, udt1.newValue().setBytes("a", ByteBuffer.wrap(new byte[]{1}))); }});
+        toFormat.setMap("s", new HashMap<Integer, UDTValue>() {{
+            put(3, udt1.newValue().setBytes("a", ByteBuffer.wrap(new byte[]{ 1 })));
+        }});
 
         assertEquals(codecRegistry.codecFor(udt2).parse(toParse), toFormat);
         assertEquals(codecRegistry.codecFor(udt2).format(toFormat), toParse);
@@ -313,7 +321,7 @@ public class DataTypeTest {
         assertThat(dataTypes).doesNotContainAnyElementsOf(newArrayList(DataType.tinyint(), DataType.smallint()));
 
         // Ensure all values are <= V3.
-        for(DataType dataType : dataTypes) {
+        for (DataType dataType : dataTypes) {
             assertThat(dataType.getName().minProtocolVersion).isLessThanOrEqualTo(ProtocolVersion.V3);
         }
     }
