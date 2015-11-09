@@ -31,7 +31,7 @@ abstract class AbstractGraphStatement<T extends Statement> {
 
     AbstractGraphStatement(GraphSession session) {
         this.session = session;
-        this.payload = Maps.newHashMap(session.getCustomDefaultPayload());
+        this.payload = Maps.newHashMap(session.getDefaultGraphOptions());
     }
 
     /* TODO: eventually make more advanced checks on the statement

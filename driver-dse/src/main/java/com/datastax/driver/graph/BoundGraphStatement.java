@@ -47,7 +47,7 @@ public class BoundGraphStatement extends AbstractGraphStatement<BoundStatement> 
     }
 
     void copyConfigFromStatement(GraphStatement gst) {
-        this.wrappedStatement.setOutgoingPayload(gst.getOutgoingPayload() == null ? this.session.getCustomDefaultPayload() : gst.getOutgoingPayload());
+        this.wrappedStatement.setOutgoingPayload(gst.getOutgoingPayload() == null ? this.session.getDefaultGraphOptions() : gst.getOutgoingPayload());
     }
 
     // Bind variables in the PreparedStatement
