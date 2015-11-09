@@ -30,10 +30,20 @@ public class PreparedGraphStatement {
      * API
      */
 
+    /**
+     * Bind the prepared statement.
+     *
+     * @return A {@link com.datastax.driver.graph.BoundGraphStatement} instance on which we can bind values and execute.
+     */
     public BoundGraphStatement bind() {
         return new BoundGraphStatement(ps.bind(), gst);
     }
 
+    /**
+     * Get the query string prepared.
+     *
+     * @return The query string prepared.
+     */
     public String getQueryString() {
         return this.ps.getQueryString();
     }

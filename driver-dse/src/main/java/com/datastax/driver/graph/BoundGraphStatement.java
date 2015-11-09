@@ -29,6 +29,9 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.exceptions.DriverException;
 
+/**
+ * Bound graph statement produced from a prepared statement.
+ */
 public class BoundGraphStatement extends AbstractGraphStatement<BoundStatement> {
 
     //  "name", "value"
@@ -47,7 +50,7 @@ public class BoundGraphStatement extends AbstractGraphStatement<BoundStatement> 
     }
 
     void copyConfigFromStatement(GraphStatement gst) {
-        this.wrappedStatement.setOutgoingPayload(gst.getOutgoingPayload() == null ? this.session.getDefaultGraphOptions() : gst.getOutgoingPayload());
+        this.wrappedStatement.setOutgoingPayload(gst.getGraphOptions() == null ? this.session.getDefaultGraphOptions() : gst.getGraphOptions());
     }
 
     // Bind variables in the PreparedStatement
@@ -99,9 +102,13 @@ public class BoundGraphStatement extends AbstractGraphStatement<BoundStatement> 
      */
 
     /**
-     * Bind Graph parameters values
-     * @param name
-     * @param value
+     * Set a parameter value for the statement.
+     *
+     * Values can be any type supported in JSON.
+     * @param name Name of the value, defined in the query. Parameters in Gremlin are named as variables, no
+     *             need for a CQL syntax like the bind marker "?" or the identifier ":" in front of a parameter.
+     *             Please refer to Gremlin's documentation for more information.
+     * @param value Any object serializable in JSON. The type will be detected automatically at statement's execution.
      */
     public void set(String name, Object value) {
         this.valuesMap.put(name, value);

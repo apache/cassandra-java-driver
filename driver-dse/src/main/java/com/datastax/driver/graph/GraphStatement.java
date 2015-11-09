@@ -32,6 +32,9 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.datastax.driver.core.SimpleStatement;
 import com.datastax.driver.core.exceptions.DriverException;
 
+/**
+ * A simple graph statement implementation.
+ */
 public class GraphStatement extends AbstractGraphStatement<SimpleStatement> {
 
     private final String query;
@@ -55,14 +58,14 @@ public class GraphStatement extends AbstractGraphStatement<SimpleStatement> {
 
     /*
     Parameter values are supposed to be sent as JSON string in a particular format.
-    The format is : {"parameterName":parameterValue}
+    The format is : {name":"parameterName", "value":parameterValue}
      */
     private void processValues() {
         JsonNodeFactory factory = new JsonNodeFactory(false);
         JsonFactory jsonFactory = new JsonFactory();
         ObjectMapper objectMapper = new ObjectMapper();
         if (this.paramsHash == this.valuesMap.hashCode()) {
-//            Avoids regenerating the Json params if the params haven't changed.
+            // Avoids regenerating the Json params if the params haven't changed.
             return;
         }
         this.JsonParams.clear();
@@ -117,6 +120,15 @@ public class GraphStatement extends AbstractGraphStatement<SimpleStatement> {
      * API
      */
 
+    /**
+     * Set a parameter value for the statement.
+     *
+     * Values can be any type supported in JSON.
+     * @param name Name of the value, defined in the query. Parameters in Gremlin are named as variables, no
+     *             need for a CQL syntax like the bind marker "?" or the identifier ":" in front of a parameter.
+     *             Please refer to Gremlin's documentation for more information.
+     * @param value Any object serializable in JSON. The type will be detected automatically at statement's execution.
+     */
     public void set(String name, Object value) {
         this.valuesMap.put(name, value);
     }
