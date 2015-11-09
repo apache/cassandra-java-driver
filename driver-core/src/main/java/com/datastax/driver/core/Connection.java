@@ -438,15 +438,15 @@ class Connection {
         } catch (ConnectionException e) {
             throw defunct(e);
         } catch (BusyConnectionException e) {
-            logger.warn("Tried to set the keyspace on busy connection to {}. "
-                + "This should not happen but is not critical (it will be retried)", address);
+            logger.warn("Tried to set the keyspace on busy {}. "
+                + "This should not happen but is not critical (it will be retried)", this);
             throw new ConnectionException(address, "Tried to set the keyspace on busy connection");
         } catch (ExecutionException e) {
             Throwable cause = e.getCause();
             if (cause instanceof OperationTimedOutException) {
                 // Rethrow so that the caller doesn't try to use the connection, but do not defunct as we don't want to mark down
-                logger.warn("Timeout while setting keyspace on connection to {}. "
-                    + "This should not happen but is not critical (it will be retried)", address);
+                logger.warn("Timeout while setting keyspace on {}. "
+                    + "This should not happen but is not critical (it will be retried)", this);
                 throw new ConnectionException(address, "Timeout while setting keyspace on connection");
             } else {
                 throw defunct(new ConnectionException(address, "Error while setting keyspace", cause));

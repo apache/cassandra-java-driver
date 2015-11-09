@@ -451,7 +451,6 @@ class HostConnectionPool implements Connection.Owner {
                 }
                 logger.debug("Creating new connection on busy pool to {}", host);
                 newConnection = manager.connectionFactory().open(this);
-                newConnection.setKeyspace(manager.poolsState.keyspace);
             }
             connections.add(newConnection);
 
