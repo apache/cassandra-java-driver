@@ -95,5 +95,10 @@ abstract class AbstractGraphStatement<T extends Statement> {
         this.payload.put(GraphSession.GRAPH_REBINDING_KEY, ByteBuffer.wrap(graphRebinding.getBytes()));
         return this;
     }
+
+    public AbstractGraphStatement setOutgoingPayload(Map<String, ByteBuffer> payload) {
+        this.wrappedStatement.setOutgoingPayload(payload);
+        return this;
+    }
 }
 

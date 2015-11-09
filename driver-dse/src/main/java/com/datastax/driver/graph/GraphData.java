@@ -78,6 +78,10 @@ public class GraphData {
         return this.jsonNode.asLong();
     }
 
+    public Double asDouble() {
+        return this.jsonNode.asDouble();
+    }
+
     public <T extends Vertex> T asVertex(Class<T> clas) {
         try {
             if (this.jsonNode != null) {

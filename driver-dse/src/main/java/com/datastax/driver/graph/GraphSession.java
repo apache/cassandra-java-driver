@@ -92,8 +92,8 @@ public class GraphSession {
         return this.session;
     }
 
-    public GraphStatement newGraphStatement(String query, Object... objects) {
-        return new GraphStatement(query, this, objects);
+    public GraphStatement newGraphStatement(String query) {
+        return new GraphStatement(query, this);
     }
 
     public Map<String, ByteBuffer> getCustomDefaultPayload() {

@@ -40,15 +40,13 @@ public class GraphStatement extends AbstractGraphStatement<SimpleStatement> {
     private int paramsHash;
     private volatile ByteBuffer routingKey;
 
-    protected GraphStatement(String query, GraphSession session, Object... values) {
+    protected GraphStatement(String query, GraphSession session) {
         super(session);
 
         this.query = query;
         this.valuesMap = new HashMap<String, Object>();
         this.JsonParams = new ArrayList<String>();
         this.routingKey = null;
-
-        addValuesMap(values);
     }
 
     public boolean hasValues() {
@@ -102,17 +100,6 @@ public class GraphStatement extends AbstractGraphStatement<SimpleStatement> {
             this.paramsHash = this.valuesMap.hashCode();
         } catch (IOException e) {
             throw new DriverException("Some values are not in a compatible type to be serialized in a Gremlin Query.");
-        }
-    }
-
-    private void addValuesMap(Object... values) {
-        if (values == null || values.length == 0) {
-            return;
-        } else if ((values.length % 2) != 0) {
-            throw new DriverException("Values in Graph statements must all be named");
-        }
-        for (int i = 0; i < values.length; i+=2) {
-            this.valuesMap.put((String)values[i], values[i+1]);
         }
     }
 
