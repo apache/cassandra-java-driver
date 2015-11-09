@@ -4,6 +4,7 @@
 
 - [bug] Fix implementation of UserType.hashCode() (JAVA-942)
 - [bug] JAVA-854: avoid early return in Cluster.init when a node doesn't support the protocol version.
+- [bug] JAVA-978: Fix quoting issue that caused Mapper.getTableMetadata() to return null.
 
 Merged from 2.0 branch:
 
