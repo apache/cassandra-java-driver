@@ -79,14 +79,14 @@ public class GraphSession {
         return execute(statement);
     }
 
-    public PreparedGraphStatement prepare(GraphStatement gst) {
-        return new PreparedGraphStatement(session.prepare(gst.configureAndGetWrappedStatement()), gst);
-    }
+//    public PreparedGraphStatement prepare(GraphStatement gst) {
+//        return new PreparedGraphStatement(session.prepare(gst.configureAndGetWrappedStatement()), gst);
+//    }
 
-    public PreparedGraphStatement prepare(String query) {
-        GraphStatement statement = newGraphStatement(query);
-        return prepare(statement);
-    }
+//    public PreparedGraphStatement prepare(String query) {
+//        GraphStatement statement = newGraphStatement(query);
+//        return prepare(statement);
+//    }
 
     public Session getSession() {
         return this.session;
