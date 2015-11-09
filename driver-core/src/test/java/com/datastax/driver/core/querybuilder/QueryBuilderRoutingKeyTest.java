@@ -107,8 +107,8 @@ public class QueryBuilderRoutingKeyTest extends CCMBridge.PerClassSingleNodeClus
         query = builder.select().from(table).where(eq("k", 42));
 
         batch_query = "BEGIN BATCH ";
-        batch_query += String.format("INSERT INTO %s.test_int (k,a) VALUES (42,1);", keyspace);
-        batch_query += String.format("UPDATE %s.test_int USING TTL 400;", keyspace);
+        batch_query += String.format("INSERT INTO %s.test_int (k,a) VALUES (42,1); ", keyspace);
+        batch_query += String.format("UPDATE %s.test_int USING TTL 400; ", keyspace);
         batch_query += "APPLY BATCH;";
         batch = builder.batch()
                 .add(builder.insertInto(table).values(new String[]{"k", "a"}, new Object[]{42, 1}))
@@ -118,7 +118,7 @@ public class QueryBuilderRoutingKeyTest extends CCMBridge.PerClassSingleNodeClus
         // TODO: rs = session.execute(batch); // Not guaranteed to be valid CQL
 
         batch_query = "BEGIN BATCH ";
-        batch_query += String.format("SELECT * FROM %s.test_int WHERE k=42;", keyspace);
+        batch_query += String.format("SELECT * FROM %s.test_int WHERE k=42; ", keyspace);
         batch_query += "APPLY BATCH;";
         batch = builder.batch(query);
         assertEquals(batch.getRoutingKey(), bb);
@@ -126,7 +126,7 @@ public class QueryBuilderRoutingKeyTest extends CCMBridge.PerClassSingleNodeClus
         // TODO: rs = session.execute(batch); // Not guaranteed to be valid CQL
 
         batch_query = "BEGIN BATCH ";
-        batch_query += "SELECT * FROM foo WHERE k=42;";
+        batch_query += "SELECT * FROM foo WHERE k=42; ";
         batch_query += "APPLY BATCH;";
         batch = builder.batch().add(builder.select().from("foo").where(eq("k", 42)));
         assertEquals(batch.getRoutingKey(), null);
@@ -134,7 +134,7 @@ public class QueryBuilderRoutingKeyTest extends CCMBridge.PerClassSingleNodeClus
         // TODO: rs = session.execute(batch); // Not guaranteed to be valid CQL
 
         batch_query = "BEGIN BATCH USING TIMESTAMP 42 ";
-        batch_query += "INSERT INTO foo.bar (a) VALUES (123);";
+        batch_query += "INSERT INTO foo.bar (a) VALUES (123); ";
         batch_query += "APPLY BATCH;";
         batch = builder.batch().using(timestamp(42)).add(builder.insertInto("foo", "bar").value("a", 123));
         assertEquals(batch.getRoutingKey(), null);

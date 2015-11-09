@@ -19,7 +19,6 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.datastax.driver.core.utils.CassandraVersion;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Predicate;
@@ -31,7 +30,6 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import static com.datastax.driver.core.BatchStatement.Type.COUNTER;
 import static org.apache.log4j.Level.DEBUG;
 import static org.apache.log4j.Level.INFO;
 import static org.apache.log4j.Level.TRACE;
@@ -39,7 +37,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
 import com.datastax.driver.core.exceptions.DriverException;
+import com.datastax.driver.core.utils.CassandraVersion;
 
+import static com.datastax.driver.core.BatchStatement.Type.COUNTER;
 import static com.datastax.driver.core.BatchStatement.Type.UNLOGGED;
 import static com.datastax.driver.core.CCMBridge.ipOfNode;
 import static com.datastax.driver.core.QueryLogger.*;
@@ -378,7 +378,7 @@ public class QueryLoggerTest extends CCMBridge.PerClassSingleNodeCluster {
 
     @Test(groups = "short")
     @CassandraVersion(major=2.0)
-    public void should_log_non_null_named_parameter() throws Exception {
+    public void should_log_non_null_named_parameter_in_bound_statement() throws Exception {
         // given
         normal.setLevel(TRACE);
         queryLogger = QueryLogger.builder()
@@ -404,7 +404,7 @@ public class QueryLoggerTest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     @Test(groups = "short")
-    public void should_log_non_null_positional_parameter() throws Exception {
+    public void should_log_non_null_positional_parameter_in_bound_statement() throws Exception {
         // given
         normal.setLevel(TRACE);
         queryLogger = QueryLogger.builder().build();
@@ -427,7 +427,7 @@ public class QueryLoggerTest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     @Test(groups = "short")
-    public void should_log_null_parameter() throws Exception {
+    public void should_log_null_parameter_in_bound_statement() throws Exception {
         // given
         normal.setLevel(TRACE);
         queryLogger = QueryLogger.builder().build();
@@ -475,6 +475,113 @@ public class QueryLoggerTest extends CCMBridge.PerClassSingleNodeCluster {
             .contains("c_text:'foo'")
             .contains("c_int:12345");
     }
+
+    @Test(groups = "short")
+    @CassandraVersion(major = 2.1)
+    public void should_log_positional_parameters_in_simple_statement() throws Exception {
+        // given
+        normal.setLevel(TRACE);
+        queryLogger = QueryLogger.builder()
+            .withConstantThreshold(Long.MAX_VALUE)
+            .withMaxQueryStringLength(Integer.MAX_VALUE)
+            .build();
+        cluster.register(queryLogger);
+        // when
+        SimpleStatement s = session.newSimpleStatement("UPDATE test SET c_text = ?, c_int = ? WHERE pk = ?");
+        s.setString(0, "foo");
+        s.setToNull(1);
+        s.setInt(2, 42);
+        session.execute(s);
+        // then
+        String line = normalAppender.waitAndGet(10000);
+        assertThat(line)
+            .contains("Query completed normally")
+            .contains(ipOfNode(1))
+            .contains(s.getQueryString())
+            .contains("0:'foo'")
+            .contains("1:NULL")
+            .contains("2:42");
+    }
+
+    @Test(groups = "short")
+    @CassandraVersion(major = 2.1)
+    public void should_log_named_parameters_in_simple_statement() throws Exception {
+        // given
+        normal.setLevel(TRACE);
+        queryLogger = QueryLogger.builder()
+            .withConstantThreshold(Long.MAX_VALUE)
+            .withMaxQueryStringLength(Integer.MAX_VALUE)
+            .build();
+        cluster.register(queryLogger);
+        // when
+        SimpleStatement s = session.newSimpleStatement("UPDATE test SET c_text = :text, c_int = :int WHERE pk = :pk");
+        s.setInt("pk", 42);
+        s.setString("text", "foo");
+        s.setToNull("int");
+        session.execute(s);
+        // then
+        String line = normalAppender.waitAndGet(10000);
+        assertThat(line)
+            .contains("Query completed normally")
+            .contains(ipOfNode(1))
+            .contains(s.getQueryString())
+            .contains("pk:42")
+            .contains("text:'foo'")
+            .contains("int:NULL");
+    }
+
+    @Test(groups = "short")
+    @CassandraVersion(major = 2.1)
+    public void should_log_values_set_with_setBytesUnsafe_as_blobs_in_simple_statement() throws Exception {
+        // given
+        normal.setLevel(TRACE);
+        queryLogger = QueryLogger.builder()
+            .withConstantThreshold(Long.MAX_VALUE)
+            .withMaxQueryStringLength(Integer.MAX_VALUE)
+            .build();
+        cluster.register(queryLogger);
+        // when
+        SimpleStatement s = session.newSimpleStatement("UPDATE test SET c_int = :int WHERE pk = :pk");
+        s.setInt("pk", 42);
+        s.setBytesUnsafe("int", com.datastax.driver.core.utils.Bytes.fromHexString("0x00000001"));
+        session.execute(s);
+        // then
+        String line = normalAppender.waitAndGet(10000);
+        assertThat(line)
+            .contains("Query completed normally")
+            .contains(ipOfNode(1))
+            .contains(s.getQueryString())
+            .contains("pk:42")
+            .contains("int:0x00000001");
+    }
+
+    @Test(groups = "short")
+    @CassandraVersion(major=2.1)
+    public void should_log_simple_statement_parameters_inside_batch_statement() throws Exception {
+        // given
+        normal.setLevel(TRACE);
+        queryLogger = QueryLogger.builder().build();
+        cluster.register(queryLogger);
+        // when
+        String query1 = "UPDATE test SET c_text = ? WHERE pk = ?";
+        String query2 = "UPDATE test SET c_int = ? WHERE pk = ?";
+        BatchStatement batch = new BatchStatement();
+        batch.add(session.newSimpleStatement(query1).bind("foo", 42));
+        batch.add(session.prepare(query2).bind(12345, 43));
+        session.execute(batch);
+        // then
+        String line = normalAppender.waitAndGet(10000);
+        assertThat(line)
+            .contains("Query completed normally")
+            .contains(ipOfNode(1))
+            .contains(query1)
+            .contains(query2)
+            .contains("0:'foo'")
+            .contains("1:42")
+            .contains("pk:43")
+            .contains("c_int:12345");
+    }
+
     // Test different CQL types
 
     @Test(groups = "short")

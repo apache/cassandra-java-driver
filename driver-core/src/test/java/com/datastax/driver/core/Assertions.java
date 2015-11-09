@@ -15,6 +15,8 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.RegularStatement.ValueDefinition;
+
 /**
  * Augment AssertJ with custom assertions for the Java driver.
  */
@@ -80,4 +82,7 @@ public class Assertions extends org.assertj.core.api.Assertions {
         return new MaterializedViewMetadataAssert(view);
     }
 
+    public static ValueDefinitionAssert assertThat(ValueDefinition definition) {
+        return new ValueDefinitionAssert(definition);
+    }
 }

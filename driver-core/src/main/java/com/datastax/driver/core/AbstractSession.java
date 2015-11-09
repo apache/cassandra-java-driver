@@ -76,7 +76,10 @@ public abstract class AbstractSession implements Session {
      */
     @Override
     public SimpleStatement newSimpleStatement(String query) {
-        return new SimpleStatement(query, this.getCluster());
+        this.getCluster().init();
+        return new SimpleStatement(query,
+            this.getCluster().getConfiguration().getProtocolOptions().getProtocolVersion(),
+            this.getCluster().getConfiguration().getCodecRegistry());
     }
 
     /**
@@ -84,7 +87,11 @@ public abstract class AbstractSession implements Session {
      */
     @Override
     public SimpleStatement newSimpleStatement(String query, Object... values) {
-        return new SimpleStatement(query, this.getCluster(), values);
+        this.getCluster().init();
+        return new SimpleStatement(query,
+            this.getCluster().getConfiguration().getProtocolOptions().getProtocolVersion(),
+            this.getCluster().getConfiguration().getCodecRegistry(),
+            values);
     }
 
     /**

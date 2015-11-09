@@ -1,5 +1,10 @@
 ## Changelog
 
+### 3.0.0-beta1 (in progress)
+
+- [improvement] JAVA-855: Expose getters and setters for RegularStatement values.
+
+
 ### 3.0.0-alpha5
 
 - [improvement] JAVA-958: Make TableOrView.Order visible.

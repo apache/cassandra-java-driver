@@ -17,7 +17,6 @@ package com.datastax.driver.core.querybuilder;
 
 import java.util.List;
 
-import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.CodecRegistry;
 import com.datastax.driver.core.ProtocolVersion;
 import com.datastax.driver.core.TableMetadata;

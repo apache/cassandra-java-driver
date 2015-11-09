@@ -20,6 +20,7 @@ import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
+import java.util.List;
 
 import com.datastax.driver.core.exceptions.PagingStateException;
 import com.datastax.driver.core.utils.Bytes;
@@ -72,7 +73,7 @@ public class PagingState {
 
     private byte[] hash(Statement statement) {
         byte[] digest;
-        ByteBuffer[] values;
+        List<ByteBuffer> values;
         MessageDigest md;
         assert !(statement instanceof BatchStatement);
         try {
@@ -80,7 +81,7 @@ public class PagingState {
             if (statement instanceof BoundStatement) {
                 BoundStatement bs = ((BoundStatement)statement);
                 md.update(bs.preparedStatement().getQueryString().getBytes());
-                values = bs.wrapper.values;
+                values = Arrays.asList(bs.wrapper.values);
             } else {
                 //it is a RegularStatement since Batch statements are not allowed
                 RegularStatement rs = (RegularStatement)statement;

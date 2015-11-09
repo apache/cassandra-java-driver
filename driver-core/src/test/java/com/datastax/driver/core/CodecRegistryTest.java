@@ -22,14 +22,40 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.testng.annotations.Test;
 
+import static com.google.common.collect.Lists.newArrayList;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 
 public class CodecRegistryTest {
-    TypeToken<List<Integer>> LIST_OF_INT_TOKEN = new TypeToken<List<Integer>>() {
-    };
+
+    static final TypeToken<List<Integer>> LIST_OF_INT_TOKEN = new TypeToken<List<Integer>>(){};
+    static final DataType.CollectionType LIST_OF_INT_DATATYPE = DataType.list(DataType.cint());
+
+    @Test(groups = "unit")
+    public void should_find_codec_by_cql_type() {
+        CodecRegistry registry = new CodecRegistry();
+        assertThat(registry.codecFor(DataType.cint())).isSameAs(TypeCodec.cint());
+        assertThat(registry.codecFor(LIST_OF_INT_DATATYPE)).accepts(LIST_OF_INT_TOKEN);
+        assertThat(registry.codecFor(LIST_OF_INT_DATATYPE)).accepts(newArrayList(1, 2 ,3));
+    }
+
+    @Test(groups = "unit")
+    public void should_find_codec_by_java_type() {
+        CodecRegistry registry = new CodecRegistry();
+        assertThat(registry.codecFor(Integer.class)).isSameAs(TypeCodec.cint());
+        assertThat(registry.codecFor(LIST_OF_INT_TOKEN)).accepts(LIST_OF_INT_DATATYPE);
+        assertThat(registry.codecFor(LIST_OF_INT_TOKEN)).accepts(newArrayList(1, 2 ,3));
+    }
+
+    @Test(groups = "unit")
+    public void should_find_codec_by_value() {
+        CodecRegistry registry = new CodecRegistry();
+        assertThat(registry.codecFor(Integer.class)).isSameAs(TypeCodec.cint());
+        assertThat(registry.codecFor(newArrayList(1, 2 ,3))).accepts(LIST_OF_INT_DATATYPE);
+        assertThat(registry.codecFor(newArrayList(1, 2 ,3))).accepts(LIST_OF_INT_TOKEN);
+    }
 
     @Test(groups = "unit")
     public void should_ignore_codec_colliding_with_already_registered_codec() {
@@ -59,10 +85,10 @@ public class CodecRegistryTest {
         CodecRegistry registry = new CodecRegistry();
 
         // Force generation of a list token from the default token
-        registry.codecFor(DataType.list(DataType.cint()), LIST_OF_INT_TOKEN);
+        registry.codecFor(LIST_OF_INT_DATATYPE, LIST_OF_INT_TOKEN);
 
         TypeCodec newCodec = mock(TypeCodec.class);
-        when(newCodec.getCqlType()).thenReturn(DataType.list(DataType.cint()));
+        when(newCodec.getCqlType()).thenReturn(LIST_OF_INT_DATATYPE);
         when(newCodec.getJavaType()).thenReturn(LIST_OF_INT_TOKEN);
         when(newCodec.toString()).thenReturn("newCodec");
 
@@ -70,7 +96,7 @@ public class CodecRegistryTest {
 
         assertThat(logs.getNext()).contains("Ignoring codec newCodec");
         assertThat(
-            registry.codecFor(DataType.list(DataType.cint()), LIST_OF_INT_TOKEN)
+            registry.codecFor(LIST_OF_INT_DATATYPE, LIST_OF_INT_TOKEN)
         ).isNotSameAs(newCodec);
 
         stopCapturingLogs(logs);

@@ -415,9 +415,9 @@ public class QueryBuilderTest {
         Statement batch;
 
         query = "BEGIN BATCH USING TIMESTAMP 42 ";
-        query += "INSERT INTO foo (a,b) VALUES ({2,3,4},3.4);";
-        query += "UPDATE foo SET a[2]='foo',b=[3,2,1]+b,c=c-{'a'} WHERE k=2;";
-        query += "DELETE a[3],b['foo'],c FROM foo WHERE k=1;";
+        query += "INSERT INTO foo (a,b) VALUES ({2,3,4},3.4); ";
+        query += "UPDATE foo SET a[2]='foo',b=[3,2,1]+b,c=c-{'a'} WHERE k=2; ";
+        query += "DELETE a[3],b['foo'],c FROM foo WHERE k=1; ";
         query += "APPLY BATCH;";
         batch = builder.batch()
             .add(builder.insertInto("foo").values(new String[]{ "a", "b" }, new Object[]{ new TreeSet<Integer>() {{
@@ -432,7 +432,7 @@ public class QueryBuilderTest {
 
         // Test passing batch(statement)
         query = "BEGIN BATCH ";
-        query += "DELETE a[3] FROM foo WHERE k=1;";
+        query += "DELETE a[3] FROM foo WHERE k=1; ";
         query += "APPLY BATCH;";
         batch = builder.batch(builder.delete().listElt("a", 3).from("foo").where(eq("k", 1)));
         assertEquals(batch.toString(), query);
@@ -447,9 +447,9 @@ public class QueryBuilderTest {
 
         // Test value increments
         query = "BEGIN COUNTER BATCH USING TIMESTAMP 42 ";
-        query += "UPDATE foo SET a=a+1;";
-        query += "UPDATE foo SET b=b+2;";
-        query += "UPDATE foo SET c=c+3;";
+        query += "UPDATE foo SET a=a+1; ";
+        query += "UPDATE foo SET b=b+2; ";
+        query += "UPDATE foo SET c=c+3; ";
         query += "APPLY BATCH;";
         batch = builder.batch()
             .add(builder.update("foo").with(incr("a", 1)))
@@ -460,9 +460,9 @@ public class QueryBuilderTest {
 
         // Test single increments
         query = "BEGIN COUNTER BATCH USING TIMESTAMP 42 ";
-        query += "UPDATE foo SET a=a+1;";
-        query += "UPDATE foo SET b=b+1;";
-        query += "UPDATE foo SET c=c+1;";
+        query += "UPDATE foo SET a=a+1; ";
+        query += "UPDATE foo SET b=b+1; ";
+        query += "UPDATE foo SET c=c+1; ";
         query += "APPLY BATCH;";
         batch = builder.batch()
             .add(builder.update("foo").with(incr("a")))
@@ -473,9 +473,9 @@ public class QueryBuilderTest {
 
         // Test value decrements
         query = "BEGIN COUNTER BATCH USING TIMESTAMP 42 ";
-        query += "UPDATE foo SET a=a-1;";
-        query += "UPDATE foo SET b=b-2;";
-        query += "UPDATE foo SET c=c-3;";
+        query += "UPDATE foo SET a=a-1; ";
+        query += "UPDATE foo SET b=b-2; ";
+        query += "UPDATE foo SET c=c-3; ";
         query += "APPLY BATCH;";
         batch = builder.batch()
             .add(builder.update("foo").with(decr("a", 1)))
@@ -486,9 +486,9 @@ public class QueryBuilderTest {
 
         // Test single decrements
         query = "BEGIN COUNTER BATCH USING TIMESTAMP 42 ";
-        query += "UPDATE foo SET a=a-1;";
-        query += "UPDATE foo SET b=b-1;";
-        query += "UPDATE foo SET c=c-1;";
+        query += "UPDATE foo SET a=a-1; ";
+        query += "UPDATE foo SET b=b-1; ";
+        query += "UPDATE foo SET c=c-1; ";
         query += "APPLY BATCH;";
         batch = builder.batch()
             .add(builder.update("foo").with(decr("a")))
@@ -499,9 +499,9 @@ public class QueryBuilderTest {
 
         // Test negative decrements and negative increments
         query = "BEGIN COUNTER BATCH USING TIMESTAMP 42 ";
-        query += "UPDATE foo SET a=a+1;";
-        query += "UPDATE foo SET b=b+-2;";
-        query += "UPDATE foo SET c=c-3;";
+        query += "UPDATE foo SET a=a+1; ";
+        query += "UPDATE foo SET b=b+-2; ";
+        query += "UPDATE foo SET c=c-3; ";
         query += "APPLY BATCH;";
         batch = builder.batch()
             .add(builder.update("foo").with(decr("a", -1)))
@@ -776,7 +776,7 @@ public class QueryBuilderTest {
 
     @Test(groups = "unit", expectedExceptions = IllegalArgumentException.class)
     public void should_fail_if_built_statement_has_too_many_values() {
-        List<Object> values = Collections.<Object>nCopies(65535, "a");
+            List<Object> values = Collections.<Object>nCopies(65535, "a");
 
         // If the excessive count results from successive DSL calls, we don't check it on the fly so this statement works:
         BuiltStatement statement = builder.select().all().from("foo")
@@ -784,8 +784,8 @@ public class QueryBuilderTest {
             .and(in("baz", values.toArray()));
 
         // But we still want to check it client-side, to fail fast instead of sending a bad query to Cassandra.
-        // getValues() is called on any RegularStatement before we send it (see SessionManager.makeRequestMessage).
-        statement.getValues();
+        // getValueDefinitions() forces the statement to update its cache, which will check the number of values.
+        statement.getValueDefinitions();
     }
 
     @Test(groups = "unit")
@@ -864,24 +864,24 @@ public class QueryBuilderTest {
     public void should_not_serialize_raw_query_values() {
         RegularStatement select = builder.select().from("test").where(gt("i", raw("1")));
         assertThat(select.getQueryString()).doesNotContain("?");
-        assertThat(select.getValues()).isNull();
+        assertThat(select.getValueDefinitions()).isEmpty();
     }
 
-    @Test(groups = "unit", expectedExceptions = { IllegalStateException.class })
-    public void should_throw_ISE_if_getObject_called_on_statement_without_values() {
+    @Test(groups = "unit", expectedExceptions = { IllegalArgumentException.class })
+    public void should_throw_IAE_if_getObject_called_on_statement_without_values() {
         builder.select().from("test").where(eq("foo", 42)).getObject(0); // integers are appended to the CQL string
     }
 
-    @Test(groups = "unit", expectedExceptions = { IndexOutOfBoundsException.class })
-    public void should_throw_IOOBE_if_getObject_called_with_wrong_index() {
-        builder.select().from("test").where(eq("foo", new Object())).getObject(1);
+    @Test(groups = "unit", expectedExceptions = { IllegalArgumentException.class })
+    public void should_throw_IAE_if_getObject_called_with_wrong_index() {
+        builder.select().from("test").where(eq("foo", new Date())).getObject(1);
     }
 
     @Test(groups = "unit")
     public void should_return_object_at_ith_index() {
-        Object expected = new Object();
+        Object expected = new Date();
         Object actual = builder.select().from("test").where(eq("foo", expected)).getObject(0);
-        assertThat(actual).isSameAs(expected);
+        assertThat(actual).isEqualTo(expected);
     }
 
     @Test(groups = "unit")
@@ -906,7 +906,7 @@ public class QueryBuilderTest {
     public void should_not_attempt_to_serialize_function_calls_in_collections() {
         BuiltStatement query = builder.insertInto("foo").value("v", Sets.newHashSet(fcall("func", 1)));
         assertThat(query.getQueryString()).isEqualTo("INSERT INTO foo (v) VALUES ({func(1)});");
-        assertThat(query.getValues()).isNullOrEmpty();
+        assertThat(query.getValueDefinitions()).isNullOrEmpty();
     }
 
     @Test(groups = "unit")
@@ -914,7 +914,7 @@ public class QueryBuilderTest {
     public void should_not_attempt_to_serialize_raw_values_in_collections() {
         BuiltStatement query = builder.insertInto("foo").value("v", ImmutableMap.of(1, raw("x")));
         assertThat(query.getQueryString()).isEqualTo("INSERT INTO foo (v) VALUES ({1:x});");
-        assertThat(query.getValues()).isNullOrEmpty();
+        assertThat(query.getValueDefinitions()).isNullOrEmpty();
     }
 
     @Test(groups = "unit")

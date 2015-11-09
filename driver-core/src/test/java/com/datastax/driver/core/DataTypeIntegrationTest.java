@@ -34,7 +34,8 @@ import com.datastax.driver.core.utils.CassandraVersion;
  * The goal of this test is to cover the serialization and deserialization of datatypes.
  *
  * It creates a table with a column of a given type, inserts a value and then tries to retrieve it.
- * There are 3 variants for the insert query: a raw string, a simple statement with a parameter
+ * There are 4 variants for the insert query: a raw string, a simple statement with a positional parameter
+ * (protocol > v2 only), a simple statement with a named parameter
  * (protocol > v2 only) and a prepared statement.
  * This is repeated with a large number of datatypes.
  */
@@ -44,7 +45,7 @@ public class DataTypeIntegrationTest extends CCMBridge.PerClassSingleNodeCluster
     List<TestTable> tables = allTables();
     VersionNumber cassandraVersion;
 
-    enum StatementType {RAW_STRING, SIMPLE_WITH_PARAM, PREPARED}
+    enum StatementType {RAW_STRING, SIMPLE_WITH_POSITIONAL_PARAM, SIMPLE_WITH_NAMED_PARAM, PREPARED}
 
     @Override
     protected Collection<String> getTableDefinitions() {
@@ -85,8 +86,14 @@ public class DataTypeIntegrationTest extends CCMBridge.PerClassSingleNodeCluster
 
     @Test(groups = "long")
     @CassandraVersion(major = 2.0, description = "Uses parameterized simple statements, which are only available with protocol v2")
-    public void should_insert_and_retrieve_data_with_parameterized_simple_statements() {
-        should_insert_and_retrieve_data(StatementType.SIMPLE_WITH_PARAM);
+    public void should_insert_and_retrieve_data_with_simple_statements_using_positional_parameters() {
+        should_insert_and_retrieve_data(StatementType.SIMPLE_WITH_POSITIONAL_PARAM);
+    }
+
+    @Test(groups = "long")
+    @CassandraVersion(major = 2.0, description = "Uses parameterized simple statements, which are only available with protocol v2")
+    public void should_insert_and_retrieve_data_with_simple_statements_using_named_parameters() {
+        should_insert_and_retrieve_data(StatementType.SIMPLE_WITH_NAMED_PARAM);
     }
 
     protected void should_insert_and_retrieve_data(StatementType statementType) {
@@ -105,10 +112,18 @@ public class DataTypeIntegrationTest extends CCMBridge.PerClassSingleNodeCluster
                     String query = table.insertStatement.replace("?", formatValue);
                     session.execute(query);
                     break;
-                case SIMPLE_WITH_PARAM:
-                    SimpleStatement statement = session.newSimpleStatement(table.insertStatement, table.sampleValue);
-                    checkGetValuesReturnsSerializedValue(protocolVersion, statement, table);
-                    session.execute(statement);
+                case SIMPLE_WITH_POSITIONAL_PARAM: {
+                        SimpleStatement statement = session.newSimpleStatement(table.insertStatement, table.sampleValue);
+                        checkGetValuesReturnsSerializedValue(protocolVersion, statement, table);
+                        session.execute(statement);
+                    }
+                    break;
+                case SIMPLE_WITH_NAMED_PARAM: {
+                        SimpleStatement statement = session.newSimpleStatement(table.insertStatement.replace("?", ":val"));
+                        statement.set("val", table.sampleValue, codec.getJavaType());
+                        checkGetValuesReturnsSerializedValue(protocolVersion, statement, table);
+                        session.execute(statement);
+                    }
                     break;
                 case PREPARED:
                     PreparedStatement ps = session.prepare(table.insertStatement);
@@ -157,9 +172,9 @@ public class DataTypeIntegrationTest extends CCMBridge.PerClassSingleNodeCluster
 
     public void checkGetValuesReturnsSerializedValue(ProtocolVersion protocolVersion, SimpleStatement statement, TestTable table) {
         CodecRegistry codecRegistry = cluster.getConfiguration().getCodecRegistry();
-        ByteBuffer[] values = statement.getValues();
-        assertThat(values.length).isEqualTo(1);
-        assertThat(values[0])
+        List<ByteBuffer> values = statement.getValues();
+        assertThat(values.size()).isEqualTo(1);
+        assertThat(values.get(0))
             .as("Value not serialized as expected for " + table.sampleValue)
             .isEqualTo(codecRegistry.codecFor(table.testColumnType).serialize(table.sampleValue, protocolVersion));
     }
@@ -228,7 +243,6 @@ public class DataTypeIntegrationTest extends CCMBridge.PerClassSingleNodeCluster
         // type maps to a java primitive type it's value will by the default value instead of null.
         for (DataType dataType : DataType.allPrimitiveTypes(TestUtils.getDesiredProtocolVersion())) {
             Object expectedPrimitiveValue = null;
-            Object expectedValue = null;
             switch(dataType.getName()) {
                 case BIGINT:
                 case TIME:
@@ -255,7 +269,7 @@ public class DataTypeIntegrationTest extends CCMBridge.PerClassSingleNodeCluster
             }
 
             if(!dataType.getName().equals(DataType.Name.COUNTER)) {
-                tables.add(new TestTable(dataType, null, expectedValue, expectedPrimitiveValue, "1.2.0"));
+                tables.add(new TestTable(dataType, null, null, expectedPrimitiveValue, "1.2.0"));
             }
         }
         return tables;

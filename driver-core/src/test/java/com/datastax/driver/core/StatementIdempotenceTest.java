@@ -53,7 +53,9 @@ public class StatementIdempotenceTest {
     @Test(groups = "unit")
     public void should_default_to_false_when_not_set_on_statement_nor_query_options() {
         QueryOptions queryOptions = new QueryOptions();
-        SimpleStatement statement = new SimpleStatement("", cluster);
+        SimpleStatement statement = new SimpleStatement("",
+            cluster.getConfiguration().getProtocolOptions().getProtocolVersion(),
+            cluster.getConfiguration().getCodecRegistry());
 
         assertThat(statement.isIdempotentWithDefault(queryOptions)).isFalse();
     }
@@ -61,7 +63,9 @@ public class StatementIdempotenceTest {
     @Test(groups = "unit")
     public void should_use_query_options_when_not_set_on_statement() {
         QueryOptions queryOptions = new QueryOptions();
-        SimpleStatement statement = new SimpleStatement("", cluster);
+        SimpleStatement statement = new SimpleStatement("",
+            cluster.getConfiguration().getProtocolOptions().getProtocolVersion(),
+            cluster.getConfiguration().getCodecRegistry());
 
         for (boolean valueInOptions : new boolean[]{ true, false }) {
             queryOptions.setDefaultIdempotence(valueInOptions);
@@ -72,7 +76,9 @@ public class StatementIdempotenceTest {
     @Test(groups = "unit")
     public void should_use_statement_when_set_on_statement() {
         QueryOptions queryOptions = new QueryOptions();
-        SimpleStatement statement = new SimpleStatement("", cluster);
+        SimpleStatement statement = new SimpleStatement("",
+            cluster.getConfiguration().getProtocolOptions().getProtocolVersion(),
+            cluster.getConfiguration().getCodecRegistry());
 
         for (boolean valueInOptions : new boolean[]{ true, false })
             for (boolean valueInStatement : new boolean[]{ true, false }) {

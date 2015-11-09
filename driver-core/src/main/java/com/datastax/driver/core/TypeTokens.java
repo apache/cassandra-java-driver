@@ -26,6 +26,7 @@ import com.google.common.reflect.TypeToken;
  * Utility methods to create {@code TypeToken} instances.
  */
 public final class TypeTokens {
+
     private TypeTokens() {
     }
 

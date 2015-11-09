@@ -30,6 +30,7 @@ import com.google.common.util.concurrent.UncheckedExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import com.datastax.driver.core.exceptions.CodecNotFoundException;
@@ -230,6 +231,7 @@ public final class CodecRegistry {
      * Weights are computed mainly according to the CQL type:
      * <ol>
      * <li>Manually-registered codecs always weigh 0;
+     * <li>Codecs whose CQL type or Java type is not known always weigh 0;
      * <li>Codecs for primtive types weigh 0;
      * <li>Codecs for collections weigh the total weight of their inner types + the weight of their level of deepness;
      * <li>Codecs for UDTs and tuples weigh the total weight of their inner types + the weight of their level of deepness, but cannot weigh less than 1;
@@ -242,7 +244,7 @@ public final class CodecRegistry {
 
         @Override
         public int weigh(CacheKey key, TypeCodec<?> value) {
-            return codecs.contains(value) ? 0 : weigh(key.cqlType, 0);
+            return codecs.contains(value) || key.cqlType == null || key.javaType == null ? 0 : weigh(key.cqlType, 0);
         }
 
         private int weigh(DataType cqlType, int level) {
@@ -423,7 +425,47 @@ public final class CodecRegistry {
      * @throws CodecNotFoundException if a suitable codec cannot be found.
      */
     public <T> TypeCodec<T> codecFor(DataType cqlType) throws CodecNotFoundException {
+        checkNotNull(cqlType, "Parameter cqlType cannot be null");
         return lookupCodec(cqlType, null);
+    }
+
+    /**
+     * Returns a {@link TypeCodec codec} that accepts the given Java class.
+     * <p>
+     * This method returns the first matching codec, regardless of its accepted CQL type.
+     * It should be reserved for situations where the CQL type is not available or unknown.
+     * In the Java driver, this happens mainly when serializing a value using a
+     * {@link SimpleStatement}.
+     * <p>
+     * Codecs returned by this method are cached (see the {@link CodecRegistry top-level documentation}
+     * of this class for more explanations about caching).
+     *
+     * @param javaType The Java type the codec should accept; must not be {@code null}.
+     * @return A suitable codec.
+     * @throws CodecNotFoundException if a suitable codec cannot be found.
+     */
+    public <T> TypeCodec<T> codecFor(Class<T> javaType) throws CodecNotFoundException {
+        return codecFor(TypeToken.of(javaType));
+    }
+
+    /**
+     * Returns a {@link TypeCodec codec} that accepts the given Java type.
+     * <p>
+     * This method returns the first matching codec, regardless of its accepted CQL type.
+     * It should be reserved for situations where the CQL type is not available or unknown.
+     * In the Java driver, this happens mainly when serializing a value using a
+     * {@link SimpleStatement}.
+     * <p>
+     * Codecs returned by this method are cached (see the {@link CodecRegistry top-level documentation}
+     * of this class for more explanations about caching).
+     *
+     * @param javaType {@link TypeToken Java type} the codec should accept; must not be {@code null}.
+     * @return A suitable codec.
+     * @throws CodecNotFoundException if a suitable codec cannot be found.
+     */
+    public <T> TypeCodec<T> codecFor(TypeToken<T> javaType) throws CodecNotFoundException {
+        checkNotNull(javaType, "Parameter javaType cannot be null");
+        return lookupCodec(null, javaType);
     }
 
     /**
@@ -436,8 +478,8 @@ public final class CodecRegistry {
      * Codecs returned by this method are cached (see the {@link CodecRegistry top-level documentation}
      * of this class for more explanations about caching).
      *
-     * @param cqlType The {@link DataType CQL type} the codec should accept; must not be {@code null}.
-     * @param javaType The Java type the codec should accept; can be {@code null}.
+     * @param cqlType The {@link DataType CQL type} the codec should accept; must not be {@code null} if {@code javaType} is {@code null}.
+     * @param javaType The Java type the codec should accept; must not be {@code null} if {@code cqlType} is {@code null}.
      * @return A suitable codec.
      * @throws CodecNotFoundException if a suitable codec cannot be found.
      */
@@ -454,8 +496,8 @@ public final class CodecRegistry {
      * Codecs returned by this method are cached (see the {@link CodecRegistry top-level documentation}
      * of this class for more explanations about caching).
      *
-     * @param cqlType The {@link DataType CQL type} the codec should accept; must not be {@code null}.
-     * @param javaType The {@link TypeToken Java type} the codec should accept; can be {@code null}.
+     * @param cqlType The {@link DataType CQL type} the codec should accept; must not be {@code null} if {@code javaType} is {@code null}.
+     * @param javaType The {@link TypeToken Java type} the codec should accept; must not be {@code null} if {@code cqlType} is {@code null}.
      * @return A suitable codec.
      * @throws CodecNotFoundException if a suitable codec cannot be found.
      */
@@ -487,8 +529,8 @@ public final class CodecRegistry {
 
     @SuppressWarnings("unchecked")
     private <T> TypeCodec<T> lookupCodec(DataType cqlType, TypeToken<T> javaType) {
-        checkNotNull(cqlType, "Parameter cqlType cannot be null");
-        logger.trace("Querying cache for codec [{} <-> {}]", cqlType, javaType == null ? "ANY" : javaType);
+        checkArgument(cqlType != null || javaType != null, "Parameters cqlType and javaType cannot be both null");
+        logger.trace("Querying cache for codec [{} <-> {}]", cqlType == null ? "ANY" : cqlType, javaType == null ? "ANY" : javaType);
         CacheKey cacheKey = new CacheKey(cqlType, javaType);
         try {
             TypeCodec<?> codec = cache.get(cacheKey);
@@ -508,10 +550,10 @@ public final class CodecRegistry {
 
     @SuppressWarnings("unchecked")
     private <T> TypeCodec<T> findCodec(DataType cqlType, TypeToken<T> javaType) {
-        checkNotNull(cqlType, "Parameter cqlType cannot be null");
-        logger.trace("Looking for codec [{} <-> {}]", cqlType, javaType == null ? "ANY" : javaType);
+        checkArgument(cqlType != null || javaType != null, "Parameters cqlType and javaType cannot be both null");
+        logger.trace("Looking for codec [{} <-> {}]", cqlType == null ? "ANY" : cqlType, javaType == null ? "ANY" : javaType);
         for (TypeCodec<?> codec : codecs) {
-            if (codec.accepts(cqlType) && (javaType == null || codec.accepts(javaType))) {
+            if ((cqlType == null || codec.accepts(cqlType)) && (javaType == null || codec.accepts(javaType))) {
                 logger.trace("Codec found: {}", codec);
                 return (TypeCodec<T>)codec;
             }
@@ -540,7 +582,7 @@ public final class CodecRegistry {
         // this check can fail specially when creating codecs for collections
         // e.g. if B extends A and there is a codec registered for A and
         // we request a codec for List<B>, the registry would generate a codec for List<A>
-        if (!codec.accepts(cqlType) || (javaType != null && !codec.accepts(javaType)))
+        if ((cqlType != null && !codec.accepts(cqlType)) || (javaType != null && !codec.accepts(javaType)))
             throw notFound(cqlType, javaType);
         logger.trace("Codec created: {}", codec);
         return codec;
@@ -559,29 +601,28 @@ public final class CodecRegistry {
 
     @SuppressWarnings("unchecked")
     private <T> TypeCodec<T> maybeCreateCodec(DataType cqlType, TypeToken<T> javaType) {
-        checkNotNull(cqlType);
 
-        if (cqlType.getName() == LIST && (javaType == null || List.class.isAssignableFrom(javaType.getRawType()))) {
+        if ((cqlType == null || cqlType.getName() == LIST) && (javaType == null || List.class.isAssignableFrom(javaType.getRawType()))) {
             TypeToken<?> elementType = null;
             if (javaType != null && javaType.getType() instanceof ParameterizedType) {
                 Type[] typeArguments = ((ParameterizedType)javaType.getType()).getActualTypeArguments();
                 elementType = TypeToken.of(typeArguments[0]);
             }
-            TypeCodec<?> eltCodec = findCodec(cqlType.getTypeArguments().get(0), elementType);
+            TypeCodec<?> eltCodec = findCodec(cqlType == null ? null : cqlType.getTypeArguments().get(0), elementType);
             return (TypeCodec<T>)TypeCodec.list(eltCodec);
         }
 
-        if (cqlType.getName() == SET && (javaType == null || Set.class.isAssignableFrom(javaType.getRawType()))) {
+        if ((cqlType == null || cqlType.getName() == SET) && (javaType == null || Set.class.isAssignableFrom(javaType.getRawType()))) {
             TypeToken<?> elementType = null;
             if (javaType != null && javaType.getType() instanceof ParameterizedType) {
                 Type[] typeArguments = ((ParameterizedType)javaType.getType()).getActualTypeArguments();
                 elementType = TypeToken.of(typeArguments[0]);
             }
-            TypeCodec<?> eltCodec = findCodec(cqlType.getTypeArguments().get(0), elementType);
+            TypeCodec<?> eltCodec = findCodec(cqlType == null ? null : cqlType.getTypeArguments().get(0), elementType);
             return (TypeCodec<T>)TypeCodec.set(eltCodec);
         }
 
-        if (cqlType.getName() == MAP && (javaType == null || Map.class.isAssignableFrom(javaType.getRawType()))) {
+        if ((cqlType == null || cqlType.getName() == MAP) && (javaType == null || Map.class.isAssignableFrom(javaType.getRawType()))) {
             TypeToken<?> keyType = null;
             TypeToken<?> valueType = null;
             if (javaType != null && javaType.getType() instanceof ParameterizedType) {
@@ -589,20 +630,20 @@ public final class CodecRegistry {
                 keyType = TypeToken.of(typeArguments[0]);
                 valueType = TypeToken.of(typeArguments[1]);
             }
-            TypeCodec<?> keyCodec = findCodec(cqlType.getTypeArguments().get(0), keyType);
-            TypeCodec<?> valueCodec = findCodec(cqlType.getTypeArguments().get(1), valueType);
+            TypeCodec<?> keyCodec = findCodec(cqlType == null ? null : cqlType.getTypeArguments().get(0), keyType);
+            TypeCodec<?> valueCodec = findCodec(cqlType == null ? null : cqlType.getTypeArguments().get(1), valueType);
             return (TypeCodec<T>)TypeCodec.map(keyCodec, valueCodec);
         }
 
-        if (cqlType instanceof TupleType && (javaType == null || TupleValue.class.isAssignableFrom(javaType.getRawType()))) {
+        if (cqlType != null && cqlType instanceof TupleType && (javaType == null || TupleValue.class.isAssignableFrom(javaType.getRawType()))) {
             return (TypeCodec<T>)TypeCodec.tuple((TupleType)cqlType);
         }
 
-        if (cqlType instanceof UserType && (javaType == null || UDTValue.class.isAssignableFrom(javaType.getRawType()))) {
+        if (cqlType != null && cqlType instanceof UserType && (javaType == null || UDTValue.class.isAssignableFrom(javaType.getRawType()))) {
             return (TypeCodec<T>)TypeCodec.userType((UserType)cqlType);
         }
 
-        if(cqlType instanceof DataType.CustomType && (javaType == null || ByteBuffer.class.isAssignableFrom(javaType.getRawType()))) {
+        if (cqlType != null && cqlType instanceof DataType.CustomType && (javaType == null || ByteBuffer.class.isAssignableFrom(javaType.getRawType()))) {
             return (TypeCodec<T>)TypeCodec.custom((DataType.CustomType)cqlType);
         }
 

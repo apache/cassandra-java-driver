@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.CodecRegistry;
 import com.datastax.driver.core.ProtocolVersion;
 import com.datastax.driver.core.TableMetadata;
@@ -51,7 +50,6 @@ public class Insert extends BuiltStatement {
     StringBuilder buildQueryString(List<Object> variables) {
         StringBuilder builder = new StringBuilder();
 
-        CodecRegistry codecRegistry = getCodecRegistry();
         builder.append("INSERT INTO ");
         if (keyspace != null)
             Utils.appendName(keyspace, builder).append('.');

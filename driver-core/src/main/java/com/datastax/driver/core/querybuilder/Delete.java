@@ -18,7 +18,6 @@ package com.datastax.driver.core.querybuilder;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.CodecRegistry;
 import com.datastax.driver.core.ProtocolVersion;
 import com.datastax.driver.core.TableMetadata;
@@ -57,7 +56,6 @@ public class Delete extends BuiltStatement {
     StringBuilder buildQueryString(List<Object> variables) {
         StringBuilder builder = new StringBuilder();
 
-        CodecRegistry codecRegistry = getCodecRegistry();
         builder.append("DELETE");
         if (!columns.isEmpty())
             Utils.joinAndAppend(builder.append(" "), codecRegistry, ",", columns, variables);
