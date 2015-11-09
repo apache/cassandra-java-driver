@@ -20,6 +20,9 @@ import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
+/**
+ * A default representation of a Vertex in DSE Graph.
+ */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonDeserialize(using = DefaultVertexDeserializer.class)
 public class Vertex {

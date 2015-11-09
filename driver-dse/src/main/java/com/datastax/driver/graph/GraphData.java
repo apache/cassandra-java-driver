@@ -22,6 +22,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import com.datastax.driver.core.exceptions.DriverException;
 
+/**
+ * A result entity containing a graph query's result, wrapping a Json result.
+ */
 public class GraphData {
 
     private JsonNode jsonNode;
@@ -40,7 +43,17 @@ public class GraphData {
         this.objectMapper = objectMapper;
     }
 
-    GraphData get(Object keyOrIndex) {
+    /**
+     * API
+     */
+
+    /**
+     * This method allows digging through the result received from the graph server.
+     *
+     * @param keyOrIndex The key to get the value from, if keyOrIndex is a String. The index of the Array, if it is an Integer.
+     * @return A new GraphData object containing the encapsulated result.
+     */
+    public GraphData get(Object keyOrIndex) {
         if (keyOrIndex == null) {
             throw new DriverException("You must provide a valid key or index identifier in a get() call, 'null' is not valid.");
         }
@@ -55,33 +68,71 @@ public class GraphData {
     }
 
     /**
-     * API
+     * Get the raw wrapped JSON object.
+     *
+     * @return The wrapped JSON object.
      */
-
     public Object getJsonObject() {
         return this.jsonNode;
     }
 
+    /**
+     * Return the encapsulated result as a String.
+     *
+     * @return A String of the encapsulated result.
+     */
     public String asString() {
         return this.jsonNode.asText();
     }
 
+    /**
+     * Return the encapsulated result as an integer.
+     *
+     * @return An integer of the encapsulated result.
+     */
     public int asInt() {
         return this.jsonNode.asInt();
     }
 
+    /**
+     * Return the encapsulated result as a boolean.
+     *
+     * @return A boolean of the encapsulated result.
+     */
     public boolean asBool() {
         return this.jsonNode.asBoolean();
     }
 
-    public Long asLong() {
+    /**
+     * Return the encapsulated result as a long integer.
+     *
+     * @return A long integer of the encapsulated result.
+     */
+    public long asLong() {
         return this.jsonNode.asLong();
     }
 
-    public Double asDouble() {
+    /**
+     * Return the encapsulated result as a double.
+     *
+     * @return A double of the encapsulated result.
+     */
+    public double asDouble() {
         return this.jsonNode.asDouble();
     }
 
+    /**
+     * Return the encapsulated result deserialized in a T object that extends Vertex.
+     *
+     * The contained Json object will be parsed according to a class that must extend Vertex. Note that
+     * a deserialiser must also be known for this class. It means that the deserialized class must have a
+     * @JsonDeserialize and provide the name of the class able to deserialize this T object.
+     *
+     * @return A T object parsed from the result contained in the GraphData object. This method
+     * can throw an exception if the deserializer is incorrect, or if the method
+     * {@link com.datastax.driver.graph.GraphJsonDeserializer#checkVertex(com.fasterxml.jackson.databind.JsonNode)}
+     * does not validate the result as a Vertex result.
+     */
     public <T extends Vertex> T asVertex(Class<T> clas) {
         try {
             if (this.jsonNode != null) {
@@ -97,10 +148,27 @@ public class GraphData {
         }
     }
 
+    /**
+     * Return the contained result as a {@link Vertex} object.
+     *
+     * @return The Vertex object.
+     */
     public Vertex asVertex() {
         return asVertex(Vertex.class);
     }
 
+    /**
+     * Return the encapsulated result deserialized in a T object that extends Edge.
+     * <p/>
+     * The contained Json object will be parsed according to a class that must extend Edge. Note that
+     * a deserializer must also be known for this class. It means that the deserialized class must have a
+     *
+     * @return A T object parsed from the result contained in the GraphData object. This method
+     * can throw an exception if the deserializer is incorrect, or if the method
+     * {@link com.datastax.driver.graph.GraphJsonDeserializer#checkEdge(com.fasterxml.jackson.databind.JsonNode)}
+     * does not validate the result as a Edge result.
+     * @JsonDeserialize and provide the name of the class able to deserialize this T object.
+     */
     public <T extends Edge> T asEdge(Class<T> clas) {
         try {
             if (this.jsonNode != null) {
@@ -115,6 +183,11 @@ public class GraphData {
         }
     }
 
+    /**
+     * Return the contained result as a {@link Edge} object.
+     *
+     * @return The Edge object.
+     */
     public Edge asEdge() {
         return asEdge(Edge.class);
     }

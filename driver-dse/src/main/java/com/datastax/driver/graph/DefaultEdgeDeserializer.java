@@ -21,6 +21,9 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonNode;
 
+/**
+ * A default deserializer for graph results, creating Edge instances.
+ */
 public class DefaultEdgeDeserializer extends GraphJsonDeserializer<Edge> {
     @Override
     public Edge deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException {

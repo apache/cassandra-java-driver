@@ -21,8 +21,10 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonNode;
 
+/**
+ * A default deserializer for graph results, creating Vertex instances.
+ */
 public class DefaultVertexDeserializer extends GraphJsonDeserializer<Vertex> {
-
     @Override
     public Vertex deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException{
         JsonNode jsonNode = jsonParser.getCodec().readTree(jsonParser);

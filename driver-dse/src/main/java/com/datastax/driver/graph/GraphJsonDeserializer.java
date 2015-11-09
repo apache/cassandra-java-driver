@@ -28,6 +28,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import com.datastax.driver.core.exceptions.DriverException;
 
+/**
+ * A template deserializer for a Graph Json deserializer class.
+ *
+ * This class is mainly here for extensibility and provide useful methods to the inherited classes.
+ * @param <T> The aimed deserialized type.
+ */
 public abstract class GraphJsonDeserializer<T> extends JsonDeserializer<T>{
 
     @Override
@@ -35,7 +41,7 @@ public abstract class GraphJsonDeserializer<T> extends JsonDeserializer<T>{
 
     // The properties map is stored in a specific (weird) structure (Map<String, Array[Map<String, Object>]>)
     // This creates a map of the property's name as key and property's value as value as a Map<String, GraphData>.
-    public Map<String, GraphData> transformVertexProperties(JsonNode jsonProps) {
+    protected Map<String, GraphData> transformVertexProperties(JsonNode jsonProps) {
         ObjectMapper objectMapper = new ObjectMapper();
         Map<String, GraphData> properties = new HashMap<String, GraphData>();
         Iterator<Map.Entry<String, JsonNode>> jsonPropsIterator = jsonProps.fields();
@@ -46,7 +52,7 @@ public abstract class GraphJsonDeserializer<T> extends JsonDeserializer<T>{
         return properties;
     }
 
-    public Map<String, GraphData> transformEdgeProperties(JsonNode jsonProps) {
+    protected Map<String, GraphData> transformEdgeProperties(JsonNode jsonProps) {
         ObjectMapper objectMapper = new ObjectMapper();
         Map<String, GraphData> properties = new HashMap<String, GraphData>();
         Iterator<Map.Entry<String, JsonNode>> jsonPropsIterator = jsonProps.fields();

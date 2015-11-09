@@ -20,6 +20,9 @@ import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
+/**
+ * A default representation of an Edge in DSE Graph.
+ */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonDeserialize(using = DefaultEdgeDeserializer.class)
 public class Edge {
