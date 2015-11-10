@@ -44,7 +44,7 @@ public class QueryBuilderTupleExecutionTest extends CCMBridge.PerClassSingleNode
 
     @Test(groups = "short")
     public void should_handle_tuple() throws Exception {
-        String query = "INSERT INTO foo(k,x) VALUES (0,(1));";
+        String query = "INSERT INTO foo (k,x) VALUES (0,(1));";
         TupleType tupleType = cluster.getMetadata().newTupleType(cint());
         BuiltStatement insert = new QueryBuilder(cluster).insertInto("foo").value("k", 0).value("x", tupleType.newValue(1));
         assertEquals(insert.toString(), query);

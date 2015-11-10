@@ -22,12 +22,11 @@ import java.util.*;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import org.testng.annotations.BeforeMethod;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
@@ -187,7 +186,7 @@ public class QueryBuilderTest {
         String query;
         Statement insert;
 
-        query = "INSERT INTO foo(a,b,\"C\",d) VALUES (123,'127.0.0.1','foo''bar',{'x':3,'y':2}) USING TIMESTAMP 42 AND TTL 24;";
+        query = "INSERT INTO foo (a,b,\"C\",d) VALUES (123,'127.0.0.1','foo''bar',{'x':3,'y':2}) USING TIMESTAMP 42 AND TTL 24;";
         insert = builder.insertInto("foo")
             .value("a", 123)
             .value("b", InetAddress.getByName("127.0.0.1"))
@@ -199,13 +198,13 @@ public class QueryBuilderTest {
             .using(timestamp(42)).and(ttl(24));
         assertEquals(insert.toString(), query);
 
-        query = "INSERT INTO foo(a,b) VALUES (2,null);";
+        query = "INSERT INTO foo (a,b) VALUES (2,null);";
         insert = builder.insertInto("foo")
             .value("a", 2)
             .value("b", null);
         assertEquals(insert.toString(), query);
 
-        query = "INSERT INTO foo(a,b) VALUES ({2,3,4},3.4) USING TTL 24 AND TIMESTAMP 42;";
+        query = "INSERT INTO foo (a,b) VALUES ({2,3,4},3.4) USING TTL 24 AND TIMESTAMP 42;";
         insert = builder.insertInto("foo").values(new String[]{ "a", "b" }, new Object[]{ new TreeSet<Integer>() {{
             add(2);
             add(3);
@@ -213,7 +212,7 @@ public class QueryBuilderTest {
         }}, 3.4 }).using(ttl(24)).and(timestamp(42));
         assertEquals(insert.toString(), query);
 
-        query = "INSERT INTO foo.bar(a,b) VALUES ({2,3,4},3.4) USING TTL ? AND TIMESTAMP ?;";
+        query = "INSERT INTO foo.bar (a,b) VALUES ({2,3,4},3.4) USING TTL ? AND TIMESTAMP ?;";
         insert = builder.insertInto("foo", "bar")
             .values(new String[]{ "a", "b" }, new Object[]{ new TreeSet<Integer>() {{
                 add(2);
@@ -225,7 +224,7 @@ public class QueryBuilderTest {
         assertEquals(insert.toString(), query);
 
         // commutative result of TIMESTAMP
-        query = "INSERT INTO foo.bar(a,b,c) VALUES ({2,3,4},3.4,123) USING TIMESTAMP 42;";
+        query = "INSERT INTO foo.bar (a,b,c) VALUES ({2,3,4},3.4,123) USING TIMESTAMP 42;";
         insert = builder.insertInto("foo", "bar")
             .using(timestamp(42))
             .values(new String[]{ "a", "b" }, new Object[]{ new TreeSet<Integer>() {{
@@ -237,7 +236,7 @@ public class QueryBuilderTest {
         assertEquals(insert.toString(), query);
 
         // commutative result of value() and values()
-        query = "INSERT INTO foo(c,a,b) VALUES (123,{2,3,4},3.4) USING TIMESTAMP 42;";
+        query = "INSERT INTO foo (c,a,b) VALUES (123,{2,3,4},3.4) USING TIMESTAMP 42;";
         insert = builder.insertInto("foo")
             .using(timestamp(42))
             .value("c", 123)
@@ -256,7 +255,7 @@ public class QueryBuilderTest {
         }
 
         // CAS test
-        query = "INSERT INTO foo(k,x) VALUES (0,1) IF NOT EXISTS;";
+        query = "INSERT INTO foo (k,x) VALUES (0,1) IF NOT EXISTS;";
         insert = builder.insertInto("foo").value("k", 0).value("x", 1).ifNotExists();
         assertEquals(insert.toString(), query);
 
@@ -416,7 +415,7 @@ public class QueryBuilderTest {
         Statement batch;
 
         query = "BEGIN BATCH USING TIMESTAMP 42 ";
-        query += "INSERT INTO foo(a,b) VALUES ({2,3,4},3.4);";
+        query += "INSERT INTO foo (a,b) VALUES ({2,3,4},3.4);";
         query += "UPDATE foo SET a[2]='foo',b=[3,2,1]+b,c=c-{'a'} WHERE k=2;";
         query += "DELETE a[3],b['foo'],c FROM foo WHERE k=1;";
         query += "APPLY BATCH;";
@@ -526,7 +525,7 @@ public class QueryBuilderTest {
         String query;
         Statement insert;
 
-        query = "INSERT INTO test(k,c) VALUES (0,?);";
+        query = "INSERT INTO test (k,c) VALUES (0,?);";
         insert = builder.insertInto("test")
             .value("k", 0)
             .value("c", bindMarker());
@@ -619,15 +618,15 @@ public class QueryBuilderTest {
         String query;
         Statement insert;
 
-        query = "INSERT INTO foo(a) VALUES ('123); --comment');";
+        query = "INSERT INTO foo (a) VALUES ('123); --comment');";
         insert = builder.insertInto("foo").value("a", "123); --comment");
         assertEquals(insert.toString(), query);
 
-        query = "INSERT INTO foo(\"a,b\") VALUES (123);";
+        query = "INSERT INTO foo (\"a,b\") VALUES (123);";
         insert = builder.insertInto("foo").value("a,b", 123);
         assertEquals(insert.toString(), query);
 
-        query = "INSERT INTO foo(a,b) VALUES ({'2''} space','3','4'},3.4) USING TTL 24 AND TIMESTAMP 42;";
+        query = "INSERT INTO foo (a,b) VALUES ({'2''} space','3','4'},3.4) USING TTL 24 AND TIMESTAMP 42;";
         insert = builder.insertInto("foo").values(new String[]{ "a", "b" }, new Object[]{ new TreeSet<String>() {{
             add("2'} space");
             add("3");
@@ -741,13 +740,13 @@ public class QueryBuilderTest {
             "SELECT * FROM \"Metrics\".\"epochs\";");
 
         assertEquals(builder.insertInto("Metrics", "epochs").toString(),
-            "INSERT INTO Metrics.epochs() VALUES ();");
+            "INSERT INTO Metrics.epochs () VALUES ();");
         assertEquals(builder.insertInto("Metrics", quote("epochs")).toString(),
-            "INSERT INTO Metrics.\"epochs\"() VALUES ();");
+            "INSERT INTO Metrics.\"epochs\" () VALUES ();");
         assertEquals(builder.insertInto(quote("Metrics"), "epochs").toString(),
-            "INSERT INTO \"Metrics\".epochs() VALUES ();");
+            "INSERT INTO \"Metrics\".epochs () VALUES ();");
         assertEquals(builder.insertInto(quote("Metrics"), quote("epochs")).toString(),
-            "INSERT INTO \"Metrics\".\"epochs\"() VALUES ();");
+            "INSERT INTO \"Metrics\".\"epochs\" () VALUES ();");
     }
 
     @Test(groups = "unit")
@@ -883,6 +882,60 @@ public class QueryBuilderTest {
         Object expected = new Object();
         Object actual = builder.select().from("test").where(eq("foo", expected)).getObject(0);
         assertThat(actual).isSameAs(expected);
+    }
+
+    @Test(groups = "unit")
+    @CassandraVersion(major = 2.1)
+    public void should_serialize_collections_of_serializable_elements() {
+        Set<UUID> set = Sets.newHashSet(UUID.randomUUID());
+        List<Date> list = Lists.newArrayList(new Date());
+        Map<BigInteger, String> map = ImmutableMap.of(new BigInteger("1"), "foo");
+        BuiltStatement query = builder.insertInto("foo").value("v", set);
+        assertThat(query.getQueryString()).isEqualTo("INSERT INTO foo (v) VALUES (?);");
+        assertThat(query.getObject(0)).isEqualTo(set);
+        query = builder.insertInto("foo").value("v", list);
+        assertThat(query.getQueryString()).isEqualTo("INSERT INTO foo (v) VALUES (?);");
+        assertThat(query.getObject(0)).isEqualTo(list);
+        query = builder.insertInto("foo").value("v", map);
+        assertThat(query.getQueryString()).isEqualTo("INSERT INTO foo (v) VALUES (?);");
+        assertThat(query.getObject(0)).isEqualTo(map);
+    }
+
+    @Test(groups = "unit")
+    @CassandraVersion(major = 2.1)
+    public void should_not_attempt_to_serialize_function_calls_in_collections() {
+        BuiltStatement query = builder.insertInto("foo").value("v", Sets.newHashSet(fcall("func", 1)));
+        assertThat(query.getQueryString()).isEqualTo("INSERT INTO foo (v) VALUES ({func(1)});");
+        assertThat(query.getValues()).isNullOrEmpty();
+    }
+
+    @Test(groups = "unit")
+    @CassandraVersion(major = 2.1)
+    public void should_not_attempt_to_serialize_raw_values_in_collections() {
+        BuiltStatement query = builder.insertInto("foo").value("v", ImmutableMap.of(1, raw("x")));
+        assertThat(query.getQueryString()).isEqualTo("INSERT INTO foo (v) VALUES ({1:x});");
+        assertThat(query.getValues()).isNullOrEmpty();
+    }
+
+    @Test(groups = "unit")
+    @CassandraVersion(major = 2.1)
+    public void should_not_attempt_to_serialize_collections_containing_numbers() {
+        BuiltStatement query;
+        // lists
+        List<Integer> list = Lists.newArrayList(1, 2, 3);
+        query = builder.insertInto("foo").value("v", list);
+        assertThat(query.getQueryString()).isEqualTo("INSERT INTO foo (v) VALUES ([1,2,3]);");
+        assertThat(query.hasValues()).isFalse();
+        // sets
+        Set<Integer> set = Sets.newHashSet(1, 2, 3);
+        query = builder.insertInto("foo").value("v", set);
+        assertThat(query.getQueryString()).isEqualTo("INSERT INTO foo (v) VALUES ({1,2,3});");
+        assertThat(query.hasValues()).isFalse();
+        // maps
+        Map<Integer, Float> map = ImmutableMap.of(1, 12.34f);
+        query = builder.insertInto("foo").value("v", map);
+        assertThat(query.getQueryString()).isEqualTo("INSERT INTO foo (v) VALUES ({1:12.34});");
+        assertThat(query.hasValues()).isFalse();
     }
 
 }
