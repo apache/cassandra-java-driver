@@ -110,8 +110,9 @@ public class DefaultRetryPolicy implements RetryPolicy {
      * unavailable exception.
      * <p>
      * This method triggers a retry iff no retry has been executed before
-     * (nbRetry == 0), with {@link RetryDecision#tryNextHost}, otherwise it
-     * throws an exception. The retry will be processed on the next host
+     * (nbRetry == 0), with
+     * {@link RetryPolicy.RetryDecision#tryNextHost(ConsistencyLevel) RetryDecision.tryNextHost(cl)},
+     * otherwise it throws an exception. The retry will be processed on the next host
      * in the query plan according to the current Load Balancing Policy.
      * Where retrying on the same host in the event of an Unavailable exception
      * has almost no chance of success, if the first replica tried happens to

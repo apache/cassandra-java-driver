@@ -119,12 +119,12 @@ public class PerHostPercentileTracker implements LatencyTracker {
          * resolution and separation. This must be an integer between 0 and 5.
          * <p>
          * If not set explicitly, this value defaults to 3.
+         * <p>
+         * See <a href="http://hdrhistogram.github.io/HdrHistogram/JavaDoc/org/HdrHistogram/Histogram.html">the HdrHistogram Javadocs</a>
+         * for a more detailed explanation on how this parameter affects the resolution of recorded samples.
          *
          * @param numberOfSignificantValueDigits the new value.
          * @return this builder.
-         *
-         * @see <a href="http://hdrhistogram.github.io/HdrHistogram/JavaDoc/org/HdrHistogram/Histogram.html">the HdrHistogram Javadocs</a>
-         * for a more detailed explanation on how this parameter affects the resolution of recorded samples.
          */
         public Builder withNumberOfSignificantValueDigits(int numberOfSignificantValueDigits) {
             this.numberOfSignificantValueDigits = numberOfSignificantValueDigits;

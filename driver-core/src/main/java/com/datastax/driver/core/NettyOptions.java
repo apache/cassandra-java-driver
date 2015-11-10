@@ -68,7 +68,6 @@ import io.netty.util.Timer;
  * and in particular for OSGi applications, it is likely that such a configuration would lead to
  * compile and/or runtime errors.</strong>
  *
- * @jira_ticket JAVA-640
  * @since 2.0.10
  */
 public class NettyOptions {
@@ -79,7 +78,7 @@ public class NettyOptions {
     public static final NettyOptions DEFAULT_INSTANCE = new NettyOptions();
 
     /**
-     * Return the {@link EventLoopGroup} instance to use.
+     * Return the {@code EventLoopGroup} instance to use.
      * <p>
      * This hook is invoked only once at {@link Cluster} initialization;
      * the returned instance will be kept in use throughout the cluster lifecycle.
@@ -89,30 +88,30 @@ public class NettyOptions {
      * case implementors should also override {@link #onClusterClose(EventLoopGroup)}
      * to prevent the shared instance to be closed when the cluster is closed.
      * <p>
-     * The default implementation returns a new instance of {@link io.netty.channel.epoll.EpollEventLoopGroup}
+     * The default implementation returns a new instance of {@code io.netty.channel.epoll.EpollEventLoopGroup}
      * if {@link NettyUtil#isEpollAvailable() epoll is available},
-     * or {@link NioEventLoopGroup} otherwise.
+     * or {@code io.netty.channel.nio.NioEventLoopGroup} otherwise.
      *
-     * @param threadFactory The {@link ThreadFactory} to use when creating a new {@link EventLoopGroup} instance;
+     * @param threadFactory The {@link ThreadFactory} to use when creating a new {@code EventLoopGroup} instance;
      *                      The driver will provide its own internal thread factory here.
      *                      It is safe to ignore it and use another thread factory.
-     * @return the {@link EventLoopGroup} instance to use.
+     * @return the {@code EventLoopGroup} instance to use.
      */
     public EventLoopGroup eventLoopGroup(ThreadFactory threadFactory) {
         return NettyUtil.newEventLoopGroupInstance(threadFactory);
     }
 
     /**
-     * Return the specific {@link SocketChannel} subclass to use.
+     * Return the specific {@code SocketChannel} subclass to use.
      * <p>
      * This hook is invoked only once at {@link Cluster} initialization;
      * the returned instance will then be used each time the driver creates a new {@link Connection}
      * and configures a new instance of {@link Bootstrap} for it.
      * <p>
-     * The default implementation returns {@link io.netty.channel.epoll.EpollSocketChannel} if {@link NettyUtil#isEpollAvailable() epoll is available},
-     * or {@link NioSocketChannel} otherwise.
+     * The default implementation returns {@code io.netty.channel.epoll.EpollSocketChannel} if {@link NettyUtil#isEpollAvailable() epoll is available},
+     * or {@code io.netty.channel.socket.nio.NioSocketChannel} otherwise.
      *
-     * @return The {@link SocketChannel} subclass to use.
+     * @return The {@code SocketChannel} subclass to use.
      */
     public Class<? extends SocketChannel> channelClass() {
         return NettyUtil.channelClass();

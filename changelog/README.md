@@ -335,7 +335,7 @@ Merged from 2.0 branch: everything up to 2.0.3 (included), and the following.
 - [bug] Make metadata parsing more lenient (JAVA-377, JAVA-391)
 
 
-### 2.0.12 (in progress)
+### 2.0.12
 
 - [bug] JAVA-950: Fix Cluster.connect with a case-sensitive keyspace.
 - [improvement] JAVA-920: Downgrade "error creating pool" message to WARN.
