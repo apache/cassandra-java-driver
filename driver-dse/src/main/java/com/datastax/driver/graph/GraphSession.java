@@ -113,7 +113,7 @@ public class GraphSession {
     /**
      * Prepare a graph statement.
      *
-     * @param statement A simple {@link GraphStatement} object to be prepared.
+     * @param gst A simple {@link GraphStatement} object to be prepared.
      *
      * @return A {@link PreparedGraphStatement} object to be bound with values, and executed.
      */

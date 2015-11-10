@@ -18,6 +18,7 @@ package com.datastax.driver.graph;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 /**
@@ -26,7 +27,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonDeserialize(using = DefaultVertexDeserializer.class)
 public class Vertex {
-    private int id;
+    private GraphData id;
     private String label;
     private String type;
 
@@ -36,18 +37,18 @@ public class Vertex {
 
     }
 
-    public Vertex(int id, String label, String type, Map<String, GraphData> properties) {
+    public Vertex(GraphData id, String label, String type, Map<String, GraphData> properties) {
         this.id = id;
         this.label = label;
         this.type = type;
         this.properties = properties;
     }
 
-    public void setId(int id) {
+    public void setId(GraphData id) {
         this.id = id;
     }
 
-    public Integer getId() {
+    public GraphData getId() {
         return this.id;
     }
 
@@ -79,7 +80,7 @@ public class Vertex {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("Graph Vertex [");
-        sb.append(String.format("id = %d, label = %s", this.id, this.label));
+        sb.append(String.format("id = %s, label = %s", this.id.toString(), this.label));
         sb.append(", properties = [");
         int i = 0;
         for (Map.Entry<String, GraphData> entry : this.properties.entrySet()) {

@@ -20,6 +20,7 @@ import java.io.IOException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * A default deserializer for graph results, creating Vertex instances.
@@ -29,9 +30,10 @@ public class DefaultVertexDeserializer extends GraphJsonDeserializer<Vertex> {
     public Vertex deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException{
         JsonNode jsonNode = jsonParser.getCodec().readTree(jsonParser);
         checkVertex(jsonNode);
-        return new Vertex(jsonNode.get("id").numberValue().intValue(),
+        ObjectMapper objectMapper = new ObjectMapper();
+        return new Vertex(new GraphData("id", jsonNode.get("id"), objectMapper),
             jsonNode.get("label").asText(),
             jsonNode.get("type").asText(),
-            transformVertexProperties(jsonNode.get("properties")));
+            transformVertexProperties(jsonNode.get("properties"), objectMapper));
     }
 }

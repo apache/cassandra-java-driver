@@ -41,8 +41,8 @@ public abstract class GraphJsonDeserializer<T> extends JsonDeserializer<T>{
 
     // The properties map is stored in a specific (weird) structure (Map<String, Array[Map<String, Object>]>)
     // This creates a map of the property's name as key and property's value as value as a Map<String, GraphData>.
-    protected Map<String, GraphData> transformVertexProperties(JsonNode jsonProps) {
-        ObjectMapper objectMapper = new ObjectMapper();
+    protected Map<String, GraphData> transformVertexProperties(JsonNode jsonProps, ObjectMapper objectMapper) {
+//        ObjectMapper objectMapper = new ObjectMapper();
         Map<String, GraphData> properties = new HashMap<String, GraphData>();
         Iterator<Map.Entry<String, JsonNode>> jsonPropsIterator = jsonProps.fields();
         while (jsonPropsIterator.hasNext()) {
