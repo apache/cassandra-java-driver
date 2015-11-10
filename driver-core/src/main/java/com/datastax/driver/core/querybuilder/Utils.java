@@ -61,23 +61,6 @@ abstract class Utils {
         return sb;
     }
 
-    // Returns false if it's not really serializable (function call, bind markers, ...)
-    static boolean isSerializable(Object value) {
-        if (value instanceof BindMarker || value instanceof FCall || value instanceof CName)
-            return false;
-
-        if (value instanceof RawString)
-            return false;
-
-        // We also don't serialize fixed size number types. The reason is that if we do it, we will
-        // force a particular size (4 bytes for ints, ...) and for the query builder, we don't want
-        // users to have to bother with that.
-        if (value instanceof Number && !(value instanceof BigInteger || value instanceof BigDecimal))
-            return false;
-
-        return true;
-    }
-
     static ByteBuffer[] convert(List<Object> values, ProtocolVersion protocolVersion) {
         ByteBuffer[] serializedValues = new ByteBuffer[values.size()];
         for (int i = 0; i < values.size(); i++) {
@@ -185,17 +168,6 @@ abstract class Utils {
         }
     }
 
-    static StringBuilder appendCollection(Object value, StringBuilder sb, List<Object> variables) {
-        if (variables == null || !isSerializable(value)) {
-            boolean wasCollection = appendValueIfCollection(value, sb);
-            assert wasCollection;
-        } else {
-            sb.append('?');
-            variables.add(value);
-        }
-        return sb;
-    }
-
     static StringBuilder appendList(List<?> l, StringBuilder sb) {
         sb.append('[');
         for (int i = 0; i < l.size(); i++) {
@@ -255,15 +227,62 @@ abstract class Utils {
     static boolean containsBindMarker(Object value) {
         if (value instanceof BindMarker)
             return true;
-
-        if (!(value instanceof FCall))
-            return false;
-
-        FCall fcall = (FCall)value;
-        for (Object param : fcall.parameters)
-            if (containsBindMarker(param))
-                return true;
+        if (value instanceof FCall)
+            for (Object param : ((FCall)value).parameters)
+                if (containsBindMarker(param))
+                    return true;
+        if (value instanceof Collection)
+            for (Object elt : (Collection)value)
+                if (containsBindMarker(elt))
+                    return true;
+        if (value instanceof Map)
+            for (Map.Entry<?,?> entry : ((Map<?,?>)value).entrySet())
+                if (containsBindMarker(entry.getKey()) || containsBindMarker(entry.getValue()))
+                    return true;
         return false;
+    }
+
+    static boolean containsSpecialValue(Object value) {
+        if (value instanceof BindMarker || value instanceof FCall || value instanceof CName || value instanceof RawString)
+            return true;
+        if (value instanceof Collection)
+            for (Object elt : (Collection)value)
+                if (containsSpecialValue(elt))
+                    return true;
+        if (value instanceof Map)
+            for (Map.Entry<?,?> entry : ((Map<?,?>)value).entrySet())
+                if (containsSpecialValue(entry.getKey()) || containsSpecialValue(entry.getValue()))
+                    return true;
+        return false;
+    }
+
+    /**
+     * Return true if the given value is likely to find a suitable codec
+     * to be serialized as a query parameter.
+     * If the value is not serializable, it must be included in the query string.
+     * Non serializable values include special values such as function calls,
+     * column names and bind markers, and collections thereof.
+     * We also don't serialize fixed size number types. The reason is that if we do it, we will
+     * force a particular size (4 bytes for ints, ...) and for the query builder, we don't want
+     * users to have to bother with that.
+     *
+     * @param value the value to inspect.
+     * @return true if the value is serializable, false otherwise.
+     */
+    static boolean isSerializable(Object value) {
+        if (containsSpecialValue(value))
+            return false;
+        if (value instanceof Number && !(value instanceof BigInteger || value instanceof BigDecimal))
+            return false;
+        if (value instanceof Collection)
+            for (Object elt : (Collection)value)
+                if (!isSerializable(elt))
+                    return false;
+        if (value instanceof Map)
+            for (Map.Entry<?,?> entry : ((Map<?,?>)value).entrySet())
+                if (!isSerializable(entry.getKey()) || !isSerializable(entry.getValue()))
+                    return false;
+        return true;
     }
 
     static boolean isIdempotent(Object value) {
@@ -293,13 +312,6 @@ abstract class Utils {
 
     private static StringBuilder appendValueString(String value, StringBuilder sb) {
         return sb.append(DataType.text().format(value));
-    }
-
-    static boolean isRawValue(Object value) {
-        return value != null
-            && !(value instanceof FCall)
-            && !(value instanceof CName)
-            && !(value instanceof BindMarker);
     }
 
     static String toRawString(Object value) {
