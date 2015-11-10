@@ -1,6 +1,6 @@
 ## Changelog
 
-### 2.0.12 (in progress)
+### 2.0.12
 
 - [bug] JAVA-950: Fix Cluster.connect with a case-sensitive keyspace.
 - [improvement] JAVA-920: Downgrade "error creating pool" message to WARN.
