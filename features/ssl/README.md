@@ -176,5 +176,5 @@ This could be used for the following use cases:
   [OpenSSL](http://netty.io/wiki/forked-tomcat-native.html)
   for improved performance.
 
-[SSLOptions]: http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/SSLOptions.html
-[NettyOptions]: http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/NettyOptions.html
+[SSLOptions]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/SSLOptions.html
+[NettyOptions]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/NettyOptions.html

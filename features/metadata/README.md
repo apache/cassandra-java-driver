@@ -47,8 +47,8 @@ Note that it is preferable to register a listener only *after* the cluster is fu
 otherwise the listener could be notified with a great deal of "Added" events as
 the driver builds the schema metadata from scratch for the first time.
 
-[SchemaChangeListener]: http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/SchemaChangeListener.html
-[registerListener]: http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/Cluster.html#register(com.datastax.driver.core.SchemaChangeListener)
+[SchemaChangeListener]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/SchemaChangeListener.html
+[registerListener]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/Cluster.html#register(com.datastax.driver.core.SchemaChangeListener)
 
 #### Schema agreement
 

@@ -246,7 +246,7 @@ ResultSet insert(@Param("u") UUID userId, @Param("n") String name);
 
 If a method argument is a Java enumeration, it must be annotated with
 `@Enumerated` to indicate how to convert it to a CQL type (the rules are
-the same as in [mapping definition](http://localhost:9090/features/object_mapper/creating/#enumerations)):
+the same as in [mapping definition](../creating/#enumerations)):
 
 ```java
 @Query("insert into user (key, gender) values (?,?)")
