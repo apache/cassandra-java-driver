@@ -158,7 +158,7 @@
           </execution>
         </executions>
         <configuration>
-          <comparisonVersion>2.1.7.1</comparisonVersion>
+          <comparisonVersion>2.1.8</comparisonVersion>
           <ignoredDifferencesFile>../clirr-ignores.xml</ignoredDifferencesFile>
           <excludes>
             <!-- Package-private, internal classes -->
