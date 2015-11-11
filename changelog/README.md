@@ -9,6 +9,7 @@
 - [improvement] JAVA-961: Raise an exception when an older version of guava (<16.01) is found.
 - [bug] JAVA-972: TypeCodec.parse() implementations should be case insensitive when checking for keyword NULL.
 - [bug] JAVA-971: Make type codecs invariant.
+- [bug] JAVA-986: Update documentation links to reference 3.0.
 
 Merged from 2.1 branch:
 
