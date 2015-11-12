@@ -8,6 +8,7 @@
 - [improvement] Pass the authenticator name from the server to the auth provider (JAVA-885) 
 - [improvement] Raise an exception when an older version of guava (<16.01) is found (JAVA-961)
 - [bug] TypeCodec.parse() implementations should be case insensitive when checking for keyword NULL (JAVA-972)
+- [bug] JAVA-819: Driver shouldn't retry on client timeout if statement is not idempotent.
 
 Merged from 2.1 branch:
 

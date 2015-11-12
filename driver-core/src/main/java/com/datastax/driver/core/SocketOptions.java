@@ -87,7 +87,7 @@ public class SocketOptions {
      * <p>
      * Please note that this is not the maximum time a call to {@link Session#execute} may block;
      * this is the maximum time that call will wait for one particular
-     * Cassandra host, but other hosts will be tried if one of them times out. In
+     * Cassandra host, but other hosts could be tried if one of them times out. In
      * other words, a {@link Session#execute} call may theoretically wait up to
      * {@code getReadTimeoutMillis() * <number_of_cassandra_hosts>} (though the
      * total number of hosts tried for a given query also depends on the

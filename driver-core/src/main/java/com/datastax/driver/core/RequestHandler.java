@@ -733,7 +733,11 @@ class RequestHandler {
                 connection.release();
 
                 logError(connection.address, timeoutException);
-                retry(false, null);
+                // JAVA-819: DO not retry query if statement is not idempotent
+                if (statement.isIdempotentWithDefault(manager.cluster.manager.configuration.getQueryOptions()))
+                    retry(false, null);
+                else
+                    reportNoMoreHosts(this);
             } catch (Exception e) {
                 // This shouldn't happen, but if it does, we want to signal the callback, not let it hang indefinitely
                 setFinalException(null, new DriverInternalError("An unexpected error happened while handling timeout", e));

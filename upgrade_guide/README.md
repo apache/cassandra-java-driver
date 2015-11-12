@@ -208,6 +208,13 @@ We've also seized the opportunity to remove code that was deprecated in 2.1.
 20. `TableMetadata.Options` has been made a top-level class and renamed to
     `TableOptionsMetadata`. It is now also used by `MaterializedViewMetadata`.
 
+21. The driver will not retry anymore a query that failed due to a client
+    timeout (see `SocketOptions.getReadTimeoutMillis()`), *unless
+    the statement is explicitly marked idempotent* (see `Statement.isIdempotent()`).
+    Since statement are considered non idempotent by default,
+    this is a significant behavioral change in the driver. It was introduced
+    by [JAVA-819](https://datastax-oss.atlassian.net/browse/JAVA-819).
+
 
 ### 2.1.8
 
