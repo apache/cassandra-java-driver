@@ -145,6 +145,50 @@ public final class UUIDs {
         return new UUID(makeMSB(getCurrentTimestamp()), CLOCK_SEQ_AND_NODE);
     }
 
+	/**
+	 * Creates a time-based UUID with the provided UUID v1 timestamp as MSB. As
+	 * a new random LSB will be generated upon each call, the generated UUID is
+	 * guaranteed to be unique even when multiple UUIDs are generated with
+	 * identical timestamps.
+	 * 
+	 * As the generation of a random LSB provides a significant overhead, this
+	 * method should not be used when creating a UUID for the currentTime but
+	 * {@link #timeBased()} instead.
+	 * 
+	 * It should also be noted that generating a new random LSB for each UUID
+	 * is not within TimeUUID specifications.
+	 * 
+	 * @param hundredNanoSecondIntervalsSinceUUIDEpoch
+	 *            thats right, no millis since unix epoch or bad things will
+	 *            happen
+	 * @return a new time-based UUID with guaranteed uniqueness
+	 */
+	public static UUID timeBasedFromNanoIntervals(long hundredNanoSecondIntervalsSinceUUIDEpoch) {
+		return new UUID(makeMSB(hundredNanoSecondIntervalsSinceUUIDEpoch), makeClockSeqAndNode());
+	}
+
+	/**
+	 * Creates a time-based UUID with the provided unix timestamp as MSB. As
+	 * a new random LSB will be generated upon each call, the generated UUID is
+	 * guaranteed to be unique even when multiple UUIDs are generated with
+	 * identical timestamps.
+	 * 
+	 * As the generation of a random LSB provides a significant overhead, this
+	 * method should not be used when creating a UUID for the currentTime but
+	 * {@link #timeBased()} instead.
+	 * 
+	 * It should also be noted that generating a new random LSB for each UUID
+	 * is not within TimeUUID specifications.
+	 * 
+	 * @param millisSinceUnixEpoch
+	 *            the unix timestamp you know and love
+	 * 
+	 * @return a new time-based UUID with guaranteed uniqueness
+	 */
+	public static UUID timeBasedFromMillis(long millisSinceUnixEpoch) {
+		return new UUID(makeMSB(fromUnixTimestamp(millisSinceUnixEpoch)), makeClockSeqAndNode());
+	}
+
     /**
      * Creates a "fake" time-based UUID that sorts as the smallest possible
      * version 1 UUID generated at the provided timestamp.
