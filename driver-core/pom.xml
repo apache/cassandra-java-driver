@@ -57,6 +57,12 @@
       <version>${jnr-ffi.version}</version>
     </dependency>
 
+    <dependency>
+      <groupId>com.github.jnr</groupId>
+      <artifactId>jnr-posix</artifactId>
+      <version>${jnr-posix.version}</version>
+    </dependency>
+
     <!-- Compression libraries for the protocol. -->
     <!-- Each of them is only a mandatory runtime dependency if you want to use the compression it offers -->
 
