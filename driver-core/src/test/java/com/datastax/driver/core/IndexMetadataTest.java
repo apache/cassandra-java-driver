@@ -23,6 +23,7 @@ import java.util.Map;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.primitives.Ints;
+import nl.jqno.equalsverifier.EqualsVerifier;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -100,6 +101,13 @@ public class IndexMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
         );
 
         return builder.build();
+    }
+
+    @Test(groups = "unit")
+    public void should_use_all_fields_in_equals_and_hashCode() {
+        EqualsVerifier.forClass(IndexMetadata.class)
+            .allFieldsShouldBeUsedExcept("table")
+            .verify();
     }
 
     @Test(groups = "short")

@@ -239,11 +239,11 @@ public class IndexMetadata {
         return builder.toString();
     }
 
-    public int hashCode() {
+    public final int hashCode() {
         return Objects.hashCode(name, kind, target, options);
     }
 
-    public boolean equals(Object obj) {
+    public final boolean equals(Object obj) {
         if (obj == this)
             return true;
 

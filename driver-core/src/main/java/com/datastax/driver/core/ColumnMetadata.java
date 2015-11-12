@@ -102,20 +102,20 @@ public class ColumnMetadata {
     }
 
     @Override
-    public boolean equals(Object other) {
+    public final boolean equals(Object other) {
         if (other == this)
             return true;
         if (!(other instanceof ColumnMetadata))
             return false;
 
         ColumnMetadata that = (ColumnMetadata)other;
-        return this.name.equals(that.name) &&
-            this.isStatic == that.isStatic &&
-            this.type.equals(that.type);
+        return Objects.equal(name, that.name) &&
+            Objects.equal(type, that.type) &&
+            isStatic == that.isStatic;
     }
 
     @Override
-    public int hashCode() {
+    public final int hashCode() {
         return Objects.hashCode(name, isStatic, type);
     }
 

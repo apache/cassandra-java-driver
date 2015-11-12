@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 import com.google.common.collect.ImmutableMap;
+import nl.jqno.equalsverifier.EqualsVerifier;
 import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.entry;
@@ -65,6 +66,13 @@ public class TableMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
             .setRefreshNodeListIntervalMillis(0)
             .setRefreshSchemaIntervalMillis(0)
         );
+    }
+
+    @Test(groups = "unit")
+    public void should_use_all_fields_in_equals_and_hashCode() {
+        EqualsVerifier.forClass(TableMetadata.class)
+            .allFieldsShouldBeUsedExcept("cassandraVersion", "keyspace")
+            .verify();
     }
 
     @Test(groups = "short")

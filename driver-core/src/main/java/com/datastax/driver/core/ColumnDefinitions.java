@@ -15,7 +15,15 @@
  */
 package com.datastax.driver.core;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import com.google.common.base.Objects;
+
+
 
 /**
  * Metadata describing the columns returned in a {@link ResultSet} or a
@@ -355,10 +363,10 @@ public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition>
                 return false;
 
             Definition other = (Definition)o;
-            return keyspace.equals(other.keyspace)
-                && table.equals(other.table)
-                && name.equals(other.name)
-                && type.equals(other.type);
+            return Objects.equal(keyspace, other.keyspace)
+                && Objects.equal(table, other.table)
+                && Objects.equal(name, other.name)
+                && Objects.equal(type, other.type);
         }
     }
 }
