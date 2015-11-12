@@ -280,7 +280,7 @@ class SessionManager extends AbstractSession {
 
             @Override
             public void onFailure(Throwable t) {
-                logger.error("Error creating pool to " + host, t);
+                logger.warn("Error creating pool to " + host, t);
                 future.set(false);
             }
         });
@@ -364,7 +364,7 @@ class SessionManager extends AbstractSession {
                             cluster.manager.logClusterNameMismatch(host, e.expectedClusterName, e.actualClusterName);
                             cluster.manager.triggerOnDown(host, false);
                         } else {
-                            logger.error("Error creating pool to " + host, t);
+                            logger.warn("Error creating pool to " + host, t);
                         }
                         future.set(false);
                     }
@@ -615,10 +615,7 @@ class SessionManager extends AbstractSession {
                     @Override
                     public void onFailure(Throwable t) {
                         logger.debug(String.format("Unexpected error while preparing query (%s) on %s", query, entry.getKey()), t);
-
-                        // If the query timed out, that already released the connection, otherwise do it now
-                        if (!(t instanceof OperationTimedOutException))
-                            c.release();
+                        c.release();
                     }
                 });
                 futures.add(future);

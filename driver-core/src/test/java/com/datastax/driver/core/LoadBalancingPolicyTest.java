@@ -155,7 +155,7 @@ public class LoadBalancingPolicyTest extends AbstractPoliciesTest {
     @Test(groups = "long")
     public void DCAwareRoundRobinTest() throws Throwable {
 
-        Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(new DCAwareRoundRobinPolicy("dc2"));
+        Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(DCAwareRoundRobinPolicy.builder().withLocalDc("dc2").build());
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(2, 2, builder);
         try {
 
@@ -180,7 +180,7 @@ public class LoadBalancingPolicyTest extends AbstractPoliciesTest {
     @Test(groups = "long")
     public void DCAwareRoundRobinTest2() throws Throwable {
 
-        Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(new DCAwareRoundRobinPolicy("dc1"));
+        Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(DCAwareRoundRobinPolicy.builder().withLocalDc("dc1").build());
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(2, 2, builder);
         try {
 
@@ -205,7 +205,7 @@ public class LoadBalancingPolicyTest extends AbstractPoliciesTest {
     @Test(groups = "long")
     public void dcAwareRoundRobinTestWithOneRemoteHost() throws Throwable {
 
-        Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(new DCAwareRoundRobinPolicy("dc2", 1));
+        Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(DCAwareRoundRobinPolicy.builder().withLocalDc("dc2").withUsedHostsPerRemoteDc(1).build());
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(2, 2, builder);
         try {
 

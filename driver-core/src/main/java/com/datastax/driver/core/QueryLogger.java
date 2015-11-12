@@ -168,7 +168,7 @@ public abstract class QueryLogger implements LatencyTracker {
     public static final Logger SLOW_LOGGER = LoggerFactory.getLogger("com.datastax.driver.core.QueryLogger.SLOW");
 
     /**
-     * The logger used to log unsuccessful queries, i.e., queries that did not completed normally and threw an exception.
+     * The logger used to log unsuccessful queries, i.e., queries that did not complete normally and threw an exception.
      * <p>
      * This logger is activated by setting its level to {@code DEBUG} or {@code TRACE}.
      * Additionally, if the level is set to {@code TRACE} and the statement being logged is a {@link BoundStatement},

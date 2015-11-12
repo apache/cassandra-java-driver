@@ -35,6 +35,7 @@ import org.scassandra.http.client.*;
  * and a CCM cluster is not running at the same time.
  */
 public class SCassandraCluster {
+    private static final Map<Integer,Map<String,Object>> EMPTY_MAP = ImmutableMap.of();
     public static final int BINARY_PORT = 9042;
     private static final int ADMIN_PORT = 9052;
 
@@ -42,16 +43,22 @@ public class SCassandraCluster {
     private final List<InetAddress> addresses;
     private final List<PrimingClient> primingClients;
     private final List<ActivityClient> activityClients;
+    private final Map<Integer,Map<String,Object>> propertyMap;
 
     public SCassandraCluster(int nodeCount) {
         this(CCMBridge.IP_PREFIX, nodeCount);
     }
 
     public SCassandraCluster(String ipPrefix, int nodeCount) {
+        this(ipPrefix, nodeCount, EMPTY_MAP);
+    }
+
+    public SCassandraCluster(String ipPrefix, int nodeCount, Map<Integer,Map<String,Object>> propertyMap) {
         scassandras = Lists.newArrayListWithCapacity(nodeCount);
         addresses = Lists.newArrayListWithCapacity(nodeCount);
         primingClients = Lists.newArrayListWithCapacity(nodeCount);
         activityClients = Lists.newArrayListWithCapacity(nodeCount);
+        this.propertyMap = propertyMap;
 
         for (int i = 1; i <= nodeCount; i++) {
             String ip = ipPrefix + i;
@@ -142,10 +149,10 @@ public class SCassandraCluster {
             Map<String, ?> row = ImmutableMap.<String, Object>builder()
                 .put("peer", address)
                 .put("rpc_address", address)
-                .put("data_center", "datacenter1")
-                .put("rack", "rack1")
-                .put("release_version", "2.0.1")
-                .put("tokens", ImmutableSet.of(Long.toString(Long.MIN_VALUE + i)))
+                .put("data_center", getProperty(i, "data_center", "datacenter1"))
+                .put("rack", getProperty(i, "rack1", "rack1"))
+                .put("release_version", getProperty(i, "release_version", "2.0.1"))
+                .put("tokens", getProperty(i, "tokens", ImmutableSet.of(Long.toString(Long.MIN_VALUE + i))))
                 .build();
 
             rows.add(row);
@@ -164,6 +171,11 @@ public class SCassandraCluster {
                 .withColumnTypes(SELECT_PEERS_COLUMN_TYPES)
                 .withRows(rows)
                 .build());
+    }
+
+    private Object getProperty(int node, String property, Object defaultValue) {
+        Map<String,Object> nodeProperties = propertyMap.get(node);
+        return nodeProperties != null && nodeProperties.containsKey(property) ? nodeProperties.get(property) : defaultValue;
     }
 
     static final ImmutableMap<String, ColumnTypes> SELECT_PEERS_COLUMN_TYPES =

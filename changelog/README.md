@@ -9,6 +9,22 @@
 - [improvement] Raise an exception when an older version of guava (<16.01) is found (JAVA-961)
 - [bug] TypeCodec.parse() implementations should be case insensitive when checking for keyword NULL (JAVA-972)
 
+Merged from 2.1 branch:
+
+- [bug] JAVA-854: avoid early return in Cluster.init when a node doesn't support the protocol version.
+- [bug] JAVA-978: Fix quoting issue that caused Mapper.getTableMetadata() to return null.
+- [improvement] JAVA-920: Downgrade "error creating pool" message to WARN.
+- [bug] JAVA-954: Don't trigger reconnection before initialization complete.
+- [improvement] JAVA-914: Avoid rejected tasks at shutdown.
+- [improvement] JAVA-921: Add SimpleStatement.getValuesCount().
+- [bug] JAVA-901: Move call to connection.release() out of cancelHandler.
+- [bug] JAVA-960: Avoid race in control connection shutdown.
+- [bug] JAVA-656: Fix NPE in ControlConnection.updateLocationInfo.
+- [bug] JAVA-966: Count uninitialized connections in conviction policy.
+- [improvement] JAVA-917: Document SSL configuration.
+- [improvement] JAVA-652: Add DCAwareRoundRobinPolicy builder.
+- [improvement] JAVA-808: Add generic filtering policy that can be used to exclude specific DCs.
+
 ### 3.0.0-alpha4
 
 - [improvement] Change default consistency level to LOCAL_QUORUM (JAVA-926)
@@ -194,6 +210,79 @@ Merged from 2.0 branch:
 Merged from 2.1 branch:
 
 - [improvement] Unify "Target" enum for schema elements (JAVA-782)
+
+
+### 2.1.9
+
+- [bug] Fix implementation of UserType.hashCode() (JAVA-942)
+- [bug] JAVA-854: avoid early return in Cluster.init when a node doesn't support the protocol version.
+- [bug] JAVA-978: Fix quoting issue that caused Mapper.getTableMetadata() to return null.
+
+Merged from 2.0 branch:
+
+- [bug] JAVA-950: Fix Cluster.connect with a case-sensitive keyspace.
+- [improvement] JAVA-920: Downgrade "error creating pool" message to WARN.
+- [bug] JAVA-954: Don't trigger reconnection before initialization complete.
+- [improvement] JAVA-914: Avoid rejected tasks at shutdown.
+- [improvement] JAVA-921: Add SimpleStatement.getValuesCount().
+- [bug] JAVA-901: Move call to connection.release() out of cancelHandler.
+- [bug] JAVA-960: Avoid race in control connection shutdown.
+- [bug] JAVA-656: Fix NPE in ControlConnection.updateLocationInfo.
+- [bug] JAVA-966: Count uninitialized connections in conviction policy.
+- [improvement] JAVA-917: Document SSL configuration.
+- [improvement] JAVA-652: Add DCAwareRoundRobinPolicy builder.
+- [improvement] JAVA-808: Add generic filtering policy that can be used to exclude specific DCs.
+
+
+### 2.1.8
+
+Merged from 2.0 branch:
+
+- [improvement] Log streamid at the trace level on sending request and receiving response (JAVA-718)
+
+- [bug] Fix SpeculativeExecutionPolicy.init() and close() are never called (JAVA-796)
+- [improvement] Suppress unnecessary warning at shutdown (JAVA-710)
+- [improvement] Allow DNS name with multiple A-records as contact point (#340)
+- [bug] Allow tracing across multiple result pages (JAVA-794)
+- [bug] DowngradingConsistencyRetryPolicy ignores write timeouts (JAVA-737)
+- [bug] Forbid bind marker in QueryBuilder add/append/prepend (JAVA-736)
+- [bug] Prevent QueryBuilder.quote() from applying duplicate double quotes (JAVA-712)
+- [bug] Prevent QueryBuilder from trying to serialize raw string (JAVA-688)
+- [bug] Support bind marker in QueryBuilder DELETE's list index (JAVA-679)
+- [improvement] Improve QueryBuilder API for SELECT DISTINCT (JAVA-475)
+- [improvement] Create values() function for Insert builder using List (JAVA-225)
+- [improvement] Warn when ReplicationStrategy encounters invalid
+  replication factors (JAVA-702)
+- [improvement] Add PoolingOptions method to set both core and max
+  connections (JAVA-662).
+- [improvement] Do not include epoll JAR in binary distribution (JAVA-766)
+- [improvement] Optimize internal copies of Request objects (JAVA-726)
+- [bug] Preserve tracing across retries (JAVA-815)
+- [improvement] New RetryDecision.tryNextHost() (JAVA-709)
+- [bug] Handle function calls and raw strings as non-idempotent in QueryBuilder (JAVA-733)
+- [improvement] Provide API to retrieve values of a Parameterized SimpleStatement (JAVA-765)
+- [improvement] implement UPDATE ... IF EXISTS in QueryBuilder (JAVA-827)
+- [improvement] Randomize contact points list to prevent hotspots (JAVA-618)
+- [improvement] Surface the coordinator used on query failure (JAVA-720)
+- [bug] Handle contact points removed during init (JAVA-792)
+- [improvement] Allow PlainTextAuthProvider to change its credentials at runtime (JAVA-719)
+- [new feature] Make it possible to register for SchemaChange Events (JAVA-151)
+- [improvement] Downgrade "Asked to rebuild table" log from ERROR to INFO level (JAVA-861)
+- [improvement] Provide an option to prepare statements only on one node (JAVA-797)
+- [improvement] Provide an option to not re-prepare all statements in onUp (JAVA-658)
+- [improvement] Customizable creation of netty timer (JAVA-853)
+- [bug] Avoid quadratic ring processing with invalid replication factors (JAVA-859)
+- [improvement] Debounce control connection queries (JAVA-657)
+- [bug] LoadBalancingPolicy.distance() called before init() (JAVA-784)
+- [new feature] Make driver-side metadata optional (JAVA-828)
+- [improvement] Allow hosts to remain partially up (JAVA-544)
+- [improvement] Remove internal blocking calls and expose async session
+  creation (JAVA-821, JAVA-822)
+- [improvement] Use parallel calls when re-preparing statement on other
+  hosts (JAVA-725)
+- [bug] Don't use connection timeout for unrelated internal queries (JAVA-629)
+- [bug] Fix NPE in speculative executions when metrics disabled
+  (JAVA-892)
 
 
 ### 2.1.7.1
@@ -456,6 +545,22 @@ Merged from 2.0 branch: everything up to 2.0.3 (included), and the following.
 - [bug] Avoid classloader leak in Tomcat (JAVA-343)
 - [bug] Avoid deadlock in onAdd/onUp (JAVA-387)
 - [bug] Make metadata parsing more lenient (JAVA-377, JAVA-391)
+
+
+### 2.0.12
+
+- [bug] JAVA-950: Fix Cluster.connect with a case-sensitive keyspace.
+- [improvement] JAVA-920: Downgrade "error creating pool" message to WARN.
+- [bug] JAVA-954: Don't trigger reconnection before initialization complete.
+- [improvement] JAVA-914: Avoid rejected tasks at shutdown.
+- [improvement] JAVA-921: Add SimpleStatement.getValuesCount().
+- [bug] JAVA-901: Move call to connection.release() out of cancelHandler.
+- [bug] JAVA-960: Avoid race in control connection shutdown.
+- [bug] JAVA-656: Fix NPE in ControlConnection.updateLocationInfo.
+- [bug] JAVA-966: Count uninitialized connections in conviction policy.
+- [improvement] JAVA-917: Document SSL configuration.
+- [improvement] JAVA-652: Add DCAwareRoundRobinPolicy builder.
+- [improvement] JAVA-808: Add generic filtering policy that can be used to exclude specific DCs.
 
 
 ### 2.0.11

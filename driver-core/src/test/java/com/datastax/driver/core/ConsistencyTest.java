@@ -653,7 +653,7 @@ public class ConsistencyTest extends AbstractPoliciesTest {
     @Test(groups = "long")
     public void testRFThreeDowngradingCLTwoDCsDCAware() throws Throwable {
         Cluster.Builder builder = Cluster.builder()
-            .withLoadBalancingPolicy(new TokenAwarePolicy(new DCAwareRoundRobinPolicy("dc2"), false))
+            .withLoadBalancingPolicy(new TokenAwarePolicy(DCAwareRoundRobinPolicy.builder().withLocalDc("dc2").build(), false))
             .withRetryPolicy(DowngradingConsistencyRetryPolicy.INSTANCE);
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(3, 3, builder);
         try {

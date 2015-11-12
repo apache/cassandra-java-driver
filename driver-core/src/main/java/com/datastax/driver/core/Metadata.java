@@ -71,10 +71,17 @@ public class Metadata {
         }
     }
 
+    Host newHost(InetSocketAddress address) {
+        return new Host(address, cluster.convictionPolicyFactory, cluster);
+    }
+
+    Host addIfAbsent(Host host) {
+        Host previous = hosts.putIfAbsent(host.getSocketAddress(), host);
+        return previous == null ? host : null;
+    }
+
     Host add(InetSocketAddress address) {
-        Host newHost = new Host(address, cluster.convictionPolicyFactory, cluster);
-        Host previous = hosts.putIfAbsent(address, newHost);
-        return previous == null ? newHost : null;
+        return addIfAbsent(newHost(address));
     }
 
     boolean remove(Host host) {

@@ -280,7 +280,7 @@ public class Cluster implements Closeable {
      * be contacted to set the {@code keyspace}.
      * @throws AuthenticationException if an authentication error occurs while
      * contacting the initial contact points.
-     * @throws InvalidQueryException if the keyspace does not exists.
+     * @throws InvalidQueryException if the keyspace does not exist.
      * @throws IllegalStateException if the Cluster was closed prior to calling
      * this method. This can occur either directly (through {@link #close()} or
      * {@link #closeAsync()}), or as a result of an error while initializing the
@@ -421,8 +421,8 @@ public class Cluster implements Closeable {
      * The cluster metrics.
      *
      * @return the cluster metrics, or {@code null} if metrics collection has
-     * been disabled (that is if {@code cluster.getConfiguration().getMetricsOptions().isEnabled()}
-     * returns {@code false}).
+     * been disabled (that is if {@link Configuration#getMetricsOptions}
+     * returns {@code null}).
      */
     public Metrics getMetrics() {
         checkNotClosed(manager);
@@ -915,7 +915,7 @@ public class Cluster implements Closeable {
          * this one. However, this can be useful if the Cassandra nodes are behind
          * a router and are not accessed directly. Note that if you are in this
          * situtation (Cassandra nodes are behind a router, not directly accessible),
-         * you almost surely want to provide a specific {@code AddressTranslator}
+         * you almost surely want to provide a specific {@link AddressTranslator}
          * (through {@link #withAddressTranslator}) to translate actual Cassandra node
          * addresses to the addresses the driver should use, otherwise the driver
          * will not be able to auto-detect new nodes (and will generally not function
@@ -1443,6 +1443,7 @@ public class Cluster implements Closeable {
                     loadBalancingPolicy().onDown(host);
                     for (Host.StateListener listener : listeners)
                         listener.onDown(host);
+                    startPeriodicReconnectionAttempt(host, true);
                 }
 
                 configuration.getPoolingOptions().setProtocolVersion(protocolVersion());
@@ -1459,7 +1460,7 @@ public class Cluster implements Closeable {
 
                     if (!connectionFactory.protocolVersion.isSupportedBy(host)) {
                         logUnsupportedVersionProtocol(host, connectionFactory.protocolVersion);
-                        return;
+                        continue;
                     }
                     
                     if (!contactPointHosts.contains(host))
@@ -2039,14 +2040,15 @@ public class Cluster implements Closeable {
             }
         }
 
-        public boolean signalConnectionFailure(Host host, ConnectionException exception,
-                                               boolean connectionInitialized, boolean isHostAddition) {
-            // Don't signal failure until we've fully initialized the controlConnection as this might mess up with
+        public boolean signalConnectionFailure(Host host, Connection connection,
+                                               boolean isHostAddition) {
+            boolean isDown = host.convictionPolicy.signalConnectionFailure(connection);
+
+            // Don't mark the node down until we've fully initialized the controlConnection as this might mess up with
             // the protocol detection
             if (!isFullyInit || isClosed())
                 return true;
 
-            boolean isDown = host.convictionPolicy.signalConnectionFailure(exception, connectionInitialized);
             if (isDown)
                 triggerOnDown(host, isHostAddition, true);
             return isDown;

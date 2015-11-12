@@ -16,17 +16,12 @@
 package com.datastax.driver.core;
 
 import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
-
-import static java.util.concurrent.TimeUnit.SECONDS;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
-import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
-import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.util.HashedWheelTimer;
 import io.netty.util.Timer;
 
@@ -68,7 +63,6 @@ import io.netty.util.Timer;
  * and in particular for OSGi applications, it is likely that such a configuration would lead to
  * compile and/or runtime errors.</strong>
  *
- * @jira_ticket JAVA-640
  * @since 2.0.10
  */
 public class NettyOptions {
@@ -79,7 +73,7 @@ public class NettyOptions {
     public static final NettyOptions DEFAULT_INSTANCE = new NettyOptions();
 
     /**
-     * Return the {@link EventLoopGroup} instance to use.
+     * Return the {@code EventLoopGroup} instance to use.
      * <p>
      * This hook is invoked only once at {@link Cluster} initialization;
      * the returned instance will be kept in use throughout the cluster lifecycle.
@@ -89,30 +83,30 @@ public class NettyOptions {
      * case implementors should also override {@link #onClusterClose(EventLoopGroup)}
      * to prevent the shared instance to be closed when the cluster is closed.
      * <p>
-     * The default implementation returns a new instance of {@link io.netty.channel.epoll.EpollEventLoopGroup}
+     * The default implementation returns a new instance of {@code io.netty.channel.epoll.EpollEventLoopGroup}
      * if {@link NettyUtil#isEpollAvailable() epoll is available},
-     * or {@link NioEventLoopGroup} otherwise.
+     * or {@code io.netty.channel.nio.NioEventLoopGroup} otherwise.
      *
-     * @param threadFactory The {@link ThreadFactory} to use when creating a new {@link EventLoopGroup} instance;
+     * @param threadFactory The {@link ThreadFactory} to use when creating a new {@code EventLoopGroup} instance;
      *                      The driver will provide its own internal thread factory here.
      *                      It is safe to ignore it and use another thread factory.
-     * @return the {@link EventLoopGroup} instance to use.
+     * @return the {@code EventLoopGroup} instance to use.
      */
     public EventLoopGroup eventLoopGroup(ThreadFactory threadFactory) {
         return NettyUtil.newEventLoopGroupInstance(threadFactory);
     }
 
     /**
-     * Return the specific {@link SocketChannel} subclass to use.
+     * Return the specific {@code SocketChannel} subclass to use.
      * <p>
      * This hook is invoked only once at {@link Cluster} initialization;
      * the returned instance will then be used each time the driver creates a new {@link Connection}
      * and configures a new instance of {@link Bootstrap} for it.
      * <p>
-     * The default implementation returns {@link io.netty.channel.epoll.EpollSocketChannel} if {@link NettyUtil#isEpollAvailable() epoll is available},
-     * or {@link NioSocketChannel} otherwise.
+     * The default implementation returns {@code io.netty.channel.epoll.EpollSocketChannel} if {@link NettyUtil#isEpollAvailable() epoll is available},
+     * or {@code io.netty.channel.socket.nio.NioSocketChannel} otherwise.
      *
-     * @return The {@link SocketChannel} subclass to use.
+     * @return The {@code SocketChannel} subclass to use.
      */
     public Class<? extends SocketChannel> channelClass() {
         return NettyUtil.channelClass();
@@ -183,22 +177,17 @@ public class NettyOptions {
      * <p>
      * This gives the implementor a chance to close the {@link EventLoopGroup} properly, if required.
      * <p>
-     * The default implementation initiates a {@link EventLoopGroup#shutdownGracefully(long, long, TimeUnit) graceful shutdown}
-     * of the passed {@link EventLoopGroup} instance with no "quiet period" and a timeout of 15 seconds;
-     * then waits uninterruptibly for the shutdown to complete, or the timeout to occur, whichever happens first.
+     * The default implementation initiates a {@link EventLoopGroup#shutdownGracefully() graceful shutdown}
+     * of the passed {@link EventLoopGroup}, then waits uninterruptibly for the shutdown to complete or timeout.
      * <p>
      * Implementation note: if the {@link EventLoopGroup} instance is being shared, or used for other purposes than to
-     * coordinate Netty events for the current cluster, than it should not be shut down here;
+     * coordinate Netty events for the current cluster, then it should not be shut down here;
      * subclasses would have to override this method accordingly to take the appropriate action.
      *
      * @param eventLoopGroup the event loop group used by the cluster being closed
      */
     public void onClusterClose(EventLoopGroup eventLoopGroup) {
-        // shutdownGracefully with default parameters employs a quiet period of 2 seconds
-        // where in pre-Netty4 versions, closing a cluster instance was very quick (milliseconds).
-        // Since we close the channels before shutting down the eventLoopGroup,
-        // it is safe to reduce the quiet period to 0 seconds
-        eventLoopGroup.shutdownGracefully(0, 15, SECONDS).syncUninterruptibly();
+        eventLoopGroup.shutdownGracefully().syncUninterruptibly();
     }
 
     /**

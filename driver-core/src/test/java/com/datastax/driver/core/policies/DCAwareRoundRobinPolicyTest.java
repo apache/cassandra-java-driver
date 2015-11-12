@@ -179,11 +179,11 @@ public class DCAwareRoundRobinPolicyTest {
         Set<Host> initHosts = new CopyOnWriteArraySet<Host>();
 
         CountingDCAwarePolicy() {
-            super(new DCAwareRoundRobinPolicy());
+            super(DCAwareRoundRobinPolicy.builder().build());
         }
 
         CountingDCAwarePolicy(String localDc) {
-            super(new DCAwareRoundRobinPolicy(localDc));
+            super(DCAwareRoundRobinPolicy.builder().withLocalDc(localDc).build());
         }
 
         String getLocalDc() {

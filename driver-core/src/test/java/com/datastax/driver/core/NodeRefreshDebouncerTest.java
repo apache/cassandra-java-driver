@@ -19,7 +19,6 @@ import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
 import org.mockito.ArgumentCaptor;
-import org.mockito.Mockito;
 import org.testng.annotations.Test;
 
 import static com.google.common.collect.Lists.newArrayList;

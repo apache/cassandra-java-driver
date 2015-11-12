@@ -51,7 +51,6 @@ public class SimpleStatementTest {
         new SimpleStatement("doesn't matter", cluster).getObject(0);
     }
 
-
     @Test(groups = "unit", expectedExceptions = { IndexOutOfBoundsException.class })
     public void should_throw_IOOBE_if_getObject_called_with_wrong_index() {
         new SimpleStatement("doesn't matter", cluster, new Object()).getObject(1);
@@ -63,4 +62,15 @@ public class SimpleStatementTest {
         Object actual = new SimpleStatement("doesn't matter", cluster, expected).getObject(0);
         assertThat(actual).isSameAs(expected);
     }
+
+    @Test(groups = "unit")
+    public void should_return_number_of_values() {
+        assertThat(
+            new SimpleStatement("doesn't matter", cluster).valuesCount()
+        ).isEqualTo(0);
+        assertThat(
+            new SimpleStatement("doesn't matter", cluster, 1, 2).valuesCount()
+        ).isEqualTo(2);
+    }
+
 }

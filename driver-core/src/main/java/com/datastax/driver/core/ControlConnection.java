@@ -121,6 +121,9 @@ class ControlConnection implements Connection.Owner {
         new AbstractReconnectionHandler("Control connection", cluster.reconnectionExecutor, cluster.reconnectionPolicy().newSchedule(), reconnectionAttempt, initialDelayMs) {
             @Override
             protected Connection tryReconnect() throws ConnectionException {
+                if (isShutdown)
+                    throw new ConnectionException(null, "Control connection was shut down");
+
                 try {
                     return reconnectInternal(queryPlan(), false);
                 } catch (NoHostAvailableException e) {
@@ -134,17 +137,28 @@ class ControlConnection implements Connection.Owner {
 
             @Override
             protected void onReconnection(Connection connection) {
+                if (isShutdown) {
+                    connection.closeAsync();
+                    return;
+                }
+
                 setNewConnection(connection);
             }
 
             @Override
             protected boolean onConnectionException(ConnectionException e, long nextDelayMs) {
+                if (isShutdown)
+                    return false;
+
                 logger.error("[Control connection] Cannot connect to any host, scheduling retry in {} milliseconds", nextDelayMs);
                 return true;
             }
 
             @Override
             protected boolean onUnknownException(Exception e, long nextDelayMs) {
+                if (isShutdown)
+                    return false;
+
                 logger.error(String.format("[Control connection] Unknown error during reconnection, scheduling retry in %d milliseconds", nextDelayMs), e);
                 return true;
             }
@@ -191,7 +205,6 @@ class ControlConnection implements Connection.Owner {
                         // Mark the host down right away so that we don't try it again during the initialization process.
                         // We don't call cluster.triggerOnDown because it does a bunch of other things we don't want to do here (notify LBP, etc.)
                         host.setDown();
-                        cluster.startPeriodicReconnectionAttempt(host, true);
                     }
                 } catch (ExecutionException e) {
                     errors = logError(host, e.getCause(), errors, iter);
@@ -551,8 +564,15 @@ class ControlConnection implements Connection.Owner {
             if (host == null) {
                 // We don't know that node, create the Host object but wait until we've set the known
                 // info before signaling the addition.
-                host = cluster.metadata.add(foundHosts.get(i));
-                isNew = true;
+                Host newHost = cluster.metadata.newHost(foundHosts.get(i));
+                Host existing = cluster.metadata.addIfAbsent(newHost);
+                if (existing == null) {
+                    host = newHost;
+                    isNew = true;
+                } else {
+                    host = existing;
+                    isNew = false;
+                }
             }
             if (dcs.get(i) != null || racks.get(i) != null)
                 updateLocationInfo(host, dcs.get(i), racks.get(i), isInitialConnection, cluster);

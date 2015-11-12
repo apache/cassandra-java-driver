@@ -184,5 +184,5 @@ Changing the driver's defaults should be done with care and only in
 specific situations; read each method's Javadoc for detailed
 explanations.
 
-[setPrepareOnAllHosts]: http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/QueryOptions.html#setPrepareOnAllHosts(boolean)
-[setReprepareOnUp]: http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/QueryOptions.html#setReprepareOnUp(boolean)
+[setPrepareOnAllHosts]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/QueryOptions.html#setPrepareOnAllHosts(boolean)
+[setReprepareOnUp]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/QueryOptions.html#setReprepareOnUp(boolean)

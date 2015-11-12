@@ -44,7 +44,7 @@ ones annotated `@Transient`) must have corresponding setters and
 getters.
 
 [table]:http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/mapping/annotations/Table.html
-[case-sensitive]:http://docs.datastax.com/en/cql/3.2/cql/cql_reference/ucase-lcase_r.html
+[case-sensitive]:http://docs.datastax.com/en/cql/3.3/cql/cql_reference/ucase-lcase_r.html
 [consistency level]:http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/ConsistencyLevel.html
 
 #### Column names

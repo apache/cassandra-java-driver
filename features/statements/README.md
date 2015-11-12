@@ -42,13 +42,13 @@ If you use custom policies ([RetryPolicy], [LoadBalancingPolicy],
 properties that influence statement execution. To achieve this, you can
 wrap your statements in a custom [StatementWrapper] implementation.
 
-[Statement]: http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/Statement.html
-[SimpleStatement]: http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/SimpleStatement.html
-[BoundStatement]: http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/BoundStatement.html
-[BatchStatement]: http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/BatchStatement.html
-[QueryBuilder]: http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/querybuilder/QueryBuilder.html
-[BuiltStatement]: http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/querybuilder/BuiltStatement.html
-[StatementWrapper]: http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/StatementWrapper.html
-[RetryPolicy]: http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/policies/RetryPolicy.html
-[LoadBalancingPolicy]: http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/policies/LoadBalancingPolicy.html
-[SpeculativeExecutionPolicy]: http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/policies/SpeculativeExecutionPolicy.html
+[Statement]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/Statement.html
+[SimpleStatement]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/SimpleStatement.html
+[BoundStatement]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/BoundStatement.html
+[BatchStatement]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/BatchStatement.html
+[QueryBuilder]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/querybuilder/QueryBuilder.html
+[BuiltStatement]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/querybuilder/BuiltStatement.html
+[StatementWrapper]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/StatementWrapper.html
+[RetryPolicy]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/policies/RetryPolicy.html
+[LoadBalancingPolicy]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/policies/LoadBalancingPolicy.html
+[SpeculativeExecutionPolicy]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/policies/SpeculativeExecutionPolicy.html

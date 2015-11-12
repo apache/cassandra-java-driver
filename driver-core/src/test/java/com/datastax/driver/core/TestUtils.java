@@ -23,8 +23,11 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.nio.ByteBuffer;
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import com.google.common.util.concurrent.Futures;
+import io.netty.channel.EventLoopGroup;
 import org.scassandra.Scassandra;
 import org.scassandra.ScassandraFactory;
 import org.slf4j.Logger;
@@ -550,6 +553,38 @@ public abstract class TestUtils {
         }
     }
 
+    public static Host findOrWaitForHost(Cluster cluster, int node, long duration, TimeUnit unit) {
+        return findOrWaitForHost(cluster, CCMBridge.ipOfNode(node), duration, unit);
+    }
+
+    public static Host findOrWaitForHost(final Cluster cluster, final String address, long duration, TimeUnit unit) {
+        Host host = findHost(cluster, address);
+        if(host == null) {
+            final CountDownLatch addSignal = new CountDownLatch(1);
+            Host.StateListener addListener = new StateListenerBase() {
+                @Override
+                public void onAdd(Host host) {
+                    if(host.getAddress().getHostAddress().equals(address)) {
+                        // for a new node, because of this we also listen for add events.
+                        addSignal.countDown();
+                    }
+                }
+            };
+            cluster.register(addListener);
+            try {
+                // Wait until an add event occurs or we timeout.
+                if (addSignal.await(duration, unit)) {
+                    host = findHost(cluster, address);
+                }
+            } catch (InterruptedException e) {
+                return null;
+            } finally {
+                cluster.unregister(addListener);
+            }
+        }
+        return host;
+    }
+
     public static Host findHost(Cluster cluster, int hostNumber) {
         return findHost(cluster, CCMBridge.ipOfNode(hostNumber));
     }
@@ -652,4 +687,16 @@ public abstract class TestUtils {
             .setRefreshNodeListIntervalMillis(0)
             .setRefreshSchemaIntervalMillis(0);
     }
+
+    /**
+     * A custom {@link NettyOptions} that shuts down the {@link EventLoopGroup} after
+     * no quiet time.  This is useful for tests that consistently close clusters as
+     * otherwise there is a 2 second delay (from JAVA-914).
+     */
+    public static NettyOptions nonQuietClusterCloseOptions = new NettyOptions() {
+        @Override
+        public void onClusterClose(EventLoopGroup eventLoopGroup) {
+            eventLoopGroup.shutdownGracefully(0, 15, TimeUnit.SECONDS).syncUninterruptibly();
+        }
+    };
 }

@@ -31,7 +31,7 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
-
+import static com.datastax.driver.core.TestUtils.nonQuietClusterCloseOptions;
 
 /**
  * Simple test of the Sessions methods against a one node cluster.
@@ -171,7 +171,10 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
 
             // Use our own cluster and session (not the ones provided by the parent class) because we want an uninitialized cluster
             // (note the use of newSession below)
-            final Cluster cluster = Cluster.builder().addContactPointsWithPorts(Collections.singletonList(hostAddress)).build();
+            final Cluster cluster = Cluster.builder()
+                .addContactPointsWithPorts(Collections.singletonList(hostAddress))
+                .withNettyOptions(nonQuietClusterCloseOptions)
+                .build();
             final Session session = cluster.newSession();
 
             // Spawn two threads to simulate the race
@@ -207,7 +210,7 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
             startLatch.countDown();
 
             executor.shutdown();
-            boolean normalShutdown = executor.awaitTermination(1, TimeUnit.SECONDS);
+            boolean normalShutdown = executor.awaitTermination(5, TimeUnit.SECONDS);
             assertTrue(normalShutdown);
 
             // The deadlock occurred here before JAVA-418

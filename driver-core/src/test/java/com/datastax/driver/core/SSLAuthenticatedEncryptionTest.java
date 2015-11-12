@@ -20,8 +20,7 @@ import org.testng.annotations.Test;
 
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
-import static com.datastax.driver.core.CCMBridge.DEFAULT_CLIENT_KEYSTORE_PATH;
-import static com.datastax.driver.core.CCMBridge.DEFAULT_CLIENT_TRUSTSTORE_PATH;
+import static com.datastax.driver.core.CCMBridge.*;
 
 public class SSLAuthenticatedEncryptionTest extends SSLTestBase {
 
@@ -58,5 +57,27 @@ public class SSLAuthenticatedEncryptionTest extends SSLTestBase {
     @Test(groups="short", expectedExceptions={NoHostAvailableException.class})
     public void should_not_connect_without_client_auth_but_node_requires_auth() throws Exception {
         connectWithSSLOptions(getSSLOptions(Optional.<String>absent(), Optional.of(DEFAULT_CLIENT_TRUSTSTORE_PATH)));
+    }
+
+    /**
+     * <p>
+     * Validates that SSL connectivity can be configured via the standard javax.net.ssl System properties.
+     * </p>
+     *
+     * @test_category connection:ssl, authentication
+     * @expected_result Connection can be established.
+     */
+    @Test(groups="short")
+    public void should_use_system_properties_with_default_ssl_options() throws Exception {
+        try {
+            System.setProperty("javax.net.ssl.keyStore", DEFAULT_CLIENT_KEYSTORE_FILE.getAbsolutePath());
+            System.setProperty("javax.net.ssl.keyStorePassword", DEFAULT_CLIENT_KEYSTORE_PASSWORD);
+            System.setProperty("javax.net.ssl.trustStore", DEFAULT_CLIENT_TRUSTSTORE_FILE.getAbsolutePath());
+            System.setProperty("javax.net.ssl.trustStorePassword", DEFAULT_CLIENT_TRUSTSTORE_PASSWORD);
+
+            connectWithSSL();
+        } finally {
+            clearSystemProperties();
+        }
     }
 }

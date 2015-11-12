@@ -257,7 +257,6 @@ public class Host {
 
     void setDown() {
         state = State.DOWN;
-        convictionPolicy.reset();
     }
 
     void setUp() {

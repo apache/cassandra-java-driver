@@ -25,6 +25,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
+import com.google.common.util.concurrent.Uninterruptibles;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.AfterMethod;
@@ -32,8 +33,12 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
 import static org.testng.Assert.fail;
 
+import com.datastax.driver.core.AbstractReconnectionHandler.HandlerFuture;
 import com.datastax.driver.core.AbstractReconnectionHandlerTest.MockReconnectionWork.ReconnectBehavior;
 import com.datastax.driver.core.policies.ReconnectionPolicy.ReconnectionSchedule;
 
@@ -48,7 +53,7 @@ public class AbstractReconnectionHandlerTest {
 
     @BeforeMethod(groups = {"unit", "short"})
     public void setup() {
-        executor = Executors.newScheduledThreadPool(2);
+        executor = spy(Executors.newScheduledThreadPool(2));
         schedule = new MockReconnectionSchedule();
         work = new MockReconnectionWork();
         future.set(null);
@@ -133,6 +138,9 @@ public class AbstractReconnectionHandlerTest {
     public void should_stop_if_cancelled_between_attempts() {
         handler.start();
 
+        // Wait for the initial schedule of a reconnect.
+        verify(executor, timeout(1000)).schedule(handler, 0, TimeUnit.MILLISECONDS);
+
         // Force a failed reconnect.
         schedule.tick();
         work.nextReconnect = ReconnectBehavior.THROW_EXCEPTION;
@@ -143,17 +151,30 @@ public class AbstractReconnectionHandlerTest {
         schedule.delay = 3000;
         schedule.tick();
 
-        // At this point the reconnect should be scheduled but not executed yet, cancel the future.
+        // Ensure reconnect is scheduled (slight timing window after handling failed reconnect
+        // and scheduling next reconnect).
+        verify(executor, timeout(1000)).schedule(handler, schedule.delay, TimeUnit.MILLISECONDS);
+
+        // Add a short delay to account for nextTry being assigned after schedule completes.
+        Uninterruptibles.sleepUninterruptibly(5, TimeUnit.MILLISECONDS);
         future.get().cancel(false);
 
-        // Should block until scheduler runs, detects cancel and exits.
+        // Should immediately return as the future was cancelled while the task was scheduled.
         waitForCompletion();
 
         assertThat(work.success).isFalse();
         // Should have had 1 failed attempt, no second attempt since cancelled.
         assertThat(work.tries).isEqualTo(1);
-        // The future will be marked null once it is detected as cancelled.
-        assertThat(future.get()).isNull();
+
+        // The future will be marked cancelled and thus not executed.
+        ListenableFuture<?> currentAttempt = future.get();
+        assertThat(currentAttempt).isInstanceOf(HandlerFuture.class);
+        HandlerFuture handlerFuture = (HandlerFuture)currentAttempt;
+        assertThat(handlerFuture.isCancelled());
+
+        // The next try should also be cancelled.
+        assertThat(handlerFuture.nextTry).isNotNull();
+        assertThat(handlerFuture.nextTry.isCancelled());
     }
 
     @Test(groups = "unit")
