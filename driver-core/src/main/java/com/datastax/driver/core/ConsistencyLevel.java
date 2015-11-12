@@ -64,4 +64,13 @@ public enum ConsistencyLevel {
     public boolean isDCLocal() {
         return this == LOCAL_ONE || this == LOCAL_QUORUM;
     }
+
+    /**
+     * Whether or not the consistency level is a serial consistency level.
+     *
+     * @return whether this consistency level is {@code LOCAL_SERIAL} or {@code SERIAL}.
+     */
+    public boolean isSerial() {
+        return this == LOCAL_SERIAL || this == SERIAL;
+    }
 }
