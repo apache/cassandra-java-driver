@@ -127,4 +127,27 @@ public class MetadataTest {
         }
         return tokensByHost;
     }
+
+    @Test(groups = "unit")
+    public void handleId_should_lowercase_unquoted_alphanumeric_identifiers() {
+        assertThat(Metadata.handleId("FooBar1")).isEqualTo("foobar1");
+        assertThat(Metadata.handleId("Foo_Bar_1")).isEqualTo("foo_bar_1");
+    }
+
+    @Test(groups = "unit")
+    public void handleId_should_unquote_and_preserve_case_of_quoted_identifiers() {
+        assertThat(Metadata.handleId("\"FooBar1\"")).isEqualTo("FooBar1");
+        assertThat(Metadata.handleId("\"Foo_Bar_1\"")).isEqualTo("Foo_Bar_1");
+        assertThat(Metadata.handleId("\"Foo Bar 1\"")).isEqualTo("Foo Bar 1");
+    }
+
+    @Test(groups = "unit")
+    public void handleId_should_unescape_duplicate_double_quotes_in_quoted_identifiers() {
+        assertThat(Metadata.handleId("\"Foo\"\"Bar\"")).isEqualTo("Foo\"Bar");
+    }
+
+    @Test(groups = "unit")
+    public void handleId_should_preserve_unquoted_non_alphanumeric_identifiers() {
+        assertThat(Metadata.handleId("Foo Bar")).isEqualTo("Foo Bar");
+    }
 }

@@ -1,5 +1,10 @@
 ## Changelog
 
+### 2.1.10 (in progress)
+
+- [bug] JAVA-988: Metadata.handleId should handle escaped double quotes.
+
+
 ### 2.1.9
 
 - [bug] Fix implementation of UserType.hashCode() (JAVA-942)
