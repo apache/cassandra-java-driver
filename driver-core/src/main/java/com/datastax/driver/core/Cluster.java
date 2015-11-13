@@ -1110,8 +1110,9 @@ public class Cluster implements Closeable {
         /**
          * Enables the use of SSL for the created {@code Cluster}.
          * <p>
-         * Calling this method will use default SSL options (see {@link SSLOptions#SSLOptions()}).
-         * This is thus a shortcut for {@code withSSL(new SSLOptions())}.
+         * Calling this method will use the JDK-based implementation with the default options
+         * (see {@link JdkSSLOptions.Builder}).
+         * This is thus a shortcut for {@code withSSL(JdkSSLOptions.builder().build())}.
          * <p>
          * Note that if SSL is enabled, the driver will not connect to any
          * Cassandra nodes that doesn't have SSL enabled and it is strongly
@@ -1121,7 +1122,7 @@ public class Cluster implements Closeable {
          * @return this builder.
          */
         public Builder withSSL() {
-            this.sslOptions = new SSLOptions();
+            this.sslOptions = JdkSSLOptions.builder().build();
             return this;
         }
 

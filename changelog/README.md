@@ -10,6 +10,9 @@
 - [bug] JAVA-972: TypeCodec.parse() implementations should be case insensitive when checking for keyword NULL.
 - [bug] JAVA-971: Make type codecs invariant.
 - [bug] JAVA-986: Update documentation links to reference 3.0.
+- [improvement] JAVA-841: Refactor SSLOptions API.
+- [improvement] JAVA-948: Don't limit cipher suites by default.
+- [improvement] JAVA-917: Document SSL configuration.
 
 Merged from 2.1 branch:
 
