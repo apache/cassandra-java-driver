@@ -46,8 +46,8 @@ public class Metadata {
     private final ConcurrentMap<String, KeyspaceMetadata> keyspaces = new ConcurrentHashMap<String, KeyspaceMetadata>();
     volatile TokenMap tokenMap;
 
-    private static final Pattern cqlId = Pattern.compile("\\w+");
-    private static final Pattern lowercaseId = Pattern.compile("[a-z][a-z0-9_]*");
+    private static final Pattern alphanumeric = Pattern.compile("\\w+"); // this includes _
+    private static final Pattern lowercaseAlphanumeric = Pattern.compile("[a-z][a-z0-9_]*");
 
     Metadata(Cluster.Manager cluster) {
         this.cluster = cluster;
@@ -387,20 +387,32 @@ public class Metadata {
         return hosts.values();
     }
 
-    // Deal with case sensitivity for a given keyspace or table id
+    /*
+     * Deal with case sensitivity for a given element id (keyspace, table, column, etc.)
+     *
+     * This method is used to convert identifiers provided by the client (through methods such as getKeyspace(String)),
+     * to the format used internally by the driver.
+     *
+     * We expect client-facing APIs to behave like cqlsh, that is:
+     * - identifiers that are mixed-case or contain special characters should be quoted.
+     * - unquoted identifiers will be lowercased: getKeyspace("Foo") will look for a keyspace named "foo"
+     */
     static String handleId(String id) {
         // Shouldn't really happen for this method, but no reason to fail here
         if (id == null)
             return null;
 
-        if (cqlId.matcher(id).matches())
+        if (alphanumeric.matcher(id).matches())
             return id.toLowerCase();
 
-        // Check if it's enclosed in quotes. If it is, remove them
+        // Check if it's enclosed in quotes. If it is, remove them and unescape internal double quotes
         if (id.charAt(0) == '"' && id.charAt(id.length() - 1) == '"')
-            return id.substring(1, id.length() - 1);
+            return id.substring(1, id.length() - 1).replaceAll("\"\"", "\"");
 
-        // otherwise, just return the id.
+        // Otherwise, just return the id.
+        // Note that this is a bit at odds with the rules explained above, because the client can pass an
+        // identifier that contains special characters, without the need to quote it.
+        // Still it's better to be lenient here rather than throwing an exception.
         return id;
     }
 
@@ -409,7 +421,7 @@ public class Metadata {
     // but to get a nicer output we don't do it if it's not necessary.
     static String escapeId(String ident) {
         // we don't need to escape if it's lowercase and match non-quoted CQL3 ids.
-        return lowercaseId.matcher(ident).matches() ? ident : quote(ident);
+        return lowercaseAlphanumeric.matcher(ident).matches() ? ident : quote(ident);
     }
 
     /**
