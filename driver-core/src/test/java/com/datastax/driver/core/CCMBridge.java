@@ -431,13 +431,13 @@ public class CCMBridge {
             erroredOut = true;
         }
 
-        @BeforeClass(groups = { "short", "long" })
+        @BeforeClass(groups = { "isolated", "short", "long" })
         public void beforeClass() {
             maybeInitCluster();
             initKeyspace();
         }
 
-        @AfterClass(groups = { "short", "long" })
+        @AfterClass(groups = { "isolated", "short", "long" })
         public void afterClass() {
             try {
                 clearSimpleKeyspace();
