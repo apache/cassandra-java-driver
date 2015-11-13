@@ -435,10 +435,14 @@ public class Cluster implements Closeable {
      * <p>
      * Registering the same listener multiple times is a no-op.
      * <p>
-     * Note that while {@link LoadBalancingPolicy} implements
-     * {@code Host.StateListener}, the configured load balancing does not
-     * need to (and should not) be registered through this method to
-     * received host related events.
+     * This method should be used to register additional listeners
+     * on an already-initialized cluster.
+     * To add listeners to a cluster object prior to its initialization,
+     * use {@link Builder#withInitialListeners(Collection)}.
+     * Calling this method on a non-initialized cluster
+     * will result in the listener being
+     * {@link com.datastax.driver.core.Host.StateListener#onRegister(Cluster) notified}
+     * twice of cluster registration: once inside this method, and once at cluster initialization.
      *
      * @param listener the new {@link Host.StateListener} to register.
      * @return this {@code Cluster} object;
@@ -453,7 +457,7 @@ public class Cluster implements Closeable {
     /**
      * Unregisters the provided listener from being notified on hosts events.
      * <p>
-     * This method is a no-op if {@code listener} hadn't previously be
+     * This method is a no-op if {@code listener} hasn't previously been
      * registered against this Cluster.
      *
      * @param listener the {@link Host.StateListener} to unregister.
@@ -472,13 +476,15 @@ public class Cluster implements Closeable {
      * <p>
      * Registering the same listener multiple times is a no-op.
      * <p>
-     * Be wary that the registered tracker {@code update} method will be call
+     * Beware that the registered tracker's
+     * {@link LatencyTracker#update(Host, Statement, Exception, long) update}
+     * method will be called
      * very frequently (at the end of every query to a Cassandra host) and
      * should thus not be costly.
      * <p>
-     * The main use case for a {@code LatencyTracker} is so
-     * {@link LoadBalancingPolicy} can implement latency awareness
-     * Typically, {@link LatencyAwarePolicy} registers  it's own internal
+     * The main use case for a {@link LatencyTracker} is to allow
+     * load balancing policies to implement latency awareness.
+     * For example, {@link LatencyAwarePolicy} registers  it's own internal
      * {@code LatencyTracker} (automatically, you don't have to call this
      * method directly).
      *
@@ -496,7 +502,7 @@ public class Cluster implements Closeable {
      * Unregisters the provided latency tracking from being updated
      * with host read latencies.
      * <p>
-     * This method is a no-op if {@code tracker} hadn't previously be
+     * This method is a no-op if {@code tracker} hasn't previously been
      * registered against this Cluster.
      *
      * @param tracker the {@link LatencyTracker} to unregister.
@@ -528,7 +534,7 @@ public class Cluster implements Closeable {
      * Unregisters the provided schema change listener from being updated
      * with schema change events.
      * <p>
-     * This method is a no-op if {@code listener} hadn't previously be
+     * This method is a no-op if {@code listener} hasn't previously been
      * registered against this Cluster.
      *
      * @param listener the {@link SchemaChangeListener} to unregister.
