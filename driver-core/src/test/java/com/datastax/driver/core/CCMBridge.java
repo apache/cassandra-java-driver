@@ -60,8 +60,12 @@ public class CCMBridge {
     public static final String DEFAULT_CLIENT_TRUSTSTORE_PASSWORD = "cassandra1sfun";
     public static final String DEFAULT_CLIENT_TRUSTSTORE_PATH = "/client.truststore";
 
+    public static final File DEFAULT_CLIENT_TRUSTSTORE_FILE = createTempStore(DEFAULT_CLIENT_TRUSTSTORE_PATH);
+
     public static final String DEFAULT_CLIENT_KEYSTORE_PASSWORD = "cassandra1sfun";
     public static final String DEFAULT_CLIENT_KEYSTORE_PATH = "/client.keystore";
+
+    public static final File DEFAULT_CLIENT_KEYSTORE_FILE = createTempStore(DEFAULT_CLIENT_KEYSTORE_PATH);
 
     // Contain the same keypair as the client keystore, but in format usable by OpenSSL
     public static final File DEFAULT_CLIENT_PRIVATE_KEY_FILE = createTempStore("/client.key");
@@ -433,13 +437,13 @@ public class CCMBridge {
             erroredOut = true;
         }
 
-        @BeforeClass(groups = { "short", "long" })
+        @BeforeClass(groups = { "isolated", "short", "long" })
         public void beforeClass() {
             maybeInitCluster();
             initKeyspace();
         }
 
-        @AfterClass(groups = { "short", "long" })
+        @AfterClass(groups = { "isolated", "short", "long" })
         public void afterClass() {
             try {
                 clearSimpleKeyspace();

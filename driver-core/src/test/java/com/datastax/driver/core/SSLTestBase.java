@@ -39,14 +39,14 @@ public abstract class SSLTestBase {
         this.requireClientAuth = requireClientAuth;
     }
 
-    @BeforeClass(groups={"short", "long"})
+    @BeforeClass(groups={"isolated", "short", "long"})
     public void beforeClass() {
         ccm = CCMBridge.builder("test")
             .withSSL(requireClientAuth)
             .build();
     }
 
-    @AfterClass(groups={"short", "long"})
+    @AfterClass(groups={"isolated", "short", "long"})
     public void afterClass() {
         ccm.remove();
     }
@@ -67,6 +67,30 @@ public abstract class SSLTestBase {
             cluster = Cluster.builder()
                 .addContactPoint(CCMBridge.IP_PREFIX + '1')
                 .withSSL(sslOptions)
+                .build();
+
+            cluster.connect();
+        } finally {
+            if (cluster != null)
+                cluster.close();
+        }
+    }
+
+    /**
+     * <p>
+     * Attempts to connect to a cassandra cluster with using {@link Cluster.Builder#withSSL} with no
+     * provided {@link SSLOptions} and then closes the created {@link Cluster} instance.
+     * </p>
+     *
+     * @throws Exception A {@link com.datastax.driver.core.exceptions.NoHostAvailableException} will be
+     *  raised here if connection cannot be established.
+     */
+    protected void connectWithSSL() throws Exception {
+        Cluster cluster = null;
+        try {
+            cluster = Cluster.builder()
+                .addContactPoint(CCMBridge.IP_PREFIX + '1')
+                .withSSL()
                 .build();
 
             cluster.connect();

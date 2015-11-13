@@ -29,6 +29,8 @@ Merged from 2.1 branch:
 - [improvement] JAVA-917: Document SSL configuration.
 - [improvement] JAVA-652: Add DCAwareRoundRobinPolicy builder.
 - [improvement] JAVA-808: Add generic filtering policy that can be used to exclude specific DCs.
+- [bug] JAVA-988: Metadata.handleId should handle escaped double quotes.
+
 
 
 ### 3.0.0-alpha4
@@ -213,6 +215,11 @@ Merged from 2.0 branch:
 Merged from 2.1 branch:
 
 - [improvement] JAVA-782: Unify "Target" enum for schema elements.
+
+
+### 2.1.10 (in progress)
+
+- [bug] JAVA-988: Metadata.handleId should handle escaped double quotes.
 
 
 ### 2.1.9

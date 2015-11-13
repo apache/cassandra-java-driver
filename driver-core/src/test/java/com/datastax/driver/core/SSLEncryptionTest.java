@@ -123,4 +123,20 @@ public class SSLEncryptionTest extends SSLTestBase {
                 cluster.close();
         }
     }
+
+    /**
+     * <p>
+     * Validates that SSL connectivity can be configured via the standard javax.net.ssl System properties.
+     * </p>
+     *
+     * @test_category connection:ssl
+     * @expected_result Connection can be established.
+     */
+    @Test(groups="isolated")
+    public void should_use_system_properties_with_default_ssl_options() throws Exception {
+        System.setProperty("javax.net.ssl.trustStore", CCMBridge.DEFAULT_CLIENT_TRUSTSTORE_FILE.getAbsolutePath());
+        System.setProperty("javax.net.ssl.trustStorePassword", CCMBridge.DEFAULT_CLIENT_TRUSTSTORE_PASSWORD);
+
+        connectWithSSL();
+    }
 }
