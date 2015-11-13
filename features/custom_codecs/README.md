@@ -374,6 +374,45 @@ Foo<Bar> foo = row.get(0, new TypeToken<Foo<Bar>>(){})
 Foo<Bar> foo = row.get(0, Foo.class);
 ```
 
+### Support for subtype polymorphism
+
+Suppose the following class hierarchy:
+
+```java
+class Animal {}
+class Cat extends Animal {}
+```
+
+By default, a codec will accept to serialize any object that extends or
+implements its declared Java type: a codec such as
+`AnimalCodec extends TypeCodec<Animal>` will accept `Cat` instances as well.
+
+This allows a codec to handle interfaces and superclasses
+in a generic way, regardless of the actual implementation being
+used by client code; for example, the driver has a built-in codec
+that handles `List` instances, and this codec is capable of
+serializing any concrete `List` implementation.
+
+But this has one caveat: when setting or retrieving values
+with `get()` and `set()`, *it is vital to pass the exact 
+Java type the codec handles*:
+
+```java
+codecRegistry.register(new AnimalCodec());
+BoundStatement bs = ...
+bs.set(0, new Cat(), Animal.class); // works
+bs.set(0, new Cat(),    Cat.class); // throws CodecNotFoundException
+```
+
+The same is valid when retrieving values:
+
+```java
+codecRegistry.register(new AnimalCodec());
+Row row = ...
+Animal animal = row.get(0, Animal.class); // works
+Cat    cat    = row.get(0,    Cat.class); // throws CodecNotFoundException
+```
+
 ### Performance considerations
 
 A codec lookup operation may be costly; to mitigate this, the `CodecRegistry` 
@@ -390,8 +429,8 @@ and if so, adds it to the cache and returns it;
 4. if the creation succeeds, the registry adds the created codec to the cache and returns it;
 5. otherwise, the registry throws [CodecNotFoundException].
 
-The cache can be used as long as _at least the CQL type is known_. The following situations 
-are exceptions where it is _not_ possible to cache lookup results:
+The cache can be used as long as *at least the CQL type is known*. The following situations 
+are exceptions where it is *not* possible to cache lookup results:
 
 * With [SimpleStatement] instances;
 * With [BuiltStatement] instances (created via the Query Builder).
@@ -422,7 +461,7 @@ consider using prepared statements all the time.
 [CustomType]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/DataType.CustomType.html
 [TypeToken]: http://docs.guava-libraries.googlecode.com/git/javadoc/com/google/common/reflect/TypeToken.html
 [SimpleStatement]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/SimpleStatement.html
-[BuiltStatement]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/BuiltStatement.html
+[BuiltStatement]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/querybuilder/BuiltStatement.html
 [setList]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/SettableByIndexData.html#setList(int,%20java.util.List)
 [setSet]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/SettableByIndexData.html#setSet(int,%20java.util.Set)
 [setMap]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/SettableByIndexData.html#setMap(int,%20java.util.Map)

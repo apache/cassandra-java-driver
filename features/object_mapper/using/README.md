@@ -28,9 +28,9 @@ Mapper<User> mapper = manager.mapper(User.class);
 calling `manager#mapper` more than once for the same class will return
 the previously generated mapper.
 
-[Mapper]:http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/mapping/Mapper.html
-[MappingManager]:http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/mapping/MappingManager.html
-[Session]:http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/Session.html
+[Mapper]:http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/Mapper.html
+[MappingManager]:http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/MappingManager.html
+[Session]:http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Session.html
 
 #### Basic CRUD operations
 
@@ -174,7 +174,7 @@ It provides methods `one()`, `all()`, `iterator()`, `getExecutionInfo()`
 and `isExhausted()`. Note that iterating the `Result` will consume the
 `ResultSet`, and vice-versa.
 
-[Result]: http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/mapping/Result.html
+[Result]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/Result.html
 
 ### Accessors
 
@@ -224,7 +224,7 @@ corresponds to which marker:
 ResultSet insert(@Param("u") UUID userId, @Param("n") String name);
 ```
 
-[param]:http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/mapping/annotations/Param.html
+[param]:http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/annotations/Param.html
 
 If a method argument is a Java enumeration, it must be annotated with
 `@Enumerated` to indicate how to convert it to a CQL type (the rules are
@@ -292,4 +292,4 @@ query with the annotation [@QueryParameters]. Then, options like
 public ListenableFuture<Result<User>> getAllAsync();
 ```
 
-[@QueryParameters]: http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/mapping/annotations/QueryParameters.html
+[@QueryParameters]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/annotations/QueryParameters.html

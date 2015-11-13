@@ -8,6 +8,7 @@
 - [improvement] JAVA-885: Pass the authenticator name from the server to the auth provider. 
 - [improvement] JAVA-961: Raise an exception when an older version of guava (<16.01) is found.
 - [bug] JAVA-972: TypeCodec.parse() implementations should be case insensitive when checking for keyword NULL.
+- [bug] JAVA-971: Make type codecs invariant.
 
 Merged from 2.1 branch:
 
@@ -24,6 +25,7 @@ Merged from 2.1 branch:
 - [improvement] JAVA-917: Document SSL configuration.
 - [improvement] JAVA-652: Add DCAwareRoundRobinPolicy builder.
 - [improvement] JAVA-808: Add generic filtering policy that can be used to exclude specific DCs.
+
 
 ### 3.0.0-alpha4
 

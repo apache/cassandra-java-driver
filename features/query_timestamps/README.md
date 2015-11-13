@@ -16,7 +16,7 @@ session.execute("INSERT INTO my_table(c1, c2) values (1, 1) " +
 
 ### Client-side generation
 
-This is enabled by default if you're using the driver 2.2 and a version
+This is enabled by default if you're using the driver 3.0 and a version
 of Cassandra that supports [native protocol](../native_protocol) v3 or
 above.
 
@@ -42,8 +42,8 @@ statement.setDefaultTimestamp(1234567890);
 session.execute(statement);
 ```
 
-[tsg]: http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/TimestampGenerator.html
-[amtsg]: http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/AtomicMonotonicTimestampGenerator.html
+[tsg]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/TimestampGenerator.html
+[amtsg]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/AtomicMonotonicTimestampGenerator.html
 
 
 ### Server-side generation
