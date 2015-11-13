@@ -126,15 +126,11 @@ public class SSLEncryptionTest extends SSLTestBase {
      * @test_category connection:ssl
      * @expected_result Connection can be established.
      */
-    @Test(groups="short")
+    @Test(groups="isolated")
     public void should_use_system_properties_with_default_ssl_options() throws Exception {
-        try {
-            System.setProperty("javax.net.ssl.trustStore", DEFAULT_CLIENT_TRUSTSTORE_FILE.getAbsolutePath());
-            System.setProperty("javax.net.ssl.trustStorePassword", DEFAULT_CLIENT_TRUSTSTORE_PASSWORD);
+        System.setProperty("javax.net.ssl.trustStore", DEFAULT_CLIENT_TRUSTSTORE_FILE.getAbsolutePath());
+        System.setProperty("javax.net.ssl.trustStorePassword", DEFAULT_CLIENT_TRUSTSTORE_PASSWORD);
 
-            connectWithSSL();
-        } finally {
-            clearSystemProperties();
-        }
+        connectWithSSL();
     }
 }

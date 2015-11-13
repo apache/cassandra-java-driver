@@ -39,14 +39,14 @@ public abstract class SSLTestBase {
         this.requireClientAuth = requireClientAuth;
     }
 
-    @BeforeClass(groups={"short", "long"})
+    @BeforeClass(groups={"isolated", "short", "long"})
     public void beforeClass() {
         ccm = CCMBridge.builder("test")
             .withSSL(requireClientAuth)
             .build();
     }
 
-    @AfterClass(groups={"short", "long"})
+    @AfterClass(groups={"isolated", "short", "long"})
     public void afterClass() {
         ccm.remove();
     }
@@ -98,16 +98,6 @@ public abstract class SSLTestBase {
             if (cluster != null)
                 cluster.close();
         }
-    }
-
-    /**
-     * Clears all System properties associated with SSL key and trust stores.
-     */
-    protected void clearSystemProperties() {
-        System.clearProperty("javax.net.ssl.keyStore");
-        System.clearProperty("javax.net.ssl.keyStorePassword");
-        System.clearProperty("javax.net.ssl.trustStore");
-        System.clearProperty("javax.net.ssl.trustStorePassword");
     }
 
     /**
