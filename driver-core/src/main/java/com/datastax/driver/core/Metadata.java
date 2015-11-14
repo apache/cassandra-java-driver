@@ -751,7 +751,7 @@ public class Metadata {
                 ReplicationStrategy strategy = keyspace.replicationStrategy();
                 Map<Token, Set<Host>> ksTokens = (strategy == null)
                     ? makeNonReplicatedMap(tokenToPrimary)
-                    : strategy.computeTokenToReplicaMap(tokenToPrimary, ring);
+                    : strategy.computeTokenToReplicaMap(keyspace.getName(), tokenToPrimary, ring);
 
                 tokenToHosts.put(keyspace.getName(), ksTokens);
 

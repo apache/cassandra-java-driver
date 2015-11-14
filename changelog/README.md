@@ -6,6 +6,7 @@
 - [bug] JAVA-983: QueryBuilder cannot handle collections containing function calls.
 - [improvement] JAVA-863: Idempotence propagation in PreparedStatements.
 - [bug] JAVA-937: TypeCodec static initializers not always correctly executed.
+- [improvement] JAVA-989: Include keyspace name when invalid replication found when generating token map.
 
 Merged from 2.0 branch:
 
