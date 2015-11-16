@@ -143,17 +143,17 @@ public class QueryBuilderITest extends CCMBridge.PerClassSingleNodeCluster {
         String query;
         Statement insert;
 
-        query = "INSERT INTO foo(a) VALUES ('123); --comment');";
+        query = "INSERT INTO foo (a) VALUES ('123); --comment');";
         insert = builder.insertInto("foo")
                 .value("a", "123); --comment");
         assertEquals(insert.toString(), query);
 
-        query = "INSERT INTO foo(\"a,b\") VALUES (123);";
+        query = "INSERT INTO foo (\"a,b\") VALUES (123);";
         insert = builder.insertInto("foo")
                 .value("a,b", 123);
         assertEquals(insert.toString(), query);
 
-        query = "INSERT INTO foo(a,b) VALUES ({'2''} space','3','4'},3.4) USING TTL 24 AND TIMESTAMP 42;";
+        query = "INSERT INTO foo (a,b) VALUES ({'2''} space','3','4'},3.4) USING TTL 24 AND TIMESTAMP 42;";
         insert = builder.insertInto("foo").values(new String[]{ "a", "b"}, new Object[]{ new TreeSet<String>(){{ add("2'} space"); add("3"); add("4"); }}, 3.4 }).using(ttl(24)).and(timestamp(42));
         assertEquals(insert.toString(), query);
     }

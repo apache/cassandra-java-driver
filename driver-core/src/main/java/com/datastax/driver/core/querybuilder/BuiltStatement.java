@@ -169,11 +169,11 @@ public abstract class BuiltStatement extends RegularStatement {
 
     // TODO: Correctly document the InvalidTypeException
     void maybeAddRoutingKey(String name, Object value) {
-        if (routingKeyValues == null || name == null || value == null || value instanceof BindMarker)
+        if (routingKeyValues == null || name == null || value == null || Utils.containsSpecialValue(value))
             return;
 
         for (int i = 0; i < partitionKey.size(); i++) {
-            if (name.equals(partitionKey.get(i).getName()) && Utils.isRawValue(value)) {
+            if (name.equals(partitionKey.get(i).getName())) {
                 routingKeyValues.set(i, value);
                 return;
             }

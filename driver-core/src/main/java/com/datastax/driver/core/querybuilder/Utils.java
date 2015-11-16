@@ -20,12 +20,12 @@ import java.math.BigInteger;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.datastax.driver.core.CodecRegistry;
-import com.datastax.driver.core.TypeCodec;
+import com.datastax.driver.core.*;
 
 // Static utilities private to the query builder
 abstract class Utils {
@@ -59,16 +59,6 @@ abstract class Utils {
         return sb;
     }
 
-    private static boolean isForceAppendToQueryString(Object value) {
-        // Force append to query string for all fixed-size number types.
-        // The reason is that if we don't do it, we will
-        // force a particular size (4 bytes for ints, ...)
-        // and for the query builder, we don't want
-        // users to have to bother with that.
-        // TODO this probably does not work well with custom codecs for fixed-size numbers (int, bigint, float, double)
-        return value instanceof Number && !(value instanceof BigInteger || value instanceof BigDecimal);
-    }
-
     static StringBuilder appendValue(Object value, CodecRegistry codecRegistry, StringBuilder sb, List<Object> variables) {
         if (value == null) {
             sb.append("null");
@@ -87,7 +77,16 @@ abstract class Utils {
             appendName(((CName)value).name, codecRegistry, sb);
         } else if (value instanceof RawString) {
             sb.append(value.toString());
-        } else if (variables == null || isForceAppendToQueryString(value)) {
+        } else if(value instanceof List && !isSerializable(value)) {
+            // bind variables are not supported inside collection literals
+            appendList((List<?>)value, codecRegistry, sb, null);
+        } else if(value instanceof Set && !isSerializable(value)) {
+            // bind variables are not supported inside collection literals
+            appendSet((Set<?>)value, codecRegistry, sb, null);
+        } else if(value instanceof Map && !isSerializable(value)) {
+            // bind variables are not supported inside collection literals
+            appendMap((Map<?,?>)value, codecRegistry, sb, null);
+        } else if (variables == null || !isSerializable(value)) {
             // we are not collecting statement values (variables == null)
             // or the value is meant to be forcefully appended to the query string:
             // format it with the appropriate codec and append it now
@@ -104,18 +103,103 @@ abstract class Utils {
         return sb;
     }
 
+    private static StringBuilder appendList(List<?> l, CodecRegistry codecRegistry, StringBuilder sb, List<Object> variables) {
+        sb.append('[');
+        for (int i = 0; i < l.size(); i++) {
+            if (i > 0)
+                sb.append(',');
+            appendValue(l.get(i), codecRegistry, sb, variables);
+        }
+        sb.append(']');
+        return sb;
+    }
+
+    private static StringBuilder appendSet(Set<?> s, CodecRegistry codecRegistry, StringBuilder sb, List<Object> variables) {
+        sb.append('{');
+        boolean first = true;
+        for (Object elt : s) {
+            if (first) first = false; else sb.append(',');
+            appendValue(elt, codecRegistry, sb, variables);
+        }
+        sb.append('}');
+        return sb;
+    }
+
+    private static StringBuilder appendMap(Map<?, ?> m, CodecRegistry codecRegistry, StringBuilder sb, List<Object> variables) {
+        sb.append('{');
+        boolean first = true;
+        for (Map.Entry<?, ?> entry : m.entrySet()) {
+            if (first)
+                first = false;
+            else
+                sb.append(',');
+            appendValue(entry.getKey(), codecRegistry, sb, variables);
+            sb.append(':');
+            appendValue(entry.getValue(), codecRegistry, sb, variables);
+        }
+        sb.append('}');
+        return sb;
+    }
+
     static boolean containsBindMarker(Object value) {
         if (value instanceof BindMarker)
             return true;
-
-        if (!(value instanceof FCall))
-            return false;
-
-        FCall fcall = (FCall)value;
-        for (Object param : fcall.parameters)
+        if (value instanceof FCall)
+            for (Object param : ((FCall)value).parameters)
             if (containsBindMarker(param))
                 return true;
+        if (value instanceof Collection)
+            for (Object elt : (Collection)value)
+                if (containsBindMarker(elt))
+                    return true;
+        if (value instanceof Map)
+            for (Map.Entry<?,?> entry : ((Map<?,?>)value).entrySet())
+                if (containsBindMarker(entry.getKey()) || containsBindMarker(entry.getValue()))
+                    return true;
         return false;
+    }
+
+    static boolean containsSpecialValue(Object value) {
+        if (value instanceof BindMarker || value instanceof FCall || value instanceof CName || value instanceof RawString)
+            return true;
+        if (value instanceof Collection)
+            for (Object elt : (Collection)value)
+                if (containsSpecialValue(elt))
+                    return true;
+        if (value instanceof Map)
+            for (Map.Entry<?,?> entry : ((Map<?,?>)value).entrySet())
+                if (containsSpecialValue(entry.getKey()) || containsSpecialValue(entry.getValue()))
+                    return true;
+        return false;
+    }
+
+    /**
+     * Return true if the given value is likely to find a suitable codec
+     * to be serialized as a query parameter.
+     * If the value is not serializable, it must be included in the query string.
+     * Non serializable values include special values such as function calls,
+     * column names and bind markers, and collections thereof.
+     * We also don't serialize fixed size number types. The reason is that if we do it, we will
+     * force a particular size (4 bytes for ints, ...) and for the query builder, we don't want
+     * users to have to bother with that.
+     *
+     * @param value the value to inspect.
+     * @return true if the value is serializable, false otherwise.
+     */
+    static boolean isSerializable(Object value) {
+        if (containsSpecialValue(value))
+            return false;
+        if (value instanceof Number && !(value instanceof BigInteger || value instanceof BigDecimal))
+            return false;
+        if (value instanceof Collection)
+            for (Object elt : (Collection)value)
+                if (!isSerializable(elt))
+                    return false;
+        if (value instanceof Map)
+            for (Map.Entry<?,?> entry : ((Map<?,?>)value).entrySet())
+                if (!isSerializable(entry.getKey()) || !isSerializable(entry.getValue()))
+                    return false;
+        return true;
     }
 
     static boolean isIdempotent(Object value) {
@@ -141,13 +225,6 @@ abstract class Utils {
             }
         }
         return true;
-    }
-
-    static boolean isRawValue(Object value) {
-        return value != null
-            && !(value instanceof FCall)
-            && !(value instanceof CName)
-            && !(value instanceof BindMarker);
     }
 
     static StringBuilder appendName(String name, StringBuilder sb) {
