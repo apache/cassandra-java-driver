@@ -52,7 +52,7 @@ public class QueryBuilderUDTExecutionTest extends CCMBridge.PerClassSingleNodeCl
         UDTValue udtValue = udtType.newValue().setInt("i", 2).setInet("a", InetAddress.getByName("localhost"));
 
         Statement insert = insertInto("udtTest").value("k", 1).value("t", udtValue);
-        assertEquals(insert.toString(), "INSERT INTO udtTest(k,t) VALUES (1,{i:2, a:'127.0.0.1'});");
+        assertEquals(insert.toString(), "INSERT INTO udtTest (k,t) VALUES (1,{i:2, a:'127.0.0.1'});");
 
         session.execute(insert);
 
@@ -71,7 +71,7 @@ public class QueryBuilderUDTExecutionTest extends CCMBridge.PerClassSingleNodeCl
         UDTValue udtValue2 = udtType.newValue().setInt("i", 3).setInet("a", InetAddress.getByName("localhost"));
 
         Statement insert = insertInto("udtTest").value("k", 1).value("l", ImmutableList.of(udtValue));
-        assertThat(insert.toString()).isEqualTo("INSERT INTO udtTest(k,l) VALUES (1,[{i:2, a:'127.0.0.1'}]);");
+        assertThat(insert.toString()).isEqualTo("INSERT INTO udtTest (k,l) VALUES (1,[{i:2, a:'127.0.0.1'}]);");
 
         session.execute(insert);
 

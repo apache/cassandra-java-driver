@@ -106,7 +106,7 @@ public class QueryBuilderRoutingKeyTest extends CCMBridge.PerClassSingleNodeClus
         query = select().from(table).where(eq("k", 42));
 
         batch_query = "BEGIN BATCH ";
-        batch_query += String.format("INSERT INTO %s.test_int(k,a) VALUES (42,1);", keyspace);
+        batch_query += String.format("INSERT INTO %s.test_int (k,a) VALUES (42,1);", keyspace);
         batch_query += String.format("UPDATE %s.test_int USING TTL 400;", keyspace);
         batch_query += "APPLY BATCH;";
         batch = batch()
@@ -133,7 +133,7 @@ public class QueryBuilderRoutingKeyTest extends CCMBridge.PerClassSingleNodeClus
         // TODO: rs = session.execute(batch); // Not guaranteed to be valid CQL
 
         batch_query = "BEGIN BATCH USING TIMESTAMP 42 ";
-        batch_query += "INSERT INTO foo.bar(a) VALUES (123);";
+        batch_query += "INSERT INTO foo.bar (a) VALUES (123);";
         batch_query += "APPLY BATCH;";
         batch = batch().using(timestamp(42)).add(insertInto("foo", "bar").value("a", 123));
         assertEquals(batch.getRoutingKey(), null);

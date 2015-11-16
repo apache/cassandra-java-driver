@@ -52,7 +52,7 @@ public class Insert extends BuiltStatement {
         if (keyspace != null)
             Utils.appendName(keyspace, builder).append('.');
         Utils.appendName(table, builder);
-        builder.append('(');
+        builder.append(" (");
         Utils.joinAndAppendNames(builder, ",", names);
         builder.append(") VALUES (");
         Utils.joinAndAppendValues(builder, ",", values, variables);

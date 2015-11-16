@@ -160,11 +160,11 @@ public abstract class BuiltStatement extends RegularStatement {
 
     // TODO: Correctly document the InvalidTypeException
     void maybeAddRoutingKey(String name, Object value) {
-        if (routingKey == null || name == null || value == null || value instanceof BindMarker)
+        if (routingKey == null || name == null || value == null || Utils.containsSpecialValue(value))
             return;
 
         for (int i = 0; i < partitionKey.size(); i++) {
-            if (name.equals(partitionKey.get(i).getName()) && Utils.isRawValue(value)) {
+            if (name.equals(partitionKey.get(i).getName())) {
                 DataType dt = partitionKey.get(i).getType();
                 // We don't really care which protocol version we use, since the only place it matters if for
                 // collections (not inside UDT), and those are not allowed in a partition key anyway, hence the hardcoding.
