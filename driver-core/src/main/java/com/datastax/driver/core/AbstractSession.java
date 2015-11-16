@@ -140,6 +140,8 @@ public abstract class AbstractSession implements Session {
                     prepared.enableTracing();
                 prepared.setRetryPolicy(statement.getRetryPolicy());
                 prepared.setOutgoingPayload(statement.getOutgoingPayload());
+                prepared.setIdempotent(statement.isIdempotent());
+
                 return prepared;
             }
         });

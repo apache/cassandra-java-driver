@@ -230,6 +230,10 @@ We've also seized the opportunity to remove code that was deprecated in 2.1.
         ...
     }
     ```
+    
+22. The interface `IdempotenceAwarePreparedStatement` has been removed
+    and now the `PreparedStatement` interface exposes 2 new methods, 
+    `setIdempotent(Boolean)` and `isIdempotent()`.
 
 ### 2.1.8
 

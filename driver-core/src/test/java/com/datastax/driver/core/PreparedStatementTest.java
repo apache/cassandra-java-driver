@@ -84,7 +84,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
         sb = new StringBuilder();
         sb.append("CREATE TABLE ").append(ALL_SET_TABLE).append(" (k text PRIMARY KEY");
         for (DataType type : primitiveTypes) {
-            // This must be handled separatly
+            // This must be handled separately
             if (exclude(type))
                 continue;
             sb.append(", c_set_").append(type).append(" set<").append(type).append('>');
@@ -95,12 +95,12 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
         sb = new StringBuilder();
         sb.append("CREATE TABLE ").append(ALL_MAP_TABLE).append(" (k text PRIMARY KEY");
         for (DataType keyType : primitiveTypes) {
-            // This must be handled separatly
+            // This must be handled separately
             if (exclude(keyType))
                 continue;
 
             for (DataType valueType : primitiveTypes) {
-                // This must be handled separatly
+                // This must be handled separately
                 if (exclude(valueType))
                     continue;
                 sb.append(", c_map_").append(keyType).append('_').append(valueType).append(" map<").append(keyType).append(',').append(valueType).append('>');
@@ -124,7 +124,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
     public void preparedNativeTest() {
         // Test preparing/bounding for all native types
         for (DataType type : primitiveTypes) {
-            // This must be handled separatly
+            // This must be handled separately
             if (exclude(type))
                 continue;
 
@@ -146,7 +146,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
     public void preparedNativeTest2() {
         // Test preparing/bounding for all native types
         for (DataType type : primitiveTypes) {
-            // This must be handled separatly
+            // This must be handled separately
             if (exclude(type))
                 continue;
 
@@ -166,7 +166,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
     public void prepareListTest() {
         // Test preparing/bounding for all possible list types
         for (DataType rawType : primitiveTypes) {
-            // This must be handled separatly
+            // This must be handled separately
             if (exclude(rawType))
                 continue;
 
@@ -191,7 +191,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
     public void prepareListTest2() {
         // Test preparing/bounding for all possible list types
         for (DataType rawType : primitiveTypes) {
-            // This must be handled separatly
+            // This must be handled separately
             if (exclude(rawType))
                 continue;
 
@@ -213,7 +213,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
     public void prepareSetTest() {
         // Test preparing/bounding for all possible set types
         for (DataType rawType : primitiveTypes) {
-            // This must be handled separatly
+            // This must be handled separately
             if (exclude(rawType))
                 continue;
 
@@ -238,7 +238,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
     public void prepareSetTest2() {
         // Test preparing/bounding for all possible set types
         for (DataType rawType : primitiveTypes) {
-            // This must be handled separatly
+            // This must be handled separately
             if (exclude(rawType))
                 continue;
 
@@ -260,12 +260,12 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
     public void prepareMapTest() {
         // Test preparing/bounding for all possible map types
         for (DataType rawKeyType : primitiveTypes) {
-            // This must be handled separatly
+            // This must be handled separately
             if (exclude(rawKeyType))
                 continue;
 
             for (DataType rawValueType : primitiveTypes) {
-                // This must be handled separatly
+                // This must be handled separately
                 if (exclude(rawValueType))
                     continue;
 
@@ -291,12 +291,12 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
     public void prepareMapTest2() {
         // Test preparing/bounding for all possible map types
         for (DataType rawKeyType : primitiveTypes) {
-            // This must be handled separatly
+            // This must be handled separately
             if (exclude(rawKeyType))
                 continue;
 
             for (DataType rawValueType : primitiveTypes) {
-                // This must be handled separatly
+                // This must be handled separately
                 if (exclude(rawValueType))
                     continue;
 
@@ -663,5 +663,41 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
                 return;
         }
         fail("Did not find '" + toFind + "' in trace");
+    }
+
+    @Test(groups = "short")
+    public void should_propagate_idempotence_in_statements() {
+        session.execute(String.format("CREATE TABLE %s.idempotencetest (i int PRIMARY KEY)", keyspace));
+
+        SimpleStatement statement;
+        PreparedStatement prepared;
+        BoundStatement bound;
+
+        statement = session.newSimpleStatement(String.format("SELECT * FROM %s.idempotencetest WHERE i = ?", keyspace));
+
+        prepared = session.prepare(statement);
+        bound = prepared.bind(1);
+
+        assertThat(prepared.isIdempotent()).isNull();
+        assertThat(bound.isIdempotent()).isNull();
+
+        statement.setIdempotent(true);
+        prepared = session.prepare(statement);
+        bound = prepared.bind(1);
+
+        assertThat(prepared.isIdempotent()).isTrue();
+        assertThat(bound.isIdempotent()).isTrue();
+
+        statement.setIdempotent(false);
+        prepared = session.prepare(statement);
+        bound = prepared.bind(1);
+
+        assertThat(prepared.isIdempotent()).isFalse();
+        assertThat(bound.isIdempotent()).isFalse();
+
+        prepared.setIdempotent(true);
+        bound = prepared.bind(1);
+
+        assertThat(bound.isIdempotent()).isTrue();
     }
 }

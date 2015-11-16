@@ -87,6 +87,9 @@ public class BoundStatement extends Statement implements SettableData<BoundState
             // propagate incoming payload as outgoing payload, if no outgoing payload has been explicitly set
             this.setOutgoingPayload(statement.getIncomingPayload());
         this.codecRegistry = statement.getCodecRegistry();
+        if (statement.isIdempotent() != null) {
+            this.setIdempotent(statement.isIdempotent());
+        }
     }
 
     /**
