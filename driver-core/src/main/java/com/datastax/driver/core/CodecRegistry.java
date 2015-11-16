@@ -499,6 +499,8 @@ public final class CodecRegistry {
                 throw (CodecNotFoundException) e.getCause();
             }
             throw new CodecNotFoundException(e.getCause(), cqlType, javaType);
+        } catch (RuntimeException e) {
+            throw new CodecNotFoundException(e.getCause(), cqlType, javaType);
         } catch (ExecutionException e) {
             throw new CodecNotFoundException(e.getCause(), cqlType, javaType);
         }

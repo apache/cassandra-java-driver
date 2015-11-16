@@ -58,6 +58,7 @@ public class AggregateMetadata {
         this.stateTypeCodec = stateTypeCodec;
     }
 
+    // Cassandra < 3.0:
     // CREATE TABLE system.schema_aggregates (
     //     keyspace_name text,
     //     aggregate_name text,
@@ -70,42 +71,74 @@ public class AggregateMetadata {
     //     state_type text,
     //     PRIMARY KEY (keyspace_name, aggregate_name, signature)
     // ) WITH CLUSTERING ORDER BY (aggregate_name ASC, signature ASC)
-    static AggregateMetadata build(KeyspaceMetadata ksm, Row row, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
+    //
+    // Cassandra >= 3.0:
+    // CREATE TABLE system.schema_aggregates (
+    //     keyspace_name text,
+    //     aggregate_name text,
+    //     argument_types frozen<list<text>>,
+    //     final_func text,
+    //     initcond text,
+    //     return_type text,
+    //     state_func text,
+    //     state_type text,
+    //     PRIMARY KEY (keyspace_name, aggregate_name, argument_types)
+    // ) WITH CLUSTERING ORDER BY (aggregate_name ASC, argument_types ASC)
+    static AggregateMetadata build(KeyspaceMetadata ksm, Row row, VersionNumber version, Cluster cluster) {
+        CodecRegistry codecRegistry = cluster.getConfiguration().getCodecRegistry();
+        ProtocolVersion protocolVersion = cluster.getConfiguration().getProtocolOptions().getProtocolVersion();
         String simpleName = row.getString("aggregate_name");
-        List<String> signature = row.getList("signature", String.class);
-        String fullName = Metadata.fullFunctionName(simpleName, signature);
-        List<DataType> argumentTypes = parseTypes(row.getList("argument_types", String.class), protocolVersion, codecRegistry);
+        List<DataType> argumentTypes = parseTypes(ksm, row.getList("argument_types", String.class), version, cluster);
+        String fullName = Metadata.fullFunctionName(simpleName, argumentTypes);
         String finalFuncSimpleName = row.getString("final_func");
-        DataType returnType = CassandraTypeParser.parseOne(row.getString("return_type"), protocolVersion, codecRegistry);
+        DataType returnType;
+        if(version.getMajor() >= 3) {
+            returnType = DataTypeCqlNameParser.parse(row.getString("return_type"), cluster, ksm.getName(), ksm.userTypes, null, false, false);
+        } else {
+            returnType = DataTypeClassNameParser.parseOne(row.getString("return_type"), protocolVersion, codecRegistry);
+        }
         String stateFuncSimpleName = row.getString("state_func");
         String stateTypeName = row.getString("state_type");
-        DataType stateType = CassandraTypeParser.parseOne(stateTypeName, protocolVersion, codecRegistry);
-        ByteBuffer rawInitCond = row.getBytes("initcond");
-        Object initCond = rawInitCond == null ? null : codecRegistry.codecFor(stateType).deserialize(rawInitCond, protocolVersion);
+        DataType stateType;
+        Object initCond;
+        if(version.getMajor() >= 3) {
+            stateType = DataTypeCqlNameParser.parse(stateTypeName, cluster, ksm.getName(), ksm.userTypes, null, false, false);
+            String rawInitCond = row.getString("initcond");
+            initCond = rawInitCond == null ? null : codecRegistry.codecFor(stateType).parse(rawInitCond);
+        } else {
+            stateType = DataTypeClassNameParser.parseOne(stateTypeName, protocolVersion, codecRegistry);
+            ByteBuffer rawInitCond = row.getBytes("initcond");
+            initCond = rawInitCond == null ? null : codecRegistry.codecFor(stateType).deserialize(rawInitCond, protocolVersion);
+        }
 
         String finalFuncFullName = finalFuncSimpleName == null ? null : String.format("%s(%s)", finalFuncSimpleName, stateType);
-        String stateFuncFullName = makeStateFuncFullName(stateFuncSimpleName, stateType.toString(), signature);
+        String stateFuncFullName = makeStateFuncFullName(stateFuncSimpleName, stateType, argumentTypes);
 
-        AggregateMetadata aggregate = new AggregateMetadata(ksm, fullName, simpleName, argumentTypes,
+        return new AggregateMetadata(ksm, fullName, simpleName, argumentTypes,
             finalFuncSimpleName, finalFuncFullName, initCond, returnType, stateFuncSimpleName,
             stateFuncFullName, stateType, codecRegistry.codecFor(stateType));
-        ksm.add(aggregate);
-        return aggregate;
     }
 
-    private static String makeStateFuncFullName(String stateFuncSimpleName, String stateTypeName, List<String> typeNames) {
-        List<String> args = Lists.newArrayList(stateTypeName);
-        args.addAll(typeNames);
+    private static String makeStateFuncFullName(String stateFuncSimpleName, DataType stateType, List<DataType> argumentTypes) {
+        List<DataType> args = Lists.newArrayList(stateType);
+        args.addAll(argumentTypes);
         return Metadata.fullFunctionName(stateFuncSimpleName, args);
     }
 
-    private static List<DataType> parseTypes(List<String> names, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
-        if (names.isEmpty())
+    private static List<DataType> parseTypes(KeyspaceMetadata ksm, List<String> types, VersionNumber version, Cluster cluster) {
+        if (types.isEmpty())
             return Collections.emptyList();
 
+        CodecRegistry codecRegistry = cluster.getConfiguration().getCodecRegistry();
+        ProtocolVersion protocolVersion = cluster.getConfiguration().getProtocolOptions().getProtocolVersion();
         ImmutableList.Builder<DataType> builder = ImmutableList.builder();
-        for (String name : names) {
-            DataType type = CassandraTypeParser.parseOne(name, protocolVersion, codecRegistry);
+        for (String name : types) {
+            DataType type;
+            if (version.getMajor() >= 3) {
+                type = DataTypeCqlNameParser.parse(name, cluster, ksm.getName(), ksm.userTypes, null, false, false);
+            } else {
+                type = DataTypeClassNameParser.parseOne(name, protocolVersion, codecRegistry);
+            }
             builder.add(type);
         }
         return builder.build();

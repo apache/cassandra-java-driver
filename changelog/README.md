@@ -5,7 +5,7 @@
 - [improvement] JAVA-958: Make TableOrView.Order visible.
 - [improvement] JAVA-968: Update metrics to the latest version.
 - [improvement] JAVA-965: Improve error handling for when a non-type 1 UUID is given to bind() on a timeuuid column.
-- [improvement] JAVA-885: Pass the authenticator name from the server to the auth provider. 
+- [improvement] JAVA-885: Pass the authenticator name from the server to the auth provider.
 - [improvement] JAVA-961: Raise an exception when an older version of guava (<16.01) is found.
 - [bug] JAVA-972: TypeCodec.parse() implementations should be case insensitive when checking for keyword NULL.
 - [bug] JAVA-971: Make type codecs invariant.
@@ -13,6 +13,7 @@
 - [improvement] JAVA-841: Refactor SSLOptions API.
 - [improvement] JAVA-948: Don't limit cipher suites by default.
 - [improvement] JAVA-917: Document SSL configuration.
+- [improvement] JAVA-936: Adapt schema metadata parsing logic to new storage format of CQL types in C* 3.0.
 
 Merged from 2.1 branch:
 

@@ -56,8 +56,8 @@ public class ColumnMetadata {
         this.isStatic = isStatic;
     }
 
-    static ColumnMetadata fromRaw(TableOrView tm, Raw raw) {
-        return new ColumnMetadata(tm, raw.name, raw.dataType, raw.kind == Raw.Kind.STATIC);
+    static ColumnMetadata fromRaw(TableOrView tm, Raw raw, DataType dataType) {
+        return new ColumnMetadata(tm, raw.name, dataType, raw.kind == Raw.Kind.STATIC);
     }
 
     static ColumnMetadata forAlias(TableMetadata tm, String name, DataType type) {
@@ -165,12 +165,12 @@ public class ColumnMetadata {
         public final String name;
         public Kind kind;
         public final int position;
-        public final DataType dataType;
+        public final String dataType;
         public final boolean isReversed;
 
         public final Map<String, String> indexColumns = new HashMap<String, String>();
 
-        Raw(String name, Kind kind, int position, DataType dataType, boolean isReversed) {
+        Raw(String name, Kind kind, int position, String dataType, boolean isReversed) {
             this.name = name;
             this.kind = kind;
             this.position = position;
@@ -178,7 +178,7 @@ public class ColumnMetadata {
             this.isReversed = isReversed;
         }
 
-        static Raw fromRow(Row row, VersionNumber version, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
+        static Raw fromRow(Row row, VersionNumber version) {
             String name = row.getString(COLUMN_NAME);
 
             Kind kind;
@@ -198,26 +198,26 @@ public class ColumnMetadata {
                 position = row.isNull(COMPONENT_INDEX) ? 0 : row.getInt(COMPONENT_INDEX);
             }
 
-            String dataTypeStr;
+            String dataType;
             boolean reversed;
             if(version.getMajor() >= 3) {
-                dataTypeStr = row.getString(TYPE);
+                dataType = row.getString(TYPE);
                 String clusteringOrderStr = row.getString(CLUSTERING_ORDER);
                 reversed = clusteringOrderStr.equals(DESC);
             } else {
-                dataTypeStr = row.getString(VALIDATOR);
-                reversed = CassandraTypeParser.isReversed(dataTypeStr);
+                dataType = row.getString(VALIDATOR);
+                reversed = DataTypeClassNameParser.isReversed(dataType);
             }
-            DataType dataType = CassandraTypeParser.parseOne(dataTypeStr, protocolVersion, codecRegistry);
 
             Raw c = new Raw(name, kind, position, dataType, reversed);
 
             // secondary indexes (C* < 3.0.0)
             // from C* 3.0 onwards 2i are defined in a separate table
-            for (String str : Arrays.asList(INDEX_TYPE, INDEX_NAME, INDEX_OPTIONS))
-                if (row.getColumnDefinitions().contains(str) && !row.isNull(str))
-                    c.indexColumns.put(str, row.getString(str));
-
+            if(version.getMajor() < 3) {
+                for (String str : Arrays.asList(INDEX_TYPE, INDEX_NAME, INDEX_OPTIONS))
+                    if (row.getColumnDefinitions().contains(str) && !row.isNull(str))
+                        c.indexColumns.put(str, row.getString(str));
+            }
             return c;
         }
     }

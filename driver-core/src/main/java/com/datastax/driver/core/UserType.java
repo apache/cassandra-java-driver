@@ -25,11 +25,11 @@ import com.google.common.collect.Iterators;
  * <p>
  * A UDT is a essentially a named collection of fields (with a name and a type).
  */
-public class UserType extends DataType implements Iterable<UserType.Field>{
+public class UserType extends DataType implements Iterable<UserType.Field> {
 
-    private static final String TYPE_NAME  = "type_name";
+    static final String TYPE_NAME  = "type_name";
     private static final String COLS_NAMES = "field_names";
-    private static final String COLS_TYPES = "field_types";
+    static final String COLS_TYPES = "field_types";
 
     private final String keyspace;
     private final String typeName;
@@ -40,11 +40,11 @@ public class UserType extends DataType implements Iterable<UserType.Field>{
     // Note that we don't expose the order of fields, from an API perspective this is a map
     // of String->Field, but internally we care about the order because the serialization format
     // of UDT expects a particular order.
-    final Field[] byIdx;
+    private final Field[] byIdx;
     // For a given name, we can only have one field with that name, so we don't need a int[] in
     // practice. However, storing one element arrays save allocations in UDTValue.getAllIndexesOf
     // implementation.
-    final Map<String, int[]> byName;
+    private final Map<String, int[]> byName;
 
     UserType(String keyspace, String typeName, Collection<Field> fields, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
         super(DataType.Name.UDT);
@@ -62,7 +62,10 @@ public class UserType extends DataType implements Iterable<UserType.Field>{
         this.byName = builder.build();
     }
 
-    static UserType build(Row row, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
+    static UserType build(KeyspaceMetadata ksm, Row row, VersionNumber version, Cluster cluster, Map<String, UserType> userTypes) {
+        ProtocolVersion protocolVersion = cluster.getConfiguration().getProtocolOptions().getProtocolVersion();
+        CodecRegistry codecRegistry = cluster.getConfiguration().getCodecRegistry();
+
         String keyspace = row.getString(KeyspaceMetadata.KS_NAME);
         String name = row.getString(TYPE_NAME);
 
@@ -70,9 +73,15 @@ public class UserType extends DataType implements Iterable<UserType.Field>{
         List<String> fieldTypes = row.getList(COLS_TYPES, String.class);
 
         List<Field> fields = new ArrayList<Field>(fieldNames.size());
-        for (int i = 0; i < fieldNames.size(); i++)
-            fields.add(new Field(fieldNames.get(i), CassandraTypeParser.parseOne(fieldTypes.get(i), protocolVersion, codecRegistry)));
-
+        for (int i = 0; i < fieldNames.size(); i++) {
+            DataType fieldType;
+            if (version.getMajor() >= 3.0) {
+                fieldType = DataTypeCqlNameParser.parse(fieldTypes.get(i), cluster, ksm.getName(), userTypes, ksm.userTypes, false, false);
+            } else {
+                fieldType = DataTypeClassNameParser.parseOne(fieldTypes.get(i), protocolVersion, codecRegistry);
+            }
+            fields.add(new Field(fieldNames.get(i), fieldType));
+        }
         return new UserType(keyspace, name, fields, protocolVersion, codecRegistry);
     }
 
@@ -169,6 +178,14 @@ public class UserType extends DataType implements Iterable<UserType.Field>{
         return true;
     }
 
+    Field[] getFields() {
+        return byIdx;
+    }
+
+    Map<String, int[]> getFieldIndicesByName() {
+        return byName;
+    }
+
     @Override
     public int hashCode() {
         int result = name.hashCode();
@@ -179,8 +196,8 @@ public class UserType extends DataType implements Iterable<UserType.Field>{
     }
 
     @Override
-    public final boolean equals(Object o) {
-        if(!(o instanceof UserType))
+    public boolean equals(Object o) {
+        if (!(o instanceof UserType))
             return false;
 
         UserType other = (UserType)o;
@@ -190,7 +207,7 @@ public class UserType extends DataType implements Iterable<UserType.Field>{
         return name.equals(other.name)
             && keyspace.equals(other.keyspace)
             && typeName.equals(other.typeName)
-            && Arrays.equals(byIdx, other.byIdx);
+            && Arrays.equals(getFields(), other.getFields());
     }
 
     /**
@@ -301,7 +318,7 @@ public class UserType extends DataType implements Iterable<UserType.Field>{
 
         @Override
         public final boolean equals(Object o) {
-            if(!(o instanceof Field))
+            if (!(o instanceof Field))
                 return false;
 
             Field other = (Field)o;
@@ -312,6 +329,31 @@ public class UserType extends DataType implements Iterable<UserType.Field>{
         @Override
         public String toString() {
             return Metadata.escapeId(name) + ' ' + type;
+        }
+    }
+
+    /**
+     * A "shallow" definition of a UDT that only contains the keyspace and type name, without any information
+     * about the type's structure.
+     *
+     * This is used for internal dependency analysis only, and never returned to the client.
+     *
+     * @since 3.0.0
+     */
+    static class Shallow extends DataType {
+
+        final String keyspaceName;
+        final String typeName;
+
+        Shallow(String keyspaceName, String typeName) {
+            super(Name.UDT);
+            this.keyspaceName = keyspaceName;
+            this.typeName = typeName;
+        }
+
+        @Override
+        public boolean isFrozen() {
+            return false;
         }
     }
 }

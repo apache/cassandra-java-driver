@@ -61,18 +61,19 @@ public class IndexMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
         definition(IndexMetadata.KIND, text()),
         definition(IndexMetadata.OPTIONS, map(text(), text()))
     });
-    public static final TypeCodec<Map<String, String>> MAP_CODEC = TypeCodec.map(TypeCodec.varchar(), TypeCodec.varchar());
+    
+    private static final TypeCodec<Map<String, String>> MAP_CODEC = TypeCodec.map(TypeCodec.varchar(), TypeCodec.varchar());
+    
+    private ProtocolVersion protocolVersion;
 
-    private static ProtocolVersion protocolVersion;
-    private static CodecRegistry codecRegistry;
-
+    @Override
     @BeforeClass(groups = { "short", "long" })
     public void beforeClass() {
         super.beforeClass();
-        protocolVersion = cluster.getConfiguration().getProtocolOptions().getProtocolVersion();
-        codecRegistry = cluster.getConfiguration().getCodecRegistry();
+        CodecRegistry codecRegistry = cluster.getConfiguration().getCodecRegistry();
         legacyColumnDefs.setCodecRegistry(codecRegistry);
         indexColumnDefs.setCodecRegistry(codecRegistry);
+        protocolVersion = cluster.getConfiguration().getProtocolOptions().getProtocolVersion();
     }
 
     @Override
@@ -285,8 +286,8 @@ public class IndexMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
             wrap("{\"foo\" : \"bar\", \"class_name\" : \"dummy.DummyIndex\"}") // index options
         );
         Row columnRow = ArrayBackedRow.fromData(legacyColumnDefs, M3PToken.FACTORY, protocolVersion, columnData);
-        Raw columnRaw = Raw.fromRow(columnRow, VersionNumber.parse("2.1"), protocolVersion, codecRegistry);
-        ColumnMetadata column = ColumnMetadata.fromRaw(table, columnRaw);
+        Raw columnRaw = Raw.fromRow(columnRow, VersionNumber.parse("2.1"));
+        ColumnMetadata column = ColumnMetadata.fromRaw(table, columnRaw, DataType.varchar());
         IndexMetadata index = IndexMetadata.fromLegacy(column, columnRaw);
         assertThat(index)
             .isNotNull()
@@ -348,10 +349,8 @@ public class IndexMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
             wrap("null") // index options
         );
         Row row = ArrayBackedRow.fromData(legacyColumnDefs, M3PToken.FACTORY, cluster.getConfiguration().getProtocolOptions().getProtocolVersion(), data);
-        Raw raw = Raw.fromRow(row, VersionNumber.parse("2.1"),
-            cluster.getConfiguration().getProtocolOptions().getProtocolVersion(),
-            cluster.getConfiguration().getCodecRegistry());
-        ColumnMetadata column = ColumnMetadata.fromRaw(table, raw);
+        Raw raw = Raw.fromRow(row, VersionNumber.parse("2.1"));
+        ColumnMetadata column = ColumnMetadata.fromRaw(table, raw, DataType.blob());
         IndexMetadata index = IndexMetadata.fromLegacy(column, raw);
         assertThat(index)
             .isNotNull()

@@ -162,8 +162,8 @@ public abstract class DataType {
         switch (name) {
             case CUSTOM:
                 String className = CBUtil.readString(buffer);
-                return CassandraTypeParser.isUserType(className) || CassandraTypeParser.isTupleType(className)
-                     ? CassandraTypeParser.parseOne(className, protocolVersion, codecRegistry)
+                return DataTypeClassNameParser.isUserType(className) || DataTypeClassNameParser.isTupleType(className)
+                     ? DataTypeClassNameParser.parseOne(className, protocolVersion, codecRegistry)
                      : custom(className);
             case LIST:
                 return list(decode(buffer, protocolVersion, codecRegistry));

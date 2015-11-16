@@ -30,11 +30,11 @@ public class UDTValue extends AbstractData<UDTValue> {
     }
 
     protected DataType getType(int i) {
-        return definition.byIdx[i].getType();
+        return definition.getFields()[i].getType();
     }
 
     protected String getName(int i) {
-        return definition.byIdx[i].getName();
+        return definition.getFields()[i].getName();
     }
 
     @Override
@@ -43,7 +43,7 @@ public class UDTValue extends AbstractData<UDTValue> {
     }
 
     protected int[] getAllIndexesOf(String name) {
-        int[] indexes = definition.byName.get(Metadata.handleId(name));
+        int[] indexes = definition.getFieldIndicesByName().get(Metadata.handleId(name));
         if (indexes == null)
             throw new IllegalArgumentException(name + " is not a field defined in this UDT");
         return indexes;

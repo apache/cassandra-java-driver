@@ -25,8 +25,9 @@ import com.datastax.driver.core.exceptions.DriverInternalError;
 import com.datastax.driver.core.utils.Bytes;
 
 /*
- * Helps transforming Cassandra types (as read in the schema tables) to
- * DataType.
+ * Parse data types from schema tables, for Cassandra 3.0 and above.
+ * In these versions, data types appear as class names, like "org.apache.cassandra.db.marshal.AsciiType"
+ * or "org.apache.cassandra.db.marshal.TupleType(org.apache.cassandra.db.marshal.Int32Type,org.apache.cassandra.db.marshal.Int32Type)".
  *
  * This is modified (and simplified) from Cassandra's TypeParser class to suit
  * our needs. In particular it's not very efficient, but it doesn't really matter
@@ -36,8 +37,8 @@ import com.datastax.driver.core.utils.Bytes;
  * problem because in theory we'll only parse class names coming from Cassandra and
  * so there shouldn't be anything wrong with them.
  */
-class CassandraTypeParser {
-    private static final Logger logger = LoggerFactory.getLogger(CassandraTypeParser.class);
+class DataTypeClassNameParser {
+    private static final Logger logger = LoggerFactory.getLogger(DataTypeClassNameParser.class);
 
     private static final String REVERSED_TYPE = "org.apache.cassandra.db.marshal.ReversedType";
     private static final String FROZEN_TYPE = "org.apache.cassandra.db.marshal.FrozenType";

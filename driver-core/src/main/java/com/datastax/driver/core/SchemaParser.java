@@ -26,7 +26,7 @@ import org.slf4j.LoggerFactory;
 import static com.datastax.driver.core.SchemaElement.*;
 
 abstract class SchemaParser {
-    
+
     private static final Logger logger = LoggerFactory.getLogger(SchemaParser.class);
 
     private static final TypeCodec<List<String>> LIST_OF_TEXT_CODEC = TypeCodec.list(TypeCodec.varchar());
@@ -39,26 +39,27 @@ abstract class SchemaParser {
         return V2_PARSER;
     }
 
-    abstract SystemRows fetchSystemRows(Metadata metadata,
+    abstract SystemRows fetchSystemRows(Cluster cluster,
                                         SchemaElement targetType, String targetKeyspace, String targetName, List<String> targetSignature,
                                         Connection connection, VersionNumber cassandraVersion)
         throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException;
 
     abstract String tableNameColumn();
 
-    void refresh(Metadata metadata,
+    void refresh(Cluster cluster,
                  SchemaElement targetType, String targetKeyspace, String targetName, List<String> targetSignature,
                  Connection connection, VersionNumber cassandraVersion)
         throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
 
-        SystemRows rows = fetchSystemRows(metadata, targetType, targetKeyspace, targetName, targetSignature, connection, cassandraVersion);
+        SystemRows rows = fetchSystemRows(cluster, targetType, targetKeyspace, targetName, targetSignature, connection, cassandraVersion);
 
+        Metadata metadata = cluster.getMetadata();
         metadata.lock.lock();
         try {
             if (targetType == null || targetType == KEYSPACE) {
                 // building the whole schema or a keyspace
                 assert rows.keyspaces != null;
-                Map<String, KeyspaceMetadata> keyspaces = buildKeyspaces(metadata, rows, cassandraVersion);
+                Map<String, KeyspaceMetadata> keyspaces = buildKeyspaces(rows, cassandraVersion, cluster);
                 updateKeyspaces(metadata, metadata.keyspaces, keyspaces, targetKeyspace);
             } else {
                 assert targetKeyspace != null;
@@ -73,64 +74,68 @@ abstract class SchemaParser {
                     switch (targetType) {
                         case TABLE:
                             if (rows.tables.containsKey(targetKeyspace)) {
-                                Map<String, TableMetadata> tables = buildTables(metadata, keyspace, rows.tables.get(targetKeyspace), rows.columns.get(targetKeyspace), rows.indexes.get(targetKeyspace), cassandraVersion);
+                                Map<String, TableMetadata> tables = buildTables(keyspace, rows.tables.get(targetKeyspace), rows.columns.get(targetKeyspace), rows.indexes.get(targetKeyspace), cassandraVersion, cluster);
                                 updateTables(metadata, keyspace.tables, tables, targetName);
                             }
                             if (rows.views.containsKey(targetKeyspace)) {
-                                Map<String, MaterializedViewMetadata> tables = buildViews(keyspace, rows.views.get(targetKeyspace), rows.columns.get(targetKeyspace), cassandraVersion);
+                                Map<String, MaterializedViewMetadata> tables = buildViews(keyspace, rows.views.get(targetKeyspace), rows.columns.get(targetKeyspace), cassandraVersion, cluster);
                                 updateViews(metadata, keyspace.views, tables, targetName);
                             }
                             break;
                         case TYPE:
                             if (rows.udts.containsKey(targetKeyspace)) {
-                                Map<String, UserType> userTypes = buildUserTypes(metadata, rows.udts.get(targetKeyspace));
+                                Map<String, UserType> userTypes = buildUserTypes(keyspace, rows.udts.get(targetKeyspace), cassandraVersion, cluster);
                                 updateUserTypes(metadata, keyspace.userTypes, userTypes, targetName);
                             }
                             break;
                         case FUNCTION:
                             if (rows.functions.containsKey(targetKeyspace)) {
-                                Map<String, FunctionMetadata> functions = buildFunctions(metadata, keyspace, rows.functions.get(targetKeyspace));
+                                Map<String, FunctionMetadata> functions = buildFunctions(keyspace, rows.functions.get(targetKeyspace), cassandraVersion, cluster);
                                 updateFunctions(metadata, keyspace.functions, functions, targetName);
                             }
                             break;
                         case AGGREGATE:
                             if (rows.aggregates.containsKey(targetKeyspace)) {
-                                Map<String, AggregateMetadata> aggregates = buildAggregates(metadata, keyspace, rows.aggregates.get(targetKeyspace));
+                                Map<String, AggregateMetadata> aggregates = buildAggregates(keyspace, rows.aggregates.get(targetKeyspace), cassandraVersion, cluster);
                                 updateAggregates(metadata, keyspace.aggregates, aggregates, targetName);
                             }
                             break;
                     }
                 }
             }
+        } catch (RuntimeException e) {
+            // Failure to parse the schema is definitively wrong so log a full-on error, but this won't generally prevent queries to
+            // work and this can happen when new Cassandra versions modify stuff in the schema and the driver hasn't yet be modified.
+            // So log, but let things go otherwise.
+            logger.error("Error parsing schema from Cassandra system tables: the schema in Cluster#getMetadata() will appear incomplete or stale", e);
         } finally {
             metadata.lock.unlock();
         }
     }
 
-    private Map<String, KeyspaceMetadata> buildKeyspaces(Metadata metadata,
-                                                         SystemRows rows,
-                                                         VersionNumber cassandraVersion) {
+    private Map<String, KeyspaceMetadata> buildKeyspaces(SystemRows rows,
+                                                         VersionNumber cassandraVersion, Cluster cluster) {
 
         Map<String, KeyspaceMetadata> keyspaces = new LinkedHashMap<String, KeyspaceMetadata>();
         for (Row keyspaceRow : rows.keyspaces) {
             KeyspaceMetadata keyspace = KeyspaceMetadata.build(keyspaceRow, cassandraVersion);
-            Map<String, TableMetadata> tables = buildTables(metadata, keyspace, rows.tables.get(keyspace.getName()), rows.columns.get(keyspace.getName()), rows.indexes.get(keyspace.getName()), cassandraVersion);
-            for (TableMetadata table : tables.values()) {
-                keyspace.add(table);
-            }
-            Map<String, UserType> userTypes = buildUserTypes(metadata, rows.udts.get(keyspace.getName()));
+            Map<String, UserType> userTypes = buildUserTypes(keyspace, rows.udts.get(keyspace.getName()), cassandraVersion, cluster);
             for (UserType userType : userTypes.values()) {
                 keyspace.add(userType);
             }
-            Map<String, FunctionMetadata> functions = buildFunctions(metadata, keyspace, rows.functions.get(keyspace.getName()));
+            Map<String, TableMetadata> tables = buildTables(keyspace, rows.tables.get(keyspace.getName()), rows.columns.get(keyspace.getName()), rows.indexes.get(keyspace.getName()), cassandraVersion, cluster);
+            for (TableMetadata table : tables.values()) {
+                keyspace.add(table);
+            }
+            Map<String, FunctionMetadata> functions = buildFunctions(keyspace, rows.functions.get(keyspace.getName()), cassandraVersion, cluster);
             for (FunctionMetadata function : functions.values()) {
                 keyspace.add(function);
             }
-            Map<String, AggregateMetadata> aggregates = buildAggregates(metadata, keyspace, rows.aggregates.get(keyspace.getName()));
+            Map<String, AggregateMetadata> aggregates = buildAggregates(keyspace, rows.aggregates.get(keyspace.getName()), cassandraVersion, cluster);
             for (AggregateMetadata aggregate : aggregates.values()) {
                 keyspace.add(aggregate);
             }
-            Map<String, MaterializedViewMetadata> views = buildViews(keyspace, rows.views.get(keyspace.getName()), rows.columns.get(keyspace.getName()), cassandraVersion);
+            Map<String, MaterializedViewMetadata> views = buildViews(keyspace, rows.views.get(keyspace.getName()), rows.columns.get(keyspace.getName()), cassandraVersion, cluster);
             for (MaterializedViewMetadata view : views.values()) {
                 keyspace.add(view);
             }
@@ -139,12 +144,9 @@ abstract class SchemaParser {
         return keyspaces;
     }
 
-    private Map<String, TableMetadata> buildTables(Metadata metadata, KeyspaceMetadata keyspace, List<Row> tableRows, Map<String, Map<String, ColumnMetadata.Raw>> colsDefs, Map<String, List<Row>> indexDefs, VersionNumber cassandraVersion) {
+    private Map<String, TableMetadata> buildTables(KeyspaceMetadata keyspace, List<Row> tableRows, Map<String, Map<String, ColumnMetadata.Raw>> colsDefs, Map<String, List<Row>> indexDefs, VersionNumber cassandraVersion, Cluster cluster) {
         Map<String, TableMetadata> tables = new LinkedHashMap<String, TableMetadata>();
         if (tableRows != null) {
-            ProtocolVersion protocolVersion = metadata.cluster.protocolVersion();
-            CodecRegistry codecRegistry = metadata.cluster.configuration.getCodecRegistry();
-
             for (Row tableDef : tableRows) {
                 String cfName = tableDef.getString(tableNameColumn());
                 try {
@@ -169,10 +171,10 @@ abstract class SchemaParser {
                         }
                     }
                     List<Row> cfIndexes = (indexDefs == null) ? null : indexDefs.get(cfName);
-                    TableMetadata table = TableMetadata.build(keyspace, tableDef, cols, cfIndexes, tableNameColumn(), cassandraVersion, protocolVersion, codecRegistry);
+                    TableMetadata table = TableMetadata.build(keyspace, tableDef, cols, cfIndexes, tableNameColumn(), cassandraVersion, cluster);
                     tables.put(table.getName(), table);
                 } catch (RuntimeException e) {
-                    // See ControlConnection#refreshSchema for why we'd rather not probably this further
+                    // See #refresh for why we'd rather not propagate this further
                     logger.error(String.format("Error parsing schema for table %s.%s: "
                             + "Cluster.getMetadata().getKeyspace(\"%s\").getTable(\"%s\") will be missing or incomplete",
                         keyspace.getName(), cfName, keyspace.getName(), cfName), e);
@@ -182,26 +184,27 @@ abstract class SchemaParser {
         return tables;
     }
 
-    private Map<String, UserType> buildUserTypes(Metadata metadata, List<Row> udtRows) {
+    private Map<String, UserType> buildUserTypes(KeyspaceMetadata keyspace, List<Row> udtRows, VersionNumber cassandraVersion, Cluster cluster) {
         Map<String, UserType> userTypes = new LinkedHashMap<String, UserType>();
         if (udtRows != null) {
-            ProtocolVersion protocolVersion = metadata.cluster.protocolVersion();
-            CodecRegistry codecRegistry = metadata.cluster.configuration.getCodecRegistry();
-            for (Row udtRow : udtRows) {
-                UserType type = UserType.build(udtRow, protocolVersion, codecRegistry);
+            for (Row udtRow : maybeSortUdts(udtRows, cluster, keyspace.getName())) {
+                UserType type = UserType.build(keyspace, udtRow, cassandraVersion, cluster, userTypes);
                 userTypes.put(type.getTypeName(), type);
             }
         }
         return userTypes;
     }
 
-    private Map<String, FunctionMetadata> buildFunctions(Metadata metadata, KeyspaceMetadata keyspace, List<Row> functionRows) {
+    // Some schema versions require parsing UDTs in a specific order
+    protected List<Row> maybeSortUdts(List<Row> udtRows, Cluster cluster, String keyspace) {
+        return udtRows;
+    }
+
+    private Map<String, FunctionMetadata> buildFunctions(KeyspaceMetadata keyspace, List<Row> functionRows, VersionNumber cassandraVersion, Cluster cluster) {
         Map<String, FunctionMetadata> functions = new LinkedHashMap<String, FunctionMetadata>();
         if (functionRows != null) {
-            ProtocolVersion protocolVersion = metadata.cluster.protocolVersion();
-            CodecRegistry codecRegistry = metadata.cluster.configuration.getCodecRegistry();
             for (Row functionRow : functionRows) {
-                FunctionMetadata function = FunctionMetadata.build(keyspace, functionRow, protocolVersion, codecRegistry);
+                FunctionMetadata function = FunctionMetadata.build(keyspace, functionRow, cassandraVersion, cluster);
                 if (function != null)
                     functions.put(function.getFullName(), function);
             }
@@ -209,13 +212,11 @@ abstract class SchemaParser {
         return functions;
     }
 
-    private Map<String, AggregateMetadata> buildAggregates(Metadata metadata, KeyspaceMetadata keyspace, List<Row> aggregateRows) {
+    private Map<String, AggregateMetadata> buildAggregates(KeyspaceMetadata keyspace, List<Row> aggregateRows, VersionNumber cassandraVersion, Cluster cluster) {
         Map<String, AggregateMetadata> aggregates = new LinkedHashMap<String, AggregateMetadata>();
         if (aggregateRows != null) {
-            ProtocolVersion protocolVersion = metadata.cluster.protocolVersion();
-            CodecRegistry codecRegistry = metadata.cluster.configuration.getCodecRegistry();
             for (Row aggregateRow : aggregateRows) {
-                AggregateMetadata aggregate = AggregateMetadata.build(keyspace, aggregateRow, protocolVersion, codecRegistry);
+                AggregateMetadata aggregate = AggregateMetadata.build(keyspace, aggregateRow, cassandraVersion, cluster);
                 if (aggregate != null)
                     aggregates.put(aggregate.getFullName(), aggregate);
             }
@@ -223,7 +224,7 @@ abstract class SchemaParser {
         return aggregates;
     }
 
-    private Map<String, MaterializedViewMetadata> buildViews(KeyspaceMetadata keyspace, List<Row> viewRows, Map<String, Map<String, ColumnMetadata.Raw>> colsDefs, VersionNumber cassandraVersion) {
+    private Map<String, MaterializedViewMetadata> buildViews(KeyspaceMetadata keyspace, List<Row> viewRows, Map<String, Map<String, ColumnMetadata.Raw>> colsDefs, VersionNumber cassandraVersion, Cluster cluster) {
         Map<String, MaterializedViewMetadata> views = new LinkedHashMap<String, MaterializedViewMetadata>();
         if (viewRows != null) {
             for (Row viewRow : viewRows) {
@@ -233,11 +234,11 @@ abstract class SchemaParser {
                     if (cols == null || cols.isEmpty())
                         continue; // we probably raced, we will update the metadata next time
 
-                    MaterializedViewMetadata view = MaterializedViewMetadata.build(keyspace, viewRow, cols, cassandraVersion);
+                    MaterializedViewMetadata view = MaterializedViewMetadata.build(keyspace, viewRow, cols, cassandraVersion, cluster);
                     if(view != null)
                         views.put(view.getName(), view);
                 } catch (RuntimeException e) {
-                    // See ControlConnection#refreshSchema for why we'd rather not probably this further
+                    // See #refresh for why we'd rather not propagate this further
                     logger.error(String.format("Error parsing schema for view %s.%s: "
                             + "Cluster.getMetadata().getKeyspace(\"%s\").getView(\"%s\") will be missing or incomplete",
                         keyspace.getName(), viewName, keyspace.getName(), viewName), e);
@@ -423,7 +424,7 @@ abstract class SchemaParser {
         return result;
     }
 
-    static Map<String, Map<String, Map<String, ColumnMetadata.Raw>>> groupByKeyspaceAndCf(ResultSet rs, VersionNumber cassandraVersion, ProtocolVersion protocolVersion, CodecRegistry codecRegistry, String tableName) {
+    static Map<String, Map<String, Map<String, ColumnMetadata.Raw>>> groupByKeyspaceAndCf(ResultSet rs, VersionNumber cassandraVersion, String tableName) {
         if (rs == null)
             return Collections.emptyMap();
 
@@ -442,7 +443,7 @@ abstract class SchemaParser {
                 l = new HashMap<String, ColumnMetadata.Raw>();
                 colsByCf.put(cfName, l);
             }
-            ColumnMetadata.Raw c = ColumnMetadata.Raw.fromRow(row, cassandraVersion, protocolVersion, codecRegistry);
+            ColumnMetadata.Raw c = ColumnMetadata.Raw.fromRow(row, cassandraVersion);
             l.put(c.name, c);
         }
         return result;
@@ -497,14 +498,12 @@ abstract class SchemaParser {
         private static final String CF_NAME                = "columnfamily_name";
 
         @Override
-        SystemRows fetchSystemRows(Metadata metadata,
+        SystemRows fetchSystemRows(Cluster cluster,
                                    SchemaElement targetType, String targetKeyspace, String targetName, List<String> targetSignature,
                                    Connection connection, VersionNumber cassandraVersion)
             throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
 
             boolean isSchemaOrKeyspace = (targetType == null || targetType == KEYSPACE);
-            ProtocolVersion protocolVersion = metadata.cluster.protocolVersion();
-            CodecRegistry codecRegistry = metadata.cluster.configuration.getCodecRegistry();
 
             String whereClause = "";
             if (targetType != null) {
@@ -526,6 +525,8 @@ abstract class SchemaParser {
                 functionsFuture = null,
                 aggregatesFuture = null;
 
+            ProtocolVersion protocolVersion = cluster.getConfiguration().getProtocolOptions().getProtocolVersion();
+
             if (isSchemaOrKeyspace)
                 ksFuture = queryAsync(SELECT_KEYSPACES + whereClause, connection, protocolVersion);
 
@@ -545,7 +546,7 @@ abstract class SchemaParser {
 
             return new SystemRows(get(ksFuture),
                 groupByKeyspace(get(cfFuture)),
-                groupByKeyspaceAndCf(get(colsFuture), cassandraVersion, protocolVersion, codecRegistry, CF_NAME),
+                groupByKeyspaceAndCf(get(colsFuture), cassandraVersion, CF_NAME),
                 groupByKeyspace(get(udtFuture)),
                 groupByKeyspace(get(functionsFuture)),
                 groupByKeyspace(get(aggregatesFuture)),
@@ -583,12 +584,10 @@ abstract class SchemaParser {
         private static final String TABLE_NAME = "table_name";
 
         @Override
-        SystemRows fetchSystemRows(Metadata metadata, SchemaElement targetType, String targetKeyspace, String targetName, List<String> targetSignature, Connection connection, VersionNumber cassandraVersion)
+        SystemRows fetchSystemRows(Cluster cluster, SchemaElement targetType, String targetKeyspace, String targetName, List<String> targetSignature, Connection connection, VersionNumber cassandraVersion)
             throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
 
             boolean isSchemaOrKeyspace = (targetType == null || targetType == KEYSPACE);
-            ProtocolVersion protocolVersion = metadata.cluster.protocolVersion();
-            CodecRegistry codecRegistry = metadata.cluster.configuration.getCodecRegistry();
 
             ResultSetFuture ksFuture = null,
                 udtFuture = null,
@@ -598,6 +597,8 @@ abstract class SchemaParser {
                 aggregatesFuture = null,
                 indexesFuture = null,
                 viewsFuture = null;
+
+            ProtocolVersion protocolVersion = cluster.getConfiguration().getProtocolOptions().getProtocolVersion();
 
             if (isSchemaOrKeyspace)
                 ksFuture = queryAsync(SELECT_KEYSPACES + whereClause(targetType, targetKeyspace, targetName, targetSignature), connection, protocolVersion);
@@ -620,7 +621,7 @@ abstract class SchemaParser {
 
             return new SystemRows(get(ksFuture),
                 groupByKeyspace(get(cfFuture)),
-                groupByKeyspaceAndCf(get(colsFuture), cassandraVersion, protocolVersion, codecRegistry, TABLE_NAME),
+                groupByKeyspaceAndCf(get(colsFuture), cassandraVersion, TABLE_NAME),
                 groupByKeyspace(get(udtFuture)),
                 groupByKeyspace(get(functionsFuture)),
                 groupByKeyspace(get(aggregatesFuture)),
@@ -644,12 +645,57 @@ abstract class SchemaParser {
                 else if (targetType == TYPE)
                     whereClause += " AND type_name = '" + targetName + '\'';
                 else if (targetType == FUNCTION)
-                    whereClause += " AND function_name = '" + targetName + "' AND signature = " + LIST_OF_TEXT_CODEC.format(targetSignature);
+                    whereClause += " AND function_name = '" + targetName + "' AND argument_types = " + LIST_OF_TEXT_CODEC.format(targetSignature);
                 else if (targetType == AGGREGATE)
-                    whereClause += " AND aggregate_name = '" + targetName + "' AND signature = " + LIST_OF_TEXT_CODEC.format(targetSignature);
+                    whereClause += " AND aggregate_name = '" + targetName + "' AND argument_types = " + LIST_OF_TEXT_CODEC.format(targetSignature);
             }
             return whereClause;
         }
 
+
+        @Override
+        protected List<Row> maybeSortUdts(List<Row> udtRows, Cluster cluster, String keyspace) {
+            if (udtRows.size() < 2)
+                return udtRows;
+
+            // For C* 3+, user-defined type resolution must be done in proper order
+            // to guarantee that nested UDTs get resolved
+            DirectedGraph<Row> graph = new DirectedGraph<Row>(udtRows);
+            for (Row from : udtRows) {
+                for (Row to : udtRows) {
+                    if (from != to && dependsOn(to, from, cluster, keyspace))
+                        graph.addEdge(from, to);
+                }
+            }
+            return graph.topologicalSort();
+        }
+
+        private boolean dependsOn(Row udt1, Row udt2, Cluster cluster, String keyspace) {
+            List<String> fieldTypes = udt1.getList(UserType.COLS_TYPES, String.class);
+            String typeName = udt2.getString(UserType.TYPE_NAME);
+            for (String fieldTypeStr : fieldTypes) {
+                // use shallow user types since some definitions might not be known at this stage
+                DataType fieldType = DataTypeCqlNameParser.parse(fieldTypeStr, cluster, keyspace, null, null, false, true);
+                if (references(fieldType, typeName))
+                    return true;
+            }
+            return false;
+        }
+
+        private boolean references(DataType dataType, String typeName) {
+            if (dataType instanceof UserType.Shallow && ((UserType.Shallow)dataType).typeName.equals(typeName))
+                return true;
+            for (DataType arg : dataType.getTypeArguments()) {
+                if (references(arg, typeName))
+                    return true;
+            }
+            if (dataType instanceof TupleType) {
+                for (DataType arg : ((TupleType)dataType).getComponentTypes()) {
+                    if (references(arg, typeName))
+                        return true;
+                }
+            }
+            return false;
+        }
     }
 }

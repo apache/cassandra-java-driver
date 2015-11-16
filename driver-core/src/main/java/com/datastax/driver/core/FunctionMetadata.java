@@ -58,6 +58,7 @@ public class FunctionMetadata {
         this.returnType = returnType;
     }
 
+    // Cassandra < 3.0:
     // CREATE TABLE system.schema_functions (
     //     keyspace_name text,
     //     function_name text,
@@ -70,41 +71,65 @@ public class FunctionMetadata {
     //     return_type text,
     //     PRIMARY KEY (keyspace_name, function_name, signature)
     // ) WITH CLUSTERING ORDER BY (function_name ASC, signature ASC)
-    static FunctionMetadata build(KeyspaceMetadata ksm, Row row, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
-        String simpleName = row.getString("function_name");
-        List<String> signature = row.getList("signature", String.class);
-        String fullName = Metadata.fullFunctionName(simpleName, signature);
+    //
+    // Cassandra >= 3.0:
+    // CREATE TABLE system_schema.functions (
+    //     keyspace_name text,
+    //     function_name text,
+    //     argument_names frozen<list<text>>,
+    //     argument_types frozen<list<text>>,
+    //     body text,
+    //     called_on_null_input boolean,
+    //     language text,
+    //     return_type text,
+    //     PRIMARY KEY (keyspace_name, function_name, argument_types)
+    // ) WITH CLUSTERING ORDER BY (function_name ASC, argument_types ASC)
+    //
 
+    static FunctionMetadata build(KeyspaceMetadata ksm, Row row, VersionNumber version, Cluster cluster) {
+        CodecRegistry codecRegistry = cluster.getConfiguration().getCodecRegistry();
+        ProtocolVersion protocolVersion = cluster.getConfiguration().getProtocolOptions().getProtocolVersion();
+        String simpleName = row.getString("function_name");
         List<String> argumentNames = row.getList("argument_names", String.class);
+        // this will be a list of C* types in 2.2 and a list of CQL types in 3.0
         List<String> argumentTypes = row.getList("argument_types", String.class);
+        Map<String, DataType> arguments = buildArguments(ksm, argumentNames, argumentTypes, version, cluster);
+        String fullName = Metadata.fullFunctionName(simpleName, arguments.values());
         if (argumentNames.size() != argumentTypes.size()) {
             logger.error(String.format("Error parsing definition of function %1$s.%2$s: the number of argument names and types don't match."
                     + "Cluster.getMetadata().getKeyspace(\"%1$s\").getFunction(\"%2$s\") will be missing.",
                 ksm.getName(), fullName));
             return null;
         }
-        Map<String, DataType> arguments = buildArguments(argumentNames, argumentTypes, protocolVersion, codecRegistry);
-
         String body = row.getString("body");
         boolean calledOnNullInput = row.getBool("called_on_null_input");
         String language = row.getString("language");
-        DataType returnType = CassandraTypeParser.parseOne(row.getString("return_type"), protocolVersion, codecRegistry);
-
-        FunctionMetadata function = new FunctionMetadata(ksm, fullName, simpleName, arguments, body,
+        DataType returnType;
+        if(version.getMajor() >= 3.0) {
+            returnType = DataTypeCqlNameParser.parse(row.getString("return_type"), cluster, ksm.getName(), ksm.userTypes, null, false, false);
+        } else {
+            returnType = DataTypeClassNameParser.parseOne(row.getString("return_type"), protocolVersion, codecRegistry);
+        }
+        return new FunctionMetadata(ksm, fullName, simpleName, arguments, body,
             calledOnNullInput, language, returnType);
-        ksm.add(function);
-        return function;
     }
 
     // Note: the caller ensures that names and types have the same size
-    private static Map<String, DataType> buildArguments(List<String> names, List<String> types, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
+    private static Map<String, DataType> buildArguments(KeyspaceMetadata ksm, List<String> names, List<String> types, VersionNumber version, Cluster cluster) {
         if (names.isEmpty())
             return Collections.emptyMap();
-
         ImmutableMap.Builder<String, DataType> builder = ImmutableMap.builder();
+        Metadata metadata = cluster.getMetadata();
+        CodecRegistry codecRegistry = cluster.getConfiguration().getCodecRegistry();
+        ProtocolVersion protocolVersion = cluster.getConfiguration().getProtocolOptions().getProtocolVersion();
         Iterator<String> iterTypes = types.iterator();
         for (String name : names) {
-            DataType type = CassandraTypeParser.parseOne(iterTypes.next(), protocolVersion, codecRegistry);
+            DataType type;
+            if (version.getMajor() >= 3) {
+                type = DataTypeCqlNameParser.parse(iterTypes.next(), cluster, ksm.getName(), ksm.userTypes, null, false, false);
+            } else {
+                type = DataTypeClassNameParser.parseOne(iterTypes.next(), protocolVersion, codecRegistry);
+            }
             builder.put(name, type);
         }
         return builder.build();
