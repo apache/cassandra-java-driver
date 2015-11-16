@@ -16,13 +16,19 @@
 package com.datastax.driver.core.policies;
 
 import com.datastax.driver.core.*;
+import com.datastax.driver.core.exceptions.OverloadedException;
+import com.datastax.driver.core.exceptions.ServerError;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.mockito.Mockito;
 import org.scassandra.Scassandra;
+import org.scassandra.http.client.ClosedConnectionConfig.CloseType;
+import org.scassandra.http.client.Config;
 import org.scassandra.http.client.PrimingRequest;
+import org.scassandra.http.client.PrimingRequest.PrimingRequestBuilder;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.DataProvider;
 
 import java.util.List;
 import java.util.Map;
@@ -31,6 +37,8 @@ import static com.datastax.driver.core.TestUtils.nonQuietClusterCloseOptions;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.times;
+import static org.scassandra.http.client.PrimingRequest.Result.overloaded;
+import static org.scassandra.http.client.PrimingRequest.Result.server_error;
 
 /**
  * Base class for retry policy integration tests.
@@ -49,9 +57,16 @@ public class AbstractRetryPolicyIntegrationTest {
     protected Host host1, host2, host3;
     protected Session session;
 
-    protected RetryPolicy retryPolicy;
+    protected ExtendedRetryPolicy retryPolicy;
 
-    protected AbstractRetryPolicyIntegrationTest(RetryPolicy retryPolicy) {
+    protected AbstractRetryPolicyIntegrationTest() {
+    }
+
+    protected AbstractRetryPolicyIntegrationTest(ExtendedRetryPolicy retryPolicy) {
+        setRetryPolicy(retryPolicy);
+    }
+
+    protected final void setRetryPolicy(ExtendedRetryPolicy retryPolicy) {
         this.retryPolicy = Mockito.spy(retryPolicy);
     }
 
@@ -65,6 +80,12 @@ public class AbstractRetryPolicyIntegrationTest {
                 .withPort(scassandras.getBinaryPort())
                 .withRetryPolicy(retryPolicy)
                 .withLoadBalancingPolicy(new SortingLoadBalancingPolicy())
+                // Scassandra does not support V3 nor V4 yet, and V4 may cause the server to crash
+                .withProtocolVersion(ProtocolVersion.V2)
+                .withPoolingOptions(new PoolingOptions()
+                        .setCoreConnectionsPerHost(HostDistance.LOCAL, 1)
+                        .setMaxConnectionsPerHost(HostDistance.LOCAL, 1)
+                        .setHeartbeatIntervalSeconds(0))
                 .withNettyOptions(nonQuietClusterCloseOptions)
                 .build();
 
@@ -84,10 +105,18 @@ public class AbstractRetryPolicyIntegrationTest {
     }
 
     protected void simulateError(int hostNumber, PrimingRequest.Result result) {
-        scassandras.node(hostNumber).primingClient().prime(PrimingRequest.queryBuilder()
+        simulateError(hostNumber, result, null);
+    }
+
+    protected void simulateError(int hostNumber, PrimingRequest.Result result, Config config) {
+        PrimingRequestBuilder builder = PrimingRequest.queryBuilder()
                 .withQuery("mock query")
-                .withResult(result)
-                .build());
+                .withResult(result);
+
+        if (config != null)
+            builder = builder.withConfig(config);
+
+        scassandras.node(hostNumber).primingClient().prime(builder.build());
     }
 
     protected void simulateNormalResponse(int hostNumber) {
@@ -97,7 +126,7 @@ public class AbstractRetryPolicyIntegrationTest {
                 .build());
     }
 
-    private static List<Map<String, ?>> row(String key, String value) {
+    protected static List<Map<String, ?>> row(String key, String value) {
         return ImmutableList.<Map<String, ?>>of(ImmutableMap.of(key, value));
     }
 
@@ -125,6 +154,11 @@ public class AbstractRetryPolicyIntegrationTest {
                 any(Statement.class), any(ConsistencyLevel.class), anyInt(), anyInt(), anyInt());
     }
 
+    protected void assertOnRequestErrorWasCalled(int times) {
+        Mockito.verify(retryPolicy, times(times)).onRequestError(
+            any(Statement.class), any(ConsistencyLevel.class), any(Exception.class), anyInt());
+    }
+
     protected void assertQueried(int hostNumber, int times) {
         assertThat(scassandras.node(hostNumber).activityClient().retrieveQueries()).hasSize(times);
     }
@@ -135,5 +169,22 @@ public class AbstractRetryPolicyIntegrationTest {
             cluster.close();
         if (scassandras != null)
             scassandras.stop();
+    }
+
+    @DataProvider
+    public static Object[][] serverSideErrors() {
+        return new Object[][]{
+                {server_error, ServerError.class},
+                {overloaded, OverloadedException.class},
+        };
+    }
+
+    @DataProvider
+    public static Object[][] connectionErrors() {
+        return new Object[][]{
+                {CloseType.CLOSE},
+                {CloseType.HALFCLOSE},
+                {CloseType.RESET}
+        };
     }
 }

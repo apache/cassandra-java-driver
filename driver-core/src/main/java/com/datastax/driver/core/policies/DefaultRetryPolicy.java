@@ -34,7 +34,7 @@ import com.datastax.driver.core.WriteType;
  * In some cases, it may be convenient to use a more aggressive retry policy
  * like {@link DowngradingConsistencyRetryPolicy}.
  */
-public class DefaultRetryPolicy implements RetryPolicy {
+public class DefaultRetryPolicy implements ExtendedRetryPolicy {
 
     public static final DefaultRetryPolicy INSTANCE = new DefaultRetryPolicy();
 
@@ -136,4 +136,19 @@ public class DefaultRetryPolicy implements RetryPolicy {
                 ? RetryDecision.tryNextHost(cl)
                 : RetryDecision.rethrow();
     }
+
+    /**
+     * {@inheritDoc}
+     * <p/>
+     * For historical reasons, this implementation triggers a retry on the next host in the query plan
+     * with the same consistency level, regardless of the statement's idempotence.
+     * Note that this breaks the general rule
+     * stated in {@link ExtendedRetryPolicy#onRequestError(Statement, ConsistencyLevel, Exception, int)}:
+     * "a retry should only be attempted if the request is known to be idempotent".
+     */
+    @Override
+    public RetryDecision onRequestError(Statement statement, ConsistencyLevel cl, Exception e, int nbRetry) {
+        return RetryDecision.tryNextHost(cl);
+    }
+
 }

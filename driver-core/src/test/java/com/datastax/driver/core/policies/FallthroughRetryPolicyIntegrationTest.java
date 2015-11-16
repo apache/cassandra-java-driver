@@ -15,14 +15,17 @@
  */
 package com.datastax.driver.core.policies;
 
-import com.datastax.driver.core.exceptions.ReadTimeoutException;
-import com.datastax.driver.core.exceptions.UnavailableException;
-import com.datastax.driver.core.exceptions.WriteTimeoutException;
+import com.datastax.driver.core.SocketOptions;
+import com.datastax.driver.core.exceptions.*;
+import org.scassandra.http.client.ClosedConnectionConfig;
+import org.scassandra.http.client.ClosedConnectionConfig.CloseType;
+import org.scassandra.http.client.PrimingRequest;
 import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.scassandra.http.client.PrimingRequest.Result.*;
+import static org.scassandra.http.client.PrimingRequest.then;
 
 public class FallthroughRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegrationTest {
     public FallthroughRetryPolicyIntegrationTest() {
@@ -72,6 +75,76 @@ public class FallthroughRetryPolicyIntegrationTest extends AbstractRetryPolicyIn
 
         assertOnUnavailableWasCalled(1);
         assertThat(errors.getRetriesOnUnavailable().getCount()).isEqualTo(0);
+        assertQueried(1, 1);
+        assertQueried(2, 0);
+        assertQueried(3, 0);
+    }
+
+    @Test(groups = "short")
+    public void should_rethrow_on_client_timeouts() {
+        cluster.getConfiguration().getSocketOptions().setReadTimeoutMillis(1);
+        try {
+            scassandras
+                    .node(1).primingClient().prime(PrimingRequest.queryBuilder()
+                    .withQuery("mock query")
+                    .withThen(then().withFixedDelay(1000L).withRows(row("result", "result1")))
+                    .build());
+            try {
+                query();
+                fail("expected a DriverInternalError");
+            } catch (DriverInternalError e) {
+                assertThat(e.getCause().getMessage()).isEqualTo(
+                        String.format("[%s] Operation timed out", host1.getSocketAddress())
+                );
+            }
+            assertOnRequestErrorWasCalled(1);
+            assertThat(errors.getRetries().getCount()).isEqualTo(0);
+            assertThat(errors.getClientTimeouts().getCount()).isEqualTo(1);
+            assertThat(errors.getRetriesOnClientTimeout().getCount()).isEqualTo(0);
+            assertQueried(1, 1);
+            assertQueried(2, 0);
+            assertQueried(3, 0);
+        } finally {
+            cluster.getConfiguration().getSocketOptions().setReadTimeoutMillis(SocketOptions.DEFAULT_READ_TIMEOUT_MILLIS);
+        }
+    }
+
+
+    @Test(groups = "short", dataProvider = "serverSideErrors")
+    public void should_rethrow_on_server_side_error(PrimingRequest.Result error, Class<? extends DriverException> exception) {
+        simulateError(1, error);
+        try {
+            query();
+            fail("expected a DriverException");
+        } catch (DriverException e) {
+            assertThat(e).isInstanceOf(exception);
+        }
+        assertOnRequestErrorWasCalled(1);
+        assertThat(errors.getOthers().getCount()).isEqualTo(1);
+        assertThat(errors.getRetries().getCount()).isEqualTo(0);
+        assertThat(errors.getRetriesOnOtherErrors().getCount()).isEqualTo(0);
+        assertQueried(1, 1);
+        assertQueried(2, 0);
+        assertQueried(3, 0);
+    }
+
+
+    @Test(groups = "short", dataProvider = "connectionErrors")
+    public void should_rethrow_on_connection_error(CloseType closeType) {
+        simulateError(1, PrimingRequest.Result.closed_connection, new ClosedConnectionConfig(closeType));
+        try {
+            query();
+            fail("expected an error");
+        } catch (DriverInternalError e) {
+            assertThat(e.getCause().getMessage()).isEqualTo(
+                    String.format("[%s] Connection has been closed", host1.getSocketAddress())
+            );
+        }
+        assertOnRequestErrorWasCalled(1);
+        assertThat(errors.getRetries().getCount()).isEqualTo(0);
+        assertThat(errors.getConnectionErrors().getCount()).isEqualTo(1);
+        assertThat(errors.getIgnoresOnConnectionError().getCount()).isEqualTo(0);
+        assertThat(errors.getRetriesOnConnectionError().getCount()).isEqualTo(0);
         assertQueried(1, 1);
         assertQueried(2, 0);
         assertQueried(3, 0);

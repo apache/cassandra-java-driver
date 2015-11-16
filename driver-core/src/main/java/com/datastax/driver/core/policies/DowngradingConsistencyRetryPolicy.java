@@ -66,7 +66,7 @@ import com.datastax.driver.core.WriteType;
  * to make sure the data is persisted, and that reading something is better
  * than reading nothing, even if there is a risk of reading stale data.
  */
-public class DowngradingConsistencyRetryPolicy implements RetryPolicy {
+public class DowngradingConsistencyRetryPolicy implements ExtendedRetryPolicy {
 
     public static final DowngradingConsistencyRetryPolicy INSTANCE = new DowngradingConsistencyRetryPolicy();
 
@@ -194,5 +194,19 @@ public class DowngradingConsistencyRetryPolicy implements RetryPolicy {
 
         // Tries the biggest CL that is expected to work
         return maxLikelyToWorkCL(aliveReplica);
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p/>
+     * For historical reasons, this implementation triggers a retry on the next host in the query plan
+     * with the same consistency level, regardless of the statement's idempotence.
+     * Note that this breaks the general rule
+     * stated in {@link ExtendedRetryPolicy#onRequestError(Statement, ConsistencyLevel, Exception, int)}:
+     * "a retry should only be attempted if the request is known to be idempotent".`
+     */
+    @Override
+    public RetryDecision onRequestError(Statement statement, ConsistencyLevel cl, Exception e, int nbRetry) {
+        return RetryDecision.tryNextHost(cl);
     }
 }

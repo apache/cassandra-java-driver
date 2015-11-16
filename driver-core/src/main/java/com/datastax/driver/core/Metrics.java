@@ -272,6 +272,7 @@ public class Metrics {
         private final Counter writeTimeouts = registry.counter("write-timeouts");
         private final Counter readTimeouts = registry.counter("read-timeouts");
         private final Counter unavailables = registry.counter("unavailables");
+        private final Counter clientTimeouts = registry.counter("client-timeouts");
 
         private final Counter otherErrors = registry.counter("other-errors");
 
@@ -279,10 +280,17 @@ public class Metrics {
         private final Counter retriesOnWriteTimeout = registry.counter("retries-on-write-timeout");
         private final Counter retriesOnReadTimeout = registry.counter("retries-on-read-timeout");
         private final Counter retriesOnUnavailable = registry.counter("retries-on-unavailable");
+        private final Counter retriesOnClientTimeout = registry.counter("retries-on-client-timeout");
+        private final Counter retriesOnConnectionError = registry.counter("retries-on-connection-error");
+        private final Counter retriesOnOtherErrors = registry.counter("retries-on-other-errors");
+
         private final Counter ignores = registry.counter("ignores");
         private final Counter ignoresOnWriteTimeout = registry.counter("ignores-on-write-timeout");
         private final Counter ignoresOnReadTimeout = registry.counter("ignores-on-read-timeout");
         private final Counter ignoresOnUnavailable = registry.counter("ignores-on-unavailable");
+        private final Counter ignoresOnClientTimeout = registry.counter("ignores-on-client-timeout");
+        private final Counter ignoresOnConnectionError = registry.counter("ignores-on-connection-error");
+        private final Counter ignoresOnOtherErrors = registry.counter("ignores-on-other-errors");
 
         private final Counter speculativeExecutions = registry.counter("speculative-executions");
 
@@ -335,6 +343,16 @@ public class Metrics {
         }
 
         /**
+         * Returns the number of requests that timed out before the driver
+         * received a response.
+         *
+         * @return the number of client timeouts.
+         */
+        public Counter getClientTimeouts() {
+            return clientTimeouts;
+        }
+
+        /**
          * Returns the number of requests that returned errors not accounted for by
          * another metric. This includes all types of invalid requests.
          *
@@ -349,7 +367,7 @@ public class Metrics {
          * Returns the number of times a request was retried due to the
          * {@link com.datastax.driver.core.policies.RetryPolicy}.
          *
-         * @return the number of times a requests was retried due to the
+         * @return the number of times a request was retried due to the
          * {@link com.datastax.driver.core.policies.RetryPolicy}.
          */
         public Counter getRetries() {
@@ -361,7 +379,7 @@ public class Metrics {
          * {@link com.datastax.driver.core.policies.RetryPolicy}, after a
          * read timed out.
          *
-         * @return the number of times a requests was retried due to the
+         * @return the number of times a request was retried due to the
          * {@link com.datastax.driver.core.policies.RetryPolicy}, after a
          * read timed out.
          */
@@ -374,7 +392,7 @@ public class Metrics {
          * {@link com.datastax.driver.core.policies.RetryPolicy}, after a
          * write timed out.
          *
-         * @return the number of times a requests was retried due to the
+         * @return the number of times a request was retried due to the
          * {@link com.datastax.driver.core.policies.RetryPolicy}, after a
          * write timed out.
          */
@@ -387,12 +405,51 @@ public class Metrics {
          * {@link com.datastax.driver.core.policies.RetryPolicy}, after an
          * unavailable exception.
          *
-         * @return the number of times a requests was retried due to the
+         * @return the number of times a request was retried due to the
          * {@link com.datastax.driver.core.policies.RetryPolicy}, after an
          * unavailable exception.
          */
         public Counter getRetriesOnUnavailable() {
             return retriesOnUnavailable;
+        }
+
+        /**
+         * Returns the number of times a request was retried due to the
+         * {@link com.datastax.driver.core.policies.RetryPolicy}, after a
+         * client timeout.
+         *
+         * @return the number of times a request was retried due to the
+         * {@link com.datastax.driver.core.policies.RetryPolicy}, after a
+         * client timeout.
+         */
+        public Counter getRetriesOnClientTimeout() {
+            return retriesOnClientTimeout;
+        }
+
+        /**
+         * Returns the number of times a request was retried due to the
+         * {@link com.datastax.driver.core.policies.RetryPolicy}, after a
+         * connection error.
+         *
+         * @return the number of times a request was retried due to the
+         * {@link com.datastax.driver.core.policies.RetryPolicy}, after a
+         * connection error.
+         */
+        public Counter getRetriesOnConnectionError() {
+            return retriesOnConnectionError;
+        }
+
+        /**
+         * Returns the number of times a request was retried due to the
+         * {@link com.datastax.driver.core.policies.RetryPolicy}, after an
+         * unexpected error.
+         *
+         * @return the number of times a request was retried due to the
+         * {@link com.datastax.driver.core.policies.RetryPolicy}, after an
+         * unexpected error.
+         */
+        public Counter getRetriesOnOtherErrors() {
+            return retriesOnOtherErrors;
         }
 
         /**
@@ -412,7 +469,7 @@ public class Metrics {
          * {@link com.datastax.driver.core.policies.RetryPolicy}, after a
          * read timed out.
          *
-         * @return the number of times a requests was ignored due to the
+         * @return the number of times a request was ignored due to the
          * {@link com.datastax.driver.core.policies.RetryPolicy}, after a
          * read timed out.
          */
@@ -425,7 +482,7 @@ public class Metrics {
          * {@link com.datastax.driver.core.policies.RetryPolicy}, after a
          * write timed out.
          *
-         * @return the number of times a requests was ignored due to the
+         * @return the number of times a request was ignored due to the
          * {@link com.datastax.driver.core.policies.RetryPolicy}, after a
          * write timed out.
          */
@@ -438,12 +495,51 @@ public class Metrics {
          * {@link com.datastax.driver.core.policies.RetryPolicy}, after an
          * unavailable exception.
          *
-         * @return the number of times a requests was ignored due to the
+         * @return the number of times a request was ignored due to the
          * {@link com.datastax.driver.core.policies.RetryPolicy}, after an
          * unavailable exception.
          */
         public Counter getIgnoresOnUnavailable() {
             return ignoresOnUnavailable;
+        }
+
+        /**
+         * Returns the number of times a request was ignored due to the
+         * {@link com.datastax.driver.core.policies.RetryPolicy}, after a
+         * client timeout.
+         *
+         * @return the number of times a request was ignored due to the
+         * {@link com.datastax.driver.core.policies.RetryPolicy}, after a
+         * client timeout.
+         */
+        public Counter getIgnoresOnClientTimeout() {
+            return ignoresOnClientTimeout;
+        }
+
+        /**
+         * Returns the number of times a request was ignored due to the
+         * {@link com.datastax.driver.core.policies.RetryPolicy}, after a
+         * connection error.
+         *
+         * @return the number of times a request was ignored due to the
+         * {@link com.datastax.driver.core.policies.RetryPolicy}, after a
+         * connection error.
+         */
+        public Counter getIgnoresOnConnectionError() {
+            return ignoresOnConnectionError;
+        }
+
+        /**
+         * Returns the number of times a request was ignored due to the
+         * {@link com.datastax.driver.core.policies.RetryPolicy}, after an
+         * unexpected error.
+         *
+         * @return the number of times a request was ignored due to the
+         * {@link com.datastax.driver.core.policies.RetryPolicy}, after an
+         * unexpected error.
+         */
+        public Counter getIgnoresOnOtherErrors() {
+            return ignoresOnOtherErrors;
         }
 
         /**
