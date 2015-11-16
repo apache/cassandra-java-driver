@@ -149,6 +149,8 @@ Netty-tcnative provides the native integration with OpenSSL. Follow
 [these instructions](http://netty.io/wiki/forked-tomcat-native.html) to
 add it to your dependencies.
 
+Note that using netty-tcnative requires JDK 1.7 or above.
+
 ##### Configuring the context
 
 Use the following Java code to configure OpenSSL with your certificates:
