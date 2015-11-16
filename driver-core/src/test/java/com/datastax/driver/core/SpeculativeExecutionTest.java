@@ -15,24 +15,27 @@
  */
 package com.datastax.driver.core;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 
-import com.datastax.driver.core.policies.SpeculativeExecutionPolicy;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import org.scassandra.Scassandra;
 import org.scassandra.http.client.PrimingRequest;
-import org.testng.annotations.*;
-
-import com.datastax.driver.core.policies.ConstantSpeculativeExecutionPolicy;
-import com.datastax.driver.core.policies.RetryPolicy;
-
-import static com.datastax.driver.core.Assertions.assertThat;
-import static com.datastax.driver.core.TestUtils.nonQuietClusterCloseOptions;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+
+import com.datastax.driver.core.exceptions.DriverException;
+import com.datastax.driver.core.policies.ConstantSpeculativeExecutionPolicy;
+import com.datastax.driver.core.policies.RetryPolicy;
+import com.datastax.driver.core.policies.SpeculativeExecutionPolicy;
+
+import static com.datastax.driver.core.Assertions.assertThat;
+import static com.datastax.driver.core.TestUtils.nonQuietClusterCloseOptions;
 
 public class SpeculativeExecutionTest {
     ScassandraCluster scassandras;
@@ -241,6 +244,11 @@ public class SpeculativeExecutionTest {
         @Override
         public RetryDecision onUnavailable(Statement statement, ConsistencyLevel cl, int requiredReplica, int aliveReplica, int nbRetry) {
             return RetryDecision.rethrow();
+        }
+
+        @Override
+        public RetryDecision onRequestError(Statement statement, ConsistencyLevel cl, DriverException e, int nbRetry) {
+            return RetryDecision.tryNextHost(cl);
         }
 
         @Override

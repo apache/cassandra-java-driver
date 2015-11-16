@@ -131,7 +131,7 @@ public class QueryLoggerErrorsTest extends ScassandraTestBase.PerClassCluster {
             .contains(ip)
             .contains(Integer.toString(scassandra.getBinaryPort()))
             .contains(query)
-            .contains(OperationTimedOutException.class.getName());
+            .contains("Timed out waiting for server response");
     }
 
     @DataProvider(name="errors")
@@ -174,7 +174,6 @@ public class QueryLoggerErrorsTest extends ScassandraTestBase.PerClassCluster {
         } catch(Exception e) {
             if(e instanceof NoHostAvailableException) {
                 assertThat(expectedException).isEqualTo(NoHostAvailableException.class);
-                // ok
                 Throwable error = ((NoHostAvailableException)e).getErrors().get(hostAddress);
                 assertThat(error).isNotNull().isOfAnyClassIn(loggedException);
             } else {

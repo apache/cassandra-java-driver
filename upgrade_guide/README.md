@@ -235,6 +235,14 @@ We've also seized the opportunity to remove code that was deprecated in 2.1.
     and now the `PreparedStatement` interface exposes 2 new methods, 
     `setIdempotent(Boolean)` and `isIdempotent()`.
 
+22. `RetryPolicy` and `ExtendedRetryPolicy` (introduced in 2.1.10)
+    were merged together; as a consequence, `RetryPolicy` now has one 
+    more method: `onRequestError`; see
+    [JAVA-819](https://datastax-oss.atlassian.net/browse/JAVA-819) for
+    more information. Furthermore, `FallthroughRetryPolicy` now returns
+    `RetryDecision.rethrow()` when `onRequestError` is called.
+    
+
 ### 2.1.8
 
 2.1.8 is binary-compatible with 2.1.7 but introduces a small change in the 
