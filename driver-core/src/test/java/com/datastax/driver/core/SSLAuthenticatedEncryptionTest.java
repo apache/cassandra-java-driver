@@ -15,20 +15,11 @@
  */
 package com.datastax.driver.core;
 
-import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
-import static com.datastax.driver.core.SSLTestBase.SslImplementation.JDK;
-import static com.datastax.driver.core.SSLTestBase.SslImplementation.NETTY_OPENSSL;
-
 public class SSLAuthenticatedEncryptionTest extends SSLTestBase {
-
-    @DataProvider(name="sslImplementation")
-    public static Object[][] sslImplementation() {
-        return new Object[][]{ { JDK }, { NETTY_OPENSSL } };
-    }
 
     public SSLAuthenticatedEncryptionTest() {
         super(true);
@@ -44,7 +35,7 @@ public class SSLAuthenticatedEncryptionTest extends SSLTestBase {
      * @test_category connection:ssl, authentication
      * @expected_result Connection can be established to a cassandra node using SSL that requires client auth.
      */
-    @Test(groups="short", dataProvider = "sslImplementation")
+    @Test(groups="short", dataProvider = "sslImplementation", dataProviderClass = SSLTestBase.class)
     public void should_connect_with_ssl_with_client_auth_and_node_requires_auth(SslImplementation sslImplementation) throws Exception {
         connectWithSSLOptions(getSSLOptions(sslImplementation, true, true));
     }
@@ -59,7 +50,7 @@ public class SSLAuthenticatedEncryptionTest extends SSLTestBase {
      * @test_category connection:ssl, authentication
      * @expected_result Connection is not established.
      */
-    @Test(groups="short", dataProvider = "sslImplementation", expectedExceptions={NoHostAvailableException.class})
+    @Test(groups="short", dataProvider = "sslImplementation", dataProviderClass = SSLTestBase.class, expectedExceptions={NoHostAvailableException.class})
     public void should_not_connect_without_client_auth_but_node_requires_auth(SslImplementation sslImplementation) throws Exception {
         connectWithSSLOptions(getSSLOptions(sslImplementation, false, true));
     }

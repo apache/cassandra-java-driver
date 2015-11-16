@@ -17,21 +17,13 @@ package com.datastax.driver.core;
 
 import java.util.concurrent.TimeUnit;
 
-import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
 import static com.datastax.driver.core.Assertions.assertThat;
-import static com.datastax.driver.core.SSLTestBase.SslImplementation.JDK;
-import static com.datastax.driver.core.SSLTestBase.SslImplementation.NETTY_OPENSSL;
 
 public class SSLEncryptionTest extends SSLTestBase {
-
-    @DataProvider(name="sslImplementation")
-    public static Object[][] sslImplementation() {
-        return new Object[][]{ { JDK }, { NETTY_OPENSSL } };
-    }
 
     public SSLEncryptionTest() {
         super(false);
@@ -46,7 +38,7 @@ public class SSLEncryptionTest extends SSLTestBase {
      * @test_category connection:ssl
      * @expected_result Connection can be established to a cassandra node using SSL.
      */
-    @Test(groups="short", dataProvider = "sslImplementation")
+    @Test(groups="short", dataProvider = "sslImplementation", dataProviderClass = SSLTestBase.class)
     public void should_connect_with_ssl_without_client_auth_and_node_doesnt_require_auth(SslImplementation sslImplementation) throws Exception {
         connectWithSSLOptions(getSSLOptions(sslImplementation, false, true));
     }
@@ -60,7 +52,7 @@ public class SSLEncryptionTest extends SSLTestBase {
      * @test_category connection:ssl
      * @expected_result Connection can not be established to a cassandra node using SSL with an untrusted cert.
      */
-    @Test(groups="short", dataProvider = "sslImplementation", expectedExceptions={NoHostAvailableException.class})
+    @Test(groups="short", dataProvider = "sslImplementation", dataProviderClass = SSLTestBase.class, expectedExceptions={NoHostAvailableException.class})
     public void should_not_connect_with_ssl_without_trusting_server_cert(SslImplementation sslImplementation) throws Exception {
         connectWithSSLOptions(getSSLOptions(sslImplementation, false, false));
     }
@@ -103,7 +95,7 @@ public class SSLEncryptionTest extends SSLTestBase {
      * @test_category connection:ssl
      * @expected_result Connection is re-established within a sufficient amount of time after a node comes back online.
      */
-    @Test(groups="long", dataProvider = "sslImplementation")
+    @Test(groups="long", dataProvider = "sslImplementation", dataProviderClass = SSLTestBase.class)
     public void should_reconnect_with_ssl_on_node_up(SslImplementation sslImplementation) throws Exception {
         Cluster cluster = null;
         try {

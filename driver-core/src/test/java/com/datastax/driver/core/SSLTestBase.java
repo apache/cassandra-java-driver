@@ -24,10 +24,13 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
 
 import static io.netty.handler.ssl.SslProvider.OPENSSL;
 import static org.assertj.core.api.Assertions.fail;
 
+import static com.datastax.driver.core.SSLTestBase.SslImplementation.JDK;
+import static com.datastax.driver.core.SSLTestBase.SslImplementation.NETTY_OPENSSL;
 
 public abstract class SSLTestBase {
 
@@ -37,6 +40,17 @@ public abstract class SSLTestBase {
 
     public SSLTestBase(boolean requireClientAuth) {
         this.requireClientAuth = requireClientAuth;
+    }
+
+    @DataProvider(name="sslImplementation")
+    public static Object[][] sslImplementation() {
+        // Bypass Netty SSL if on JDK 1.6 since it only works on 1.7+.
+        String javaVersion = System.getProperty("java.version");
+        if(javaVersion.startsWith("1.6")) {
+            return new Object[][]{ { JDK } };
+        } else {
+            return new Object[][]{ { JDK }, { NETTY_OPENSSL } };
+        }
     }
 
     @BeforeClass(groups={"isolated", "short", "long"})
