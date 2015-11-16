@@ -8,6 +8,7 @@
 - [bug] JAVA-937: TypeCodec static initializers not always correctly executed.
 - [improvement] JAVA-989: Include keyspace name when invalid replication found when generating token map.
 - [improvement] JAVA-664: Reduce heap consumption for TokenMap.
+- [bug] JAVA-819: Driver shouldn't retry on client timeout if statement is not idempotent.
 
 Merged from 2.0 branch:
 

@@ -25,7 +25,7 @@ import com.datastax.driver.core.WriteType;
  * All of the methods of this retry policy unconditionally return {@link RetryPolicy.RetryDecision#rethrow}.
  * If this policy is used, retry will have to be implemented in business code.
  */
-public class FallthroughRetryPolicy implements RetryPolicy {
+public class FallthroughRetryPolicy implements ExtendedRetryPolicy {
 
     public static final FallthroughRetryPolicy INSTANCE = new FallthroughRetryPolicy();
 
@@ -86,4 +86,17 @@ public class FallthroughRetryPolicy implements RetryPolicy {
     public RetryDecision onUnavailable(Statement statement, ConsistencyLevel cl, int requiredReplica, int aliveReplica, int nbRetry) {
         return RetryDecision.rethrow();
     }
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * This implementation triggers a retry on the next host in the query plan,
+     * regardless of the consistency level, the number of retries or
+     * the possibility that the mutation has been applied server-side.
+     */
+    @Override
+    public RetryDecision onRequestError(Statement statement, ConsistencyLevel cl, int nbRetry) {
+        return RetryDecision.tryNextHost(cl);
+    }
+
 }

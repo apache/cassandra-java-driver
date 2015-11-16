@@ -34,7 +34,7 @@ import com.datastax.driver.core.WriteType;
  * In some cases, it may be convenient to use a more aggressive retry policy
  * like {@link DowngradingConsistencyRetryPolicy}.
  */
-public class DefaultRetryPolicy implements RetryPolicy {
+public class DefaultRetryPolicy implements ExtendedRetryPolicy {
 
     public static final DefaultRetryPolicy INSTANCE = new DefaultRetryPolicy();
 
@@ -135,4 +135,17 @@ public class DefaultRetryPolicy implements RetryPolicy {
             ? RetryDecision.tryNextHost(cl)
             : RetryDecision.rethrow();
     }
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * This implementation triggers a retry on the next host in the query plan,
+     * regardless of the consistency level, the number of retries or
+     * the possibility that the mutation has been applied server-side.
+     */
+    @Override
+    public RetryDecision onRequestError(Statement statement, ConsistencyLevel cl, int nbRetry) {
+        return RetryDecision.tryNextHost(cl);
+    }
+
 }

@@ -66,7 +66,7 @@ import com.datastax.driver.core.WriteType;
  * to make sure the data is persisted, and that reading something is better
  * than reading nothing, even if there is a risk of reading stale data.
  */
-public class DowngradingConsistencyRetryPolicy implements RetryPolicy {
+public class DowngradingConsistencyRetryPolicy implements ExtendedRetryPolicy {
 
     public static final DowngradingConsistencyRetryPolicy INSTANCE = new DowngradingConsistencyRetryPolicy();
 
@@ -193,5 +193,17 @@ public class DowngradingConsistencyRetryPolicy implements RetryPolicy {
 
         // Tries the biggest CL that is expected to work
         return maxLikelyToWorkCL(aliveReplica);
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * This implementation triggers a retry on the next host in the query plan,
+     * regardless of the consistency level, the number of retries or
+     * the possibility that the mutation has been applied server-side.
+     */
+    @Override
+    public RetryDecision onRequestError(Statement statement, ConsistencyLevel cl, int nbRetry) {
+        return RetryDecision.tryNextHost(cl);
     }
 }
