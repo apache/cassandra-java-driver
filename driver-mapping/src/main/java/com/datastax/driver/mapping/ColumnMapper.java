@@ -20,9 +20,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.google.common.reflect.TypeToken;
 
+import com.datastax.driver.core.Metadata;
 import com.datastax.driver.core.TypeCodec;
-
-import static com.datastax.driver.core.querybuilder.QueryBuilder.quote;
 
 abstract class ColumnMapper<T> {
 
@@ -57,7 +56,7 @@ abstract class ColumnMapper<T> {
     public String getColumnName() {
         return kind == Kind.COMPUTED
             ? columnName
-            : quote(columnName);
+            : Metadata.quote(columnName);
     }
 
     public String getAlias() {

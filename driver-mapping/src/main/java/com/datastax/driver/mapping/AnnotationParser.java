@@ -18,13 +18,11 @@ package com.datastax.driver.mapping;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.google.common.base.Strings;
+import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 
 import com.datastax.driver.core.ConsistencyLevel;
@@ -106,10 +104,20 @@ class AnnotationParser {
         validateOrder(pks, "@PartitionKey");
         validateOrder(ccs, "@ClusteringColumn");
 
-        mapper.addColumns(convert(pks, factory, mapper.entityClass, mappingManager, columnCounter),
-                          convert(ccs, factory, mapper.entityClass, mappingManager, columnCounter),
-                          convert(rgs, factory, mapper.entityClass, mappingManager, columnCounter));
+        mapper.addColumns(createColumnMappers(pks, factory, mapper.entityClass, mappingManager, columnCounter),
+                          createColumnMappers(ccs, factory, mapper.entityClass, mappingManager, columnCounter),
+                          createColumnMappers(rgs, factory, mapper.entityClass, mappingManager, columnCounter));
         return mapper;
+    }
+
+    private static <T> List<ColumnMapper<T>> createColumnMappers(List<Field> fields, EntityMapper.Factory factory, Class<T> klass, MappingManager mappingManager, AtomicInteger columnCounter) {
+        List<ColumnMapper<T>> mappers = new ArrayList<ColumnMapper<T>>(fields.size());
+        for (int i = 0; i < fields.size(); i++) {
+            Field field = fields.get(i);
+            int pos = position(field);
+            mappers.add(factory.createColumnMapper(klass, field, pos < 0 ? i : pos, mappingManager, columnCounter));
+        }
+        return mappers;
     }
 
     public static <T> MappedUDTCodec<T> parseUDT(Class<T> udtClass, EntityMapper.Factory factory, MappingManager mappingManager) {
@@ -153,16 +161,17 @@ class AnnotationParser {
                     break;
             }
         }
-        List<ColumnMapper<T>> columnMappers = convert(columns, factory, udtClass, mappingManager, null);
+        Map<String, ColumnMapper<T>> columnMappers = createFieldMappers(columns, factory, udtClass, mappingManager, null);
         return new MappedUDTCodec<T>(userType, udtClass, columnMappers, mappingManager);
     }
 
-    private static <T> List<ColumnMapper<T>> convert(List<Field> fields, EntityMapper.Factory factory, Class<T> klass, MappingManager mappingManager, AtomicInteger columnCounter) {
-        List<ColumnMapper<T>> mappers = new ArrayList<ColumnMapper<T>>(fields.size());
+    private static <T> Map<String, ColumnMapper<T>> createFieldMappers(List<Field> fields, EntityMapper.Factory factory, Class<T> klass, MappingManager mappingManager, AtomicInteger columnCounter) {
+        Map<String, ColumnMapper<T>> mappers = Maps.newHashMapWithExpectedSize(fields.size());
         for (int i = 0; i < fields.size(); i++) {
             Field field = fields.get(i);
             int pos = position(field);
-            mappers.add(factory.createColumnMapper(klass, field, pos < 0 ? i : pos, mappingManager, columnCounter));
+            ColumnMapper<T> mapper = factory.createColumnMapper(klass, field, pos < 0 ? i : pos, mappingManager, columnCounter);
+            mappers.put(mapper.getColumnName(), mapper);
         }
         return mappers;
     }

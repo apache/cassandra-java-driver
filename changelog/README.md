@@ -19,6 +19,7 @@
 - [new feature] JAVA-606: Codec support for Java 8.
 - [new feature] JAVA-565: Codec support for Java arrays.
 - [new feature] JAVA-605: Codec support for Java enums.
+- [bug] JAVA-884: Fix UDT mapper to process fields in the correct order.
 
 Merged from 2.1 branch:
 

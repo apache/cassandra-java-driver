@@ -113,6 +113,8 @@ public class MapperUDTTest extends CCMBridge.PerClassSingleNodeCluster {
 
         @Override
         public boolean equals(Object other) {
+            if (this == other)
+                return true;
             if (other instanceof User) {
                 User that = (User) other;
                 return Objects.equal(this.userId, that.userId) &&
@@ -122,6 +124,21 @@ public class MapperUDTTest extends CCMBridge.PerClassSingleNodeCluster {
             }
             return false;
         }
+
+        @Override
+        public int hashCode() {
+            return Objects.hashCode(this.userId, this.name, this.mainAddress, this.otherAddresses);
+        }
+
+        @Override
+        public String toString() {
+            return Objects.toStringHelper(User.class)
+                .add("userId", userId)
+                .add("name", name)
+                .add("mainAddress", mainAddress)
+                .add("otherAddresses", otherAddresses)
+                .toString();
+        }
     }
 
     @UDT(name = "address")
@@ -130,10 +147,11 @@ public class MapperUDTTest extends CCMBridge.PerClassSingleNodeCluster {
         // Dummy constant to test that static fields are properly ignored
         public static final int FOO = 1;
 
-        private String street;
-
         @Field // not strictly required, but we want to check that the annotation works without a name
         private String city;
+
+        // Declared out of order compared to the UDT definition, to make sure that we serialize fields in the correct order (JAVA-884)
+        private String street;
 
         @Field(name = "ZIP_code", caseSensitive = true)
         private int zipCode;
@@ -187,6 +205,8 @@ public class MapperUDTTest extends CCMBridge.PerClassSingleNodeCluster {
 
         @Override
         public boolean equals(Object other) {
+            if (this == other)
+                return true;
             if (other instanceof Address) {
                 Address that = (Address) other;
                 return Objects.equal(this.street, that.street) &&
@@ -195,6 +215,21 @@ public class MapperUDTTest extends CCMBridge.PerClassSingleNodeCluster {
                        Objects.equal(this.phones, that.phones);
             }
             return false;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hashCode(this.street, this.city, this.zipCode, this.phones);
+        }
+
+        @Override
+        public String toString() {
+            return Objects.toStringHelper(Address.class)
+                .add("street", street)
+                .add("city", city)
+                .add("zip", zipCode)
+                .add("phones", phones)
+                .toString();
         }
     }
 
