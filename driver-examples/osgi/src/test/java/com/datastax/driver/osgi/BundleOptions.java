@@ -21,6 +21,7 @@ import org.ops4j.pax.exam.options.MavenArtifactProvisionOption;
 import org.ops4j.pax.exam.options.UrlProvisionOption;
 import org.ops4j.pax.exam.util.PathUtils;
 
+import static org.ops4j.pax.exam.CoreOptions.bootDelegationPackage;
 import static org.ops4j.pax.exam.CoreOptions.bundle;
 import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
 import static org.ops4j.pax.exam.CoreOptions.options;
@@ -47,7 +48,7 @@ public class BundleOptions {
     }
 
     public static CompositeOption nettyBundles() {
-        final String nettyVersion = "4.0.27.Final";
+        final String nettyVersion = "4.0.33.Final";
         return new CompositeOption() {
 
             @Override public Option[] getOptions() {
@@ -71,6 +72,9 @@ public class BundleOptions {
 
             @Override public Option[] getOptions() {
                 return options(
+                    // Delegate javax.security.cert to the parent classloader.  javax.security.cert.X509Certificate is used in
+                    // io.netty.util.internal.EmptyArrays, but not directly by the driver.
+                    bootDelegationPackage("javax.security.cert"),
                     systemProperty("cassandra.contactpoints").value(CCMBridge.IP_PREFIX + 1),
                     systemProperty("logback.configurationFile").value("file:" + PathUtils.getBaseDir() + "/src/test/resources/logback.xml"),
                     mavenBundle("org.slf4j", "slf4j-api", "1.7.5"),
