@@ -4,6 +4,7 @@
 
 - [bug] JAVA-988: Metadata.handleId should handle escaped double quotes.
 - [bug] JAVA-983: QueryBuilder cannot handle collections containing function calls.
+- [improvement] JAVA-863: Idempotence propagation in PreparedStatements.
 
 
 ### 2.1.9
