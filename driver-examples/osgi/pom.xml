@@ -20,7 +20,7 @@
   <parent>
     <groupId>com.datastax.cassandra</groupId>
     <artifactId>cassandra-driver-examples-parent</artifactId>
-    <version>3.0.0-beta1-SNAPSHOT</version>
+    <version>3.0.0-alpha5-SNAPSHOT</version>
   </parent>
   <artifactId>cassandra-driver-examples-osgi</artifactId>
   <packaging>bundle</packaging>

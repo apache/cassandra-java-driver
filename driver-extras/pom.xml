@@ -21,7 +21,7 @@
   <parent>
     <artifactId>cassandra-driver-parent</artifactId>
     <groupId>com.datastax.cassandra</groupId>
-    <version>3.0.0-beta1-SNAPSHOT</version>
+    <version>3.0.0-alpha5-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 

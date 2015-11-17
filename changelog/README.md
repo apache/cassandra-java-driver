@@ -1,6 +1,6 @@
 ## Changelog
 
-### 3.0.0-beta1 (in progress)
+### 3.0.0-alpha5
 
 - [improvement] JAVA-958: Make TableOrView.Order visible.
 - [improvement] JAVA-968: Update metrics to the latest version.

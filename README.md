@@ -8,7 +8,7 @@ not yet have been released. You can find the documentation for latest
 version through [Java driver
 docs](http://datastax.github.io/java-driver/) or via the release tags,
 [e.g.
-3.0.0-alpha4](https://github.com/datastax/java-driver/tree/3.0.0-alpha4).*
+3.0.0-alpha5](https://github.com/datastax/java-driver/tree/3.0.0-alpha5).*
 
 A modern, [feature-rich](features/) and highly tunable Java client
 library for Apache Cassandra (1.2+) and DataStax Enterprise (3.1+) using
@@ -76,7 +76,7 @@ it in your application using the following Maven dependency:
 <dependency>
   <groupId>com.datastax.cassandra</groupId>
   <artifactId>cassandra-driver-core</artifactId>
-  <version>3.0.0-alpha4</version>
+  <version>3.0.0-alpha5</version>
 </dependency>
 ```
 
@@ -86,7 +86,7 @@ Note that the object mapper is published as a separate artifact:
 <dependency>
   <groupId>com.datastax.cassandra</groupId>
   <artifactId>cassandra-driver-mapping</artifactId>
-  <version>3.0.0-alpha4</version>
+  <version>3.0.0-alpha5</version>
 </dependency>
 ```
 
@@ -96,7 +96,7 @@ The 'extras' module is also published as a separate artifact:
 <dependency>
   <groupId>com.datastax.cassandra</groupId>
   <artifactId>cassandra-driver-extras</artifactId>
-  <version>3.0.0-alpha4</version>
+  <version>3.0.0-alpha5</version>
 </dependency>
 ```
 
@@ -105,7 +105,7 @@ We also provide a [shaded JAR](features/shaded_jar/)
 to avoid the explicit dependency to Netty.
 
 If you can't use a dependency management tool, a
-[binary tarball](http://downloads.datastax.com/java-driver/cassandra-java-driver-3.0.0-alpha4.tar.gz)
+[binary tarball](http://downloads.datastax.com/java-driver/cassandra-java-driver-3.0.0-alpha5.tar.gz)
 is available for download.
 
 ## Compatibility
