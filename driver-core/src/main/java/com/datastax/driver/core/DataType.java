@@ -899,7 +899,7 @@ public abstract class DataType {
         @SuppressWarnings("unchecked")
         @Override
         TypeCodec<Object> codec(ProtocolVersion protocolVersion) {
-            return (TypeCodec)TypeCodec.BytesCodec.instance;
+            return (TypeCodec)TypeCodec.bytesCodec;
         }
 
         @Override

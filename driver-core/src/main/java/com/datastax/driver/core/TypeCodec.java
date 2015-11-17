@@ -30,30 +30,41 @@ import com.datastax.driver.core.utils.Bytes;
 
 abstract class TypeCodec<T> {
 
-    // Somehow those don't seem to get properly initialized if they're not here. The reason
-    // escape me right now so let's just leave it here for now
-    public static final StringCodec utf8Instance = new StringCodec(Charset.forName("UTF-8"));
-    public static final StringCodec asciiInstance = new StringCodec(Charset.forName("US-ASCII"));
+    public static final StringCodec     utf8StringCodec  = new StringCodec(Charset.forName("UTF-8"));
+    public static final StringCodec     asciiStringCodec = new StringCodec(Charset.forName("US-ASCII"));
+    public static final LongCodec       longCodec        = new LongCodec();
+    public static final BytesCodec      bytesCodec       = new BytesCodec();
+    public static final BooleanCodec    booleanCodec     = new BooleanCodec();
+    public static final DecimalCodec    decimalCodec     = new DecimalCodec();
+    public static final DoubleCodec     doubleCodec      = new DoubleCodec();
+    public static final FloatCodec      floatCodec       = new FloatCodec();
+    public static final InetCodec       inetCodec        = new InetCodec();
+    public static final IntCodec        intCodec         = new IntCodec();
+    public static final DateCodec       dateCodec        = new DateCodec();
+    public static final UUIDCodec       uuidCodec        = new UUIDCodec();
+    public static final BigIntegerCodec bigIntegerCodec  = new BigIntegerCodec();
+    public static final TimeUUIDCodec   timeUuidCodec    = new TimeUUIDCodec();
 
     private static final Map<DataType.Name, TypeCodec<?>> primitiveCodecs = new EnumMap<DataType.Name, TypeCodec<?>>(DataType.Name.class);
+
     static {
-        primitiveCodecs.put(DataType.Name.ASCII,     StringCodec.asciiInstance);
-        primitiveCodecs.put(DataType.Name.BIGINT,    LongCodec.instance);
-        primitiveCodecs.put(DataType.Name.BLOB,      BytesCodec.instance);
-        primitiveCodecs.put(DataType.Name.BOOLEAN,   BooleanCodec.instance);
-        primitiveCodecs.put(DataType.Name.COUNTER,   LongCodec.instance);
-        primitiveCodecs.put(DataType.Name.DECIMAL,   DecimalCodec.instance);
-        primitiveCodecs.put(DataType.Name.DOUBLE,    DoubleCodec.instance);
-        primitiveCodecs.put(DataType.Name.FLOAT,     FloatCodec.instance);
-        primitiveCodecs.put(DataType.Name.INET,      InetCodec.instance);
-        primitiveCodecs.put(DataType.Name.INT,       IntCodec.instance);
-        primitiveCodecs.put(DataType.Name.TEXT,      StringCodec.utf8Instance);
-        primitiveCodecs.put(DataType.Name.TIMESTAMP, DateCodec.instance);
-        primitiveCodecs.put(DataType.Name.UUID,      UUIDCodec.instance);
-        primitiveCodecs.put(DataType.Name.VARCHAR,   StringCodec.utf8Instance);
-        primitiveCodecs.put(DataType.Name.VARINT,    BigIntegerCodec.instance);
-        primitiveCodecs.put(DataType.Name.TIMEUUID,  TimeUUIDCodec.instance);
-        primitiveCodecs.put(DataType.Name.CUSTOM,    BytesCodec.instance);
+        primitiveCodecs.put(DataType.Name.ASCII,     asciiStringCodec);
+        primitiveCodecs.put(DataType.Name.BIGINT,    longCodec);
+        primitiveCodecs.put(DataType.Name.BLOB,      bytesCodec);
+        primitiveCodecs.put(DataType.Name.BOOLEAN,   booleanCodec);
+        primitiveCodecs.put(DataType.Name.COUNTER,   longCodec);
+        primitiveCodecs.put(DataType.Name.DECIMAL,   decimalCodec);
+        primitiveCodecs.put(DataType.Name.DOUBLE,    doubleCodec);
+        primitiveCodecs.put(DataType.Name.FLOAT,     floatCodec);
+        primitiveCodecs.put(DataType.Name.INET,      inetCodec);
+        primitiveCodecs.put(DataType.Name.INT,       intCodec);
+        primitiveCodecs.put(DataType.Name.TEXT,      utf8StringCodec);
+        primitiveCodecs.put(DataType.Name.TIMESTAMP, dateCodec);
+        primitiveCodecs.put(DataType.Name.UUID,      uuidCodec);
+        primitiveCodecs.put(DataType.Name.VARCHAR,   utf8StringCodec);
+        primitiveCodecs.put(DataType.Name.VARINT,    bigIntegerCodec);
+        primitiveCodecs.put(DataType.Name.TIMEUUID,  timeUuidCodec);
+        primitiveCodecs.put(DataType.Name.CUSTOM,    bytesCodec);
     }
 
     private static class PrimitiveCollectionCodecs
@@ -413,8 +424,6 @@ abstract class TypeCodec<T> {
 
     static class LongCodec extends TypeCodec<Long> {
 
-        public static final LongCodec instance = new LongCodec();
-
         private LongCodec() {}
 
         @Override
@@ -457,8 +466,6 @@ abstract class TypeCodec<T> {
 
     static class BytesCodec extends TypeCodec<ByteBuffer> {
 
-        public static final BytesCodec instance = new BytesCodec();
-
         private BytesCodec() {}
 
         @Override
@@ -485,8 +492,6 @@ abstract class TypeCodec<T> {
     static class BooleanCodec extends TypeCodec<Boolean> {
         private static final ByteBuffer TRUE = ByteBuffer.wrap(new byte[]{1});
         private static final ByteBuffer FALSE = ByteBuffer.wrap(new byte[]{0});
-
-        public static final BooleanCodec instance = new BooleanCodec();
 
         private BooleanCodec() {}
 
@@ -528,8 +533,6 @@ abstract class TypeCodec<T> {
     }
 
     static class DecimalCodec extends TypeCodec<BigDecimal> {
-
-        public static final DecimalCodec instance = new DecimalCodec();
 
         private DecimalCodec() {}
 
@@ -577,8 +580,6 @@ abstract class TypeCodec<T> {
 
     static class DoubleCodec extends TypeCodec<Double> {
 
-        public static final DoubleCodec instance = new DoubleCodec();
-
         private DoubleCodec() {}
 
         @Override
@@ -620,8 +621,6 @@ abstract class TypeCodec<T> {
     }
 
     static class FloatCodec extends TypeCodec<Float> {
-
-        public static final FloatCodec instance = new FloatCodec();
 
         private FloatCodec() {}
 
@@ -665,8 +664,6 @@ abstract class TypeCodec<T> {
 
     static class InetCodec extends TypeCodec<InetAddress> {
 
-        public static final InetCodec instance = new InetCodec();
-
         private InetCodec() {}
 
         @Override
@@ -702,8 +699,6 @@ abstract class TypeCodec<T> {
     }
 
     static class IntCodec extends TypeCodec<Integer> {
-
-        public static final IntCodec instance = new IntCodec();
 
         private IntCodec() {}
 
@@ -764,7 +759,6 @@ abstract class TypeCodec<T> {
             "yyyy-MM-ddZ"
         };
 
-        public static final DateCodec instance = new DateCodec();
         private static final Pattern IS_LONG_PATTERN = Pattern.compile("^-?\\d+$");
 
         private DateCodec() {}
@@ -818,18 +812,16 @@ abstract class TypeCodec<T> {
 
         @Override
         public ByteBuffer serialize(Date value) {
-            return LongCodec.instance.serializeNoBoxing(value.getTime());
+            return longCodec.serializeNoBoxing(value.getTime());
         }
 
         @Override
         public Date deserialize(ByteBuffer bytes) {
-            return new Date(LongCodec.instance.deserializeNoBoxing(bytes));
+            return new Date(longCodec.deserializeNoBoxing(bytes));
         }
     }
 
     static class UUIDCodec extends TypeCodec<UUID> {
-
-        public static final UUIDCodec instance = new UUIDCodec();
 
         protected UUIDCodec() {}
 
@@ -863,8 +855,6 @@ abstract class TypeCodec<T> {
 
     static class TimeUUIDCodec extends UUIDCodec {
 
-        public static final TimeUUIDCodec instance = new TimeUUIDCodec();
-
         private TimeUUIDCodec() {}
 
         @Override
@@ -885,8 +875,6 @@ abstract class TypeCodec<T> {
     }
 
     static class BigIntegerCodec extends TypeCodec<BigInteger> {
-
-        public static final BigIntegerCodec instance = new BigIntegerCodec();
 
         private BigIntegerCodec() {}
 
