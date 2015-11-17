@@ -180,7 +180,7 @@
         <version>2.5</version>
         <configuration>
           <tagNameFormat>@{project.version}</tagNameFormat>
-          <arguments>-Penforce-java8</arguments>
+          <!-- do NOT specify arguments tag here as it would override the arguments tag in this plugin's definition in the parent POM -->
         </configuration>
       </plugin>
       <plugin>
