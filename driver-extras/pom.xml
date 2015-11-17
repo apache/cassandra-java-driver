@@ -15,13 +15,11 @@
       limitations under the License.
 
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <parent>
     <artifactId>cassandra-driver-parent</artifactId>
     <groupId>com.datastax.cassandra</groupId>
-    <version>3.0.0-alpha5-SNAPSHOT</version>
+    <version>3.0.0-alpha5</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
@@ -255,7 +253,7 @@
     <connection>scm:git:git@github.com:datastax/java-driver.git</connection>
     <developerConnection>scm:git:git@github.com:datastax/java-driver.git</developerConnection>
     <url>https://github.com/datastax/java-driver</url>
-    <tag>HEAD</tag>
+    <tag>3.0.0-alpha5</tag>
   </scm>
 
   <developers>
