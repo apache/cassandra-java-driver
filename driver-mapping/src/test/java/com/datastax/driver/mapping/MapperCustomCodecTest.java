@@ -19,10 +19,12 @@ import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.Map;
 
-import com.datastax.driver.core.utils.CassandraVersion;
 import com.google.common.base.Optional;
+import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.common.reflect.TypeParameter;
+import com.google.common.reflect.TypeToken;
 import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -30,6 +32,7 @@ import static org.assertj.core.api.Assertions.fail;
 
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.exceptions.InvalidTypeException;
+import com.datastax.driver.core.utils.CassandraVersion;
 import com.datastax.driver.mapping.annotations.*;
 
 @CassandraVersion(major=2.1)
@@ -554,6 +557,46 @@ public class MapperCustomCodecTest extends CCMBridge.PerClassSingleNodeCluster {
         public OptionalOfString() {
             super(registry.codecFor(DataType.text(), String.class));
         }
+    }
+
+    /**
+     * This class is a copy of GuavaOptionalCodec declared in the extras module,
+     * to avoid circular dependencies between Maven modules.
+     */
+    public static class OptionalCodec<T> extends MappingCodec<Optional<T>, T> {
+
+        private final Predicate<T> isAbsent;
+
+        public OptionalCodec(TypeCodec<T> codec) {
+            super(codec, new TypeToken<Optional<T>>(){}.where(new TypeParameter<T>(){}, codec.getJavaType()));
+            this.isAbsent = new Predicate<T>() {
+                @Override
+                public boolean apply(T input) {
+                    return input == null
+                        || input instanceof Collection && ((Collection)input).isEmpty()
+                        || input instanceof Map && ((Map)input).isEmpty();
+                }
+            };
+        }
+
+        @Override
+        protected Optional<T> deserialize(T value) {
+            return isAbsent(value) ? Optional.<T>absent() : Optional.fromNullable(value);
+        }
+
+        @Override
+        protected T serialize(Optional<T> value) {
+            return value.isPresent() ? value.get() : absentValue();
+        }
+
+        protected T absentValue() {
+            return null;
+        }
+
+        protected boolean isAbsent(T value) {
+            return isAbsent.apply(value);
+        }
+
     }
 
     private static class NoDefaultConstructorCodec extends TypeCodec<String> {

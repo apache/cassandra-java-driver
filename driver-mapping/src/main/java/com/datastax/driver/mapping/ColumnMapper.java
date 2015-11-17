@@ -20,9 +20,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.google.common.reflect.TypeToken;
 
+import com.datastax.driver.core.Metadata;
 import com.datastax.driver.core.TypeCodec;
-
-import static com.datastax.driver.core.querybuilder.QueryBuilder.quote;
 
 abstract class ColumnMapper<T> {
 
@@ -57,7 +56,7 @@ abstract class ColumnMapper<T> {
     public String getColumnName() {
         return kind == Kind.COMPUTED
             ? columnName
-            : quote(columnName);
+            : Metadata.quote(columnName);
     }
 
     public String getAlias() {
@@ -69,10 +68,9 @@ abstract class ColumnMapper<T> {
     }
 
     /**
-     * The Java type that will get passed to the codec.
-     * This might be different from the field type if the column mapper does a transformation.
+     * The Java type of this column.
      */
-    public TypeToken<Object> getPivotType() {
+    public TypeToken<Object> getJavaType() {
         return fieldType;
     }
 }

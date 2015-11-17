@@ -18,11 +18,8 @@ package com.datastax.driver.core;
 import java.nio.ByteBuffer;
 import java.util.*;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
-import com.google.common.base.Objects;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
@@ -36,7 +33,7 @@ import com.datastax.driver.core.exceptions.CodecNotFoundException;
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 
 import static com.datastax.driver.core.Assertions.assertThat;
-import static com.datastax.driver.core.CodecUtils.listOf;
+import static com.datastax.driver.core.TypeTokens.listOf;
 import static com.datastax.driver.core.DataType.*;
 import static com.datastax.driver.core.ProtocolVersion.V3;
 
@@ -88,18 +85,6 @@ public class TypeCodecTest {
         List<String> list = newArrayList(Strings.repeat("a", 65536));
         TypeCodec<List<?>> codec = codecRegistry.codecFor(cqlType);
         codec.serialize(list, ProtocolVersion.V2);
-    }
-
-    @Test(groups = "unit")
-    public void test_cql_text_to_json() {
-        JsonCodec<User> codec = new JsonCodec<User>(User.class);
-        // the codec is expected to format json objects as json strings enclosed in single quotes,
-        // as it is required for CQL literals of varchar type.
-        String json = "'{\"id\":1,\"name\":\"John Doe\"}'";
-        User user = new User(1, "John Doe");
-        assertThat(codec.format(user)).isEqualTo(json);
-        assertThat(codec.parse(json)).isEqualToComparingFieldByField(user);
-        assertThat(codec).canSerialize(user);
     }
 
     @Test(groups = "unit")
@@ -172,13 +157,6 @@ public class TypeCodecTest {
     }
 
     @Test(groups = "unit")
-    public void test_enum() {
-        EnumStringCodec<FooBarQix> codec = new EnumStringCodec<FooBarQix>(FooBarQix.class);
-        assertThat(codec)
-            .canSerialize(FooBarQix.FOO);
-    }
-
-    @Test(groups = "unit")
     public void test_inheritance() {
         CodecRegistry codecRegistry = new CodecRegistry();
         ACodec aCodec = new ACodec();
@@ -227,7 +205,7 @@ public class TypeCodecTest {
 
     @Test(groups = "unit")
     public void should_deserialize_empty_buffer_as_tuple_with_null_values() {
-        CodecRegistry codecRegistry = CodecRegistry.DEFAULT_INSTANCE;
+        CodecRegistry codecRegistry = new CodecRegistry();
         TupleType tupleType = new TupleType(newArrayList(DataType.cint(), DataType.varchar(), DataType.cfloat()), ProtocolVersion.NEWEST_SUPPORTED, codecRegistry);
         TupleValue expected = tupleType.newValue(null, null, null);
 
@@ -238,7 +216,7 @@ public class TypeCodecTest {
 
     @Test(groups = "unit")
     public void should_deserialize_empty_buffer_as_udt_with_null_values() {
-        CodecRegistry codecRegistry = CodecRegistry.DEFAULT_INSTANCE;
+        CodecRegistry codecRegistry = new CodecRegistry();
         UserType udt = new UserType("ks", "t", Arrays.asList(
             new UserType.Field("t", DataType.text()),
             new UserType.Field("i", DataType.cint()),
@@ -278,7 +256,7 @@ public class TypeCodecTest {
         private final TypeCodec<List<String>> codec = TypeCodec.list(TypeCodec.varchar());
 
         protected ListVarcharToListListInteger() {
-            super(DataType.list(DataType.varchar()), listOf(listOf(Integer.class)));
+            super(DataType.list(DataType.varchar()), TypeTokens.listOf(TypeTokens.listOf(Integer.class)));
         }
 
         @Override
@@ -316,57 +294,7 @@ public class TypeCodecTest {
             throw new UnsupportedOperationException();
         }
     }
-
-    @SuppressWarnings("unused")
-    public static class User {
-
-        private int id;
-
-        private String name;
-
-        @JsonCreator
-        public User(@JsonProperty("id") int id, @JsonProperty("name") String name) {
-            this.id = id;
-            this.name = name;
-        }
-
-        public int getId() {
-            return id;
-        }
-
-        public void setId(int id) {
-            this.id = id;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public void setName(String name) {
-            this.name = name;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o)
-                return true;
-            if (o == null || getClass() != o.getClass())
-                return false;
-            User user = (User)o;
-            return Objects.equal(id, user.id) &&
-                Objects.equal(name, user.name);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hashCode(id, name);
-        }
-    }
-
-    enum FooBarQix {
-        FOO, BAR, QIX
-    }
-
+    
     class A {
 
         int i = 0;

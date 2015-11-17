@@ -24,8 +24,6 @@ import java.util.Set;
 
 import com.google.common.collect.Sets;
 
-import com.datastax.driver.core.TupleValue;
-import com.datastax.driver.core.UDTValue;
 import com.datastax.driver.mapping.annotations.UDT;
 
 /**
@@ -51,12 +49,6 @@ class TypeMappings {
 
     static boolean isMappedUDT(Class<?> klass) {
         return klass.isAnnotationPresent(UDT.class);
-    }
-
-    static boolean mapsToUserTypeOrTuple(Class<?> klass) {
-        return isMappedUDT(klass) ||
-            klass.equals(UDTValue.class) ||
-            klass.equals(TupleValue.class);
     }
 
     /**

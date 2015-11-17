@@ -82,31 +82,6 @@ declaration.
 [cc]:http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/annotations/ClusteringColumn.html
 [pks]:http://thelastpickle.com/blog/2013/01/11/primary-keys-in-cql.html
 
-#### Enumerations
-
-[@Enumerated][enum] is used to map Java enumerations. Since Cassandra
-does not support enumerations, the object mapper defines two ways to
-persist an enum value :
-
-- `EnumType.ORDINAL` : the value is persisted as a Cassandra's `int` and
-  its value is its position in the enum.
-- `EnumType.STRING` : the value is persisted as a Cassandra's `text` and
-  its value is its name in the enum.
-
-According to the chosen type, the matching database column must be the
-same type.
-
-```
-CREATE TABLE person (id uuid PRIMARY KEY, name text, gender int);
-```
-
-```java
-@Enumerated(EnumType.ORDINAL)
-private Gender gender;
-```
-
-[enum]:http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/annotations/Enumerated.html
-
 #### Computed fields
 
 [@Computed][computed] can be used on fields that are the result of a

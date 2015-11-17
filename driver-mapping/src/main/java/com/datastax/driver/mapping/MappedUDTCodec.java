@@ -17,6 +17,7 @@ package com.datastax.driver.mapping;
 
 import java.nio.ByteBuffer;
 import java.util.List;
+import java.util.Map;
 
 import com.google.common.collect.Lists;
 
@@ -26,13 +27,13 @@ import com.datastax.driver.core.exceptions.InvalidTypeException;
 /**
  * Serializes a class annotated with {@code @UDT} to the corresponding CQL user-defined type.
  */
-class MappedUDTCodec<T> extends TypeCodec<T> {
+class MappedUDTCodec<T> extends TypeCodec.AbstractUDTCodec<T> {
     private final UserType cqlUserType;
     private final Class<T> udtClass;
-    private final List<ColumnMapper<T>> columnMappers;
+    private final Map<String, ColumnMapper<T>> columnMappers;
     private final CodecRegistry codecRegistry;
 
-    public MappedUDTCodec(UserType cqlUserType, Class<T> udtClass, List<ColumnMapper<T>> columnMappers, MappingManager mappingManager) {
+    public MappedUDTCodec(UserType cqlUserType, Class<T> udtClass, Map<String, ColumnMapper<T>> columnMappers, MappingManager mappingManager) {
         super(cqlUserType, udtClass);
         this.cqlUserType = cqlUserType;
         this.udtClass = udtClass;
@@ -41,56 +42,7 @@ class MappedUDTCodec<T> extends TypeCodec<T> {
     }
 
     @Override
-    public ByteBuffer serialize(T sourceObject, ProtocolVersion protocolVersion) throws InvalidTypeException {
-        if (sourceObject == null)
-            return null;
-
-        int size = 0;
-
-        List<ByteBuffer> serializedFields = Lists.newArrayList();
-        for (ColumnMapper<T> cm : columnMappers) {
-            Object value = cm.getValue(sourceObject);
-            TypeCodec<Object> codec = cm.getCustomCodec();
-            if (codec == null)
-                codec = codecRegistry.codecFor(cqlUserType.getFieldType(cm.getColumnName()), cm.getPivotType());
-            ByteBuffer serializedField = codec.serialize(value, protocolVersion);
-            size += 4 + (serializedField == null ? 0 : serializedField.remaining());
-            serializedFields.add(serializedField);
-        }
-
-        ByteBuffer result = ByteBuffer.allocate(size);
-        for (ByteBuffer bb : serializedFields) {
-            if (bb == null) {
-                result.putInt(-1);
-            } else {
-                result.putInt(bb.remaining());
-                result.put(bb.duplicate());
-            }
-        }
-        return (ByteBuffer)result.flip();
-    }
-
-    @Override
-    public T deserialize(ByteBuffer bytes, ProtocolVersion protocolVersion) throws InvalidTypeException {
-        if (bytes == null || bytes.remaining() == 0)
-            return null;
-        ByteBuffer input = bytes.duplicate();
-
-        T targetObject = newInstance();
-
-        for (ColumnMapper<T> cm : columnMappers) {
-            int size = input.getInt();
-            ByteBuffer serialized = (size < 0) ? null : CodecUtils.readBytes(input, size);
-            TypeCodec<Object> codec = cm.getCustomCodec();
-            if (codec == null)
-                codec = codecRegistry.codecFor(cqlUserType.getFieldType(cm.getColumnName()), cm.getPivotType());
-            cm.setValue(targetObject, codec.deserialize(serialized, protocolVersion));
-        }
-
-        return targetObject;
-    }
-
-    private T newInstance() {
+    protected T newInstance() {
         try {
             return udtClass.newInstance();
         } catch (Exception e) {
@@ -99,12 +51,49 @@ class MappedUDTCodec<T> extends TypeCodec<T> {
     }
 
     @Override
-    public T parse(String value) throws InvalidTypeException {
+    protected ByteBuffer serializeField(T source, String fieldName, ProtocolVersion protocolVersion) {
+        // The parent class passes lowercase names unquoted, but in our internal map of mappers they are always quoted
+        if (!fieldName.startsWith("\""))
+            fieldName = Metadata.quote(fieldName);
+
+        ColumnMapper<T> columnMapper = columnMappers.get(fieldName);
+
+        if (columnMapper == null)
+            return null;
+
+        Object value = columnMapper.getValue(source);
+
+        TypeCodec<Object> codec = columnMapper.getCustomCodec();
+        if (codec == null)
+            codec = codecRegistry.codecFor(cqlUserType.getFieldType(columnMapper.getColumnName()), columnMapper.getJavaType());
+
+        return codec.serialize(value, protocolVersion);
+    }
+
+    @Override
+    protected T deserializeAndSetField(ByteBuffer input, T target, String fieldName, ProtocolVersion protocolVersion) {
+        if (!fieldName.startsWith("\""))
+            fieldName = Metadata.quote(fieldName);
+
+        ColumnMapper<T> columnMapper = columnMappers.get(fieldName);
+        if (columnMapper != null) {
+            TypeCodec<Object> codec = columnMapper.getCustomCodec();
+            if (codec == null)
+                codec = codecRegistry.codecFor(cqlUserType.getFieldType(columnMapper.getColumnName()), columnMapper.getJavaType());
+            columnMapper.setValue(target, codec.deserialize(input, protocolVersion));
+        }
+        return target;
+    }
+
+    @Override
+    protected String formatField(T source, String fieldName) {
+        // This codec implementation is internal-use only, and its format method is never used
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public String format(T value) throws InvalidTypeException {
+    protected T parseAndSetField(String input, T target, String fieldName) {
+        // This codec implementation is internal-use only, and its parse method is never used
         throw new UnsupportedOperationException();
     }
 }

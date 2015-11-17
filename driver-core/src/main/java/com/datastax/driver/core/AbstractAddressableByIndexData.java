@@ -24,9 +24,9 @@ import java.util.*;
 import com.google.common.base.Objects;
 import com.google.common.reflect.TypeToken;
 
-import static com.datastax.driver.core.CodecUtils.listOf;
-import static com.datastax.driver.core.CodecUtils.mapOf;
-import static com.datastax.driver.core.CodecUtils.setOf;
+import static com.datastax.driver.core.TypeTokens.listOf;
+import static com.datastax.driver.core.TypeTokens.mapOf;
+import static com.datastax.driver.core.TypeTokens.setOf;
 
 abstract class AbstractAddressableByIndexData<T extends SettableByIndexData<T>> extends AbstractGettableByIndexData implements SettableByIndexData<T> {
 
@@ -170,12 +170,12 @@ abstract class AbstractAddressableByIndexData<T extends SettableByIndexData<T>> 
 
     @Override
     public <E> T setList(int i, List<E> v, Class<E> elementsClass) {
-        return setValue(i, codecFor(i, listOf(elementsClass)).serialize(v, protocolVersion));
+        return setValue(i, codecFor(i, TypeTokens.listOf(elementsClass)).serialize(v, protocolVersion));
     }
 
     @Override
     public <E> T setList(int i, List<E> v, TypeToken<E> elementsType) {
-        return setValue(i, codecFor(i, listOf(elementsType)).serialize(v, protocolVersion));
+        return setValue(i, codecFor(i, TypeTokens.listOf(elementsType)).serialize(v, protocolVersion));
     }
 
     @SuppressWarnings("unchecked")
@@ -185,12 +185,12 @@ abstract class AbstractAddressableByIndexData<T extends SettableByIndexData<T>> 
 
     @Override
     public <K, V> T setMap(int i, Map<K, V> v, Class<K> keysClass, Class<V> valuesClass) {
-        return setValue(i, codecFor(i, mapOf(keysClass, valuesClass)).serialize(v, protocolVersion));
+        return setValue(i, codecFor(i, TypeTokens.mapOf(keysClass, valuesClass)).serialize(v, protocolVersion));
     }
 
     @Override
     public <K, V> T setMap(int i, Map<K, V> v, TypeToken<K> keysType, TypeToken<V> valuesType) {
-        return setValue(i, codecFor(i, mapOf(keysType, valuesType)).serialize(v, protocolVersion));
+        return setValue(i, codecFor(i, TypeTokens.mapOf(keysType, valuesType)).serialize(v, protocolVersion));
     }
 
     @SuppressWarnings("unchecked")
@@ -200,12 +200,12 @@ abstract class AbstractAddressableByIndexData<T extends SettableByIndexData<T>> 
 
     @Override
     public <E> T setSet(int i, Set<E> v, Class<E> elementsClass) {
-        return setValue(i, codecFor(i, setOf(elementsClass)).serialize(v, protocolVersion));
+        return setValue(i, codecFor(i, TypeTokens.setOf(elementsClass)).serialize(v, protocolVersion));
     }
 
     @Override
     public <E> T setSet(int i, Set<E> v, TypeToken<E> elementsType) {
-        return setValue(i, codecFor(i, setOf(elementsType)).serialize(v, protocolVersion));
+        return setValue(i, codecFor(i, TypeTokens.setOf(elementsType)).serialize(v, protocolVersion));
     }
 
     public T setUDTValue(int i, UDTValue v) {

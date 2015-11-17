@@ -37,7 +37,7 @@ import org.testng.annotations.Test;
 import static com.google.common.collect.Lists.newArrayList;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import static com.datastax.driver.core.CodecUtils.listOf;
+import static com.datastax.driver.core.TypeTokens.listOf;
 import static com.datastax.driver.core.TestUtils.getValue;
 import static com.datastax.driver.core.TestUtils.setValue;
 
@@ -173,7 +173,7 @@ public class GettableDataIntegrationTest extends CCMBridge.PerClassSingleNodeClu
             byName.setMap("m", map, mapping.javaType, mapping.javaType);
             if(is21) {
                 byName.setTupleValue("t", tupleValue);
-                byName.setSet("s", set, listOf(mapping.javaType));
+                byName.setSet("s", set, TypeTokens.listOf(mapping.javaType));
             }
             session.execute(byName);
 
@@ -187,7 +187,7 @@ public class GettableDataIntegrationTest extends CCMBridge.PerClassSingleNodeClu
             byIndex.setMap(3, map, mapping.javaType, mapping.javaType);
             if(is21) {
                 byIndex.setTupleValue(4, tupleValue);
-                byIndex.setSet(5, set, listOf(mapping.javaType));
+                byIndex.setSet(5, set, TypeTokens.listOf(mapping.javaType));
             }
             session.execute(byIndex);
 
@@ -214,7 +214,7 @@ public class GettableDataIntegrationTest extends CCMBridge.PerClassSingleNodeClu
                     assertThat(getValue(returnedTuple, 0, mapping.outerType, registry)).isEqualTo(mapping.value);
                     assertThat(getValue(returnedTuple, 1, mapping.outerType, registry)).isEqualTo(mapping.value);
 
-                    assertThat(row.getSet("s", listOf(mapping.javaType))).isEqualTo(set);
+                    assertThat(row.getSet("s", TypeTokens.listOf(mapping.javaType))).isEqualTo(set);
                 }
 
                 // Retrieve by index.
@@ -227,7 +227,7 @@ public class GettableDataIntegrationTest extends CCMBridge.PerClassSingleNodeClu
                     assertThat(getValue(returnedTuple, 0, mapping.outerType, registry)).isEqualTo(mapping.value);
                     assertThat(getValue(returnedTuple, 1, mapping.outerType, registry)).isEqualTo(mapping.value);
 
-                    assertThat(row.getSet(4, listOf(mapping.javaType))).isEqualTo(set);
+                    assertThat(row.getSet(4, TypeTokens.listOf(mapping.javaType))).isEqualTo(set);
                 }
             }
         }

@@ -39,7 +39,7 @@ import com.datastax.driver.mapping.annotations.*;
 public class MapperUDTTest extends CCMBridge.PerClassSingleNodeCluster {
 
     protected Collection<String> getTableDefinitions() {
-        return Arrays.asList("CREATE TYPE address (street text, city text, zip_code int, phones set<text>)",
+        return Arrays.asList("CREATE TYPE address (street text, city text, \"ZIP_code\" int, phones set<text>)",
                              "CREATE TABLE users (user_id uuid PRIMARY KEY, name text, mainaddress frozen<address>, other_addresses map<text,frozen<address>>)");
     }
 
@@ -113,6 +113,8 @@ public class MapperUDTTest extends CCMBridge.PerClassSingleNodeCluster {
 
         @Override
         public boolean equals(Object other) {
+            if (this == other)
+                return true;
             if (other instanceof User) {
                 User that = (User) other;
                 return Objects.equal(this.userId, that.userId) &&
@@ -122,6 +124,21 @@ public class MapperUDTTest extends CCMBridge.PerClassSingleNodeCluster {
             }
             return false;
         }
+
+        @Override
+        public int hashCode() {
+            return Objects.hashCode(this.userId, this.name, this.mainAddress, this.otherAddresses);
+        }
+
+        @Override
+        public String toString() {
+            return Objects.toStringHelper(User.class)
+                .add("userId", userId)
+                .add("name", name)
+                .add("mainAddress", mainAddress)
+                .add("otherAddresses", otherAddresses)
+                .toString();
+        }
     }
 
     @UDT(name = "address")
@@ -130,12 +147,13 @@ public class MapperUDTTest extends CCMBridge.PerClassSingleNodeCluster {
         // Dummy constant to test that static fields are properly ignored
         public static final int FOO = 1;
 
-        private String street;
-
         @Field // not strictly required, but we want to check that the annotation works without a name
         private String city;
 
-        @Field(name = "zip_code")
+        // Declared out of order compared to the UDT definition, to make sure that we serialize fields in the correct order (JAVA-884)
+        private String street;
+
+        @Field(name = "ZIP_code", caseSensitive = true)
         private int zipCode;
 
         private Set<String> phones;
@@ -187,6 +205,8 @@ public class MapperUDTTest extends CCMBridge.PerClassSingleNodeCluster {
 
         @Override
         public boolean equals(Object other) {
+            if (this == other)
+                return true;
             if (other instanceof Address) {
                 Address that = (Address) other;
                 return Objects.equal(this.street, that.street) &&
@@ -195,6 +215,21 @@ public class MapperUDTTest extends CCMBridge.PerClassSingleNodeCluster {
                        Objects.equal(this.phones, that.phones);
             }
             return false;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hashCode(this.street, this.city, this.zipCode, this.phones);
+        }
+
+        @Override
+        public String toString() {
+            return Objects.toStringHelper(Address.class)
+                .add("street", street)
+                .add("city", city)
+                .add("zip", zipCode)
+                .add("phones", phones)
+                .toString();
         }
     }
 
@@ -286,9 +321,9 @@ public class MapperUDTTest extends CCMBridge.PerClassSingleNodeCluster {
             UUID userId = UUIDs.random();
 
             // Create a user.
-            session.execute("update users SET other_addresses['condo']={street: '101 Ocean Ln', city: 'Jacksonville, FL', zip_code: 89898, phones: {'8675309'}} " +
+            session.execute("update users SET other_addresses['condo']={street: '101 Ocean Ln', city: 'Jacksonville, FL', \"ZIP_code\": 89898, phones: {'8675309'}} " +
                     " WHERE user_id=" + TypeCodec.uuid().format(userId));
-            session.execute("update users SET mainaddress={street: '42 Middle of Nowhere', city: 'Lake of the Woods', zip_code: 49553, phones: {'8675039'}} " +
+            session.execute("update users SET mainaddress={street: '42 Middle of Nowhere', city: 'Lake of the Woods', \"ZIP_code\": 49553, phones: {'8675039'}} " +
                     " WHERE user_Id=" + TypeCodec.uuid().format(userId));
 
             // Get the user.

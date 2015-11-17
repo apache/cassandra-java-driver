@@ -28,7 +28,6 @@ import org.testng.annotations.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.testng.Assert.*;
 
-import com.datastax.driver.mapping.MapperTest.User.Gender;
 import com.datastax.driver.mapping.annotations.*;
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.utils.UUIDs;
@@ -38,6 +37,7 @@ import com.datastax.driver.core.utils.UUIDs;
  */
 public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
 
+    @Override
     protected Collection<String> getTableDefinitions() {
         // We'll allow to generate those create statement from the annotated entities later, but it's currently
         // a TODO
@@ -56,6 +56,7 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
      *
      * And the next step will be to support UDT (which should be relatively simple).
      */
+    @SuppressWarnings("unused")
     @Table(name = "users",
            readConsistency="QUORUM",
            writeConsistency="QUORUM")
@@ -63,8 +64,6 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
 
         // Dummy constant to test that static fields are properly ignored
         public static final int FOO = 1;
-
-        public enum Gender { FEMALE, MALE }
 
         @PartitionKey
         @Column(name = "user_id")
@@ -75,15 +74,12 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
         @Column // not strictly required, but we want to check that the annotation works without a name
         private int year;
 
-        private Gender gender;
-
         public User() {}
 
-        public User(String name, String email, Gender gender) {
+        public User(String name, String email) {
             this.userId = UUIDs.random();
             this.name = name;
             this.email = email;
-            this.gender = gender;
         }
 
         public UUID getUserId() {
@@ -114,14 +110,6 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
             return year;
         }
 
-        public void setGender(Gender gender) {
-            this.gender = gender;
-        }
-
-        public Gender getGender() {
-            return gender;
-        }
-
         public void setYear(int year) {
             this.year = year;
         }
@@ -135,13 +123,12 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
             return Objects.equal(userId, that.userId)
                 && Objects.equal(name, that.name)
                 && Objects.equal(email, that.email)
-                && Objects.equal(year, that.year)
-                && Objects.equal(gender, that.gender);
+                && Objects.equal(year, that.year);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hashCode(userId, name, email, year, gender);
+            return Objects.hashCode(userId, name, email, year);
         }
     }
 
@@ -151,6 +138,7 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
      * the order must be specified (@ClusteringColumn(0), @ClusteringColumn(1), ...).
      * The same stands for the @PartitionKey.
      */
+    @SuppressWarnings("unused")
     @Table(name = "posts")
     public static class Post {
 
@@ -268,7 +256,7 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
         // harcoded arg0, arg1, .... A big annoying, and apparently Java 8 will fix that
         // somehow, but well, not a huge deal.
         @Query("SELECT * FROM posts WHERE user_id=:userId AND post_id=:postId")
-        public Post getOne(@Param("userId") UUID userId,
+        Post getOne(@Param("userId") UUID userId,
                            @Param("postId") UUID postId);
 
         // Note that the following method will be asynchronous (it will use executeAsync
@@ -276,23 +264,16 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
         // that we need to map the result to the Post entity thanks to the return type.
         @Query("SELECT * FROM posts WHERE user_id=?")
         @QueryParameters(consistency="QUORUM")
-        public ListenableFuture<Result<Post>> getAllAsync(UUID userId);
+        ListenableFuture<Result<Post>> getAllAsync(UUID userId);
 
         // The method above actually query stuff, but if a method is declared to return
         // a Statement, it will not execute anything, but just return you the BoundStatement
         // ready for execution. That way, you can batch stuff for instance (see usage below).
         @Query("UPDATE posts SET content=? WHERE user_id=? AND post_id=?")
-        public Statement updateContentQuery(String newContent, UUID userId, UUID postId);
+        Statement updateContentQuery(String newContent, UUID userId, UUID postId);
 
         @Query("SELECT * FROM posts")
-        public Result<Post> getAll();
-    }
-
-    @Accessor
-    public interface UserAccessor {
-        // Demonstrates use of an enum as an accessor parameter
-        @Query("UPDATE users SET name=?, gender=? WHERE user_id=?")
-        ResultSet updateNameAndGender(String name, Gender gender, UUID userId);
+        Result<Post> getAll();
     }
 
     @Test(groups = "short")
@@ -302,7 +283,7 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
         // supported by the Mapper object.
         Mapper<User> m = new MappingManager(session).mapper(User.class);
 
-        User u1 = new User("Paul", "paul@yahoo.com", User.Gender.MALE);
+        User u1 = new User("Paul", "paul@yahoo.com");
         u1.setYear(2014);
         m.save(u1);
 
@@ -320,7 +301,7 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
 
         Mapper<Post> m = manager.mapper(Post.class);
 
-        User u1 = new User("Paul", "paul@gmail.com", User.Gender.MALE);
+        User u1 = new User("Paul", "paul@gmail.com");
         Post p1 = new Post(u1, "Something about mapping");
         Post p2 = new Post(u1, "Something else");
         Post p3 = new Post(u1, "Something more");
@@ -372,15 +353,6 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
 
         assertTrue(postAccessor.getAllAsync(u1.getUserId()).get().isExhausted());
 
-        // Pass an enum constant as an accessor parameter
-        UserAccessor userAccessor = manager.createAccessor(UserAccessor.class);
-        userAccessor.updateNameAndGender("Paule", User.Gender.FEMALE, u1.getUserId());
-        Mapper<User> userMapper = manager.mapper(User.class);
-        assertEquals(userMapper.get(u1.getUserId()).getGender(), User.Gender.FEMALE);
-
-        // Test that an enum value can be unassigned through an accessor (set to null).
-        userAccessor.updateNameAndGender("Paule", null, u1.getUserId());
-        assertEquals(userMapper.get(u1.getUserId()).getGender(), null);
     }
 
     @Test(groups="short")
@@ -390,7 +362,7 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
         Mapper<Post> m = manager.mapper(Post.class);
 
         // Insert a few posts
-        User u1 = new User("Paul", "paul@gmail.com", User.Gender.MALE);
+        User u1 = new User("Paul", "paul@gmail.com");
         Post p1 = new Post(u1, "Something about mapping");
         Post p2 = new Post(u1, "Something else");
         Post p3 = new Post(u1, "Something more");

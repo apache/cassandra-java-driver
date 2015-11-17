@@ -25,9 +25,9 @@ import com.google.common.reflect.TypeToken;
 
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 
-import static com.datastax.driver.core.CodecUtils.listOf;
-import static com.datastax.driver.core.CodecUtils.mapOf;
-import static com.datastax.driver.core.CodecUtils.setOf;
+import static com.datastax.driver.core.TypeTokens.listOf;
+import static com.datastax.driver.core.TypeTokens.mapOf;
+import static com.datastax.driver.core.TypeTokens.setOf;
 
 abstract class AbstractGettableByIndexData implements GettableByIndexData {
 
@@ -302,7 +302,7 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
     @SuppressWarnings("unchecked")
     public <T> List<T> getList(int i, TypeToken<T> elementsType) {
         ByteBuffer value = getValue(i);
-        TypeToken<List<T>> javaType = listOf(elementsType);
+        TypeToken<List<T>> javaType = TypeTokens.listOf(elementsType);
         return codecFor(i, javaType).deserialize(value, protocolVersion);
     }
 
@@ -322,7 +322,7 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
     @SuppressWarnings("unchecked")
     public <T> Set<T> getSet(int i, TypeToken<T> elementsType) {
         ByteBuffer value = getValue(i);
-        TypeToken<Set<T>> javaType = setOf(elementsType);
+        TypeToken<Set<T>> javaType = TypeTokens.setOf(elementsType);
         return codecFor(i, javaType).deserialize(value, protocolVersion);
     }
 
@@ -342,7 +342,7 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
     @SuppressWarnings("unchecked")
     public <K, V> Map<K, V> getMap(int i, TypeToken<K> keysType, TypeToken<V> valuesType) {
         ByteBuffer value = getValue(i);
-        TypeToken<Map<K, V>> javaType = mapOf(keysType, valuesType);
+        TypeToken<Map<K, V>> javaType = TypeTokens.mapOf(keysType, valuesType);
         return codecFor(i, javaType).deserialize(value, protocolVersion);
     }
 

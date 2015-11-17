@@ -286,9 +286,45 @@ public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition>
 
     void setCodecRegistry(CodecRegistry codecRegistry) {
         for (Definition definition : byIdx) {
-            CodecUtils.setCodecRegistry(definition.type, codecRegistry);
+            propagateCodecRegistry(definition.type, codecRegistry);
         }
         this.codecRegistry = codecRegistry;
+    }
+
+    /**
+     * Propagate a CodecRegistry instance to a given type and its child types, if any.
+     * <p>
+     * By the time CQL types are decoded from response messages, the codec registry is not available;
+     * This method manually sets a CodecRegistry on all CQL types that require it,
+     * and thus should be called immediately after a response is decoded
+     * into either a prepared statement or a result set.
+     *
+     * @param cqlType The decodec {@link DataType cqlType}.
+     * @param codecRegistry The {@link CodecRegistry} instance to use.
+     */
+    static void propagateCodecRegistry(DataType cqlType, CodecRegistry codecRegistry) {
+        // user types
+        if(cqlType instanceof UserType) {
+            UserType userType = (UserType)cqlType;
+            userType.setCodecRegistry(codecRegistry);
+            for (UserType.Field field : userType.byIdx) {
+                propagateCodecRegistry(field.getType(), codecRegistry);
+            }
+        }
+        // tuples
+        else if(cqlType instanceof TupleType) {
+            TupleType tupleType = (TupleType)cqlType;
+            tupleType.setCodecRegistry(codecRegistry);
+            for (DataType componentType : tupleType.getComponentTypes()) {
+                propagateCodecRegistry(componentType, codecRegistry);
+            }
+        }
+        // collections
+        else if(cqlType.isCollection()) {
+            for (DataType inner : cqlType.getTypeArguments()) {
+                propagateCodecRegistry(inner, codecRegistry);
+            }
+        }
     }
 
     /**

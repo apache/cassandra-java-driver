@@ -90,6 +90,17 @@ Note that the object mapper is published as a separate artifact:
 </dependency>
 ```
 
+The 'extras' module is also published as a separate artifact:
+
+```xml
+<dependency>
+  <groupId>com.datastax.cassandra</groupId>
+  <artifactId>cassandra-driver-extras</artifactId>
+  <version>3.0.0-alpha4</version>
+</dependency>
+```
+
+
 We also provide a [shaded JAR](features/shaded_jar/)
 to avoid the explicit dependency to Netty.
 

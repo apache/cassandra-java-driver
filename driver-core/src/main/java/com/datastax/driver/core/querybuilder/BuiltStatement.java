@@ -24,9 +24,6 @@ import java.util.regex.Pattern;
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.policies.RetryPolicy;
 
-import static com.datastax.driver.core.CodecUtils.compose;
-import static com.datastax.driver.core.CodecUtils.convert;
-
 /**
  * Common ancestor to the query builder built statements.
  */
@@ -68,7 +65,7 @@ public abstract class BuiltStatement extends RegularStatement {
     }
 
     // Same as Metadata.escapeId, but we don't have access to it here.
-    protected String escapeId(String ident) {
+    protected static String escapeId(String ident) {
         // we don't need to escape if it's lowercase and match non-quoted CQL3 ids.
         return lowercaseId.matcher(ident).matches() ? ident : Metadata.quote(ident);
     }
@@ -203,7 +200,7 @@ public abstract class BuiltStatement extends RegularStatement {
         }
         return routingKeyParts.length == 1
             ? routingKeyParts[0]
-            : compose(routingKeyParts);
+            : Utils.compose(routingKeyParts);
     }
 
     @Override
@@ -219,7 +216,7 @@ public abstract class BuiltStatement extends RegularStatement {
     @Override
     public ByteBuffer[] getValues() {
         maybeRebuildCache();
-        return values == null ? null : convert(values.toArray(), getProtocolVersion(), getCodecRegistry());
+        return values == null ? null : Utils.convert(values.toArray(), getProtocolVersion(), getCodecRegistry());
     }
 
     @Override

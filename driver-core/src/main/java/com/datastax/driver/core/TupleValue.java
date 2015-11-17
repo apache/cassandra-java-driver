@@ -76,20 +76,8 @@ public class TupleValue extends AbstractAddressableByIndexData<TupleValue> {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("(");
-        for (int i = 0; i < values.length; i++) {
-            if (i > 0)
-                sb.append(", ");
-
-            if(values[i] == null)
-                sb.append("null");
-            else {
-                DataType dt = getType(i);
-                TypeCodec<Object> codec = getCodecRegistry().codecFor(dt);
-                sb.append(codec.format(codec.deserialize(values[i], protocolVersion)));
-            }
-        }
-        sb.append(")");
+        TypeCodec<Object> codec = getCodecRegistry().codecFor(type);
+        sb.append(codec.format(this));
         return sb.toString();
     }
 }

@@ -14,6 +14,12 @@
 - [improvement] JAVA-948: Don't limit cipher suites by default.
 - [improvement] JAVA-917: Document SSL configuration.
 - [improvement] JAVA-936: Adapt schema metadata parsing logic to new storage format of CQL types in C* 3.0.
+- [new feature] JAVA-846: Provide custom codecs library as an extra module.
+- [new feature] JAVA-742: Codec Support for JSON.
+- [new feature] JAVA-606: Codec support for Java 8.
+- [new feature] JAVA-565: Codec support for Java arrays.
+- [new feature] JAVA-605: Codec support for Java enums.
+- [bug] JAVA-884: Fix UDT mapper to process fields in the correct order.
 
 Merged from 2.1 branch:
 

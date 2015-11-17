@@ -208,6 +208,28 @@ We've also seized the opportunity to remove code that was deprecated in 2.1.
 20. `TableMetadata.Options` has been made a top-level class and renamed to
     `TableOptionsMetadata`. It is now also used by `MaterializedViewMetadata`.
 
+21. The mapper annotation `@Enumerated` has been removed, users should now
+    use the newly-introduced `driver-extras` module to get automatic
+    enum-to-CQL mappings. Two new codecs provide the same functionality: 
+    `EnumOrdinalCodec` and `EnumNameCodec`:
+    
+    ```java    
+    enum Foo {...}
+    enum Bar {...}
+    
+    // register the appropriate codecs
+    CodecRegistry.DEFAULT_INSTANCE
+        .register(new EnumOrdinalCodec<Foo>(Foo.class))
+        .register(new EnumNameCodec<Bar>(Bar.class))
+        
+    // the following mappings are handled out-of-the-box
+    @Table
+    public class MyPojo {
+        private Foo foo;
+        private List<Bar> bars;
+        ...
+    }
+    ```
 
 ### 2.1.8
 

@@ -40,11 +40,11 @@ public class UserType extends DataType implements Iterable<UserType.Field> {
     // Note that we don't expose the order of fields, from an API perspective this is a map
     // of String->Field, but internally we care about the order because the serialization format
     // of UDT expects a particular order.
-    private final Field[] byIdx;
+    final Field[] byIdx;
     // For a given name, we can only have one field with that name, so we don't need a int[] in
     // practice. However, storing one element arrays save allocations in UDTValue.getAllIndexesOf
     // implementation.
-    private final Map<String, int[]> byName;
+    final Map<String, int[]> byName;
 
     UserType(String keyspace, String typeName, Collection<Field> fields, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
         super(DataType.Name.UDT);
@@ -178,14 +178,6 @@ public class UserType extends DataType implements Iterable<UserType.Field> {
         return true;
     }
 
-    Field[] getFields() {
-        return byIdx;
-    }
-
-    Map<String, int[]> getFieldIndicesByName() {
-        return byName;
-    }
-
     @Override
     public int hashCode() {
         int result = name.hashCode();
@@ -207,7 +199,7 @@ public class UserType extends DataType implements Iterable<UserType.Field> {
         return name.equals(other.name)
             && keyspace.equals(other.keyspace)
             && typeName.equals(other.typeName)
-            && Arrays.equals(getFields(), other.getFields());
+            && Arrays.equals(byIdx, other.byIdx);
     }
 
     /**

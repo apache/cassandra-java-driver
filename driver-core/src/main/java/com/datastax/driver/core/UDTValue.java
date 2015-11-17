@@ -30,11 +30,11 @@ public class UDTValue extends AbstractData<UDTValue> {
     }
 
     protected DataType getType(int i) {
-        return definition.getFields()[i].getType();
+        return definition.byIdx[i].getType();
     }
 
     protected String getName(int i) {
-        return definition.getFields()[i].getName();
+        return definition.byIdx[i].getName();
     }
 
     @Override
@@ -43,7 +43,7 @@ public class UDTValue extends AbstractData<UDTValue> {
     }
 
     protected int[] getAllIndexesOf(String name) {
-        int[] indexes = definition.getFieldIndicesByName().get(Metadata.handleId(name));
+        int[] indexes = definition.byName.get(Metadata.handleId(name));
         if (indexes == null)
             throw new IllegalArgumentException(name + " is not a field defined in this UDT");
         return indexes;
@@ -78,23 +78,8 @@ public class UDTValue extends AbstractData<UDTValue> {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("{");
-        for (int i = 0; i < values.length; i++) {
-            if (i > 0)
-                sb.append(",");
-
-            sb.append(getName(i));
-            sb.append(":");
-
-            if(values[i] == null)
-                sb.append("null");
-            else {
-                DataType dt = getType(i);
-                TypeCodec<Object> codec = getCodecRegistry().codecFor(dt);
-                sb.append(codec.format(codec.deserialize(values[i], protocolVersion)));
-            }
-        }
-        sb.append("}");
+        TypeCodec<Object> codec = getCodecRegistry().codecFor(definition);
+        sb.append(codec.format(this));
         return sb.toString();
     }
 }
