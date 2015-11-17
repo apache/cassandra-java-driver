@@ -42,7 +42,7 @@
             <div class="col-md-8">
               <form id="search" class="form-search dropdown visible-lg-block" ng-controller="search" ng-class="{open: hasResults}" role="search" ng-submit="submit()" data-spy="affix" data-offset-top="130">
                 <div class="form-group has-feedback">
-                  <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('3.0.0-alpha4')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+                  <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('3.0.0-alpha5')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
                 </div>
                 <ul class="dropdown-menu search-results" role="menu">
                   <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
@@ -63,12 +63,12 @@
               <li>
                 <div class="btn-group">
                   <button id="current-version" class="btn btn-default btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    3.0.0-alpha4
+                    3.0.0-alpha5
                     <span class="caret"></span>
                   </button>
                   <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
                   
-                    <li class="disabled"><a href="./">3.0.0-alpha4</a></li>
+                    <li class="disabled"><a href="./">3.0.0-alpha5</a></li>
                   
                     <li><a href="../../../2.2.0-rc3/features/object_mapper/custom_codecs/">2.2.0-rc3</a></li>
                   
@@ -159,7 +159,9 @@
   
   
   
-  <li><a href="../../../changelog/">Changelog <small>page</small></a></li>
+  <li>
+    <a href="../../../changelog/">Changelog <small>page</small></a>
+  </li>
   
   
   
@@ -170,47 +172,65 @@
   
   
   
-  <li><a href="../../address_resolution/">Address resolution <small>page</small></a></li>
+  <li>
+    <a href="../../address_resolution/">Address resolution <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../../async/">Asynchronous programming <small>page</small></a></li>
+  <li>
+    <a href="../../async/">Asynchronous programming <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../../compression/">Compression <small>page</small></a></li>
+  <li>
+    <a href="../../compression/">Compression <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../../pooling/">Connection pooling <small>page</small></a></li>
+  <li>
+    <a href="../../pooling/">Connection pooling <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../../custom_codecs/">Custom Codecs <small>page</small></a></li>
+  <li>
+    <a href="../../custom_codecs/">Custom Codecs <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../../custom_payloads/">Custom Payloads <small>page</small></a></li>
+  <li>
+    <a href="../../custom_payloads/">Custom Payloads <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../../logging/">Logging <small>page</small></a></li>
+  <li>
+    <a href="../../logging/">Logging <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../../metadata/">Metadata <small>page</small></a></li>
+  <li>
+    <a href="../../metadata/">Metadata <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../../native_protocol/">Native protocol <small>page</small></a></li>
+  <li>
+    <a href="../../native_protocol/">Native protocol <small>page</small></a>
+  </li>
   
   
   
@@ -221,12 +241,16 @@
   
   
   
-  <li><a href="../creating/">Definition of mapped classes <small>page</small></a></li>
+  <li>
+    <a href="../creating/">Definition of mapped classes <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../using/">Using the mapper <small>page</small></a></li>
+  <li>
+    <a href="../using/">Using the mapper <small>page</small></a>
+  </li>
   
   
   
@@ -244,27 +268,44 @@
   
   
   
-  <li><a href="../../paging/">Paging <small>page</small></a></li>
+  <li>
+    <a href="../../paging/">Paging <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../../query_timestamps/">Query timestamps <small>page</small></a></li>
+  <li>
+    <a href="../../query_timestamps/">Query timestamps <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../../speculative_execution/">Speculative query execution <small>page</small></a></li>
+  <li>
+    <a href="../../ssl/">SSL <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../../statements/">Statements <small>page</small></a></li>
+  <li>
+    <a href="../../speculative_execution/">Speculative query execution <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../../shaded_jar/">Using the shaded JAR <small>page</small></a></li>
+  <li>
+    <a href="../../statements/">Statements <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../../shaded_jar/">Using the shaded JAR <small>page</small></a>
+  </li>
   
   
 </ul>
@@ -274,12 +315,16 @@
   
   
   
-  <li><a href="../../../faq/">Frequently Asked Questions <small>page</small></a></li>
+  <li>
+    <a href="../../../faq/">Frequently Asked Questions <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../../../upgrade_guide/">Upgrade guide <small>page</small></a></li>
+  <li>
+    <a href="../../../upgrade_guide/">Upgrade guide <small>page</small></a>
+  </li>
   
   
 </ul>
@@ -355,7 +400,7 @@ column/field. In that case you won’t register it when initializing the
 
 <span class="n">MappingManager</span> <span class="n">mappingManager</span> <span class="o">=</span> <span class="k">new</span> <span class="n">MappingManager</span><span class="o">(</span><span class="n">cluster</span><span class="o">.</span><span class="na">connect</span><span class="o">());</span>
 </code></pre>
-<p>Instead, reference the codec’s class in the <a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/mapping/annotations/Column.html">@Column</a>
+<p>Instead, reference the codec’s class in the <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/annotations/Column.html">@Column</a>
 annotation:</p>
 <pre class="highlight"><code><span class="nd">@Table</span><span class="o">(</span><span class="n">name</span> <span class="o">=</span> <span class="s">"user"</span><span class="o">)</span>
 <span class="kd">public</span> <span class="kd">class</span> <span class="nc">User</span> <span class="o">{</span>
@@ -370,7 +415,7 @@ annotation:</p>
 <p>The class must have a no-arg constructor. The mapper will create an
 instance (one per column) and cache it for future use.</p>
 
-<p>This also works with <a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/mapping/annotations/Field.html">@Field</a> and <a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/mapping/annotations/Param.html">@Param</a> annotations.</p>
+<p>This also works with <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/annotations/Field.html">@Field</a> and <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/annotations/Param.html">@Param</a> annotations.</p>
 
 <h2 id="implicit-udt-codecs" class="target">Implicit UDT codecs<a class="anchor" href="#implicit-udt-codecs" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h2>

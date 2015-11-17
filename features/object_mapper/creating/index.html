@@ -42,7 +42,7 @@
             <div class="col-md-8">
               <form id="search" class="form-search dropdown visible-lg-block" ng-controller="search" ng-class="{open: hasResults}" role="search" ng-submit="submit()" data-spy="affix" data-offset-top="130">
                 <div class="form-group has-feedback">
-                  <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('3.0.0-alpha4')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+                  <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('3.0.0-alpha5')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
                 </div>
                 <ul class="dropdown-menu search-results" role="menu">
                   <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
@@ -63,12 +63,12 @@
               <li>
                 <div class="btn-group">
                   <button id="current-version" class="btn btn-default btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    3.0.0-alpha4
+                    3.0.0-alpha5
                     <span class="caret"></span>
                   </button>
                   <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
                   
-                    <li class="disabled"><a href="./">3.0.0-alpha4</a></li>
+                    <li class="disabled"><a href="./">3.0.0-alpha5</a></li>
                   
                     <li><a href="../../../2.2.0-rc3/features/object_mapper/creating/">2.2.0-rc3</a></li>
                   
@@ -136,8 +136,6 @@
 </a></li>
 <li><a href="#primary-key-fields">Primary key fields
 </a></li>
-<li><a href="#enumerations">Enumerations
-</a></li>
 <li><a href="#computed-fields">Computed fields
 </a></li>
 <li><a href="#transient-fields">Transient fields
@@ -171,7 +169,9 @@
   
   
   
-  <li><a href="../../../changelog/">Changelog <small>page</small></a></li>
+  <li>
+    <a href="../../../changelog/">Changelog <small>page</small></a>
+  </li>
   
   
   
@@ -182,47 +182,65 @@
   
   
   
-  <li><a href="../../address_resolution/">Address resolution <small>page</small></a></li>
+  <li>
+    <a href="../../address_resolution/">Address resolution <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../../async/">Asynchronous programming <small>page</small></a></li>
+  <li>
+    <a href="../../async/">Asynchronous programming <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../../compression/">Compression <small>page</small></a></li>
+  <li>
+    <a href="../../compression/">Compression <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../../pooling/">Connection pooling <small>page</small></a></li>
+  <li>
+    <a href="../../pooling/">Connection pooling <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../../custom_codecs/">Custom Codecs <small>page</small></a></li>
+  <li>
+    <a href="../../custom_codecs/">Custom Codecs <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../../custom_payloads/">Custom Payloads <small>page</small></a></li>
+  <li>
+    <a href="../../custom_payloads/">Custom Payloads <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../../logging/">Logging <small>page</small></a></li>
+  <li>
+    <a href="../../logging/">Logging <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../../metadata/">Metadata <small>page</small></a></li>
+  <li>
+    <a href="../../metadata/">Metadata <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../../native_protocol/">Native protocol <small>page</small></a></li>
+  <li>
+    <a href="../../native_protocol/">Native protocol <small>page</small></a>
+  </li>
   
   
   
@@ -241,12 +259,16 @@
   
   
   
-  <li><a href="../using/">Using the mapper <small>page</small></a></li>
+  <li>
+    <a href="../using/">Using the mapper <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../custom_codecs/">Using custom codecs <small>page</small></a></li>
+  <li>
+    <a href="../custom_codecs/">Using custom codecs <small>page</small></a>
+  </li>
   
   
 </ul>
@@ -256,27 +278,44 @@
   
   
   
-  <li><a href="../../paging/">Paging <small>page</small></a></li>
+  <li>
+    <a href="../../paging/">Paging <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../../query_timestamps/">Query timestamps <small>page</small></a></li>
+  <li>
+    <a href="../../query_timestamps/">Query timestamps <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../../speculative_execution/">Speculative query execution <small>page</small></a></li>
+  <li>
+    <a href="../../ssl/">SSL <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../../statements/">Statements <small>page</small></a></li>
+  <li>
+    <a href="../../speculative_execution/">Speculative query execution <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../../shaded_jar/">Using the shaded JAR <small>page</small></a></li>
+  <li>
+    <a href="../../statements/">Statements <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../../shaded_jar/">Using the shaded JAR <small>page</small></a>
+  </li>
   
   
 </ul>
@@ -286,12 +325,16 @@
   
   
   
-  <li><a href="../../../faq/">Frequently Asked Questions <small>page</small></a></li>
+  <li>
+    <a href="../../../faq/">Frequently Asked Questions <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../../../upgrade_guide/">Upgrade guide <small>page</small></a></li>
+  <li>
+    <a href="../../../upgrade_guide/">Upgrade guide <small>page</small></a>
+  </li>
   
   
 </ul>
@@ -310,7 +353,7 @@
 </h3>
 
 <p>A table entity is a class that will be mapped to a table in Cassandra.
-It is annotated with <a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/mapping/annotations/Table.html">@Table</a>:</p>
+It is annotated with <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/annotations/Table.html">@Table</a>:</p>
 <pre><code>CREATE TABLE user (user_id uuid PRIMARY KEY, name text);
 </code></pre>
 <pre class="highlight"><code><span class="nd">@Table</span><span class="o">(</span><span class="n">keyspace</span> <span class="o">=</span> <span class="s">"ks"</span><span class="o">,</span> <span class="n">name</span> <span class="o">=</span> <span class="s">"users"</span><span class="o">,</span>
@@ -334,15 +377,15 @@ It is annotated with <a href="http://docs.datastax.com/en/drivers/java/2.2/com/d
 <li>
 <code>name</code>: the name of the table in the database.</li>
 <li>
-<code>caseSensitiveKeyspace</code>: whether the keyspace name is <a href="http://docs.datastax.com/en/cql/3.2/cql/cql_reference/ucase-lcase_r.html">case-sensitive</a>.</li>
+<code>caseSensitiveKeyspace</code>: whether the keyspace name is <a href="http://docs.datastax.com/en/cql/3.3/cql/cql_reference/ucase-lcase_r.html">case-sensitive</a>.</li>
 <li>
-<code>caseSensitiveTable</code>: whether the table name is <a href="http://docs.datastax.com/en/cql/3.2/cql/cql_reference/ucase-lcase_r.html">case-sensitive</a>.</li>
+<code>caseSensitiveTable</code>: whether the table name is <a href="http://docs.datastax.com/en/cql/3.3/cql/cql_reference/ucase-lcase_r.html">case-sensitive</a>.</li>
 <li>
-<code>readConsistency</code>: the <a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/ConsistencyLevel.html">consistency level</a> that will be used on each
+<code>readConsistency</code>: the <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/ConsistencyLevel.html">consistency level</a> that will be used on each
 get operation in the mapper. (if unspecified, it defaults to the
 cluster-wide setting)</li>
 <li>
-<code>writeConsistency</code>: the <a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/ConsistencyLevel.html">consistency level</a> that will be used on each
+<code>writeConsistency</code>: the <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/ConsistencyLevel.html">consistency level</a> that will be used on each
 save, or delete operation in the mapper. (if unspecified, it defaults
 to the cluster-wide setting)</li>
 </ul>
@@ -356,13 +399,13 @@ getters.</p>
 
 <p>By default, the mapper tries to map each Java property to a
 case insensitive column of the same name. If you want to use a different
-name, or <a href="http://docs.datastax.com/en/cql/3.2/cql/cql_reference/ucase-lcase_r.html">case-sensitive</a> names, use the <a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/mapping/annotations/Column.html">@Column</a> annotation on
+name, or <a href="http://docs.datastax.com/en/cql/3.3/cql/cql_reference/ucase-lcase_r.html">case-sensitive</a> names, use the <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/annotations/Column.html">@Column</a> annotation on
 the field.</p>
 
 <h4 id="primary-key-fields" class="target">Primary key fields<a class="anchor" href="#primary-key-fields" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h4>
 
-<p><a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/mapping/annotations/PartitionKey.html">@PartitionKey</a> and <a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/mapping/annotations/ClusteringColumn.html">@ClusteringColumn</a> are used to indicate the
+<p><a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/annotations/PartitionKey.html">@PartitionKey</a> and <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/annotations/ClusteringColumn.html">@ClusteringColumn</a> are used to indicate the
 <a href="http://thelastpickle.com/blog/2013/01/11/primary-keys-in-cql.html">partition key</a> and <a href="http://thelastpickle.com/blog/2013/01/11/primary-keys-in-cql.html">clustering columns</a>. In the case of a
 composite partition key or multiple clustering columns, the integer
 value indicates the position of the column in the key:</p>
@@ -377,33 +420,10 @@ value indicates the position of the column in the key:</p>
 <p>The order of the indices must match that of the columns in the table
 declaration.</p>
 
-<h4 id="enumerations" class="target">Enumerations<a class="anchor" href="#enumerations" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
-</h4>
-
-<p><a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/mapping/annotations/Enumerated.html">@Enumerated</a> is used to map Java enumerations. Since Cassandra
-does not support enumerations, the object mapper defines two ways to
-persist an enum value :</p>
-
-<ul>
-<li>
-<code>EnumType.ORDINAL</code> : the value is persisted as a Cassandra’s <code>int</code> and
-its value is its position in the enum.</li>
-<li>
-<code>EnumType.STRING</code> : the value is persisted as a Cassandra’s <code>text</code> and
-its value is its name in the enum.</li>
-</ul>
-
-<p>According to the chosen type, the matching database column must be the
-same type.</p>
-<pre><code>CREATE TABLE person (id uuid PRIMARY KEY, name text, gender int);
-</code></pre>
-<pre class="highlight"><code><span class="nd">@Enumerated</span><span class="o">(</span><span class="n">EnumType</span><span class="o">.</span><span class="na">ORDINAL</span><span class="o">)</span>
-<span class="kd">private</span> <span class="n">Gender</span> <span class="n">gender</span><span class="o">;</span>
-</code></pre>
 <h4 id="computed-fields" class="target">Computed fields<a class="anchor" href="#computed-fields" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h4>
 
-<p><a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/mapping/annotations/Computed.html">@Computed</a> can be used on fields that are the result of a
+<p><a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/annotations/Computed.html">@Computed</a> can be used on fields that are the result of a
 computation on the Cassandra side. Typically a function call. Native
 functions in Cassandra like <code>writetime()</code> or <a href="http://www.planetcassandra.org/blog/user-defined-functions-in-cassandra-3-0/">User Defined Functions</a> are
 supported.</p>
@@ -430,12 +450,12 @@ version (see
 <h4 id="transient-fields" class="target">Transient fields<a class="anchor" href="#transient-fields" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h4>
 
-<p><a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/mapping/annotations/Transient.html">@Transient</a> can be used to prevent a field from being mapped.</p>
+<p><a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/annotations/Transient.html">@Transient</a> can be used to prevent a field from being mapped.</p>
 
 <h3 id="mapping-user-types" class="target">Mapping User Types<a class="anchor" href="#mapping-user-types" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h3>
 
-<p><a href="http://docs.datastax.com/en/developer/java-driver/2.1/java-driver/reference/userDefinedTypes.html">User Defined Types</a> can also be mapped by using <a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/mapping/annotations/UDT.html">@UDT</a>:</p>
+<p><a href="http://docs.datastax.com/en/developer/java-driver/2.1/java-driver/reference/userDefinedTypes.html">User Defined Types</a> can also be mapped by using <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/annotations/UDT.html">@UDT</a>:</p>
 <pre><code>CREATE TYPE address (street text, zip_code int);
 </code></pre>
 <pre class="highlight"><code><span class="nd">@UDT</span><span class="o">(</span><span class="n">keyspace</span> <span class="o">=</span> <span class="s">"ks"</span><span class="o">,</span> <span class="n">name</span> <span class="o">=</span> <span class="s">"address"</span><span class="o">)</span>
@@ -465,7 +485,7 @@ getters.</p>
 
 <p>As in table entities, fields are mapped to an UDT field of the same
 name by default. To declare a different name or use case-sensitivity,
-use the <a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/mapping/annotations/Field.html">@Field</a> annotation:</p>
+use the <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/annotations/Field.html">@Field</a> annotation:</p>
 <pre class="highlight"><code><span class="nd">@Field</span><span class="o">(</span><span class="n">name</span> <span class="o">=</span> <span class="s">"zip_code"</span><span class="o">)</span>
 <span class="kd">private</span> <span class="kt">int</span> <span class="n">zipCode</span><span class="o">;</span>
 </code></pre>
@@ -498,8 +518,8 @@ won’t check that the declarations match the rules in Cassandra).
 However it is a good idea to keep using these annotations and make sure
 they match the schema, in anticipation for the schema generation features
 that will be added in a future version.
-The default annotation is <a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/mapping/annotations/Frozen.html">@Frozen</a>, <a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/mapping/annotations/FrozenKey.html">@FrozenKey</a> and
-<a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/mapping/annotations/FrozenValue.html">@FrozenValue</a>` are also provided for convenience:</p>
+The default annotation is <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/annotations/Frozen.html">@Frozen</a>, <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/annotations/FrozenKey.html">@FrozenKey</a> and
+<a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/annotations/FrozenValue.html">@FrozenValue</a>` are also provided for convenience:</p>
 <pre class="highlight"><code><span class="c1">// Will be mapped as a 'list&lt;text&gt;'</span>
 <span class="kd">private</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="n">stringList</span><span class="o">;</span>
 

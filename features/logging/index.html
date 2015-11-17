@@ -42,7 +42,7 @@
             <div class="col-md-8">
               <form id="search" class="form-search dropdown visible-lg-block" ng-controller="search" ng-class="{open: hasResults}" role="search" ng-submit="submit()" data-spy="affix" data-offset-top="130">
                 <div class="form-group has-feedback">
-                  <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('3.0.0-alpha4')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+                  <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('3.0.0-alpha5')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
                 </div>
                 <ul class="dropdown-menu search-results" role="menu">
                   <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
@@ -63,12 +63,12 @@
               <li>
                 <div class="btn-group">
                   <button id="current-version" class="btn btn-default btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    3.0.0-alpha4
+                    3.0.0-alpha5
                     <span class="caret"></span>
                   </button>
                   <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
                   
-                    <li class="disabled"><a href="./">3.0.0-alpha4</a></li>
+                    <li class="disabled"><a href="./">3.0.0-alpha5</a></li>
                   
                     <li><a href="../../2.2.0-rc3/features/logging/">2.2.0-rc3</a></li>
                   
@@ -163,7 +163,9 @@
   
   
   
-  <li><a href="../../changelog/">Changelog <small>page</small></a></li>
+  <li>
+    <a href="../../changelog/">Changelog <small>page</small></a>
+  </li>
   
   
   
@@ -174,32 +176,44 @@
   
   
   
-  <li><a href="../address_resolution/">Address resolution <small>page</small></a></li>
+  <li>
+    <a href="../address_resolution/">Address resolution <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../async/">Asynchronous programming <small>page</small></a></li>
+  <li>
+    <a href="../async/">Asynchronous programming <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../compression/">Compression <small>page</small></a></li>
+  <li>
+    <a href="../compression/">Compression <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../pooling/">Connection pooling <small>page</small></a></li>
+  <li>
+    <a href="../pooling/">Connection pooling <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../custom_codecs/">Custom Codecs <small>page</small></a></li>
+  <li>
+    <a href="../custom_codecs/">Custom Codecs <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../custom_payloads/">Custom Payloads <small>page</small></a></li>
+  <li>
+    <a href="../custom_payloads/">Custom Payloads <small>page</small></a>
+  </li>
   
   
   
@@ -212,42 +226,65 @@
   
   
   
-  <li><a href="../metadata/">Metadata <small>page</small></a></li>
+  <li>
+    <a href="../metadata/">Metadata <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../native_protocol/">Native protocol <small>page</small></a></li>
+  <li>
+    <a href="../native_protocol/">Native protocol <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../object_mapper/">Object Mapper <small>page</small></a></li>
+  <li>
+    <a href="../object_mapper/">Object Mapper <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../paging/">Paging <small>page</small></a></li>
+  <li>
+    <a href="../paging/">Paging <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../query_timestamps/">Query timestamps <small>page</small></a></li>
+  <li>
+    <a href="../query_timestamps/">Query timestamps <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../speculative_execution/">Speculative query execution <small>page</small></a></li>
+  <li>
+    <a href="../ssl/">SSL <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../statements/">Statements <small>page</small></a></li>
+  <li>
+    <a href="../speculative_execution/">Speculative query execution <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../shaded_jar/">Using the shaded JAR <small>page</small></a></li>
+  <li>
+    <a href="../statements/">Statements <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../shaded_jar/">Using the shaded JAR <small>page</small></a>
+  </li>
   
   
 </ul>
@@ -257,12 +294,16 @@
   
   
   
-  <li><a href="../../faq/">Frequently Asked Questions <small>page</small></a></li>
+  <li>
+    <a href="../../faq/">Frequently Asked Questions <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../../upgrade_guide/">Upgrade guide <small>page</small></a></li>
+  <li>
+    <a href="../../upgrade_guide/">Upgrade guide <small>page</small></a>
+  </li>
   
   
 </ul>
@@ -497,7 +538,7 @@ threshold in milliseconds.</p>
 <p>Note that <code>QueryLogger</code> instances are thread-safe and can be shared cluster-wide. 
 Besides, you can adjust several parameters such as the maximum query string length to be printed, 
 the maximum number of parameters to print, etc. Refer to the 
-<code>QueryLogger</code> <a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/QueryLogger.html">API docs</a> for more information.</p>
+<code>QueryLogger</code> <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/QueryLogger.html">API docs</a> for more information.</p>
 
 <p>Secondly, you need to adjust your logging framework to accept log messages from the <code>QueryLogger</code>. The <code>QueryLogger</code>
 uses 3 different loggers:</p>
@@ -531,7 +572,7 @@ to TRACE instead, e.g. with Log4J:</p>
 <pre><code>TRACE [cluster1] [/127.0.0.1:9042] Query too slow, took 329 ms: SELECT * FROM users WHERE user_id=? [user_id=42];
 </code></pre>
 <p>Be careful when logging large query strings (specially batches) and/or queries with considerable amounts of parameters. 
-See the <code>QueryLogger</code> <a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/QueryLogger.html">API docs</a> for examples of how to truncate the printed message when necessary.</p>
+See the <code>QueryLogger</code> <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/QueryLogger.html">API docs</a> for examples of how to truncate the printed message when necessary.</p>
 
 <h4 id="constant-vs-dynamic-thresholds" class="target">Constant vs Dynamic thresholds<a class="anchor" href="#constant-vs-dynamic-thresholds" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h4>
@@ -540,11 +581,10 @@ See the <code>QueryLogger</code> <a href="http://docs.datastax.com/en/drivers/ja
 a constant threshold in milliseconds (which is the default behavior), or 
 a dynamic threshold based on per-host latency percentiles, as computed by <code>PerHostPercentileTracker</code>.</p>
 
-<p><strong>Dynamic thresholds are still a beta feature as of version 2.2.0-rc3: they
-haven’t been extensively tested yet, and the API is still subject to
-change.</strong></p>
+<p><strong>Dynamic thresholds are still a beta feature: they haven’t been extensively 
+tested yet, and the API is still subject to change.</strong></p>
 
-<p>Refer to the <code>QueryLogger</code> <a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/QueryLogger.html">API docs</a> for an example of usage.</p>
+<p>Refer to the <code>QueryLogger</code> <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/QueryLogger.html">API docs</a> for an example of usage.</p>
 
 <h3 id="performance-tips" class="target">Performance Tips<a class="anchor" href="#performance-tips" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h3>

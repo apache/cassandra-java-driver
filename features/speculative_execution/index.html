@@ -42,7 +42,7 @@
             <div class="col-md-8">
               <form id="search" class="form-search dropdown visible-lg-block" ng-controller="search" ng-class="{open: hasResults}" role="search" ng-submit="submit()" data-spy="affix" data-offset-top="130">
                 <div class="form-group has-feedback">
-                  <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('3.0.0-alpha4')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+                  <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('3.0.0-alpha5')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
                 </div>
                 <ul class="dropdown-menu search-results" role="menu">
                   <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
@@ -63,12 +63,12 @@
               <li>
                 <div class="btn-group">
                   <button id="current-version" class="btn btn-default btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    3.0.0-alpha4
+                    3.0.0-alpha5
                     <span class="caret"></span>
                   </button>
                   <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
                   
-                    <li class="disabled"><a href="./">3.0.0-alpha4</a></li>
+                    <li class="disabled"><a href="./">3.0.0-alpha5</a></li>
                   
                     <li><a href="../../2.2.0-rc3/features/speculative_execution/">2.2.0-rc3</a></li>
                   
@@ -172,7 +172,9 @@ PercentileSpeculativeExecutionPolicy
   
   
   
-  <li><a href="../../changelog/">Changelog <small>page</small></a></li>
+  <li>
+    <a href="../../changelog/">Changelog <small>page</small></a>
+  </li>
   
   
   
@@ -183,62 +185,93 @@ PercentileSpeculativeExecutionPolicy
   
   
   
-  <li><a href="../address_resolution/">Address resolution <small>page</small></a></li>
+  <li>
+    <a href="../address_resolution/">Address resolution <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../async/">Asynchronous programming <small>page</small></a></li>
+  <li>
+    <a href="../async/">Asynchronous programming <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../compression/">Compression <small>page</small></a></li>
+  <li>
+    <a href="../compression/">Compression <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../pooling/">Connection pooling <small>page</small></a></li>
+  <li>
+    <a href="../pooling/">Connection pooling <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../custom_codecs/">Custom Codecs <small>page</small></a></li>
+  <li>
+    <a href="../custom_codecs/">Custom Codecs <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../custom_payloads/">Custom Payloads <small>page</small></a></li>
+  <li>
+    <a href="../custom_payloads/">Custom Payloads <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../logging/">Logging <small>page</small></a></li>
+  <li>
+    <a href="../logging/">Logging <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../metadata/">Metadata <small>page</small></a></li>
+  <li>
+    <a href="../metadata/">Metadata <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../native_protocol/">Native protocol <small>page</small></a></li>
+  <li>
+    <a href="../native_protocol/">Native protocol <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../object_mapper/">Object Mapper <small>page</small></a></li>
+  <li>
+    <a href="../object_mapper/">Object Mapper <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../paging/">Paging <small>page</small></a></li>
+  <li>
+    <a href="../paging/">Paging <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../query_timestamps/">Query timestamps <small>page</small></a></li>
+  <li>
+    <a href="../query_timestamps/">Query timestamps <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../ssl/">SSL <small>page</small></a>
+  </li>
   
   
   
@@ -251,12 +284,16 @@ PercentileSpeculativeExecutionPolicy
   
   
   
-  <li><a href="../statements/">Statements <small>page</small></a></li>
+  <li>
+    <a href="../statements/">Statements <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../shaded_jar/">Using the shaded JAR <small>page</small></a></li>
+  <li>
+    <a href="../shaded_jar/">Using the shaded JAR <small>page</small></a>
+  </li>
   
   
 </ul>
@@ -266,12 +303,16 @@ PercentileSpeculativeExecutionPolicy
   
   
   
-  <li><a href="../../faq/">Frequently Asked Questions <small>page</small></a></li>
+  <li>
+    <a href="../../faq/">Frequently Asked Questions <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../../upgrade_guide/">Upgrade guide <small>page</small></a></li>
+  <li>
+    <a href="../../upgrade_guide/">Upgrade guide <small>page</small></a>
+  </li>
   
   
 </ul>
@@ -318,14 +359,14 @@ there is no way to guarantee that only one node will apply the mutation.</p>
 </ul>
 
 <p>In the driver, this is determined by
-<a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/Statement.html#isIdempotent()">Statement#isIdempotent()</a>.  Unfortunately, the driver
+<a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Statement.html#isIdempotent()">Statement#isIdempotent()</a>.  Unfortunately, the driver
 doesn’t parse query strings, so in most cases it has no information
 about what the query actually does. Therefore:</p>
 
 <ul>
 <li>
 <strong><code>Statement#isIdempotent()</code> is only computed automatically for
-statements built with <a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/querybuilder/QueryBuilder.html">QueryBuilder</a></strong>.
+statements built with <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/querybuilder/QueryBuilder.html">QueryBuilder</a></strong>.
 Note that the driver takes a rather conservative approach with uses
 of <code>fcall()</code> or <code>raw()</code>: whenever they appear in a value to be
 inserted in the database (like the values of an <code>Insert</code> or the
@@ -355,14 +396,14 @@ default cluster-wide:</p>
 </h3>
 
 <p>Speculative executions are controlled by an instance of
-<a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/policies/SpeculativeExecutionPolicy.html">SpeculativeExecutionPolicy</a> provided when initializing the
+<a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/policies/SpeculativeExecutionPolicy.html">SpeculativeExecutionPolicy</a> provided when initializing the
 <code>Cluster</code>.  This policy defines the threshold after which a new
 speculative execution will be triggered.</p>
 
 <p>Two implementations are provided with the driver:</p>
 
 <h4 id="constant-speculative-execution-policy" class="target">
-<a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/policies/ConstantSpeculativeExecutionPolicy.html">ConstantSpeculativeExecutionPolicy</a><a class="anchor" href="#constant-speculative-execution-policy" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/policies/ConstantSpeculativeExecutionPolicy.html">ConstantSpeculativeExecutionPolicy</a><a class="anchor" href="#constant-speculative-execution-policy" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h4>
 
 <p>This simple policy uses a constant threshold:</p>
@@ -387,7 +428,7 @@ another speculative execution on a third node.</li>
 </ul>
 
 <h4 id="percentile-speculative-execution-policy" class="target">
-<a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/policies/PercentileSpeculativeExecutionPolicy.html">PercentileSpeculativeExecutionPolicy</a><a class="anchor" href="#percentile-speculative-execution-policy" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/policies/PercentileSpeculativeExecutionPolicy.html">PercentileSpeculativeExecutionPolicy</a><a class="anchor" href="#percentile-speculative-execution-policy" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h4>
 
 <p>This policy sets the threshold at a given latency percentile for the
@@ -406,7 +447,7 @@ explicitly depend on it:</p>
   <span class="nt">&lt;version&gt;</span>2.1.4<span class="nt">&lt;/version&gt;</span>
 <span class="nt">&lt;/dependency&gt;</span>
 </code></pre>
-<p>Then create an instance of <a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/PerHostPercentileTracker.html">PerHostPercentileTracker</a> that will collect
+<p>Then create an instance of <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/PerHostPercentileTracker.html">PerHostPercentileTracker</a> that will collect
 latency statistics for your <code>Cluster</code>:</p>
 <pre class="highlight"><code><span class="c1">// There are more options than shown here, please refer to the API docs</span>
 <span class="c1">// for more information</span>
@@ -450,7 +491,7 @@ create a single tracker object and share it with both components.</p>
 <li>on an internal error, it will try the next host;</li>
 <li>when the consistency level could not be reached (<code>unavailable</code> error
 or read or write timeout), it will delegate the decision to
-<a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/policies/RetryPolicy.html">RetryPolicy</a>, which might trigger a retry on the same
+<a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/policies/RetryPolicy.html">RetryPolicy</a>, which might trigger a retry on the same
 host.</li>
 </ul>
 
@@ -470,9 +511,9 @@ individual requests, so throughput will not necessarily improve.</p>
 
 <p>You can monitor how many speculative executions were triggered with the
 <code>speculative-executions</code> metric (exposed in the Java API as
-<a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/Metrics.Errors.html#getSpeculativeExecutions()">cluster.getMetrics().getErrors().getSpeculativeExecutions()</a>).
+<a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Metrics.Errors.html#getSpeculativeExecutions()">cluster.getMetrics().getErrors().getSpeculativeExecutions()</a>).
 It should only be a few percents of the total number of requests
-(<a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/Metrics.html#getRequestsTimer()">cluster.getMetrics().getRequestsTimer().getCount()</a>).</p>
+(<a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Metrics.html#getRequestsTimer()">cluster.getMetrics().getRequestsTimer().getCount()</a>).</p>
 
 <h4 id="stream-id-exhaustion" class="target">Stream id exhaustion<a class="anchor" href="#stream-id-exhaustion" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h4>
@@ -489,7 +530,7 @@ one. If requests are often cancelled, so will see connections being
 recycled at a high rate.</p>
 
 <p>One way to detect this is to monitor open connections per host
-(<a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/Session.State.html">Session.getState().getOpenConnections(host)</a>) against
+(<a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Session.State.html">Session.getState().getOpenConnections(host)</a>) against
 TCP connections at the OS level. If open connections stay constant but
 you see many TCP connections in closing states, you might be running
 into this issue. Try raising the speculative execution threshold.</p>
@@ -500,7 +541,7 @@ version 3 (driver 2.1.2 or above with Cassandra 2.1 or above), there are
 32K stream ids per connection, so higher cancellation rates can be
 sustained. If you’re unsure of which native protocol version you’re
 using, you can check with
-<a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/ProtocolOptions.html#getProtocolVersion()">cluster.getConfiguration().getProtocolOptions().getProtocolVersion()</a>.</p>
+<a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/ProtocolOptions.html#getProtocolVersion()">cluster.getConfiguration().getProtocolOptions().getProtocolVersion()</a>.</p>
 
 <h4 id="request-ordering-and-client-timestamps" class="target">Request ordering and client timestamps<a class="anchor" href="#request-ordering-and-client-timestamps" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h4>

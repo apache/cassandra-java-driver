@@ -42,7 +42,7 @@
             <div class="col-md-8">
               <form id="search" class="form-search dropdown visible-lg-block" ng-controller="search" ng-class="{open: hasResults}" role="search" ng-submit="submit()" data-spy="affix" data-offset-top="130">
                 <div class="form-group has-feedback">
-                  <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('3.0.0-alpha4')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+                  <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('3.0.0-alpha5')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
                 </div>
                 <ul class="dropdown-menu search-results" role="menu">
                   <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
@@ -63,12 +63,12 @@
               <li>
                 <div class="btn-group">
                   <button id="current-version" class="btn btn-default btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    3.0.0-alpha4
+                    3.0.0-alpha5
                     <span class="caret"></span>
                   </button>
                   <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
                   
-                    <li class="disabled"><a href="./">3.0.0-alpha4</a></li>
+                    <li class="disabled"><a href="./">3.0.0-alpha5</a></li>
                   
                     <li><a href="../../../2.2.0-rc3/features/object_mapper/using/">2.2.0-rc3</a></li>
                   
@@ -176,7 +176,9 @@
   
   
   
-  <li><a href="../../../changelog/">Changelog <small>page</small></a></li>
+  <li>
+    <a href="../../../changelog/">Changelog <small>page</small></a>
+  </li>
   
   
   
@@ -187,47 +189,65 @@
   
   
   
-  <li><a href="../../address_resolution/">Address resolution <small>page</small></a></li>
+  <li>
+    <a href="../../address_resolution/">Address resolution <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../../async/">Asynchronous programming <small>page</small></a></li>
+  <li>
+    <a href="../../async/">Asynchronous programming <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../../compression/">Compression <small>page</small></a></li>
+  <li>
+    <a href="../../compression/">Compression <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../../pooling/">Connection pooling <small>page</small></a></li>
+  <li>
+    <a href="../../pooling/">Connection pooling <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../../custom_codecs/">Custom Codecs <small>page</small></a></li>
+  <li>
+    <a href="../../custom_codecs/">Custom Codecs <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../../custom_payloads/">Custom Payloads <small>page</small></a></li>
+  <li>
+    <a href="../../custom_payloads/">Custom Payloads <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../../logging/">Logging <small>page</small></a></li>
+  <li>
+    <a href="../../logging/">Logging <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../../metadata/">Metadata <small>page</small></a></li>
+  <li>
+    <a href="../../metadata/">Metadata <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../../native_protocol/">Native protocol <small>page</small></a></li>
+  <li>
+    <a href="../../native_protocol/">Native protocol <small>page</small></a>
+  </li>
   
   
   
@@ -238,7 +258,9 @@
   
   
   
-  <li><a href="../creating/">Definition of mapped classes <small>page</small></a></li>
+  <li>
+    <a href="../creating/">Definition of mapped classes <small>page</small></a>
+  </li>
   
   
   
@@ -251,7 +273,9 @@
   
   
   
-  <li><a href="../custom_codecs/">Using custom codecs <small>page</small></a></li>
+  <li>
+    <a href="../custom_codecs/">Using custom codecs <small>page</small></a>
+  </li>
   
   
 </ul>
@@ -261,27 +285,44 @@
   
   
   
-  <li><a href="../../paging/">Paging <small>page</small></a></li>
+  <li>
+    <a href="../../paging/">Paging <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../../query_timestamps/">Query timestamps <small>page</small></a></li>
+  <li>
+    <a href="../../query_timestamps/">Query timestamps <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../../speculative_execution/">Speculative query execution <small>page</small></a></li>
+  <li>
+    <a href="../../ssl/">SSL <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../../statements/">Statements <small>page</small></a></li>
+  <li>
+    <a href="../../speculative_execution/">Speculative query execution <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../../shaded_jar/">Using the shaded JAR <small>page</small></a></li>
+  <li>
+    <a href="../../statements/">Statements <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../../shaded_jar/">Using the shaded JAR <small>page</small></a>
+  </li>
   
   
 </ul>
@@ -291,12 +332,16 @@
   
   
   
-  <li><a href="../../../faq/">Frequently Asked Questions <small>page</small></a></li>
+  <li>
+    <a href="../../../faq/">Frequently Asked Questions <small>page</small></a>
+  </li>
   
   
   
   
-  <li><a href="../../../upgrade_guide/">Upgrade guide <small>page</small></a></li>
+  <li>
+    <a href="../../../upgrade_guide/">Upgrade guide <small>page</small></a>
+  </li>
   
   
 </ul>
@@ -309,7 +354,7 @@
 <h2 id="using-the-mapper" class="target">Using the mapper<a class="anchor" href="#using-the-mapper" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h2>
 
-<p>First, create a <a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/mapping/MappingManager.html">MappingManager</a>. It wraps an existing <a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/core/Session.html">Session</a>
+<p>First, create a <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/MappingManager.html">MappingManager</a>. It wraps an existing <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Session.html">Session</a>
 instance:</p>
 <pre class="highlight"><code><span class="n">MappingManager</span> <span class="n">manager</span> <span class="o">=</span> <span class="k">new</span> <span class="n">MappingManager</span><span class="o">(</span><span class="n">session</span><span class="o">);</span>
 </code></pre>
@@ -325,7 +370,7 @@ this is a problem for you, see <code>MappingManager(session, protocolVersion)</c
 </h3>
 
 <p>Each entity class (annotated with <code>@Table</code>) is managed by a dedicated
-<a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/mapping/Mapper.html">Mapper</a> object. You obtain this object from the <code>MappingManager</code>:</p>
+<a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/Mapper.html">Mapper</a> object. You obtain this object from the <code>MappingManager</code>:</p>
 <pre class="highlight"><code><span class="n">Mapper</span><span class="o">&lt;</span><span class="n">User</span><span class="o">&gt;</span> <span class="n">mapper</span> <span class="o">=</span> <span class="n">manager</span><span class="o">.</span><span class="na">mapper</span><span class="o">(</span><span class="n">User</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
 </code></pre>
 <p><code>Mapper</code> objects are thread-safe. The manager caches them internally, so
@@ -464,7 +509,7 @@ be called so the value will be the one after invocation of the class’s
 default constructor).</li>
 </ul>
 
-<p><a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/mapping/Result.html">Result</a> is similar to <code>ResultSet</code> but for a given mapped class.
+<p><a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/Result.html">Result</a> is similar to <code>ResultSet</code> but for a given mapped class.
 It provides methods <code>one()</code>, <code>all()</code>, <code>iterator()</code>, <code>getExecutionInfo()</code>
 and <code>isExhausted()</code>. Note that iterating the <code>Result</code> will consume the
 <code>ResultSet</code>, and vice-versa.</p>
@@ -502,14 +547,14 @@ the markers:</p>
 <pre class="highlight"><code><span class="nd">@Query</span><span class="o">(</span><span class="s">"insert into user (id, name) values (?, ?)"</span><span class="o">)</span>
 <span class="n">ResultSet</span> <span class="nf">insert</span><span class="p">(</span><span class="n">UUID</span> <span class="n">userId</span><span class="o">,</span> <span class="n">String</span> <span class="n">name</span><span class="o">);</span>
 </code></pre>
-<p>With named markers, use <a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/mapping/annotations/Param.html">@Param</a> to indicate which parameter
+<p>With named markers, use <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/annotations/Param.html">@Param</a> to indicate which parameter
 corresponds to which marker:</p>
 <pre class="highlight"><code><span class="nd">@Query</span><span class="o">(</span><span class="s">"insert into user (userId, name) values (:u, :n)"</span><span class="o">)</span>
 <span class="n">ResultSet</span> <span class="nf">insert</span><span class="p">(</span><span class="nd">@Param</span><span class="o">(</span><span class="s">"u"</span><span class="o">)</span> <span class="n">UUID</span> <span class="n">userId</span><span class="o">,</span> <span class="nd">@Param</span><span class="o">(</span><span class="s">"n"</span><span class="o">)</span> <span class="n">String</span> <span class="n">name</span><span class="o">);</span>
 </code></pre>
 <p>If a method argument is a Java enumeration, it must be annotated with
 <code>@Enumerated</code> to indicate how to convert it to a CQL type (the rules are
-the same as in <a href="http://localhost:9090/features/object_mapper/creating/#enumerations">mapping definition</a>):</p>
+the same as in <a href="../creating/#enumerations">mapping definition</a>):</p>
 <pre class="highlight"><code><span class="nd">@Query</span><span class="o">(</span><span class="s">"insert into user (key, gender) values (?,?)"</span><span class="o">)</span>
 <span class="n">ResultSet</span> <span class="nf">addUser</span><span class="p">(</span><span class="kt">int</span> <span class="n">key</span><span class="o">,</span> <span class="nd">@Enumerated</span><span class="o">(</span><span class="n">EnumType</span><span class="o">.</span><span class="na">ORDINAL</span><span class="o">)</span> <span class="n">Enum</span> <span class="n">value</span><span class="o">);</span>
 </code></pre>
@@ -563,7 +608,7 @@ executed:</p>
 </h4>
 
 <p>It is possible to customize query parameters to include in a <code>Accessor</code>
-query with the annotation <a href="http://docs.datastax.com/en/drivers/java/2.2/com/datastax/driver/mapping/annotations/QueryParameters.html">@QueryParameters</a>. Then, options like
+query with the annotation <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/annotations/QueryParameters.html">@QueryParameters</a>. Then, options like
 <em>consistency level</em>, <em>fetchsize</em> or <em>tracing</em> are settable:</p>
 <pre class="highlight"><code><span class="nd">@Query</span><span class="o">(</span><span class="s">"SELECT * FROM ks.users"</span><span class="o">)</span>
 <span class="nd">@QueryParameters</span><span class="o">(</span><span class="n">consistency</span><span class="o">=</span><span class="s">"QUORUM"</span><span class="o">)</span>
