@@ -20,7 +20,7 @@
   <parent>
     <groupId>com.datastax.cassandra</groupId>
     <artifactId>cassandra-driver-parent</artifactId>
-    <version>3.0.0-alpha5</version>
+    <version>3.0.0-beta1-SNAPSHOT</version>
   </parent>
   <artifactId>cassandra-driver-mapping</artifactId>
   <packaging>bundle</packaging>
@@ -218,7 +218,7 @@
     <connection>scm:git:git@github.com:datastax/java-driver.git</connection>
     <developerConnection>scm:git:git@github.com:datastax/java-driver.git</developerConnection>
     <url>https://github.com/datastax/java-driver</url>
-    <tag>3.0.0-alpha5</tag>
+    <tag>HEAD</tag>
   </scm>
 
   <developers>
