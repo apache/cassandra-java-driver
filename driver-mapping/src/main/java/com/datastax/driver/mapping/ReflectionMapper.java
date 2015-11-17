@@ -92,6 +92,29 @@ class ReflectionMapper<T> extends EntityMapper<T> {
         }
     }
 
+    private static class CollectionEnumMapper<T> extends LiteralMapper<T> {
+        private final InferredCQLType inferredCQLType;
+        private final EnumType enumType;
+
+        private CollectionEnumMapper(Field field, int position, PropertyDescriptor pd, EnumType enumType, InferredCQLType inferredCQLType, AtomicInteger columnCounter) {
+            super(field, inferredCQLType.dataType, position, pd, columnCounter);
+            this.inferredCQLType = inferredCQLType;
+            this.enumType = enumType;
+        }
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public Object getValue(T entity) {
+            Object valueWithEntities = super.getValue(entity);
+            return (T) com.datastax.driver.mapping.CollectionEnumMapper.convertToCql(valueWithEntities, inferredCQLType, enumType);
+        }
+
+        @Override
+        public void setValue(Object entity, Object valueWithUDTValues) {
+            super.setValue(entity, com.datastax.driver.mapping.CollectionEnumMapper.convertToEnum(valueWithUDTValues, inferredCQLType, enumType));
+        }
+
+    }
     private static class EnumMapper<T> extends LiteralMapper<T> {
 
         private final EnumType enumType;
@@ -217,11 +240,15 @@ class ReflectionMapper<T> extends EntityMapper<T> {
                     return (ColumnMapper<T>) new UDTColumnMapper(field, position, pd, udtMapper, columnCounter);
                 }
 
+
                 if (field.getGenericType() instanceof ParameterizedType) {
                     InferredCQLType inferredCQLType = InferredCQLType.from(field, mappingManager);
                     if (inferredCQLType.containsMappedUDT) {
                         // We need a specialized mapper to convert UDT instances in the hierarchy.
                         return (ColumnMapper<T>)new NestedUDTMapper(field, position, pd, inferredCQLType, columnCounter);
+                    } else if (inferredCQLType.containsEnum) {
+                        EnumType enumType = AnnotationParser.enumType(field);
+                        return new CollectionEnumMapper<T>(field, position, pd, enumType, inferredCQLType, columnCounter);
                     } else {
                         // The default codecs will know how to handle the extracted datatype.
                         return new LiteralMapper<T>(field, inferredCQLType.dataType, position, pd, columnCounter);
