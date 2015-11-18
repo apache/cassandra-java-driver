@@ -76,7 +76,24 @@
             </goals>
             <configuration>
               <includeDependencySources>true</includeDependencySources>
-              <additionalparam>${javadoc.opts}</additionalparam>
+              <!-- optional dependencies from other modules (must be explicitly declared here in order to be correctly resolved) -->
+              <additionalDependencies>
+                <additionalDependency>
+                  <groupId>com.fasterxml.jackson.core</groupId>
+                  <artifactId>jackson-databind</artifactId>
+                  <version>${jackson.version}</version>
+                </additionalDependency>
+                <additionalDependency>
+                  <groupId>joda-time</groupId>
+                  <artifactId>joda-time</artifactId>
+                  <version>${joda.version}</version>
+                </additionalDependency>
+                <additionalDependency>
+                  <groupId>javax.json</groupId>
+                  <artifactId>javax.json-api</artifactId>
+                  <version>${jsr353-api.version}</version>
+                </additionalDependency>
+              </additionalDependencies>
             </configuration>
           </execution>
         </executions>
