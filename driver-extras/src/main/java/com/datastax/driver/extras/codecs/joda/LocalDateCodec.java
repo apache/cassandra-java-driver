@@ -39,7 +39,7 @@ import static com.datastax.driver.core.ParseUtils.unquote;
 
 /**
  * {@link TypeCodec} that maps
- * {@link org.joda.time.LocalDate} to CQL <code>date</code> columns.
+ * {@link org.joda.time.LocalDate} to CQL {@code date}.
  */
 public class LocalDateCodec extends TypeCodec<LocalDate> {
 

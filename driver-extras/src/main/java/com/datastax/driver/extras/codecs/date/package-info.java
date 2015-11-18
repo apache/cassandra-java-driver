@@ -16,27 +16,7 @@
 
 /**
  * This package contains a collection of convenience
- * {@link com.datastax.driver.core.TypeCodec} instances useful for
+ * {@link com.datastax.driver.core.TypeCodec TypeCodec} instances useful for
  * serializing between CQL temporal types and Java primitive types.
- * <p>
- * The codecs in this class provide the following mappings:
- *
- * <table summary="Supported Mappings">
- *     <tr>
- *         <th>Codec</th>
- *         <th>CQL type</th>
- *         <th>Java type</th>
- *     </tr>
- *     <tr>
- *         <td>{@link com.datastax.driver.extras.codecs.date.SimpleTimestampCodec}</td>
- *         <td>{@link com.datastax.driver.core.DataType#timestamp() timestamp}</td>
- *         <td>{@code long} (representing milliseconds since the Epoch)</td>
- *     </tr>
- *     <tr>
- *         <td>{@link com.datastax.driver.extras.codecs.date.SimpleDateCodec}</td>
- *         <td>{@link com.datastax.driver.core.DataType#date() date}</td>
- *         <td>{@code int} (representing days since the Epoch)</td>
- *     </tr>
- * </table>
  */
 package com.datastax.driver.extras.codecs.date;

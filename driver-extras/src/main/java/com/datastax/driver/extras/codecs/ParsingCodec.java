@@ -24,18 +24,18 @@ import com.datastax.driver.core.TypeCodec;
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 
 /**
- * An abstract TypeCodec that stores JAVA objects as serialized strings.
+ * An abstract {@link TypeCodec} that stores JAVA objects as serialized strings.
  * This can serve as a base for codecs dealing with XML or JSON formats.
  * <p>
  * This codec can be seen as a convenience base class to help
  * implementing Java-to-XML or Java-to-JSON mappings, but it comes
  * with a performance penalty: each Java object is serialized
- * in two steps: first to a String, and then to a ByteBuffer,
+ * in two steps: first to a String, and then to a {@link ByteBuffer},
  * which means that each serialization actually incurs in two potentially
  * expensive operations being carried.
  * <p>
  * If you are using an XML or JSON library that supports writing Java objects
- * directly to ByteBuffers, consider writing your own codec instead of
+ * directly to {@link ByteBuffer}s, consider writing your own codec instead of
  * using this one.
  *
  * @param <T> The Java type this codec serializes from and deserializes to.
