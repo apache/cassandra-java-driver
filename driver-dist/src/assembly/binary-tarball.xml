@@ -51,10 +51,10 @@
       <outputDirectory>apidocs</outputDirectory>
     </fileSet>
     <fileSet>
-      <directory>../driver-core</directory>
+      <directory>..</directory>
       <includes>
-        <include>CHANGELOG.rst</include>
-        <include>Upgrade_guide*.rst</include>
+        <include>changelog/README.md</include>
+        <include>upgrade_guide/README.md</include>
       </includes>
       <outputDirectory>/</outputDirectory>
     </fileSet>
