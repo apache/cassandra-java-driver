@@ -52,6 +52,13 @@
       <artifactId>cassandra-driver-mapping</artifactId>
       <version>${project.parent.version}</version>
     </dependency>
+
+    <dependency>
+      <groupId>com.datastax.cassandra</groupId>
+      <artifactId>cassandra-driver-extras</artifactId>
+      <version>${project.parent.version}</version>
+    </dependency>
+
   </dependencies>
 
   <build>

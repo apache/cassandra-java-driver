@@ -28,6 +28,7 @@
         <include>com.datastax.cassandra:cassandra-driver-core</include>
         <include>com.datastax.cassandra:cassandra-driver-dse</include>
         <include>com.datastax.cassandra:cassandra-driver-mapping</include>
+        <include>com.datastax.cassandra:cassandra-driver-extras</include>
       </includes>
       <binaries>
         <outputDirectory>/</outputDirectory>
