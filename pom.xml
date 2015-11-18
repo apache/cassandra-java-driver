@@ -103,7 +103,7 @@
             <version>1.4.1</version>
             <executions>
               <execution>
-                <id>enforce-java</id>
+                <id>enforce-java8</id>
                 <goals>
                   <goal>enforce</goal>
                 </goals>
@@ -180,6 +180,7 @@
         <version>2.5</version>
         <configuration>
           <tagNameFormat>@{project.version}</tagNameFormat>
+          <preparationGoals>clean verify -Penforce-java8</preparationGoals>
           <!-- do NOT specify arguments tag here as it would override the arguments tag in this plugin's definition in the parent POM -->
         </configuration>
       </plugin>
