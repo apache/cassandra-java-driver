@@ -1049,7 +1049,7 @@ class Connection {
         public void operationComplete(ChannelFuture future) throws Exception {
             // If we've closed the channel client side then we don't really want to defunct the connection, but
             // if there is remaining thread waiting on us, we still want to wake them up
-            if (!isInitialized || isClosed()) {
+            if (isClosed()) {
                 dispatcher.errorOutAllHandler(new TransportException(address, "Channel has been closed"));
                 // we still want to force so that the future completes
                 Connection.this.closeAsync().force();
