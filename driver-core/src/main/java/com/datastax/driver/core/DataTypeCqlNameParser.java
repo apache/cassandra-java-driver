@@ -79,6 +79,9 @@ class DataTypeCqlNameParser {
      */
     static DataType parse(String toParse, Cluster cluster, String currentKeyspaceName, Map<String, UserType> currentUserTypes, Map<String, UserType> oldUserTypes, boolean frozen, boolean shallowUserTypes) {
 
+        if(toParse.startsWith("'"))
+            return custom(toParse.substring(1, toParse.length() - 1));
+
         Parser parser = new Parser(toParse, 0);
         String type = parser.parseTypeName();
 

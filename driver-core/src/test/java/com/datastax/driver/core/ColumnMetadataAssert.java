@@ -36,22 +36,22 @@ public class ColumnMetadataAssert extends AbstractAssert<ColumnMetadataAssert, C
     }
 
     public ColumnMetadataAssert isPrimaryKey() {
-        assertThat(actual.getParent().getPrimaryKey().contains(actual));
+        assertThat(actual.getParent().getPrimaryKey().contains(actual)).as("Expecting %s to be part of the primary key, but it was not", actual).isTrue();
         return this;
     }
 
     public ColumnMetadataAssert isPartitionKey() {
-        assertThat(actual.getParent().getPartitionKey().contains(actual));
+        assertThat(actual.getParent().getPartitionKey().contains(actual)).as("Expecting %s to be part of the partition key, but it was not", actual).isTrue();
         return this;
     }
 
     public ColumnMetadataAssert isClusteringColumn() {
-        assertThat(actual.getParent().getClusteringColumns().contains(actual));
+        assertThat(actual.getParent().getClusteringColumns().contains(actual)).as("Expecting %s to be a clustering column, but it was not", actual).isTrue();
         return this;
     }
 
     public ColumnMetadataAssert isRegularColumn() {
-        assertThat(!actual.getParent().getPrimaryKey().contains(actual));
+        assertThat(actual.getParent().getPrimaryKey().contains(actual)).as("Expecting %s to be a regular column, but it was not", actual).isFalse();
         return this;
     }
 

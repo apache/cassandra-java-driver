@@ -116,7 +116,7 @@ public class Metadata {
             return id.toLowerCase();
 
         // Check if it's enclosed in quotes. If it is, remove them and unescape internal double quotes
-        if (id.charAt(0) == '"' && id.charAt(id.length() - 1) == '"')
+        if (!id.isEmpty() && id.charAt(0) == '"' && id.charAt(id.length() - 1) == '"')
             return id.substring(1, id.length() - 1).replaceAll("\"\"", "\"");
 
         // Otherwise, just return the id.
