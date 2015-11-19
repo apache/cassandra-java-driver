@@ -77,12 +77,6 @@ abstract class ArrayBackedResultSet implements ResultSet {
                 // this explicitly because MultiPage implementation don't support info == null.
                 assert r.metadata.pagingState == null || info != null;
 
-                // if this is an internal call, it doesn't matter which codecRegistry will be used
-                CodecRegistry codecRegistry = session == null ?
-                    CodecRegistry.DEFAULT_INSTANCE :
-                    session.getCluster().getConfiguration().getCodecRegistry();
-                columnDefs.setCodecRegistry(codecRegistry);
-
                 return r.metadata.pagingState == null
                     ? new SinglePage(columnDefs, tokenFactory, protocolVersion, r.data, info)
                     : new MultiPage(columnDefs, tokenFactory, protocolVersion, r.data, info, r.metadata.pagingState, session, statement);

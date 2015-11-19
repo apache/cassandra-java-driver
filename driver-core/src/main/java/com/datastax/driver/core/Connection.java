@@ -135,7 +135,8 @@ class Connection {
             bootstrap.handler(
                 new Initializer(this, protocolVersion, protocolOptions.getCompression().compressor(), protocolOptions.getSSLOptions(),
                     factory.configuration.getPoolingOptions().getHeartbeatIntervalSeconds(),
-                    factory.configuration.getNettyOptions()));
+                    factory.configuration.getNettyOptions(),
+                    factory.configuration.getCodecRegistry()));
 
             ChannelFuture future = bootstrap.connect(address);
 
@@ -1282,18 +1283,24 @@ class Connection {
         private final SSLOptions sslOptions;
         private final NettyOptions nettyOptions;
         private final ChannelHandler idleStateHandler;
+        private final CodecRegistry codecRegistry;
 
-        public Initializer(Connection connection, ProtocolVersion protocolVersion, FrameCompressor compressor, SSLOptions sslOptions, int heartBeatIntervalSeconds, NettyOptions nettyOptions) {
+        public Initializer(Connection connection, ProtocolVersion protocolVersion, FrameCompressor compressor, SSLOptions sslOptions, int heartBeatIntervalSeconds, NettyOptions nettyOptions, CodecRegistry codecRegistry) {
             this.connection = connection;
             this.protocolVersion = protocolVersion;
             this.compressor = compressor;
             this.sslOptions = sslOptions;
             this.nettyOptions = nettyOptions;
+            this.codecRegistry = codecRegistry;
             this.idleStateHandler = new IdleStateHandler(0, 0, heartBeatIntervalSeconds);
         }
 
         @Override
         protected void initChannel(SocketChannel channel) throws Exception {
+
+            // set the codec registry so that it can be accessed by ProtocolDecoder
+            channel.attr(Message.CODEC_REGISTRY_ATTRIBUTE_KEY).set(codecRegistry);
+
             ChannelPipeline pipeline = channel.pipeline();
 
             if (sslOptions != null) {

@@ -23,6 +23,7 @@ import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToMessageDecoder;
 import io.netty.handler.codec.MessageToMessageEncoder;
+import io.netty.util.AttributeKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,13 +37,15 @@ abstract class Message {
 
     protected static final Logger logger = LoggerFactory.getLogger(Message.class);
 
+    static AttributeKey<CodecRegistry> CODEC_REGISTRY_ATTRIBUTE_KEY = AttributeKey.newInstance("com.datastax.driver.core.CodecRegistry");
+
     public interface Coder<R extends Request> {
         public void encode(R request, ByteBuf dest, ProtocolVersion version);
         public int encodedSize(R request, ProtocolVersion version);
     }
 
     public interface Decoder<R extends Response> {
-        public R decode(ByteBuf body, ProtocolVersion version);
+        public R decode(ByteBuf body, ProtocolVersion version, CodecRegistry codecRegistry);
     }
 
     private volatile int streamId;
@@ -240,7 +243,9 @@ abstract class Message {
             List<String> warnings = hasWarnings ? CBUtil.readStringList(frame.body) : Collections.<String>emptyList();
 
             try {
-                Response response = Response.Type.fromOpcode(frame.header.opcode).decoder.decode(frame.body, frame.header.version);
+                CodecRegistry codecRegistry = ctx.channel().attr(CODEC_REGISTRY_ATTRIBUTE_KEY).get();
+                assert codecRegistry != null;
+                Response response = Response.Type.fromOpcode(frame.header.opcode).decoder.decode(frame.body, frame.header.version, codecRegistry);
                 response
                     .setTracingId(tracingId)
                     .setWarnings(warnings)
