@@ -60,7 +60,6 @@ public class Select extends BuiltStatement {
     StringBuilder buildQueryString(List<Object> variables) {
         StringBuilder builder = new StringBuilder();
 
-        CodecRegistry codecRegistry = getCodecRegistry();
         builder.append("SELECT ");
         if (isDistinct)
             builder.append("DISTINCT ");

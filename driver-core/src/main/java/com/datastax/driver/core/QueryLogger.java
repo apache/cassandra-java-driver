@@ -22,8 +22,11 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 import com.google.common.annotations.Beta;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.datastax.driver.core.RegularStatement.ValueDefinition;
 
 /**
  * A configurable {@link LatencyTracker} that logs all executed statements.
@@ -647,7 +650,9 @@ public abstract class QueryLogger implements LatencyTracker {
         boolean showParameterValues = logger.isTraceEnabled();
         if (showParameterValues) {
             StringBuilder params = new StringBuilder();
-            if (statement instanceof BoundStatement) {
+            if (statement instanceof RegularStatement) {
+                appendParameters((RegularStatement)statement, params, maxLoggedParameters);
+            } else if (statement instanceof BoundStatement) {
                 appendParameters((BoundStatement)statement, params, maxLoggedParameters);
             } else if (statement instanceof BatchStatement) {
                 BatchStatement batchStatement = (BatchStatement)statement;
@@ -655,6 +660,8 @@ public abstract class QueryLogger implements LatencyTracker {
                 for (Statement inner : batchStatement.getStatements()) {
                     if (inner instanceof BoundStatement) {
                         remaining = appendParameters((BoundStatement)inner, params, remaining);
+                    } else if (inner instanceof RegularStatement) {
+                        remaining = appendParameters((RegularStatement)inner, params, remaining);
                     }
                 }
             }
@@ -676,6 +683,10 @@ public abstract class QueryLogger implements LatencyTracker {
         } else if (statement instanceof BoundStatement) {
             int boundValues = ((BoundStatement)statement).wrapper.values.length;
             sb.append("[" + boundValues + " bound values] ");
+        } else if (statement instanceof RegularStatement) {
+            int values = ((RegularStatement)statement).valuesCount();
+            if (values > 0)
+                sb.append("[" + values + " bound values] ");
         }
 
         append(statement, sb, maxQueryStringLength);
@@ -702,7 +713,7 @@ public abstract class QueryLogger implements LatencyTracker {
             if (remaining == -1) {
                 numberOfLoggedParameters = numberOfParameters;
             } else {
-                numberOfLoggedParameters = remaining > numberOfParameters ? numberOfParameters : remaining;
+                numberOfLoggedParameters = Math.min(remaining, numberOfParameters);
                 remaining -= numberOfLoggedParameters;
             }
             for (int i = 0; i < numberOfLoggedParameters; i++) {
@@ -710,7 +721,10 @@ public abstract class QueryLogger implements LatencyTracker {
                     buffer.append(" [");
                 else
                     buffer.append(", ");
-                buffer.append(String.format("%s:%s", metadata.getName(i), parameterValueAsString(definitions.get(i), statement.wrapper.values[i])));
+                String value = statement.isSet(i)
+                    ? parameterValueAsString(definitions.get(i).getType(), statement.wrapper.values[i])
+                    : "<UNSET>";
+                buffer.append(String.format("%s:%s", metadata.getName(i), value));
             }
             if (numberOfLoggedParameters < numberOfParameters) {
                 buffer.append(FURTHER_PARAMS_OMITTED);
@@ -719,12 +733,50 @@ public abstract class QueryLogger implements LatencyTracker {
         return remaining;
     }
 
-    protected String parameterValueAsString(ColumnDefinitions.Definition definition, ByteBuffer raw) {
+    protected int appendParameters(RegularStatement statement, StringBuilder buffer, int remaining) {
+        if (remaining == 0)
+            return 0;
+        List<ValueDefinition> definitions = statement.getValueDefinitions();
+        int numberOfParameters = definitions.size();
+        if (numberOfParameters > 0) {
+            int numberOfLoggedParameters;
+            if (remaining == -1) {
+                numberOfLoggedParameters = numberOfParameters;
+            } else {
+                numberOfLoggedParameters = Math.min(remaining, numberOfParameters);
+                remaining -= numberOfLoggedParameters;
+            }
+            for (ValueDefinition definition : definitions) {
+                if (buffer.length() == 0)
+                    buffer.append(" [");
+                else
+                    buffer.append(", ");
+
+                DataType type = Objects.firstNonNull(definition.getType(), DataType.blob());
+                if (statement.usesPositionalValues()) {
+                    int index = definition.getIndex();
+                    buffer.append(String.format("%s:%s",
+                        index,
+                        parameterValueAsString(type, statement.getBytesUnsafe(index))));
+                } else {
+                    String name = definition.getName();
+                    buffer.append(String.format("%s:%s",
+                        name,
+                        parameterValueAsString(type, statement.getBytesUnsafe(name))));
+                }
+            }
+            if (numberOfLoggedParameters < numberOfParameters) {
+                buffer.append(FURTHER_PARAMS_OMITTED);
+            }
+        }
+        return remaining;
+    }
+
+    protected String parameterValueAsString(DataType type, ByteBuffer raw) {
         String valueStr;
         if (raw == null || raw.remaining() == 0) {
             valueStr = "NULL";
         } else {
-            DataType type = definition.getType();
             CodecRegistry codecRegistry = cluster.getConfiguration().getCodecRegistry();
             TypeCodec<Object> codec = codecRegistry.codecFor(type);
             int maxParameterValueLength = this.maxParameterValueLength;

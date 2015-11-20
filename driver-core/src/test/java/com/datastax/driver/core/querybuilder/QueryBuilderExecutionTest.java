@@ -22,9 +22,6 @@ import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.data.MapEntry.entry;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
 
 import com.datastax.driver.core.*;
 
@@ -57,19 +54,19 @@ public class QueryBuilderExecutionTest extends CCMBridge.PerClassSingleNodeClust
 
         List<Row> rows = session.execute(builder.select().from(TABLE1).where(in("k", "k1", "k2"))).all();
 
-        assertEquals(2, rows.size());
+        assertThat(rows).hasSize(2);
 
         Row r1 = rows.get(0);
-        assertEquals("k1", r1.getString("k"));
-        assertEquals("This is a test", r1.getString("t"));
-        assertEquals(3, r1.getInt("i"));
-        assertFalse(r1.isNull("f"));
+        assertThat(r1.getString("k")).isEqualTo("k1");
+        assertThat(r1.getString("t")).isEqualTo("This is a test");
+        assertThat(r1.getInt("i")).isEqualTo(3);
+        assertThat(r1.isNull("f")).isFalse();
 
         Row r2 = rows.get(1);
-        assertEquals("k2", r2.getString("k"));
-        assertEquals("Another test", r2.getString("t"));
-        assertTrue(r2.isNull("i"));
-        assertTrue(r2.isNull("f"));
+        assertThat(r2.getString("k")).isEqualTo("k2");
+        assertThat(r2.getString("t")).isEqualTo("Another test");
+        assertThat(r2.isNull("i")).isTrue();
+        assertThat(r2.isNull("f")).isTrue();
     }
 
     @Test(groups = "short")
@@ -80,10 +77,10 @@ public class QueryBuilderExecutionTest extends CCMBridge.PerClassSingleNodeClust
         String query = builder.select().from("dateTest").where(eq(token("t"), fcall("token", d))).toString();
         List<Row> rows = session.execute(query).all();
 
-        assertEquals(1, rows.size());
+        assertThat(rows).hasSize(1);
 
         Row r1 = rows.get(0);
-        assertEquals(d, r1.getTimestamp("t"));
+        assertThat(r1.getTimestamp("t")).isEqualTo(d);
     }
 
     @Test(groups = "short")
@@ -91,29 +88,55 @@ public class QueryBuilderExecutionTest extends CCMBridge.PerClassSingleNodeClust
         // Just check we correctly avoid values when there is a bind marker
         String query = "INSERT INTO foo (a,b,c,d) VALUES ('foo','bar',?,0);";
         BuiltStatement stmt = builder.insertInto("foo").value("a", "foo").value("b", "bar").value("c", bindMarker()).value("d", 0);
-        assertEquals(stmt.getQueryString(), query);
+        assertThat(query).isEqualTo(stmt.getQueryString());
 
         query = "INSERT INTO foo (a,b,c,d) VALUES ('foo','bar',:c,0);";
         stmt = builder.insertInto("foo").value("a", "foo").value("b", "bar").value("c", bindMarker("c")).value("d", 0);
-        assertEquals(stmt.getQueryString(), query);
+        assertThat(query).isEqualTo(stmt.getQueryString());
     }
 
     @Test(groups = "short")
-    public void batchNonBuiltStatementTest() throws Exception {
-        SimpleStatement simple = session.newSimpleStatement("INSERT INTO " + TABLE1 + " (k, t) VALUES ('batchTest1', 'val1')");
+    public void should_create_bind_markers_when_no_statement_contains_bind_markers() throws Exception {
+        SimpleStatement simple = session.newSimpleStatement("INSERT INTO " + TABLE1 + " (k,t) VALUES ('batchTest1','val1')");
         RegularStatement built = builder.insertInto(TABLE1).value("k", "batchTest2").value("t", "val2");
-        session.execute(builder.batch().add(simple).add(built));
+        Batch batch = builder.batch().add(simple).add(built);
+        // batch has a non built statement, so no bind markers are generated
+        assertThat(batch.getValueDefinitions()).isEmpty();
+        assertThat(batch.getQueryString()).isEqualTo("BEGIN BATCH INSERT INTO test1 (k,t) VALUES ('batchTest1','val1'); INSERT INTO test1 (k,t) VALUES ('batchTest2','val2'); APPLY BATCH;");
+        session.execute(batch);
 
         List<Row> rows = session.execute(builder.select().from(TABLE1).where(in("k", "batchTest1", "batchTest2"))).all();
-        assertEquals(2, rows.size());
+        assertThat(rows).hasSize(2);
 
         Row r1 = rows.get(0);
-        assertEquals("batchTest1", r1.getString("k"));
-        assertEquals("val1", r1.getString("t"));
+        assertThat(r1.getString("k")).isEqualTo("batchTest1");
+        assertThat(r1.getString("t")).isEqualTo("val1");
 
         Row r2 = rows.get(1);
-        assertEquals("batchTest2", r2.getString("k"));
-        assertEquals("val2", r2.getString("t"));
+        assertThat(r2.getString("k")).isEqualTo("batchTest2");
+        assertThat(r2.getString("t")).isEqualTo("val2");
+    }
+
+    @Test(groups = "short")
+    public void should_not_create_additional_bind_markers_when_statement_already_contains_bind_markers() throws Exception {
+        SimpleStatement simple = session.newSimpleStatement("INSERT INTO " + TABLE1 + " (k,t) VALUES ('batchTest1',?)", "val1");
+        RegularStatement built = builder.insertInto(TABLE1).value("k", "batchTest2").value("t", "val2");
+        Batch batch = builder.batch().add(simple).add(built);
+        // batch has a non built statement, so no additional bind markers are generated
+        assertThat(batch.getValueDefinitions()).hasSize(1);
+        assertThat(batch.getQueryString()).isEqualTo("BEGIN BATCH INSERT INTO test1 (k,t) VALUES ('batchTest1',?); INSERT INTO test1 (k,t) VALUES ('batchTest2','val2'); APPLY BATCH;");
+        session.execute(batch);
+
+        List<Row> rows = session.execute(builder.select().from(TABLE1).where(in("k", "batchTest1", "batchTest2"))).all();
+        assertThat(rows).hasSize(2);
+
+        Row r1 = rows.get(0);
+        assertThat(r1.getString("k")).isEqualTo("batchTest1");
+        assertThat(r1.getString("t")).isEqualTo("val1");
+
+        Row r2 = rows.get(1);
+        assertThat(r2.getString("k")).isEqualTo("batchTest2");
+        assertThat(r2.getString("t")).isEqualTo("val2");
     }
 
     @Test(groups = "short")

@@ -533,16 +533,13 @@ class SessionManager extends AbstractSession {
             if (version == ProtocolVersion.V1 && rs instanceof com.datastax.driver.core.querybuilder.BuiltStatement)
                 ((com.datastax.driver.core.querybuilder.BuiltStatement)rs).setForceNoValues(true);
 
-            ByteBuffer[] rawValues = rs.getValues();
-
-            if (version == ProtocolVersion.V1 && rawValues != null)
+            List<ByteBuffer> values = rs.getValues();
+            List<String> valueNames = rs.getValueNames();
+            if (version == ProtocolVersion.V1 && !values.isEmpty())
                 throw new UnsupportedFeatureException(version, "Binary values are not supported");
 
-            List<ByteBuffer> values = rawValues == null ? Collections.<ByteBuffer>emptyList() : Arrays.asList(rawValues);
-
             String qString = rs.getQueryString();
-
-            Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(consistency, values, false,
+            Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(consistency, values, valueNames, false,
                                                                                       fetchSize, usedPagingState, serialConsistency, defaultTimestamp);
             request =  new Requests.Query(qString, options, statement.isTracing());
         } else if (statement instanceof BoundStatement) {
@@ -554,7 +551,7 @@ class SessionManager extends AbstractSession {
             if (version.compareTo(ProtocolVersion.V4) < 0)
                 bs.ensureAllSet();
             boolean skipMetadata = version != ProtocolVersion.V1 && bs.statement.getPreparedId().resultSetMetadata != null;
-            Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(consistency, Arrays.asList(bs.wrapper.values), skipMetadata,
+            Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(consistency, Arrays.asList(bs.wrapper.values), Collections.<String>emptyList(), skipMetadata,
                                                                                       fetchSize, usedPagingState, serialConsistency, defaultTimestamp);
             request = new Requests.Execute(bs.statement.getPreparedId().id, options, statement.isTracing());
         } else {

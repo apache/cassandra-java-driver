@@ -19,7 +19,12 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.datastax.driver.core.*;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
+
+import com.datastax.driver.core.CodecRegistry;
+import com.datastax.driver.core.ProtocolVersion;
+import com.datastax.driver.core.RegularStatement;
 
 /**
  * A built BATCH statement.
@@ -30,9 +35,6 @@ public class Batch extends BuiltStatement {
     private final boolean logged;
     private final Options usings;
 
-    // Only used when we add at last one statement that is not a BuiltStatement subclass
-    private int nonBuiltStatementValues;
-
     Batch(ProtocolVersion protocolVersion, CodecRegistry codecRegistry, RegularStatement[] statements, boolean logged) {
         super((String)null, protocolVersion, codecRegistry);
         this.statements = statements.length == 0
@@ -41,8 +43,8 @@ public class Batch extends BuiltStatement {
         this.logged = logged;
         this.usings = new Options(this);
 
-        for (int i = 0; i < statements.length; i++)
-            add(statements[i]);
+        for (RegularStatement statement : statements)
+            add(statement);
     }
 
     @Override
@@ -55,26 +57,27 @@ public class Batch extends BuiltStatement {
 
         if (!usings.usings.isEmpty()) {
             builder.append(" USING ");
-            Utils.joinAndAppend(builder, getCodecRegistry(), " AND ", usings.usings, variables);
+            Utils.joinAndAppend(builder, codecRegistry, " AND ", usings.usings, variables);
         }
         builder.append(' ');
 
-        for (int i = 0; i < statements.size(); i++) {
-            RegularStatement stmt = statements.get(i);
+        for (RegularStatement stmt : statements) {
             if (stmt instanceof BuiltStatement) {
                 BuiltStatement bst = (BuiltStatement)stmt;
                 builder.append(maybeAddSemicolon(bst.buildQueryString(variables)));
-
             } else {
                 String str = stmt.getQueryString();
                 builder.append(str);
                 if (!str.trim().endsWith(";"))
                     builder.append(';');
 
-                // Note that we force hasBindMarkers if there is any non-BuiltStatement, so we know
-                // that we can only get there with variables == null
+                // If there are non-built child statements, we're not collecting values.
+                // All variables in built statements will be inlined in the query string, but
+                // for non-built statements we need to copy the values to the parent batch.
                 assert variables == null;
+                this.copyValues(stmt);
             }
+            builder.append(' ');
         }
         builder.append("APPLY BATCH;");
         return builder;
@@ -90,6 +93,10 @@ public class Batch extends BuiltStatement {
      * are mixed.
      */
     public Batch add(RegularStatement statement) {
+        // We can't handle collisions if multiple statement use the same names, so avoid names altogether
+        Preconditions.checkArgument(!statement.usesNamedValues(),
+            "Statements with named values are not supported in built batches, use positional values instead");
+
         boolean isCounterOp = statement instanceof BuiltStatement && ((BuiltStatement) statement).isCounterOp();
 
         if (this.isCounterOp == null)
@@ -99,45 +106,22 @@ public class Batch extends BuiltStatement {
 
         this.statements.add(statement);
 
-        if (statement instanceof BuiltStatement)
-        {
-            this.hasBindMarkers |= ((BuiltStatement)statement).hasBindMarkers;
-        }
-        else
-        {
-            // For non-BuiltStatement, we cannot know if it includes a bind makers and we assume it does. In practice,
-            // this means we will always serialize values as strings when there is non-BuiltStatement
+        if (statement instanceof BuiltStatement) {
+            BuiltStatement builtStatement = (BuiltStatement)statement;
+            this.hasBindMarkers |= builtStatement.hasBindMarkers;
+        } else {
+            // For non-BuiltStatement, we cannot know if they include bind markers,
+            // so we assume they do.
+            // If that's the case, the user meant the whole statement to be prepared,
+            // and we shouldn't add our own markers.
+            // In practice, this means that the batch statement will never add its own
+            // bind markers as soon as at least one of its components is assumed to contain those.
             this.hasBindMarkers = true;
-            this.nonBuiltStatementValues += ((SimpleStatement)statement).valuesCount();
         }
 
         checkForBindMarkers(null);
 
         return this;
-    }
-
-    @Override
-    public ByteBuffer[] getValues() {
-        // If there is some non-BuiltStatement inside the batch with values, we shouldn't
-        // use super.getValues() since it will ignore the values of said non-BuiltStatement.
-        // If that's the case, we just collects all those values (and we know
-        // super.getValues() == null in that case since we've explicitely set this.hasBindMarker
-        // to true). Otherwise, we simply call super.getValues().
-        if (nonBuiltStatementValues == 0)
-            return super.getValues();
-
-        ByteBuffer[] values = new ByteBuffer[nonBuiltStatementValues];
-        int i = 0;
-        for (RegularStatement statement : statements)
-        {
-            if (statement instanceof BuiltStatement)
-                continue;
-
-            ByteBuffer[] statementValues = statement.getValues();
-            System.arraycopy(statementValues, 0, values, i, statementValues.length);
-            i += statementValues.length;
-        }
-        return values;
     }
 
     /**

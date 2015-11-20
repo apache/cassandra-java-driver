@@ -21,6 +21,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import io.netty.buffer.ByteBuf;
 
@@ -222,6 +223,7 @@ class Requests {
 
         public static final QueryProtocolOptions DEFAULT = new QueryProtocolOptions(ConsistencyLevel.ONE,
                                                                                     Collections.<ByteBuffer>emptyList(),
+                                                                                    Collections.<String>emptyList(),
                                                                                     false,
                                                                                     -1,
                                                                                     null,
@@ -231,6 +233,7 @@ class Requests {
         private final EnumSet<QueryFlag> flags = EnumSet.noneOf(QueryFlag.class);
         public final ConsistencyLevel consistency;
         public final List<ByteBuffer> values;
+        public final List<String> valueNames;
         public final boolean skipMetadata;
         public final int pageSize;
         public final ByteBuffer pagingState;
@@ -239,6 +242,7 @@ class Requests {
 
         public QueryProtocolOptions(ConsistencyLevel consistency,
                                     List<ByteBuffer> values,
+                                    List<String> valueNames,
                                     boolean skipMetadata,
                                     int pageSize,
                                     ByteBuffer pagingState,
@@ -247,6 +251,9 @@ class Requests {
 
             this.consistency = consistency;
             this.values = values;
+            this.valueNames = valueNames;
+            if (!valueNames.isEmpty())
+                Preconditions.checkArgument(valueNames.size() == values.size());
             this.skipMetadata = skipMetadata;
             this.pageSize = pageSize;
             this.pagingState = pagingState;
@@ -256,6 +263,8 @@ class Requests {
             // Populate flags
             if (!values.isEmpty())
                 flags.add(QueryFlag.VALUES);
+            if (!valueNames.isEmpty())
+                flags.add(QueryFlag.VALUE_NAMES);
             if (skipMetadata)
                 flags.add(QueryFlag.SKIP_METADATA);
             if (pageSize >= 0)
@@ -269,7 +278,7 @@ class Requests {
         }
 
         public QueryProtocolOptions copy(ConsistencyLevel newConsistencyLevel) {
-            return new QueryProtocolOptions(newConsistencyLevel, values, skipMetadata, pageSize, pagingState, serialConsistency, defaultTimestamp);
+            return new QueryProtocolOptions(newConsistencyLevel, values, valueNames, skipMetadata, pageSize, pagingState, serialConsistency, defaultTimestamp);
         }
 
         public void encode(ByteBuf dest, ProtocolVersion version) {
@@ -284,8 +293,12 @@ class Requests {
                 case V4:
                     CBUtil.writeConsistencyLevel(consistency, dest);
                     dest.writeByte((byte)QueryFlag.serialize(flags));
-                    if (flags.contains(QueryFlag.VALUES))
-                        CBUtil.writeValueList(values, dest);
+                    if (flags.contains(QueryFlag.VALUES)) {
+                        if (flags.contains(QueryFlag.VALUE_NAMES))
+                            CBUtil.writeNamedValueList(values, valueNames, dest);
+                        else
+                            CBUtil.writeValueList(values, dest);
+                    }
                     if (flags.contains(QueryFlag.PAGE_SIZE))
                         dest.writeInt(pageSize);
                     if (flags.contains(QueryFlag.PAGING_STATE))

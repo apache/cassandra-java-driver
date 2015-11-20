@@ -29,75 +29,24 @@ import com.datastax.driver.core.exceptions.InvalidTypeException;
 public class SimpleStatement extends RegularStatement {
 
     private final String query;
-    private final Object[] values;
-    private final Cluster cluster;
 
     private volatile ByteBuffer routingKey;
     private volatile String keyspace;
     
-    protected SimpleStatement(String query, Cluster cluster) {
-        this(query, cluster, (Object[]) null);
+    protected SimpleStatement(String query, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
+        super(protocolVersion, codecRegistry);
+        this.query = query;
     }
 
-    protected SimpleStatement(String query, Cluster cluster, Object... values) {
-        if (values != null && values.length > 65535)
-            throw new IllegalArgumentException("Too many values, the maximum allowed is 65535");
+    protected SimpleStatement(String query, ProtocolVersion protocolVersion, CodecRegistry codecRegistry, Object... values) {
+        super(protocolVersion, codecRegistry);
         this.query = query;
-        this.values = values;
-        this.cluster = cluster;
+        bind(values);
     }
 
     @Override
     public String getQueryString() {
         return query;
-    }
-
-    /**
-     * {@inheritDoc}
-     * <p>
-     * Note: Calling this method may trigger the underlying {@link Cluster} initialization.
-     */
-    @Override
-    public ByteBuffer[] getValues() {
-        if(values == null)
-            return null;
-        cluster.init();
-        Configuration configuration = cluster.getConfiguration();
-        ProtocolVersion protocolVersion = configuration.getProtocolOptions().getProtocolVersion();
-        CodecRegistry codecRegistry = configuration.getCodecRegistry();
-        return convert(values, protocolVersion, codecRegistry);
-    }
-
-    /**
-     * The number of values for this statement, that is the size of the array
-     * that will be returned by {@code getValues}.
-     *
-     * @return the number of values.
-     */
-    public int valuesCount() {
-        return values == null ? 0 : values.length;
-    }
-
-    @Override
-    public boolean hasValues() {
-        return values != null && values.length > 0;
-    }
-    
-    /**
-     * Returns the {@code i}th value as the Java type matching its CQL type.
-     *
-     * @param i the index to retrieve.
-     * @return the value of the {@code i}th value of this statement.
-     *
-     * @throws IllegalStateException if this statement does not have values.
-     * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     */
-    public Object getObject(int i) {
-        if (values == null)
-            throw new IllegalStateException("This statement does not have values");
-        if (i < 0 || i >= values.length)
-            throw new ArrayIndexOutOfBoundsException(i);
-        return values[i];
     }
 
     /**

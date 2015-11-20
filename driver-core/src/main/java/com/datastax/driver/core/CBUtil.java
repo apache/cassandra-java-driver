@@ -33,6 +33,8 @@ import com.datastax.driver.core.exceptions.DriverInternalError;
  */
 abstract class CBUtil { // TODO rename
 
+    static final ByteBuffer UNSET_VALUE = ByteBuffer.allocate(0);
+
     private CBUtil() {}
 
     private static String readString(ByteBuf cb, int length) {
@@ -310,7 +312,7 @@ abstract class CBUtil { // TODO rename
             return;
         }
 
-        if (bytes == BoundStatement.UNSET) {
+        if (bytes == UNSET_VALUE) {
             cb.writeInt(-2);
             return;
         }
@@ -342,6 +344,15 @@ abstract class CBUtil { // TODO rename
         cb.writeShort(values.size());
         for (ByteBuffer value : values)
             CBUtil.writeValue(value, cb);
+    }
+
+    public static void writeNamedValueList(List<ByteBuffer> values, List<String> valueNames, ByteBuf cb) {
+        assert values.size() == valueNames.size();
+        cb.writeShort(values.size());
+        for (int i = 0; i < values.size(); i++) {
+            CBUtil.writeString(valueNames.get(i), cb);
+            CBUtil.writeValue(values.get(i), cb);
+        }
     }
 
     public static int sizeOfValueList(List<ByteBuffer> values) {

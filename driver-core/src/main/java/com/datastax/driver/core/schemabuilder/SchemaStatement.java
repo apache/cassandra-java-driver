@@ -17,10 +17,13 @@ package com.datastax.driver.core.schemabuilder;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import com.google.common.base.Strings;
 
+import com.datastax.driver.core.CodecRegistry;
+import com.datastax.driver.core.ProtocolVersion;
 import com.datastax.driver.core.RegularStatement;
 
 /**
@@ -39,6 +42,10 @@ public abstract class SchemaStatement extends RegularStatement {
 
     private volatile String cache;
 
+    public SchemaStatement() {
+        super(ProtocolVersion.NEWEST_SUPPORTED, CodecRegistry.DEFAULT_INSTANCE);
+    }
+
     abstract String buildInternal();
 
     @Override
@@ -50,9 +57,15 @@ public abstract class SchemaStatement extends RegularStatement {
     }
 
     @Override
-    public ByteBuffer[] getValues() {
+    protected List<ByteBuffer> getValues() {
         // DDL statements never have values
-        return new ByteBuffer[0];
+        return Collections.emptyList();
+    }
+
+    @Override
+    protected List<String> getValueNames() {
+        // DDL statements never have values
+        return Collections.emptyList();
     }
 
     @Override

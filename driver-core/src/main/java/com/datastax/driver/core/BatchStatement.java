@@ -60,7 +60,7 @@ public class BatchStatement extends Statement {
          * operations and it can only contain these.
          */
         COUNTER
-    };
+    }
 
     final Type batchType;
     private final List<Statement> statements = new ArrayList<Statement>();
@@ -88,10 +88,10 @@ public class BatchStatement extends Statement {
                 statement = ((StatementWrapper) statement).getWrappedStatement();
             if (statement instanceof RegularStatement) {
                 RegularStatement st = (RegularStatement)statement;
-                ByteBuffer[] vals = st.getValues();
+                List<ByteBuffer> vals = st.getValues();
                 String query = st.getQueryString();
                 idAndVals.ids.add(query);
-                idAndVals.values.add(vals == null ? Collections.<ByteBuffer>emptyList() : Arrays.asList(vals));
+                idAndVals.values.add(vals);
             } else {
                 // We handle BatchStatement in add() so ...
                 assert statement instanceof BoundStatement;

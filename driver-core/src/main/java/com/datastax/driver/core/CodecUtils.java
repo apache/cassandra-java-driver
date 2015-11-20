@@ -23,8 +23,6 @@ import java.util.Set;
 import com.google.common.reflect.TypeParameter;
 import com.google.common.reflect.TypeToken;
 
-import com.datastax.driver.core.exceptions.InvalidTypeException;
-
 /**
  * A set of utility methods to deal with type conversion and serialization.
  */

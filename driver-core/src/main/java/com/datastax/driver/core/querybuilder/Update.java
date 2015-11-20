@@ -18,7 +18,6 @@ package com.datastax.driver.core.querybuilder;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.CodecRegistry;
 import com.datastax.driver.core.ProtocolVersion;
 import com.datastax.driver.core.TableMetadata;
@@ -65,7 +64,6 @@ public class Update extends BuiltStatement {
             Utils.appendName(keyspace, builder).append('.');
         Utils.appendName(table, builder);
 
-        CodecRegistry codecRegistry = getCodecRegistry();
         if (!usings.usings.isEmpty()) {
             builder.append(" USING ");
             Utils.joinAndAppend(builder, codecRegistry, " AND ", usings.usings, variables);
