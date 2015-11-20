@@ -16,9 +16,10 @@
 package com.datastax.driver.core;
 
 import java.util.Collection;
-import java.util.Collections;
 
 import org.testng.annotations.Test;
+
+import static com.google.common.collect.Lists.newArrayList;
 
 import com.datastax.driver.core.utils.CassandraVersion;
 
@@ -42,7 +43,7 @@ public class AggregateMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
         FunctionMetadata stateFunc = keyspace.getFunction("cat", text(), cint());
         AggregateMetadata aggregate = keyspace.getAggregate("cat_tos", cint());
         assertThat(aggregate).isNotNull();
-        assertThat(aggregate.getFullName()).isEqualTo("cat_tos(int)");
+        assertThat(aggregate.getSignature()).isEqualTo("cat_tos(int)");
         assertThat(aggregate.getSimpleName()).isEqualTo("cat_tos");
         assertThat(aggregate.getArgumentTypes()).containsExactly(cint());
         assertThat(aggregate.getFinalFunc()).isNull();
@@ -69,7 +70,7 @@ public class AggregateMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
         FunctionMetadata stateFunc = keyspace.getFunction("inc", cint());
         AggregateMetadata aggregate = keyspace.getAggregate("mycount");
         assertThat(aggregate).isNotNull();
-        assertThat(aggregate.getFullName()).isEqualTo("mycount()");
+        assertThat(aggregate.getSignature()).isEqualTo("mycount()");
         assertThat(aggregate.getSimpleName()).isEqualTo("mycount");
         assertThat(aggregate.getArgumentTypes()).isEmpty();
         assertThat(aggregate.getFinalFunc()).isNull();
@@ -99,7 +100,7 @@ public class AggregateMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
         FunctionMetadata finalFunc = keyspace.getFunction("announce", cint());
         AggregateMetadata aggregate = keyspace.getAggregate("prettysum", cint());
         assertThat(aggregate).isNotNull();
-        assertThat(aggregate.getFullName()).isEqualTo("prettysum(int)");
+        assertThat(aggregate.getSignature()).isEqualTo("prettysum(int)");
         assertThat(aggregate.getSimpleName()).isEqualTo("prettysum");
         assertThat(aggregate.getArgumentTypes()).containsExactly(cint());
         assertThat(aggregate.getFinalFunc()).isEqualTo(finalFunc);
@@ -127,7 +128,7 @@ public class AggregateMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
         FunctionMetadata stateFunc = keyspace.getFunction("plus2", cint(), cint());
         AggregateMetadata aggregate = keyspace.getAggregate("sum", cint());
         assertThat(aggregate).isNotNull();
-        assertThat(aggregate.getFullName()).isEqualTo("sum(int)");
+        assertThat(aggregate.getSignature()).isEqualTo("sum(int)");
         assertThat(aggregate.getSimpleName()).isEqualTo("sum");
         assertThat(aggregate.getArgumentTypes()).containsExactly(cint());
         assertThat(aggregate.getFinalFunc()).isNull();
@@ -140,9 +141,52 @@ public class AggregateMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
             + "SFUNC plus2 STYPE int;", this.keyspace));
     }
 
+    @Test(groups = "short")
+    public void should_parse_and_format_aggregate_with_udts() {
+        // given
+        String cqlFunction = String.format(
+            "CREATE FUNCTION %s.\"MY_FUNC\"(address1 \"Address\", address2 \"Address\") "
+            + "CALLED ON NULL INPUT "
+            + "RETURNS \"Address\" "
+            + "LANGUAGE java "
+            + "AS 'return address1;'", keyspace);
+        String cqlAggregate = String.format(
+            "CREATE AGGREGATE %s.\"MY_AGGREGATE\"(\"Address\") "
+            + "SFUNC \"MY_FUNC\" "
+            + "STYPE \"Address\";",
+            keyspace);
+        // when
+        session.execute(cqlFunction);
+        session.execute(cqlAggregate);
+        // then
+        KeyspaceMetadata keyspace = cluster.getMetadata().getKeyspace(this.keyspace);
+        UserType addressType = keyspace.getUserType("\"Address\"");
+        FunctionMetadata stateFunc = keyspace.getFunction("\"MY_FUNC\"", addressType, addressType);
+        AggregateMetadata aggregate = keyspace.getAggregate("\"MY_AGGREGATE\"", addressType);
+        assertThat(aggregate).isNotNull();
+        assertThat(aggregate.getSignature()).isEqualTo("\"MY_AGGREGATE\"(\"Address\")");
+        assertThat(aggregate.getSimpleName()).isEqualTo("MY_AGGREGATE");
+        assertThat(aggregate.getArgumentTypes()).containsExactly(addressType);
+        assertThat(aggregate.getFinalFunc()).isNull();
+        assertThat(aggregate.getInitCond()).isNull();
+        assertThat(aggregate.getReturnType()).isEqualTo(addressType);
+        assertThat(aggregate.getStateFunc()).isEqualTo(stateFunc);
+        assertThat(aggregate.getStateType()).isEqualTo(addressType);
+        assertThat(aggregate.toString()).isEqualTo(cqlAggregate);
+    }
+
     @Override
     protected Collection<String> getTableDefinitions() {
-        return Collections.emptyList();
+        return newArrayList(
+            String.format("CREATE TYPE IF NOT EXISTS %s.phone (number text)", keyspace),
+            String.format("CREATE TYPE IF NOT EXISTS %s.\"Address\" ("
+            + "    street text,"
+            + "    city text,"
+            + "    zip int,"
+            + "    phones frozen<set<frozen<phone>>>,"
+            + "    location frozen<tuple<float, float>>"
+            + ")", keyspace)
+        );
     }
 
 }

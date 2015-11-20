@@ -353,11 +353,13 @@ public class KeyspaceMetadata {
     }
 
     void add(FunctionMetadata function) {
-        functions.put(function.getFullName(), function);
+        String functionName = Metadata.fullFunctionName(function.getSimpleName(), function.getArguments().values());
+        functions.put(functionName, function);
     }
 
     void add(AggregateMetadata aggregate) {
-        aggregates.put(aggregate.getFullName(), aggregate);
+        String aggregateName = Metadata.fullFunctionName(aggregate.getSimpleName(), aggregate.getArgumentTypes());
+        aggregates.put(aggregateName, aggregate);
     }
 
     void add(UserType type) {

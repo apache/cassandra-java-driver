@@ -273,6 +273,11 @@ public class UserType extends DataType implements Iterable<UserType.Field> {
         return "frozen<" + Metadata.escapeId(getKeyspace()) + '.' + Metadata.escapeId(getTypeName()) + ">";
     }
 
+    @Override
+    public String asFunctionParameterString() {
+        return Metadata.escapeId(getTypeName());
+    }
+
     /**
      * A UDT field.
      */

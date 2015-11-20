@@ -49,9 +49,9 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
     @Override
     protected Collection<String> getTableDefinitions() {
         String type1 = "CREATE TYPE phone (alias text, number text)";
-        String type2 = "CREATE TYPE address (street text, \"ZIP\" int, phones set<frozen<phone>>)";
+        String type2 = "CREATE TYPE \"\"\"User Address\"\"\" (street text, \"ZIP\"\"\" int, phones set<frozen<phone>>)";
 
-        String table = "CREATE TABLE user (id int PRIMARY KEY, addr frozen<address>)";
+        String table = "CREATE TABLE user (id int PRIMARY KEY, addr frozen<\"\"\"User Address\"\"\">)";
 
         return Arrays.asList(type1, type2, table);
     }
@@ -70,13 +70,13 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
             PreparedStatement ins = session.prepare("INSERT INTO user(id, addr) VALUES (?, ?)");
             PreparedStatement sel = session.prepare("SELECT * FROM user WHERE id=?");
 
-            UserType addrDef = cluster.getMetadata().getKeyspace(keyspace).getUserType("address");
+            UserType addrDef = cluster.getMetadata().getKeyspace(keyspace).getUserType(quote("\"User Address\""));
             UserType phoneDef = cluster.getMetadata().getKeyspace(keyspace).getUserType("phone");
 
             UDTValue phone1 = phoneDef.newValue().setString("alias", "home").setString("number", "0123548790");
             UDTValue phone2 = phoneDef.newValue().setString("alias", "work").setString("number", "0698265251");
 
-            UDTValue addr = addrDef.newValue().setString("street", "1600 Pennsylvania Ave NW").setInt(quote("ZIP"), 20500).setSet("phones", ImmutableSet.of(phone1, phone2));
+            UDTValue addr = addrDef.newValue().setString("street", "1600 Pennsylvania Ave NW").setInt(quote("ZIP\""), 20500).setSet("phones", ImmutableSet.of(phone1, phone2));
 
             session.execute(ins.bind(userId, addr));
 
@@ -100,13 +100,13 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
 
         try {
             session.execute("USE " + keyspace);
-            UserType addrDef = cluster.getMetadata().getKeyspace(keyspace).getUserType("address");
+            UserType addrDef = cluster.getMetadata().getKeyspace(keyspace).getUserType(quote("\"User Address\""));
             UserType phoneDef = cluster.getMetadata().getKeyspace(keyspace).getUserType("phone");
 
             UDTValue phone1 = phoneDef.newValue().setString("alias", "home").setString("number", "0123548790");
             UDTValue phone2 = phoneDef.newValue().setString("alias", "work").setString("number", "0698265251");
 
-            UDTValue addr = addrDef.newValue().setString("street", "1600 Pennsylvania Ave NW").setInt(quote("ZIP"), 20500).setSet("phones", ImmutableSet.of(phone1, phone2));
+            UDTValue addr = addrDef.newValue().setString("street", "1600 Pennsylvania Ave NW").setInt(quote("ZIP\""), 20500).setSet("phones", ImmutableSet.of(phone1, phone2));
 
             session.execute("INSERT INTO user(id, addr) VALUES (?, ?)", userId, addr);
 
@@ -134,7 +134,7 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
             assertEquals(addrDef, null);
             assertEquals(phoneDef, null);
 
-            addrDef = cluster.getMetadata().getKeyspace(keyspace).getUserType("address");
+            addrDef = cluster.getMetadata().getKeyspace(keyspace).getUserType(quote("\"User Address\""));
             phoneDef = cluster.getMetadata().getKeyspace(keyspace).getUserType("phone");
             assertNotEquals(addrDef, null);
             assertNotEquals(phoneDef, null);
@@ -145,14 +145,14 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
                     "WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor': '1'}");
             session.execute("USE " + nonExistingKeyspace);
 
-            addrDef = cluster.getMetadata().getKeyspace(nonExistingKeyspace).getUserType("address");
+            addrDef = cluster.getMetadata().getKeyspace(nonExistingKeyspace).getUserType(quote("\"User Address\""));
             phoneDef = cluster.getMetadata().getKeyspace(nonExistingKeyspace).getUserType("phone");
             assertEquals(addrDef, null);
             assertEquals(phoneDef, null);
 
             session.execute("USE " + keyspace);
 
-            addrDef = cluster.getMetadata().getKeyspace(keyspace).getUserType("address");
+            addrDef = cluster.getMetadata().getKeyspace(keyspace).getUserType(quote("\"User Address\""));
             phoneDef = cluster.getMetadata().getKeyspace(keyspace).getUserType("phone");
             assertNotEquals(addrDef, null);
             assertNotEquals(phoneDef, null);

@@ -16,9 +16,11 @@
 package com.datastax.driver.core;
 
 import java.util.Collection;
-import java.util.Collections;
 
 import org.testng.annotations.Test;
+
+import static com.google.common.collect.Lists.newArrayList;
+import static org.assertj.core.api.Assertions.entry;
 
 import com.datastax.driver.core.utils.CassandraVersion;
 
@@ -39,7 +41,7 @@ public class FunctionMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
         FunctionMetadata function = keyspace.getFunction("plus", cint(), cint());
         assertThat(function).isNotNull();
         assertThat(function.getKeyspace()).isEqualTo(keyspace);
-        assertThat(function.getFullName()).isEqualTo("plus(int,int)");
+        assertThat(function.getSignature()).isEqualTo("plus(int,int)");
         assertThat(function.getSimpleName()).isEqualTo("plus");
         assertThat(function.getReturnType()).isEqualTo(cint());
         assertThat(function.getArguments())
@@ -71,14 +73,13 @@ public class FunctionMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
         FunctionMetadata function = keyspace.getFunction("pi");
         assertThat(function).isNotNull();
         assertThat(function.getKeyspace()).isEqualTo(keyspace);
-        assertThat(function.getFullName()).isEqualTo("pi()");
+        assertThat(function.getSignature()).isEqualTo("pi()");
         assertThat(function.getSimpleName()).isEqualTo("pi");
         assertThat(function.getReturnType()).isEqualTo(DataType.cdouble());
         assertThat(function.getArguments()).isEmpty();
         assertThat(function.getLanguage()).isEqualTo("java");
         assertThat(function.getBody()).isEqualTo("return Math.PI;");
         assertThat(function.isCalledOnNullInput()).isTrue();
-        assertThat(keyspace.getFunction("pi")).isEqualTo(function);
         assertThat(function.toString())
             .isEqualTo(cql);
         assertThat(function.exportAsString())
@@ -89,9 +90,55 @@ public class FunctionMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
                 + "AS 'return Math.PI;';", this.keyspace));
     }
 
+    @Test(groups = "short")
+    public void should_parse_and_format_function_with_udts() {
+        // given
+        String body =
+            "//If \"called on null input\", handle nulls\n"
+            + "if(ADDRESS == null) return previous_total + 0;\n"
+            + "//User types are converted to com.datastax.driver.core.UDTValue types\n"
+            + "java.util.Set phones = ADDRESS.getSet(\"phones\", com.datastax.driver.core.UDTValue.class);\n"
+            + "return previous_total + phones.size();\n";
+        String cqlFunction = String.format(
+            "CREATE FUNCTION %s.\"NUM_PHONES_ACCU\"(previous_total int,\"ADDRESS\" \"Address\") "
+                + "CALLED ON NULL INPUT "
+                + "RETURNS int "
+                + "LANGUAGE java "
+                + "AS "
+                + "'"
+                + body
+                + "';", keyspace);
+        // when
+        session.execute(cqlFunction);
+        // then
+        KeyspaceMetadata keyspace = cluster.getMetadata().getKeyspace(this.keyspace);
+        UserType addressType = keyspace.getUserType("\"Address\"");
+        FunctionMetadata function = keyspace.getFunction("\"NUM_PHONES_ACCU\"", cint(), addressType);
+        assertThat(function).isNotNull();
+        assertThat(function.getKeyspace()).isEqualTo(keyspace);
+
+        assertThat(function.getSignature()).isEqualTo("\"NUM_PHONES_ACCU\"(int,\"Address\")");
+        assertThat(function.getSimpleName()).isEqualTo("NUM_PHONES_ACCU");
+        assertThat(function.getReturnType()).isEqualTo(cint());
+        assertThat(function.getArguments()).containsExactly(entry("previous_total", cint()), entry("ADDRESS", addressType));
+        assertThat(function.getLanguage()).isEqualTo("java");
+        assertThat(function.getBody()).isEqualTo(body);
+        assertThat(function.isCalledOnNullInput()).isTrue();
+        assertThat(function.toString()).isEqualTo(cqlFunction);
+    }
+
     @Override
     protected Collection<String> getTableDefinitions() {
-        return Collections.emptyList();
+        return newArrayList(
+            String.format("CREATE TYPE IF NOT EXISTS %s.\"Phone\" (number text)", keyspace),
+            String.format("CREATE TYPE IF NOT EXISTS %s.\"Address\" ("
+                + "    street text,"
+                + "    city text,"
+                + "    zip int,"
+                + "    phones frozen<set<frozen<\"Phone\">>>,"
+                + "    location frozen<tuple<float, float>>"
+                + ")", keyspace)
+        );
     }
 
 }

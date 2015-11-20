@@ -583,6 +583,23 @@ public abstract class DataType {
         });
     }
 
+    /**
+     * Returns a String representation of this data type
+     * suitable for inclusion as a parameter type
+     * in a function or aggregate signature.
+     * <p>
+     * In such places, the String representation might vary
+     * from the canonical one as returned by {@link #toString()};
+     * e.g. the {@code frozen} keyword is not accepted.
+     *
+     * @return a String representation of this data type
+     * suitable for inclusion as a parameter type
+     * in a function or aggregate signature.
+     */
+    public String asFunctionParameterString() {
+        return toString();
+    }
+
     public static class NativeType extends DataType {
 
         private NativeType(DataType.Name name) {
@@ -659,6 +676,18 @@ public abstract class DataType {
             }
             else {
                 String template = frozen ? "frozen<%s<%s>>" : "%s<%s>";
+                return String.format(template, name, typeArguments.get(0));
+            }
+        }
+
+        @Override
+        public String asFunctionParameterString() {
+            if (name == Name.MAP) {
+                String template = "%s<%s, %s>";
+                return String.format(template, name, typeArguments.get(0), typeArguments.get(1));
+            }
+            else {
+                String template = "%s<%s>";
                 return String.format(template, name, typeArguments.get(0));
             }
         }

@@ -24,8 +24,8 @@ public class FunctionMetadataAssert extends AbstractAssert<FunctionMetadataAsser
         super(actual, FunctionMetadataAssert.class);
     }
 
-    public FunctionMetadataAssert hasFullName(String name) {
-        assertThat(actual.getFullName()).isEqualTo(name);
+    public FunctionMetadataAssert hasSignature(String name) {
+        assertThat(actual.getSignature()).isEqualTo(name);
         return this;
     }
 
