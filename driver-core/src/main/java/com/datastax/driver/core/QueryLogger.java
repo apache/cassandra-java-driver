@@ -702,7 +702,7 @@ public abstract class QueryLogger implements LatencyTracker {
             if (remaining == -1) {
                 numberOfLoggedParameters = numberOfParameters;
             } else {
-                numberOfLoggedParameters = remaining > numberOfParameters ? numberOfParameters : remaining;
+                numberOfLoggedParameters = Math.min(remaining, numberOfParameters);
                 remaining -= numberOfLoggedParameters;
             }
             for (int i = 0; i < numberOfLoggedParameters; i++) {
@@ -710,7 +710,10 @@ public abstract class QueryLogger implements LatencyTracker {
                     buffer.append(" [");
                 else
                     buffer.append(", ");
-                buffer.append(String.format("%s:%s", metadata.getName(i), parameterValueAsString(definitions.get(i), statement.wrapper.values[i])));
+                String value = statement.isSet(i)
+                    ? parameterValueAsString(definitions.get(i), statement.wrapper.values[i])
+                    : "<UNSET>";
+                buffer.append(String.format("%s:%s", metadata.getName(i), value));
             }
             if (numberOfLoggedParameters < numberOfParameters) {
                 buffer.append(FURTHER_PARAMS_OMITTED);
