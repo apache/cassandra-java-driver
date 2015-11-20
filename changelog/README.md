@@ -3,6 +3,7 @@
 ### 3.0.0-beta1 (in progress)
 
 - [improvement] JAVA-855: Expose getters and setters for RegularStatement values.
+- [bug] JAVA-999: Handle unset parameters in QueryLogger.
 
 
 ### 3.0.0-alpha5

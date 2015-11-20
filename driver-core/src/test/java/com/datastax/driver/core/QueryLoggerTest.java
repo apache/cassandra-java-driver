@@ -450,6 +450,29 @@ public class QueryLoggerTest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     @Test(groups = "short")
+    @CassandraVersion(major=3.0)
+    public void should_log_unset_parameter_in_bound_statement() throws Exception {
+        // given
+        normal.setLevel(TRACE);
+        queryLogger = QueryLogger.builder().build();
+        cluster.register(queryLogger);
+        // when
+        String query = "UPDATE test SET c_text = ? WHERE pk = ?";
+        PreparedStatement ps = session.prepare(query);
+        BoundStatement bs = ps.bind();
+        bs.setInt("pk", 42);
+        session.execute(bs);
+        // then
+        String line = normalAppender.waitAndGet(10000);
+        assertThat(line)
+            .contains("Query completed normally")
+            .contains(ipOfNode(1))
+            .contains(query)
+            .contains("pk:42")
+            .contains("c_text:<UNSET>");
+    }
+
+    @Test(groups = "short")
     @CassandraVersion(major=2.0)
     public void should_log_bound_statement_parameters_inside_batch_statement() throws Exception {
         // given
@@ -553,6 +576,33 @@ public class QueryLoggerTest extends CCMBridge.PerClassSingleNodeCluster {
             .contains(s.getQueryString())
             .contains("pk:42")
             .contains("int:0x00000001");
+    }
+
+    /**
+     * Due to the way we manage metadata in RegularStatement, we can't detect values that
+     * appear in the query string but haven't been set. This is an edge case, regular statements
+     * should generally have all their values set.
+     */
+    @Test(groups = "short")
+    @CassandraVersion(major=3.0)
+    public void should_not_log_unset_parameter_in_simple_statement() throws Exception {
+        // given
+        normal.setLevel(TRACE);
+        queryLogger = QueryLogger.builder().build();
+        cluster.register(queryLogger);
+        // when
+        String query = "UPDATE test SET c_int = :int WHERE pk = :pk";
+        SimpleStatement s = session.newSimpleStatement(query);
+        s.setInt(1, 42);
+        session.execute(s);
+        // then
+        String line = normalAppender.waitAndGet(10000);
+        assertThat(line)
+            .contains("Query completed normally")
+            .contains(ipOfNode(1))
+            .contains(query)
+            .contains("1:42")
+            .doesNotContain("c_text");
     }
 
     @Test(groups = "short")

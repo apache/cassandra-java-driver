@@ -15,7 +15,6 @@
  */
 package com.datastax.driver.core;
 
-import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.util.List;
 
@@ -722,9 +721,10 @@ public abstract class QueryLogger implements LatencyTracker {
                     buffer.append(" [");
                 else
                     buffer.append(", ");
-                buffer.append(String.format("%s:%s",
-                    metadata.getName(i),
-                    parameterValueAsString(definitions.get(i).getType(), statement.wrapper.values[i])));
+                String value = statement.isSet(i)
+                    ? parameterValueAsString(definitions.get(i).getType(), statement.wrapper.values[i])
+                    : "<UNSET>";
+                buffer.append(String.format("%s:%s", metadata.getName(i), value));
             }
             if (numberOfLoggedParameters < numberOfParameters) {
                 buffer.append(FURTHER_PARAMS_OMITTED);
