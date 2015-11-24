@@ -2116,6 +2116,18 @@ public class Cluster implements Closeable {
             return stmt;
         }
 
+        public PreparedStatement replacePrepared(PreparedStatement stmt) {
+            PreparedStatement previous = preparedQueries.replace(stmt.getPreparedId().id, stmt);
+            if (previous != null) {
+                logger.debug("Replace already prepared query {}.", stmt.getQueryString());
+
+                // The one object in the cache will get GCed once it's not referenced by the client anymore since we use a weak reference.
+                // So we need to make sure that the instance we do return to the user is the one that is in the cache.
+                return previous;
+            }
+            return stmt;
+        }
+
         /**
          * @param reusedConnection an existing connection (from a reconnection attempt) that we want to
          *                         reuse to prepare the statements (might be null).

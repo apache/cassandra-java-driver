@@ -16,6 +16,7 @@
 package com.datastax.driver.core;
 
 import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -58,6 +59,7 @@ class RequestHandler {
     private final io.netty.util.Timer scheduler;
 
     private volatile List<Host> triedHosts;
+    private volatile Statement actualStatement;
 
     private volatile Map<InetSocketAddress, Throwable> errors;
 
@@ -82,6 +84,7 @@ class RequestHandler {
         this.allowSpeculativeExecutions = statement != Statement.DEFAULT
             && statement.isIdempotentWithDefault(manager.configuration().getQueryOptions());
         this.statement = statement;
+        this.actualStatement = statement;
 
         this.timerContext = metricsEnabled()
             ? metrics().getRequestsTimer().time()
@@ -180,7 +183,7 @@ class RequestHandler {
             }
             if (execution.retryConsistencyLevel != null)
                 info = info.withAchievedConsistency(execution.retryConsistencyLevel);
-            callback.onSet(connection, response, info, statement, System.nanoTime() - startTime);
+            callback.onSet(connection, response, info, actualStatement, System.nanoTime() - startTime);
         } catch (Exception e) {
             callback.onException(connection,
                 new DriverInternalError("Unexpected exception while setting final result from " + response, e),
@@ -425,6 +428,24 @@ class RequestHandler {
             try {
                 switch (response.type) {
                     case RESULT:
+                        boolean couldHaveObsoleteMetadata = statement instanceof BoundStatement && response instanceof Responses.Result.Rows;
+                        if (couldHaveObsoleteMetadata) {
+                            Responses.Result.Rows rows = (Responses.Result.Rows) response;
+                            List<ByteBuffer> firstRow = rows.data.peek();
+                            if (firstRow != null) {
+                                PreparedId preparedId = ((BoundStatement) statement).preparedStatement().getPreparedId();
+                                int statementMetadataSize = preparedId.resultSetMetadata.size();
+                                if (statementMetadataSize != firstRow.size()) {
+                                    PreparedStatement toPrepare = manager.cluster.manager.preparedQueries.get(preparedId.id);
+                                    int metadataSizeInCache = toPrepare.getPreparedId().resultSetMetadata.size();
+                                    boolean cacheContainsObsoleteMetadata = metadataSizeInCache == statementMetadataSize;
+                                    if (cacheContainsObsoleteMetadata) {
+                                        write(connection, prepareAndRetry(toPrepare.getQueryString()));
+                                        return;
+                                    }
+                                }
+                            }
+                        }
                         connection.release();
                         setFinalResult(connection, response);
                         break;
@@ -638,6 +659,14 @@ class RequestHandler {
                         case RESULT:
                             if (((Responses.Result)response).kind == Responses.Result.Kind.PREPARED) {
                                 logger.debug("Scheduling retry now that query is prepared");
+                                Responses.Result.Prepared prepared = (Responses.Result.Prepared) response;
+                                Cluster cluster = manager.cluster;
+                                ProtocolVersion version = cluster.getConfiguration().getProtocolOptions().getProtocolVersionEnum();
+                                PreparedStatement stmt = DefaultPreparedStatement.fromMessage(prepared, cluster.getMetadata(), version, toPrepare, manager.poolsState.keyspace);
+                                cluster.manager.replacePrepared(stmt);
+                                if (statement instanceof BoundStatement) {
+                                    actualStatement = new BoundStatement(stmt, ((BoundStatement) statement).wrapper);
+                                }
                                 retry(true, null);
                             } else {
                                 logError(connection.address, new DriverException("Got unexpected response to prepare message: " + response));

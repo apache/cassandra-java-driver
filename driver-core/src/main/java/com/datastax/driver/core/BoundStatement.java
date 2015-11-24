@@ -60,11 +60,19 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @param statement the prepared statement from which to create a {@code BoundStatement}.
      */
     public BoundStatement(PreparedStatement statement) {
+        this(statement, null);
+    }
+
+    public BoundStatement(PreparedStatement statement, DataWrapper wrapper) {
         this.statement = statement;
-        this.wrapper = new DataWrapper(this, statement.getVariables().size());
-        for (int i = 0; i < wrapper.values.length; i++) {
-            wrapper.values[i] = UNSET;
+        if (wrapper == null) {
+            wrapper = new DataWrapper(this, statement.getVariables().size());
+            for (int i = 0; i < wrapper.values.length; i++) {
+                wrapper.values[i] = UNSET;
+            }
         }
+        this.wrapper = wrapper;
+
 
         if (statement.getConsistencyLevel() != null)
             this.setConsistencyLevel(statement.getConsistencyLevel());

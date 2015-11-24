@@ -435,4 +435,27 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
             otherCluster.close();
         }
     }
+
+    @Test(groups="short")
+    public void should_use_new_metadata_after_new_field_added() {
+        String aVal = "a_val";
+        String bVal = "b_val";
+        String dVal = "d_val";
+        session.execute("CREATE TABLE MetaTest (a varchar PRIMARY KEY, b varchar, d varchar)");
+        session.execute("INSERT INTO MetaTest(a, b, d) VALUES(?, ?, ?)", aVal, bVal, dVal);
+
+        PreparedStatement ps = session.prepare("SELECT * FROM MetaTest WHERE a = ?");
+        BoundStatement bs = ps.bind(aVal);
+        ResultSet rowsBefore = session.execute(bs);
+
+        session.execute("ALTER TABLE MetaTest ADD c varchar");
+
+        BoundStatement bs2 = ps.bind(aVal);
+        ResultSet rowsAfter = session.execute(bs2);
+        Row row = rowsAfter.one();
+        assertEquals(row.getString("a"), aVal);
+        assertEquals(row.getString("b"), bVal);
+        assertThat(row.getString("c") == null);
+        assertEquals(row.getString("d"), dVal);
+    }
 }
