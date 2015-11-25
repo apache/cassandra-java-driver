@@ -54,6 +54,11 @@
     <snappy.version>1.0.5</snappy.version>
     <lz4.version>1.2.0</lz4.version>
     <hdr.version>2.1.4</hdr.version>
+    <!-- driver-extras module -->
+    <jackson.version>2.6.3</jackson.version>
+    <joda.version>2.9.1</joda.version>
+    <jsr353-api.version>1.0</jsr353-api.version>
+    <jsr353-ri.version>1.0.4</jsr353-ri.version>
     <!-- test dependency versions -->
     <testng.version>6.8.8</testng.version>
     <assertj.version>1.7.0</assertj.version>
@@ -103,7 +108,7 @@
             <version>1.4.1</version>
             <executions>
               <execution>
-                <id>enforce-java</id>
+                <id>enforce-java8</id>
                 <goals>
                   <goal>enforce</goal>
                 </goals>
@@ -160,10 +165,33 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-javadoc-plugin</artifactId>
         <version>2.9.1</version>
+        <inherited>true</inherited>
         <configuration>
           <verbose>false</verbose>
+          <additionalparam>${javadoc.opts}</additionalparam>
           <!-- I can haz math in my javadoc (see http://zverovich.net/2012/01/14/beautiful-math-in-javadoc.html) -->
-          <additionalparam>${javadoc.opts} -header '&lt;script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"&gt;&lt;/script&gt;'</additionalparam>
+          <header>
+            &lt;script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"&gt;&lt;/script&gt;
+          </header>
+          <!-- open external links in a separate window -->
+          <bottom>
+            &lt;script type="text/javascript"&gt;
+            for(var i in document.links) {
+            var link = document.links[i];
+            if (link.href.indexOf('http') === 0) link.target = '_blank';
+            }
+            &lt;/script&gt;
+          </bottom>
+          <links>
+            <link>https://docs.oracle.com/javase/8/docs/api/</link>
+            <link>http://docs.guava-libraries.googlecode.com/git-history/v16.0.1/javadoc/</link>
+            <link>http://netty.io/4.0/api/</link>
+            <!-- dependencies from driver-extras -->
+            <link>http://www.joda.org/joda-time/apidocs/</link>
+            <link>http://fasterxml.github.io/jackson-core/javadoc/2.6/</link>
+            <link>http://fasterxml.github.io/jackson-databind/javadoc/2.6/</link>
+            <link>https://javaee-spec.java.net/nonav/javadocs/</link>
+          </links>
         </configuration>
         <executions>
           <execution>
@@ -180,6 +208,7 @@
         <version>2.5</version>
         <configuration>
           <tagNameFormat>@{project.version}</tagNameFormat>
+          <preparationGoals>clean verify -Penforce-java8</preparationGoals>
           <!-- do NOT specify arguments tag here as it would override the arguments tag in this plugin's definition in the parent POM -->
         </configuration>
       </plugin>

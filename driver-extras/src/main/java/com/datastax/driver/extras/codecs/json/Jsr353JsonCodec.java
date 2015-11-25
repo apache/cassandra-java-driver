@@ -36,7 +36,7 @@ import com.datastax.driver.core.utils.Bytes;
  * More specifically, this codec maps an arbitrary {@link JsonStructure} to
  * a CQL {@code varchar} column.
  * <p>
- * Note that this codec handles the Java type {@link JsonStructure}.
+ * This codec handles the Java type {@link JsonStructure}.
  * It is therefore required that values are set and retrieved using that exact Java type;
  * users should manually downcast to either {@link JsonObject} or {@link JsonArray},
  * as in the example below:
@@ -45,17 +45,37 @@ import com.datastax.driver.core.utils.Bytes;
  * // setting values
  * JsonObject myObject = ...
  * PreparedStatement ps = ...
- * // set values using JsonStructure
+ * // set values using JsonStructure as target Java type
  * BoundStatement bs = ps.bind().set(1, myObject, JsonStructure.class);
  *
  * // retrieving values
  * Row row = session.execute(bs).one();
- * // use JsonStructure to retrieve values
+ * // use JsonStructure as target Java type to retrieve values
  * JsonStructure json = row.get(0, JsonStructure.class);
  * if (json instanceof JsonObject) {
  *     myObject = (JsonObject) json;
  *     ...
  * }
+ * }</pre>
+ *
+ * <p>
+ * Note that at runtime, this codec requires the presence of both JSR-353 API
+ * and a JSR-353-compatible runtime library, such as
+ * <a href="https://jsonp.java.net/download.html">JSR-353's reference implementation</a>.
+ * If you use Maven, this can be done by declaring the following dependencies in your project:
+ *
+ * <pre>{@code
+ * <dependency>
+ *   <groupId>javax.json</groupId>
+ *   <artifactId>javax.json-api</artifactId>
+ *   <version>1.0</version>
+ * </dependency>
+ *
+ * <dependency>
+ *   <groupId>org.glassfish</groupId>
+ *   <artifactId>javax.json</artifactId>
+ *   <version>1.0.4</version>
+ * </dependency>
  * }</pre>
  *
  */

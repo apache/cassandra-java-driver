@@ -17,45 +17,13 @@
 /**
  * This package contains a collection of convenience
  * {@link com.datastax.driver.core.TypeCodec TypeCodec} instances useful for
- * serializing between CQL types and JDK 8 types, such as the ones from the
- * {@code java.time} API and {@link java.util.Optional}.
- * <p>
- * The codecs in this class provide the following mappings:
+ * serializing between CQL types and Java 8 types, such as the ones from the
+ * {@link java.time} API and {@link java.util.Optional}.
  *
- * <table summary="Supported Mappings">
- *     <tr>
- *         <th>Codec</th>
- *         <th>CQL type</th>
- *         <th>JDK 8 type</th>
- *     </tr>
- *     <tr>
- *         <td>{@link com.datastax.driver.extras.codecs.jdk8.OptionalCodec}</td>
- *         <td>Any</td>
- *         <td>{@link java.util.Optional Optional}</td>
- *     </tr>
- *     <tr>
- *         <td>{@link com.datastax.driver.extras.codecs.jdk8.LocalTimeCodec}</td>
- *         <td>{@link com.datastax.driver.core.DataType#time() time}</td>
- *         <td>{@link java.time.LocalTime LocalTime}</td>
- *     </tr>
- *     <tr>
- *         <td>{@link com.datastax.driver.extras.codecs.jdk8.LocalDateCodec}</td>
- *         <td>{@link com.datastax.driver.core.DataType#date() date}</td>
- *         <td>{@link java.time.LocalDate LocalDate}</td>
- *     </tr>
- *     <tr>
- *         <td>{@link com.datastax.driver.extras.codecs.jdk8.InstantCodec}</td>
- *         <td>{@link com.datastax.driver.core.DataType#timestamp() timestamp}</td>
- *         <td>{@link java.time.Instant Instant}</td>
- *     </tr>
- *     <tr>
- *         <td>{@link com.datastax.driver.extras.codecs.jdk8.ZonedDateTimeCodec}</td>
- *         <td>{@link com.datastax.driver.core.TupleType tuple} of
- *         ({@link com.datastax.driver.core.DataType#timestamp() timestamp},
- *         {@link com.datastax.driver.core.DataType#varchar() varchar})</td>
- *         <td>{@link java.time.ZonedDateTime ZonedDateTime}</td>
- *     </tr>
- * </table>
+ * <p>
+ * Note that, while the driver remains globally compatible with older JDKs,
+ * classes in this package require the presence of a Java 8 or higher
+ * at runtime.
  *
  */
 package com.datastax.driver.extras.codecs.jdk8;

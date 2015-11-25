@@ -28,9 +28,7 @@ import com.datastax.driver.core.exceptions.InvalidTypeException;
 import static com.datastax.driver.core.ParseUtils.quote;
 
 /**
- * {@link TypeCodec} that maps {@link LocalTime} <-> CQL time (long representing nanoseconds since midnight)
- * allowing the setting and retrieval of <code>time</code> columns as {@link LocalTime}
- * instances.
+ * {@link TypeCodec} that maps {@link LocalTime} to CQL {@code time} (long representing nanoseconds since midnight).
  */
 public class LocalTimeCodec extends TypeCodec<LocalTime> {
 

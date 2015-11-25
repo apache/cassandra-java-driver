@@ -18,8 +18,5 @@
  * This package contains a collection of convenience
  * {@link com.datastax.driver.core.TypeCodec TypeCodec} instances useful for
  * serializing between CQL types and Guava-specific Java types.
- *
- * Currently only {@link com.datastax.driver.extras.codecs.guava.OptionalCodec OptionalCodec}
- * is provided.
  */
 package com.datastax.driver.extras.codecs.guava;

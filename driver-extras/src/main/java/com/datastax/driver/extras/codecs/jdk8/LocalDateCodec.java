@@ -35,7 +35,7 @@ import static com.datastax.driver.core.ParseUtils.unquote;
 
 /**
  * {@link TypeCodec} that maps
- * {@link java.time.LocalDate} to CQL <code>date</code> columns.
+ * {@link java.time.LocalDate} to CQL {@code date}.
  */
 public class LocalDateCodec extends TypeCodec<LocalDate> {
 

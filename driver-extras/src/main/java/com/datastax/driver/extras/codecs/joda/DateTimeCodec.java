@@ -37,7 +37,7 @@ import static com.datastax.driver.core.ParseUtils.quote;
 /**
  * <p>
  * {@link TypeCodec} that maps
- * {@link DateTime} <-> <code>tuple&lt;timestamp,varchar&gt;</code>
+ * {@link DateTime} to CQL {@code tuple<timestamp,varchar>},
  * providing a pattern for maintaining timezone information in
  * Cassandra.
  *
@@ -49,6 +49,9 @@ import static com.datastax.driver.core.ParseUtils.quote;
  * persisted in the <code>varchar</code> field such that when the
  * value is deserialized the timezone is
  * preserved.
+ *
+ * @see <a href="https://cassandra.apache.org/doc/cql3/CQL-2.2.html#usingtimestamps">Working with timestamps</a>
+ * section of CQL specification.
  */
 public class DateTimeCodec extends TypeCodec.AbstractTupleCodec<DateTime> {
 

@@ -42,8 +42,8 @@ import static com.datastax.driver.core.ParseUtils.unquote;
 
 /**
  * <p>
- * {@link TypeCodec} that maps {@link Instant} <-> {@link Date}
- * allowing the setting and retrieval of <code>timestamp</code>
+ * {@link TypeCodec} that maps {@link Instant} to CQL {@code timestamp}
+ * allowing the setting and retrieval of {@code timestamp}
  * columns as {@link Instant} instances.
  * </p>
  *
@@ -53,7 +53,8 @@ import static com.datastax.driver.core.ParseUtils.unquote;
  * </p>
  *
  * @see ZonedDateTimeCodec
- * @see "https://cassandra.apache.org/doc/cql3/CQL-2.2.html#usingtimestamps"
+ * @see <a href="https://cassandra.apache.org/doc/cql3/CQL-2.2.html#usingtimestamps">Working with timestamps</a>
+ * section of CQL specification.
  */
 public class InstantCodec extends TypeCodec<Instant> {
 

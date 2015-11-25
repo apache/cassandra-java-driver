@@ -16,39 +16,21 @@
 
 /**
  * This package contains a collection of convenience
- * {@link com.datastax.driver.core.TypeCodec} instances useful for
- * serializing between CQL types and Joda Time types like {@link org.joda.time.DateTime}.
- * <p>
- * The codecs in this class provide the following mappings:
+ * {@link com.datastax.driver.core.TypeCodec TypeCodec} instances useful for
+ * serializing between CQL types and Joda Time types such as {@link org.joda.time.DateTime}.
  *
- * <table summary="Supported Mappings">
- *     <tr>
- *         <th>Codec</th>
- *         <th>CQL type</th>
- *         <th>Joda Time</th>
- *     </tr>
- *     <tr>
- *         <td>{@link com.datastax.driver.extras.codecs.joda.LocalTimeCodec}</td>
- *         <td>{@link com.datastax.driver.core.DataType#time() time}</td>
- *         <td>{@link org.joda.time.LocalTime LocalTime}</td>
- *     </tr>
- *     <tr>
- *         <td>{@link com.datastax.driver.extras.codecs.joda.LocalDateCodec}</td>
- *         <td>{@link com.datastax.driver.core.DataType#date() date}</td>
- *         <td>{@link org.joda.time.LocalDate LocalDate}</td>
- *     </tr>
- *     <tr>
- *         <td>{@link com.datastax.driver.extras.codecs.joda.InstantCodec}</td>
- *         <td>{@link com.datastax.driver.core.DataType#timestamp() timestamp}</td>
- *         <td>{@link org.joda.time.Instant Instant}</td>
- *     </tr>
- *     <tr>
- *         <td>{@link com.datastax.driver.extras.codecs.joda.DateTimeCodec}</td>
- *         <td>{@link com.datastax.driver.core.TupleType tuple} of
- *         ({@link com.datastax.driver.core.DataType#timestamp() timestamp},
- *         {@link com.datastax.driver.core.DataType#varchar() varchar})</td>
- *         <td>{@link org.joda.time.DateTime DateTime}</td>
- *     </tr>
- * </table>
+ * <p>
+ * Note that classes in this package require the presence of
+ * <a href="http://www.joda.org/joda-time/">Joda Time library</a> at runtime.
+ * If you use Maven, this can be done by declaring the following dependency in your project:
+ *
+ * <pre>{@code
+ * <dependency>
+ *   <groupId>joda-time</groupId>
+ *   <artifactId>joda-time</artifactId>
+ *   <version>2.9.1</version>
+ * </dependency>
+ * }</pre>
+ *
  */
 package com.datastax.driver.extras.codecs.joda;

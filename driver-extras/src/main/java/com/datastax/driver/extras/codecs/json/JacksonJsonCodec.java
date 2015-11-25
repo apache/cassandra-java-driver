@@ -33,10 +33,24 @@ import com.datastax.driver.core.utils.Bytes;
 /**
  * A JSON codec that uses the <a href="http://wiki.fasterxml.com/JacksonHome">Jackson</a>
  * library to perform serialization and deserialization of JSON objects.
+ *
  * <p>
- * Note that this codec maps a single object to a single JSON structure at a time;
+ * This codec maps a single Java object to a single JSON structure at a time;
  * mapping of arrays or collections to root-level JSON arrays is not supported,
  * but such a codec can be easily crafted after this one.
+ *
+ * <p>
+ * Note that this codec requires the presence of Jackson library at runtime.
+ * If you use Maven, this can be done by declaring the following dependency in your project:
+ *
+ * <pre>{@code
+ * <dependency>
+ *   <groupId>com.fasterxml.jackson.core</groupId>
+ *   <artifactId>jackson-databind</artifactId>
+ *   <version>2.6.3</version>
+ * </dependency>
+ * }</pre>
+ *
  */
 public class JacksonJsonCodec<T> extends TypeCodec<T> {
 
