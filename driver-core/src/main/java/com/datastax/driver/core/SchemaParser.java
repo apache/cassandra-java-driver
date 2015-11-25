@@ -205,8 +205,10 @@ abstract class SchemaParser {
         if (functionRows != null) {
             for (Row functionRow : functionRows) {
                 FunctionMetadata function = FunctionMetadata.build(keyspace, functionRow, cassandraVersion, cluster);
-                if (function != null)
-                    functions.put(function.getFullName(), function);
+                if (function != null) {
+                    String name = Metadata.fullFunctionName(function.getSimpleName(), function.getArguments().values());
+                    functions.put(name, function);
+                }
             }
         }
         return functions;
@@ -217,8 +219,10 @@ abstract class SchemaParser {
         if (aggregateRows != null) {
             for (Row aggregateRow : aggregateRows) {
                 AggregateMetadata aggregate = AggregateMetadata.build(keyspace, aggregateRow, cassandraVersion, cluster);
-                if (aggregate != null)
-                    aggregates.put(aggregate.getFullName(), aggregate);
+                if (aggregate != null) {
+                    String name = Metadata.fullFunctionName(aggregate.getSimpleName(), aggregate.getArgumentTypes());
+                    aggregates.put(name, aggregate);
+                }
             }
         }
         return aggregates;
@@ -328,14 +332,15 @@ abstract class SchemaParser {
         Iterator<FunctionMetadata> it = oldFunctions.values().iterator();
         while (it.hasNext()) {
             FunctionMetadata oldFunction = it.next();
-            String functionName = oldFunction.getFullName();
-            if ((functionToRebuild == null || functionToRebuild.equals(functionName)) && !newFunctions.containsKey(functionName)) {
+            String oldFunctionName = Metadata.fullFunctionName(oldFunction.getSimpleName(), oldFunction.getArguments().values());
+            if ((functionToRebuild == null || functionToRebuild.equals(oldFunctionName)) && !newFunctions.containsKey(oldFunctionName)) {
                 it.remove();
                 metadata.triggerOnFunctionRemoved(oldFunction);
             }
         }
         for (FunctionMetadata newFunction : newFunctions.values()) {
-            FunctionMetadata oldFunction = oldFunctions.put(newFunction.getFullName(), newFunction);
+            String newFunctionName = Metadata.fullFunctionName(newFunction.getSimpleName(), newFunction.getArguments().values());
+            FunctionMetadata oldFunction = oldFunctions.put(newFunctionName, newFunction);
             if (oldFunction == null) {
                 metadata.triggerOnFunctionAdded(newFunction);
             } else if (!newFunction.equals(oldFunction)) {
@@ -348,14 +353,15 @@ abstract class SchemaParser {
         Iterator<AggregateMetadata> it = oldAggregates.values().iterator();
         while (it.hasNext()) {
             AggregateMetadata oldAggregate = it.next();
-            String aggregateName = oldAggregate.getFullName();
-            if ((aggregateToRebuild == null || aggregateToRebuild.equals(aggregateName)) && !newAggregates.containsKey(aggregateName)) {
+            String oldAggregateName = Metadata.fullFunctionName(oldAggregate.getSimpleName(), oldAggregate.getArgumentTypes());
+            if ((aggregateToRebuild == null || aggregateToRebuild.equals(oldAggregateName)) && !newAggregates.containsKey(oldAggregateName)) {
                 it.remove();
                 metadata.triggerOnAggregateRemoved(oldAggregate);
             }
         }
         for (AggregateMetadata newAggregate : newAggregates.values()) {
-            AggregateMetadata oldAggregate = oldAggregates.put(newAggregate.getFullName(), newAggregate);
+            String newAggregateName = Metadata.fullFunctionName(newAggregate.getSimpleName(), newAggregate.getArgumentTypes());
+            AggregateMetadata oldAggregate = oldAggregates.put(newAggregateName, newAggregate);
             if (oldAggregate == null) {
                 metadata.triggerOnAggregateAdded(newAggregate);
             } else if (!newAggregate.equals(oldAggregate)) {

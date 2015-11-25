@@ -32,7 +32,6 @@ public class FunctionMetadata {
     private static final Logger logger = LoggerFactory.getLogger(FunctionMetadata.class);
 
     private final KeyspaceMetadata keyspace;
-    private final String fullName;
     private final String simpleName;
     private final Map<String, DataType> arguments;
     private final String body;
@@ -41,7 +40,6 @@ public class FunctionMetadata {
     private final DataType returnType;
 
     private FunctionMetadata(KeyspaceMetadata keyspace,
-                             String fullName,
                              String simpleName,
                              Map<String, DataType> arguments,
                              String body,
@@ -49,7 +47,6 @@ public class FunctionMetadata {
                              String language,
                              DataType returnType) {
         this.keyspace = keyspace;
-        this.fullName = fullName;
         this.simpleName = simpleName;
         this.arguments = arguments;
         this.body = body;
@@ -94,8 +91,8 @@ public class FunctionMetadata {
         // this will be a list of C* types in 2.2 and a list of CQL types in 3.0
         List<String> argumentTypes = row.getList("argument_types", String.class);
         Map<String, DataType> arguments = buildArguments(ksm, argumentNames, argumentTypes, version, cluster);
-        String fullName = Metadata.fullFunctionName(simpleName, arguments.values());
         if (argumentNames.size() != argumentTypes.size()) {
+            String fullName = Metadata.fullFunctionName(simpleName, arguments.values());
             logger.error(String.format("Error parsing definition of function %1$s.%2$s: the number of argument names and types don't match."
                     + "Cluster.getMetadata().getKeyspace(\"%1$s\").getFunction(\"%2$s\") will be missing.",
                 ksm.getName(), fullName));
@@ -110,8 +107,7 @@ public class FunctionMetadata {
         } else {
             returnType = DataTypeClassNameParser.parseOne(row.getString("return_type"), protocolVersion, codecRegistry);
         }
-        return new FunctionMetadata(ksm, fullName, simpleName, arguments, body,
-            calledOnNullInput, language, returnType);
+        return new FunctionMetadata(ksm, simpleName, arguments, body, calledOnNullInput, language, returnType);
     }
 
     // Note: the caller ensures that names and types have the same size
@@ -119,7 +115,6 @@ public class FunctionMetadata {
         if (names.isEmpty())
             return Collections.emptyMap();
         ImmutableMap.Builder<String, DataType> builder = ImmutableMap.builder();
-        Metadata metadata = cluster.getMetadata();
         CodecRegistry codecRegistry = cluster.getConfiguration().getCodecRegistry();
         ProtocolVersion protocolVersion = cluster.getConfiguration().getProtocolOptions().getProtocolVersion();
         Iterator<String> iterTypes = types.iterator();
@@ -164,12 +159,10 @@ public class FunctionMetadata {
     }
 
     private String asCQLQuery(boolean formatted) {
-        // create function test.sum(a int, b int) RETURNS NULL ON NULL INPUT RETURNS int LANGUAGE java as 'return a+b;';
 
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder("CREATE FUNCTION ");
 
         sb
-            .append("CREATE FUNCTION ")
             .append(Metadata.escapeId(keyspace.getName()))
             .append('.')
             .append(Metadata.escapeId(simpleName))
@@ -188,7 +181,7 @@ public class FunctionMetadata {
                 .append(TableMetadata.spaces(4, formatted))
                 .append(Metadata.escapeId(name))
                 .append(' ')
-                .append(type);
+                .append(type.asFunctionParameterString());
         }
         sb.append(')');
 
@@ -221,15 +214,30 @@ public class FunctionMetadata {
     }
 
     /**
-     * Returns the full name of this function.
+     * Returns the CQL signature of this function.
      * <p>
      * This is the name of the function, followed by the names of the argument types between parentheses,
      * for example {@code sum(int,int)}.
+     * <p>
+     * Note that the returned signature is not qualified with the keyspace name.
      *
-     * @return the full name.
+     * @return the signature of this function.
      */
-    public String getFullName() {
-        return fullName;
+    public String getSignature() {
+        StringBuilder sb = new StringBuilder();
+        sb
+            .append(Metadata.escapeId(simpleName))
+            .append('(');
+        boolean first = true;
+        for (DataType type : arguments.values()) {
+            if (first)
+                first = false;
+            else
+                sb.append(',');
+            sb.append(type.asFunctionParameterString());
+        }
+        sb.append(')');
+        return sb.toString();
     }
 
     /**
@@ -239,9 +247,9 @@ public class FunctionMetadata {
      * different argument lists, therefore the simple name may not be unique. For example,
      * {@code sum(int,int)} and {@code sum(int,int,int)} both have the simple name {@code sum}.
      *
-     * @return the simple name.
+     * @return the simple name of this function.
      *
-     * @see #getFullName()
+     * @see #getSignature()
      */
     public String getSimpleName() {
         return simpleName;
@@ -303,7 +311,6 @@ public class FunctionMetadata {
         if (other instanceof FunctionMetadata) {
             FunctionMetadata that = (FunctionMetadata)other;
             return this.keyspace.getName().equals(that.keyspace.getName()) &&
-                this.fullName.equals(that.fullName) &&
                 this.arguments.equals(that.arguments) &&
                 this.body.equals(that.body) &&
                 this.calledOnNullInput == that.calledOnNullInput &&
@@ -315,6 +322,6 @@ public class FunctionMetadata {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(keyspace.getName(), fullName, arguments, body, calledOnNullInput, language, returnType);
+        return Objects.hashCode(keyspace.getName(), arguments, body, calledOnNullInput, language, returnType);
     }
 }

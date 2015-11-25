@@ -25,6 +25,7 @@ import com.datastax.driver.core.utils.CassandraVersion;
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.DataType.*;
 import static com.datastax.driver.core.DataTypeCqlNameParser.parse;
+import static com.datastax.driver.core.Metadata.quote;
 
 @CassandraVersion(major = 3.0)
 public class DataTypeCqlNameParserTest extends CCMBridge.PerClassSingleNodeCluster {
@@ -88,8 +89,8 @@ public class DataTypeCqlNameParserTest extends CCMBridge.PerClassSingleNodeClust
         assertThat(parse("list<list<int>>", cluster, null, null, null, false, false)).isEqualTo(list(list(cint())));
         assertThat(parse("set<list<frozen<map<bigint,varchar>>>>", cluster, null, null, null, false, false)).isEqualTo(set(list(map(bigint(), varchar(), true))));
 
-        UserType keyType = keyspaceMetadata.getUserType("Incr,edibly\" EvilTy<>><<><p\"e");
-        UserType valueType = keyspaceMetadata.getUserType("\"A\"");
+        UserType keyType = keyspaceMetadata.getUserType(quote("Incr,edibly\" EvilTy<>><<><p\"e"));
+        UserType valueType = keyspaceMetadata.getUserType(quote("A"));
         assertThat(parse("map<frozen<\"Incr,edibly\"\" EvilTy<>><<><p\"\"e\">,frozen<\"A\">>", cluster, keyspace, keyspaceMetadata.userTypes, null, false, false))
             .isEqualTo(map(keyType, valueType, false));
     }

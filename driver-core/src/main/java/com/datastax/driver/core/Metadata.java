@@ -134,14 +134,44 @@ public class Metadata {
         return lowercaseAlphanumeric.matcher(ident).matches() ? ident : quote(ident);
     }
 
-    // Builds the internal name of a function/aggregate
-    // Note that if simpleName comes from the user, the caller must call handleId on it before passing it to this method
+    /**
+     * Builds the internal name of a function/aggregate, which is similar, but not identical,
+     * to the function/aggregate signature.
+     * This is only used to generate keys for internal metadata maps (KeyspaceMetadata.functions and.
+     * KeyspaceMetadata.aggregates).
+     * Note that if simpleName comes from the user, the caller must call handleId on it before passing it to this method.
+     * Note that this method does not necessarily generates a valid CQL function signature.
+     * Note that argumentTypes can be either a list of strings (schema change events)
+     * or a list of DataTypes (function lookup from client code).
+     * This method must ensure that both cases produce the same identifier.
+     */
     static String fullFunctionName(String simpleName, Collection<?> argumentTypes) {
-        return String.format("%s(%s)",
-            simpleName, COMMAS.join(argumentTypes));
+        StringBuilder sb = new StringBuilder(simpleName);
+        sb.append('(');
+        boolean first = true;
+        for (Object argumentType : argumentTypes) {
+            if (first)
+                first = false;
+            else
+                sb.append(',');
+            // user types must be represented by their names only,
+            // without keyspace prefix, because that's how
+            // they appear in a schema change event (in targetSignature)
+            if (argumentType instanceof UserType) {
+                UserType userType = (UserType)argumentType;
+                String typeName = Metadata.escapeId(userType.getTypeName());
+                if (userType.isFrozen())
+                    sb.append("frozen<");
+                sb.append(typeName);
+                if (userType.isFrozen())
+                    sb.append(">");
+            } else {
+                sb.append(argumentType);
+            }
+        }
+        sb.append(')');
+        return sb.toString();
     }
-
-    static final Joiner COMMAS = Joiner.on(",");
 
     /**
      * Quote a keyspace, table or column identifier to make it case sensitive.
@@ -160,7 +190,7 @@ public class Metadata {
      * or even {@link Cluster#connect(String)}.
      */
     public static String quote(String id) {
-        return '"' + id + '"';
+        return '"' + id.replace("\"", "\"\"") + '"';
     }
 
     /**

@@ -24,8 +24,8 @@ public class AggregateMetadataAssert extends AbstractAssert<AggregateMetadataAss
         super(actual, AggregateMetadataAssert.class);
     }
 
-    public AggregateMetadataAssert hasFullName(String name) {
-        assertThat(actual.getFullName()).isEqualTo(name);
+    public AggregateMetadataAssert hasSignature(String name) {
+        assertThat(actual.getSignature()).isEqualTo(name);
         return this;
     }
 

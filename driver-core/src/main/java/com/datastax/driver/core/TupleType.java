@@ -185,12 +185,16 @@ public class TupleType extends DataType {
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        for (DataType type : types) {
-            sb.append(sb.length() == 0 ? "frozen<tuple<" : ", ");
-            sb.append(type);
-        }
-        return sb.append(">>").toString();
+        return "frozen<" + asFunctionParameterString() + ">";
     }
 
+    @Override
+    public String asFunctionParameterString() {
+        StringBuilder sb = new StringBuilder();
+        for (DataType type : types) {
+            sb.append(sb.length() == 0 ? "tuple<" : ", ");
+            sb.append(type);
+        }
+        return sb.append(">").toString();
+    }
 }

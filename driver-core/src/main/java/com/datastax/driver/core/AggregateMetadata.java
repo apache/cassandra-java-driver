@@ -29,7 +29,6 @@ import com.google.common.collect.Lists;
 public class AggregateMetadata {
 
     private final KeyspaceMetadata keyspace;
-    private final String fullName;
     private final String simpleName;
     private final List<DataType> argumentTypes;
     private final String finalFuncSimpleName;
@@ -41,11 +40,10 @@ public class AggregateMetadata {
     private final DataType stateType;
     private final TypeCodec<Object> stateTypeCodec;
 
-    private AggregateMetadata(KeyspaceMetadata keyspace, String fullName, String simpleName, List<DataType> argumentTypes,
+    private AggregateMetadata(KeyspaceMetadata keyspace, String simpleName, List<DataType> argumentTypes,
                              String finalFuncSimpleName, String finalFuncFullName, Object initCond, DataType returnType,
                              String stateFuncSimpleName, String stateFuncFullName, DataType stateType, TypeCodec<Object> stateTypeCodec) {
         this.keyspace = keyspace;
-        this.fullName = fullName;
         this.simpleName = simpleName;
         this.argumentTypes = argumentTypes;
         this.finalFuncSimpleName = finalFuncSimpleName;
@@ -89,7 +87,6 @@ public class AggregateMetadata {
         ProtocolVersion protocolVersion = cluster.getConfiguration().getProtocolOptions().getProtocolVersion();
         String simpleName = row.getString("aggregate_name");
         List<DataType> argumentTypes = parseTypes(ksm, row.getList("argument_types", String.class), version, cluster);
-        String fullName = Metadata.fullFunctionName(simpleName, argumentTypes);
         String finalFuncSimpleName = row.getString("final_func");
         DataType returnType;
         if(version.getMajor() >= 3) {
@@ -111,10 +108,10 @@ public class AggregateMetadata {
             initCond = rawInitCond == null ? null : codecRegistry.codecFor(stateType).deserialize(rawInitCond, protocolVersion);
         }
 
-        String finalFuncFullName = finalFuncSimpleName == null ? null : String.format("%s(%s)", finalFuncSimpleName, stateType);
+        String finalFuncFullName = finalFuncSimpleName == null ? null : Metadata.fullFunctionName(finalFuncSimpleName, Collections.singletonList(stateType));
         String stateFuncFullName = makeStateFuncFullName(stateFuncSimpleName, stateType, argumentTypes);
 
-        return new AggregateMetadata(ksm, fullName, simpleName, argumentTypes,
+        return new AggregateMetadata(ksm, simpleName, argumentTypes,
             finalFuncSimpleName, finalFuncFullName, initCond, returnType, stateFuncSimpleName,
             stateFuncFullName, stateType, codecRegistry.codecFor(stateType));
     }
@@ -173,37 +170,23 @@ public class AggregateMetadata {
     }
 
     private String asCQLQuery(boolean formatted) {
-        //create aggregate test.prettysum(int) SFUNC plus STYPE int FINALFUNC announce INITCOND 0;
 
-        StringBuilder sb = new StringBuilder();
-
-        sb
-            .append("CREATE AGGREGATE ")
+        StringBuilder sb = new StringBuilder("CREATE AGGREGATE ")
             .append(Metadata.escapeId(keyspace.getName()))
-            .append('.')
-            .append(Metadata.escapeId(simpleName))
-            .append('(');
+            .append('.');
 
-        boolean first = true;
-        for (DataType type : argumentTypes) {
-            if (first)
-                first = false;
-            else
-                sb.append(',');
-            sb.append(type);
-        }
-        sb.append(')');
+        appendSignature(sb);
 
         TableMetadata.spaceOrNewLine(sb, formatted)
             .append("SFUNC ")
-            .append(stateFuncSimpleName)
+            .append(Metadata.escapeId(stateFuncSimpleName))
             .append(" STYPE ")
-            .append(stateType);
+            .append(stateType.asFunctionParameterString());
 
         if (finalFuncSimpleName != null)
             TableMetadata.spaceOrNewLine(sb, formatted)
                 .append("FINALFUNC ")
-                .append(finalFuncSimpleName);
+                .append(Metadata.escapeId(finalFuncSimpleName));
 
         if (initCond != null)
             TableMetadata.spaceOrNewLine(sb, formatted)
@@ -213,6 +196,21 @@ public class AggregateMetadata {
         sb.append(';');
 
         return sb.toString();
+    }
+
+    private void appendSignature(StringBuilder sb) {
+        sb
+            .append(Metadata.escapeId(simpleName))
+            .append('(');
+        boolean first = true;
+        for (DataType type : argumentTypes) {
+            if (first)
+                first = false;
+            else
+                sb.append(',');
+            sb.append(type.asFunctionParameterString());
+        }
+        sb.append(')');
     }
 
     /**
@@ -225,15 +223,19 @@ public class AggregateMetadata {
     }
 
     /**
-     * Returns the full name of this aggregate.
+     * Returns the CQL signature of this aggregate.
      * <p>
      * This is the name of the aggregate, followed by the names of the argument types between parentheses,
      * like it was specified in the {@code CREATE AGGREGATE...} statement, for example {@code sum(int)}.
+     * <p>
+     * Note that the returned signature is not qualified with the keyspace name.
      *
-     * @return the full name.
+     * @return the signature of this aggregate.
      */
-    public String getFullName() {
-        return fullName;
+    public String getSignature() {
+        StringBuilder sb = new StringBuilder();
+        appendSignature(sb);
+        return sb.toString();
     }
 
     /**
@@ -243,9 +245,9 @@ public class AggregateMetadata {
      * different argument lists, therefore the simple name may not be unique. For example,
      * {@code sum(int)} and {@code sum(int,int)} both have the simple name {@code sum}.
      *
-     * @return the simple name.
+     * @return the simple name of this aggregate.
      *
-     * @see #getFullName()
+     * @see #getSignature()
      */
     public String getSimpleName() {
         return simpleName;
@@ -332,7 +334,6 @@ public class AggregateMetadata {
         if (other instanceof AggregateMetadata) {
             AggregateMetadata that = (AggregateMetadata)other;
             return this.keyspace.getName().equals(that.keyspace.getName()) &&
-                this.fullName.equals(that.fullName) &&
                 this.argumentTypes.equals(that.argumentTypes) &&
                 Objects.equal(this.finalFuncFullName, that.finalFuncFullName) &&
                 // Note: this might be a problem if a custom codec has been registered for the initCond's type, with a target Java type that
@@ -348,7 +349,7 @@ public class AggregateMetadata {
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(this.keyspace.getName(), this.fullName, this.argumentTypes,
+        return Objects.hashCode(this.keyspace.getName(), this.argumentTypes,
             this.finalFuncFullName, this.initCond, this.returnType, this.stateFuncFullName, this.stateType);
     }
 }
