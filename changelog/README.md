@@ -3,6 +3,7 @@
 ### 3.0.0-beta1 (in progress)
 
 - [bug] JAVA-993: Support for "custom" types after CASSANDRA-10365.
+- [bug] JAVA-999: Handle unset parameters in QueryLogger.
 
 
 ### 3.0.0-alpha5
