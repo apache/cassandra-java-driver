@@ -74,6 +74,12 @@ public class BoundStatement extends Statement implements SettableData<BoundState
             this.enableTracing();
         if (statement.getRetryPolicy() != null)
             this.setRetryPolicy(statement.getRetryPolicy());
+        if (statement instanceof IdempotenceAwarePreparedStatement) {
+            IdempotenceAwarePreparedStatement idempotenceAwarePS = (IdempotenceAwarePreparedStatement) statement;
+            if (idempotenceAwarePS.isIdempotent() != null) {
+                this.setIdempotent(idempotenceAwarePS.isIdempotent());
+            }
+        }
     }
 
     /**
