@@ -11,7 +11,7 @@ It is **not binary compatible** with the driver's 2.1 branch.
 The main changes were introduced by the custom codecs feature (see below).
 We've also seized the opportunity to remove code that was deprecated in 2.1.
 
-1.  The default consistency level in `QueryOptions` is now `LOCAL_QUORUM`.
+1.  The default consistency level in `QueryOptions` is now `LOCAL_ONE`.
 2.  [Custom codecs](../features/custom_codecs/)
     ([JAVA-721](https://datastax-oss.atlassian.net/browse/JAVA-721))
     introduce several breaking changes and also modify a few runtime behaviors.
