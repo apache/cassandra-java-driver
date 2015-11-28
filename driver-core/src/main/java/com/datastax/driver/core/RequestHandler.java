@@ -628,7 +628,7 @@ class RequestHandler {
         }
 
         private Connection.ResponseCallback prepareAndRetry(final String toPrepare) {
-            return new AbstractPrepareRequest(toPrepare) {
+            return new PrepareRequestResponseCallback(toPrepare) {
                 @Override
                 protected void onSuccessfulPrepare(Connection connection, Responses.Result preparedResponse) {
                     logger.debug("Scheduling retry now that query is prepared");
@@ -639,10 +639,10 @@ class RequestHandler {
 
 
         private Connection.ResponseCallback prepareAndReparse(final String toPrepare, final  Message.Response resultSetResponse) {
-            return new AbstractPrepareRequest(toPrepare) {
+            return new PrepareRequestResponseCallback(toPrepare) {
                 @Override
                 protected void onSuccessfulPrepare(Connection connection, Responses.Result preparedResponse) {
-                    logger.debug("Scheduling retry now that query is prepared");
+                    logger.debug("Parse response that query is re-prepared");
                     Responses.Result.Prepared prepared = (Responses.Result.Prepared) preparedResponse;
                     Cluster cluster = manager.cluster;
                     ProtocolVersion version = cluster.getConfiguration().getProtocolOptions().getProtocolVersionEnum();
@@ -731,11 +731,11 @@ class RequestHandler {
             RequestHandler.this.setFinalResult(this, connection, response, st);
         }
 
-        private abstract class AbstractPrepareRequest implements Connection.ResponseCallback {
+        private abstract class PrepareRequestResponseCallback implements Connection.ResponseCallback {
 
             private final String toPrepare;
 
-            AbstractPrepareRequest(String toPrepare) {
+            PrepareRequestResponseCallback(String toPrepare) {
                 this.toPrepare = toPrepare;
             }
 
