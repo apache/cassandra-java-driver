@@ -59,7 +59,6 @@ class RequestHandler {
     private final io.netty.util.Timer scheduler;
 
     private volatile List<Host> triedHosts;
-    private volatile Statement actualStatement;
 
     private volatile Map<InetSocketAddress, Throwable> errors;
 
@@ -84,7 +83,6 @@ class RequestHandler {
         this.allowSpeculativeExecutions = statement != Statement.DEFAULT
             && statement.isIdempotentWithDefault(manager.configuration().getQueryOptions());
         this.statement = statement;
-        this.actualStatement = statement;
 
         this.timerContext = metricsEnabled()
             ? metrics().getRequestsTimer().time()
@@ -160,7 +158,7 @@ class RequestHandler {
         errors.put(address, exception);
     }
 
-    private void setFinalResult(SpeculativeExecution execution, Connection connection, Message.Response response) {
+    private void setFinalResult(SpeculativeExecution execution, Connection connection, Message.Response response, Statement st) {
         if (!isDone.compareAndSet(false, true)) {
             if(logger.isTraceEnabled())
                 logger.trace("[{}] Got beaten to setting the result", execution.id);
@@ -183,11 +181,11 @@ class RequestHandler {
             }
             if (execution.retryConsistencyLevel != null)
                 info = info.withAchievedConsistency(execution.retryConsistencyLevel);
-            callback.onSet(connection, response, info, actualStatement, System.nanoTime() - startTime);
+            callback.onSet(connection, response, info, st, System.nanoTime() - startTime);
         } catch (Exception e) {
             callback.onException(connection,
-                new DriverInternalError("Unexpected exception while setting final result from " + response, e),
-                System.nanoTime() - startTime, /*unused*/0);
+                    new DriverInternalError("Unexpected exception while setting final result from " + response, e),
+                    System.nanoTime() - startTime, /*unused*/0);
         }
     }
 
@@ -438,9 +436,9 @@ class RequestHandler {
                                 if (statementMetadataSize != firstRow.size()) {
                                     PreparedStatement toPrepare = manager.cluster.manager.preparedQueries.get(preparedId.id);
                                     int metadataSizeInCache = toPrepare.getPreparedId().resultSetMetadata.size();
-                                    boolean cacheContainsObsoleteMetadata = metadataSizeInCache == statementMetadataSize;
+                                    boolean cacheContainsObsoleteMetadata = metadataSizeInCache != firstRow.size();
                                     if (cacheContainsObsoleteMetadata) {
-                                        write(connection, prepareAndRetry(toPrepare.getQueryString()));
+                                        write(connection, prepareAndReparse(toPrepare.getQueryString(), response));
                                         return;
                                     }
                                 }
@@ -659,14 +657,6 @@ class RequestHandler {
                         case RESULT:
                             if (((Responses.Result)response).kind == Responses.Result.Kind.PREPARED) {
                                 logger.debug("Scheduling retry now that query is prepared");
-                                Responses.Result.Prepared prepared = (Responses.Result.Prepared) response;
-                                Cluster cluster = manager.cluster;
-                                ProtocolVersion version = cluster.getConfiguration().getProtocolOptions().getProtocolVersionEnum();
-                                PreparedStatement stmt = DefaultPreparedStatement.fromMessage(prepared, cluster.getMetadata(), version, toPrepare, manager.poolsState.keyspace);
-                                cluster.manager.replacePrepared(stmt);
-                                if (statement instanceof BoundStatement) {
-                                    actualStatement = new BoundStatement(stmt, ((BoundStatement) statement).wrapper);
-                                }
                                 retry(true, null);
                             } else {
                                 logError(connection.address, new DriverException("Got unexpected response to prepare message: " + response));
@@ -698,6 +688,86 @@ class RequestHandler {
                         !queryStateRef.compareAndSet(queryState, queryState.complete())) {
                         logger.debug("onTimeout triggered but the response was completed by another thread, cancelling (retryCount = {}, queryState = {}, queryStateRef = {})",
                             retryCount, queryState, queryStateRef.get());
+                        return false;
+                    }
+                    connection.release();
+                    logError(connection.address, new DriverException("Timeout waiting for response to prepare message"));
+                    retry(false, null);
+                    return true;
+                }
+            };
+        }
+
+
+        private Connection.ResponseCallback prepareAndReparse(final String toPrepare, final  Message.Response resultSetResponse) {
+
+            return new Connection.ResponseCallback() {
+
+                @Override
+                public Message.Request request() {
+                    return new Requests.Prepare(toPrepare);
+                }
+
+                @Override
+                public int retryCount() {
+                    return SpeculativeExecution.this.retryCount();
+                }
+
+                @Override
+                public void onSet(Connection connection, Message.Response preparedResponse, long latency, int retryCount) {
+                    QueryState queryState = queryStateRef.get();
+                    if (!queryState.isInProgressAt(retryCount) ||
+                            !queryStateRef.compareAndSet(queryState, queryState.complete())) {
+                        logger.debug("onSet triggered but the preparedResponse was completed by another thread, cancelling (retryCount = {}, queryState = {}, queryStateRef = {})",
+                                retryCount, queryState, queryStateRef.get());
+                        return;
+                    }
+
+                    connection.release();
+
+                    // TODO should we check the preparedResponse ?
+                    switch (preparedResponse.type) {
+                        case RESULT:
+                            if (((Responses.Result)preparedResponse).kind == Responses.Result.Kind.PREPARED) {
+                                logger.debug("Scheduling retry now that query is prepared");
+                                Responses.Result.Prepared prepared = (Responses.Result.Prepared) preparedResponse;
+                                Cluster cluster = manager.cluster;
+                                ProtocolVersion version = cluster.getConfiguration().getProtocolOptions().getProtocolVersionEnum();
+                                PreparedStatement stmt = DefaultPreparedStatement.fromMessage(prepared, cluster.getMetadata(), version, toPrepare, manager.poolsState.keyspace);
+                                cluster.manager.replacePrepared(stmt);
+                                if (statement instanceof BoundStatement) {
+                                    setFinalResult(connection, resultSetResponse, new BoundStatement(stmt, ((BoundStatement) statement).wrapper));
+                                }
+                            } else {
+                                logError(connection.address, new DriverException("Got unexpected preparedResponse to prepare message: " + preparedResponse));
+                                retry(false, null);
+                            }
+                            break;
+                        case ERROR:
+                            logError(connection.address, new DriverException("Error preparing query, got " + preparedResponse));
+                            if (metricsEnabled())
+                                metrics().getErrorMetrics().getOthers().inc();
+                            retry(false, null);
+                            break;
+                        default:
+                            // Something's wrong, so we return but we let setFinalResult propagate the exception
+                            SpeculativeExecution.this.setFinalResult(connection, preparedResponse);
+                            break;
+                    }
+                }
+
+                @Override
+                public void onException(Connection connection, Exception exception, long latency, int retryCount) {
+                    SpeculativeExecution.this.onException(connection, exception, latency, retryCount);
+                }
+
+                @Override
+                public boolean onTimeout(Connection connection, long latency, int retryCount) {
+                    QueryState queryState = queryStateRef.get();
+                    if (!queryState.isInProgressAt(retryCount) ||
+                            !queryStateRef.compareAndSet(queryState, queryState.complete())) {
+                        logger.debug("onTimeout triggered but the response was completed by another thread, cancelling (retryCount = {}, queryState = {}, queryStateRef = {})",
+                                retryCount, queryState, queryStateRef.get());
                         return false;
                     }
                     connection.release();
@@ -777,7 +847,11 @@ class RequestHandler {
         }
 
         private void setFinalResult(Connection connection, Message.Response response) {
-            RequestHandler.this.setFinalResult(this, connection, response);
+            setFinalResult(connection, response, statement);
+        }
+
+        private void setFinalResult(Connection connection, Message.Response response, Statement st) {
+            RequestHandler.this.setFinalResult(this, connection, response, st);
         }
     }
 
