@@ -20,7 +20,7 @@ import java.util.List;
 
 import com.datastax.driver.core.policies.RetryPolicy;
 
-public class DefaultPreparedStatement implements PreparedStatement{
+public class DefaultPreparedStatement implements IdempotenceAwarePreparedStatement{
 
     final PreparedId preparedId;
 
@@ -33,6 +33,7 @@ public class DefaultPreparedStatement implements PreparedStatement{
     volatile ConsistencyLevel serialConsistency;
     volatile boolean traceQuery;
     volatile RetryPolicy retryPolicy;
+    volatile Boolean idempotent;
 
     private DefaultPreparedStatement(PreparedId id, String query, String queryKeyspace) {
         this.preparedId = id;
@@ -174,5 +175,14 @@ public class DefaultPreparedStatement implements PreparedStatement{
 
     public PreparedId getPreparedId() {
         return preparedId;
+    }
+
+    public PreparedStatement setIdempotent(Boolean idempotent) {
+        this.idempotent = idempotent;
+        return this;
+    }
+
+    public Boolean isIdempotent() {
+        return this.idempotent;
     }
 }
