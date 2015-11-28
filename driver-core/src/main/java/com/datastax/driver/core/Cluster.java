@@ -2116,6 +2116,13 @@ public class Cluster implements Closeable {
             return stmt;
         }
 
+        public void replacePrepared(PreparedStatement stmt) {
+            PreparedStatement previous = preparedQueries.replace(stmt.getPreparedId().id, stmt);
+            if (previous != null) {
+                logger.debug("Replace already prepared query {}.", stmt.getQueryString());
+            }
+        }
+
         /**
          * @param reusedConnection an existing connection (from a reconnection attempt) that we want to
          *                         reuse to prepare the statements (might be null).

@@ -436,6 +436,56 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
         }
     }
 
+    @Test(groups="short")
+    public void should_use_new_metadata_after_new_field_added() {
+        String aVal = "a_val";
+        String bVal = "b_val";
+        String dVal = "d_val";
+        session.execute("CREATE TABLE MetaTest (a varchar PRIMARY KEY, b varchar, d varchar)");
+        session.execute("INSERT INTO MetaTest(a, b, d) VALUES(?, ?, ?)", aVal, bVal, dVal);
+
+        PreparedStatement ps = session.prepare("SELECT * FROM MetaTest WHERE a = ?");
+        BoundStatement bs = ps.bind(aVal);
+        session.execute(bs);
+
+        session.execute("ALTER TABLE MetaTest ADD c varchar");
+
+        BoundStatement bs2 = ps.bind(aVal);
+        ResultSet rowsAfter = session.execute(bs2);
+        Row row = rowsAfter.one();
+        assertEquals(row.getString("a"), aVal);
+        assertEquals(row.getString("b"), bVal);
+        assertThat(row.getString("c") == null);
+        assertEquals(row.getString("d"), dVal);
+    }
+
+    @Test(groups="short")
+    public void should_not_schedule_reprepare_for_already_reprepared_query_after_new_field_added() {
+        String aVal = "a_val";
+        String bVal = "b_val";
+        String dVal = "d_val";
+        session.execute("CREATE TABLE MetaTest2 (a varchar PRIMARY KEY, b varchar, d varchar)");
+        session.execute("INSERT INTO MetaTest2(a, b, d) VALUES(?, ?, ?)", aVal, bVal, dVal);
+
+        PreparedStatement ps = session.prepare("SELECT * FROM MetaTest2 WHERE a = ?");
+        BoundStatement bs = ps.bind(aVal);
+        session.execute(bs);
+
+        session.execute("ALTER TABLE MetaTest2 ADD c varchar");
+
+        BoundStatement bs2 = ps.bind(aVal);
+        session.execute(bs2);
+
+        BoundStatement bs3 = ps.bind(aVal);
+        ResultSet rowsAfter = session.execute(bs3);
+
+        Row row = rowsAfter.one();
+        assertEquals(row.getString("a"), aVal);
+        assertEquals(row.getString("b"), bVal);
+        assertThat(row.getString("c") == null);
+        assertEquals(row.getString("d"), dVal);
+    }
+
     @Test(groups = "short")
     public void should_propagate_idempotence_in_statements() {
         session.execute(String.format("CREATE TABLE %s.idempotencetest (i int PRIMARY KEY)", keyspace));
