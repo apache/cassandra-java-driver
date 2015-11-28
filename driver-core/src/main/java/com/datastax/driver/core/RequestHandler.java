@@ -427,6 +427,7 @@ class RequestHandler {
                 switch (response.type) {
                     case RESULT:
                         boolean couldHaveObsoleteMetadata = statement instanceof BoundStatement && response instanceof Responses.Result.Rows;
+                        Statement promotedStatement = statement;
                         if (couldHaveObsoleteMetadata) {
                             Responses.Result.Rows rows = (Responses.Result.Rows) response;
                             List<ByteBuffer> firstRow = rows.data.peek();
@@ -434,21 +435,20 @@ class RequestHandler {
                                 PreparedId preparedId = ((BoundStatement) statement).preparedStatement().getPreparedId();
                                 int statementMetadataSize = preparedId.resultSetMetadata.size();
                                 if (statementMetadataSize != firstRow.size()) {
-                                    PreparedStatement toPrepare = manager.cluster.manager.preparedQueries.get(preparedId.id);
-                                    int metadataSizeInCache = toPrepare.getPreparedId().resultSetMetadata.size();
+                                    PreparedStatement preparedStatementInCache = manager.cluster.manager.preparedQueries.get(preparedId.id);
+                                    int metadataSizeInCache = preparedStatementInCache.getPreparedId().resultSetMetadata.size();
                                     boolean cacheContainsObsoleteMetadata = metadataSizeInCache != firstRow.size();
                                     if (cacheContainsObsoleteMetadata) {
-                                        write(connection, reprepareAndReparse(toPrepare.getQueryString(), response));
+                                        write(connection, reprepareAndReparse(preparedStatementInCache.getQueryString(), response));
                                         return;
                                     } else {
-                                        setFinalResult(connection, response, new BoundStatement(toPrepare, ((BoundStatement) statement).wrapper));
-                                        connection.release();
+                                        promotedStatement = new BoundStatement(preparedStatementInCache, ((BoundStatement) statement).wrapper);
                                     }
                                 }
                             }
                         }
                         connection.release();
-                        setFinalResult(connection, response);
+                        setFinalResult(connection, response, promotedStatement);
                         break;
                     case ERROR:
                         Responses.Error err = (Responses.Error)response;
@@ -645,7 +645,7 @@ class RequestHandler {
             return new PrepareRequestResponseCallback(toPrepare) {
                 @Override
                 protected void onSuccessfulPrepare(Connection connection, Responses.Result preparedResponse) {
-                    logger.info("Parse response that query is re-prepared");
+                    logger.info("Query {} is re-prepared for updated result set. Seeing this message a few times is fine, but seeing it a lot may be source of performance problems.",toPrepare);
                     Responses.Result.Prepared prepared = (Responses.Result.Prepared) preparedResponse;
                     Cluster cluster = manager.cluster;
                     ProtocolVersion version = cluster.getConfiguration().getProtocolOptions().getProtocolVersionEnum();
