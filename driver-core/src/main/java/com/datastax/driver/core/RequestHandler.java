@@ -158,7 +158,7 @@ class RequestHandler {
         errors.put(address, exception);
     }
 
-    private void setFinalResult(SpeculativeExecution execution, Connection connection, Message.Response response, Statement st) {
+    private void setFinalResult(SpeculativeExecution execution, Connection connection, Message.Response response, Statement stmt) {
         if (!isDone.compareAndSet(false, true)) {
             if(logger.isTraceEnabled())
                 logger.trace("[{}] Got beaten to setting the result", execution.id);
@@ -181,7 +181,7 @@ class RequestHandler {
             }
             if (execution.retryConsistencyLevel != null)
                 info = info.withAchievedConsistency(execution.retryConsistencyLevel);
-            callback.onSet(connection, response, info, st, System.nanoTime() - startTime);
+            callback.onSet(connection, response, info, stmt, System.nanoTime() - startTime);
         } catch (Exception e) {
             callback.onException(connection,
                     new DriverInternalError("Unexpected exception while setting final result from " + response, e),
@@ -730,8 +730,8 @@ class RequestHandler {
             setFinalResult(connection, response, statement);
         }
 
-        private void setFinalResult(Connection connection, Message.Response response, Statement st) {
-            RequestHandler.this.setFinalResult(this, connection, response, st);
+        private void setFinalResult(Connection connection, Message.Response response, Statement stmt) {
+            RequestHandler.this.setFinalResult(this, connection, response, stmt);
         }
 
         private abstract class PrepareRequestResponseCallback implements Connection.ResponseCallback {
