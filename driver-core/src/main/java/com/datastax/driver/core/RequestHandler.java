@@ -438,8 +438,11 @@ class RequestHandler {
                                     int metadataSizeInCache = toPrepare.getPreparedId().resultSetMetadata.size();
                                     boolean cacheContainsObsoleteMetadata = metadataSizeInCache != firstRow.size();
                                     if (cacheContainsObsoleteMetadata) {
-                                        write(connection, prepareAndReparse(toPrepare.getQueryString(), response));
+                                        write(connection, reprepareAndReparse(toPrepare.getQueryString(), response));
                                         return;
+                                    } else {
+                                        setFinalResult(connection, response, new BoundStatement(toPrepare, ((BoundStatement) statement).wrapper));
+                                        connection.release();
                                     }
                                 }
                             }
@@ -638,11 +641,11 @@ class RequestHandler {
         }
 
 
-        private Connection.ResponseCallback prepareAndReparse(final String toPrepare, final  Message.Response resultSetResponse) {
+        private Connection.ResponseCallback reprepareAndReparse(final String toPrepare, final  Message.Response resultSetResponse) {
             return new PrepareRequestResponseCallback(toPrepare) {
                 @Override
                 protected void onSuccessfulPrepare(Connection connection, Responses.Result preparedResponse) {
-                    logger.debug("Parse response that query is re-prepared");
+                    logger.info("Parse response that query is re-prepared");
                     Responses.Result.Prepared prepared = (Responses.Result.Prepared) preparedResponse;
                     Cluster cluster = manager.cluster;
                     ProtocolVersion version = cluster.getConfiguration().getProtocolOptions().getProtocolVersionEnum();
