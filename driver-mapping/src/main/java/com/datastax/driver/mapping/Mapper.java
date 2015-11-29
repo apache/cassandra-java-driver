@@ -77,16 +77,19 @@ public class Mapper<T> {
 
         this.protocolVersion = manager.getSession().getCluster().getConfiguration().getProtocolOptions().getProtocolVersionEnum();
         this.mapOneFunction = new Function<ResultSet, T>() {
+            @Override
             public T apply(ResultSet rs) {
                 return Mapper.this.mapAliased(rs).one();
             }
         };
         this.mapOneFunctionWithoutAliases = new Function<ResultSet, T>() {
+            @Override
             public T apply(ResultSet rs) {
                 return Mapper.this.map(rs).one();
             }
         };
         this.mapAllFunctionWithoutAliases = new Function<ResultSet, Result<T>>() {
+            @Override
             public Result<T> apply(ResultSet rs) {
                 return Mapper.this.map(rs);
             }
@@ -822,6 +825,7 @@ public class Mapper<T> {
                 this.ttlValue = value;
             }
 
+            @Override
             void appendTo(Insert.Options usings) {
                 usings.and(QueryBuilder.ttl(QueryBuilder.bindMarker()));
             }
@@ -1025,6 +1029,7 @@ public class Mapper<T> {
             return false;
         }
 
+        @Override
         public int hashCode() {
             return Objects.hashCode(queryType, optionTypes, columns);
         }

@@ -26,6 +26,7 @@ import java.util.Random;
 
 public class Generators {
     private static ThreadLocal<Random> random = new ThreadLocal<Random>() {
+        @Override
         protected Random initialValue() {
             return new Random();
         }
@@ -62,10 +63,12 @@ public class Generators {
 
     public static final QueryGenerator.Builder INSERTER = new QueryGenerator.Builder() {
 
+        @Override
         public String name() {
             return "insert";
         }
 
+        @Override
         public OptionParser addOptions(OptionParser parser) {
             String msg = "Simple insertion of CQL3 rows (using prepared statements unless the --no-prepare option is used). "
                     + "The inserted rows have a fixed set of columns but no clustering columns.";
@@ -78,6 +81,7 @@ public class Generators {
             return parser;
         }
 
+        @Override
         public void prepare(OptionSet options, Session session) {
 
             try {
@@ -100,6 +104,7 @@ public class Generators {
             session.execute(sb.toString());
         }
 
+        @Override
         public QueryGenerator create(int id, int iterations, OptionSet options, Session session) {
 
             return options.has("no-prepare")
@@ -159,10 +164,12 @@ public class Generators {
 
     public static final QueryGenerator.Builder READER = new QueryGenerator.Builder() {
 
+        @Override
         public String name() {
             return "read";
         }
 
+        @Override
         public OptionParser addOptions(OptionParser parser) {
             String msg = "Read the rows inserted with the insert generator. Use prepared statements unless the --no-prepare option is used.";
             parser.formatHelpWith(Stress.Help.formatFor(name(), msg));
@@ -171,6 +178,7 @@ public class Generators {
             return parser;
         }
 
+        @Override
         public void prepare(OptionSet options, Session session) {
             KeyspaceMetadata ks = session.getCluster().getMetadata().getKeyspace("stress");
             if (ks == null || ks.getTable("standard1") == null) {
@@ -181,6 +189,7 @@ public class Generators {
             session.execute("USE stress");
         }
 
+        @Override
         public QueryGenerator create(int id, int iterations, OptionSet options, Session session) {
             return options.has("no-prepare")
                     ? createRegular(id, iterations)

@@ -34,6 +34,7 @@ public interface AuthProvider {
      * This is only useful as a placeholder when no authentication is to be used.
      */
     public static final AuthProvider NONE = new AuthProvider() {
+        @Override
         public Authenticator newAuthenticator(InetSocketAddress host) {
             throw new AuthenticationException(host,
                     String.format("Host %s requires authentication, but no authenticator found in Cluster configuration", host));

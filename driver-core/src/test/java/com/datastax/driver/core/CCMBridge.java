@@ -386,6 +386,7 @@ public class CCMBridge {
     }
 
     public static class terminationHook extends Thread {
+        @Override
         public void run() {
             logger.debug("shut down hook task..");
 

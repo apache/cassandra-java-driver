@@ -73,6 +73,7 @@ abstract class ReplicationStrategy {
             this.replicationFactor = replicationFactor;
         }
 
+        @Override
         Map<Token, Set<Host>> computeTokenToReplicaMap(String keyspaceName, Map<Token, Host> tokenToPrimary, List<Token> ring) {
 
             int rf = Math.min(replicationFactor, ring.size());
@@ -116,7 +117,8 @@ abstract class ReplicationStrategy {
             this.replicationFactors = replicationFactors;
         }
 
-        Map<Token, Set<Host>> computeTokenToReplicaMap(String keyspaceName, Map<Token, Host> tokenToPrimary, List<Token> ring) {
+        @Override
+        Map<Token, Set<Host>> computeTokenToReplicaMap(String keyspaceName, Map<Token, Host> tokenToPrimary, List<Token> ring) {        
 
             // This is essentially a copy of org.apache.cassandra.locator.NetworkTopologyStrategy
             Map<String, Set<String>> racks = getRacksInDcs(tokenToPrimary.values());

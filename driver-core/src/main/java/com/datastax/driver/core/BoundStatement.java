@@ -304,6 +304,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
      * @throws InvalidTypeException      if column {@code i} is not of type BOOLEAN.
      */
+    @Override
     public BoundStatement setBool(int i, boolean v) {
         return wrapper.setBool(i, v);
     }
@@ -320,6 +321,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      *                                  variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
      * @throws InvalidTypeException     if (any one occurrence of) {@code name} is not of type BOOLEAN.
      */
+    @Override
     public BoundStatement setBool(String name, boolean v) {
         return wrapper.setBool(name, v);
     }
@@ -333,6 +335,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
      * @throws InvalidTypeException      if column {@code i} is not of type INT.
      */
+    @Override
     public BoundStatement setInt(int i, int v) {
         return wrapper.setInt(i, v);
     }
@@ -349,6 +352,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      *                                  variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
      * @throws InvalidTypeException     if (any one occurrence of) {@code name} is not of type INT.
      */
+    @Override
     public BoundStatement setInt(String name, int v) {
         return wrapper.setInt(name, v);
     }
@@ -362,6 +366,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
      * @throws InvalidTypeException      if column {@code i} is not of type BIGINT or COUNTER.
      */
+    @Override
     public BoundStatement setLong(int i, long v) {
         return wrapper.setLong(i, v);
     }
@@ -379,6 +384,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @throws InvalidTypeException     if (any occurrence of) {@code name} is
      *                                  not of type BIGINT or COUNTER.
      */
+    @Override
     public BoundStatement setLong(String name, long v) {
         return wrapper.setLong(name, v);
     }
@@ -392,6 +398,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
      * @throws InvalidTypeException      if column {@code i} is not of type TIMESTAMP.
      */
+    @Override
     public BoundStatement setDate(int i, Date v) {
         return wrapper.setDate(i, v);
     }
@@ -409,6 +416,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @throws InvalidTypeException     if (any occurrence of) {@code name} is
      *                                  not of type TIMESTAMP.
      */
+    @Override
     public BoundStatement setDate(String name, Date v) {
         return wrapper.setDate(name, v);
     }
@@ -422,6 +430,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
      * @throws InvalidTypeException      if column {@code i} is not of type FLOAT.
      */
+    @Override
     public BoundStatement setFloat(int i, float v) {
         return wrapper.setFloat(i, v);
     }
@@ -439,6 +448,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @throws InvalidTypeException     if (any occurrence of) {@code name} is
      *                                  not of type FLOAT.
      */
+    @Override
     public BoundStatement setFloat(String name, float v) {
         return wrapper.setFloat(name, v);
     }
@@ -452,6 +462,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
      * @throws InvalidTypeException      if column {@code i} is not of type DOUBLE.
      */
+    @Override
     public BoundStatement setDouble(int i, double v) {
         return wrapper.setDouble(i, v);
     }
@@ -469,6 +480,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @throws InvalidTypeException     if (any occurrence of) {@code name} is
      *                                  not of type DOUBLE.
      */
+    @Override
     public BoundStatement setDouble(String name, double v) {
         return wrapper.setDouble(name, v);
     }
@@ -483,6 +495,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @throws InvalidTypeException      if column {@code i} is of neither of the
      *                                   following types: VARCHAR, TEXT or ASCII.
      */
+    @Override
     public BoundStatement setString(int i, String v) {
         return wrapper.setString(i, v);
     }
@@ -500,6 +513,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @throws InvalidTypeException     if (any occurrence of) {@code name} is
      *                                  of neither of the following types: VARCHAR, TEXT or ASCII.
      */
+    @Override
     public BoundStatement setString(String name, String v) {
         return wrapper.setString(name, v);
     }
@@ -517,6 +531,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
      * @throws InvalidTypeException      if column {@code i} is not of type BLOB.
      */
+    @Override
     public BoundStatement setBytes(int i, ByteBuffer v) {
         return wrapper.setBytes(i, v);
     }
@@ -537,6 +552,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      *                                  variable, that is if {@code !this.preparedStatement().variables().names().contains(name)}.
      * @throws InvalidTypeException     if (any occurrence of) {@code name} is not of type BLOB.
      */
+    @Override
     public BoundStatement setBytes(String name, ByteBuffer v) {
         return wrapper.setBytes(name, v);
     }
@@ -554,6 +570,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @return this BoundStatement.
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
      */
+    @Override
     public BoundStatement setBytesUnsafe(int i, ByteBuffer v) {
         return wrapper.setBytesUnsafe(i, v);
     }
@@ -574,6 +591,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @throws IllegalArgumentException if {@code name} is not a prepared
      *                                  variable, that is if {@code !this.preparedStatement().variables().names().contains(name)}.
      */
+    @Override
     public BoundStatement setBytesUnsafe(String name, ByteBuffer v) {
         return wrapper.setBytesUnsafe(name, v);
     }
@@ -587,6 +605,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
      * @throws InvalidTypeException      if column {@code i} is not of type VARINT.
      */
+    @Override
     public BoundStatement setVarint(int i, BigInteger v) {
         return wrapper.setVarint(i, v);
     }
@@ -604,6 +623,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @throws InvalidTypeException     if (any occurrence of) {@code name} is
      *                                  not of type VARINT.
      */
+    @Override
     public BoundStatement setVarint(String name, BigInteger v) {
         return wrapper.setVarint(name, v);
     }
@@ -617,6 +637,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
      * @throws InvalidTypeException      if column {@code i} is not of type DECIMAL.
      */
+    @Override
     public BoundStatement setDecimal(int i, BigDecimal v) {
         return wrapper.setDecimal(i, v);
     }
@@ -634,6 +655,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @throws InvalidTypeException     if (any occurrence of) {@code name} is
      *                                  not of type DECIMAL.
      */
+    @Override
     public BoundStatement setDecimal(String name, BigDecimal v) {
         return wrapper.setDecimal(name, v);
     }
@@ -649,6 +671,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      *                                   TIMEUUID, or if column {@code i} is of type TIMEUUID but {@code v} is
      *                                   not a type 1 UUID.
      */
+    @Override
     public BoundStatement setUUID(int i, UUID v) {
         return wrapper.setUUID(i, v);
     }
@@ -667,6 +690,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      *                                  not of type UUID or TIMEUUID, or if column {@code name} is of type
      *                                  TIMEUUID but {@code v} is not a type 1 UUID.
      */
+    @Override
     public BoundStatement setUUID(String name, UUID v) {
         return wrapper.setUUID(name, v);
     }
@@ -680,6 +704,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
      * @throws InvalidTypeException      if column {@code i} is not of type INET.
      */
+    @Override
     public BoundStatement setInet(int i, InetAddress v) {
         return wrapper.setInet(i, v);
     }
@@ -697,6 +722,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @throws InvalidTypeException     if (any occurrence of) {@code name} is
      *                                  not of type INET.
      */
+    @Override
     public BoundStatement setInet(String name, InetAddress v) {
         return wrapper.setInet(name, v);
     }
@@ -795,6 +821,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @throws NullPointerException      if {@code v} contains null values. Nulls are not supported in collections
      *                                   by CQL.
      */
+    @Override
     public <T> BoundStatement setList(int i, List<T> v) {
         return wrapper.setList(i, v);
     }
@@ -818,6 +845,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @throws NullPointerException     if {@code v} contains null values. Nulls are not supported in collections
      *                                  by CQL.
      */
+    @Override
     public <T> BoundStatement setList(String name, List<T> v) {
         return wrapper.setList(name, v);
     }
@@ -839,6 +867,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @throws NullPointerException      if {@code v} contains null values. Nulls are not supported in collections
      *                                   by CQL.
      */
+    @Override
     public <K, V> BoundStatement setMap(int i, Map<K, V> v) {
         return wrapper.setMap(i, v);
     }
@@ -863,6 +892,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @throws NullPointerException     if {@code v} contains null values. Nulls are not supported in collections
      *                                  by CQL.
      */
+    @Override
     public <K, V> BoundStatement setMap(String name, Map<K, V> v) {
         return wrapper.setMap(name, v);
     }
@@ -883,6 +913,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @throws NullPointerException      if {@code v} contains null values. Nulls are not supported in collections
      *                                   by CQL.
      */
+    @Override
     public <T> BoundStatement setSet(int i, Set<T> v) {
         return wrapper.setSet(i, v);
     }
@@ -906,6 +937,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @throws NullPointerException     if {@code v} contains null values. Nulls are not supported in collections
      *                                  by CQL.
      */
+    @Override
     public <T> BoundStatement setSet(String name, Set<T> v) {
         return wrapper.setSet(name, v);
     }
@@ -920,6 +952,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @throws InvalidTypeException      if value {@code i} is not a UDT value or if its definition
      *                                   does not correspond to the one of {@code v}.
      */
+    @Override
     public BoundStatement setUDTValue(int i, UDTValue v) {
         return wrapper.setUDTValue(i, v);
     }
@@ -937,6 +970,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      *                                  not a UDT value or if the definition of column {@code name} does not correspond to
      *                                  the one of {@code v}.
      */
+    @Override
     public BoundStatement setUDTValue(String name, UDTValue v) {
         return wrapper.setUDTValue(name, v);
     }
@@ -951,6 +985,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @throws InvalidTypeException      if value {@code i} is not a tuple value or if its types
      *                                   do not correspond to the ones of {@code v}.
      */
+    @Override
     public BoundStatement setTupleValue(int i, TupleValue v) {
         return wrapper.setTupleValue(i, v);
     }
@@ -968,6 +1003,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      *                                  not a tuple value or if the types of column {@code name} do not correspond to
      *                                  the ones of {@code v}.
      */
+    @Override
     public BoundStatement setTupleValue(String name, TupleValue v) {
         return wrapper.setTupleValue(name, v);
     }
@@ -981,6 +1017,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @return this object.
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
      */
+    @Override
     public BoundStatement setToNull(int i) {
         return wrapper.setToNull(i);
     }
@@ -995,6 +1032,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @return this object.
      * @throws IllegalArgumentException if {@code name} is not a valid name for this object.
      */
+    @Override
     public BoundStatement setToNull(String name) {
         return wrapper.setToNull(name);
     }
@@ -1002,6 +1040,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     /**
      * {@inheritDoc}
      */
+    @Override
     public boolean isNull(int i) {
         return wrapper.isNull(i);
     }
@@ -1009,6 +1048,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     /**
      * {@inheritDoc}
      */
+    @Override
     public boolean isNull(String name) {
         return wrapper.isNull(name);
     }
@@ -1023,6 +1063,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     /**
      * {@inheritDoc}
      */
+    @Override
     public boolean getBool(String name) {
         return wrapper.getBool(name);
     }
@@ -1030,6 +1071,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     /**
      * {@inheritDoc}
      */
+    @Override
     public int getInt(int i) {
         return wrapper.getInt(i);
     }
@@ -1037,6 +1079,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     /**
      * {@inheritDoc}
      */
+    @Override
     public int getInt(String name) {
         return wrapper.getInt(name);
     }
@@ -1044,6 +1087,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     /**
      * {@inheritDoc}
      */
+    @Override
     public long getLong(int i) {
         return wrapper.getLong(i);
     }
@@ -1051,6 +1095,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     /**
      * {@inheritDoc}
      */
+    @Override
     public long getLong(String name) {
         return wrapper.getLong(name);
     }
@@ -1058,6 +1103,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     /**
      * {@inheritDoc}
      */
+    @Override
     public Date getDate(int i) {
         return wrapper.getDate(i);
     }
@@ -1065,6 +1111,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     /**
      * {@inheritDoc}
      */
+    @Override
     public Date getDate(String name) {
         return wrapper.getDate(name);
     }
@@ -1072,6 +1119,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     /**
      * {@inheritDoc}
      */
+    @Override
     public float getFloat(int i) {
         return wrapper.getFloat(i);
     }
@@ -1079,6 +1127,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     /**
      * {@inheritDoc}
      */
+    @Override
     public float getFloat(String name) {
         return wrapper.getFloat(name);
     }
@@ -1086,6 +1135,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     /**
      * {@inheritDoc}
      */
+    @Override
     public double getDouble(int i) {
         return wrapper.getDouble(i);
     }
@@ -1093,6 +1143,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     /**
      * {@inheritDoc}
      */
+    @Override
     public double getDouble(String name) {
         return wrapper.getDouble(name);
     }
@@ -1100,6 +1151,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     /**
      * {@inheritDoc}
      */
+    @Override
     public ByteBuffer getBytesUnsafe(int i) {
         return wrapper.getBytesUnsafe(i);
     }
@@ -1107,6 +1159,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     /**
      * {@inheritDoc}
      */
+    @Override
     public ByteBuffer getBytesUnsafe(String name) {
         return wrapper.getBytesUnsafe(name);
     }
@@ -1114,6 +1167,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     /**
      * {@inheritDoc}
      */
+    @Override
     public ByteBuffer getBytes(int i) {
         return wrapper.getBytes(i);
     }
@@ -1121,6 +1175,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     /**
      * {@inheritDoc}
      */
+    @Override
     public ByteBuffer getBytes(String name) {
         return wrapper.getBytes(name);
     }
@@ -1128,6 +1183,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     /**
      * {@inheritDoc}
      */
+    @Override
     public String getString(int i) {
         return wrapper.getString(i);
     }
@@ -1135,6 +1191,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     /**
      * {@inheritDoc}
      */
+    @Override
     public String getString(String name) {
         return wrapper.getString(name);
     }
@@ -1142,6 +1199,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     /**
      * {@inheritDoc}
      */
+    @Override
     public BigInteger getVarint(int i) {
         return wrapper.getVarint(i);
     }
@@ -1149,6 +1207,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     /**
      * {@inheritDoc}
      */
+    @Override
     public BigInteger getVarint(String name) {
         return wrapper.getVarint(name);
     }
@@ -1156,6 +1215,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     /**
      * {@inheritDoc}
      */
+    @Override
     public BigDecimal getDecimal(int i) {
         return wrapper.getDecimal(i);
     }
@@ -1163,6 +1223,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     /**
      * {@inheritDoc}
      */
+    @Override
     public BigDecimal getDecimal(String name) {
         return wrapper.getDecimal(name);
     }
@@ -1170,6 +1231,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     /**
      * {@inheritDoc}
      */
+    @Override
     public UUID getUUID(int i) {
         return wrapper.getUUID(i);
     }
@@ -1177,6 +1239,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     /**
      * {@inheritDoc}
      */
+    @Override
     public UUID getUUID(String name) {
         return wrapper.getUUID(name);
     }
@@ -1184,6 +1247,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     /**
      * {@inheritDoc}
      */
+    @Override
     public InetAddress getInet(int i) {
         return wrapper.getInet(i);
     }
@@ -1191,6 +1255,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     /**
      * {@inheritDoc}
      */
+    @Override
     public InetAddress getInet(String name) {
         return wrapper.getInet(name);
     }
@@ -1198,6 +1263,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     /**
      * {@inheritDoc}
      */
+    @Override
     public <T> List<T> getList(int i, Class<T> elementsClass) {
         return wrapper.getList(i, elementsClass);
     }
@@ -1205,6 +1271,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     /**
      * {@inheritDoc}
      */
+    @Override
     public <T> List<T> getList(int i, TypeToken<T> elementsType) {
         return wrapper.getList(i, elementsType);
     }
@@ -1212,6 +1279,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     /**
      * {@inheritDoc}
      */
+    @Override
     public <T> List<T> getList(String name, Class<T> elementsClass) {
         return wrapper.getList(name, elementsClass);
     }
@@ -1219,6 +1287,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     /**
      * {@inheritDoc}
      */
+    @Override
     public <T> List<T> getList(String name, TypeToken<T> elementsType) {
         return wrapper.getList(name, elementsType);
     }
@@ -1226,6 +1295,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     /**
      * {@inheritDoc}
      */
+    @Override
     public <T> Set<T> getSet(int i, Class<T> elementsClass) {
         return wrapper.getSet(i, elementsClass);
     }
@@ -1233,6 +1303,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     /**
      * {@inheritDoc}
      */
+    @Override
     public <T> Set<T> getSet(int i, TypeToken<T> elementsType) {
         return wrapper.getSet(i, elementsType);
     }
@@ -1240,6 +1311,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     /**
      * {@inheritDoc}
      */
+    @Override
     public <T> Set<T> getSet(String name, Class<T> elementsClass) {
         return wrapper.getSet(name, elementsClass);
     }
@@ -1247,6 +1319,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     /**
      * {@inheritDoc}
      */
+    @Override
     public <T> Set<T> getSet(String name, TypeToken<T> elementsType) {
         return wrapper.getSet(name, elementsType);
     }
@@ -1254,6 +1327,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     /**
      * {@inheritDoc}
      */
+    @Override
     public <K, V> Map<K, V> getMap(int i, Class<K> keysClass, Class<V> valuesClass) {
         return wrapper.getMap(i, keysClass, valuesClass);
     }
@@ -1261,6 +1335,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     /**
      * {@inheritDoc}
      */
+    @Override
     public <K, V> Map<K, V> getMap(int i, TypeToken<K> keysType, TypeToken<V> valuesType) {
         return wrapper.getMap(i, keysType, valuesType);
     }
@@ -1268,6 +1343,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     /**
      * {@inheritDoc}
      */
+    @Override
     public <K, V> Map<K, V> getMap(String name, Class<K> keysClass, Class<V> valuesClass) {
         return wrapper.getMap(name, keysClass, valuesClass);
     }
@@ -1275,6 +1351,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     /**
      * {@inheritDoc}
      */
+    @Override
     public <K, V> Map<K, V> getMap(String name, TypeToken<K> keysType, TypeToken<V> valuesType) {
         return wrapper.getMap(name, keysType, valuesType);
     }
@@ -1282,6 +1359,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     /**
      * {@inheritDoc}
      */
+    @Override
     public UDTValue getUDTValue(int i) {
         return wrapper.getUDTValue(i);
     }
@@ -1289,6 +1367,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     /**
      * {@inheritDoc}
      */
+    @Override
     public UDTValue getUDTValue(String name) {
         return wrapper.getUDTValue(name);
     }
@@ -1296,6 +1375,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     /**
      * {@inheritDoc}
      */
+    @Override
     public TupleValue getTupleValue(int i) {
         return wrapper.getTupleValue(i);
     }
@@ -1303,6 +1383,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     /**
      * {@inheritDoc}
      */
+    @Override
     public TupleValue getTupleValue(String name) {
         return wrapper.getTupleValue(name);
     }
@@ -1310,6 +1391,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     /**
      * {@inheritDoc}
      */
+    @Override
     public Object getObject(int i) {
         return wrapper.getObject(i);
     }
@@ -1317,6 +1399,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     /**
      * {@inheritDoc}
      */
+    @Override
     public Object getObject(String name) {
         return wrapper.getObject(name);
     }

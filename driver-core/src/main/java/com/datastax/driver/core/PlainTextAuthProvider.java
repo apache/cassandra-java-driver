@@ -77,6 +77,7 @@ public class PlainTextAuthProvider implements AuthProvider {
      * @return an Authenticator instance which can be used to perform
      * authentication negotiations on behalf of the client
      */
+    @Override
     public Authenticator newAuthenticator(InetSocketAddress host) {
         return new PlainTextAuthenticator(username, password);
     }
@@ -116,6 +117,7 @@ public class PlainTextAuthProvider implements AuthProvider {
             // no-op, the server should send nothing anyway
         }
 
+        @Override
         Map<String, String> getCredentials() {
             return ImmutableMap.of("username", new String(username, Charsets.UTF_8),
                     "password", new String(password, Charsets.UTF_8));

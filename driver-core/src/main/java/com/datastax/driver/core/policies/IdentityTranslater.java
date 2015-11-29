@@ -32,6 +32,7 @@ public class IdentityTranslater implements AddressTranslater {
      * @param address the address of a node as returned by Cassandra.
      * @return {@code address} unmodified.
      */
+    @Override
     public InetSocketAddress translate(InetSocketAddress address) {
         return address;
     }
