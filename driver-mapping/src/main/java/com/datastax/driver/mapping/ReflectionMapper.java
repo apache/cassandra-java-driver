@@ -50,7 +50,7 @@ class ReflectionMapper<T> extends EntityMapper<T> {
         try {
             return entityClass.newInstance();
         } catch (Exception e) {
-            throw new RuntimeException("Can't create an instance of " + entityClass.getName());
+            throw new RuntimeException("Can't create an instance of " + entityClass.getName(), e);
         }
     }
 
@@ -74,7 +74,7 @@ class ReflectionMapper<T> extends EntityMapper<T> {
             try {
                 return readMethod.invoke(entity);
             } catch (IllegalArgumentException e) {
-                throw new IllegalArgumentException("Could not get field '" + fieldName + "'");
+                throw new IllegalArgumentException("Could not get field '" + fieldName + "'", e);
             } catch (Exception e) {
                 throw new IllegalStateException("Unable to access getter for '" + fieldName + "' in " + entity.getClass().getName(), e);
             }
@@ -85,7 +85,7 @@ class ReflectionMapper<T> extends EntityMapper<T> {
             try {
                 writeMethod.invoke(entity, value);
             } catch (IllegalArgumentException e) {
-                throw new IllegalArgumentException("Could not set field '" + fieldName + "' to value '" + value + "'");
+                throw new IllegalArgumentException("Could not set field '" + fieldName + "' to value '" + value + "'", e);
             } catch (Exception e) {
                 throw new IllegalStateException("Unable to access setter for '" + fieldName + "' in " + entity.getClass().getName(), e);
             }
@@ -231,7 +231,7 @@ class ReflectionMapper<T> extends EntityMapper<T> {
                 return new LiteralMapper<T>(field, position, pd, columnCounter);
 
             } catch (IntrospectionException e) {
-                throw new IllegalArgumentException("Cannot find matching getter and setter for field '" + fieldName + "'");
+                throw new IllegalArgumentException("Cannot find matching getter and setter for field '" + fieldName + "'", e);
             }
         }
     }

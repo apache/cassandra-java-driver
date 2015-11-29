@@ -472,21 +472,21 @@ class HostConnectionPool implements Connection.Owner {
             return false;
         } catch (ConnectionException e) {
             open.decrementAndGet();
-            logger.debug("Connection error to {} while creating additional connection", host);
+            logger.debug("Connection error to {} while creating additional connection ", host, e);
             return false;
         } catch (AuthenticationException e) {
             // This shouldn't really happen in theory
             open.decrementAndGet();
-            logger.error("Authentication error while creating additional connection (error is: {})", e.getMessage());
+            logger.error("Authentication error while creating additional connection (error is: {}) ", e.getMessage(), e);
             return false;
         } catch (UnsupportedProtocolVersionException e) {
             // This shouldn't happen since we shouldn't have been able to connect in the first place
             open.decrementAndGet();
-            logger.error("UnsupportedProtocolVersionException error while creating additional connection (error is: {})", e.getMessage());
+            logger.error("UnsupportedProtocolVersionException error while creating additional connection (error is: {}) ", e.getMessage(), e);
             return false;
         } catch (ClusterNameMismatchException e) {
             open.decrementAndGet();
-            logger.error("ClusterNameMismatchException error while creating additional connection (error is: {})", e.getMessage());
+            logger.error("ClusterNameMismatchException error while creating additional connection (error is: {}) ", e.getMessage(), e);
             return false;
         }
     }

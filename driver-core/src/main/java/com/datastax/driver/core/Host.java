@@ -93,7 +93,7 @@ public class Host {
         try {
             this.cassandraVersion = VersionNumber.parse(cassandraVersion);
         } catch (IllegalArgumentException e) {
-            logger.warn("Error parsing Cassandra version {}. This shouldn't have happened", cassandraVersion);
+            logger.warn("Error parsing Cassandra version {}. This shouldn't have happened", cassandraVersion, e);
         }
     }
 

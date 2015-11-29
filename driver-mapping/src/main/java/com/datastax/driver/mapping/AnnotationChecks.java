@@ -72,7 +72,7 @@ class AnnotationChecks {
             } catch (IllegalArgumentException e) {
                 throw new IllegalArgumentException(String.format("Error while checking frozen types on field %s of %s %s: %s",
                                                                  field.getName(), classDescription,
-                                                                 field.getDeclaringClass().getName(), e.getMessage()));
+                                                                 field.getDeclaringClass().getName(), e.getMessage()), e);
             }
         }
         checkValidComputed(field);

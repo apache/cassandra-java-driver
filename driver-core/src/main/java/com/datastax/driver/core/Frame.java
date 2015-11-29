@@ -198,9 +198,9 @@ class Frame {
                     // it there).
                     return Frame.create(frame);
                 } catch (CorruptedFrameException e) {
-                    throw new DriverInternalError(e.getMessage());
+                    throw new DriverInternalError(e.getMessage(), e);
                 } catch (TooLongFrameException e) {
-                    throw new DriverInternalError(e.getMessage());
+                    throw new DriverInternalError(e.getMessage(), e);
                 }
             }
         }

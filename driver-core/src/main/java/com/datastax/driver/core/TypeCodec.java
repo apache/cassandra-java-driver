@@ -696,7 +696,7 @@ abstract class TypeCodec<T> {
             try {
                 return InetAddress.getByAddress(Bytes.getArray(bytes));
             } catch (UnknownHostException e) {
-                throw new InvalidTypeException("Invalid bytes for inet value, got " + bytes.remaining() + " bytes");
+                throw new InvalidTypeException("Invalid bytes for inet value, got " + bytes.remaining() + " bytes", e);
             }
         }
     }
@@ -838,7 +838,7 @@ abstract class TypeCodec<T> {
             try {
                 return UUID.fromString(value);
             } catch (IllegalArgumentException e) {
-                throw new InvalidTypeException(String.format("Cannot parse UUID value from \"%s\"", value));
+                throw new InvalidTypeException(String.format("Cannot parse UUID value from \"%s\"", value), e);
             }
         }
 
@@ -895,7 +895,7 @@ abstract class TypeCodec<T> {
             try {
                 return new BigInteger(value);
             } catch (NumberFormatException e) {
-                throw new InvalidTypeException(String.format("Cannot parse varint value from \"%s\"", value));
+                throw new InvalidTypeException(String.format("Cannot parse varint value from \"%s\"", value), e);
             }
         }
 
@@ -993,7 +993,7 @@ abstract class TypeCodec<T> {
                 }
                 return l;
             } catch (BufferUnderflowException e) {
-                throw new InvalidTypeException("Not enough bytes to deserialize list");
+                throw new InvalidTypeException("Not enough bytes to deserialize list.", e);
             }
         }
     }
@@ -1077,7 +1077,7 @@ abstract class TypeCodec<T> {
                 }
                 return l;
             } catch (BufferUnderflowException e) {
-                throw new InvalidTypeException("Not enough bytes to deserialize a set");
+                throw new InvalidTypeException("Not enough bytes to deserialize a set.", e);
             }
         }
     }
@@ -1184,7 +1184,7 @@ abstract class TypeCodec<T> {
                 }
                 return m;
             } catch (BufferUnderflowException e) {
-                throw new InvalidTypeException("Not enough bytes to deserialize a map");
+                throw new InvalidTypeException("Not enough bytes to deserialize a map.", e);
             }
         }
     }

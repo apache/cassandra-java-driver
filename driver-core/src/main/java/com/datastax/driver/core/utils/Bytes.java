@@ -19,11 +19,16 @@ import java.lang.reflect.Constructor;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Simple utility methods to make working with bytes (blob) easier.
  */
 public final class Bytes {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(Bytes.class);
+    
     private Bytes() {}
 
     private static final byte[] charToByte = new byte[256];
@@ -57,6 +62,7 @@ public final class Bytes {
             c = String.class.getDeclaredConstructor(int.class, int.class, char[].class);
             c.setAccessible(true);
         } catch (Exception e) {
+            LOGGER.warn("Unable to get String constructor (int, int, char[]).", e);
             c = null;
         }
         stringConstructor = c;

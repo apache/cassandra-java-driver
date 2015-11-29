@@ -20,6 +20,9 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.utils.UUIDs;
@@ -35,6 +38,8 @@ import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
 
 public class MailboxImpl implements MailboxService {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(MailboxImpl.class);
+    
     private static final String TABLE = "mailbox";
 
     private final Session session;
@@ -62,6 +67,8 @@ public class MailboxImpl implements MailboxService {
         try {
             session.execute("USE " + keyspace);
         } catch (InvalidQueryException e) {
+            LOGGER.warn("Error executing query : USE " + keyspace, e);
+            
             session.execute("CREATE KEYSPACE " + keyspace +
                 " with replication = {'class': 'SimpleStrategy', 'replication_factor' : 1}");
 

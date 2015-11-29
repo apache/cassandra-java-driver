@@ -367,7 +367,7 @@ public class CCMBridge {
             connectionSuccessful = true;
             logger.debug("Successfully connected");
         } catch (IOException e) {
-            logger.debug("Connection failed");
+            logger.debug("Connection failed", e);
         } finally {
             if (socket != null)
                 try {
