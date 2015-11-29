@@ -99,7 +99,7 @@ public class Mapper<T> {
         this.defaultDeleteOptions = NO_OPTIONS;
     }
 
-    Session session() {
+    final Session session() {
         return manager.getSession();
     }
 
