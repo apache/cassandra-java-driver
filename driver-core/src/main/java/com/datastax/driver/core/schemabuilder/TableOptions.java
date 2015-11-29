@@ -1042,10 +1042,12 @@ public abstract class TableOptions<T extends TableOptions> extends SchemaStateme
                 super(Algorithm.NONE);
             }
 
+            @Override
             public CompressionOptions withChunkLengthInKb(Integer chunkLengthInKb) {
                 return this;
             }
 
+            @Override
             public CompressionOptions withCRCCheckChance(Double crcCheckChance) {
                 return this;
             }

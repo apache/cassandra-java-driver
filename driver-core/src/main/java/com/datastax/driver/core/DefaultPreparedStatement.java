@@ -95,42 +95,51 @@ public class DefaultPreparedStatement implements IdempotenceAwarePreparedStateme
         return true;
     }
 
+    @Override
     public ColumnDefinitions getVariables() {
         return preparedId.metadata;
     }
 
+    @Override
     public BoundStatement bind(Object... values) {
         BoundStatement bs = new BoundStatement(this);
         return bs.bind(values);
     }
 
+    @Override
     public BoundStatement bind() {
         return new BoundStatement(this);
     }
 
+    @Override
     public PreparedStatement setRoutingKey(ByteBuffer routingKey) {
         this.routingKey = routingKey;
         return this;
     }
 
+    @Override
     public PreparedStatement setRoutingKey(ByteBuffer... routingKeyComponents) {
         this.routingKey = SimpleStatement.compose(routingKeyComponents);
         return this;
     }
 
+    @Override
     public ByteBuffer getRoutingKey() {
         return routingKey;
     }
 
+    @Override
     public PreparedStatement setConsistencyLevel(ConsistencyLevel consistency) {
         this.consistency = consistency;
         return this;
     }
 
+    @Override
     public ConsistencyLevel getConsistencyLevel() {
         return consistency;
     }
 
+    @Override
     public PreparedStatement setSerialConsistencyLevel(ConsistencyLevel serialConsistency) {
         if (serialConsistency != ConsistencyLevel.SERIAL && serialConsistency != ConsistencyLevel.LOCAL_SERIAL)
             throw new IllegalArgumentException();
@@ -138,50 +147,61 @@ public class DefaultPreparedStatement implements IdempotenceAwarePreparedStateme
         return this;
     }
 
+    @Override
     public ConsistencyLevel getSerialConsistencyLevel() {
         return serialConsistency;
     }
 
+    @Override
     public String getQueryString() {
         return query;
     }
 
+    @Override
     public String getQueryKeyspace() {
         return queryKeyspace;
     }
 
+    @Override
     public PreparedStatement enableTracing() {
         this.traceQuery = true;
         return this;
     }
 
+    @Override
     public PreparedStatement disableTracing() {
         this.traceQuery = false;
         return this;
     }
 
+    @Override
     public boolean isTracing() {
         return traceQuery;
     }
 
+    @Override
     public PreparedStatement setRetryPolicy(RetryPolicy policy) {
         this.retryPolicy = policy;
         return this;
     }
 
+    @Override
     public RetryPolicy getRetryPolicy() {
         return retryPolicy;
     }
 
+    @Override
     public PreparedId getPreparedId() {
         return preparedId;
     }
 
+    @Override
     public PreparedStatement setIdempotent(Boolean idempotent) {
         this.idempotent = idempotent;
         return this;
     }
 
+    @Override
     public Boolean isIdempotent() {
         return this.idempotent;
     }

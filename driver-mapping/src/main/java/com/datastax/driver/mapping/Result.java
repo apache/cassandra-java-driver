@@ -102,18 +102,22 @@ public class Result<T> implements Iterable<T> {
      * @return an iterator that will consume and return the remaining rows of
      * this mapped result set.
      */
-    public Iterator<T> iterator() {
+    @Override
+    public Iterator<T> iterator() {        
         return new Iterator<T>() {
             private final Iterator<Row> rowIterator = rs.iterator();
 
+            @Override
             public boolean hasNext() {
                 return rowIterator.hasNext();
             }
 
+            @Override
             public T next() {
                 return map(rowIterator.next());
             }
 
+            @Override
             public void remove() {
                 throw new UnsupportedOperationException();
             }

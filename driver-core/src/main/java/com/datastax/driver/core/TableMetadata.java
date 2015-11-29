@@ -46,6 +46,7 @@ public class TableMetadata {
     private static final String DEFAULT_VALUE_ALIAS  = "value";
 
     private static final Comparator<ColumnMetadata> columnMetadataComparator = new Comparator<ColumnMetadata>() {
+        @Override
         public int compare(ColumnMetadata c1, ColumnMetadata c2) {
             return c1.getName().compareTo(c2.getName());
         }
@@ -72,6 +73,7 @@ public class TableMetadata {
         ASC, DESC;
 
         static final Predicate<Order> isAscending = new Predicate<Order>() {
+            @Override
             public boolean apply(Order o) {
                 return o == ASC;
             }

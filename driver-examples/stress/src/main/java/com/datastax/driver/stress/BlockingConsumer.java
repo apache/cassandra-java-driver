@@ -55,6 +55,7 @@ public class BlockingConsumer implements Consumer {
             super("Consumer Threads");
         }
 
+        @Override
         public void run() {
             try {
                 while (requests.hasNext())

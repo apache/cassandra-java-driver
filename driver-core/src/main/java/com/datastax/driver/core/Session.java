@@ -320,6 +320,7 @@ public interface Session extends Closeable {
      * If you want to do so, use {@link Cluster#close}, but note that it will
      * close all sessions created from that cluster.
      */
+    @Override
     public void close();
 
     /**
