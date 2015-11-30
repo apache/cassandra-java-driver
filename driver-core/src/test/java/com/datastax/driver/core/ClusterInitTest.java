@@ -239,7 +239,7 @@ public class ClusterInitTest {
         primingClient.prime(
             PrimingRequest.queryBuilder()
                 .withQuery("SELECT * FROM system.peers")
-                .withColumnTypes(SCassandraCluster.SELECT_PEERS_COLUMN_TYPES)
+                .withColumnTypes(ScassandraCluster.SELECT_PEERS)
                 .withRows(rows)
                 .build());
     }

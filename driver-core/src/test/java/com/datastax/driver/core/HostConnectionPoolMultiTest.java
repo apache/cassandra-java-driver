@@ -32,13 +32,14 @@ import static org.scassandra.http.client.ClosedConnectionReport.CloseType.CLOSE;
 
 public class HostConnectionPoolMultiTest {
 
-    private SCassandraCluster scassandra;
+    private ScassandraCluster scassandra;
 
     private Cluster cluster;
 
     @BeforeMethod(groups={"short", "long"})
     private void setUp() {
-        scassandra = new SCassandraCluster(2);
+        scassandra = ScassandraCluster.builder().withNodes(2).build();
+        scassandra.init();
     }
 
     @AfterMethod(groups={"short", "long"})
@@ -72,7 +73,7 @@ public class HostConnectionPoolMultiTest {
     @Test(groups="short")
     public void should_mark_host_down_if_all_connections_fail_on_init() {
         // Prevent any connections on node 2.
-        scassandra.instance(2).currentClient().disableListener();
+        scassandra.node(2).currentClient().disableListener();
         createCluster(8,8);
 
         // Node 2 should be in a down state while node 1 stays up.
@@ -80,7 +81,7 @@ public class HostConnectionPoolMultiTest {
         assertThat(cluster).host(1).isUp();
 
         // Node 2 should come up as soon as it is able to reconnect.
-        scassandra.instance(2).currentClient().enableListener();
+        scassandra.node(2).currentClient().enableListener();
         assertThat(cluster).host(2).comesUpWithin(2, SECONDS);
     }
 
@@ -104,7 +105,7 @@ public class HostConnectionPoolMultiTest {
         InetSocketAddress controlSocket = (InetSocketAddress)controlConnection.channel.localAddress();
 
         // Close the control connection.
-        scassandra.instance(1).currentClient()
+        scassandra.node(1).currentClient()
                 .closeConnection(CLOSE, controlSocket);
 
         // Sleep reconnect interval * 2 to allow time to reconnect.
