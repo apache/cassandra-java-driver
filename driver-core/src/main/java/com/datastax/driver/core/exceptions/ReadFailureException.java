@@ -80,12 +80,12 @@ public class ReadFailureException extends QueryConsistencyException {
     }
 
     @Override
-    public DriverException copy() {
+    public ReadFailureException copy() {
         return new ReadFailureException(getAddress(), getMessage(), this, getConsistencyLevel(), getReceivedAcknowledgements(),
             getRequiredAcknowledgements(), getFailures(), wasDataRetrieved());
     }
 
-    public DriverException copy(InetSocketAddress address) {
+    public ReadFailureException copy(InetSocketAddress address) {
         return new ReadFailureException(
             address,
             getMessage(),

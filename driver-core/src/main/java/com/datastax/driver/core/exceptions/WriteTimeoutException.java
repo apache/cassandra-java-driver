@@ -62,7 +62,7 @@ public class WriteTimeoutException extends QueryConsistencyException {
     }
 
     @Override
-    public DriverException copy() {
+    public WriteTimeoutException copy() {
         return new WriteTimeoutException(
             getAddress(),
             getMessage(),

@@ -19,6 +19,8 @@ import org.testng.annotations.Test;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
 
+import com.datastax.driver.core.exceptions.BusyConnectionException;
+
 public class StreamIdGeneratorTest {
 
     @Test(groups = "unit")
@@ -42,11 +44,6 @@ public class StreamIdGeneratorTest {
         generator.release(100);
         assertEquals(generator.next(), 100);
 
-        try {
-            generator.next();
-            fail("No more streamId should be available");
-        } catch (BusyConnectionException e) {
-            // Ok, expected
-        }
+        assertEquals(generator.next(), -1);
     }
 }

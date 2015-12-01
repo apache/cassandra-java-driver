@@ -32,6 +32,7 @@ import com.datastax.driver.core.Message.Response;
 import com.datastax.driver.core.exceptions.DriverInternalError;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
+import com.datastax.driver.core.exceptions.UnsupportedProtocolVersionException;
 import com.datastax.driver.core.policies.LoadBalancingPolicy;
 import com.datastax.driver.core.policies.ReconnectionPolicy;
 import com.datastax.driver.core.policies.SpeculativeExecutionPolicy;
@@ -357,7 +358,7 @@ class SessionManager extends AbstractSession {
                     @Override
                     public void onFailure(Throwable t) {
                         if (t instanceof UnsupportedProtocolVersionException) {
-                            cluster.manager.logUnsupportedVersionProtocol(host, ((UnsupportedProtocolVersionException)t).unsupportedVersion);
+                            cluster.manager.logUnsupportedVersionProtocol(host, ((UnsupportedProtocolVersionException)t).getUnsupportedVersion());
                             cluster.manager.triggerOnDown(host, false);
                         } else if (t instanceof ClusterNameMismatchException) {
                             ClusterNameMismatchException e = (ClusterNameMismatchException)t;

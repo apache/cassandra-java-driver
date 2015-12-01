@@ -20,12 +20,8 @@ import java.net.InetSocketAddress;
 
 /**
  * Indicates that the contacted host replied with an UNPREPARED error code.
- * This class is mainly intended for internal use;
- * client applications are not expected to deal with this exception directly,
- * because the driver would transparently prepare the query and execute it again;
- * but such exceptions are likely to appear occasionally in the driver logs.
  */
-public class UnpreparedException extends DriverInternalError implements CoordinatorException {
+public class UnpreparedException extends QueryValidationException implements CoordinatorException {
 
     private static final long serialVersionUID = 0;
 

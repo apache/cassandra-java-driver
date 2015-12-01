@@ -505,8 +505,7 @@ class RequestHandler {
                                 connection.release();
                                 // Try another node
                                 logger.warn("Host {} is overloaded, trying next host.", connection.address);
-                                DriverException overloaded = new DriverException("Host overloaded");
-                                logError(connection.address, overloaded);
+                                logError(connection.address, exceptionToReport);
                                 if (metricsEnabled())
                                     metrics().getErrorMetrics().getOthers().inc();
                                 retry(false, null);
@@ -515,9 +514,8 @@ class RequestHandler {
                                 connection.release();
                                 // Defunct connection and try another node
                                 logger.warn("{} replied with server error ({}), trying next host.", connection.address, err.message);
-                                DriverException exception = new DriverException("Host replied with server error: " + err.message);
-                                logError(connection.address, exception);
-                                connection.defunct(exception);
+                                logError(connection.address, exceptionToReport);
+                                connection.defunct(exceptionToReport);
                                 if (metricsEnabled())
                                     metrics().getErrorMetrics().getOthers().inc();
                                 retry(false, null);
@@ -526,8 +524,7 @@ class RequestHandler {
                                 connection.release();
                                 // Try another node
                                 logger.error("Query sent to {} but it is bootstrapping. This shouldn't happen but trying next host.", connection.address);
-                                DriverException bootstrapping = new DriverException("Host is bootstrapping");
-                                logError(connection.address, bootstrapping);
+                                logError(connection.address, exceptionToReport);
                                 if (metricsEnabled())
                                     metrics().getErrorMetrics().getOthers().inc();
                                 retry(false, null);
@@ -678,7 +675,7 @@ class RequestHandler {
                         return false;
                     }
                     connection.release();
-                    logError(connection.address, new DriverException("Timeout waiting for response to prepare message"));
+                    logError(connection.address, new OperationTimedOutException(connection.address, "Timeout waiting for response to prepare message"));
                     retry(false, null);
                     return true;
                 }

@@ -22,10 +22,6 @@ public class DriverException extends RuntimeException {
 
     private static final long serialVersionUID = 0;
 
-    DriverException() {
-        super();
-    }
-
     public DriverException(String message) {
         super(message);
     }
@@ -41,7 +37,7 @@ public class DriverException extends RuntimeException {
     /**
      * Copy the exception.
      * <p>
-     * This return a new exception, equivalent to the original one, except that
+     * This returns a new exception, equivalent to the original one, except that
      * because a new object is created in the current thread, the top-most
      * element in the stacktrace of the exception will refer to the current
      * thread (this is mainly intended for internal use by the driver). The cause of

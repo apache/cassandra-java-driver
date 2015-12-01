@@ -22,17 +22,17 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Exception thrown when a query cannot be performed because no host are
+ * Exception thrown when a query cannot be performed because no host is
  * available.
- *
- * This exception is thrown if
+ * <p>
+ * This exception is thrown if either:
  * <ul>
- *   <li>either there is no host live in the cluster at the moment of the query</li>
- *   <li>all host that have been tried have failed due to a connection problem</li>
+ *   <li>there is no host live in the cluster at the moment of the query;</li>
+ *   <li>all hosts that have been tried have failed.</li>
  * </ul>
  *
- * For debugging purpose, the list of hosts that have been tried along with the
- * failure cause can be retrieved using the {@link #errors} method.
+ * For debugging purposes, the list of hosts that have been tried along with the
+ * failure cause can be retrieved using the {@link #getErrors()} method.
  */
 public class NoHostAvailableException extends DriverException {
 
@@ -80,7 +80,7 @@ public class NoHostAvailableException extends DriverException {
     }
 
     @Override
-    public DriverException copy() {
+    public NoHostAvailableException copy() {
         return new NoHostAvailableException(getMessage(), this, errors);
     }
 

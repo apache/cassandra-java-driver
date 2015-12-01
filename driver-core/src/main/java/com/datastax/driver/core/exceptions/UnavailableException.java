@@ -21,7 +21,7 @@ import java.net.InetSocketAddress;
 import com.datastax.driver.core.ConsistencyLevel;
 
 /**
- * Exception thrown when the coordinator knows there is not enough replica
+ * Exception thrown when the coordinator knows there is not enough replicas
  * alive to perform a query with the requested consistency level.
  */
 public class UnavailableException extends QueryExecutionException implements CoordinatorException {
@@ -78,10 +78,10 @@ public class UnavailableException extends QueryExecutionException implements Coo
     }
 
     /**
-     * The number of replica that were known to be alive by the Cassandra
+     * The number of replicas that were known to be alive by the Cassandra
      * coordinator node when it tried to execute the operation.
      *
-     * @return The number of replica that were known to be alive by the Cassandra
+     * @return The number of replicas that were known to be alive by the Cassandra
      * coordinator node when it tried to execute the operation.
      */
     public int getAliveReplicas() {
@@ -105,7 +105,7 @@ public class UnavailableException extends QueryExecutionException implements Coo
     }
 
     @Override
-    public DriverException copy() {
+    public UnavailableException copy() {
         return new UnavailableException(getAddress(), getMessage(), this, consistency, required, alive);
     }
 

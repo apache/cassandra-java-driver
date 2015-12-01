@@ -25,6 +25,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.datastax.driver.core.exceptions.AuthenticationException;
+import com.datastax.driver.core.exceptions.ConnectionException;
+import com.datastax.driver.core.exceptions.UnsupportedProtocolVersionException;
 import com.datastax.driver.core.policies.ReconnectionPolicy;
 
 /**
@@ -140,7 +142,7 @@ abstract class AbstractReconnectionHandler implements Runnable {
             if (onAuthenticationException(e, nextDelay)) {
                 reschedule(nextDelay);
             } else {
-                logger.error("Retry against {} have been suspended. It won't be retried unless the node is restarted.", e.getHost());
+                logger.error("Retries against {} have been suspended. It won't be retried unless the node is restarted.", e.getHost());
                 currentAttempt.compareAndSet(handlerFuture, null);
             }
         } catch (InterruptedException e) {
@@ -151,7 +153,7 @@ abstract class AbstractReconnectionHandler implements Runnable {
             if (onUnsupportedProtocolVersionException(e, nextDelay)) {
                 reschedule(nextDelay);
             } else {
-                logger.error("Retry against {} have been suspended. It won't be retried unless the node is restarted.", e.address);
+                logger.error("Retries against {} have been suspended. It won't be retried unless the node is restarted.", e.getHost());
                 currentAttempt.compareAndSet(handlerFuture, null);
             }
         } catch (ClusterNameMismatchException e) {
@@ -160,7 +162,7 @@ abstract class AbstractReconnectionHandler implements Runnable {
             if (onClusterNameMismatchException(e, nextDelay)) {
                 reschedule(nextDelay);
             } else {
-                logger.error("Retry against {} have been suspended. It won't be retried unless the node is restarted.", e.address);
+                logger.error("Retries against {} have been suspended. It won't be retried unless the node is restarted.", e.address.getAddress());
                 currentAttempt.compareAndSet(handlerFuture, null);
             }
         } catch (Exception e) {
