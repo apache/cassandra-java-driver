@@ -72,10 +72,6 @@
                   
                     <li class="disabled"><a href="./">2.2.0-rc3</a></li>
                   
-                    <li><a href="../../2.2.0-rc2/upgrade_guide/">2.2.0-rc2</a></li>
-                  
-                    <li><a href="../../2.2.0-rc1/upgrade_guide/">2.2.0-rc1</a></li>
-                  
                     <li><a href="../../2.1.9/upgrade_guide/">2.1.9</a></li>
                   
                     <li><a href="../../2.1.8/upgrade_guide/">2.1.8</a></li>
@@ -526,6 +522,9 @@ explanations). So they become purely informational at this stage.
 However it is a good idea to keep using these annotations and make sure
 they match the schema, in anticipation for the schema generation features
 that will be added in a future version.</p></li>
+<li><p><code>AsyncInitSession</code> has been removed, <code>initAsync()</code> is now part of the
+<code>Session</code> interface (the only purpose of the extra interface was to preserve
+binary compatibility on the 2.1 branch).</p></li>
 </ol>
 
 <h3 id="2-1-7" class="target">2.1.7<a class="anchor" href="#2-1-7" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
@@ -709,19 +708,28 @@ the protocol version in use
 <h3 id="2-0-11" class="target">2.0.11<a class="anchor" href="#2-0-11" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h3>
 
+<p>2.0.11 preserves binary compatibility with previous versions. There are a few
+changes in the driver’s behavior:</p>
+
 <ol>
-<li>The <code>DefaultRetryPolicy</code>’s behaviour has changed in the case of an Unavailable
+<li><p>The <code>DefaultRetryPolicy</code>’s behaviour has changed in the case of an Unavailable
 exception received from a request. The new behaviour will cause the driver to
 process a Retry on a different node at most once, otherwise an exception will
 be thrown. This change makes sense in the case where the node tried initially
 for the request happens to be isolated from the rest of the cluster (e.g.
 because of a network partition) but can still answer to the client normally.
 In this case, trying another node has a chance of success.
-The previous behaviour was to always throw an exception.</li>
-<li>A <code>BuiltStatement</code> is now considered non-idempotent whenever a <code>fcall()</code>
+The previous behaviour was to always throw an exception.</p></li>
+<li><p>A <code>BuiltStatement</code> is now considered non-idempotent whenever a <code>fcall()</code>
 or <code>raw()</code> is used to build a value to be inserted in the database.
 If you know that the CQL functions or expressions are safe, use
-<code>setIdempotent(true)</code> on the statement.</li>
+<code>setIdempotent(true)</code> on the statement.</p></li>
+<li><p>The list of contact points provided at startup is now shuffled before trying
+to open the control connection, so that multiple clients with the same contact
+points don’t all pick the same control host. As a result, you can’t assume that
+the driver will try contact points in a deterministic order. In particular, if
+you use the <code>DCAwareRoundRobinPolicy</code> without specifying a primary datacenter
+name, make sure that you only provide local hosts as contact points.</p></li>
 </ol>
 
 <h3 id="2-0-x-to-2-0-10" class="target">
