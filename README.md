@@ -1,5 +1,13 @@
 # Datastax Java Driver for Apache Cassandra
 
+-----
+
+**Note:** the 2.2 branch has been retired (see
+[this announcement](https://groups.google.com/a/lists.datastax.com/forum/#!topic/java-driver-user/Vu0cD0BguMc)).
+You are encouraged to move to 3.0.
+
+-----
+
 [![Build Status](https://travis-ci.org/datastax/java-driver.svg?branch=2.2)](https://travis-ci.org/datastax/java-driver)
 
 *If you're reading this on github.com, please note that this is the readme
