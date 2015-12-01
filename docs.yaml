@@ -41,11 +41,7 @@ versions:
   - name: 3.0.0-alpha5
     ref: '3.0.0-alpha5'
   - name: 2.2.0-rc3
-    ref: '2.2.0-rc3'
-  - name: 2.2.0-rc2
-    ref: '4adddcf'
-  - name: 2.2.0-rc1
-    ref: '2.2.0-rc1'
+    ref: '49bb860'
   - name: 2.1.9
     ref: '2.1.9'
   - name: 2.1.8
