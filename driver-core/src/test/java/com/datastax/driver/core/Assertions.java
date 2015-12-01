@@ -25,6 +25,10 @@ public class Assertions extends org.assertj.core.api.Assertions{
         return new ClusterAssert(cluster);
     }
 
+    public static HostAssert assertThat(Host host) {
+        return new HostAssert(host);
+    }
+
     public static SessionAssert assertThat(Session session) {
         return new SessionAssert(session);
     }

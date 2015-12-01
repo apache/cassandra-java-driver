@@ -31,6 +31,10 @@ public class HostAssert extends AbstractAssert<HostAssert, Host> {
 
     private final Cluster cluster;
 
+    protected HostAssert(Host host) {
+        this(host, null);
+    }
+
     protected HostAssert(Host host, Cluster cluster) {
         super(host, HostAssert.class);
         this.cluster = cluster;
@@ -60,6 +64,11 @@ public class HostAssert extends AbstractAssert<HostAssert, Host> {
     public HostAssert isReconnectingFromDown() {
         assertThat(actual.getReconnectionAttemptFuture() != null && !actual.getReconnectionAttemptFuture().isDone())
             .isTrue();
+        return this;
+    }
+
+    public HostAssert isInDatacenter(String datacenter) {
+        assertThat(actual.getDatacenter()).isEqualTo(datacenter);
         return this;
     }
 

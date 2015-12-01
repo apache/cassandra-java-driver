@@ -20,6 +20,7 @@ import java.util.Map;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import org.scassandra.Scassandra;
 import org.scassandra.http.client.PrimingRequest;
 import org.testng.annotations.*;
 
@@ -36,7 +37,7 @@ import static com.datastax.driver.core.ConsistencyLevel.ONE;
 
 public class ExceptionsScassandraTest {
 
-    protected SCassandraCluster scassandras;
+    protected ScassandraCluster scassandras;
     protected Cluster cluster;
     protected Metrics.Errors errors;
     protected Host host1;
@@ -44,7 +45,8 @@ public class ExceptionsScassandraTest {
 
     @BeforeClass(groups = "short")
     public void beforeClass() {
-        scassandras = new SCassandraCluster(CCMBridge.IP_PREFIX, 1);
+        scassandras = ScassandraCluster.builder().withNodes(1).build();
+        scassandras.init();
     }
 
     @BeforeMethod(groups = "short")
@@ -56,8 +58,11 @@ public class ExceptionsScassandraTest {
         session = cluster.connect();
         host1 = TestUtils.findHost(cluster, 1);
         errors = cluster.getMetrics().getErrorMetrics();
-        scassandras.clearAllPrimes();
-        scassandras.clearAllRecordedActivity();
+
+        for(Scassandra node : scassandras.nodes()) {
+            node.primingClient().clearAllPrimes();
+            node.activityClient().clearAllRecordedActivity();
+        }
     }
 
     @Test(groups = "short")
@@ -110,11 +115,10 @@ public class ExceptionsScassandraTest {
     }
 
     protected void simulateError(int hostNumber, PrimingRequest.Result result) {
-        scassandras
-            .prime(hostNumber, PrimingRequest.queryBuilder()
-                .withQuery("mock query")
-                .withResult(result)
-                .build());
+        scassandras.node(hostNumber).primingClient().prime(PrimingRequest.queryBuilder()
+            .withQuery("mock query")
+            .withResult(result)
+            .build());
     }
 
     private static List<Map<String, ?>> row(String key, String value) {
@@ -131,7 +135,9 @@ public class ExceptionsScassandraTest {
 
     @AfterMethod(groups = "short")
     public void afterMethod() {
-        scassandras.clearAllPrimes();
+        for(Scassandra node : scassandras.nodes()) {
+            node.primingClient().clearAllPrimes();
+        }
         if (cluster != null)
             cluster.close();
     }

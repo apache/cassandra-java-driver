@@ -47,6 +47,11 @@ public class ClusterAssert extends AbstractAssert<ClusterAssert, Cluster> {
         return this;
     }
 
+    public HostAssert controlHost() {
+        Host host = TestUtils.findOrWaitForControlConnection(actual, 10, TimeUnit.SECONDS);
+        return new HostAssert(host, actual);
+    }
+
     public HostAssert host(int hostNumber) {
         // Wait for the node to be added if it's not already known.
         // In 2.2+ C* does not send an added event until the node is ready so we wait a long time.

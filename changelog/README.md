@@ -6,6 +6,11 @@
 - [bug] JAVA-983: QueryBuilder cannot handle collections containing function calls.
 - [improvement] JAVA-863: Idempotence propagation in PreparedStatements.
 
+Merged from 2.0 branch:
+
+- [bug] JAVA-994: Don't call on(Up|Down|Add|Remove) methods if Cluster is closed/closing.
+- [bug] JAVA-995: Defunct connection even if initializing.
+
 
 ### 2.1.9
 
@@ -340,6 +345,12 @@ Merged from 2.0 branch: everything up to 2.0.3 (included), and the following.
 - [bug] Avoid classloader leak in Tomcat (JAVA-343)
 - [bug] Avoid deadlock in onAdd/onUp (JAVA-387)
 - [bug] Make metadata parsing more lenient (JAVA-377, JAVA-391)
+
+
+### 2.0.13 (in progress)
+
+- [bug] JAVA-994: Don't call on(Up|Down|Add|Remove) methods if Cluster is closed/closing.
+- [bug] JAVA-995: Defunct connection even if initializing.
 
 
 ### 2.0.12

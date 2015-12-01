@@ -16,6 +16,7 @@
 package com.datastax.driver.core;
 
 import java.net.InetAddress;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -23,10 +24,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.google.common.base.Function;
 import com.google.common.collect.HashMultiset;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.Test;
+
+import static com.google.common.collect.Lists.newArrayList;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.TestUtils.nonDebouncingQueryOptions;
@@ -188,13 +192,18 @@ public class ControlConnectionTest {
     public void should_randomize_contact_points_when_determining_control_connection() {
         int hostCount = 5;
         int iterations = 100;
-        SCassandraCluster scassandras = new SCassandraCluster(hostCount);
+        ScassandraCluster scassandras = ScassandraCluster.builder().withNodes(hostCount).build();
+        scassandras.init();
 
         try {
+            Collection<String> contactPoints = newArrayList();
+            for(int i = 1; i <= hostCount; i++) {
+                contactPoints.add(scassandras.address(i));
+            }
             final HashMultiset<InetAddress> occurrencesByHost = HashMultiset.create(hostCount);
             for(int i = 0; i < iterations; i++) {
                 Cluster cluster = Cluster.builder()
-                    .addContactPoints(scassandras.addresses())
+                    .addContactPoints(contactPoints.toArray(new String[hostCount]))
                     .withNettyOptions(nonQuietClusterCloseOptions)
                     .build();
 

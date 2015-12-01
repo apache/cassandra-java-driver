@@ -27,6 +27,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.Uninterruptibles;
 import io.netty.channel.EventLoopGroup;
 import org.scassandra.Scassandra;
 import org.scassandra.ScassandraFactory;
@@ -428,6 +429,19 @@ public abstract class TestUtils {
         for (Host host : cluster.getMetadata().allHosts()) {
             if (host.getAddress().getHostAddress().equals(address))
                 return host;
+        }
+        return null;
+    }
+
+    public static Host findOrWaitForControlConnection(final Cluster cluster, long duration, TimeUnit unit) {
+        ControlConnection controlConnection = cluster.manager.controlConnection;
+        long durationNs = TimeUnit.NANOSECONDS.convert(duration, unit);
+        long start = System.nanoTime();
+        while(System.nanoTime() - start < durationNs) {
+            if(controlConnection.isOpen()) {
+                return controlConnection.connectedHost();
+            }
+            Uninterruptibles.sleepUninterruptibly(100, TimeUnit.MILLISECONDS);
         }
         return null;
     }
