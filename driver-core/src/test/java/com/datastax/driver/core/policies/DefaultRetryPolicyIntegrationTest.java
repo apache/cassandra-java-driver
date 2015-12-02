@@ -173,11 +173,11 @@ public class DefaultRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegr
                 query();
                 fail("expected a NoHostAvailableException");
             } catch (NoHostAvailableException e) {
-                assertThat(e.getErrors().keySet()).hasSize(3).containsExactly(
+                assertThat(e.getErrors().keySet()).hasSize(3).containsOnlyOnce(
                     host1.getSocketAddress(),
                     host2.getSocketAddress(),
                     host3.getSocketAddress());
-                assertThat(e.getErrors().values()).extractingResultOf("getMessage").containsExactly(
+                assertThat(e.getErrors().values()).extractingResultOf("getMessage").containsOnlyOnce(
                     String.format("[%s]: Timed out waiting for server response", host1.getSocketAddress()),
                     String.format("[%s]: Timed out waiting for server response", host2.getSocketAddress()),
                     String.format("[%s]: Timed out waiting for server response", host3.getSocketAddress())
@@ -213,7 +213,7 @@ public class DefaultRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegr
             query();
             Fail.fail("expected a NoHostAvailableException");
         } catch (NoHostAvailableException e) {
-            assertThat(e.getErrors().keySet()).hasSize(3).containsExactly(
+            assertThat(e.getErrors().keySet()).hasSize(3).containsOnlyOnce(
                 host1.getSocketAddress(),
                 host2.getSocketAddress(),
                 host3.getSocketAddress());
