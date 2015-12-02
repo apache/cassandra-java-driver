@@ -35,10 +35,12 @@ class Requests {
         public static final String COMPRESSION_OPTION = "COMPRESSION";
 
         public static final Message.Coder<Startup> coder = new Message.Coder<Startup>() {
+            @Override
             public void encode(Startup msg, ByteBuf dest, ProtocolVersion version) {
                 CBUtil.writeStringMap(msg.options, dest);
             }
 
+            @Override
             public int encodedSize(Startup msg, ProtocolVersion version) {
                 return CBUtil.sizeOfStringMap(msg.options);
             }
@@ -67,11 +69,13 @@ class Requests {
 
         public static final Message.Coder<Credentials> coder = new Message.Coder<Credentials>() {
 
+            @Override
             public void encode(Credentials msg, ByteBuf dest, ProtocolVersion version) {
                 assert version == ProtocolVersion.V1;
                 CBUtil.writeStringMap(msg.credentials, dest);
             }
 
+            @Override
             public int encodedSize(Credentials msg, ProtocolVersion version) {
                 assert version == ProtocolVersion.V1;
                 return CBUtil.sizeOfStringMap(msg.credentials);
@@ -90,8 +94,10 @@ class Requests {
 
         public static final Message.Coder<Options> coder = new Message.Coder<Options>()
         {
+            @Override
             public void encode(Options msg, ByteBuf dest, ProtocolVersion version) {}
 
+            @Override
             public int encodedSize(Options msg, ProtocolVersion version) {
                 return 0;
             }
@@ -110,11 +116,13 @@ class Requests {
     public static class Query extends Message.Request {
 
         public static final Message.Coder<Query> coder = new Message.Coder<Query>() {
+            @Override
             public void encode(Query msg, ByteBuf dest, ProtocolVersion version) {
                 CBUtil.writeLongString(msg.query, dest);
                 msg.options.encode(dest, version);
             }
 
+            @Override
             public int encodedSize(Query msg, ProtocolVersion version) {
                 return CBUtil.sizeOfLongString(msg.query)
                        + msg.options.encodedSize(version);
@@ -153,11 +161,13 @@ class Requests {
     public static class Execute extends Message.Request {
 
         public static final Message.Coder<Execute> coder = new Message.Coder<Execute>() {
+            @Override
             public void encode(Execute msg, ByteBuf dest, ProtocolVersion version) {
                 CBUtil.writeBytes(msg.statementId.bytes, dest);
                 msg.options.encode(dest, version);
             }
 
+            @Override
             public int encodedSize(Execute msg, ProtocolVersion version) {
                 return CBUtil.sizeOfBytes(msg.statementId.bytes)
                      + msg.options.encodedSize(version);
@@ -334,6 +344,7 @@ class Requests {
     public static class Batch extends Message.Request {
 
         public static final Message.Coder<Batch> coder = new Message.Coder<Batch>() {
+            @Override
             public void encode(Batch msg, ByteBuf dest, ProtocolVersion version) {
                 int queries = msg.queryOrIdList.size();
                 assert queries <= 0xFFFF;
@@ -355,6 +366,7 @@ class Requests {
                 msg.options.encode(dest, version);
             }
 
+            @Override
             public int encodedSize(Batch msg, ProtocolVersion version) {
                 int size = 3; // type + nb queries
                 for (int i = 0; i < msg.queryOrIdList.size(); i++) {
@@ -482,10 +494,12 @@ class Requests {
 
         public static final Message.Coder<Prepare> coder = new Message.Coder<Prepare>() {
 
+            @Override
             public void encode(Prepare msg, ByteBuf dest, ProtocolVersion version) {
                 CBUtil.writeLongString(msg.query, dest);
             }
 
+            @Override
             public int encodedSize(Prepare msg, ProtocolVersion version) {
                 return CBUtil.sizeOfLongString(msg.query);
             }
@@ -507,12 +521,14 @@ class Requests {
     public static class Register extends Message.Request {
 
         public static final Message.Coder<Register> coder = new Message.Coder<Register>() {
+            @Override
             public void encode(Register msg, ByteBuf dest, ProtocolVersion version) {
                 dest.writeShort(msg.eventTypes.size());
                 for (ProtocolEvent.Type type : msg.eventTypes)
                     CBUtil.writeEnumValue(type, dest);
             }
 
+            @Override
             public int encodedSize(Register msg, ProtocolVersion version) {
                 int size = 2;
                 for (ProtocolEvent.Type type : msg.eventTypes)
@@ -538,10 +554,12 @@ class Requests {
 
         public static final Message.Coder<AuthResponse> coder = new Message.Coder<AuthResponse>() {
 
+            @Override
             public void encode(AuthResponse response, ByteBuf dest, ProtocolVersion version) {
                 CBUtil.writeValue(response.token, dest);
             }
 
+            @Override
             public int encodedSize(AuthResponse response, ProtocolVersion version) {
                 return CBUtil.sizeOfValue(response.token);
             }

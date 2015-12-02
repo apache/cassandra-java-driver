@@ -560,6 +560,7 @@ public class Cluster implements Closeable {
      * <p>
      * This method is a shortcut for {@code closeAsync().get()}.
      */
+    @Override
     public void close() {
         try {
             closeAsync().get();
@@ -1838,10 +1839,12 @@ public class Cluster implements Closeable {
         void startPeriodicReconnectionAttempt(final Host host, final boolean isHostAddition) {
             new AbstractReconnectionHandler(host.toString(), reconnectionExecutor, reconnectionPolicy().newSchedule(), host.reconnectionAttempt) {
 
+                @Override
                 protected Connection tryReconnect() throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
                     return connectionFactory.open(host);
                 }
 
+                @Override
                 protected void onReconnection(Connection connection) {
                     // Make sure we have up-to-date infos on that host before adding it (so we typically
                     // catch that an upgraded node uses a new cassandra version).
@@ -1863,17 +1866,20 @@ public class Cluster implements Closeable {
                     }
                 }
 
+                @Override
                 protected boolean onConnectionException(ConnectionException e, long nextDelayMs) {
                     if (logger.isDebugEnabled())
                         logger.debug("Failed reconnection to {} ({}), scheduling retry in {} milliseconds", host, e.getMessage(), nextDelayMs);
                     return true;
                 }
 
+                @Override
                 protected boolean onUnknownException(Exception e, long nextDelayMs) {
                     logger.error(String.format("Unknown error during reconnection to %s, scheduling retry in %d milliseconds", host, nextDelayMs), e);
                     return true;
                 }
 
+                @Override
                 protected boolean onAuthenticationException(AuthenticationException e, long nextDelayMs) {
                     logger.error(String.format("Authentication error during reconnection to %s, scheduling retry in %d milliseconds", host, nextDelayMs), e);
                     return true;
@@ -1891,10 +1897,12 @@ public class Cluster implements Closeable {
             // Setting an initial delay of 0 to start immediately, and all the exception handlers return false to prevent further attempts
             new AbstractReconnectionHandler(host.toString(), reconnectionExecutor, reconnectionPolicy().newSchedule(), host.reconnectionAttempt, 0) {
 
+                @Override
                 protected Connection tryReconnect() throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
                     return connectionFactory.open(host);
                 }
 
+                @Override
                 protected void onReconnection(Connection connection) {
                     // Make sure we have up-to-date infos on that host before adding it (so we typically
                     // catch that an upgraded node uses a new cassandra version).
@@ -1913,17 +1921,20 @@ public class Cluster implements Closeable {
                     }
                 }
 
+                @Override
                 protected boolean onConnectionException(ConnectionException e, long nextDelayMs) {
                     if (logger.isDebugEnabled())
                         logger.debug("Failed one-time reconnection to {} ({})", host, e.getMessage());
                     return false;
                 }
 
+                @Override
                 protected boolean onUnknownException(Exception e, long nextDelayMs) {
                     logger.error(String.format("Unknown error during one-time reconnection to %s", host), e);
                     return false;
                 }
 
+                @Override
                 protected boolean onAuthenticationException(AuthenticationException e, long nextDelayMs) {
                     logger.error(String.format("Authentication error during one-time reconnection to %s", host), e);
                     return false;
@@ -2438,6 +2449,7 @@ public class Cluster implements Closeable {
                  * a netty worker, which we're going to shutdown. So creates some thread for that.
                  */
                 (new Thread("Shutdown-checker") {
+                    @Override
                     public void run() {
                         // Just wait indefinitely on the the completion of the thread pools. Provided the user
                         // call force(), we'll never really block forever.
@@ -2628,6 +2640,7 @@ public class Cluster implements Closeable {
                 // probably should be fixed C* side, after which we'll be able to remove this.
                 final SettableFuture<?> future = SettableFuture.create();
                 scheduledTasksExecutor.schedule(new ExceptionCatchingRunnable() {
+                    @Override
                     public void runMayThrow() throws Exception {
                         ListenableFuture<?> f = execute(task);
                         Futures.addCallback(f, new FutureCallback<Object>() {

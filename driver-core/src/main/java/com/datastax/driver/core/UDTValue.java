@@ -28,14 +28,17 @@ public class UDTValue extends AbstractData<UDTValue> {
         this.definition = definition;
     }
 
+    @Override
     protected DataType getType(int i) {
         return definition.byIdx[i].getType();
     }
 
+    @Override
     protected String getName(int i) {
         return definition.byIdx[i].getName();
     }
 
+    @Override
     protected int[] getAllIndexesOf(String name) {
         int[] indexes = definition.byName.get(Metadata.handleId(name));
         if (indexes == null)

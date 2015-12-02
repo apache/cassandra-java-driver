@@ -198,11 +198,13 @@ class ReflectionMapper<T> extends EntityMapper<T> {
 
     private static class ReflectionFactory implements Factory {
 
+        @Override
         public <T> EntityMapper<T> create(Class<T> entityClass, String keyspace, String table, ConsistencyLevel writeConsistency, ConsistencyLevel readConsistency) {
             return new ReflectionMapper<T>(entityClass, keyspace, table, writeConsistency, readConsistency);
         }
 
         @SuppressWarnings({ "unchecked", "rawtypes" })
+        @Override
         public <T> ColumnMapper<T> createColumnMapper(Class<T> entityClass, Field field, int position, MappingManager mappingManager, AtomicInteger columnCounter) {
             String fieldName = field.getName();
             try {

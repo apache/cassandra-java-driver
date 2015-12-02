@@ -102,6 +102,7 @@ public class EC2MultiRegionAddressTranslater implements CloseableAddressTranslat
         return null;
     }
 
+    @Override
     public void close() {
         try {
             ctx.close();
