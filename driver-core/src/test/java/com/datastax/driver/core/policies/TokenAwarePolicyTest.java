@@ -41,6 +41,7 @@ import com.datastax.driver.core.TestUtils;
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT;
 import static com.datastax.driver.core.TestUtils.SIMPLE_KEYSPACE;
+import static com.datastax.driver.core.TestUtils.getDesiredProtocolVersion;
 import static com.datastax.driver.core.TestUtils.nonQuietClusterCloseOptions;
 
 public class TokenAwarePolicyTest {
@@ -95,7 +96,7 @@ public class TokenAwarePolicyTest {
             // given: A routing key that falls in the token range of node 6.
 
             // Encodes into murmur hash '4874351301193663061' which should belong be owned by node 6 with replicas 7 and 8.
-            ByteBuffer routingKey = DataType.text().serialize("This is some sample text");
+            ByteBuffer routingKey = DataType.text().serialize("This is some sample text", getDesiredProtocolVersion());
 
             // then: The replicas resolved from the cluster metadata must match node 6 and its replicas.
             List<Host> replicas = Lists.newArrayList(cluster.getMetadata().getReplicas("keyspace", routingKey));
@@ -161,7 +162,7 @@ public class TokenAwarePolicyTest {
             Session session = cluster.connect();
 
             // Encodes into murmur hash '4557949199137838892' which should belong be owned by node 3.
-            ByteBuffer routingKey = DataType.text().serialize("should_choose_proper_host_based_on_routing_key");
+            ByteBuffer routingKey = DataType.text().serialize("should_choose_proper_host_based_on_routing_key", getDesiredProtocolVersion());
             SimpleStatement statement = new SimpleStatement("select * from table where k=5")
                 .setRoutingKey(routingKey)
                 .setKeyspace("keyspace");
@@ -207,7 +208,8 @@ public class TokenAwarePolicyTest {
             Session session = cluster.connect();
 
             // Encodes into murmur hash '-8124212968526248339' which should belong to 1:1 in DC1 and 2:1 in DC2.
-            ByteBuffer routingKey = DataType.text().serialize("should_choose_host_in_local_dc_when_using_network_topology_strategy_and_dc_aware");
+            ByteBuffer routingKey = DataType.text().serialize("should_choose_host_in_local_dc_when_using_network_topology_strategy_and_dc_aware",
+                getDesiredProtocolVersion());
             SimpleStatement statement = new SimpleStatement("select * from table where k=5")
                 .setRoutingKey(routingKey)
                 .setKeyspace("keyspace");
@@ -250,7 +252,7 @@ public class TokenAwarePolicyTest {
 
             // when: A query is made with a routing key and both hosts having that key's token are down.
             // Encodes into murmur hash '6444339665561646341' which should belong to node 4.
-            ByteBuffer routingKey = DataType.text().serialize("should_use_other_nodes_when_replicas_having_token_are_down");
+            ByteBuffer routingKey = DataType.text().serialize("should_use_other_nodes_when_replicas_having_token_are_down", getDesiredProtocolVersion());
             SimpleStatement statement = new SimpleStatement("select * from table where k=5")
                 .setRoutingKey(routingKey)
             .setKeyspace("keyspace");
