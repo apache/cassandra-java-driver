@@ -44,42 +44,42 @@ abstract class AbstractAddressableByIndexData<T extends SettableByIndexData<T>> 
 
     public T setBool(int i, boolean v) {
         checkType(i, DataType.Name.BOOLEAN);
-        return setValue(i, TypeCodec.BooleanCodec.instance.serializeNoBoxing(v));
+        return setValue(i, TypeCodec.booleanCodec.serializeNoBoxing(v));
     }
 
     public T setInt(int i, int v) {
         checkType(i, DataType.Name.INT);
-        return setValue(i, TypeCodec.IntCodec.instance.serializeNoBoxing(v));
+        return setValue(i, TypeCodec.intCodec.serializeNoBoxing(v));
     }
 
     public T setLong(int i, long v) {
         checkType(i, DataType.Name.BIGINT, DataType.Name.COUNTER);
-        return setValue(i, TypeCodec.LongCodec.instance.serializeNoBoxing(v));
+        return setValue(i, TypeCodec.longCodec.serializeNoBoxing(v));
     }
 
     public T setDate(int i, Date v) {
         checkType(i, DataType.Name.TIMESTAMP);
-        return setValue(i, v == null ? null : TypeCodec.DateCodec.instance.serialize(v));
+        return setValue(i, v == null ? null : TypeCodec.dateCodec.serialize(v));
     }
 
     public T setFloat(int i, float v) {
         checkType(i, DataType.Name.FLOAT);
-        return setValue(i, TypeCodec.FloatCodec.instance.serializeNoBoxing(v));
+        return setValue(i, TypeCodec.floatCodec.serializeNoBoxing(v));
     }
 
     public T setDouble(int i, double v) {
         checkType(i, DataType.Name.DOUBLE);
-        return setValue(i, TypeCodec.DoubleCodec.instance.serializeNoBoxing(v));
+        return setValue(i, TypeCodec.doubleCodec.serializeNoBoxing(v));
     }
 
     public T setString(int i, String v) {
         DataType.Name type = checkType(i, DataType.Name.VARCHAR, DataType.Name.TEXT, DataType.Name.ASCII);
         switch (type) {
             case ASCII:
-                return setValue(i, v == null ? null : TypeCodec.StringCodec.asciiInstance.serialize(v));
+                return setValue(i, v == null ? null : TypeCodec.asciiStringCodec.serialize(v));
             case TEXT:
             case VARCHAR:
-                return setValue(i, v == null ? null : TypeCodec.StringCodec.utf8Instance.serialize(v));
+                return setValue(i, v == null ? null : TypeCodec.utf8StringCodec.serialize(v));
             default:
                 throw new AssertionError();
         }
@@ -96,12 +96,12 @@ abstract class AbstractAddressableByIndexData<T extends SettableByIndexData<T>> 
 
     public T setVarint(int i, BigInteger v) {
         checkType(i, DataType.Name.VARINT);
-        return setValue(i, v == null ? null : TypeCodec.BigIntegerCodec.instance.serialize(v));
+        return setValue(i, v == null ? null : TypeCodec.bigIntegerCodec.serialize(v));
     }
 
     public T setDecimal(int i, BigDecimal v) {
         checkType(i, DataType.Name.DECIMAL);
-        return setValue(i, v == null ? null : TypeCodec.DecimalCodec.instance.serialize(v));
+        return setValue(i, v == null ? null : TypeCodec.decimalCodec.serialize(v));
     }
 
     public T setUUID(int i, UUID v) {
@@ -114,13 +114,13 @@ abstract class AbstractAddressableByIndexData<T extends SettableByIndexData<T>> 
             throw new InvalidTypeException(String.format("%s is not a Type 1 (time-based) UUID", v));
 
         return type == DataType.Name.UUID
-             ? setValue(i, TypeCodec.UUIDCodec.instance.serialize(v))
-             : setValue(i, TypeCodec.TimeUUIDCodec.instance.serialize(v));
+             ? setValue(i, TypeCodec.uuidCodec.serialize(v))
+             : setValue(i, TypeCodec.timeUuidCodec.serialize(v));
     }
 
     public T setInet(int i, InetAddress v) {
         checkType(i, DataType.Name.INET);
-        return setValue(i, v == null ? null : TypeCodec.InetCodec.instance.serialize(v));
+        return setValue(i, v == null ? null : TypeCodec.inetCodec.serialize(v));
     }
 
     public <E> T setList(int i, List<E> v) {
