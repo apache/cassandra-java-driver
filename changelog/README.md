@@ -5,6 +5,8 @@
 - [bug] JAVA-993: Support for "custom" types after CASSANDRA-10365.
 - [bug] JAVA-999: Handle unset parameters in QueryLogger.
 - [bug] JAVA-998: SchemaChangeListener not invoked for Functions or Aggregates having UDT arguments.
+- [bug] JAVA-1009: use CL ONE to compute query plan when reconnecting
+  control connection.
 
 Merged from 2.1 branch:
 

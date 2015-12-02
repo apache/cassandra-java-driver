@@ -51,6 +51,11 @@ public abstract class Statement {
         public String getKeyspace() {
             return null;
         }
+
+        @Override
+        public ConsistencyLevel getConsistencyLevel() {
+            return ConsistencyLevel.ONE;
+        }
     };
 
     private volatile ConsistencyLevel consistency;
