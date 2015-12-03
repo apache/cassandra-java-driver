@@ -316,11 +316,12 @@ public abstract class TestUtils {
     }
 
     private static void waitFor(String node, Cluster cluster, int maxTry, boolean waitForDead, boolean waitForOut) {
-        if (waitForDead || waitForOut)
+        if (waitForDead || waitForOut) {
             if (waitForDead)
                 logger.info("Waiting for stopped node: " + node);
             else if (waitForOut)
                 logger.info("Waiting for decommissioned node: " + node);
+        }
         else
             logger.info("Waiting for upcoming node: " + node);
 
