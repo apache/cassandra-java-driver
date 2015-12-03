@@ -39,7 +39,7 @@ class Responses {
 
         public static final Message.Decoder<Error> decoder = new Message.Decoder<Error>() {
             @Override
-            public Error decode(ByteBuf body, ProtocolVersion version) {
+            public Error decode(ByteBuf body, ProtocolVersion version, CodecRegistry codecRegistry) {
                 ExceptionCode code = ExceptionCode.fromValue(body.readInt());
                 String msg = CBUtil.readString(body);
                 Object infos = null;
@@ -138,7 +138,7 @@ class Responses {
     public static class Ready extends Message.Response {
 
         public static final Message.Decoder<Ready> decoder = new Message.Decoder<Ready>() {
-            public Ready decode(ByteBuf body, ProtocolVersion version) {
+            public Ready decode(ByteBuf body, ProtocolVersion version, CodecRegistry codecRegistry) {
                 // TODO: Would it be cool to return a singleton? Check we don't need to
                 // set the streamId or something
                 return new Ready();
@@ -158,7 +158,7 @@ class Responses {
     public static class Authenticate extends Message.Response {
 
         public static final Message.Decoder<Authenticate> decoder = new Message.Decoder<Authenticate>() {
-            public Authenticate decode(ByteBuf body, ProtocolVersion version) {
+            public Authenticate decode(ByteBuf body, ProtocolVersion version, CodecRegistry codecRegistry) {
                 String authenticator = CBUtil.readString(body);
                 return new Authenticate(authenticator);
             }
@@ -180,7 +180,7 @@ class Responses {
     public static class Supported extends Message.Response {
 
         public static final Message.Decoder<Supported> decoder = new Message.Decoder<Supported>() {
-            public Supported decode(ByteBuf body, ProtocolVersion version) {
+            public Supported decode(ByteBuf body, ProtocolVersion version, CodecRegistry codecRegistry) {
                 return new Supported(CBUtil.readStringToStringListMap(body));
             }
         };
@@ -216,9 +216,9 @@ class Responses {
     public static abstract class Result extends Message.Response {
 
         public static final Message.Decoder<Result> decoder = new Message.Decoder<Result>() {
-            public Result decode(ByteBuf body, ProtocolVersion version) {
+            public Result decode(ByteBuf body, ProtocolVersion version, CodecRegistry codecRegistry) {
                 Kind kind = Kind.fromId(body.readInt());
-                return kind.subDecoder.decode(body, version);
+                return kind.subDecoder.decode(body, version, codecRegistry);
             }
         };
 
@@ -273,7 +273,7 @@ class Responses {
             }
 
             public static final Message.Decoder<Result> subcodec = new Message.Decoder<Result>() {
-                public Result decode(ByteBuf body, ProtocolVersion version) {
+                public Result decode(ByteBuf body, ProtocolVersion version, CodecRegistry codecRegistry) {
                     return new Void();
                 }
             };
@@ -293,7 +293,7 @@ class Responses {
             }
 
             public static final Message.Decoder<Result> subcodec = new Message.Decoder<Result>() {
-                public Result decode(ByteBuf body, ProtocolVersion version) {
+                public Result decode(ByteBuf body, ProtocolVersion version, CodecRegistry codecRegistry) {
                     return new SetKeyspace(CBUtil.readString(body));
                 }
             };
@@ -347,11 +347,11 @@ class Responses {
                     this.pkIndices = pkIndices;
                 }
 
-                public static Metadata decode(ByteBuf body, ProtocolVersion protocolVersion) {
-                    return decode(body, false, protocolVersion);
+                public static Metadata decode(ByteBuf body, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
+                    return decode(body, false, protocolVersion, codecRegistry);
                 }
 
-                public static Metadata decode(ByteBuf body, boolean withPkIndices, ProtocolVersion protocolVersion) {
+                public static Metadata decode(ByteBuf body, boolean withPkIndices, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
 
                     // flags & column count
                     EnumSet<Flag> flags = Flag.deserialize(body.readInt());
@@ -387,13 +387,11 @@ class Responses {
                         String ksName = globalTablesSpec ? globalKsName : CBUtil.readString(body);
                         String cfName = globalTablesSpec ? globalCfName : CBUtil.readString(body);
                         String name = CBUtil.readString(body);
-                        // will set the appropriate CodecRegistry instance later
-                        // when the message will be decoded into either a PreparedStatement or a ResultSet
-                        DataType type = DataType.decode(body, protocolVersion, CodecRegistry.DEFAULT_INSTANCE);
+                        DataType type = DataType.decode(body, protocolVersion, codecRegistry);
                         defs[i] = new ColumnDefinitions.Definition(ksName, cfName, name, type);
                     }
 
-                    return new Metadata(columnCount, new ColumnDefinitions(defs), state, pkIndices);
+                    return new Metadata(columnCount, new ColumnDefinitions(defs, codecRegistry), state, pkIndices);
                 }
 
                 @Override
@@ -415,9 +413,9 @@ class Responses {
             }
 
             public static final Message.Decoder<Result> subcodec = new Message.Decoder<Result>() {
-                public Result decode(ByteBuf body, ProtocolVersion version) {
+                public Result decode(ByteBuf body, ProtocolVersion version, CodecRegistry codecRegistry) {
 
-                    Metadata metadata = Metadata.decode(body, version);
+                    Metadata metadata = Metadata.decode(body, version, codecRegistry);
 
                     int rowCount = body.readInt();
                     int columnCount = metadata.columnCount;
@@ -457,11 +455,18 @@ class Responses {
                         } else {
                             sb.append(" | ");
                             if (metadata.columns != null) {
-                                sb.append(metadata.columns.getType(i));
+                                DataType dataType = metadata.columns.getType(i);
+                                sb.append(dataType);
                                 sb.append(" ");
+                                TypeCodec<Object> codec = metadata.columns.codecRegistry.codecFor(dataType);
+                                Object o = codec.deserialize(v, version);
+                                String s = codec.format(o);
+                                if (s.length() > 100)
+                                    s = s.substring(0, 100) + "...";
+                                sb.append(s);
+                            } else {
+                                sb.append(Bytes.toHexString(v));
                             }
-                            // cannot deserialize without the right CodecRegistry instance
-                            sb.append(Bytes.toHexString(v));
                         }
                     }
                     sb.append('\n');
@@ -474,22 +479,22 @@ class Responses {
         public static class Prepared extends Result {
 
             public static final Message.Decoder<Result> subcodec = new Message.Decoder<Result>() {
-                public Result decode(ByteBuf body, ProtocolVersion version) {
+                public Result decode(ByteBuf body, ProtocolVersion version, CodecRegistry codecRegistry) {
                     MD5Digest id = MD5Digest.wrap(CBUtil.readBytes(body));
                     boolean withPkIndices = version.compareTo(V4) >= 0;
-                    Rows.Metadata metadata = Rows.Metadata.decode(body, withPkIndices, version);
-                    Rows.Metadata resultMetadata = decodeResultMetadata(body, version);
+                    Rows.Metadata metadata = Rows.Metadata.decode(body, withPkIndices, version, codecRegistry);
+                    Rows.Metadata resultMetadata = decodeResultMetadata(body, version, codecRegistry);
                     return new Prepared(id, metadata, resultMetadata);
                 }
 
-                private Metadata decodeResultMetadata(ByteBuf body, ProtocolVersion version) {
+                private Metadata decodeResultMetadata(ByteBuf body, ProtocolVersion version, CodecRegistry codecRegistry) {
                     switch (version) {
                         case V1:
                             return Rows.Metadata.EMPTY;
                         case V2:
                         case V3:
                         case V4:
-                            return Rows.Metadata.decode(body, version);
+                            return Rows.Metadata.decode(body, version, codecRegistry);
                         default:
                             throw version.unsupported();
                     }
@@ -524,7 +529,7 @@ class Responses {
             public final List<String> targetSignature;
 
             public static final Message.Decoder<Result> subcodec = new Message.Decoder<Result>() {
-                public Result decode(ByteBuf body, ProtocolVersion version)
+                public Result decode(ByteBuf body, ProtocolVersion version, CodecRegistry codecRegistry)
                 {
                     // Note: the CREATE KEYSPACE/TABLE/TYPE SCHEMA_CHANGE response is different from the SCHEMA_CHANGE EVENT type
                     Change change;
@@ -575,7 +580,7 @@ class Responses {
     public static class Event extends Message.Response {
 
         public static final Message.Decoder<Event> decoder = new Message.Decoder<Event>() {
-            public Event decode(ByteBuf body, ProtocolVersion version) {
+            public Event decode(ByteBuf body, ProtocolVersion version, CodecRegistry codecRegistry) {
                 return new Event(ProtocolEvent.deserialize(body, version));
             }
         };
@@ -596,7 +601,7 @@ class Responses {
     public static class AuthChallenge extends Message.Response {
 
         public static final Message.Decoder<AuthChallenge> decoder = new Message.Decoder<AuthChallenge>() {
-            public AuthChallenge decode(ByteBuf body, ProtocolVersion version) {
+            public AuthChallenge decode(ByteBuf body, ProtocolVersion version, CodecRegistry codecRegistry) {
                 ByteBuffer b = CBUtil.readValue(body);
                 if (b == null)
                     return new AuthChallenge(null);
@@ -618,7 +623,7 @@ class Responses {
     public static class AuthSuccess extends Message.Response {
 
         public static final Message.Decoder<AuthSuccess> decoder = new Message.Decoder<AuthSuccess>() {
-            public AuthSuccess decode(ByteBuf body, ProtocolVersion version) {
+            public AuthSuccess decode(ByteBuf body, ProtocolVersion version, CodecRegistry codecRegistry) {
                 ByteBuffer b = CBUtil.readValue(body);
                 if (b == null)
                     return new AuthSuccess(null);

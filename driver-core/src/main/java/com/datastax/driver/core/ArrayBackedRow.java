@@ -16,10 +16,8 @@
 package com.datastax.driver.core;
 
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.List;
 import java.util.regex.Pattern;
-
-import com.google.common.base.Joiner;
 
 import com.datastax.driver.core.exceptions.DriverInternalError;
 
@@ -75,7 +73,7 @@ class ArrayBackedRow extends AbstractGettableData implements Row {
 
     @Override
     protected CodecRegistry getCodecRegistry() {
-        return metadata.getCodecRegistry();
+        return metadata.codecRegistry;
     }
 
     @Override
@@ -102,6 +100,7 @@ class ArrayBackedRow extends AbstractGettableData implements Row {
         return getToken(metadata.getFirstIdx(name));
     }
 
+    @Override
     public Token getPartitionKeyToken() {
         int i = 0;
         for (ColumnDefinitions.Definition column : metadata) {

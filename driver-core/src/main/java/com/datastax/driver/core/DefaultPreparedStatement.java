@@ -56,8 +56,6 @@ public class DefaultPreparedStatement implements PreparedStatement {
 
         ColumnDefinitions defs = msg.metadata.columns;
 
-        defs.setCodecRegistry(cluster.getConfiguration().getCodecRegistry());
-
         ProtocolVersion protocolVersion = cluster.getConfiguration().getProtocolOptions().getProtocolVersion();
 
         if (defs.size() == 0) {

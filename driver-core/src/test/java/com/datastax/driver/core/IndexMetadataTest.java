@@ -51,7 +51,7 @@ public class IndexMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
         definition(INDEX_TYPE, text()),
         definition(VALIDATOR, text()),
         definition(INDEX_OPTIONS, text())
-    });
+    }, CodecRegistry.DEFAULT_INSTANCE);
 
     /**
      * Column definitions for indexes table (post-3.0 layout).
@@ -60,7 +60,7 @@ public class IndexMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
         definition(IndexMetadata.NAME, text()),
         definition(IndexMetadata.KIND, text()),
         definition(IndexMetadata.OPTIONS, map(text(), text()))
-    });
+    }, CodecRegistry.DEFAULT_INSTANCE);
     
     private static final TypeCodec<Map<String, String>> MAP_CODEC = TypeCodec.map(TypeCodec.varchar(), TypeCodec.varchar());
     
@@ -70,9 +70,6 @@ public class IndexMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
     @BeforeClass(groups = { "short", "long" })
     public void beforeClass() {
         super.beforeClass();
-        CodecRegistry codecRegistry = cluster.getConfiguration().getCodecRegistry();
-        legacyColumnDefs.setCodecRegistry(codecRegistry);
-        indexColumnDefs.setCodecRegistry(codecRegistry);
         protocolVersion = cluster.getConfiguration().getProtocolOptions().getProtocolVersion();
     }
 
