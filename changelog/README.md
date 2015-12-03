@@ -6,6 +6,11 @@
 - [bug] JAVA-999: Handle unset parameters in QueryLogger.
 - [bug] JAVA-998: SchemaChangeListener not invoked for Functions or Aggregates having UDT arguments.
 
+Merged from 2.1 branch:
+
+- [improvement] JAVA-989: Include keyspace name when invalid replication found when generating token map.
+- [improvement] JAVA-664: Reduce heap consumption for TokenMap.
+
 
 ### 3.0.0-alpha5
 

@@ -60,7 +60,7 @@ abstract class ReplicationStrategy {
         }
     }
 
-    abstract Map<Token, Set<Host>> computeTokenToReplicaMap(Map<Token, Host> tokenToPrimary, List<Token> ring);
+    abstract Map<Token, Set<Host>> computeTokenToReplicaMap(String keyspaceName, Map<Token, Host> tokenToPrimary, List<Token> ring);
 
     private static Token getTokenWrapping(int i, List<Token> ring) {
         return ring.get(i % ring.size());
@@ -74,7 +74,7 @@ abstract class ReplicationStrategy {
             this.replicationFactor = replicationFactor;
         }
 
-        Map<Token, Set<Host>> computeTokenToReplicaMap(Map<Token, Host> tokenToPrimary, List<Token> ring) {
+        Map<Token, Set<Host>> computeTokenToReplicaMap(String keyspaceName, Map<Token, Host> tokenToPrimary, List<Token> ring) {
 
             int rf = Math.min(replicationFactor, ring.size());
 
@@ -117,7 +117,7 @@ abstract class ReplicationStrategy {
             this.replicationFactors = replicationFactors;
         }
 
-        Map<Token, Set<Host>> computeTokenToReplicaMap(Map<Token, Host> tokenToPrimary, List<Token> ring) {
+        Map<Token, Set<Host>> computeTokenToReplicaMap(String keyspaceName, Map<Token, Host> tokenToPrimary, List<Token> ring) {
 
              // This is essentially a copy of org.apache.cassandra.locator.NetworkTopologyStrategy
             Map<String, Set<String>> racks = getRacksInDcs(tokenToPrimary.values());
@@ -189,10 +189,10 @@ abstract class ReplicationStrategy {
                     int expectedFactor = replicationFactors.get(dcName);
                     int achievedFactor = entry.getValue().size();
                     if (achievedFactor < expectedFactor && !warnedDcs.contains(dcName)) {
-                        logger.warn("Error while computing token map for datacenter {}: "
+                        logger.warn("Error while computing token map for keyspace {} with datacenter {}: "
                                 + "could not achieve replication factor {} (found {} replicas only), "
                                 + "check your keyspace replication settings.",
-                            dcName, expectedFactor, achievedFactor);
+                            keyspaceName, dcName, expectedFactor, achievedFactor);
                         // only warn once per DC
                         warnedDcs.add(dcName);
                     }

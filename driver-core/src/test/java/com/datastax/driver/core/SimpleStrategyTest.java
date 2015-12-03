@@ -114,6 +114,8 @@ public class SimpleStrategyTest extends AbstractReplicationStrategyTest {
                                                                   .put(TOKEN18, host(IP6))
                                                                   .build();
 
+    private static final String keyspace = "excalibur";
+
     /*
      * --------------
      *     Tests
@@ -138,7 +140,7 @@ public class SimpleStrategyTest extends AbstractReplicationStrategyTest {
 
         ReplicationStrategy strategy = simpleStrategy(2);
 
-        Map<Token, Set<Host>> replicaMap = strategy.computeTokenToReplicaMap(tokenToPrimary, ring);
+        Map<Token, Set<Host>> replicaMap = strategy.computeTokenToReplicaMap(keyspace, tokenToPrimary, ring);
 
         assertReplicaPlacement(replicaMap, TOKEN01, IP1, IP2);
         assertReplicaPlacement(replicaMap, TOKEN06, IP2, IP1);
@@ -164,7 +166,7 @@ public class SimpleStrategyTest extends AbstractReplicationStrategyTest {
 
         ReplicationStrategy strategy = simpleStrategy(2);
 
-        Map<Token, Set<Host>> replicaMap = strategy.computeTokenToReplicaMap(tokenToPrimary, ring);
+        Map<Token, Set<Host>> replicaMap = strategy.computeTokenToReplicaMap(keyspace, tokenToPrimary, ring);
 
         assertReplicaPlacement(replicaMap, TOKEN01, IP1, IP2);
         assertReplicaPlacement(replicaMap, TOKEN06, IP1, IP2);
@@ -190,7 +192,7 @@ public class SimpleStrategyTest extends AbstractReplicationStrategyTest {
 
         ReplicationStrategy strategy = simpleStrategy(2);
 
-        Map<Token, Set<Host>> replicaMap = strategy.computeTokenToReplicaMap(tokenToPrimary, ring);
+        Map<Token, Set<Host>> replicaMap = strategy.computeTokenToReplicaMap(keyspace, tokenToPrimary, ring);
 
         assertReplicaPlacement(replicaMap, TOKEN01, IP1, IP2);
         assertReplicaPlacement(replicaMap, TOKEN06, IP1, IP2);
@@ -200,7 +202,7 @@ public class SimpleStrategyTest extends AbstractReplicationStrategyTest {
 
     @Test(groups = "unit")
     public void simpleStrategyExampleTopologyMapTest() {
-        Map<Token, Set<Host>> replicaMap = exampleStrategy.computeTokenToReplicaMap(exampleTokenToPrimary, exampleRing);
+        Map<Token, Set<Host>> replicaMap = exampleStrategy.computeTokenToReplicaMap(keyspace, exampleTokenToPrimary, exampleRing);
 
         assertReplicaPlacement(replicaMap, TOKEN01, IP1, IP5, IP3);
         assertReplicaPlacement(replicaMap, TOKEN02, IP1, IP5, IP3);
@@ -224,7 +226,7 @@ public class SimpleStrategyTest extends AbstractReplicationStrategyTest {
 
     @Test(groups = "unit")
     public void simpleStrategyExampleTopologyTooManyReplicasTest() {
-        Map<Token, Set<Host>> replicaMap = exampleStrategyTooManyReplicas.computeTokenToReplicaMap(exampleTokenToPrimary, exampleRing);
+        Map<Token, Set<Host>> replicaMap = exampleStrategyTooManyReplicas.computeTokenToReplicaMap(keyspace, exampleTokenToPrimary, exampleRing);
 
         assertReplicaPlacement(replicaMap, TOKEN01, IP1, IP5, IP3, IP2, IP6, IP4);
         assertReplicaPlacement(replicaMap, TOKEN02, IP1, IP5, IP3, IP2, IP6, IP4);

@@ -613,13 +613,18 @@ public class Metadata {
             Set<TokenRange> tokenRanges = makeTokenRanges(ring, factory);
 
             Map<String, Map<Token, Set<Host>>> tokenToHosts = new HashMap<String, Map<Token, Set<Host>>>();
+            Map<ReplicationStrategy, Map<Token, Set<Host>>> replStrategyToHosts = new HashMap<ReplicationStrategy, Map<Token, Set<Host>>>();
             Map<String, Map<Host, Set<TokenRange>>> hostsToRanges = new HashMap<String, Map<Host, Set<TokenRange>>>();
             for (KeyspaceMetadata keyspace : keyspaces)
             {
                 ReplicationStrategy strategy = keyspace.replicationStrategy();
-                Map<Token, Set<Host>> ksTokens = (strategy == null)
-                    ? makeNonReplicatedMap(tokenToPrimary)
-                    : strategy.computeTokenToReplicaMap(tokenToPrimary, ring);
+                Map<Token, Set<Host>> ksTokens = replStrategyToHosts.get(strategy);
+                if (ksTokens == null) {
+                    ksTokens = (strategy == null)
+                        ? makeNonReplicatedMap(tokenToPrimary)
+                        : strategy.computeTokenToReplicaMap(keyspace.getName(), tokenToPrimary, ring);
+                    replStrategyToHosts.put(strategy, ksTokens);
+                }
 
                 tokenToHosts.put(keyspace.getName(), ksTokens);
 

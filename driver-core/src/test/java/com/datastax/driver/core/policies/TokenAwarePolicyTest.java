@@ -29,6 +29,7 @@ import com.datastax.driver.core.*;
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT;
 import static com.datastax.driver.core.TestUtils.SIMPLE_KEYSPACE;
+import static com.datastax.driver.core.TestUtils.getDesiredProtocolVersion;
 import static com.datastax.driver.core.TestUtils.nonQuietClusterCloseOptions;
 
 public class TokenAwarePolicyTest {
