@@ -119,7 +119,7 @@ public class SpeculativeExecutionTest {
         long execStartCount = errors.getSpeculativeExecutions().getCount();
         long retriesStartCount = errors.getRetriesOnUnavailable().getCount();
 
-        SimpleStatement statement = session.newSimpleStatement("mock query");
+        SimpleStatement statement = new SimpleStatement("mock query");
         statement.setConsistencyLevel(ConsistencyLevel.TWO);
         ResultSet rs = session.execute(statement);
         Row row = rs.one();

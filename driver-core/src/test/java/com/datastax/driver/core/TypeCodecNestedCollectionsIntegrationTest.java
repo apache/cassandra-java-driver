@@ -30,11 +30,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 import com.datastax.driver.core.querybuilder.BuiltStatement;
-import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.utils.CassandraVersion;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.bindMarker;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.insertInto;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
 
 /**
  * Validates that nested collections are properly encoded,
@@ -84,10 +85,10 @@ public class TypeCodecNestedCollectionsIntegrationTest extends CCMBridge.PerClas
 
     @BeforeMethod(groups = "short")
     public void createBuiltStatements() throws Exception {
-        insertStmt = new QueryBuilder(cluster).insertInto("\"myTable\"")
+        insertStmt = insertInto("\"myTable\"")
             .value("pk", bindMarker())
             .value("v", bindMarker());
-        selectStmt = new QueryBuilder(cluster).select("pk", "v")
+        selectStmt = select("pk", "v")
             .from("\"myTable\"")
             .where(eq("pk", bindMarker()));
     }

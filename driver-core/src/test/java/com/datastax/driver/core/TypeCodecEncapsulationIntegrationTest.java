@@ -31,11 +31,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 import com.datastax.driver.core.querybuilder.BuiltStatement;
-import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.utils.CassandraVersion;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.bindMarker;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.insertInto;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
 
 public class TypeCodecEncapsulationIntegrationTest extends CCMBridge.PerClassSingleNodeCluster {
 
@@ -85,14 +86,14 @@ public class TypeCodecEncapsulationIntegrationTest extends CCMBridge.PerClassSin
 
     @BeforeMethod(groups = "short")
     public void createBuiltStatements() throws Exception {
-        insertStmt = new QueryBuilder(cluster).insertInto("\"myTable\"")
+        insertStmt = insertInto("\"myTable\"")
             .value("c_int", bindMarker())
             .value("c_bigint", bindMarker())
             .value("c_float", bindMarker())
             .value("c_double", bindMarker())
             .value("c_varint", bindMarker())
             .value("c_decimal", bindMarker());
-        selectStmt = new QueryBuilder(cluster).select("c_int", "c_bigint", "c_float", "c_double", "c_varint", "c_decimal")
+        selectStmt = select("c_int", "c_bigint", "c_float", "c_double", "c_varint", "c_decimal")
             .from("\"myTable\"")
             .where(eq("c_int", bindMarker()))
             .and(eq("c_bigint", bindMarker()));

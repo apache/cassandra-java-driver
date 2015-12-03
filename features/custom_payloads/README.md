@@ -71,7 +71,7 @@ Once the payload is set, you can either prepare the statement or execute it;
 in both cases, the payload will be sent along with the `PREPARE` or `QUERY` request respectively:
 
 ```java
-Statement statement = session.newSimpleStatement("SELECT foo FROM bar WHERE qix = 1");
+Statement statement = new SimpleStatement("SELECT foo FROM bar WHERE qix = 1");
 statement.setOutgoingPayload(myCustomPayload);
 session.execute(statement); // myCustomPayload will be sent with QUERY request
 session.prepare(statement); // myCustomPayload will be sent with PREPARE request
@@ -88,7 +88,7 @@ When sending payloads with batches, please note that payloads must be attached t
 `BatchStatement` itself, *not* to internal statements:
 
 ```java
-Statement statement = session.newSimpleStatement("INSERT INTO t1 (c1, c2) values ('foo', 'bar')")
+Statement statement = new SimpleStatement("INSERT INTO t1 (c1, c2) values ('foo', 'bar')")
 // correct
 Statement batch = new BatchStatement().add(statement);
 batch.setOutgoingPayload(myCustomPayload);
@@ -104,7 +104,7 @@ any outgoing payload set on the executed statement *will be transparently
 sent over and over for every new page request*.
 
 ```java
-Statement statement = session.newSimpleStatement("...");
+Statement statement = new SimpleStatement("...");
 statement.setOutgoingPayload(myCustomPayload);
 ResultSet rows = session.execute(...); // myCustomPayload will be sent with first QUERY request
 for (Row row : rows) {
@@ -148,7 +148,7 @@ Custom payloads sent back by the server can be retrieved in the following ways:
 1) From a `ResultSet`: use the `ExecutionInfo` class to retrieve the payload sent by the server.
 
 ```java
-Statement statement = session.newSimpleStatement("...");
+Statement statement = new SimpleStatement("...");
 ResultSet rows = session.execute(...);
 // last payload sent by the server
 Map<String,ByteBuffer> serverPayload = rows.getExecutionInfo().getIncomingPayload();
@@ -160,7 +160,7 @@ with its last `RESULT` response. If you need to retrieve all the
 payloads for all `RESULT` responses, use the following method instead:
 
 ```java
-Statement statement = session.newSimpleStatement("...");
+Statement statement = new SimpleStatement("...");
 ResultSet rows = session.execute(...);
 //all payloads sent by the server
 for (ExecutionInfo info : rows.getAllExecutionInfo()) {
@@ -183,7 +183,7 @@ to prepare a statement, as with all other properties in the given statement, its
 payload, if any, will become the default outgoing payload for the prepared statement.
 
 ```java
-Statement statement = session.newSimpleStatement("...");
+Statement statement = new SimpleStatement("...");
 statement.setOutgoingPayload(myCustomPayload)
 PreparedStatement ps = session.prepare(...); // myCustomPayload will be sent with PREPARE request 
                                              // AND become the default outgoing payload
@@ -194,7 +194,7 @@ The code below is roughly equivalent to the one above - except that the payload 
 with the `PREPARE` request:
 
 ```java
-Statement statement = session.newSimpleStatement("...");
+Statement statement = new SimpleStatement("...");
 PreparedStatement ps = session.prepare(...); // no payload sent with PREPARE request
 ps.setOutgoingPayload(myCustomPayload) // default outgoing payload is now myCustomPayload
 ```
@@ -218,7 +218,7 @@ the following rules apply:
    like in the example below:
    
 ```java
-Statement statement = session.newSimpleStatement("...");
+Statement statement = new SimpleStatement("...");
 PreparedStatement ps = session.prepare(...); // no payload sent with PREPARE request
 BoundStatement bs = ps.bind(1); // no outgoing payload by default
 bs.setOutgoingPayload(myCustomPayload); // outgoing payload for this specific statement

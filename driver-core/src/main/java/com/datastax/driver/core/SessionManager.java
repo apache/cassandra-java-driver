@@ -478,21 +478,22 @@ class SessionManager extends AbstractSession {
         // init() locks, so avoid if we know we don't need it.
         if (!isInit)
             init();
-        ProtocolVersion version = cluster.manager.protocolVersion();
+        ProtocolVersion protocolVersion = cluster.manager.protocolVersion();
+        CodecRegistry codecRegistry = cluster.manager.configuration.getCodecRegistry();
 
         ConsistencyLevel consistency = statement.getConsistencyLevel();
         if (consistency == null)
             consistency = configuration().getQueryOptions().getConsistencyLevel();
 
         ConsistencyLevel serialConsistency = statement.getSerialConsistencyLevel();
-        if (version.compareTo(ProtocolVersion.V3) < 0 && statement instanceof BatchStatement) {
+        if (protocolVersion.compareTo(ProtocolVersion.V3) < 0 && statement instanceof BatchStatement) {
             if (serialConsistency != null)
-                throw new UnsupportedFeatureException(version, "Serial consistency on batch statements is not supported");
+                throw new UnsupportedFeatureException(protocolVersion, "Serial consistency on batch statements is not supported");
         } else if (serialConsistency == null)
             serialConsistency = configuration().getQueryOptions().getSerialConsistencyLevel();
 
         long defaultTimestamp = Long.MIN_VALUE;
-        if (cluster.manager.protocolVersion().compareTo(ProtocolVersion.V3) >= 0) {
+        if (protocolVersion.compareTo(ProtocolVersion.V3) >= 0) {
             defaultTimestamp = statement.getDefaultTimestamp();
             if (defaultTimestamp == Long.MIN_VALUE)
                 defaultTimestamp = cluster.getConfiguration().getPolicies().getTimestampGenerator().next();
@@ -501,14 +502,14 @@ class SessionManager extends AbstractSession {
         int fetchSize = statement.getFetchSize();
         ByteBuffer usedPagingState = pagingState;
 
-        if (version == ProtocolVersion.V1) {
+        if (protocolVersion == ProtocolVersion.V1) {
             assert pagingState == null;
             // We don't let the user change the fetchSize globally if the proto v1 is used, so we just need to
             // check for the case of a per-statement override
             if (fetchSize <= 0)
                 fetchSize = -1;
             else if (fetchSize != Integer.MAX_VALUE)
-                throw new UnsupportedFeatureException(version, "Paging is not supported");
+                throw new UnsupportedFeatureException(protocolVersion, "Paging is not supported");
         } else if (fetchSize <= 0) {
             fetchSize = configuration().getQueryOptions().getFetchSize();
         }
@@ -531,13 +532,13 @@ class SessionManager extends AbstractSession {
             // It saddens me that we special case for the query builder here, but for now this is simpler.
             // We could provide a general API in RegularStatement instead at some point but it's unclear what's
             // the cleanest way to do that is right now (and it's probably not really that useful anyway).
-            if (version == ProtocolVersion.V1 && rs instanceof com.datastax.driver.core.querybuilder.BuiltStatement)
+            if (protocolVersion == ProtocolVersion.V1 && rs instanceof com.datastax.driver.core.querybuilder.BuiltStatement)
                 ((com.datastax.driver.core.querybuilder.BuiltStatement)rs).setForceNoValues(true);
 
-            ByteBuffer[] rawValues = rs.getValues();
+            ByteBuffer[] rawValues = rs.getValues(protocolVersion, codecRegistry);
 
-            if (version == ProtocolVersion.V1 && rawValues != null)
-                throw new UnsupportedFeatureException(version, "Binary values are not supported");
+            if (protocolVersion == ProtocolVersion.V1 && rawValues != null)
+                throw new UnsupportedFeatureException(protocolVersion, "Binary values are not supported");
 
             List<ByteBuffer> values = rawValues == null ? Collections.<ByteBuffer>emptyList() : Arrays.asList(rawValues);
 
@@ -552,9 +553,9 @@ class SessionManager extends AbstractSession {
                 throw new InvalidQueryException(String.format("Tried to execute unknown prepared query : %s. "
                     + "You may have used a PreparedStatement that was created with another Cluster instance.", bs.statement.getPreparedId().id));
             }
-            if (version.compareTo(ProtocolVersion.V4) < 0)
+            if (protocolVersion.compareTo(ProtocolVersion.V4) < 0)
                 bs.ensureAllSet();
-            boolean skipMetadata = version != ProtocolVersion.V1 && bs.statement.getPreparedId().resultSetMetadata != null;
+            boolean skipMetadata = protocolVersion != ProtocolVersion.V1 && bs.statement.getPreparedId().resultSetMetadata != null;
             Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(consistency, Arrays.asList(bs.wrapper.values), skipMetadata,
                                                                                       fetchSize, usedPagingState, serialConsistency, defaultTimestamp);
             request = new Requests.Execute(bs.statement.getPreparedId().id, options, statement.isTracing());
@@ -562,13 +563,13 @@ class SessionManager extends AbstractSession {
             assert statement instanceof BatchStatement : statement;
             assert pagingState == null;
 
-            if (version == ProtocolVersion.V1)
-                throw new UnsupportedFeatureException(version, "Protocol level batching is not supported");
+            if (protocolVersion == ProtocolVersion.V1)
+                throw new UnsupportedFeatureException(protocolVersion, "Protocol level batching is not supported");
 
             BatchStatement bs = (BatchStatement)statement;
-            if (version.compareTo(ProtocolVersion.V4) < 0)
+            if (protocolVersion.compareTo(ProtocolVersion.V4) < 0)
                 bs.ensureAllSet();
-            BatchStatement.IdAndValues idAndVals = bs.getIdAndValues();
+            BatchStatement.IdAndValues idAndVals = bs.getIdAndValues(protocolVersion, codecRegistry);
             Requests.BatchProtocolOptions options = new Requests.BatchProtocolOptions(consistency, serialConsistency, defaultTimestamp);
             request =  new Requests.Batch(bs.batchType, idAndVals.ids, idAndVals.values, options, statement.isTracing());
         }

@@ -111,8 +111,8 @@ public abstract class StatementWrapper extends Statement {
     }
 
     @Override
-    public ByteBuffer getRoutingKey() {
-        return wrapped.getRoutingKey();
+    public ByteBuffer getRoutingKey(ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
+        return wrapped.getRoutingKey(protocolVersion, codecRegistry);
     }
 
     @Override
@@ -126,8 +126,8 @@ public abstract class StatementWrapper extends Statement {
     }
 
     @Override
-    public Statement setPagingState(PagingState pagingState) {
-        return wrapped.setPagingState(pagingState);
+    public Statement setPagingState(PagingState pagingState, CodecRegistry codecRegistry) {
+        return wrapped.setPagingState(pagingState, codecRegistry);
     }
 
     @Override

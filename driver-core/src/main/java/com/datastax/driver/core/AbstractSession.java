@@ -36,7 +36,7 @@ public abstract class AbstractSession implements Session {
      */
     @Override
     public ResultSet execute(String query) {
-        return execute(newSimpleStatement(query));
+        return execute(new SimpleStatement(query));
     }
 
     /**
@@ -44,7 +44,7 @@ public abstract class AbstractSession implements Session {
      */
     @Override
     public ResultSet execute(String query, Object... values) {
-        return execute(newSimpleStatement(query, values));
+        return execute(new SimpleStatement(query, values));
     }
 
     /**
@@ -60,7 +60,7 @@ public abstract class AbstractSession implements Session {
      */
     @Override
     public ResultSetFuture executeAsync(String query) {
-        return executeAsync(newSimpleStatement(query));
+        return executeAsync(new SimpleStatement(query));
     }
 
     /**
@@ -68,23 +68,7 @@ public abstract class AbstractSession implements Session {
      */
     @Override
     public ResultSetFuture executeAsync(String query, Object... values) {
-        return executeAsync(newSimpleStatement(query, values));
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public SimpleStatement newSimpleStatement(String query) {
-        return new SimpleStatement(query, this.getCluster());
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public SimpleStatement newSimpleStatement(String query, Object... values) {
-        return new SimpleStatement(query, this.getCluster(), values);
+        return executeAsync(new SimpleStatement(query, values));
     }
 
     /**
@@ -132,7 +116,9 @@ public abstract class AbstractSession implements Session {
         return Futures.transform(prepared, new Function<PreparedStatement, PreparedStatement>() {
             @Override
             public PreparedStatement apply(PreparedStatement prepared) {
-                ByteBuffer routingKey = statement.getRoutingKey();
+                ProtocolVersion protocolVersion = getCluster().getConfiguration().getProtocolOptions().getProtocolVersion();
+                CodecRegistry codecRegistry = getCluster().getConfiguration().getCodecRegistry();
+                ByteBuffer routingKey = statement.getRoutingKey(protocolVersion, codecRegistry);
                 if (routingKey != null)
                     prepared.setRoutingKey(routingKey);
                 prepared.setConsistencyLevel(statement.getConsistencyLevel());

@@ -67,7 +67,7 @@ public class SpeculativeExecutionIntegrationTest extends CCMBridge.PerClassSingl
 
         BatchStatement batch = new BatchStatement();
         for (int k = 0; k < 1000; k++) {
-            batch.add(session.newSimpleStatement("insert into foo(k,v) values (?,1)", k));
+            batch.add(new SimpleStatement("insert into foo(k,v) values (?,1)", k));
         }
         session.execute(batch);
 

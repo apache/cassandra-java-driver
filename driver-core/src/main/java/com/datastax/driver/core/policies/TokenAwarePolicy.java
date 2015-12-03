@@ -50,7 +50,9 @@ public class TokenAwarePolicy implements ChainableLoadBalancingPolicy {
 
     private final LoadBalancingPolicy childPolicy;
     private final boolean shuffleReplicas;
-    private Metadata clusterMetadata;
+    private volatile Metadata clusterMetadata;
+    private volatile ProtocolVersion protocolVersion;
+    private volatile CodecRegistry codecRegistry;
 
     /**
      * Creates a new {@code TokenAware} policy.
@@ -90,6 +92,8 @@ public class TokenAwarePolicy implements ChainableLoadBalancingPolicy {
     @Override
     public void init(Cluster cluster, Collection<Host> hosts) {
         clusterMetadata = cluster.getMetadata();
+        protocolVersion = cluster.getConfiguration().getProtocolOptions().getProtocolVersion();
+        codecRegistry = cluster.getConfiguration().getCodecRegistry();
         childPolicy.init(cluster, hosts);
     }
 
@@ -118,7 +122,7 @@ public class TokenAwarePolicy implements ChainableLoadBalancingPolicy {
     @Override
     public Iterator<Host> newQueryPlan(final String loggedKeyspace, final Statement statement) {
 
-        ByteBuffer partitionKey = statement.getRoutingKey();
+        ByteBuffer partitionKey = statement.getRoutingKey(protocolVersion, codecRegistry);
         String keyspace = statement.getKeyspace();
         if (keyspace == null)
             keyspace = loggedKeyspace;

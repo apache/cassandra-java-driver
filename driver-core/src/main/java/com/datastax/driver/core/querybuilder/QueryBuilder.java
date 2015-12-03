@@ -38,41 +38,7 @@ import com.datastax.driver.core.exceptions.InvalidQueryException;
  */
 public final class QueryBuilder {
 
-    private final ProtocolVersion protocolVersion;
-    private final CodecRegistry codecRegistry;
-
-    /**
-     * Create a new QueryBuilder instance and associate it with the given {@link Cluster}.
-     * Note: if the {@link Cluster} is not yet initialized, this method
-     * will trigger its initialization.
-     *
-     * @param cluster The {@link Cluster} instance this object should be attached to.
-     */
-    public QueryBuilder(Cluster cluster) {
-        this(getProtocolVersion(cluster), cluster.getConfiguration().getCodecRegistry());
-    }
-
-    private static ProtocolVersion getProtocolVersion(Cluster cluster) {
-        cluster.init();
-        return cluster.getConfiguration().getProtocolOptions().getProtocolVersion();
-    }
-
-    /**
-     * Create a "disconnected" QueryBuilder instance (<b>you should prefer
-     * {@link #QueryBuilder(Cluster)} whenever possible</b>).
-     * <p>
-     * This constructor is only exposed for situations where you don't have a {@code Cluster}
-     * instance available. If you use this constructor, and use statements built from it
-     * with a {@code Cluster} later, you won't be able to rely on custom codecs registered
-     * against the cluster, or you might get errors if the protocol versions don't match.
-     *
-     * @param protocolVersion the protocol version.
-     * @param codecRegistry the codec registry.
-     */
-    public QueryBuilder(ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
-        this.protocolVersion = protocolVersion;
-        this.codecRegistry = codecRegistry;
-    }
+    private QueryBuilder() {}
 
     /**
      * Start building a new SELECT query that selects the provided names.
@@ -83,8 +49,8 @@ public final class QueryBuilder {
      * @return an in-construction SELECT query (you will need to provide at
      * least a FROM clause to complete the query).
      */
-    public Select.Builder select(String... columns) {
-        return new Select.Builder(protocolVersion, codecRegistry, Arrays.asList((Object[])columns));
+    public static Select.Builder select(String... columns) {
+        return new Select.Builder(Arrays.asList((Object[])columns));
     }
 
     /**
@@ -93,9 +59,9 @@ public final class QueryBuilder {
      * @return an in-construction SELECT query (you will need to provide a
      * column selection and at least a FROM clause to complete the query).
      */
-    public Select.Selection select() {
+    public static Select.Selection select() {
         // Note: the fact we return Select.Selection as return type is on purpose.
-        return new Select.SelectionOrAlias(protocolVersion, codecRegistry);
+        return new Select.SelectionOrAlias();
     }
 
     /**
@@ -104,8 +70,8 @@ public final class QueryBuilder {
      * @param table the name of the table in which to insert.
      * @return an in-construction INSERT query.
      */
-    public Insert insertInto(String table) {
-        return new Insert(protocolVersion, codecRegistry, null, table);
+    public static Insert insertInto(String table) {
+        return new Insert(null, table);
     }
 
     /**
@@ -115,8 +81,8 @@ public final class QueryBuilder {
      * @param table the name of the table to insert into.
      * @return an in-construction INSERT query.
      */
-    public Insert insertInto(String keyspace, String table) {
-        return new Insert(protocolVersion, codecRegistry, keyspace, table);
+    public static Insert insertInto(String keyspace, String table) {
+        return new Insert(keyspace, table);
     }
 
     /**
@@ -125,8 +91,8 @@ public final class QueryBuilder {
      * @param table the name of the table to insert into.
      * @return an in-construction INSERT query.
      */
-    public Insert insertInto(TableMetadata table) {
-        return new Insert(protocolVersion, codecRegistry, table);
+    public static Insert insertInto(TableMetadata table) {
+        return new Insert(table);
     }
 
     /**
@@ -136,8 +102,8 @@ public final class QueryBuilder {
      * @return an in-construction UPDATE query (at least a SET and a WHERE
      * clause needs to be provided to complete the query).
      */
-    public Update update(String table) {
-        return new Update(protocolVersion, codecRegistry, null, table);
+    public static Update update(String table) {
+        return new Update(null, table);
     }
 
     /**
@@ -148,8 +114,8 @@ public final class QueryBuilder {
      * @return an in-construction UPDATE query (at least a SET and a WHERE
      * clause needs to be provided to complete the query).
      */
-    public Update update(String keyspace, String table) {
-        return new Update(protocolVersion, codecRegistry, keyspace, table);
+    public static Update update(String keyspace, String table) {
+        return new Update(keyspace, table);
     }
 
     /**
@@ -159,8 +125,8 @@ public final class QueryBuilder {
      * @return an in-construction UPDATE query (at least a SET and a WHERE
      * clause needs to be provided to complete the query).
      */
-    public Update update(TableMetadata table) {
-        return new Update(protocolVersion, codecRegistry, table);
+    public static Update update(TableMetadata table) {
+        return new Update(table);
     }
 
     /**
@@ -170,8 +136,8 @@ public final class QueryBuilder {
      * @return an in-construction DELETE query (At least a FROM and a WHERE
      * clause needs to be provided to complete the query).
      */
-    public Delete.Builder delete(String... columns) {
-        return new Delete.Builder(protocolVersion, codecRegistry, columns);
+    public static Delete.Builder delete(String... columns) {
+        return new Delete.Builder(columns);
     }
 
     /**
@@ -181,8 +147,8 @@ public final class QueryBuilder {
      * column selection and at least a FROM and a WHERE clause to complete the
      * query).
      */
-    public Delete.Selection delete() {
-        return new Delete.Selection(protocolVersion, codecRegistry);
+    public static Delete.Selection delete() {
+        return new Delete.Selection();
     }
 
     /**
@@ -198,8 +164,8 @@ public final class QueryBuilder {
      * @param statements the statements to batch.
      * @return a new {@code RegularStatement} that batch {@code statements}.
      */
-    public Batch batch(RegularStatement... statements) {
-        return new Batch(protocolVersion, codecRegistry, statements, true);
+    public static Batch batch(RegularStatement... statements) {
+        return new Batch(statements, true);
     }
 
     /**
@@ -219,8 +185,8 @@ public final class QueryBuilder {
      * @return a new {@code RegularStatement} that batch {@code statements} without
      * using the batch log.
      */
-    public Batch unloggedBatch(RegularStatement... statements) {
-        return new Batch(protocolVersion, codecRegistry, statements, false);
+    public static Batch unloggedBatch(RegularStatement... statements) {
+        return new Batch(statements, false);
     }
 
     /**
@@ -229,8 +195,8 @@ public final class QueryBuilder {
      * @param table the name of the table to truncate.
      * @return the truncation query.
      */
-    public Truncate truncate(String table) {
-        return new Truncate(protocolVersion, codecRegistry, null, table);
+    public static Truncate truncate(String table) {
+        return new Truncate(null, table);
     }
 
     /**
@@ -240,8 +206,8 @@ public final class QueryBuilder {
      * @param table the name of the table to truncate.
      * @return the truncation query.
      */
-    public Truncate truncate(String keyspace, String table) {
-        return new Truncate(protocolVersion, codecRegistry, keyspace, table);
+    public static Truncate truncate(String keyspace, String table) {
+        return new Truncate(keyspace, table);
     }
 
     /**
@@ -250,8 +216,8 @@ public final class QueryBuilder {
      * @param table the table to truncate.
      * @return the truncation query.
      */
-    public Truncate truncate(TableMetadata table) {
-        return new Truncate(protocolVersion, codecRegistry, table);
+    public static Truncate truncate(TableMetadata table) {
+        return new Truncate(table);
     }
 
     /**

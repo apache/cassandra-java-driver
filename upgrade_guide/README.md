@@ -42,19 +42,12 @@ We've also seized the opportunity to remove code that was deprecated in 2.1.
         * `<V> T set(String name, V v, Class<V> targetClass)`
         * `<V> T set(String name, V v, TypeToken<V> targetType)`
         * `<V> T set(String name, V v, TypeCodec<V> codec)`
-    * `Session`. The following methods were added:
-        * `newSimpleStatement(String query)`
-        * `newSimpleStatement(String query, Object... values)`
+    * `Statement`. The following public methods were modified:
+        * `getRoutingKey(ProtocolVersion, CodecRegistry)`: both parameters added.
     * `RegularStatement`. The following public methods were modified:
-        * `getValues()`
-        * `hasValues()`
-    * `SimpleStatement`. Public constructors were removed; users are required to call either:
-        * `Session.newSimpleStatement(String query)` or
-        * `Session.newSimpleStatement(String query, Object... values)`
-    * `QueryBuilder`. This class now has a single, public constructor: `QueryBuilder(Cluster cluster)`.
-        Its fluent API has also changed; instead of e.g.: `QueryBuilder.select(...)`,
-        users should now use the following idiom: `new QueryBuilder(cluster).select(...)`
-        All methods that start a query are now instance methods instead of static ones.
+        * `getValues(ProtocolVersion, CodecRegistry)`: second parameter added.
+        * `getQueryString(CodecRegistry)` and `hasValues(CodecRegistry)`: parameter added. No-arg versions are still present
+           and use the default codec registry; refer to the Javadocs for guidance on which version to use.
     * `PreparedStatement`. The following public method was added:
         * `CodecRegistry getCodecRegistry()`.
     * `TupleType`. The following public method was deleted:

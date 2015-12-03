@@ -171,9 +171,9 @@ Cluster cluster = ...
 Session session = ...
 MyPojo myPojo = ...
 // Using SimpleStatement
-Statement stmt = session.newSimpleStatement("INSERT INTO t (id, json) VALUES (?, ?)", 42, myPojo));
+Statement stmt = new SimpleStatement("INSERT INTO t (id, json) VALUES (?, ?)", 42, myPojo));
 // Using the Query Builder
-BuiltStatement insertStmt = new QueryBuilder(cluster).insertInto("t")
+BuiltStatement insertStmt = QueryBuilder.insertInto("t")
     .value("id", 42)
     .value("json", myPojo);
 // Using BoundStatements

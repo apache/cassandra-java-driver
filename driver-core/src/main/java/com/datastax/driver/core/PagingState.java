@@ -41,9 +41,9 @@ public class PagingState {
     private final byte[] hash;
     private final ProtocolVersion protocolVersion;
 
-    PagingState(ByteBuffer pagingState, Statement statement, ProtocolVersion protocolVersion) {
+    PagingState(ByteBuffer pagingState, Statement statement, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
         this.pagingState = Bytes.getArray(pagingState);
-        this.hash = hash(statement);
+        this.hash = hash(statement, protocolVersion, codecRegistry);
         this.protocolVersion = protocolVersion;
     }
 
@@ -70,7 +70,7 @@ public class PagingState {
             : ProtocolVersion.V2;
     }
 
-    private byte[] hash(Statement statement) {
+    private byte[] hash(Statement statement, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
         byte[] digest;
         ByteBuffer[] values;
         MessageDigest md;
@@ -85,7 +85,7 @@ public class PagingState {
                 //it is a RegularStatement since Batch statements are not allowed
                 RegularStatement rs = (RegularStatement)statement;
                 md.update(rs.getQueryString().getBytes());
-                values = rs.getValues();
+                values = rs.getValues(protocolVersion, codecRegistry);
             }
             if (values != null) {
                 for (ByteBuffer value : values) {
@@ -101,8 +101,8 @@ public class PagingState {
         return digest;
     }
 
-    boolean matches(Statement statement) {
-        byte[] toTest = hash(statement);
+    boolean matches(Statement statement, CodecRegistry codecRegistry) {
+        byte[] toTest = hash(statement, protocolVersion, codecRegistry);
         return Arrays.equals(toTest, this.hash);
     }
 

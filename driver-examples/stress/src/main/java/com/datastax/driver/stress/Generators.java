@@ -124,7 +124,7 @@ public class Generators {
                     }
                     sb.append(" WHERE key = ").append(prefix | iteration);
                     ++iteration;
-                    return new QueryGenerator.Request.SimpleQuery(session.newSimpleStatement(sb.toString()));
+                    return new QueryGenerator.Request.SimpleQuery(new SimpleStatement(sb.toString()));
                 }
             };
         }
@@ -196,7 +196,7 @@ public class Generators {
                     StringBuilder sb = new StringBuilder();
                     sb.append("SELECT * FROM standard1 WHERE key = ").append(prefix | iteration);
                     ++iteration;
-                    return new QueryGenerator.Request.SimpleQuery(session.newSimpleStatement(sb.toString()));
+                    return new QueryGenerator.Request.SimpleQuery(new SimpleStatement(sb.toString()));
                 }
             };
         }

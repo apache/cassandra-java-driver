@@ -62,11 +62,11 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
 
         // execute
         checkExecuteResultSet(session.execute(String.format(TestUtils.SELECT_ALL_FORMAT, TABLE1)), key);
-        checkExecuteResultSet(session.execute(session.newSimpleStatement(String.format(TestUtils.SELECT_ALL_FORMAT, TABLE1)).setConsistencyLevel(ConsistencyLevel.ONE)), key);
+        checkExecuteResultSet(session.execute(new SimpleStatement(String.format(TestUtils.SELECT_ALL_FORMAT, TABLE1)).setConsistencyLevel(ConsistencyLevel.ONE)), key);
 
         // executeAsync
         checkExecuteResultSet(session.executeAsync(String.format(TestUtils.SELECT_ALL_FORMAT, TABLE1)).getUninterruptibly(), key);
-        checkExecuteResultSet(session.executeAsync(session.newSimpleStatement(String.format(TestUtils.SELECT_ALL_FORMAT, TABLE1)).setConsistencyLevel(ConsistencyLevel.ONE)).getUninterruptibly(), key);
+        checkExecuteResultSet(session.executeAsync(new SimpleStatement(String.format(TestUtils.SELECT_ALL_FORMAT, TABLE1)).setConsistencyLevel(ConsistencyLevel.ONE)).getUninterruptibly(), key);
     }
 
     @Test(groups = "short")
@@ -151,11 +151,11 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
 
             // execute
             checkExecuteResultSet(compressedSession.execute(SELECT_ALL), key);
-            checkExecuteResultSet(compressedSession.execute(session.newSimpleStatement(SELECT_ALL).setConsistencyLevel(ConsistencyLevel.ONE)), key);
+            checkExecuteResultSet(compressedSession.execute(new SimpleStatement(SELECT_ALL).setConsistencyLevel(ConsistencyLevel.ONE)), key);
 
             // executeAsync
             checkExecuteResultSet(compressedSession.executeAsync(SELECT_ALL).getUninterruptibly(), key);
-            checkExecuteResultSet(compressedSession.executeAsync(session.newSimpleStatement(SELECT_ALL).setConsistencyLevel(ConsistencyLevel.ONE)).getUninterruptibly(), key);
+            checkExecuteResultSet(compressedSession.executeAsync(new SimpleStatement(SELECT_ALL).setConsistencyLevel(ConsistencyLevel.ONE)).getUninterruptibly(), key);
 
         } finally {
             cluster.getConfiguration().getProtocolOptions().setCompression(ProtocolOptions.Compression.NONE);

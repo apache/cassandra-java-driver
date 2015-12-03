@@ -88,8 +88,8 @@ import static com.datastax.driver.core.DataType.Name.SET;
  *     <li>all driver types that implement {@link GettableByIndexData}, {@link GettableByNameData},
  *     {@link SettableByIndexData} and/or {@link SettableByNameData}. Namely: {@link Row},
  *     {@link BoundStatement}, {@link UDTValue} and {@link TupleValue};</li>
- *     <li>{@link Session#newSimpleStatement(String, Object...) simple statements};</li>
- *     <li>statements created with the {@link com.datastax.driver.core.querybuilder.QueryBuilder#QueryBuilder(Cluster) Query builder}.</li>
+ *     <li>{@link SimpleStatement(String, Object...) simple statements};</li>
+ *     <li>statements created with the {@link com.datastax.driver.core.querybuilder.QueryBuilder Query builder}.</li>
  * </ul>
  *
  * Example:
@@ -393,7 +393,7 @@ public final class CodecRegistry {
      * Furthermore, this method returns the first matching codec, regardless of its accepted CQL type.
      * It should be reserved for situations where the target CQL type is not available or unknown.
      * In the Java driver, this happens mainly when serializing a value in a
-     * {@link Session#newSimpleStatement(String, Object...) SimpleStatement} or in the
+     * {@link SimpleStatement(String, Object...) SimpleStatement} or in the
      * {@link com.datastax.driver.core.querybuilder.QueryBuilder}, where no CQL type information is available.
      * <p>
      * Codecs returned by this method are <em>NOT</em> cached (see the {@link CodecRegistry top-level documentation}

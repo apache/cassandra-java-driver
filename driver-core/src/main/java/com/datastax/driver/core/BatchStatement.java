@@ -81,14 +81,14 @@ public class BatchStatement extends Statement {
         this.batchType = batchType;
     }
 
-    IdAndValues getIdAndValues() {
+    IdAndValues getIdAndValues(ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
         IdAndValues idAndVals = new IdAndValues(statements.size());
         for (Statement statement : statements) {
             if(statement instanceof StatementWrapper)
                 statement = ((StatementWrapper) statement).getWrappedStatement();
             if (statement instanceof RegularStatement) {
                 RegularStatement st = (RegularStatement)statement;
-                ByteBuffer[] vals = st.getValues();
+                ByteBuffer[] vals = st.getValues(protocolVersion, codecRegistry);
                 String query = st.getQueryString();
                 idAndVals.ids.add(query);
                 idAndVals.values.add(vals == null ? Collections.<ByteBuffer>emptyList() : Arrays.asList(vals));
@@ -213,11 +213,11 @@ public class BatchStatement extends Statement {
     }
 
     @Override
-    public ByteBuffer getRoutingKey() {
+    public ByteBuffer getRoutingKey(ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
         for (Statement statement : statements) {
             if(statement instanceof StatementWrapper)
                 statement = ((StatementWrapper) statement).getWrappedStatement();
-            ByteBuffer rk = statement.getRoutingKey();
+            ByteBuffer rk = statement.getRoutingKey(protocolVersion, codecRegistry);
             if (rk != null)
                 return rk;
         }

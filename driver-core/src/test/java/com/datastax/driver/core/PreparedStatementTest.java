@@ -341,7 +341,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
     @Test(groups = "short")
     public void prepareStatementInheritPropertiesTest() {
 
-        RegularStatement toPrepare = session.newSimpleStatement("SELECT * FROM test WHERE k=?");
+        RegularStatement toPrepare = new SimpleStatement("SELECT * FROM test WHERE k=?");
         toPrepare.setConsistencyLevel(ConsistencyLevel.QUORUM);
         toPrepare.enableTracing();
 
@@ -373,7 +373,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
             BatchStatement bs = new BatchStatement();
             bs.add(ps1.bind("one", "foo"));
             bs.add(ps2.bind("two"));
-            bs.add(session.newSimpleStatement("INSERT INTO " + SIMPLE_TABLE2 + " (k, v) VALUES ('three', 'foobar')"));
+            bs.add(new SimpleStatement("INSERT INTO " + SIMPLE_TABLE2 + " (k, v) VALUES ('three', 'foobar')"));
 
             session.execute(bs);
 
@@ -400,7 +400,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
 
         PreparedStatement ps = session.prepare(String.format("INSERT INTO %s.foo (i) VALUES (?)", keyspace));
         BoundStatement bs = ps.bind(1);
-        assertThat(bs.getRoutingKey()).isNotNull();
+        assertThat(bs.getRoutingKey(ProtocolVersion.NEWEST_SUPPORTED, CodecRegistry.DEFAULT_INSTANCE)).isNotNull();
     }
 
     @Test(groups = "short")
@@ -413,7 +413,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
 
         PreparedStatement ps = session.prepare("INSERT INTO \"Test\".\"Foo\" (i) VALUES (?)");
         BoundStatement bs = ps.bind(1);
-        assertThat(bs.getRoutingKey()).isNotNull();
+        assertThat(bs.getRoutingKey(ProtocolVersion.NEWEST_SUPPORTED, CodecRegistry.DEFAULT_INSTANCE)).isNotNull();
     }
 
     @Test(groups = "short", expectedExceptions = InvalidQueryException.class)
@@ -517,7 +517,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
         st2.setString(0, "foo");
         // i is UNSET
         session.execute(st2);
-        Statement st3 = session.newSimpleStatement("SELECT i from " + SIMPLE_TABLE + " where k = 'foo'");
+        Statement st3 = new SimpleStatement("SELECT i from " + SIMPLE_TABLE + " where k = 'foo'");
         st3.enableTracing();
         ResultSet rows = session.execute(st3);
         assertThat(rows.one().getInt("i")).isEqualTo(1234);
@@ -546,7 +546,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
         session.execute(bound);
 
         ResultSet rows = session.execute(
-            session.newSimpleStatement("SELECT i from " + SIMPLE_TABLE + " where k = 'foo'")
+            new SimpleStatement("SELECT i from " + SIMPLE_TABLE + " where k = 'foo'")
                 .enableTracing());
 
         assertThat(rows.one().isNull("i"));
@@ -575,7 +575,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
         session.execute(bound);
 
         ResultSet rows = session.execute(
-            session.newSimpleStatement("SELECT i from " + SIMPLE_TABLE + " where k = 'foo'")
+            new SimpleStatement("SELECT i from " + SIMPLE_TABLE + " where k = 'foo'")
                 .enableTracing());
 
         assertThat(rows.one().isNull("i"));
@@ -604,7 +604,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
         st2.setString(0, "foo");
         // i is UNSET
         session.execute(new BatchStatement().add(st2));
-        Statement st3 = session.newSimpleStatement("SELECT i from " + SIMPLE_TABLE + " where k = 'foo'");
+        Statement st3 = new SimpleStatement("SELECT i from " + SIMPLE_TABLE + " where k = 'foo'");
         st3.enableTracing();
         ResultSet rows = session.execute(st3);
         assertThat(rows.one().getInt("i")).isEqualTo(1234);
@@ -626,7 +626,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
         st1.setString(0, "foo");
         st1.setToNull(1);
         session.execute(st1);
-        Statement st2 = session.newSimpleStatement("SELECT i from " + SIMPLE_TABLE + " where k = 'foo'");
+        Statement st2 = new SimpleStatement("SELECT i from " + SIMPLE_TABLE + " where k = 'foo'");
         st2.enableTracing();
         ResultSet rows = session.execute(st2);
         assertThat(rows.one().isNull(0)).isTrue();
@@ -649,7 +649,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
         st1.setString(0, "foo");
         st1.setToNull(1);
         session.execute(new BatchStatement().add(st1));
-        Statement st2 = session.newSimpleStatement("SELECT i from " + SIMPLE_TABLE + " where k = 'foo'");
+        Statement st2 = new SimpleStatement("SELECT i from " + SIMPLE_TABLE + " where k = 'foo'");
         st2.enableTracing();
         ResultSet rows = session.execute(st2);
         assertThat(rows.one().isNull(0)).isTrue();
@@ -673,7 +673,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
         PreparedStatement prepared;
         BoundStatement bound;
 
-        statement = session.newSimpleStatement(String.format("SELECT * FROM %s.idempotencetest WHERE i = ?", keyspace));
+        statement = new SimpleStatement(String.format("SELECT * FROM %s.idempotencetest WHERE i = ?", keyspace));
 
         prepared = session.prepare(statement);
         bound = prepared.bind(1);

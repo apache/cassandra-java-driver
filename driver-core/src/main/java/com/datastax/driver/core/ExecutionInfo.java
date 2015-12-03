@@ -34,17 +34,19 @@ public class ExecutionInfo {
     private final QueryTrace trace;
     private final ByteBuffer pagingState;
     private final ProtocolVersion protocolVersion;
+    private final CodecRegistry codecRegistry;
     private final Statement statement;
     private volatile boolean schemaInAgreement;
     private final List<String> warnings;
     private final Map<String, ByteBuffer> incomingPayload;
 
-    private ExecutionInfo(List<Host> triedHosts, ConsistencyLevel achievedConsistency, QueryTrace trace, ByteBuffer pagingState, ProtocolVersion protocolVersion, Statement statement, boolean schemaAgreement, List<String> warnings, Map<String, ByteBuffer> incomingPayload) {
+    private ExecutionInfo(List<Host> triedHosts, ConsistencyLevel achievedConsistency, QueryTrace trace, ByteBuffer pagingState, ProtocolVersion protocolVersion, CodecRegistry codecRegistry, Statement statement, boolean schemaAgreement, List<String> warnings, Map<String, ByteBuffer> incomingPayload) {
         this.triedHosts = triedHosts;
         this.achievedConsistency = achievedConsistency;
         this.trace = trace;
         this.pagingState = pagingState;
         this.protocolVersion = protocolVersion;
+        this.codecRegistry = codecRegistry;
         this.statement = statement;
         this.schemaInAgreement = schemaAgreement;
         this.warnings = warnings;
@@ -52,27 +54,27 @@ public class ExecutionInfo {
     }
 
     ExecutionInfo(List<Host> triedHosts) {
-        this(triedHosts, null, null, null, null, null, true, Collections.<String>emptyList(), null);
+        this(triedHosts, null, null, null, null, null, null, true, Collections.<String>emptyList(), null);
     }
 
     ExecutionInfo withTraceAndWarnings(QueryTrace newTrace, List<String> warnings) {
-        return new ExecutionInfo(triedHosts, achievedConsistency, newTrace, pagingState, protocolVersion, statement, schemaInAgreement, warnings, incomingPayload);
+        return new ExecutionInfo(triedHosts, achievedConsistency, newTrace, pagingState, protocolVersion, codecRegistry, statement, schemaInAgreement, warnings, incomingPayload);
     }
 
     ExecutionInfo withAchievedConsistency(ConsistencyLevel newConsistency) {
-        return new ExecutionInfo(triedHosts, newConsistency, trace, pagingState, protocolVersion, statement, schemaInAgreement, warnings, incomingPayload);
+        return new ExecutionInfo(triedHosts, newConsistency, trace, pagingState, protocolVersion, codecRegistry, statement, schemaInAgreement, warnings, incomingPayload);
     }
 
-    ExecutionInfo withPagingState(ByteBuffer pagingState, ProtocolVersion protocolVersion) {
-        return new ExecutionInfo(triedHosts, achievedConsistency, trace, pagingState, protocolVersion, statement, schemaInAgreement, warnings, incomingPayload);
+    ExecutionInfo withPagingState(ByteBuffer pagingState, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
+        return new ExecutionInfo(triedHosts, achievedConsistency, trace, pagingState, protocolVersion, codecRegistry, statement, schemaInAgreement, warnings, incomingPayload);
     }
 
     ExecutionInfo withStatement(Statement statement) {
-        return new ExecutionInfo(triedHosts, achievedConsistency, trace, pagingState, protocolVersion, statement, schemaInAgreement, warnings, incomingPayload);
+        return new ExecutionInfo(triedHosts, achievedConsistency, trace, pagingState, protocolVersion, codecRegistry, statement, schemaInAgreement, warnings, incomingPayload);
     }
 
     ExecutionInfo withIncomingPayload(Map<String, ByteBuffer> incomingPayload) {
-        return new ExecutionInfo(triedHosts, achievedConsistency, trace, pagingState, protocolVersion, statement, schemaInAgreement, warnings, incomingPayload);
+        return new ExecutionInfo(triedHosts, achievedConsistency, trace, pagingState, protocolVersion, codecRegistry, statement, schemaInAgreement, warnings, incomingPayload);
     }
 
     /**
@@ -175,7 +177,7 @@ public class ExecutionInfo {
     public PagingState getPagingState() {
         if (this.pagingState == null)
             return null;
-        return new PagingState(this.pagingState, this.statement, this.protocolVersion);
+        return new PagingState(this.pagingState, this.statement, this.protocolVersion, this.codecRegistry);
     }
 
     /**

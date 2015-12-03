@@ -44,7 +44,7 @@ public abstract class Statement {
     // used when preparing a statement and for other internal queries. Do not expose publicly.
     static final Statement DEFAULT = new Statement() {
         @Override
-        public ByteBuffer getRoutingKey() {
+        public ByteBuffer getRoutingKey(ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
             return null;
         }
 
@@ -186,9 +186,15 @@ public abstract class Statement {
      * to fail and if the load balancing policy used is not token aware, then
      * the routing key can be safely ignored.
      *
+     * @param protocolVersion the protocol version that will be used if the actual
+     *                        implementation needs to serialize something to compute
+     *                        the key.
+     * @param codecRegistry the codec registry that will be used if the actual
+     *                      implementation needs to serialize something to compute
+     *                      this key.
      * @return the routing key for this query or {@code null}.
      */
-    public abstract ByteBuffer getRoutingKey();
+    public abstract ByteBuffer getRoutingKey(ProtocolVersion protocolVersion, CodecRegistry codecRegistry);
 
     /**
      * Returns the keyspace this query operates on.
@@ -368,17 +374,21 @@ public abstract class Statement {
      *
      * @param pagingState the paging state to set, or {@code null} to remove any state that was
      *                    previously set on this statement.
+     * @param codecRegistry the codec registry that will be used if this method needs to serialize the
+     *                      statement's values in order to check that the paging state matches.
      * @return this {@code Statement} object.
      *
      * @throws PagingStateException if the paging state does not match this statement.
+     *
+     * @see #setPagingState(PagingState)
      */
-    public Statement setPagingState(PagingState pagingState) {
+    public Statement setPagingState(PagingState pagingState, CodecRegistry codecRegistry) {
         if (this instanceof BatchStatement) {
             throw new UnsupportedOperationException("Cannot set the paging state on a batch statement");
         } else {
             if (pagingState == null) {
                 this.pagingState = null;
-            } else if (pagingState.matches(this)) {
+            } else if (pagingState.matches(this, codecRegistry)) {
                 this.pagingState = pagingState.getRawState();
             } else {
                 throw new PagingStateException("Paging state mismatch, "
@@ -387,6 +397,27 @@ public abstract class Statement {
             }
         }
         return this;
+    }
+
+    /**
+     * Sets the paging state.
+     * <p>
+     * This method calls {@link #setPagingState(PagingState, CodecRegistry)} with {@link CodecRegistry#DEFAULT_INSTANCE}.
+     * Whether you should use this or the other variant depends on the type of statement this is
+     * called on:
+     * <ul>
+     *     <li>for a {@link BoundStatement}, the codec registry isn't actually needed, so it's always safe to
+     *     use this method;</li>
+     *     <li>for a {@link SimpleStatement} or {@link BuiltStatement}, you can use this method if you use no
+     *     custom codecs, or if your custom codecs are registered with the default registry. Otherwise, use
+     *     the other method and provide the registry that contains your codecs.</li>
+     * </ul>
+     *
+     * @param pagingState the paging state to set, or {@code null} to remove any state that was
+     *                    previously set on this statement.
+     */
+    public Statement setPagingState(PagingState pagingState) {
+        return setPagingState(pagingState, CodecRegistry.DEFAULT_INSTANCE);
     }
 
     /**

@@ -17,7 +17,6 @@ package com.datastax.driver.core.querybuilder;
 
 import java.util.*;
 
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -34,8 +33,6 @@ public class QueryBuilderExecutionTest extends CCMBridge.PerClassSingleNodeClust
 
     private static final String TABLE1 = "test1";
 
-    private QueryBuilder builder;
-
     @Override
     protected Collection<String> getTableDefinitions() {
         return Arrays.asList(
@@ -44,18 +41,13 @@ public class QueryBuilderExecutionTest extends CCMBridge.PerClassSingleNodeClust
             "CREATE TABLE test_coll (k int PRIMARY KEY, a list<int>, b map<int,text>, c set<text>)");
     }
 
-    @BeforeMethod(groups = "short")
-    public void setUpQueryBuilder() throws Exception {
-        builder = new QueryBuilder(cluster);
-    }
-
     @Test(groups = "short")
     public void executeTest() throws Exception {
 
-        session.execute(builder.insertInto(TABLE1).value("k", "k1").value("t", "This is a test").value("i", 3).value("f", 0.42));
-        session.execute(builder.update(TABLE1).with(set("t", "Another test")).where(eq("k", "k2")));
+        session.execute(insertInto(TABLE1).value("k", "k1").value("t", "This is a test").value("i", 3).value("f", 0.42));
+        session.execute(update(TABLE1).with(set("t", "Another test")).where(eq("k", "k2")));
 
-        List<Row> rows = session.execute(builder.select().from(TABLE1).where(in("k", "k1", "k2"))).all();
+        List<Row> rows = session.execute(select().from(TABLE1).where(in("k", "k1", "k2"))).all();
 
         assertEquals(2, rows.size());
 
@@ -76,8 +68,8 @@ public class QueryBuilderExecutionTest extends CCMBridge.PerClassSingleNodeClust
     public void dateHandlingTest() throws Exception {
 
         Date d = new Date();
-        session.execute(builder.insertInto("dateTest").value("t", d));
-        String query = builder.select().from("dateTest").where(eq(token("t"), fcall("token", d))).toString();
+        session.execute(insertInto("dateTest").value("t", d));
+        String query = select().from("dateTest").where(eq(token("t"), fcall("token", d))).toString();
         List<Row> rows = session.execute(query).all();
 
         assertEquals(1, rows.size());
@@ -90,21 +82,21 @@ public class QueryBuilderExecutionTest extends CCMBridge.PerClassSingleNodeClust
     public void prepareTest() throws Exception {
         // Just check we correctly avoid values when there is a bind marker
         String query = "INSERT INTO foo (a,b,c,d) VALUES ('foo','bar',?,0);";
-        BuiltStatement stmt = builder.insertInto("foo").value("a", "foo").value("b", "bar").value("c", bindMarker()).value("d", 0);
+        BuiltStatement stmt = insertInto("foo").value("a", "foo").value("b", "bar").value("c", bindMarker()).value("d", 0);
         assertEquals(stmt.getQueryString(), query);
 
         query = "INSERT INTO foo (a,b,c,d) VALUES ('foo','bar',:c,0);";
-        stmt = builder.insertInto("foo").value("a", "foo").value("b", "bar").value("c", bindMarker("c")).value("d", 0);
+        stmt = insertInto("foo").value("a", "foo").value("b", "bar").value("c", bindMarker("c")).value("d", 0);
         assertEquals(stmt.getQueryString(), query);
     }
 
     @Test(groups = "short")
     public void batchNonBuiltStatementTest() throws Exception {
-        SimpleStatement simple = session.newSimpleStatement("INSERT INTO " + TABLE1 + " (k, t) VALUES ('batchTest1', 'val1')");
-        RegularStatement built = builder.insertInto(TABLE1).value("k", "batchTest2").value("t", "val2");
-        session.execute(builder.batch().add(simple).add(built));
+        SimpleStatement simple = new SimpleStatement("INSERT INTO " + TABLE1 + " (k, t) VALUES ('batchTest1', 'val1')");
+        RegularStatement built = insertInto(TABLE1).value("k", "batchTest2").value("t", "val2");
+        session.execute(batch().add(simple).add(built));
 
-        List<Row> rows = session.execute(builder.select().from(TABLE1).where(in("k", "batchTest1", "batchTest2"))).all();
+        List<Row> rows = session.execute(select().from(TABLE1).where(in("k", "batchTest1", "batchTest2"))).all();
         assertEquals(2, rows.size());
 
         Row r1 = rows.get(0);
@@ -121,7 +113,7 @@ public class QueryBuilderExecutionTest extends CCMBridge.PerClassSingleNodeClust
         //given
         session.execute("INSERT INTO test_coll (k, a, b) VALUES (1, [1,2,3], null)");
         //when
-        BuiltStatement statement = builder.delete().listElt("a", 1).from("test_coll").where(eq("k", 1));
+        BuiltStatement statement = delete().listElt("a", 1).from("test_coll").where(eq("k", 1));
         session.execute(statement);
         //then
         List<Integer> actual = session.execute("SELECT a FROM test_coll WHERE k = 1").one().getList("a", Integer.class);
@@ -133,7 +125,7 @@ public class QueryBuilderExecutionTest extends CCMBridge.PerClassSingleNodeClust
         //given
         session.execute("INSERT INTO test_coll (k, a) VALUES (1, [1,2,3])");
         //when
-        BuiltStatement statement = builder.delete().listElt("a", bindMarker()).from("test_coll").where(eq("k", 1));
+        BuiltStatement statement = delete().listElt("a", bindMarker()).from("test_coll").where(eq("k", 1));
         PreparedStatement ps = session.prepare(statement);
         session.execute(ps.bind(1));
         //then
@@ -146,7 +138,7 @@ public class QueryBuilderExecutionTest extends CCMBridge.PerClassSingleNodeClust
         //given
         session.execute("INSERT INTO test_coll (k, c) VALUES (1, {'foo','bar','qix'})");
         //when
-        BuiltStatement statement = builder.delete().setElt("c", "foo").from("test_coll").where(eq("k", 1));
+        BuiltStatement statement = delete().setElt("c", "foo").from("test_coll").where(eq("k", 1));
         session.execute(statement);
         //then
         Set<String> actual = session.execute("SELECT c FROM test_coll WHERE k = 1").one().getSet("c", String.class);
@@ -158,7 +150,7 @@ public class QueryBuilderExecutionTest extends CCMBridge.PerClassSingleNodeClust
         //given
         session.execute("INSERT INTO test_coll (k, c) VALUES (1, {'foo','bar','qix'})");
         //when
-        BuiltStatement statement = builder.delete().setElt("c", bindMarker()).from("test_coll").where(eq("k", 1));
+        BuiltStatement statement = delete().setElt("c", bindMarker()).from("test_coll").where(eq("k", 1));
         PreparedStatement ps = session.prepare(statement);
         session.execute(ps.bind("foo"));
         //then
@@ -171,7 +163,7 @@ public class QueryBuilderExecutionTest extends CCMBridge.PerClassSingleNodeClust
         //given
         session.execute("INSERT INTO test_coll (k, b) VALUES (1, {1:'foo', 2:'bar'})");
         //when
-        BuiltStatement statement = builder.delete().mapElt("b", 1).from("test_coll").where(eq("k", 1));
+        BuiltStatement statement = delete().mapElt("b", 1).from("test_coll").where(eq("k", 1));
         session.execute(statement);
         //then
         Map<Integer, String> actual = session.execute("SELECT b FROM test_coll WHERE k = 1").one().getMap("b", Integer.class, String.class);
@@ -183,7 +175,7 @@ public class QueryBuilderExecutionTest extends CCMBridge.PerClassSingleNodeClust
         //given
         session.execute("INSERT INTO test_coll (k, a, b) VALUES (1, null, {1:'foo', 2:'bar'})");
         //when
-        BuiltStatement statement = builder.delete().mapElt("b", bindMarker()).from("test_coll").where(eq("k", 1));
+        BuiltStatement statement = delete().mapElt("b", bindMarker()).from("test_coll").where(eq("k", 1));
         PreparedStatement ps = session.prepare(statement);
         session.execute(ps.bind().setInt(0, 1));
         //then

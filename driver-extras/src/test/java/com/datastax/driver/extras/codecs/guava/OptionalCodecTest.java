@@ -30,7 +30,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.CCMBridge.PerClassSingleNodeCluster;
 import com.datastax.driver.core.querybuilder.BuiltStatement;
-import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.utils.CassandraVersion;
 
 import static com.datastax.driver.core.TypeCodec.bigint;
@@ -39,6 +38,8 @@ import static com.datastax.driver.core.TypeCodec.list;
 import static com.datastax.driver.core.TypeCodec.varchar;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.bindMarker;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.insertInto;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
 
 public class OptionalCodecTest extends PerClassSingleNodeCluster {
 
@@ -62,8 +63,8 @@ public class OptionalCodecTest extends PerClassSingleNodeCluster {
 
     @BeforeMethod(groups = "short")
     public void createBuiltStatements() throws Exception {
-        insertStmt = new QueryBuilder(cluster).insertInto("foo").value("c1", bindMarker()).value("c2", bindMarker()).value("c3", bindMarker());
-        selectStmt = new QueryBuilder(cluster).select("c2", "c3").from("foo").where(eq("c1", bindMarker()));
+        insertStmt = insertInto("foo").value("c1", bindMarker()).value("c2", bindMarker()).value("c3", bindMarker());
+        selectStmt = select("c2", "c3").from("foo").where(eq("c1", bindMarker()));
     }
 
     /**

@@ -19,9 +19,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.CodecRegistry;
-import com.datastax.driver.core.ProtocolVersion;
 import com.datastax.driver.core.TableMetadata;
 
 /**
@@ -35,23 +33,22 @@ public class Insert extends BuiltStatement {
     private final Options usings;
     private boolean ifNotExists;
 
-    Insert(ProtocolVersion protocolVersion, CodecRegistry codecRegistry, String keyspace, String table) {
-        super(keyspace, protocolVersion, codecRegistry);
+    Insert(String keyspace, String table) {
+        super(keyspace);
         this.table = table;
         this.usings = new Options(this);
     }
 
-    Insert(ProtocolVersion protocolVersion, CodecRegistry codecRegistry, TableMetadata table) {
-        super(table, protocolVersion, codecRegistry);
+    Insert(TableMetadata table) {
+        super(table);
         this.table = escapeId(table.getName());
         this.usings = new Options(this);
     }
 
     @Override
-    StringBuilder buildQueryString(List<Object> variables) {
+    StringBuilder buildQueryString(List<Object> variables, CodecRegistry codecRegistry) {
         StringBuilder builder = new StringBuilder();
 
-        CodecRegistry codecRegistry = getCodecRegistry();
         builder.append("INSERT INTO ");
         if (keyspace != null)
             Utils.appendName(keyspace, builder).append('.');

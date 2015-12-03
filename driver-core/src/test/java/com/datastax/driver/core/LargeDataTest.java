@@ -24,11 +24,13 @@ import static org.testng.Assert.assertTrue;
 
 import com.datastax.driver.core.querybuilder.Batch;
 import com.datastax.driver.core.querybuilder.Insert;
-import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.utils.CassandraVersion;
 
 import static com.datastax.driver.core.TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.batch;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.insertInto;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
 
 /**
  * Test limitations when using large amounts of data with the driver
@@ -43,13 +45,12 @@ public class LargeDataTest {
      */
     private void testWideRows(CCMBridge.CCMCluster c, int key) throws Throwable {
         // Write data
-        QueryBuilder builder = new QueryBuilder(c.cluster);
         for (int i = 0; i < 1000000; ++i) {
-            c.session.execute(builder.insertInto("wide_rows").value("k", key).value("i", i).setConsistencyLevel(ConsistencyLevel.QUORUM));
+            c.session.execute(insertInto("wide_rows").value("k", key).value("i", i).setConsistencyLevel(ConsistencyLevel.QUORUM));
         }
 
         // Read data
-        ResultSet rs = c.session.execute(builder.select("i").from("wide_rows").where(eq("k", key)));
+        ResultSet rs = c.session.execute(select("i").from("wide_rows").where(eq("k", key)));
 
         // Verify data
         int i = 0;
@@ -66,15 +67,14 @@ public class LargeDataTest {
      */
     private void testWideBatchRows(CCMBridge.CCMCluster c, int key) throws Throwable {
         // Write data
-        QueryBuilder builder = new QueryBuilder(c.cluster);
-        Batch q = builder.batch();
+        Batch q = batch();
         for (int i = 0; i < 4000; ++i) {
-            q = q.add(builder.insertInto("wide_batch_rows").value("k", key).value("i", i));
+            q = q.add(insertInto("wide_batch_rows").value("k", key).value("i", i));
         }
         c.session.execute(q.setConsistencyLevel(ConsistencyLevel.QUORUM));
 
         // Read data
-        ResultSet rs = c.session.execute(builder.select("i").from("wide_batch_rows").where(eq("k", key)));
+        ResultSet rs = c.session.execute(select("i").from("wide_batch_rows").where(eq("k", key)));
 
         // Verify data
         int i = 0;
@@ -96,13 +96,12 @@ public class LargeDataTest {
         bb.flip();
 
         // Write data
-        QueryBuilder builder = new QueryBuilder(c.cluster);
         for (int i = 0; i < 1000000; ++i) {
-            c.session.execute(builder.insertInto("wide_byte_rows").value("k", key).value("i", bb).setConsistencyLevel(ConsistencyLevel.QUORUM));
+            c.session.execute(insertInto("wide_byte_rows").value("k", key).value("i", bb).setConsistencyLevel(ConsistencyLevel.QUORUM));
         }
 
         // Read data
-        ResultSet rs = c.session.execute(builder.select("i").from("wide_byte_rows").where(eq("k", key)));
+        ResultSet rs = c.session.execute(select("i").from("wide_byte_rows").where(eq("k", key)));
 
         // Verify data
         for (Row row : rs) {
@@ -118,16 +117,15 @@ public class LargeDataTest {
      */
     private void testLargeText(CCMBridge.CCMCluster c, int key) throws Throwable {
         // Write data
-        QueryBuilder builder = new QueryBuilder(c.cluster);
         StringBuilder b = new StringBuilder();
         for (int i = 0; i < 1000000; ++i) {
             // Create ultra-long text
             b.append(i);
         }
-        c.session.execute(builder.insertInto("large_text").value("k", key).value("txt", b.toString()).setConsistencyLevel(ConsistencyLevel.QUORUM));
+        c.session.execute(insertInto("large_text").value("k", key).value("txt", b.toString()).setConsistencyLevel(ConsistencyLevel.QUORUM));
 
         // Read data
-        Row row = c.session.execute(builder.select().all().from("large_text").where(eq("k", key))).one();
+        Row row = c.session.execute(select().all().from("large_text").where(eq("k", key))).one();
 
         // Verify data
         assertTrue(b.toString().equals(row.getString("txt")));
@@ -167,15 +165,14 @@ public class LargeDataTest {
      */
     private void testWideTable(CCMBridge.CCMCluster c, int key) throws Throwable {
         // Write data
-        QueryBuilder builder = new QueryBuilder(c.cluster);
-        Insert insertStatement = builder.insertInto("wide_table").value("k", key);
+        Insert insertStatement = insertInto("wide_table").value("k", key);
         for (int i = 0; i < 330; ++i) {
             insertStatement = insertStatement.value(createColumnName(i), i);
         }
         c.session.execute(insertStatement.setConsistencyLevel(ConsistencyLevel.QUORUM));
 
         // Read data
-        Row row = c.session.execute(builder.select().all().from("wide_table").where(eq("k", key))).one();
+        Row row = c.session.execute(select().all().from("wide_table").where(eq("k", key))).one();
 
         // Verify data
         for (int i = 0; i < 330; ++i) {
