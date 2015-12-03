@@ -71,7 +71,7 @@ abstract class ArrayBackedResultSet implements ResultSet {
                 }
 
                 Token.Factory tokenFactory = (session == null) ? null
-                    : session.getCluster().getMetadata().tokenFactory();
+                    : session.getCluster().manager.metadata.tokenFactory();
 
                 // info can be null only for internal calls, but we don't page those. We assert
                 // this explicitly because MultiPage implementation don't support info == null.

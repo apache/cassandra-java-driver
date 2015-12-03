@@ -1631,12 +1631,16 @@ public class Cluster implements Closeable {
         }
 
         public ListenableFuture<?> triggerOnUp(final Host host) {
-            return executor.submit(new ExceptionCatchingRunnable() {
-                @Override
-                public void runMayThrow() throws InterruptedException, ExecutionException {
-                    onUp(host, null);
-                }
-            });
+            if (!isClosed()) {
+                return executor.submit(new ExceptionCatchingRunnable() {
+                    @Override
+                    public void runMayThrow() throws InterruptedException, ExecutionException {
+                        onUp(host, null);
+                    }
+                });
+            } else {
+                return MoreFutures.VOID_SUCCESS;
+            }
         }
 
         // Use triggerOnUp unless you're sure you want to run this on the current thread.
@@ -1746,12 +1750,16 @@ public class Cluster implements Closeable {
         }
 
         public ListenableFuture<?> triggerOnDown(final Host host, final boolean isHostAddition, final boolean startReconnection) {
-            return executor.submit(new ExceptionCatchingRunnable() {
-                @Override
-                public void runMayThrow() throws InterruptedException, ExecutionException {
-                    onDown(host, isHostAddition, startReconnection);
-                }
-            });
+            if(!isClosed()) {
+                return executor.submit(new ExceptionCatchingRunnable() {
+                    @Override
+                    public void runMayThrow() throws InterruptedException, ExecutionException {
+                        onDown(host, isHostAddition, startReconnection);
+                    }
+                });
+            } else {
+                return MoreFutures.VOID_SUCCESS;
+            }
         }
 
         // Use triggerOnDown unless you're sure you want to run this on the current thread.
@@ -1906,12 +1914,16 @@ public class Cluster implements Closeable {
         }
 
         public ListenableFuture<?> triggerOnAdd(final Host host) {
-            return executor.submit(new ExceptionCatchingRunnable() {
-                @Override
-                public void runMayThrow() throws InterruptedException, ExecutionException {
-                    onAdd(host, null);
-                }
-            });
+            if (!isClosed()) {
+                return executor.submit(new ExceptionCatchingRunnable() {
+                    @Override
+                    public void runMayThrow() throws InterruptedException, ExecutionException {
+                        onAdd(host, null);
+                    }
+                });
+            } else {
+                return MoreFutures.VOID_SUCCESS;
+            }
         }
 
         // Use triggerOnAdd unless you're sure you want to run this on the current thread.
@@ -2011,12 +2023,16 @@ public class Cluster implements Closeable {
         }
 
         public ListenableFuture<?> triggerOnRemove(final Host host) {
-            return executor.submit(new ExceptionCatchingRunnable() {
-                @Override
-                public void runMayThrow() throws InterruptedException, ExecutionException {
-                    onRemove(host);
-                }
-            });
+            if (!isClosed()) {
+                return executor.submit(new ExceptionCatchingRunnable() {
+                    @Override
+                    public void runMayThrow() throws InterruptedException, ExecutionException {
+                        onRemove(host);
+                    }
+                });
+            } else {
+                return MoreFutures.VOID_SUCCESS;
+            }
         }
 
         // Use triggerOnRemove unless you're sure you want to run this on the current thread.

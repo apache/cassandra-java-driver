@@ -17,6 +17,8 @@ package com.datastax.driver.core.policies;
 
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
+
+import org.scassandra.Scassandra;
 import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -116,7 +118,9 @@ public class DefaultRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegr
         try {
             Session whiteListedSession = whiteListedCluster.connect();
             // Clear all activity as result of connect.
-            scassandras.clearAllRecordedActivity();
+            for(Scassandra node : scassandras.nodes()) {
+                node.activityClient().clearAllRecordedActivity();
+            }
 
             simulateError(1, unavailable);
 

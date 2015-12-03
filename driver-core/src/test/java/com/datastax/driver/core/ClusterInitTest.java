@@ -230,19 +230,22 @@ public class ClusterInitTest {
      */
     @Test(groups="short")
     public void should_not_abort_init_if_host_does_not_support_protocol_version() {
-        Map<Integer,Map<String,Object>> nodeProperties = Maps.newHashMap();
-        // Configure node 2 to run with an older version which uses protocol v1.
-        nodeProperties.put(2, ImmutableMap.<String,Object>of("release_version", "1.2.19"));
-        SCassandraCluster scassandraCluster = new SCassandraCluster(CCMBridge.IP_PREFIX, 5, nodeProperties);
+        ScassandraCluster scassandraCluster = ScassandraCluster.builder()
+            .withIpPrefix(CCMBridge.IP_PREFIX)
+            .withNodes(5)
+            // For node 2, report an older version which uses protocol v1.
+            .forcePeerInfo(1, 2, "release_version", "1.2.19")
+            .build();
         Cluster cluster = Cluster.builder()
-            .addContactPoints(scassandraCluster.addresses().get(0))
+            .addContactPoints(scassandraCluster.address(1))
             .withNettyOptions(nonQuietClusterCloseOptions)
             .build();
 
         try {
+            scassandraCluster.init();
             cluster.init();
-            for(int i = 0; i < scassandraCluster.addresses().size(); i++) {
-                String hostAddress = scassandraCluster.addresses().get(i).getHostAddress();
+            for(int i = 1; i <= 5; i++) {
+                String hostAddress = scassandraCluster.address(i);
                 if (i == 2) {
                     // As this host is at an older protocol version, it should be ignored and not marked up.
                     assertThat(cluster).host(hostAddress).hasState(Host.State.ADDED);
@@ -281,7 +284,7 @@ public class ClusterInitTest {
         primingClient.prime(
             PrimingRequest.queryBuilder()
                 .withQuery("SELECT * FROM system.peers")
-                .withColumnTypes(SCassandraCluster.SELECT_PEERS_COLUMN_TYPES)
+                .withColumnTypes(ScassandraCluster.SELECT_PEERS)
                 .withRows(rows)
                 .build());
     }

@@ -19,13 +19,15 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.collect.Lists;
+import org.scassandra.Scassandra;
 import org.scassandra.http.client.PreparedStatementPreparation;
 import org.testng.annotations.*;
 
 import static com.datastax.driver.core.Assertions.assertThat;
+import static com.datastax.driver.core.TestUtils.nonQuietClusterCloseOptions;
 
 public class QueryOptionsTest {
-    SCassandraCluster scassandra;
+    ScassandraCluster scassandra;
 
     QueryOptions queryOptions;
 
@@ -36,19 +38,18 @@ public class QueryOptionsTest {
     Host host1, host2, host3;
 
 
-    @BeforeClass(groups = "short")
-    public void beforeClass() {
-        scassandra = new SCassandraCluster(CCMBridge.IP_PREFIX, 3);
-    }
-
     @BeforeMethod(groups = "short")
     public void beforeMethod() {
+        scassandra = ScassandraCluster.builder().withNodes(3).build();
+        scassandra.init();
+
         queryOptions = new QueryOptions();
         loadBalancingPolicy = new SortingLoadBalancingPolicy();
         cluster = Cluster.builder()
             .addContactPoint(CCMBridge.ipOfNode(2))
             .withLoadBalancingPolicy(loadBalancingPolicy)
             .withQueryOptions(queryOptions)
+            .withNettyOptions(nonQuietClusterCloseOptions)
             .build();
 
         session = cluster.connect();
@@ -59,7 +60,7 @@ public class QueryOptionsTest {
 
         // Make sure there are no prepares
         for (int host : Lists.newArrayList(1, 2, 3)) {
-            assertThat(scassandra.retrievePreparedStatementPreparations(host)).hasSize(0);
+            assertThat(scassandra.node(host).activityClient().retrievePreparedStatementPreparations()).hasSize(0);
         }
     }
 
@@ -70,9 +71,9 @@ public class QueryOptionsTest {
         assertThat(cluster.manager.preparedQueries).containsValue(statement);
 
         // Ensure prepared properly based on expectation.
-        List<PreparedStatementPreparation> preparationOne = scassandra.retrievePreparedStatementPreparations(1);
-        List<PreparedStatementPreparation> preparationTwo = scassandra.retrievePreparedStatementPreparations(2);
-        List<PreparedStatementPreparation> preparationThree = scassandra.retrievePreparedStatementPreparations(3);
+        List<PreparedStatementPreparation> preparationOne = scassandra.node(1).activityClient().retrievePreparedStatementPreparations();
+        List<PreparedStatementPreparation> preparationTwo = scassandra.node(2).activityClient().retrievePreparedStatementPreparations();
+        List<PreparedStatementPreparation> preparationThree = scassandra.node(3).activityClient().retrievePreparedStatementPreparations();
 
         assertThat(preparationOne).hasSize(1);
         assertThat(preparationOne.get(0).getPreparedStatementText()).isEqualTo(query);
@@ -142,19 +143,19 @@ public class QueryOptionsTest {
         String query = "select sansa_stark from the_known_world";
         session.prepare(query);
 
-        List<PreparedStatementPreparation> preparationOne = scassandra.retrievePreparedStatementPreparations(1);
+        List<PreparedStatementPreparation> preparationOne = scassandra.node(1).activityClient().retrievePreparedStatementPreparations();
 
         assertThat(preparationOne).hasSize(1);
         assertThat(preparationOne.get(0).getPreparedStatementText()).isEqualTo(query);
 
-        scassandra.clearAllRecordedActivity();
-        scassandra.stop(1);
+        scassandra.node(1).activityClient().clearAllRecordedActivity();
+        scassandra.node(1).stop();
         assertThat(cluster).host(1).goesDownWithin(10, TimeUnit.SECONDS);
 
-        scassandra.start(1);
+        scassandra.node(1).start();
         assertThat(cluster).host(1).comesUpWithin(60, TimeUnit.SECONDS);
 
-        preparationOne = scassandra.retrievePreparedStatementPreparations(1);
+        preparationOne = scassandra.node(1).activityClient().retrievePreparedStatementPreparations();
         if (expectReprepare) {
             assertThat(preparationOne).hasSize(1);
             assertThat(preparationOne.get(0).getPreparedStatementText()).isEqualTo(query);
@@ -218,12 +219,6 @@ public class QueryOptionsTest {
         if (cluster != null)
             cluster.close();
 
-        scassandra.clearAllPrimes();
-        scassandra.clearAllRecordedActivity();
-    }
-
-    @AfterClass(groups = "short")
-    public void afterClass() {
         if (scassandra != null)
             scassandra.stop();
     }
