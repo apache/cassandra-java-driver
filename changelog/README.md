@@ -8,6 +8,7 @@
 - [bug] JAVA-1009: use CL ONE to compute query plan when reconnecting
   control connection.
 - [improvement] JAVA-1003: Change default consistency level to LOCAL_ONE (amends JAVA-926).
+- [improvement] JAVA-863: Idempotence propagation in prepared statements.
 
 Merged from 2.1 branch:
 
