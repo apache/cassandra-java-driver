@@ -125,21 +125,21 @@ public class LogginRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegra
     }
 
     @Test(groups = "short")
-    public void should_log_ignored_unexpected_error() throws InterruptedException {
+    public void should_log_ignored_request_error() throws InterruptedException {
         simulateError(1, server_error);
         retryDecision = ignore();
         query();
         String line = appender.waitAndGet(5000);
-        assertThat(line.trim()).isEqualTo(expectedMessage(IGNORING_UNEXPECTED_ERROR, ONE, 0));
+        assertThat(line.trim()).isEqualTo(expectedMessage(IGNORING_REQUEST_ERROR, ONE, 0));
     }
 
     @Test(groups = "short")
-    public void should_log_retried_unexpected_error() throws InterruptedException {
+    public void should_log_retried_request_error() throws InterruptedException {
         simulateError(1, server_error);
         retryDecision = tryNextHost(LOCAL_ONE);
         query();
         String line = appender.waitAndGet(5000);
-        assertThat(line.trim()).isEqualTo(expectedMessage(RETRYING_ON_UNEXPECTED_ERROR, "next host", LOCAL_ONE, ONE, 0));
+        assertThat(line.trim()).isEqualTo(expectedMessage(RETRYING_ON_REQUEST_ERROR, "next host", LOCAL_ONE, ONE, 0));
     }
 
     private String expectedMessage(String template, Object... args) {
