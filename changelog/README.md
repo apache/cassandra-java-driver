@@ -7,6 +7,7 @@
 - [bug] JAVA-998: SchemaChangeListener not invoked for Functions or Aggregates having UDT arguments.
 - [bug] JAVA-1009: use CL ONE to compute query plan when reconnecting
   control connection.
+- [improvement] JAVA-1003: Change default consistency level to LOCAL_ONE (amends JAVA-926).
 
 Merged from 2.1 branch:
 

@@ -33,7 +33,7 @@ import static org.scassandra.http.client.PrimingRequest.Result.write_request_tim
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.policies.FallthroughRetryPolicy;
 
-import static com.datastax.driver.core.ConsistencyLevel.LOCAL_QUORUM;
+import static com.datastax.driver.core.ConsistencyLevel.LOCAL_ONE;
 
 public class ExceptionsScassandraTest {
 
@@ -72,8 +72,8 @@ public class ExceptionsScassandraTest {
             query();
             fail("expected an UnavailableException");
         } catch (UnavailableException e) {
-            assertThat(e.getMessage()).isEqualTo("Not enough replicas available for query at consistency LOCAL_QUORUM (1 required but only 0 alive)");
-            assertThat(e.getConsistencyLevel()).isEqualTo(LOCAL_QUORUM);
+            assertThat(e.getMessage()).isEqualTo("Not enough replicas available for query at consistency LOCAL_ONE (1 required but only 0 alive)");
+            assertThat(e.getConsistencyLevel()).isEqualTo(LOCAL_ONE);
             assertThat(e.getAliveReplicas()).isEqualTo(0);
             assertThat(e.getRequiredReplicas()).isEqualTo(1);
             assertThat(e.getAddress()).isEqualTo(host1.getSocketAddress());
@@ -88,8 +88,8 @@ public class ExceptionsScassandraTest {
             query();
             fail("expected a ReadTimeoutException");
         } catch (ReadTimeoutException e) {
-            assertThat(e.getMessage()).isEqualTo("Cassandra timeout during read query at consistency LOCAL_QUORUM (1 responses were required but only 0 replica responded)");
-            assertThat(e.getConsistencyLevel()).isEqualTo(LOCAL_QUORUM);
+            assertThat(e.getMessage()).isEqualTo("Cassandra timeout during read query at consistency LOCAL_ONE (1 responses were required but only 0 replica responded)");
+            assertThat(e.getConsistencyLevel()).isEqualTo(LOCAL_ONE);
             assertThat(e.getReceivedAcknowledgements()).isEqualTo(0);
             assertThat(e.getRequiredAcknowledgements()).isEqualTo(1);
             assertThat(e.getAddress()).isEqualTo(host1.getSocketAddress());
@@ -104,8 +104,8 @@ public class ExceptionsScassandraTest {
             query();
             fail("expected a WriteTimeoutException");
         } catch (WriteTimeoutException e) {
-            assertThat(e.getMessage()).isEqualTo("Cassandra timeout during write query at consistency LOCAL_QUORUM (1 replica were required but only 0 acknowledged the write)");
-            assertThat(e.getConsistencyLevel()).isEqualTo(LOCAL_QUORUM);
+            assertThat(e.getMessage()).isEqualTo("Cassandra timeout during write query at consistency LOCAL_ONE (1 replica were required but only 0 acknowledged the write)");
+            assertThat(e.getConsistencyLevel()).isEqualTo(LOCAL_ONE);
             assertThat(e.getReceivedAcknowledgements()).isEqualTo(0);
             assertThat(e.getRequiredAcknowledgements()).isEqualTo(1);
             assertThat(e.getWriteType()).isEqualTo(WriteType.SIMPLE);
