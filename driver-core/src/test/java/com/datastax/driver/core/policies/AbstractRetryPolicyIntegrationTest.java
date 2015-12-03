@@ -23,9 +23,7 @@ import com.google.common.collect.ImmutableMap;
 import org.mockito.Mockito;
 import org.scassandra.Scassandra;
 import org.scassandra.http.client.PrimingRequest;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -139,7 +137,7 @@ public class AbstractRetryPolicyIntegrationTest {
 
     protected void assertOnRequestErrorWasCalled(int times) {
         Mockito.verify((ExtendedRetryPolicy)retryPolicy, times(times)).onRequestError(
-            any(Statement.class), any(ConsistencyLevel.class), anyInt());
+            any(Statement.class), any(ConsistencyLevel.class), any(Exception.class), anyInt());
     }
 
     protected void assertQueried(int hostNumber, int times) {

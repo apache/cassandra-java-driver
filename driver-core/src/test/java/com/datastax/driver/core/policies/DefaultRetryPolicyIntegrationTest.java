@@ -198,9 +198,8 @@ public class DefaultRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegr
     @DataProvider
     public static Object[][] serverSideErrors() {
         return new Object[][]{
-            {server_error    , ServerError.class},
-            {overloaded      , OverloadedException.class},
-            {is_bootstrapping, BootstrappingException.class}
+            {server_error, ServerError.class},
+            {overloaded, OverloadedException.class},
         };
     }
 
@@ -222,7 +221,7 @@ public class DefaultRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegr
         assertOnRequestErrorWasCalled(3);
         assertThat(errors.getOthers().getCount()).isEqualTo(3);
         assertThat(errors.getRetries().getCount()).isEqualTo(3);
-        assertThat(errors.getRetriesOnUnexpectedError().getCount()).isEqualTo(3);
+        assertThat(errors.getRetriesOnOtherErrors().getCount()).isEqualTo(3);
         assertQueried(1, 1);
         assertQueried(2, 1);
         assertQueried(3, 1);

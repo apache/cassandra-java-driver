@@ -145,7 +145,7 @@ public class StatementWrapperTest extends CCMBridge.PerClassSingleNodeCluster {
         }
 
         @Override
-        public RetryDecision onRequestError(Statement statement, ConsistencyLevel cl, int nbRetry) {
+        public RetryDecision onRequestError(Statement statement, ConsistencyLevel cl, Exception e, int nbRetry) {
             return RetryDecision.tryNextHost(cl);
         }
 

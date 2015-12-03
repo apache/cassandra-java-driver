@@ -122,9 +122,8 @@ public class IdempotenceAwareRetryPolicyIntegrationTest extends AbstractRetryPol
     @DataProvider
     public static Object[][] serverSideErrors() {
         return new Object[][]{
-            {server_error    , ServerError.class},
-            {is_bootstrapping, BootstrappingException.class},
-            {overloaded      , OverloadedException.class}
+            {server_error, ServerError.class},
+            {overloaded  , OverloadedException.class}
         };
     }
 
@@ -140,7 +139,7 @@ public class IdempotenceAwareRetryPolicyIntegrationTest extends AbstractRetryPol
         assertOnRequestErrorWasCalled(1);
         assertThat(errors.getOthers().getCount()).isEqualTo(1);
         assertThat(errors.getRetries().getCount()).isEqualTo(0);
-        assertThat(errors.getRetriesOnUnexpectedError().getCount()).isEqualTo(0);
+        assertThat(errors.getRetriesOnOtherErrors().getCount()).isEqualTo(0);
         assertQueried(1, 1);
         assertQueried(2, 0);
         assertQueried(3, 0);
@@ -165,7 +164,7 @@ public class IdempotenceAwareRetryPolicyIntegrationTest extends AbstractRetryPol
         assertOnRequestErrorWasCalled(3);
         assertThat(errors.getOthers().getCount()).isEqualTo(3);
         assertThat(errors.getRetries().getCount()).isEqualTo(3);
-        assertThat(errors.getRetriesOnUnexpectedError().getCount()).isEqualTo(3);
+        assertThat(errors.getRetriesOnOtherErrors().getCount()).isEqualTo(3);
         assertQueried(1, 1);
         assertQueried(2, 1);
         assertQueried(3, 1);
@@ -192,7 +191,7 @@ public class IdempotenceAwareRetryPolicyIntegrationTest extends AbstractRetryPol
         }
 
         @Override
-        public RetryDecision onRequestError(Statement statement, ConsistencyLevel cl, int nbRetry) {
+        public RetryDecision onRequestError(Statement statement, ConsistencyLevel cl, Exception e, int nbRetry) {
             return RetryDecision.tryNextHost(cl);
         }
 

@@ -63,9 +63,9 @@ public class IdempotenceAwareRetryPolicy implements ExtendedRetryPolicy {
     }
 
     @Override
-    public RetryDecision onRequestError(Statement statement, ConsistencyLevel cl, int nbRetry) {
+    public RetryDecision onRequestError(Statement statement, ConsistencyLevel cl, Exception e, int nbRetry) {
         if(isIdempotent(statement))
-            return childPolicy.onRequestError(statement, cl, nbRetry);
+            return childPolicy.onRequestError(statement, cl, e, nbRetry);
         else
             return RetryDecision.rethrow();
     }

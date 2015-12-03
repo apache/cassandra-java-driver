@@ -283,7 +283,7 @@ public class Metrics {
         private final Counter retriesOnUnavailable = registry.counter("retries-on-unavailable");
         private final Counter retriesOnClientTimeout = registry.counter("retries-on-client-timeout");
         private final Counter retriesOnConnectionError = registry.counter("retries-on-connection-error");
-        private final Counter retriesOnUnexpectedError = registry.counter("retries-on-unexpected-error");
+        private final Counter retriesOnOtherErrors = registry.counter("retries-on-other-errors");
 
         private final Counter ignores = registry.counter("ignores");
         private final Counter ignoresOnWriteTimeout = registry.counter("ignores-on-write-timeout");
@@ -291,7 +291,7 @@ public class Metrics {
         private final Counter ignoresOnUnavailable = registry.counter("ignores-on-unavailable");
         private final Counter ignoresOnClientTimeout = registry.counter("ignores-on-client-timeout");
         private final Counter ignoresOnConnectionError = registry.counter("ignores-on-connection-error");
-        private final Counter ignoresOnUnexpectedError = registry.counter("ignores-on-unexpected-error");
+        private final Counter ignoresOnOtherErrors = registry.counter("ignores-on-other-errors");
 
         private final Counter speculativeExecutions = registry.counter("speculative-executions");
 
@@ -449,8 +449,8 @@ public class Metrics {
          * {@link com.datastax.driver.core.policies.RetryPolicy}, after an
          * unexpected error.
          */
-        public Counter getRetriesOnUnexpectedError() {
-            return retriesOnUnexpectedError;
+        public Counter getRetriesOnOtherErrors() {
+            return retriesOnOtherErrors;
         }
 
         /**
@@ -539,8 +539,8 @@ public class Metrics {
          * {@link com.datastax.driver.core.policies.RetryPolicy}, after an
          * unexpected error.
          */
-        public Counter getIgnoresOnUnexpectedError() {
-            return ignoresOnUnexpectedError;
+        public Counter getIgnoresOnOtherErrors() {
+            return ignoresOnOtherErrors;
         }
         /**
          * Returns the number of times a speculative execution was started

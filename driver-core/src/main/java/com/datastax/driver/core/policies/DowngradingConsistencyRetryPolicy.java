@@ -203,7 +203,7 @@ public class DowngradingConsistencyRetryPolicy implements ExtendedRetryPolicy {
      * the possibility that the mutation has been applied server-side.
      */
     @Override
-    public RetryDecision onRequestError(Statement statement, ConsistencyLevel cl, int nbRetry) {
+    public RetryDecision onRequestError(Statement statement, ConsistencyLevel cl, Exception e, int nbRetry) {
         return RetryDecision.tryNextHost(cl);
     }
 }

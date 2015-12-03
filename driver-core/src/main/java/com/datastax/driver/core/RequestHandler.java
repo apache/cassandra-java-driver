@@ -526,18 +526,20 @@ class RequestHandler {
                             case OVERLOADED:
                                 connection.release();
                                 logger.warn("Host {} is overloaded.", connection.address);
-                                if (retryPolicy instanceof ExtendedRetryPolicy)
-                                    retry = ((ExtendedRetryPolicy)retryPolicy).onRequestError(statement,
-                                        request().consistency(),
-                                        retriesByPolicy);
-                                else
-                                    retry = RetryPolicy.RetryDecision.tryNextHost(request().consistency());
                                 if (metricsEnabled()) {
                                     metrics().getErrorMetrics().getOthers().inc();
-                                    if (retry.getType() == Type.RETRY)
-                                        metrics().getErrorMetrics().getRetriesOnUnexpectedError().inc();
-                                    if (retry.getType() == Type.IGNORE)
-                                        metrics().getErrorMetrics().getIgnoresOnUnexpectedError().inc();
+                                }
+                                if (retryPolicy instanceof ExtendedRetryPolicy) {
+                                    retry = ((ExtendedRetryPolicy)retryPolicy).onRequestError(statement,
+                                        request().consistency(), exceptionToReport, retriesByPolicy);
+                                    if (metricsEnabled()) {
+                                        if (retry.getType() == Type.RETRY)
+                                            metrics().getErrorMetrics().getRetriesOnOtherErrors().inc();
+                                        if (retry.getType() == Type.IGNORE)
+                                            metrics().getErrorMetrics().getIgnoresOnOtherErrors().inc();
+                                    }
+                                } else {
+                                    retry = RetryPolicy.RetryDecision.tryNextHost(request().consistency());
                                 }
                                 break;
                             case SERVER_ERROR:
@@ -545,37 +547,31 @@ class RequestHandler {
                                 logger.warn("{} replied with server error ({}), defuncting connection.", connection.address, err.message);
                                 // Defunct connection
                                 connection.defunct(exceptionToReport);
-                                if (retryPolicy instanceof ExtendedRetryPolicy)
-                                    retry = ((ExtendedRetryPolicy)retryPolicy).onRequestError(statement,
-                                        request().consistency(),
-                                        retriesByPolicy);
-                                else
-                                    retry = RetryPolicy.RetryDecision.tryNextHost(request().consistency());
                                 if (metricsEnabled()) {
                                     metrics().getErrorMetrics().getOthers().inc();
-                                    if (retry.getType() == Type.RETRY)
-                                        metrics().getErrorMetrics().getRetriesOnUnexpectedError().inc();
-                                    if (retry.getType() == Type.IGNORE)
-                                        metrics().getErrorMetrics().getIgnoresOnUnexpectedError().inc();
+                                }
+                                if (retryPolicy instanceof ExtendedRetryPolicy) {
+                                    retry = ((ExtendedRetryPolicy)retryPolicy).onRequestError(statement,
+                                        request().consistency(), exceptionToReport, retriesByPolicy);
+                                    if (metricsEnabled()) {
+                                        if (retry.getType() == Type.RETRY)
+                                            metrics().getErrorMetrics().getRetriesOnOtherErrors().inc();
+                                        if (retry.getType() == Type.IGNORE)
+                                            metrics().getErrorMetrics().getIgnoresOnOtherErrors().inc();
+                                    }
+                                } else {
+                                    retry = RetryPolicy.RetryDecision.tryNextHost(request().consistency());
                                 }
                                 break;
                             case IS_BOOTSTRAPPING:
                                 connection.release();
-                                logger.error("Query sent to {} but it is bootstrapping.", connection.address);
-                                if (retryPolicy instanceof ExtendedRetryPolicy)
-                                    retry = ((ExtendedRetryPolicy)retryPolicy).onRequestError(statement,
-                                        request().consistency(),
-                                        retriesByPolicy);
-                                else
-                                    retry = RetryPolicy.RetryDecision.tryNextHost(request().consistency());
+                                assert exceptionToReport instanceof BootstrappingException;
+                                logger.error("Query sent to {} but it is bootstrapping. This shouldn't happen but trying next host.", connection.address);
                                 if (metricsEnabled()) {
                                     metrics().getErrorMetrics().getOthers().inc();
-                                    if (retry.getType() == Type.RETRY)
-                                        metrics().getErrorMetrics().getRetriesOnUnexpectedError().inc();
-                                    if (retry.getType() == Type.IGNORE)
-                                        metrics().getErrorMetrics().getIgnoresOnUnexpectedError().inc();
                                 }
-                                break;
+                                retry(false, null);
+                                return;
                             case UNPREPARED:
                                 // Do not release connection yet, because we might reuse it to send the PREPARE message (see write() call below)
                                 assert err.infos instanceof MD5Digest;
@@ -729,7 +725,7 @@ class RequestHandler {
                     RetryPolicy retryPolicy = retryPolicy();
                     RetryPolicy.RetryDecision decision;
                     if (retryPolicy instanceof ExtendedRetryPolicy)
-                        decision = ((ExtendedRetryPolicy)retryPolicy).onRequestError(statement, request().consistency(), retriesByPolicy);
+                        decision = ((ExtendedRetryPolicy)retryPolicy).onRequestError(statement, request().consistency(), exception, retriesByPolicy);
                     else
                         decision = RetryPolicy.RetryDecision.tryNextHost(request().consistency());
                     if (metricsEnabled()) {
@@ -776,7 +772,7 @@ class RequestHandler {
                 RetryPolicy retryPolicy = retryPolicy();
                 RetryPolicy.RetryDecision decision;
                 if (retryPolicy instanceof ExtendedRetryPolicy)
-                    decision = ((ExtendedRetryPolicy)retryPolicy).onRequestError(statement, request().consistency(), retriesByPolicy);
+                    decision = ((ExtendedRetryPolicy)retryPolicy).onRequestError(statement, request().consistency(), timeoutException, retriesByPolicy);
                 else
                     decision = RetryPolicy.RetryDecision.tryNextHost(request().consistency());
                 if (metricsEnabled()) {

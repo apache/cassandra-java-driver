@@ -49,10 +49,11 @@ public interface ExtendedRetryPolicy extends RetryPolicy {
      *
      * @param statement the original query that failed.
      * @param cl the original consistency level for the operation.
+     * @param e the exception that caused this request to fail.
      * @param nbRetry the number of retries already performed for this operation.
      * @return the retry decision. If {@code RetryDecision.RETHROW} is returned,
-     * a {@link com.datastax.driver.core.exceptions.DriverException DriverException} will be thrown for the operation.
+     * the {@link Exception} passed to this method will be thrown for the operation.
      */
-    RetryDecision onRequestError(Statement statement, ConsistencyLevel cl, int nbRetry);
+    RetryDecision onRequestError(Statement statement, ConsistencyLevel cl, Exception e, int nbRetry);
 
 }

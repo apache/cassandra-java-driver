@@ -121,10 +121,10 @@ public class LoggingRetryPolicy implements ExtendedRetryPolicy {
     }
 
     @Override
-    public RetryDecision onRequestError(Statement statement, ConsistencyLevel cl, int nbRetry) {
+    public RetryDecision onRequestError(Statement statement, ConsistencyLevel cl, Exception e, int nbRetry) {
         RetryDecision decision;
         if (policy instanceof ExtendedRetryPolicy)
-            decision = ((ExtendedRetryPolicy)policy).onRequestError(statement, cl, nbRetry);
+            decision = ((ExtendedRetryPolicy)policy).onRequestError(statement, cl, e, nbRetry);
         else
             // old behavior for policies that do not implement ExtendedRetryPolicy
             decision = RetryDecision.tryNextHost(cl);

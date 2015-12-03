@@ -142,11 +142,11 @@ public class DefaultRetryPolicy implements ExtendedRetryPolicy {
      * For historical reasons, this implementation triggers a retry on the next host in the query plan
      * with the same consistency level, regardless of the statement's idempotence.
      * Note that this breaks the general rule
-     * stated in {@link ExtendedRetryPolicy#onRequestError(Statement, ConsistencyLevel, int)}:
+     * stated in {@link ExtendedRetryPolicy#onRequestError(Statement, ConsistencyLevel, Exception, int)}:
      * "a retry should only be attempted if the request is known to be idempotent".
      */
     @Override
-    public RetryDecision onRequestError(Statement statement, ConsistencyLevel cl, int nbRetry) {
+    public RetryDecision onRequestError(Statement statement, ConsistencyLevel cl, Exception e, int nbRetry) {
         return RetryDecision.tryNextHost(cl);
     }
 

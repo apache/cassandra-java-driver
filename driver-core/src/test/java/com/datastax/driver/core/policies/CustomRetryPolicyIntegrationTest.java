@@ -105,7 +105,6 @@ public class CustomRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegra
         return new Object[][]{
             {server_error, ServerError.class},
             {overloaded, OverloadedException.class},
-            {is_bootstrapping, BootstrappingException.class}
         };
     }
 
@@ -121,7 +120,7 @@ public class CustomRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegra
         assertOnRequestErrorWasCalled(1);
         assertThat(errors.getOthers().getCount()).isEqualTo(1);
         assertThat(errors.getRetries().getCount()).isEqualTo(0);
-        assertThat(errors.getRetriesOnUnexpectedError().getCount()).isEqualTo(0);
+        assertThat(errors.getRetriesOnOtherErrors().getCount()).isEqualTo(0);
         assertQueried(1, 1);
         assertQueried(2, 0);
         assertQueried(3, 0);
@@ -151,7 +150,7 @@ public class CustomRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegra
         }
 
         @Override
-        public RetryDecision onRequestError(Statement statement, ConsistencyLevel cl, int nbRetry) {
+        public RetryDecision onRequestError(Statement statement, ConsistencyLevel cl, Exception e, int nbRetry) {
             return RetryDecision.rethrow();
         }
     }

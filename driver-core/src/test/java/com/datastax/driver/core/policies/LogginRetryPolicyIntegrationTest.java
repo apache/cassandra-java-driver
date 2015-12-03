@@ -167,7 +167,7 @@ public class LogginRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegra
         }
 
         @Override
-        public RetryPolicy.RetryDecision onRequestError(Statement statement, ConsistencyLevel cl, int nbRetry) {
+        public RetryPolicy.RetryDecision onRequestError(Statement statement, ConsistencyLevel cl, Exception e, int nbRetry) {
             return retryDecision;
         }
 
