@@ -570,6 +570,7 @@ class RequestHandler {
                                 if (metricsEnabled()) {
                                     metrics().getErrorMetrics().getOthers().inc();
                                 }
+                                logError(connection.address, exceptionToReport);
                                 retry(false, null);
                                 return;
                             case UNPREPARED:
