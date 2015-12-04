@@ -18,8 +18,8 @@ package com.datastax.driver.core.policies;
 import com.datastax.driver.core.SocketOptions;
 import com.datastax.driver.core.exceptions.*;
 import org.assertj.core.api.Fail;
+import org.scassandra.http.client.ClosedConnectionConfig;
 import org.scassandra.http.client.PrimingRequest;
-import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -109,13 +109,6 @@ public class FallthroughRetryPolicyIntegrationTest extends AbstractRetryPolicyIn
         }
     }
 
-    @DataProvider
-    public static Object[][] serverSideErrors() {
-        return new Object[][]{
-                {server_error, ServerError.class},
-                {overloaded, OverloadedException.class}
-        };
-    }
 
     @Test(groups = "short", dataProvider = "serverSideErrors")
     public void should_rethrow_on_server_side_error(PrimingRequest.Result error, Class<? extends DriverException> exception) {
@@ -135,4 +128,25 @@ public class FallthroughRetryPolicyIntegrationTest extends AbstractRetryPolicyIn
         assertQueried(3, 0);
     }
 
+
+    @Test(groups = "short", dataProvider = "connectionErrors")
+    public void should_rethrow_on_connection_error(ClosedConnectionConfig.CloseType closeType) {
+        simulateError(1, PrimingRequest.Result.closed_connection, new ClosedConnectionConfig(closeType));
+        try {
+            query();
+            Fail.fail("expected a TransportException");
+        } catch (TransportException e) {
+            assertThat(e.getMessage()).isEqualTo(
+                    String.format("[%s] Connection has been closed", host1.getAddress())
+            );
+        }
+        assertOnRequestErrorWasCalled(1, TransportException.class);
+        assertThat(errors.getRetries().getCount()).isEqualTo(0);
+        assertThat(errors.getConnectionErrors().getCount()).isEqualTo(1);
+        assertThat(errors.getIgnoresOnConnectionError().getCount()).isEqualTo(0);
+        assertThat(errors.getRetriesOnConnectionError().getCount()).isEqualTo(0);
+        assertQueried(1, 1);
+        assertQueried(2, 0);
+        assertQueried(3, 0);
+    }
 }

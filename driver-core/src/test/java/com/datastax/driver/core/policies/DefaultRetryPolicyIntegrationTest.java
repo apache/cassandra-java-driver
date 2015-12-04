@@ -19,8 +19,8 @@ import com.datastax.driver.core.*;
 import com.datastax.driver.core.exceptions.*;
 import org.assertj.core.api.Fail;
 import org.scassandra.Scassandra;
+import org.scassandra.http.client.ClosedConnectionConfig;
 import org.scassandra.http.client.PrimingRequest;
-import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.util.Collections;
@@ -174,7 +174,7 @@ public class DefaultRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegr
                 query();
                 fail("expected a NoHostAvailableException");
             } catch (NoHostAvailableException e) {
-                assertThat(e.getErrors().keySet()).hasSize(3).containsOnlyOnce(
+                assertThat(e.getErrors().keySet()).hasSize(3).containsOnly(
                         host1.getSocketAddress(),
                         host2.getSocketAddress(),
                         host3.getSocketAddress());
@@ -199,13 +199,6 @@ public class DefaultRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegr
         }
     }
 
-    @DataProvider
-    public static Object[][] serverSideErrors() {
-        return new Object[][]{
-                {server_error, ServerError.class},
-                {overloaded, OverloadedException.class}
-        };
-    }
 
     @Test(groups = "short", dataProvider = "serverSideErrors")
     public void should_try_next_host_on_server_side_error(PrimingRequest.Result error, Class<? extends DriverException> exception) {
@@ -216,7 +209,7 @@ public class DefaultRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegr
             query();
             Fail.fail("expected a NoHostAvailableException");
         } catch (NoHostAvailableException e) {
-            assertThat(e.getErrors().keySet()).hasSize(3).containsOnlyOnce(
+            assertThat(e.getErrors().keySet()).hasSize(3).containsOnly(
                     host1.getSocketAddress(),
                     host2.getSocketAddress(),
                     host3.getSocketAddress());
@@ -231,4 +224,29 @@ public class DefaultRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegr
         assertQueried(3, 1);
     }
 
+
+    @Test(groups = "short", dataProvider = "connectionErrors")
+    public void should_try_next_host_on_connection_error(ClosedConnectionConfig.CloseType closeType) {
+        simulateError(1, PrimingRequest.Result.closed_connection, new ClosedConnectionConfig(closeType));
+        simulateError(2, PrimingRequest.Result.closed_connection, new ClosedConnectionConfig(closeType));
+        simulateError(3, PrimingRequest.Result.closed_connection, new ClosedConnectionConfig(closeType));
+        try {
+            query();
+            Fail.fail("expected a NoHostAvailableException");
+        } catch (NoHostAvailableException e) {
+            assertThat(e.getErrors().keySet()).hasSize(3).containsOnly(
+                    host1.getSocketAddress(),
+                    host2.getSocketAddress(),
+                    host3.getSocketAddress());
+            assertThat(e.getErrors().values()).hasOnlyElementsOfType(TransportException.class);
+        }
+        assertOnRequestErrorWasCalled(3, TransportException.class);
+        assertThat(errors.getRetries().getCount()).isEqualTo(3);
+        assertThat(errors.getConnectionErrors().getCount()).isEqualTo(3);
+        assertThat(errors.getIgnoresOnConnectionError().getCount()).isEqualTo(0);
+        assertThat(errors.getRetriesOnConnectionError().getCount()).isEqualTo(3);
+        assertQueried(1, 1);
+        assertQueried(2, 1);
+        assertQueried(3, 1);
+    }
 }
