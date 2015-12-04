@@ -19,45 +19,37 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
 /**
- * Indicates that the contacted host reported itself being overloaded.
+ * Indicates that a connection has run out of stream IDs.
  */
-public class OverloadedException extends QueryExecutionException implements CoordinatorException {
+public class BusyConnectionException extends DriverException implements CoordinatorException {
 
     private static final long serialVersionUID = 0;
 
     private final InetSocketAddress address;
 
-    public OverloadedException(InetSocketAddress address, String message) {
-        super(String.format("Queried host (%s) was overloaded: %s", address, message));
+    public BusyConnectionException(InetSocketAddress address) {
+        super(String.format("[%s] Connection has run out of stream IDs", address.getAddress()));
         this.address = address;
     }
 
-    /**
-     * Private constructor used solely when copying exceptions.
-     */
-    private OverloadedException(InetSocketAddress address, String message, OverloadedException cause) {
-        super(message, cause);
+    public BusyConnectionException(InetSocketAddress address, Throwable cause) {
+        super(String.format("[%s] Connection has run out of stream IDs", address.getAddress()), cause);
         this.address = address;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public InetAddress getHost() {
         return address.getAddress();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public InetSocketAddress getAddress() {
         return address;
     }
 
     @Override
-    public OverloadedException copy() {
-        return new OverloadedException(address, getMessage(), this);
+    public BusyConnectionException copy() {
+        return new BusyConnectionException(address, this);
     }
+
 }

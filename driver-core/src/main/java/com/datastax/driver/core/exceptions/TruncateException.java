@@ -62,7 +62,7 @@ public class TruncateException extends QueryExecutionException implements Coordi
     }
 
     @Override
-    public DriverException copy() {
+    public TruncateException copy() {
         return new TruncateException(getAddress(), getMessage(), this);
     }
 }

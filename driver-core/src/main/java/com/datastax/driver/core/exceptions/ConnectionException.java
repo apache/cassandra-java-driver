@@ -13,30 +13,53 @@
  *   See the License for the specific language governing permissions and
  *   limitations under the License.
  */
-package com.datastax.driver.core;
+package com.datastax.driver.core.exceptions;
 
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
-class ConnectionException extends Exception {
+/**
+ * Indicates that a connection to a host has encountered a problem
+ * and that it should be closed.
+ */
+public class ConnectionException extends DriverException implements CoordinatorException {
 
     private static final long serialVersionUID = 0;
 
     public final InetSocketAddress address;
 
-    public ConnectionException(InetSocketAddress address, String msg, Throwable cause)
-    {
+    public ConnectionException(InetSocketAddress address, String msg, Throwable cause) {
         super(msg, cause);
         this.address = address;
     }
 
-    public ConnectionException(InetSocketAddress address, String msg)
-    {
+    public ConnectionException(InetSocketAddress address, String msg) {
         super(msg);
         this.address = address;
     }
 
     @Override
-    public String getMessage() {
-        return String.format("[%s] %s", address, super.getMessage());
+    public InetAddress getHost() {
+        return address.getAddress();
     }
+
+    @Override
+    public InetSocketAddress getAddress() {
+        return address;
+    }
+
+    @Override
+    public String getMessage() {
+        return String.format("[%s] %s", getHost(), getRawMessage());
+    }
+
+    @Override
+    public ConnectionException copy() {
+        return new ConnectionException(address, getRawMessage(), this);
+    }
+
+    String getRawMessage() {
+        return super.getMessage();
+    }
+
 }

@@ -34,10 +34,7 @@ import com.google.common.util.concurrent.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.datastax.driver.core.exceptions.AuthenticationException;
-import com.datastax.driver.core.exceptions.DriverInternalError;
-import com.datastax.driver.core.exceptions.InvalidQueryException;
-import com.datastax.driver.core.exceptions.NoHostAvailableException;
+import com.datastax.driver.core.exceptions.*;
 import com.datastax.driver.core.policies.*;
 import com.datastax.driver.core.utils.MoreFutures;
 
@@ -1404,9 +1401,9 @@ public class Cluster implements Closeable {
                 try {
                     controlConnection.connect();
                 } catch (UnsupportedProtocolVersionException e) {
-                    logger.debug("Cannot connect with protocol {}, trying {}", e.unsupportedVersion, e.serverVersion);
+                    logger.debug("Cannot connect with protocol {}, trying {}", e.getUnsupportedVersion(), e.getServerVersion());
 
-                    connectionFactory.protocolVersion = e.serverVersion;
+                    connectionFactory.protocolVersion = e.getServerVersion();
                     try {
                         controlConnection.connect();
                     } catch (UnsupportedProtocolVersionException e1) {
@@ -1682,7 +1679,7 @@ public class Cluster implements Closeable {
                         Thread.currentThread().interrupt();
                         // Don't propagate because we don't want to prevent other listener to run
                     } catch (UnsupportedProtocolVersionException e) {
-                        logUnsupportedVersionProtocol(host, e.unsupportedVersion);
+                        logUnsupportedVersionProtocol(host, e.getUnsupportedVersion());
                         return;
                     } catch (ClusterNameMismatchException e) {
                         logClusterNameMismatch(host, e.expectedClusterName, e.actualClusterName);
@@ -1969,7 +1966,7 @@ public class Cluster implements Closeable {
                         Thread.currentThread().interrupt();
                         // Don't propagate because we don't want to prevent other listener to run
                     } catch (UnsupportedProtocolVersionException e) {
-                        logUnsupportedVersionProtocol(host, e.unsupportedVersion);
+                        logUnsupportedVersionProtocol(host, e.getUnsupportedVersion());
                         return;
                     } catch (ClusterNameMismatchException e) {
                         logClusterNameMismatch(host, e.expectedClusterName, e.actualClusterName);

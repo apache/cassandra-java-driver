@@ -23,9 +23,7 @@ import com.google.common.collect.ImmutableMap;
 import org.mockito.Mockito;
 import org.scassandra.Scassandra;
 import org.scassandra.http.client.PrimingRequest;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -35,6 +33,7 @@ import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.times;
 
 import com.datastax.driver.core.*;
+import com.datastax.driver.core.exceptions.DriverException;
 
 import static com.datastax.driver.core.TestUtils.nonQuietClusterCloseOptions;
 
@@ -57,7 +56,14 @@ public class AbstractRetryPolicyIntegrationTest {
 
     protected RetryPolicy retryPolicy;
 
+    protected AbstractRetryPolicyIntegrationTest() {
+    }
+
     protected AbstractRetryPolicyIntegrationTest(RetryPolicy retryPolicy) {
+        setRetryPolicy(retryPolicy);
+    }
+
+    protected final void setRetryPolicy(RetryPolicy retryPolicy) {
         this.retryPolicy = Mockito.spy(retryPolicy);
     }
 
@@ -108,7 +114,7 @@ public class AbstractRetryPolicyIntegrationTest {
                 .build());
     }
 
-    private static List<Map<String, ?>> row(String key, String value) {
+    protected static List<Map<String, ?>> row(String key, String value) {
         return ImmutableList.<Map<String, ?>>of(ImmutableMap.of(key, value));
     }
 
@@ -134,6 +140,11 @@ public class AbstractRetryPolicyIntegrationTest {
     protected void assertOnUnavailableWasCalled(int times) {
         Mockito.verify(retryPolicy, times(times)).onUnavailable(
             any(Statement.class), any(ConsistencyLevel.class), anyInt(), anyInt(), anyInt());
+    }
+
+    protected void assertOnRequestErrorWasCalled(int times, Class<? extends DriverException> expected) {
+        Mockito.verify(retryPolicy, times(times)).onRequestError(
+            any(Statement.class), any(ConsistencyLevel.class), any(expected), anyInt());
     }
 
     protected void assertQueried(int hostNumber, int times) {

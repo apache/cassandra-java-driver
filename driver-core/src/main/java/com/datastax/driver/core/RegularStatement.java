@@ -18,6 +18,7 @@ package com.datastax.driver.core;
 import java.nio.ByteBuffer;
 
 import com.datastax.driver.core.exceptions.InvalidTypeException;
+import com.datastax.driver.core.exceptions.UnsupportedProtocolVersionException;
 
 /**
  * A regular (non-prepared and non batched) CQL statement.

@@ -23,6 +23,9 @@ import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.datastax.driver.core.exceptions.BusyConnectionException;
+import com.datastax.driver.core.exceptions.ConnectionException;
+
 import static com.datastax.driver.core.SchemaElement.*;
 
 abstract class SchemaParser {

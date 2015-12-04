@@ -63,7 +63,7 @@ public class UnauthorizedException extends QueryValidationException implements C
     }
 
     @Override
-    public DriverException copy() {
+    public UnauthorizedException copy() {
         return new UnauthorizedException(getAddress(), getMessage(), this);
     }
 }

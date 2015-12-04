@@ -17,8 +17,8 @@ package com.datastax.driver.core.exceptions;
 
 /**
  * Exception related to the execution of a query.
- *
- * This correspond to the exception that Cassandra throw when a (valid) query
+ * <p>
+ * This corresponds to the exception that Cassandra throws when a (valid) query
  * cannot be executed (TimeoutException, UnavailableException, ...).
  */
 @SuppressWarnings("serial")

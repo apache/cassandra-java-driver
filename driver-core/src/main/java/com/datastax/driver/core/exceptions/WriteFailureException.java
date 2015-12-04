@@ -75,12 +75,12 @@ public class WriteFailureException extends QueryConsistencyException {
     }
 
     @Override
-    public DriverException copy() {
+    public WriteFailureException copy() {
         return new WriteFailureException(getAddress(), getMessage(), this, getConsistencyLevel(), getWriteType(),
             getReceivedAcknowledgements(), getRequiredAcknowledgements(), getFailures());
     }
 
-    public DriverException copy(InetSocketAddress address) {
+    public WriteFailureException copy(InetSocketAddress address) {
         return new WriteFailureException(
             address,
             getMessage(),

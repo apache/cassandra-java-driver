@@ -19,13 +19,9 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
 /**
- * Indicates that the contacted host was bootstrapping.
- * This class is mainly intended for internal use;
- * client applications are not expected to deal with this exception directly,
- * because the driver would transparently retry the same query on another host;
- * but such exceptions are likely to appear occasionally in the driver logs.
+ * Indicates that the contacted host was bootstrapping when it received a read query.
  */
-public class BootstrappingException extends DriverInternalError implements CoordinatorException {
+public class BootstrappingException extends QueryExecutionException implements CoordinatorException {
 
     private static final long serialVersionUID = 0;
 

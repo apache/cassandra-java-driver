@@ -77,7 +77,7 @@ public class ReadTimeoutException extends QueryConsistencyException {
     }
 
     @Override
-    public DriverException copy() {
+    public ReadTimeoutException copy() {
         return new ReadTimeoutException(
             getAddress(),
             getMessage(),

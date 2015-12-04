@@ -62,7 +62,7 @@ public class SyntaxError extends QueryValidationException implements Coordinator
     }
 
     @Override
-    public DriverException copy() {
+    public SyntaxError copy() {
         return new SyntaxError(getAddress(), getMessage(), this);
     }
 }

@@ -21,6 +21,7 @@ import java.util.Map;
 import com.google.common.collect.ImmutableMap;
 
 import com.datastax.driver.core.exceptions.PagingStateException;
+import com.datastax.driver.core.exceptions.UnsupportedProtocolVersionException;
 import com.datastax.driver.core.policies.RetryPolicy;
 import com.datastax.driver.core.querybuilder.BuiltStatement;
 

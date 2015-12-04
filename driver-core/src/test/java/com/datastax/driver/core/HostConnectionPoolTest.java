@@ -38,6 +38,8 @@ import static org.scassandra.http.client.ClosedConnectionReport.CloseType.CLOSE;
 import static org.scassandra.http.client.PrimingRequest.then;
 import static org.testng.Assert.fail;
 
+import com.datastax.driver.core.exceptions.BusyConnectionException;
+import com.datastax.driver.core.exceptions.ConnectionException;
 import com.datastax.driver.core.policies.ConstantReconnectionPolicy;
 
 import static com.datastax.driver.core.Assertions.assertThat;

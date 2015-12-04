@@ -10,6 +10,7 @@
 - [improvement] JAVA-1003: Change default consistency level to LOCAL_ONE (amends JAVA-926).
 - [improvement] JAVA-863: Idempotence propagation in prepared statements.
 - [improvement] JAVA-996: Make CodecRegistry available to ProtocolDecoder.
+- [bug] JAVA-819: Driver shouldn't retry on client timeout if statement is not idempotent.
 
 Merged from 2.1 branch:
 

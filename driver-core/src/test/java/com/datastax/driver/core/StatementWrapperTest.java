@@ -24,6 +24,7 @@ import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.datastax.driver.core.exceptions.DriverException;
 import com.datastax.driver.core.policies.*;
 
 public class StatementWrapperTest extends CCMBridge.PerClassSingleNodeCluster {
@@ -142,6 +143,11 @@ public class StatementWrapperTest extends CCMBridge.PerClassSingleNodeCluster {
         @Override
         public RetryDecision onWriteTimeout(Statement statement, ConsistencyLevel cl, WriteType writeType, int requiredAcks, int receivedAcks, int nbRetry) {
             return RetryDecision.rethrow();
+        }
+
+        @Override
+        public RetryDecision onRequestError(Statement statement, ConsistencyLevel cl, DriverException e, int nbRetry) {
+            return RetryDecision.tryNextHost(cl);
         }
 
         @Override
