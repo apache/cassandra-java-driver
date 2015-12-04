@@ -21,7 +21,6 @@ import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
-import static org.scassandra.http.client.PrimingRequest.Result.is_bootstrapping;
 import static org.scassandra.http.client.PrimingRequest.Result.overloaded;
 import static org.scassandra.http.client.PrimingRequest.Result.server_error;
 import static org.scassandra.http.client.PrimingRequest.Result.write_request_timeout;
