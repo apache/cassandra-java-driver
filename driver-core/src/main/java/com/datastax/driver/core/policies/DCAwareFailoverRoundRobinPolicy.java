@@ -109,8 +109,7 @@ public class DCAwareFailoverRoundRobinPolicy implements LoadBalancingPolicy,
 	private Date switchedToBackupDcAt;
 
 	/**
-	 * Automatically switching back to local DC is possible after : downtime*
-	 * {@code switchBackDelayFactor}
+	 * Automatically switching back to local DC is possible after : downtime*{@code switchBackDelayFactor}
 	 */
 	private Float switchBackDelayFactor=(float)1000;
 
