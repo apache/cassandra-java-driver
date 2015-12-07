@@ -22,49 +22,83 @@ import com.datastax.driver.core.exceptions.InvalidTypeException;
 /**
  * A simple {@code RegularStatement} implementation built directly from a query
  * string.
- * <p>
- * Use {@link Session#newSimpleStatement(String)} to create a new instance of this
- * class.
  */
 public class SimpleStatement extends RegularStatement {
 
     private final String query;
     private final Object[] values;
-    private final Cluster cluster;
 
     private volatile ByteBuffer routingKey;
     private volatile String keyspace;
-    
-    protected SimpleStatement(String query, Cluster cluster) {
-        this(query, cluster, (Object[]) null);
+
+    /**
+     * Creates a new {@code SimpleStatement} with the provided query string (and no values).
+     *
+     * @param query the query string.
+     */
+    public SimpleStatement(String query) {
+        this(query, (Object[]) null);
     }
 
-    protected SimpleStatement(String query, Cluster cluster, Object... values) {
+    /**
+     * Creates a new {@code SimpleStatement} with the provided query string and values.
+     * <p>
+     * This version of SimpleStatement is useful when you want to execute a
+     * query only once (and thus do not want to resort to prepared statement), but
+     * do not want to convert all column values to string (typically, if you have blob
+     * values, encoding them to a hexadecimal string is not very efficient). In
+     * that case, you can provide a query string with bind markers to this constructor
+     * along with the values for those bind variables. When executed, the server will
+     * prepare the provided, bind the provided values to that prepare statement and
+     * execute the resulting statement. Thus,
+     * <pre>
+     *   session.execute(new SimpleStatement(query, value1, value2, value3));
+     * </pre>
+     * is functionally equivalent to
+     * <pre>
+     *   PreparedStatement ps = session.prepare(query);
+     *   session.execute(ps.bind(value1, value2, value3));
+     * </pre>
+     * except that the former version:
+     * <ul>
+     *   <li>Requires only one round-trip to a Cassandra node.</li>
+     *   <li>Does not left any prepared statement stored in memory (neither client or
+     *   server side) once it has been executed.</li>
+     * </ul>
+     * <p>
+     * Note that the type of the {@code values} provided to this method will
+     * not be validated by the driver as is done by {@link BoundStatement#bind} since
+     * {@code query} is not parsed (and hence the driver cannot know what those value
+     * should be). The codec to serialize each value will be chosen in the codec registry
+     * associated with this session's cluster, based on the value's Java type
+     * (this is the equivalent to calling {@link CodecRegistry#codecFor(Object)}).
+     * If too many or too few values are provided, or if a value is not a valid one for
+     * the variable it is bound to, an
+     * {@link com.datastax.driver.core.exceptions.InvalidQueryException} will be thrown
+     * by Cassandra at execution time. A {@code CodecNotFoundException} may be
+     * thrown by this constructor however, if the codec registry does not know how to
+     * handle one of the values.
+     *
+     * @param query the query string.
+     * @param values values required for the execution of {@code query}.
+     * @throws IllegalArgumentException if the number of values is greater than 65535.
+     */
+    public SimpleStatement(String query, Object... values) {
         if (values != null && values.length > 65535)
             throw new IllegalArgumentException("Too many values, the maximum allowed is 65535");
         this.query = query;
         this.values = values;
-        this.cluster = cluster;
     }
 
     @Override
-    public String getQueryString() {
+    public String getQueryString(CodecRegistry codecRegistry) {
         return query;
     }
 
-    /**
-     * {@inheritDoc}
-     * <p>
-     * Note: Calling this method may trigger the underlying {@link Cluster} initialization.
-     */
     @Override
-    public ByteBuffer[] getValues() {
+    public ByteBuffer[] getValues(ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
         if(values == null)
             return null;
-        cluster.init();
-        Configuration configuration = cluster.getConfiguration();
-        ProtocolVersion protocolVersion = configuration.getProtocolOptions().getProtocolVersion();
-        CodecRegistry codecRegistry = configuration.getCodecRegistry();
         return convert(values, protocolVersion, codecRegistry);
     }
 
@@ -79,7 +113,7 @@ public class SimpleStatement extends RegularStatement {
     }
 
     @Override
-    public boolean hasValues() {
+    public boolean hasValues(CodecRegistry codecRegistry) {
         return values != null && values.length > 0;
     }
     
@@ -107,13 +141,16 @@ public class SimpleStatement extends RegularStatement {
      * {@link #setRoutingKey}, this method will return {@code null} to
      * avoid having to parse the query string to retrieve the partition key.
      *
+     * @param protocolVersion unused by this implementation (no internal serialization is required to compute the key).
+     * @param codecRegistry unused by this implementation (no internal serialization is required to compute the key).
+     *
      * @return the routing key set through {@link #setRoutingKey} if such a key
      * was set, {@code null} otherwise.
      *
      * @see Statement#getRoutingKey
      */
     @Override
-    public ByteBuffer getRoutingKey() {
+    public ByteBuffer getRoutingKey(ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
         return routingKey;
     }
 

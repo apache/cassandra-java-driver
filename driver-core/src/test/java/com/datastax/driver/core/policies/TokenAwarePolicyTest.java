@@ -97,7 +97,7 @@ public class TokenAwarePolicyTest {
 
             // then: generating a query plan on a statement using that routing key should properly prioritize node 6 and its replicas.
             // Actual query does not matter, only the keyspace and routing key will be used
-            SimpleStatement statement = session.newSimpleStatement("select * from table where k=5");
+            SimpleStatement statement = new SimpleStatement("select * from table where k=5");
             statement.setRoutingKey(routingKey);
             statement.setKeyspace("keyspace");
 
@@ -154,7 +154,7 @@ public class TokenAwarePolicyTest {
 
             // Encodes into murmur hash '4557949199137838892' which should belong be owned by node 3.
             ByteBuffer routingKey = TypeCodec.varchar().serialize("should_choose_proper_host_based_on_routing_key", ProtocolVersion.NEWEST_SUPPORTED);
-            SimpleStatement statement = session.newSimpleStatement("select * from table where k=5")
+            SimpleStatement statement = new SimpleStatement("select * from table where k=5")
                 .setRoutingKey(routingKey)
                 .setKeyspace("keyspace");
 
@@ -200,7 +200,7 @@ public class TokenAwarePolicyTest {
 
             // Encodes into murmur hash '-8124212968526248339' which should belong to 1:1 in DC1 and 2:1 in DC2.
             ByteBuffer routingKey = TypeCodec.varchar().serialize("should_choose_host_in_local_dc_when_using_network_topology_strategy_and_dc_aware", ProtocolVersion.NEWEST_SUPPORTED);
-            SimpleStatement statement = session.newSimpleStatement("select * from table where k=5")
+            SimpleStatement statement = new SimpleStatement("select * from table where k=5")
                 .setRoutingKey(routingKey)
                 .setKeyspace("keyspace");
 
@@ -243,7 +243,7 @@ public class TokenAwarePolicyTest {
             // when: A query is made with a routing key and both hosts having that key's token are down.
             // Encodes into murmur hash '6444339665561646341' which should belong to node 4.
             ByteBuffer routingKey = TypeCodec.varchar().serialize("should_use_other_nodes_when_replicas_having_token_are_down", ProtocolVersion.NEWEST_SUPPORTED);
-            SimpleStatement statement = session.newSimpleStatement("select * from table where k=5")
+            SimpleStatement statement = new SimpleStatement("select * from table where k=5")
                 .setRoutingKey(routingKey)
             .setKeyspace("keyspace");
 

@@ -90,7 +90,7 @@ public class DowngradingConsistencyRetryPolicyIntegrationTest {
         RetryPolicy retryPolicy = session.getCluster().getConfiguration().getPolicies().getRetryPolicy();
         Mockito.reset(retryPolicy);
 
-        Statement s = session.newSimpleStatement("SELECT * FROM test.foo WHERE k = 0")
+        Statement s = new SimpleStatement("SELECT * FROM test.foo WHERE k = 0")
             .setConsistencyLevel(requested);
 
         ResultSet rs = session.execute(s);

@@ -28,12 +28,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.querybuilder.BuiltStatement;
-import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.utils.CassandraVersion;
-import com.datastax.driver.extras.codecs.json.JacksonJsonCodec;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.bindMarker;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.insertInto;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
 
 public class JacksonJsonCodecTest extends CCMBridge.PerClassSingleNodeCluster {
 
@@ -97,11 +97,11 @@ public class JacksonJsonCodecTest extends CCMBridge.PerClassSingleNodeCluster {
 
     @Test(groups = "short")
     public void should_use_custom_codec_with_built_statements_1() {
-        BuiltStatement insertStmt = new QueryBuilder(cluster).insertInto("t1")
+        BuiltStatement insertStmt = insertInto("t1")
             .value("c1", bindMarker())
             .value("c2", bindMarker())
             .value("c3", bindMarker());
-        BuiltStatement selectStmt = new QueryBuilder(cluster).select("c1", "c2", "c3")
+        BuiltStatement selectStmt = select("c1", "c2", "c3")
             .from("t1")
             .where(eq("c1", bindMarker()))
             .and(eq("c2", bindMarker()));
@@ -113,12 +113,12 @@ public class JacksonJsonCodecTest extends CCMBridge.PerClassSingleNodeCluster {
 
     @Test(groups = "short")
     public void should_use_custom_codec_with_built_statements_2() {
-        BuiltStatement insertStmt = new QueryBuilder(cluster).insertInto("t1")
+        BuiltStatement insertStmt = insertInto("t1")
             .value("c1", notAJsonString)
             .value("c2", alice)
             .value("c3", bobAndCharlie);
         BuiltStatement selectStmt =
-            new QueryBuilder(cluster).select("c1", "c2", "c3")
+            select("c1", "c2", "c3")
                 .from("t1")
                 .where(eq("c1", notAJsonString))
                 .and(eq("c2", alice));

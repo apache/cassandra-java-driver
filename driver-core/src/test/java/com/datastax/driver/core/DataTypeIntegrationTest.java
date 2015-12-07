@@ -106,7 +106,7 @@ public class DataTypeIntegrationTest extends CCMBridge.PerClassSingleNodeCluster
                     session.execute(query);
                     break;
                 case SIMPLE_WITH_PARAM:
-                    SimpleStatement statement = session.newSimpleStatement(table.insertStatement, table.sampleValue);
+                    SimpleStatement statement = new SimpleStatement(table.insertStatement, table.sampleValue);
                     checkGetValuesReturnsSerializedValue(protocolVersion, statement, table);
                     session.execute(statement);
                     break;
@@ -157,7 +157,7 @@ public class DataTypeIntegrationTest extends CCMBridge.PerClassSingleNodeCluster
 
     public void checkGetValuesReturnsSerializedValue(ProtocolVersion protocolVersion, SimpleStatement statement, TestTable table) {
         CodecRegistry codecRegistry = cluster.getConfiguration().getCodecRegistry();
-        ByteBuffer[] values = statement.getValues();
+        ByteBuffer[] values = statement.getValues(protocolVersion, codecRegistry);
         assertThat(values.length).isEqualTo(1);
         assertThat(values[0])
             .as("Value not serialized as expected for " + table.sampleValue)

@@ -48,7 +48,7 @@ public class QueryTracker {
     }
 
     public void query(Session session, int times, ConsistencyLevel cl, Class<? extends Exception> expectedException) {
-        Statement statement = session.newSimpleStatement(QUERY);
+        Statement statement = new SimpleStatement(QUERY);
         if(cl != null) {
             statement.setConsistencyLevel(cl);
         }

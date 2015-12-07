@@ -18,9 +18,7 @@ package com.datastax.driver.core.querybuilder;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.CodecRegistry;
-import com.datastax.driver.core.ProtocolVersion;
 import com.datastax.driver.core.TableMetadata;
 
 /**
@@ -35,8 +33,8 @@ public class Delete extends BuiltStatement {
     private final Conditions conditions;
     private boolean ifExists;
 
-    Delete(ProtocolVersion protocolVersion, CodecRegistry codecRegistry, String keyspace, String table, List<Selector> columns) {
-        super(keyspace, protocolVersion, codecRegistry);
+    Delete(String keyspace, String table, List<Selector> columns) {
+        super(keyspace);
         this.table = table;
         this.columns = columns;
         this.where = new Where(this);
@@ -44,8 +42,8 @@ public class Delete extends BuiltStatement {
         this.conditions = new Conditions(this);
     }
 
-    Delete(ProtocolVersion protocolVersion, CodecRegistry codecRegistry, TableMetadata table, List<Selector> columns) {
-        super(table, protocolVersion, codecRegistry);
+    Delete(TableMetadata table, List<Selector> columns) {
+        super(table);
         this.table = escapeId(table.getName());
         this.columns = columns;
         this.where = new Where(this);
@@ -54,10 +52,9 @@ public class Delete extends BuiltStatement {
     }
 
     @Override
-    StringBuilder buildQueryString(List<Object> variables) {
+    StringBuilder buildQueryString(List<Object> variables, CodecRegistry codecRegistry) {
         StringBuilder builder = new StringBuilder();
 
-        CodecRegistry codecRegistry = getCodecRegistry();
         builder.append("DELETE");
         if (!columns.isEmpty())
             Utils.joinAndAppend(builder.append(" "), codecRegistry, ",", columns, variables);
@@ -278,19 +275,12 @@ public class Delete extends BuiltStatement {
      */
     public static class Builder {
 
-        private final ProtocolVersion protocolVersion;
-        private final CodecRegistry codecRegistry;
-
         List<Selector> columns = new ArrayList<Selector>();
 
-        Builder(ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
-            this.protocolVersion = protocolVersion;
-            this.codecRegistry = codecRegistry;
+        Builder() {
         }
 
-        Builder(ProtocolVersion protocolVersion, CodecRegistry codecRegistry, String... columnNames) {
-            this.protocolVersion = protocolVersion;
-            this.codecRegistry = codecRegistry;
+        Builder(String... columnNames) {
             for (String columnName : columnNames) {
                 this.columns.add(new Selector(columnName));
             }
@@ -314,7 +304,7 @@ public class Delete extends BuiltStatement {
          * @return a newly built DELETE statement that deletes from {@code keyspace.table}.
          */
         public Delete from(String keyspace, String table) {
-            return new Delete(protocolVersion, codecRegistry, keyspace, table, columns);
+            return new Delete(keyspace, table, columns);
         }
 
         /**
@@ -324,7 +314,7 @@ public class Delete extends BuiltStatement {
          * @return a newly built DELETE statement that deletes from {@code table}.
          */
         public Delete from(TableMetadata table) {
-            return new Delete(protocolVersion, codecRegistry, table, columns);
+            return new Delete(table, columns);
         }
     }
 
@@ -332,10 +322,6 @@ public class Delete extends BuiltStatement {
      * An column selection clause for an in-construction DELETE statement.
      */
     public static class Selection extends Builder {
-
-        Selection(ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
-            super(protocolVersion, codecRegistry);
-        }
 
         /**
          * Deletes all columns (i.e. "DELETE FROM ...")

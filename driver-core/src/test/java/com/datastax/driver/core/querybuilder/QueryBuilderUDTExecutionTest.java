@@ -31,8 +31,7 @@ import static org.testng.Assert.assertEquals;
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.utils.CassandraVersion;
 
-import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.putAll;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 
 @CassandraVersion(major=2.1, minor=3)
 public class QueryBuilderUDTExecutionTest extends CCMBridge.PerClassSingleNodeCluster {
@@ -48,12 +47,12 @@ public class QueryBuilderUDTExecutionTest extends CCMBridge.PerClassSingleNodeCl
         UserType udtType = cluster.getMetadata().getKeyspace(keyspace).getUserType("udt");
         UDTValue udtValue = udtType.newValue().setInt("i", 2).setInet("a", InetAddress.getByName("localhost"));
 
-        Statement insert = new QueryBuilder(cluster).insertInto("udtTest").value("k", 1).value("t", udtValue);
+        Statement insert = insertInto("udtTest").value("k", 1).value("t", udtValue);
         assertEquals(insert.toString(), "INSERT INTO udtTest (k,t) VALUES (1,{i:2,a:'127.0.0.1'});");
 
         session.execute(insert);
 
-        List<Row> rows = session.execute(new QueryBuilder(cluster).select().from("udtTest").where(eq("k", 1))).all();
+        List<Row> rows = session.execute(select().from("udtTest").where(eq("k", 1))).all();
 
         assertEquals(rows.size(), 1);
 
@@ -67,12 +66,12 @@ public class QueryBuilderUDTExecutionTest extends CCMBridge.PerClassSingleNodeCl
         UDTValue udtValue = udtType.newValue().setInt("i", 2).setInet("a", InetAddress.getByName("localhost"));
         UDTValue udtValue2 = udtType.newValue().setInt("i", 3).setInet("a", InetAddress.getByName("localhost"));
 
-        Statement insert = new QueryBuilder(cluster).insertInto("udtTest").value("k", 1).value("l", ImmutableList.of(udtValue));
+        Statement insert = insertInto("udtTest").value("k", 1).value("l", ImmutableList.of(udtValue));
         assertThat(insert.toString()).isEqualTo("INSERT INTO udtTest (k,l) VALUES (1,[{i:2,a:'127.0.0.1'}]);");
 
         session.execute(insert);
 
-        List<Row> rows = session.execute(new QueryBuilder(cluster).select().from("udtTest").where(eq("k", 1))).all();
+        List<Row> rows = session.execute(select().from("udtTest").where(eq("k", 1))).all();
 
         assertThat(rows.size()).isEqualTo(1);
 
@@ -82,13 +81,13 @@ public class QueryBuilderUDTExecutionTest extends CCMBridge.PerClassSingleNodeCl
         Map<Integer, UDTValue> map = Maps.newHashMap();
         map.put(0, udtValue);
         map.put(2, udtValue2);
-        Statement updateMap = new QueryBuilder(cluster).update("udtTest").with(putAll("m", map)).where(eq("k", 1));
+        Statement updateMap = update("udtTest").with(putAll("m", map)).where(eq("k", 1));
         assertThat(updateMap.toString())
             .isEqualTo("UPDATE udtTest SET m=m+{0:{i:2,a:'127.0.0.1'},2:{i:3,a:'127.0.0.1'}} WHERE k=1;");
 
         session.execute(updateMap);
 
-        rows = session.execute(new QueryBuilder(cluster).select().from("udtTest").where(eq("k", 1))).all();
+        rows = session.execute(select().from("udtTest").where(eq("k", 1))).all();
         r1 = rows.get(0);
         assertThat(r1.getMap("m", Integer.class, UDTValue.class)).isEqualTo(map);
     }

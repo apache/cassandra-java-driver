@@ -20,9 +20,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.CodecRegistry;
-import com.datastax.driver.core.ProtocolVersion;
 import com.datastax.driver.core.TableMetadata;
 
 /**
@@ -40,16 +38,16 @@ public class Select extends BuiltStatement {
     private Object limit;
     private boolean allowFiltering;
 
-    Select(ProtocolVersion protocolVersion, CodecRegistry codecRegistry, String keyspace, String table, List<Object> columnNames, boolean isDistinct) {
-        super(keyspace, protocolVersion, codecRegistry);
+    Select(String keyspace, String table, List<Object> columnNames, boolean isDistinct) {
+        super(keyspace);
         this.table = table;
         this.isDistinct = isDistinct;
         this.columnNames = columnNames;
         this.where = new Where(this);
     }
 
-    Select(ProtocolVersion protocolVersion, CodecRegistry codecRegistry, TableMetadata table, List<Object> columnNames, boolean isDistinct) {
-        super(table, protocolVersion, codecRegistry);
+    Select(TableMetadata table, List<Object> columnNames, boolean isDistinct) {
+        super(table);
         this.table = escapeId(table.getName());
         this.isDistinct = isDistinct;
         this.columnNames = columnNames;
@@ -57,10 +55,9 @@ public class Select extends BuiltStatement {
     }
 
     @Override
-    StringBuilder buildQueryString(List<Object> variables) {
+    StringBuilder buildQueryString(List<Object> variables, CodecRegistry codecRegistry) {
         StringBuilder builder = new StringBuilder();
 
-        CodecRegistry codecRegistry = getCodecRegistry();
         builder.append("SELECT ");
         if (isDistinct)
             builder.append("DISTINCT ");
@@ -258,19 +255,13 @@ public class Select extends BuiltStatement {
      */
     public static class Builder {
 
-        private final ProtocolVersion protocolVersion;
-        private final CodecRegistry codecRegistry;
         List<Object> columnNames;
         boolean isDistinct;
 
-        Builder(ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
-            this.protocolVersion = protocolVersion;
-            this.codecRegistry = codecRegistry;
+        Builder() {
         }
 
-        Builder(ProtocolVersion protocolVersion, CodecRegistry codecRegistry, List<Object> columnNames) {
-            this.protocolVersion = protocolVersion;
-            this.codecRegistry = codecRegistry;
+        Builder(List<Object> columnNames) {
             this.columnNames = columnNames;
         }
 
@@ -302,7 +293,7 @@ public class Select extends BuiltStatement {
          * @return a newly built SELECT statement that selects from {@code keyspace.table}.
          */
         public Select from(String keyspace, String table) {
-            return new Select(protocolVersion, codecRegistry, keyspace, table, columnNames, isDistinct);
+            return new Select(keyspace, table, columnNames, isDistinct);
         }
 
         /**
@@ -312,7 +303,7 @@ public class Select extends BuiltStatement {
          * @return a newly built SELECT statement that selects from {@code table}.
          */
         public Select from(TableMetadata table) {
-            return new Select(protocolVersion, codecRegistry, table, columnNames, isDistinct);
+            return new Select(table, columnNames, isDistinct);
         }
     }
 
@@ -320,10 +311,6 @@ public class Select extends BuiltStatement {
      * An Selection clause for an in-construction SELECT statement.
      */
     public static abstract class Selection extends Builder {
-
-        Selection(ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
-            super(protocolVersion, codecRegistry);
-        }
 
         /**
          * Uses DISTINCT selection.
@@ -408,10 +395,6 @@ public class Select extends BuiltStatement {
     public static class SelectionOrAlias extends Selection {
 
         private Object previousSelection;
-
-        SelectionOrAlias(ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
-            super(protocolVersion, codecRegistry);
-        }
 
         /**
          * Adds an alias for the just selected item.

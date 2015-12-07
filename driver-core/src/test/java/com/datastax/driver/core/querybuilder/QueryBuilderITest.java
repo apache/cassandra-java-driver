@@ -19,7 +19,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.TreeSet;
 
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.*;
@@ -34,7 +33,6 @@ public class QueryBuilderITest extends CCMBridge.PerClassSingleNodeCluster {
 
     private static final String TABLE_TEXT = "test_text";
     private static final String TABLE_INT = "test_int";
-    private QueryBuilder builder;
 
     @Override
     protected Collection<String> getTableDefinitions() {
@@ -51,11 +49,6 @@ public class QueryBuilderITest extends CCMBridge.PerClassSingleNodeCluster {
         );
     }
 
-    @BeforeMethod(groups = "short")
-    public void setUpQueryBuilder() throws Exception {
-        builder = new QueryBuilder(cluster);
-    }
-
     @Test(groups = "short")
     public void remainingDeleteTests() throws Exception {
 
@@ -64,7 +57,7 @@ public class QueryBuilderITest extends CCMBridge.PerClassSingleNodeCluster {
         assertNotNull(table);
 
         String expected = String.format("DELETE k FROM %s.test_text;", keyspace);
-        query = builder.delete("k").from(table);
+        query = delete("k").from(table);
         assertEquals(query.toString(), expected);
         try {
             session.execute(query);
@@ -87,52 +80,52 @@ public class QueryBuilderITest extends CCMBridge.PerClassSingleNodeCluster {
         session.execute("USE foo");
 
         query = "SELECT * FROM foo WHERE k=?;";
-        select = builder.select().all().from("foo").where(eq("k", QueryBuilder.bindMarker()));
+        select = select().all().from("foo").where(eq("k", QueryBuilder.bindMarker()));
         ps = session.prepare(select.toString());
         bs = ps.bind();
         assertEquals(select.toString(), query);
         session.execute(bs.setString("k", "4 AND c=5"));
 
         query = "SELECT * FROM foo WHERE k='4'' AND c=''5';";
-        select = builder.select().all().from("foo").where(eq("k", "4' AND c='5"));
+        select = select().all().from("foo").where(eq("k", "4' AND c='5"));
         assertEquals(select.toString(), query);
 
         query = "SELECT * FROM foo WHERE k='4'' OR ''1''=''1';";
-        select = builder.select().all().from("foo").where(eq("k", "4' OR '1'='1"));
+        select = select().all().from("foo").where(eq("k", "4' OR '1'='1"));
         assertEquals(select.toString(), query);
 
         query = "SELECT * FROM foo WHERE k='4; --test comment;';";
-        select = builder.select().all().from("foo").where(eq("k", "4; --test comment;"));
+        select = select().all().from("foo").where(eq("k", "4; --test comment;"));
         assertEquals(select.toString(), query);
 
         query = "SELECT \"*\" FROM foo;";
-        select = builder.select("*").from("foo");
+        select = select("*").from("foo");
         assertEquals(select.toString(), query);
 
         query = "SELECT a,b FROM foo WHERE a IN ('b','c''); --comment');";
-        select = builder.select("a", "b").from("foo")
+        select = select("a", "b").from("foo")
                 .where(in("a", "b", "c'); --comment"));
         assertEquals(select.toString(), query);
 
         // User Injection?
         query = "SELECT * FROM bar; --(b) FROM foo;";
-        select = builder.select().fcall("* FROM bar; --", column("b")).from("foo");
+        select = select().fcall("* FROM bar; --", column("b")).from("foo");
         assertEquals(select.toString(), query);
 
         query = "SELECT writetime(\"a) FROM bar; --\"),ttl(a) FROM foo ALLOW FILTERING;";
-        select = builder.select().writeTime("a) FROM bar; --").ttl("a").from("foo").allowFiltering();
+        select = select().writeTime("a) FROM bar; --").ttl("a").from("foo").allowFiltering();
         assertEquals(select.toString(), query);
 
         query = "SELECT writetime(a),ttl(\"a) FROM bar; --\") FROM foo ALLOW FILTERING;";
-        select = builder.select().writeTime("a").ttl("a) FROM bar; --").from("foo").allowFiltering();
+        select = select().writeTime("a").ttl("a) FROM bar; --").from("foo").allowFiltering();
         assertEquals(select.toString(), query);
 
         query = "SELECT * FROM foo WHERE \"k=1 OR k\">42 LIMIT 42;";
-        select = builder.select().all().from("foo").where(gt("k=1 OR k", 42)).limit(42);
+        select = select().all().from("foo").where(gt("k=1 OR k", 42)).limit(42);
         assertEquals(select.toString(), query);
 
         query = "SELECT * FROM foo WHERE token(\"k)>0 OR token(k\")>token(42);";
-        select = builder.select().all().from("foo").where(gt(token("k)>0 OR token(k"), fcall("token", 42)));
+        select = select().all().from("foo").where(gt(token("k)>0 OR token(k"), fcall("token", 42)));
         assertEquals(select.toString(), query);
     }
 
@@ -144,17 +137,17 @@ public class QueryBuilderITest extends CCMBridge.PerClassSingleNodeCluster {
         Statement insert;
 
         query = "INSERT INTO foo (a) VALUES ('123); --comment');";
-        insert = builder.insertInto("foo")
+        insert = insertInto("foo")
                 .value("a", "123); --comment");
         assertEquals(insert.toString(), query);
 
         query = "INSERT INTO foo (\"a,b\") VALUES (123);";
-        insert = builder.insertInto("foo")
+        insert = insertInto("foo")
                 .value("a,b", 123);
         assertEquals(insert.toString(), query);
 
         query = "INSERT INTO foo (a,b) VALUES ({'2''} space','3','4'},3.4) USING TTL 24 AND TIMESTAMP 42;";
-        insert = builder.insertInto("foo").values(new String[]{ "a", "b"}, new Object[]{ new TreeSet<String>(){{ add("2'} space"); add("3"); add("4"); }}, 3.4 }).using(ttl(24)).and(timestamp(42));
+        insert = insertInto("foo").values(new String[]{ "a", "b"}, new Object[]{ new TreeSet<String>(){{ add("2'} space"); add("3"); add("4"); }}, 3.4 }).using(ttl(24)).and(timestamp(42));
         assertEquals(insert.toString(), query);
     }
 
@@ -165,15 +158,15 @@ public class QueryBuilderITest extends CCMBridge.PerClassSingleNodeCluster {
         Statement update;
 
         query = "UPDATE foo.bar USING TIMESTAMP 42 SET a=12 WHERE k='2 OR 1=1';";
-        update = builder.update("foo", "bar").using(timestamp(42)).with(set("a", 12)).where(eq("k", "2 OR 1=1"));
+        update = update("foo", "bar").using(timestamp(42)).with(set("a", 12)).where(eq("k", "2 OR 1=1"));
         assertEquals(update.toString(), query);
 
         query = "UPDATE foo SET b='null WHERE k=1; --comment' WHERE k=2;";
-        update = builder.update("foo").where().and(eq("k", 2)).with(set("b", "null WHERE k=1; --comment"));
+        update = update("foo").where().and(eq("k", 2)).with(set("b", "null WHERE k=1; --comment"));
         assertEquals(update.toString(), query);
 
         query = "UPDATE foo USING TIMESTAMP 42 SET \"b WHERE k=1; --comment\"=[3,2,1]+\"b WHERE k=1; --comment\" WHERE k=2;";
-        update = builder.update("foo").where().and(eq("k", 2)).with(prependAll("b WHERE k=1; --comment", Arrays.asList(3, 2, 1))).using(timestamp(42));
+        update = update("foo").where().and(eq("k", 2)).with(prependAll("b WHERE k=1; --comment", Arrays.asList(3, 2, 1))).using(timestamp(42));
         assertEquals(update.toString(), query);
     }
 
@@ -184,40 +177,40 @@ public class QueryBuilderITest extends CCMBridge.PerClassSingleNodeCluster {
         Statement delete;
 
         query = "DELETE FROM \"foo WHERE k=4\";";
-        delete = builder.delete().from("foo WHERE k=4");
+        delete = delete().from("foo WHERE k=4");
         assertEquals(delete.toString(), query);
 
         query = "DELETE FROM foo WHERE k='4 AND c=5';";
-        delete = builder.delete().from("foo").where(eq("k", "4 AND c=5"));
+        delete = delete().from("foo").where(eq("k", "4 AND c=5"));
         assertEquals(delete.toString(), query);
 
         query = "DELETE FROM foo WHERE k='4'' AND c=''5';";
-        delete = builder.delete().from("foo").where(eq("k", "4' AND c='5"));
+        delete = delete().from("foo").where(eq("k", "4' AND c='5"));
         assertEquals(delete.toString(), query);
 
         query = "DELETE FROM foo WHERE k='4'' OR ''1''=''1';";
-        delete = builder.delete().from("foo").where(eq("k", "4' OR '1'='1"));
+        delete = delete().from("foo").where(eq("k", "4' OR '1'='1"));
         assertEquals(delete.toString(), query);
 
         query = "DELETE FROM foo WHERE k='4; --test comment;';";
-        delete = builder.delete().from("foo").where(eq("k", "4; --test comment;"));
+        delete = delete().from("foo").where(eq("k", "4; --test comment;"));
         assertEquals(delete.toString(), query);
 
         query = "DELETE \"*\" FROM foo;";
-        delete = builder.delete("*").from("foo");
+        delete = delete("*").from("foo");
         assertEquals(delete.toString(), query);
 
         query = "DELETE a,b FROM foo WHERE a IN ('b','c''); --comment');";
-        delete = builder.delete("a", "b").from("foo")
+        delete = delete("a", "b").from("foo")
                 .where(in("a", "b", "c'); --comment"));
         assertEquals(delete.toString(), query);
 
         query = "DELETE FROM foo WHERE \"k=1 OR k\">42;";
-        delete = builder.delete().from("foo").where(gt("k=1 OR k", 42));
+        delete = delete().from("foo").where(gt("k=1 OR k", 42));
         assertEquals(delete.toString(), query);
 
         query = "DELETE FROM foo WHERE token(\"k)>0 OR token(k\")>token(42);";
-        delete = builder.delete().from("foo").where(gt(token("k)>0 OR token(k"), fcall("token", 42)));
+        delete = delete().from("foo").where(gt(token("k)>0 OR token(k"), fcall("token", 42)));
         assertEquals(delete.toString(), query);
     }
 
@@ -228,21 +221,21 @@ public class QueryBuilderITest extends CCMBridge.PerClassSingleNodeCluster {
 
         Statement delete;
         Row row;
-        delete = builder.delete().from(keyspace, TABLE_INT).where(eq("k", 2)).ifExists();
+        delete = delete().from(keyspace, TABLE_INT).where(eq("k", 2)).ifExists();
         row = session.execute(delete).one();
         assertFalse(row.getBool("[applied]"));
         
-        delete = builder.delete().from(keyspace, TABLE_INT).where(eq("k", 1)).ifExists();
+        delete = delete().from(keyspace, TABLE_INT).where(eq("k", 1)).ifExists();
         row = session.execute(delete).one();
         assertTrue(row.getBool("[applied]"));
 
         session.execute(String.format("INSERT INTO %s.test_int (k, a, b) VALUES (1, 1, 1)", keyspace));
 
-        delete = builder.delete().from(keyspace, TABLE_INT).where(eq("k", 1)).onlyIf(eq("a", 1)).and(eq("b", 2));
+        delete = delete().from(keyspace, TABLE_INT).where(eq("k", 1)).onlyIf(eq("a", 1)).and(eq("b", 2));
         row = session.execute(delete).one();
         assertFalse(row.getBool("[applied]"));
         
-        delete = builder.delete().from(keyspace, TABLE_INT).where(eq("k", 1)).onlyIf(eq("a", 1)).and(eq("b", 1));
+        delete = delete().from(keyspace, TABLE_INT).where(eq("k", 1)).onlyIf(eq("a", 1)).and(eq("b", 1));
         row = session.execute(delete).one();
         assertTrue(row.getBool("[applied]"));
     }
@@ -254,27 +247,27 @@ public class QueryBuilderITest extends CCMBridge.PerClassSingleNodeCluster {
 
         Statement update;
         Row row;
-        update = builder.update(TABLE_INT).with(set("a", 2)).and(set("b", 2)).where(eq("k", 2)).ifExists();
+        update = update(TABLE_INT).with(set("a", 2)).and(set("b", 2)).where(eq("k", 2)).ifExists();
         row = session.execute(update).one();
         assertFalse(row.getBool("[applied]"));
 
-        update = builder.update(TABLE_INT).with(set("a", 2)).and(set("b", 2)).where(eq("k", 1)).ifExists();
+        update = update(TABLE_INT).with(set("a", 2)).and(set("b", 2)).where(eq("k", 1)).ifExists();
         row = session.execute(update).one();
         assertTrue(row.getBool("[applied]"));
 
-        update = builder.update(TABLE_INT).with(set("a", 2)).and(set("b", 2)).where(eq("k", 2)).onlyIf(eq("a", 1)).and(eq("b", 2));
+        update = update(TABLE_INT).with(set("a", 2)).and(set("b", 2)).where(eq("k", 2)).onlyIf(eq("a", 1)).and(eq("b", 2));
         row = session.execute(update).one();
         assertFalse(row.getBool("[applied]"));
 
-        update = builder.update(TABLE_INT).with(set("a", 3)).and(set("b", 3)).where(eq("k", 1)).onlyIf(eq("a", 2)).and(eq("b", 2));
+        update = update(TABLE_INT).with(set("a", 3)).and(set("b", 3)).where(eq("k", 1)).onlyIf(eq("a", 2)).and(eq("b", 2));
         row = session.execute(update).one();
         assertTrue(row.getBool("[applied]"));
 
-        update = builder.update(TABLE_INT).with(set("a", 4)).and(set("b", 4)).onlyIf(eq("a", 2)).and(eq("b", 2)).where(eq("k", 1));
+        update = update(TABLE_INT).with(set("a", 4)).and(set("b", 4)).onlyIf(eq("a", 2)).and(eq("b", 2)).where(eq("k", 1));
         row = session.execute(update).one();
         assertFalse(row.getBool("[applied]"));
 
-        update = builder.update(TABLE_INT).with(set("a", 4)).and(set("b", 4)).onlyIf(eq("a", 3)).and(eq("b", 3)).where(eq("k", 1));
+        update = update(TABLE_INT).with(set("a", 4)).and(set("b", 4)).onlyIf(eq("a", 3)).and(eq("b", 3)).where(eq("k", 1));
         row = session.execute(update).one();
         assertTrue(row.getBool("[applied]"));
     }

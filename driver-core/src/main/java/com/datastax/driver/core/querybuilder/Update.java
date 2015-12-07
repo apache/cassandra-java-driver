@@ -18,9 +18,7 @@ package com.datastax.driver.core.querybuilder;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.CodecRegistry;
-import com.datastax.driver.core.ProtocolVersion;
 import com.datastax.driver.core.TableMetadata;
 import com.datastax.driver.core.querybuilder.Assignment.CounterAssignment;
 
@@ -36,8 +34,8 @@ public class Update extends BuiltStatement {
     private final Conditions conditions;
     private boolean ifExists;
 
-    Update(ProtocolVersion protocolVersion, CodecRegistry codecRegistry, String keyspace, String table) {
-        super(keyspace, protocolVersion, codecRegistry);
+    Update(String keyspace, String table) {
+        super(keyspace);
         this.table = table;
         this.assignments = new Assignments(this);
         this.where = new Where(this);
@@ -46,8 +44,8 @@ public class Update extends BuiltStatement {
         this.ifExists = false;
     }
 
-    Update(ProtocolVersion protocolVersion, CodecRegistry codecRegistry, TableMetadata table) {
-        super(table, protocolVersion, codecRegistry);
+    Update(TableMetadata table) {
+        super(table);
         this.table = escapeId(table.getName());
         this.assignments = new Assignments(this);
         this.where = new Where(this);
@@ -57,7 +55,7 @@ public class Update extends BuiltStatement {
     }
 
     @Override
-    StringBuilder buildQueryString(List<Object> variables) {
+    StringBuilder buildQueryString(List<Object> variables, CodecRegistry codecRegistry) {
         StringBuilder builder = new StringBuilder();
 
         builder.append("UPDATE ");
@@ -65,7 +63,6 @@ public class Update extends BuiltStatement {
             Utils.appendName(keyspace, builder).append('.');
         Utils.appendName(table, builder);
 
-        CodecRegistry codecRegistry = getCodecRegistry();
         if (!usings.usings.isEmpty()) {
             builder.append(" USING ");
             Utils.joinAndAppend(builder, codecRegistry, " AND ", usings.usings, variables);

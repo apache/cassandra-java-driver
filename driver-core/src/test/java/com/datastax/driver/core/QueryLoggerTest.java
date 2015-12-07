@@ -274,7 +274,7 @@ public class QueryLoggerTest extends CCMBridge.PerClassSingleNodeCluster {
         normal.setLevel(DEBUG);
         Statement unknownStatement = new Statement() {
             @Override
-            public ByteBuffer getRoutingKey() {
+            public ByteBuffer getRoutingKey(ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
                 return null;
             }
 

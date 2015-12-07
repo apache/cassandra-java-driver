@@ -17,9 +17,7 @@ package com.datastax.driver.core.querybuilder;
 
 import java.util.List;
 
-import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.CodecRegistry;
-import com.datastax.driver.core.ProtocolVersion;
 import com.datastax.driver.core.TableMetadata;
 
 /**
@@ -29,18 +27,18 @@ public class Truncate extends BuiltStatement {
 
     private final String table;
 
-    Truncate(ProtocolVersion protocolVersion, CodecRegistry codecRegistry, String keyspace, String table) {
-        super(keyspace, protocolVersion, codecRegistry);
+    Truncate(String keyspace, String table) {
+        super(keyspace);
         this.table = table;
     }
 
-    Truncate(ProtocolVersion protocolVersion, CodecRegistry codecRegistry, TableMetadata table) {
-        super(table, protocolVersion, codecRegistry);
+    Truncate(TableMetadata table) {
+        super(table);
         this.table = escapeId(table.getName());
     }
 
     @Override
-    protected StringBuilder buildQueryString(List<Object> variables) {
+    protected StringBuilder buildQueryString(List<Object> variables, CodecRegistry codecRegistry) {
         StringBuilder builder = new StringBuilder();
 
         builder.append("TRUNCATE ");

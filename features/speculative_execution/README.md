@@ -92,7 +92,7 @@ about what the query actually does. Therefore:
 You can override the value on each statement:
 
 ```java
-Statement s = session.newSimpleStatement("SELECT * FROM users WHERE id = 1");
+Statement s = new SimpleStatement("SELECT * FROM users WHERE id = 1");
 s.setIdempotent(true);
 ```
 

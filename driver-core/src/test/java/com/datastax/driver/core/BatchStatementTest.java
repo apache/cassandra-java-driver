@@ -40,7 +40,7 @@ public class BatchStatementTest extends CCMBridge.PerClassSingleNodeCluster {
 
             BatchStatement batch = new BatchStatement();
 
-            batch.add(session.newSimpleStatement("INSERT INTO test (k, v) VALUES (?, ?)", "key1", 0));
+            batch.add(new SimpleStatement("INSERT INTO test (k, v) VALUES (?, ?)", "key1", 0));
             batch.add(st.bind("key1", 1));
             batch.add(st.bind("key2", 0));
 
@@ -87,7 +87,7 @@ public class BatchStatementTest extends CCMBridge.PerClassSingleNodeCluster {
 
             BatchStatement batch = new BatchStatement();
 
-            batch.add(session.newSimpleStatement("INSERT INTO test (k, v) VALUES (?, ?)", "key1", 0));
+            batch.add(new SimpleStatement("INSERT INTO test (k, v) VALUES (?, ?)", "key1", 0));
             batch.add(st.bind("key1", 1));
             batch.add(st.bind("key1", 2));
 

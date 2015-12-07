@@ -32,7 +32,9 @@ import com.datastax.driver.core.utils.CassandraVersion;
 
 import static com.datastax.driver.core.DataType.cint;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.insertInto;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.set;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.update;
 
 @CassandraVersion(major=2.1, minor=3)
 public class QueryBuilderTupleExecutionTest extends CCMBridge.PerClassSingleNodeCluster {
@@ -46,7 +48,7 @@ public class QueryBuilderTupleExecutionTest extends CCMBridge.PerClassSingleNode
     public void should_handle_tuple() throws Exception {
         String query = "INSERT INTO foo (k,x) VALUES (0,(1));";
         TupleType tupleType = cluster.getMetadata().newTupleType(cint());
-        BuiltStatement insert = new QueryBuilder(cluster).insertInto("foo").value("k", 0).value("x", tupleType.newValue(1));
+        BuiltStatement insert = insertInto("foo").value("k", 0).value("x", tupleType.newValue(1));
         assertEquals(insert.toString(), query);
     }
 
@@ -58,7 +60,7 @@ public class QueryBuilderTupleExecutionTest extends CCMBridge.PerClassSingleNode
         query = "UPDATE foo SET l=[(1,2)] WHERE k=1;";
         TupleType tupleType = cluster.getMetadata().newTupleType(cint(), cint());
         List<TupleValue> list = ImmutableList.of(tupleType.newValue(1, 2));
-        statement = new QueryBuilder(cluster).update("foo").with(set("l", list)).where(eq("k", 1));
+        statement = update("foo").with(set("l", list)).where(eq("k", 1));
         assertThat(statement.toString()).isEqualTo(query);
     }
 

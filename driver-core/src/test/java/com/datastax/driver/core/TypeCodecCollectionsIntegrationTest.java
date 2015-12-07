@@ -22,8 +22,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.datastax.driver.core.querybuilder.QueryBuilder;
-import com.datastax.driver.core.utils.CassandraVersion;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
 import org.testng.annotations.BeforeMethod;
@@ -34,12 +32,12 @@ import static com.google.common.collect.Sets.newHashSet;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.datastax.driver.core.querybuilder.BuiltStatement;
+import com.datastax.driver.core.utils.CassandraVersion;
 
-import static com.datastax.driver.core.TypeTokens.listOf;
-import static com.datastax.driver.core.TypeTokens.mapOf;
-import static com.datastax.driver.core.TypeTokens.setOf;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.bindMarker;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.insertInto;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
 
 @CassandraVersion(major=2.0)
 public class TypeCodecCollectionsIntegrationTest extends CCMBridge.PerClassSingleNodeCluster {
@@ -75,7 +73,7 @@ public class TypeCodecCollectionsIntegrationTest extends CCMBridge.PerClassSingl
 
     @BeforeMethod(groups = "short")
     public void createBuiltStatements() throws Exception {
-        insertStmt = new QueryBuilder(cluster).insertInto("\"myTable2\"")
+        insertStmt = insertInto("\"myTable2\"")
             .value("c_int", bindMarker())
             .value("l_int", bindMarker())
             .value("l_bigint", bindMarker())
@@ -83,7 +81,7 @@ public class TypeCodecCollectionsIntegrationTest extends CCMBridge.PerClassSingl
             .value("s_double", bindMarker())
             .value("m_varint", bindMarker())
             .value("m_decimal", bindMarker());
-        selectStmt = new QueryBuilder(cluster).select("c_int", "l_int", "l_bigint", "s_float", "s_double", "m_varint", "m_decimal")
+        selectStmt = select("c_int", "l_int", "l_bigint", "s_float", "s_double", "m_varint", "m_decimal")
             .from("\"myTable2\"")
             .where(eq("c_int", bindMarker()));
     }

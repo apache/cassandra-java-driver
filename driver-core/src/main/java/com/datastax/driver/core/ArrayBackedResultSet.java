@@ -45,10 +45,12 @@ abstract class ArrayBackedResultSet implements ResultSet {
     private final boolean wasApplied;
 
     protected final ProtocolVersion protocolVersion;
+    protected final CodecRegistry codecRegistry;
 
-    private ArrayBackedResultSet(ColumnDefinitions metadata, Token.Factory tokenFactory, List<ByteBuffer> firstRow, ProtocolVersion protocolVersion) {
+    private ArrayBackedResultSet(ColumnDefinitions metadata, Token.Factory tokenFactory, List<ByteBuffer> firstRow, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
         this.metadata = metadata;
         this.protocolVersion = protocolVersion;
+        this.codecRegistry = codecRegistry;
         this.tokenFactory = tokenFactory;
         this.wasApplied = checkWasApplied(firstRow, metadata, protocolVersion);
     }
@@ -79,8 +81,8 @@ abstract class ArrayBackedResultSet implements ResultSet {
                 assert r.metadata.pagingState == null || info != null;
 
                 return r.metadata.pagingState == null
-                    ? new SinglePage(columnDefs, tokenFactory, protocolVersion, r.data, info)
-                    : new MultiPage(columnDefs, tokenFactory, protocolVersion, r.data, info, r.metadata.pagingState, session, statement);
+                    ? new SinglePage(columnDefs, tokenFactory, protocolVersion, columnDefs.codecRegistry, r.data, info)
+                    : new MultiPage(columnDefs, tokenFactory, protocolVersion, columnDefs.codecRegistry, r.data, info, r.metadata.pagingState, session, statement);
 
             case SET_KEYSPACE:
             case SCHEMA_CHANGE:
@@ -105,7 +107,7 @@ abstract class ArrayBackedResultSet implements ResultSet {
 
     private static ArrayBackedResultSet empty(ExecutionInfo info) {
         // We could pass the protocol version but we know we won't need it so passing a bogus value (null)
-        return new SinglePage(ColumnDefinitions.EMPTY, null,  null, EMPTY_QUEUE, info);
+        return new SinglePage(ColumnDefinitions.EMPTY, null,  null, null, EMPTY_QUEUE, info);
     }
 
     public ColumnDefinitions getColumnDefinitions() {
@@ -166,9 +168,10 @@ abstract class ArrayBackedResultSet implements ResultSet {
         private SinglePage(ColumnDefinitions metadata,
                            Token.Factory tokenFactory,
                            ProtocolVersion protocolVersion,
+                           CodecRegistry codecRegistry,
                            Queue<List<ByteBuffer>> rows,
                            ExecutionInfo info) {
-            super(metadata, tokenFactory, rows.peek(), protocolVersion);
+            super(metadata, tokenFactory, rows.peek(), protocolVersion, codecRegistry);
             this.info = info;
             this.rows = rows;
         }
@@ -230,6 +233,7 @@ abstract class ArrayBackedResultSet implements ResultSet {
         private MultiPage(ColumnDefinitions metadata,
                           Token.Factory tokenFactory,
                           ProtocolVersion protocolVersion,
+                          CodecRegistry codecRegistry,
                           Queue<List<ByteBuffer>> rows,
                           ExecutionInfo info,
                           ByteBuffer pagingState,
@@ -239,9 +243,9 @@ abstract class ArrayBackedResultSet implements ResultSet {
             // Note: as of Cassandra 2.1.0, it turns out that the result of a CAS update is never paged, so
             // we could hard-code the result of wasApplied in this class to "true". However, we can not be sure
             // that this will never change, so apply the generic check by peeking at the first row.
-            super(metadata, tokenFactory, rows.peek(), protocolVersion);
+            super(metadata, tokenFactory, rows.peek(), protocolVersion, codecRegistry);
             this.currentPage = rows;
-            this.infos.offer(info.withPagingState(pagingState, protocolVersion).withStatement(statement));
+            this.infos.offer(info.withPagingState(pagingState, protocolVersion, codecRegistry).withStatement(statement));
 
             this.fetchState = new FetchingState(pagingState, null);
             this.session = session;
@@ -338,7 +342,7 @@ abstract class ArrayBackedResultSet implements ResultSet {
                                 if (rm.kind == Responses.Result.Kind.ROWS) {
                                     Responses.Result.Rows rows = (Responses.Result.Rows)rm;
                                     if (rows.metadata.pagingState != null)
-                                        info = info.withPagingState(rows.metadata.pagingState, protocolVersion).withStatement(statement);
+                                        info = info.withPagingState(rows.metadata.pagingState, protocolVersion, codecRegistry).withStatement(statement);
                                     MultiPage.this.nextPages.offer(rows.data);
                                     MultiPage.this.fetchState = rows.metadata.pagingState == null ? null : new FetchingState(rows.metadata.pagingState, null);
                                 } else if (rm.kind == Responses.Result.Kind.VOID) {

@@ -222,9 +222,13 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * precedence. If the routing key has been set through {@link PreparedStatement#setRoutingKey} then that is used
      * next. If neither of those are set then it is computed.
      *
+     * @param protocolVersion unused by this implementation (no internal serialization is required to compute the key).
+     * @param codecRegistry unused by this implementation (no internal serialization is required to compute the key).
+     *
      * @return the routing key for this statement or {@code null}.
      */
-    public ByteBuffer getRoutingKey() {
+    @Override
+    public ByteBuffer getRoutingKey(ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
         if (this.routingKey != null) {
             return this.routingKey;
         }

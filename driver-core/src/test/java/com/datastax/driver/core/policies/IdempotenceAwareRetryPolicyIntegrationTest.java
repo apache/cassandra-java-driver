@@ -63,7 +63,7 @@ public class IdempotenceAwareRetryPolicyIntegrationTest extends AbstractRetryPol
     @Test(groups = "short")
     public void should_retry_on_write_timeout_if_statement_idempotent() {
         simulateError(1, write_request_timeout);
-        session.execute(session.newSimpleStatement("mock query").setIdempotent(true));
+        session.execute(new SimpleStatement("mock query").setIdempotent(true));
         assertOnWriteTimeoutWasCalled(1);
         assertThat(errors.getWriteTimeouts().getCount()).isEqualTo(1);
         assertThat(errors.getRetries().getCount()).isEqualTo(1);
@@ -111,7 +111,7 @@ public class IdempotenceAwareRetryPolicyIntegrationTest extends AbstractRetryPol
                     .withQuery("mock query")
                     .withThen(then().withFixedDelay(1000L).withRows(row("result", "result1")))
                     .build());
-            session.execute(session.newSimpleStatement("mock query").setIdempotent(true));
+            session.execute(new SimpleStatement("mock query").setIdempotent(true));
             assertOnRequestErrorWasCalled(1, OperationTimedOutException.class);
             assertThat(errors.getClientTimeouts().getCount()).isEqualTo(1);
             assertThat(errors.getRetries().getCount()).isEqualTo(1);
@@ -157,7 +157,7 @@ public class IdempotenceAwareRetryPolicyIntegrationTest extends AbstractRetryPol
         simulateError(2, error);
         simulateError(3, error);
         try {
-            session.execute(session.newSimpleStatement("mock query").setIdempotent(true));
+            session.execute(new SimpleStatement("mock query").setIdempotent(true));
             fail("expected a NoHostAvailableException");
         } catch (NoHostAvailableException e) {
             assertThat(e.getErrors().keySet()).hasSize(3).containsOnly(

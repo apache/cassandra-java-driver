@@ -36,7 +36,7 @@ In addition, you can also override the default timestamp on a
 per-statement basis:
 
 ```java
-Statement statement = session.newSimpleStatement(
+Statement statement = new SimpleStatement(
     "UPDATE users SET email = 'x@y.com' where id = 1");
 statement.setDefaultTimestamp(1234567890);
 session.execute(statement);
