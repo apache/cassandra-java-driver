@@ -12,7 +12,6 @@
 Merged from 2.0 branch:
 
 - [bug] JAVA-994: Don't call on(Up|Down|Add|Remove) methods if Cluster is closed/closing.
-- [bug] JAVA-995: Defunct connection even if initializing.
 
 
 ### 2.1.9
@@ -353,8 +352,6 @@ Merged from 2.0 branch: everything up to 2.0.3 (included), and the following.
 ### 2.0.13 (in progress)
 
 - [bug] JAVA-994: Don't call on(Up|Down|Add|Remove) methods if Cluster is closed/closing.
-- [bug] JAVA-995: Defunct connection even if initializing.
-
 
 ### 2.0.12
 
