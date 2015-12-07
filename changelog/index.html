@@ -42,7 +42,7 @@
             <div class="col-md-8">
               <form id="search" class="form-search dropdown visible-lg-block" ng-controller="search" ng-class="{open: hasResults}" role="search" ng-submit="submit()" data-spy="affix" data-offset-top="130">
                 <div class="form-group has-feedback">
-                  <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('3.0.0-alpha5')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+                  <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('3.0.0-beta1')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
                 </div>
                 <ul class="dropdown-menu search-results" role="menu">
                   <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
@@ -63,12 +63,14 @@
               <li>
                 <div class="btn-group">
                   <button id="current-version" class="btn btn-default btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    3.0.0-alpha5
+                    3.0.0-beta1
                     <span class="caret"></span>
                   </button>
                   <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
                   
-                    <li class="disabled"><a href="./">3.0.0-alpha5</a></li>
+                    <li class="disabled"><a href="./">3.0.0-beta1</a></li>
+                  
+                    <li><a href="../3.0.0-alpha5/changelog/">3.0.0-alpha5</a></li>
                   
                     <li><a href="../2.2.0-rc3/changelog/">2.2.0-rc3</a></li>
                   
@@ -113,6 +115,8 @@
                     <li>
 <a href="#changelog">Changelog
 </a><ul class="nav nav-pills nav-stacked">
+<li><a href="#3-0-0-beta1">3.0.0-beta1
+</a></li>
 <li><a href="#3-0-0-alpha5">3.0.0-alpha5
 </a></li>
 <li><a href="#3-0-0-alpha4">3.0.0-alpha4
@@ -156,6 +160,8 @@
 <li><a href="#2-1-0-rc1">2.1.0-rc1
 </a></li>
 <li><a href="#2-1-0-beta1">2.1.0-beta1
+</a></li>
+<li><a href="#2-0-13-in-progress">2.0.13 (in progress)
 </a></li>
 <li><a href="#2-0-12">2.0.12
 </a></li>
@@ -276,6 +282,30 @@
 
 <h2 id="changelog" class="target">Changelog<a class="anchor" href="#changelog" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h2>
+
+<h3 id="3-0-0-beta1" class="target">3.0.0-beta1<a class="anchor" href="#3-0-0-beta1" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<ul>
+<li>[bug] JAVA-993: Support for “custom” types after CASSANDRA-10365.</li>
+<li>[bug] JAVA-999: Handle unset parameters in QueryLogger.</li>
+<li>[bug] JAVA-998: SchemaChangeListener not invoked for Functions or Aggregates having UDT arguments.</li>
+<li>[bug] JAVA-1009: use CL ONE to compute query plan when reconnecting
+control connection.</li>
+<li>[improvement] JAVA-1003: Change default consistency level to LOCAL_ONE (amends JAVA-926).</li>
+<li>[improvement] JAVA-863: Idempotence propagation in prepared statements.</li>
+<li>[improvement] JAVA-996: Make CodecRegistry available to ProtocolDecoder.</li>
+<li>[bug] JAVA-819: Driver shouldn’t retry on client timeout if statement is not idempotent.</li>
+<li>[improvement] JAVA-1007: Make SimpleStatement and QueryBuilder “detached” again.</li>
+</ul>
+
+<p>Merged from 2.1 branch:</p>
+
+<ul>
+<li>[improvement] JAVA-989: Include keyspace name when invalid replication found when generating token map.</li>
+<li>[improvement] JAVA-664: Reduce heap consumption for TokenMap.</li>
+<li>[bug] JAVA-994: Don’t call on(Up|Down|Add|Remove) methods if Cluster is closed/closing.</li>
+</ul>
 
 <h3 id="3-0-0-alpha5" class="target">3.0.0-alpha5<a class="anchor" href="#3-0-0-alpha5" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h3>
@@ -538,6 +568,12 @@ connections.</li>
 
 <ul>
 <li>[bug] JAVA-988: Metadata.handleId should handle escaped double quotes.</li>
+</ul>
+
+<p>Merged from 2.0 branch:</p>
+
+<ul>
+<li>[bug] JAVA-994: Don’t call on(Up|Down|Add|Remove) methods if Cluster is closed/closing.</li>
 </ul>
 
 <h3 id="2-1-9" class="target">2.1.9<a class="anchor" href="#2-1-9" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
@@ -899,6 +935,13 @@ batches.</li>
 <li>[bug] JAVA-343: Avoid classloader leak in Tomcat.</li>
 <li>[bug] JAVA-387: Avoid deadlock in onAdd/onUp.</li>
 <li>[bug] JAVA-377, JAVA-391: Make metadata parsing more lenient.</li>
+</ul>
+
+<h3 id="2-0-13-in-progress" class="target">2.0.13 (in progress)<a class="anchor" href="#2-0-13-in-progress" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<ul>
+<li>[bug] JAVA-994: Don’t call on(Up|Down|Add|Remove) methods if Cluster is closed/closing.</li>
 </ul>
 
 <h3 id="2-0-12" class="target">2.0.12<a class="anchor" href="#2-0-12" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>

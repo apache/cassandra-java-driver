@@ -42,7 +42,7 @@
             <div class="col-md-8">
               <form id="search" class="form-search dropdown visible-lg-block" ng-controller="search" ng-class="{open: hasResults}" role="search" ng-submit="submit()" data-spy="affix" data-offset-top="130">
                 <div class="form-group has-feedback">
-                  <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('3.0.0-alpha5')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+                  <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('3.0.0-beta1')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
                 </div>
                 <ul class="dropdown-menu search-results" role="menu">
                   <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
@@ -63,12 +63,14 @@
               <li>
                 <div class="btn-group">
                   <button id="current-version" class="btn btn-default btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    3.0.0-alpha5
+                    3.0.0-beta1
                     <span class="caret"></span>
                   </button>
                   <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
                   
-                    <li class="disabled"><a href="./">3.0.0-alpha5</a></li>
+                    <li class="disabled"><a href="./">3.0.0-beta1</a></li>
+                  
+                    <li><a href="../../3.0.0-alpha5/features/custom_payloads/">3.0.0-alpha5</a></li>
                   
                     <li><a href="../../2.2.0-rc3/features/custom_payloads/">2.2.0-rc3</a></li>
                   
@@ -388,7 +390,7 @@ by using the special value <code>Statement.NULL_PAYLOAD_VALUE</code>.</p>
 
 <p>Once the payload is set, you can either prepare the statement or execute it; 
 in both cases, the payload will be sent along with the <code>PREPARE</code> or <code>QUERY</code> request respectively:</p>
-<pre class="highlight"><code><span class="n">Statement</span> <span class="n">statement</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="na">newSimpleStatement</span><span class="o">(</span><span class="s">"SELECT foo FROM bar WHERE qix = 1"</span><span class="o">);</span>
+<pre class="highlight"><code><span class="n">Statement</span> <span class="n">statement</span> <span class="o">=</span> <span class="k">new</span> <span class="n">SimpleStatement</span><span class="o">(</span><span class="s">"SELECT foo FROM bar WHERE qix = 1"</span><span class="o">);</span>
 <span class="n">statement</span><span class="o">.</span><span class="na">setOutgoingPayload</span><span class="o">(</span><span class="n">myCustomPayload</span><span class="o">);</span>
 <span class="n">session</span><span class="o">.</span><span class="na">execute</span><span class="o">(</span><span class="n">statement</span><span class="o">);</span> <span class="c1">// myCustomPayload will be sent with QUERY request</span>
 <span class="n">session</span><span class="o">.</span><span class="na">prepare</span><span class="o">(</span><span class="n">statement</span><span class="o">);</span> <span class="c1">// myCustomPayload will be sent with PREPARE request</span>
@@ -399,7 +401,7 @@ in both cases, the payload will be sent along with the <code>PREPARE</code> or <
 </code></pre>
 <p>When sending payloads with batches, please note that payloads must be attached to the 
 <code>BatchStatement</code> itself, <em>not</em> to internal statements:</p>
-<pre class="highlight"><code><span class="n">Statement</span> <span class="n">statement</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="na">newSimpleStatement</span><span class="o">(</span><span class="s">"INSERT INTO t1 (c1, c2) values ('foo', 'bar')"</span><span class="o">)</span>
+<pre class="highlight"><code><span class="n">Statement</span> <span class="n">statement</span> <span class="o">=</span> <span class="k">new</span> <span class="n">SimpleStatement</span><span class="o">(</span><span class="s">"INSERT INTO t1 (c1, c2) values ('foo', 'bar')"</span><span class="o">)</span>
 <span class="c1">// correct</span>
 <span class="n">Statement</span> <span class="n">batch</span> <span class="o">=</span> <span class="k">new</span> <span class="n">BatchStatement</span><span class="o">().</span><span class="na">add</span><span class="o">(</span><span class="n">statement</span><span class="o">);</span>
 <span class="n">batch</span><span class="o">.</span><span class="na">setOutgoingPayload</span><span class="o">(</span><span class="n">myCustomPayload</span><span class="o">);</span>
@@ -412,7 +414,7 @@ in both cases, the payload will be sent along with the <code>PREPARE</code> or <
 <p>One important note about paging requests: if your query needs to paginate,
 any outgoing payload set on the executed statement <em>will be transparently 
 sent over and over for every new page request</em>.</p>
-<pre class="highlight"><code><span class="n">Statement</span> <span class="n">statement</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="na">newSimpleStatement</span><span class="o">(</span><span class="s">"..."</span><span class="o">);</span>
+<pre class="highlight"><code><span class="n">Statement</span> <span class="n">statement</span> <span class="o">=</span> <span class="k">new</span> <span class="n">SimpleStatement</span><span class="o">(</span><span class="s">"..."</span><span class="o">);</span>
 <span class="n">statement</span><span class="o">.</span><span class="na">setOutgoingPayload</span><span class="o">(</span><span class="n">myCustomPayload</span><span class="o">);</span>
 <span class="n">ResultSet</span> <span class="n">rows</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="na">execute</span><span class="o">(...);</span> <span class="c1">// myCustomPayload will be sent with first QUERY request</span>
 <span class="k">for</span> <span class="o">(</span><span class="n">Row</span> <span class="n">row</span> <span class="o">:</span> <span class="n">rows</span><span class="o">)</span> <span class="o">{</span>
@@ -448,7 +450,7 @@ greater than 4:</p>
 <p>Custom payloads sent back by the server can be retrieved in the following ways:</p>
 
 <p>1) From a <code>ResultSet</code>: use the <code>ExecutionInfo</code> class to retrieve the payload sent by the server.</p>
-<pre class="highlight"><code><span class="n">Statement</span> <span class="n">statement</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="na">newSimpleStatement</span><span class="o">(</span><span class="s">"..."</span><span class="o">);</span>
+<pre class="highlight"><code><span class="n">Statement</span> <span class="n">statement</span> <span class="o">=</span> <span class="k">new</span> <span class="n">SimpleStatement</span><span class="o">(</span><span class="s">"..."</span><span class="o">);</span>
 <span class="n">ResultSet</span> <span class="n">rows</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="na">execute</span><span class="o">(...);</span>
 <span class="c1">// last payload sent by the server</span>
 <span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span><span class="n">ByteBuffer</span><span class="o">&gt;</span> <span class="n">serverPayload</span> <span class="o">=</span> <span class="n">rows</span><span class="o">.</span><span class="na">getExecutionInfo</span><span class="o">().</span><span class="na">getIncomingPayload</span><span class="o">();</span>
@@ -457,7 +459,7 @@ greater than 4:</p>
 the above method would only return the last payload sent by server
 with its last <code>RESULT</code> response. If you need to retrieve all the 
 payloads for all <code>RESULT</code> responses, use the following method instead:</p>
-<pre class="highlight"><code><span class="n">Statement</span> <span class="n">statement</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="na">newSimpleStatement</span><span class="o">(</span><span class="s">"..."</span><span class="o">);</span>
+<pre class="highlight"><code><span class="n">Statement</span> <span class="n">statement</span> <span class="o">=</span> <span class="k">new</span> <span class="n">SimpleStatement</span><span class="o">(</span><span class="s">"..."</span><span class="o">);</span>
 <span class="n">ResultSet</span> <span class="n">rows</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="na">execute</span><span class="o">(...);</span>
 <span class="c1">//all payloads sent by the server</span>
 <span class="k">for</span> <span class="o">(</span><span class="n">ExecutionInfo</span> <span class="n">info</span> <span class="o">:</span> <span class="n">rows</span><span class="o">.</span><span class="na">getAllExecutionInfo</span><span class="o">())</span> <span class="o">{</span>
@@ -475,7 +477,7 @@ with its <code>PREPARED</code> response, use the following method:</p>
 <p>If you use either <code>Session.prepare(RegularStatement)</code> or <code>Session.prepareAsync(RegularStatement)</code>
 to prepare a statement, as with all other properties in the given statement, its outgoing
 payload, if any, will become the default outgoing payload for the prepared statement.</p>
-<pre class="highlight"><code><span class="n">Statement</span> <span class="n">statement</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="na">newSimpleStatement</span><span class="o">(</span><span class="s">"..."</span><span class="o">);</span>
+<pre class="highlight"><code><span class="n">Statement</span> <span class="n">statement</span> <span class="o">=</span> <span class="k">new</span> <span class="n">SimpleStatement</span><span class="o">(</span><span class="s">"..."</span><span class="o">);</span>
 <span class="n">statement</span><span class="o">.</span><span class="na">setOutgoingPayload</span><span class="o">(</span><span class="n">myCustomPayload</span><span class="o">)</span>
 <span class="n">PreparedStatement</span> <span class="n">ps</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="na">prepare</span><span class="o">(...);</span> <span class="c1">// myCustomPayload will be sent with PREPARE request </span>
                                              <span class="c1">// AND become the default outgoing payload</span>
@@ -483,7 +485,7 @@ payload, if any, will become the default outgoing payload for the prepared state
 <p>Naturally, you can also set a default outgoing payload on the <code>PreparedStatement</code> instance itself.
 The code below is roughly equivalent to the one above - except that the payload is not sent
 with the <code>PREPARE</code> request:</p>
-<pre class="highlight"><code><span class="n">Statement</span> <span class="n">statement</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="na">newSimpleStatement</span><span class="o">(</span><span class="s">"..."</span><span class="o">);</span>
+<pre class="highlight"><code><span class="n">Statement</span> <span class="n">statement</span> <span class="o">=</span> <span class="k">new</span> <span class="n">SimpleStatement</span><span class="o">(</span><span class="s">"..."</span><span class="o">);</span>
 <span class="n">PreparedStatement</span> <span class="n">ps</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="na">prepare</span><span class="o">(...);</span> <span class="c1">// no payload sent with PREPARE request</span>
 <span class="n">ps</span><span class="o">.</span><span class="na">setOutgoingPayload</span><span class="o">(</span><span class="n">myCustomPayload</span><span class="o">)</span> <span class="c1">// default outgoing payload is now myCustomPayload</span>
 </code></pre>
@@ -506,7 +508,7 @@ won’t have any outgoing payload set by default; users can however set an outgo
 individual <code>BoundStatement</code> instances by calling their <code>setOutgoingPayload()</code> method,
 like in the example below:</li>
 </ol>
-<pre class="highlight"><code><span class="n">Statement</span> <span class="n">statement</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="na">newSimpleStatement</span><span class="o">(</span><span class="s">"..."</span><span class="o">);</span>
+<pre class="highlight"><code><span class="n">Statement</span> <span class="n">statement</span> <span class="o">=</span> <span class="k">new</span> <span class="n">SimpleStatement</span><span class="o">(</span><span class="s">"..."</span><span class="o">);</span>
 <span class="n">PreparedStatement</span> <span class="n">ps</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="na">prepare</span><span class="o">(...);</span> <span class="c1">// no payload sent with PREPARE request</span>
 <span class="n">BoundStatement</span> <span class="n">bs</span> <span class="o">=</span> <span class="n">ps</span><span class="o">.</span><span class="na">bind</span><span class="o">(</span><span class="mi">1</span><span class="o">);</span> <span class="c1">// no outgoing payload by default</span>
 <span class="n">bs</span><span class="o">.</span><span class="na">setOutgoingPayload</span><span class="o">(</span><span class="n">myCustomPayload</span><span class="o">);</span> <span class="c1">// outgoing payload for this specific statement</span>

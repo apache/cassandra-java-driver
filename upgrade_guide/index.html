@@ -42,7 +42,7 @@
             <div class="col-md-8">
               <form id="search" class="form-search dropdown visible-lg-block" ng-controller="search" ng-class="{open: hasResults}" role="search" ng-submit="submit()" data-spy="affix" data-offset-top="130">
                 <div class="form-group has-feedback">
-                  <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('3.0.0-alpha5')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+                  <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('3.0.0-beta1')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
                 </div>
                 <ul class="dropdown-menu search-results" role="menu">
                   <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
@@ -63,12 +63,14 @@
               <li>
                 <div class="btn-group">
                   <button id="current-version" class="btn btn-default btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    3.0.0-alpha5
+                    3.0.0-beta1
                     <span class="caret"></span>
                   </button>
                   <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
                   
-                    <li class="disabled"><a href="./">3.0.0-alpha5</a></li>
+                    <li class="disabled"><a href="./">3.0.0-beta1</a></li>
+                  
+                    <li><a href="../3.0.0-alpha5/upgrade_guide/">3.0.0-alpha5</a></li>
                   
                     <li><a href="../2.2.0-rc3/upgrade_guide/">2.2.0-rc3</a></li>
                   
@@ -235,7 +237,7 @@ The main changes were introduced by the custom codecs feature (see below).
 We’ve also seized the opportunity to remove code that was deprecated in 2.1.</p>
 
 <ol>
-<li> The default consistency level in <code>QueryOptions</code> is now <code>LOCAL_QUORUM</code>.</li>
+<li> The default consistency level in <code>QueryOptions</code> is now <code>LOCAL_ONE</code>.</li>
 <li>
 <p><a href="../features/custom_codecs/">Custom codecs</a>
 (<a href="https://datastax-oss.atlassian.net/browse/JAVA-721">JAVA-721</a>)
@@ -296,35 +298,24 @@ introduce several breaking changes and also modify a few runtime behaviors.</p>
 </ul>
 </li>
 <li>
-<code>Session</code>. The following methods were added:
+<code>Statement</code>. The following public methods were modified:
 
 <ul>
-<li><code>newSimpleStatement(String query)</code></li>
-<li><code>newSimpleStatement(String query, Object... values)</code></li>
+<li>
+<code>getRoutingKey(ProtocolVersion, CodecRegistry)</code>: both parameters added.</li>
 </ul>
 </li>
 <li>
 <code>RegularStatement</code>. The following public methods were modified:
 
 <ul>
-<li><code>getValues()</code></li>
-<li><code>hasValues()</code></li>
+<li>
+<code>getValues(ProtocolVersion, CodecRegistry)</code>: second parameter added.</li>
+<li>
+<code>getQueryString(CodecRegistry)</code> and <code>hasValues(CodecRegistry)</code>: parameter added. No-arg versions are still present
+and use the default codec registry; refer to the Javadocs for guidance on which version to use.</li>
 </ul>
 </li>
-<li>
-<code>SimpleStatement</code>. Public constructors were removed; users are required to call either:
-
-<ul>
-<li>
-<code>Session.newSimpleStatement(String query)</code> or</li>
-<li><code>Session.newSimpleStatement(String query, Object... values)</code></li>
-</ul>
-</li>
-<li>
-<code>QueryBuilder</code>. This class now has a single, public constructor: <code>QueryBuilder(Cluster cluster)</code>.
-Its fluent API has also changed; instead of e.g.: <code>QueryBuilder.select(...)</code>,
-users should now use the following idiom: <code>new QueryBuilder(cluster).select(...)</code>
-All methods that start a query are now instance methods instead of static ones.</li>
 <li>
 <code>PreparedStatement</code>. The following public method was added:
 
@@ -555,6 +546,15 @@ enum-to-CQL mappings. Two new codecs provide the same functionality:
 <span class="o">}</span>
 </code></pre>
 </li>
+<li><p>The interface <code>IdempotenceAwarePreparedStatement</code> has been removed
+and now the <code>PreparedStatement</code> interface exposes 2 new methods, 
+<code>setIdempotent(Boolean)</code> and <code>isIdempotent()</code>.</p></li>
+<li><p><code>RetryPolicy</code> and <code>ExtendedRetryPolicy</code> (introduced in 2.1.10)
+were merged together; as a consequence, <code>RetryPolicy</code> now has one 
+more method: <code>onRequestError</code>; see
+<a href="https://datastax-oss.atlassian.net/browse/JAVA-819">JAVA-819</a> for
+more information. Furthermore, <code>FallthroughRetryPolicy</code> now returns
+<code>RetryDecision.rethrow()</code> when <code>onRequestError</code> is called.</p></li>
 </ol>
 
 <h3 id="2-1-8" class="target">2.1.8<a class="anchor" href="#2-1-8" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
