@@ -178,7 +178,7 @@
             &lt;script type="text/javascript"&gt;
             for(var i in document.links) {
             var link = document.links[i];
-            if (link.href.indexOf('http') === 0) link.target = '_blank';
+            if (link.href.indexOf('is-external=true') != -1) link.target = '_blank';
             }
             &lt;/script&gt;
           </bottom>
