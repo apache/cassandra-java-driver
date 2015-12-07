@@ -19,7 +19,7 @@
   <parent>
     <artifactId>cassandra-driver-parent</artifactId>
     <groupId>com.datastax.cassandra</groupId>
-    <version>3.0.0-beta1-SNAPSHOT</version>
+    <version>3.0.0-beta1</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
@@ -253,7 +253,7 @@
     <connection>scm:git:git@github.com:datastax/java-driver.git</connection>
     <developerConnection>scm:git:git@github.com:datastax/java-driver.git</developerConnection>
     <url>https://github.com/datastax/java-driver</url>
-    <tag>HEAD</tag>
+    <tag>3.0.0-beta1</tag>
   </scm>
 
   <developers>
