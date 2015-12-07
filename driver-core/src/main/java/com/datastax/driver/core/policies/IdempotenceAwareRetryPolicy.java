@@ -73,7 +73,7 @@ public class IdempotenceAwareRetryPolicy implements RetryPolicy {
 
     @Override
     public void close() {
-        // nothing to do
+        childPolicy.close();
     }
 
     /**
