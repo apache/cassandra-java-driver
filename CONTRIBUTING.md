@@ -5,15 +5,15 @@
 Before starting to work on something, please comment in JIRA or ask on the mailing list
 to make sure nobody else is working on it.
 
-If a fix applies to 2.0, 2.1 and 2.2, work on the 2.0 branch, your commit will eventually
-get merged in 2.1 then in 2.2.
+If a fix applies to 2.1 and 3.0, work on the 2.1 branch, your commit will eventually
+get merged in 3.0. Other branches (2.0 and 2.2) are now discontinued.
 
 Before you send your pull request, make sure that:
 
 - you have a unit test that failed before the fix and succeeds after.
-- the fix is mentioned in `driver-core/CHANGELOG.rst`.
+- the fix is mentioned in `changelog/README.md`.
 - the commit message include the reference of the JIRA ticket for automatic linking
-  (example: `Fix NPE when a connection fails during pool construction (JAVA-503).`).
+  (example: `JAVA-503: Fix NPE when a connection fails during pool construction.`).
 
 As long as your pull request is not merged, it's OK to rebase your branch and push with
 `--force`.
