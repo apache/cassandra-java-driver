@@ -20,25 +20,25 @@ import java.net.InetSocketAddress;
 
 /**
  * An interface for exceptions that are able to report the address of the coordinator host
- * that triggered the response error which caused the exception to be raised.
+ * that was contacted.
  */
 public interface CoordinatorException {
 
     /**
-     * The coordinator host that caused this exception to be raised.
+     * The coordinator host that was contacted.
      * <p>
      * This is a shortcut for {@link InetSocketAddress#getAddress() getAddress().getAddress()}.
      *
-     * @return The coordinator host that caused this exception to be raised;
+     * @return The coordinator host that was contacted;
      * may be {@code null} if the coordinator is not known.
      *
      */
     InetAddress getHost();
 
     /**
-     * The full address of the coordinator host that caused this exception to be raised.
+     * The full address of the coordinator host that was contacted.
      *
-     * @return the full address of the coordinator host that caused this exception to be raised;
+     * @return the full address of the coordinator host that was contacted;
      * may be {@code null} if the coordinator is not known.
      */
     InetSocketAddress getAddress();

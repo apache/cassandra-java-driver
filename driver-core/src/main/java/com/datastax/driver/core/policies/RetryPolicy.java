@@ -44,7 +44,7 @@ public interface RetryPolicy {
      */
     class RetryDecision {
         /**
-         * The type of retry decisions.
+         * The types of retry decisions.
          */
         public enum Type { RETRY, RETHROW, IGNORE };
 
@@ -68,57 +68,67 @@ public interface RetryPolicy {
         }
 
         /**
-         * The consistency level for a retry decision.
+         * The consistency level for this retry decision.
+         * This is only meaningful for {@code RETRY} decisions.
+         * The consistency level is always {@code null} for an
+         * {@code IGNORE} or a {@code RETHROW} decision;
+         * for a {@code RETRY} decision, the consistency level can be {@code null},
+         * in which case the retry is done at the same consistency level
+         * as in the original attempt.
          *
-         * @return the consistency level for a retry decision or {@code null}
-         * if this retry decision is an {@code IGNORE} or a {@code RETHROW}.
+         * @return the consistency level for a retry decision.
          */
         public ConsistencyLevel getRetryConsistencyLevel() {
             return retryCL;
         }
 
         /**
-         * Whether the retry policy uses the same host for retry decision.
+         * Whether this decision is to retry the same host.
+         * This is only meaningful for {@code RETRY} decisions.
          *
-         * @return the retry on next host boolean. Default is false.
+         * @return {@code true} if the decision is to retry the same host,
+         * {@code false} otherwise. Default is {@code false}.
          */
         public boolean isRetryCurrent() {
             return retryCurrent;
         }
 
         /**
-         * Creates a RETHROW retry decision.
+         * Creates a {@link RetryDecision.Type#RETHROW} retry decision.
          *
-         * @return a RETHROW retry decision.
+         * @return a {@link RetryDecision.Type#RETHROW} retry decision.
          */
         public static RetryDecision rethrow() {
             return new RetryDecision(Type.RETHROW, null, true);
         }
 
         /**
-         * Creates a RETRY retry decision using the provided consistency level.
+         * Creates a {@link RetryDecision.Type#RETRY} retry decision using
+         * the same host and the provided consistency level.
          *
          * @param consistency the consistency level to use for the retry.
-         * @return a RETRY with consistency level {@code consistency} retry decision.
+         * @return a {@link RetryDecision.Type#RETRY} decision using
+         * the same host and the provided consistency level
          */
         public static RetryDecision retry(ConsistencyLevel consistency) {
             return new RetryDecision(Type.RETRY, consistency, true);
         }
 
         /**
-         * Creates an IGNORE retry decision.
+         * Creates an {@link RetryDecision.Type#IGNORE} retry decision.
          *
-         * @return an IGNORE retry decision.
+         * @return an {@link RetryDecision.Type#IGNORE} retry decision.
          */
         public static RetryDecision ignore() {
             return new RetryDecision(Type.IGNORE, null, true);
         }
 
         /**
-         * Creates a RETRY retry decision and indicates to retry on another host
-         * using the provided consistency level.
+         * Creates a {@link RetryDecision.Type#RETRY} retry decision using the next host
+         * in the query plan, and using the provided consistency level.
          *
-         * @return a RETRY retry decision.
+         * @return a {@link RetryDecision.Type#RETRY} retry decision using the next host
+         * in the query plan, and using the provided consistency level.
          */
         public static RetryDecision tryNextHost(ConsistencyLevel retryCL) {
             return new RetryDecision(Type.RETRY, retryCL, false);
