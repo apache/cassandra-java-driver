@@ -93,6 +93,11 @@ for (Row row : rs) {
 }
 ```
 
+If you use paging with the async API, you'll also want to use those
+methods to avoid triggering synchronous fetches unintentionally; see
+[async paging](../async/#async-paging).
+
+
 ### Saving and reusing the paging state
 
 Sometimes it is convenient to save the paging state in order to restore

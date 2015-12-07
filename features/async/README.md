@@ -42,6 +42,54 @@ Futures.addCallback(version, new FutureCallback<String>() {
 });
 ```
 
+### Async paging
+
+If you consume a `ResultSet` in a callback, be aware that iterating the
+rows will trigger synchronous queries as you page through the results.
+To avoid this, use [getAvailableWithoutFetching] to limit the iteration
+to the current page, and [fetchMoreResults] to get a future to the next
+page (see also the section on [paging](../paging/)).
+Here is a full example:
+
+[getAvailableWithoutFetching]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/ResultSet.html#getAvailableWithoutFetching--
+[fetchMoreResults]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/ResultSet.html#fetchMoreResults--
+
+```java
+Statement statement = new SimpleStatement("select * from foo").setFetchSize(20);
+ListenableFuture<ResultSet> future = Futures.transform(
+    session.executeAsync(statement),
+    iterate(1));
+
+private static AsyncFunction<ResultSet, ResultSet> iterate(final int page) {
+    return new AsyncFunction<ResultSet, ResultSet>() {
+        @Override
+        public ListenableFuture<ResultSet> apply(ResultSet rs) throws Exception {
+
+            // How far we can go without triggering the blocking fetch:
+            int remainingInPage = rs.getAvailableWithoutFetching();
+
+            System.out.printf("Starting page %d (%d rows)%n", page, remainingInPage);
+
+            for (Row row : rs) {
+                System.out.printf("[page %d - %d] row = %s%n", page, remainingInPage, row);
+                if (--remainingInPage == 0)
+                    break;
+            }
+            System.out.printf("Done page %d%n", page);
+
+            boolean wasLastPage = rs.getExecutionInfo().getPagingState() == null;
+            if (wasLastPage) {
+                System.out.println("Done iterating");
+                return Futures.immediateFuture(rs);
+            } else {
+                ListenableFuture<ResultSet> future = rs.fetchMoreResults();
+                return Futures.transform(future, iterate(page + 1));
+            }
+        }
+    };
+}
+```
+
 ### Good practices
 
 If your callback is slow, consider providing a separate executor.
