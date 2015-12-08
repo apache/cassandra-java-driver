@@ -25,7 +25,6 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.util.HashedWheelTimer;
 import io.netty.util.Timer;
-import org.mockito.ArgumentCaptor;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.testng.annotations.DataProvider;
@@ -35,7 +34,6 @@ import static org.mockito.Answers.CALLS_REAL_METHODS;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
-import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.CCMBridge.ipOfNode;
 
 public class NettyOptionsTest {
@@ -46,7 +44,7 @@ public class NettyOptionsTest {
         return params;
     }
 
-    @Test(groups = "short", dataProvider = "NettyOptionsTest")
+    @Test(groups = "long", dataProvider = "NettyOptionsTest")
     public void should_invoke_netty_options_hooks(int hosts, int coreConnections) throws Exception {
         //given
         CCMBridge ccm = CCMBridge.builder("test").withNodes(hosts).build();
