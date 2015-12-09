@@ -42,7 +42,7 @@ class AccessorReflectionMapper<T> extends AccessorMapper<T> {
         try {
             return (T) Proxy.newProxyInstance(daoClass.getClassLoader(), proxyClasses, handler);
         } catch (Exception e) {
-            throw new RuntimeException("Cannot create instance for Accessor interface " + daoClass.getName());
+            throw new RuntimeException("Cannot create instance for Accessor interface " + daoClass.getName(), e);
         }
     }
 

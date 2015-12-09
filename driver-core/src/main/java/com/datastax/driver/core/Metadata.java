@@ -737,6 +737,7 @@ public class Metadata {
                         hostTokens.add(t);
                     } catch (IllegalArgumentException e) {
                         // If we failed parsing that token, skip it
+                        logger.trace("Skipping the token - unable to parse.", e);
                     }
                 }
             }

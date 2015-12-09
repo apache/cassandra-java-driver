@@ -53,7 +53,7 @@ abstract class CBUtil { // TODO rename
             int length = cb.readUnsignedShort();
             return readString(cb, length);
         } catch (IndexOutOfBoundsException e) {
-            throw new DriverInternalError("Not enough bytes to read an UTF8 serialized string preceded by it's 2 bytes length");
+            throw new DriverInternalError("Not enough bytes to read an UTF8 serialized string preceded by it's 2 bytes length.", e);
         }
     }
 
@@ -87,7 +87,7 @@ abstract class CBUtil { // TODO rename
             int length = cb.readInt();
             return readString(cb, length);
         } catch (IndexOutOfBoundsException e) {
-            throw new DriverInternalError("Not enough bytes to read an UTF8 serialized string preceded by it's 4 bytes length");
+            throw new DriverInternalError("Not enough bytes to read an UTF8 serialized string preceded by it's 4 bytes length.", e);
         }
     }
 
@@ -108,7 +108,7 @@ abstract class CBUtil { // TODO rename
             cb.readBytes(bytes);
             return bytes;
         } catch (IndexOutOfBoundsException e) {
-            throw new DriverInternalError("Not enough bytes to read a byte array preceded by it's 2 bytes length");
+            throw new DriverInternalError("Not enough bytes to read a byte array preceded by it's 2 bytes length.", e);
         }
     }
 
@@ -138,7 +138,7 @@ abstract class CBUtil { // TODO rename
         try {
             return Enum.valueOf(enumType, value.toUpperCase());
         } catch (IllegalArgumentException e) {
-            throw new DriverInternalError(String.format("Invalid value '%s' for %s", value, enumType.getSimpleName()));
+            throw new DriverInternalError(String.format("Invalid value '%s' for %s", value, enumType.getSimpleName()), e);
         }
     }
 
@@ -311,7 +311,7 @@ abstract class CBUtil { // TODO rename
         try {
             return new InetSocketAddress(InetAddress.getByAddress(address), port);
         } catch (UnknownHostException e) {
-            throw new DriverInternalError(String.format("Invalid IP address (%d.%d.%d.%d) while deserializing inet address", address[0], address[1], address[2], address[3]));
+            throw new DriverInternalError(String.format("Invalid IP address (%d.%d.%d.%d) while deserializing inet address", address[0], address[1], address[2], address[3]), e);
         }
     }
 

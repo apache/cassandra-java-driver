@@ -17,13 +17,17 @@ package com.datastax.driver.stress;
 
 import java.util.Iterator;
 
-import com.google.common.util.concurrent.Uninterruptibles;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import com.google.common.util.concurrent.Uninterruptibles;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.exceptions.DriverException;
 
 public class BlockingConsumer implements Consumer {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(BlockingConsumer.class);
+    
     private final Runner runner = new Runner();
 
     private final Session session;
@@ -60,7 +64,7 @@ public class BlockingConsumer implements Consumer {
                 while (requests.hasNext())
                     handle(requests.next());
             } catch (DriverException e) {
-                System.err.println("Error during query: " + e.getMessage());
+                LOGGER.warn("Error during query: " + e.getMessage(), e);
             }
         }
 

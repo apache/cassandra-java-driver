@@ -41,10 +41,10 @@ abstract class FrameCompressor {
                 i = new SnappyCompressor();
             } catch (NoClassDefFoundError e) {
                 i = null;
-                logger.warn("Cannot find Snappy class, you should make sure the Snappy library is in the classpath if you intend to use it. Snappy compression will not be available for the protocol.");
+                logger.warn("Cannot find Snappy class, you should make sure the Snappy library is in the classpath if you intend to use it. Snappy compression will not be available for the protocol.", e);
             } catch (Throwable e) {
                 i = null;
-                logger.warn("Error loading Snappy library ({}). Snappy compression will not be available for the protocol.", e.toString());
+                logger.warn("Error loading Snappy library ({}). Snappy compression will not be available for the protocol.", e.toString(), e);
             }
             instance = i;
         }
@@ -87,7 +87,7 @@ abstract class FrameCompressor {
                 logger.warn("Cannot find LZ4 class, you should make sure the LZ4 library is in the classpath if you intend to use it. LZ4 compression will not be available for the protocol.");
             } catch (Throwable e) {
                 i = null;
-                logger.warn("Error loading LZ4 library ({}). LZ4 compression will not be available for the protocol.", e.toString());
+                logger.warn("Error loading LZ4 library ({}). LZ4 compression will not be available for the protocol.", e.toString(), e);
             }
             instance = i;
         }

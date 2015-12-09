@@ -134,10 +134,12 @@ class ControlConnection implements Host.StateListener, Connection.Owner {
                 try {
                     return reconnectInternal(queryPlan(), false);
                 } catch (NoHostAvailableException e) {
-                    throw new ConnectionException(null, e.getMessage());
+                    logger.trace("NoHostAvailableException trying to execute reconnectInternal()", e);
+                    throw new ConnectionException(null, e.getMessage());                    
                 } catch (UnsupportedProtocolVersionException e) {
                     // reconnectInternal only propagate those if we've not decided on the protocol version yet,
                     // which should only happen on the initial connection and thus in connect() but never here.
+                    logger.warn("UnsupportedProtocolVersionException trying to execute reconnectInternal()", e);
                     throw new AssertionError();
                 }
             }
@@ -287,7 +289,7 @@ class ControlConnection implements Host.StateListener, Connection.Owner {
             return connection;
         } catch (BusyConnectionException e) {
             connection.closeAsync().force();
-            throw new DriverInternalError("Newly created connection should not be busy");
+            throw new DriverInternalError("Newly created connection should not be busy", e);
         } catch (InterruptedException e) {
             connection.closeAsync().force();
             throw e;
@@ -319,7 +321,7 @@ class ControlConnection implements Host.StateListener, Connection.Owner {
                 cluster.submitNodeListRefresh();
             }
         } catch (ConnectionException e) {
-            logger.debug("[Control connection] Connection error while refreshing schema ({})", e.getMessage());
+            logger.debug("[Control connection] Connection error while refreshing schema ({}).", e.getMessage(), e);
             signalError();
         } catch (ExecutionException e) {
             // If we're being shutdown during schema refresh, this can happen. That's fine so don't scare the user.
@@ -327,7 +329,7 @@ class ControlConnection implements Host.StateListener, Connection.Owner {
                 logger.error("[Control connection] Unexpected error while refreshing schema", e);
             signalError();
         } catch (BusyConnectionException e) {
-            logger.debug("[Control connection] Connection is busy, reconnecting");
+            logger.debug("[Control connection] Connection is busy, reconnecting", e);
             signalError();
         }
     }
@@ -407,7 +409,7 @@ class ControlConnection implements Host.StateListener, Connection.Owner {
         try {
             refreshNodeListAndTokenMap(c, cluster, false, true);
         } catch (ConnectionException e) {
-            logger.debug("[Control connection] Connection error while refreshing node list and token map ({})", e.getMessage());
+            logger.debug("[Control connection] Connection error while refreshing node list and token map ({})", e.getMessage() , e);
             signalError();
         } catch (ExecutionException e) {
             // If we're being shutdown during refresh, this can happen. That's fine so don't scare the user.
@@ -415,11 +417,11 @@ class ControlConnection implements Host.StateListener, Connection.Owner {
                 logger.error("[Control connection] Unexpected error while refreshing node list and token map", e);
             signalError();
         } catch (BusyConnectionException e) {
-            logger.debug("[Control connection] Connection is busy, reconnecting");
+            logger.debug("[Control connection] Connection is busy, reconnecting", e);
             signalError();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            logger.debug("[Control connection] Interrupted while refreshing node list and token map, skipping it.");
+            logger.debug("[Control connection] Interrupted while refreshing node list and token map, skipping it.", e);
         }
     }
 
@@ -499,7 +501,7 @@ class ControlConnection implements Host.StateListener, Connection.Owner {
             return true;
 
         } catch (ConnectionException e) {
-            logger.debug("[Control connection] Connection error while refreshing node info ({})", e.getMessage());
+            logger.debug("[Control connection] Connection error while refreshing node info ({})", e.getMessage(), e);
             signalError();
         } catch (ExecutionException e) {
             // If we're being shutdown during refresh, this can happen. That's fine so don't scare the user.
@@ -507,11 +509,11 @@ class ControlConnection implements Host.StateListener, Connection.Owner {
                 logger.debug("[Control connection] Unexpected error while refreshing node info", e);
             signalError();
         } catch (BusyConnectionException e) {
-            logger.debug("[Control connection] Connection is busy, reconnecting");
+            logger.debug("[Control connection] Connection is busy, reconnecting", e);
             signalError();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            logger.debug("[Control connection] Interrupted while refreshing node info, skipping it.");
+            logger.debug("[Control connection] Interrupted while refreshing node info, skipping it.", e);
         } catch (Exception e) {
             logger.debug("[Control connection] Unexpected error while refreshing node info", e);
             signalError();

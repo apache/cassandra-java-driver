@@ -102,7 +102,7 @@ abstract class AbstractReconnectionHandler implements Runnable {
             ready.countDown();
         } catch (RejectedExecutionException e) {
             // The executor has been shutdown, fair enough, just ignore
-            logger.debug("Aborting reconnection handling since the cluster is shutting down");
+            logger.debug("Aborting reconnection handling since the cluster is shutting down", e);
         }
     }
 

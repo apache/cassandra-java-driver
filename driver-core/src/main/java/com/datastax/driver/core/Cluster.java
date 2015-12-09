@@ -860,7 +860,7 @@ public class Cluster implements Closeable {
                 this.rawAddresses.add(InetAddress.getByName(address));
                 return this;
             } catch (UnknownHostException e) {
-                throw new IllegalArgumentException(e.getMessage());
+                throw new IllegalArgumentException(e.getMessage(), e);
             }
         }
 
@@ -913,7 +913,7 @@ public class Cluster implements Closeable {
             try {
                 addContactPoints(InetAddress.getAllByName(address));
             } catch (UnknownHostException e) {
-                throw new IllegalArgumentException(e.getMessage());
+                throw new IllegalArgumentException(e.getMessage(), e);
             }
             return this;
         }
@@ -1428,13 +1428,13 @@ public class Cluster implements Closeable {
                 try {
                     controlConnection.connect();
                 } catch (UnsupportedProtocolVersionException e) {
-                    logger.debug("Cannot connect with protocol {}, trying {}", e.unsupportedVersion, e.serverVersion);
+                    logger.debug("Cannot connect with protocol {}, trying {}", e.unsupportedVersion, e.serverVersion, e);
 
                     connectionFactory.protocolVersion = e.serverVersion;
                     try {
                         controlConnection.connect();
                     } catch (UnsupportedProtocolVersionException e1) {
-                        throw new DriverInternalError("Cannot connect to node with its own version, this makes no sense", e);
+                        throw new DriverInternalError("Cannot connect to node with its own version, this makes no sense", e1);
                     }
                 }
 
