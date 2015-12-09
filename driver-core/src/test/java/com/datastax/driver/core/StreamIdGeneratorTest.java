@@ -16,6 +16,7 @@
 package com.datastax.driver.core;
 
 import org.testng.annotations.Test;
+
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
 

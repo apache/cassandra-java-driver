@@ -15,22 +15,26 @@
  */
 package com.datastax.driver.core;
 
-import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import com.google.common.collect.*;
+import com.datastax.driver.core.utils.CassandraVersion;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.Test;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
-import com.datastax.driver.core.utils.CassandraVersion;
-
 /**
  * The goal of this test is to cover the serialization and deserialization of datatypes.
- *
+ * <p/>
  * It creates a table with a column of a given type, inserts a value and then tries to retrieve it.
  * There are 3 variants for the insert query: a raw string, a simple statement with a parameter
  * (protocol > v2 only) and a prepared statement.
@@ -53,7 +57,7 @@ public class DataTypeIntegrationTest extends CCMBridge.PerClassSingleNodeCluster
         for (TestTable table : tables) {
             if (cassandraVersion.compareTo(table.minCassandraVersion) < 0)
                 logger.debug("Skipping table because it uses a feature not supported by Cassandra {}: {}",
-                    cassandraVersion, table.createStatement);
+                        cassandraVersion, table.createStatement);
             else
                 statements.add(table.createStatement);
         }
@@ -101,12 +105,12 @@ public class DataTypeIntegrationTest extends CCMBridge.PerClassSingleNodeCluster
             Object queriedValue = table.testColumnType.deserialize(row.getBytesUnsafe("v"));
 
             assertThat(queriedValue)
-                .as("Test failure on %s statement with table:%n%s;%n" +
-                        "insert statement:%n%s;%n",
-                    statementType,
-                    table.createStatement,
-                    table.insertStatement)
-                .isEqualTo(table.sampleValue);
+                    .as("Test failure on %s statement with table:%n%s;%n" +
+                                    "insert statement:%n%s;%n",
+                            statementType,
+                            table.createStatement,
+                            table.insertStatement)
+                    .isEqualTo(table.sampleValue);
 
             session.execute(table.truncateStatement);
         }
@@ -187,8 +191,8 @@ public class DataTypeIntegrationTest extends CCMBridge.PerClassSingleNodeCluster
                 Object valueSample = valueEntry.getValue();
 
                 tables.add(new TestTable(DataType.map(keyType, valueType),
-                    ImmutableMap.builder().put(keySample, valueSample).build(),
-                    "1.2.0"));
+                        ImmutableMap.builder().put(keySample, valueSample).build(),
+                        "1.2.0"));
             }
         }
         return tables;

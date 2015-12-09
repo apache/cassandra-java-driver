@@ -15,12 +15,11 @@
  */
 package com.datastax.driver.core.policies;
 
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.util.Enumeration;
-import java.util.Hashtable;
-
+import com.datastax.driver.core.exceptions.DriverException;
 import com.google.common.annotations.VisibleForTesting;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.naming.Context;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
@@ -28,22 +27,22 @@ import javax.naming.directory.Attribute;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.datastax.driver.core.exceptions.DriverException;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.util.Enumeration;
+import java.util.Hashtable;
 
 /**
  * {@link AddressTranslater} implementation for a multi-region EC2 deployment <b>where clients are also deployed in EC2</b>.
- * <p>
+ * <p/>
  * Its distinctive feature is that it translates addresses according to the location of the Cassandra host:
  * <ul>
  * <li>addresses in different EC2 regions (than the client) are unchanged;</li>
  * <li>addresses in the same EC2 region are <b>translated to private IPs</b>.</li>
  * </ul>
  * This optimizes network costs, because Amazon charges more for communication over public IPs.
- *
- * <p>
+ * <p/>
+ * <p/>
  * Implementation note: this class performs a reverse DNS lookup of the origin address, to find the domain name of the target
  * instance. Then it performs a forward DNS lookup of the domain name; the EC2 DNS does the private/public switch automatically
  * based on location.
@@ -93,9 +92,9 @@ public class EC2MultiRegionAddressTranslater implements CloseableAddressTranslat
     }
 
     private String lookupPtrRecord(String reversedDomain) throws Exception {
-        Attributes attrs = ctx.getAttributes(reversedDomain, new String[]{ "PTR" });
+        Attributes attrs = ctx.getAttributes(reversedDomain, new String[]{"PTR"});
         for (NamingEnumeration ae = attrs.getAll(); ae.hasMoreElements(); ) {
-            Attribute attr = (Attribute)ae.next();
+            Attribute attr = (Attribute) ae.next();
             for (Enumeration<?> vals = attr.getAll(); vals.hasMoreElements(); )
                 return vals.nextElement().toString();
         }
@@ -136,7 +135,7 @@ public class EC2MultiRegionAddressTranslater implements CloseableAddressTranslat
             int lowNibble = b & 0x0F;
             int highNibble = b >> 4 & 0x0F;
             builder.append(Integer.toHexString(lowNibble)).append('.')
-                .append(Integer.toHexString(highNibble)).append('.');
+                    .append(Integer.toHexString(highNibble)).append('.');
         }
         builder.append("ip6.arpa");
         return builder.toString();

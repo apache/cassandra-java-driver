@@ -15,10 +15,10 @@
  */
 package com.datastax.driver.core;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableList;
-
+import com.google.common.collect.ImmutableMap;
 import org.testng.annotations.Test;
+
 import static org.testng.Assert.assertEquals;
 
 public class SimpleJSONParserTest {

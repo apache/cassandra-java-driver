@@ -15,28 +15,28 @@
  */
 package com.datastax.driver.osgi.impl;
 
-import java.util.Hashtable;
-
-import org.osgi.framework.BundleActivator;
-import org.osgi.framework.BundleContext;
-
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.osgi.api.MailboxService;
+import org.osgi.framework.BundleActivator;
+import org.osgi.framework.BundleContext;
+
+import java.util.Hashtable;
 
 public class Activator implements BundleActivator {
 
     private Cluster cluster;
 
-    @Override public void start(BundleContext context) throws Exception {
+    @Override
+    public void start(BundleContext context) throws Exception {
         String contactPointsStr = context.getProperty("cassandra.contactpoints");
-        if(contactPointsStr == null) {
+        if (contactPointsStr == null) {
             contactPointsStr = "127.0.0.1";
         }
         String[] contactPoints = contactPointsStr.split(",");
 
         String keyspace = context.getProperty("cassandra.keyspace");
-        if(keyspace == null) {
+        if (keyspace == null) {
             keyspace = "mailbox";
         }
 
@@ -49,8 +49,9 @@ public class Activator implements BundleActivator {
         context.registerService(MailboxService.class.getName(), mailbox, new Hashtable<String, String>());
     }
 
-    @Override public void stop(BundleContext context) throws Exception {
-        if(cluster != null) {
+    @Override
+    public void stop(BundleContext context) throws Exception {
+        if (cluster != null) {
             cluster.close();
         }
     }

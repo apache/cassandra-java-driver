@@ -110,7 +110,7 @@ public class ColumnMetadata {
         if (o == null || getClass() != o.getClass())
             return false;
 
-        ColumnMetadata that = (ColumnMetadata)o;
+        ColumnMetadata that = (ColumnMetadata) o;
 
         if (isStatic != that.isStatic)
             return false;
@@ -166,7 +166,7 @@ public class ColumnMetadata {
 
         /**
          * Returns whether this index is a custom one.
-         * <p>
+         * <p/>
          * If it is indeed a custom index, {@link #getIndexClassName} will
          * return the name of the class used in Cassandra to implement that
          * index.
@@ -189,7 +189,7 @@ public class ColumnMetadata {
 
         /**
          * Returns a CQL query representing this index.
-         *
+         * <p/>
          * This method returns a single 'CREATE INDEX' query corresponding to
          * this index definition.
          *
@@ -201,8 +201,8 @@ public class ColumnMetadata {
             String cfName = Metadata.escapeId(table.getName());
             String colName = Metadata.escapeId(column.getName());
             return isCustomIndex()
-                 ? String.format("CREATE CUSTOM INDEX %s ON %s.%s (%s) USING '%s';", name, ksName, cfName, colName, customClassName)
-                 : String.format("CREATE INDEX %s ON %s.%s (%s);", name, ksName, cfName, colName);
+                    ? String.format("CREATE CUSTOM INDEX %s ON %s.%s (%s) USING '%s';", name, ksName, cfName, colName, customClassName)
+                    : String.format("CREATE INDEX %s ON %s.%s (%s);", name, ksName, cfName, colName);
         }
 
         @Override
@@ -212,7 +212,7 @@ public class ColumnMetadata {
             if (o == null || getClass() != o.getClass())
                 return false;
 
-            IndexMetadata that = (IndexMetadata)o;
+            IndexMetadata that = (IndexMetadata) o;
 
             if (!name.equals(that.name))
                 return false;
@@ -252,7 +252,7 @@ public class ColumnMetadata {
     // Temporary class that is used to make building the schema easier. Not meant to be
     // exposed publicly at all.
     static class Raw {
-        public enum Kind { PARTITION_KEY, CLUSTERING_KEY, REGULAR, COMPACT_VALUE, STATIC }
+        public enum Kind {PARTITION_KEY, CLUSTERING_KEY, REGULAR, COMPACT_VALUE, STATIC}
 
         public final String name;
         public final Kind kind;
@@ -274,8 +274,8 @@ public class ColumnMetadata {
 
             String name = row.getString(COLUMN_NAME);
             Kind kind = version.getMajor() < 2 || row.isNull(KIND)
-                      ? Kind.REGULAR
-                      : Enum.valueOf(Kind.class, row.getString(KIND).toUpperCase());
+                    ? Kind.REGULAR
+                    : Enum.valueOf(Kind.class, row.getString(KIND).toUpperCase());
             int componentIndex = row.isNull(COMPONENT_INDEX) ? 0 : row.getInt(COMPONENT_INDEX);
             String validatorStr = row.getString(VALIDATOR);
             boolean reversed = CassandraTypeParser.isReversed(validatorStr);

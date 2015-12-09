@@ -15,22 +15,22 @@
  */
 package com.datastax.driver.core;
 
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicReference;
-
+import com.datastax.driver.core.exceptions.DriverException;
+import com.datastax.driver.core.exceptions.DriverInternalError;
+import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Objects;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.datastax.driver.core.exceptions.DriverException;
-import com.datastax.driver.core.exceptions.DriverInternalError;
-import com.datastax.driver.core.exceptions.NoHostAvailableException;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
+import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 class ControlConnection implements Host.StateListener, Connection.Owner {
 
@@ -98,8 +98,8 @@ class ControlConnection implements Host.StateListener, Connection.Owner {
     Host connectedHost() {
         Connection current = connectionRef.get();
         return (current == null)
-            ? null
-            : cluster.metadata.getHost(current.address);
+                ? null
+                : cluster.metadata.getHost(current.address);
     }
 
     void triggerReconnect() {
@@ -257,9 +257,9 @@ class ControlConnection implements Host.StateListener, Connection.Owner {
         try {
             logger.trace("[Control connection] Registering for events");
             List<ProtocolEvent.Type> evs = Arrays.asList(
-                ProtocolEvent.Type.TOPOLOGY_CHANGE,
-                ProtocolEvent.Type.STATUS_CHANGE,
-                ProtocolEvent.Type.SCHEMA_CHANGE
+                    ProtocolEvent.Type.TOPOLOGY_CHANGE,
+                    ProtocolEvent.Type.STATUS_CHANGE,
+                    ProtocolEvent.Type.SCHEMA_CHANGE
             );
             connection.write(new Requests.Register(evs));
 
@@ -295,7 +295,7 @@ class ControlConnection implements Host.StateListener, Connection.Owner {
     }
 
     void refreshSchema(String keyspace, String table) throws InterruptedException {
-        if(keyspace == null && table == null) {
+        if (keyspace == null && table == null) {
             logger.debug("[Control connection] Refreshing schema");
         } else {
             logger.debug("[Control connection] Refreshing schema for {}{}", keyspace == null ? "" : keyspace, table == null ? "" : '.' + table);
@@ -335,8 +335,8 @@ class ControlConnection implements Host.StateListener, Connection.Owner {
         }
 
         DefaultResultSetFuture ksFuture = table == null
-            ? new DefaultResultSetFuture(null, new Requests.Query(SELECT_KEYSPACES + whereClause))
-            : null;
+                ? new DefaultResultSetFuture(null, new Requests.Query(SELECT_KEYSPACES + whereClause))
+                : null;
         DefaultResultSetFuture cfFuture = new DefaultResultSetFuture(null, new Requests.Query(SELECT_COLUMN_FAMILIES + whereClause));
         DefaultResultSetFuture colsFuture = new DefaultResultSetFuture(null, new Requests.Query(SELECT_COLUMNS + whereClause));
 
@@ -353,7 +353,7 @@ class ControlConnection implements Host.StateListener, Connection.Owner {
         if (host == null || host.getCassandraVersion() == null) {
             cassandraVersion = cluster.protocolVersion() == 1 ? VersionNumber.parse("1.2.0") : VersionNumber.parse("2.0.0");
             logger.warn("Cannot find Cassandra version for host {} to parse the schema, using {} based on protocol version in use. "
-                + "If parsing the schema fails, this could be the cause", connection.address, cassandraVersion);
+                    + "If parsing the schema fails, this could be the cause", connection.address, cassandraVersion);
         } else {
             cassandraVersion = host.getCassandraVersion();
         }
@@ -417,8 +417,8 @@ class ControlConnection implements Host.StateListener, Connection.Owner {
         boolean isConnectedHost = c.address.equals(host.getSocketAddress());
         if (isConnectedHost || host.listenAddress != null) {
             DefaultResultSetFuture future = isConnectedHost
-                ? new DefaultResultSetFuture(null, new Requests.Query(SELECT_LOCAL))
-                : new DefaultResultSetFuture(null, new Requests.Query(SELECT_PEERS + " WHERE peer='" + host.listenAddress.getHostAddress() + '\''));
+                    ? new DefaultResultSetFuture(null, new Requests.Query(SELECT_LOCAL))
+                    : new DefaultResultSetFuture(null, new Requests.Query(SELECT_PEERS + " WHERE peer='" + host.listenAddress.getHostAddress() + '\''));
             c.write(future);
             return future.get().one();
         }
@@ -499,8 +499,8 @@ class ControlConnection implements Host.StateListener, Connection.Owner {
         String version = row.getString("release_version");
         // We don't know if it's a 'local' or a 'peers' row, and only 'peers' rows have the 'peer' field.
         InetAddress listenAddress = row.getColumnDefinitions().contains("peer")
-            ? row.getInet("peer")
-            : null;
+                ? row.getInet("peer")
+                : null;
 
         host.setVersionAndListenAdress(version, listenAddress);
     }
@@ -692,7 +692,7 @@ class ControlConnection implements Host.StateListener, Connection.Owner {
 
         if (current != null && current.address.equals(host.getSocketAddress())) {
             logger.debug("[Control connection] {} is down/removed and it was the control host, triggering reconnect",
-                current.address);
+                    current.address);
             if (!current.isClosed())
                 current.closeAsync();
             backgroundReconnect(0);

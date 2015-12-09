@@ -15,10 +15,10 @@
  */
 package com.datastax.driver.core.querybuilder;
 
+import com.datastax.driver.core.TableMetadata;
+
 import java.util.ArrayList;
 import java.util.List;
-
-import com.datastax.driver.core.TableMetadata;
 
 /**
  * A built DELETE statement.
@@ -86,7 +86,7 @@ public class Delete extends BuiltStatement {
 
     /**
      * Adds a WHERE clause to this statement.
-     *
+     * <p/>
      * This is a shorter/more readable version for {@code where().and(clause)}.
      *
      * @param clause the clause to add.
@@ -107,7 +107,7 @@ public class Delete extends BuiltStatement {
 
     /**
      * Adds a conditions clause (IF) to this statement.
-     * <p>
+     * <p/>
      * This is a shorter/more readable version for {@code onlyIf().and(condition)}.
      *
      * @param condition the condition to add.
@@ -138,7 +138,7 @@ public class Delete extends BuiltStatement {
 
     /**
      * Sets the 'IF EXISTS' option for this DELETE statement.
-     *
+     * <p/>
      * <p>
      * A delete with that option will report whether the statement actually
      * resulted in data being deleted. The existence check and deletion are
@@ -174,8 +174,7 @@ public class Delete extends BuiltStatement {
          * @param clause the clause to add.
          * @return this WHERE clause.
          */
-        public Where and(Clause clause)
-        {
+        public Where and(Clause clause) {
             clauses.add(clause);
             statement.maybeAddRoutingKey(clause.name(), clause.firstValue());
             checkForBindMarkers(clause);
@@ -195,7 +194,7 @@ public class Delete extends BuiltStatement {
         /**
          * Sets the 'IF EXISTS' option for the DELETE statement this WHERE clause
          * is part of.
-         *
+         * <p/>
          * <p>
          * A delete with that option will report whether the statement actually
          * resulted in data being deleted. The existence check and deletion are
@@ -288,7 +287,7 @@ public class Delete extends BuiltStatement {
          * Adds the table to delete from.
          *
          * @param keyspace the name of the keyspace to delete from.
-         * @param table the name of the table to delete from.
+         * @param table    the name of the table to delete from.
          * @return a newly built DELETE statement that deletes from {@code keyspace.table}.
          */
         public Delete from(String keyspace, String table) {
@@ -315,7 +314,6 @@ public class Delete extends BuiltStatement {
          * Deletes all columns (i.e. "DELETE FROM ...")
          *
          * @return an in-build DELETE statement.
-         *
          * @throws IllegalStateException if some columns had already been selected for this builder.
          */
         public Builder all() {
@@ -340,7 +338,7 @@ public class Delete extends BuiltStatement {
          * Deletes the provided list element.
          *
          * @param columnName the name of the list column.
-         * @param idx the index of the element to delete.
+         * @param idx        the index of the element to delete.
          * @return this in-build DELETE Selection
          */
         public Selection listElt(String columnName, int idx) {
@@ -353,7 +351,7 @@ public class Delete extends BuiltStatement {
          * specified as a bind marker.
          *
          * @param columnName the name of the list column.
-         * @param idx the index of the element to delete.
+         * @param idx        the index of the element to delete.
          * @return this in-build DELETE Selection
          */
         public Selection listElt(String columnName, BindMarker idx) {
@@ -365,7 +363,7 @@ public class Delete extends BuiltStatement {
          * Deletes the provided set element.
          *
          * @param columnName the name of the set column.
-         * @param element the element to delete.
+         * @param element    the element to delete.
          * @return this in-build DELETE Selection
          */
         public Selection setElt(String columnName, Object element) {
@@ -378,7 +376,7 @@ public class Delete extends BuiltStatement {
          * specified as a bind marker.
          *
          * @param columnName the name of the set column.
-         * @param element the element to delete.
+         * @param element    the element to delete.
          * @return this in-build DELETE Selection
          */
         public Selection setElt(String columnName, BindMarker element) {
@@ -390,7 +388,7 @@ public class Delete extends BuiltStatement {
          * Deletes a map element given a key.
          *
          * @param columnName the name of the map column.
-         * @param key the key for the element to delete.
+         * @param key        the key for the element to delete.
          * @return this in-build DELETE Selection
          */
         public Selection mapElt(String columnName, Object key) {
@@ -478,7 +476,7 @@ public class Delete extends BuiltStatement {
 
         /**
          * Adds the provided condition for the deletion.
-         * <p>
+         * <p/>
          * Note that while the query builder accept any type of {@code Clause}
          * as conditions, Cassandra currently only allows equality ones.
          *

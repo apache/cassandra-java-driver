@@ -28,8 +28,7 @@ class UnsupportedProtocolVersionException extends Exception {
     public final InetSocketAddress address;
     public final int versionUnsupported;
 
-    public UnsupportedProtocolVersionException(InetSocketAddress address, int versionUnsupported)
-    {
+    public UnsupportedProtocolVersionException(InetSocketAddress address, int versionUnsupported) {
         super(String.format("[%s] Host %s does not support protocol version %d", address, address, versionUnsupported));
         this.address = address;
         this.versionUnsupported = versionUnsupported;

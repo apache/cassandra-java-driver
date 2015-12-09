@@ -15,6 +15,14 @@
  */
 package com.datastax.driver.core;
 
+import com.codahale.metrics.Gauge;
+import com.datastax.driver.core.policies.ConstantReconnectionPolicy;
+import com.google.common.util.concurrent.Uninterruptibles;
+import org.scassandra.cql.PrimitiveType;
+import org.scassandra.http.client.PrimingRequest;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
 import java.net.InetSocketAddress;
 import java.util.Iterator;
 import java.util.List;
@@ -22,30 +30,19 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.datastax.driver.core.Assertions.assertThat;
+import static com.google.common.collect.Lists.newArrayList;
 import static java.util.Collections.singletonList;
 import static java.util.concurrent.TimeUnit.SECONDS;
-
-import com.codahale.metrics.Gauge;
-import com.google.common.util.concurrent.Uninterruptibles;
-import org.scassandra.cql.PrimitiveType;
-import org.scassandra.http.client.PrimingRequest;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
-import static com.google.common.collect.Lists.newArrayList;
 import static org.mockito.Mockito.*;
 import static org.scassandra.http.client.ClosedConnectionReport.CloseType.CLOSE;
 import static org.scassandra.http.client.PrimingRequest.then;
 import static org.testng.Assert.fail;
 
-import com.datastax.driver.core.policies.ConstantReconnectionPolicy;
-
-import static com.datastax.driver.core.Assertions.assertThat;
-
 public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
 
 
-    @BeforeClass(groups={"short", "long"})
+    @BeforeClass(groups = {"short", "long"})
     public void reinitializeCluster() {
         // Don't use the provided cluster, each test will create its own instead.
         cluster.close();
@@ -72,10 +69,10 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
      */
     private List<MockRequest> sendRequests(int count, HostConnectionPool pool, List<Connection> expectedConnections) throws ConnectionException, BusyConnectionException, TimeoutException {
         List<MockRequest> requests = newArrayList();
-        for(int i = 0; i < count; i++) {
+        for (int i = 0; i < count; i++) {
             MockRequest request = MockRequest.send(pool);
             requests.add(request);
-            if(expectedConnections != null)
+            if (expectedConnections != null)
                 assertThat(expectedConnections).contains(request.connection);
         }
         return requests;
@@ -86,8 +83,8 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
      */
     private void completeRequests(int count, List<MockRequest> requests) {
         Iterator<MockRequest> requestIt = requests.iterator();
-        for(int i = 0; i < count; i++) {
-            if(requestIt.hasNext()) {
+        for (int i = 0; i < count; i++) {
+            if (requestIt.hasNext()) {
                 MockRequest request = requestIt.next();
                 request.simulateSuccessResponse();
                 requestIt.remove();
@@ -101,7 +98,7 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
      * Completes all requests by simulating a successful response.
      */
     private void completeRequests(List<MockRequest> requests) {
-        for(MockRequest request : requests) {
+        for (MockRequest request : requests) {
             request.simulateSuccessResponse();
         }
     }
@@ -110,9 +107,9 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
      * Ensures that if a fixed-sized pool has filled its core connections that borrowConnection will timeout instead
      * of creating a new connection.
      *
-     * @since 2.0.10, 2.1.6
      * @jira_ticket JAVA-419
      * @test_category connection:connection_pool
+     * @since 2.0.10, 2.1.6
      */
     @Test(groups = "short")
     public void fixed_size_pool_should_fill_its_core_connections_and_then_timeout() throws ConnectionException, TimeoutException, BusyConnectionException {
@@ -139,9 +136,9 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
      * Ensures that if a variable-sized pool has filled up to its maximum connections that borrowConnection will
      * timeout instead of creating a new connection.
      *
-     * @since 2.0.10, 2.1.6
      * @jira_ticket JAVA-419
      * @test_category connection:connection_pool
+     * @since 2.0.10, 2.1.6
      */
     @Test(groups = "short")
     public void variable_size_pool_should_fill_its_connections_and_then_timeout() throws Exception {
@@ -187,9 +184,9 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
     /**
      * Ensures that if the core connection pool is full that borrowConnection will create and use a new connection.
      *
-     * @since 2.0.10, 2.1.6
      * @jira_ticket JAVA-419
      * @test_category connection:connection_pool
+     * @since 2.0.10, 2.1.6
      */
     @Test(groups = "short")
     public void should_add_extra_connection_when_core_full() throws Exception {
@@ -217,9 +214,9 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
      * Ensures that a trashed connection that has not been timed out should be resurrected into the connection pool if
      * borrowConnection is called and a new connection is needed.
      *
-     * @since 2.0.10, 2.1.6
      * @jira_ticket JAVA-419
      * @test_category connection:connection_pool
+     * @since 2.0.10, 2.1.6
      */
     @Test(groups = "long")
     public void should_resurrect_trashed_connection_within_idle_timeout() throws Exception {
@@ -277,9 +274,9 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
      * Ensures that a trashed connection that has been timed out should not be resurrected into the connection pool if
      * borrowConnection is called and a new connection is needed.
      *
-     * @since 2.0.10, 2.1.6
      * @jira_ticket JAVA-419
      * @test_category connection:connection_pool
+     * @since 2.0.10, 2.1.6
      */
     @Test(groups = "long")
     public void should_not_resurrect_trashed_connection_after_idle_timeout() throws Exception {
@@ -331,8 +328,8 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
             MockRequest request = MockRequest.send(pool);
             requests.add(request);
             assertThat(request.connection)
-                .isNotEqualTo(connection2) // should not be the full connection
-                .isNotEqualTo(connection1); // should not be the previously trashed one
+                    .isNotEqualTo(connection2) // should not be the full connection
+                    .isNotEqualTo(connection1); // should not be the previously trashed one
         } finally {
             completeRequests(requests);
             cluster.close();
@@ -342,9 +339,9 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
     /**
      * Ensures that a trashed connection that has been timed out should not be closed until it has 0 in flight requests.
      *
-     * @since 2.0.10, 2.1.6
      * @jira_ticket JAVA-419
      * @test_category connection:connection_pool
+     * @since 2.0.10, 2.1.6
      */
     @Test(groups = "long")
     public void should_not_close_trashed_connection_until_no_in_flight() throws Exception {
@@ -394,9 +391,9 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
      * Ensures that if a connection that has less than the minimum available stream ids is returned to the pool that
      * the connection is put in the trash.
      *
-     * @since 2.0.10, 2.1.6
      * @jira_ticket JAVA-419
      * @test_category connection:connection_pool
+     * @since 2.0.10, 2.1.6
      */
     @Test(groups = "short")
     public void should_trash_on_returning_connection_with_insufficient_streams() throws Exception {
@@ -444,7 +441,7 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
      * @test_category connection:connection_pool
      * @since 2.0.11
      */
-    @Test(groups="short")
+    @Test(groups = "short")
     public void should_keep_host_up_when_one_connection_lost() throws Exception {
         Cluster cluster = createClusterBuilder().build();
         try {
@@ -454,7 +451,7 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
 
             // Drop a connection and ensure the host stays up.
             currentClient.disableListener();
-            currentClient.closeConnection(CLOSE, ((InetSocketAddress)core0.channel.localAddress()));
+            currentClient.closeConnection(CLOSE, ((InetSocketAddress) core0.channel.localAddress()));
             Uninterruptibles.sleepUninterruptibly(100, TimeUnit.MILLISECONDS);
 
             // connection 0 should be down, while connection 1 and the Host should remain up.
@@ -478,22 +475,22 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
      * @test_category connection:connection_pool
      * @since 2.0.11
      */
-    @Test(groups="short")
+    @Test(groups = "short")
     public void should_mark_host_down_when_no_connections_remaining() throws Exception {
         int readTimeout = 1000;
         int reconnectInterval = 1000;
         Cluster cluster = this.createClusterBuilder()
-            .withSocketOptions(new SocketOptions()
-                .setConnectTimeoutMillis(readTimeout)
-                .setReadTimeoutMillis(reconnectInterval))
-            .withReconnectionPolicy(new ConstantReconnectionPolicy(1000)).build();
+                .withSocketOptions(new SocketOptions()
+                        .setConnectTimeoutMillis(readTimeout)
+                        .setReadTimeoutMillis(reconnectInterval))
+                .withReconnectionPolicy(new ConstantReconnectionPolicy(1000)).build();
         try {
             cluster.init();
 
             Connection.Factory factory = spy(cluster.manager.connectionFactory);
             cluster.manager.connectionFactory = factory;
 
-            HostConnectionPool pool = createPool(cluster, 8,8);
+            HostConnectionPool pool = createPool(cluster, 8, 8);
             // copy list to track these connections.
             List<Connection> connections = newArrayList(pool.connections);
 
@@ -508,13 +505,13 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
             assertThat(cluster).hasClosedControlConnection();
 
             // Ensure all connections are closed.
-            for(Connection connection : connections) {
+            for (Connection connection : connections) {
                 assertThat(connection.isClosed()).isTrue();
             }
 
             // Expect a reconnect attempt on host after reconnect interval
             // on behalf of the control connection.
-            verify(factory, timeout(reconnectInterval*2).atLeastOnce()).open(host);
+            verify(factory, timeout(reconnectInterval * 2).atLeastOnce()).open(host);
 
             // Sleep for a bit to allow reconnect to fail.
             Uninterruptibles.sleepUninterruptibly(readTimeout * 2, TimeUnit.MILLISECONDS);
@@ -528,9 +525,9 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
             // Reconnect attempt should have been connected for control connection
             // and pool.
             // 2 attempts for connection.open (reconnect control connection and initial connection for host state).
-            verify(factory, after(reconnectInterval*2).atLeast(2)).open(host);
+            verify(factory, after(reconnectInterval * 2).atLeast(2)).open(host);
             // 7 attempts for core connections after first initial connection.
-            verify(factory, timeout(reconnectInterval*2)).newConnections(any(HostConnectionPool.class), eq(7));
+            verify(factory, timeout(reconnectInterval * 2)).newConnections(any(HostConnectionPool.class), eq(7));
 
             // Wait some reasonable amount of time for connection to reestablish.
             Uninterruptibles.sleepUninterruptibly(readTimeout, TimeUnit.MILLISECONDS);
@@ -553,15 +550,15 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
      * @test_category connection:connection_pool
      * @since 2.0.11
      */
-    @Test(groups="short")
+    @Test(groups = "short")
     public void should_create_new_connections_when_connection_lost_and_under_core_connections() throws Exception {
         int readTimeout = 1000;
         int reconnectInterval = 1000;
         Cluster cluster = this.createClusterBuilder()
-            .withSocketOptions(new SocketOptions()
-                .setConnectTimeoutMillis(readTimeout)
-                .setReadTimeoutMillis(reconnectInterval))
-            .withReconnectionPolicy(new ConstantReconnectionPolicy(1000)).build();
+                .withSocketOptions(new SocketOptions()
+                        .setConnectTimeoutMillis(readTimeout)
+                        .setReadTimeoutMillis(reconnectInterval))
+                .withReconnectionPolicy(new ConstantReconnectionPolicy(1000)).build();
         List<MockRequest> requests = newArrayList();
         try {
             cluster.init();
@@ -577,8 +574,8 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
             // Drop two core connections.
             // Disable new connections initially and we'll eventually reenable it.
             currentClient.disableListener();
-            currentClient.closeConnection(CLOSE, ((InetSocketAddress)core0.channel.localAddress()));
-            currentClient.closeConnection(CLOSE, ((InetSocketAddress)core2.channel.localAddress()));
+            currentClient.closeConnection(CLOSE, ((InetSocketAddress) core0.channel.localAddress()));
+            currentClient.closeConnection(CLOSE, ((InetSocketAddress) core2.channel.localAddress()));
             Uninterruptibles.sleepUninterruptibly(100, TimeUnit.MILLISECONDS);
 
             // Since we have a connection left the host should remain up.
@@ -646,10 +643,10 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
         int readTimeout = 1000;
         int reconnectInterval = 1000;
         Cluster cluster = this.createClusterBuilder()
-            .withSocketOptions(new SocketOptions()
-                .setConnectTimeoutMillis(readTimeout)
-                .setReadTimeoutMillis(reconnectInterval))
-            .withReconnectionPolicy(new ConstantReconnectionPolicy(1000)).build();
+                .withSocketOptions(new SocketOptions()
+                        .setConnectTimeoutMillis(readTimeout)
+                        .setReadTimeoutMillis(reconnectInterval))
+                .withReconnectionPolicy(new ConstantReconnectionPolicy(1000)).build();
         List<MockRequest> requests = newArrayList();
         try {
             cluster.init();
@@ -679,12 +676,12 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
             Connection extra1 = pool.connections.get(1);
 
             // Drop a connection and disable listening.
-            currentClient.closeConnection(CLOSE, ((InetSocketAddress)core0.channel.localAddress()));
+            currentClient.closeConnection(CLOSE, ((InetSocketAddress) core0.channel.localAddress()));
             Uninterruptibles.sleepUninterruptibly(100, TimeUnit.MILLISECONDS);
             currentClient.disableListener();
 
             // Since core0 was closed, all of it's requests should have errored.
-            for(MockRequest request : core0requests) {
+            for (MockRequest request : core0requests) {
                 verify(request, times(1)).onException(any(Connection.class), any(Exception.class), anyLong(), anyInt());
             }
 
@@ -744,15 +741,15 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
      * @test_category connection:connection_pool
      * @since 2.0.11
      */
-    @Test(groups="short")
+    @Test(groups = "short")
     public void should_not_mark_host_down_if_some_connections_fail_on_init() throws Exception {
         int readTimeout = 1000;
         int reconnectInterval = 1000;
         Cluster cluster = this.createClusterBuilder()
-            .withSocketOptions(new SocketOptions()
-                .setConnectTimeoutMillis(readTimeout)
-                .setReadTimeoutMillis(reconnectInterval))
-            .withReconnectionPolicy(new ConstantReconnectionPolicy(1000)).build();
+                .withSocketOptions(new SocketOptions()
+                        .setConnectTimeoutMillis(readTimeout)
+                        .setReadTimeoutMillis(reconnectInterval))
+                .withReconnectionPolicy(new ConstantReconnectionPolicy(1000)).build();
         List<MockRequest> requests = newArrayList();
         try {
             cluster.init();
@@ -810,10 +807,10 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
         int readTimeout = 1000;
         int reconnectInterval = 1000;
         Cluster cluster = this.createClusterBuilder()
-            .withSocketOptions(new SocketOptions()
-                .setConnectTimeoutMillis(readTimeout)
-                .setReadTimeoutMillis(reconnectInterval))
-            .withReconnectionPolicy(new ConstantReconnectionPolicy(1000)).build();
+                .withSocketOptions(new SocketOptions()
+                        .setConnectTimeoutMillis(readTimeout)
+                        .setReadTimeoutMillis(reconnectInterval))
+                .withReconnectionPolicy(new ConstantReconnectionPolicy(1000)).build();
         try {
             // Init cluster so control connection is created.
             cluster.init();
@@ -851,15 +848,15 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
      * @test_category connection:connection_pool
      * @since 2.0.11
      */
-    @Test(groups="short")
+    @Test(groups = "short")
     public void should_wait_on_connection_if_not_convicted_and_no_connections_available() throws Exception {
         int readTimeout = 1000;
         int reconnectInterval = 1000;
         Cluster cluster = this.createClusterBuilder()
-            .withSocketOptions(new SocketOptions()
-                .setConnectTimeoutMillis(readTimeout)
-                .setReadTimeoutMillis(reconnectInterval))
-            .withReconnectionPolicy(new ConstantReconnectionPolicy(1000)).build();
+                .withSocketOptions(new SocketOptions()
+                        .setConnectTimeoutMillis(readTimeout)
+                        .setReadTimeoutMillis(reconnectInterval))
+                .withReconnectionPolicy(new ConstantReconnectionPolicy(1000)).build();
         try {
             // Init cluster so control connection is created.
             cluster.init();
@@ -906,15 +903,15 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
      * @test_category connection:connection_pool
      * @since 2.0.11
      */
-    @Test(groups="short")
+    @Test(groups = "short")
     public void should_wait_on_connection_if_zero_core_connections() throws Exception {
         int readTimeout = 1000;
         int reconnectInterval = 1000;
         Cluster cluster = this.createClusterBuilder()
-            .withSocketOptions(new SocketOptions()
-                .setConnectTimeoutMillis(readTimeout)
-                .setReadTimeoutMillis(reconnectInterval))
-            .withReconnectionPolicy(new ConstantReconnectionPolicy(1000)).build();
+                .withSocketOptions(new SocketOptions()
+                        .setConnectTimeoutMillis(readTimeout)
+                        .setReadTimeoutMillis(reconnectInterval))
+                .withReconnectionPolicy(new ConstantReconnectionPolicy(1000)).build();
         try {
             // Init cluster so control connection is created.
             cluster.init();
@@ -942,26 +939,26 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
 
     private HostConnectionPool createPool(Cluster cluster, int coreConnections, int maxConnections) {
         cluster.getConfiguration().getPoolingOptions()
-            .setMaxConnectionsPerHost(HostDistance.LOCAL, maxConnections)
-            .setCoreConnectionsPerHost(HostDistance.LOCAL, coreConnections);
+                .setMaxConnectionsPerHost(HostDistance.LOCAL, maxConnections)
+                .setCoreConnectionsPerHost(HostDistance.LOCAL, coreConnections);
         Session session = cluster.connect();
         Host host = TestUtils.findHost(cluster, 1);
 
         // Replace the existing pool with a spy pool and return it.
-        SessionManager sm = ((SessionManager)session);
+        SessionManager sm = ((SessionManager) session);
         return sm.pools.get(host);
     }
 
     /**
-     * <p>
+     * <p/>
      * This test uses a table named "Java349" with 1000 column and performs asynchronously 100k insertions. While the
      * insertions are being executed, the number of opened connection is monitored.
      * <p/>
      * If at anytime, the number of opened connections is negative, this test will fail.
      *
-     * @since 2.0.6, 2.1.1
      * @jira_ticket JAVA-349
      * @test_category connection:connection_pool
+     * @since 2.0.6, 2.1.1
      */
     @Test(groups = "long", enabled = false /* this test causes timeouts on Jenkins */)
     public void open_connections_metric_should_always_be_positive() throws InterruptedException {
@@ -1021,17 +1018,19 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
         sb.append(");");
 
         PrimingRequest preparedStatementPrime = PrimingRequest.preparedStatementBuilder()
-            .withQuery(sb.toString())
-            .withThen(then().withVariableTypes(PrimitiveType.INT))
-            .build();
+                .withQuery(sb.toString())
+                .withThen(then().withVariableTypes(PrimitiveType.INT))
+                .build();
         primingClient.prime(preparedStatementPrime);
         return sb.toString();
     }
 
-    /** Mock ResponseCallback that simulates the behavior of SpeculativeExecution (in terms of borrowing/releasing connections). */
+    /**
+     * Mock ResponseCallback that simulates the behavior of SpeculativeExecution (in terms of borrowing/releasing connections).
+     */
     static class MockRequest implements Connection.ResponseCallback {
 
-        enum State { START, COMPLETED, FAILED, TIMED_OUT }
+        enum State {START, COMPLETED, FAILED, TIMED_OUT}
 
         final Connection connection;
         private Connection.ResponseHandler responseHandler;

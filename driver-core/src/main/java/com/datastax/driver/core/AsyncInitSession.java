@@ -19,10 +19,10 @@ import com.google.common.util.concurrent.ListenableFuture;
 
 /**
  * A {@link Session} that can be initialized asynchronously.
- *
+ * <p/>
  * This interface exists only for backward compatibility reasons: {@link #initAsync()} should really be
  * defined by {@link Session}, but adding it after the fact would break binary compatibility.
- *
+ * <p/>
  * By default, all sessions returned by the driver implement this interface. The only way you would get
  * sessions that don't is if you use a custom {@link Cluster} subclass.
  */

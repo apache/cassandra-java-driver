@@ -25,7 +25,7 @@ public class IdentityTranslater implements AddressTranslater {
 
     /**
      * Translates a Cassandra {@code rpc_address} to another address if necessary.
-     * <p>
+     * <p/>
      * This method is the identity function, it always return the address passed
      * in argument, doing no translation.
      *

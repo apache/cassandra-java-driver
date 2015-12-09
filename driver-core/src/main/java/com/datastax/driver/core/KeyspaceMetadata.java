@@ -26,9 +26,9 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class KeyspaceMetadata {
 
-    public static final String KS_NAME           = "keyspace_name";
-    private static final String DURABLE_WRITES   = "durable_writes";
-    private static final String STRATEGY_CLASS   = "strategy_class";
+    public static final String KS_NAME = "keyspace_name";
+    private static final String DURABLE_WRITES = "durable_writes";
+    private static final String STRATEGY_CLASS = "strategy_class";
     private static final String STRATEGY_OPTIONS = "strategy_options";
 
     private final String name;
@@ -114,10 +114,10 @@ public class KeyspaceMetadata {
     /**
      * Returns a {@code String} containing CQL queries representing this
      * keyspace and the table it contains.
-     *
+     * <p/>
      * In other words, this method returns the queries that would allow to
      * recreate the schema of this keyspace, along with all its table.
-     *
+     * <p/>
      * Note that the returned String is formatted to be human readable (for
      * some definition of human readable at least).
      *
@@ -137,7 +137,7 @@ public class KeyspaceMetadata {
 
     /**
      * Returns a CQL query representing this keyspace.
-     *
+     * <p/>
      * This method returns a single 'CREATE KEYSPACE' query with the options
      * corresponding to this keyspace definition.
      *
@@ -166,7 +166,7 @@ public class KeyspaceMetadata {
         if (o == null || getClass() != o.getClass())
             return false;
 
-        KeyspaceMetadata that = (KeyspaceMetadata)o;
+        KeyspaceMetadata that = (KeyspaceMetadata) o;
 
         if (durableWrites != that.durableWrites)
             return false;

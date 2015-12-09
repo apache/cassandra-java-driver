@@ -24,7 +24,7 @@ public class SocketOptions {
     /**
      * The default connection timeout in milliseconds if none is set explicitly
      * using {@link #setConnectTimeoutMillis}.
-     * <p>
+     * <p/>
      * That default is of 5 seconds.
      */
     public static final int DEFAULT_CONNECT_TIMEOUT_MILLIS = 5000;
@@ -32,7 +32,7 @@ public class SocketOptions {
     /**
      * The default read timeout in milliseconds if none is set explicitly
      * using {@link #setReadTimeoutMillis}.
-     * <p>
+     * <p/>
      * That default is of 12 seconds so as to be slightly bigger that the
      * default Cassandra timeout.
      *
@@ -52,11 +52,12 @@ public class SocketOptions {
     /**
      * Creates a new {@code SocketOptions} instance with default values.
      */
-    public SocketOptions() {}
+    public SocketOptions() {
+    }
 
     /**
      * The connection timeout in milliseconds.
-     * <p>
+     * <p/>
      * As the name implies, the connection timeout defines how long the driver
      * waits to establish a new connection to a Cassandra node before giving up.
      *
@@ -79,10 +80,10 @@ public class SocketOptions {
 
     /**
      * The per-host read timeout in milliseconds.
-     * <p>
+     * <p/>
      * This defines how long the driver will wait for a given Cassandra node to
      * answer a query.
-     * <p>
+     * <p/>
      * Please note that this is not the maximum time a call to {@link Session#execute} may block;
      * this is the maximum time that call will wait for one particular
      * Cassandra host, but other hosts will be tried if one of them times out. In
@@ -92,12 +93,12 @@ public class SocketOptions {
      * {@link com.datastax.driver.core.policies.LoadBalancingPolicy} in use).
      * If you want to control how long to wait for a query, use {@link Session#executeAsync}
      * and the {@code ResultSetFuture#get(long, TimeUnit)} method.
-     * <p>
+     * <p/>
      * Also note that for efficiency reasons, this read timeout is approximate: it
      * has an accuracy of up to 100 milliseconds (i.e. it may fire up to 100 milliseconds late).
      * It is not meant to be used for precise timeout, but rather as a protection
      * against misbehaving Cassandra nodes.
-     * <p>
+     * <p/>
      *
      * @return the read timeout in milliseconds.
      */
@@ -107,18 +108,18 @@ public class SocketOptions {
 
     /**
      * Sets the per-host read timeout in milliseconds.
-     * <p>
+     * <p/>
      * When setting this value, keep in mind the following:
      * <ul>
-     *   <li>it should be higher than the timeout settings used on the Cassandra side
-     *   ({@code *_request_timeout_in_ms} in {@code cassandra.yaml}).</li>
-     *   <li>the read timeout is only approximate and only control the timeout to one Cassandra
-     *   host, not the full query (see {@link #getReadTimeoutMillis} for more details). If a
-     *   high level of precision on the timeout to a request is required, you should use
-     *   the {@link ResultSetFuture#get(long, java.util.concurrent.TimeUnit)} method.
-     *   </li>
+     * <li>it should be higher than the timeout settings used on the Cassandra side
+     * ({@code *_request_timeout_in_ms} in {@code cassandra.yaml}).</li>
+     * <li>the read timeout is only approximate and only control the timeout to one Cassandra
+     * host, not the full query (see {@link #getReadTimeoutMillis} for more details). If a
+     * high level of precision on the timeout to a request is required, you should use
+     * the {@link ResultSetFuture#get(long, java.util.concurrent.TimeUnit)} method.
+     * </li>
      * </ul>
-     * <p>
+     * <p/>
      * Setting a value of 0 disables read timeouts.
      *
      * @param readTimeoutMillis the timeout to set.
@@ -141,13 +142,12 @@ public class SocketOptions {
 
     /**
      * Sets whether to enable TCP keepalive.
-     * <p>
+     * <p/>
      * By default, this option is not set by the driver. The actual value will be the default
      * from the underlying Netty transport (Java NIO or native epoll).
      *
      * @param keepAlive whether to enable or disable the option.
      * @return this {@code SocketOptions}.
-     *
      * @see java.net.SocketOptions#TCP_NODELAY
      */
     public SocketOptions setKeepAlive(boolean keepAlive) {
@@ -167,13 +167,12 @@ public class SocketOptions {
 
     /**
      * Sets whether to enable reuse-address.
-     * <p>
+     * <p/>
      * By default, this option is not set by the driver. The actual value will be the default
      * from the underlying Netty transport (Java NIO or native epoll).
      *
      * @param reuseAddress whether to enable or disable the option.
      * @return this {@code SocketOptions}.
-     *
      * @see java.net.SocketOptions#SO_REUSEADDR
      */
     public SocketOptions setReuseAddress(boolean reuseAddress) {
@@ -185,7 +184,6 @@ public class SocketOptions {
      * Returns the linger-on-close timeout.
      *
      * @return the value of the option, or {@code null} if it is not set.
-     *
      * @see #setSoLinger(int)
      */
     public Integer getSoLinger() {
@@ -194,13 +192,12 @@ public class SocketOptions {
 
     /**
      * Sets the linger-on-close timeout.
-     * <p>
+     * <p/>
      * By default, this option is not set by the driver. The actual value will be the default
      * from the underlying Netty transport (Java NIO or native epoll).
-
+     *
      * @param soLinger the new value.
      * @return this {@code SocketOptions}.
-     *
      * @see java.net.SocketOptions#SO_LINGER
      */
     public SocketOptions setSoLinger(int soLinger) {
@@ -212,7 +209,6 @@ public class SocketOptions {
      * Returns whether Nagle's algorithm is disabled.
      *
      * @return the value of the option ({@code true} means Nagle is disabled), or {@code null} if it is not set.
-     *
      * @see #setTcpNoDelay(boolean)
      */
     public Boolean getTcpNoDelay() {
@@ -221,12 +217,11 @@ public class SocketOptions {
 
     /**
      * Sets whether to disable Nagle's algorithm.
-     * <p>
+     * <p/>
      * By default, this option is set to {@code true} (Nagle disabled).
      *
      * @param tcpNoDelay whether to enable or disable the option.
      * @return this {@code SocketOptions}.
-     *
      * @see java.net.SocketOptions#TCP_NODELAY
      */
     public SocketOptions setTcpNoDelay(boolean tcpNoDelay) {
@@ -238,7 +233,6 @@ public class SocketOptions {
      * Returns the hint to the size of the underlying buffers for incoming network I/O.
      *
      * @return the value of the option, or {@code null} if it is not set.
-     *
      * @see #setReceiveBufferSize(int)
      */
     public Integer getReceiveBufferSize() {
@@ -247,13 +241,12 @@ public class SocketOptions {
 
     /**
      * Sets a hint to the size of the underlying buffers for incoming network I/O.
-     * <p>
+     * <p/>
      * By default, this option is not set by the driver. The actual value will be the default
      * from the underlying Netty transport (Java NIO or native epoll).
      *
      * @param receiveBufferSize the new value.
      * @return this {@code SocketOptions}.
-     *
      * @see java.net.SocketOptions#SO_RCVBUF
      */
     public SocketOptions setReceiveBufferSize(int receiveBufferSize) {
@@ -265,7 +258,6 @@ public class SocketOptions {
      * Returns the hint to the size of the underlying buffers for outgoing network I/O.
      *
      * @return the value of the option, or {@code null} if it is not set.
-     *
      * @see #setSendBufferSize(int)
      */
     public Integer getSendBufferSize() {
@@ -274,13 +266,12 @@ public class SocketOptions {
 
     /**
      * Sets a hint to the size of the underlying buffers for outgoing network I/O.
-     * <p>
+     * <p/>
      * By default, this option is not set by the driver. The actual value will be the default
      * from the underlying Netty transport (Java NIO or native epoll).
      *
      * @param sendBufferSize the new value.
      * @return this {@code SocketOptions}.
-     *
      * @see java.net.SocketOptions#SO_SNDBUF
      */
     public SocketOptions setSendBufferSize(int sendBufferSize) {

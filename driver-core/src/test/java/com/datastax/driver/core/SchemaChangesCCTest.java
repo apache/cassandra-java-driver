@@ -15,27 +15,21 @@
  */
 package com.datastax.driver.core;
 
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.concurrent.TimeUnit;
-
+import com.datastax.driver.core.policies.DelegatingLoadBalancingPolicy;
+import com.datastax.driver.core.policies.LoadBalancingPolicy;
+import com.datastax.driver.core.policies.Policies;
 import com.google.common.util.concurrent.Uninterruptibles;
 import org.mockito.ArgumentCaptor;
 import org.testng.annotations.Test;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.timeout;
-import static org.mockito.Mockito.verify;
-import static org.testng.Assert.fail;
-
-import com.datastax.driver.core.policies.DelegatingLoadBalancingPolicy;
-import com.datastax.driver.core.policies.LoadBalancingPolicy;
-import com.datastax.driver.core.policies.Policies;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.concurrent.TimeUnit;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.*;
 
 public class SchemaChangesCCTest {
 
@@ -44,8 +38,8 @@ public class SchemaChangesCCTest {
     /**
      * Validates that any schema change events made while the control connection is down are
      * propagated when the control connection is re-established.
-     * <p>
-     *
+     * <p/>
+     * <p/>
      * Note that on control connection recovery not all schema changes are propagated.  For example,
      * if a table was altered and then dropped only a drop event would be received as that is all
      * that can be discerned.
@@ -55,13 +49,13 @@ public class SchemaChangesCCTest {
      * @jira_ticket JAVA-151
      * @since 2.0.11, 2.1.8, 2.2.1
      */
-    @Test(groups="long")
+    @Test(groups = "long")
     public void should_receive_changes_made_while_control_connection_is_down_on_reconnect() throws Exception {
         ToggleablePolicy lbPolicy = new ToggleablePolicy(Policies.defaultLoadBalancingPolicy());
 
         CCMBridge ccm = CCMBridge.builder("SchemaChangesCCTest").withNodes(2).build();
         Cluster.Builder builder = Cluster.builder()
-            .withLoadBalancingPolicy(lbPolicy);
+                .withLoadBalancingPolicy(lbPolicy);
         Cluster cluster = builder.addContactPoint(CCMBridge.ipOfNode(1)).build();
         // Put cluster2 control connection on node 2 so it doesn't go down (to prevent noise for debugging).
         Cluster cluster2 = builder.addContactPoint(CCMBridge.ipOfNode(2)).build();
@@ -116,29 +110,29 @@ public class SchemaChangesCCTest {
             // Poll on the control connection and wait for it to be reestablished.
             long maxControlConnectionWait = 60000;
             long startTime = System.currentTimeMillis();
-            while(!cluster.manager.controlConnection.isOpen() && System.currentTimeMillis() - startTime < maxControlConnectionWait) {
+            while (!cluster.manager.controlConnection.isOpen() && System.currentTimeMillis() - startTime < maxControlConnectionWait) {
                 Uninterruptibles.sleepUninterruptibly(1, TimeUnit.SECONDS);
             }
 
             assertThat(cluster.manager.controlConnection.isOpen())
-                .as("Control connection was not opened after %dms.", maxControlConnectionWait)
-                .isTrue();
+                    .as("Control connection was not opened after %dms.", maxControlConnectionWait)
+                    .isTrue();
 
             // Ensure the drop keyspace event shows up.
             ArgumentCaptor<KeyspaceMetadata> removedKeyspace = ArgumentCaptor.forClass(KeyspaceMetadata.class);
             verify(listener, timeout(NOTIF_TIMEOUT_MS).times(1)).onKeyspaceRemoved(removedKeyspace.capture());
             assertThat(removedKeyspace.getValue())
-                .hasName("ks2")
-                .isEqualTo(predroppedKeyspace);
+                    .hasName("ks2")
+                    .isEqualTo(predroppedKeyspace);
 
             // Ensure the drop table event shows up.
             ArgumentCaptor<TableMetadata> droppedTable = ArgumentCaptor.forClass(TableMetadata.class);
             verify(listener, timeout(NOTIF_TIMEOUT_MS).times(1)).onTableRemoved(droppedTable.capture());
 
             assertThat(droppedTable.getValue())
-                .isInKeyspace("ks1")
-                .hasName("tbl2")
-                .isEqualTo(predroppedTable);
+                    .isInKeyspace("ks1")
+                    .hasName("tbl2")
+                    .isEqualTo(predroppedTable);
 
             // Ensure that the alter keyspace event shows up.
             ArgumentCaptor<KeyspaceMetadata> alteredKeyspace = ArgumentCaptor.forClass(KeyspaceMetadata.class);
@@ -147,14 +141,14 @@ public class SchemaChangesCCTest {
 
             // Previous metadata should match the metadata observed before disconnect.
             assertThat(originalKeyspace.getValue())
-                .hasName("ks1")
-                .isDurableWrites()
-                .isEqualTo(prealteredKeyspace);
+                    .hasName("ks1")
+                    .isDurableWrites()
+                    .isEqualTo(prealteredKeyspace);
 
             // New metadata should reflect that the durable writes attribute changed.
             assertThat(alteredKeyspace.getValue())
-                .hasName("ks1")
-                .isNotDurableWrites();
+                    .hasName("ks1")
+                    .isNotDurableWrites();
 
             // Ensure the alter table event shows up.
             ArgumentCaptor<TableMetadata> alteredTable = ArgumentCaptor.forClass(TableMetadata.class);
@@ -163,16 +157,16 @@ public class SchemaChangesCCTest {
 
             // Previous metadata should match the metadata observed before disconnect.
             assertThat(originalTable.getValue())
-                .isInKeyspace("ks1")
-                .hasName("tbl1")
-                .hasColumn("v", DataType.text())
-                .isEqualTo(prealteredTable);
+                    .isInKeyspace("ks1")
+                    .hasName("tbl1")
+                    .hasColumn("v", DataType.text())
+                    .isEqualTo(prealteredTable);
 
             // New metadata should reflect that the column type changed.
             assertThat(alteredTable.getValue())
-                .isInKeyspace("ks1")
-                .hasName("tbl1")
-                .hasColumn("v", DataType.blob());
+                    .isInKeyspace("ks1")
+                    .hasName("tbl1")
+                    .hasColumn("v", DataType.blob());
 
             // Ensure the add keyspace event shows up.
             ArgumentCaptor<KeyspaceMetadata> addedKeyspace = ArgumentCaptor.forClass(KeyspaceMetadata.class);
@@ -185,8 +179,8 @@ public class SchemaChangesCCTest {
             verify(listener, timeout(NOTIF_TIMEOUT_MS).times(1)).onTableAdded(addedTable.capture());
 
             assertThat(addedTable.getValue())
-                .isInKeyspace("ks1")
-                .hasName("tbl3");
+                    .isInKeyspace("ks1")
+                    .hasName("tbl3");
         } finally {
             cluster.close();
             ccm.remove();

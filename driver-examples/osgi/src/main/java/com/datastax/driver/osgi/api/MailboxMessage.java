@@ -46,13 +46,14 @@ public class MailboxMessage {
         return body;
     }
 
-    @Override public boolean equals(Object that) {
-        if(that instanceof MailboxMessage) {
-            MailboxMessage thatM = (MailboxMessage)that;
+    @Override
+    public boolean equals(Object that) {
+        if (that instanceof MailboxMessage) {
+            MailboxMessage thatM = (MailboxMessage) that;
             return recipient.equals(thatM.getRecipient()) &&
-                date.equals(thatM.getDate()) &&
-                sender.equals(thatM.getSender()) &&
-                body.equals(thatM.getBody());
+                    date.equals(thatM.getDate()) &&
+                    sender.equals(thatM.getSender()) &&
+                    body.equals(thatM.getBody());
         } else {
             return false;
         }

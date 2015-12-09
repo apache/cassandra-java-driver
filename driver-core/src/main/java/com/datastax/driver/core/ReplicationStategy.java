@@ -15,13 +15,13 @@
  */
 package com.datastax.driver.core;
 
-import java.util.*;
-
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.*;
 
 /*
  * Computes the token->list<replica> association, given the token ring and token->primary token map.
@@ -42,8 +42,7 @@ abstract class ReplicationStrategy {
                 return repFactorString == null ? null : new SimpleStrategy(Integer.parseInt(repFactorString));
             } else if (strategyClass.contains("NetworkTopologyStrategy")) {
                 Map<String, Integer> dcRfs = new HashMap<String, Integer>();
-                for (Map.Entry<String, String> entry : replicationOptions.entrySet())
-                {
+                for (Map.Entry<String, String> entry : replicationOptions.entrySet()) {
                     if (entry.getKey().equals("class"))
                         continue;
 
@@ -83,7 +82,7 @@ abstract class ReplicationStrategy {
                 // Consecutive sections of the ring can assigned to the same host
                 Set<Host> replicas = new LinkedHashSet<Host>();
                 for (int j = 0; j < ring.size() && replicas.size() < rf; j++)
-                    replicas.add(tokenToPrimary.get(getTokenWrapping(i+j, ring)));
+                    replicas.add(tokenToPrimary.get(getTokenWrapping(i + j, ring)));
                 replicaMap.put(ring.get(i), ImmutableSet.copyOf(replicas));
             }
             return replicaMap;
@@ -96,7 +95,7 @@ abstract class ReplicationStrategy {
             if (o == null || getClass() != o.getClass())
                 return false;
 
-            SimpleStrategy that = (SimpleStrategy)o;
+            SimpleStrategy that = (SimpleStrategy) o;
 
             return replicationFactor == that.replicationFactor;
 
@@ -119,7 +118,7 @@ abstract class ReplicationStrategy {
 
         Map<Token, Set<Host>> computeTokenToReplicaMap(Map<Token, Host> tokenToPrimary, List<Token> ring) {
 
-             // This is essentially a copy of org.apache.cassandra.locator.NetworkTopologyStrategy
+            // This is essentially a copy of org.apache.cassandra.locator.NetworkTopologyStrategy
             Map<String, Set<String>> racks = getRacksInDcs(tokenToPrimary.values());
             Map<Token, Set<Host>> replicaMap = new HashMap<Token, Set<Host>>(tokenToPrimary.size());
             Map<String, Integer> dcHostCount = Maps.newHashMapWithExpectedSize(replicationFactors.size());
@@ -127,7 +126,7 @@ abstract class ReplicationStrategy {
             // find maximum number of nodes in each DC
             for (Host host : Sets.newHashSet(tokenToPrimary.values())) {
                 String dc = host.getDatacenter();
-                if(dcHostCount.get(dc) == null) {
+                if (dcHostCount.get(dc) == null) {
                     dcHostCount.put(dc, 0);
                 }
                 dcHostCount.put(dc, dcHostCount.get(dc) + 1);
@@ -190,9 +189,9 @@ abstract class ReplicationStrategy {
                     int achievedFactor = entry.getValue().size();
                     if (achievedFactor < expectedFactor && !warnedDcs.contains(dcName)) {
                         logger.warn("Error while computing token map for datacenter {}: "
-                                + "could not achieve replication factor {} (found {} replicas only), "
-                                + "check your keyspace replication settings.",
-                            dcName, expectedFactor, achievedFactor);
+                                        + "could not achieve replication factor {} (found {} replicas only), "
+                                        + "check your keyspace replication settings.",
+                                dcName, expectedFactor, achievedFactor);
                         // only warn once per DC
                         warnedDcs.add(dcName);
                     }
@@ -206,7 +205,7 @@ abstract class ReplicationStrategy {
         private boolean allDone(Map<String, Set<Host>> map, Map<String, Integer> dcHostCount) {
             for (Map.Entry<String, Set<Host>> entry : map.entrySet()) {
                 String dc = entry.getKey();
-                int dcCount = dcHostCount.get(dc) == null? 0 : dcHostCount.get(dc);
+                int dcCount = dcHostCount.get(dc) == null ? 0 : dcHostCount.get(dc);
                 if (entry.getValue().size() < Math.min(replicationFactors.get(dc), dcCount))
                     return false;
             }
@@ -233,7 +232,7 @@ abstract class ReplicationStrategy {
             if (o == null || getClass() != o.getClass())
                 return false;
 
-            NetworkTopologyStrategy that = (NetworkTopologyStrategy)o;
+            NetworkTopologyStrategy that = (NetworkTopologyStrategy) o;
 
             return replicationFactors.equals(that.replicationFactors);
 

@@ -15,32 +15,33 @@
  */
 package com.datastax.driver.stress;
 
-import java.io.IOException;
-import java.util.*;
-
 import com.datastax.driver.core.*;
-import com.datastax.driver.core.exceptions.*;
-
+import com.datastax.driver.core.exceptions.NoHostAvailableException;
+import joptsimple.*;
 import org.apache.log4j.PropertyConfigurator;
 
-import joptsimple.*;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * A simple stress tool to demonstrate the use of the driver.
- *
+ * <p/>
  * Sample usage:
- *   stress insert -n 100000
- *   stress read -n 10000
+ * stress insert -n 100000
+ * stress read -n 10000
  */
 public class Stress {
 
     private static final Map<String, QueryGenerator.Builder> generators = new HashMap<String, QueryGenerator.Builder>();
+
     static {
         PropertyConfigurator.configure(System.getProperty("log4j.configuration", "./conf/log4j.properties"));
 
-        QueryGenerator.Builder[] gs = new QueryGenerator.Builder[] {
-            Generators.INSERTER,
-            Generators.READER
+        QueryGenerator.Builder[] gs = new QueryGenerator.Builder[]{
+                Generators.INSERTER,
+                Generators.READER
         };
 
         for (QueryGenerator.Builder b : gs)
@@ -60,7 +61,7 @@ public class Stress {
             accepts("connections-per-host", "The number of connections per hosts (default: based on the number of threads)").withRequiredArg().ofType(Integer.class);
         }};
         String msg = "Where <generator> can be one of " + generators.keySet() + '\n'
-                   + "You can get more help on a particular generator with: stress <generator> -h";
+                + "You can get more help on a particular generator with: stress <generator> -h";
         parser.formatHelpWith(Help.formatFor("<generator>", msg));
         return parser;
     }
@@ -175,7 +176,7 @@ public class Stress {
         public static Help formatFor(String generator, String header) {
             // It's a pain in the ass to get the real console width in JAVA so hardcode it. But it's the 21th
             // century, we're not stuck at 80 characters anymore.
-            int width = 120; 
+            int width = 120;
             return new Help(new BuiltinHelpFormatter(width, 4), generator, header);
         }
 
@@ -195,19 +196,19 @@ public class Stress {
         Stresser stresser = Stresser.forCommandLineArguments(args);
         OptionSet options = stresser.getOptions();
 
-        int requests = options.has("n") ? (Integer)options.valueOf("n") : -1;
-        int concurrency = (Integer)options.valueOf("t");
+        int requests = options.has("n") ? (Integer) options.valueOf("n") : -1;
+        int concurrency = (Integer) options.valueOf("t");
 
-        String reportFileName = (String)options.valueOf("report-file");
+        String reportFileName = (String) options.valueOf("report-file");
 
         boolean async = options.has("async");
 
-        int iterations = (requests  == -1 ? -1 : requests / concurrency);
+        int iterations = (requests == -1 ? -1 : requests / concurrency);
 
         final int maxRequestsPerConnection = 128;
         int maxConnections = options.has("connections-per-host")
-                           ? (Integer)options.valueOf("connections-per-host")
-                           : concurrency / maxRequestsPerConnection + 1;
+                ? (Integer) options.valueOf("connections-per-host")
+                : concurrency / maxRequestsPerConnection + 1;
 
         PoolingOptions pools = new PoolingOptions();
         pools.setMaxSimultaneousRequestsPerConnectionThreshold(HostDistance.LOCAL, concurrency);
@@ -226,10 +227,10 @@ public class Stress {
         try {
             // Create session to hosts
             Cluster cluster = new Cluster.Builder()
-                                         .addContactPoints(String.valueOf(options.valueOf("ip")))
-                                         .withPoolingOptions(pools)
-                                         .withSocketOptions(new SocketOptions().setTcpNoDelay(true))
-                                         .build();
+                    .addContactPoints(String.valueOf(options.valueOf("ip")))
+                    .withPoolingOptions(pools)
+                    .withSocketOptions(new SocketOptions().setTcpNoDelay(true))
+                    .build();
 
             if (options.has("compression"))
                 cluster.getConfiguration().getProtocolOptions().setCompression(ProtocolOptions.Compression.SNAPPY);
@@ -242,13 +243,13 @@ public class Stress {
             System.out.println("Preparing test...");
             stresser.prepare(session);
 
-            Reporter reporter = new Reporter((Integer)options.valueOf("print-delay"), reportFileName, args, requests);
+            Reporter reporter = new Reporter((Integer) options.valueOf("print-delay"), reportFileName, args, requests);
 
             Consumer[] consumers = new Consumer[concurrency];
             for (int i = 0; i < concurrency; i++) {
                 QueryGenerator generator = stresser.newGenerator(i, session, iterations);
                 consumers[i] = async ? new AsynchronousConsumer(session, generator, reporter) :
-                                       new BlockingConsumer(session, generator, reporter);
+                        new BlockingConsumer(session, generator, reporter);
             }
 
             System.out.println("Starting to stress test...");

@@ -15,20 +15,20 @@
  */
 package com.datastax.driver.core;
 
-import java.util.concurrent.Executor;
-
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.MoreExecutors;
 
+import java.util.concurrent.Executor;
+
 /**
  * Options related to connection pooling.
- * <p>
+ * <p/>
  * The driver uses connections in an asynchronous manner. Meaning that
  * multiple requests can be submitted on the same connection at the same
  * time. This means that the driver only needs to maintain a relatively
  * small number of connections to each Cassandra host. These options allow
  * the driver to control how many connections are kept exactly.
- * <p>
+ * <p/>
  * For each host, the driver keeps a core pool of connections open at all
  * times determined by calling ({@link #getCoreConnectionsPerHost}).
  * If the use of those connections reaches a configurable threshold
@@ -37,7 +37,7 @@ import com.google.common.util.concurrent.MoreExecutors;
  * connections ({@link #getMaxConnectionsPerHost}). When the pool exceeds
  * the maximum number of connections, connections in excess are
  * reclaimed.
- * <p>
+ * <p/>
  * Each of these parameters can be separately set for {@code LOCAL} and
  * {@code REMOTE} hosts ({@link HostDistance}). For {@code IGNORED} hosts,
  * the default for all those settings is 0 and cannot be changed.
@@ -62,10 +62,10 @@ public class PoolingOptions {
 
     private volatile Cluster.Manager manager;
 
-    private final int[] maxSimultaneousRequests = new int[]{ DEFAULT_MAX_REQUESTS, DEFAULT_MAX_REQUESTS, 0 };
+    private final int[] maxSimultaneousRequests = new int[]{DEFAULT_MAX_REQUESTS, DEFAULT_MAX_REQUESTS, 0};
 
-    private final int[] coreConnections = new int[] { DEFAULT_CORE_POOL_LOCAL, DEFAULT_CORE_POOL_REMOTE, 0 };
-    private final int[] maxConnections = new int[] { DEFAULT_MAX_POOL_LOCAL , DEFAULT_MAX_POOL_REMOTE, 0 };
+    private final int[] coreConnections = new int[]{DEFAULT_CORE_POOL_LOCAL, DEFAULT_CORE_POOL_REMOTE, 0};
+    private final int[] maxConnections = new int[]{DEFAULT_MAX_POOL_LOCAL, DEFAULT_MAX_POOL_REMOTE, 0};
 
     private volatile int idleTimeoutSeconds = DEFAULT_IDLE_TIMEOUT_SECONDS;
     private volatile int poolTimeoutMillis = DEFAULT_POOL_TIMEOUT_MILLIS;
@@ -73,7 +73,8 @@ public class PoolingOptions {
 
     private volatile Executor initializationExecutor = DEFAULT_INITIALIZATION_EXECUTOR;
 
-    public PoolingOptions() {}
+    public PoolingOptions() {
+    }
 
     void register(Cluster.Manager manager) {
         this.manager = manager;
@@ -82,18 +83,17 @@ public class PoolingOptions {
     /**
      * Returns the number of simultaneous requests on a connection below which
      * connections in excess are reclaimed.
-     * <p>
+     * <p/>
      * If an opened connection to an host at distance {@code distance}
      * handles less than this number of simultaneous requests and there is
      * more than {@link #getCoreConnectionsPerHost} connections open to this
      * host, the connection is closed.
-     * <p>
+     * <p/>
      * The default value for this option is 25 for {@code LOCAL} and
      * {@code REMOTE} hosts.
      *
      * @param distance the {@code HostDistance} for which to return this threshold.
      * @return the configured threshold, or the default one if none have been set.
-     *
      * @deprecated this option isn't used anymore with the current pool resizing algorithm.
      */
     @Deprecated
@@ -105,13 +105,11 @@ public class PoolingOptions {
      * Sets the number of simultaneous requests on a connection below which
      * connections in excess are reclaimed.
      *
-     * @param distance the {@code HostDistance} for which to configure this threshold.
+     * @param distance                   the {@code HostDistance} for which to configure this threshold.
      * @param newMinSimultaneousRequests the value to set (between 0 and 128).
      * @return this {@code PoolingOptions}.
-     *
      * @throws IllegalArgumentException if {@code distance == HostDistance.IGNORED}, or if {@code minSimultaneousRequests}
-     * is not in range, or if {@code newMinSimultaneousRequests} is greater than the maximum value for this distance.
-     *
+     *                                  is not in range, or if {@code newMinSimultaneousRequests} is greater than the maximum value for this distance.
      * @deprecated this option isn't used anymore with the current pool resizing algorithm.
      */
     @Deprecated
@@ -122,16 +120,16 @@ public class PoolingOptions {
     /**
      * Returns the number of simultaneous requests on all connections to an host after
      * which more connections are created.
-     * <p>
+     * <p/>
      * If all the connections opened to an host at distance {@code
      * distance} connection are handling more than this number of
      * simultaneous requests and there is less than
      * {@link #getMaxConnectionsPerHost} connections open to this host, a
      * new connection is open.
-     * <p>
+     * <p/>
      * Note that a given connection cannot handle more than 128
      * simultaneous requests (protocol limitation).
-     * <p>
+     * <p/>
      * The default value for this option is 100 for {@code LOCAL} and
      * {@code REMOTE} hosts.
      *
@@ -146,12 +144,11 @@ public class PoolingOptions {
      * Sets number of simultaneous requests on all connections to an host after
      * which more connections are created.
      *
-     * @param distance the {@code HostDistance} for which to configure this threshold.
+     * @param distance                   the {@code HostDistance} for which to configure this threshold.
      * @param newMaxSimultaneousRequests the value to set (between 0 and 128).
      * @return this {@code PoolingOptions}.
-     *
      * @throws IllegalArgumentException if {@code distance == HostDistance.IGNORED}, or if {@code maxSimultaneousRequests}
-     * is not in range, or if {@code newMaxSimultaneousRequests} is less than the minimum value for this distance.
+     *                                  is not in range, or if {@code newMaxSimultaneousRequests} is less than the minimum value for this distance.
      */
     public synchronized PoolingOptions setMaxSimultaneousRequestsPerConnectionThreshold(HostDistance distance, int newMaxSimultaneousRequests) {
         if (distance == HostDistance.IGNORED)
@@ -164,7 +161,7 @@ public class PoolingOptions {
 
     /**
      * Returns the core number of connections per host.
-     * <p>
+     * <p/>
      * For the provided {@code distance}, this correspond to the number of
      * connections initially created and kept open to each host of that
      * distance.
@@ -179,18 +176,16 @@ public class PoolingOptions {
     /**
      * Sets the core number of connections per host.
      *
-     * @param distance the {@code HostDistance} for which to set this threshold.
+     * @param distance           the {@code HostDistance} for which to set this threshold.
      * @param newCoreConnections the value to set
      * @return this {@code PoolingOptions}.
-     *
      * @throws IllegalArgumentException if {@code distance == HostDistance.IGNORED},
-     * or if {@code newCoreConnections} is greater than the maximum value for this distance.
-     *
+     *                                  or if {@code newCoreConnections} is greater than the maximum value for this distance.
      * @see #setConnectionsPerHost(HostDistance, int, int)
      */
     public synchronized PoolingOptions setCoreConnectionsPerHost(HostDistance distance, int newCoreConnections) {
         if (distance == HostDistance.IGNORED)
-                throw new IllegalArgumentException("Cannot set core connections per host for " + distance + " hosts");
+            throw new IllegalArgumentException("Cannot set core connections per host for " + distance + " hosts");
 
         checkConnectionsPerHostOrder(newCoreConnections, maxConnections[distance.ordinal()], distance);
         int oldCore = coreConnections[distance.ordinal()];
@@ -202,7 +197,7 @@ public class PoolingOptions {
 
     /**
      * Returns the maximum number of connections per host.
-     * <p>
+     * <p/>
      * For the provided {@code distance}, this correspond to the maximum
      * number of connections that can be created per host at that distance.
      *
@@ -216,13 +211,11 @@ public class PoolingOptions {
     /**
      * Sets the maximum number of connections per host.
      *
-     * @param distance the {@code HostDistance} for which to set this threshold.
+     * @param distance          the {@code HostDistance} for which to set this threshold.
      * @param newMaxConnections the value to set
      * @return this {@code PoolingOptions}.
-     *
      * @throws IllegalArgumentException if {@code distance == HostDistance.IGNORED},
-     * or if {@code newMaxConnections} is less than the core value for this distance.
-     *
+     *                                  or if {@code newMaxConnections} is less than the core value for this distance.
      * @see #setConnectionsPerHost(HostDistance, int, int)
      */
     public synchronized PoolingOptions setMaxConnectionsPerHost(HostDistance distance, int newMaxConnections) {
@@ -236,17 +229,16 @@ public class PoolingOptions {
 
     /**
      * Sets the core and maximum number of connections per host in one call.
-     * <p>
+     * <p/>
      * This is a convenience method that is equivalent to calling {@link #setCoreConnectionsPerHost(HostDistance, int)}
      * and {@link #setMaxConnectionsPerHost(HostDistance, int)}.
      *
      * @param distance the {@code HostDistance} for which to set these threshold.
-     * @param core the core number of connections.
-     * @param max the max number of connections.
+     * @param core     the core number of connections.
+     * @param max      the max number of connections.
      * @return this {@code PoolingOptions}.
-     *
      * @throws IllegalArgumentException if {@code distance == HostDistance.IGNORED},
-     * or if {@code core} > {@code max}.
+     *                                  or if {@code core} > {@code max}.
      */
     public synchronized PoolingOptions setConnectionsPerHost(HostDistance distance, int core, int max) {
         if (distance == HostDistance.IGNORED)
@@ -269,13 +261,12 @@ public class PoolingOptions {
 
     /**
      * Sets the timeout before an idle connection is removed.
-     * <p>
+     * <p/>
      * The order of magnitude should be a few minutes (the default is 120 seconds). The
      * timeout that triggers the removal has a granularity of 10 seconds.
      *
      * @param idleTimeoutSeconds the new timeout in seconds.
      * @return this {@code PoolingOptions}.
-     *
      * @throws IllegalArgumentException if the timeout is negative.
      */
     public PoolingOptions setIdleTimeoutSeconds(int idleTimeoutSeconds) {
@@ -296,15 +287,14 @@ public class PoolingOptions {
 
     /**
      * Sets the timeout when trying to acquire a connection from a host's pool.
-     * <p>
+     * <p/>
      * If no connection is available within that time, the driver will try the
      * next host from the query plan.
-     * <p>
+     * <p/>
      * If this option is set to zero, the driver won't wait at all.
      *
      * @param poolTimeoutMillis the new value in milliseconds.
      * @return this {@code PoolingOptions}
-     *
      * @throws IllegalArgumentException if the timeout is negative.
      */
     public PoolingOptions setPoolTimeoutMillis(int poolTimeoutMillis) {
@@ -316,6 +306,7 @@ public class PoolingOptions {
 
     /**
      * Returns the heart beat interval, after which a message is sent on an idle connection to make sure it's still alive.
+     *
      * @return the interval.
      */
     public int getHeartbeatIntervalSeconds() {
@@ -324,17 +315,16 @@ public class PoolingOptions {
 
     /**
      * Sets the heart beat interval, after which a message is sent on an idle connection to make sure it's still alive.
-     * <p>
+     * <p/>
      * This is an application-level keep-alive, provided for convenience since adjusting the TCP keep-alive might not be
      * practical in all environments.
-     * <p>
+     * <p/>
      * This option should be set higher than {@link SocketOptions#getReadTimeoutMillis()}.
-     * <p>
+     * <p/>
      * The default value for this option is 30 seconds.
      *
      * @param heartbeatIntervalSeconds the new value in seconds. If set to 0, it will disable the feature.
      * @return this {@code PoolingOptions}
-     *
      * @throws IllegalArgumentException if the interval is negative.
      */
     public PoolingOptions setHeartbeatIntervalSeconds(int heartbeatIntervalSeconds) {
@@ -357,11 +347,11 @@ public class PoolingOptions {
 
     /**
      * Sets the executor to use for connection initialization.
-     * <p>
+     * <p/>
      * Connections are open in a completely asynchronous manner. Since initializing the transport
      * requires separate CQL queries, the futures representing the completion of these queries are
      * transformed and chained. This executor is where these transformations happen.
-     * <p>
+     * <p/>
      * <b>This is an advanced option, which should be rarely needed in practice.</b> It defaults to
      * Guava's {@code MoreExecutors.sameThreadExecutor()}, which results in running the transformations
      * on the network I/O threads; this is fine if the transformations are fast and not I/O bound
@@ -372,7 +362,6 @@ public class PoolingOptions {
      *
      * @param initializationExecutor the executor to use
      * @return this {@code PoolingOptions}
-     *
      * @throws java.lang.NullPointerException if the executor is null
      */
     public PoolingOptions setInitializationExecutor(Executor initializationExecutor) {
@@ -385,7 +374,7 @@ public class PoolingOptions {
      * Requests the driver to re-evaluate the {@link HostDistance} (through the configured
      * {@link com.datastax.driver.core.policies.LoadBalancingPolicy#distance}) for every known
      * hosts and to drop/add connections to each hosts according to the computed distance.
-     * <p>
+     * <p/>
      * Note that, due to backward compatibility issues, this method is not interruptible. If the
      * caller thread gets interrupted, the method will complete and only then re-interrupt the
      * thread (which you can check with {@code Thread.currentThread().isInterrupted()}).
@@ -398,7 +387,6 @@ public class PoolingOptions {
      * Requests the driver to re-evaluate the {@link HostDistance} for a given node.
      *
      * @param host the host to refresh.
-     *
      * @see #refreshConnectedHosts()
      */
     public void refreshConnectedHost(Host host) {
@@ -408,13 +396,13 @@ public class PoolingOptions {
     private static void checkRequestsPerConnectionRange(int value, String description, HostDistance distance) {
         if (value < 0 || value > StreamIdGenerator.MAX_STREAM_PER_CONNECTION)
             throw new IllegalArgumentException(String.format("%s for %s hosts must be in the range (0, %d)",
-                                                             description, distance,
-                                                             StreamIdGenerator.MAX_STREAM_PER_CONNECTION));
+                    description, distance,
+                    StreamIdGenerator.MAX_STREAM_PER_CONNECTION));
     }
 
     private static void checkConnectionsPerHostOrder(int core, int max, HostDistance distance) {
         if (core > max)
             throw new IllegalArgumentException(String.format("Core connections for %s hosts must be less than max (%d > %d)",
-                                                             distance, core, max));
+                    distance, core, max));
     }
 }

@@ -15,20 +15,19 @@
  */
 package com.datastax.driver.core;
 
+import com.codahale.metrics.*;
+import com.datastax.driver.core.policies.SpeculativeExecutionPolicy;
+
 import java.util.HashSet;
 import java.util.Set;
 
-import com.codahale.metrics.*;
-
-import com.datastax.driver.core.policies.SpeculativeExecutionPolicy;
-
 /**
  * Metrics exposed by the driver.
- * <p>
+ * <p/>
  * The metrics exposed by this class use the <a href="http://metrics.codahale.com/">Metrics</a>
  * library and you should refer its <a href="http://metrics.codahale.com/manual/">documentation</a>
  * for details on how to handle the exposed metric objects.
- * <p>
+ * <p/>
  * By default, metrics are exposed through JMX, which is very useful for
  * development and browsing, but for production environments you may want to
  * have a look at the <a href="http://metrics.codahale.com/manual/core/#reporters">reporters</a>
@@ -93,7 +92,7 @@ public class Metrics {
         }
     });
 
-    private final Gauge<Integer> reconnectionSchedulerQueueSize= registry.register("reconnection-scheduler-task-count", new Gauge<Integer>() {
+    private final Gauge<Integer> reconnectionSchedulerQueueSize = registry.register("reconnection-scheduler-task-count", new Gauge<Integer>() {
         @Override
         public Integer getValue() {
             return manager.reconnectionExecutor.getQueue().size();
@@ -119,17 +118,17 @@ public class Metrics {
 
     /**
      * Returns the registry containing all metrics.
-     * <p>
+     * <p/>
      * The metrics registry allows you to easily use the reporters that ship
      * with <a href="http://metrics.codahale.com/manual/core/#reporters">Metrics</a>
      * or a custom written one.
-     * <p>
+     * <p/>
      * For instance, if {@code metrics} is {@code this} object, you could export the
      * metrics to csv files using:
      * <pre>
      *     com.codahale.metrics.CsvReporter.forRegistry(metrics.getRegistry()).build(new File("measurements/")).start(1, TimeUnit.SECONDS);
      * </pre>
-     * <p>
+     * <p/>
      * If you already have a {@code MetricRegistry} in your application and wish to
      * add the driver's metrics to it, the recommended approach is to use a listener:
      * <pre>
@@ -161,12 +160,12 @@ public class Metrics {
 
     /**
      * Returns metrics on the user requests performed on the Cluster.
-     * <p>
+     * <p/>
      * This metric exposes
      * <ul>
-     *   <li>the total number of requests.</li>
-     *   <li>the requests rate (in requests per seconds), including 1, 5 and 15 minute rates.</li>
-     *   <li>the mean, min and max latencies, as well as latency at a given percentile.</li>
+     * <li>the total number of requests.</li>
+     * <li>the requests rate (in requests per seconds), including 1, 5 and 15 minute rates.</li>
+     * <li>the mean, min and max latencies, as well as latency at a given percentile.</li>
      * </ul>
      *
      * @return a {@code Timer} metric object exposing the rate and latency for
@@ -216,7 +215,7 @@ public class Metrics {
 
     /**
      * Returns the total number of currently "trashed" connections to Cassandra hosts.
-     * <p>
+     * <p/>
      * When the load to a host decreases, the driver will reclaim some connections in order to save
      * resources. No requests are sent to these connections anymore, but they are kept open for an
      * additional amount of time ({@link PoolingOptions#getIdleTimeoutSeconds()}), in case the load
@@ -289,11 +288,11 @@ public class Metrics {
 
         /**
          * Returns the number of connection to Cassandra nodes errors.
-         * <p>
+         * <p/>
          * This represents the number of times that a request to a Cassandra node
          * has failed due to a connection problem. This thus also corresponds to
          * how often the driver had to pick a fallback host for a request.
-         * <p>
+         * <p/>
          * You can expect a few connection errors when a Cassandra node fails
          * (or is stopped) ,but if that number grows continuously you likely have
          * a problem.

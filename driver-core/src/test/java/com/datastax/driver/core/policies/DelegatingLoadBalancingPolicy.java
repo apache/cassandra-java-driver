@@ -15,17 +15,17 @@
  */
 package com.datastax.driver.core.policies;
 
-import java.util.Collection;
-import java.util.Iterator;
-
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Host;
 import com.datastax.driver.core.HostDistance;
 import com.datastax.driver.core.Statement;
 
+import java.util.Collection;
+import java.util.Iterator;
+
 /**
  * Base class for tests that want to wrap a policy to add some instrumentation.
- *
+ * <p/>
  * NB: this is currently only used in tests, but could be provided as a convenience in the production code.
  */
 public abstract class DelegatingLoadBalancingPolicy implements ChainableLoadBalancingPolicy, CloseableLoadBalancingPolicy {
@@ -75,6 +75,6 @@ public abstract class DelegatingLoadBalancingPolicy implements ChainableLoadBala
     @Override
     public void close() {
         if (delegate instanceof CloseableLoadBalancingPolicy)
-            ((CloseableLoadBalancingPolicy)delegate).close();
+            ((CloseableLoadBalancingPolicy) delegate).close();
     }
 }

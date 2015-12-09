@@ -15,24 +15,20 @@
  */
 package com.datastax.driver.core.querybuilder;
 
+import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.core.RegularStatement;
+import com.datastax.driver.core.Statement;
+import com.datastax.driver.core.exceptions.InvalidQueryException;
+import org.testng.annotations.Test;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.util.*;
 
-import org.testng.annotations.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
-
-import com.datastax.driver.core.ConsistencyLevel;
-import com.datastax.driver.core.RegularStatement;
-import com.datastax.driver.core.Statement;
-import com.datastax.driver.core.exceptions.InvalidQueryException;
-
 import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.testng.Assert.*;
 
 public class QueryBuilderTest {
 
@@ -52,10 +48,10 @@ public class QueryBuilderTest {
 
         query = "SELECT a,b,\"C\" FROM foo WHERE a IN ('127.0.0.1','127.0.0.3') AND \"C\"='foo' ORDER BY a ASC,b DESC LIMIT 42;";
         select = select("a", "b", quote("C")).from("foo")
-                   .where(in("a", InetAddress.getByName("127.0.0.1"), InetAddress.getByName("127.0.0.3")))
-                      .and(eq(quote("C"), "foo"))
-                   .orderBy(asc("a"), desc("b"))
-                   .limit(42);
+                .where(in("a", InetAddress.getByName("127.0.0.1"), InetAddress.getByName("127.0.0.3")))
+                .and(eq(quote("C"), "foo"))
+                .orderBy(asc("a"), desc("b"))
+                .limit(42);
         assertEquals(select.toString(), query);
 
         query = "SELECT writetime(a),ttl(a) FROM foo ALLOW FILTERING;";
@@ -163,63 +159,67 @@ public class QueryBuilderTest {
 
         query = "INSERT INTO foo(a,b,\"C\",d) VALUES (123,'127.0.0.1','foo''bar',{'x':3,'y':2}) USING TIMESTAMP 42 AND TTL 24;";
         insert = insertInto("foo")
-                   .value("a", 123)
-                   .value("b", InetAddress.getByName("127.0.0.1"))
-                   .value(quote("C"), "foo'bar")
-                   .value("d", new TreeMap<String, Integer>() {{
-                       put("x", 3);
-                       put("y", 2);
-                   }})
-                   .using(timestamp(42)).and(ttl(24));
+                .value("a", 123)
+                .value("b", InetAddress.getByName("127.0.0.1"))
+                .value(quote("C"), "foo'bar")
+                .value("d", new TreeMap<String, Integer>() {{
+                    put("x", 3);
+                    put("y", 2);
+                }})
+                .using(timestamp(42)).and(ttl(24));
         assertEquals(insert.toString(), query);
 
         query = "INSERT INTO foo(a,b) VALUES (2,null);";
         insert = insertInto("foo")
-                   .value("a", 2)
-                   .value("b", null);
+                .value("a", 2)
+                .value("b", null);
         assertEquals(insert.toString(), query);
 
         query = "INSERT INTO foo(a,b) VALUES ({2,3,4},3.4) USING TTL 24 AND TIMESTAMP 42;";
-        insert = insertInto("foo").values(new String[]{ "a", "b" }, new Object[]{ new TreeSet<Integer>() {{
+        insert = insertInto("foo").values(new String[]{"a", "b"}, new Object[]{new TreeSet<Integer>() {{
             add(2);
             add(3);
             add(4);
-        }}, 3.4 }).using(ttl(24)).and(timestamp(42));
+        }}, 3.4}).using(ttl(24)).and(timestamp(42));
         assertEquals(insert.toString(), query);
 
         query = "INSERT INTO foo.bar(a,b) VALUES ({2,3,4},3.4) USING TTL ? AND TIMESTAMP ?;";
         insert = insertInto("foo", "bar")
-                    .values(new String[]{ "a", "b" }, new Object[]{ new TreeSet<Integer>() {{
-                        add(2);
-                        add(3);
-                        add(4);
-                    }}, 3.4 })
-                    .using(ttl(bindMarker()))
-                    .and(timestamp(bindMarker()));
+                .values(new String[]{"a", "b"}, new Object[]{new TreeSet<Integer>() {{
+                    add(2);
+                    add(3);
+                    add(4);
+                }}, 3.4})
+                .using(ttl(bindMarker()))
+                .and(timestamp(bindMarker()));
         assertEquals(insert.toString(), query);
 
         // commutative result of TIMESTAMP
         query = "INSERT INTO foo.bar(a,b,c) VALUES ({2,3,4},3.4,123) USING TIMESTAMP 42;";
         insert = insertInto("foo", "bar")
-                    .using(timestamp(42))
-                    .values(new String[]{ "a", "b" }, new Object[]{ new TreeSet<Integer>() {{
-                        add(2);
-                        add(3);
-                        add(4);
-                    }}, 3.4 })
-                    .value("c", 123);
+                .using(timestamp(42))
+                .values(new String[]{"a", "b"}, new Object[]{new TreeSet<Integer>() {{
+                    add(2);
+                    add(3);
+                    add(4);
+                }}, 3.4})
+                .value("c", 123);
         assertEquals(insert.toString(), query);
 
         // commutative result of value() and values()
         query = "INSERT INTO foo(c,a,b) VALUES (123,{2,3,4},3.4) USING TIMESTAMP 42;";
         insert = insertInto("foo")
-                    .using(timestamp(42))
-                    .value("c", 123)
-                    .values(new String[]{ "a", "b"}, new Object[]{ new TreeSet<Integer>(){{ add(2); add(3); add(4); }}, 3.4 });
+                .using(timestamp(42))
+                .value("c", 123)
+                .values(new String[]{"a", "b"}, new Object[]{new TreeSet<Integer>() {{
+                    add(2);
+                    add(3);
+                    add(4);
+                }}, 3.4});
         assertEquals(insert.toString(), query);
 
         try {
-            insert = insertInto("foo").values(new String[]{ "a", "b"}, new Object[]{ 1, 2, 3 });
+            insert = insertInto("foo").values(new String[]{"a", "b"}, new Object[]{1, 2, 3});
             fail();
         } catch (IllegalArgumentException e) {
             assertEquals(e.getMessage(), "Got 2 names but 3 values");
@@ -255,20 +255,31 @@ public class QueryBuilderTest {
         assertEquals(update.toString(), query);
 
         query = "UPDATE foo SET b=b-[1,2,3],c=c+{1},d=d+{2,3,4};";
-        update = update("foo").with(discardAll("b", Arrays.asList(1, 2, 3))).and(add("c", 1)).and(addAll("d", new TreeSet<Integer>(){{ add(2); add(3); add(4); }}));
+        update = update("foo").with(discardAll("b", Arrays.asList(1, 2, 3))).and(add("c", 1)).and(addAll("d", new TreeSet<Integer>() {{
+            add(2);
+            add(3);
+            add(4);
+        }}));
         assertEquals(update.toString(), query);
 
         query = "UPDATE foo SET b=b-{2,3,4},c['k']='v',d=d+{'x':3,'y':2};";
-        update = update("foo").with(removeAll("b", new TreeSet<Integer>(){{ add(2); add(3); add(4); }}))
-                    .and(put("c", "k", "v"))
-                    .and(putAll("d", new TreeMap<String, Integer>(){{ put("x", 3); put("y", 2); }}));
+        update = update("foo").with(removeAll("b", new TreeSet<Integer>() {{
+            add(2);
+            add(3);
+            add(4);
+        }}))
+                .and(put("c", "k", "v"))
+                .and(putAll("d", new TreeMap<String, Integer>() {{
+                    put("x", 3);
+                    put("y", 2);
+                }}));
         assertEquals(update.toString(), query);
 
         query = "UPDATE foo USING TTL 400;";
         update = update("foo").using(ttl(400));
         assertEquals(update.toString(), query);
 
-        query = "UPDATE foo SET a="+new BigDecimal(3.2)+",b=42 WHERE k=2;";
+        query = "UPDATE foo SET a=" + new BigDecimal(3.2) + ",b=42 WHERE k=2;";
         update = update("foo").with(set("a", new BigDecimal(3.2))).and(set("b", new BigInteger("42"))).where(eq("k", 2));
         assertEquals(update.toString(), query);
 
@@ -300,7 +311,7 @@ public class QueryBuilderTest {
         update = update("foo").with(set("x", 3)).where(eq("k", 2)).ifExists();
         assertThat(update.toString()).isEqualTo("UPDATE foo SET x=3 WHERE k=2 IF EXISTS;");
     }
-    
+
     @Test(groups = "unit")
     public void deleteTest() throws Exception {
 
@@ -373,10 +384,14 @@ public class QueryBuilderTest {
         query += "DELETE a[3],b['foo'],c FROM foo WHERE k=1;";
         query += "APPLY BATCH;";
         batch = batch()
-            .add(insertInto("foo").values(new String[]{ "a", "b"}, new Object[]{ new TreeSet<Integer>(){{ add(2); add(3); add(4); }}, 3.4 }))
-            .add(update("foo").with(setIdx("a", 2, "foo")).and(prependAll("b", Arrays.asList(3, 2, 1))).and(remove("c", "a")).where(eq("k", 2)))
-            .add(delete().listElt("a", 3).mapElt("b", "foo").column("c").from("foo").where(eq("k", 1)))
-            .using(timestamp(42));
+                .add(insertInto("foo").values(new String[]{"a", "b"}, new Object[]{new TreeSet<Integer>() {{
+                    add(2);
+                    add(3);
+                    add(4);
+                }}, 3.4}))
+                .add(update("foo").with(setIdx("a", 2, "foo")).and(prependAll("b", Arrays.asList(3, 2, 1))).and(remove("c", "a")).where(eq("k", 2)))
+                .add(delete().listElt("a", 3).mapElt("b", "foo").column("c").from("foo").where(eq("k", 1)))
+                .using(timestamp(42));
         assertEquals(batch.toString(), query);
 
         // Test passing batch(statement)
@@ -401,10 +416,10 @@ public class QueryBuilderTest {
         query += "UPDATE foo SET c=c+3;";
         query += "APPLY BATCH;";
         batch = batch()
-            .add(update("foo").with(incr("a", 1)))
-            .add(update("foo").with(incr("b", 2)))
-            .add(update("foo").with(incr("c", 3)))
-            .using(timestamp(42));
+                .add(update("foo").with(incr("a", 1)))
+                .add(update("foo").with(incr("b", 2)))
+                .add(update("foo").with(incr("c", 3)))
+                .using(timestamp(42));
         assertEquals(batch.toString(), query);
 
         // Test single increments
@@ -414,10 +429,10 @@ public class QueryBuilderTest {
         query += "UPDATE foo SET c=c+1;";
         query += "APPLY BATCH;";
         batch = batch()
-            .add(update("foo").with(incr("a")))
-            .add(update("foo").with(incr("b")))
-            .add(update("foo").with(incr("c")))
-            .using(timestamp(42));
+                .add(update("foo").with(incr("a")))
+                .add(update("foo").with(incr("b")))
+                .add(update("foo").with(incr("c")))
+                .using(timestamp(42));
         assertEquals(batch.toString(), query);
 
         // Test value decrements
@@ -427,10 +442,10 @@ public class QueryBuilderTest {
         query += "UPDATE foo SET c=c-3;";
         query += "APPLY BATCH;";
         batch = batch()
-            .add(update("foo").with(decr("a", 1)))
-            .add(update("foo").with(decr("b", 2)))
-            .add(update("foo").with(decr("c", 3)))
-            .using(timestamp(42));
+                .add(update("foo").with(decr("a", 1)))
+                .add(update("foo").with(decr("b", 2)))
+                .add(update("foo").with(decr("c", 3)))
+                .using(timestamp(42));
         assertEquals(batch.toString(), query);
 
         // Test single decrements
@@ -440,10 +455,10 @@ public class QueryBuilderTest {
         query += "UPDATE foo SET c=c-1;";
         query += "APPLY BATCH;";
         batch = batch()
-            .add(update("foo").with(decr("a")))
-            .add(update("foo").with(decr("b")))
-            .add(update("foo").with(decr("c")))
-            .using(timestamp(42));
+                .add(update("foo").with(decr("a")))
+                .add(update("foo").with(decr("b")))
+                .add(update("foo").with(decr("c")))
+                .using(timestamp(42));
         assertEquals(batch.toString(), query);
 
         // Test negative decrements and negative increments
@@ -453,23 +468,23 @@ public class QueryBuilderTest {
         query += "UPDATE foo SET c=c-3;";
         query += "APPLY BATCH;";
         batch = batch()
-            .add(update("foo").with(decr("a", -1)))
-            .add(update("foo").with(incr("b", -2)))
-            .add(update("foo").with(decr("c", 3)))
-            .using(timestamp(42));
+                .add(update("foo").with(decr("a", -1)))
+                .add(update("foo").with(incr("b", -2)))
+                .add(update("foo").with(decr("c", 3)))
+                .using(timestamp(42));
         assertEquals(batch.toString(), query);
     }
 
-    @Test(groups = "unit", expectedExceptions={IllegalArgumentException.class})
+    @Test(groups = "unit", expectedExceptions = {IllegalArgumentException.class})
     public void batchMixedCounterTest() throws Exception {
         String query;
         Statement batch;
 
         batch = batch()
-            .add(update("foo").with(incr("a", 1)))
-            .add(update("foo").with(set("b", 2)))
-            .add(update("foo").with(incr("c", 3)))
-            .using(timestamp(42));
+                .add(update("foo").with(incr("a", 1)))
+                .add(update("foo").with(set("b", 2)))
+                .add(update("foo").with(incr("c", 3)))
+                .using(timestamp(42));
     }
 
     @Test(groups = "unit")
@@ -479,8 +494,8 @@ public class QueryBuilderTest {
 
         query = "INSERT INTO test(k,c) VALUES (0,?);";
         insert = insertInto("test")
-                   .value("k", 0)
-                   .value("c", bindMarker());
+                .value("k", 0)
+                .value("c", bindMarker());
         assertEquals(insert.toString(), query);
     }
 
@@ -580,7 +595,11 @@ public class QueryBuilderTest {
         assertEquals(insert.toString(), query);
 
         query = "INSERT INTO foo(a,b) VALUES ({'2''} space','3','4'},3.4) USING TTL 24 AND TIMESTAMP 42;";
-        insert = insertInto("foo").values(new String[]{ "a", "b"}, new Object[]{ new TreeSet<String>(){{ add("2'} space"); add("3"); add("4"); }}, 3.4 }).using(ttl(24)).and(timestamp(42));
+        insert = insertInto("foo").values(new String[]{"a", "b"}, new Object[]{new TreeSet<String>() {{
+            add("2'} space");
+            add("3");
+            add("4");
+        }}, 3.4}).using(ttl(24)).and(timestamp(42));
         assertEquals(insert.toString(), query);
     }
 
@@ -680,22 +699,22 @@ public class QueryBuilderTest {
     @Test(groups = "unit")
     public void quotingTest() {
         assertEquals(QueryBuilder.select().from("Metrics", "epochs").getQueryString(),
-            "SELECT * FROM Metrics.epochs;");
+                "SELECT * FROM Metrics.epochs;");
         assertEquals(QueryBuilder.select().from("Metrics", quote("epochs")).getQueryString(),
-            "SELECT * FROM Metrics.\"epochs\";");
+                "SELECT * FROM Metrics.\"epochs\";");
         assertEquals(QueryBuilder.select().from(quote("Metrics"), "epochs").getQueryString(),
-            "SELECT * FROM \"Metrics\".epochs;");
+                "SELECT * FROM \"Metrics\".epochs;");
         assertEquals(QueryBuilder.select().from(quote("Metrics"), quote("epochs")).getQueryString(),
-            "SELECT * FROM \"Metrics\".\"epochs\";");
+                "SELECT * FROM \"Metrics\".\"epochs\";");
 
         assertEquals(QueryBuilder.insertInto("Metrics", "epochs").getQueryString(),
-            "INSERT INTO Metrics.epochs() VALUES ();");
+                "INSERT INTO Metrics.epochs() VALUES ();");
         assertEquals(QueryBuilder.insertInto("Metrics", quote("epochs")).getQueryString(),
-            "INSERT INTO Metrics.\"epochs\"() VALUES ();");
+                "INSERT INTO Metrics.\"epochs\"() VALUES ();");
         assertEquals(QueryBuilder.insertInto(quote("Metrics"), "epochs").getQueryString(),
-            "INSERT INTO \"Metrics\".epochs() VALUES ();");
+                "INSERT INTO \"Metrics\".epochs() VALUES ();");
         assertEquals(QueryBuilder.insertInto(quote("Metrics"), quote("epochs")).getQueryString(),
-            "INSERT INTO \"Metrics\".\"epochs\"() VALUES ();");
+                "INSERT INTO \"Metrics\".\"epochs\"() VALUES ();");
     }
 
     @Test(groups = "unit")
@@ -709,7 +728,7 @@ public class QueryBuilderTest {
 
         query = "SELECT * FROM foo WHERE k=4 AND (c1,c2)>=('a',2) AND (c1,c2)<('b',0);";
         select = select().all().from("foo").where(eq("k", 4)).and(gte(Arrays.asList("c1", "c2"), Arrays.<Object>asList("a", 2)))
-                                                             .and(lt(Arrays.asList("c1", "c2"), Arrays.<Object>asList("b", 0)));
+                .and(lt(Arrays.asList("c1", "c2"), Arrays.<Object>asList("b", 0)));
         assertEquals(select.toString(), query);
 
         query = "SELECT * FROM foo WHERE k=4 AND (c1,c2)<=('a',2);";
@@ -729,8 +748,8 @@ public class QueryBuilderTest {
 
         // If the excessive count results from successive DSL calls, we don't check it on the fly so this statement works:
         BuiltStatement statement = select().all().from("foo")
-            .where(eq("bar", "a"))
-            .and(in("baz", values.toArray()));
+                .where(eq("bar", "a"))
+                .and(in("baz", values.toArray()));
 
         // But we still want to check it client-side, to fail fast instead of sending a bad query to Cassandra.
         // getValues() is called on any RegularStatement before we send it (see SessionManager.makeRequestMessage).
@@ -779,12 +798,12 @@ public class QueryBuilderTest {
         assertThat(select.getValues()).isNull();
     }
 
-    @Test(groups = "unit", expectedExceptions = { IllegalStateException.class })
+    @Test(groups = "unit", expectedExceptions = {IllegalStateException.class})
     public void should_throw_ISE_if_getObject_called_on_statement_without_values() {
         select().from("test").where(eq("foo", 42)).getObject(0); // integers are appended to the CQL string
     }
 
-    @Test(groups = "unit", expectedExceptions = { IndexOutOfBoundsException.class })
+    @Test(groups = "unit", expectedExceptions = {IndexOutOfBoundsException.class})
     public void should_throw_IOOBE_if_getObject_called_with_wrong_index() {
         select().from("test").where(eq("foo", new Object())).getObject(1);
     }

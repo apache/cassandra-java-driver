@@ -15,9 +15,10 @@
  */
 package com.datastax.driver.core;
 
+import org.testng.annotations.Test;
+
 import java.util.Arrays;
 
-import org.testng.annotations.Test;
 import static org.testng.Assert.*;
 
 public class CassandraTypeParserTest {
@@ -42,7 +43,7 @@ public class CassandraTypeParserTest {
     public void parseWithCompositeTest() {
 
         String s = "org.apache.cassandra.db.marshal.CompositeType(org.apache.cassandra.db.marshal.Int32Type, org.apache.cassandra.db.marshal.UTF8Type,";
-              s += "org.apache.cassandra.db.marshal.ColumnToCollectionType(6162:org.apache.cassandra.db.marshal.ListType(org.apache.cassandra.db.marshal.Int32Type)))";
+        s += "org.apache.cassandra.db.marshal.ColumnToCollectionType(6162:org.apache.cassandra.db.marshal.ListType(org.apache.cassandra.db.marshal.Int32Type)))";
         CassandraTypeParser.ParseResult r1 = CassandraTypeParser.parseWithComposite(s);
         assertTrue(r1.isComposite);
         assertEquals(r1.types, Arrays.asList(DataType.cint(), DataType.text()));

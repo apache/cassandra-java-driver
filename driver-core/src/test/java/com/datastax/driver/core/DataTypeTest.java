@@ -15,16 +15,15 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.exceptions.InvalidTypeException;
+import org.testng.annotations.Test;
+
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
 
-import org.testng.annotations.Test;
-
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
-
-import com.datastax.driver.core.exceptions.InvalidTypeException;
 
 public class DataTypeTest {
 

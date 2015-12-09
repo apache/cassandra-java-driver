@@ -15,12 +15,12 @@
  */
 package com.datastax.driver.core;
 
-import java.util.Arrays;
-import java.util.Iterator;
-
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import org.testng.annotations.DataProvider;
+
+import java.util.Arrays;
+import java.util.Iterator;
 
 public class DataProviders {
 
@@ -37,7 +37,7 @@ public class DataProviders {
             }
         }).iterator();
 
-        return new Iterator<Object[]> () {
+        return new Iterator<Object[]>() {
 
             @Override
             public boolean hasNext() {
@@ -46,8 +46,8 @@ public class DataProviders {
 
             @Override
             public Object[] next() {
-                return new Object[] {
-                    consistencyLevels.next()
+                return new Object[]{
+                        consistencyLevels.next()
                 };
             }
 
@@ -63,9 +63,9 @@ public class DataProviders {
      */
     @DataProvider(name = "serialConsistencyLevels")
     public static Object[][] serialConsistencyLevels() {
-        return new Object[][] {
-            { ConsistencyLevel.SERIAL },
-            { ConsistencyLevel.LOCAL_SERIAL }
+        return new Object[][]{
+                {ConsistencyLevel.SERIAL},
+                {ConsistencyLevel.LOCAL_SERIAL}
         };
     }
 

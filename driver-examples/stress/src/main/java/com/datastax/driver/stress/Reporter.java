@@ -15,14 +15,20 @@
  */
 package com.datastax.driver.stress;
 
-import java.io.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import com.yammer.metrics.Metrics;
-import com.yammer.metrics.core.*;
-import com.yammer.metrics.reporting.*;
+import com.yammer.metrics.core.Meter;
+import com.yammer.metrics.core.Timer;
+import com.yammer.metrics.core.TimerContext;
 import com.yammer.metrics.stats.Snapshot;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Reporter implements Runnable {
 
@@ -67,8 +73,8 @@ public class Reporter implements Runnable {
         this.iterations = iterations;
 
         // Middle = exclude first and last 10% (note: if requests is -1, we'll end up with negative bounds, which will always exclude. It's fine if we never stop anyway)
-        this.middleLowBound = (int)(0.1 * iterations);
-        this.middleHighBound = (int)(0.9 * iterations);
+        this.middleLowBound = (int) (0.1 * iterations);
+        this.middleHighBound = (int) (0.9 * iterations);
     }
 
     private static String formatHeader(String[] args) {
@@ -162,14 +168,14 @@ public class Reporter implements Runnable {
 
     private void reportToCSV(Report report) {
         csv.println(new StringBuilder()
-                    .append(report.elapsed).append(',')
-                    .append(report.totalOps).append(',')
-                    .append(report.intervalRate).append(',')
-                    .append(report.meanRate).append(',')
-                    .append(report.meanLatency).append(',')
-                    .append(report.latency95th).append(',')
-                    .append(report.latency99th).append(',')
-                    .append(report.stdDev));
+                .append(report.elapsed).append(',')
+                .append(report.totalOps).append(',')
+                .append(report.intervalRate).append(',')
+                .append(report.meanRate).append(',')
+                .append(report.meanLatency).append(',')
+                .append(report.latency95th).append(',')
+                .append(report.latency99th).append(',')
+                .append(report.stdDev));
     }
 
     private void stopCSV(Report lastReport) {
@@ -197,7 +203,7 @@ public class Reporter implements Runnable {
 
     private void printReportToConsole(Report report) {
         long delay = report.timestamp - lastConsoleTimestamp;
-        double intervalRate = (((double)(report.totalOps - lastConsoleOpCount)) / delay) * 1000;
+        double intervalRate = (((double) (report.totalOps - lastConsoleOpCount)) / delay) * 1000;
 
         String msg = String.format(" %8d | %12d | %13.2f | %12.2f | %17.3f | %17.3f | %17.3f | %9.3f",
                 report.elapsed, report.totalOps, intervalRate, report.meanRate, report.meanLatency, report.latency95th, report.latency99th, report.stdDev);

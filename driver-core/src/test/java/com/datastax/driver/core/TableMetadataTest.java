@@ -15,10 +15,10 @@
  */
 package com.datastax.driver.core;
 
-import java.util.Collection;
-
 import com.google.common.collect.Lists;
 import org.testng.annotations.Test;
+
+import java.util.Collection;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -26,18 +26,18 @@ public class TableMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
     @Override
     protected Collection<String> getTableDefinitions() {
         return Lists.newArrayList(
-            "CREATE TABLE single_quote (\n"
-                + "    c1 int PRIMARY KEY\n"
-                + ") WITH  comment = 'comment with single quote '' should work'"
+                "CREATE TABLE single_quote (\n"
+                        + "    c1 int PRIMARY KEY\n"
+                        + ") WITH  comment = 'comment with single quote '' should work'"
         );
     }
 
     @Override
     protected Cluster.Builder configure(Cluster.Builder builder) {
         return builder.withQueryOptions(new QueryOptions()
-            .setRefreshNodeIntervalMillis(0)
-            .setRefreshNodeListIntervalMillis(0)
-            .setRefreshSchemaIntervalMillis(0)
+                        .setRefreshNodeIntervalMillis(0)
+                        .setRefreshNodeListIntervalMillis(0)
+                        .setRefreshSchemaIntervalMillis(0)
         );
     }
 

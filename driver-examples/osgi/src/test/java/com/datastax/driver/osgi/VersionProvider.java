@@ -20,12 +20,13 @@ import com.jcabi.manifests.Manifests;
 /**
  * Attempts to resolve the project version from the Bundle manifest.  If not present, will throw RuntimeException
  * on initialization.   If this happens, try building with 'mvn compile' to generate the Bundle manifest.
- *
+ * <p/>
  * In IntelliJ you can have compile run after make by right clicking on 'compile' in the 'Maven Projects' tool window.
  */
 public class VersionProvider {
 
     private static String PROJECT_VERSION;
+
     static {
         String bundleName = Manifests.read("Bundle-SymbolicName");
         if (bundleName.equals("com.datastax.driver.osgi")) {

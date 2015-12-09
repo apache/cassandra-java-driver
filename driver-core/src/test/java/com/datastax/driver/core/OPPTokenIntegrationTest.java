@@ -22,7 +22,8 @@ public class OPPTokenIntegrationTest extends TokenIntegrationTest {
         super("-p ByteOrderedPartitioner", DataType.blob());
     }
 
-    @Override protected Token.Factory tokenFactory() {
+    @Override
+    protected Token.Factory tokenFactory() {
         return OPPToken.FACTORY;
     }
 }

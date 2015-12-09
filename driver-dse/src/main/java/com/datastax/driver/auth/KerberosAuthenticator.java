@@ -30,8 +30,7 @@ import java.net.InetSocketAddress;
  * PrivilegedSaslClient which performs the priviledged actions on behalf
  * of the logged in user.
  */
-public class KerberosAuthenticator implements Authenticator
-{
+public class KerberosAuthenticator implements Authenticator {
     private static final Logger logger = LoggerFactory.getLogger(KerberosAuthenticator.class);
 
     public static final String JAAS_CONFIG_ENTRY = "DseClient";
@@ -41,8 +40,7 @@ public class KerberosAuthenticator implements Authenticator
 
     private final PrivilegedSaslClient saslClient;
 
-    public KerberosAuthenticator(InetSocketAddress host)
-    {
+    public KerberosAuthenticator(InetSocketAddress host) {
         saslClient = new PrivilegedSaslClient(loginSubject(),
                 SUPPORTED_MECHANISMS,
                 null,
@@ -52,32 +50,26 @@ public class KerberosAuthenticator implements Authenticator
                 null);
     }
 
-    private Subject loginSubject()
-    {
+    private Subject loginSubject() {
         Subject subject = new Subject();
-        try
-        {
+        try {
             LoginContext login = new LoginContext(JAAS_CONFIG_ENTRY, subject);
             login.login();
             return subject;
-        } catch (LoginException e)
-        {
+        } catch (LoginException e) {
             throw new RuntimeException(e);
         }
     }
 
     @Override
-    public byte[] initialResponse()
-    {
+    public byte[] initialResponse() {
         return saslClient.getInitialResponse();
     }
 
     @Override
-    public byte[] evaluateChallenge(byte[] challenge)
-    {
+    public byte[] evaluateChallenge(byte[] challenge) {
         byte[] response = saslClient.evaluateChallenge(challenge);
-        if (response == null)
-        {
+        if (response == null) {
             // If we generate a null response, then authentication has completed (if
             // not, warn), and return without sending a response back to the server.
             logger.trace("Response to server is null: authentication should now be complete.");
@@ -91,8 +83,7 @@ public class KerberosAuthenticator implements Authenticator
     }
 
     @Override
-    public void onAuthenticationSuccess(byte[] token)
-    {
+    public void onAuthenticationSuccess(byte[] token) {
         // no-op
     }
 }

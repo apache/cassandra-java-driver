@@ -15,12 +15,12 @@
  */
 package com.datastax.driver.core;
 
-import java.util.*;
-
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.*;
 
 /**
  * Describes a Table.
@@ -29,19 +29,19 @@ public class TableMetadata {
 
     private static final Logger logger = LoggerFactory.getLogger(TableMetadata.class);
 
-    static final String CF_NAME                      = "columnfamily_name";
+    static final String CF_NAME = "columnfamily_name";
 
-    private static final String KEY_VALIDATOR        = "key_validator";
-    private static final String COMPARATOR           = "comparator";
-    private static final String VALIDATOR            = "default_validator";
+    private static final String KEY_VALIDATOR = "key_validator";
+    private static final String COMPARATOR = "comparator";
+    private static final String VALIDATOR = "default_validator";
 
-    private static final String KEY_ALIASES          = "key_aliases";
-    private static final String COLUMN_ALIASES       = "column_aliases";
-    private static final String VALUE_ALIAS          = "value_alias";
+    private static final String KEY_ALIASES = "key_aliases";
+    private static final String COLUMN_ALIASES = "column_aliases";
+    private static final String VALUE_ALIAS = "value_alias";
 
-    private static final String DEFAULT_KEY_ALIAS    = "key";
+    private static final String DEFAULT_KEY_ALIAS = "key";
     private static final String DEFAULT_COLUMN_ALIAS = "column";
-    private static final String DEFAULT_VALUE_ALIAS  = "value";
+    private static final String DEFAULT_VALUE_ALIAS = "value";
 
     private static final Comparator<ColumnMetadata> columnMetadataComparator = new Comparator<ColumnMetadata>() {
         public int compare(ColumnMetadata c1, ColumnMetadata c2) {
@@ -61,7 +61,7 @@ public class TableMetadata {
 
     /**
      * Clustering orders.
-     * <p>
+     * <p/>
      * This is used by {@link #getClusteringOrder} to indicate the clustering
      * order of a table.
      */
@@ -100,8 +100,8 @@ public class TableMetadata {
         CassandraTypeParser.ParseResult keyValidator = CassandraTypeParser.parseWithComposite(row.getString(KEY_VALIDATOR));
         CassandraTypeParser.ParseResult comparator = CassandraTypeParser.parseWithComposite(row.getString(COMPARATOR));
         List<String> columnAliases = cassandraVersion.getMajor() >= 2 || row.getString(COLUMN_ALIASES) == null
-                                   ? Collections.<String>emptyList()
-                                   : SimpleJSONParser.parseStringList(row.getString(COLUMN_ALIASES));
+                ? Collections.<String>emptyList()
+                : SimpleJSONParser.parseStringList(row.getString(COLUMN_ALIASES));
 
         int clusteringSize = findClusteringSize(comparator, rawCols.values(), columnAliases, cassandraVersion);
         boolean isDense = clusteringSize != comparator.types.size() - 1;
@@ -121,8 +121,8 @@ public class TableMetadata {
             // See ControlConnection#refreshSchema for why we'd rather not probably this further. Since table options is one thing
             // that tends to change often in Cassandra, it's worth special casing this.
             logger.error(String.format("Error parsing schema options for table %s.%s: "
-                                       + "Cluster.getMetadata().getKeyspace(\"%s\").getTable(\"%s\").getOptions() will return null",
-                                       ksm.getName(), name, ksm.getName(), name), e);
+                            + "Cluster.getMetadata().getKeyspace(\"%s\").getTable(\"%s\").getOptions() will return null",
+                    ksm.getName(), name, ksm.getName(), name), e);
         }
 
         TableMetadata tm = new TableMetadata(ksm, name, partitionKey, clusteringColumns, columns, options, clusteringOrder, cassandraVersion);
@@ -135,8 +135,8 @@ public class TableMetadata {
             // In C* 1.2, only the REGULAR columns are in the columns schema table, so we need to add the names from
             // the aliases (and make sure we handle default aliases).
             List<String> keyAliases = row.getString(KEY_ALIASES) == null
-                                    ? Collections.<String>emptyList()
-                                    : SimpleJSONParser.parseStringList(row.getString(KEY_ALIASES));
+                    ? Collections.<String>emptyList()
+                    : SimpleJSONParser.parseStringList(row.getString(KEY_ALIASES));
             for (int i = 0; i < partitionKey.size(); i++) {
                 String alias = keyAliases.size() > i ? keyAliases.get(i) : (i == 0 ? DEFAULT_KEY_ALIAS : DEFAULT_KEY_ALIAS + (i + 1));
                 partitionKey.set(i, ColumnMetadata.forAlias(tm, alias, keyValidator.types.get(i)));
@@ -234,8 +234,8 @@ public class TableMetadata {
      * Returns metadata on a column of this table.
      *
      * @param name the name of the column to retrieve ({@code name} will be
-     * interpreted as a case-insensitive identifier unless enclosed in double-quotes,
-     * see {@link Metadata#quote}).
+     *             interpreted as a case-insensitive identifier unless enclosed in double-quotes,
+     *             see {@link Metadata#quote}).
      * @return the metadata for the {@code name} column if it exists, or
      * {@code null} otherwise.
      */
@@ -245,7 +245,7 @@ public class TableMetadata {
 
     /**
      * Returns a list containing all the columns of this table.
-     *
+     * <p/>
      * The order of the columns in the list is consistent with
      * the order of the columns returned by a {@code SELECT * FROM thisTable}:
      * the first column is the partition key, next are the clustering
@@ -260,7 +260,7 @@ public class TableMetadata {
 
     /**
      * Returns the list of columns composing the primary key for this table.
-     *
+     * <p/>
      * A table will always at least have a partition key (that
      * may itself be one or more columns), so the returned list at least
      * has one element.
@@ -276,7 +276,7 @@ public class TableMetadata {
 
     /**
      * Returns the list of columns composing the partition key for this table.
-     *
+     * <p/>
      * A table always has a partition key so the returned list has
      * at least one element.
      *
@@ -298,7 +298,7 @@ public class TableMetadata {
 
     /**
      * Returns the clustering order for this table.
-     * <p>
+     * <p/>
      * The returned contains the clustering order of each clustering column. The
      * {@code i}th element of the result correspond to the order (ascending or
      * descending) of the {@code i}th clustering column (see
@@ -328,11 +328,11 @@ public class TableMetadata {
     /**
      * Returns a {@code String} containing CQL queries representing this
      * table and the index on it.
-     *
+     * <p/>
      * In other words, this method returns the queries that would allow you to
      * recreate the schema of this table, along with the index defined on
      * columns of this table.
-     *
+     * <p/>
      * Note that the returned String is formatted to be human readable (for
      * some definition of human readable at least).
      *
@@ -356,10 +356,10 @@ public class TableMetadata {
 
     /**
      * Returns a CQL query representing this table.
-     *
+     * <p/>
      * This method returns a single 'CREATE TABLE' query with the options
      * corresponding to this table definition.
-     *
+     * <p/>
      * Note that the returned string is a single line; the returned query
      * is not formatted in any way.
      *
@@ -377,7 +377,7 @@ public class TableMetadata {
         if (o == null || getClass() != o.getClass())
             return false;
 
-        TableMetadata that = (TableMetadata)o;
+        TableMetadata that = (TableMetadata) o;
 
         if (!name.equals(that.name))
             return false;
@@ -423,7 +423,8 @@ public class TableMetadata {
             sb.append('(');
             boolean first = true;
             for (ColumnMetadata cm : partitionKey) {
-                if (first) first = false; else sb.append(", ");
+                if (first) first = false;
+                else sb.append(", ");
                 sb.append(Metadata.escapeId(cm.getName()));
             }
             sb.append(')');
@@ -449,7 +450,7 @@ public class TableMetadata {
         and(sb, formatted).append("bloom_filter_fp_chance = ").append(options.bfFpChance);
         and(sb, formatted).append("caching = '").append(options.caching).append('\'');
         if (options.comment != null)
-            and(sb, formatted).append("comment = '").append(options.comment.replace("'","''")).append('\'');
+            and(sb, formatted).append("comment = '").append(options.comment.replace("'", "''")).append('\'');
         and(sb, formatted).append("compaction = ").append(formatOptionMap(options.compaction));
         and(sb, formatted).append("compression = ").append(formatOptionMap(options.compression));
         if (cassandraVersion.getMajor() >= 2) {
@@ -475,7 +476,8 @@ public class TableMetadata {
         sb.append("{ ");
         boolean first = true;
         for (Map.Entry<String, String> entry : m.entrySet()) {
-            if (first) first = false; else sb.append(", ");
+            if (first) first = false;
+            else sb.append(", ");
             sb.append('\'').append(entry.getKey()).append('\'');
             sb.append(" : ");
             try {
@@ -511,23 +513,23 @@ public class TableMetadata {
 
     public static class Options {
 
-        private static final String COMMENT                  = "comment";
-        private static final String READ_REPAIR              = "read_repair_chance";
-        private static final String LOCAL_READ_REPAIR        = "local_read_repair_chance";
-        private static final String REPLICATE_ON_WRITE       = "replicate_on_write";
-        private static final String GC_GRACE                 = "gc_grace_seconds";
-        private static final String BF_FP_CHANCE             = "bloom_filter_fp_chance";
-        private static final String CACHING                  = "caching";
-        private static final String COMPACTION_CLASS         = "compaction_strategy_class";
-        private static final String COMPACTION_OPTIONS       = "compaction_strategy_options";
+        private static final String COMMENT = "comment";
+        private static final String READ_REPAIR = "read_repair_chance";
+        private static final String LOCAL_READ_REPAIR = "local_read_repair_chance";
+        private static final String REPLICATE_ON_WRITE = "replicate_on_write";
+        private static final String GC_GRACE = "gc_grace_seconds";
+        private static final String BF_FP_CHANCE = "bloom_filter_fp_chance";
+        private static final String CACHING = "caching";
+        private static final String COMPACTION_CLASS = "compaction_strategy_class";
+        private static final String COMPACTION_OPTIONS = "compaction_strategy_options";
         private static final String MIN_COMPACTION_THRESHOLD = "min_compaction_threshold";
         private static final String MAX_COMPACTION_THRESHOLD = "max_compaction_threshold";
-        private static final String POPULATE_CACHE_ON_FLUSH  = "populate_io_cache_on_flush";
-        private static final String COMPRESSION_PARAMS       = "compression_parameters";
+        private static final String POPULATE_CACHE_ON_FLUSH = "populate_io_cache_on_flush";
+        private static final String COMPRESSION_PARAMS = "compression_parameters";
         private static final String MEMTABLE_FLUSH_PERIOD_MS = "memtable_flush_period_in_ms";
-        private static final String DEFAULT_TTL              = "default_time_to_live";
-        private static final String SPECULATIVE_RETRY        = "speculative_retry";
-        private static final String INDEX_INTERVAL           = "index_interval";
+        private static final String DEFAULT_TTL = "default_time_to_live";
+        private static final String SPECULATIVE_RETRY = "speculative_retry";
+        private static final String INDEX_INTERVAL = "index_interval";
 
         private static final boolean DEFAULT_REPLICATE_ON_WRITE = true;
         private static final double DEFAULT_BF_FP_CHANCE = 0.01;
@@ -577,7 +579,7 @@ public class TableMetadata {
 
         private static boolean isNullOrAbsent(Row row, String name) {
             return row.getColumnDefinitions().getIndexOf(name) < 0
-                   || row.isNull(name);
+                    || row.isNull(name);
         }
 
         /**
@@ -618,7 +620,7 @@ public class TableMetadata {
 
         /**
          * Returns whether replicateOnWrite is set for this table.
-         *
+         * <p/>
          * This is only meaningful for tables holding counters.
          *
          * @return whether replicateOnWrite is set for this table.
@@ -678,7 +680,7 @@ public class TableMetadata {
 
         /**
          * Returns the default TTL for this table.
-         * <p>
+         * <p/>
          * Note: this option is not available in Cassandra 1.2 and will return 0 (no default
          * TTL) when connected to 1.2 nodes.
          *
@@ -691,7 +693,7 @@ public class TableMetadata {
 
         /**
          * Returns the speculative retry option for this table.
-         * <p>
+         * <p/>
          * Note: this option is not available in Cassandra 1.2 and will return "NONE" (no
          * speculative retry) when connected to 1.2 nodes.
          *
@@ -703,7 +705,7 @@ public class TableMetadata {
 
         /**
          * Returns the index interval option for this table.
-         * <p>
+         * <p/>
          * Note: this option is not available in Cassandra 1.2 (more precisely, it is not
          * configurable per-table) and will return 128 (the default index interval) when
          * connected to 1.2 nodes.
@@ -739,7 +741,7 @@ public class TableMetadata {
             if (o == null || getClass() != o.getClass())
                 return false;
 
-            Options options = (Options)o;
+            Options options = (Options) o;
 
             if (isCompactStorage != options.isCompactStorage)
                 return false;
@@ -780,13 +782,13 @@ public class TableMetadata {
             result = (isCompactStorage ? 1 : 0);
             result = 31 * result + (comment != null ? comment.hashCode() : 0);
             temp = Double.doubleToLongBits(readRepair);
-            result = 31 * result + (int)(temp ^ (temp >>> 32));
+            result = 31 * result + (int) (temp ^ (temp >>> 32));
             temp = Double.doubleToLongBits(localReadRepair);
-            result = 31 * result + (int)(temp ^ (temp >>> 32));
+            result = 31 * result + (int) (temp ^ (temp >>> 32));
             result = 31 * result + (replicateOnWrite ? 1 : 0);
             result = 31 * result + gcGrace;
             temp = Double.doubleToLongBits(bfFpChance);
-            result = 31 * result + (int)(temp ^ (temp >>> 32));
+            result = 31 * result + (int) (temp ^ (temp >>> 32));
             result = 31 * result + (caching != null ? caching.hashCode() : 0);
             result = 31 * result + (populateCacheOnFlush ? 1 : 0);
             result = 31 * result + memtableFlushPeriodMs;

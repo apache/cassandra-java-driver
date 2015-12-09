@@ -15,6 +15,9 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.exceptions.InvalidTypeException;
+import com.datastax.driver.core.utils.Bytes;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -28,42 +31,40 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.regex.Pattern;
 
-import com.datastax.driver.core.exceptions.InvalidTypeException;
-import com.datastax.driver.core.utils.Bytes;
-
 abstract class TypeCodec<T> {
 
     private static final Map<DataType.Name, TypeCodec<?>> primitiveCodecs = new EnumMap<DataType.Name, TypeCodec<?>>(DataType.Name.class);
+
     static {
-        primitiveCodecs.put(DataType.Name.ASCII,     StringCodec.asciiInstance);
-        primitiveCodecs.put(DataType.Name.BIGINT,    LongCodec.instance);
-        primitiveCodecs.put(DataType.Name.BLOB,      BytesCodec.instance);
-        primitiveCodecs.put(DataType.Name.BOOLEAN,   BooleanCodec.instance);
-        primitiveCodecs.put(DataType.Name.COUNTER,   LongCodec.instance);
-        primitiveCodecs.put(DataType.Name.DECIMAL,   DecimalCodec.instance);
-        primitiveCodecs.put(DataType.Name.DOUBLE,    DoubleCodec.instance);
-        primitiveCodecs.put(DataType.Name.FLOAT,     FloatCodec.instance);
-        primitiveCodecs.put(DataType.Name.INET,      InetCodec.instance);
-        primitiveCodecs.put(DataType.Name.INT,       IntCodec.instance);
-        primitiveCodecs.put(DataType.Name.TEXT,      StringCodec.utf8Instance);
+        primitiveCodecs.put(DataType.Name.ASCII, StringCodec.asciiInstance);
+        primitiveCodecs.put(DataType.Name.BIGINT, LongCodec.instance);
+        primitiveCodecs.put(DataType.Name.BLOB, BytesCodec.instance);
+        primitiveCodecs.put(DataType.Name.BOOLEAN, BooleanCodec.instance);
+        primitiveCodecs.put(DataType.Name.COUNTER, LongCodec.instance);
+        primitiveCodecs.put(DataType.Name.DECIMAL, DecimalCodec.instance);
+        primitiveCodecs.put(DataType.Name.DOUBLE, DoubleCodec.instance);
+        primitiveCodecs.put(DataType.Name.FLOAT, FloatCodec.instance);
+        primitiveCodecs.put(DataType.Name.INET, InetCodec.instance);
+        primitiveCodecs.put(DataType.Name.INT, IntCodec.instance);
+        primitiveCodecs.put(DataType.Name.TEXT, StringCodec.utf8Instance);
         primitiveCodecs.put(DataType.Name.TIMESTAMP, DateCodec.instance);
-        primitiveCodecs.put(DataType.Name.UUID,      UUIDCodec.instance);
-        primitiveCodecs.put(DataType.Name.VARCHAR,   StringCodec.utf8Instance);
-        primitiveCodecs.put(DataType.Name.VARINT,    BigIntegerCodec.instance);
-        primitiveCodecs.put(DataType.Name.TIMEUUID,  TimeUUIDCodec.instance);
-        primitiveCodecs.put(DataType.Name.CUSTOM,    BytesCodec.instance);
+        primitiveCodecs.put(DataType.Name.UUID, UUIDCodec.instance);
+        primitiveCodecs.put(DataType.Name.VARCHAR, StringCodec.utf8Instance);
+        primitiveCodecs.put(DataType.Name.VARINT, BigIntegerCodec.instance);
+        primitiveCodecs.put(DataType.Name.TIMEUUID, TimeUUIDCodec.instance);
+        primitiveCodecs.put(DataType.Name.CUSTOM, BytesCodec.instance);
     }
 
     private static final Map<DataType.Name, TypeCodec<List<?>>> primitiveListsCodecs = new EnumMap<DataType.Name, TypeCodec<List<?>>>(DataType.Name.class);
     private static final Map<DataType.Name, TypeCodec<Set<?>>> primitiveSetsCodecs = new EnumMap<DataType.Name, TypeCodec<Set<?>>>(DataType.Name.class);
     private static final Map<DataType.Name, Map<DataType.Name, TypeCodec<Map<?, ?>>>> primitiveMapsCodecs = new EnumMap<DataType.Name, Map<DataType.Name, TypeCodec<Map<?, ?>>>>(DataType.Name.class);
+
     static {
         populatePrimitiveCollectionCodecs();
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
-    private static void populatePrimitiveCollectionCodecs()
-    {
+    private static void populatePrimitiveCollectionCodecs() {
         for (Map.Entry<DataType.Name, TypeCodec<?>> entry : primitiveCodecs.entrySet()) {
             DataType.Name type = entry.getKey();
             TypeCodec<?> codec = entry.getValue();
@@ -76,34 +77,37 @@ abstract class TypeCodec<T> {
         }
     }
 
-    private TypeCodec() {}
+    private TypeCodec() {
+    }
 
     public abstract T parse(String value);
+
     public abstract String format(T value);
 
     public abstract ByteBuffer serialize(T value);
+
     public abstract T deserialize(ByteBuffer bytes);
 
     @SuppressWarnings("unchecked")
     static <T> TypeCodec<T> createFor(DataType.Name name) {
         assert !name.isCollection();
-        return (TypeCodec<T>)primitiveCodecs.get(name);
+        return (TypeCodec<T>) primitiveCodecs.get(name);
     }
 
     @SuppressWarnings("unchecked")
     static <T> TypeCodec<List<T>> listOf(DataType arg) {
         TypeCodec<List<?>> codec = primitiveListsCodecs.get(arg.getName());
         return codec != null
-             ? (TypeCodec)codec
-             : new ListCodec<T>(TypeCodec.<T>createFor(arg.getName()));
+                ? (TypeCodec) codec
+                : new ListCodec<T>(TypeCodec.<T>createFor(arg.getName()));
     }
 
     @SuppressWarnings("unchecked")
     static <T> TypeCodec<Set<T>> setOf(DataType arg) {
         TypeCodec<Set<?>> codec = primitiveSetsCodecs.get(arg.getName());
         return codec != null
-             ? (TypeCodec)codec
-             : new SetCodec<T>(TypeCodec.<T>createFor(arg.getName()));
+                ? (TypeCodec) codec
+                : new SetCodec<T>(TypeCodec.<T>createFor(arg.getName()));
     }
 
     @SuppressWarnings("unchecked")
@@ -111,8 +115,8 @@ abstract class TypeCodec<T> {
         Map<DataType.Name, TypeCodec<Map<?, ?>>> valueCodecs = primitiveMapsCodecs.get(keys.getName());
         TypeCodec<Map<?, ?>> codec = valueCodecs == null ? null : valueCodecs.get(values.getName());
         return codec != null
-             ? (TypeCodec)codec
-             : new MapCodec<K, V>(TypeCodec.<K>createFor(keys.getName()), TypeCodec.<V>createFor(values.getName()));
+                ? (TypeCodec) codec
+                : new MapCodec<K, V>(TypeCodec.<K>createFor(keys.getName()), TypeCodec.<V>createFor(values.getName()));
     }
 
     /* This is ugly, but not sure how we can do much better/faster
@@ -163,7 +167,7 @@ abstract class TypeCodec<T> {
             return DataType.uuid();
 
         if (value instanceof List) {
-            List<?> l = (List<?>)value;
+            List<?> l = (List<?>) value;
             if (l.isEmpty())
                 return DataType.list(DataType.blob());
             DataType eltType = getDataTypeFor(l.get(0));
@@ -171,7 +175,7 @@ abstract class TypeCodec<T> {
         }
 
         if (value instanceof Set) {
-            Set<?> s = (Set<?>)value;
+            Set<?> s = (Set<?>) value;
             if (s.isEmpty())
                 return DataType.set(DataType.blob());
             DataType eltType = getDataTypeFor(s.iterator().next());
@@ -179,15 +183,15 @@ abstract class TypeCodec<T> {
         }
 
         if (value instanceof Map) {
-            Map<?, ?> m = (Map<?, ?>)value;
+            Map<?, ?> m = (Map<?, ?>) value;
             if (m.isEmpty())
                 return DataType.map(DataType.blob(), DataType.blob());
             Map.Entry<?, ?> e = m.entrySet().iterator().next();
             DataType keyType = getDataTypeFor(e.getKey());
             DataType valueType = getDataTypeFor(e.getValue());
             return keyType == null || valueType == null
-                 ? null
-                 : DataType.map(keyType, valueType);
+                    ? null
+                    : DataType.map(keyType, valueType);
         }
 
         return null;
@@ -198,15 +202,15 @@ abstract class TypeCodec<T> {
         if (elements > 65535)
             throw new IllegalArgumentException("Native protocol version 2 supports up to 65535 elements in any collection - but collection contains " + elements + " elements");
         ByteBuffer result = ByteBuffer.allocate(2 + size);
-        result.putShort((short)elements);
+        result.putShort((short) elements);
         for (ByteBuffer bb : buffers) {
             int elemSize = bb.remaining();
             if (elemSize > 65535)
                 throw new IllegalArgumentException("Native protocol version 2 supports only elements with size up to 65535 bytes - but element size is " + elemSize + " bytes");
-            result.putShort((short)elemSize);
+            result.putShort((short) elemSize);
             result.put(bb.duplicate());
         }
-        return (ByteBuffer)result.flip();
+        return (ByteBuffer) result.flip();
     }
 
     // Utility method for collections
@@ -245,7 +249,7 @@ abstract class TypeCodec<T> {
             int nbMatch = 0;
             int start = -1;
             do {
-                start = text.indexOf(search, start+1);
+                start = text.indexOf(search, start + 1);
                 if (start != -1)
                     ++nbMatch;
             } while (start != -1);
@@ -283,7 +287,8 @@ abstract class TypeCodec<T> {
 
         public static final LongCodec instance = new LongCodec();
 
-        private LongCodec() {}
+        private LongCodec() {
+        }
 
         @Override
         public Long parse(String value) {
@@ -327,7 +332,8 @@ abstract class TypeCodec<T> {
 
         public static final BytesCodec instance = new BytesCodec();
 
-        private BytesCodec() {}
+        private BytesCodec() {
+        }
 
         @Override
         public ByteBuffer parse(String value) {
@@ -352,12 +358,13 @@ abstract class TypeCodec<T> {
 
     static class BooleanCodec extends TypeCodec<Boolean> {
 
-        private static final ByteBuffer TRUE = ByteBuffer.wrap(new byte[] {1});
-        private static final ByteBuffer FALSE = ByteBuffer.wrap(new byte[] {0});
+        private static final ByteBuffer TRUE = ByteBuffer.wrap(new byte[]{1});
+        private static final ByteBuffer FALSE = ByteBuffer.wrap(new byte[]{0});
 
         public static final BooleanCodec instance = new BooleanCodec();
 
-        private BooleanCodec() {}
+        private BooleanCodec() {
+        }
 
         @Override
         public Boolean parse(String value) {
@@ -400,7 +407,8 @@ abstract class TypeCodec<T> {
 
         public static final DecimalCodec instance = new DecimalCodec();
 
-        private DecimalCodec() {}
+        private DecimalCodec() {
+        }
 
         @Override
         public BigDecimal parse(String value) {
@@ -448,7 +456,8 @@ abstract class TypeCodec<T> {
 
         public static final DoubleCodec instance = new DoubleCodec();
 
-        private DoubleCodec() {}
+        private DoubleCodec() {
+        }
 
         @Override
         public Double parse(String value) {
@@ -492,7 +501,8 @@ abstract class TypeCodec<T> {
 
         public static final FloatCodec instance = new FloatCodec();
 
-        private FloatCodec() {}
+        private FloatCodec() {
+        }
 
         @Override
         public Float parse(String value) {
@@ -536,7 +546,8 @@ abstract class TypeCodec<T> {
 
         public static final InetCodec instance = new InetCodec();
 
-        private InetCodec() {}
+        private InetCodec() {
+        }
 
         @Override
         public InetAddress parse(String value) {
@@ -571,7 +582,8 @@ abstract class TypeCodec<T> {
 
         public static final IntCodec instance = new IntCodec();
 
-        private IntCodec() {}
+        private IntCodec() {
+        }
 
         @Override
         public Integer parse(String value) {
@@ -613,27 +625,28 @@ abstract class TypeCodec<T> {
 
     static class DateCodec extends TypeCodec<Date> {
 
-        private static final String[] iso8601Patterns = new String[] {
-            "yyyy-MM-dd HH:mm",
-            "yyyy-MM-dd HH:mm:ss",
-            "yyyy-MM-dd HH:mmZ",
-            "yyyy-MM-dd HH:mm:ssZ",
-            "yyyy-MM-dd HH:mm:ss.SSS",
-            "yyyy-MM-dd HH:mm:ss.SSSZ",
-            "yyyy-MM-dd'T'HH:mm",
-            "yyyy-MM-dd'T'HH:mmZ",
-            "yyyy-MM-dd'T'HH:mm:ss",
-            "yyyy-MM-dd'T'HH:mm:ssZ",
-            "yyyy-MM-dd'T'HH:mm:ss.SSS",
-            "yyyy-MM-dd'T'HH:mm:ss.SSSZ",
-            "yyyy-MM-dd",
-            "yyyy-MM-ddZ"
+        private static final String[] iso8601Patterns = new String[]{
+                "yyyy-MM-dd HH:mm",
+                "yyyy-MM-dd HH:mm:ss",
+                "yyyy-MM-dd HH:mmZ",
+                "yyyy-MM-dd HH:mm:ssZ",
+                "yyyy-MM-dd HH:mm:ss.SSS",
+                "yyyy-MM-dd HH:mm:ss.SSSZ",
+                "yyyy-MM-dd'T'HH:mm",
+                "yyyy-MM-dd'T'HH:mmZ",
+                "yyyy-MM-dd'T'HH:mm:ss",
+                "yyyy-MM-dd'T'HH:mm:ssZ",
+                "yyyy-MM-dd'T'HH:mm:ss.SSS",
+                "yyyy-MM-dd'T'HH:mm:ss.SSSZ",
+                "yyyy-MM-dd",
+                "yyyy-MM-ddZ"
         };
 
         public static final DateCodec instance = new DateCodec();
         private static final Pattern IS_LONG_PATTERN = Pattern.compile("^-?\\d+$");
 
-        private DateCodec() {}
+        private DateCodec() {
+        }
 
         /*
          * Copied and adapted from apache commons DateUtils.parseStrictly method (that is used Cassandra side
@@ -697,7 +710,8 @@ abstract class TypeCodec<T> {
 
         public static final UUIDCodec instance = new UUIDCodec();
 
-        protected UUIDCodec() {}
+        protected UUIDCodec() {
+        }
 
         @Override
         public UUID parse(String value) {
@@ -731,7 +745,8 @@ abstract class TypeCodec<T> {
 
         public static final TimeUUIDCodec instance = new TimeUUIDCodec();
 
-        private TimeUUIDCodec() {}
+        private TimeUUIDCodec() {
+        }
 
         @Override
         public UUID parse(String value) {
@@ -754,7 +769,8 @@ abstract class TypeCodec<T> {
 
         public static final BigIntegerCodec instance = new BigIntegerCodec();
 
-        private BigIntegerCodec() {}
+        private BigIntegerCodec() {
+        }
 
         @Override
         public BigInteger parse(String value) {

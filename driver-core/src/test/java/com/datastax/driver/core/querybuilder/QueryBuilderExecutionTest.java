@@ -15,19 +15,15 @@
  */
 package com.datastax.driver.core.querybuilder;
 
-import java.util.*;
-
+import com.datastax.driver.core.*;
 import org.testng.annotations.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.data.MapEntry.entry;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
-
-import com.datastax.driver.core.*;
+import java.util.*;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.data.MapEntry.entry;
+import static org.testng.Assert.*;
 
 public class QueryBuilderExecutionTest extends CCMBridge.PerClassSingleNodeCluster {
 
@@ -36,9 +32,9 @@ public class QueryBuilderExecutionTest extends CCMBridge.PerClassSingleNodeClust
     @Override
     protected Collection<String> getTableDefinitions() {
         return Arrays.asList(
-            String.format(TestUtils.CREATE_TABLE_SIMPLE_FORMAT, TABLE1),
-            "CREATE TABLE dateTest (t timestamp PRIMARY KEY)",
-            "CREATE TABLE test_coll (k int PRIMARY KEY, a list<int>, b map<int,text>, c set<text>)");
+                String.format(TestUtils.CREATE_TABLE_SIMPLE_FORMAT, TABLE1),
+                "CREATE TABLE dateTest (t timestamp PRIMARY KEY)",
+                "CREATE TABLE test_coll (k int PRIMARY KEY, a list<int>, b map<int,text>, c set<text>)");
     }
 
     @Test(groups = "short")

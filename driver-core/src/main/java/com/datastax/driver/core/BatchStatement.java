@@ -15,19 +15,15 @@
  */
 package com.datastax.driver.core;
 
-import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-
 import com.google.common.collect.ImmutableList;
+
+import java.nio.ByteBuffer;
+import java.util.*;
 
 /**
  * A statement that group a number of {@link Statement} so they get executed as
  * a batch.
- * <p>
+ * <p/>
  * Note: BatchStatement is not supported with the native protocol version 1: you
  * will get an {@link UnsupportedProtocolVersionException} when submitting one if
  * version 1 of the protocol is in use (i.e. if you've force version 1 through
@@ -59,7 +55,9 @@ public class BatchStatement extends Statement {
          * operations and it can only contain these.
          */
         COUNTER
-    };
+    }
+
+    ;
 
     final Type batchType;
     private final List<Statement> statements = new ArrayList<Statement>();
@@ -84,14 +82,14 @@ public class BatchStatement extends Statement {
         IdAndValues idAndVals = new IdAndValues(statements.size());
         for (Statement statement : statements) {
             if (statement instanceof RegularStatement) {
-                RegularStatement st = (RegularStatement)statement;
+                RegularStatement st = (RegularStatement) statement;
                 ByteBuffer[] vals = st.getValues();
                 idAndVals.ids.add(st.getQueryString());
                 idAndVals.values.add(vals == null ? Collections.<ByteBuffer>emptyList() : Arrays.asList(vals));
             } else {
                 // We handle BatchStatement in add() so ...
                 assert statement instanceof BoundStatement;
-                BoundStatement st = (BoundStatement)statement;
+                BoundStatement st = (BoundStatement) statement;
                 idAndVals.ids.add(st.statement.getPreparedId().id);
                 idAndVals.values.add(Arrays.asList(st.values));
             }
@@ -101,13 +99,13 @@ public class BatchStatement extends Statement {
 
     /**
      * Adds a new statement to this batch.
-     * <p>
+     * <p/>
      * Note that {@code statement} can be any {@code Statement}. It is allowed to mix
      * {@code RegularStatement} and {@code BoundStatement} in the same
      * {@code BatchStatement} in particular. Adding another {@code BatchStatement}
      * is also allowed for convenient and is equivalent to adding all the {@code Statement}
      * contained in that other {@code BatchStatement}.
-     * <p>
+     * <p/>
      * Please note that the options of the added Statement (all those defined directly by the
      * {@link Statement} class: consistency level, fetch size, tracing, ...) will be ignored
      * for the purpose of the execution of the Batch. Instead, the options used are the one
@@ -115,10 +113,9 @@ public class BatchStatement extends Statement {
      *
      * @param statement the new statement to add.
      * @return this batch statement.
-     *
      * @throws IllegalStateException if adding the new statement means that this
-     * {@code BatchStatement} has more than 65536 statements (since this is the maximum number
-     * of statements for a BatchStatement allowed by the underlying protocol).
+     *                               {@code BatchStatement} has more than 65536 statements (since this is the maximum number
+     *                               of statements for a BatchStatement allowed by the underlying protocol).
      */
     public BatchStatement add(Statement statement) {
 
@@ -126,7 +123,7 @@ public class BatchStatement extends Statement {
         // easier to avoid endless loop if the use mistakenly pass a batch that depends on this
         // object (or this directly).
         if (statement instanceof BatchStatement) {
-            for (Statement subStatements : ((BatchStatement)statement).statements) {
+            for (Statement subStatements : ((BatchStatement) statement).statements) {
                 add(subStatements);
             }
         } else {
@@ -139,7 +136,7 @@ public class BatchStatement extends Statement {
 
     /**
      * Adds multiple statements to this batch.
-     * <p>
+     * <p/>
      * This is a shortcut method that calls {@link #add} on all the statements
      * from {@code statements}.
      *
@@ -184,7 +181,7 @@ public class BatchStatement extends Statement {
     /**
      * Throws an {@code UnsupportedOperationException} as setting the serial consistency is
      * currently not supported for protocol batches by Cassandra.
-     * <p>
+     * <p/>
      * The current version of the protocol uses does not allow to provide a serial consistency level
      * for protocol batches (the batch created through this class). This is fixed by the protocol
      * version 3 that will be part of Cassandra 2.1 and will be supported by the driver version 2.1.
@@ -193,7 +190,6 @@ public class BatchStatement extends Statement {
      *
      * @param serialConsistency the serial consistency level
      * @return nothing since this call currently always throws an {@code UnsupportedOperationException}.
-     *
      * @throws UnsupportedOperationException see above.
      */
     @Override

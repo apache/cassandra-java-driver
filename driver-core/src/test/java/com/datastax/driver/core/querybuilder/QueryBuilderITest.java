@@ -15,19 +15,17 @@
  */
 package com.datastax.driver.core.querybuilder;
 
+import com.datastax.driver.core.*;
+import com.datastax.driver.core.exceptions.SyntaxError;
+import com.datastax.driver.core.utils.CassandraVersion;
+import org.testng.annotations.Test;
+
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.TreeSet;
 
-import org.testng.annotations.Test;
-
-import static org.testng.Assert.*;
-
-import com.datastax.driver.core.*;
-import com.datastax.driver.core.exceptions.SyntaxError;
-import com.datastax.driver.core.utils.CassandraVersion;
-
 import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
+import static org.testng.Assert.*;
 
 public class QueryBuilderITest extends CCMBridge.PerClassSingleNodeCluster {
 
@@ -37,15 +35,15 @@ public class QueryBuilderITest extends CCMBridge.PerClassSingleNodeCluster {
     @Override
     protected Collection<String> getTableDefinitions() {
         return Arrays.asList(String.format("CREATE TABLE %s (k text PRIMARY KEY, a int, b int)", TABLE_TEXT),
-                             String.format("CREATE TABLE %s (k int PRIMARY KEY, a int, b int)", TABLE_INT));
+                String.format("CREATE TABLE %s (k int PRIMARY KEY, a int, b int)", TABLE_INT));
     }
 
     @Override
     protected Cluster.Builder configure(Cluster.Builder builder) {
         return builder.withQueryOptions(new QueryOptions()
-            .setRefreshNodeIntervalMillis(0)
-            .setRefreshNodeListIntervalMillis(0)
-            .setRefreshSchemaIntervalMillis(0)
+                        .setRefreshNodeIntervalMillis(0)
+                        .setRefreshNodeListIntervalMillis(0)
+                        .setRefreshSchemaIntervalMillis(0)
         );
     }
 
@@ -147,7 +145,11 @@ public class QueryBuilderITest extends CCMBridge.PerClassSingleNodeCluster {
         assertEquals(insert.toString(), query);
 
         query = "INSERT INTO foo(a,b) VALUES ({'2''} space','3','4'},3.4) USING TTL 24 AND TIMESTAMP 42;";
-        insert = insertInto("foo").values(new String[]{ "a", "b"}, new Object[]{ new TreeSet<String>(){{ add("2'} space"); add("3"); add("4"); }}, 3.4 }).using(ttl(24)).and(timestamp(42));
+        insert = insertInto("foo").values(new String[]{"a", "b"}, new Object[]{new TreeSet<String>() {{
+            add("2'} space");
+            add("3");
+            add("4");
+        }}, 3.4}).using(ttl(24)).and(timestamp(42));
         assertEquals(insert.toString(), query);
     }
 
@@ -215,9 +217,9 @@ public class QueryBuilderITest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     @Test(groups = "short")
-    @CassandraVersion(major=2.0, minor=7, description="DELETE..IF EXISTS only supported in 2.0.7+ (CASSANDRA-5708)")
+    @CassandraVersion(major = 2.0, minor = 7, description = "DELETE..IF EXISTS only supported in 2.0.7+ (CASSANDRA-5708)")
     public void conditionalDeletesTest() throws Exception {
-        session.execute(String.format("INSERT INTO %s.test_int (k, a, b) VALUES (1, 1, 1)",keyspace));
+        session.execute(String.format("INSERT INTO %s.test_int (k, a, b) VALUES (1, 1, 1)", keyspace));
 
         Statement delete;
         Row row;
@@ -241,9 +243,9 @@ public class QueryBuilderITest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     @Test(groups = "short")
-    @CassandraVersion(major=2.0, minor=13, description="Allow IF EXISTS for UPDATE statements (CASSANDRA-8610)")
+    @CassandraVersion(major = 2.0, minor = 13, description = "Allow IF EXISTS for UPDATE statements (CASSANDRA-8610)")
     public void conditionalUpdatesTest() throws Exception {
-        session.execute(String.format("INSERT INTO %s.test_int (k, a, b) VALUES (1, 1, 1)",keyspace));
+        session.execute(String.format("INSERT INTO %s.test_int (k, a, b) VALUES (1, 1, 1)", keyspace));
 
         Statement update;
         Row row;

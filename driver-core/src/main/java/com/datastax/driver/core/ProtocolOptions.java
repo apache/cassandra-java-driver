@@ -26,21 +26,27 @@ public class ProtocolOptions {
      * Compression supported by the Cassandra binary protocol.
      */
     public enum Compression {
-        /** No compression */
+        /**
+         * No compression
+         */
         NONE("") {
             @Override
             FrameCompressor compressor() {
                 return null;
             }
         },
-        /** Snappy compression */
+        /**
+         * Snappy compression
+         */
         SNAPPY("snappy") {
             @Override
             FrameCompressor compressor() {
                 return FrameCompressor.SnappyCompressor.instance;
             }
         },
-        /** LZ4 compression */
+        /**
+         * LZ4 compression
+         */
         LZ4("lz4") {
             @Override
             FrameCompressor compressor() {
@@ -68,7 +74,9 @@ public class ProtocolOptions {
         public String toString() {
             return protocolName;
         }
-    };
+    }
+
+    ;
 
     /**
      * The default port for Cassandra native binary protocol: 9042.
@@ -104,7 +112,7 @@ public class ProtocolOptions {
     /**
      * Creates a new {@code ProtocolOptions} instance using the provided port
      * (without SSL nor authentication).
-     * <p>
+     * <p/>
      * This is a shortcut for {@code new ProtocolOptions(port, null, AuthProvider.NONE)}.
      *
      * @param port the port to use for the binary protocol.
@@ -117,15 +125,15 @@ public class ProtocolOptions {
      * Creates a new {@code ProtocolOptions} instance using the provided port
      * and SSL context.
      *
-     * @param port the port to use for the binary protocol.
+     * @param port            the port to use for the binary protocol.
      * @param protocolVersion the protocol version to use. This can be a negative number, in which case the
-     * version uses will be the biggest version supported by the <em>first</em> node the driver connects to.
-     * Otherwise, it must be either 1 or 2 to force using a particular protocol version. See
-     * {@link Cluster.Builder#withProtocolVersion} for more details.
-     * @param sslOptions the SSL options to use. Use {@code null} if SSL is not
-     * to be used.
-     * @param authProvider the {@code AuthProvider} to use for authentication against
-     * the Cassandra nodes.
+     *                        version uses will be the biggest version supported by the <em>first</em> node the driver connects to.
+     *                        Otherwise, it must be either 1 or 2 to force using a particular protocol version. See
+     *                        {@link Cluster.Builder#withProtocolVersion} for more details.
+     * @param sslOptions      the SSL options to use. Use {@code null} if SSL is not
+     *                        to be used.
+     * @param authProvider    the {@code AuthProvider} to use for authentication against
+     *                        the Cassandra nodes.
      */
     public ProtocolOptions(int port, int protocolVersion, int maxSchemaAgreementWaitSeconds, SSLOptions sslOptions, AuthProvider authProvider) {
         this.port = port;
@@ -166,7 +174,7 @@ public class ProtocolOptions {
 
     /**
      * Returns the compression used by the protocol.
-     * <p>
+     * <p/>
      * By default, compression is not used.
      *
      * @return the compression used.
@@ -177,18 +185,17 @@ public class ProtocolOptions {
 
     /**
      * Sets the compression to use.
-     * <p>
+     * <p/>
      * Note that while this setting can be changed at any time, it will
      * only apply to newly created connections.
      *
      * @param compression the compression algorithm to use (or {@code
-     * Compression.NONE} to disable compression).
+     *                    Compression.NONE} to disable compression).
      * @return this {@code ProtocolOptions} object.
-     *
      * @throws IllegalStateException if the compression requested is not
-     * available. Most compression algorithms require that the relevant be
-     * present in the classpath. If not, the compression will be
-     * unavailable.
+     *                               available. Most compression algorithms require that the relevant be
+     *                               present in the classpath. If not, the compression will be
+     *                               unavailable.
      */
     public ProtocolOptions setCompression(Compression compression) {
         if (compression != Compression.NONE && compression.compressor() == null)

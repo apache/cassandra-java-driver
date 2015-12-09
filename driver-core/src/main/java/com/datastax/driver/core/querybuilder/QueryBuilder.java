@@ -15,34 +15,35 @@
  */
 package com.datastax.driver.core.querybuilder;
 
-import java.util.*;
-
 import com.datastax.driver.core.RegularStatement;
 import com.datastax.driver.core.TableMetadata;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
 
+import java.util.*;
+
 /**
  * Static methods to build a CQL3 query.
- * <p>
+ * <p/>
  * The queries built by this builder will provide a value for the
  * {@link com.datastax.driver.core.Statement#getRoutingKey} method only when a
  * {@link com.datastax.driver.core.TableMetadata} is provided to the builder.
  * It is thus advised to do so if a {@link com.datastax.driver.core.policies.TokenAwarePolicy}
  * is in use.
- * <p>
+ * <p/>
  * The provider builders perform very little validation of the built query.
  * There is thus no guarantee that a built query is valid, and it is
  * definitively possible to create invalid queries.
- * <p>
+ * <p/>
  * Note that it could be convenient to use an 'import static' to use the methods of this class.
  */
 public final class QueryBuilder {
 
-    private QueryBuilder() {}
+    private QueryBuilder() {
+    }
 
     /**
      * Start building a new SELECT query that selects the provided names.
-     *
+     * <p/>
      * Note that {@code select(c1, c2)} is just a shortcut for {@code select().column(c1).column(c2) }.
      *
      * @param columns the columns names that should be selected by the query.
@@ -50,7 +51,7 @@ public final class QueryBuilder {
      * least a FROM clause to complete the query).
      */
     public static Select.Builder select(String... columns) {
-        return new Select.Builder(Arrays.asList((Object[])columns));
+        return new Select.Builder(Arrays.asList((Object[]) columns));
     }
 
     /**
@@ -78,7 +79,7 @@ public final class QueryBuilder {
      * Start building a new INSERT query.
      *
      * @param keyspace the name of the keyspace to use.
-     * @param table the name of the table to insert into.
+     * @param table    the name of the table to insert into.
      * @return an in-construction INSERT query.
      */
     public static Insert insertInto(String keyspace, String table) {
@@ -110,7 +111,7 @@ public final class QueryBuilder {
      * Start building a new UPDATE query.
      *
      * @param keyspace the name of the keyspace to use.
-     * @param table the name of the table to update.
+     * @param table    the name of the table to update.
      * @return an in-construction UPDATE query (at least a SET and a WHERE
      * clause needs to be provided to complete the query).
      */
@@ -153,7 +154,7 @@ public final class QueryBuilder {
 
     /**
      * Built a new BATCH query on the provided statements.
-     * <p>
+     * <p/>
      * This method will build a logged batch (this is the default in CQL3). To
      * create unlogged batches, use {@link #unloggedBatch}. Also note that
      * for convenience, if the provided statements are counter statements, this
@@ -170,14 +171,14 @@ public final class QueryBuilder {
 
     /**
      * Built a new UNLOGGED BATCH query on the provided statements.
-     * <p>
+     * <p/>
      * Compared to logged batches (the default), unlogged batch don't
      * use the distributed batch log server side and as such are not
      * guaranteed to be atomic. In other words, if an unlogged batch
      * timeout, some of the batched statements may have been persisted
      * while some have not. Unlogged batch will however be slightly
      * faster than logged batch.
-     * <p>
+     * <p/>
      * If the statements added to the batch are counter statements, the
      * resulting batch will be a COUNTER one.
      *
@@ -203,7 +204,7 @@ public final class QueryBuilder {
      * Creates a new TRUNCATE query.
      *
      * @param keyspace the name of the keyspace to use.
-     * @param table the name of the table to truncate.
+     * @param table    the name of the table to truncate.
      * @return the truncation query.
      */
     public static Truncate truncate(String keyspace, String table) {
@@ -246,7 +247,7 @@ public final class QueryBuilder {
 
     /**
      * The token of column names.
-     * <p>
+     * <p/>
      * This variant is most useful when the partition key is composite.
      *
      * @param columnNames the column names to take the token of.
@@ -255,7 +256,7 @@ public final class QueryBuilder {
     public static String token(String... columnNames) {
         StringBuilder sb = new StringBuilder();
         sb.append("token(");
-        Utils.joinAndAppendNames(sb, ",", Arrays.asList((Object[])columnNames));
+        Utils.joinAndAppendNames(sb, ",", Arrays.asList((Object[]) columnNames));
         sb.append(')');
         return sb.toString();
     }
@@ -264,7 +265,7 @@ public final class QueryBuilder {
      * Creates an "equal" where clause stating the provided column must be
      * equal to the provided value.
      *
-     * @param name the column name
+     * @param name  the column name
      * @param value the value
      * @return the corresponding where clause.
      */
@@ -276,31 +277,31 @@ public final class QueryBuilder {
      * Create an "in" where clause stating the provided column must be equal
      * to one of the provided values.
      *
-     * @param name the column name
+     * @param name   the column name
      * @param values the values
      * @return the corresponding where clause.
      */
     public static Clause in(String name, Object... values) {
         return new Clause.InClause(name, Arrays.asList(values));
     }
-	
+
     /**
      * Create an "in" where clause stating the provided column must be equal
      * to one of the provided values.
      *
-     * @param name the column name
+     * @param name   the column name
      * @param values the values
      * @return the corresponding where clause.
      */
-	public static Clause in(String name, List<?> values) {
-		return new Clause.InClause(name, values);
-	}
+    public static Clause in(String name, List<?> values) {
+        return new Clause.InClause(name, values);
+    }
 
     /**
      * Creates a "lesser than" where clause stating the provided column must be less than
      * the provided value.
      *
-     * @param name the column name
+     * @param name  the column name
      * @param value the value
      * @return the corresponding where clause.
      */
@@ -310,16 +311,15 @@ public final class QueryBuilder {
 
     /**
      * Creates a "lesser than" where clause for a group of clustering columns.
-     * <p>
+     * <p/>
      * For instance, {@code lt(Arrays.asList("a", "b"), Arrays.asList(2, "test"))}
      * will generate the CQL WHERE clause {@code (a, b) &lt; (2, 'test') }.
-     * <p>
+     * <p/>
      * Please note that this variant is only supported starting with Cassandra 2.0.6.
      *
-     * @param names the column names
+     * @param names  the column names
      * @param values the values
      * @return the corresponding where clause.
-     *
      * @throws IllegalArgumentException if {@code names.size() != values.size()}.
      */
     public static Clause lt(List<String> names, List<?> values) {
@@ -333,7 +333,7 @@ public final class QueryBuilder {
      * Creates a "lesser than or equal" where clause stating the provided column must
      * be lesser than or equal to the provided value.
      *
-     * @param name the column name
+     * @param name  the column name
      * @param value the value
      * @return the corresponding where clause.
      */
@@ -343,16 +343,15 @@ public final class QueryBuilder {
 
     /**
      * Creates a "lesser than or equal" where clause for a group of clustering columns.
-     * <p>
+     * <p/>
      * For instance, {@code lte(Arrays.asList("a", "b"), Arrays.asList(2, "test"))}
      * will generate the CQL WHERE clause {@code (a, b) &lte; (2, 'test') }.
-     * <p>
+     * <p/>
      * Please note that this variant is only supported starting with Cassandra 2.0.6.
      *
-     * @param names the column names
+     * @param names  the column names
      * @param values the values
      * @return the corresponding where clause.
-     *
      * @throws IllegalArgumentException if {@code names.size() != values.size()}.
      */
     public static Clause lte(List<String> names, List<?> values) {
@@ -366,7 +365,7 @@ public final class QueryBuilder {
      * Creates a "greater than" where clause stating the provided column must
      * be greater to the provided value.
      *
-     * @param name the column name
+     * @param name  the column name
      * @param value the value
      * @return the corresponding where clause.
      */
@@ -376,16 +375,15 @@ public final class QueryBuilder {
 
     /**
      * Creates a "greater than" where clause for a group of clustering columns.
-     * <p>
+     * <p/>
      * For instance, {@code gt(Arrays.asList("a", "b"), Arrays.asList(2, "test"))}
      * will generate the CQL WHERE clause {@code (a, b) &gt; (2, 'test') }.
-     * <p>
+     * <p/>
      * Please note that this variant is only supported starting with Cassandra 2.0.6.
      *
-     * @param names the column names
+     * @param names  the column names
      * @param values the values
      * @return the corresponding where clause.
-     *
      * @throws IllegalArgumentException if {@code names.size() != values.size()}.
      */
     public static Clause gt(List<String> names, List<?> values) {
@@ -399,7 +397,7 @@ public final class QueryBuilder {
      * Creates a "greater than or equal" where clause stating the provided
      * column must be greater than or equal to the provided value.
      *
-     * @param name the column name
+     * @param name  the column name
      * @param value the value
      * @return the corresponding where clause.
      */
@@ -409,16 +407,15 @@ public final class QueryBuilder {
 
     /**
      * Creates a "greater than or equal" where clause for a group of clustering columns.
-     * <p>
+     * <p/>
      * For instance, {@code gte(Arrays.asList("a", "b"), Arrays.asList(2, "test"))}
      * will generate the CQL WHERE clause {@code (a, b) &gte; (2, 'test') }.
-     * <p>
+     * <p/>
      * Please note that this variant is only supported starting with Cassandra 2.0.6.
      *
-     * @param names the column names
+     * @param names  the column names
      * @param values the values
      * @return the corresponding where clause.
-     *
      * @throws IllegalArgumentException if {@code names.size() != values.size()}.
      */
     public static Clause gte(List<String> names, List<?> values) {
@@ -453,7 +450,6 @@ public final class QueryBuilder {
      *
      * @param timestamp the timestamp (in microseconds) to use.
      * @return the corresponding option
-     *
      * @throws IllegalArgumentException if {@code timestamp &gt; 0}.
      */
     public static Using timestamp(long timestamp) {
@@ -478,7 +474,6 @@ public final class QueryBuilder {
      *
      * @param ttl the ttl (in seconds) to use.
      * @return the corresponding option
-     *
      * @throws IllegalArgumentException if {@code ttl &gt; 0}.
      */
     public static Using ttl(int ttl) {
@@ -500,10 +495,10 @@ public final class QueryBuilder {
 
     /**
      * Simple "set" assignment of a value to a column.
-     * <p>
+     * <p/>
      * This will generate: {@code name = value}.
      *
-     * @param name the column name
+     * @param name  the column name
      * @param value the value to assign
      * @return the correspond assignment (to use in an update query)
      */
@@ -513,7 +508,7 @@ public final class QueryBuilder {
 
     /**
      * Incrementation of a counter column.
-     * <p>
+     * <p/>
      * This will generate: {@code name = name + 1}.
      *
      * @param name the column name to increment
@@ -525,10 +520,10 @@ public final class QueryBuilder {
 
     /**
      * Incrementation of a counter column by a provided value.
-     * <p>
+     * <p/>
      * This will generate: {@code name = name + value}.
      *
-     * @param name the column name to increment
+     * @param name  the column name to increment
      * @param value the value by which to increment
      * @return the correspond assignment (to use in an update query)
      */
@@ -538,10 +533,10 @@ public final class QueryBuilder {
 
     /**
      * Incrementation of a counter column by a provided value.
-     * <p>
+     * <p/>
      * This will generate: {@code name = name + value}.
      *
-     * @param name the column name to increment
+     * @param name  the column name to increment
      * @param value a bind marker representing the value by which to increment
      * @return the correspond assignment (to use in an update query)
      */
@@ -551,7 +546,7 @@ public final class QueryBuilder {
 
     /**
      * Decrementation of a counter column.
-     * <p>
+     * <p/>
      * This will generate: {@code name = name - 1}.
      *
      * @param name the column name to decrement
@@ -563,10 +558,10 @@ public final class QueryBuilder {
 
     /**
      * Decrementation of a counter column by a provided value.
-     * <p>
+     * <p/>
      * This will generate: {@code name = name - value}.
      *
-     * @param name the column name to decrement
+     * @param name  the column name to decrement
      * @param value the value by which to decrement
      * @return the correspond assignment (to use in an update query)
      */
@@ -576,10 +571,10 @@ public final class QueryBuilder {
 
     /**
      * Decrementation of a counter column by a provided value.
-     * <p>
+     * <p/>
      * This will generate: {@code name = name - value}.
      *
-     * @param name the column name to decrement
+     * @param name  the column name to decrement
      * @param value a bind marker representing the value by which to decrement
      * @return the correspond assignment (to use in an update query)
      */
@@ -589,10 +584,10 @@ public final class QueryBuilder {
 
     /**
      * Prepend a value to a list column.
-     * <p>
+     * <p/>
      * This will generate: {@code name = [ value ] + name}.
      *
-     * @param name the column name (must be of type list).
+     * @param name  the column name (must be of type list).
      * @param value the value to prepend. Using a BindMarker here is not supported.
      *              To use a BindMarker use {@code QueryBuilder#prependAll} with a
      *              singleton list.
@@ -607,7 +602,7 @@ public final class QueryBuilder {
 
     /**
      * Prepend a list of values to a list column.
-     * <p>
+     * <p/>
      * This will generate: {@code name = list + name}.
      *
      * @param name the column name (must be of type list).
@@ -620,7 +615,7 @@ public final class QueryBuilder {
 
     /**
      * Prepend a list of values to a list column.
-     * <p>
+     * <p/>
      * This will generate: {@code name = list + name}.
      *
      * @param name the column name (must be of type list).
@@ -633,10 +628,10 @@ public final class QueryBuilder {
 
     /**
      * Append a value to a list column.
-     * <p>
+     * <p/>
      * This will generate: {@code name = name + [value]}.
      *
-     * @param name the column name (must be of type list).
+     * @param name  the column name (must be of type list).
      * @param value the value to append. Using a BindMarker here is not supported.
      *              To use a BindMarker use {@code QueryBuilder#appendAll} with a
      *              singleton list.
@@ -651,7 +646,7 @@ public final class QueryBuilder {
 
     /**
      * Append a list of values to a list column.
-     * <p>
+     * <p/>
      * This will generate: {@code name = name + list}.
      *
      * @param name the column name (must be of type list).
@@ -664,7 +659,7 @@ public final class QueryBuilder {
 
     /**
      * Append a list of values to a list column.
-     * <p>
+     * <p/>
      * This will generate: {@code name = name + list}.
      *
      * @param name the column name (must be of type list).
@@ -677,10 +672,10 @@ public final class QueryBuilder {
 
     /**
      * Discard a value from a list column.
-     * <p>
+     * <p/>
      * This will generate: {@code name = name - [value]}.
      *
-     * @param name the column name (must be of type list).
+     * @param name  the column name (must be of type list).
      * @param value the value to discard.  Using a BindMarker here is not supported.
      *              To use a BindMarker use {@code QueryBuilder#discardAll} with a singleton list.
      * @return the correspond assignment (to use in an update query)
@@ -694,7 +689,7 @@ public final class QueryBuilder {
 
     /**
      * Discard a list of values to a list column.
-     * <p>
+     * <p/>
      * This will generate: {@code name = name - list}.
      *
      * @param name the column name (must be of type list).
@@ -707,7 +702,7 @@ public final class QueryBuilder {
 
     /**
      * Discard a list of values to a list column.
-     * <p>
+     * <p/>
      * This will generate: {@code name = name - list}.
      *
      * @param name the column name (must be of type list).
@@ -720,11 +715,11 @@ public final class QueryBuilder {
 
     /**
      * Sets a list column value by index.
-     * <p>
+     * <p/>
      * This will generate: {@code name[idx] = value}.
      *
-     * @param name the column name (must be of type list).
-     * @param idx the index to set
+     * @param name  the column name (must be of type list).
+     * @param idx   the index to set
      * @param value the value to set
      * @return the correspond assignment (to use in an update query)
      */
@@ -734,17 +729,17 @@ public final class QueryBuilder {
 
     /**
      * Adds a value to a set column.
-     * <p>
+     * <p/>
      * This will generate: {@code name = name + {value}}.
      *
-     * @param name the column name (must be of type set).
+     * @param name  the column name (must be of type set).
      * @param value the value to add. Using a BindMarker here is not supported.
      *              To use a BindMarker use {@code QueryBuilder#addAll} with a
      *              singleton set.
      * @return the correspond assignment (to use in an update query)
      */
     public static Assignment add(String name, Object value) {
-        if (value instanceof BindMarker){
+        if (value instanceof BindMarker) {
             throw new InvalidQueryException("Binding a value in add() is not supported, use addAll() and bind a singleton list");
         }
         return addAll(name, Collections.singleton(value));
@@ -752,11 +747,11 @@ public final class QueryBuilder {
 
     /**
      * Adds a set of values to a set column.
-     * <p>
+     * <p/>
      * This will generate: {@code name = name + set}.
      *
      * @param name the column name (must be of type set).
-     * @param set the set of values to append
+     * @param set  the set of values to append
      * @return the correspond assignment (to use in an update query)
      */
     public static Assignment addAll(String name, Set<?> set) {
@@ -765,11 +760,11 @@ public final class QueryBuilder {
 
     /**
      * Adds a set of values to a set column.
-     * <p>
+     * <p/>
      * This will generate: {@code name = name + set}.
      *
      * @param name the column name (must be of type set).
-     * @param set a bind marker representing the set of values to append
+     * @param set  a bind marker representing the set of values to append
      * @return the correspond assignment (to use in an update query)
      */
     public static Assignment addAll(String name, BindMarker set) {
@@ -778,10 +773,10 @@ public final class QueryBuilder {
 
     /**
      * Remove a value from a set column.
-     * <p>
+     * <p/>
      * This will generate: {@code name = name - {value}}.
      *
-     * @param name the column name (must be of type set).
+     * @param name  the column name (must be of type set).
      * @param value the value to remove. Using a BindMarker here is not supported.
      *              To use a BindMarker use {@code QueryBuilder#removeAll} with a singleton set.
      * @return the correspond assignment (to use in an update query)
@@ -795,11 +790,11 @@ public final class QueryBuilder {
 
     /**
      * Remove a set of values from a set column.
-     * <p>
+     * <p/>
      * This will generate: {@code name = name - set}.
      *
      * @param name the column name (must be of type set).
-     * @param set the set of values to remove
+     * @param set  the set of values to remove
      * @return the correspond assignment (to use in an update query)
      */
     public static Assignment removeAll(String name, Set<?> set) {
@@ -808,11 +803,11 @@ public final class QueryBuilder {
 
     /**
      * Remove a set of values from a set column.
-     * <p>
+     * <p/>
      * This will generate: {@code name = name - set}.
      *
      * @param name the column name (must be of type set).
-     * @param set a bind marker representing the set of values to remove
+     * @param set  a bind marker representing the set of values to remove
      * @return the correspond assignment (to use in an update query)
      */
     public static Assignment removeAll(String name, BindMarker set) {
@@ -821,11 +816,11 @@ public final class QueryBuilder {
 
     /**
      * Puts a new key/value pair to a map column.
-     * <p>
+     * <p/>
      * This will generate: {@code name[key] = value}.
      *
-     * @param name the column name (must be of type map).
-     * @param key the key to put
+     * @param name  the column name (must be of type map).
+     * @param key   the key to put
      * @param value the value to put
      * @return the correspond assignment (to use in an update query)
      */
@@ -835,11 +830,11 @@ public final class QueryBuilder {
 
     /**
      * Puts a map of new key/value pairs to a map column.
-     * <p>
+     * <p/>
      * This will generate: {@code name = name + map}.
      *
      * @param name the column name (must be of type map).
-     * @param map the map of key/value pairs to put
+     * @param map  the map of key/value pairs to put
      * @return the correspond assignment (to use in an update query)
      */
     public static Assignment putAll(String name, Map<?, ?> map) {
@@ -848,11 +843,11 @@ public final class QueryBuilder {
 
     /**
      * Puts a map of new key/value pairs to a map column.
-     * <p>
+     * <p/>
      * This will generate: {@code name = name + map}.
      *
      * @param name the column name (must be of type map).
-     * @param map a bind marker representing the map of key/value pairs to put
+     * @param map  a bind marker representing the map of key/value pairs to put
      * @return the correspond assignment (to use in an update query)
      */
     public static Assignment putAll(String name, BindMarker map) {
@@ -861,7 +856,7 @@ public final class QueryBuilder {
 
     /**
      * An object representing an anonymous bind marker (a question mark).
-     * <p>
+     * <p/>
      * This can be used wherever a value is expected. For instance, one can do:
      * <pre>
      * {@code
@@ -879,7 +874,7 @@ public final class QueryBuilder {
 
     /**
      * An object representing a named bind marker.
-     * <p>
+     * <p/>
      * This can be used wherever a value is expected. For instance, one can do:
      * <pre>
      * {@code
@@ -888,7 +883,7 @@ public final class QueryBuilder {
      *     PreparedState p = session.prepare(i.toString());
      * }
      * </pre>
-     * <p>
+     * <p/>
      * Please note that named bind makers are only supported starting with Cassandra 2.0.1.
      *
      * @param name the name for the bind marker.
@@ -900,19 +895,19 @@ public final class QueryBuilder {
 
     /**
      * Protects a value from any interpretation by the query builder.
-     * <p>
+     * <p/>
      * The following table exemplify the behavior of this function:
      * <table border=1>
-     *   <caption>Examples of use</caption>
-     *   <tr><th>Code</th><th>Resulting query string</th></tr>
-     *   <tr><td>{@code select().from("t").where(eq("c", "C'est la vie!")); }</td><td>{@code "SELECT * FROM t WHERE c='C''est la vie!';"}</td></tr>
-     *   <tr><td>{@code select().from("t").where(eq("c", raw("C'est la vie!"))); }</td><td>{@code "SELECT * FROM t WHERE c=C'est la vie!;"}</td></tr>
-     *   <tr><td>{@code select().from("t").where(eq("c", raw("'C'est la vie!'"))); }</td><td>{@code "SELECT * FROM t WHERE c='C'est la vie!';"}</td></tr>
-     *   <tr><td>{@code select().from("t").where(eq("c", "now()")); }</td><td>{@code "SELECT * FROM t WHERE c='now()';"}</td></tr>
-     *   <tr><td>{@code select().from("t").where(eq("c", raw("now()"))); }</td><td>{@code "SELECT * FROM t WHERE c=now();"}</td></tr>
+     * <caption>Examples of use</caption>
+     * <tr><th>Code</th><th>Resulting query string</th></tr>
+     * <tr><td>{@code select().from("t").where(eq("c", "C'est la vie!")); }</td><td>{@code "SELECT * FROM t WHERE c='C''est la vie!';"}</td></tr>
+     * <tr><td>{@code select().from("t").where(eq("c", raw("C'est la vie!"))); }</td><td>{@code "SELECT * FROM t WHERE c=C'est la vie!;"}</td></tr>
+     * <tr><td>{@code select().from("t").where(eq("c", raw("'C'est la vie!'"))); }</td><td>{@code "SELECT * FROM t WHERE c='C'est la vie!';"}</td></tr>
+     * <tr><td>{@code select().from("t").where(eq("c", "now()")); }</td><td>{@code "SELECT * FROM t WHERE c='now()';"}</td></tr>
+     * <tr><td>{@code select().from("t").where(eq("c", raw("now()"))); }</td><td>{@code "SELECT * FROM t WHERE c=now();"}</td></tr>
      * </table>
      * <i>Note: the 2nd and 3rd examples in this table are not a valid CQL3 queries.</i>
-     * <p>
+     * <p/>
      * The use of that method is generally discouraged since it lead to security risks. However,
      * if you know what you are doing, it allows to escape the interpretations done by the
      * QueryBuilder.
@@ -927,7 +922,7 @@ public final class QueryBuilder {
     /**
      * Creates a function call.
      *
-     * @param name the name of the function to call.
+     * @param name       the name of the function to call.
      * @param parameters the parameters for the function.
      * @return the function call.
      */
@@ -955,7 +950,7 @@ public final class QueryBuilder {
 
     /**
      * Declares that the name in argument should be treated as a column name.
-     * <p>
+     * <p/>
      * This mainly meant for use with {@link Select.Selection#fcall} when a
      * function should apply to a column name, not a string value.
      *

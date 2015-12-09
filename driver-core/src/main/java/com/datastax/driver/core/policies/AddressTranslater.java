@@ -15,14 +15,14 @@
  */
 package com.datastax.driver.core.policies;
 
-import java.net.InetSocketAddress;
-
 import com.datastax.driver.core.Cluster;
+
+import java.net.InetSocketAddress;
 
 /**
  * Translates IP addresses received from Cassandra nodes into locally queriable
  * addresses.
- * <p>
+ * <p/>
  * The driver auto-detect new Cassandra nodes added to the cluster through server
  * side pushed notifications and through checking the system tables. For each
  * node, the address the driver will receive will correspond to the address set as
@@ -35,7 +35,7 @@ import com.datastax.driver.core.Cluster;
  * pass by a router to reach that node). This interface allows to deal with
  * such cases, by allowing to translate an address as sent by a Cassandra node
  * to another address to be used by the driver for connection.
- * <p>
+ * <p/>
  * Please note that the contact points addresses provided while creating the
  * {@link Cluster} instance are not "tanslated", only IP address retrieve from or sent
  * by Cassandra nodes to the driver are.
@@ -46,10 +46,10 @@ public interface AddressTranslater {
      * Translates a Cassandra {@code rpc_address} to another address if necessary.
      *
      * @param address the address of a node as returned by Cassandra. Note that
-     * if the {@code rpc_address} of a node has been configured to {@code 0.0.0.0}
-     * server side, then the provided address will be the node {@code listen_address},
-     * *not* {@code 0.0.0.0}. Also note that the port for {@code InetSocketAddress}
-     * will always be the one set at Cluster construction time (9042 by default).
+     *                if the {@code rpc_address} of a node has been configured to {@code 0.0.0.0}
+     *                server side, then the provided address will be the node {@code listen_address},
+     *                *not* {@code 0.0.0.0}. Also note that the port for {@code InetSocketAddress}
+     *                will always be the one set at Cluster construction time (9042 by default).
      * @return the address the driver should actually use to connect to the node
      * designated by {@code address}. If the return is {@code null}, then {@code
      * address} will be used by the driver (it is thus equivalent to returing

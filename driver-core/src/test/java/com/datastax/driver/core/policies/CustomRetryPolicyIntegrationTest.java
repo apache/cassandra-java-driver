@@ -15,18 +15,17 @@
  */
 package com.datastax.driver.core.policies;
 
+import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.Statement;
+import com.datastax.driver.core.WriteType;
+import com.datastax.driver.core.exceptions.UnavailableException;
 import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.scassandra.http.client.PrimingRequest.Result.read_request_timeout;
 import static org.scassandra.http.client.PrimingRequest.Result.unavailable;
-
-import com.datastax.driver.core.ConsistencyLevel;
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.Statement;
-import com.datastax.driver.core.WriteType;
-import com.datastax.driver.core.exceptions.UnavailableException;
 
 /**
  * Integration test with a custom implementation, to test retry and ignore decisions.
@@ -84,8 +83,8 @@ public class CustomRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegra
         @Override
         public RetryDecision onUnavailable(Statement statement, ConsistencyLevel cl, int requiredReplica, int aliveReplica, int nbRetry) {
             return (nbRetry == 0)
-                ? RetryDecision.retry(cl)
-                : RetryDecision.rethrow();
+                    ? RetryDecision.retry(cl)
+                    : RetryDecision.rethrow();
         }
     }
 }

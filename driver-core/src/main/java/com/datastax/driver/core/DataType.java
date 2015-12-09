@@ -15,19 +15,18 @@
  */
 package com.datastax.driver.core;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.net.InetAddress;
-import java.nio.ByteBuffer;
-import java.util.*;
-
+import com.datastax.driver.core.exceptions.DriverInternalError;
+import com.datastax.driver.core.exceptions.InvalidTypeException;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import io.netty.buffer.ByteBuf;
 
-import com.datastax.driver.core.exceptions.DriverInternalError;
-import com.datastax.driver.core.exceptions.InvalidTypeException;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.net.InetAddress;
+import java.nio.ByteBuffer;
+import java.util.*;
 
 /**
  * Data types supported by cassandra.
@@ -39,31 +38,32 @@ public class DataType {
      */
     public enum Name {
 
-        ASCII     (1,  String.class),
-        BIGINT    (2,  Long.class),
-        BLOB      (3,  ByteBuffer.class),
-        BOOLEAN   (4,  Boolean.class),
-        COUNTER   (5,  Long.class),
-        DECIMAL   (6,  BigDecimal.class),
-        DOUBLE    (7,  Double.class),
-        FLOAT     (8,  Float.class),
-        INET      (16, InetAddress.class),
-        INT       (9,  Integer.class),
-        TEXT      (10, String.class),
-        TIMESTAMP (11, Date.class),
-        UUID      (12, UUID.class),
-        VARCHAR   (13, String.class),
-        VARINT    (14, BigInteger.class),
-        TIMEUUID  (15, UUID.class),
-        LIST      (32, List.class),
-        SET       (34, Set.class),
-        MAP       (33, Map.class),
-        CUSTOM    (0,  ByteBuffer.class);
+        ASCII(1, String.class),
+        BIGINT(2, Long.class),
+        BLOB(3, ByteBuffer.class),
+        BOOLEAN(4, Boolean.class),
+        COUNTER(5, Long.class),
+        DECIMAL(6, BigDecimal.class),
+        DOUBLE(7, Double.class),
+        FLOAT(8, Float.class),
+        INET(16, InetAddress.class),
+        INT(9, Integer.class),
+        TEXT(10, String.class),
+        TIMESTAMP(11, Date.class),
+        UUID(12, UUID.class),
+        VARCHAR(13, String.class),
+        VARINT(14, BigInteger.class),
+        TIMEUUID(15, UUID.class),
+        LIST(32, List.class),
+        SET(34, Set.class),
+        MAP(33, Map.class),
+        CUSTOM(0, ByteBuffer.class);
 
         final int protocolId;
         final Class<?> javaType;
 
         private static final Name[] nameToIds;
+
         static {
             int maxCode = -1;
             for (Name name : Name.values())
@@ -107,31 +107,31 @@ public class DataType {
 
         /**
          * Returns the Java Class corresponding to this CQL type name.
-         *
+         * <p/>
          * The correspondence between CQL types and java ones is as follow:
          * <table>
-         *   <caption>DataType to Java class correspondence</caption>
-         *   <tr><th>DataType (CQL)</th><th>Java Class</th></tr>
-         *   <tr><td>ASCII         </td><td>String</td></tr>
-         *   <tr><td>BIGINT        </td><td>Long</td></tr>
-         *   <tr><td>BLOB          </td><td>ByteBuffer</td></tr>
-         *   <tr><td>BOOLEAN       </td><td>Boolean</td></tr>
-         *   <tr><td>COUNTER       </td><td>Long</td></tr>
-         *   <tr><td>CUSTOM        </td><td>ByteBuffer</td></tr>
-         *   <tr><td>DECIMAL       </td><td>BigDecimal</td></tr>
-         *   <tr><td>DOUBLE        </td><td>Double</td></tr>
-         *   <tr><td>FLOAT         </td><td>Float</td></tr>
-         *   <tr><td>INET          </td><td>InetAddress</td></tr>
-         *   <tr><td>INT           </td><td>Integer</td></tr>
-         *   <tr><td>LIST          </td><td>List</td></tr>
-         *   <tr><td>MAP           </td><td>Map</td></tr>
-         *   <tr><td>SET           </td><td>Set</td></tr>
-         *   <tr><td>TEXT          </td><td>String</td></tr>
-         *   <tr><td>TIMESTAMP     </td><td>Date</td></tr>
-         *   <tr><td>UUID          </td><td>UUID</td></tr>
-         *   <tr><td>VARCHAR       </td><td>String</td></tr>
-         *   <tr><td>VARINT        </td><td>BigInteger</td></tr>
-         *   <tr><td>TIMEUUID      </td><td>UUID</td></tr>
+         * <caption>DataType to Java class correspondence</caption>
+         * <tr><th>DataType (CQL)</th><th>Java Class</th></tr>
+         * <tr><td>ASCII         </td><td>String</td></tr>
+         * <tr><td>BIGINT        </td><td>Long</td></tr>
+         * <tr><td>BLOB          </td><td>ByteBuffer</td></tr>
+         * <tr><td>BOOLEAN       </td><td>Boolean</td></tr>
+         * <tr><td>COUNTER       </td><td>Long</td></tr>
+         * <tr><td>CUSTOM        </td><td>ByteBuffer</td></tr>
+         * <tr><td>DECIMAL       </td><td>BigDecimal</td></tr>
+         * <tr><td>DOUBLE        </td><td>Double</td></tr>
+         * <tr><td>FLOAT         </td><td>Float</td></tr>
+         * <tr><td>INET          </td><td>InetAddress</td></tr>
+         * <tr><td>INT           </td><td>Integer</td></tr>
+         * <tr><td>LIST          </td><td>List</td></tr>
+         * <tr><td>MAP           </td><td>Map</td></tr>
+         * <tr><td>SET           </td><td>Set</td></tr>
+         * <tr><td>TEXT          </td><td>String</td></tr>
+         * <tr><td>TIMESTAMP     </td><td>Date</td></tr>
+         * <tr><td>UUID          </td><td>UUID</td></tr>
+         * <tr><td>VARCHAR       </td><td>String</td></tr>
+         * <tr><td>VARINT        </td><td>BigInteger</td></tr>
+         * <tr><td>TIMEUUID      </td><td>UUID</td></tr>
          * </table>
          *
          * @return the java Class corresponding to this CQL type name.
@@ -152,12 +152,14 @@ public class DataType {
     private final TypeCodec<?> codec;
 
     private static final Map<Name, DataType> primitiveTypeMap = new EnumMap<Name, DataType>(Name.class);
+
     static {
         for (Name name : Name.values()) {
             if (!name.isCollection() && name != Name.CUSTOM)
                 primitiveTypeMap.put(name, new DataType(name, Collections.<DataType>emptyList(), TypeCodec.createFor(name)));
         }
     }
+
     private static final Set<DataType> primitiveTypeSet = ImmutableSet.copyOf(primitiveTypeMap.values());
 
     private DataType(DataType.Name name, List<DataType> typeArguments, TypeCodec<?> codec) {
@@ -191,7 +193,7 @@ public class DataType {
 
     @SuppressWarnings("unchecked")
     TypeCodec<Object> codec() {
-        return (TypeCodec<Object>)codec;
+        return (TypeCodec<Object>) codec;
     }
 
     /**
@@ -364,7 +366,7 @@ public class DataType {
     /**
      * Returns the type of maps of {@code keyType} to {@code valueType} elements.
      *
-     * @param keyType the type of the map keys.
+     * @param keyType   the type of the map keys.
      * @param valueType the type of the map values.
      * @return the type of map of {@code keyType} to {@code valueType} elements.
      */
@@ -374,13 +376,13 @@ public class DataType {
 
     /**
      * Returns a Custom type.
-     * <p>
+     * <p/>
      * A custom type is defined by the name of the class used on the Cassandra
      * side to implement it. Note that the support for custom type by the
      * driver is limited: values of a custom type won't be interpreted by the
      * driver in any way. They will thus have to be set (by {@link BoundStatement#setBytesUnsafe}
      * and retrieved (by {@link Row#getBytesUnsafe}) as raw ByteBuffer.
-     * <p>
+     * <p/>
      * The use of custom types is rarely useful and is thus not encouraged.
      *
      * @param typeClassName the server-side fully qualified class name for the type.
@@ -403,17 +405,17 @@ public class DataType {
 
     /**
      * Returns the type arguments of this type.
-     * <p>
+     * <p/>
      * Note that only the collection types (LIST, MAP, SET) have type
      * arguments. For the other types, this will return an empty list.
-     * <p>
+     * <p/>
      * For the collection types:
      * <ul>
-     *   <li>For lists and sets, this method returns one argument, the type of
-     *   the elements.</li>
-     *   <li>For maps, this method returns two arguments, the first one is the
-     *   type of the map keys, the second one is the type of the map
-     *   values.</li>
+     * <li>For lists and sets, this method returns one argument, the type of
+     * the elements.</li>
+     * <li>For maps, this method returns two arguments, the first one is the
+     * type of the map keys, the second one is the type of the map
+     * values.</li>
      * </ul>
      *
      * @return an immutable list containing the type arguments of this type.
@@ -435,21 +437,20 @@ public class DataType {
     /**
      * Parses a string value for the type this object represent, returning its
      * Cassandra binary representation.
-     * <p>
+     * <p/>
      * Please note that currently, parsing collections is not supported and will
      * throw an {@code InvalidTypeException}.
      *
      * @param value the value to parse.
      * @return the binary representation of {@code value}.
-     *
      * @throws InvalidTypeException if {@code value} is not a valid string
-     * representation for this type. Please note that values for custom types
-     * can never be parsed and will always return this exception.
+     *                              representation for this type. Please note that values for custom types
+     *                              can never be parsed and will always return this exception.
      */
     public ByteBuffer parse(String value) {
         if (name == Name.CUSTOM)
             throw new InvalidTypeException(String.format("Cannot parse '%s' as value of custom type of class '%s' "
-                                                       + "(values for custom type cannot be parse and must be inputted as bytes directly)", value, customClassName));
+                    + "(values for custom type cannot be parse and must be inputted as bytes directly)", value, customClassName));
 
         if (name.isCollection())
             throw new InvalidTypeException(String.format("Cannot parse value as %s, parsing collections is not currently supported", name));
@@ -462,10 +463,9 @@ public class DataType {
      *
      * @param value the value to format.
      * @return a string corresponding to the CQL representation of {@code value}.
-     *
      * @throws InvalidTypeException if {@code value} does not correspond to
-     * a CQL value (known by the driver). Please note that for custom types this
-     * method will always return this exception.
+     *                              a CQL value (known by the driver). Please note that for custom types this
+     *                              method will always return this exception.
      */
     public String format(Object value) {
         return value == null ? null : codec().format(value);
@@ -482,11 +482,10 @@ public class DataType {
 
     /**
      * Returns the Java Class corresponding to this type.
-     *
+     * <p/>
      * This is a shortcut for {@code getName().asJavaClass()}.
      *
      * @return the java Class corresponding to this type.
-     *
      * @see Name#asJavaClass
      */
     public Class<?> asJavaClass() {
@@ -506,15 +505,14 @@ public class DataType {
 
     /**
      * Serialize a value of this type to bytes.
-     * <p>
+     * <p/>
      * The actual format of the resulting bytes will correspond to the
      * Cassandra encoding for this type.
      *
      * @param value the value to serialize.
      * @return the value serialized, or {@code null} if {@code value} is null.
-     *
      * @throws InvalidTypeException if {@code value} is not a valid object
-     * for this {@code DataType}.
+     *                              for this {@code DataType}.
      */
     public ByteBuffer serialize(Object value) {
         Class<?> providedClass = value.getClass();
@@ -532,7 +530,7 @@ public class DataType {
 
     /**
      * Deserialize a value of this type from the provided bytes.
-     * <p>
+     * <p/>
      * The format of {@code bytes} must correspond to the Cassandra
      * encoding for this type.
      *
@@ -546,9 +544,8 @@ public class DataType {
      * throwing an exception in that case. It is however highly discouraged to
      * store empty byte buffers for types for which it doesn't make sense, so
      * this implementation can generally be ignored).
-     *
      * @throws InvalidTypeException if {@code bytes} is not a valid
-     * encoding of an object of this {@code DataType}.
+     *                              encoding of an object of this {@code DataType}.
      */
     public Object deserialize(ByteBuffer bytes) {
         return codec().deserialize(bytes);
@@ -556,7 +553,7 @@ public class DataType {
 
     /**
      * Serialize an object based on its java class.
-     * <p>
+     * <p/>
      * This is equivalent to {@link #serialize} but with the difference that
      * the actual {@code DataType} of the resulting value is inferred from the
      * java class of {@code value}. The correspondence between CQL {@code DataType}
@@ -566,10 +563,9 @@ public class DataType {
      *
      * @param value the value to serialize.
      * @return the value serialized, or {@code null} if {@code value} is null.
-     *
      * @throws IllegalArgumentException if {@code value} is not of a type
-     * corresponding to a CQL3 type, i.e. is not a Class that could be returned
-     * by {@link DataType#asJavaClass}.
+     *                                  corresponding to a CQL3 type, i.e. is not a Class that could be returned
+     *                                  by {@link DataType#asJavaClass}.
      */
     public static ByteBuffer serializeValue(Object value) {
         if (value == null)
@@ -591,15 +587,15 @@ public class DataType {
 
     @Override
     public final int hashCode() {
-        return Arrays.hashCode(new Object[]{ name, typeArguments, customClassName });
+        return Arrays.hashCode(new Object[]{name, typeArguments, customClassName});
     }
 
     @Override
     public final boolean equals(Object o) {
-        if(!(o instanceof DataType))
+        if (!(o instanceof DataType))
             return false;
 
-        DataType d = (DataType)o;
+        DataType d = (DataType) o;
         return name == d.name && typeArguments.equals(d.typeArguments) && Objects.equal(customClassName, d.customClassName);
     }
 

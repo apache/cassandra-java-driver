@@ -15,13 +15,13 @@
  */
 package com.datastax.driver.core;
 
-import java.net.InetSocketAddress;
-
 import io.netty.buffer.ByteBuf;
+
+import java.net.InetSocketAddress;
 
 class ProtocolEvent {
 
-    public enum Type { TOPOLOGY_CHANGE, STATUS_CHANGE, SCHEMA_CHANGE }
+    public enum Type {TOPOLOGY_CHANGE, STATUS_CHANGE, SCHEMA_CHANGE}
 
     public final Type type;
 
@@ -42,7 +42,7 @@ class ProtocolEvent {
     }
 
     public static class TopologyChange extends ProtocolEvent {
-        public enum Change { NEW_NODE, REMOVED_NODE, MOVED_NODE }
+        public enum Change {NEW_NODE, REMOVED_NODE, MOVED_NODE}
 
         public final Change change;
         public final InetSocketAddress node;
@@ -68,7 +68,7 @@ class ProtocolEvent {
 
     public static class StatusChange extends ProtocolEvent {
 
-        public enum Status { UP, DOWN }
+        public enum Status {UP, DOWN}
 
         public final Status status;
         public final InetSocketAddress node;
@@ -94,7 +94,7 @@ class ProtocolEvent {
 
     public static class SchemaChange extends ProtocolEvent {
 
-        public enum Change { CREATED, UPDATED, DROPPED }
+        public enum Change {CREATED, UPDATED, DROPPED}
 
         public final Change change;
         public final String keyspace;

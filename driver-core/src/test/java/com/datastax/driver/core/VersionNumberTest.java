@@ -16,6 +16,7 @@
 package com.datastax.driver.core;
 
 import org.testng.annotations.Test;
+
 import static org.testng.Assert.assertEquals;
 
 public class VersionNumberTest {
@@ -23,13 +24,13 @@ public class VersionNumberTest {
     @Test(groups = "unit")
     public void versionNumberTest() {
 
-        String[] versions = new String[] {
-            "1.2.0",
-            "2.0.0",
-            "2.0.0-beta1",
-            "2.0.0-beta1-SNAPSHOT",
-            "2.0.0-beta1-SNAPSHOT+abc01",
-            "2.0.0.22" // DSE
+        String[] versions = new String[]{
+                "1.2.0",
+                "2.0.0",
+                "2.0.0-beta1",
+                "2.0.0-beta1-SNAPSHOT",
+                "2.0.0-beta1-SNAPSHOT+abc01",
+                "2.0.0.22" // DSE
         };
 
         VersionNumber[] numbers = new VersionNumber[versions.length];

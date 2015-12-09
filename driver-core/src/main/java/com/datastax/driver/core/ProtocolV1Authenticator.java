@@ -19,10 +19,10 @@ import java.util.Map;
 
 /**
  * Parent class for {@link Authenticator} implementations that support native protocol v1 authentication.
- *
+ * <p/>
  * Protocol v1 uses simple, credentials-based authentication (as opposed to SASL for later protocol versions).
  * In order to support protocol v1, an authenticator must extend this class.
- *
+ * <p/>
  * We use an abstract class instead of an interface because we don't want to expose {@link #getCredentials()}.
  *
  * @see <a href="https://github.com/apache/cassandra/blob/trunk/doc/native_protocol_v1.spec">Native protocol v1 specification</a>

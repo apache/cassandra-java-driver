@@ -15,14 +15,13 @@
  */
 package com.datastax.driver.core;
 
-import java.util.List;
-
 import com.google.common.collect.ImmutableList;
 import org.testng.annotations.Test;
 
-import static org.testng.Assert.fail;
+import java.util.List;
 
 import static com.datastax.driver.core.Assertions.assertThat;
+import static org.testng.Assert.fail;
 
 public class TokenRangeTest {
     // The tests in this class don't depend on the kind of factory used, so use Murmur3 everywhere
@@ -33,74 +32,74 @@ public class TokenRangeTest {
     public void should_check_intersection() {
         // NB - to make the test more visual, we use watch face numbers
         assertThat(tokenRange(3, 9))
-            .doesNotIntersect(tokenRange(11, 1))
-            .doesNotIntersect(tokenRange(1, 2))
-            .doesNotIntersect(tokenRange(11, 3))
-            .doesNotIntersect(tokenRange(2, 3))
-            .doesNotIntersect(tokenRange(3, 3))
-            .intersects(tokenRange(2, 6))
-            .intersects(tokenRange(2, 10))
-            .intersects(tokenRange(6, 10))
-            .intersects(tokenRange(4, 8))
-            .intersects(tokenRange(3, 9))
-            .doesNotIntersect(tokenRange(9, 10))
-            .doesNotIntersect(tokenRange(10, 11))
+                .doesNotIntersect(tokenRange(11, 1))
+                .doesNotIntersect(tokenRange(1, 2))
+                .doesNotIntersect(tokenRange(11, 3))
+                .doesNotIntersect(tokenRange(2, 3))
+                .doesNotIntersect(tokenRange(3, 3))
+                .intersects(tokenRange(2, 6))
+                .intersects(tokenRange(2, 10))
+                .intersects(tokenRange(6, 10))
+                .intersects(tokenRange(4, 8))
+                .intersects(tokenRange(3, 9))
+                .doesNotIntersect(tokenRange(9, 10))
+                .doesNotIntersect(tokenRange(10, 11))
         ;
         assertThat(tokenRange(9, 3))
-            .doesNotIntersect(tokenRange(5, 7))
-            .doesNotIntersect(tokenRange(7, 8))
-            .doesNotIntersect(tokenRange(5, 9))
-            .doesNotIntersect(tokenRange(8, 9))
-            .doesNotIntersect(tokenRange(9, 9))
-            .intersects(tokenRange(8, 2))
-            .intersects(tokenRange(8, 4))
-            .intersects(tokenRange(2, 4))
-            .intersects(tokenRange(10, 2))
-            .intersects(tokenRange(9, 3))
-            .doesNotIntersect(tokenRange(3, 4))
-            .doesNotIntersect(tokenRange(4, 5))
+                .doesNotIntersect(tokenRange(5, 7))
+                .doesNotIntersect(tokenRange(7, 8))
+                .doesNotIntersect(tokenRange(5, 9))
+                .doesNotIntersect(tokenRange(8, 9))
+                .doesNotIntersect(tokenRange(9, 9))
+                .intersects(tokenRange(8, 2))
+                .intersects(tokenRange(8, 4))
+                .intersects(tokenRange(2, 4))
+                .intersects(tokenRange(10, 2))
+                .intersects(tokenRange(9, 3))
+                .doesNotIntersect(tokenRange(3, 4))
+                .doesNotIntersect(tokenRange(4, 5))
         ;
         assertThat(tokenRange(3, 3)).doesNotIntersect(tokenRange(3, 3));
 
         // Reminder: minToken serves as both lower and upper bound
         assertThat(tokenRange(minToken, 5))
-            .doesNotIntersect(tokenRange(6, 7))
-            .doesNotIntersect(tokenRange(6, minToken))
-            .intersects(tokenRange(6, 4))
-            .intersects(tokenRange(2, 4))
-            .intersects(tokenRange(minToken, 4))
-            .intersects(tokenRange(minToken, 5))
+                .doesNotIntersect(tokenRange(6, 7))
+                .doesNotIntersect(tokenRange(6, minToken))
+                .intersects(tokenRange(6, 4))
+                .intersects(tokenRange(2, 4))
+                .intersects(tokenRange(minToken, 4))
+                .intersects(tokenRange(minToken, 5))
         ;
 
         assertThat(tokenRange(5, minToken))
-            .doesNotIntersect(tokenRange(3, 4))
-            .doesNotIntersect(tokenRange(minToken, 4))
-            .intersects(tokenRange(6, 7))
-            .intersects(tokenRange(4, 1))
-            .intersects(tokenRange(6, minToken))
-            .intersects(tokenRange(5, minToken))
+                .doesNotIntersect(tokenRange(3, 4))
+                .doesNotIntersect(tokenRange(minToken, 4))
+                .intersects(tokenRange(6, 7))
+                .intersects(tokenRange(4, 1))
+                .intersects(tokenRange(6, minToken))
+                .intersects(tokenRange(5, minToken))
         ;
 
         assertThat(tokenRange(minToken, minToken))
-            .intersects(tokenRange(3, 4))
-            .intersects(tokenRange(3, minToken))
-            .intersects(tokenRange(minToken, 3))
-            .doesNotIntersect(tokenRange(3, 3))
+                .intersects(tokenRange(3, 4))
+                .intersects(tokenRange(3, minToken))
+                .intersects(tokenRange(minToken, 3))
+                .doesNotIntersect(tokenRange(3, 3))
         ;
     }
 
     @Test(groups = "unit")
     public void should_compute_intersection() {
         assertThat(tokenRange(3, 9).intersectWith(tokenRange(2, 4)))
-            .isEqualTo(ImmutableList.of(tokenRange(3, 4)));
+                .isEqualTo(ImmutableList.of(tokenRange(3, 4)));
         assertThat(tokenRange(3, 9).intersectWith(tokenRange(3, 5)))
-            .isEqualTo(ImmutableList.of(tokenRange(3, 5)));
+                .isEqualTo(ImmutableList.of(tokenRange(3, 5)));
         assertThat(tokenRange(3, 9).intersectWith(tokenRange(4, 6)))
-            .isEqualTo(ImmutableList.of(tokenRange(4, 6)));
+                .isEqualTo(ImmutableList.of(tokenRange(4, 6)));
         assertThat(tokenRange(3, 9).intersectWith(tokenRange(7, 9)))
-            .isEqualTo(ImmutableList.of(tokenRange(7, 9)));
+                .isEqualTo(ImmutableList.of(tokenRange(7, 9)));
         assertThat(tokenRange(3, 9).intersectWith(tokenRange(8, 10)))
-            .isEqualTo(ImmutableList.of(tokenRange(8, 9)));
+                .isEqualTo(ImmutableList.of(tokenRange(8, 9)));
     }
 
     @Test(groups = "unit")
@@ -108,14 +107,14 @@ public class TokenRangeTest {
         // If a range wraps the ring like 10, -10 does this will produce two separate
         // intersected ranges.
         assertThat(tokenRange(10, -10).intersectWith(tokenRange(-20, 20)))
-            .isEqualTo(ImmutableList.of(tokenRange(10, 20), tokenRange(-20, -10)));
+                .isEqualTo(ImmutableList.of(tokenRange(10, 20), tokenRange(-20, -10)));
         assertThat(tokenRange(-20, 20).intersectWith(tokenRange(10, -10)))
-            .isEqualTo(ImmutableList.of(tokenRange(10, 20), tokenRange(-20, -10)));
+                .isEqualTo(ImmutableList.of(tokenRange(10, 20), tokenRange(-20, -10)));
 
         // If both ranges wrap the ring, they should be merged together wrapping across
         // the range.
         assertThat(tokenRange(10, -30).intersectWith(tokenRange(20, -20)))
-            .isEqualTo(ImmutableList.of(tokenRange(20, -30)));
+                .isEqualTo(ImmutableList.of(tokenRange(20, -30)));
     }
 
     @Test(groups = "unit", expectedExceptions = IllegalArgumentException.class)

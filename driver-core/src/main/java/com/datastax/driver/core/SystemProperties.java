@@ -20,7 +20,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Allows overriding internal settings via system properties.
- * <p>
+ * <p/>
  * Warning: this is meant for integration tests only, NOT FOR PRODUCTION USE.
  */
 class SystemProperties {

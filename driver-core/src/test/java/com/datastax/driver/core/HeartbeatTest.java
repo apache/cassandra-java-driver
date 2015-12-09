@@ -15,8 +15,6 @@
  */
 package com.datastax.driver.core;
 
-import static java.util.concurrent.TimeUnit.SECONDS;
-
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.testng.annotations.AfterMethod;
@@ -24,6 +22,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import static com.datastax.driver.core.Assertions.assertThat;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 public class HeartbeatTest {
 
@@ -37,7 +36,7 @@ public class HeartbeatTest {
         connectionLogger.addAppender(logs);
     }
 
-    @AfterMethod(groups="long")
+    @AfterMethod(groups = "long")
     public void stopCapturingLogs() {
         connectionLogger.setLevel(null);
         connectionLogger.removeAppender(logs);
@@ -59,9 +58,9 @@ public class HeartbeatTest {
         try {
             ccm = CCMBridge.builder("test").withNodes(1).build();
             cluster = Cluster.builder().addContactPoint(CCMBridge.ipOfNode(1))
-                .withPoolingOptions(new PoolingOptions()
-                    .setHeartbeatIntervalSeconds(3))
-                .build();
+                    .withPoolingOptions(new PoolingOptions()
+                            .setHeartbeatIntervalSeconds(3))
+                    .build();
 
             // Don't create any session, only the control connection will be established
             cluster.init();
@@ -75,14 +74,14 @@ public class HeartbeatTest {
             // Ensure heartbeat is sent after no activity.
             SECONDS.sleep(4);
             assertThat(logs.getNext())
-                .contains("sending heartbeat")
-                .contains("heartbeat query succeeded");
+                    .contains("sending heartbeat")
+                    .contains("heartbeat query succeeded");
 
             // Ensure heartbeat is sent after continued inactivity.
             SECONDS.sleep(4);
             assertThat(logs.getNext())
-                .contains("sending heartbeat")
-                .contains("heartbeat query succeeded");
+                    .contains("sending heartbeat")
+                    .contains("heartbeat query succeeded");
 
             // Ensure heartbeat is not sent after activity.
             logs.getNext();
@@ -95,8 +94,8 @@ public class HeartbeatTest {
             // Finally, ensure heartbeat is sent after inactivity.
             SECONDS.sleep(4);
             assertThat(logs.getNext())
-                .contains("sending heartbeat")
-                .contains("heartbeat query succeeded");
+                    .contains("sending heartbeat")
+                    .contains("heartbeat query succeeded");
         } finally {
             if (cluster != null)
                 cluster.close();
@@ -107,7 +106,7 @@ public class HeartbeatTest {
 
     /**
      * Ensures that a heartbeat message is not sent if the configured heartbeat interval is 0.
-     *
+     * <p/>
      * While difficult to prove the absence of evidence, the test will wait up to the default heartbeat interval
      * (30 seconds + 1) and check to see if the heartbeat was sent.
      *

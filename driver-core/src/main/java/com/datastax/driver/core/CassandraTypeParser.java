@@ -15,12 +15,11 @@
  */
 package com.datastax.driver.core;
 
-import java.util.*;
-
-import com.google.common.collect.ImmutableMap;
-
 import com.datastax.driver.core.exceptions.DriverInternalError;
 import com.datastax.driver.core.utils.Bytes;
+import com.google.common.collect.ImmutableMap;
+
+import java.util.*;
 
 /*
  * Helps transforming Cassandra types (as read in the schema tables) to
@@ -44,24 +43,24 @@ class CassandraTypeParser {
     private static final String MAP_TYPE = "org.apache.cassandra.db.marshal.MapType";
 
     private static ImmutableMap<String, DataType> cassTypeToDataType =
-        new ImmutableMap.Builder<String, DataType>()
-            .put("org.apache.cassandra.db.marshal.AsciiType",         DataType.ascii())
-            .put("org.apache.cassandra.db.marshal.LongType",          DataType.bigint())
-            .put("org.apache.cassandra.db.marshal.BytesType",         DataType.blob())
-            .put("org.apache.cassandra.db.marshal.BooleanType",       DataType.cboolean())
-            .put("org.apache.cassandra.db.marshal.CounterColumnType", DataType.counter())
-            .put("org.apache.cassandra.db.marshal.DecimalType",       DataType.decimal())
-            .put("org.apache.cassandra.db.marshal.DoubleType",        DataType.cdouble())
-            .put("org.apache.cassandra.db.marshal.FloatType",         DataType.cfloat())
-            .put("org.apache.cassandra.db.marshal.InetAddressType",   DataType.inet())
-            .put("org.apache.cassandra.db.marshal.Int32Type",         DataType.cint())
-            .put("org.apache.cassandra.db.marshal.UTF8Type",          DataType.text())
-            .put("org.apache.cassandra.db.marshal.TimestampType",     DataType.timestamp())
-            .put("org.apache.cassandra.db.marshal.DateType",          DataType.timestamp())
-            .put("org.apache.cassandra.db.marshal.UUIDType",          DataType.uuid())
-            .put("org.apache.cassandra.db.marshal.IntegerType",       DataType.varint())
-            .put("org.apache.cassandra.db.marshal.TimeUUIDType",      DataType.timeuuid())
-            .build();
+            new ImmutableMap.Builder<String, DataType>()
+                    .put("org.apache.cassandra.db.marshal.AsciiType", DataType.ascii())
+                    .put("org.apache.cassandra.db.marshal.LongType", DataType.bigint())
+                    .put("org.apache.cassandra.db.marshal.BytesType", DataType.blob())
+                    .put("org.apache.cassandra.db.marshal.BooleanType", DataType.cboolean())
+                    .put("org.apache.cassandra.db.marshal.CounterColumnType", DataType.counter())
+                    .put("org.apache.cassandra.db.marshal.DecimalType", DataType.decimal())
+                    .put("org.apache.cassandra.db.marshal.DoubleType", DataType.cdouble())
+                    .put("org.apache.cassandra.db.marshal.FloatType", DataType.cfloat())
+                    .put("org.apache.cassandra.db.marshal.InetAddressType", DataType.inet())
+                    .put("org.apache.cassandra.db.marshal.Int32Type", DataType.cint())
+                    .put("org.apache.cassandra.db.marshal.UTF8Type", DataType.text())
+                    .put("org.apache.cassandra.db.marshal.TimestampType", DataType.timestamp())
+                    .put("org.apache.cassandra.db.marshal.DateType", DataType.timestamp())
+                    .put("org.apache.cassandra.db.marshal.UUIDType", DataType.uuid())
+                    .put("org.apache.cassandra.db.marshal.IntegerType", DataType.varint())
+                    .put("org.apache.cassandra.db.marshal.TimeUUIDType", DataType.timeuuid())
+                    .build();
 
     static DataType parseOne(String className) {
         if (isReversed(className)) {
@@ -142,9 +141,9 @@ class CassandraTypeParser {
 
         private ParseResult(DataType type, boolean reversed) {
             this(false,
-                 Collections.<DataType>singletonList(type),
-                 Collections.<Boolean>singletonList(reversed),
-                 Collections.<String, DataType>emptyMap());
+                    Collections.<DataType>singletonList(type),
+                    Collections.<Boolean>singletonList(reversed),
+                    Collections.<String, DataType>emptyMap());
         }
 
         private ParseResult(boolean isComposite, List<DataType> types, List<Boolean> reversed, Map<String, DataType> collections) {
@@ -328,8 +327,8 @@ class CassandraTypeParser {
          */
         private static boolean isIdentifierChar(int c) {
             return (c >= '0' && c <= '9')
-                || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
-                || c == '-' || c == '+' || c == '.' || c == '_' || c == '&';
+                    || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
+                    || c == '-' || c == '+' || c == '.' || c == '_' || c == '&';
         }
 
         // left idx positioned on the character stopping the read

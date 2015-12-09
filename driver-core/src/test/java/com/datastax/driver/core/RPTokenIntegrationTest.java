@@ -22,7 +22,8 @@ public class RPTokenIntegrationTest extends TokenIntegrationTest {
         super("-p RandomPartitioner", DataType.varint());
     }
 
-    @Override protected Token.Factory tokenFactory() {
+    @Override
+    protected Token.Factory tokenFactory() {
         return RPToken.FACTORY;
     }
 }

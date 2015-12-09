@@ -15,21 +15,20 @@
  */
 package com.datastax.driver.core.exceptions;
 
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.util.Locale;
-
+import com.datastax.driver.core.CCMBridge;
+import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.TestUtils;
+import com.datastax.driver.core.WriteType;
 import org.testng.annotations.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
-
-import com.datastax.driver.core.*;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 
 import static com.datastax.driver.core.CCMBridge.ipOfNode;
 import static com.datastax.driver.core.ConsistencyLevel.LOCAL_QUORUM;
-import static com.datastax.driver.core.TestUtils.waitForDownWithWait;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 /**
  * Tests Exception classes with separate clusters per test, when applicable
@@ -53,9 +52,9 @@ public class ExceptionsTest {
             String table = "TestTable";
 
             String[] cqlCommands = new String[]{
-                String.format(TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT, keyspace, 1),
-                "USE " + keyspace,
-                String.format(TestUtils.CREATE_TABLE_SIMPLE_FORMAT, table)
+                    String.format(TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT, keyspace, 1),
+                    "USE " + keyspace,
+                    String.format(TestUtils.CREATE_TABLE_SIMPLE_FORMAT, table)
             };
 
             // Create the schema once
@@ -185,7 +184,7 @@ public class ExceptionsTest {
     public void should_create_proper_invalid_query_exception() {
         InvalidQueryException e = new InvalidQueryException("Bad, really bad");
         assertThat(e.getMessage()).isEqualTo("Bad, really bad");
-        e = (InvalidQueryException)e.copy();
+        e = (InvalidQueryException) e.copy();
         assertThat(e.getMessage()).isEqualTo("Bad, really bad");
     }
 
@@ -193,7 +192,7 @@ public class ExceptionsTest {
     public void should_create_proper_trace_retrieval_exception() {
         TraceRetrievalException e = new TraceRetrievalException("Couldn't find any trace of it");
         assertThat(e.getMessage()).isEqualTo("Couldn't find any trace of it");
-        e = (TraceRetrievalException)e.copy();
+        e = (TraceRetrievalException) e.copy();
         assertThat(e.getMessage()).isEqualTo("Couldn't find any trace of it");
     }
 
@@ -210,7 +209,7 @@ public class ExceptionsTest {
         assertThat(e.getMessage()).isEqualTo("Bad, really bad");
         assertThat(e.getAddress()).isEqualTo(address1);
         assertThat(e.getHost()).isEqualTo(address1.getAddress());
-        InvalidQueryException e1 = (InvalidQueryException)e.copy();
+        InvalidQueryException e1 = (InvalidQueryException) e.copy();
         assertThat(e1.getMessage()).isEqualTo("Bad, really bad");
     }
 
@@ -232,7 +231,7 @@ public class ExceptionsTest {
         assertThat(e.getMessage()).isEqualTo("Missing ) at EOF");
         assertThat(e.getAddress()).isEqualTo(address1);
         assertThat(e.getHost()).isEqualTo(address1.getAddress());
-        e = (SyntaxError)e.copy();
+        e = (SyntaxError) e.copy();
         assertThat(e.getMessage()).isEqualTo("Missing ) at EOF");
         assertThat(e.getAddress()).isEqualTo(address1);
         assertThat(e.getHost()).isEqualTo(address1.getAddress());
@@ -244,7 +243,7 @@ public class ExceptionsTest {
         assertThat(e.getMessage()).isEqualTo("I'm running headless now");
         assertThat(e.getAddress()).isEqualTo(address1);
         assertThat(e.getHost()).isEqualTo(address1.getAddress());
-        e = (TruncateException)e.copy();
+        e = (TruncateException) e.copy();
         assertThat(e.getMessage()).isEqualTo("I'm running headless now");
         assertThat(e.getAddress()).isEqualTo(address1);
         assertThat(e.getHost()).isEqualTo(address1.getAddress());
@@ -256,7 +255,7 @@ public class ExceptionsTest {
         assertThat(e.getMessage()).isEqualTo("You talking to me?");
         assertThat(e.getAddress()).isEqualTo(address1);
         assertThat(e.getHost()).isEqualTo(address1.getAddress());
-        e = (UnauthorizedException)e.copy();
+        e = (UnauthorizedException) e.copy();
         assertThat(e.getMessage()).isEqualTo("You talking to me?");
         assertThat(e.getAddress()).isEqualTo(address1);
         assertThat(e.getHost()).isEqualTo(address1.getAddress());

@@ -15,15 +15,14 @@
  */
 package com.datastax.driver.core;
 
-import java.util.EnumSet;
-import java.util.List;
-
+import com.datastax.driver.core.exceptions.DriverInternalError;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.*;
 
-import com.datastax.driver.core.exceptions.DriverInternalError;
+import java.util.EnumSet;
+import java.util.List;
 
 class Frame {
 
@@ -33,13 +32,13 @@ class Frame {
     /**
      * On-wire frame.
      * Frames are defined as:
-     *
-     *   0         8        16        24        32
-     *   +---------+---------+---------+---------+
-     *   | version |  flags  | stream  | opcode  |
-     *   +---------+---------+---------+---------+
-     *   |                length                 |
-     *   +---------+---------+---------+---------+
+     * <p/>
+     * 0         8        16        24        32
+     * +---------+---------+---------+---------+
+     * | version |  flags  | stream  | opcode  |
+     * +---------+---------+---------+---------+
+     * |                length                 |
+     * +---------+---------+---------+---------+
      */
     private Frame(Header header, ByteBuf body) {
         this.header = header;
@@ -88,8 +87,7 @@ class Frame {
             this.opcode = opcode;
         }
 
-        public static enum Flag
-        {
+        public static enum Flag {
             // The order of that enum matters!!
             COMPRESSED,
             TRACING;

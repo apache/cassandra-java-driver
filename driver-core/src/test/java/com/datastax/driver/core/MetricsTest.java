@@ -15,16 +15,15 @@
  */
 package com.datastax.driver.core;
 
-import java.util.Collection;
-
-import com.google.common.collect.Lists;
-import org.testng.annotations.Test;
-
-import static org.testng.Assert.assertEquals;
-
 import com.datastax.driver.core.Metrics.Errors;
 import com.datastax.driver.core.policies.RetryPolicy;
 import com.datastax.driver.core.policies.RetryPolicy.RetryDecision;
+import com.google.common.collect.Lists;
+import org.testng.annotations.Test;
+
+import java.util.Collection;
+
+import static org.testng.Assert.assertEquals;
 
 public class MetricsTest extends CCMBridge.PerClassSingleNodeCluster {
     private volatile RetryDecision retryDecision;
@@ -52,7 +51,7 @@ public class MetricsTest extends CCMBridge.PerClassSingleNodeCluster {
     @Override
     protected Collection<String> getTableDefinitions() {
         return Lists.newArrayList("CREATE TABLE test (k int primary key, v int)",
-                                  "INSERT INTO test (k, v) VALUES (1, 1)");
+                "INSERT INTO test (k, v) VALUES (1, 1)");
     }
 
     @Test(groups = "short")

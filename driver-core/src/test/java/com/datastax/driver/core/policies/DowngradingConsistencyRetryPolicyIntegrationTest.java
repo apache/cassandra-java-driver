@@ -15,23 +15,18 @@
  */
 package com.datastax.driver.core.policies;
 
+import com.datastax.driver.core.*;
 import com.google.common.base.Objects;
 import org.mockito.Mockito;
 import org.mockito.verification.VerificationMode;
 import org.testng.annotations.Test;
 
+import static com.datastax.driver.core.ConsistencyLevel.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyInt;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
-
-import com.datastax.driver.core.*;
-
-import static com.datastax.driver.core.ConsistencyLevel.ALL;
-import static com.datastax.driver.core.ConsistencyLevel.ONE;
-import static com.datastax.driver.core.ConsistencyLevel.QUORUM;
-import static com.datastax.driver.core.ConsistencyLevel.TWO;
 
 /**
  * Note: we can't extend {@link AbstractRetryPolicyIntegrationTest} here, because SCassandra doesn't allow custom values for
@@ -48,9 +43,9 @@ public class DowngradingConsistencyRetryPolicyIntegrationTest {
             // 3-node cluster, keyspace with RF = 3
             ccm = CCMBridge.builder(this.getClass().getName()).withNodes(3).build();
             cluster = Cluster.builder()
-                .addContactPoint(CCMBridge.ipOfNode(1))
-                .withRetryPolicy(Mockito.spy(DowngradingConsistencyRetryPolicy.INSTANCE))
-                .build();
+                    .addContactPoint(CCMBridge.ipOfNode(1))
+                    .withRetryPolicy(Mockito.spy(DowngradingConsistencyRetryPolicy.INSTANCE))
+                    .build();
             Session session = cluster.connect();
 
             session.execute("CREATE KEYSPACE test WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 3}");
@@ -91,7 +86,7 @@ public class DowngradingConsistencyRetryPolicyIntegrationTest {
         Mockito.reset(retryPolicy);
 
         Statement s = new SimpleStatement("SELECT * FROM test.foo WHERE k = 0")
-            .setConsistencyLevel(requested);
+                .setConsistencyLevel(requested);
 
         ResultSet rs = session.execute(s);
 
@@ -104,6 +99,6 @@ public class DowngradingConsistencyRetryPolicyIntegrationTest {
         // If the level was downgraded the policy should have been invoked
         VerificationMode expectedCallsToPolicy = (expected == requested) ? never() : times(1);
         Mockito.verify(retryPolicy, expectedCallsToPolicy).onUnavailable(
-            any(Statement.class), any(ConsistencyLevel.class), anyInt(), anyInt(), anyInt());
+                any(Statement.class), any(ConsistencyLevel.class), anyInt(), anyInt(), anyInt());
     }
 }

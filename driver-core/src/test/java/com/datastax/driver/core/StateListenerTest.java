@@ -15,17 +15,15 @@
  */
 package com.datastax.driver.core;
 
-import java.util.concurrent.CountDownLatch;
-
-import static java.util.concurrent.TimeUnit.MINUTES;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import java.util.concurrent.CountDownLatch;
 
 import static com.datastax.driver.core.StateListenerTest.TestListener.Event.*;
+import static java.util.concurrent.TimeUnit.MINUTES;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class StateListenerTest {
     private static final Logger logger = LoggerFactory.getLogger(StateListenerTest.class);
@@ -37,8 +35,8 @@ public class StateListenerTest {
         try {
             ccm = CCMBridge.builder("test").build();
             cluster = Cluster.builder()
-                .addContactPoint(CCMBridge.ipOfNode(1))
-                .build();
+                    .addContactPoint(CCMBridge.ipOfNode(1))
+                    .build();
             cluster.init();
             TestListener listener = new TestListener();
             cluster.register(listener);
@@ -82,8 +80,8 @@ public class StateListenerTest {
 
         void waitForEvent() throws InterruptedException {
             assertThat(latch.await(2, MINUTES))
-                .as("Timed out waiting for event " + expectedEvent)
-                .isTrue();
+                    .as("Timed out waiting for event " + expectedEvent)
+                    .isTrue();
             assertThat(actualEvent).isEqualTo(expectedEvent);
         }
 

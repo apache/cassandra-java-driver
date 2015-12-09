@@ -15,35 +15,31 @@
  */
 package com.datastax.driver.core.policies;
 
+import com.datastax.driver.core.*;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Joiner;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
+import com.google.common.collect.AbstractIterator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.*;
-import com.google.common.collect.AbstractIterator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.Configuration;
-import com.datastax.driver.core.ConsistencyLevel;
-import com.datastax.driver.core.Host;
-import com.datastax.driver.core.HostDistance;
-import com.datastax.driver.core.Statement;
-
 /**
  * A data-center aware Round-robin load balancing policy.
- * <p>
+ * <p/>
  * This policy provides round-robin queries over the node of the local
  * data center. It also includes in the query plans returned a configurable
  * number of hosts in the remote data centers, but those are always tried
  * after the local nodes. In other words, this policy guarantees that no
  * host in a remote data center will be queried unless no host in the local
  * data center can be reached.
- * <p>
+ * <p/>
  * If used with a single data center, this policy is equivalent to the
  * {@link RoundRobinPolicy}, but its DC awareness incurs a slight overhead
  * so the latter should be preferred to this policy in that case.
@@ -160,16 +156,16 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy, CloseableLo
 
     @SuppressWarnings("unchecked")
     private static CopyOnWriteArrayList<Host> cloneList(CopyOnWriteArrayList<Host> list) {
-        return (CopyOnWriteArrayList<Host>)list.clone();
+        return (CopyOnWriteArrayList<Host>) list.clone();
     }
 
     /**
      * Return the HostDistance for the provided host.
-     * <p>
+     * <p/>
      * This policy consider nodes in the local datacenter as {@code LOCAL}.
      * For each remote datacenter, it considers a configurable number of
      * hosts as {@code REMOTE} and the rest is {@code IGNORED}.
-     * <p>
+     * <p/>
      * To configure how many host in each remote datacenter is considered
      * {@code REMOTE}, see {@link #DCAwareRoundRobinPolicy(String, int)}.
      *
@@ -189,13 +185,13 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy, CloseableLo
         // We need to clone, otherwise our subList call is not thread safe
         dcHosts = cloneList(dcHosts);
         return dcHosts.subList(0, Math.min(dcHosts.size(), usedHostsPerRemoteDc)).contains(host)
-             ? HostDistance.REMOTE
-             : HostDistance.IGNORED;
+                ? HostDistance.REMOTE
+                : HostDistance.IGNORED;
     }
 
     /**
      * Returns the hosts to use for a new query.
-     * <p>
+     * <p/>
      * The returned plan will always try each known host in the local
      * datacenter first, and then, if none of the local host is reachable,
      * will try up to a configurable number of other host per remote datacenter.
@@ -203,8 +199,8 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy, CloseableLo
      * Round-robin algorithm.
      *
      * @param loggedKeyspace the keyspace currently logged in on for this
-     * query.
-     * @param statement the query for which to build the plan.
+     *                       query.
+     * @param statement      the query for which to build the plan.
      * @return a new query plan, i.e. an iterator indicating which host to
      * try first for querying, which one to use as failover, etc...
      */
@@ -247,8 +243,8 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy, CloseableLo
                     }
 
                     ConsistencyLevel cl = statement.getConsistencyLevel() == null
-                        ? configuration.getQueryOptions().getConsistencyLevel()
-                        : statement.getConsistencyLevel();
+                            ? configuration.getQueryOptions().getConsistencyLevel()
+                            : statement.getConsistencyLevel();
 
                     if (dontHopForLocalCL && cl.isDCLocal())
                         return endOfData();
@@ -333,10 +329,10 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy, CloseableLo
 
         /**
          * Sets the name of the datacenter that will be considered "local" by the policy.
-         * <p>
+         * <p/>
          * This must be the name as known by Cassandra (in other words, the name in that appears in
          * {@code system.peers}, or in the output of admin tools like nodetool).
-         * <p>
+         * <p/>
          * If this method isn't called, the policy will default to the datacenter of the first node
          * connected to. This will always be ok if all the contact points use at {@code Cluster}
          * creation are in the local data-center. Otherwise, you should provide the name yourself
@@ -347,24 +343,24 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy, CloseableLo
          */
         public Builder withLocalDc(String localDc) {
             Preconditions.checkArgument(!Strings.isNullOrEmpty(localDc),
-                "localDc name can't be null or empty. If you want to let the policy autodetect the datacenter, don't call Builder.withLocalDC");
+                    "localDc name can't be null or empty. If you want to let the policy autodetect the datacenter, don't call Builder.withLocalDC");
             this.localDc = localDc;
             return this;
         }
 
         /**
          * Sets the number of hosts per remote datacenter that the policy should consider.
-         * <p>
+         * <p/>
          * The policy's {@code distance()} method will return a {@code HostDistance.REMOTE} distance for only {@code usedHostsPerRemoteDc}
          * hosts per remote datacenter. Other hosts of the remote datacenters will be ignored (and thus no connections to them will be
          * maintained).
-         * <p>
+         * <p/>
          * If {@code usedHostsPerRemoteDc > 0}, then if for a query no host in the local datacenter can be reached and if the consistency
          * level of the query is not {@code LOCAL_ONE} or {@code LOCAL_QUORUM}, then up to {@code usedHostsPerRemoteDc} hosts per remote
          * datacenter will be tried by the policy as a fallback. By default, no remote host will be used for {@code LOCAL_ONE} and
          * {@code LOCAL_QUORUM}, since this would change the meaning of the consistency level, somewhat breaking the consistency contract
          * (this can be overridden with {@link #allowRemoteDCsForLocalConsistencyLevel()}).
-         * <p>
+         * <p/>
          * If this method isn't called, the policy will default to 0.
          *
          * @param usedHostsPerRemoteDc the number.
@@ -372,7 +368,7 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy, CloseableLo
          */
         public Builder withUsedHostsPerRemoteDc(int usedHostsPerRemoteDc) {
             Preconditions.checkArgument(usedHostsPerRemoteDc >= 0,
-                "usedHostsPerRemoteDc must be equal or greater than 0");
+                    "usedHostsPerRemoteDc must be equal or greater than 0");
             this.usedHostsPerRemoteDc = usedHostsPerRemoteDc;
             return this;
         }
@@ -380,7 +376,7 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy, CloseableLo
         /**
          * Allows the policy to return remote hosts when building query plans for queries having consistency level {@code LOCAL_ONE}
          * or {@code LOCAL_QUORUM}.
-         * <p>
+         * <p/>
          * When used in conjunction with {@link #withUsedHostsPerRemoteDc(int) usedHostsPerRemoteDc} > 0, this overrides the policy of
          * never using remote datacenter nodes for {@code LOCAL_ONE} and {@code LOCAL_QUORUM} queries. It is however inadvisable to do
          * so in almost all cases, as this would potentially break consistency guarantees and if you are fine with that, it's probably

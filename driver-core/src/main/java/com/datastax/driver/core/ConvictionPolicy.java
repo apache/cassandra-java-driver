@@ -15,16 +15,16 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.policies.ReconnectionPolicy;
+
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
-import com.datastax.driver.core.policies.ReconnectionPolicy;
-
 /**
  * The policy with which to decide whether a host should be considered down.
- *
+ * <p/>
  * TODO: this class is fully abstract (rather than an interface) because I'm
  * not sure it's worth exposing (and if we do expose it, we need to expose
  * ConnectionException). Maybe just exposing say a threshold of error before
@@ -127,7 +127,7 @@ abstract class ConvictionPolicy {
         @Override
         boolean canReconnectNow() {
             return nextReconnectionTime == Long.MIN_VALUE ||
-                System.nanoTime() >= nextReconnectionTime;
+                    System.nanoTime() >= nextReconnectionTime;
         }
 
         static class Factory implements ConvictionPolicy.Factory {

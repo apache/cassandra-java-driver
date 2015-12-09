@@ -15,15 +15,15 @@
  */
 package com.datastax.driver.core;
 
-import java.net.InetSocketAddress;
-import java.util.Map;
-
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 
+import java.net.InetSocketAddress;
+import java.util.Map;
+
 /**
  * A simple {@code AuthProvider} implementation.
- * <p>
+ * <p/>
  * This provider allows to programmatically define authentication
  * information that will then apply to all hosts. The
  * PlainTextAuthenticator instances it returns support SASL
@@ -38,6 +38,7 @@ public class PlainTextAuthProvider implements AuthProvider {
     /**
      * Creates a new simple authentication information provider with the
      * supplied credentials.
+     *
      * @param username to use for authentication requests
      * @param password to use for authentication requests
      */
@@ -48,7 +49,7 @@ public class PlainTextAuthProvider implements AuthProvider {
 
     /**
      * Changes the user name.
-     *
+     * <p/>
      * The new credentials will be used for all connections initiated after this method was called.
      *
      * @param username the new name.
@@ -59,7 +60,7 @@ public class PlainTextAuthProvider implements AuthProvider {
 
     /**
      * Changes the password.
-     *
+     * <p/>
      * The new credentials will be used for all connections initiated after this method was called.
      *
      * @param password the new password.
@@ -117,7 +118,7 @@ public class PlainTextAuthProvider implements AuthProvider {
 
         Map<String, String> getCredentials() {
             return ImmutableMap.of("username", new String(username, Charsets.UTF_8),
-                                   "password", new String(password, Charsets.UTF_8));
+                    "password", new String(password, Charsets.UTF_8));
         }
     }
 }

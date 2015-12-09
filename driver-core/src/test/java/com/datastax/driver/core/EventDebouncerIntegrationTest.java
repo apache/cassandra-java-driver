@@ -15,17 +15,16 @@
  */
 package com.datastax.driver.core;
 
+import org.testng.annotations.Test;
+
 import java.util.Collection;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;
 
-import org.testng.annotations.Test;
-
+import static com.datastax.driver.core.CCMBridge.ipOfNode;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Fail.fail;
-
-import static com.datastax.driver.core.CCMBridge.ipOfNode;
 
 public class EventDebouncerIntegrationTest {
 
@@ -43,13 +42,13 @@ public class EventDebouncerIntegrationTest {
         TestLoadBalancingPolicy policy = new TestLoadBalancingPolicy();
         CCMBridge ccm = CCMBridge.builder("main").withNodes(3).build();
         final Cluster cluster = new Cluster.Builder()
-            .addContactPoints(ipOfNode(1))
-            .withLoadBalancingPolicy(policy)
-            .withQueryOptions(new QueryOptions()
-                    .setRefreshNodeIntervalMillis(0)
-                    .setRefreshNodeListIntervalMillis(0)
-                    .setRefreshSchemaIntervalMillis(0)
-            ).build();
+                .addContactPoints(ipOfNode(1))
+                .withLoadBalancingPolicy(policy)
+                .withQueryOptions(new QueryOptions()
+                                .setRefreshNodeIntervalMillis(0)
+                                .setRefreshNodeListIntervalMillis(0)
+                                .setRefreshSchemaIntervalMillis(0)
+                ).build();
         try {
             new Thread() {
                 @Override

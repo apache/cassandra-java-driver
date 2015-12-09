@@ -34,32 +34,32 @@ import static org.testng.Assert.fail;
 public class ConnectionReleaseTest extends ScassandraTestBase {
 
     /**
-     * <p>
+     * <p/>
      * Validates that when a future is set that the stream associated with the future's request is released.
      * This prevents situations where a user may not be specifying a separate executor on a callback/
      * transform to a ResultSetFuture, which is not recommended, causing executeAsync to block in borrowConnection
      * until stream ids become available.
-     *
+     * <p/>
      * Executes the following:
-     *
+     * <p/>
      * <ol>
-     *   <li>Sets # of connections per host to 1.</li>
-     *   <li>Sends MAX_STREAM_PER_CONNECTION-1 requests that take 10 seconds to execute.</li>
-     *   <li>Calls executeAsync to retrieve records from test1 with k=1.</li>
-     *   <li>Transforms executeAsync to take the 'c' column from the result and query test2.
-     *       This is done without an executor to ensure the netty worker is used and has to wait for the function
-     *       completion.</li>
-     *   <li>Asserts that the transformed future completes within pool timeout and the value is as expected.</li>
+     * <li>Sets # of connections per host to 1.</li>
+     * <li>Sends MAX_STREAM_PER_CONNECTION-1 requests that take 10 seconds to execute.</li>
+     * <li>Calls executeAsync to retrieve records from test1 with k=1.</li>
+     * <li>Transforms executeAsync to take the 'c' column from the result and query test2.
+     * This is done without an executor to ensure the netty worker is used and has to wait for the function
+     * completion.</li>
+     * <li>Asserts that the transformed future completes within pool timeout and the value is as expected.</li>
      * </ol>
      *
      * @jira_ticket JAVA-666
      * @expected_result Are able to transform a Future without hanging in executeAsync as connection should be freed
-     *   before the transform function is called.
+     * before the transform function is called.
      * @test_category queries:async
      * @since 2.0.10, 2.1.6
      */
     @SuppressWarnings("unchecked")
-    @Test(groups="short")
+    @Test(groups = "short")
     public void should_release_connection_before_completing_future() throws Exception {
         Cluster cluster = null;
         Collection<ResultSetFuture> mockFutures = Lists.newArrayList();
@@ -92,7 +92,7 @@ public class ConnectionReleaseTest extends ScassandraTestBase {
 
             final Session session = cluster.connect("ks");
             // Consume all stream ids except one.
-            for(int i = 0; i < StreamIdGenerator.MAX_STREAM_PER_CONNECTION-1; i++)
+            for (int i = 0; i < StreamIdGenerator.MAX_STREAM_PER_CONNECTION - 1; i++)
                 mockFutures.add(session.executeAsync("mock query"));
 
 
@@ -114,15 +114,15 @@ public class ConnectionReleaseTest extends ScassandraTestBase {
             try {
                 ResultSet result = future.get(waitTimeInMs, TimeUnit.MILLISECONDS);
                 assertThat(result.one().getString("n")).isEqualTo("world");
-            }  catch (TimeoutException e) {
+            } catch (TimeoutException e) {
                 fail("Future timed out after " + waitTimeInMs + "ms.  " +
                         "There is a strong possibility connection is not being released.");
             }
         } finally {
             // Cancel all pending requests.
-            for(ResultSetFuture future : mockFutures)
+            for (ResultSetFuture future : mockFutures)
                 future.cancel(true);
-            if(cluster != null)
+            if (cluster != null)
                 cluster.close();
         }
     }

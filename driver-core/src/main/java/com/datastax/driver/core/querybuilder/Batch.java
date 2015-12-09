@@ -15,12 +15,11 @@
  */
 package com.datastax.driver.core.querybuilder;
 
+import com.datastax.driver.core.RegularStatement;
+
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-
-import com.datastax.driver.core.RegularStatement;
 
 /**
  * A built BATCH statement.
@@ -36,10 +35,10 @@ public class Batch extends BuiltStatement {
     private int nonBuiltStatementValues;
 
     Batch(RegularStatement[] statements, boolean logged) {
-        super((String)null);
+        super((String) null);
         this.statements = statements.length == 0
-                        ? new ArrayList<RegularStatement>()
-                        : new ArrayList<RegularStatement>(statements.length);
+                ? new ArrayList<RegularStatement>()
+                : new ArrayList<RegularStatement>(statements.length);
         this.logged = logged;
         this.usings = new Options(this);
 
@@ -52,8 +51,8 @@ public class Batch extends BuiltStatement {
         StringBuilder builder = new StringBuilder();
 
         builder.append(isCounterOp()
-                       ? "BEGIN COUNTER BATCH"
-                       : (logged ? "BEGIN BATCH" : "BEGIN UNLOGGED BATCH"));
+                ? "BEGIN COUNTER BATCH"
+                : (logged ? "BEGIN BATCH" : "BEGIN UNLOGGED BATCH"));
 
         if (!usings.usings.isEmpty()) {
             builder.append(" USING ");
@@ -64,7 +63,7 @@ public class Batch extends BuiltStatement {
         for (int i = 0; i < statements.size(); i++) {
             RegularStatement stmt = statements.get(i);
             if (stmt instanceof BuiltStatement) {
-                BuiltStatement bst = (BuiltStatement)stmt;
+                BuiltStatement bst = (BuiltStatement) stmt;
                 builder.append(maybeAddSemicolon(bst.buildQueryString(variables)));
 
             } else {
@@ -87,9 +86,8 @@ public class Batch extends BuiltStatement {
      *
      * @param statement the new statement to add.
      * @return this batch.
-     *
      * @throws IllegalArgumentException if counter and non-counter operations
-     * are mixed.
+     *                                  are mixed.
      */
     public Batch add(RegularStatement statement) {
         boolean isCounterOp = statement instanceof BuiltStatement && ((BuiltStatement) statement).isCounterOp();
@@ -101,12 +99,9 @@ public class Batch extends BuiltStatement {
 
         this.statements.add(statement);
 
-        if (statement instanceof BuiltStatement)
-        {
-            this.hasBindMarkers |= ((BuiltStatement)statement).hasBindMarkers;
-        }
-        else
-        {
+        if (statement instanceof BuiltStatement) {
+            this.hasBindMarkers |= ((BuiltStatement) statement).hasBindMarkers;
+        } else {
             // For non-BuiltStatement, we cannot know if it includes a bind makers and we assume it does. In practice,
             // this means we will always serialize values as strings when there is non-BuiltStatement
             this.hasBindMarkers = true;
@@ -134,8 +129,7 @@ public class Batch extends BuiltStatement {
 
         ByteBuffer[] values = new ByteBuffer[nonBuiltStatementValues];
         int i = 0;
-        for (RegularStatement statement : statements)
-        {
+        for (RegularStatement statement : statements) {
             if (statement instanceof BuiltStatement)
                 continue;
 

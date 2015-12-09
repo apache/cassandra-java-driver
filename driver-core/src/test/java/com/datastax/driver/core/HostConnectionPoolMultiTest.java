@@ -27,7 +27,6 @@ import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.HostDistance.LOCAL;
 import static com.datastax.driver.core.TestUtils.nonDebouncingQueryOptions;
 import static java.util.concurrent.TimeUnit.SECONDS;
-
 import static org.scassandra.http.client.ClosedConnectionReport.CloseType.CLOSE;
 
 public class HostConnectionPoolMultiTest {
@@ -36,15 +35,15 @@ public class HostConnectionPoolMultiTest {
 
     private Cluster cluster;
 
-    @BeforeMethod(groups={"short", "long"})
+    @BeforeMethod(groups = {"short", "long"})
     private void setUp() {
         scassandra = ScassandraCluster.builder().withNodes(2).build();
         scassandra.init();
     }
 
-    @AfterMethod(groups={"short", "long"})
+    @AfterMethod(groups = {"short", "long"})
     private void tearDown() {
-        if(cluster != null) {
+        if (cluster != null) {
             cluster.close();
         }
         scassandra.stop();
@@ -70,11 +69,11 @@ public class HostConnectionPoolMultiTest {
      * @test_category connection:connection_pool
      * @since 2.0.11
      */
-    @Test(groups="short")
+    @Test(groups = "short")
     public void should_mark_host_down_if_all_connections_fail_on_init() {
         // Prevent any connections on node 2.
         scassandra.node(2).currentClient().disableListener();
-        createCluster(8,8);
+        createCluster(8, 8);
 
         // Node 2 should be in a down state while node 1 stays up.
         assertThat(cluster).host(2).goesDownWithin(10, SECONDS);
@@ -93,16 +92,16 @@ public class HostConnectionPoolMultiTest {
      * @test_category connection:connection_pool
      * @since 2.0.11
      */
-    @Test(groups="short")
+    @Test(groups = "short")
     public void should_replace_control_connection_if_it_goes_down_but_host_remains_up() {
-        createCluster(1,2);
+        createCluster(1, 2);
 
         // Ensure control connection is on node 1.
         assertThat(cluster).usesControlHost(1);
 
         // Identify the socket associated with the control connection.
         Connection controlConnection = cluster.manager.controlConnection.connectionRef.get();
-        InetSocketAddress controlSocket = (InetSocketAddress)controlConnection.channel.localAddress();
+        InetSocketAddress controlSocket = (InetSocketAddress) controlConnection.channel.localAddress();
 
         // Close the control connection.
         scassandra.node(1).currentClient()

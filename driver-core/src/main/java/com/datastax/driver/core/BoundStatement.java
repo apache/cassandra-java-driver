@@ -15,31 +15,29 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.exceptions.InvalidTypeException;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
 
-import com.google.common.collect.Lists;
-
-import com.datastax.driver.core.exceptions.InvalidTypeException;
-
 /**
  * A prepared statement with values bound to the bind variables.
- * <p>
+ * <p/>
  * Once values has been provided for the variables of the {@link PreparedStatement}
  * it has been created from, such BoundStatement can be executed (through
  * {@link Session#execute(Statement)}).
- * <p>
+ * <p/>
  * The values of a BoundStatement can be set by either index or name. When
  * setting them by name, names follow the case insensitivity rules explained in
  * {@link ColumnDefinitions} but with the difference that if multiple bind
  * variables have the same name, setting that name will set <b>all</b> the
  * variables for that name.
- * <p>
+ * <p/>
  * Any variable that hasn't been specifically set will be considered {@code null}.
- * <p>
+ * <p/>
  * Bound values may also be retrieved using {@code get*()} methods. Note that this
  * may have a non-negligible impact on performance: internally, values are stored
  * in serialized form, so they need to be deserialized again. These methods are
@@ -56,6 +54,7 @@ public class BoundStatement extends Statement implements GettableData {
     /**
      * Creates a new {@code BoundStatement} from the provided prepared
      * statement.
+     *
      * @param statement the prepared statement from which to create a {@code BoundStatement}.
      */
     public BoundStatement(PreparedStatement statement) {
@@ -90,7 +89,6 @@ public class BoundStatement extends Statement implements GettableData {
      *
      * @param i the index of the variable to check.
      * @return whether the {@code i}th variable has been bound to a non null value.
-     *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
      */
     public boolean isSet(int i) {
@@ -105,9 +103,8 @@ public class BoundStatement extends Statement implements GettableData {
      * @param name the name of the variable to check.
      * @return whether the first occurrence of variable {@code name} has been
      * bound to a non-null value.
-     *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, that is if {@code !this.preparedStatement().variables().names().contains(name)}.
+     *                                  variable, that is if {@code !this.preparedStatement().variables().names().contains(name)}.
      */
     public boolean isSet(String name) {
         return isSet(metadata().getFirstIdx(name));
@@ -115,33 +112,31 @@ public class BoundStatement extends Statement implements GettableData {
 
     /**
      * Bound values to the variables of this statement.
-     *
+     * <p/>
      * This is a convenience method to bind all the variables of the
      * {@code BoundStatement} in one call.
      *
      * @param values the values to bind to the variables of the newly created
-     * BoundStatement. The first element of {@code values} will be bound to the
-     * first bind variable, etc. It is legal to provide fewer values than the
-     * statement has bound variables. In that case, the remaining variable need
-     * to be bound before execution. If more values than variables are provided
-     * however, an IllegalArgumentException wil be raised.
+     *               BoundStatement. The first element of {@code values} will be bound to the
+     *               first bind variable, etc. It is legal to provide fewer values than the
+     *               statement has bound variables. In that case, the remaining variable need
+     *               to be bound before execution. If more values than variables are provided
+     *               however, an IllegalArgumentException wil be raised.
      * @return this bound statement.
-     *
      * @throws IllegalArgumentException if more {@code values} are provided
-     * than there is of bound variables in this statement.
-     * @throws InvalidTypeException if any of the provided value is not of
-     * correct type to be bound to the corresponding bind variable.
-     * @throws NullPointerException if one of {@code values} is a collection
-     * (List, Set or Map) containing a null value. Nulls are not supported in
-     * collections by CQL.
+     *                                  than there is of bound variables in this statement.
+     * @throws InvalidTypeException     if any of the provided value is not of
+     *                                  correct type to be bound to the corresponding bind variable.
+     * @throws NullPointerException     if one of {@code values} is a collection
+     *                                  (List, Set or Map) containing a null value. Nulls are not supported in
+     *                                  collections by CQL.
      */
     public BoundStatement bind(Object... values) {
 
         if (values.length > statement.getVariables().size())
             throw new IllegalArgumentException(String.format("Prepared statement has only %d variables, %d values provided", statement.getVariables().size(), values.length));
 
-        for (int i = 0; i < values.length; i++)
-        {
+        for (int i = 0; i < values.length; i++) {
             Object toSet = values[i];
 
             if (toSet == null) {
@@ -155,7 +150,7 @@ public class BoundStatement extends Statement implements GettableData {
                     if (!(toSet instanceof List))
                         throw new InvalidTypeException(String.format("Invalid type for value %d, column is a list but %s provided", i, toSet.getClass()));
 
-                    List<?> l = (List<?>)toSet;
+                    List<?> l = (List<?>) toSet;
                     // If the list is empty, it will never fail validation, but otherwise we should check the list given if of the right type
                     if (!l.isEmpty()) {
                         // Ugly? Yes
@@ -169,7 +164,7 @@ public class BoundStatement extends Statement implements GettableData {
                     if (!(toSet instanceof Set))
                         throw new InvalidTypeException(String.format("Invalid type for value %d, column is a set but %s provided", i, toSet.getClass()));
 
-                    Set<?> s = (Set<?>)toSet;
+                    Set<?> s = (Set<?>) toSet;
                     // If the list is empty, it will never fail validation, but otherwise we should check the list given if of the right type
                     if (!s.isEmpty()) {
                         // Ugly? Yes
@@ -183,7 +178,7 @@ public class BoundStatement extends Statement implements GettableData {
                     if (!(toSet instanceof Map))
                         throw new InvalidTypeException(String.format("Invalid type for value %d, column is a map but %s provided", i, toSet.getClass()));
 
-                    Map<?, ?> m = (Map<?, ?>)toSet;
+                    Map<?, ?> m = (Map<?, ?>) toSet;
                     // If the list is empty, it will never fail validation, but otherwise we should check the list given if of the right type
                     if (!m.isEmpty()) {
                         // Ugly? Yes
@@ -199,7 +194,7 @@ public class BoundStatement extends Statement implements GettableData {
                     break;
                 default:
                     if (toSet instanceof Token)
-                        toSet = ((Token)toSet).getValue();
+                        toSet = ((Token) toSet).getValue();
 
                     Class<?> providedClass = toSet.getClass();
                     Class<?> expectedClass = columnType.getName().javaType;
@@ -214,14 +209,13 @@ public class BoundStatement extends Statement implements GettableData {
 
     /**
      * Sets the routing key for this bound statement.
-     * <p>
+     * <p/>
      * This is useful when the routing key can neither be set on the {@code PreparedStatement} this bound statement
      * was built from, nor automatically computed from bound variables. In particular, this is the case if the
      * partition key is composite and only some of its components are bound.
      *
      * @param routingKey the raw (binary) value to use as routing key.
      * @return this {@code BoundStatement} object.
-     *
      * @see BoundStatement#getRoutingKey
      */
     public BoundStatement setRoutingKey(ByteBuffer routingKey) {
@@ -231,7 +225,7 @@ public class BoundStatement extends Statement implements GettableData {
 
     /**
      * The routing key for this bound query.
-     * <p>
+     * <p/>
      * This method will return a non-{@code null} value if either of the following occur:
      * <ul>
      * <li>The routing key has been set directly through {@link BoundStatement#setRoutingKey}.</li>
@@ -241,8 +235,8 @@ public class BoundStatement extends Statement implements GettableData {
      * key will then be built using the values provided for these partition key columns.</li>
      * </ul>
      * Otherwise, {@code null} is returned.
-     * <p>
-     *
+     * <p/>
+     * <p/>
      * Note that if the routing key has been set through {@link BoundStatement#setRoutingKey}, then that takes
      * precedence. If the routing key has been set through {@link PreparedStatement#setRoutingKey} then that is used
      * next. If neither of those are set then it is computed.
@@ -279,7 +273,7 @@ public class BoundStatement extends Statement implements GettableData {
 
     /**
      * Returns the keyspace this query operates on.
-     * <p>
+     * <p/>
      * This method will always return a non-{@code null} value (unless the statement
      * has no variables, but you should avoid prepared statement in the first in that
      * case). The keyspace returned will be the one corresponding to the first
@@ -301,9 +295,8 @@ public class BoundStatement extends Statement implements GettableData {
      * @param i the index of the variable to set.
      * @param v the value to set.
      * @return this BoundStatement.
-     *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
-     * @throws InvalidTypeException if column {@code i} is not of type BOOLEAN.
+     * @throws InvalidTypeException      if column {@code i} is not of type BOOLEAN.
      */
     public BoundStatement setBool(int i, boolean v) {
         metadata().checkType(i, DataType.Name.BOOLEAN);
@@ -315,13 +308,12 @@ public class BoundStatement extends Statement implements GettableData {
      * provided boolean.
      *
      * @param name the name of the variable to set; if multiple variables
-     * {@code name} are prepared, all of them are set.
-     * @param v the value to set.
+     *             {@code name} are prepared, all of them are set.
+     * @param v    the value to set.
      * @return this BoundStatement.
-     *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if (any one occurrence of) {@code name} is not of type BOOLEAN.
+     *                                  variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * @throws InvalidTypeException     if (any one occurrence of) {@code name} is not of type BOOLEAN.
      */
     public BoundStatement setBool(String name, boolean v) {
         int[] indexes = metadata().getAllIdx(name);
@@ -339,9 +331,8 @@ public class BoundStatement extends Statement implements GettableData {
      * @param i the index of the variable to set.
      * @param v the value to set.
      * @return this BoundStatement.
-     *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
-     * @throws InvalidTypeException if column {@code i} is not of type INT.
+     * @throws InvalidTypeException      if column {@code i} is not of type INT.
      */
     public BoundStatement setInt(int i, int v) {
         metadata().checkType(i, DataType.Name.INT);
@@ -353,13 +344,12 @@ public class BoundStatement extends Statement implements GettableData {
      * provided integer.
      *
      * @param name the name of the variable to set; if multiple variables
-     * {@code name} are prepared, all of them are set.
-     * @param v the value to set.
+     *             {@code name} are prepared, all of them are set.
+     * @param v    the value to set.
      * @return this BoundStatement.
-     *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if (any one occurrence of) {@code name} is not of type INT.
+     *                                  variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * @throws InvalidTypeException     if (any one occurrence of) {@code name} is not of type INT.
      */
     public BoundStatement setInt(String name, int v) {
         int[] indexes = metadata().getAllIdx(name);
@@ -377,9 +367,8 @@ public class BoundStatement extends Statement implements GettableData {
      * @param i the index of the variable to set.
      * @param v the value to set.
      * @return this BoundStatement.
-     *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
-     * @throws InvalidTypeException if column {@code i} is not of type BIGINT or COUNTER.
+     * @throws InvalidTypeException      if column {@code i} is not of type BIGINT or COUNTER.
      */
     public BoundStatement setLong(int i, long v) {
         metadata().checkType(i, DataType.Name.BIGINT, DataType.Name.COUNTER);
@@ -391,14 +380,13 @@ public class BoundStatement extends Statement implements GettableData {
      * provided long.
      *
      * @param name the name of the variable to set; if multiple variables
-     * {@code name} are prepared, all of them are set.
-     * @param v the value to set.
+     *             {@code name} are prepared, all of them are set.
+     * @param v    the value to set.
      * @return this BoundStatement.
-     *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if (any occurrence of) {@code name} is
-     * not of type BIGINT or COUNTER.
+     *                                  variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * @throws InvalidTypeException     if (any occurrence of) {@code name} is
+     *                                  not of type BIGINT or COUNTER.
      */
     public BoundStatement setLong(String name, long v) {
         int[] indexes = metadata().getAllIdx(name);
@@ -416,9 +404,8 @@ public class BoundStatement extends Statement implements GettableData {
      * @param i the index of the variable to set.
      * @param v the value to set.
      * @return this BoundStatement.
-     *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
-     * @throws InvalidTypeException if column {@code i} is not of type TIMESTAMP.
+     * @throws InvalidTypeException      if column {@code i} is not of type TIMESTAMP.
      */
     public BoundStatement setDate(int i, Date v) {
         metadata().checkType(i, DataType.Name.TIMESTAMP);
@@ -430,14 +417,13 @@ public class BoundStatement extends Statement implements GettableData {
      * provided date.
      *
      * @param name the name of the variable to set; if multiple variables
-     * {@code name} are prepared, all of them are set.
-     * @param v the value to set.
+     *             {@code name} are prepared, all of them are set.
+     * @param v    the value to set.
      * @return this BoundStatement.
-     *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if (any occurrence of) {@code name} is
-     * not of type TIMESTAMP.
+     *                                  variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * @throws InvalidTypeException     if (any occurrence of) {@code name} is
+     *                                  not of type TIMESTAMP.
      */
     public BoundStatement setDate(String name, Date v) {
         int[] indexes = metadata().getAllIdx(name);
@@ -455,9 +441,8 @@ public class BoundStatement extends Statement implements GettableData {
      * @param i the index of the variable to set.
      * @param v the value to set.
      * @return this BoundStatement.
-     *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
-     * @throws InvalidTypeException if column {@code i} is not of type FLOAT.
+     * @throws InvalidTypeException      if column {@code i} is not of type FLOAT.
      */
     public BoundStatement setFloat(int i, float v) {
         metadata().checkType(i, DataType.Name.FLOAT);
@@ -469,14 +454,13 @@ public class BoundStatement extends Statement implements GettableData {
      * provided float.
      *
      * @param name the name of the variable to set; if multiple variables
-     * {@code name} are prepared, all of them are set.
-     * @param v the value to set.
+     *             {@code name} are prepared, all of them are set.
+     * @param v    the value to set.
      * @return this BoundStatement.
-     *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if (any occurrence of) {@code name} is
-     * not of type FLOAT.
+     *                                  variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * @throws InvalidTypeException     if (any occurrence of) {@code name} is
+     *                                  not of type FLOAT.
      */
     public BoundStatement setFloat(String name, float v) {
         int[] indexes = metadata().getAllIdx(name);
@@ -494,9 +478,8 @@ public class BoundStatement extends Statement implements GettableData {
      * @param i the index of the variable to set.
      * @param v the value to set.
      * @return this BoundStatement.
-     *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
-     * @throws InvalidTypeException if column {@code i} is not of type DOUBLE.
+     * @throws InvalidTypeException      if column {@code i} is not of type DOUBLE.
      */
     public BoundStatement setDouble(int i, double v) {
         metadata().checkType(i, DataType.Name.DOUBLE);
@@ -508,14 +491,13 @@ public class BoundStatement extends Statement implements GettableData {
      * provided double.
      *
      * @param name the name of the variable to set; if multiple variables
-     * {@code name} are prepared, all of them are set.
-     * @param v the value to set.
+     *             {@code name} are prepared, all of them are set.
+     * @param v    the value to set.
      * @return this BoundStatement.
-     *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if (any occurrence of) {@code name} is
-     * not of type DOUBLE.
+     *                                  variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * @throws InvalidTypeException     if (any occurrence of) {@code name} is
+     *                                  not of type DOUBLE.
      */
     public BoundStatement setDouble(String name, double v) {
         int[] indexes = metadata().getAllIdx(name);
@@ -533,15 +515,14 @@ public class BoundStatement extends Statement implements GettableData {
      * @param i the index of the variable to set.
      * @param v the value to set.
      * @return this BoundStatement.
-     *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
-     * @throws InvalidTypeException if column {@code i} is of neither of the
-     * following types: VARCHAR, TEXT or ASCII.
+     * @throws InvalidTypeException      if column {@code i} is of neither of the
+     *                                   following types: VARCHAR, TEXT or ASCII.
      */
     public BoundStatement setString(int i, String v) {
         DataType.Name type = metadata().checkType(i, DataType.Name.VARCHAR,
-            DataType.Name.TEXT,
-            DataType.Name.ASCII);
+                DataType.Name.TEXT,
+                DataType.Name.ASCII);
         switch (type) {
             case ASCII:
                 return setValue(i, v == null ? null : TypeCodec.StringCodec.asciiInstance.serialize(v));
@@ -558,14 +539,13 @@ public class BoundStatement extends Statement implements GettableData {
      * provided string.
      *
      * @param name the name of the variable to set; if multiple variables
-     * {@code name} are prepared, all of them are set.
-     * @param v the value to set.
+     *             {@code name} are prepared, all of them are set.
+     * @param v    the value to set.
      * @return this BoundStatement.
-     *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if (any occurrence of) {@code name} is
-     * of neither of the following types: VARCHAR, TEXT or ASCII.
+     *                                  variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * @throws InvalidTypeException     if (any occurrence of) {@code name} is
+     *                                  of neither of the following types: VARCHAR, TEXT or ASCII.
      */
     public BoundStatement setString(String name, String v) {
         int[] indexes = metadata().getAllIdx(name);
@@ -576,7 +556,7 @@ public class BoundStatement extends Statement implements GettableData {
 
     /**
      * Sets the {@code i}th value to the provided byte buffer.
-     *
+     * <p/>
      * This method validate that the type of the column set is BLOB. If you
      * want to insert manually serialized data into columns of another type,
      * use {@link #setBytesUnsafe} instead.
@@ -584,9 +564,8 @@ public class BoundStatement extends Statement implements GettableData {
      * @param i the index of the variable to set.
      * @param v the value to set.
      * @return this BoundStatement.
-     *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
-     * @throws InvalidTypeException if column {@code i} is not of type BLOB.
+     * @throws InvalidTypeException      if column {@code i} is not of type BLOB.
      */
     public BoundStatement setBytes(int i, ByteBuffer v) {
         metadata().checkType(i, DataType.Name.BLOB);
@@ -596,19 +575,18 @@ public class BoundStatement extends Statement implements GettableData {
     /**
      * Sets the value for (all occurrences of) variable {@code name} to the
      * provided byte buffer.
-     *
+     * <p/>
      * This method validate that the type of the column set is BLOB. If you
      * want to insert manually serialized data into columns of another type,
      * use {@link #setBytesUnsafe} instead.
      *
      * @param name the name of the variable to set; if multiple variables
-     * {@code name} are prepared, all of them are set.
-     * @param v the value to set.
+     *             {@code name} are prepared, all of them are set.
+     * @param v    the value to set.
      * @return this BoundStatement.
-     *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, that is if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if (any occurrence of) {@code name} is not of type BLOB.
+     *                                  variable, that is if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * @throws InvalidTypeException     if (any occurrence of) {@code name} is not of type BLOB.
      */
     public BoundStatement setBytes(String name, ByteBuffer v) {
         int[] indexes = metadata().getAllIdx(name);
@@ -622,7 +600,7 @@ public class BoundStatement extends Statement implements GettableData {
 
     /**
      * Sets the {@code i}th value to the provided byte buffer.
-     *
+     * <p/>
      * Contrary to {@link #setBytes}, this method does not check the
      * type of the column set. If you insert data that is not compatible with
      * the type of the column, you will get an {@code InvalidQueryException} at
@@ -631,7 +609,6 @@ public class BoundStatement extends Statement implements GettableData {
      * @param i the index of the variable to set.
      * @param v the value to set.
      * @return this BoundStatement.
-     *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
      */
     public BoundStatement setBytesUnsafe(int i, ByteBuffer v) {
@@ -641,19 +618,18 @@ public class BoundStatement extends Statement implements GettableData {
     /**
      * Sets the value for (all occurrences of) variable {@code name} to the
      * provided byte buffer.
-     *
+     * <p/>
      * Contrary to {@link #setBytes}, this method does not check the
      * type of the column set. If you insert data that is not compatible with
      * the type of the column, you will get an {@code InvalidQueryException} at
      * execute time.
      *
      * @param name the name of the variable to set; if multiple variables
-     * {@code name} are prepared, all of them are set.
-     * @param v the value to set.
+     *             {@code name} are prepared, all of them are set.
+     * @param v    the value to set.
      * @return this BoundStatement.
-     *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, that is if {@code !this.preparedStatement().variables().names().contains(name)}.
+     *                                  variable, that is if {@code !this.preparedStatement().variables().names().contains(name)}.
      */
     public BoundStatement setBytesUnsafe(String name, ByteBuffer v) {
         int[] indexes = metadata().getAllIdx(name);
@@ -669,9 +645,8 @@ public class BoundStatement extends Statement implements GettableData {
      * @param i the index of the variable to set.
      * @param v the value to set.
      * @return this BoundStatement.
-     *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
-     * @throws InvalidTypeException if column {@code i} is not of type VARINT.
+     * @throws InvalidTypeException      if column {@code i} is not of type VARINT.
      */
     public BoundStatement setVarint(int i, BigInteger v) {
         metadata().checkType(i, DataType.Name.VARINT);
@@ -683,14 +658,13 @@ public class BoundStatement extends Statement implements GettableData {
      * provided big integer.
      *
      * @param name the name of the variable to set; if multiple variables
-     * {@code name} are prepared, all of them are set.
-     * @param v the value to set.
+     *             {@code name} are prepared, all of them are set.
+     * @param v    the value to set.
      * @return this BoundStatement.
-     *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if (any occurrence of) {@code name} is
-     * not of type VARINT.
+     *                                  variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * @throws InvalidTypeException     if (any occurrence of) {@code name} is
+     *                                  not of type VARINT.
      */
     public BoundStatement setVarint(String name, BigInteger v) {
         int[] indexes = metadata().getAllIdx(name);
@@ -708,9 +682,8 @@ public class BoundStatement extends Statement implements GettableData {
      * @param i the index of the variable to set.
      * @param v the value to set.
      * @return this BoundStatement.
-     *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
-     * @throws InvalidTypeException if column {@code i} is not of type DECIMAL.
+     * @throws InvalidTypeException      if column {@code i} is not of type DECIMAL.
      */
     public BoundStatement setDecimal(int i, BigDecimal v) {
         metadata().checkType(i, DataType.Name.DECIMAL);
@@ -722,14 +695,13 @@ public class BoundStatement extends Statement implements GettableData {
      * provided big decimal.
      *
      * @param name the name of the variable to set; if multiple variables
-     * {@code name} are prepared, all of them are set.
-     * @param v the value to set.
+     *             {@code name} are prepared, all of them are set.
+     * @param v    the value to set.
      * @return this BoundStatement.
-     *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if (any occurrence of) {@code name} is
-     * not of type DECIMAL.
+     *                                  variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * @throws InvalidTypeException     if (any occurrence of) {@code name} is
+     *                                  not of type DECIMAL.
      */
     public BoundStatement setDecimal(String name, BigDecimal v) {
         int[] indexes = metadata().getAllIdx(name);
@@ -747,15 +719,14 @@ public class BoundStatement extends Statement implements GettableData {
      * @param i the index of the variable to set.
      * @param v the value to set.
      * @return this BoundStatement.
-     *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
-     * @throws InvalidTypeException if column {@code i} is not of type UUID or
-     * TIMEUUID, or if column {@code i} is of type TIMEUUID but {@code v} is
-     * not a type 1 UUID.
+     * @throws InvalidTypeException      if column {@code i} is not of type UUID or
+     *                                   TIMEUUID, or if column {@code i} is of type TIMEUUID but {@code v} is
+     *                                   not a type 1 UUID.
      */
     public BoundStatement setUUID(int i, UUID v) {
         DataType.Name type = metadata().checkType(i, DataType.Name.UUID,
-            DataType.Name.TIMEUUID);
+                DataType.Name.TIMEUUID);
 
         if (v == null)
             return setValue(i, null);
@@ -764,8 +735,8 @@ public class BoundStatement extends Statement implements GettableData {
             throw new InvalidTypeException(String.format("%s is not a Type 1 (time-based) UUID", v));
 
         return type == DataType.Name.UUID
-             ? setValue(i, TypeCodec.UUIDCodec.instance.serialize(v))
-             : setValue(i, TypeCodec.TimeUUIDCodec.instance.serialize(v));
+                ? setValue(i, TypeCodec.UUIDCodec.instance.serialize(v))
+                : setValue(i, TypeCodec.TimeUUIDCodec.instance.serialize(v));
     }
 
     /**
@@ -773,15 +744,14 @@ public class BoundStatement extends Statement implements GettableData {
      * provided UUID.
      *
      * @param name the name of the variable to set; if multiple variables
-     * {@code name} are prepared, all of them are set.
-     * @param v the value to set.
+     *             {@code name} are prepared, all of them are set.
+     * @param v    the value to set.
      * @return this BoundStatement.
-     *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if (any occurrence of) {@code name} is
-     * not of type UUID or TIMEUUID, or if column {@code name} is of type
-     * TIMEUUID but {@code v} is not a type 1 UUID.
+     *                                  variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * @throws InvalidTypeException     if (any occurrence of) {@code name} is
+     *                                  not of type UUID or TIMEUUID, or if column {@code name} is of type
+     *                                  TIMEUUID but {@code v} is not a type 1 UUID.
      */
     public BoundStatement setUUID(String name, UUID v) {
         int[] indexes = metadata().getAllIdx(name);
@@ -801,9 +771,8 @@ public class BoundStatement extends Statement implements GettableData {
      * @param i the index of the variable to set.
      * @param v the value to set.
      * @return this BoundStatement.
-     *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
-     * @throws InvalidTypeException if column {@code i} is not of type INET.
+     * @throws InvalidTypeException      if column {@code i} is not of type INET.
      */
     public BoundStatement setInet(int i, InetAddress v) {
         metadata().checkType(i, DataType.Name.INET);
@@ -815,14 +784,13 @@ public class BoundStatement extends Statement implements GettableData {
      * provided inet address.
      *
      * @param name the name of the variable to set; if multiple variables
-     * {@code name} are prepared, all of them are set.
-     * @param v the value to set.
+     *             {@code name} are prepared, all of them are set.
+     * @param v    the value to set.
      * @return this BoundStatement.
-     *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if (any occurrence of) {@code name} is
-     * not of type INET.
+     *                                  variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * @throws InvalidTypeException     if (any occurrence of) {@code name} is
+     *                                  not of type INET.
      */
     public BoundStatement setInet(String name, InetAddress v) {
         int[] indexes = metadata().getAllIdx(name);
@@ -836,16 +804,15 @@ public class BoundStatement extends Statement implements GettableData {
 
     /**
      * Sets the {@code i}th value to the provided {@link Token}.
-     * <p>
+     * <p/>
      * {@link #setPartitionKeyToken(Token)} should generally be preferred if you
      * have a single token variable.
      *
      * @param i the index of the variable to set.
      * @param v the value to set.
      * @return this BoundStatement.
-     *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
-     * @throws InvalidTypeException if column {@code i} is not of the type of the token's value.
+     * @throws InvalidTypeException      if column {@code i} is not of the type of the token's value.
      */
     public BoundStatement setToken(int i, Token v) {
         metadata().checkType(i, v.getType().getName());
@@ -855,10 +822,10 @@ public class BoundStatement extends Statement implements GettableData {
     /**
      * Sets the value for (all occurrences of) variable {@code name} to the
      * provided token.
-     * <p>
+     * <p/>
      * {@link #setPartitionKeyToken(Token)} should generally be preferred if you
      * have a single token variable.
-     * <p>
+     * <p/>
      * If you have multiple token variables, use positional binding ({@link #setToken(int, Token)},
      * or named bind markers:
      * <pre>
@@ -869,14 +836,13 @@ public class BoundStatement extends Statement implements GettableData {
      * </pre>
      *
      * @param name the name of the variable to set; if multiple variables
-     * {@code name} are prepared, all of them are set.
-     * @param v the value to set.
+     *             {@code name} are prepared, all of them are set.
+     * @param v    the value to set.
      * @return this BoundStatement.
-     *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if (any occurrence of) {@code name} is
-     * not of the type of the token's value.
+     *                                  variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * @throws InvalidTypeException     if (any occurrence of) {@code name} is
+     *                                  not of the type of the token's value.
      */
     public BoundStatement setToken(String name, Token v) {
         int[] indexes = metadata().getAllIdx(name);
@@ -889,7 +855,7 @@ public class BoundStatement extends Statement implements GettableData {
      * Sets the value for (all occurrences of) variable "{@code partition key token}"
      * to the provided token (this is the name generated by Cassandra for markers
      * corresponding to a {@code token(...)} call).
-     * <p>
+     * <p/>
      * This method is a shorthand for statements with a single token variable:
      * <pre>
      * {@code
@@ -909,11 +875,10 @@ public class BoundStatement extends Statement implements GettableData {
      *
      * @param v the value to set.
      * @return this BoundStatement.
-     *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if (any occurrence of) {@code name} is
-     * not of the type of the token's value.
+     *                                  variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * @throws InvalidTypeException     if (any occurrence of) {@code name} is
+     *                                  not of the type of the token's value.
      */
     public BoundStatement setPartitionKeyToken(Token v) {
         return setToken("partition key token", v);
@@ -921,20 +886,19 @@ public class BoundStatement extends Statement implements GettableData {
 
     /**
      * Sets the {@code i}th value to the provided list.
-     * <p>
+     * <p/>
      * Please note that {@code null} values are not supported inside collection by CQL.
      *
      * @param <T> the type of the elements of the list to set.
-     * @param i the index of the variable to set.
-     * @param v the value to set.
+     * @param i   the index of the variable to set.
+     * @param v   the value to set.
      * @return this BoundStatement.
-     *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
-     * @throws InvalidTypeException if column {@code i} is not a list type or
-     * if the elements of {@code v} are not of the type of the elements of
-     * column {@code i}.
-     * @throws NullPointerException if {@code v} contains null values. Nulls are not supported in collections
-     * by CQL.
+     * @throws InvalidTypeException      if column {@code i} is not a list type or
+     *                                   if the elements of {@code v} are not of the type of the elements of
+     *                                   column {@code i}.
+     * @throws NullPointerException      if {@code v} contains null values. Nulls are not supported in collections
+     *                                   by CQL.
      */
     public <T> BoundStatement setList(int i, List<T> v) {
         DataType type = metadata().getType(i);
@@ -960,22 +924,21 @@ public class BoundStatement extends Statement implements GettableData {
     /**
      * Sets the value for (all occurrences of) variable {@code name} to the
      * provided list.
-     * <p>
+     * <p/>
      * Please note that {@code null} values are not supported inside collection by CQL.
      *
-     * @param <T> the type of the elements of the list to set.
+     * @param <T>  the type of the elements of the list to set.
      * @param name the name of the variable to set; if multiple variables
-     * {@code name} are prepared, all of them are set.
-     * @param v the value to set.
+     *             {@code name} are prepared, all of them are set.
+     * @param v    the value to set.
      * @return this BoundStatement.
-     *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if (any occurrence of) {@code name} is
-     * not a list type or if the elements of {@code v} are not of the type of
-     * the elements of column {@code name}.
-     * @throws NullPointerException if {@code v} contains null values. Nulls are not supported in collections
-     * by CQL.
+     *                                  variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * @throws InvalidTypeException     if (any occurrence of) {@code name} is
+     *                                  not a list type or if the elements of {@code v} are not of the type of
+     *                                  the elements of column {@code name}.
+     * @throws NullPointerException     if {@code v} contains null values. Nulls are not supported in collections
+     *                                  by CQL.
      */
     public <T> BoundStatement setList(String name, List<T> v) {
         int[] indexes = metadata().getAllIdx(name);
@@ -986,21 +949,20 @@ public class BoundStatement extends Statement implements GettableData {
 
     /**
      * Sets the {@code i}th value to the provided map.
-     * <p>
+     * <p/>
      * Please note that {@code null} values are not supported inside collection by CQL.
      *
      * @param <K> the type of the keys for the map to set.
      * @param <V> the type of the values for the map to set.
-     * @param i the index of the variable to set.
-     * @param v the value to set.
+     * @param i   the index of the variable to set.
+     * @param v   the value to set.
      * @return this BoundStatement.
-     *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
-     * @throws InvalidTypeException if column {@code i} is not a map type or
-     * if the elements (keys or values) of {@code v} are not of the type of the
-     * elements of column {@code i}.
-     * @throws NullPointerException if {@code v} contains null values. Nulls are not supported in collections
-     * by CQL.
+     * @throws InvalidTypeException      if column {@code i} is not a map type or
+     *                                   if the elements (keys or values) of {@code v} are not of the type of the
+     *                                   elements of column {@code i}.
+     * @throws NullPointerException      if {@code v} contains null values. Nulls are not supported in collections
+     *                                   by CQL.
      */
     public <K, V> BoundStatement setMap(int i, Map<K, V> v) {
         DataType type = metadata().getType(i);
@@ -1028,23 +990,22 @@ public class BoundStatement extends Statement implements GettableData {
     /**
      * Sets the value for (all occurrences of) variable {@code name} to the
      * provided map.
-     * <p>
+     * <p/>
      * Please note that {@code null} values are not supported inside collection by CQL.
      *
-     * @param <K> the type of the keys for the map to set.
-     * @param <V> the type of the values for the map to set.
+     * @param <K>  the type of the keys for the map to set.
+     * @param <V>  the type of the values for the map to set.
      * @param name the name of the variable to set; if multiple variables
-     * {@code name} are prepared, all of them are set.
-     * @param v the value to set.
+     *             {@code name} are prepared, all of them are set.
+     * @param v    the value to set.
      * @return this BoundStatement.
-     *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if (any occurrence of) {@code name} is
-     * not a map type or if the elements (keys or values) of {@code v} are not of
-     * the type of the elements of column {@code name}.
-     * @throws NullPointerException if {@code v} contains null values. Nulls are not supported in collections
-     * by CQL.
+     *                                  variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * @throws InvalidTypeException     if (any occurrence of) {@code name} is
+     *                                  not a map type or if the elements (keys or values) of {@code v} are not of
+     *                                  the type of the elements of column {@code name}.
+     * @throws NullPointerException     if {@code v} contains null values. Nulls are not supported in collections
+     *                                  by CQL.
      */
     public <K, V> BoundStatement setMap(String name, Map<K, V> v) {
         int[] indexes = metadata().getAllIdx(name);
@@ -1055,20 +1016,19 @@ public class BoundStatement extends Statement implements GettableData {
 
     /**
      * Sets the {@code i}th value to the provided set.
-     * <p>
+     * <p/>
      * Please note that {@code null} values are not supported inside collection by CQL.
      *
      * @param <T> the type of the elements of the set to set.
-     * @param i the index of the variable to set.
-     * @param v the value to set.
+     * @param i   the index of the variable to set.
+     * @param v   the value to set.
      * @return this BoundStatement.
-     *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
-     * @throws InvalidTypeException if column {@code i} is not a set type or
-     * if the elements of {@code v} are not of the type of the elements of
-     * column {@code i}.
-     * @throws NullPointerException if {@code v} contains null values. Nulls are not supported in collections
-     * by CQL.
+     * @throws InvalidTypeException      if column {@code i} is not a set type or
+     *                                   if the elements of {@code v} are not of the type of the elements of
+     *                                   column {@code i}.
+     * @throws NullPointerException      if {@code v} contains null values. Nulls are not supported in collections
+     *                                   by CQL.
      */
     public <T> BoundStatement setSet(int i, Set<T> v) {
         DataType type = metadata().getType(i);
@@ -1093,22 +1053,21 @@ public class BoundStatement extends Statement implements GettableData {
     /**
      * Sets the value for (all occurrences of) variable {@code name} to the
      * provided set.
-     * <p>
+     * <p/>
      * Please note that {@code null} values are not supported inside collection by CQL.
      *
-     * @param <T> the type of the elements of the set to set.
+     * @param <T>  the type of the elements of the set to set.
      * @param name the name of the variable to set; if multiple variables
-     * {@code name} are prepared, all of them are set.
-     * @param v the value to set.
+     *             {@code name} are prepared, all of them are set.
+     * @param v    the value to set.
      * @return this BoundStatement.
-     *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if (any occurrence of) {@code name} is
-     * not a map type or if the elements of {@code v} are not of the type of
-     * the elements of column {@code name}.
-     * @throws NullPointerException if {@code v} contains null values. Nulls are not supported in collections
-     * by CQL.
+     *                                  variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * @throws InvalidTypeException     if (any occurrence of) {@code name} is
+     *                                  not a map type or if the elements of {@code v} are not of the type of
+     *                                  the elements of column {@code name}.
+     * @throws NullPointerException     if {@code v} contains null values. Nulls are not supported in collections
+     *                                  by CQL.
      */
     public <T> BoundStatement setSet(String name, Set<T> v) {
         int[] indexes = metadata().getAllIdx(name);

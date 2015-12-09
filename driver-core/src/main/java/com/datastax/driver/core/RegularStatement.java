@@ -19,7 +19,7 @@ import java.nio.ByteBuffer;
 
 /**
  * A regular (non-prepared and non batched) CQL statement.
- * <p>
+ * <p/>
  * This class represents a query string along with query options (and optionally
  * binary values, see {@code getValues}). It can be extended but {@link SimpleStatement}
  * is provided as a simple implementation to build a {@code RegularStatement} directly
@@ -30,7 +30,8 @@ public abstract class RegularStatement extends Statement {
     /**
      * Creates a new RegularStatement.
      */
-    protected RegularStatement() {}
+    protected RegularStatement() {
+    }
 
     /**
      * Returns the query string for this statement.
@@ -41,7 +42,7 @@ public abstract class RegularStatement extends Statement {
 
     /**
      * The values to use for this statement.
-     * <p>
+     * <p/>
      * Note: Values for a RegularStatement (i.e. if this method does not return
      * {@code null}) are not supported with the native protocol version 1: you
      * will get an {@link UnsupportedProtocolVersionException} when submitting
@@ -51,7 +52,6 @@ public abstract class RegularStatement extends Statement {
      *
      * @return the values to use for this statement or {@code null} if there is
      * no such values.
-     *
      * @see SimpleStatement#SimpleStatement(String, Object...)
      */
     public abstract ByteBuffer[] getValues();

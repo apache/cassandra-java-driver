@@ -15,14 +15,14 @@
  */
 package com.datastax.driver.core;
 
-import org.testng.annotations.Test;
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
-
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.datastax.driver.core.policies.ConstantReconnectionPolicy;
 import com.datastax.driver.core.policies.ExponentialReconnectionPolicy;
 import com.datastax.driver.core.policies.ReconnectionPolicy;
+import org.testng.annotations.Test;
+
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 public class ReconnectionPolicyTest extends AbstractPoliciesTest {
 
@@ -47,22 +47,26 @@ public class ReconnectionPolicyTest extends AbstractPoliciesTest {
         try {
             new ExponentialReconnectionPolicy(-1, 1);
             fail();
-        } catch (IllegalArgumentException e) {}
+        } catch (IllegalArgumentException e) {
+        }
 
         try {
             new ExponentialReconnectionPolicy(1, -1);
             fail();
-        } catch (IllegalArgumentException e) {}
+        } catch (IllegalArgumentException e) {
+        }
 
         try {
             new ExponentialReconnectionPolicy(-1, -1);
             fail();
-        } catch (IllegalArgumentException e) {}
+        } catch (IllegalArgumentException e) {
+        }
 
         try {
             new ExponentialReconnectionPolicy(2, 1);
             fail();
-        } catch (IllegalArgumentException e) {}
+        } catch (IllegalArgumentException e) {
+        }
 
         // Test nextDelays()
         ReconnectionPolicy.ReconnectionSchedule schedule = new ExponentialReconnectionPolicy(2 * 1000, 5 * 60 * 1000).newSchedule();
@@ -104,7 +108,8 @@ public class ReconnectionPolicyTest extends AbstractPoliciesTest {
         try {
             new ConstantReconnectionPolicy(-1);
             fail();
-        } catch (IllegalArgumentException e) {}
+        } catch (IllegalArgumentException e) {
+        }
 
         // Test nextDelays()
         ReconnectionPolicy.ReconnectionSchedule schedule = new ConstantReconnectionPolicy(10 * 1000).newSchedule();
@@ -142,7 +147,8 @@ public class ReconnectionPolicyTest extends AbstractPoliciesTest {
                 startTime = System.nanoTime() / 1000000000;
                 query(c, 12);
                 fail("Test race condition where node has not shut off quickly enough.");
-            } catch (NoHostAvailableException e) {}
+            } catch (NoHostAvailableException e) {
+            }
 
             long thisTime;
             boolean restarted = false;
@@ -184,7 +190,8 @@ public class ReconnectionPolicyTest extends AbstractPoliciesTest {
                     startTime = System.nanoTime() / 1000000000;
                     query(c, 12);
                     fail("Test race condition where node has not shut off quickly enough.");
-                } catch (NoHostAvailableException e) {}
+                } catch (NoHostAvailableException e) {
+                }
 
                 restarted = false;
                 while (true) {

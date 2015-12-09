@@ -15,16 +15,18 @@
  */
 package com.datastax.driver.core;
 
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
+import com.datastax.driver.core.exceptions.DriverInternalError;
+import com.datastax.driver.core.exceptions.NoHostAvailableException;
+import com.datastax.driver.core.exceptions.QueryExecutionException;
+import com.datastax.driver.core.exceptions.QueryValidationException;
 import com.google.common.util.concurrent.AbstractFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.datastax.driver.core.exceptions.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Internal implementation of ResultSetFuture.
@@ -57,11 +59,11 @@ class DefaultResultSetFuture extends AbstractFuture<ResultSet> implements Result
         try {
             switch (response.type) {
                 case RESULT:
-                    Responses.Result rm = (Responses.Result)response;
+                    Responses.Result rm = (Responses.Result) response;
                     switch (rm.kind) {
                         case SET_KEYSPACE:
                             // propagate the keyspace change to other connections
-                            session.poolsState.setKeyspace(((Responses.Result.SetKeyspace)rm).keyspace);
+                            session.poolsState.setKeyspace(((Responses.Result.SetKeyspace) rm).keyspace);
                             set(ArrayBackedResultSet.fromMessage(rm, session, info, statement));
                             break;
                         case SCHEMA_CHANGE:
@@ -70,7 +72,7 @@ class DefaultResultSetFuture extends AbstractFuture<ResultSet> implements Result
                             if (!cluster.configuration.getQueryOptions().isMetadataEnabled()) {
                                 cluster.waitForSchemaAgreementAndSignal(connection, this, rs);
                             } else {
-                                Responses.Result.SchemaChange scc = (Responses.Result.SchemaChange)rm;
+                                Responses.Result.SchemaChange scc = (Responses.Result.SchemaChange) rm;
                                 switch (scc.change) {
                                     case CREATED:
                                         if (scc.columnFamily.isEmpty()) {
@@ -99,7 +101,7 @@ class DefaultResultSetFuture extends AbstractFuture<ResultSet> implements Result
                                             KeyspaceMetadata keyspace = cluster.metadata.getKeyspaceInternal(scc.keyspace);
                                             if (keyspace == null)
                                                 logger.warn("Received a DROPPED notification for {}.{}, but this keyspace is unknown in our metadata",
-                                                    scc.keyspace, scc.columnFamily);
+                                                        scc.keyspace, scc.columnFamily);
                                             else {
                                                 final TableMetadata removed = keyspace.removeTable(scc.columnFamily);
                                                 if (removed != null) {
@@ -133,7 +135,7 @@ class DefaultResultSetFuture extends AbstractFuture<ResultSet> implements Result
                     }
                     break;
                 case ERROR:
-                    setException(((Responses.Error)response).asException(connection.address));
+                    setException(((Responses.Error) response).asException(connection.address));
                     break;
                 default:
                     // This mean we have probably have a bad node, so defunct the connection
@@ -176,23 +178,23 @@ class DefaultResultSetFuture extends AbstractFuture<ResultSet> implements Result
 
     /**
      * Waits for the query to return and return its result.
-     *
+     * <p/>
      * This method is usually more convenient than {@link #get} because it:
      * <ul>
-     *   <li>Waits for the result uninterruptibly, and so doesn't throw
-     *   {@link InterruptedException}.</li>
-     *   <li>Returns meaningful exceptions, instead of having to deal
-     *   with ExecutionException.</li>
+     * <li>Waits for the result uninterruptibly, and so doesn't throw
+     * {@link InterruptedException}.</li>
+     * <li>Returns meaningful exceptions, instead of having to deal
+     * with ExecutionException.</li>
      * </ul>
      * As such, it is the preferred way to get the future result.
      *
      * @throws NoHostAvailableException if no host in the cluster can be
-     * contacted successfully to execute this query.
-     * @throws QueryExecutionException if the query triggered an execution
-     * exception, that is an exception thrown by Cassandra when it cannot execute
-     * the query with the requested consistency level successfully.
+     *                                  contacted successfully to execute this query.
+     * @throws QueryExecutionException  if the query triggered an execution
+     *                                  exception, that is an exception thrown by Cassandra when it cannot execute
+     *                                  the query with the requested consistency level successfully.
      * @throws QueryValidationException if the query is invalid (syntax error,
-     * unauthorized or any other validation problem).
+     *                                  unauthorized or any other validation problem).
      */
     public ResultSet getUninterruptibly() {
         try {
@@ -205,26 +207,26 @@ class DefaultResultSetFuture extends AbstractFuture<ResultSet> implements Result
     /**
      * Waits for the provided time for the query to return and return its
      * result if available.
-     *
+     * <p/>
      * This method is usually more convenient than {@link #get} because it:
      * <ul>
-     *   <li>Waits for the result uninterruptibly, and so doesn't throw
-     *   {@link InterruptedException}.</li>
-     *   <li>Returns meaningful exceptions, instead of having to deal
-     *   with ExecutionException.</li>
+     * <li>Waits for the result uninterruptibly, and so doesn't throw
+     * {@link InterruptedException}.</li>
+     * <li>Returns meaningful exceptions, instead of having to deal
+     * with ExecutionException.</li>
      * </ul>
      * As such, it is the preferred way to get the future result.
      *
      * @throws NoHostAvailableException if no host in the cluster can be
-     * contacted successfully to execute this query.
-     * @throws QueryExecutionException if the query triggered an execution
-     * exception, that is an exception thrown by Cassandra when it cannot execute
-     * the query with the requested consistency level successfully.
+     *                                  contacted successfully to execute this query.
+     * @throws QueryExecutionException  if the query triggered an execution
+     *                                  exception, that is an exception thrown by Cassandra when it cannot execute
+     *                                  the query with the requested consistency level successfully.
      * @throws QueryValidationException if the query if invalid (syntax error,
-     * unauthorized or any other validation problem).
-     * @throws TimeoutException if the wait timed out (Note that this is
-     * different from a Cassandra timeout, which is a {@code
-     * QueryExecutionException}).
+     *                                  unauthorized or any other validation problem).
+     * @throws TimeoutException         if the wait timed out (Note that this is
+     *                                  different from a Cassandra timeout, which is a {@code
+     *                                  QueryExecutionException}).
      */
     public ResultSet getUninterruptibly(long timeout, TimeUnit unit) throws TimeoutException {
         try {
@@ -237,12 +239,12 @@ class DefaultResultSetFuture extends AbstractFuture<ResultSet> implements Result
     /**
      * Attempts to cancel the execution of the request corresponding to this
      * future. This attempt will fail if the request has already returned.
-     * <p>
+     * <p/>
      * Please note that this only cancels the request driver side, but nothing
      * is done to interrupt the execution of the request Cassandra side (and that even
      * if {@code mayInterruptIfRunning} is true) since  Cassandra does not
      * support such interruption.
-     * <p>
+     * <p/>
      * This method can be used to ensure no more work is performed driver side
      * (which, while it doesn't include stopping a request already submitted
      * to a Cassandra node, may include not retrying another Cassandra host on
@@ -262,7 +264,7 @@ class DefaultResultSetFuture extends AbstractFuture<ResultSet> implements Result
      * <pre>
      *
      * @param mayInterruptIfRunning the value of this parameter is currently
-     * ignored.
+     *                              ignored.
      * @return {@code false} if the future could not be cancelled (it has already
      * completed normally); {@code true} otherwise.
      */
@@ -271,7 +273,7 @@ class DefaultResultSetFuture extends AbstractFuture<ResultSet> implements Result
         if (!super.cancel(mayInterruptIfRunning))
             return false;
 
-        if(handler != null) {
+        if (handler != null) {
             handler.cancel();
         }
         return true;

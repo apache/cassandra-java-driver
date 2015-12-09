@@ -15,12 +15,11 @@
  */
 package com.datastax.driver.core.policies;
 
+import com.datastax.driver.core.CCMBridge;
+import com.datastax.driver.core.Cluster;
 import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-
-import com.datastax.driver.core.CCMBridge;
-import com.datastax.driver.core.Cluster;
 
 public class CloseableLoadBalancingPolicyTest {
     @Test(groups = "short")
@@ -31,9 +30,9 @@ public class CloseableLoadBalancingPolicyTest {
         try {
             ccm = CCMBridge.builder("test").withNodes(1).build();
             cluster = Cluster.builder()
-                             .addContactPoint(CCMBridge.ipOfNode(1))
-                             .withLoadBalancingPolicy(policy)
-                             .build();
+                    .addContactPoint(CCMBridge.ipOfNode(1))
+                    .withLoadBalancingPolicy(policy)
+                    .build();
             cluster.connect();
         } finally {
             if (cluster != null)

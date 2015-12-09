@@ -15,15 +15,13 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.exceptions.InvalidTypeException;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
-
-import com.google.common.collect.Lists;
-
-import com.datastax.driver.core.exceptions.InvalidTypeException;
 
 abstract class AbstractGettableData implements GettableData {
 
@@ -153,16 +151,16 @@ abstract class AbstractGettableData implements GettableData {
 
     public String getString(int i) {
         DataType.Name type = metadata.checkType(i, DataType.Name.VARCHAR,
-            DataType.Name.TEXT,
-            DataType.Name.ASCII);
+                DataType.Name.TEXT,
+                DataType.Name.ASCII);
 
         ByteBuffer value = getValue(i);
         if (value == null)
             return null;
 
         return type == DataType.Name.ASCII
-            ? TypeCodec.StringCodec.asciiInstance.deserialize(value)
-            : TypeCodec.StringCodec.utf8Instance.deserialize(value);
+                ? TypeCodec.StringCodec.asciiInstance.deserialize(value)
+                : TypeCodec.StringCodec.utf8Instance.deserialize(value);
     }
 
     public String getString(String name) {
@@ -205,8 +203,8 @@ abstract class AbstractGettableData implements GettableData {
             return null;
 
         return type == DataType.Name.UUID
-            ? TypeCodec.UUIDCodec.instance.deserialize(value)
-            : TypeCodec.TimeUUIDCodec.instance.deserialize(value);
+                ? TypeCodec.UUIDCodec.instance.deserialize(value)
+                : TypeCodec.TimeUUIDCodec.instance.deserialize(value);
     }
 
     public UUID getUUID(String name) {
@@ -241,7 +239,7 @@ abstract class AbstractGettableData implements GettableData {
         if (value == null)
             return Collections.<T>emptyList();
 
-        return Collections.unmodifiableList((List<T>)type.codec().deserialize(value));
+        return Collections.unmodifiableList((List<T>) type.codec().deserialize(value));
     }
 
     public <T> List<T> getList(String name, Class<T> elementsClass) {
@@ -262,7 +260,7 @@ abstract class AbstractGettableData implements GettableData {
         if (value == null)
             return Collections.<T>emptySet();
 
-        return Collections.unmodifiableSet((Set<T>)type.codec().deserialize(value));
+        return Collections.unmodifiableSet((Set<T>) type.codec().deserialize(value));
     }
 
     public <T> Set<T> getSet(String name, Class<T> elementsClass) {
@@ -284,7 +282,7 @@ abstract class AbstractGettableData implements GettableData {
         if (value == null)
             return Collections.<K, V>emptyMap();
 
-        return Collections.unmodifiableMap((Map<K, V>)type.codec().deserialize(value));
+        return Collections.unmodifiableMap((Map<K, V>) type.codec().deserialize(value));
     }
 
     public <K, V> Map<K, V> getMap(String name, Class<K> keysClass, Class<V> valuesClass) {

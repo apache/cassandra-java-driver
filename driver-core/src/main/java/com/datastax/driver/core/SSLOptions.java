@@ -16,7 +16,6 @@
 package com.datastax.driver.core;
 
 import javax.net.ssl.SSLContext;
-import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 
 /**
@@ -27,19 +26,19 @@ public class SSLOptions {
     /**
      * The default SSL cipher suites.
      */
-    public static final String[] DEFAULT_SSL_CIPHER_SUITES = { "TLS_RSA_WITH_AES_128_CBC_SHA", "TLS_RSA_WITH_AES_256_CBC_SHA" };
+    public static final String[] DEFAULT_SSL_CIPHER_SUITES = {"TLS_RSA_WITH_AES_128_CBC_SHA", "TLS_RSA_WITH_AES_256_CBC_SHA"};
 
     final SSLContext context;
     final String[] cipherSuites;
 
     /**
      * Creates default SSL options.
-     * <p>
+     * <p/>
      * The resulting options will use the default JSSE options, and you can use the default
      * <a href="http://docs.oracle.com/javase/6/docs/technotes/guides/security/jsse/JSSERefGuide.html#Customization">JSSE System properties</a>
      * to customize it's behavior. This may in particular involve
      * <a href="http://docs.oracle.com/javase/6/docs/technotes/guides/security/jsse/JSSERefGuide.html#CreateKeystore">creating a simple keyStore and trustStore</a>.
-     * <p>
+     * <p/>
      * The cipher suites used by this default instance are the one defined by
      * {@code DEFAULT_SSL_CIPHER_SUITES} and match the default cipher suites
      * supported by Cassandra server side.
@@ -51,7 +50,7 @@ public class SSLOptions {
     /**
      * Creates SSL options that uses the provided SSL context and cipher suites.
      *
-     * @param context the {@code SSLContext} to use.
+     * @param context      the {@code SSLContext} to use.
      * @param cipherSuites the cipher suites to use.
      */
     public SSLOptions(SSLContext context, String[] cipherSuites) {

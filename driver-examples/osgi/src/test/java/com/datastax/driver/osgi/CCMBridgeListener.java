@@ -15,16 +15,15 @@
  */
 package com.datastax.driver.osgi;
 
+import com.datastax.driver.core.CCMBridge;
 import org.testng.ITestContext;
 import org.testng.ITestListener;
 import org.testng.ITestResult;
 
-import com.datastax.driver.core.CCMBridge;
-
 /**
  * A listener that fires up a single node CCM instance on test class start and tears it
  * down on test class end.
- *
+ * <p/>
  * This is needed for tests that use Pax-Exam since it runs some methods in the OSGi container
  * which we do not want.
  */
@@ -32,23 +31,35 @@ public class CCMBridgeListener implements ITestListener {
 
     private CCMBridge ccm;
 
-    @Override public void onStart(ITestContext context) {
+    @Override
+    public void onStart(ITestContext context) {
         ccm = CCMBridge.builder("test").withNodes(1).build();
     }
 
-    @Override public void onFinish(ITestContext context) {
-        if(ccm != null) {
+    @Override
+    public void onFinish(ITestContext context) {
+        if (ccm != null) {
             ccm.remove();
         }
     }
 
-    @Override public void onTestStart(ITestResult result) {}
+    @Override
+    public void onTestStart(ITestResult result) {
+    }
 
-    @Override public void onTestSuccess(ITestResult result) {}
+    @Override
+    public void onTestSuccess(ITestResult result) {
+    }
 
-    @Override public void onTestFailure(ITestResult result) {}
+    @Override
+    public void onTestFailure(ITestResult result) {
+    }
 
-    @Override public void onTestSkipped(ITestResult result) {}
+    @Override
+    public void onTestSkipped(ITestResult result) {
+    }
 
-    @Override public void onTestFailedButWithinSuccessPercentage(ITestResult result) {}
+    @Override
+    public void onTestFailedButWithinSuccessPercentage(ITestResult result) {
+    }
 }

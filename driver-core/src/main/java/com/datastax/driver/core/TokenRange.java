@@ -15,21 +15,20 @@
  */
 package com.datastax.driver.core;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * A range of tokens on the Cassandra ring.
- * <p>
+ * <p/>
  * A range is start-exclusive and end-inclusive. It is empty when start and end are the same token, except if that is the minimum
  * token, in which case the range covers the whole ring (this is consistent with the behavior of CQL range queries).
- * <p>
+ * <p/>
  * Note that CQL does not handle wrapping. To query all partitions in a range, see {@link #unwrap()}.
  */
 public final class TokenRange implements Comparable<TokenRange> {
@@ -64,12 +63,11 @@ public final class TokenRange implements Comparable<TokenRange> {
 
     /**
      * Splits this range into a number of smaller ranges of equal "size" (referring to the number of tokens, not the actual amount of data).
-     * <p>
+     * <p/>
      * Splitting an empty range is not permitted. But note that, in edge cases, splitting a range might produce one or more empty ranges.
      *
      * @param numberOfSplits the number of splits to create.
      * @return the splits.
-     *
      * @throws IllegalArgumentException if the range is empty or if numberOfSplits < 1.
      */
     public List<TokenRange> splitEvenly(int numberOfSplits) {
@@ -91,7 +89,7 @@ public final class TokenRange implements Comparable<TokenRange> {
 
     /**
      * Returns whether this range is empty.
-     * <p>
+     * <p/>
      * A range is empty when start and end are the same token, except if that is the minimum token,
      * in which case the range covers the whole ring (this is consistent with the behavior of CQL
      * range queries).
@@ -114,13 +112,13 @@ public final class TokenRange implements Comparable<TokenRange> {
     /**
      * Splits this range into a list of two non-wrapping ranges. This will return the range itself if it is
      * non-wrapping, or two ranges otherwise.
-     * <p>
+     * <p/>
      * For example:
      * <ul>
-     *     <li>{@code ]1,10]} unwraps to itself;</li>
-     *     <li>{@code ]10,1]} unwraps to {@code ]10,min_token]} and {@code ]min_token,1]}.</li>
+     * <li>{@code ]1,10]} unwraps to itself;</li>
+     * <li>{@code ]10,1]} unwraps to {@code ]10,min_token]} and {@code ]min_token,1]}.</li>
      * </ul>
-     * <p>
+     * <p/>
      * This is useful for CQL range queries, which do not handle wrapping:
      * <pre>
      * {@code
@@ -137,8 +135,8 @@ public final class TokenRange implements Comparable<TokenRange> {
     public List<TokenRange> unwrap() {
         if (isWrappedAround()) {
             return ImmutableList.of(
-                new TokenRange(start, factory.minToken(), factory),
-                new TokenRange(factory.minToken(), end, factory));
+                    new TokenRange(start, factory.minToken(), factory),
+                    new TokenRange(factory.minToken(), end, factory));
         } else {
             return ImmutableList.of(this);
         }
@@ -146,11 +144,11 @@ public final class TokenRange implements Comparable<TokenRange> {
 
     /**
      * Returns whether this range intersects another one.
-     * <p>
+     * <p/>
      * For example:
      * <ul>
-     *     <li>{@code ]3,5]} intersects {@code ]1,4]}, {@code ]4,5]}...</li>
-     *     <li>{@code ]3,5]} does not intersect {@code ]1,2]}, {@code ]2,3]}, {@code ]5,7]}...</li>
+     * <li>{@code ]3,5]} intersects {@code ]1,4]}, {@code ]4,5]}...</li>
+     * <li>{@code ]3,5]} does not intersect {@code ]1,2]}, {@code ]2,3]}, {@code ]5,7]}...</li>
      * </ul>
      *
      * @param that the other range.
@@ -162,17 +160,17 @@ public final class TokenRange implements Comparable<TokenRange> {
             return false;
 
         return this.contains(that.start, true)
-            || this.contains(that.end, false)
-            || that.contains(this.start, true)
-            || that.contains(this.end, false);
+                || this.contains(that.end, false)
+                || that.contains(this.start, true)
+                || that.contains(this.end, false);
     }
 
     /**
      * Computes the intersection of this range with another one.
-     * <p>
+     * <p/>
      * If either of these ranges overlap the the ring, they are unwrapped and the unwrapped
      * tokens are compared with one another.
-     * <p>
+     * <p/>
      * This call will fail if the two ranges do not intersect, you must check by calling
      * {@link #intersects(TokenRange)} beforehand.
      *
@@ -189,20 +187,20 @@ public final class TokenRange implements Comparable<TokenRange> {
         // Compare the unwrapped ranges to one another.
         List<TokenRange> unwrappedForThis = this.unwrap();
         List<TokenRange> unwrappedForThat = that.unwrap();
-        for(TokenRange t1 : unwrappedForThis) {
-            for(TokenRange t2 : unwrappedForThat) {
-                if(t1.intersects(t2)) {
+        for (TokenRange t1 : unwrappedForThis) {
+            for (TokenRange t2 : unwrappedForThat) {
+                if (t1.intersects(t2)) {
                     intersected.add(new TokenRange(
-                        (t1.contains(t2.start, true)) ? t2.start : t1.start,
-                        (t1.contains(t2.end, false)) ? t2.end : t1.end,
-                        factory));
+                            (t1.contains(t2.start, true)) ? t2.start : t1.start,
+                            (t1.contains(t2.end, false)) ? t2.end : t1.end,
+                            factory));
                 }
             }
         }
 
         // If two intersecting ranges were produced, merge them if they are adjacent.
         // This could happen in the case that two wrapped ranges intersected.
-        if(intersected.size() == 2) {
+        if (intersected.size() == 2) {
             TokenRange t1 = intersected.get(0);
             TokenRange t2 = intersected.get(1);
             if (t1.end.equals(t2.start) || t2.end.equals(t1.start)) {
@@ -229,29 +227,28 @@ public final class TokenRange implements Comparable<TokenRange> {
     private boolean contains(Token token, boolean isStart) {
         boolean isAfterStart = isStart ? token.compareTo(start) >= 0 : token.compareTo(start) > 0;
         boolean isBeforeEnd = end.equals(factory.minToken()) ||
-            (isStart ? token.compareTo(end) < 0 : token.compareTo(end) <= 0);
+                (isStart ? token.compareTo(end) < 0 : token.compareTo(end) <= 0);
         return isWrappedAround()
-            ? isAfterStart || isBeforeEnd
-            : isAfterStart && isBeforeEnd;
+                ? isAfterStart || isBeforeEnd
+                : isAfterStart && isBeforeEnd;
     }
 
     /**
      * Merges this range with another one.
-     * <p>
+     * <p/>
      * The two ranges should either intersect or be adjacent; in other words, the merged range
      * should not include tokens that are in neither of the original ranges.
-     * <p>
+     * <p/>
      * For example:
      * <ul>
-     *     <li>merging {@code ]3,5]} with {@code ]4,7]} produces {@code ]3,7]};</li>
-     *     <li>merging {@code ]3,5]} with {@code ]4,5]} produces {@code ]3,5]};</li>
-     *     <li>merging {@code ]3,5]} with {@code ]5,8]} produces {@code ]3,8]};</li>
-     *     <li>merging {@code ]3,5]} with {@code ]6,8]} fails.</li>
+     * <li>merging {@code ]3,5]} with {@code ]4,7]} produces {@code ]3,7]};</li>
+     * <li>merging {@code ]3,5]} with {@code ]4,5]} produces {@code ]3,5]};</li>
+     * <li>merging {@code ]3,5]} with {@code ]5,8]} produces {@code ]3,8]};</li>
+     * <li>merging {@code ]3,5]} with {@code ]6,8]} fails.</li>
      * </ul>
      *
      * @param that the other range.
      * @return the resulting range.
-     *
      * @throws IllegalArgumentException if the ranges neither intersect nor are adjacent.
      */
     public TokenRange mergeWith(TokenRange that) {
@@ -260,8 +257,8 @@ public final class TokenRange implements Comparable<TokenRange> {
 
         if (!(this.intersects(that) || this.end.equals(that.start) || that.end.equals(this.start)))
             throw new IllegalArgumentException(String.format(
-                "Can't merge %s with %s because they neither intersect nor are adjacent",
-                this, that));
+                    "Can't merge %s with %s because they neither intersect nor are adjacent",
+                    this, that));
 
         if (this.isEmpty())
             return that;
@@ -279,8 +276,8 @@ public final class TokenRange implements Comparable<TokenRange> {
 
         // Starting at this.start, see how far we can go while staying in at least one of the ranges.
         Token mergedEnd = (thatStartsInThis && !this.contains(that.end, false))
-            ? that.end
-            : this.end;
+                ? that.end
+                : this.end;
 
         // Repeat in the other direction.
         Token mergedStart = thisStartsInThat ? that.start : this.start;
@@ -297,9 +294,9 @@ public final class TokenRange implements Comparable<TokenRange> {
         if (other == this)
             return true;
         if (other instanceof TokenRange) {
-            TokenRange that = (TokenRange)other;
+            TokenRange that = (TokenRange) other;
             return Objects.equal(this.start, that.start) &&
-                Objects.equal(this.end, that.end);
+                    Objects.equal(this.end, that.end);
         }
         return false;
     }
@@ -314,8 +311,9 @@ public final class TokenRange implements Comparable<TokenRange> {
         return String.format("]%s, %s]", start, end);
     }
 
-    @Override public int compareTo(TokenRange other) {
-        if(this.equals(other)) {
+    @Override
+    public int compareTo(TokenRange other) {
+        if (this.equals(other)) {
             return 0;
         } else {
             int compareStart = this.start.compareTo(other.start);

@@ -15,24 +15,22 @@
  */
 package com.datastax.driver.core;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-
+import com.datastax.driver.core.utils.Bytes;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.mockito.ArgumentCaptor;
 import org.testng.annotations.*;
 
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.*;
-
-import com.datastax.driver.core.utils.Bytes;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.Metadata.handleId;
 import static com.datastax.driver.core.TestUtils.nonDebouncingQueryOptions;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.*;
 
 public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
 
@@ -44,7 +42,9 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
     private static final String ALTER_TABLE = "ALTER TABLE %s.table1 ADD j int";
     private static final String DROP_TABLE = "DROP TABLE %s.table1";
 
-    /** The maximum time that the test will wait to check that listeners have been notified */
+    /**
+     * The maximum time that the test will wait to check that listeners have been notified
+     */
     private static final int NOTIF_TIMEOUT_MS = 5000;
 
     Cluster cluster1;
@@ -74,16 +74,16 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
     @BeforeClass(groups = "short")
     public void setup() throws InterruptedException {
         Cluster.Builder builder = configure(Cluster.builder())
-            .addContactPointsWithPorts(Collections.singletonList(hostAddress))
-            .withQueryOptions(nonDebouncingQueryOptions());
+                .addContactPointsWithPorts(Collections.singletonList(hostAddress))
+                .withQueryOptions(nonDebouncingQueryOptions());
         cluster1 = builder.build();
         cluster2 = builder.build();
         schemaDisabledCluster = spy(configure(Cluster.builder())
-            .addContactPointsWithPorts(Collections.singletonList(hostAddress))
-            .withClusterName("schema-disabled")
-            .withQueryOptions(nonDebouncingQueryOptions()
-                    .setMetadataEnabled(false)
-            ).build());
+                .addContactPointsWithPorts(Collections.singletonList(hostAddress))
+                .withClusterName("schema-disabled")
+                .withQueryOptions(nonDebouncingQueryOptions()
+                                .setMetadataEnabled(false)
+                ).build());
 
         schemaDisabledSession = schemaDisabledCluster.connect();
 
@@ -117,12 +117,12 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
 
     @DataProvider(name = "existingKeyspaceName")
     public static Object[][] existingKeyspaceName() {
-        return new Object[][]{ { "lowercase" }, { "\"CaseSensitive\"" } };
+        return new Object[][]{{"lowercase"}, {"\"CaseSensitive\""}};
     }
 
     @DataProvider(name = "newKeyspaceName")
     public static Object[][] newKeyspaceName() {
-        return new Object[][]{ { "lowercase2" }, { "\"CaseSensitive2\"" } };
+        return new Object[][]{{"lowercase2"}, {"\"CaseSensitive2\""}};
     }
 
     @BeforeMethod(groups = "short")
@@ -152,8 +152,8 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
             ArgumentCaptor<TableMetadata> added = ArgumentCaptor.forClass(TableMetadata.class);
             verify(listener, timeout(NOTIF_TIMEOUT_MS).times(1)).onTableAdded(added.capture());
             assertThat(added.getValue())
-                .isInKeyspace(handleId(keyspace))
-                .hasName("table1");
+                    .isInKeyspace(handleId(keyspace))
+                    .hasName("table1");
         }
 
         for (Metadata m : metadatas)
@@ -170,8 +170,8 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
             added = ArgumentCaptor.forClass(TableMetadata.class);
             verify(listener, timeout(NOTIF_TIMEOUT_MS).times(1)).onTableAdded(added.capture());
             assertThat(added.getValue())
-                .isInKeyspace(handleId(keyspace))
-                .hasName("table1");
+                    .isInKeyspace(handleId(keyspace))
+                    .hasName("table1");
         }
         execute(ALTER_TABLE, keyspace);
         for (SchemaChangeListener listener : listeners) {
@@ -179,12 +179,12 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
             ArgumentCaptor<TableMetadata> previous = ArgumentCaptor.forClass(TableMetadata.class);
             verify(listener, timeout(NOTIF_TIMEOUT_MS).times(1)).onTableChanged(current.capture(), previous.capture());
             assertThat(previous.getValue())
-                .isEqualTo(added.getValue())
-                .hasNoColumn("j");
+                    .isEqualTo(added.getValue())
+                    .hasNoColumn("j");
             assertThat(current.getValue())
-                .isInKeyspace(handleId(keyspace))
-                .hasName("table1")
-                .hasColumn("j");
+                    .isInKeyspace(handleId(keyspace))
+                    .hasName("table1")
+                    .hasColumn("j");
         }
         for (Metadata m : metadatas)
             assertThat(m.getKeyspace(keyspace).getTable("table1")).hasColumn("j");
@@ -197,8 +197,8 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
             ArgumentCaptor<TableMetadata> added = ArgumentCaptor.forClass(TableMetadata.class);
             verify(listener, timeout(NOTIF_TIMEOUT_MS).times(1)).onTableAdded(added.capture());
             assertThat(added.getValue())
-                .hasName("table1")
-                .isInKeyspace(handleId(keyspace));
+                    .hasName("table1")
+                    .isInKeyspace(handleId(keyspace));
         }
         execute(DROP_TABLE, keyspace);
         for (Metadata m : metadatas)
@@ -239,11 +239,11 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
             ArgumentCaptor<KeyspaceMetadata> previous = ArgumentCaptor.forClass(KeyspaceMetadata.class);
             verify(listener, timeout(NOTIF_TIMEOUT_MS).times(1)).onKeyspaceChanged(current.capture(), previous.capture());
             assertThat(previous.getValue())
-                .isEqualTo(added.getValue())
-                .isDurableWrites();
+                    .isEqualTo(added.getValue())
+                    .isDurableWrites();
             assertThat(current.getValue())
-                .hasName(handleId(keyspace))
-                .isNotDurableWrites();
+                    .hasName(handleId(keyspace))
+                    .isNotDurableWrites();
         }
         for (Metadata m : metadatas)
             assertThat(m.getKeyspace(keyspace)).isNotDurableWrites();
@@ -260,13 +260,13 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
             ArgumentCaptor<TableMetadata> table = ArgumentCaptor.forClass(TableMetadata.class);
             verify(listener, timeout(NOTIF_TIMEOUT_MS).times(1)).onTableRemoved(table.capture());
             assertThat(table.getValue())
-                .hasName("table1")
-                .isInKeyspace(handleId(keyspace));
+                    .hasName("table1")
+                    .isInKeyspace(handleId(keyspace));
 
             ArgumentCaptor<KeyspaceMetadata> ks = ArgumentCaptor.forClass(KeyspaceMetadata.class);
             verify(listener, timeout(NOTIF_TIMEOUT_MS).times(1)).onKeyspaceRemoved(ks.capture());
             assertThat(ks.getValue())
-                .hasName(handleId(keyspace));
+                    .hasName(handleId(keyspace));
         }
         for (Metadata m : metadatas) {
             assertThat(m.getKeyspace(keyspace)).isNull();
@@ -285,10 +285,10 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
     @Test(groups = "short", expectedExceptions = IllegalStateException.class)
     public void should_throw_illegal_state_exception_on_newToken_with_metadata_disabled() {
         Cluster cluster = configure(Cluster.builder())
-            .addContactPointsWithPorts(Collections.singletonList(hostAddress))
-            .withQueryOptions(nonDebouncingQueryOptions()
-                    .setMetadataEnabled(false)
-            ).build();
+                .addContactPointsWithPorts(Collections.singletonList(hostAddress))
+                .withQueryOptions(nonDebouncingQueryOptions()
+                                .setMetadataEnabled(false)
+                ).build();
 
         try {
             cluster.init();
@@ -309,10 +309,10 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
     @Test(groups = "short", expectedExceptions = IllegalStateException.class)
     public void should_throw_illegal_state_exception_on_newTokenRange_with_metadata_disabled() {
         Cluster cluster = configure(Cluster.builder())
-            .addContactPointsWithPorts(Collections.singletonList(hostAddress))
-            .withQueryOptions(nonDebouncingQueryOptions()
-                    .setMetadataEnabled(false)
-            ).build();
+                .addContactPointsWithPorts(Collections.singletonList(hostAddress))
+                .withQueryOptions(nonDebouncingQueryOptions()
+                                .setMetadataEnabled(false)
+                ).build();
 
         try {
             cluster.init();
@@ -383,10 +383,10 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
     @AfterMethod(groups = "short")
     public void cleanup() throws InterruptedException {
         ListenableFuture<List<ResultSet>> f = Futures.successfulAsList(Lists.newArrayList(
-            session1.executeAsync("DROP TABLE lowercase.table1"),
-            session1.executeAsync("DROP TABLE \"CaseSensitive\".table1"),
-            session1.executeAsync("DROP KEYSPACE lowercase2"),
-            session1.executeAsync("DROP KEYSPACE \"CaseSensitive2\"")
+                session1.executeAsync("DROP TABLE lowercase.table1"),
+                session1.executeAsync("DROP TABLE \"CaseSensitive\".table1"),
+                session1.executeAsync("DROP KEYSPACE lowercase2"),
+                session1.executeAsync("DROP KEYSPACE \"CaseSensitive2\"")
         ));
         Futures.getUnchecked(f);
     }

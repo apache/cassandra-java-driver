@@ -15,24 +15,23 @@
  */
 package com.datastax.driver.core.policies;
 
-import java.net.InetSocketAddress;
-import java.util.Collection;
-
+import com.datastax.driver.core.Host;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableSet;
 
-import com.datastax.driver.core.Host;
+import java.net.InetSocketAddress;
+import java.util.Collection;
 
 /**
  * A load balancing policy wrapper that ensure that only hosts from a provided
  * white list will ever be returned.
- * <p>
+ * <p/>
  * This policy wraps another load balancing policy and will delegate the choice
  * of hosts to the wrapped policy with the exception that only hosts contained
  * in the white list provided when constructing this policy will ever be
  * returned. Any host not in the while list will be considered {@code IGNORED}
  * and thus will not be connected to.
- * <p>
+ * <p/>
  * This policy can be useful to ensure that the driver only connects to a
  * predefined set of hosts. Keep in mind however that this policy defeats
  * somewhat the host auto-detection of the driver. As such, this policy is only
@@ -50,8 +49,8 @@ public class WhiteListPolicy extends HostFilterPolicy {
      * from the provided while list.
      *
      * @param childPolicy the wrapped policy.
-     * @param whiteList the white listed hosts. Only hosts from this list may get connected
-     * to (whether they will get connected to or not depends on the child policy).
+     * @param whiteList   the white listed hosts. Only hosts from this list may get connected
+     *                    to (whether they will get connected to or not depends on the child policy).
      */
     public WhiteListPolicy(LoadBalancingPolicy childPolicy, Collection<InetSocketAddress> whiteList) {
         super(childPolicy, buildPredicate(whiteList));

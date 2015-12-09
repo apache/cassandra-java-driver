@@ -15,12 +15,12 @@
  */
 package com.datastax.driver.core.querybuilder;
 
+import com.datastax.driver.core.TableMetadata;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-
-import com.datastax.driver.core.TableMetadata;
 
 /**
  * A built SELECT statement.
@@ -93,7 +93,7 @@ public class Select extends BuiltStatement {
 
     /**
      * Adds a WHERE clause to this statement.
-     *
+     * <p/>
      * This is a shorter/more readable version for {@code where().and(clause)}.
      *
      * @param clause the clause to add.
@@ -117,9 +117,8 @@ public class Select extends BuiltStatement {
      *
      * @param orderings the orderings to define for this query.
      * @return this statement.
-     *
      * @throws IllegalStateException if an ORDER BY clause has already been
-     * provided.
+     *                               provided.
      */
     public Select orderBy(Ordering... orderings) {
         if (this.orderings != null)
@@ -136,10 +135,9 @@ public class Select extends BuiltStatement {
      *
      * @param limit the limit to set.
      * @return this statement.
-     *
      * @throws IllegalArgumentException if {@code limit &gte; 0}.
-     * @throws IllegalStateException if a LIMIT clause has already been
-     * provided.
+     * @throws IllegalStateException    if a LIMIT clause has already been
+     *                                  provided.
      */
     public Select limit(int limit) {
         if (limit <= 0)
@@ -158,9 +156,8 @@ public class Select extends BuiltStatement {
      *
      * @param marker the marker to use for the limit.
      * @return this statement.
-     *
      * @throws IllegalStateException if a LIMIT clause has already been
-     * provided.
+     *                               provided.
      */
     public Select limit(BindMarker marker) {
         if (this.limit != null)
@@ -211,9 +208,8 @@ public class Select extends BuiltStatement {
          *
          * @param orderings the orderings to add.
          * @return the select statement this Where clause if part of.
-         *
          * @throws IllegalStateException if an ORDER BY clause has already been
-         * provided.
+         *                               provided.
          */
         public Select orderBy(Ordering... orderings) {
             return statement.orderBy(orderings);
@@ -225,10 +221,9 @@ public class Select extends BuiltStatement {
          *
          * @param limit the limit to set.
          * @return the select statement this Where clause if part of.
-         *
          * @throws IllegalArgumentException if {@code limit &gte; 0}.
-         * @throws IllegalStateException if a LIMIT clause has already been
-         * provided.
+         * @throws IllegalStateException    if a LIMIT clause has already been
+         *                                  provided.
          */
         public Select limit(int limit) {
             return statement.limit(limit);
@@ -240,9 +235,8 @@ public class Select extends BuiltStatement {
          *
          * @param limit the bind marker to use as limit.
          * @return the select statement this Where clause if part of.
-         *
          * @throws IllegalStateException if a LIMIT clause has already been
-         * provided.
+         *                               provided.
          */
         public Select limit(BindMarker limit) {
             return statement.limit(limit);
@@ -257,7 +251,8 @@ public class Select extends BuiltStatement {
         List<Object> columnNames;
         boolean isDistinct;
 
-        Builder() {}
+        Builder() {
+        }
 
         Builder(List<Object> columnNames) {
             this.columnNames = columnNames;
@@ -287,7 +282,7 @@ public class Select extends BuiltStatement {
          * Adds the table to select from.
          *
          * @param keyspace the name of the keyspace to select from.
-         * @param table the name of the table to select from.
+         * @param table    the name of the table to select from.
          * @return a newly built SELECT statement that selects from {@code keyspace.table}.
          */
         public Select from(String keyspace, String table) {
@@ -324,7 +319,6 @@ public class Select extends BuiltStatement {
          * Selects all columns (i.e. "SELECT *  ...")
          *
          * @return an in-build SELECT statement.
-         *
          * @throws IllegalStateException if some columns had already been selected for this builder.
          */
         public abstract Builder all();
@@ -333,7 +327,6 @@ public class Select extends BuiltStatement {
          * Selects the count of all returned rows (i.e. "SELECT count(*) ...").
          *
          * @return an in-build SELECT statement.
-         *
          * @throws IllegalStateException if some columns had already been selected for this builder.
          */
         public abstract Builder countAll();
@@ -348,7 +341,7 @@ public class Select extends BuiltStatement {
 
         /**
          * Selects the write time of provided column.
-         * <p>
+         * <p/>
          * This is a shortcut for {@code fcall("writetime", QueryBuilder.column(name))}.
          *
          * @param name the name of the column to select the write time of.
@@ -358,7 +351,7 @@ public class Select extends BuiltStatement {
 
         /**
          * Selects the ttl of provided column.
-         * <p>
+         * <p/>
          * This is a shortcut for {@code fcall("ttl", QueryBuilder.column(name))}.
          *
          * @param name the name of the column to select the ttl of.
@@ -368,16 +361,16 @@ public class Select extends BuiltStatement {
 
         /**
          * Creates a function call.
-         * <p>
+         * <p/>
          * Please note that the parameters are interpreted as values, and so
          * {@code fcall("textToBlob", "foo")} will generate the string
          * {@code "textToBlob('foo')"}. If you want to generate
          * {@code "textToBlob(foo)"}, i.e. if the argument must be interpreted
          * as a column name (in a select clause), you will need to use the
-         * {@link QueryBuilder#column} method, and so 
+         * {@link QueryBuilder#column} method, and so
          * {@code fcall("textToBlob", QueryBuilder.column(foo)}.
          *
-         * @param name the name of the function.
+         * @param name       the name of the function.
          * @param parameters the parameters for the function call.
          * @return this in-build SELECT statement
          */
@@ -386,7 +379,7 @@ public class Select extends BuiltStatement {
 
     /**
      * An Selection clause for an in-construction SELECT statement.
-     * <p>
+     * <p/>
      * This only differs from {@link Selection} in that you can add an
      * alias for the previously selected item through {@link SelectionOrAlias#as}.
      */
@@ -394,7 +387,8 @@ public class Select extends BuiltStatement {
 
         private Object previousSelection;
 
-        SelectionOrAlias() {}
+        SelectionOrAlias() {
+        }
 
         /**
          * Adds an alias for the just selected item.
@@ -430,7 +424,6 @@ public class Select extends BuiltStatement {
          * Selects all columns (i.e. "SELECT *  ...")
          *
          * @return an in-build SELECT statement.
-         *
          * @throws IllegalStateException if some columns had already been selected for this builder.
          */
         public Builder all() {
@@ -439,14 +432,13 @@ public class Select extends BuiltStatement {
             if (previousSelection != null)
                 throw new IllegalStateException(String.format("Some columns ([%s]) have already been selected.", previousSelection));
 
-            return (Builder)this;
+            return (Builder) this;
         }
 
         /**
          * Selects the count of all returned rows (i.e. "SELECT count(*) ...").
          *
          * @return an in-build SELECT statement.
-         *
          * @throws IllegalStateException if some columns had already been selected for this builder.
          */
         public Builder countAll() {
@@ -456,7 +448,7 @@ public class Select extends BuiltStatement {
                 throw new IllegalStateException(String.format("Some columns ([%s]) have already been selected.", previousSelection));
 
             columnNames = COUNT_ALL;
-            return (Builder)this;
+            return (Builder) this;
         }
 
         /**
@@ -471,7 +463,7 @@ public class Select extends BuiltStatement {
 
         /**
          * Selects the write time of provided column.
-         * <p>
+         * <p/>
          * This is a shortcut for {@code fcall("writetime", QueryBuilder.column(name))}.
          *
          * @param name the name of the column to select the write time of.
@@ -483,7 +475,7 @@ public class Select extends BuiltStatement {
 
         /**
          * Selects the ttl of provided column.
-         * <p>
+         * <p/>
          * This is a shortcut for {@code fcall("ttl", QueryBuilder.column(name))}.
          *
          * @param name the name of the column to select the ttl of.
@@ -495,13 +487,13 @@ public class Select extends BuiltStatement {
 
         /**
          * Creates a function call.
-         * <p>
+         * <p/>
          * Please note that the parameters are interpreted as values, and so
          * {@code fcall("textToBlob", "foo")} will generate the string
          * {@code "textToBlob('foo')"}. If you want to generate
          * {@code "textToBlob(foo)"}, i.e. if the argument must be interpreted
          * as a column name (in a select clause), you will need to use the
-         * {@link QueryBuilder#column} method, and so 
+         * {@link QueryBuilder#column} method, and so
          * {@code fcall("textToBlob", QueryBuilder.column(foo)}.
          */
         public SelectionOrAlias fcall(String name, Object... parameters) {
@@ -512,7 +504,7 @@ public class Select extends BuiltStatement {
          * Adds the table to select from.
          *
          * @param keyspace the name of the keyspace to select from.
-         * @param table the name of the table to select from.
+         * @param table    the name of the table to select from.
          * @return a newly built SELECT statement that selects from {@code keyspace.table}.
          */
         @Override

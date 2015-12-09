@@ -108,7 +108,7 @@ public class ClusterStressTest extends CCMBridge.PerClassSingleNodeCluster {
                 if (error == null) {
                     Throwable cause = e.getCause();
                     if (cause instanceof AssertionError)
-                        error = (AssertionError)cause;
+                        error = (AssertionError) cause;
                     else
                         error = assertionError("Error while creating a cluster", cause);
                 }
@@ -136,7 +136,7 @@ public class ClusterStressTest extends CCMBridge.PerClassSingleNodeCluster {
                 if (error == null) {
                     Throwable cause = e.getCause();
                     if (cause instanceof AssertionError)
-                        error = (AssertionError)cause;
+                        error = (AssertionError) cause;
                     else
                         error = assertionError("Error while closing a cluster", cause);
                 }
@@ -169,19 +169,19 @@ public class ClusterStressTest extends CCMBridge.PerClassSingleNodeCluster {
                 // There should be 1 control connection after initializing.
                 cluster.init();
                 assertEquals(cluster.manager.sessions.size(), 0);
-                assertEquals((int)cluster.getMetrics().getOpenConnections().getValue(), 1);
+                assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1);
                 assertEquals(channelMonitor.openChannels(contactPoints).size(), 1);
 
                 // The first session initializes the cluster and its control connection
                 Session session = cluster.connect();
                 assertEquals(cluster.manager.sessions.size(), 1);
-                assertEquals((int)cluster.getMetrics().getOpenConnections().getValue(), 1 + TestUtils.numberOfLocalCoreConnections(cluster));
+                assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1 + TestUtils.numberOfLocalCoreConnections(cluster));
                 assertEquals(channelMonitor.openChannels(contactPoints).size(), 1 + TestUtils.numberOfLocalCoreConnections(cluster));
 
                 // Closing the session keeps the control connection opened
                 session.close();
                 assertEquals(cluster.manager.sessions.size(), 0);
-                assertEquals((int)cluster.getMetrics().getOpenConnections().getValue(), 1);
+                assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1);
                 assertEquals(channelMonitor.openChannels(contactPoints).size(), 1);
 
                 return this;

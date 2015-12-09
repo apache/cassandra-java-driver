@@ -15,9 +15,9 @@
  */
 package com.datastax.driver.core;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
 import com.datastax.driver.core.policies.ReconnectionPolicy;
+
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * A reconnection policy that tracks how many times its schedule has been invoked.

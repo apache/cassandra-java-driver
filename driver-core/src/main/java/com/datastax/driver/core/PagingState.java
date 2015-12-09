@@ -16,21 +16,20 @@
 
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.exceptions.PagingStateException;
+import com.datastax.driver.core.utils.Bytes;
+
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 
-import com.datastax.driver.core.exceptions.InvalidQueryException;
-import com.datastax.driver.core.exceptions.PagingStateException;
-import com.datastax.driver.core.utils.Bytes;
-
 /**
  * The paging state of a query.
- *
+ * <p/>
  * This object represents the next page to be fetched if the query is
  * multi page. It can be saved and reused later on the same statement.
- *
+ * <p/>
  * The PagingState can be serialized and deserialized either as a String
  * or as a byte array.
  *
@@ -53,7 +52,7 @@ public class PagingState {
         int hashSize = pagingStateBB.getShort();
         if (pagingSize + hashSize != pagingStateBB.remaining()) {
             throw new PagingStateException("Cannot deserialize paging state, invalid format. "
-                + "The serialized form was corrupted, or not initially generated from a PagingState object.");
+                    + "The serialized form was corrupted, or not initially generated from a PagingState object.");
         }
         this.pagingState = extractPagingState(complete);
         this.hash = extractHashDigest(complete);
@@ -67,12 +66,12 @@ public class PagingState {
         try {
             md = MessageDigest.getInstance("MD5");
             if (statement instanceof BoundStatement) {
-                BoundStatement bs = ((BoundStatement)statement);
+                BoundStatement bs = ((BoundStatement) statement);
                 md.update(bs.preparedStatement().getQueryString().getBytes());
                 values = bs.values;
             } else {
                 //it is a RegularStatement since Batch statements are not allowed
-                RegularStatement rs = (RegularStatement)statement;
+                RegularStatement rs = (RegularStatement) statement;
                 md.update(rs.getQueryString().getBytes());
                 values = rs.getValues();
             }
@@ -118,8 +117,8 @@ public class PagingState {
     private ByteBuffer generateCompleteOutput() {
         ByteBuffer res = ByteBuffer.allocate(pagingState.length + hash.length + 4);
 
-        res.putShort((short)pagingState.length);
-        res.putShort((short)hash.length);
+        res.putShort((short) pagingState.length);
+        res.putShort((short) hash.length);
 
         res.put(pagingState);
         res.put(hash);
@@ -143,7 +142,6 @@ public class PagingState {
      *
      * @param string the string value.
      * @return the PagingState object created.
-     *
      * @throws PagingStateException if the string does not have the correct format.
      */
     public static PagingState fromString(String string) {
@@ -152,7 +150,7 @@ public class PagingState {
             return new PagingState(complete);
         } catch (Exception e) {
             throw new PagingStateException("Cannot deserialize paging state, invalid format. "
-                + "The serialized form was corrupted, or not initially generated from a PagingState object.", e);
+                    + "The serialized form was corrupted, or not initially generated from a PagingState object.", e);
         }
     }
 
@@ -170,7 +168,6 @@ public class PagingState {
      *
      * @param pagingState The byte array representation.
      * @return the PagingState object created.
-     *
      * @throws PagingStateException if the byte array does not have the correct format.
      */
     public static PagingState fromBytes(byte[] pagingState) {

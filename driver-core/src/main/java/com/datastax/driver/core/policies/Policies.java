@@ -33,17 +33,17 @@ public class Policies {
 
     public Policies() {
         this(defaultLoadBalancingPolicy(), defaultReconnectionPolicy(), defaultRetryPolicy(),
-            defaultAddressTranslater(), defaultSpeculativeExecutionPolicy());
+                defaultAddressTranslater(), defaultSpeculativeExecutionPolicy());
     }
 
     /**
      * Creates a new {@code Policies} object using the provided policies.
-     * <p>
+     * <p/>
      * This constructor use the default {@link IdentityTranslater}.
      *
      * @param loadBalancingPolicy the load balancing policy to use.
-     * @param reconnectionPolicy the reconnection policy to use.
-     * @param retryPolicy the retry policy to use.
+     * @param reconnectionPolicy  the reconnection policy to use.
+     * @param retryPolicy         the retry policy to use.
      */
     public Policies(LoadBalancingPolicy loadBalancingPolicy,
                     ReconnectionPolicy reconnectionPolicy,
@@ -56,9 +56,9 @@ public class Policies {
      * Creates a new {@code Policies} object using the provided policies.
      *
      * @param loadBalancingPolicy the load balancing policy to use.
-     * @param reconnectionPolicy the reconnection policy to use.
-     * @param retryPolicy the retry policy to use.
-     * @param addressTranslater the address translater to use.
+     * @param reconnectionPolicy  the reconnection policy to use.
+     * @param retryPolicy         the retry policy to use.
+     * @param addressTranslater   the address translater to use.
      */
     public Policies(LoadBalancingPolicy loadBalancingPolicy,
                     ReconnectionPolicy reconnectionPolicy,
@@ -74,12 +74,12 @@ public class Policies {
 
     /**
      * The default load balancing policy.
-     * <p>
+     * <p/>
      * The default load balancing policy is {@link DCAwareRoundRobinPolicy} with token
      * awareness (so {@code new TokenAwarePolicy(new DCAwareRoundRobinPolicy())}).
-     * <p>
+     * <p/>
      * Note that this policy shuffles the replicas when token awareness is used, see
-     * {@link TokenAwarePolicy#TokenAwarePolicy(LoadBalancingPolicy,boolean)} for an
+     * {@link TokenAwarePolicy#TokenAwarePolicy(LoadBalancingPolicy, boolean)} for an
      * explanation of the tradeoffs.
      *
      * @return the default load balancing policy.
@@ -92,7 +92,7 @@ public class Policies {
 
     /**
      * The default reconnection policy.
-     * <p>
+     * <p/>
      * The default reconnection policy is an {@link ExponentialReconnectionPolicy}
      * where the base delay is 1 second and the max delay is 10 minutes;
      *
@@ -104,7 +104,7 @@ public class Policies {
 
     /**
      * The default retry policy.
-     * <p>
+     * <p/>
      * The default retry policy is {@link DefaultRetryPolicy}.
      *
      * @return the default retry policy.
@@ -115,7 +115,7 @@ public class Policies {
 
     /**
      * The default address translater.
-     * <p>
+     * <p/>
      * The default address translater is {@link IdentityTranslater}.
      *
      * @return the default address translater.
@@ -126,7 +126,7 @@ public class Policies {
 
     /**
      * The default speculative retry policy.
-     * <p>
+     * <p/>
      * The default speculative retry policy is a {@link NoSpeculativeExecutionPolicy}.
      *
      * @return the default speculative retry policy.
@@ -137,7 +137,7 @@ public class Policies {
 
     /**
      * The load balancing policy in use.
-     * <p>
+     * <p/>
      * The load balancing policy defines how Cassandra hosts are picked for queries.
      *
      * @return the load balancing policy in use.
@@ -148,7 +148,7 @@ public class Policies {
 
     /**
      * The reconnection policy in use.
-     * <p>
+     * <p/>
      * The reconnection policy defines how often the driver tries to reconnect to a dead node.
      *
      * @return the reconnection policy in use.
@@ -159,7 +159,7 @@ public class Policies {
 
     /**
      * The retry policy in use.
-     * <p>
+     * <p/>
      * The retry policy defines in which conditions a query should be
      * automatically retries by the driver.
      *

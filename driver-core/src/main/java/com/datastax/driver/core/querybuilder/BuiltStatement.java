@@ -15,13 +15,13 @@
  */
 package com.datastax.driver.core.querybuilder;
 
+import com.datastax.driver.core.*;
+import com.datastax.driver.core.policies.RetryPolicy;
+
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
-
-import com.datastax.driver.core.*;
-import com.datastax.driver.core.policies.RetryPolicy;
 
 /**
  * Common ancestor to the query builder built statements.
@@ -75,8 +75,7 @@ public abstract class BuiltStatement extends RegularStatement {
      *
      * @param i the index to retrieve.
      * @return the value of the {@code i}th value of this statement.
-     *
-     * @throws IllegalStateException if this statement does not have values.
+     * @throws IllegalStateException     if this statement does not have values.
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
      */
     public Object getObject(int i) {
@@ -182,8 +181,8 @@ public abstract class BuiltStatement extends RegularStatement {
                 return null;
 
         return routingKey.length == 1
-             ? routingKey[0]
-             : compose(routingKey);
+                ? routingKey[0]
+                : compose(routingKey);
     }
 
     @Override
@@ -217,7 +216,7 @@ public abstract class BuiltStatement extends RegularStatement {
 
     /**
      * Allows to force this builder to not generate values (through its {@code getValues()} method).
-     * <p>
+     * <p/>
      * By default (and unless the protocol version 1 is in use, see below) and
      * for performance reasons, the query builder will not serialize all values
      * provided to strings. This means that the {@link #getQueryString} may
@@ -230,13 +229,13 @@ public abstract class BuiltStatement extends RegularStatement {
      * return {@code null} and that the string returned by {@code
      * getQueryString()} will contain no other bind markers than the one
      * inputted by the user.
-     * <p>
+     * <p/>
      * If the native protocol version 1 is in use, the driver will default
      * to not generating values since those are not supported by that version of
      * the protocol. In practice, the driver will automatically call this method
      * with {@code true} as argument prior to execution. Hence, calling this
      * method when the protocol version 1 is in use is basically a no-op.
-     * <p>
+     * <p/>
      * Note that this method is mainly useful for debugging purpose. In general,
      * the default behavior should be the correct and most efficient one.
      *
@@ -256,8 +255,7 @@ public abstract class BuiltStatement extends RegularStatement {
             totalLength += 2 + bb.remaining() + 1;
 
         ByteBuffer out = ByteBuffer.allocate(totalLength);
-        for (ByteBuffer buffer : buffers)
-        {
+        for (ByteBuffer buffer : buffers) {
             ByteBuffer bb = buffer.duplicate();
             putShortLength(out, bb.remaining());
             out.put(bb);
@@ -280,7 +278,7 @@ public abstract class BuiltStatement extends RegularStatement {
         T statement;
 
         ForwardingStatement(T statement) {
-            super((String)null);
+            super((String) null);
             this.statement = statement;
         }
 

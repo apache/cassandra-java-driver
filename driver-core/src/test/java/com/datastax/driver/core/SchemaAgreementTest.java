@@ -15,18 +15,17 @@
  */
 package com.datastax.driver.core;
 
-import java.net.InetAddress;
-import java.util.UUID;
-
+import com.datastax.driver.core.exceptions.DriverException;
+import com.datastax.driver.core.utils.UUIDs;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import java.net.InetAddress;
+import java.util.UUID;
 
-import com.datastax.driver.core.exceptions.DriverException;
-import com.datastax.driver.core.utils.UUIDs;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class SchemaAgreementTest {
 
@@ -102,7 +101,7 @@ public class SchemaAgreementTest {
 
     private static void forceSchemaVersion(Session session, InetAddress peerAddress, UUID schemaVersion) {
         session.execute(String.format("UPDATE system.peers SET schema_version = %s WHERE peer = %s",
-            DataType.uuid().format(schemaVersion), DataType.inet().format(peerAddress)));
+                DataType.uuid().format(schemaVersion), DataType.inet().format(peerAddress)));
     }
 
     @AfterMethod(groups = "short")

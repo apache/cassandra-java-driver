@@ -15,11 +15,7 @@
  */
 package com.datastax.driver.core;
 
-import java.nio.ByteBuffer;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.UUID;
-
+import com.datastax.driver.core.exceptions.DriverInternalError;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
@@ -28,7 +24,10 @@ import io.netty.handler.codec.MessageToMessageEncoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.datastax.driver.core.exceptions.DriverInternalError;
+import java.nio.ByteBuffer;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.UUID;
 
 /**
  * A message from the CQL binary protocol.
@@ -39,6 +38,7 @@ abstract class Message {
 
     public interface Coder<R extends Request> {
         public void encode(R request, ByteBuf dest);
+
         public int encodedSize(R request);
     }
 
@@ -48,7 +48,8 @@ abstract class Message {
 
     private volatile int streamId;
 
-    protected Message() {}
+    protected Message() {
+    }
 
     public Message setStreamId(int streamId) {
         this.streamId = streamId;
@@ -62,15 +63,15 @@ abstract class Message {
     public static abstract class Request extends Message {
 
         public enum Type {
-            STARTUP        (1, Requests.Startup.coder, Requests.Startup.coder),
-            CREDENTIALS    (4, Requests.Credentials.coder, null),
-            OPTIONS        (5, Requests.Options.coder, Requests.Options.coder),
-            QUERY          (7, Requests.Query.coderV1, Requests.Query.coderV2),
-            PREPARE        (9, Requests.Prepare.coder, Requests.Prepare.coder),
-            EXECUTE        (10, Requests.Execute.coderV1, Requests.Execute.coderV2),
-            REGISTER       (11, Requests.Register.coder, Requests.Register.coder),
-            BATCH          (13, null, Requests.Batch.coder),
-            AUTH_RESPONSE  (15, Requests.AuthResponse.coder, Requests.AuthResponse.coder);
+            STARTUP(1, Requests.Startup.coder, Requests.Startup.coder),
+            CREDENTIALS(4, Requests.Credentials.coder, null),
+            OPTIONS(5, Requests.Options.coder, Requests.Options.coder),
+            QUERY(7, Requests.Query.coderV1, Requests.Query.coderV2),
+            PREPARE(9, Requests.Prepare.coder, Requests.Prepare.coder),
+            EXECUTE(10, Requests.Execute.coderV1, Requests.Execute.coderV2),
+            REGISTER(11, Requests.Register.coder, Requests.Register.coder),
+            BATCH(13, null, Requests.Batch.coder),
+            AUTH_RESPONSE(15, Requests.AuthResponse.coder, Requests.AuthResponse.coder);
 
             public final int opcode;
             private final Coder<?> coderV1;
@@ -82,8 +83,7 @@ abstract class Message {
                 this.coderV2 = coderV2;
             }
 
-            public Coder<?> coder(int version)
-            {
+            public Coder<?> coder(int version) {
                 assert version == 1 || version == 2 : "Unsupported protocol version, we shouldn't have arrived here";
                 return version == 1 ? coderV1 : coderV2;
             }
@@ -107,26 +107,36 @@ abstract class Message {
 
         ConsistencyLevel consistency() {
             switch (this.type) {
-                case QUERY:   return ((Requests.Query)this).options.consistency;
-                case EXECUTE: return ((Requests.Execute)this).options.consistency;
-                case BATCH:   return ((Requests.Batch)this).consistency;
-                default:      return null;
+                case QUERY:
+                    return ((Requests.Query) this).options.consistency;
+                case EXECUTE:
+                    return ((Requests.Execute) this).options.consistency;
+                case BATCH:
+                    return ((Requests.Batch) this).consistency;
+                default:
+                    return null;
             }
         }
 
         ConsistencyLevel serialConsistency() {
             switch (this.type) {
-                case QUERY:   return ((Requests.Query)this).options.serialConsistency;
-                case EXECUTE: return ((Requests.Execute)this).options.serialConsistency;
-                default:      return null;
+                case QUERY:
+                    return ((Requests.Query) this).options.serialConsistency;
+                case EXECUTE:
+                    return ((Requests.Execute) this).options.serialConsistency;
+                default:
+                    return null;
             }
         }
 
         ByteBuffer pagingState() {
             switch (this.type) {
-                case QUERY:   return ((Requests.Query)this).options.pagingState;
-                case EXECUTE: return ((Requests.Execute)this).options.pagingState;
-                default:      return null;
+                case QUERY:
+                    return ((Requests.Query) this).options.pagingState;
+                case EXECUTE:
+                    return ((Requests.Execute) this).options.pagingState;
+                default:
+                    return null;
             }
         }
 
@@ -142,20 +152,21 @@ abstract class Message {
     public static abstract class Response extends Message {
 
         public enum Type {
-            ERROR          (0, Responses.Error.decoder, Responses.Error.decoder),
-            READY          (2, Responses.Ready.decoder, Responses.Ready.decoder),
-            AUTHENTICATE   (3, Responses.Authenticate.decoder, Responses.Authenticate.decoder),
-            SUPPORTED      (6, Responses.Supported.decoder, Responses.Supported.decoder),
-            RESULT         (8, Responses.Result.decoderV1, Responses.Result.decoderV2),
-            EVENT          (12, Responses.Event.decoder, Responses.Event.decoder),
-            AUTH_CHALLENGE (14, Responses.AuthChallenge.decoder, Responses.AuthChallenge.decoder),
-            AUTH_SUCCESS   (16, Responses.AuthSuccess.decoder, Responses.AuthSuccess.decoder);
+            ERROR(0, Responses.Error.decoder, Responses.Error.decoder),
+            READY(2, Responses.Ready.decoder, Responses.Ready.decoder),
+            AUTHENTICATE(3, Responses.Authenticate.decoder, Responses.Authenticate.decoder),
+            SUPPORTED(6, Responses.Supported.decoder, Responses.Supported.decoder),
+            RESULT(8, Responses.Result.decoderV1, Responses.Result.decoderV2),
+            EVENT(12, Responses.Event.decoder, Responses.Event.decoder),
+            AUTH_CHALLENGE(14, Responses.AuthChallenge.decoder, Responses.AuthChallenge.decoder),
+            AUTH_SUCCESS(16, Responses.AuthSuccess.decoder, Responses.AuthSuccess.decoder);
 
             public final int opcode;
             private final Decoder<?> decoderV1;
             private final Decoder<?> decoderV2;
 
             private static final Type[] opcodeIdx;
+
             static {
                 int maxOpcode = -1;
                 for (Type type : Type.values())
@@ -181,8 +192,7 @@ abstract class Message {
                 return t;
             }
 
-            public Decoder<?> decoder(int version)
-            {
+            public Decoder<?> decoder(int version) {
                 assert version == 1 || version == 2 : "Unsupported protocol version, we shouldn't have arrived here";
                 return version == 1 ? decoderV1 : decoderV2;
             }
@@ -239,7 +249,7 @@ abstract class Message {
                 flags.add(Frame.Header.Flag.TRACING);
 
             @SuppressWarnings("unchecked")
-            Coder<Request> coder = (Coder<Request>)request.type.coder(protocolVersion);
+            Coder<Request> coder = (Coder<Request>) request.type.coder(protocolVersion);
             ByteBuf body = ctx.alloc().buffer(coder.encodedSize(request));
             coder.encode(request, body);
 

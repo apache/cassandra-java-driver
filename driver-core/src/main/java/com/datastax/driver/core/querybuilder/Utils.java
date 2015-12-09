@@ -15,6 +15,8 @@
  */
 package com.datastax.driver.core.querybuilder;
 
+import com.datastax.driver.core.DataType;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -23,8 +25,6 @@ import java.util.*;
 import java.util.regex.Pattern;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-
-import com.datastax.driver.core.DataType;
 
 // Static utilities private to the query builder
 abstract class Utils {
@@ -133,9 +133,9 @@ abstract class Utils {
             }
 
             if (rawValue)
-                sb.append((String)value);
+                sb.append((String) value);
             else
-                appendValueString((String)value, sb);
+                appendValueString((String) value, sb);
         }
     }
 
@@ -156,7 +156,7 @@ abstract class Utils {
             sb.append(value);
             return true;
         } else if (value instanceof FCall) {
-            FCall fcall = (FCall)value;
+            FCall fcall = (FCall) value;
             sb.append(fcall.name).append('(');
             for (int i = 0; i < fcall.parameters.length; i++) {
                 if (i > 0)
@@ -166,7 +166,7 @@ abstract class Utils {
             sb.append(')');
             return true;
         } else if (value instanceof CName) {
-            appendName(((CName)value).name, sb);
+            appendName(((CName) value).name, sb);
             return true;
         } else if (value == null) {
             sb.append("null");
@@ -182,10 +182,10 @@ abstract class Utils {
             appendList((List) value, sb, rawValue);
             return true;
         } else if (value instanceof Set) {
-            appendSet((Set)value, sb, rawValue);
+            appendSet((Set) value, sb, rawValue);
             return true;
         } else if (value instanceof Map) {
-            appendMap((Map)value, sb, rawValue);
+            appendMap((Map) value, sb, rawValue);
             return true;
         } else {
             return false;
@@ -218,7 +218,8 @@ abstract class Utils {
         sb.append('{');
         boolean first = true;
         for (Object elt : s) {
-            if (first) first = false; else sb.append(',');
+            if (first) first = false;
+            else sb.append(',');
             appendFlatValue(elt, sb, rawValue);
         }
         sb.append('}');
@@ -248,7 +249,7 @@ abstract class Utils {
         if (!(value instanceof FCall))
             return false;
 
-        FCall fcall = (FCall)value;
+        FCall fcall = (FCall) value;
         for (Object param : fcall.parameters)
             if (containsBindMarker(param))
                 return true;
@@ -256,23 +257,23 @@ abstract class Utils {
     }
 
     static boolean isIdempotent(Object value) {
-        if(value == null) {
+        if (value == null) {
             return true;
         } else if (value instanceof Assignment) {
-            Assignment assignment = (Assignment)value;
+            Assignment assignment = (Assignment) value;
             return assignment.isIdempotent();
         } else if (value instanceof FCall) {
             return false;
         } else if (value instanceof RawString) {
             return false;
-        } else if(value instanceof Collection) {
-            for (Object elt : ((Collection)value)) {
-                if(!isIdempotent(elt))
+        } else if (value instanceof Collection) {
+            for (Object elt : ((Collection) value)) {
+                if (!isIdempotent(elt))
                     return false;
             }
             return true;
         } else if (value instanceof Map) {
-            for (Map.Entry<?, ?> entry : ((Map<?, ?>)value).entrySet()) {
+            for (Map.Entry<?, ?> entry : ((Map<?, ?>) value).entrySet()) {
                 if (!isIdempotent(entry.getKey()) || !isIdempotent(entry.getValue()))
                     return false;
             }
@@ -286,9 +287,9 @@ abstract class Utils {
 
     static boolean isRawValue(Object value) {
         return value != null
-            && !(value instanceof FCall)
-            && !(value instanceof CName)
-            && !(value instanceof BindMarker);
+                && !(value instanceof FCall)
+                && !(value instanceof CName)
+                && !(value instanceof BindMarker);
     }
 
     static String toRawString(Object value) {
@@ -307,11 +308,11 @@ abstract class Utils {
 
     static StringBuilder appendName(Object name, StringBuilder sb) {
         if (name instanceof String) {
-            appendName((String)name, sb);
+            appendName((String) name, sb);
         } else if (name instanceof CName) {
-            appendName(((CName)name).name, sb);
+            appendName(((CName) name).name, sb);
         } else if (name instanceof FCall) {
-            FCall fcall = (FCall)name;
+            FCall fcall = (FCall) name;
             sb.append(fcall.name).append('(');
             for (int i = 0; i < fcall.parameters.length; i++) {
                 if (i > 0)
@@ -320,7 +321,7 @@ abstract class Utils {
             }
             sb.append(')');
         } else if (name instanceof Alias) {
-            Alias alias = (Alias)name;
+            Alias alias = (Alias) name;
             appendName(alias.column, sb);
             sb.append(" AS ").append(alias.alias);
         } else {
@@ -331,6 +332,7 @@ abstract class Utils {
 
     static abstract class Appendeable {
         abstract void appendTo(StringBuilder sb, List<Object> values);
+
         abstract boolean containsBindMarker();
     }
 
@@ -343,7 +345,7 @@ abstract class Utils {
         int nbMatch = 0;
         int start = -1;
         do {
-            start = text.indexOf(search, start+1);
+            start = text.indexOf(search, start + 1);
             if (start != -1)
                 ++nbMatch;
         } while (start != -1);

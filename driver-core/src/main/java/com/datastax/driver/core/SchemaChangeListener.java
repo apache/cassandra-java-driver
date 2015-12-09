@@ -17,10 +17,10 @@ package com.datastax.driver.core;
 
 /**
  * Interface for objects that are interested in tracking schema change events in the cluster.
- * <p>
+ * <p/>
  * An implementation of this interface can be registered against a Cluster
  * object through the {@link com.datastax.driver.core.Cluster#register(SchemaChangeListener)} method.
- * <p>
+ * <p/>
  * Note that the methods defined by this interface will be executed by internal driver threads, and are
  * therefore expected to have short execution times. If you need to perform long computations or blocking
  * calls in response to schema change events, it is strongly recommended to schedule them asynchronously
@@ -45,7 +45,7 @@ public interface SchemaChangeListener {
     /**
      * Called when a keyspace has changed.
      *
-     * @param current the keyspace that has changed, in its current form (after the change).
+     * @param current  the keyspace that has changed, in its current form (after the change).
      * @param previous the keyspace that has changed, in its previous form (before the change).
      */
     void onKeyspaceChanged(KeyspaceMetadata current, KeyspaceMetadata previous);
@@ -67,7 +67,7 @@ public interface SchemaChangeListener {
     /**
      * Called when a table has changed.
      *
-     * @param current the table that has changed, in its current form (after the change).
+     * @param current  the table that has changed, in its current form (after the change).
      * @param previous the table that has changed, in its previous form (before the change).
      */
     void onTableChanged(TableMetadata current, TableMetadata previous);

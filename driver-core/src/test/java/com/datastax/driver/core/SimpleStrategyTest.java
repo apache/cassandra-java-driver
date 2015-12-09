@@ -15,14 +15,14 @@
  */
 package com.datastax.driver.core;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import org.testng.annotations.Test;
+
 import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import org.testng.annotations.Test;
 
 public class SimpleStrategyTest extends AbstractReplicationStrategyTest {
 
@@ -73,46 +73,46 @@ public class SimpleStrategyTest extends AbstractReplicationStrategyTest {
     private static final ReplicationStrategy exampleStrategyTooManyReplicas = simpleStrategy(8);
 
     private static final List<Token> exampleRing = ImmutableList.<Token>builder()
-                                                   .add(TOKEN01)
-                                                   .add(TOKEN02)
-                                                   .add(TOKEN03)
-                                                   .add(TOKEN04)
-                                                   .add(TOKEN05)
-                                                   .add(TOKEN06)
-                                                   .add(TOKEN07)
-                                                   .add(TOKEN08)
-                                                   .add(TOKEN09)
-                                                   .add(TOKEN10)
-                                                   .add(TOKEN11)
-                                                   .add(TOKEN12)
-                                                   .add(TOKEN13)
-                                                   .add(TOKEN14)
-                                                   .add(TOKEN15)
-                                                   .add(TOKEN16)
-                                                   .add(TOKEN17)
-                                                   .add(TOKEN18)
-                                                   .build();
+            .add(TOKEN01)
+            .add(TOKEN02)
+            .add(TOKEN03)
+            .add(TOKEN04)
+            .add(TOKEN05)
+            .add(TOKEN06)
+            .add(TOKEN07)
+            .add(TOKEN08)
+            .add(TOKEN09)
+            .add(TOKEN10)
+            .add(TOKEN11)
+            .add(TOKEN12)
+            .add(TOKEN13)
+            .add(TOKEN14)
+            .add(TOKEN15)
+            .add(TOKEN16)
+            .add(TOKEN17)
+            .add(TOKEN18)
+            .build();
 
     private static final Map<Token, Host> exampleTokenToPrimary = ImmutableMap.<Token, Host>builder()
-                                                                  .put(TOKEN01, host(IP1))
-                                                                  .put(TOKEN02, host(IP1))
-                                                                  .put(TOKEN03, host(IP5))
-                                                                  .put(TOKEN04, host(IP3))
-                                                                  .put(TOKEN05, host(IP1))
-                                                                  .put(TOKEN06, host(IP5))
-                                                                  .put(TOKEN07, host(IP2))
-                                                                  .put(TOKEN08, host(IP6))
-                                                                  .put(TOKEN09, host(IP3))
-                                                                  .put(TOKEN10, host(IP4))
-                                                                  .put(TOKEN11, host(IP5))
-                                                                  .put(TOKEN12, host(IP4))
-                                                                  .put(TOKEN13, host(IP4))
-                                                                  .put(TOKEN14, host(IP2))
-                                                                  .put(TOKEN15, host(IP6))
-                                                                  .put(TOKEN16, host(IP3))
-                                                                  .put(TOKEN17, host(IP2))
-                                                                  .put(TOKEN18, host(IP6))
-                                                                  .build();
+            .put(TOKEN01, host(IP1))
+            .put(TOKEN02, host(IP1))
+            .put(TOKEN03, host(IP5))
+            .put(TOKEN04, host(IP3))
+            .put(TOKEN05, host(IP1))
+            .put(TOKEN06, host(IP5))
+            .put(TOKEN07, host(IP2))
+            .put(TOKEN08, host(IP6))
+            .put(TOKEN09, host(IP3))
+            .put(TOKEN10, host(IP4))
+            .put(TOKEN11, host(IP5))
+            .put(TOKEN12, host(IP4))
+            .put(TOKEN13, host(IP4))
+            .put(TOKEN14, host(IP2))
+            .put(TOKEN15, host(IP6))
+            .put(TOKEN16, host(IP3))
+            .put(TOKEN17, host(IP2))
+            .put(TOKEN18, host(IP6))
+            .build();
 
     /*
      * --------------
@@ -123,18 +123,18 @@ public class SimpleStrategyTest extends AbstractReplicationStrategyTest {
     @Test(groups = "unit")
     public void simpleStrategySimpleTopologyTest() {
         List<Token> ring = ImmutableList.<Token>builder()
-                           .add(TOKEN01)
-                           .add(TOKEN06)
-                           .add(TOKEN14)
-                           .add(TOKEN19)
-                           .build();
+                .add(TOKEN01)
+                .add(TOKEN06)
+                .add(TOKEN14)
+                .add(TOKEN19)
+                .build();
 
         Map<Token, Host> tokenToPrimary = ImmutableMap.<Token, Host>builder()
-                                        .put(TOKEN01, host(IP1))
-                                        .put(TOKEN06, host(IP2))
-                                        .put(TOKEN14, host(IP1))
-                                        .put(TOKEN19, host(IP2))
-                                        .build();
+                .put(TOKEN01, host(IP1))
+                .put(TOKEN06, host(IP2))
+                .put(TOKEN14, host(IP1))
+                .put(TOKEN19, host(IP2))
+                .build();
 
         ReplicationStrategy strategy = simpleStrategy(2);
 
@@ -149,18 +149,18 @@ public class SimpleStrategyTest extends AbstractReplicationStrategyTest {
     @Test(groups = "unit")
     public void simpleStrategyConsecutiveRingSectionsTest() {
         List<Token> ring = ImmutableList.<Token>builder()
-                           .add(TOKEN01)
-                           .add(TOKEN06)
-                           .add(TOKEN14)
-                           .add(TOKEN19)
-                           .build();
+                .add(TOKEN01)
+                .add(TOKEN06)
+                .add(TOKEN14)
+                .add(TOKEN19)
+                .build();
 
         Map<Token, Host> tokenToPrimary = ImmutableMap.<Token, Host>builder()
-                                          .put(TOKEN01, host(IP1))
-                                          .put(TOKEN06, host(IP1))
-                                          .put(TOKEN14, host(IP2))
-                                          .put(TOKEN19, host(IP2))
-                                          .build();
+                .put(TOKEN01, host(IP1))
+                .put(TOKEN06, host(IP1))
+                .put(TOKEN14, host(IP2))
+                .put(TOKEN19, host(IP2))
+                .build();
 
         ReplicationStrategy strategy = simpleStrategy(2);
 
@@ -175,18 +175,18 @@ public class SimpleStrategyTest extends AbstractReplicationStrategyTest {
     @Test(groups = "unit")
     public void simpleStrategyUnbalancedRingTest() {
         List<Token> ring = ImmutableList.<Token>builder()
-                           .add(TOKEN01)
-                           .add(TOKEN06)
-                           .add(TOKEN14)
-                           .add(TOKEN19)
-                           .build();
+                .add(TOKEN01)
+                .add(TOKEN06)
+                .add(TOKEN14)
+                .add(TOKEN19)
+                .build();
 
         Map<Token, Host> tokenToPrimary = ImmutableMap.<Token, Host>builder()
-                                          .put(TOKEN01, host(IP1))
-                                          .put(TOKEN06, host(IP1))
-                                          .put(TOKEN14, host(IP2))
-                                          .put(TOKEN19, host(IP1))
-                                          .build();
+                .put(TOKEN01, host(IP1))
+                .put(TOKEN06, host(IP1))
+                .put(TOKEN14, host(IP2))
+                .put(TOKEN19, host(IP1))
+                .build();
 
         ReplicationStrategy strategy = simpleStrategy(2);
 

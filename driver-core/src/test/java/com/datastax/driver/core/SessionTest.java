@@ -15,6 +15,12 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.utils.CassandraVersion;
+import com.datastax.driver.core.utils.SocketChannelMonitor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.testng.annotations.Test;
+
 import java.net.InetSocketAddress;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
@@ -22,18 +28,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import com.datastax.driver.core.utils.CassandraVersion;
-import com.datastax.driver.core.utils.SocketChannelMonitor;
-import io.netty.channel.socket.SocketChannel;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.testng.annotations.Test;
-
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
-
 import static com.datastax.driver.core.TestUtils.nonQuietClusterCloseOptions;
+import static org.testng.Assert.*;
 
 /**
  * Simple test of the Sessions methods against a one node cluster.
@@ -50,9 +46,9 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
     @Override
     protected Collection<String> getTableDefinitions() {
         return Arrays.asList(String.format(TestUtils.CREATE_TABLE_SIMPLE_FORMAT, TABLE1),
-                             String.format(TestUtils.CREATE_TABLE_SIMPLE_FORMAT, TABLE2),
-                             String.format(TestUtils.CREATE_TABLE_SIMPLE_FORMAT, TABLE3),
-                             String.format("CREATE TABLE %s (k text PRIMARY KEY, c counter)", COUNTER_TABLE));
+                String.format(TestUtils.CREATE_TABLE_SIMPLE_FORMAT, TABLE2),
+                String.format(TestUtils.CREATE_TABLE_SIMPLE_FORMAT, TABLE3),
+                String.format("CREATE TABLE %s (k text PRIMARY KEY, c counter)", COUNTER_TABLE));
     }
 
     @Test(groups = "short")
@@ -134,7 +130,7 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
      * @expected_result session established and queries made successfully using it.
      */
     @Test(groups = "short")
-    @CassandraVersion(major=2.0)
+    @CassandraVersion(major = 2.0)
     public void session_should_function_with_lz4_compression() throws Exception {
         compressionTest(ProtocolOptions.Compression.LZ4);
     }
@@ -206,7 +202,7 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
             // ensure sessions.size() returns to 0 with only 1 active connection
             session.close();
             assertEquals(cluster.manager.sessions.size(), 0);
-            assertEquals((int)cluster.getMetrics().getOpenConnections().getValue(), 1);
+            assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1);
             assertEquals(channelMonitor.openChannels(contactPoints).size(), 1);
 
             // give the driver time to close sessions
@@ -252,9 +248,9 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
             // Use our own cluster and session (not the ones provided by the parent class) because we want an uninitialized cluster
             // (note the use of newSession below)
             final Cluster cluster = Cluster.builder()
-                .addContactPointsWithPorts(Collections.singletonList(hostAddress))
-                .withNettyOptions(nonQuietClusterCloseOptions)
-                .build();
+                    .addContactPointsWithPorts(Collections.singletonList(hostAddress))
+                    .withNettyOptions(nonQuietClusterCloseOptions)
+                    .build();
             final Session session = cluster.newSession();
 
             // Spawn two threads to simulate the race
