@@ -15,25 +15,21 @@
  */
 package com.datastax.driver.core.exceptions;
 
-import java.util.List;
-import java.util.Map;
-
+import com.datastax.driver.core.*;
+import com.datastax.driver.core.policies.FallthroughRetryPolicy;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.scassandra.Scassandra;
 import org.scassandra.http.client.PrimingRequest;
 import org.testng.annotations.*;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
-import static org.scassandra.http.client.PrimingRequest.Result.read_request_timeout;
-import static org.scassandra.http.client.PrimingRequest.Result.unavailable;
-import static org.scassandra.http.client.PrimingRequest.Result.write_request_timeout;
-
-import com.datastax.driver.core.*;
-import com.datastax.driver.core.policies.FallthroughRetryPolicy;
+import java.util.List;
+import java.util.Map;
 
 import static com.datastax.driver.core.ConsistencyLevel.ONE;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
+import static org.scassandra.http.client.PrimingRequest.Result.*;
 
 public class ExceptionsScassandraTest {
 
@@ -52,14 +48,14 @@ public class ExceptionsScassandraTest {
     @BeforeMethod(groups = "short")
     public void beforeMethod() {
         cluster = Cluster.builder()
-            .addContactPoint(CCMBridge.ipOfNode(1))
-            .withRetryPolicy(FallthroughRetryPolicy.INSTANCE)
-            .build();
+                .addContactPoint(CCMBridge.ipOfNode(1))
+                .withRetryPolicy(FallthroughRetryPolicy.INSTANCE)
+                .build();
         session = cluster.connect();
         host1 = TestUtils.findHost(cluster, 1);
         errors = cluster.getMetrics().getErrorMetrics();
 
-        for(Scassandra node : scassandras.nodes()) {
+        for (Scassandra node : scassandras.nodes()) {
             node.primingClient().clearAllPrimes();
             node.activityClient().clearAllRecordedActivity();
         }
@@ -116,9 +112,9 @@ public class ExceptionsScassandraTest {
 
     protected void simulateError(int hostNumber, PrimingRequest.Result result) {
         scassandras.node(hostNumber).primingClient().prime(PrimingRequest.queryBuilder()
-            .withQuery("mock query")
-            .withResult(result)
-            .build());
+                .withQuery("mock query")
+                .withResult(result)
+                .build());
     }
 
     private static List<Map<String, ?>> row(String key, String value) {
@@ -135,7 +131,7 @@ public class ExceptionsScassandraTest {
 
     @AfterMethod(groups = "short")
     public void afterMethod() {
-        for(Scassandra node : scassandras.nodes()) {
+        for (Scassandra node : scassandras.nodes()) {
             node.primingClient().clearAllPrimes();
         }
         if (cluster != null)

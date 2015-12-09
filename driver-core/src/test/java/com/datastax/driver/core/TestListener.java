@@ -15,14 +15,12 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.utils.CassandraVersion;
 import org.testng.*;
 import org.testng.internal.ConstructorOrMethod;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.concurrent.TimeUnit;
-
-import com.datastax.driver.core.utils.CassandraVersion;
 
 public class TestListener extends TestListenerAdapter implements IInvokedMethodListener {
 
@@ -74,16 +72,17 @@ public class TestListener extends TestListenerAdapter implements IInvokedMethodL
 
     static String formatIntoHHMMSS(long secondsTotal) {
         long hours = secondsTotal / 3600,
-        remainder = secondsTotal % 3600,
-        minutes = remainder / 60,
-        seconds = remainder % 60;
+                remainder = secondsTotal % 3600,
+                minutes = remainder / 60,
+                seconds = remainder % 60;
 
         return ((hours < 10 ? "0" : "") + hours
-        + ':' + (minutes < 10 ? "0" : "") + minutes
-        + ':' + (seconds< 10 ? "0" : "") + seconds);
+                + ':' + (minutes < 10 ? "0" : "") + minutes
+                + ':' + (seconds < 10 ? "0" : "") + seconds);
     }
 
-    @Override public void beforeInvocation(IInvokedMethod testMethod, ITestResult testResult) {
+    @Override
+    public void beforeInvocation(IInvokedMethod testMethod, ITestResult testResult) {
         // Check to see if the class or method is annotated with 'CassandraVersion', if so ensure the
         // version we are testing with meets the requirement, if not a SkipException is thrown
         // and this test is skipped.
@@ -91,19 +90,20 @@ public class TestListener extends TestListenerAdapter implements IInvokedMethodL
         ConstructorOrMethod constructorOrMethod = testNgMethod.getConstructorOrMethod();
 
         Class<?> clazz = testNgMethod.getInstance().getClass();
-        if(clazz != null && clazz.isAnnotationPresent(CassandraVersion.class)) {
+        if (clazz != null && clazz.isAnnotationPresent(CassandraVersion.class)) {
             CassandraVersion cassandraVersion = clazz.getAnnotation(CassandraVersion.class);
             TestUtils.versionCheck(cassandraVersion.major(), cassandraVersion.minor(), cassandraVersion.description());
         }
 
         Method method = constructorOrMethod.getMethod();
-        if(method != null && method.isAnnotationPresent(CassandraVersion.class)) {
+        if (method != null && method.isAnnotationPresent(CassandraVersion.class)) {
             CassandraVersion cassandraVersion = method.getAnnotation(CassandraVersion.class);
             TestUtils.versionCheck(cassandraVersion.major(), cassandraVersion.minor(), cassandraVersion.description());
         }
     }
 
-    @Override public void afterInvocation(IInvokedMethod testMethod, ITestResult testResult) {
+    @Override
+    public void afterInvocation(IInvokedMethod testMethod, ITestResult testResult) {
         // Do nothing
     }
 }

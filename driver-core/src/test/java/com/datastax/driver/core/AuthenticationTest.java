@@ -15,16 +15,15 @@
  */
 package com.datastax.driver.core;
 
-import java.util.concurrent.TimeUnit;
-
+import com.datastax.driver.core.exceptions.AuthenticationException;
+import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.datastax.driver.core.exceptions.AuthenticationException;
-import com.datastax.driver.core.exceptions.NoHostAvailableException;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Tests for authenticated cluster access
@@ -38,12 +37,12 @@ public class AuthenticationTest {
     /**
      * creates a cluster and turns on password authentication before starting it.
      */
-    @BeforeClass (groups = "short")
+    @BeforeClass(groups = "short")
     public void setupClusterWithAuthentication() throws InterruptedException {
         ccm = CCMBridge.builder("test")
-            .withCassandraConfiguration("authenticator", "PasswordAuthenticator")
-            .notStarted()
-            .build();
+                .withCassandraConfiguration("authenticator", "PasswordAuthenticator")
+                .notStarted()
+                .build();
         ccm.start(1, "-Dcassandra.superuser_setup_delay_ms=0");
 
         // Even though we've override the default user setup delay, still wait
@@ -51,7 +50,7 @@ public class AuthenticationTest {
         TimeUnit.SECONDS.sleep(1);
     }
 
-    @AfterClass (groups = "short")
+    @AfterClass(groups = "short")
     public void shutdownCluster() {
         if (ccm != null)
             ccm.stop();

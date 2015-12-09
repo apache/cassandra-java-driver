@@ -36,12 +36,11 @@ public interface IdempotenceAwarePreparedStatement extends PreparedStatement {
      * without changing the result beyond the initial application.
      * <p/>
      * See {@link com.datastax.driver.core.Statement#isIdempotent} for more explanations about this property.
-     *
+     * <p/>
      * Please note that idempotence will be propagated to all {@link BoundStatement}s created from this prepared statement.
      *
      * @return whether this statement is idempotent, or {@code null} to use
      * {@link QueryOptions#getDefaultIdempotence()}.
-     *
      */
     public Boolean isIdempotent();
 }

@@ -15,30 +15,29 @@
  */
 package com.datastax.driver.mapping;
 
-import java.util.*;
-
+import com.datastax.driver.core.CCMBridge;
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.utils.CassandraVersion;
+import com.datastax.driver.mapping.annotations.*;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.testng.annotations.Test;
 
-import com.datastax.driver.core.CCMBridge;
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.utils.CassandraVersion;
-import com.datastax.driver.mapping.annotations.*;
+import java.util.*;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 
-@CassandraVersion(major=2.1, minor=3)
+@CassandraVersion(major = 2.1, minor = 3)
 public class MapperNestedCollectionsTest extends CCMBridge.PerClassSingleNodeCluster {
 
     @Override
     protected Collection<String> getTableDefinitions() {
         return Lists.newArrayList(
-            "CREATE TYPE testType(i int, ls list<frozen<set<int>>>)",
-            "CREATE TABLE testTable (k int primary key, "
-                + "m1 map<text, frozen<map<int, int>>>, " // nested collection
-                + "m2 map<text, frozen<map<int, frozen<testType>>>>)" // nested collection with UDT
+                "CREATE TYPE testType(i int, ls list<frozen<set<int>>>)",
+                "CREATE TABLE testTable (k int primary key, "
+                        + "m1 map<text, frozen<map<int, int>>>, " // nested collection
+                        + "m2 map<text, frozen<map<int, frozen<testType>>>>)" // nested collection with UDT
         );
     }
 
@@ -50,8 +49,8 @@ public class MapperNestedCollectionsTest extends CCMBridge.PerClassSingleNodeClu
         testTable.setK(1);
         testTable.setM1(ImmutableMap.<String, Map<Integer, Integer>>of("bar", ImmutableMap.of(1, 2)));
 
-        Set<Integer> s1 = Sets.newHashSet(1,2,3);
-        Set<Integer> s2 = Sets.newHashSet(4,5,6);
+        Set<Integer> s1 = Sets.newHashSet(1, 2, 3);
+        Set<Integer> s2 = Sets.newHashSet(4, 5, 6);
         List<Set<Integer>> ls = new ArrayList<Set<Integer>>();
         ls.add(s1);
         ls.add(s2);
@@ -129,7 +128,7 @@ public class MapperNestedCollectionsTest extends CCMBridge.PerClassSingleNodeClu
             if (!(o instanceof TestType))
                 return false;
 
-            TestType testType = (TestType)o;
+            TestType testType = (TestType) o;
 
             if (i != testType.i)
                 return false;

@@ -16,7 +16,7 @@
 package com.datastax.driver.mapping;
 
 import java.lang.reflect.Proxy;
-import java.util.*;
+import java.util.List;
 
 class AccessorReflectionMapper<T> extends AccessorMapper<T> {
 
@@ -28,7 +28,7 @@ class AccessorReflectionMapper<T> extends AccessorMapper<T> {
     @SuppressWarnings({"unchecked", "rawtypes"})
     private AccessorReflectionMapper(Class<T> daoClass, List<MethodMapper> methods) {
         super(daoClass, methods);
-        this.proxyClasses = (Class<T>[])new Class[]{ daoClass };
+        this.proxyClasses = (Class<T>[]) new Class[]{daoClass};
         this.handler = new AccessorInvocationHandler<T>(this);
     }
 

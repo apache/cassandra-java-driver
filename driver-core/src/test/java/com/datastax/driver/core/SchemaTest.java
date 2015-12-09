@@ -15,12 +15,12 @@
  */
 package com.datastax.driver.core;
 
-import java.net.InetSocketAddress;
-import java.util.*;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.Test;
+
+import java.util.*;
+
 import static org.testng.Assert.assertEquals;
 
 /**
@@ -37,9 +37,9 @@ public class SchemaTest extends CCMBridge.PerClassSingleNodeCluster {
     @Override
     protected Cluster.Builder configure(Cluster.Builder builder) {
         return builder.withQueryOptions(new QueryOptions()
-            .setRefreshNodeIntervalMillis(0)
-            .setRefreshNodeListIntervalMillis(0)
-            .setRefreshSchemaIntervalMillis(0)
+                        .setRefreshNodeIntervalMillis(0)
+                        .setRefreshNodeListIntervalMillis(0)
+                        .setRefreshSchemaIntervalMillis(0)
         );
     }
 
@@ -47,51 +47,51 @@ public class SchemaTest extends CCMBridge.PerClassSingleNodeCluster {
     protected Collection<String> getTableDefinitions() {
 
         String sparse = String.format("CREATE TABLE %s.sparse (\n"
-                      + "    k text,\n"
-                      + "    c1 int,\n"
-                      + "    c2 float,\n"
-                      + "    l list<text>,\n"
-                      + "    v int,\n"
-                      + "    PRIMARY KEY (k, c1, c2)\n"
-                      + ");", keyspace);
+                + "    k text,\n"
+                + "    c1 int,\n"
+                + "    c2 float,\n"
+                + "    l list<text>,\n"
+                + "    v int,\n"
+                + "    PRIMARY KEY (k, c1, c2)\n"
+                + ");", keyspace);
 
         String st = String.format("CREATE TABLE %s.static (\n"
-                  + "    k text,\n"
-                  + "    i int,\n"
-                  + "    m map<text, timeuuid>,\n"
-                  + "    v int,\n"
-                  + "    PRIMARY KEY (k)\n"
-                  + ");", keyspace);
+                + "    k text,\n"
+                + "    i int,\n"
+                + "    m map<text, timeuuid>,\n"
+                + "    v int,\n"
+                + "    PRIMARY KEY (k)\n"
+                + ");", keyspace);
 
         String counters = String.format("CREATE TABLE %s.counters (\n"
-                        + "    k text,\n"
-                        + "    c counter,\n"
-                        + "    PRIMARY KEY (k)\n"
-                        + ");", keyspace);
+                + "    k text,\n"
+                + "    c counter,\n"
+                + "    PRIMARY KEY (k)\n"
+                + ");", keyspace);
 
         String compactStatic = String.format("CREATE TABLE %s.compact_static (\n"
-                             + "    k text,\n"
-                             + "    i int,\n"
-                             + "    t timeuuid,\n"
-                             + "    v int,\n"
-                             + "    PRIMARY KEY (k)\n"
-                             + ") WITH COMPACT STORAGE;", keyspace);
+                + "    k text,\n"
+                + "    i int,\n"
+                + "    t timeuuid,\n"
+                + "    v int,\n"
+                + "    PRIMARY KEY (k)\n"
+                + ") WITH COMPACT STORAGE;", keyspace);
 
         String compactDynamic = String.format("CREATE TABLE %s.compact_dynamic (\n"
-                              + "    k text,\n"
-                              + "    c int,\n"
-                              + "    v timeuuid,\n"
-                              + "    PRIMARY KEY (k, c)\n"
-                              + ") WITH COMPACT STORAGE;", keyspace);
+                + "    k text,\n"
+                + "    c int,\n"
+                + "    v timeuuid,\n"
+                + "    PRIMARY KEY (k, c)\n"
+                + ") WITH COMPACT STORAGE;", keyspace);
 
         String compactComposite = String.format("CREATE TABLE %s.compact_composite (\n"
-                                + "    k text,\n"
-                                + "    c1 int,\n"
-                                + "    c2 float,\n"
-                                + "    c3 double,\n"
-                                + "    v timeuuid,\n"
-                                + "    PRIMARY KEY (k, c1, c2, c3)\n"
-                                + ") WITH COMPACT STORAGE;", keyspace);
+                + "    k text,\n"
+                + "    c1 int,\n"
+                + "    c2 float,\n"
+                + "    c3 double,\n"
+                + "    v timeuuid,\n"
+                + "    PRIMARY KEY (k, c1, c2, c3)\n"
+                + ") WITH COMPACT STORAGE;", keyspace);
 
         cql3.put("sparse", sparse);
         cql3.put("static", st);
@@ -103,7 +103,7 @@ public class SchemaTest extends CCMBridge.PerClassSingleNodeCluster {
         Properties properties = System.getProperties();
         String vmVersion = properties.getProperty("java.vm.specification.version");
         double javaVersion = 1.6;
-        if(vmVersion != null) {
+        if (vmVersion != null) {
             try {
                 javaVersion = Double.parseDouble(vmVersion);
             } catch (NumberFormatException e) {
@@ -113,27 +113,27 @@ public class SchemaTest extends CCMBridge.PerClassSingleNodeCluster {
 
         // Ordering of compaction options will be dependent on JDK.  See schemaOptionsTest comments for explanation of why this is needed.
         String compactionOptions;
-        if(javaVersion >= 1.8)
+        if (javaVersion >= 1.8)
             compactionOptions = "   AND compaction = { 'sstable_size_in_mb' : 15, 'class' : 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy' }\n";
         else
             compactionOptions = "   AND compaction = { 'class' : 'org.apache.cassandra.db.compaction.LeveledCompactionStrategy', 'sstable_size_in_mb' : 15 }\n";
 
         withOptions = String.format("CREATE TABLE %s.with_options (\n"
-                    + "    k text,\n"
-                    + "    v1 int,\n"
-                    + "    v2 int,\n"
-                    + "    i int,\n"
-                    + "    PRIMARY KEY (k, v1, v2)\n"
-                    + ") WITH CLUSTERING ORDER BY (v1 DESC, v2 ASC)\n"
-                    + "   AND read_repair_chance = 0.5\n"
-                    + "   AND dclocal_read_repair_chance = 0.6\n"
-                    + "   AND replicate_on_write = true\n"
-                    + "   AND gc_grace_seconds = 42\n"
-                    + "   AND bloom_filter_fp_chance = 0.01\n"
-                    + "   AND caching = 'ALL'\n"
-                    + "   AND comment = 'My awesome table'\n"
-                    + compactionOptions
-                    + "   AND compression = { 'sstable_compression' : 'org.apache.cassandra.io.compress.SnappyCompressor', 'chunk_length_kb' : 128 };", keyspace);
+                + "    k text,\n"
+                + "    v1 int,\n"
+                + "    v2 int,\n"
+                + "    i int,\n"
+                + "    PRIMARY KEY (k, v1, v2)\n"
+                + ") WITH CLUSTERING ORDER BY (v1 DESC, v2 ASC)\n"
+                + "   AND read_repair_chance = 0.5\n"
+                + "   AND dclocal_read_repair_chance = 0.6\n"
+                + "   AND replicate_on_write = true\n"
+                + "   AND gc_grace_seconds = 42\n"
+                + "   AND bloom_filter_fp_chance = 0.01\n"
+                + "   AND caching = 'ALL'\n"
+                + "   AND comment = 'My awesome table'\n"
+                + compactionOptions
+                + "   AND compression = { 'sstable_compression' : 'org.apache.cassandra.io.compress.SnappyCompressor', 'chunk_length_kb' : 128 };", keyspace);
 
         List<String> allDefs = new ArrayList<String>();
         allDefs.addAll(cql3.values());
@@ -186,7 +186,7 @@ public class SchemaTest extends CCMBridge.PerClassSingleNodeCluster {
 
             // With C* 2.x we'll have a few additional options
             withOpts += "   AND default_time_to_live = 0\n"
-                      + "   AND speculative_retry = '99.0PERCENTILE'\n";
+                    + "   AND speculative_retry = '99.0PERCENTILE'\n";
 
             if (version.getMinor() == 0) {
                 // With 2.0 we'll have one more options
@@ -194,11 +194,11 @@ public class SchemaTest extends CCMBridge.PerClassSingleNodeCluster {
             } else {
                 // With 2.1 we have different options, the caching option changes and replicate_on_write disappears
                 withOpts += "   AND min_index_interval = 128\n"
-                          + "   AND max_index_interval = 2048;";
+                        + "   AND max_index_interval = 2048;";
 
                 withOpts = withOpts.replace("caching = 'ALL'",
-                                            "caching = { 'keys' : 'ALL', 'rows_per_partition' : 'ALL' }")
-                                   .replace("   AND replicate_on_write = true\n", "");
+                        "caching = { 'keys' : 'ALL', 'rows_per_partition' : 'ALL' }")
+                        .replace("   AND replicate_on_write = true\n", "");
             }
         }
         assertEquals(metadata.exportAsString(), withOpts);

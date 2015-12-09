@@ -20,21 +20,17 @@ import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Metrics;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
-
-import org.scassandra.Scassandra;
-import org.testng.annotations.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
-import static org.scassandra.http.client.PrimingRequest.Result.read_request_timeout;
-import static org.scassandra.http.client.PrimingRequest.Result.unavailable;
-import static org.scassandra.http.client.PrimingRequest.Result.write_request_timeout;
-
 import com.datastax.driver.core.exceptions.ReadTimeoutException;
 import com.datastax.driver.core.exceptions.UnavailableException;
 import com.datastax.driver.core.exceptions.WriteTimeoutException;
+import org.scassandra.Scassandra;
+import org.testng.annotations.Test;
 
 import java.util.Collections;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
+import static org.scassandra.http.client.PrimingRequest.Result.*;
 
 public class DefaultRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegrationTest {
     public DefaultRetryPolicyIntegrationTest() {
@@ -119,7 +115,7 @@ public class DefaultRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegr
         try {
             Session whiteListedSession = whiteListedCluster.connect();
             // Clear all activity as result of connect.
-            for(Scassandra node : scassandras.nodes()) {
+            for (Scassandra node : scassandras.nodes()) {
                 node.activityClient().clearAllRecordedActivity();
             }
 
@@ -128,7 +124,7 @@ public class DefaultRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegr
             try {
                 query(whiteListedSession);
                 fail("expected an NoHostAvailableException");
-            } catch(NoHostAvailableException e) {
+            } catch (NoHostAvailableException e) {
                 // ok
                 Throwable error = e.getErrors().get(host1.getSocketAddress());
                 assertThat(error).isNotNull();

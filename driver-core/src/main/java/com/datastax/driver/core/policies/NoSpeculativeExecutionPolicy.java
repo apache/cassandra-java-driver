@@ -24,7 +24,9 @@ import com.datastax.driver.core.Statement;
  */
 public class NoSpeculativeExecutionPolicy implements SpeculativeExecutionPolicy {
 
-    /** The single instance (this class is stateless). */
+    /**
+     * The single instance (this class is stateless).
+     */
     public static final NoSpeculativeExecutionPolicy INSTANCE = new NoSpeculativeExecutionPolicy();
 
     private static final SpeculativeExecutionPlan PLAN = new SpeculativeExecutionPlan() {

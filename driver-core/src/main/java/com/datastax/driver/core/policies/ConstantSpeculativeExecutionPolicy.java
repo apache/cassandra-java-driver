@@ -15,13 +15,12 @@
  */
 package com.datastax.driver.core.policies;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
-import com.google.common.base.Preconditions;
-
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Host;
 import com.datastax.driver.core.Statement;
+import com.google.common.base.Preconditions;
+
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * A {@link SpeculativeExecutionPolicy} that schedules a given number of speculative executions, separated by a fixed delay.
@@ -33,16 +32,15 @@ public class ConstantSpeculativeExecutionPolicy implements SpeculativeExecutionP
     /**
      * Builds a new instance.
      *
-     * @param constantDelayMillis the delay between each speculative execution. Must be strictly positive.
+     * @param constantDelayMillis      the delay between each speculative execution. Must be strictly positive.
      * @param maxSpeculativeExecutions the number of speculative executions. Must be strictly positive.
-     *                                 
      * @throws IllegalArgumentException if one of the arguments does not respect the preconditions above.
      */
     public ConstantSpeculativeExecutionPolicy(final long constantDelayMillis, final int maxSpeculativeExecutions) {
         Preconditions.checkArgument(constantDelayMillis > 0,
-            "delay must be strictly positive (was %d)", constantDelayMillis);
+                "delay must be strictly positive (was %d)", constantDelayMillis);
         Preconditions.checkArgument(maxSpeculativeExecutions > 0,
-            "number of speculative executions must be strictly positive (was %d)", maxSpeculativeExecutions);
+                "number of speculative executions must be strictly positive (was %d)", maxSpeculativeExecutions);
         this.constantDelayMillis = constantDelayMillis;
         this.maxSpeculativeExecutions = maxSpeculativeExecutions;
     }

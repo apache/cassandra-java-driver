@@ -15,23 +15,23 @@
  */
 package com.datastax.driver.core;
 
-import java.util.Collection;
-
-import com.google.common.collect.Lists;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
-
 import com.datastax.driver.core.Cluster.Builder;
 import com.datastax.driver.core.Metrics.Errors;
 import com.datastax.driver.core.policies.DowngradingConsistencyRetryPolicy;
 import com.datastax.driver.core.utils.CassandraVersion;
+import com.google.common.collect.Lists;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
+import java.util.Collection;
+
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 /**
  * Tests the behavior of client-provided timestamps with protocol v3.
  */
-@CassandraVersion(major=2.1)
+@CassandraVersion(major = 2.1)
 public class QueryTimestampTest extends CCMBridge.PerClassSingleNodeCluster {
 
     @Override
@@ -44,13 +44,13 @@ public class QueryTimestampTest extends CCMBridge.PerClassSingleNodeCluster {
     @Override
     protected Builder configure(Builder builder) {
         return builder
-                      .withTimestampGenerator(new TimestampGenerator() {
-                          @Override
-                          public long next() {
-                              return timestampFromGenerator;
-                          }
-                      })
-                      .withRetryPolicy(DowngradingConsistencyRetryPolicy.INSTANCE);
+                .withTimestampGenerator(new TimestampGenerator() {
+                    @Override
+                    public long next() {
+                        return timestampFromGenerator;
+                    }
+                })
+                .withRetryPolicy(DowngradingConsistencyRetryPolicy.INSTANCE);
     }
 
     @BeforeMethod(groups = "short")

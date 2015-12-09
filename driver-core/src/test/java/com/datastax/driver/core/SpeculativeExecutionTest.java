@@ -15,24 +15,22 @@
  */
 package com.datastax.driver.core;
 
-import java.util.*;
-
+import com.datastax.driver.core.policies.ConstantSpeculativeExecutionPolicy;
+import com.datastax.driver.core.policies.RetryPolicy;
 import com.datastax.driver.core.policies.SpeculativeExecutionPolicy;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import org.scassandra.Scassandra;
 import org.scassandra.http.client.PrimingRequest;
-import org.testng.annotations.*;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
-import com.datastax.driver.core.policies.ConstantSpeculativeExecutionPolicy;
-import com.datastax.driver.core.policies.RetryPolicy;
+import java.util.List;
+import java.util.Map;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.TestUtils.nonQuietClusterCloseOptions;
-
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 public class SpeculativeExecutionTest {
     ScassandraCluster scassandras;
@@ -52,13 +50,13 @@ public class SpeculativeExecutionTest {
 
         loadBalancingPolicy = new SortingLoadBalancingPolicy();
         cluster = Cluster.builder()
-            .addContactPoint(scassandras.address(2))
-            .withLoadBalancingPolicy(loadBalancingPolicy)
-            .withSpeculativeExecutionPolicy(new ConstantSpeculativeExecutionPolicy(speculativeExecutionDelay, 1))
-            .withQueryOptions(new QueryOptions().setDefaultIdempotence(true))
-            .withRetryPolicy(new CustomRetryPolicy())
-            .withNettyOptions(nonQuietClusterCloseOptions)
-            .build();
+                .addContactPoint(scassandras.address(2))
+                .withLoadBalancingPolicy(loadBalancingPolicy)
+                .withSpeculativeExecutionPolicy(new ConstantSpeculativeExecutionPolicy(speculativeExecutionDelay, 1))
+                .withQueryOptions(new QueryOptions().setDefaultIdempotence(true))
+                .withRetryPolicy(new CustomRetryPolicy())
+                .withNettyOptions(nonQuietClusterCloseOptions)
+                .build();
 
         session = cluster.connect();
 
@@ -80,9 +78,9 @@ public class SpeculativeExecutionTest {
     @Test(groups = "short")
     public void should_not_start_speculative_execution_if_first_execution_completes_successfully() {
         scassandras.node(1).primingClient().prime(PrimingRequest.queryBuilder()
-                .withQuery("mock query")
-                .withRows(row("result", "result1"))
-                .build()
+                        .withQuery("mock query")
+                        .withRows(row("result", "result1"))
+                        .build()
         );
 
         long execStartCount = errors.getSpeculativeExecutions().getCount();
@@ -99,17 +97,17 @@ public class SpeculativeExecutionTest {
     public void should_not_start_speculative_execution_if_first_execution_retries_but_is_still_fast_enough() {
         // will retry once on this node:
         scassandras.node(1).primingClient().prime(PrimingRequest.queryBuilder()
-                .withQuery("mock query")
-                .withConsistency(PrimingRequest.Consistency.TWO)
-                .withResult(PrimingRequest.Result.read_request_timeout)
-                .build()
+                        .withQuery("mock query")
+                        .withConsistency(PrimingRequest.Consistency.TWO)
+                        .withResult(PrimingRequest.Result.read_request_timeout)
+                        .build()
         );
 
         scassandras.node(1).primingClient().prime(PrimingRequest.queryBuilder()
-                .withQuery("mock query")
-                .withConsistency(PrimingRequest.Consistency.ONE)
-                .withRows(row("result", "result1"))
-                .build()
+                        .withQuery("mock query")
+                        .withConsistency(PrimingRequest.Consistency.ONE)
+                        .withRows(row("result", "result1"))
+                        .build()
         );
 
         long execStartCount = errors.getSpeculativeExecutions().getCount();
@@ -129,16 +127,16 @@ public class SpeculativeExecutionTest {
     @Test(groups = "short")
     public void should_start_speculative_execution_if_first_execution_takes_too_long() {
         scassandras.node(1).primingClient().prime(PrimingRequest.queryBuilder()
-                .withQuery("mock query")
-                .withFixedDelay(400)
-                .withRows(row("result", "result1"))
-                .build()
+                        .withQuery("mock query")
+                        .withFixedDelay(400)
+                        .withRows(row("result", "result1"))
+                        .build()
         );
 
         scassandras.node(2).primingClient().prime(PrimingRequest.queryBuilder()
-                .withQuery("mock query")
-                .withRows(row("result", "result2"))
-                .build()
+                        .withQuery("mock query")
+                        .withRows(row("result", "result2"))
+                        .build()
         );
         long execStartCount = errors.getSpeculativeExecutions().getCount();
 
@@ -156,28 +154,28 @@ public class SpeculativeExecutionTest {
         cluster.getConfiguration().getSocketOptions().setReadTimeoutMillis(1000);
 
         scassandras.node(1).primingClient()
-            // execution1 starts with host1, which will time out at t=1000
-            .prime(PrimingRequest.queryBuilder()
-                .withQuery("mock query")
-                .withFixedDelay(2000)
-                .withRows(row("result", "result1"))
-                .build());
-                // at t=1000, execution1 moves to host3, which eventually succeeds at t=1500
+                // execution1 starts with host1, which will time out at t=1000
+                .prime(PrimingRequest.queryBuilder()
+                        .withQuery("mock query")
+                        .withFixedDelay(2000)
+                        .withRows(row("result", "result1"))
+                        .build());
+        // at t=1000, execution1 moves to host3, which eventually succeeds at t=1500
         scassandras.node(3).primingClient()
-            .prime(PrimingRequest.queryBuilder()
-                .withQuery("mock query")
-                .withFixedDelay(500)
-                .withRows(row("result", "result3"))
-                .build());
-                // meanwhile, execution2 starts at t=200, using host2 which times out at t=1200
-                // at that time, the query plan is empty so execution2 fails
-                // The goal of this test is to check that execution2 does not fail the query, since execution1 is still running
+                .prime(PrimingRequest.queryBuilder()
+                        .withQuery("mock query")
+                        .withFixedDelay(500)
+                        .withRows(row("result", "result3"))
+                        .build());
+        // meanwhile, execution2 starts at t=200, using host2 which times out at t=1200
+        // at that time, the query plan is empty so execution2 fails
+        // The goal of this test is to check that execution2 does not fail the query, since execution1 is still running
         scassandras.node(2).primingClient()
-            .prime(PrimingRequest.queryBuilder()
-                .withQuery("mock query")
-                .withFixedDelay(2000)
-                .withRows(row("result", "result2"))
-                .build());
+                .prime(PrimingRequest.queryBuilder()
+                        .withQuery("mock query")
+                        .withFixedDelay(2000)
+                        .withRows(row("result", "result2"))
+                        .build());
         long execStartCount = errors.getSpeculativeExecutions().getCount();
 
         ResultSet rs = session.execute("mock query");
@@ -197,7 +195,7 @@ public class SpeculativeExecutionTest {
      * @jira_ticket JAVA-796
      * @since 2.0.11, 2.1.7, 2.2.1
      */
-    @Test(groups="short")
+    @Test(groups = "short")
     public void should_init_and_close_policy_on_cluster() {
         SpeculativeExecutionPolicy mockPolicy = mock(SpeculativeExecutionPolicy.class);
 

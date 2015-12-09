@@ -14,7 +14,6 @@
  *   limitations under the License.
  */
 package com.datastax.driver.core;
-import java.util.*;
 
 /**
  * Collection of (typed) CQL values that can set either by index (starting a 0) or by name.

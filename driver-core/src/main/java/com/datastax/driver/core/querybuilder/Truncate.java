@@ -15,10 +15,9 @@
  */
 package com.datastax.driver.core.querybuilder;
 
-import java.nio.ByteBuffer;
-import java.util.List;
-
 import com.datastax.driver.core.TableMetadata;
+
+import java.util.List;
 
 /**
  * A built TRUNCATE statement.

@@ -15,11 +15,10 @@
  */
 package com.datastax.driver.mapping;
 
+import com.google.common.base.Strings;
+
 import java.util.ArrayList;
 import java.util.List;
-
-import com.datastax.driver.mapping.annotations.Frozen;
-import com.google.common.base.Strings;
 
 /**
  * A tree-like structure parsed from {@code Frozen*} annotations, that indicates which
@@ -48,15 +47,15 @@ class DeclaredFrozenType {
     // checks.
     static final DeclaredFrozenType FROZEN_SIMPLE = new DeclaredFrozenType("root", true);
     static final DeclaredFrozenType FROZEN_ELEMENT = new DeclaredFrozenType("collection", false,
-                                                      new DeclaredFrozenType("element", true));
+            new DeclaredFrozenType("element", true));
     static final DeclaredFrozenType FROZEN_MAP_KEY = new DeclaredFrozenType("map", false,
-                                                      new DeclaredFrozenType("key", true));
+            new DeclaredFrozenType("key", true));
     static final DeclaredFrozenType FROZEN_MAP_VALUE = new DeclaredFrozenType("map", false,
-                                                        new DeclaredFrozenType("key", false),
-                                                        new DeclaredFrozenType("value", true));
+            new DeclaredFrozenType("key", false),
+            new DeclaredFrozenType("value", true));
     static final DeclaredFrozenType FROZEN_MAP_KEY_AND_VALUE = new DeclaredFrozenType("map", false,
-                                                                new DeclaredFrozenType("key", true),
-                                                                new DeclaredFrozenType("value", true));
+            new DeclaredFrozenType("key", true),
+            new DeclaredFrozenType("value", true));
     static final DeclaredFrozenType UNFROZEN_SIMPLE = new DeclaredFrozenType("root");
 
     static DeclaredFrozenType parse(String toParse) {
@@ -123,8 +122,7 @@ class DeclaredFrozenType {
                             else if (toParse.charAt(idx) == '>') {
                                 idx += 1;
                                 break;
-                            }
-                            else if (toParse.charAt(idx) != ',')
+                            } else if (toParse.charAt(idx) != ',')
                                 fail("expected ','");
                             else
                                 idx += 1;
@@ -171,7 +169,7 @@ class DeclaredFrozenType {
 
         private boolean isLetter(char c) {
             return (c >= 'a' && c <= 'z') ||
-                   (c >= 'A' && c <= 'Z');
+                    (c >= 'A' && c <= 'Z');
         }
 
         private boolean isDigit(char c) {

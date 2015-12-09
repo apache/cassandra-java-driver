@@ -15,15 +15,14 @@
  */
 package com.datastax.driver.stress;
 
-import java.nio.ByteBuffer;
-import java.util.Random;
-
 import com.datastax.driver.core.*;
-import com.datastax.driver.core.exceptions.*;
+import com.datastax.driver.core.exceptions.QueryValidationException;
 import com.datastax.driver.core.utils.Bytes;
-
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
+
+import java.nio.ByteBuffer;
+import java.util.Random;
 
 public class Generators {
     private static ThreadLocal<Random> random = new ThreadLocal<Random>() {
@@ -69,7 +68,7 @@ public class Generators {
 
         public OptionParser addOptions(OptionParser parser) {
             String msg = "Simple insertion of CQL3 rows (using prepared statements unless the --no-prepare option is used). "
-                       + "The inserted rows have a fixed set of columns but no clustering columns.";
+                    + "The inserted rows have a fixed set of columns but no clustering columns.";
             parser.formatHelpWith(Stress.Help.formatFor(name(), msg));
 
             parser.accepts("no-prepare", "Do no use prepared statement");
@@ -91,7 +90,7 @@ public class Generators {
 
             StringBuilder sb = new StringBuilder();
             sb.append("CREATE TABLE standard1 (key bigint PRIMARY KEY");
-            for (int i = 0; i < (Integer)options.valueOf("columns-per-row"); ++i)
+            for (int i = 0; i < (Integer) options.valueOf("columns-per-row"); ++i)
                 sb.append(", C").append(i).append(" blob");
             sb.append(')');
 
@@ -104,13 +103,13 @@ public class Generators {
         public QueryGenerator create(int id, int iterations, OptionSet options, Session session) {
 
             return options.has("no-prepare")
-                 ? createRegular(id, iterations, options)
-                 : createPrepared(id, iterations, options, session);
+                    ? createRegular(id, iterations, options)
+                    : createPrepared(id, iterations, options, session);
         }
 
         public QueryGenerator createRegular(int id, int iterations, OptionSet options) {
-            final int valueSize = (Integer)options.valueOf("value-size");
-            final int columnsPerRow = (Integer)options.valueOf("columns-per-row");
+            final int valueSize = (Integer) options.valueOf("value-size");
+            final int columnsPerRow = (Integer) options.valueOf("columns-per-row");
             final long prefix = (long) id << 32;
 
             return new AbstractGenerator(iterations) {
@@ -130,8 +129,8 @@ public class Generators {
         }
 
         public QueryGenerator createPrepared(int id, int iterations, OptionSet options, Session session) {
-            final int valueSize = (Integer)options.valueOf("value-size");
-            final int columnsPerRow = (Integer)options.valueOf("columns-per-row");
+            final int valueSize = (Integer) options.valueOf("value-size");
+            final int columnsPerRow = (Integer) options.valueOf("columns-per-row");
             final long prefix = (long) id << 32;
 
             StringBuilder sb = new StringBuilder();
@@ -184,8 +183,8 @@ public class Generators {
 
         public QueryGenerator create(int id, int iterations, OptionSet options, Session session) {
             return options.has("no-prepare")
-                 ? createRegular(id, iterations)
-                 : createPrepared(id, iterations, session);
+                    ? createRegular(id, iterations)
+                    : createPrepared(id, iterations, session);
         }
 
         public QueryGenerator createRegular(long id, int iterations) {

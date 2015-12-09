@@ -15,10 +15,10 @@
  */
 package com.datastax.driver.core;
 
-import java.util.Collection;
-
 import com.google.common.collect.Lists;
 import org.testng.annotations.Test;
+
+import java.util.Collection;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

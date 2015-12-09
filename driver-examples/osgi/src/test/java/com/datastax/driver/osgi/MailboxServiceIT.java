@@ -15,11 +15,10 @@
  */
 package com.datastax.driver.osgi;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.GregorianCalendar;
-
-import javax.inject.Inject;
+import com.datastax.driver.core.CCMBridge;
+import com.datastax.driver.osgi.api.MailboxException;
+import com.datastax.driver.osgi.api.MailboxMessage;
+import com.datastax.driver.osgi.api.MailboxService;
 import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.options.CompositeOption;
@@ -29,20 +28,20 @@ import org.ops4j.pax.exam.testng.listener.PaxExam;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
+import javax.inject.Inject;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.GregorianCalendar;
+
+import static com.datastax.driver.osgi.VersionProvider.projectVersion;
 import static org.ops4j.pax.exam.CoreOptions.*;
 import static org.testng.Assert.assertEquals;
 
-import com.datastax.driver.core.CCMBridge;
-import com.datastax.driver.osgi.api.MailboxException;
-import com.datastax.driver.osgi.api.MailboxMessage;
-import com.datastax.driver.osgi.api.MailboxService;
-
-import static com.datastax.driver.osgi.VersionProvider.projectVersion;
-
 @Listeners({CCMBridgeListener.class, PaxExam.class})
-@Test(groups="short")
+@Test(groups = "short")
 public class MailboxServiceIT {
-    @Inject MailboxService service;
+    @Inject
+    MailboxService service;
 
     private UrlProvisionOption driverBundle() {
         return driverBundle(false);
@@ -61,13 +60,14 @@ public class MailboxServiceIT {
         final String nettyVersion = "4.0.27.Final";
         return new CompositeOption() {
 
-            @Override public Option[] getOptions() {
+            @Override
+            public Option[] getOptions() {
                 return options(
-                    mavenBundle("io.netty", "netty-buffer", nettyVersion),
-                    mavenBundle("io.netty", "netty-codec", nettyVersion),
-                    mavenBundle("io.netty", "netty-common", nettyVersion),
-                    mavenBundle("io.netty", "netty-handler", nettyVersion),
-                    mavenBundle("io.netty", "netty-transport", nettyVersion)
+                        mavenBundle("io.netty", "netty-buffer", nettyVersion),
+                        mavenBundle("io.netty", "netty-codec", nettyVersion),
+                        mavenBundle("io.netty", "netty-common", nettyVersion),
+                        mavenBundle("io.netty", "netty-handler", nettyVersion),
+                        mavenBundle("io.netty", "netty-transport", nettyVersion)
                 );
             }
         };
@@ -76,15 +76,16 @@ public class MailboxServiceIT {
     private CompositeOption defaultOptions() {
         return new CompositeOption() {
 
-            @Override public Option[] getOptions() {
+            @Override
+            public Option[] getOptions() {
                 return options(
-                    systemProperty("cassandra.contactpoints").value(CCMBridge.IP_PREFIX + 1),
-                    bundle("reference:file:target/classes"),
-                    mavenBundle("com.codahale.metrics", "metrics-core", "3.0.2"),
-                    mavenBundle("org.slf4j", "slf4j-api", "1.7.5"),
-                    mavenBundle("org.slf4j", "slf4j-simple", "1.7.5").noStart(),
-                    systemPackages("org.testng", "org.junit", "org.junit.runner", "org.junit.runner.manipulation",
-                        "org.junit.runner.notification", "com.jcabi.manifests")
+                        systemProperty("cassandra.contactpoints").value(CCMBridge.IP_PREFIX + 1),
+                        bundle("reference:file:target/classes"),
+                        mavenBundle("com.codahale.metrics", "metrics-core", "3.0.2"),
+                        mavenBundle("org.slf4j", "slf4j-api", "1.7.5"),
+                        mavenBundle("org.slf4j", "slf4j-simple", "1.7.5").noStart(),
+                        systemPackages("org.testng", "org.junit", "org.junit.runner", "org.junit.runner.manipulation",
+                                "org.junit.runner.notification", "com.jcabi.manifests")
                 );
             }
         };
@@ -93,59 +94,59 @@ public class MailboxServiceIT {
     @Configuration
     public Option[] shadedConfig() {
         return options(
-            driverBundle(true),
-            guavaBundle(),
-            defaultOptions()
+                driverBundle(true),
+                guavaBundle(),
+                defaultOptions()
         );
     }
 
     @Configuration
     public Option[] defaultConfig() {
         return options(
-            driverBundle(),
-            guavaBundle(),
-            nettyBundles(),
-            defaultOptions()
+                driverBundle(),
+                guavaBundle(),
+                nettyBundles(),
+                defaultOptions()
         );
     }
 
     @Configuration
     public Option[] guava15Config() {
         return options(
-            driverBundle(),
-            nettyBundles(),
-            guavaBundle().version("15.0"),
-            defaultOptions()
+                driverBundle(),
+                nettyBundles(),
+                guavaBundle().version("15.0"),
+                defaultOptions()
         );
     }
 
     @Configuration
     public Option[] guava16Config() {
         return options(
-            driverBundle(),
-            nettyBundles(),
-            guavaBundle().version("16.0.1"),
-            defaultOptions()
+                driverBundle(),
+                nettyBundles(),
+                guavaBundle().version("16.0.1"),
+                defaultOptions()
         );
     }
 
     @Configuration
     public Option[] guava17Config() {
         return options(
-            driverBundle(),
-            nettyBundles(),
-            guavaBundle().version("17.0"),
-            defaultOptions()
+                driverBundle(),
+                nettyBundles(),
+                guavaBundle().version("17.0"),
+                defaultOptions()
         );
     }
 
     @Configuration
     public Option[] guava18Config() {
         return options(
-            driverBundle(),
-            nettyBundles(),
-            guavaBundle().version("18.0"),
-            defaultOptions()
+                driverBundle(),
+                nettyBundles(),
+                guavaBundle().version("18.0"),
+                defaultOptions()
         );
     }
 
@@ -154,15 +155,15 @@ public class MailboxServiceIT {
      * Exercises a 'mailbox' service provided by an OSGi bundle that depends on the driver.  Ensures that
      * queries can be made through the service with the current given configuration.
      * </p>
-     *
+     * <p/>
      * The following configurations are tried (defined via methods with the @Configuration annotation):
      * <ol>
-     *   <li>Default bundle (Driver with all of it's dependencies)</li>
-     *   <li>Shaded bundle (Driver with netty shaded)</li>
-     *   <li>With Guava 15</li>
-     *   <li>With Guava 16</li>
-     *   <li>With Guava 17</li>
-     *   <li>With Guava 18</li>
+     * <li>Default bundle (Driver with all of it's dependencies)</li>
+     * <li>Shaded bundle (Driver with netty shaded)</li>
+     * <li>With Guava 15</li>
+     * <li>With Guava 16</li>
+     * <li>With Guava 17</li>
+     * <li>With Guava 18</li>
      * </ol>
      *
      * @test_category packaging

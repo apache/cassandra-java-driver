@@ -17,14 +17,14 @@ package com.datastax.driver.core.policies;
 
 /**
  * A load balancing policy that wants to be notified at cluster shutdown.
- *
+ * <p/>
  * The only reason that this is separate from {@link LoadBalancingPolicy} is to avoid breaking binary compatibility at the
  * time this was introduced (2.0.7 / 2.1.3). It might be merged with the parent interface in a future major version.
  */
 public interface CloseableLoadBalancingPolicy extends LoadBalancingPolicy {
     /**
      * Gets invoked at cluster shutdown.
-     *
+     * <p/>
      * This gives the policy the opportunity to perform some cleanup, for instance stop threads that it might have started.
      */
     void close();

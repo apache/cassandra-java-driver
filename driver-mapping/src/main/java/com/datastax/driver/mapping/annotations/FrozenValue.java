@@ -15,11 +15,14 @@
  */
 package com.datastax.driver.mapping.annotations;
 
-import java.lang.annotation.*;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
  * Shorthand to specify that the value type of a collection field is frozen.
- * <p>
+ * <p/>
  * This is equivalent to any of the following:
  * <ul>
  * <li>{@code @Frozen("list<frozen<foo>>")}</li>

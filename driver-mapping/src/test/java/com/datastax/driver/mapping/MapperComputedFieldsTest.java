@@ -15,22 +15,20 @@
  */
 package com.datastax.driver.mapping;
 
-import java.util.Collection;
-
+import com.datastax.driver.core.*;
+import com.datastax.driver.core.exceptions.InvalidQueryException;
+import com.datastax.driver.core.utils.CassandraVersion;
+import com.datastax.driver.mapping.annotations.*;
 import com.google.common.collect.Lists;
 import org.testng.SkipException;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import static com.datastax.driver.core.ProtocolVersion.V1;
-import static org.assertj.core.api.Assertions.fail;
-
-import com.datastax.driver.core.*;
-import com.datastax.driver.core.exceptions.InvalidQueryException;
-import com.datastax.driver.core.utils.CassandraVersion;
-import com.datastax.driver.mapping.annotations.*;
+import java.util.Collection;
 
 import static com.datastax.driver.core.Assertions.assertThat;
+import static com.datastax.driver.core.ProtocolVersion.V1;
+import static org.assertj.core.api.Assertions.fail;
 
 /**
  * Tests to ensure validity of {@link com.datastax.driver.mapping.annotations.Computed}
@@ -42,8 +40,8 @@ public class MapperComputedFieldsTest extends CCMBridge.PerClassSingleNodeCluste
     @Override
     protected Collection<String> getTableDefinitions() {
         return Lists.newArrayList(
-            "CREATE TABLE user (login text primary key, name text)",
-            "INSERT INTO user (login, name) VALUES ('testlogin', 'test name')");
+                "CREATE TABLE user (login text primary key, name text)",
+                "INSERT INTO user (login, name) VALUES ('testlogin', 'test name')");
     }
 
     ProtocolVersion protocolVersion;
@@ -58,7 +56,7 @@ public class MapperComputedFieldsTest extends CCMBridge.PerClassSingleNodeCluste
             userMapper = mappingManager.mapper(User.class);
     }
 
-    @Test(groups = "short", expectedExceptions = { UnsupportedOperationException.class })
+    @Test(groups = "short", expectedExceptions = {UnsupportedOperationException.class})
     void should_get_unsupported_operation_exception_on_v1() {
         if (protocolVersion.compareTo(V1) > 0)
             throw new SkipException("Skipped when protocol version > V1");
@@ -95,9 +93,9 @@ public class MapperComputedFieldsTest extends CCMBridge.PerClassSingleNodeCluste
     @Test(groups = "short")
     @CassandraVersion(major = 2.0)
     void should_add_aliases_for_fields_in_select_queries() {
-        BoundStatement bs = (BoundStatement)userMapper.getQuery("test");
+        BoundStatement bs = (BoundStatement) userMapper.getQuery("test");
         assertThat(bs.preparedStatement().getQueryString())
-            .contains("SELECT", "\"login\" AS col1", "\"name\" AS col2", "writetime(\"name\") AS col3");
+                .contains("SELECT", "\"login\" AS col1", "\"name\" AS col2", "writetime(\"name\") AS col3");
     }
 
     @Test(groups = "short")

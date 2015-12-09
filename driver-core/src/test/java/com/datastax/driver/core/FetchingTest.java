@@ -15,13 +15,13 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
+import org.testng.annotations.Test;
+
 import java.util.Collection;
 import java.util.Collections;
 
-import org.testng.annotations.Test;
 import static org.testng.Assert.*;
-
-import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
 
 /**
  * Test ResultSet paging correct behavior.
@@ -52,7 +52,7 @@ public class FetchingTest extends CCMBridge.PerClassSingleNodeCluster {
             for (int i = 0; i < 100; i++) {
                 // isExhausted makes sure we do fetch if needed
                 assertFalse(rs.isExhausted());
-                assertEquals(rs.getAvailableWithoutFetching(), 5-(i%5));
+                assertEquals(rs.getAvailableWithoutFetching(), 5 - (i % 5));
                 assertEquals(rs.one().getInt(0), i);
             }
 

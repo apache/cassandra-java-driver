@@ -74,9 +74,9 @@ public class TimeoutStressTest {
         ccmBridge = CCMBridge.builder("test").withNodes(3).build();
         channelMonitor = new SocketChannelMonitor();
         nodes = Lists.newArrayList(
-            new InetSocketAddress(CCMBridge.IP_PREFIX + '1', 9042),
-            new InetSocketAddress(CCMBridge.IP_PREFIX + '2', 9042),
-            new InetSocketAddress(CCMBridge.IP_PREFIX + '3', 9042)
+                new InetSocketAddress(CCMBridge.IP_PREFIX + '1', 9042),
+                new InetSocketAddress(CCMBridge.IP_PREFIX + '2', 9042),
+                new InetSocketAddress(CCMBridge.IP_PREFIX + '3', 9042)
         );
 
         PoolingOptions poolingOptions = new PoolingOptions().setConnectionsPerHost(HostDistance.LOCAL, 8, 8);
@@ -91,33 +91,33 @@ public class TimeoutStressTest {
 
     @AfterClass(groups = "stress")
     public void afterClass() {
-        if(ccmBridge != null) {
+        if (ccmBridge != null) {
             ccmBridge.stop();
         }
-        if(channelMonitor != null) {
+        if (channelMonitor != null) {
             channelMonitor.stop();
         }
-        if(cluster != null) {
+        if (cluster != null) {
             cluster.close();
         }
     }
 
     /**
-     * <p>
+     * <p/>
      * Validates that under extreme timeout conditions the driver is able to properly maintain connection pools in
      * addition to not leaking connections.
-     *
-     * <p>
+     * <p/>
+     * <p/>
      * Does the following:
      * <ol>
-     *     <li>Creates a table and loads 30k rows in a single partition.</li>
-     *     <li>Sets the connection and read timeout {@link SocketOptions} to very low values.</li>
-     *     <li>Spawns workers that concurrently execute queries.</li>
-     *     <li>For some duration, repeatedly measures number of open socket connections and warns if exceeded.</li>
-     *     <li>After a duration, resets {@link SocketOptions} to defaults.</li>
-     *     <li>Wait for 20 seconds for reaper to remove old connections and restore pools.</li>
-     *     <li>Ensure pools are restored.</li>
-     *     <li>Shutdown session and ensure that there remains only 1 open connection.</li>
+     * <li>Creates a table and loads 30k rows in a single partition.</li>
+     * <li>Sets the connection and read timeout {@link SocketOptions} to very low values.</li>
+     * <li>Spawns workers that concurrently execute queries.</li>
+     * <li>For some duration, repeatedly measures number of open socket connections and warns if exceeded.</li>
+     * <li>After a duration, resets {@link SocketOptions} to defaults.</li>
+     * <li>Wait for 20 seconds for reaper to remove old connections and restore pools.</li>
+     * <li>Ensure pools are restored.</li>
+     * <li>Shutdown session and ensure that there remains only 1 open connection.</li>
      * </ol>
      *
      * @test_category connection:connection_pool
@@ -163,7 +163,7 @@ public class TimeoutStressTest {
 
                 // Ensure that we don't exceed maximum connections.  Log as warning as there will be a bit of a timing
                 // factor between retrieving open connections and checking the reaper.
-                if(openChannels.size() > maxConnections) {
+                if (openChannels.size() > maxConnections) {
                     logger.warn("{} of open channels: {} exceeds maximum expected: {}.  " +
                                     "This could be because there are connections to be cleaned up in the reaper.",
                             openChannels.size(), maxConnections, openChannels);
@@ -179,7 +179,7 @@ public class TimeoutStressTest {
                     .setReadTimeoutMillis(SocketOptions.DEFAULT_READ_TIMEOUT_MILLIS);
 
             logger.debug("Sleeping 20 seconds to allow connection reaper to clean up connections " +
-                "and for the pools to recover.");
+                    "and for the pools to recover.");
             Uninterruptibles.sleepUninterruptibly(20, TimeUnit.SECONDS);
 
             Collection<SocketChannel> openChannels = channelMonitor.openChannels(nodes);
@@ -249,7 +249,7 @@ public class TimeoutStressTest {
         @Override
         public void run() {
 
-            while(!stopped.get()) {
+            while (!stopped.get()) {
                 try {
                     concurrentQueries.acquire();
                     ResultSetFuture future = session.executeAsync(statement.bind("0"));
@@ -258,21 +258,21 @@ public class TimeoutStressTest {
                         @Override
                         public void onSuccess(ResultSet result) {
                             concurrentQueries.release();
-                            if(executedQueries.incrementAndGet() % 1000 == 0)
+                            if (executedQueries.incrementAndGet() % 1000 == 0)
                                 logger.debug("Successfully executed {}.  rows: {}", executedQueries.get(), result.getAvailableWithoutFetching());
                         }
 
                         @Override
                         public void onFailure(Throwable t) {
                             concurrentQueries.release();
-                            if(t instanceof NoHostAvailableException) {
+                            if (t instanceof NoHostAvailableException) {
                                 //logger.error("NHAE: {}", t.getMessage());
                             } else {
                                 //logger.error("Exception", t);
                             }
                         }
                     });
-                } catch(Exception e) {
+                } catch (Exception e) {
                     logger.error("Failure while submitting query.", e);
                 }
             }

@@ -15,13 +15,13 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.exceptions.InvalidTypeException;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
-
-import com.datastax.driver.core.exceptions.InvalidTypeException;
 
 // We don't want to expose this one: it's less useful externally and it's a bit ugly to expose anyway (but it's convenient).
 abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableData implements SettableData<T> {
@@ -34,7 +34,7 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
     @SuppressWarnings("unchecked")
     protected AbstractData(ProtocolVersion protocolVersion, int size) {
         super(protocolVersion);
-        this.wrapped = (T)this;
+        this.wrapped = (T) this;
         this.values = new ByteBuffer[size];
     }
 
@@ -240,8 +240,8 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
             throw new InvalidTypeException(String.format("%s is not a Type 1 (time-based) UUID", v));
 
         return type == DataType.Name.UUID
-             ? setValue(i, TypeCodec.uuidCodec.serialize(v))
-             : setValue(i, TypeCodec.timeUuidCodec.serialize(v));
+                ? setValue(i, TypeCodec.uuidCodec.serialize(v))
+                : setValue(i, TypeCodec.timeUuidCodec.serialize(v));
     }
 
     public T setUUID(String name, UUID v) {
@@ -426,7 +426,7 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
         if (!(o instanceof AbstractData))
             return false;
 
-        AbstractData<?> that = (AbstractData<?>)o;
+        AbstractData<?> that = (AbstractData<?>) o;
         if (values.length != that.values.length)
             return false;
 

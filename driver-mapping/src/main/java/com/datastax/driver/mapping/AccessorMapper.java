@@ -15,12 +15,12 @@
  */
 package com.datastax.driver.mapping;
 
-import java.util.*;
-
+import com.datastax.driver.core.PreparedStatement;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
-import com.datastax.driver.core.*;
+import java.util.ArrayList;
+import java.util.List;
 
 abstract class AccessorMapper<T> {
 

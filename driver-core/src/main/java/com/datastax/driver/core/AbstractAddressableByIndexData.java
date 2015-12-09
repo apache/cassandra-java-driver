@@ -15,13 +15,13 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.exceptions.InvalidTypeException;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
-
-import com.datastax.driver.core.exceptions.InvalidTypeException;
 
 abstract class AbstractAddressableByIndexData<T extends SettableByIndexData<T>> extends AbstractGettableByIndexData implements SettableByIndexData<T> {
 
@@ -35,7 +35,7 @@ abstract class AbstractAddressableByIndexData<T extends SettableByIndexData<T>> 
     @SuppressWarnings("unchecked")
     protected T setValue(int i, ByteBuffer value) {
         values[i] = value;
-        return (T)this;
+        return (T) this;
     }
 
     protected ByteBuffer getValue(int i) {
@@ -114,8 +114,8 @@ abstract class AbstractAddressableByIndexData<T extends SettableByIndexData<T>> 
             throw new InvalidTypeException(String.format("%s is not a Type 1 (time-based) UUID", v));
 
         return type == DataType.Name.UUID
-             ? setValue(i, TypeCodec.uuidCodec.serialize(v))
-             : setValue(i, TypeCodec.timeUuidCodec.serialize(v));
+                ? setValue(i, TypeCodec.uuidCodec.serialize(v))
+                : setValue(i, TypeCodec.timeUuidCodec.serialize(v));
     }
 
     public T setInet(int i, InetAddress v) {
@@ -217,7 +217,7 @@ abstract class AbstractAddressableByIndexData<T extends SettableByIndexData<T>> 
         if (!(o instanceof AbstractAddressableByIndexData))
             return false;
 
-        AbstractAddressableByIndexData<?> that = (AbstractAddressableByIndexData<?>)o;
+        AbstractAddressableByIndexData<?> that = (AbstractAddressableByIndexData<?>) o;
         if (values.length != that.values.length)
             return false;
 

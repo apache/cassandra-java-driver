@@ -15,17 +15,17 @@
  */
 package com.datastax.driver.core;
 
+import com.google.common.base.Objects;
+
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.regex.Pattern;
 import java.util.regex.Matcher;
-
-import com.google.common.base.Objects;
+import java.util.regex.Pattern;
 
 /**
  * A version number in the form X.Y.Z with optional pre-release labels and build metadata.
- * <p>
+ * <p/>
  * Version numbers compare the usual way, the major number (X) is compared first, then the minor
  * one (Y) and then the patch level one (Z). Lastly, versions with pre-release sorts before the
  * versions that don't have one, and labels are sorted alphabetically if necessary. Build metadata
@@ -56,7 +56,7 @@ public class VersionNumber implements Comparable<VersionNumber> {
 
     /**
      * Parse a version from a string.
-     * <p>
+     * <p/>
      * The version string should have primarily the form X.Y.Z to which can be appended
      * one or more pre-release label after dashes (2.0.1-beta1, 2.1.4-rc1-SNAPSHOT)
      * and an optional build label (2.1.0-beta1+a20ba.sha). Out of convenience, the
@@ -64,9 +64,8 @@ public class VersionNumber implements Comparable<VersionNumber> {
      *
      * @param version the string to parse
      * @return the parsed version number.
-     *
      * @throws IllegalArgumentException if the provided string does not
-     * represent a valid version.
+     *                                  represent a valid version.
      */
     public static VersionNumber parse(String version) {
         if (version == null)
@@ -127,7 +126,7 @@ public class VersionNumber implements Comparable<VersionNumber> {
 
     /**
      * The DSE patch version number (will only be present for version of Cassandra in DSE).
-     * <p>
+     * <p/>
      * DataStax Entreprise (DSE) adds a fourth number to the version number to track potential
      * hot fixes and/or DSE specific patches that may have been applied to the Cassandra version.
      * In that case, this method return that fourth number.
@@ -161,7 +160,7 @@ public class VersionNumber implements Comparable<VersionNumber> {
 
     /**
      * The next stable version, i.e. the version stripped of its pre-release labels and build metadata.
-     * <p>
+     * <p/>
      * This is mostly used during our development stage, where we test the driver against pre-release
      * versions of Cassandra like 2.1.0-rc7-SNAPSHOT, but need to compare to the stable version 2.1.0
      * when testing for native protocol compatibility, etc.
@@ -218,18 +217,18 @@ public class VersionNumber implements Comparable<VersionNumber> {
 
     @Override
     public boolean equals(Object o) {
-        if(!(o instanceof VersionNumber))
+        if (!(o instanceof VersionNumber))
             return false;
-        VersionNumber that = (VersionNumber)o;
+        VersionNumber that = (VersionNumber) o;
         if (major != that.major || minor != that.minor || patch != that.patch)
             return false;
 
         return major == that.major
-            && minor == that.minor
-            && patch == that.patch
-            && dsePatch == that.dsePatch
-            && (preReleases == null ? that.preReleases == null : Arrays.equals(preReleases, that.preReleases))
-            && Objects.equal(build, that.build);
+                && minor == that.minor
+                && patch == that.patch
+                && dsePatch == that.dsePatch
+                && (preReleases == null ? that.preReleases == null : Arrays.equals(preReleases, that.preReleases))
+                && Objects.equal(build, that.build);
     }
 
     @Override

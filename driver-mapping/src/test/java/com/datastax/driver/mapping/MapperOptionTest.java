@@ -15,27 +15,25 @@
  */
 package com.datastax.driver.mapping;
 
-import java.util.Collection;
-import java.util.concurrent.ExecutionException;
-
-import com.google.common.collect.Lists;
-import org.testng.SkipException;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
-import static com.datastax.driver.core.ConsistencyLevel.*;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
-
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.datastax.driver.core.exceptions.UnavailableException;
 import com.datastax.driver.core.utils.CassandraVersion;
 import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
+import com.google.common.collect.Lists;
+import org.testng.SkipException;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
+import java.util.Collection;
+import java.util.concurrent.ExecutionException;
+
+import static com.datastax.driver.core.ConsistencyLevel.*;
 import static com.datastax.driver.core.ProtocolVersion.V1;
 import static com.datastax.driver.mapping.Mapper.Option;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 public class MapperOptionTest extends CCMBridge.PerClassSingleNodeCluster {
 
@@ -69,7 +67,7 @@ public class MapperOptionTest extends CCMBridge.PerClassSingleNodeCluster {
         User todelete = new User(45, "todelete");
         mapper.save(todelete);
         Option opt = Option.timestamp(35);
-        BoundStatement bs = (BoundStatement)mapper.deleteQuery(45, opt, Option.consistencyLevel(QUORUM));
+        BoundStatement bs = (BoundStatement) mapper.deleteQuery(45, opt, Option.consistencyLevel(QUORUM));
         assertThat(bs.preparedStatement().getQueryString()).contains("USING TIMESTAMP");
         assertThat(bs.getConsistencyLevel()).isEqualTo(QUORUM);
     }
@@ -80,7 +78,7 @@ public class MapperOptionTest extends CCMBridge.PerClassSingleNodeCluster {
         User user = new User(45, "toget");
         mapper.save(user);
 
-        BoundStatement bs = (BoundStatement)mapper.getQuery(45, Option.tracing(true), Option.consistencyLevel(ALL));
+        BoundStatement bs = (BoundStatement) mapper.getQuery(45, Option.tracing(true), Option.consistencyLevel(ALL));
         assertThat(bs.isTracing()).isTrue();
         assertThat(bs.getConsistencyLevel()).isEqualTo(ALL);
 
@@ -107,32 +105,32 @@ public class MapperOptionTest extends CCMBridge.PerClassSingleNodeCluster {
     @CassandraVersion(major = 2.0)
     void should_use_default_options() {
         mapper.setDefaultSaveOptions(Option.timestamp(644746L), Option.ttl(76324));
-        BoundStatement bs = (BoundStatement)mapper.saveQuery(new User(46, "rjhrgce"));
+        BoundStatement bs = (BoundStatement) mapper.saveQuery(new User(46, "rjhrgce"));
         assertThat(bs.preparedStatement().getQueryString()).contains("TIMESTAMP").contains("TTL");
 
         mapper.resetDefaultSaveOptions();
-        bs = (BoundStatement)mapper.saveQuery(new User(47, "rjhrgce"));
+        bs = (BoundStatement) mapper.saveQuery(new User(47, "rjhrgce"));
         assertThat(bs.preparedStatement().getQueryString()).doesNotContain("TIMESTAMP").doesNotContain("TTL");
 
         mapper.setDefaultDeleteOptions(Option.timestamp(3245L), Option.tracing(true));
-        bs = (BoundStatement)mapper.deleteQuery(47);
+        bs = (BoundStatement) mapper.deleteQuery(47);
         assertThat(bs.preparedStatement().getQueryString()).contains("TIMESTAMP");
         assertThat(bs.isTracing()).isTrue();
 
         mapper.resetDefaultDeleteOptions();
-        bs = (BoundStatement)mapper.deleteQuery(47);
+        bs = (BoundStatement) mapper.deleteQuery(47);
         assertThat(bs.preparedStatement().getQueryString()).doesNotContain("TIMESTAMP");
         assertThat(bs.isTracing()).isFalse();
 
-        bs = (BoundStatement)mapper.saveQuery(new User(46, "rjhrgce"), Option.timestamp(23), Option.consistencyLevel(ConsistencyLevel.ANY));
+        bs = (BoundStatement) mapper.saveQuery(new User(46, "rjhrgce"), Option.timestamp(23), Option.consistencyLevel(ConsistencyLevel.ANY));
         assertThat(bs.getConsistencyLevel()).isEqualTo(ConsistencyLevel.ANY);
 
         mapper.setDefaultGetOptions(Option.tracing(true));
-        bs = (BoundStatement)mapper.getQuery(46);
+        bs = (BoundStatement) mapper.getQuery(46);
         assertThat(bs.isTracing()).isTrue();
 
         mapper.resetDefaultGetOptions();
-        bs = (BoundStatement)mapper.getQuery(46);
+        bs = (BoundStatement) mapper.getQuery(46);
         assertThat(bs.isTracing()).isFalse();
     }
 
@@ -170,7 +168,9 @@ public class MapperOptionTest extends CCMBridge.PerClassSingleNodeCluster {
         assertThat(savedTimestamp).isEqualTo(explicitTimestamp);
     }
 
-    /** Cover all versions of save() to check that methods that call each other properly propagate the options */
+    /**
+     * Cover all versions of save() to check that methods that call each other properly propagate the options
+     */
     @Test(groups = "short")
     @CassandraVersion(major = 2.0)
     void should_use_save_options_for_all_variants() throws ExecutionException, InterruptedException {
@@ -328,12 +328,12 @@ public class MapperOptionTest extends CCMBridge.PerClassSingleNodeCluster {
         assertThat(statement.getConsistencyLevel()).isEqualTo(TWO);
     }
 
-    @Test(groups="short", expectedExceptions = IllegalArgumentException.class)
+    @Test(groups = "short", expectedExceptions = IllegalArgumentException.class)
     void should_fail_if_option_does_not_apply_to_query() {
         mapper.get(42, Option.ttl(1));
     }
 
-    @Test(groups="short", expectedExceptions = IllegalArgumentException.class)
+    @Test(groups = "short", expectedExceptions = IllegalArgumentException.class)
     void should_fail_when_using_ttl_with_protocol_v1() {
         if (protocolVersion.compareTo(V1) > 0)
             throw new SkipException("Skipped when protocol version > V1");
@@ -341,7 +341,7 @@ public class MapperOptionTest extends CCMBridge.PerClassSingleNodeCluster {
         mapper.saveQuery(new User(42, "helloworld"), Option.ttl(15));
     }
 
-    @Test(groups="short", expectedExceptions = IllegalArgumentException.class)
+    @Test(groups = "short", expectedExceptions = IllegalArgumentException.class)
     void should_fail_when_using_timestamp_with_protocol_v1() {
         if (protocolVersion.compareTo(V1) > 0)
             throw new SkipException("Skipped when protocol version > V1");

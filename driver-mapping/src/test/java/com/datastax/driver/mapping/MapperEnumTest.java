@@ -15,17 +15,16 @@
  */
 package com.datastax.driver.mapping;
 
-import java.util.Collection;
-
+import com.datastax.driver.core.CCMBridge;
 import com.datastax.driver.mapping.annotations.Enumerated;
 import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
 import com.google.common.collect.Lists;
 import org.testng.annotations.Test;
 
-import static org.junit.Assert.assertNull;
+import java.util.Collection;
 
-import com.datastax.driver.core.CCMBridge;
+import static org.junit.Assert.assertNull;
 
 /**
  * Covers handling of enum fields by the mapper.
@@ -35,7 +34,7 @@ public class MapperEnumTest extends CCMBridge.PerClassSingleNodeCluster {
     @Override
     protected Collection<String> getTableDefinitions() {
         return Lists.newArrayList("CREATE TABLE asOrdinal (k int primary key, v int)",
-                                  "CREATE TABLE asString (k int primary key, v text)");
+                "CREATE TABLE asString (k int primary key, v text)");
     }
 
     public enum Enum {

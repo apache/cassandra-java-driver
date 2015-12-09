@@ -15,9 +15,6 @@
  */
 package com.datastax.driver.core;
 
-import java.net.InetSocketAddress;
-import java.util.Collections;
-
 import org.scassandra.Scassandra;
 import org.scassandra.ScassandraFactory;
 import org.scassandra.http.client.ActivityClient;
@@ -29,6 +26,9 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
+
+import java.net.InetSocketAddress;
+import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.fail;
 
@@ -58,7 +58,7 @@ public abstract class ScassandraTestBase {
 
     protected static String ip = CCMBridge.IP_PREFIX + "1";
 
-    @BeforeClass(groups = { "short", "long" })
+    @BeforeClass(groups = {"short", "long"})
     public void startScassandra() {
         scassandra = ScassandraFactory.createServer(ip, BINARY_PORT, ip, ADMIN_PORT);
         scassandra.start();
@@ -68,14 +68,14 @@ public abstract class ScassandraTestBase {
         hostAddress = new InetSocketAddress(ip, scassandra.getBinaryPort());
     }
 
-    @AfterClass(groups = { "short", "long" })
+    @AfterClass(groups = {"short", "long"})
     public void stopScassandra() {
-        if(scassandra != null)
+        if (scassandra != null)
             scassandra.stop();
     }
 
-    @BeforeMethod(groups = { "short", "long" })
-    @AfterMethod(groups = { "short", "long" })
+    @BeforeMethod(groups = {"short", "long"})
+    @AfterMethod(groups = {"short", "long"})
     public void resetClients() {
         activityClient.clearAllRecordedActivity();
         primingClient.clearAllPrimes();
@@ -84,28 +84,29 @@ public abstract class ScassandraTestBase {
 
     protected Cluster.Builder createClusterBuilder() {
         Cluster.Builder builder = Cluster.builder()
-            .addContactPointsWithPorts(Collections.singletonList(hostAddress))
-            .withPoolingOptions(new PoolingOptions()
-                .setCoreConnectionsPerHost(HostDistance.LOCAL, 1)
-                .setMaxConnectionsPerHost(HostDistance.LOCAL, 1)
-                .setHeartbeatIntervalSeconds(0))
-            .withPort(scassandra.getBinaryPort());
+                .addContactPointsWithPorts(Collections.singletonList(hostAddress))
+                .withPoolingOptions(new PoolingOptions()
+                        .setCoreConnectionsPerHost(HostDistance.LOCAL, 1)
+                        .setMaxConnectionsPerHost(HostDistance.LOCAL, 1)
+                        .setHeartbeatIntervalSeconds(0))
+                .withPort(scassandra.getBinaryPort());
         return builder;
     }
 
     /**
      * An overrideable method for building on to the Cluster.Builder used for this
      * class.
+     *
      * @param builder
      * @return
      */
     protected Cluster.Builder configure(Cluster.Builder builder) {
-       return builder;
+        return builder;
     }
 
     protected Host retrieveSingleHost(Cluster cluster) {
         Host host = cluster.getMetadata().getHost(hostAddress);
-        if(host == null) {
+        if (host == null) {
             fail("Unable to retrieve host");
         }
         return host;
@@ -123,7 +124,7 @@ public abstract class ScassandraTestBase {
 
         protected Host host;
 
-        @BeforeClass(groups = { "short", "long" }, dependsOnMethods = "startScassandra")
+        @BeforeClass(groups = {"short", "long"}, dependsOnMethods = "startScassandra")
         public void initCluster() {
             Cluster.Builder builder = createClusterBuilder();
             cluster = builder.build();
@@ -131,13 +132,13 @@ public abstract class ScassandraTestBase {
             session = cluster.connect();
         }
 
-        @AfterClass(groups = { "short", "long" })
+        @AfterClass(groups = {"short", "long"})
         public void closeCluster() {
             if (cluster != null)
                 cluster.close();
         }
 
-        @AfterClass(groups = { "short", "long" }, dependsOnMethods = "closeCluster")
+        @AfterClass(groups = {"short", "long"}, dependsOnMethods = "closeCluster")
         @Override
         public void stopScassandra() {
             super.stopScassandra();

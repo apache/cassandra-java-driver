@@ -15,16 +15,15 @@
  */
 package com.datastax.driver.core.policies;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.datastax.driver.core.ConsistencyLevel;
 import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.WriteType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A retry policy that wraps another policy, logging the decision made by its sub-policy.
- * <p>
+ * <p/>
  * Note that this policy only log the IGNORE and RETRY decisions (since
  * RETHROW decisions are just meant to propagate the cassandra exception). The
  * logging is done at the INFO level.
@@ -38,7 +37,7 @@ public class LoggingRetryPolicy implements RetryPolicy {
      * Creates a new {@code RetryPolicy} that logs the decision of {@code policy}.
      *
      * @param policy the policy to wrap. The policy created by this constructor
-     * will return the same decision than {@code policy} but will log them.
+     *               will return the same decision than {@code policy} but will log them.
      */
     public LoggingRetryPolicy(RetryPolicy policy) {
         this.policy = policy;

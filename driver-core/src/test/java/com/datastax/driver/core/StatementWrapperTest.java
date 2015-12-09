@@ -15,16 +15,15 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.policies.*;
+import com.google.common.collect.Lists;
+import org.testng.annotations.Test;
+
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.google.common.collect.Lists;
-import org.testng.annotations.Test;
-
 import static org.assertj.core.api.Assertions.assertThat;
-
-import com.datastax.driver.core.policies.*;
 
 public class StatementWrapperTest extends CCMBridge.PerClassSingleNodeCluster {
     @Override
@@ -39,9 +38,9 @@ public class StatementWrapperTest extends CCMBridge.PerClassSingleNodeCluster {
     @Override
     protected Cluster.Builder configure(Cluster.Builder builder) {
         return builder
-            .withLoadBalancingPolicy(loadBalancingPolicy)
-            .withSpeculativeExecutionPolicy(speculativeExecutionPolicy)
-            .withRetryPolicy(retryPolicy);
+                .withLoadBalancingPolicy(loadBalancingPolicy)
+                .withSpeculativeExecutionPolicy(speculativeExecutionPolicy)
+                .withRetryPolicy(retryPolicy);
     }
 
     @Test(groups = "short")
@@ -75,7 +74,7 @@ public class StatementWrapperTest extends CCMBridge.PerClassSingleNodeCluster {
         // Set CL TWO with only one node, so the statement will always cause UNAVAILABLE,
         // which our custom policy ignores.
         Statement s = new SimpleStatement("select * from system.local")
-            .setConsistencyLevel(ConsistencyLevel.TWO);
+                .setConsistencyLevel(ConsistencyLevel.TWO);
 
         session.execute(s);
         assertThat(retryPolicy.customStatementsHandled.get()).isEqualTo(0);
@@ -84,14 +83,18 @@ public class StatementWrapperTest extends CCMBridge.PerClassSingleNodeCluster {
         assertThat(retryPolicy.customStatementsHandled.get()).isEqualTo(1);
     }
 
-    /** A custom wrapper that's just used to mark statements. */
+    /**
+     * A custom wrapper that's just used to mark statements.
+     */
     static class CustomStatement extends StatementWrapper {
         protected CustomStatement(Statement wrapped) {
             super(wrapped);
         }
     }
 
-    /** A load balancing policy that counts how many times it has seen the custom wrapper */
+    /**
+     * A load balancing policy that counts how many times it has seen the custom wrapper
+     */
     static class CustomLoadBalancingPolicy extends DelegatingLoadBalancingPolicy {
         final AtomicInteger customStatementsHandled = new AtomicInteger();
 
@@ -107,7 +110,9 @@ public class StatementWrapperTest extends CCMBridge.PerClassSingleNodeCluster {
         }
     }
 
-    /** A speculative execution policy that counts how many times it has seen the custom wrapper */
+    /**
+     * A speculative execution policy that counts how many times it has seen the custom wrapper
+     */
     static class CustomSpeculativeExecutionPolicy extends DelegatingSpeculativeExecutionPolicy {
         final AtomicInteger customStatementsHandled = new AtomicInteger();
 
@@ -123,7 +128,9 @@ public class StatementWrapperTest extends CCMBridge.PerClassSingleNodeCluster {
         }
     }
 
-    /** A retry policy that counts how many times it has seen the custom wrapper for UNAVAILABLE errors. */
+    /**
+     * A retry policy that counts how many times it has seen the custom wrapper for UNAVAILABLE errors.
+     */
     static class CustomRetryPolicy implements RetryPolicy {
         final AtomicInteger customStatementsHandled = new AtomicInteger();
 

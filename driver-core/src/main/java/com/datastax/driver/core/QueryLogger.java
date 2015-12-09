@@ -15,22 +15,22 @@
  */
 package com.datastax.driver.core;
 
-import java.nio.ByteBuffer;
-import java.util.List;
-
-import static java.util.concurrent.TimeUnit.NANOSECONDS;
-
 import com.google.common.annotations.Beta;
 import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.ByteBuffer;
+import java.util.List;
+
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
+
 /**
  * A configurable {@link LatencyTracker} that logs all executed statements.
- * <p>
+ * <p/>
  * Typically, client applications would instantiate one single query logger (using its {@link Builder}),
  * configure it and register it on the relevant {@link Cluster} instance, e.g.:
- *
+ * <p/>
  * <pre>
  * Cluster cluster = ...
  * QueryLogger queryLogger = QueryLogger.builder(cluster)
@@ -39,55 +39,55 @@ import org.slf4j.LoggerFactory;
  *     .build();
  * cluster.register(queryLogger);
  * </pre>
- *
+ * <p/>
  * Refer to the {@link Builder} documentation for more information on
  * configuration settings for the query logger.
- * <p>
+ * <p/>
  * Once registered, the query logger will log every {@link RegularStatement}, {@link BoundStatement} or {@link BatchStatement}
  * executed by the driver;
  * note that it will never log other types of statement, null statements nor any special statement used internally by the driver.
- * <p>
+ * <p/>
  * There is one log for each request to a Cassandra node; because the driver sometimes retries the same statement on multiple nodes,
  * a single statement execution (for example, a single call to {@link Session#execute(Statement)}) can produce multiple logs on
  * different nodes.
- * <p>
+ * <p/>
  * For more flexibility, the query logger uses 3 different {@link Logger} instances:
- *
+ * <p/>
  * <ol>
- *     <li>{@link #NORMAL_LOGGER}: used to log normal queries, i.e., queries that completed successfully
- *     within a configurable threshold in milliseconds.</li>
- *     <li>{@link #SLOW_LOGGER}: used to log slow queries, i.e., queries that completed successfully
- *     but that took longer than a configurable threshold in milliseconds to complete.</li>
- *     <li>{@link #ERROR_LOGGER}: used to log unsuccessful queries, i.e.,
- *     queries that did not completed normally and threw an exception.
- *     Note this this logger will also print the full stack trace of the reported exception.</li>
+ * <li>{@link #NORMAL_LOGGER}: used to log normal queries, i.e., queries that completed successfully
+ * within a configurable threshold in milliseconds.</li>
+ * <li>{@link #SLOW_LOGGER}: used to log slow queries, i.e., queries that completed successfully
+ * but that took longer than a configurable threshold in milliseconds to complete.</li>
+ * <li>{@link #ERROR_LOGGER}: used to log unsuccessful queries, i.e.,
+ * queries that did not completed normally and threw an exception.
+ * Note this this logger will also print the full stack trace of the reported exception.</li>
  * </ol>
- *
- * <p>
+ * <p/>
+ * <p/>
  * The appropriate logger is chosen according to the following algorithm:
  * <ol>
- *     <li>if an exception has been thrown: use {@link #ERROR_LOGGER};</li>
- *     <li>otherwise, if the reported latency is greater than the configured threshold in milliseconds: use {@link #SLOW_LOGGER};</li>
- *     <li>otherwise, use {@link #NORMAL_LOGGER}.</li>
+ * <li>if an exception has been thrown: use {@link #ERROR_LOGGER};</li>
+ * <li>otherwise, if the reported latency is greater than the configured threshold in milliseconds: use {@link #SLOW_LOGGER};</li>
+ * <li>otherwise, use {@link #NORMAL_LOGGER}.</li>
  * </ol>
- *
- * <p>
+ * <p/>
+ * <p/>
  * All loggers are activated by setting their levels to {@code DEBUG} or {@code TRACE} (including {@link #ERROR_LOGGER}).
  * If the level is set to {@code TRACE} and the statement being logged is a {@link BoundStatement},
  * then the query parameters (if any) will be logged as well (names and actual values).
- *
- * <p>
+ * <p/>
+ * <p/>
  * <strong>Constant thresholds vs. Dynamic thresholds</strong>
- * <p>
+ * <p/>
  * Currently the QueryLogger can track slow queries in two different ways:
  * using a constant threshold in milliseconds (which is the default behavior),
  * or using a dynamic threshold based on per-host percentiles computed by
  * {@link PerHostPercentileTracker}.
- * <p>
+ * <p/>
  * <b>Note that the dynamic threshold version is currently provided as a beta preview: it hasn't been extensively
  * tested yet, and the API is still subject to change.</b> To use it, you must first obtain and register
  * an instance of {@link PerHostPercentileTracker}, then create your QueryLogger as follows:
- *
+ * <p/>
  * <pre>
  * Cluster cluster = ...
  * // create an instance of PerHostPercentileTracker and register it
@@ -100,8 +100,8 @@ import org.slf4j.LoggerFactory;
  *     .build();
  * cluster.register(queryLogger);
  * </pre>
-
- * <p>
+ * <p/>
+ * <p/>
  * This class is thread-safe.
  *
  * @since 2.0.10
@@ -146,11 +146,11 @@ public abstract class QueryLogger implements LatencyTracker {
     /**
      * The logger used to log normal queries, i.e., queries that completed successfully
      * within a configurable threshold in milliseconds.
-     * <p>
+     * <p/>
      * This logger is activated by setting its level to {@code DEBUG} or {@code TRACE}.
      * Additionally, if the level is set to {@code TRACE} and the statement being logged is a {@link BoundStatement},
      * then the query parameters (if any) will be logged as well (names and actual values).
-     * <p>
+     * <p/>
      * The name of this logger is {@code com.datastax.driver.core.QueryLogger.NORMAL}.
      */
     public static final Logger NORMAL_LOGGER = LoggerFactory.getLogger("com.datastax.driver.core.QueryLogger.NORMAL");
@@ -158,23 +158,23 @@ public abstract class QueryLogger implements LatencyTracker {
     /**
      * The logger used to log slow queries, i.e., queries that completed successfully
      * but whose execution time exceeded a configurable threshold in milliseconds.
-     * <p>
+     * <p/>
      * This logger is activated by setting its level to {@code DEBUG} or {@code TRACE}.
      * Additionally, if the level is set to {@code TRACE} and the statement being logged is a {@link BoundStatement},
      * then the query parameters (if any) will be logged as well (names and actual values).
-     * <p>
+     * <p/>
      * The name of this logger is {@code com.datastax.driver.core.QueryLogger.SLOW}.
      */
     public static final Logger SLOW_LOGGER = LoggerFactory.getLogger("com.datastax.driver.core.QueryLogger.SLOW");
 
     /**
      * The logger used to log unsuccessful queries, i.e., queries that did not complete normally and threw an exception.
-     * <p>
+     * <p/>
      * This logger is activated by setting its level to {@code DEBUG} or {@code TRACE}.
      * Additionally, if the level is set to {@code TRACE} and the statement being logged is a {@link BoundStatement},
      * then the query parameters (if any) will be logged as well (names and actual values).
      * Note this this logger will also print the full stack trace of the reported exception.
-     * <p>
+     * <p/>
      * The name of this logger is {@code com.datastax.driver.core.QueryLogger.ERROR}.
      */
     public static final Logger ERROR_LOGGER = LoggerFactory.getLogger("com.datastax.driver.core.QueryLogger.ERROR");
@@ -217,7 +217,7 @@ public abstract class QueryLogger implements LatencyTracker {
 
     /**
      * Creates a new {@link QueryLogger.Builder} instance.
-     * <p>
+     * <p/>
      * This is a convenience method for {@code new QueryLogger.Builder()}.
      *
      * @param cluster the {@link Cluster} this QueryLogger will be attached to.
@@ -225,7 +225,7 @@ public abstract class QueryLogger implements LatencyTracker {
      * @throws NullPointerException if {@code cluster} is {@code null}.
      */
     public static QueryLogger.Builder builder(Cluster cluster) {
-        if(cluster == null) throw new NullPointerException("QueryLogger.Builder: cluster parameter cannot be null");
+        if (cluster == null) throw new NullPointerException("QueryLogger.Builder: cluster parameter cannot be null");
         return new QueryLogger.Builder(cluster);
     }
 
@@ -290,10 +290,10 @@ public abstract class QueryLogger implements LatencyTracker {
     /**
      * A QueryLogger that uses a dynamic threshold in milliseconds
      * to track slow queries.
-     * <p>
+     * <p/>
      * Dynamic thresholds are based on per-host latency percentiles, as computed
      * by {@link PerHostPercentileTracker}.
-     * <p>
+     * <p/>
      * <b>This class is currently provided as a beta preview: it hasn't been extensively tested yet, and the API is still subject
      * to change.</b>
      */
@@ -350,7 +350,7 @@ public abstract class QueryLogger implements LatencyTracker {
          * and logged as such by the driver.
          *
          * @param slowQueryLatencyThresholdPercentile Slow queries threshold percentile.
-         *                                        It must be comprised between 0 inclusive and 100 exclusive.
+         *                                            It must be comprised between 0 inclusive and 100 exclusive.
          * @throws IllegalArgumentException if {@code slowQueryLatencyThresholdPercentile < 0 || slowQueryLatencyThresholdPercentile >= 100}.
          */
         public void setSlowQueryLatencyThresholdPercentile(double slowQueryLatencyThresholdPercentile) {
@@ -404,7 +404,7 @@ public abstract class QueryLogger implements LatencyTracker {
 
         /**
          * Enables slow query latency tracking based on constant thresholds.
-         * <p>
+         * <p/>
          * Note: You should either use {@link #withConstantThreshold(long) constant thresholds}
          * or {@link #withDynamicThreshold(PerHostPercentileTracker, double) dynamic thresholds},
          * not both.
@@ -422,22 +422,22 @@ public abstract class QueryLogger implements LatencyTracker {
 
         /**
          * Enables slow query latency tracking based on dynamic thresholds.
-         * <p>
+         * <p/>
          * Dynamic thresholds are based on per-host latency percentiles, as computed
          * by {@link PerHostPercentileTracker}.
-         * <p>
+         * <p/>
          * Note: You should either use {@link #withConstantThreshold(long) constant thresholds}
          * or {@link #withDynamicThreshold(PerHostPercentileTracker, double) dynamic thresholds},
          * not both.
-         * <p>
+         * <p/>
          * <b>This feature is currently provided as a beta preview: it hasn't been extensively tested yet, and the API is still subject
          * to change.</b>
          *
-         * @param perHostPercentileLatencyTracker the {@link PerHostPercentileTracker} instance to use for recording per-host latency histograms.
-         *                                        Cannot be {@code null}.
+         * @param perHostPercentileLatencyTracker     the {@link PerHostPercentileTracker} instance to use for recording per-host latency histograms.
+         *                                            Cannot be {@code null}.
          * @param slowQueryLatencyThresholdPercentile Slow queries threshold percentile.
-         *                                        It must be comprised between 0 inclusive and 100 exclusive.
-         *                                        The default value is {@link #DEFAULT_SLOW_QUERY_THRESHOLD_PERCENTILE}
+         *                                            It must be comprised between 0 inclusive and 100 exclusive.
+         *                                            The default value is {@link #DEFAULT_SLOW_QUERY_THRESHOLD_PERCENTILE}
          * @return this {@link Builder} instance (for method chaining).
          */
         @Beta
@@ -503,11 +503,12 @@ public abstract class QueryLogger implements LatencyTracker {
 
         /**
          * Build the {@link QueryLogger} instance.
+         *
          * @return the {@link QueryLogger} instance.
          * @throws IllegalArgumentException if the builder is unable to build a valid instance due to incorrect settings.
          */
         public QueryLogger build() {
-            if(constantThreshold) {
+            if (constantThreshold) {
                 return new ConstantThresholdQueryLogger(cluster, maxQueryStringLength, maxParameterValueLength, maxLoggedParameters, slowQueryLatencyThresholdMillis);
             } else {
                 return new DynamicThresholdQueryLogger(cluster, maxQueryStringLength, maxParameterValueLength, maxLoggedParameters, slowQueryLatencyThresholdPercentile, perHostPercentileLatencyTracker);
@@ -644,13 +645,13 @@ public abstract class QueryLogger implements LatencyTracker {
         if (showParameterValues) {
             StringBuilder params = new StringBuilder();
             if (statement instanceof BoundStatement) {
-                appendParameters((BoundStatement)statement, params, maxLoggedParameters);
+                appendParameters((BoundStatement) statement, params, maxLoggedParameters);
             } else if (statement instanceof BatchStatement) {
-                BatchStatement batchStatement = (BatchStatement)statement;
+                BatchStatement batchStatement = (BatchStatement) statement;
                 int remaining = maxLoggedParameters;
                 for (Statement inner : batchStatement.getStatements()) {
                     if (inner instanceof BoundStatement) {
-                        remaining = appendParameters((BoundStatement)inner, params, remaining);
+                        remaining = appendParameters((BoundStatement) inner, params, remaining);
                     }
                 }
             }
@@ -665,12 +666,12 @@ public abstract class QueryLogger implements LatencyTracker {
     protected String statementAsString(Statement statement) {
         StringBuilder sb = new StringBuilder();
         if (statement instanceof BatchStatement) {
-            BatchStatement bs = (BatchStatement)statement;
+            BatchStatement bs = (BatchStatement) statement;
             int statements = bs.getStatements().size();
             int boundValues = countBoundValues(bs);
             sb.append("[" + statements + " statements, " + boundValues + " bound values] ");
         } else if (statement instanceof BoundStatement) {
-            int boundValues = ((BoundStatement)statement).wrapper.values.length;
+            int boundValues = ((BoundStatement) statement).wrapper.values.length;
             sb.append("[" + boundValues + " bound values] ");
         }
 
@@ -682,7 +683,7 @@ public abstract class QueryLogger implements LatencyTracker {
         int count = 0;
         for (Statement s : bs.getStatements()) {
             if (s instanceof BoundStatement)
-                count += ((BoundStatement)s).wrapper.values.length;
+                count += ((BoundStatement) s).wrapper.values.length;
         }
         return count;
     }
@@ -727,7 +728,7 @@ public abstract class QueryLogger implements LatencyTracker {
                 int maxBufferLength = Math.max(2, (maxParameterValueLength - 2) / 2);
                 boolean bufferTooLarge = raw.remaining() > maxBufferLength;
                 if (bufferTooLarge) {
-                    raw = (ByteBuffer)raw.duplicate().limit(maxBufferLength);
+                    raw = (ByteBuffer) raw.duplicate().limit(maxBufferLength);
                 }
                 Object value = type.deserialize(raw, protocolVersion());
                 valueStr = type.format(value);
@@ -759,14 +760,14 @@ public abstract class QueryLogger implements LatencyTracker {
 
     protected int append(Statement statement, StringBuilder buffer, int remaining) {
         if (statement instanceof StatementWrapper)
-            statement = ((StatementWrapper)statement).getWrappedStatement();
+            statement = ((StatementWrapper) statement).getWrappedStatement();
 
         if (statement instanceof RegularStatement) {
-            remaining = append(((RegularStatement)statement).getQueryString().trim(), buffer, remaining);
+            remaining = append(((RegularStatement) statement).getQueryString().trim(), buffer, remaining);
         } else if (statement instanceof BoundStatement) {
-            remaining = append(((BoundStatement)statement).preparedStatement().getQueryString().trim(), buffer, remaining);
+            remaining = append(((BoundStatement) statement).preparedStatement().getQueryString().trim(), buffer, remaining);
         } else if (statement instanceof BatchStatement) {
-            BatchStatement batchStatement = (BatchStatement)statement;
+            BatchStatement batchStatement = (BatchStatement) statement;
             remaining = append("BEGIN", buffer, remaining);
             switch (batchStatement.batchType) {
                 case UNLOGGED:

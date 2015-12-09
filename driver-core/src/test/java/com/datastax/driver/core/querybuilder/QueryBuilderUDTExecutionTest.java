@@ -15,34 +15,28 @@
  */
 package com.datastax.driver.core.querybuilder;
 
+import com.datastax.driver.core.*;
+import com.datastax.driver.core.utils.CassandraVersion;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Maps;
+import org.testng.annotations.Test;
+
 import java.net.InetAddress;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Maps;
-import org.testng.annotations.Test;
-
+import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.testng.Assert.assertEquals;
 
-import com.datastax.driver.core.*;
-import com.datastax.driver.core.utils.CassandraVersion;
-
-import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.insertInto;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.putAll;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.update;
-
-@CassandraVersion(major=2.1, minor=3)
+@CassandraVersion(major = 2.1, minor = 3)
 public class QueryBuilderUDTExecutionTest extends CCMBridge.PerClassSingleNodeCluster {
 
     @Override
     protected Collection<String> getTableDefinitions() {
-            return Arrays.asList("CREATE TYPE udt (i int, a inet)",
+        return Arrays.asList("CREATE TYPE udt (i int, a inet)",
                 "CREATE TABLE udtTest(k int PRIMARY KEY, t frozen<udt>, l list<frozen<udt>>, m map<int, frozen<udt>>)");
     }
 
@@ -87,7 +81,7 @@ public class QueryBuilderUDTExecutionTest extends CCMBridge.PerClassSingleNodeCl
         map.put(2, udtValue2);
         Statement updateMap = update("udtTest").with(putAll("m", map)).where(eq("k", 1));
         assertThat(updateMap.toString())
-            .isEqualTo("UPDATE udtTest SET m=m+{0:{i:2, a:'127.0.0.1'},2:{i:3, a:'127.0.0.1'}} WHERE k=1;");
+                .isEqualTo("UPDATE udtTest SET m=m+{0:{i:2, a:'127.0.0.1'},2:{i:3, a:'127.0.0.1'}} WHERE k=1;");
 
         session.execute(updateMap);
 

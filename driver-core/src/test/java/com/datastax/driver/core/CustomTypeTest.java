@@ -15,13 +15,14 @@
  */
 package com.datastax.driver.core;
 
+import org.testng.annotations.Test;
+
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import org.testng.annotations.Test;
 import static org.testng.Assert.assertEquals;
 
 /**
@@ -32,12 +33,12 @@ public class CustomTypeTest extends CCMBridge.PerClassSingleNodeCluster {
     @Override
     protected Collection<String> getTableDefinitions() {
         return Collections.singleton(
-              "CREATE TABLE test ("
-            + "    k int,"
-            + "    c 'DynamicCompositeType(s => UTF8Type, i => Int32Type)',"
-            + "    v int,"
-            + "    PRIMARY KEY (k, c)"
-            + ") WITH COMPACT STORAGE"
+                "CREATE TABLE test ("
+                        + "    k int,"
+                        + "    c 'DynamicCompositeType(s => UTF8Type, i => Int32Type)',"
+                        + "    v int,"
+                        + "    PRIMARY KEY (k, c)"
+                        + ") WITH COMPACT STORAGE"
         );
     }
 
@@ -48,20 +49,20 @@ public class CustomTypeTest extends CCMBridge.PerClassSingleNodeCluster {
         for (Object p : params) {
             if (p instanceof Integer) {
                 ByteBuffer elt = ByteBuffer.allocate(2 + 2 + 4 + 1);
-                elt.putShort((short)(0x8000 | 'i'));
+                elt.putShort((short) (0x8000 | 'i'));
                 elt.putShort((short) 4);
-                elt.putInt((Integer)p);
-                elt.put((byte)0);
+                elt.putInt((Integer) p);
+                elt.put((byte) 0);
                 elt.flip();
                 size += elt.remaining();
                 l.add(elt);
             } else if (p instanceof String) {
-                ByteBuffer bytes = ByteBuffer.wrap(((String)p).getBytes());
+                ByteBuffer bytes = ByteBuffer.wrap(((String) p).getBytes());
                 ByteBuffer elt = ByteBuffer.allocate(2 + 2 + bytes.remaining() + 1);
-                elt.putShort((short)(0x8000 | 's'));
+                elt.putShort((short) (0x8000 | 's'));
                 elt.putShort((short) bytes.remaining());
                 elt.put(bytes);
-                elt.put((byte)0);
+                elt.put((byte) 0);
                 elt.flip();
                 size += elt.remaining();
                 l.add(elt);

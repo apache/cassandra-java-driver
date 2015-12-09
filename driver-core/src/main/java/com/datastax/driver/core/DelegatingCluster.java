@@ -15,10 +15,10 @@
  */
 package com.datastax.driver.core;
 
+import com.google.common.util.concurrent.ListenableFuture;
+
 import java.net.InetSocketAddress;
 import java.util.Collections;
-
-import com.google.common.util.concurrent.ListenableFuture;
 
 /**
  * Base class for custom {@link Cluster} implementations that wrap another instance (delegate / decorator pattern).

@@ -25,8 +25,7 @@ public class MetricsOptions {
     /**
      * Creates a new {@code MetricsOptions} object with default values.
      */
-    public MetricsOptions()
-    {
+    public MetricsOptions() {
         this(true);
     }
 
@@ -35,8 +34,7 @@ public class MetricsOptions {
      *
      * @param jmxEnabled whether to enable JMX reporting or not.
      */
-    public MetricsOptions(boolean jmxEnabled)
-    {
+    public MetricsOptions(boolean jmxEnabled) {
         this.jmxEnabled = jmxEnabled;
     }
 
@@ -45,8 +43,7 @@ public class MetricsOptions {
      *
      * @return whether JMX reporting is enabled.
      */
-    public boolean isJMXReportingEnabled()
-    {
+    public boolean isJMXReportingEnabled() {
         return jmxEnabled;
     }
 }

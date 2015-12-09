@@ -15,11 +15,11 @@
  */
 package com.datastax.driver.mapping;
 
+import com.datastax.driver.core.*;
+
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.Map.Entry;
-
-import com.datastax.driver.core.*;
 
 /**
  * An object handling the mapping of a particular class to a UDT.
@@ -52,14 +52,13 @@ public class UDTMapper<T> {
      *
      * @param v the {@code UDTValue}.
      * @return an instance of the mapped class.
-     *
      * @throws IllegalArgumentException if the {@code UDTValue} is not of the
-     * type indicated in the mapped class's {@code @UDT} annotation.
+     *                                  type indicated in the mapped class's {@code @UDT} annotation.
      */
     public T fromUDT(UDTValue v) {
         if (!v.getType().equals(userType)) {
             String message = String.format("UDT conversion mismatch: expected type %s, got %s",
-                                           userType, v.getType());
+                    userType, v.getType());
             throw new IllegalArgumentException(message);
         }
         return toEntity(v);
@@ -69,7 +68,6 @@ public class UDTMapper<T> {
      * Converts a mapped class to a {@link UDTValue}.
      *
      * @param entity an instance of the mapped class.
-     *
      * @return the corresponding {@code UDTValue}.
      */
     public UDTValue toUDT(T entity) {
@@ -113,7 +111,7 @@ public class UDTMapper<T> {
         if (type.dataType.getName() == DataType.Name.LIST) {
             InferredCQLType elementType = type.childTypes.get(0);
             List<Object> result = new ArrayList<Object>();
-            for (Object element : (List<Object>)value)
+            for (Object element : (List<Object>) value)
                 result.add(convertEntitiesToUDTs(element, elementType));
             return result;
         }
@@ -121,7 +119,7 @@ public class UDTMapper<T> {
         if (type.dataType.getName() == DataType.Name.SET) {
             InferredCQLType elementType = type.childTypes.get(0);
             Set<Object> result = new LinkedHashSet<Object>();
-            for (Object element : (Set<Object>)value)
+            for (Object element : (Set<Object>) value)
                 result.add(convertEntitiesToUDTs(element, elementType));
             return result;
         }
@@ -130,10 +128,10 @@ public class UDTMapper<T> {
             InferredCQLType keyType = type.childTypes.get(0);
             InferredCQLType valueType = type.childTypes.get(1);
             Map<Object, Object> result = new LinkedHashMap<Object, Object>();
-            for (Entry<Object, Object> entry : ((Map<Object, Object>)value).entrySet())
+            for (Entry<Object, Object> entry : ((Map<Object, Object>) value).entrySet())
                 result.put(
-                    convertEntitiesToUDTs(entry.getKey(), keyType),
-                    convertEntitiesToUDTs(entry.getValue(), valueType)
+                        convertEntitiesToUDTs(entry.getKey(), keyType),
+                        convertEntitiesToUDTs(entry.getValue(), valueType)
                 );
             return result;
         }
@@ -153,12 +151,12 @@ public class UDTMapper<T> {
             return value;
 
         if (type.udtMapper != null)
-            return type.udtMapper.toEntity((UDTValue)value);
+            return type.udtMapper.toEntity((UDTValue) value);
 
         if (type.dataType.getName() == DataType.Name.LIST) {
             InferredCQLType elementType = type.childTypes.get(0);
             List<Object> result = new ArrayList<Object>();
-            for (Object element : (List<Object>)value)
+            for (Object element : (List<Object>) value)
                 result.add(convertUDTsToEntities(element, elementType));
             return result;
         }
@@ -166,7 +164,7 @@ public class UDTMapper<T> {
         if (type.dataType.getName() == DataType.Name.SET) {
             InferredCQLType elementType = type.childTypes.get(0);
             Set<Object> result = new LinkedHashSet<Object>();
-            for (Object element : (Set<Object>)value)
+            for (Object element : (Set<Object>) value)
                 result.add(convertUDTsToEntities(element, elementType));
             return result;
         }
@@ -175,10 +173,10 @@ public class UDTMapper<T> {
             InferredCQLType keyType = type.childTypes.get(0);
             InferredCQLType valueType = type.childTypes.get(1);
             Map<Object, Object> result = new LinkedHashMap<Object, Object>();
-            for (Entry<Object, Object> entry : ((Map<Object, Object>)value).entrySet())
+            for (Entry<Object, Object> entry : ((Map<Object, Object>) value).entrySet())
                 result.put(
-                    convertUDTsToEntities(entry.getKey(), keyType),
-                    convertUDTsToEntities(entry.getValue(), valueType)
+                        convertUDTsToEntities(entry.getKey(), keyType),
+                        convertUDTsToEntities(entry.getValue(), valueType)
                 );
             return result;
         }

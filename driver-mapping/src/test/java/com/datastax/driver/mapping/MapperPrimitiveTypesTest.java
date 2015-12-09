@@ -15,21 +15,23 @@
  */
 package com.datastax.driver.mapping;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.net.InetAddress;
-import java.nio.ByteBuffer;
-import java.util.*;
-
+import com.datastax.driver.core.CCMBridge;
+import com.datastax.driver.core.utils.Bytes;
+import com.datastax.driver.core.utils.UUIDs;
 import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
 import org.testng.annotations.Test;
 
-import static org.testng.Assert.assertEquals;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.net.InetAddress;
+import java.nio.ByteBuffer;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
+import java.util.UUID;
 
-import com.datastax.driver.core.CCMBridge;
-import com.datastax.driver.core.utils.Bytes;
-import com.datastax.driver.core.utils.UUIDs;
+import static org.testng.Assert.assertEquals;
 
 /**
  * Tests the mapping of all primitive types as Java fields.
@@ -38,19 +40,19 @@ public class MapperPrimitiveTypesTest extends CCMBridge.PerClassSingleNodeCluste
 
     protected Collection<String> getTableDefinitions() {
         return Arrays.asList("CREATE TABLE primitiveTypes ("
-                             + "byteBufferCol blob primary key,"
-                             + "intCol int, intWrapperCol int,"
-                             + "longCol bigint, longWrapperCol bigint,"
-                             + "floatCol float, floatWrapperCol float,"
-                             + "doubleCol double, doubleWrapperCol double,"
-                             + "booleanCol boolean, booleanWrapperCol boolean,"
-                             + "bigDecimalCol decimal,"
-                             + "bigIntegerCol varint,"
-                             + "stringCol text,"
-                             + "inetCol inet,"
-                             + "dateCol timestamp,"
-                             + "uuidCol uuid,"
-                             + "timeUuidCol timeuuid)");
+                + "byteBufferCol blob primary key,"
+                + "intCol int, intWrapperCol int,"
+                + "longCol bigint, longWrapperCol bigint,"
+                + "floatCol float, floatWrapperCol float,"
+                + "doubleCol double, doubleWrapperCol double,"
+                + "booleanCol boolean, booleanWrapperCol boolean,"
+                + "bigDecimalCol decimal,"
+                + "bigIntegerCol varint,"
+                + "stringCol text,"
+                + "inetCol inet,"
+                + "dateCol timestamp,"
+                + "uuidCol uuid,"
+                + "timeUuidCol timeuuid)");
     }
 
     @Test(groups = "short")

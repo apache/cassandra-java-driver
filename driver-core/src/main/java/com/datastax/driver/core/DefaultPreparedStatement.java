@@ -15,12 +15,12 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.policies.RetryPolicy;
+
 import java.nio.ByteBuffer;
 import java.util.List;
 
-import com.datastax.driver.core.policies.RetryPolicy;
-
-public class DefaultPreparedStatement implements IdempotenceAwarePreparedStatement{
+public class DefaultPreparedStatement implements IdempotenceAwarePreparedStatement {
 
     final PreparedId preparedId;
 

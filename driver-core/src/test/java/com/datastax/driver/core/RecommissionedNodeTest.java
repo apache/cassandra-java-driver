@@ -15,25 +15,24 @@
  */
 package com.datastax.driver.core;
 
-import java.util.concurrent.TimeUnit;
-
+import com.datastax.driver.core.utils.CassandraVersion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.util.concurrent.TimeUnit;
 
-import com.datastax.driver.core.utils.CassandraVersion;
-
-import static com.datastax.driver.core.Assertions.*;
+import static com.datastax.driver.core.Assertions.assertThat;
+import static com.datastax.driver.core.Assertions.fail;
 import static com.datastax.driver.core.Host.State.DOWN;
 import static com.datastax.driver.core.Host.State.UP;
 import static com.datastax.driver.core.TestUtils.nonDebouncingQueryOptions;
 
 /**
  * Due to C* gossip bugs, system.peers may report nodes that are gone from the cluster.
- *
+ * <p/>
  * This class tests scenarios where these nodes have been recommissioned to another cluster and
  * come back up. The driver must detect that they are not part of the cluster anymore, and ignore them.
  */
@@ -52,7 +51,7 @@ public class RecommissionedNodeTest {
 
         // Now start the driver that will connect to node2 and node3, and consider node1 down
         mainCluster = Cluster.builder().addContactPoint(CCMBridge.IP_PREFIX + "2")
-            .withQueryOptions(nonDebouncingQueryOptions()).build();
+                .withQueryOptions(nonDebouncingQueryOptions()).build();
         mainCluster.connect();
         waitForCountUpHosts(mainCluster, 2);
         // From that point, reconnections to node1 have been scheduled.
@@ -75,7 +74,7 @@ public class RecommissionedNodeTest {
 
         // Start the driver, the control connection will be on node2
         mainCluster = Cluster.builder().addContactPoint(CCMBridge.IP_PREFIX + "2")
-            .withQueryOptions(nonDebouncingQueryOptions()).build();
+                .withQueryOptions(nonDebouncingQueryOptions()).build();
         mainCluster.connect();
         waitForCountUpHosts(mainCluster, 1);
 
@@ -103,7 +102,7 @@ public class RecommissionedNodeTest {
 
         // Start the driver, it should only connect to node 2
         mainCluster = Cluster.builder().addContactPoint(CCMBridge.IP_PREFIX + "2")
-            .withQueryOptions(nonDebouncingQueryOptions()).build();
+                .withQueryOptions(nonDebouncingQueryOptions()).build();
 
         // When we first initialize the Cluster, all hosts are marked UP
         assertThat(mainCluster).host(2).hasState(UP);
@@ -114,13 +113,13 @@ public class RecommissionedNodeTest {
 
         // Node 1 should now be DOWN with no reconnection attempt
         assertThat(mainCluster).host(1)
-            .goesDownWithin(10, TimeUnit.SECONDS)
-            .hasState(DOWN)
-            .isNotReconnectingFromDown();
+                .goesDownWithin(10, TimeUnit.SECONDS)
+                .hasState(DOWN)
+                .isNotReconnectingFromDown();
     }
 
     @Test(groups = "long")
-    @CassandraVersion(major=2.0)
+    @CassandraVersion(major = 2.0)
     public void should_ignore_node_that_does_not_support_protocol_version_on_session_init() throws Exception {
         // Simulate the bug before starting the cluster
         mainCcm = CCMBridge.builder("main").withNodes(2).build();
@@ -132,16 +131,16 @@ public class RecommissionedNodeTest {
 
         // Start the driver, it should only connect to node 2
         mainCluster = Cluster.builder().addContactPoint(CCMBridge.IP_PREFIX + "2")
-            .withQueryOptions(nonDebouncingQueryOptions()).build();
+                .withQueryOptions(nonDebouncingQueryOptions()).build();
 
         // Create a session. This will try to open a pool to node 1 and find that it doesn't support protocol version.
         mainCluster.connect();
 
         // Node 1 should now be DOWN with no reconnection attempt
         assertThat(mainCluster).host(1)
-            .goesDownWithin(10, TimeUnit.SECONDS)
-            .hasState(DOWN)
-            .isNotReconnectingFromDown();
+                .goesDownWithin(10, TimeUnit.SECONDS)
+                .hasState(DOWN)
+                .isNotReconnectingFromDown();
     }
 
     @BeforeMethod(groups = "long")
@@ -183,7 +182,7 @@ public class RecommissionedNodeTest {
 
             if (i == maxRetries)
                 fail(String.format("Up host count didn't reach %d after %d seconds",
-                                   expectedCount, i * interval));
+                        expectedCount, i * interval));
             else
                 logger.debug("Counted {} up hosts after {} seconds", actualCount, i * interval);
 

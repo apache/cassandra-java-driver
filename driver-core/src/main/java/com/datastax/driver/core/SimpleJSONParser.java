@@ -22,15 +22,15 @@ import java.util.*;
  * The only reason we need to read json in the driver is because for
  * historical reason Cassandra encodes a few properties using json in
  * the schema and we need to decode them.
- *
+ * <p/>
  * We however don't need a full-blown JSON library because:
- *   1) we know we only need to decode string lists and string maps
- *   2) we can basically assume the input is valid, we don't particularly
- *   have to bother about decoding exactly JSON as long as we at least
- *   decode what we need.
- *   3) we don't really care much about performance, none of this is done
- *   in performance sensitive parts.
- *
+ * 1) we know we only need to decode string lists and string maps
+ * 2) we can basically assume the input is valid, we don't particularly
+ * have to bother about decoding exactly JSON as long as we at least
+ * decode what we need.
+ * 3) we don't really care much about performance, none of this is done
+ * in performance sensitive parts.
+ * <p/>
  * So instead of pulling a new dependency, we roll out our own very dumb
  * parser. We should obviously not expose this publicly.
  */
@@ -123,7 +123,7 @@ class SimpleJSONParser {
      * the closing double-quote.
      */
     private String nextString() {
-        assert input.charAt(idx-1) == '"' : "Char is '" + input.charAt(idx-1) + '\'';
+        assert input.charAt(idx - 1) == '"' : "Char is '" + input.charAt(idx - 1) + '\'';
         StringBuilder sb = new StringBuilder();
         while (true) {
             char c = nextChar();
@@ -150,7 +150,7 @@ class SimpleJSONParser {
                             sb.append('\r');
                             break;
                         case 'u':
-                            sb.append((char)Integer.parseInt(input.substring(idx, idx+4), 16));
+                            sb.append((char) Integer.parseInt(input.substring(idx, idx + 4), 16));
                             idx += 4;
                             break;
                         case '"':

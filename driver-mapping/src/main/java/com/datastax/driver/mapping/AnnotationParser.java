@@ -15,6 +15,14 @@
  */
 package com.datastax.driver.mapping;
 
+import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.mapping.MethodMapper.EnumParamMapper;
+import com.datastax.driver.mapping.MethodMapper.NestedUDTParamMapper;
+import com.datastax.driver.mapping.MethodMapper.ParamMapper;
+import com.datastax.driver.mapping.MethodMapper.UDTParamMapper;
+import com.datastax.driver.mapping.annotations.*;
+import com.google.common.base.Strings;
+
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.*;
@@ -23,15 +31,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import com.google.common.base.Strings;
-
-import com.datastax.driver.core.ConsistencyLevel;
-import com.datastax.driver.mapping.MethodMapper.EnumParamMapper;
-import com.datastax.driver.mapping.MethodMapper.NestedUDTParamMapper;
-import com.datastax.driver.mapping.MethodMapper.ParamMapper;
-import com.datastax.driver.mapping.MethodMapper.UDTParamMapper;
-import com.datastax.driver.mapping.annotations.*;
 
 /**
  * Static metods that facilitates parsing class annotations into the corresponding {@link EntityMapper}.
@@ -44,7 +43,8 @@ class AnnotationParser {
         }
     };
 
-    private AnnotationParser() {}
+    private AnnotationParser() {
+    }
 
     public static <T> EntityMapper<T> parseEntity(Class<T> entityClass, EntityMapper.Factory factory, MappingManager mappingManager) {
         Table table = AnnotationChecks.getTypeAnnotation(Table.class, entityClass);
@@ -59,9 +59,9 @@ class AnnotationParser {
             ksName = mappingManager.getSession().getLoggedKeyspace();
             if (Strings.isNullOrEmpty(ksName))
                 throw new IllegalArgumentException(String.format(
-                    "Error creating mapper for class %s, the @%s annotation declares no default keyspace, and the session is not currently logged to any keyspace",
-                    entityClass.getSimpleName(),
-                    Table.class.getSimpleName()
+                        "Error creating mapper for class %s, the @%s annotation declares no default keyspace, and the session is not currently logged to any keyspace",
+                        entityClass.getSimpleName(),
+                        Table.class.getSimpleName()
                 ));
         }
 
@@ -72,15 +72,15 @@ class AnnotationParser {
         List<Field> rgs = new ArrayList<Field>();
 
         for (Field field : entityClass.getDeclaredFields()) {
-            if(field.isSynthetic() || (field.getModifiers() & Modifier.STATIC) == Modifier.STATIC)
+            if (field.isSynthetic() || (field.getModifiers() & Modifier.STATIC) == Modifier.STATIC)
                 continue;
 
             if (mappingManager.isCassandraV1 && field.getAnnotation(Computed.class) != null)
                 throw new UnsupportedOperationException("Computed fields are not supported with native protocol v1");
 
             AnnotationChecks.validateAnnotations(field, "entity",
-                                                 Column.class, ClusteringColumn.class, Enumerated.class, Frozen.class, FrozenKey.class,
-                                                 FrozenValue.class, PartitionKey.class, Transient.class, Computed.class);
+                    Column.class, ClusteringColumn.class, Enumerated.class, Frozen.class, FrozenKey.class,
+                    FrozenValue.class, PartitionKey.class, Transient.class, Computed.class);
 
             if (field.getAnnotation(Transient.class) != null)
                 continue;
@@ -107,8 +107,8 @@ class AnnotationParser {
         validateOrder(ccs, "@ClusteringColumn");
 
         mapper.addColumns(convert(pks, factory, mapper.entityClass, mappingManager, columnCounter),
-                          convert(ccs, factory, mapper.entityClass, mappingManager, columnCounter),
-                          convert(rgs, factory, mapper.entityClass, mappingManager, columnCounter));
+                convert(ccs, factory, mapper.entityClass, mappingManager, columnCounter),
+                convert(rgs, factory, mapper.entityClass, mappingManager, columnCounter));
         return mapper;
     }
 
@@ -122,9 +122,9 @@ class AnnotationParser {
             ksName = mappingManager.getSession().getLoggedKeyspace();
             if (Strings.isNullOrEmpty(ksName))
                 throw new IllegalArgumentException(String.format(
-                    "Error creating UDT mapper for class %s, the @%s annotation declares no default keyspace, and the session is not currently logged to any keyspace",
-                    udtClass.getSimpleName(),
-                    UDT.class.getSimpleName()
+                        "Error creating UDT mapper for class %s, the @%s annotation declares no default keyspace, and the session is not currently logged to any keyspace",
+                        udtClass.getSimpleName(),
+                        UDT.class.getSimpleName()
                 ));
         }
 
@@ -133,12 +133,12 @@ class AnnotationParser {
         List<Field> columns = new ArrayList<Field>();
 
         for (Field field : udtClass.getDeclaredFields()) {
-            if(field.isSynthetic() || (field.getModifiers() & Modifier.STATIC) == Modifier.STATIC)
+            if (field.isSynthetic() || (field.getModifiers() & Modifier.STATIC) == Modifier.STATIC)
                 continue;
-            
+
             AnnotationChecks.validateAnnotations(field, "UDT",
-                                                 com.datastax.driver.mapping.annotations.Field.class, Frozen.class, FrozenKey.class,
-                                                 FrozenValue.class, Enumerated.class, Transient.class);
+                    com.datastax.driver.mapping.annotations.Field.class, Frozen.class, FrozenKey.class,
+                    FrozenValue.class, Enumerated.class, Transient.class);
 
             if (field.getAnnotation(Transient.class) != null)
                 continue;
@@ -174,7 +174,7 @@ class AnnotationParser {
             int pos = position(field);
             if (pos != i)
                 throw new IllegalArgumentException(String.format("Invalid ordering value %d for annotation %s of column %s, was expecting %d",
-                                                                 pos, annotation, field.getName(), i));
+                        pos, annotation, field.getName(), i));
         }
     }
 
@@ -221,7 +221,7 @@ class AnnotationParser {
         Column column = field.getAnnotation(Column.class);
         Computed computedField = field.getAnnotation(Computed.class);
         if (column != null && !column.name().isEmpty()) {
-            if (computedField != null){
+            if (computedField != null) {
                 throw new IllegalArgumentException("Cannot use @Column and @Computed on the same field");
             }
             return column.caseSensitive() ? column.name() : column.name().toLowerCase();
@@ -295,7 +295,7 @@ class AnnotationParser {
         return factory.create(accClass, methods);
     }
 
-    @SuppressWarnings({ "unchecked", "rawtypes" })
+    @SuppressWarnings({"unchecked", "rawtypes"})
     private static ParamMapper newParamMapper(String className, String methodName, int idx, String paramName, Type paramType, Annotation[] paramAnnotations, MappingManager mappingManager) {
         if (paramType instanceof Class) {
             Class<?> paramClass = (Class<?>) paramType;
@@ -312,7 +312,8 @@ class AnnotationParser {
                 return new EnumParamMapper(paramName, idx, enumType);
             }
             return new ParamMapper(paramName, idx);
-        } if (paramType instanceof ParameterizedType) {
+        }
+        if (paramType instanceof ParameterizedType) {
             InferredCQLType inferredCQLType = InferredCQLType.from(className, methodName, idx, paramName, paramType, mappingManager);
             if (inferredCQLType.containsMappedUDT) {
                 // We need a specialized mapper to convert UDT instances in the hierarchy.

@@ -19,7 +19,7 @@ import java.nio.ByteBuffer;
 
 /**
  * A regular (non-prepared and non batched) CQL statement.
- * <p>
+ * <p/>
  * This class represents a query string along with query options (and optionally
  * binary values, see {@code getValues}). It can be extended but {@link SimpleStatement}
  * is provided as a simple implementation to build a {@code RegularStatement} directly
@@ -30,7 +30,8 @@ public abstract class RegularStatement extends Statement {
     /**
      * Creates a new RegularStatement.
      */
-    protected RegularStatement() {}
+    protected RegularStatement() {
+    }
 
     /**
      * Returns the query string for this statement.
@@ -41,7 +42,7 @@ public abstract class RegularStatement extends Statement {
 
     /**
      * The values to use for this statement.
-     * <p>
+     * <p/>
      * Note: Values for a RegularStatement (i.e. if this method does not return
      * {@code null}) are not supported with the native protocol version 1: you
      * will get an {@link UnsupportedProtocolVersionException} when submitting
@@ -50,10 +51,9 @@ public abstract class RegularStatement extends Statement {
      * Cassandra 1.2).
      *
      * @param protocolVersion the protocol version in which the returned values
-     * must be serialized for.
+     *                        must be serialized for.
      * @return the values to use for this statement or {@code null} if there is
      * no such values.
-     *
      * @see SimpleStatement#SimpleStatement(String, Object...)
      */
     public abstract ByteBuffer[] getValues(ProtocolVersion protocolVersion);
@@ -62,7 +62,6 @@ public abstract class RegularStatement extends Statement {
      * The values to use for this statement, for the given numeric protocol version.
      *
      * @throws IllegalArgumentException if {@code protocolVersion} does not correspond to any known version.
-     *
      * @deprecated This method is provided for backward compatibility. Use
      * {@link #getValues(ProtocolVersion)} instead.
      */

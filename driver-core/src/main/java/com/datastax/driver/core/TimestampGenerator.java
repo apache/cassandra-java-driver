@@ -17,7 +17,7 @@ package com.datastax.driver.core;
 
 /**
  * Generates client-side, microsecond-precision query timestamps.
- * <p>
+ * <p/>
  * Given that Cassandra uses those timestamps to resolve conflicts, implementations should generate
  * incrementing timestamps for successive implementations.
  */

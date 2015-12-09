@@ -15,13 +15,13 @@
  */
 package com.datastax.driver.core;
 
+import com.google.common.reflect.TypeToken;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
-
-import com.google.common.reflect.TypeToken;
 
 public abstract class AbstractGettableData extends AbstractGettableByIndexData implements GettableData {
 
@@ -29,10 +29,9 @@ public abstract class AbstractGettableData extends AbstractGettableByIndexData i
      * Creates a new AbstractGettableData object.
      *
      * @param protocolVersion the protocol version in which values returned
-     * by {@link #getValue} will be returned. This must be a protocol version
-     * supported by this driver. In general, the correct value will be the
-     * value returned by {@link ProtocolOptions#getProtocolVersion}.
-     *
+     *                        by {@link #getValue} will be returned. This must be a protocol version
+     *                        supported by this driver. In general, the correct value will be the
+     *                        value returned by {@link ProtocolOptions#getProtocolVersion}.
      * @throws IllegalArgumentException if {@code protocolVersion} is not a valid protocol version.
      */
     protected AbstractGettableData(ProtocolVersion protocolVersion) {
@@ -41,7 +40,6 @@ public abstract class AbstractGettableData extends AbstractGettableByIndexData i
 
     /**
      * @throws IllegalArgumentException if {@code protocolVersion} does not correspond to any known version.
-     *
      * @deprecated This constructor is provided for backward compatibility, use {@link #AbstractGettableData(ProtocolVersion)} instead.
      */
     @Deprecated
@@ -54,7 +52,6 @@ public abstract class AbstractGettableData extends AbstractGettableByIndexData i
      *
      * @param name the name for which to return the index of.
      * @return the index for the value coressponding to {@code name}.
-     *
      * @throws IllegalArgumentException if {@code name} is not valid name for this object.
      */
     protected abstract int getIndexOf(String name);

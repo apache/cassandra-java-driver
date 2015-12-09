@@ -15,25 +15,26 @@
  */
 package com.datastax.driver.core;
 
-import java.util.List;
-
 import com.google.common.util.concurrent.AbstractFuture;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 
+import java.util.List;
+
 /**
  * A future on the shutdown of a Cluster or Session instance.
- * <p>
+ * <p/>
  * This is a standard future except for the fact that this class has an
  * additional {@link #force} method that can be used to expedite the shutdown
  * process (see below).
- * <p>
+ * <p/>
  * Note that this class implements <a href="http://code.google.com/p/guava-libraries/">Guava</a>'s {@code
  * ListenableFuture} and can so be used with Guava's future utilities.
  */
 public abstract class CloseFuture extends AbstractFuture<Void> {
 
-    CloseFuture() {}
+    CloseFuture() {
+    }
 
     static CloseFuture immediateFuture() {
         CloseFuture future = new CloseFuture() {
@@ -48,11 +49,11 @@ public abstract class CloseFuture extends AbstractFuture<Void> {
 
     /**
      * Try to force the completion of the shutdown this is a future of.
-     * <p>
+     * <p/>
      * This method will do its best to expedite the shutdown process. In
      * particular, all connections will be closed right away, even if there is
      * ongoing queries at the time this method is called.
-     * <p>
+     * <p/>
      * Note that this method does not block. The completion of this method does
      * not imply the shutdown process is done, you still need to wait on this
      * future to ensure that, but calling this method will ensure said

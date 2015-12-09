@@ -15,23 +15,21 @@
  */
 package com.datastax.driver.core;
 
-import java.util.Collection;
-import java.util.List;
-
+import com.datastax.driver.core.policies.DelegatingLoadBalancingPolicy;
+import com.datastax.driver.core.policies.LoadBalancingPolicy;
+import com.datastax.driver.core.policies.RoundRobinPolicy;
 import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-import com.datastax.driver.core.policies.DelegatingLoadBalancingPolicy;
-import com.datastax.driver.core.policies.LoadBalancingPolicy;
-import com.datastax.driver.core.policies.RoundRobinPolicy;
+import java.util.Collection;
+import java.util.List;
 
 import static com.datastax.driver.core.LoadBalancingPolicyBootstrapTest.HistoryPolicy.Action.*;
 import static com.datastax.driver.core.LoadBalancingPolicyBootstrapTest.HistoryPolicy.entry;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class LoadBalancingPolicyBootstrapTest {
 
@@ -53,15 +51,15 @@ public class LoadBalancingPolicyBootstrapTest {
         try {
             ccm = CCMBridge.builder("test").withNodes(2).build();
             cluster = Cluster.builder()
-                .addContactPoints(CCMBridge.ipOfNode(1), CCMBridge.ipOfNode(2))
-                .withLoadBalancingPolicy(policy)
-                .build();
+                    .addContactPoints(CCMBridge.ipOfNode(1), CCMBridge.ipOfNode(2))
+                    .withLoadBalancingPolicy(policy)
+                    .build();
 
             cluster.init();
 
             assertThat(policy.history).containsOnly(
-                entry(INIT, TestUtils.findHost(cluster, 1)),
-                entry(INIT, TestUtils.findHost(cluster, 2))
+                    entry(INIT, TestUtils.findHost(cluster, 1)),
+                    entry(INIT, TestUtils.findHost(cluster, 2))
             );
         } finally {
             if (cluster != null)
@@ -104,23 +102,23 @@ public class LoadBalancingPolicyBootstrapTest {
 
                 HistoryPolicy policy = new HistoryPolicy(new RoundRobinPolicy());
                 cluster = Cluster.builder()
-                    .addContactPoints(CCMBridge.ipOfNode(1), CCMBridge.ipOfNode(2))
-                    .withLoadBalancingPolicy(policy)
-                    .build();
+                        .addContactPoints(CCMBridge.ipOfNode(1), CCMBridge.ipOfNode(2))
+                        .withLoadBalancingPolicy(policy)
+                        .build();
 
                 cluster.init();
 
                 if (policy.history.contains(entry(DOWN, TestUtils.findHost(cluster, nodeToStop)))) {
                     // This is the situation we're testing, the control connection tried the stopped node first.
                     assertThat(policy.history).containsExactly(
-                        entry(INIT, TestUtils.findHost(cluster, activeNode)),
-                        entry(DOWN, TestUtils.findHost(cluster, nodeToStop))
+                            entry(INIT, TestUtils.findHost(cluster, activeNode)),
+                            entry(DOWN, TestUtils.findHost(cluster, nodeToStop))
                     );
                     break;
                 } else {
                     assertThat(policy.history).containsOnly(
-                        entry(INIT, TestUtils.findHost(cluster, 1)),
-                        entry(INIT, TestUtils.findHost(cluster, 2))
+                            entry(INIT, TestUtils.findHost(cluster, 1)),
+                            entry(INIT, TestUtils.findHost(cluster, 2))
                     );
 
                     logger.info("Could not get first contact point to fail, retrying");
@@ -160,7 +158,7 @@ public class LoadBalancingPolicyBootstrapTest {
                 if (other == this)
                     return true;
                 if (other instanceof Entry) {
-                    Entry that = (Entry)other;
+                    Entry that = (Entry) other;
                     return this.action == that.action && this.host.equals(that.host);
                 }
                 return false;
@@ -171,7 +169,8 @@ public class LoadBalancingPolicyBootstrapTest {
                 return Objects.hashCode(action, host);
             }
 
-            @Override public String toString() {
+            @Override
+            public String toString() {
                 return Objects.toStringHelper(this).add("action", action).add("host", host).toString();
             }
         }

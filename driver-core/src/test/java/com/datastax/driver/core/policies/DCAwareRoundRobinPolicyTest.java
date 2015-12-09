@@ -15,8 +15,8 @@
  */
 package com.datastax.driver.core.policies;
 
-import java.util.Collection;
-
+import com.datastax.driver.core.*;
+import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.google.common.collect.Lists;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -27,26 +27,16 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import static com.google.common.collect.Lists.newArrayList;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.spy;
-import static org.mockito.MockitoAnnotations.initMocks;
-
-import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.ConsistencyLevel;
-import com.datastax.driver.core.DataProviders;
-import com.datastax.driver.core.Host;
-import com.datastax.driver.core.MemoryAppender;
-import com.datastax.driver.core.QueryTracker;
-import com.datastax.driver.core.ScassandraCluster;
-import com.datastax.driver.core.Session;
-import com.datastax.driver.core.SocketOptions;
-import com.datastax.driver.core.exceptions.NoHostAvailableException;
+import java.util.Collection;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.ScassandraCluster.datacenter;
 import static com.datastax.driver.core.TestUtils.findHost;
 import static com.datastax.driver.core.TestUtils.nonQuietClusterCloseOptions;
+import static com.google.common.collect.Lists.newArrayList;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.spy;
+import static org.mockito.MockitoAnnotations.initMocks;
 
 public class DCAwareRoundRobinPolicyTest {
 
@@ -74,8 +64,8 @@ public class DCAwareRoundRobinPolicyTest {
 
     private Cluster.Builder builder() {
         return Cluster.builder()
-            // Close cluster immediately to speed up tests.
-            .withNettyOptions(nonQuietClusterCloseOptions);
+                // Close cluster immediately to speed up tests.
+                .withNettyOptions(nonQuietClusterCloseOptions);
     }
 
     /**
@@ -89,9 +79,9 @@ public class DCAwareRoundRobinPolicyTest {
         // given: a 10 node 2 DC cluster.
         ScassandraCluster sCluster = ScassandraCluster.builder().withNodes(5, 5).build();
         Cluster cluster = builder()
-            .addContactPoint(sCluster.address(1, 1))
-            .withLoadBalancingPolicy(DCAwareRoundRobinPolicy.builder().withLocalDc(datacenter(1)).build())
-            .build();
+                .addContactPoint(sCluster.address(1, 1))
+                .withLoadBalancingPolicy(DCAwareRoundRobinPolicy.builder().withLocalDc(datacenter(1)).build())
+                .build();
         try {
             sCluster.init();
 
@@ -101,7 +91,7 @@ public class DCAwareRoundRobinPolicyTest {
 
             // then: each node in local DC should get an equal (10) number of requests.
             // then: no node in the remote DC should get a request.
-            for(int i = 1; i <= 5; i++) {
+            for (int i = 1; i <= 5; i++) {
                 queryTracker.assertQueried(sCluster, 1, i, 10);
                 queryTracker.assertQueried(sCluster, 2, i, 0);
             }
@@ -116,14 +106,14 @@ public class DCAwareRoundRobinPolicyTest {
      *
      * @test_category load_balancing:dc_aware
      */
-    @Test(groups="short")
+    @Test(groups = "short")
     public void should_not_use_remote_hosts_if_some_nodes_are_up_in_local_dc() {
         // given: a 10 node 2 DC cluster with DC policy with 2 remote hosts.
         ScassandraCluster sCluster = ScassandraCluster.builder().withNodes(5, 5).build();
         Cluster cluster = builder()
-            .addContactPoint(sCluster.address(1, 1))
-            .withLoadBalancingPolicy(DCAwareRoundRobinPolicy.builder().withLocalDc(datacenter(1)).withUsedHostsPerRemoteDc(2).build())
-            .build();
+                .addContactPoint(sCluster.address(1, 1))
+                .withLoadBalancingPolicy(DCAwareRoundRobinPolicy.builder().withLocalDc(datacenter(1)).withUsedHostsPerRemoteDc(2).build())
+                .build();
 
         try {
             sCluster.init();
@@ -142,7 +132,7 @@ public class DCAwareRoundRobinPolicyTest {
             queryTracker.assertQueried(sCluster, 1, 4, 25);
 
             // then: no nodes in the remote DC should have been queried.
-            for(int i = 1; i <= 5; i++) {
+            for (int i = 1; i <= 5; i++) {
                 queryTracker.assertQueried(sCluster, 2, i, 0);
             }
         } finally {
@@ -158,14 +148,14 @@ public class DCAwareRoundRobinPolicyTest {
      *
      * @test_category load_balancing:dc_aware
      */
-    @Test(groups="short")
+    @Test(groups = "short")
     public void should_round_robin_on_remote_hosts_when_no_up_nodes_in_local_dc() {
         // given: a 10 node 2 DC cluster with DC policy with 2 remote hosts.
         ScassandraCluster sCluster = ScassandraCluster.builder().withNodes(5, 5).build();
         Cluster cluster = builder()
-            .addContactPoint(sCluster.address(1, 1))
-            .withLoadBalancingPolicy(DCAwareRoundRobinPolicy.builder().withUsedHostsPerRemoteDc(2).build())
-            .build();
+                .addContactPoint(sCluster.address(1, 1))
+                .withLoadBalancingPolicy(DCAwareRoundRobinPolicy.builder().withUsedHostsPerRemoteDc(2).build())
+                .build();
 
         try {
             sCluster.init();
@@ -200,15 +190,15 @@ public class DCAwareRoundRobinPolicyTest {
      *
      * @test_category load_balancing:dc_aware
      */
-    @Test(groups="short", dataProvider="consistencyLevels", dataProviderClass = DataProviders.class)
+    @Test(groups = "short", dataProvider = "consistencyLevels", dataProviderClass = DataProviders.class)
     public void should_only_use_remote_hosts_when_using_non_dc_local_cl(ConsistencyLevel cl) {
         // given: a 4 node 2 DC Cluster with a LB policy that specifies to not allow remote dcs for
         // a local consistency level.
         ScassandraCluster sCluster = ScassandraCluster.builder().withNodes(2, 2).build();
         Cluster cluster = builder()
-            .addContactPoint(sCluster.address(1, 1))
-            .withLoadBalancingPolicy(DCAwareRoundRobinPolicy.builder().withUsedHostsPerRemoteDc(2).build())
-            .build();
+                .addContactPoint(sCluster.address(1, 1))
+                .withLoadBalancingPolicy(DCAwareRoundRobinPolicy.builder().withUsedHostsPerRemoteDc(2).build())
+                .build();
 
         try {
             sCluster.init();
@@ -245,17 +235,17 @@ public class DCAwareRoundRobinPolicyTest {
      *
      * @test_category load_balancing:dc_aware
      */
-    @Test(groups="short", dataProvider="consistencyLevels", dataProviderClass = DataProviders.class)
+    @Test(groups = "short", dataProvider = "consistencyLevels", dataProviderClass = DataProviders.class)
     public void should_use_remote_hosts_for_local_cl_when_allowed(ConsistencyLevel cl) {
         // given: a 4 node 2 DC Cluster with a LB policy that specifies to allow remote dcs for
         // a local consistency level.
         ScassandraCluster sCluster = ScassandraCluster.builder().withNodes(2, 2).build();
         Cluster cluster = builder()
-            .addContactPoint(sCluster.address(1, 1))
-            .withLoadBalancingPolicy(DCAwareRoundRobinPolicy.builder()
-                .allowRemoteDCsForLocalConsistencyLevel()
-                .withUsedHostsPerRemoteDc(2).build())
-            .build();
+                .addContactPoint(sCluster.address(1, 1))
+                .withLoadBalancingPolicy(DCAwareRoundRobinPolicy.builder()
+                        .allowRemoteDCsForLocalConsistencyLevel()
+                        .withUsedHostsPerRemoteDc(2).build())
+                .build();
 
         try {
             sCluster.init();
@@ -291,14 +281,14 @@ public class DCAwareRoundRobinPolicyTest {
     @Test(groups = "short")
     public void should_not_send_requests_to_blacklisted_dc_using_host_filter_policy() {
         // given: a 6 node 3 DC cluster with a DCAwareRoundRobinPolicy that is filtering hosts in DC2.
-        ScassandraCluster sCluster = ScassandraCluster.builder().withNodes(2,2,2).build();
+        ScassandraCluster sCluster = ScassandraCluster.builder().withNodes(2, 2, 2).build();
         LoadBalancingPolicy loadBalancingPolicy = HostFilterPolicy.fromDCBlackList(
-            DCAwareRoundRobinPolicy.builder().withUsedHostsPerRemoteDc(2).build(),
-            Lists.newArrayList(datacenter(2)));
+                DCAwareRoundRobinPolicy.builder().withUsedHostsPerRemoteDc(2).build(),
+                Lists.newArrayList(datacenter(2)));
         Cluster cluster = builder()
-            .addContactPoint(sCluster.address(1, 1))
-            .withLoadBalancingPolicy(loadBalancingPolicy)
-            .build();
+                .addContactPoint(sCluster.address(1, 1))
+                .withLoadBalancingPolicy(loadBalancingPolicy)
+                .build();
 
         try {
             sCluster.init();
@@ -344,14 +334,14 @@ public class DCAwareRoundRobinPolicyTest {
     @Test(groups = "short")
     public void should_send_requests_to_whitelisted_dcs_using_host_filter_policy() {
         // given: a 6 node 3 DC cluster with a DCAwareRoundRobinPolicy that is whitelisting hosts in DC1 and DC2.
-        ScassandraCluster sCluster = ScassandraCluster.builder().withNodes(2,2,2).build();
+        ScassandraCluster sCluster = ScassandraCluster.builder().withNodes(2, 2, 2).build();
         LoadBalancingPolicy loadBalancingPolicy = HostFilterPolicy.fromDCWhiteList(
-            DCAwareRoundRobinPolicy.builder().withUsedHostsPerRemoteDc(2).build(),
-            Lists.newArrayList(datacenter(1), datacenter(2)));
+                DCAwareRoundRobinPolicy.builder().withUsedHostsPerRemoteDc(2).build(),
+                Lists.newArrayList(datacenter(1), datacenter(2)));
         Cluster cluster = builder()
-            .addContactPoint(sCluster.address(1, 1))
-            .withLoadBalancingPolicy(loadBalancingPolicy)
-            .build();
+                .addContactPoint(sCluster.address(1, 1))
+                .withLoadBalancingPolicy(loadBalancingPolicy)
+                .build();
 
         try {
             sCluster.init();
@@ -394,15 +384,15 @@ public class DCAwareRoundRobinPolicyTest {
      *
      * @test_category load_balancing:dc_aware
      */
-    @Test(groups="short")
+    @Test(groups = "short")
     public void should_use_local_dc_from_contact_points_when_not_explicitly_specified() {
         // given: a 4 node 2 DC cluster without a local DC specified.
         DCAwareRoundRobinPolicy policy = spy(DCAwareRoundRobinPolicy.builder().build());
         ScassandraCluster sCluster = ScassandraCluster.builder().withNodes(2, 2).build();
         Cluster cluster = builder()
-            .addContactPoint(sCluster.address(1, 1))
-            .withLoadBalancingPolicy(policy)
-            .build();
+                .addContactPoint(sCluster.address(1, 1))
+                .withLoadBalancingPolicy(policy)
+                .build();
 
         try {
             sCluster.init();
@@ -439,9 +429,9 @@ public class DCAwareRoundRobinPolicyTest {
         DCAwareRoundRobinPolicy policy = spy(DCAwareRoundRobinPolicy.builder().build());
         ScassandraCluster sCluster = ScassandraCluster.builder().withNodes(2, 2).build();
         Cluster cluster = builder()
-            .addContactPoints(sCluster.address(1, 1), sCluster.address(2, 1))
-            .withLoadBalancingPolicy(policy)
-            .build();
+                .addContactPoints(sCluster.address(1, 1), sCluster.address(2, 1))
+                .withLoadBalancingPolicy(policy)
+                .build();
 
         try {
             sCluster.init();
@@ -477,9 +467,9 @@ public class DCAwareRoundRobinPolicyTest {
         ScassandraCluster sCluster = ScassandraCluster.builder().withNodes(2, 2).build();
         DCAwareRoundRobinPolicy policy = spy(DCAwareRoundRobinPolicy.builder().withLocalDc(datacenter(1)).build());
         Cluster cluster = builder()
-            .addContactPoints(sCluster.address(1, 1))
-            .withLoadBalancingPolicy(policy)
-            .build();
+                .addContactPoints(sCluster.address(1, 1))
+                .withLoadBalancingPolicy(policy)
+                .build();
 
         try {
             sCluster.init();
@@ -516,9 +506,9 @@ public class DCAwareRoundRobinPolicyTest {
         ScassandraCluster sCluster = ScassandraCluster.builder().withNodes(2, 2).build();
         DCAwareRoundRobinPolicy policy = spy(DCAwareRoundRobinPolicy.builder().withLocalDc(datacenter(3)).build());
         Cluster cluster = builder()
-            .addContactPoints(sCluster.address(1, 1), sCluster.address(2, 1))
-            .withLoadBalancingPolicy(policy)
-            .build();
+                .addContactPoints(sCluster.address(1, 1), sCluster.address(2, 1))
+                .withLoadBalancingPolicy(policy)
+                .build();
 
         try {
             sCluster.init();

@@ -15,22 +15,22 @@
  */
 package com.datastax.driver.core;
 
-import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
-import java.util.*;
-
-import io.netty.buffer.ByteBuf;
-
 import com.datastax.driver.core.Responses.Result.Rows.Metadata;
 import com.datastax.driver.core.exceptions.*;
 import com.datastax.driver.core.utils.Bytes;
+import io.netty.buffer.ByteBuf;
+
+import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import java.util.*;
 
 import static com.datastax.driver.core.SchemaElement.KEYSPACE;
 import static com.datastax.driver.core.SchemaElement.TABLE;
 
 class Responses {
 
-    private Responses() {}
+    private Responses() {
+    }
 
     public static class Error extends Message.Response {
 
@@ -88,22 +88,38 @@ class Responses {
 
         public DriverException asException(InetSocketAddress host) {
             switch (code) {
-                case SERVER_ERROR:     return new ServerError(host, message);
-                case PROTOCOL_ERROR:   return new ProtocolError(host, message);
-                case BAD_CREDENTIALS:  return new AuthenticationException(host, message);
-                case UNAVAILABLE:      return ((UnavailableException)infos).copy(host); // We copy to have a nice stack trace
-                case OVERLOADED:       return new OverloadedException(host, message);
-                case IS_BOOTSTRAPPING: return new BootstrappingException(host, message);
-                case TRUNCATE_ERROR:   return new TruncateException(host, message);
-                case WRITE_TIMEOUT:    return ((WriteTimeoutException)infos).copy(host);
-                case READ_TIMEOUT:     return ((ReadTimeoutException)infos).copy(host);
-                case SYNTAX_ERROR:     return new SyntaxError(host, message);
-                case UNAUTHORIZED:     return new UnauthorizedException(host, message);
-                case INVALID:          return new InvalidQueryException(host, message);
-                case CONFIG_ERROR:     return new InvalidConfigurationInQueryException(host, message);
-                case ALREADY_EXISTS:   return ((AlreadyExistsException)infos).copy(host);
-                case UNPREPARED:       return new UnpreparedException(host, message);
-                default:               return new DriverInternalError(String.format("Unknown protocol error code %s returned by %s. The error message was: %s", code, host, message));
+                case SERVER_ERROR:
+                    return new ServerError(host, message);
+                case PROTOCOL_ERROR:
+                    return new ProtocolError(host, message);
+                case BAD_CREDENTIALS:
+                    return new AuthenticationException(host, message);
+                case UNAVAILABLE:
+                    return ((UnavailableException) infos).copy(host); // We copy to have a nice stack trace
+                case OVERLOADED:
+                    return new OverloadedException(host, message);
+                case IS_BOOTSTRAPPING:
+                    return new BootstrappingException(host, message);
+                case TRUNCATE_ERROR:
+                    return new TruncateException(host, message);
+                case WRITE_TIMEOUT:
+                    return ((WriteTimeoutException) infos).copy(host);
+                case READ_TIMEOUT:
+                    return ((ReadTimeoutException) infos).copy(host);
+                case SYNTAX_ERROR:
+                    return new SyntaxError(host, message);
+                case UNAUTHORIZED:
+                    return new UnauthorizedException(host, message);
+                case INVALID:
+                    return new InvalidQueryException(host, message);
+                case CONFIG_ERROR:
+                    return new InvalidConfigurationInQueryException(host, message);
+                case ALREADY_EXISTS:
+                    return ((AlreadyExistsException) infos).copy(host);
+                case UNPREPARED:
+                    return new UnpreparedException(host, message);
+                default:
+                    return new DriverInternalError(String.format("Unknown protocol error code %s returned by %s. The error message was: %s", code, host, message));
             }
         }
 
@@ -201,16 +217,17 @@ class Responses {
         };
 
         public enum Kind {
-            VOID         (1, Void.subcodec),
-            ROWS         (2, Rows.subcodec),
-            SET_KEYSPACE (3, SetKeyspace.subcodec),
-            PREPARED     (4, Prepared.subcodec),
+            VOID(1, Void.subcodec),
+            ROWS(2, Rows.subcodec),
+            SET_KEYSPACE(3, SetKeyspace.subcodec),
+            PREPARED(4, Prepared.subcodec),
             SCHEMA_CHANGE(5, SchemaChange.subcodec);
 
             private final int id;
             final Message.Decoder<Result> subDecoder;
 
             private static final Kind[] ids;
+
             static {
                 int maxId = -1;
                 for (Kind k : Kind.values())
@@ -286,8 +303,7 @@ class Responses {
 
             public static class Metadata {
 
-                private static enum Flag
-                {
+                private static enum Flag {
                     // The order of that enum matters!!
                     GLOBAL_TABLES_SPEC,
                     HAS_MORE_PAGES,
@@ -474,7 +490,7 @@ class Responses {
 
         public static class SchemaChange extends Result {
 
-            public enum Change { CREATED, UPDATED, DROPPED }
+            public enum Change {CREATED, UPDATED, DROPPED}
 
             public final Change change;
             public final SchemaElement targetType;
@@ -482,8 +498,7 @@ class Responses {
             public final String targetName;
 
             public static final Message.Decoder<Result> subcodec = new Message.Decoder<Result>() {
-                public Result decode(ByteBuf body, ProtocolVersion version)
-                {
+                public Result decode(ByteBuf body, ProtocolVersion version) {
                     // Note: the CREATE KEYSPACE/TABLE/TYPE SCHEMA_CHANGE response is different from the SCHEMA_CHANGE EVENT type
                     Change change;
                     SchemaElement target;

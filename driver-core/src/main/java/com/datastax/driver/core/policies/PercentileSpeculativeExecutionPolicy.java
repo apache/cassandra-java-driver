@@ -15,20 +15,19 @@
  */
 package com.datastax.driver.core.policies;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
+import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.Host;
+import com.datastax.driver.core.PerHostPercentileTracker;
+import com.datastax.driver.core.Statement;
 import com.google.common.annotations.Beta;
+
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.Host;
-import com.datastax.driver.core.Statement;
-import com.datastax.driver.core.PerHostPercentileTracker;
-
 /**
  * A policy that triggers speculative executions when the request to the current host is above a given percentile.
- *
+ * <p/>
  * This class uses a {@link PerHostPercentileTracker} that must be registered with the cluster instance:
  * <pre>
  * PerHostPercentileTracker tracker = PerHostPercentileTracker
@@ -43,7 +42,7 @@ import com.datastax.driver.core.PerHostPercentileTracker;
  * </pre>
  * You <b>must</b> register the tracker with the cluster yourself (as shown on the last line above), this class will not
  * do it itself.
- * <p>
+ * <p/>
  * <b>This class is currently provided as a beta preview: it hasn't been extensively tested yet, and the API is still subject
  * to change.</b>
  */
@@ -56,17 +55,17 @@ public class PercentileSpeculativeExecutionPolicy implements SpeculativeExecutio
     /**
      * Builds a new instance.
      *
-     * @param percentileTracker the component that will record latencies. Note that this policy doesn't register it with the {@code Cluster},
-     *                          you <b>must</b> do it yourself (see the code example in this class's Javadoc).
-     * @param percentile the percentile that a request's latency must fall into to be considered slow (ex: {@code 99.0}).
+     * @param percentileTracker        the component that will record latencies. Note that this policy doesn't register it with the {@code Cluster},
+     *                                 you <b>must</b> do it yourself (see the code example in this class's Javadoc).
+     * @param percentile               the percentile that a request's latency must fall into to be considered slow (ex: {@code 99.0}).
      * @param maxSpeculativeExecutions the maximum number of speculative executions that will be triggered for a given request (this does not
      *                                 include the initial, normal request). Must be strictly positive.
      */
     public PercentileSpeculativeExecutionPolicy(PerHostPercentileTracker percentileTracker, double percentile, int maxSpeculativeExecutions) {
         checkArgument(maxSpeculativeExecutions > 0,
-            "number of speculative executions must be strictly positive (was %d)", maxSpeculativeExecutions);
+                "number of speculative executions must be strictly positive (was %d)", maxSpeculativeExecutions);
         checkArgument(percentile >= 0.0 && percentile < 100,
-            "percentile must be between 0.0 and 100 (was %f)");
+                "percentile must be between 0.0 and 100 (was %f)");
 
         this.percentileTracker = percentileTracker;
         this.percentile = percentile;

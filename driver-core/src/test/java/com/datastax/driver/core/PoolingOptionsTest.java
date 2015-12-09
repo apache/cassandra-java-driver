@@ -17,11 +17,10 @@ package com.datastax.driver.core;
 
 import org.testng.annotations.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
-
 import static com.datastax.driver.core.HostDistance.LOCAL;
 import static com.datastax.driver.core.HostDistance.REMOTE;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 public class PoolingOptionsTest {
 

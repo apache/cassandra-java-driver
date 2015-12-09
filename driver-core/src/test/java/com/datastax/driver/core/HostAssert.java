@@ -15,17 +15,16 @@
  */
 package com.datastax.driver.core;
 
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import static org.assertj.core.api.Assertions.fail;
-import org.assertj.core.api.AbstractAssert;
-import static org.assertj.core.api.Assertions.assertThat;
-
 import com.datastax.driver.core.Host.State;
 import com.datastax.driver.core.Host.StateListener;
 import com.datastax.driver.core.policies.LoadBalancingPolicy;
+import org.assertj.core.api.AbstractAssert;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 public class HostAssert extends AbstractAssert<HostAssert, Host> {
 
@@ -63,7 +62,7 @@ public class HostAssert extends AbstractAssert<HostAssert, Host> {
 
     public HostAssert isReconnectingFromDown() {
         assertThat(actual.getReconnectionAttemptFuture() != null && !actual.getReconnectionAttemptFuture().isDone())
-            .isTrue();
+                .isTrue();
         return this;
     }
 
@@ -74,7 +73,7 @@ public class HostAssert extends AbstractAssert<HostAssert, Host> {
 
     public HostAssert isNotReconnectingFromDown() {
         assertThat(actual.getReconnectionAttemptFuture() != null && !actual.getReconnectionAttemptFuture().isDone())
-            .isFalse();
+                .isFalse();
         return this;
     }
 

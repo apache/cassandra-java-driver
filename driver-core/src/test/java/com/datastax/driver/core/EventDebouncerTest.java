@@ -15,9 +15,19 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.EventDebouncer.DeliveryCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -25,16 +35,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
-
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
 import static org.assertj.core.api.Assertions.assertThat;
-
-import com.datastax.driver.core.EventDebouncer.DeliveryCallback;
 
 public class EventDebouncerTest {
 
@@ -240,7 +241,7 @@ public class EventDebouncerTest {
             if (o == null || getClass() != o.getClass())
                 return false;
 
-            MockEvent mockEvent = (MockEvent)o;
+            MockEvent mockEvent = (MockEvent) o;
 
             return i == mockEvent.i;
 

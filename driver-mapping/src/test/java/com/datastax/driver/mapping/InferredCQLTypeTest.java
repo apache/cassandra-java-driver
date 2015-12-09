@@ -15,23 +15,21 @@
  */
 package com.datastax.driver.mapping;
 
+import com.datastax.driver.core.CoreHooks;
+import com.datastax.driver.core.DataType;
+import com.datastax.driver.core.UserType;
+import com.datastax.driver.mapping.annotations.UDT;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
 import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
+import static com.datastax.driver.core.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-
-import com.datastax.driver.core.CoreHooks;
-import com.datastax.driver.core.DataType;
-import com.datastax.driver.core.UserType;
-import com.datastax.driver.mapping.annotations.UDT;
-
-import static com.datastax.driver.core.Assertions.assertThat;
 
 public class InferredCQLTypeTest {
     MappingManager manager;
@@ -76,8 +74,8 @@ public class InferredCQLTypeTest {
 
         instance = newInstanceForField("complexMap");
         assertThat(instance.dataType).isEqualTo(DataType.map(
-            DataType.list(DataType.cint()),
-            DataType.map(DataType.text(), DataType.set(mockUDTType))
+                DataType.list(DataType.cint()),
+                DataType.map(DataType.text(), DataType.set(mockUDTType))
         ));
         assertThat(instance.containsMappedUDT).isTrue();
         assertThat(instance.udtMapper).isNull();

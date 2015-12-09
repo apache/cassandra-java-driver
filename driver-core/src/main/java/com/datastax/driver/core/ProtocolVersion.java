@@ -15,12 +15,11 @@
  */
 package com.datastax.driver.core;
 
-import java.util.Map;
-
-import com.google.common.collect.ImmutableMap.Builder;
-import com.google.common.collect.ImmutableMap;
-
 import com.datastax.driver.core.exceptions.DriverInternalError;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableMap.Builder;
+
+import java.util.Map;
 
 /**
  * Versions of the native protocol supported by the driver.
@@ -29,8 +28,7 @@ public enum ProtocolVersion {
 
     V1("1.2.0", 1),
     V2("2.0.0", 2),
-    V3("2.1.0", 3),
-    ;
+    V3("2.1.0", 3),;
 
     /**
      * The most recent protocol version supported by the driver.
@@ -47,7 +45,7 @@ public enum ProtocolVersion {
 
     boolean isSupportedBy(Host host) {
         return host.getCassandraVersion() == null ||
-               isSupportedBy(host.getCassandraVersion());
+                isSupportedBy(host.getCassandraVersion());
     }
 
     VersionNumber minCassandraVersion() {
@@ -67,6 +65,7 @@ public enum ProtocolVersion {
      * This is for use internally by Cassandra to ensure that the
      * correct version is specified when serializing and deserializing
      * using classes from the imported driver library.
+     *
      * @return the protocol version as an int
      */
     public int toInt() {
@@ -74,6 +73,7 @@ public enum ProtocolVersion {
     }
 
     private static final Map<Integer, ProtocolVersion> INT_TO_VERSION;
+
     static {
         Builder<Integer, ProtocolVersion> builder = ImmutableMap.builder();
         for (ProtocolVersion version : values()) {
@@ -87,7 +87,6 @@ public enum ProtocolVersion {
      *
      * @param i the version as an integer.
      * @return the matching enum value.
-     *
      * @throws IllegalArgumentException if the argument doesn't match any known version.
      */
     public static ProtocolVersion fromInt(int i) {

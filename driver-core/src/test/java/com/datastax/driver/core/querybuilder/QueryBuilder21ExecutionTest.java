@@ -28,7 +28,7 @@ import java.util.Collection;
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 
-@CassandraVersion(major=2.1)
+@CassandraVersion(major = 2.1)
 public class QueryBuilder21ExecutionTest extends CCMBridge.PerClassSingleNodeCluster {
 
     @Override
@@ -49,7 +49,7 @@ public class QueryBuilder21ExecutionTest extends CCMBridge.PerClassSingleNodeClu
         );
     }
 
-    @Test(groups="short")
+    @Test(groups = "short")
     public void should_handle_contains_on_set_with_index() {
         PreparedStatement byCategory = session.prepare(select("id", "description", "categories")
                 .from("products")
@@ -58,12 +58,12 @@ public class QueryBuilder21ExecutionTest extends CCMBridge.PerClassSingleNodeClu
         ResultSet results = session.execute(byCategory.bind().setString("category", "hdtv"));
 
         assertThat(results.getAvailableWithoutFetching()).isEqualTo(2);
-        for(Row row : results) {
+        for (Row row : results) {
             assertThat(row.getSet("categories", String.class)).contains("hdtv");
         }
     }
 
-    @Test(groups="short")
+    @Test(groups = "short")
     public void should_handle_contains_on_list_with_index() {
         PreparedStatement byBuyer = session.prepare(select("id", "description", "buyers")
                 .from("products")
@@ -77,7 +77,7 @@ public class QueryBuilder21ExecutionTest extends CCMBridge.PerClassSingleNodeClu
         assertThat(row.getList("buyers", Integer.class)).contains(4);
     }
 
-    @Test(groups="short")
+    @Test(groups = "short")
     public void should_handle_contains_on_map_with_index() {
         PreparedStatement byFeatures = session.prepare(select("id", "description", "features_values")
                 .from("products")
@@ -92,7 +92,7 @@ public class QueryBuilder21ExecutionTest extends CCMBridge.PerClassSingleNodeClu
     }
 
 
-    @Test(groups="short")
+    @Test(groups = "short")
     public void should_handle_contains_key_on_map_with_index() {
         PreparedStatement byFeatures = session.prepare(select("id", "description", "features_keys")
                 .from("products")

@@ -15,21 +15,20 @@
  */
 package com.datastax.driver.core;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-
+import com.datastax.driver.core.exceptions.PagingStateException;
 import com.datastax.driver.core.utils.CassandraVersion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Iterator;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.datastax.driver.core.exceptions.PagingStateException;
-
-@CassandraVersion(major=2.0)
+@CassandraVersion(major = 2.0)
 public class PagingStateTest extends CCMBridge.PerClassSingleNodeCluster {
     private static final Logger logger = LoggerFactory.getLogger(PagingStateTest.class);
     public static final String KEY = "paging_test";
@@ -51,7 +50,7 @@ public class PagingStateTest extends CCMBridge.PerClassSingleNodeCluster {
      *
      * @test_category paging
      * @expected_result {@link ResultSet} from the query with the provided {@link PagingState} starts from the
-     *  subsequent row from the first query.
+     * subsequent row from the first query.
      */
     @Test(groups = "short")
     public void should_complete_when_using_paging_state() {
@@ -68,13 +67,13 @@ public class PagingStateTest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     /**
-     * <p>
+     * <p/>
      * Validates that if the {@link PagingState} is altered in any way that it may not be reused.
      * The paging state is altered in the following ways:
-     *
+     * <p/>
      * <ol>
-     *     <li>Altering a byte in the paging state raw bytes.</li>
-     *     <li>Setting the {@link PagingState} on a different Statement. (should fail hash validation)</li>
+     * <li>Altering a byte in the paging state raw bytes.</li>
+     * <li>Setting the {@link PagingState} on a different Statement. (should fail hash validation)</li>
      * </ol>
      *
      * @test_category paging
@@ -93,7 +92,7 @@ public class PagingStateTest extends CCMBridge.PerClassSingleNodeCluster {
         String savedPagingStateString = savedPagingState.toString();
 
         // corrupting the paging state
-        savedPagingStateBuffer[6] = (byte)42;
+        savedPagingStateBuffer[6] = (byte) 42;
 
         try {
             st.setFetchSize(20).setPagingState(PagingState.fromBytes(savedPagingStateBuffer));
@@ -123,10 +122,10 @@ public class PagingStateTest extends CCMBridge.PerClassSingleNodeCluster {
      *
      * @test_category paging
      * @expected_result {@link ResultSet} from the query with the provided paging state starts from the subsequent row
-     *   from the first query.
+     * from the first query.
      */
     @Test(groups = "short")
-    @CassandraVersion(major=2.0)
+    @CassandraVersion(major = 2.0)
     public void should_be_able_to_use_state_with_bound_statement() {
         PreparedStatement prepared = session.prepare("SELECT v from test where k=?");
         BoundStatement bs = prepared.bind(KEY);
@@ -149,7 +148,7 @@ public class PagingStateTest extends CCMBridge.PerClassSingleNodeCluster {
      * @expected_result A failure is thrown when setting paging state on a different {@link BoundStatement}.
      */
     @Test(groups = "short", expectedExceptions = {PagingStateException.class})
-    @CassandraVersion(major=2.0)
+    @CassandraVersion(major = 2.0)
     public void should_not_be_able_to_use_state_with_different_bound_statement() {
         PreparedStatement prepared = session.prepare("SELECT v from test where k=?");
         BoundStatement bs0 = prepared.bind(KEY);
@@ -196,7 +195,7 @@ public class PagingStateTest extends CCMBridge.PerClassSingleNodeCluster {
     @Test(groups = "unit", expectedExceptions = {PagingStateException.class})
     public void should_fail_when_given_invalid_byte_array() {
         // Given an expected page state of size 1 and hash of size 1, we should expect 6 bytes, but only receive 5.
-        byte[] complete = { 0x00, 0x01, 0x00, 0x01, 0x00 };
+        byte[] complete = {0x00, 0x01, 0x00, 0x01, 0x00};
         PagingState.fromBytes(complete);
     }
 
@@ -214,7 +213,7 @@ public class PagingStateTest extends CCMBridge.PerClassSingleNodeCluster {
      *
      * @test_category paging
      * @expected_result {@link ResultSet} from the query with the provided raw paging state starts from the
-     *  subsequent row from the first query.
+     * subsequent row from the first query.
      */
     @Test(groups = "short")
     public void should_complete_when_using_unsafe_paging_state() {

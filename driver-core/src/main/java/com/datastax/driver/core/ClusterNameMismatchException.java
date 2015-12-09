@@ -30,7 +30,7 @@ class ClusterNameMismatchException extends Exception {
 
     public ClusterNameMismatchException(InetSocketAddress address, String actualClusterName, String expectedClusterName) {
         super(String.format("[%s] Host %s reports cluster name '%s' that doesn't match our cluster name '%s'. This host will be ignored.",
-                            address, address, actualClusterName, expectedClusterName));
+                address, address, actualClusterName, expectedClusterName));
         this.address = address;
         this.expectedClusterName = expectedClusterName;
         this.actualClusterName = actualClusterName;

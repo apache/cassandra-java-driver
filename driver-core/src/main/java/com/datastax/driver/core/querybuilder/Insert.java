@@ -15,11 +15,11 @@
  */
 package com.datastax.driver.core.querybuilder;
 
+import com.datastax.driver.core.TableMetadata;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import com.datastax.driver.core.TableMetadata;
 
 /**
  * A built INSERT statement.
@@ -71,7 +71,7 @@ public class Insert extends BuiltStatement {
     /**
      * Adds a column/value pair to the values inserted by this INSERT statement.
      *
-     * @param name the name of the column to insert/update.
+     * @param name  the name of the column to insert/update.
      * @param value the value to insert/update for {@code name}.
      * @return this INSERT statement.
      */
@@ -88,10 +88,10 @@ public class Insert extends BuiltStatement {
     /**
      * Adds multiple column/value pairs to the values inserted by this INSERT statement.
      *
-     * @param names a list of column names to insert/update.
+     * @param names  a list of column names to insert/update.
      * @param values a list of values to insert/update. The {@code i}th
-     * value in {@code values} will be inserted for the {@code i}th column
-     * in {@code names}.
+     *               value in {@code values} will be inserted for the {@code i}th column
+     *               in {@code names}.
      * @return this INSERT statement.
      * @throws IllegalArgumentException if {@code names.length != values.length}.
      */
@@ -102,10 +102,10 @@ public class Insert extends BuiltStatement {
     /**
      * Adds multiple column/value pairs to the values inserted by this INSERT statement.
      *
-     * @param names a list of column names to insert/update.
+     * @param names  a list of column names to insert/update.
      * @param values a list of values to insert/update. The {@code i}th
-     * value in {@code values} will be inserted for the {@code i}th column
-     * in {@code names}.
+     *               value in {@code values} will be inserted for the {@code i}th column
+     *               in {@code names}.
      * @return this INSERT statement.
      * @throws IllegalArgumentException if {@code names.size() != values.size()}.
      */
@@ -144,15 +144,16 @@ public class Insert extends BuiltStatement {
     public Options using() {
         return usings;
     }
+
     /**
      * Sets the 'IF NOT EXISTS' option for this INSERT statement.
-     * <p>
+     * <p/>
      * An insert with that option will not succeed unless the row does not
      * exist at the time the insertion is executed. The existence check and
      * insertions are done transactionally in the sense that if multiple
      * clients attempt to create a given row with this option, then at most one
      * may succeed.
-     * <p>
+     * <p/>
      * Please keep in mind that using this option has a non negligible
      * performance impact and should be avoided when possible.
      *
@@ -189,7 +190,7 @@ public class Insert extends BuiltStatement {
         /**
          * Adds a column/value pair to the values inserted by this INSERT statement.
          *
-         * @param name the name of the column to insert/update.
+         * @param name  the name of the column to insert/update.
          * @param value the value to insert/update for {@code name}.
          * @return the INSERT statement those options are part of.
          */
@@ -200,12 +201,11 @@ public class Insert extends BuiltStatement {
         /**
          * Adds multiple column/value pairs to the values inserted by this INSERT statement.
          *
-         * @param names a list of column names to insert/update.
+         * @param names  a list of column names to insert/update.
          * @param values a list of values to insert/update. The {@code i}th
-         * value in {@code values} will be inserted for the {@code i}th column
-         * in {@code names}.
+         *               value in {@code values} will be inserted for the {@code i}th column
+         *               in {@code names}.
          * @return the INSERT statement those options are part of.
-         *
          * @throws IllegalArgumentException if {@code names.length != values.length}.
          */
         public Insert values(String[] names, Object[] values) {

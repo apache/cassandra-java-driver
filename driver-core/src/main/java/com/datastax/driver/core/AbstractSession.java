@@ -15,15 +15,17 @@
  */
 package com.datastax.driver.core;
 
+import com.google.common.base.Function;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.Uninterruptibles;
+
 import java.nio.ByteBuffer;
 import java.util.concurrent.ExecutionException;
 
-import com.google.common.base.Function;
-import com.google.common.util.concurrent.*;
-
 /**
  * Abstract implementation of the Session interface.
- *
+ * <p/>
  * This is primarly intended to make mocking easier.
  */
 public abstract class AbstractSession implements Session, AsyncInitSession {

@@ -15,19 +15,18 @@
  */
 package com.datastax.driver.core;
 
-import java.nio.ByteBuffer;
-import java.util.*;
-
 import com.beust.jcommander.internal.Lists;
+import com.datastax.driver.core.utils.CassandraVersion;
 import com.google.common.base.Joiner;
 import org.testng.annotations.Test;
+
+import java.nio.ByteBuffer;
+import java.util.*;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
 
-import com.datastax.driver.core.utils.CassandraVersion;
-
-@CassandraVersion(major=2.1)
+@CassandraVersion(major = 2.1)
 public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
 
     @Override
@@ -89,13 +88,14 @@ public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
     /**
      * Basic test of tuple functionality.
      * Original code found in python-driver:integration.standard.test_types.py:test_tuple_type
+     *
      * @throws Exception
      */
     @Test(groups = "short")
     public void tupleTypeTest() throws Exception {
         try {
             session.execute("CREATE KEYSPACE test_tuple_type " +
-                            "WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor': '1'}");
+                    "WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor': '1'}");
             session.execute("USE test_tuple_type");
             session.execute("CREATE TABLE mytable (a int PRIMARY KEY, b frozen<tuple<ascii, int, boolean>>)");
 
@@ -111,7 +111,8 @@ public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
             try {
                 TupleValue partial = t.newValue("bar", 456);
                 fail();
-            } catch (IllegalArgumentException e) {}
+            } catch (IllegalArgumentException e) {
+            }
 
             // test incomplete tuples with new TupleType
             TupleType t1 = TupleType.of(DataType.ascii(), DataType.cint());
@@ -125,7 +126,8 @@ public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
             try {
                 TupleValue subpartial = t.newValue("zoo");
                 fail();
-            } catch (IllegalArgumentException e) {}
+            } catch (IllegalArgumentException e) {
+            }
 
             // test single value tuples with new TupleType
             TupleType t2 = TupleType.of(DataType.ascii());
@@ -163,7 +165,7 @@ public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
     public void tupleTestTypeVaryingLengths() throws Exception {
         try {
             session.execute("CREATE KEYSPACE test_tuple_type_varying_lengths " +
-                            "WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor': '1'}");
+                    "WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor': '1'}");
             session.execute("USE test_tuple_type_varying_lengths");
 
             // programmatically create the table with tuples of said sizes
@@ -218,7 +220,7 @@ public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
 
         try {
             session.execute("CREATE KEYSPACE test_tuple_subtypes " +
-                            "WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor': '1'}");
+                    "WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor': '1'}");
             session.execute("USE test_tuple_subtypes");
 
             // programmatically create the table with a tuple of all datatypes
@@ -284,7 +286,7 @@ public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
 
         try {
             session.execute("CREATE KEYSPACE test_tuple_non_primitive_subtypes " +
-                            "WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor': '1'}");
+                    "WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor': '1'}");
             session.execute("USE test_tuple_non_primitive_subtypes");
 
             ArrayList<String> values = new ArrayList<String>();
@@ -388,6 +390,7 @@ public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
 
     /**
      * Helper method for creating nested tuple schema
+     *
      * @param depth
      * @return
      */
@@ -400,6 +403,7 @@ public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
 
     /**
      * Helper method for creating nested tuples
+     *
      * @param depth
      * @return
      */
@@ -435,9 +439,9 @@ public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
                             "v_2 %s, " +
                             "v_3 %s, " +
                             "v_128 %s)", nestedTuplesSchemaHelper(1),
-                                         nestedTuplesSchemaHelper(2),
-                                         nestedTuplesSchemaHelper(3),
-                                         nestedTuplesSchemaHelper(128)));
+                    nestedTuplesSchemaHelper(2),
+                    nestedTuplesSchemaHelper(3),
+                    nestedTuplesSchemaHelper(128)));
 
             for (int i : Arrays.asList(1, 2, 3, 128)) {
                 // create tuple
@@ -461,6 +465,7 @@ public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
     /**
      * Test for inserting null Tuple values into UDT's
      * Original code found in python-driver:integration.standard.test_types.py:test_tuples_with_nulls
+     *
      * @throws Exception
      */
     @Test(groups = "short")

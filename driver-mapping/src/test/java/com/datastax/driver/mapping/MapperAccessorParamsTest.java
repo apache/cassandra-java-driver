@@ -15,27 +15,26 @@
  */
 package com.datastax.driver.mapping;
 
-import java.util.Collection;
-
-import com.google.common.collect.Lists;
-import org.testng.annotations.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
 import com.datastax.driver.core.CCMBridge;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.utils.CassandraVersion;
 import com.datastax.driver.mapping.annotations.*;
+import com.google.common.collect.Lists;
+import org.testng.annotations.Test;
+
+import java.util.Collection;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class MapperAccessorParamsTest extends CCMBridge.PerClassSingleNodeCluster {
     @Override
     protected Collection<String> getTableDefinitions() {
         return Lists.newArrayList(
-            "CREATE TABLE user ( key int primary key, gender int, home_phone text, work_phone text)",
-            "CREATE INDEX on user(gender)",
-            "CREATE TABLE user_str ( key int primary key, gender text)",
-            "CREATE INDEX on user_str(gender)"
+                "CREATE TABLE user ( key int primary key, gender int, home_phone text, work_phone text)",
+                "CREATE INDEX on user(gender)",
+                "CREATE TABLE user_str ( key int primary key, gender text)",
+                "CREATE INDEX on user_str(gender)"
         );
     }
 
@@ -73,7 +72,7 @@ public class MapperAccessorParamsTest extends CCMBridge.PerClassSingleNodeCluste
     @CassandraVersion(major = 2.0, description = "Uses named parameters")
     public void should_allow_less_parameters_than_bind_markers_if_there_are_repeated_names() {
         UserPhoneAccessor accessor = new MappingManager(session)
-            .createAccessor(UserPhoneAccessor.class);
+                .createAccessor(UserPhoneAccessor.class);
 
         session.execute("delete from user where key = 0");
         accessor.updatePhones_positional("1111", "2222", 0);
@@ -99,13 +98,13 @@ public class MapperAccessorParamsTest extends CCMBridge.PerClassSingleNodeCluste
     @Test(groups = "short", expectedExceptions = RuntimeException.class)
     public void should_fail_if_not_enough_parameters() {
         new MappingManager(session)
-            .createAccessor(UserPhoneAccessor_NotEnoughParams.class);
+                .createAccessor(UserPhoneAccessor_NotEnoughParams.class);
     }
 
     @Test(groups = "short", expectedExceptions = RuntimeException.class)
     public void should_fail_if_too_many_parameters() {
         new MappingManager(session)
-            .createAccessor(UserPhoneAccessor_TooManyParams.class);
+                .createAccessor(UserPhoneAccessor_TooManyParams.class);
     }
 
     private void assertPhonesEqual(int key, String home, String work) {
@@ -133,26 +132,38 @@ public class MapperAccessorParamsTest extends CCMBridge.PerClassSingleNodeCluste
         ResultSet addUserStr(int key, @Enumerated(EnumType.STRING) Enum value);
     }
 
-    /** Tests various ways to match method parameters to query bind markers. */
+    /**
+     * Tests various ways to match method parameters to query bind markers.
+     */
     @Accessor
     public interface UserPhoneAccessor {
-        /** Standard positional markers */
+        /**
+         * Standard positional markers
+         */
         @Query("update user set home_phone = ?, work_phone = ? where key = ?")
         void updatePhones_positional(String homePhone, String workPhone, int key);
 
-        /** Standard named markers */
+        /**
+         * Standard named markers
+         */
         @Query("update user set home_phone = :home, work_phone = :work where key = :key")
         void updatePhones_named(@Param("key") int key, @Param("home") String homePhone, @Param("work") String workPhone);
 
-        /** Named markers with no @Param. Should fallback to positional matching */
+        /**
+         * Named markers with no @Param. Should fallback to positional matching
+         */
         @Query("update user set home_phone = :home, work_phone = :work where key = :key")
         void updatePhones_fallback(String homePhone, String workPhone, int key);
 
-        /** Named markers with repeated names */
+        /**
+         * Named markers with repeated names
+         */
         @Query("update user set home_phone = :phone, work_phone = :phone where key = :key")
         void updateBothPhones(@Param("key") int key, @Param("phone") String uniquePhone);
 
-        /** Named markers with repeated names, but no @Param. Should fallback to positional matching */
+        /**
+         * Named markers with repeated names, but no @Param. Should fallback to positional matching
+         */
         @Query("update user set home_phone = :phone, work_phone = :phone where key = :key")
         void updatePhones_fallback2(String homePhone, String workPhone, int key);
     }

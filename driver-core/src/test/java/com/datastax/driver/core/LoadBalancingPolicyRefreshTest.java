@@ -15,15 +15,15 @@
  */
 package com.datastax.driver.core;
 
-import java.net.InetAddress;
-import java.util.*;
-
+import com.datastax.driver.core.policies.LoadBalancingPolicy;
 import com.google.common.collect.Iterators;
 import org.testng.annotations.Test;
 
-import static org.testng.Assert.*;
+import java.net.InetAddress;
+import java.util.Collection;
+import java.util.Iterator;
 
-import com.datastax.driver.core.policies.LoadBalancingPolicy;
+import static org.testng.Assert.assertTrue;
 
 // Test that PoolingOpions.refreshConnectedHosts works as expected (JAVA-309)
 public class LoadBalancingPolicyRefreshTest {
@@ -57,11 +57,20 @@ public class LoadBalancingPolicyRefreshTest {
             return Iterators.<Host>singletonIterator(theHost);
         }
 
-        public void onAdd(Host h) {}
-        public void onRemove(Host h) {}
-        public void onUp(Host h) {}
-        public void onDown(Host h) {}
-        public void onSuspected(Host h) {}
+        public void onAdd(Host h) {
+        }
+
+        public void onRemove(Host h) {
+        }
+
+        public void onUp(Host h) {
+        }
+
+        public void onDown(Host h) {
+        }
+
+        public void onSuspected(Host h) {
+        }
     }
 
     @Test(groups = "short")

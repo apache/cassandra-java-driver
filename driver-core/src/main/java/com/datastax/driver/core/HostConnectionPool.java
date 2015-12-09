@@ -15,6 +15,15 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.exceptions.AuthenticationException;
+import com.datastax.driver.core.utils.MoreFutures;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Throwables;
+import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
@@ -26,20 +35,7 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Throwables;
-import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.datastax.driver.core.exceptions.AuthenticationException;
-import com.datastax.driver.core.utils.MoreFutures;
-
-import static com.datastax.driver.core.Connection.State.GONE;
-import static com.datastax.driver.core.Connection.State.OPEN;
-import static com.datastax.driver.core.Connection.State.RESURRECTING;
-import static com.datastax.driver.core.Connection.State.TRASHED;
+import static com.datastax.driver.core.Connection.State.*;
 
 class HostConnectionPool implements Connection.Owner {
 
@@ -53,9 +49,13 @@ class HostConnectionPool implements Connection.Owner {
 
     final List<Connection> connections;
     private final AtomicInteger open;
-    /** The total number of in-flight requests on all connections of this pool. */
+    /**
+     * The total number of in-flight requests on all connections of this pool.
+     */
     final AtomicInteger totalInFlight = new AtomicInteger();
-    /** The maximum value of {@link #totalInFlight} since the last call to {@link #cleanupIdleConnections(long)}*/
+    /**
+     * The maximum value of {@link #totalInFlight} since the last call to {@link #cleanupIdleConnections(long)}
+     */
     private final AtomicInteger maxTotalInFlight = new AtomicInteger();
     @VisibleForTesting
     final Set<Connection> trash = new CopyOnWriteArraySet<Connection>();
@@ -149,7 +149,7 @@ class HostConnectionPool implements Connection.Owner {
                     forceClose(connections);
                 } else {
                     logger.debug("Created connection pool to host {} ({} connections needed, {} successfully opened)",
-                        host, coreSize, connections.size());
+                            host, coreSize, connections.size());
                     phase.compareAndSet(Phase.INITIALIZING, Phase.READY);
                     initFuture.set(null);
                 }
@@ -269,7 +269,7 @@ class HostConnectionPool implements Connection.Owner {
         } else if (connectionCount < options().getMaxConnectionsPerHost(hostDistance)) {
             // Add a connection if we fill the first n-1 connections and almost fill the last one
             int currentCapacity = (connectionCount - 1) * options().getMaxRequestsPerConnection(hostDistance)
-                + options().getNewConnectionThreshold(hostDistance);
+                    + options().getNewConnectionThreshold(hostDistance);
             if (totalInFlightCount > currentCapacity)
                 maybeSpawnNewConnection();
         }
@@ -546,7 +546,9 @@ class HostConnectionPool implements Connection.Owner {
         cleanupTrash(now);
     }
 
-    /** If we have more active connections than needed, trash some of them */
+    /**
+     * If we have more active connections than needed, trash some of them
+     */
     private void shrinkIfBelowCapacity() {
         int currentLoad = maxTotalInFlight.getAndSet(totalInFlight.get());
 
@@ -559,7 +561,7 @@ class HostConnectionPool implements Connection.Owner {
         int toTrash = Math.max(0, actual - needed);
 
         logger.trace("Current inFlight = {}, {} connections needed, {} connections available, trashing {}",
-            currentLoad, needed, actual, toTrash);
+                currentLoad, needed, actual, toTrash);
 
         if (toTrash <= 0)
             return;
@@ -572,7 +574,9 @@ class HostConnectionPool implements Connection.Owner {
             }
     }
 
-    /** Close connections that have been sitting in the trash for too long */
+    /**
+     * Close connections that have been sitting in the trash for too long
+     */
     private void cleanupTrash(long now) {
         for (Connection connection : trash) {
             if (connection.maxIdleTime < now && connection.state.compareAndSet(TRASHED, GONE)) {
@@ -612,8 +616,8 @@ class HostConnectionPool implements Connection.Owner {
         future = new CloseFuture.Forwarding(discardAvailableConnections());
 
         return closeFuture.compareAndSet(null, future)
-            ? future
-            : closeFuture.get(); // We raced, it's ok, return the future that was actually set
+                ? future
+                : closeFuture.get(); // We raced, it's ok, return the future that was actually set
     }
 
     public int opened() {

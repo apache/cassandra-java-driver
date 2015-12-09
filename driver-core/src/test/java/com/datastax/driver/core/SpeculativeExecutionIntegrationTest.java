@@ -15,17 +15,16 @@
  */
 package com.datastax.driver.core;
 
-import java.util.Collection;
-
+import com.datastax.driver.core.policies.ConstantSpeculativeExecutionPolicy;
+import com.datastax.driver.core.utils.CassandraVersion;
 import com.google.common.collect.Lists;
 import org.mockito.Mockito;
 import org.testng.annotations.Test;
 
+import java.util.Collection;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.times;
-
-import com.datastax.driver.core.policies.ConstantSpeculativeExecutionPolicy;
-import com.datastax.driver.core.utils.CassandraVersion;
 
 /**
  * Test that needs a real CCM cluster (as opposed to SCassandra for other specex tests), because
@@ -44,10 +43,10 @@ public class SpeculativeExecutionIntegrationTest extends CCMBridge.PerClassSingl
     protected Cluster.Builder configure(Cluster.Builder builder) {
         timestampGenerator = Mockito.spy(ServerSideTimestampGenerator.INSTANCE);
         return builder
-            .withTimestampGenerator(timestampGenerator)
-            .withQueryOptions(new QueryOptions().setDefaultIdempotence(true))
-                // Set an artificially low timeout to force speculative execution
-            .withSpeculativeExecutionPolicy(new ConstantSpeculativeExecutionPolicy(1, 2));
+                .withTimestampGenerator(timestampGenerator)
+                .withQueryOptions(new QueryOptions().setDefaultIdempotence(true))
+                        // Set an artificially low timeout to force speculative execution
+                .withSpeculativeExecutionPolicy(new ConstantSpeculativeExecutionPolicy(1, 2));
     }
 
     /**

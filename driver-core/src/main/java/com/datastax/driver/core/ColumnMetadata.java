@@ -15,14 +15,10 @@
  */
 package com.datastax.driver.core;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Map.Entry;
-
 import com.google.common.base.Objects;
+
+import java.util.*;
+import java.util.Map.Entry;
 
 /**
  * Describes a Column.
@@ -116,7 +112,7 @@ public class ColumnMetadata {
         if (o == null || getClass() != o.getClass())
             return false;
 
-        ColumnMetadata that = (ColumnMetadata)o;
+        ColumnMetadata that = (ColumnMetadata) o;
 
         if (isStatic != that.isStatic)
             return false;
@@ -176,7 +172,7 @@ public class ColumnMetadata {
 
         /**
          * Returns whether this index is a custom one.
-         * <p>
+         * <p/>
          * If it is indeed a custom index, {@link #getIndexClassName} will
          * return the name of the class used in Cassandra to implement that
          * index.
@@ -200,7 +196,7 @@ public class ColumnMetadata {
         /**
          * Return whether this index is a 'KEYS' index on a map, e.g.,
          * CREATE INDEX ON mytable (KEYS(mymap))
-         * 
+         *
          * @return {@code true} if this is a 'KEYS' index on a map.
          */
         public boolean isKeys() {
@@ -210,7 +206,7 @@ public class ColumnMetadata {
         /**
          * Return whether this index is a 'FULL' index on a frozen collection, e.g.,
          * CREATE INDEX ON mytable (FULL(mymap))
-         * 
+         *
          * @return {@code true} if this is a 'FULL' index on a frozen collection.
          */
         public boolean isFull() {
@@ -219,15 +215,15 @@ public class ColumnMetadata {
              * in IndexTarget#fromColumnDefinition.
              */
             return !isKeys()
-                && !isEntries()
-                && column.getType().isCollection()
-                && column.getType().isFrozen();
+                    && !isEntries()
+                    && column.getType().isCollection()
+                    && column.getType().isFrozen();
         }
 
         /**
          * Return whether this index is a 'ENTRIES' index on a map, e.g.,
          * CREATE INDEX ON mytable (ENTRIES(mymap))
-         * 
+         *
          * @return {@code true} if this is an 'ENTRIES' index on a map.
          */
         public boolean isEntries() {
@@ -236,7 +232,7 @@ public class ColumnMetadata {
 
         /**
          * Return the value for the given option name.
-         * 
+         *
          * @param name Option name
          * @return Option value
          */
@@ -246,7 +242,7 @@ public class ColumnMetadata {
 
         /**
          * Returns a CQL query representing this index.
-         *
+         * <p/>
          * This method returns a single 'CREATE INDEX' query corresponding to
          * this index definition.
          *
@@ -258,16 +254,16 @@ public class ColumnMetadata {
             String cfName = Metadata.escapeId(table.getName());
             String colName = Metadata.escapeId(column.getName());
             return isCustomIndex()
-                ? String.format("CREATE CUSTOM INDEX %s ON %s.%s (%s) USING '%s' WITH OPTIONS = %s;",
+                    ? String.format("CREATE CUSTOM INDEX %s ON %s.%s (%s) USING '%s' WITH OPTIONS = %s;",
                     name, ksName, cfName, colName, getIndexClassName(), getOptionsAsCql())
-                : String.format("CREATE INDEX %s ON %s.%s (%s);", name, ksName, cfName, getIndexFunction(colName));
+                    : String.format("CREATE INDEX %s ON %s.%s (%s);", name, ksName, cfName, getIndexFunction(colName));
         }
 
         /**
          * Builds a string representation of the custom index options.
-         * 
+         *
          * @return String representation of the custom index options, similar to what Cassandra stores in
-         *         the 'index_options' column of the 'schema_columns' table in the 'system' keyspace.
+         * the 'index_options' column of the 'schema_columns' table in the 'system' keyspace.
          */
         private String getOptionsAsCql() {
             StringBuilder builder = new StringBuilder();
@@ -286,7 +282,7 @@ public class ColumnMetadata {
         /**
          * Wraps the column name with the appropriate index function (KEYS, FULL, ENTRIES),
          * if necessary.
-         * 
+         *
          * @return Column name wrapped with the appropriate index function.
          */
         private String getIndexFunction(String colName) {
@@ -306,10 +302,10 @@ public class ColumnMetadata {
             if (o == null || getClass() != o.getClass())
                 return false;
 
-            IndexMetadata that = (IndexMetadata)o;
+            IndexMetadata that = (IndexMetadata) o;
 
             return this.name.equals(that.name)
-                && Objects.equal(this.indexOptions, that.indexOptions);
+                    && Objects.equal(this.indexOptions, that.indexOptions);
         }
 
         @Override
@@ -347,7 +343,7 @@ public class ColumnMetadata {
     // Temporary class that is used to make building the schema easier. Not meant to be
     // exposed publicly at all.
     static class Raw {
-        public enum Kind { PARTITION_KEY, CLUSTERING_KEY, REGULAR, COMPACT_VALUE, STATIC }
+        public enum Kind {PARTITION_KEY, CLUSTERING_KEY, REGULAR, COMPACT_VALUE, STATIC}
 
         public final String name;
         public final Kind kind;
@@ -369,8 +365,8 @@ public class ColumnMetadata {
 
             String name = row.getString(COLUMN_NAME);
             Kind kind = version.getMajor() < 2 || row.isNull(KIND)
-                ? Kind.REGULAR
-                : Enum.valueOf(Kind.class, row.getString(KIND).toUpperCase());
+                    ? Kind.REGULAR
+                    : Enum.valueOf(Kind.class, row.getString(KIND).toUpperCase());
             int componentIndex = row.isNull(COMPONENT_INDEX) ? 0 : row.getInt(COMPONENT_INDEX);
             String validatorStr = row.getString(VALIDATOR);
             boolean reversed = CassandraTypeParser.isReversed(validatorStr);

@@ -16,6 +16,7 @@
 package com.datastax.driver.mapping;
 
 import org.testng.annotations.Test;
+
 import static org.testng.Assert.*;
 
 public class DeclaredFrozenTypeTest {

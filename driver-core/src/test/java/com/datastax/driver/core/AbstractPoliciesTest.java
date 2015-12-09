@@ -20,11 +20,10 @@ import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.testng.Assert.*;
-
 import static com.datastax.driver.core.TestUtils.*;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.batch;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.insertInto;
+import static org.testng.Assert.*;
 
 public abstract class AbstractPoliciesTest {
     private static final boolean DEBUG = false;
@@ -107,7 +106,9 @@ public abstract class AbstractPoliciesTest {
         }
     }
 
-    /** Assert that one of the nodes in the list was queried with n, no matter which one */
+    /**
+     * Assert that one of the nodes in the list was queried with n, no matter which one
+     */
     protected void assertOneNodeQueried(int n, String... hosts) {
         try {
             boolean found = false;
@@ -180,7 +181,7 @@ public abstract class AbstractPoliciesTest {
             if (batch)
                 // BUG: WriteType == SIMPLE
                 c.session.execute(batch()
-                        .add(insertInto(SIMPLE_TABLE).values(new String[]{ "k", "i"}, new Object[]{ 0, 0 }))
+                        .add(insertInto(SIMPLE_TABLE).values(new String[]{"k", "i"}, new Object[]{0, 0}))
                         .setConsistencyLevel(cl));
             else
                 c.session.execute(new SimpleStatement(String.format("INSERT INTO %s(k, i) VALUES (0, 0)", SIMPLE_TABLE)).setConsistencyLevel(cl));

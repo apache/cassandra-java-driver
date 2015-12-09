@@ -15,20 +15,14 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.exceptions.InvalidTypeException;
+import com.google.common.reflect.TypeToken;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-
-import com.google.common.reflect.TypeToken;
-
-import com.datastax.driver.core.exceptions.InvalidTypeException;
+import java.util.*;
 
 abstract class AbstractGettableByIndexData implements GettableByIndexData {
 
@@ -43,7 +37,6 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
      *
      * @param i the index of the type to fetch.
      * @return the type of the value at index {@code i}.
-     *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index.
      */
     protected abstract DataType getType(int i);
@@ -53,7 +46,6 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
      *
      * @param i the index of the name to fetch.
      * @return the name corresponding to the value at index {@code i}.
-     *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index.
      */
     protected abstract String getName(int i);
@@ -63,7 +55,6 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
      *
      * @param i the index to fetch.
      * @return the value at index {@code i}.
-     *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index.
      */
     protected abstract ByteBuffer getValue(int i);
@@ -210,16 +201,16 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
     @Override
     public String getString(int i) {
         DataType.Name type = checkType(i, DataType.Name.VARCHAR,
-                                          DataType.Name.TEXT,
-                                          DataType.Name.ASCII);
+                DataType.Name.TEXT,
+                DataType.Name.ASCII);
 
         ByteBuffer value = getValue(i);
         if (value == null)
             return null;
 
         return type == DataType.Name.ASCII
-             ? TypeCodec.asciiStringCodec.deserialize(value)
-             : TypeCodec.utf8StringCodec.deserialize(value);
+                ? TypeCodec.asciiStringCodec.deserialize(value)
+                : TypeCodec.utf8StringCodec.deserialize(value);
     }
 
     /**
@@ -262,8 +253,8 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
             return null;
 
         return type == DataType.Name.UUID
-             ? TypeCodec.uuidCodec.deserialize(value)
-             : TypeCodec.timeUuidCodec.deserialize(value);
+                ? TypeCodec.uuidCodec.deserialize(value)
+                : TypeCodec.timeUuidCodec.deserialize(value);
     }
 
     /**
@@ -298,7 +289,7 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
         if (value == null)
             return Collections.<T>emptyList();
 
-        return Collections.unmodifiableList((List<T>)type.codec(protocolVersion).deserialize(value));
+        return Collections.unmodifiableList((List<T>) type.codec(protocolVersion).deserialize(value));
     }
 
     /**
@@ -319,7 +310,7 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
         if (value == null)
             return Collections.<T>emptyList();
 
-        return Collections.unmodifiableList((List<T>)type.codec(protocolVersion).deserialize(value));
+        return Collections.unmodifiableList((List<T>) type.codec(protocolVersion).deserialize(value));
     }
 
     /**
@@ -340,7 +331,7 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
         if (value == null)
             return Collections.<T>emptySet();
 
-        return Collections.unmodifiableSet((Set<T>)type.codec(protocolVersion).deserialize(value));
+        return Collections.unmodifiableSet((Set<T>) type.codec(protocolVersion).deserialize(value));
     }
 
     /**
@@ -361,7 +352,7 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
         if (value == null)
             return Collections.<T>emptySet();
 
-        return Collections.unmodifiableSet((Set<T>)type.codec(protocolVersion).deserialize(value));
+        return Collections.unmodifiableSet((Set<T>) type.codec(protocolVersion).deserialize(value));
     }
 
     /**
@@ -383,7 +374,7 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
         if (value == null)
             return Collections.<K, V>emptyMap();
 
-        return Collections.unmodifiableMap((Map<K, V>)type.codec(protocolVersion).deserialize(value));
+        return Collections.unmodifiableMap((Map<K, V>) type.codec(protocolVersion).deserialize(value));
     }
 
     /**
@@ -405,7 +396,7 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
         if (value == null)
             return Collections.<K, V>emptyMap();
 
-        return Collections.unmodifiableMap((Map<K, V>)type.codec(protocolVersion).deserialize(value));
+        return Collections.unmodifiableMap((Map<K, V>) type.codec(protocolVersion).deserialize(value));
     }
 
     /**
@@ -423,7 +414,7 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
             return null;
 
         // UDT always use the protocol V3 to encode values
-        return (UDTValue)type.codec(ProtocolVersion.V3).deserialize(value);
+        return (UDTValue) type.codec(ProtocolVersion.V3).deserialize(value);
     }
 
     /**
@@ -441,7 +432,7 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
             return null;
 
         // tuples always use the protocol V3 to encode values
-        return (TupleValue)type.codec(ProtocolVersion.V3).deserialize(value);
+        return (TupleValue) type.codec(ProtocolVersion.V3).deserialize(value);
     }
 
     /**

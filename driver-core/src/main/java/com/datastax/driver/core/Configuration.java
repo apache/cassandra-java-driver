@@ -21,12 +21,12 @@ import com.datastax.driver.core.policies.Policies;
  * The configuration of the cluster.
  * It configures the following:
  * <ul>
- *   <li>Cassandra protocol level configuration (compression).</li>
- *   <li>Connection pooling configurations.</li>
- *   <li>low-level TCP configuration options (tcpNoDelay, keepAlive, ...).</li>
- *   <li>Metrics related options.</li>
- *   <li>Query related options (default consistency level, fetchSize, ...).</li>
- *   <li>Netty layer customization options.</li>
+ * <li>Cassandra protocol level configuration (compression).</li>
+ * <li>Connection pooling configurations.</li>
+ * <li>low-level TCP configuration options (tcpNoDelay, keepAlive, ...).</li>
+ * <li>Metrics related options.</li>
+ * <li>Query related options (default consistency level, fetchSize, ...).</li>
+ * <li>Netty layer customization options.</li>
  * </ul>
  * This is also where you get the configured policies, though those cannot be changed
  * (they are set during the built of the Cluster object).
@@ -47,24 +47,24 @@ public class Configuration {
      */
     public Configuration() {
         this(Policies.builder().build(),
-             new ProtocolOptions(),
-             new PoolingOptions(),
-             new SocketOptions(),
-             new MetricsOptions(),
-             new QueryOptions(),
-             NettyOptions.DEFAULT_INSTANCE);
+                new ProtocolOptions(),
+                new PoolingOptions(),
+                new SocketOptions(),
+                new MetricsOptions(),
+                new QueryOptions(),
+                NettyOptions.DEFAULT_INSTANCE);
     }
 
     /**
      * Creates a configuration with the specified parameters.
-     * 
-     * @param policies the policies to use
+     *
+     * @param policies        the policies to use
      * @param protocolOptions the protocol options to use
-     * @param poolingOptions the pooling options to use
-     * @param socketOptions the socket options to use
-     * @param metricsOptions the metrics options, or null to disable metrics.
-     * @param queryOptions defaults related to queries.
-     * @param nettyOptions the {@link NettyOptions} instance to use
+     * @param poolingOptions  the pooling options to use
+     * @param socketOptions   the socket options to use
+     * @param metricsOptions  the metrics options, or null to disable metrics.
+     * @param queryOptions    defaults related to queries.
+     * @param nettyOptions    the {@link NettyOptions} instance to use
      */
     public Configuration(Policies policies,
                          ProtocolOptions protocolOptions,
@@ -93,7 +93,7 @@ public class Configuration {
                          MetricsOptions metricsOptions,
                          QueryOptions queryOptions) {
         this(policies, protocolOptions, poolingOptions, socketOptions, metricsOptions, queryOptions,
-            NettyOptions.DEFAULT_INSTANCE);
+                NettyOptions.DEFAULT_INSTANCE);
     }
 
     void register(Cluster.Manager manager) {
@@ -140,7 +140,7 @@ public class Configuration {
 
     /**
      * Returns the metrics configuration, if metrics are enabled.
-     * <p>
+     * <p/>
      * Metrics collection is enabled by default but can be disabled at cluster
      * construction time through {@link Cluster.Builder#withoutMetrics}.
      *
@@ -161,6 +161,7 @@ public class Configuration {
 
     /**
      * Returns the {@link NettyOptions} instance for this configuration.
+     *
      * @return the {@link NettyOptions} instance for this configuration.
      */
     public NettyOptions getNettyOptions() {

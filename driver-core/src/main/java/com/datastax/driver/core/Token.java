@@ -15,18 +15,16 @@
  */
 package com.datastax.driver.core;
 
-import java.math.BigInteger;
-import java.nio.ByteBuffer;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
-import java.util.List;
-
+import com.datastax.driver.core.utils.Bytes;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import com.google.common.primitives.UnsignedBytes;
 
-import com.datastax.driver.core.utils.Bytes;
+import java.math.BigInteger;
+import java.nio.ByteBuffer;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.List;
 
 /**
  * A token on the Cassandra ring.
@@ -60,17 +58,24 @@ public abstract class Token implements Comparable<Token> {
 
     static abstract class Factory {
         abstract Token fromString(String tokenStr);
+
         abstract DataType getTokenType();
+
         abstract Token deserialize(ByteBuffer buffer, ProtocolVersion protocolVersion);
-        /** The minimum token is a special value that no key ever hashes to, it's used both as lower and upper bound. */
+
+        /**
+         * The minimum token is a special value that no key ever hashes to, it's used both as lower and upper bound.
+         */
         abstract Token minToken();
+
         abstract Token hash(ByteBuffer partitionKey);
+
         abstract List<Token> split(Token startToken, Token endToken, int numberOfSplits);
 
         // Base implementation for split
         protected List<BigInteger> split(BigInteger start, BigInteger range,
-                                    BigInteger ringEnd, BigInteger ringLength,
-                                    int numberOfSplits) {
+                                         BigInteger ringEnd, BigInteger ringLength,
+                                         int numberOfSplits) {
             BigInteger[] tmp = range.divideAndRemainder(BigInteger.valueOf(numberOfSplits));
             BigInteger divider = tmp[0];
             int remainder = tmp[1].intValue();
@@ -78,7 +83,7 @@ public abstract class Token implements Comparable<Token> {
             List<BigInteger> results = Lists.newArrayListWithExpectedSize(numberOfSplits - 1);
             BigInteger current = start;
             BigInteger dividerPlusOne = (remainder == 0) ? null // won't be used
-                : divider.add(BigInteger.ONE);
+                    : divider.add(BigInteger.ONE);
 
             for (int i = 1; i < numberOfSplits; i++) {
                 current = current.add(remainder-- > 0 ? dividerPlusOne : divider);
@@ -107,9 +112,9 @@ public abstract class Token implements Comparable<Token> {
                 int i_8 = index << 3;
                 int blockOffset = offset + i_8;
                 return ((long) key.get(blockOffset + 0) & 0xff) + (((long) key.get(blockOffset + 1) & 0xff) << 8) +
-                       (((long) key.get(blockOffset + 2) & 0xff) << 16) + (((long) key.get(blockOffset + 3) & 0xff) << 24) +
-                       (((long) key.get(blockOffset + 4) & 0xff) << 32) + (((long) key.get(blockOffset + 5) & 0xff) << 40) +
-                       (((long) key.get(blockOffset + 6) & 0xff) << 48) + (((long) key.get(blockOffset + 7) & 0xff) << 56);
+                        (((long) key.get(blockOffset + 2) & 0xff) << 16) + (((long) key.get(blockOffset + 3) & 0xff) << 24) +
+                        (((long) key.get(blockOffset + 4) & 0xff) << 32) + (((long) key.get(blockOffset + 5) & 0xff) << 40) +
+                        (((long) key.get(blockOffset + 6) & 0xff) << 48) + (((long) key.get(blockOffset + 7) & 0xff) << 56);
             }
 
             private long rotl64(long v, int n) {
@@ -144,14 +149,24 @@ public abstract class Token implements Comparable<Token> {
                 //----------
                 // body
 
-                for(int i = 0; i < nblocks; i++) {
-                    long k1 = getblock(data, offset, i*2+0);
-                    long k2 = getblock(data, offset, i*2+1);
+                for (int i = 0; i < nblocks; i++) {
+                    long k1 = getblock(data, offset, i * 2 + 0);
+                    long k2 = getblock(data, offset, i * 2 + 1);
 
-                    k1 *= c1; k1 = rotl64(k1,31); k1 *= c2; h1 ^= k1;
-                    h1 = rotl64(h1,27); h1 += h2; h1 = h1*5+0x52dce729;
-                    k2 *= c2; k2  = rotl64(k2,33); k2 *= c1; h2 ^= k2;
-                    h2 = rotl64(h2,31); h2 += h1; h2 = h2*5+0x38495ab5;
+                    k1 *= c1;
+                    k1 = rotl64(k1, 31);
+                    k1 *= c2;
+                    h1 ^= k1;
+                    h1 = rotl64(h1, 27);
+                    h1 += h2;
+                    h1 = h1 * 5 + 0x52dce729;
+                    k2 *= c2;
+                    k2 = rotl64(k2, 33);
+                    k2 *= c1;
+                    h2 ^= k2;
+                    h2 = rotl64(h2, 31);
+                    h2 += h1;
+                    h2 = h2 * 5 + 0x38495ab5;
                 }
 
                 //----------
@@ -163,31 +178,54 @@ public abstract class Token implements Comparable<Token> {
                 long k1 = 0;
                 long k2 = 0;
 
-                switch(length & 15) {
-                    case 15: k2 ^= ((long) data.get(offset+14)) << 48;
-                    case 14: k2 ^= ((long) data.get(offset+13)) << 40;
-                    case 13: k2 ^= ((long) data.get(offset+12)) << 32;
-                    case 12: k2 ^= ((long) data.get(offset+11)) << 24;
-                    case 11: k2 ^= ((long) data.get(offset+10)) << 16;
-                    case 10: k2 ^= ((long) data.get(offset+9)) << 8;
-                    case  9: k2 ^= ((long) data.get(offset+8)) << 0;
-                             k2 *= c2; k2  = rotl64(k2,33); k2 *= c1; h2 ^= k2;
+                switch (length & 15) {
+                    case 15:
+                        k2 ^= ((long) data.get(offset + 14)) << 48;
+                    case 14:
+                        k2 ^= ((long) data.get(offset + 13)) << 40;
+                    case 13:
+                        k2 ^= ((long) data.get(offset + 12)) << 32;
+                    case 12:
+                        k2 ^= ((long) data.get(offset + 11)) << 24;
+                    case 11:
+                        k2 ^= ((long) data.get(offset + 10)) << 16;
+                    case 10:
+                        k2 ^= ((long) data.get(offset + 9)) << 8;
+                    case 9:
+                        k2 ^= ((long) data.get(offset + 8)) << 0;
+                        k2 *= c2;
+                        k2 = rotl64(k2, 33);
+                        k2 *= c1;
+                        h2 ^= k2;
 
-                    case  8: k1 ^= ((long) data.get(offset+7)) << 56;
-                    case  7: k1 ^= ((long) data.get(offset+6)) << 48;
-                    case  6: k1 ^= ((long) data.get(offset+5)) << 40;
-                    case  5: k1 ^= ((long) data.get(offset+4)) << 32;
-                    case  4: k1 ^= ((long) data.get(offset+3)) << 24;
-                    case  3: k1 ^= ((long) data.get(offset+2)) << 16;
-                    case  2: k1 ^= ((long) data.get(offset+1)) << 8;
-                    case  1: k1 ^= ((long) data.get(offset));
-                             k1 *= c1; k1  = rotl64(k1,31); k1 *= c2; h1 ^= k1;
-                };
+                    case 8:
+                        k1 ^= ((long) data.get(offset + 7)) << 56;
+                    case 7:
+                        k1 ^= ((long) data.get(offset + 6)) << 48;
+                    case 6:
+                        k1 ^= ((long) data.get(offset + 5)) << 40;
+                    case 5:
+                        k1 ^= ((long) data.get(offset + 4)) << 32;
+                    case 4:
+                        k1 ^= ((long) data.get(offset + 3)) << 24;
+                    case 3:
+                        k1 ^= ((long) data.get(offset + 2)) << 16;
+                    case 2:
+                        k1 ^= ((long) data.get(offset + 1)) << 8;
+                    case 1:
+                        k1 ^= ((long) data.get(offset));
+                        k1 *= c1;
+                        k1 = rotl64(k1, 31);
+                        k1 *= c2;
+                        h1 ^= k1;
+                }
+                ;
 
                 //----------
                 // finalization
 
-                h1 ^= length; h2 ^= length;
+                h1 ^= length;
+                h2 ^= length;
 
                 h1 += h2;
                 h2 += h1;
@@ -233,16 +271,16 @@ public abstract class Token implements Comparable<Token> {
                 if (startToken.equals(endToken) && startToken.equals(MIN_TOKEN))
                     endToken = MAX_TOKEN;
 
-                BigInteger start = BigInteger.valueOf(((M3PToken)startToken).value);
-                BigInteger end = BigInteger.valueOf(((M3PToken)endToken).value);
+                BigInteger start = BigInteger.valueOf(((M3PToken) startToken).value);
+                BigInteger end = BigInteger.valueOf(((M3PToken) endToken).value);
 
                 BigInteger range = end.subtract(start);
                 if (range.compareTo(BigInteger.ZERO) < 0)
                     range = range.add(RING_LENGTH);
 
                 List<BigInteger> values = super.split(start, range,
-                    RING_END, RING_LENGTH,
-                    numberOfSplits);
+                        RING_END, RING_LENGTH,
+                        numberOfSplits);
                 List<Token> tokens = Lists.newArrayListWithExpectedSize(values.size());
                 for (BigInteger value : values)
                     tokens.add(new M3PToken(value.longValue()));
@@ -267,7 +305,7 @@ public abstract class Token implements Comparable<Token> {
         @Override
         public int compareTo(Token other) {
             assert other instanceof M3PToken;
-            long otherValue = ((M3PToken)other).value;
+            long otherValue = ((M3PToken) other).value;
             return value < otherValue ? -1 : (value == otherValue) ? 0 : 1;
         }
 
@@ -278,12 +316,12 @@ public abstract class Token implements Comparable<Token> {
             if (obj == null || this.getClass() != obj.getClass())
                 return false;
 
-            return value == ((M3PToken)obj).value;
+            return value == ((M3PToken) obj).value;
         }
 
         @Override
         public int hashCode() {
-            return (int)(value^(value>>>32));
+            return (int) (value ^ (value >>> 32));
         }
 
         @Override
@@ -346,8 +384,8 @@ public abstract class Token implements Comparable<Token> {
                 if (tokenOrder == 0 && startToken.equals(MIN_TOKEN))
                     throw new IllegalArgumentException("Cannot split whole ring with ordered partitioner");
 
-                OPPToken oppStartToken = (OPPToken)startToken;
-                OPPToken oppEndToken = (OPPToken)endToken;
+                OPPToken oppStartToken = (OPPToken) startToken;
+                OPPToken oppEndToken = (OPPToken) endToken;
 
                 int significantBytes;
                 BigInteger start, end, range, ringEnd, ringLength;
@@ -389,8 +427,8 @@ public abstract class Token implements Comparable<Token> {
                 }
 
                 List<BigInteger> values = super.split(start, range,
-                    ringEnd, ringLength,
-                    numberOfSplits);
+                        ringEnd, ringLength,
+                        numberOfSplits);
                 List<Token> tokens = Lists.newArrayListWithExpectedSize(values.size());
                 for (BigInteger value : values)
                     tokens.add(new OPPToken(toBytes(value, significantBytes)));
@@ -446,8 +484,8 @@ public abstract class Token implements Comparable<Token> {
         private static ByteBuffer stripTrailingZeroBytes(ByteBuffer b) {
             byte result[] = Bytes.getArray(b);
             int zeroIndex = result.length;
-            for(int i = result.length-1; i > 0; i--) {
-                if(result[i] == 0) {
+            for (int i = result.length - 1; i > 0; i--) {
+                if (result[i] == 0) {
                     zeroIndex = i;
                 } else {
                     break;
@@ -470,8 +508,8 @@ public abstract class Token implements Comparable<Token> {
         public int compareTo(Token other) {
             assert other instanceof OPPToken;
             return UnsignedBytes.lexicographicalComparator().compare(
-                Bytes.getArray(value),
-                Bytes.getArray(((OPPToken)other).value));
+                    Bytes.getArray(value),
+                    Bytes.getArray(((OPPToken) other).value));
         }
 
         @Override
@@ -481,7 +519,7 @@ public abstract class Token implements Comparable<Token> {
             if (obj == null || this.getClass() != obj.getClass())
                 return false;
 
-            return value.equals(((OPPToken)obj).value);
+            return value.equals(((OPPToken) obj).value);
         }
 
         @Override
@@ -532,7 +570,7 @@ public abstract class Token implements Comparable<Token> {
 
             @Override
             Token deserialize(ByteBuffer buffer, ProtocolVersion protocolVersion) {
-                return new RPToken((BigInteger)getTokenType().deserialize(buffer, protocolVersion));
+                return new RPToken((BigInteger) getTokenType().deserialize(buffer, protocolVersion));
             }
 
             @Override
@@ -551,16 +589,16 @@ public abstract class Token implements Comparable<Token> {
                 if (startToken.equals(endToken) && startToken.equals(MIN_TOKEN))
                     endToken = MAX_TOKEN;
 
-                BigInteger start = ((RPToken)startToken).value;
-                BigInteger end = ((RPToken)endToken).value;
+                BigInteger start = ((RPToken) startToken).value;
+                BigInteger end = ((RPToken) endToken).value;
 
                 BigInteger range = end.subtract(start);
                 if (range.compareTo(BigInteger.ZERO) < 0)
                     range = range.add(RING_LENGTH);
 
                 List<BigInteger> values = super.split(start, range,
-                    MAX_VALUE, RING_LENGTH,
-                    numberOfSplits);
+                        MAX_VALUE, RING_LENGTH,
+                        numberOfSplits);
                 List<Token> tokens = Lists.newArrayListWithExpectedSize(values.size());
                 for (BigInteger value : values)
                     tokens.add(new RPToken(value));
@@ -585,7 +623,7 @@ public abstract class Token implements Comparable<Token> {
         @Override
         public int compareTo(Token other) {
             assert other instanceof RPToken;
-            return value.compareTo(((RPToken)other).value);
+            return value.compareTo(((RPToken) other).value);
         }
 
         @Override
@@ -595,7 +633,7 @@ public abstract class Token implements Comparable<Token> {
             if (obj == null || this.getClass() != obj.getClass())
                 return false;
 
-            return value.equals(((RPToken)obj).value);
+            return value.equals(((RPToken) obj).value);
         }
 
         @Override

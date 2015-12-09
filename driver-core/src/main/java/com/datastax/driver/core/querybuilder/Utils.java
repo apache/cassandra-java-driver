@@ -15,6 +15,11 @@
  */
 package com.datastax.driver.core.querybuilder;
 
+import com.datastax.driver.core.DataType;
+import com.datastax.driver.core.ProtocolVersion;
+import com.datastax.driver.core.TupleValue;
+import com.datastax.driver.core.UDTValue;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -23,11 +28,6 @@ import java.util.*;
 import java.util.regex.Pattern;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-
-import com.datastax.driver.core.DataType;
-import com.datastax.driver.core.ProtocolVersion;
-import com.datastax.driver.core.TupleValue;
-import com.datastax.driver.core.UDTValue;
 
 // Static utilities private to the query builder
 abstract class Utils {
@@ -111,7 +111,7 @@ abstract class Utils {
                     msg += " (for blob values, make sure to use a ByteBuffer)";
                 throw new IllegalArgumentException(msg);
             }
-            appendValueString((String)value, sb);
+            appendValueString((String) value, sb);
         }
     }
 
@@ -132,7 +132,7 @@ abstract class Utils {
             sb.append(value);
             return true;
         } else if (value instanceof FCall) {
-            FCall fcall = (FCall)value;
+            FCall fcall = (FCall) value;
             sb.append(fcall.name).append('(');
             for (int i = 0; i < fcall.parameters.length; i++) {
                 if (i > 0)
@@ -142,7 +142,7 @@ abstract class Utils {
             sb.append(')');
             return true;
         } else if (value instanceof CName) {
-            appendName(((CName)value).name, sb);
+            appendName(((CName) value).name, sb);
             return true;
         } else if (value == null) {
             sb.append("null");
@@ -155,13 +155,13 @@ abstract class Utils {
     @SuppressWarnings("rawtypes")
     private static boolean appendValueIfCollection(Object value, StringBuilder sb) {
         if (value instanceof List) {
-            appendList((List)value, sb);
+            appendList((List) value, sb);
             return true;
         } else if (value instanceof Set) {
-            appendSet((Set)value, sb);
+            appendSet((Set) value, sb);
             return true;
         } else if (value instanceof Map) {
-            appendMap((Map)value, sb);
+            appendMap((Map) value, sb);
             return true;
         } else {
             return false;
@@ -183,7 +183,8 @@ abstract class Utils {
         sb.append('{');
         boolean first = true;
         for (Object elt : s) {
-            if (first) first = false; else sb.append(',');
+            if (first) first = false;
+            else sb.append(',');
             appendValue(elt, sb);
         }
         sb.append('}');
@@ -208,7 +209,7 @@ abstract class Utils {
 
     private static boolean appendValueIfUdt(Object value, StringBuilder sb) {
         if (value instanceof UDTValue) {
-            sb.append(((UDTValue)value).toString());
+            sb.append(((UDTValue) value).toString());
             return true;
         } else {
             return false;
@@ -217,7 +218,7 @@ abstract class Utils {
 
     private static boolean appendValueIfTuple(Object value, StringBuilder sb) {
         if (value instanceof TupleValue) {
-            sb.append(((TupleValue)value).toString());
+            sb.append(((TupleValue) value).toString());
             return true;
         } else {
             return false;
@@ -228,15 +229,15 @@ abstract class Utils {
         if (value instanceof BindMarker)
             return true;
         if (value instanceof FCall)
-            for (Object param : ((FCall)value).parameters)
+            for (Object param : ((FCall) value).parameters)
                 if (containsBindMarker(param))
                     return true;
         if (value instanceof Collection)
-            for (Object elt : (Collection)value)
+            for (Object elt : (Collection) value)
                 if (containsBindMarker(elt))
                     return true;
         if (value instanceof Map)
-            for (Map.Entry<?,?> entry : ((Map<?,?>)value).entrySet())
+            for (Map.Entry<?, ?> entry : ((Map<?, ?>) value).entrySet())
                 if (containsBindMarker(entry.getKey()) || containsBindMarker(entry.getValue()))
                     return true;
         return false;
@@ -246,11 +247,11 @@ abstract class Utils {
         if (value instanceof BindMarker || value instanceof FCall || value instanceof CName || value instanceof RawString)
             return true;
         if (value instanceof Collection)
-            for (Object elt : (Collection)value)
+            for (Object elt : (Collection) value)
                 if (containsSpecialValue(elt))
                     return true;
         if (value instanceof Map)
-            for (Map.Entry<?,?> entry : ((Map<?,?>)value).entrySet())
+            for (Map.Entry<?, ?> entry : ((Map<?, ?>) value).entrySet())
                 if (containsSpecialValue(entry.getKey()) || containsSpecialValue(entry.getValue()))
                     return true;
         return false;
@@ -275,34 +276,34 @@ abstract class Utils {
         if (value instanceof Number && !(value instanceof BigInteger || value instanceof BigDecimal))
             return false;
         if (value instanceof Collection)
-            for (Object elt : (Collection)value)
+            for (Object elt : (Collection) value)
                 if (!isSerializable(elt))
                     return false;
         if (value instanceof Map)
-            for (Map.Entry<?,?> entry : ((Map<?,?>)value).entrySet())
+            for (Map.Entry<?, ?> entry : ((Map<?, ?>) value).entrySet())
                 if (!isSerializable(entry.getKey()) || !isSerializable(entry.getValue()))
                     return false;
         return true;
     }
 
     static boolean isIdempotent(Object value) {
-        if(value == null) {
+        if (value == null) {
             return true;
         } else if (value instanceof Assignment) {
-            Assignment assignment = (Assignment)value;
+            Assignment assignment = (Assignment) value;
             return assignment.isIdempotent();
         } else if (value instanceof FCall) {
             return false;
         } else if (value instanceof RawString) {
             return false;
-        } else if(value instanceof Collection) {
-            for (Object elt : ((Collection)value)) {
-                if(!isIdempotent(elt))
+        } else if (value instanceof Collection) {
+            for (Object elt : ((Collection) value)) {
+                if (!isIdempotent(elt))
                     return false;
             }
             return true;
         } else if (value instanceof Map) {
-            for (Map.Entry<?, ?> entry : ((Map<?, ?>)value).entrySet()) {
+            for (Map.Entry<?, ?> entry : ((Map<?, ?>) value).entrySet()) {
                 if (!isIdempotent(entry.getKey()) || !isIdempotent(entry.getValue()))
                     return false;
             }
@@ -330,11 +331,11 @@ abstract class Utils {
 
     static StringBuilder appendName(Object name, StringBuilder sb) {
         if (name instanceof String) {
-            appendName((String)name, sb);
+            appendName((String) name, sb);
         } else if (name instanceof CName) {
-            appendName(((CName)name).name, sb);
+            appendName(((CName) name).name, sb);
         } else if (name instanceof FCall) {
-            FCall fcall = (FCall)name;
+            FCall fcall = (FCall) name;
             sb.append(fcall.name).append('(');
             for (int i = 0; i < fcall.parameters.length; i++) {
                 if (i > 0)
@@ -343,11 +344,11 @@ abstract class Utils {
             }
             sb.append(')');
         } else if (name instanceof Alias) {
-            Alias alias = (Alias)name;
+            Alias alias = (Alias) name;
             appendName(alias.column, sb);
             sb.append(" AS ").append(alias.alias);
         } else if (name instanceof RawString) {
-            sb.append(((RawString)name).str);
+            sb.append(((RawString) name).str);
         } else {
             throw new IllegalArgumentException(String.format("Invalid column %s of type unknown of the query builder", name));
         }
@@ -356,6 +357,7 @@ abstract class Utils {
 
     static abstract class Appendeable {
         abstract void appendTo(StringBuilder sb, List<Object> values);
+
         abstract boolean containsBindMarker();
     }
 

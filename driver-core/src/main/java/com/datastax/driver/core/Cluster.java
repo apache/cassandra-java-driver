@@ -15,6 +15,21 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.exceptions.AuthenticationException;
+import com.datastax.driver.core.exceptions.DriverInternalError;
+import com.datastax.driver.core.exceptions.InvalidQueryException;
+import com.datastax.driver.core.exceptions.NoHostAvailableException;
+import com.datastax.driver.core.policies.*;
+import com.datastax.driver.core.utils.MoreFutures;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Functions;
+import com.google.common.base.Predicates;
+import com.google.common.base.Strings;
+import com.google.common.collect.*;
+import com.google.common.util.concurrent.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.Closeable;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -25,27 +40,11 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Functions;
-import com.google.common.base.Predicates;
-import com.google.common.base.Strings;
-import com.google.common.collect.*;
-import com.google.common.util.concurrent.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.datastax.driver.core.exceptions.AuthenticationException;
-import com.datastax.driver.core.exceptions.DriverInternalError;
-import com.datastax.driver.core.exceptions.InvalidQueryException;
-import com.datastax.driver.core.exceptions.NoHostAvailableException;
-import com.datastax.driver.core.policies.*;
-import com.datastax.driver.core.utils.MoreFutures;
-
 import static com.datastax.driver.core.SchemaElement.KEYSPACE;
 
 /**
  * Information and known state of a Cassandra cluster.
- * <p>
+ * <p/>
  * This is the main entry point of the driver. A simple example of access to a
  * Cassandra cluster would be:
  * <pre>
@@ -55,7 +54,7 @@ import static com.datastax.driver.core.SchemaElement.KEYSPACE;
  *   for (Row row : session.execute("SELECT * FROM table1"))
  *       // do something ...
  * </pre>
- * <p>
+ * <p/>
  * A cluster object maintains a permanent connection to one of the cluster nodes
  * which it uses solely to maintain information on the state and current
  * topology of the cluster. Using the connection, the driver will discover all
@@ -69,7 +68,7 @@ public class Cluster implements Closeable {
     @VisibleForTesting
     static final int NEW_NODE_DELAY_SECONDS = SystemProperties.getInt("com.datastax.driver.NEW_NODE_DELAY_SECONDS", 1);
     private static final int NON_BLOCKING_EXECUTOR_SIZE = SystemProperties.getInt("com.datastax.driver.NON_BLOCKING_EXECUTOR_SIZE",
-                                                                                  Runtime.getRuntime().availableProcessors());
+            Runtime.getRuntime().availableProcessors());
 
     private static final ResourceBundle driverProperties = ResourceBundle.getBundle("com.datastax.driver.core.Driver");
 
@@ -85,13 +84,13 @@ public class Cluster implements Closeable {
 
     /**
      * Constructs a new Cluster instance.
-     * <p>
+     * <p/>
      * This constructor is mainly exposed so Cluster can be sub-classed as a means to make testing/mocking
      * easier or to "intercept" its method call. Most users shouldn't extend this class however and
      * should prefer either using the {@link #builder} or calling {@link #buildFrom} with a custom
      * Initializer.
      *
-     * @param name the name to use for the cluster (this is not the Cassandra cluster name, see {@link #getClusterName}).
+     * @param name          the name to use for the cluster (this is not the Cassandra cluster name, see {@link #getClusterName}).
      * @param contactPoints the list of contact points to use for the new cluster.
      * @param configuration the configuration for the new cluster.
      */
@@ -101,7 +100,7 @@ public class Cluster implements Closeable {
 
     /**
      * Constructs a new Cluster instance.
-     * <p>
+     * <p/>
      * This constructor is mainly exposed so Cluster can be sub-classed as a means to make testing/mocking
      * easier or to "intercept" its method call. Most users shouldn't extend this class however and
      * should prefer using the {@link #builder}.
@@ -111,9 +110,9 @@ public class Cluster implements Closeable {
      */
     protected Cluster(Initializer initializer) {
         this(initializer.getClusterName(),
-             checkNotEmpty(initializer.getContactPoints()),
-             initializer.getConfiguration(),
-             initializer.getInitialListeners());
+                checkNotEmpty(initializer.getContactPoints()),
+                initializer.getConfiguration(),
+                initializer.getInitialListeners());
     }
 
     private static List<InetSocketAddress> checkNotEmpty(List<InetSocketAddress> contactPoints) {
@@ -128,35 +127,34 @@ public class Cluster implements Closeable {
 
     /**
      * Initialize this Cluster instance.
-     *
+     * <p/>
      * This method creates an initial connection to one of the contact points
      * used to construct the {@code Cluster} instance. That connection is then
      * used to populate the cluster {@link Metadata}.
-     * <p>
+     * <p/>
      * Calling this method is optional in the sense that any call to one of the
      * {@code connect} methods of this object will automatically trigger a call
      * to this method beforehand. It is thus only useful to call this method if
      * for some reason you want to populate the metadata (or test that at least
      * one contact point can be reached) without creating a first {@code
      * Session}.
-     * <p>
+     * <p/>
      * Please note that this method only creates one control connection for
      * gathering cluster metadata. In particular, it doesn't create any connection pools.
      * Those are created when a new {@code Session} is created through
      * {@code connect}.
-     * <p>
+     * <p/>
      * This method has no effect if the cluster is already initialized.
      *
      * @return this {@code Cluster} object.
-     *
      * @throws NoHostAvailableException if no host amongst the contact points
-     * can be reached.
-     * @throws AuthenticationException if an authentication error occurs
-     * while contacting the initial contact points.
-     * @throws IllegalStateException if the Cluster was closed prior to calling
-     * this method. This can occur either directly (through {@link #close()} or
-     * {@link #closeAsync()}), or as a result of an error while initializing the
-     * Cluster.
+     *                                  can be reached.
+     * @throws AuthenticationException  if an authentication error occurs
+     *                                  while contacting the initial contact points.
+     * @throws IllegalStateException    if the Cluster was closed prior to calling
+     *                                  this method. This can occur either directly (through {@link #close()} or
+     *                                  {@link #closeAsync()}), or as a result of an error while initializing the
+     *                                  Cluster.
      */
     public Cluster init() {
         this.manager.init();
@@ -165,18 +163,17 @@ public class Cluster implements Closeable {
 
     /**
      * Build a new cluster based on the provided initializer.
-     * <p>
+     * <p/>
      * Note that for building a cluster pragmatically, Cluster.Builder
      * provides a slightly less verbose shortcut with {@link Builder#build}.
-     * <p>
+     * <p/>
      * Also note that that all the contact points provided by {@code
      * initializer} must share the same port.
      *
      * @param initializer the Cluster.Initializer to use
      * @return the newly created Cluster instance
-     *
      * @throws IllegalArgumentException if the list of contact points provided
-     * by {@code initializer} is empty or if not all those contact points have the same port.
+     *                                  by {@code initializer} is empty or if not all those contact points have the same port.
      */
     public static Cluster buildFrom(Initializer initializer) {
         return new Cluster(initializer);
@@ -184,7 +181,7 @@ public class Cluster implements Closeable {
 
     /**
      * Creates a new {@link Cluster.Builder} instance.
-     * <p>
+     * <p/>
      * This is a convenience method for {@code new Cluster.Builder()}.
      *
      * @return the new cluster builder.
@@ -195,7 +192,7 @@ public class Cluster implements Closeable {
 
     /**
      * Returns the current version of the driver.
-     * <p>
+     * <p/>
      * This is intended for products that wrap or extend the driver, as a way to check
      * compatibility if end-users override the driver version in their application.
      *
@@ -207,16 +204,16 @@ public class Cluster implements Closeable {
 
     /**
      * Creates a new session on this cluster but does not initialize it.
-     * <p>
+     * <p/>
      * Because this method does not perform any initialization, it cannot fail.
      * The initialization of the session (the connection of the Session to the
      * Cassandra nodes) will occur if either the {@link Session#init} method is
      * called explicitly, or whenever the returned session object is used.
-     * <p>
+     * <p/>
      * Once a session returned by this method gets initialized (see above), it
      * will be set to no keyspace. If you want to set such session to a
      * keyspace, you will have to explicitly execute a 'USE mykeyspace' query.
-     * <p>
+     * <p/>
      * Note that if you do not particularly need to defer initialization, it is
      * simpler to use one of the {@code connect()} method of this class.
      *
@@ -229,23 +226,22 @@ public class Cluster implements Closeable {
 
     /**
      * Creates a new session on this cluster and initialize it.
-     * <p>
+     * <p/>
      * Note that this method will initialize the newly created session, trying
      * to connect to the Cassandra nodes before returning. If you only want to
      * create a Session object without initializing it right away, see
      * {@link #newSession}.
      *
      * @return a new session on this cluster sets to no keyspace.
-     *
      * @throws NoHostAvailableException if the Cluster has not been initialized
-     * yet ({@link #init} has not be called and this is the first connect call)
-     * and no host amongst the contact points can be reached.
-     * @throws AuthenticationException if an authentication error occurs while
-     * contacting the initial contact points.
-     * @throws IllegalStateException if the Cluster was closed prior to calling
-     * this method. This can occur either directly (through {@link #close()} or
-     * {@link #closeAsync()}), or as a result of an error while initializing the
-     * Cluster.
+     *                                  yet ({@link #init} has not be called and this is the first connect call)
+     *                                  and no host amongst the contact points can be reached.
+     * @throws AuthenticationException  if an authentication error occurs while
+     *                                  contacting the initial contact points.
+     * @throws IllegalStateException    if the Cluster was closed prior to calling
+     *                                  this method. This can occur either directly (through {@link #close()} or
+     *                                  {@link #closeAsync()}), or as a result of an error while initializing the
+     *                                  Cluster.
      */
     public Session connect() {
         try {
@@ -258,28 +254,27 @@ public class Cluster implements Closeable {
     /**
      * Creates a new session on this cluster, initialize it and sets the
      * keyspace to the provided one.
-     * <p>
+     * <p/>
      * Note that this method will initialize the newly created session, trying
      * to connect to the Cassandra nodes before returning. If you only want to
      * create a Session object without initializing it right away, see
      * {@link #newSession}.
      *
      * @param keyspace The name of the keyspace to use for the created
-     * {@code Session}.
+     *                 {@code Session}.
      * @return a new session on this cluster sets to keyspace
      * {@code keyspaceName}.
-     *
      * @throws NoHostAvailableException if the Cluster has not been initialized
-     * yet ({@link #init} has not be called and this is the first connect call)
-     * and no host amongst the contact points can be reached, or if no host can
-     * be contacted to set the {@code keyspace}.
-     * @throws AuthenticationException if an authentication error occurs while
-     * contacting the initial contact points.
-     * @throws InvalidQueryException if the keyspace does not exists.
-     * @throws IllegalStateException if the Cluster was closed prior to calling
-     * this method. This can occur either directly (through {@link #close()} or
-     * {@link #closeAsync()}), or as a result of an error while initializing the
-     * Cluster.
+     *                                  yet ({@link #init} has not be called and this is the first connect call)
+     *                                  and no host amongst the contact points can be reached, or if no host can
+     *                                  be contacted to set the {@code keyspace}.
+     * @throws AuthenticationException  if an authentication error occurs while
+     *                                  contacting the initial contact points.
+     * @throws InvalidQueryException    if the keyspace does not exists.
+     * @throws IllegalStateException    if the Cluster was closed prior to calling
+     *                                  this method. This can occur either directly (through {@link #close()} or
+     *                                  {@link #closeAsync()}), or as a result of an error while initializing the
+     *                                  Cluster.
      */
     public Session connect(String keyspace) {
         try {
@@ -291,23 +286,20 @@ public class Cluster implements Closeable {
 
     /**
      * Creates a new session on this cluster and initializes it asynchronously.
-     *
+     * <p/>
      * This will also initialize the {@code Cluster} if needed; note that cluster
      * initialization happens synchronously on the thread that called this method.
      * Therefore it is recommended to initialize the cluster at application
      * startup, and not rely on this method to do it.
      *
      * @return a future that will complete when the session is fully initialized.
-     *
      * @throws NoHostAvailableException if the Cluster has not been initialized
-     * yet ({@link #init} has not been called and this is the first connect call)
-     * and no host amongst the contact points can be reached.
-     *
-     * @throws IllegalStateException if the Cluster was closed prior to calling
-     * this method. This can occur either directly (through {@link #close()} or
-     * {@link #closeAsync()}), or as a result of an error while initializing the
-     * Cluster.
-     *
+     *                                  yet ({@link #init} has not been called and this is the first connect call)
+     *                                  and no host amongst the contact points can be reached.
+     * @throws IllegalStateException    if the Cluster was closed prior to calling
+     *                                  this method. This can occur either directly (through {@link #close()} or
+     *                                  {@link #closeAsync()}), or as a result of an error while initializing the
+     *                                  Cluster.
      * @see #connect()
      */
     public ListenableFuture<Session> connectAsync() {
@@ -317,24 +309,22 @@ public class Cluster implements Closeable {
     /**
      * Creates a new session on this cluster, and initializes it to the given
      * keyspace asynchronously.
-     *
+     * <p/>
      * This will also initialize the {@code Cluster} if needed; note that cluster
      * initialization happens synchronously on the thread that called this method.
      * Therefore it is recommended to initialize the cluster at application
      * startup, and not rely on this method to do it.
      *
      * @param keyspace The name of the keyspace to use for the created
-     * {@code Session}.
+     *                 {@code Session}.
      * @return a future that will complete when the session is fully initialized.
-     *
      * @throws NoHostAvailableException if the Cluster has not been initialized
-     * yet ({@link #init} has not been called and this is the first connect call)
-     * and no host amongst the contact points can be reached.
-     *
-     * @throws IllegalStateException if the Cluster was closed prior to calling
-     * this method. This can occur either directly (through {@link #close()} or
-     * {@link #closeAsync()}), or as a result of an error while initializing the
-     * Cluster.
+     *                                  yet ({@link #init} has not been called and this is the first connect call)
+     *                                  and no host amongst the contact points can be reached.
+     * @throws IllegalStateException    if the Cluster was closed prior to calling
+     *                                  this method. This can occur either directly (through {@link #close()} or
+     *                                  {@link #closeAsync()}), or as a result of an error while initializing the
+     *                                  Cluster.
      */
     public ListenableFuture<Session> connectAsync(final String keyspace) {
         checkNotClosed(manager);
@@ -362,7 +352,7 @@ public class Cluster implements Closeable {
 
     /**
      * The name of this cluster object.
-     * <p>
+     * <p/>
      * Note that this is not the Cassandra cluster name, but rather a name
      * assigned to this Cluster object. Currently, that name is only used
      * for one purpose: to distinguish exposed JMX metrics when multiple
@@ -380,7 +370,7 @@ public class Cluster implements Closeable {
 
     /**
      * Returns read-only metadata on the connected cluster.
-     * <p>
+     * <p/>
      * This includes the known nodes with their status as seen by the driver,
      * as well as the schema definitions. Since this return metadata on the
      * connected cluster, this method may trigger the creation of a connection
@@ -388,15 +378,14 @@ public class Cluster implements Closeable {
      * has been called yet).
      *
      * @return the cluster metadata.
-     *
      * @throws NoHostAvailableException if the Cluster has not been initialized yet
-     * and no host amongst the contact points can be reached.
-     * @throws AuthenticationException if an authentication error occurs
-     * while contacting the initial contact points.
-     * @throws IllegalStateException if the Cluster was closed prior to calling
-     * this method. This can occur either directly (through {@link #close()} or
-     * {@link #closeAsync()}), or as a result of an error while initializing the
-     * Cluster.
+     *                                  and no host amongst the contact points can be reached.
+     * @throws AuthenticationException  if an authentication error occurs
+     *                                  while contacting the initial contact points.
+     * @throws IllegalStateException    if the Cluster was closed prior to calling
+     *                                  this method. This can occur either directly (through {@link #close()} or
+     *                                  {@link #closeAsync()}), or as a result of an error while initializing the
+     *                                  Cluster.
      */
     public Metadata getMetadata() {
         manager.init();
@@ -427,9 +416,9 @@ public class Cluster implements Closeable {
     /**
      * Registers the provided listener to be notified on hosts
      * up/down/added/removed events.
-     * <p>
+     * <p/>
      * Registering the same listener multiple times is a no-op.
-     * <p>
+     * <p/>
      * Note that while {@link LoadBalancingPolicy} implements
      * {@code Host.StateListener}, the configured load balancing does not
      * need to (and should not) be registered through this method to
@@ -446,7 +435,7 @@ public class Cluster implements Closeable {
 
     /**
      * Unregisters the provided listener from being notified on hosts events.
-     * <p>
+     * <p/>
      * This method is a no-op if {@code listener} hadn't previously be
      * registered against this Cluster.
      *
@@ -462,13 +451,13 @@ public class Cluster implements Closeable {
     /**
      * Registers the provided tracker to be updated with hosts read
      * latencies.
-     * <p>
+     * <p/>
      * Registering the same listener multiple times is a no-op.
-     * <p>
+     * <p/>
      * Be wary that the registered tracker {@code update} method will be call
      * very frequently (at the end of every query to a Cassandra host) and
      * should thus not be costly.
-     * <p>
+     * <p/>
      * The main use case for a {@code LatencyTracker} is so
      * {@link LoadBalancingPolicy} can implement latency awareness
      * Typically, {@link LatencyAwarePolicy} registers  it's own internal
@@ -487,7 +476,7 @@ public class Cluster implements Closeable {
     /**
      * Unregisters the provided latency tracking from being updated
      * with host read latencies.
-     * <p>
+     * <p/>
      * This method is a no-op if {@code tracker} hadn't previously be
      * registered against this Cluster.
      *
@@ -502,7 +491,7 @@ public class Cluster implements Closeable {
 
     /**
      * Registers the provided listener to be updated with schema change events.
-     * <p>
+     * <p/>
      * Registering the same listener multiple times is a no-op.
      *
      * @param listener the new {@link SchemaChangeListener} to register.
@@ -518,7 +507,7 @@ public class Cluster implements Closeable {
     /**
      * Unregisters the provided schema change listener from being updated
      * with schema change events.
-     * <p>
+     * <p/>
      * This method is a no-op if {@code listener} hadn't previously be
      * registered against this Cluster.
      *
@@ -534,17 +523,17 @@ public class Cluster implements Closeable {
 
     /**
      * Initiates a shutdown of this cluster instance.
-     * <p>
+     * <p/>
      * This method is asynchronous and return a future on the completion
      * of the shutdown process. As soon a the cluster is shutdown, no
      * new request will be accepted, but already submitted queries are
      * allowed to complete. This method closes all connections from all
      * sessions and reclaims all resources used by this Cluster
      * instance.
-     * <p>
+     * <p/>
      * If for some reason you wish to expedite this process, the
      * {@link CloseFuture#force} can be called on the result future.
-     * <p>
+     * <p/>
      * This method has no particular effect if the cluster was already closed
      * (in which case the returned future will return immediately).
      *
@@ -557,7 +546,7 @@ public class Cluster implements Closeable {
     /**
      * Initiates a shutdown of this cluster instance and blocks until
      * that shutdown completes.
-     * <p>
+     * <p/>
      * This method is a shortcut for {@code closeAsync().get()}.
      */
     public void close() {
@@ -572,7 +561,7 @@ public class Cluster implements Closeable {
 
     /**
      * Whether this Cluster instance has been closed.
-     * <p>
+     * <p/>
      * Note that this method returns true as soon as one of the close methods
      * ({@link #closeAsync} or {@link #close}) has been called, it does not guarantee
      * that the closing is done. If you want to guarantee that the closing is done,
@@ -593,11 +582,11 @@ public class Cluster implements Closeable {
 
     /**
      * Initializer for {@link Cluster} instances.
-     * <p>
+     * <p/>
      * If you want to create a new {@code Cluster} instance programmatically,
      * then it is advised to use {@link Cluster.Builder} which can be obtained from the
      * {@link Cluster#builder} method.
-     * <p>
+     * <p/>
      * But it is also possible to implement a custom {@code Initializer} that
      * retrieves initialization from a web-service or from a configuration file.
      */
@@ -605,7 +594,7 @@ public class Cluster implements Closeable {
 
         /**
          * An optional name for the created cluster.
-         * <p>
+         * <p/>
          * Such name is optional (a default name will be created otherwise) and is currently
          * only use for JMX reporting of metrics. See {@link Cluster#getClusterName} for more
          * information.
@@ -625,15 +614,15 @@ public class Cluster implements Closeable {
 
         /**
          * The configuration to use for the new cluster.
-         * <p>
+         * <p/>
          * Note that some configuration can be modified after the cluster
          * initialization but some others cannot. In particular, the ones that
          * cannot be changed afterwards includes:
          * <ul>
-         *   <li>the port use to connect to Cassandra nodes (see {@link ProtocolOptions}).</li>
-         *   <li>the policies used (see {@link Policies}).</li>
-         *   <li>the authentication info provided (see {@link Configuration}).</li>
-         *   <li>whether metrics are enabled (see {@link Configuration}).</li>
+         * <li>the port use to connect to Cassandra nodes (see {@link ProtocolOptions}).</li>
+         * <li>the policies used (see {@link Policies}).</li>
+         * <li>the authentication info provided (see {@link Configuration}).</li>
+         * <li>whether metrics are enabled (see {@link Configuration}).</li>
          * </ul>
          *
          * @return the configuration to use for the new cluster.
@@ -642,7 +631,7 @@ public class Cluster implements Closeable {
 
         /**
          * Optional listeners to register against the newly created cluster.
-         * <p>
+         * <p/>
          * Note that contrary to listeners registered post Cluster creation,
          * the listeners returned by this method will see {@link Host.StateListener#onAdd}
          * events for the initial contact points.
@@ -705,11 +694,11 @@ public class Cluster implements Closeable {
 
         /**
          * An optional name for the create cluster.
-         * <p>
+         * <p/>
          * Note: this is not related to the Cassandra cluster name (though you
          * are free to provide the same name). See {@link Cluster#getClusterName} for
          * details.
-         * <p>
+         * <p/>
          * If you use this method and create more than one Cluster instance in the
          * same JVM (which should be avoided unless you need to connect to multiple
          * Cassandra clusters), you should make sure each Cluster instance get a
@@ -725,7 +714,7 @@ public class Cluster implements Closeable {
 
         /**
          * The port to use to connect to the Cassandra host.
-         * <p>
+         * <p/>
          * If not set through this method, the default port (9042) will be used
          * instead.
          *
@@ -739,12 +728,11 @@ public class Cluster implements Closeable {
 
         /**
          * Sets the maximum time to wait for schema agreement before returning from a DDL query.
-         * <p>
+         * <p/>
          * If not set through this method, the default value (10 seconds) will be used.
          *
          * @param maxSchemaAgreementWaitSeconds the new value to set.
          * @return this Builder.
-         *
          * @throws IllegalStateException if the provided value is zero or less.
          */
         public Builder withMaxSchemaAgreementWaitSeconds(int maxSchemaAgreementWaitSeconds) {
@@ -757,19 +745,19 @@ public class Cluster implements Closeable {
 
         /**
          * The native protocol version to use.
-         * <p>
+         * <p/>
          * The driver supports versions 1 to 3 of the native protocol. Higher versions
          * of the protocol have more features and should be preferred, but this also depends
          * on the Cassandra version:
-         *
+         * <p/>
          * <table>
-         *   <caption>Native protocol version to Cassandra version correspondence</caption>
-         *   <tr><th>Protocol version</th><th>Minimum Cassandra version</th></tr>
-         *   <tr><td>1</td><td>1.2</td></tr>
-         *   <tr><td>2</td><td>2.0</td></tr>
-         *   <tr><td>3</td><td>2.1</td></tr>
+         * <caption>Native protocol version to Cassandra version correspondence</caption>
+         * <tr><th>Protocol version</th><th>Minimum Cassandra version</th></tr>
+         * <tr><td>1</td><td>1.2</td></tr>
+         * <tr><td>2</td><td>2.0</td></tr>
+         * <tr><td>3</td><td>2.1</td></tr>
          * </table>
-         * <p>
+         * <p/>
          * By default, the driver will "auto-detect" which protocol version it can use
          * when connecting to the first node. More precisely, it will try first with
          * {@link ProtocolVersion#NEWEST_SUPPORTED}, and if not supported fallback to
@@ -778,7 +766,7 @@ public class Cluster implements Closeable {
          * the driver connects to is a Cassandra 1.2 node and auto-detection is used
          * (the default), then the native protocol version 1 will be use for the lifetime
          * of the Cluster instance.
-         * <p>
+         * <p/>
          * This method allows to force the use of a particular protocol version. Forcing
          * version 1 is always fine since all Cassandra version (at least all those
          * supporting the native protocol in the first place) so far support it. However,
@@ -789,17 +777,17 @@ public class Cluster implements Closeable {
          * an UnsupportedFeatureException). Using the protocol version 1 should thus
          * only be considered when using Cassandra 1.2, until nodes have been upgraded
          * to Cassandra 2.0.
-         * <p>
+         * <p/>
          * If version 2 of the protocol is used, then Cassandra 1.2 nodes will be ignored
          * (the driver won't connect to them).
-         * <p>
+         * <p/>
          * The default behavior (auto-detection) is fine in almost all case, but you may
          * want to force a particular version if you have a Cassandra cluster with mixed
          * 1.2/2.0 nodes (i.e. during a Cassandra upgrade).
          *
          * @param version the native protocol version to use. {@code null} is also supported
-         * to trigger auto-detection (see above) but this is the default (so you don't have
-         * to call this method for that behavior).
+         *                to trigger auto-detection (see above) but this is the default (so you don't have
+         *                to call this method for that behavior).
          * @return this Builder.
          */
         public Builder withProtocolVersion(ProtocolVersion version) {
@@ -813,8 +801,7 @@ public class Cluster implements Closeable {
          * @param version the native protocol version as a number.
          * @return this Builder.
          * @throws IllegalArgumentException if the number does not correspond to any known
-         * native protocol version.
-         *
+         *                                  native protocol version.
          * @deprecated This method is provided for backward compatibility. Use
          * {@link #withProtocolVersion(ProtocolVersion)} instead.
          */
@@ -826,14 +813,14 @@ public class Cluster implements Closeable {
 
         /**
          * Adds a contact point.
-         * <p>
+         * <p/>
          * Contact points are addresses of Cassandra nodes that the driver uses
          * to discover the cluster topology. Only one contact point is required
          * (the driver will retrieve the address of the other nodes
          * automatically), but it is usually a good idea to provide more than
          * one contact point, because if that single contact point is unavailable,
          * the driver cannot initialize itself correctly.
-         * <p>
+         * <p/>
          * Note that by default (that is, unless you use the {@link #withLoadBalancingPolicy})
          * method of this builder), the first succesfully contacted host will be use
          * to define the local data-center for the client. If follows that if you are
@@ -843,11 +830,10 @@ public class Cluster implements Closeable {
          *
          * @param address the address of the node to connect to
          * @return this Builder.
-         *
          * @throws IllegalArgumentException if no IP address for {@code address}
-         * could be found
-         * @throws SecurityException if a security manager is present and
-         * permission to resolve the host name is denied.
+         *                                  could be found
+         * @throws SecurityException        if a security manager is present and
+         *                                  permission to resolve the host name is denied.
          */
         public Builder addContactPoint(String address) {
             // We explicitely check for nulls because InetAdress.getByName() will happily
@@ -866,18 +852,16 @@ public class Cluster implements Closeable {
 
         /**
          * Adds contact points.
-         * <p>
+         * <p/>
          * See {@link Builder#addContactPoint} for more details on contact
          * points.
          *
          * @param addresses addresses of the nodes to add as contact point.
          * @return this Builder.
-         *
          * @throws IllegalArgumentException if no IP address for at least one
-         * of {@code addresses} could be found
-         * @throws SecurityException if a security manager is present and
-         * permission to resolve the host name is denied.
-         *
+         *                                  of {@code addresses} could be found
+         * @throws SecurityException        if a security manager is present and
+         *                                  permission to resolve the host name is denied.
          * @see Builder#addContactPoint
          */
         public Builder addContactPoints(String... addresses) {
@@ -888,19 +872,17 @@ public class Cluster implements Closeable {
 
         /**
          * Adds a contact point - or many if it host resolves to multiple <code>InetAddress</code>s (A records).
-         * <p>
-         *
+         * <p/>
+         * <p/>
          * If the host name points to a dns records with multiple a-records, all InetAddresses
          * returned will be used. Make sure that all resulting <code>InetAddress</code>s returned
          * points to the same cluster and datacenter.
-         * <p>
+         * <p/>
          * See {@link Builder#addContactPoint} for more details on contact
          * points and thrown exceptions
          *
          * @param address address of the nodes to look up InetAddresses from to add as contact points.
          * @return this Builder.
-         *
-         *
          * @see Builder#addContactPoint
          */
         public Builder addContactPoints(String address) {
@@ -920,13 +902,12 @@ public class Cluster implements Closeable {
 
         /**
          * Adds contact points.
-         * <p>
+         * <p/>
          * See {@link Builder#addContactPoint} for more details on contact
          * points.
          *
          * @param addresses addresses of the nodes to add as contact point.
          * @return this Builder.
-         *
          * @see Builder#addContactPoint
          */
         public Builder addContactPoints(InetAddress... addresses) {
@@ -936,13 +917,12 @@ public class Cluster implements Closeable {
 
         /**
          * Adds contact points.
-         *
+         * <p/>
          * See {@link Builder#addContactPoint} for more details on contact
          * points.
          *
          * @param addresses addresses of the nodes to add as contact point
          * @return this Builder
-         *
          * @see Builder#addContactPoint
          */
         public Builder addContactPoints(Collection<InetAddress> addresses) {
@@ -952,7 +932,7 @@ public class Cluster implements Closeable {
 
         /**
          * Adds contact points.
-         * <p>
+         * <p/>
          * See {@link Builder#addContactPoint} for more details on contact
          * points. Contrarily to other {@code addContactPoints} methods, this method
          * allow to provide a different port for each contact points. Since Cassandra
@@ -969,7 +949,6 @@ public class Cluster implements Closeable {
          *
          * @param addresses addresses of the nodes to add as contact point
          * @return this Builder
-         *
          * @see Builder#addContactPoint
          */
         public Builder addContactPointsWithPorts(Collection<InetSocketAddress> addresses) {
@@ -979,7 +958,7 @@ public class Cluster implements Closeable {
 
         /**
          * Configures the load balancing policy to use for the new cluster.
-         * <p>
+         * <p/>
          * If no load balancing policy is set through this method,
          * {@link Policies#defaultLoadBalancingPolicy} will be used instead.
          *
@@ -993,7 +972,7 @@ public class Cluster implements Closeable {
 
         /**
          * Configures the reconnection policy to use for the new cluster.
-         * <p>
+         * <p/>
          * If no reconnection policy is set through this method,
          * {@link Policies#DEFAULT_RECONNECTION_POLICY} will be used instead.
          *
@@ -1007,7 +986,7 @@ public class Cluster implements Closeable {
 
         /**
          * Configures the retry policy to use for the new cluster.
-         * <p>
+         * <p/>
          * If no retry policy is set through this method,
          * {@link Policies#DEFAULT_RETRY_POLICY} will be used instead.
          *
@@ -1021,7 +1000,7 @@ public class Cluster implements Closeable {
 
         /**
          * Configures the address translater to use for the new cluster.
-         * <p>
+         * <p/>
          * See {@link AddressTranslater} for more detail on address translation,
          * but the default translater, {@link IdentityTranslater}, should be
          * correct in most cases. If unsure, stick to the default.
@@ -1037,12 +1016,12 @@ public class Cluster implements Closeable {
         /**
          * Configures the generator that will produce the client-side timestamp sent
          * with each query.
-         * <p>
+         * <p/>
          * This feature is only available with version {@link ProtocolVersion#V3 V3} or
          * above of the native protocol. With earlier versions, timestamps are always
          * generated server-side, and setting a generator through this method will have
          * no effect.
-         * <p>
+         * <p/>
          * If no generator is set through this method, the driver will default to the
          * legacy server-side behavior by using {@link ServerSideTimestampGenerator}.
          *
@@ -1056,7 +1035,7 @@ public class Cluster implements Closeable {
 
         /**
          * Configures the speculative execution policy to use for the new cluster.
-         * <p>
+         * <p/>
          * If no policy is set through this method, {@link Policies#defaultSpeculativeExecutionPolicy()}
          * will be used instead.
          *
@@ -1070,7 +1049,7 @@ public class Cluster implements Closeable {
 
         /**
          * Uses the provided credentials when connecting to Cassandra hosts.
-         * <p>
+         * <p/>
          * This should be used if the Cassandra cluster has been configured to
          * use the {@code PasswordAuthenticator}. If the the default {@code
          * AllowAllAuthenticator} is used instead, using this method has no
@@ -1088,14 +1067,14 @@ public class Cluster implements Closeable {
         /**
          * Use the specified AuthProvider when connecting to Cassandra
          * hosts.
-         * <p>
+         * <p/>
          * Use this method when a custom authentication scheme is in place.
          * You shouldn't call both this method and {@code withCredentials}
          * on the same {@code Builder} instance as one will supersede the
          * other
          *
          * @param authProvider the {@link AuthProvider} to use to login to
-         * Cassandra hosts.
+         *                     Cassandra hosts.
          * @return this Builder
          */
         public Builder withAuthProvider(AuthProvider authProvider) {
@@ -1108,7 +1087,6 @@ public class Cluster implements Closeable {
          *
          * @param compression the compression to set.
          * @return this Builder.
-         *
          * @see ProtocolOptions.Compression
          */
         public Builder withCompression(ProtocolOptions.Compression compression) {
@@ -1129,10 +1107,10 @@ public class Cluster implements Closeable {
 
         /**
          * Enables the use of SSL for the created {@code Cluster}.
-         * <p>
+         * <p/>
          * Calling this method will use default SSL options (see {@link SSLOptions#SSLOptions()}).
          * This is thus a shortcut for {@code withSSL(new SSLOptions())}.
-         * <p>
+         * <p/>
          * Note that if SSL is enabled, the driver will not connect to any
          * Cassandra nodes that doesn't have SSL enabled and it is strongly
          * advised to enable SSL on every Cassandra node if you plan on using
@@ -1149,7 +1127,6 @@ public class Cluster implements Closeable {
          * Enable the use of SSL for the created {@code Cluster} using the provided options.
          *
          * @param sslOptions the SSL options to use.
-         *
          * @return this builder.
          */
         public Builder withSSL(SSLOptions sslOptions) {
@@ -1159,7 +1136,7 @@ public class Cluster implements Closeable {
 
         /**
          * Register the provided listeners in the newly created cluster.
-         * <p>
+         * <p/>
          * Note: repeated calls to this method will override the previous ones.
          *
          * @param listeners the listeners to register.
@@ -1172,7 +1149,7 @@ public class Cluster implements Closeable {
 
         /**
          * Disables JMX reporting of the metrics.
-         * <p>
+         * <p/>
          * JMX reporting is enabled by default (see {@link Metrics}) but can be
          * disabled using this option. If metrics are disabled, this is a
          * no-op.
@@ -1186,7 +1163,7 @@ public class Cluster implements Closeable {
 
         /**
          * Sets the PoolingOptions to use for the newly created Cluster.
-         * <p>
+         * <p/>
          * If no pooling options are set through this method, default pooling
          * options will be used.
          *
@@ -1200,7 +1177,7 @@ public class Cluster implements Closeable {
 
         /**
          * Sets the SocketOptions to use for the newly created Cluster.
-         * <p>
+         * <p/>
          * If no socket options are set through this method, default socket
          * options will be used.
          *
@@ -1214,7 +1191,7 @@ public class Cluster implements Closeable {
 
         /**
          * Sets the QueryOptions to use for the newly created Cluster.
-         * <p>
+         * <p/>
          * If no query options are set through this method, default query
          * options will be used.
          *
@@ -1228,7 +1205,7 @@ public class Cluster implements Closeable {
 
         /**
          * Set the {@link NettyOptions} to use for the newly created Cluster.
-         * <p>
+         * <p/>
          * If no Netty options are set through this method, {@link NettyOptions#DEFAULT_INSTANCE}
          * will be used as a default value, which means that no customization will be applied.
          *
@@ -1242,7 +1219,7 @@ public class Cluster implements Closeable {
 
         /**
          * The configuration that will be used for the new cluster.
-         * <p>
+         * <p/>
          * You <b>should not</b> modify this object directly because changes made
          * to the returned object may not be used by the cluster build.
          * Instead, you should use the other methods of this {@code Builder}.
@@ -1252,20 +1229,20 @@ public class Cluster implements Closeable {
         @Override
         public Configuration getConfiguration() {
             Policies policies = Policies.builder()
-                .withLoadBalancingPolicy(loadBalancingPolicy)
-                .withReconnectionPolicy(reconnectionPolicy)
-                .withRetryPolicy(retryPolicy)
-                .withAddressTranslater(addressTranslater)
-                .withTimestampGenerator(timestampGenerator)
-                .withSpeculativeExecutionPolicy(speculativeExecutionPolicy)
-                .build();
+                    .withLoadBalancingPolicy(loadBalancingPolicy)
+                    .withReconnectionPolicy(reconnectionPolicy)
+                    .withRetryPolicy(retryPolicy)
+                    .withAddressTranslater(addressTranslater)
+                    .withTimestampGenerator(timestampGenerator)
+                    .withSpeculativeExecutionPolicy(speculativeExecutionPolicy)
+                    .build();
             return new Configuration(policies,
-                                     new ProtocolOptions(port, protocolVersion, maxSchemaAgreementWaitSeconds, sslOptions, authProvider).setCompression(compression),
-                                     poolingOptions == null ? new PoolingOptions() : poolingOptions,
-                                     socketOptions == null ? new SocketOptions() : socketOptions,
-                                     metricsEnabled ? new MetricsOptions(jmxEnabled) : null,
-                                     queryOptions == null ? new QueryOptions() : queryOptions,
-                                     nettyOptions);
+                    new ProtocolOptions(port, protocolVersion, maxSchemaAgreementWaitSeconds, sslOptions, authProvider).setCompression(compression),
+                    poolingOptions == null ? new PoolingOptions() : poolingOptions,
+                    socketOptions == null ? new SocketOptions() : socketOptions,
+                    metricsEnabled ? new MetricsOptions(jmxEnabled) : null,
+                    queryOptions == null ? new QueryOptions() : queryOptions,
+                    nettyOptions);
         }
 
         @Override
@@ -1276,7 +1253,7 @@ public class Cluster implements Closeable {
         /**
          * Builds the cluster with the configured set of initial contact points
          * and policies.
-         * <p>
+         * <p/>
          * This is a convenience method for {@code Cluster.buildFrom(this)}.
          *
          * @return the newly built Cluster instance.
@@ -1296,7 +1273,7 @@ public class Cluster implements Closeable {
 
     /**
      * The sessions and hosts managed by this a Cluster instance.
-     * <p>
+     * <p/>
      * Note: the reason we create a Manager object separate from Cluster is
      * that Manager is not publicly visible. For instance, we wouldn't want
      * user to be able to call the {@link #onUp} and {@link #onDown} methods.
@@ -1347,7 +1324,7 @@ public class Cluster implements Closeable {
 
         final Set<Host.StateListener> listeners;
         final Set<LatencyTracker> trackers = new CopyOnWriteArraySet<LatencyTracker>();
-        final Set<SchemaChangeListener> schemaChangeListeners = new  CopyOnWriteArraySet<SchemaChangeListener>();
+        final Set<SchemaChangeListener> schemaChangeListeners = new CopyOnWriteArraySet<SchemaChangeListener>();
 
         EventDebouncer<NodeListRefreshRequest> nodeListRefreshRequestDebouncer;
         EventDebouncer<NodeRefreshRequest> nodeRefreshRequestDebouncer;
@@ -1391,23 +1368,23 @@ public class Cluster implements Closeable {
             // create debouncers - at this stage, they are not running yet
             QueryOptions queryOptions = configuration.getQueryOptions();
             this.nodeListRefreshRequestDebouncer = new EventDebouncer<NodeListRefreshRequest>(
-                "Node list refresh",
-                scheduledTasksExecutor,
-                new NodeListRefreshRequestDeliveryCallback(),
-                queryOptions.getRefreshNodeListIntervalMillis(),
-                queryOptions.getMaxPendingRefreshNodeListRequests());
+                    "Node list refresh",
+                    scheduledTasksExecutor,
+                    new NodeListRefreshRequestDeliveryCallback(),
+                    queryOptions.getRefreshNodeListIntervalMillis(),
+                    queryOptions.getMaxPendingRefreshNodeListRequests());
             this.nodeRefreshRequestDebouncer = new EventDebouncer<NodeRefreshRequest>(
-                "Node refresh",
-                scheduledTasksExecutor,
-                new NodeRefreshRequestDeliveryCallback(),
-                queryOptions.getRefreshNodeIntervalMillis(),
-                queryOptions.getMaxPendingRefreshNodeRequests());
+                    "Node refresh",
+                    scheduledTasksExecutor,
+                    new NodeRefreshRequestDeliveryCallback(),
+                    queryOptions.getRefreshNodeIntervalMillis(),
+                    queryOptions.getMaxPendingRefreshNodeRequests());
             this.schemaRefreshRequestDebouncer = new EventDebouncer<SchemaRefreshRequest>(
-                "Schema refresh",
-                scheduledTasksExecutor,
-                new SchemaRefreshRequestDeliveryCallback(),
-                queryOptions.getRefreshSchemaIntervalMillis(),
-                queryOptions.getMaxPendingRefreshSchemaRequests());
+                    "Schema refresh",
+                    scheduledTasksExecutor,
+                    new SchemaRefreshRequestDeliveryCallback(),
+                    queryOptions.getRefreshSchemaIntervalMillis(),
+                    queryOptions.getMaxPendingRefreshSchemaRequests());
 
             this.scheduledTasksExecutor.scheduleWithFixedDelay(new CleanupIdleConnectionsTask(), 10, 10, TimeUnit.SECONDS);
 
@@ -1417,9 +1394,9 @@ public class Cluster implements Closeable {
                 // create the Host object so we can initialize the control connection.
                 metadata.add(address);
             }
-            
+
             Collection<Host> allHosts = metadata.allHosts();
-            
+
             // At this stage, metadata.allHosts() only contains the contact points, that's what we want to pass to LBP.init().
             // But the control connection will initialize first and discover more hosts, so make a copy.
             Set<Host> contactPointHosts = Sets.newHashSet(allHosts);
@@ -1455,7 +1432,7 @@ public class Cluster implements Closeable {
                 // rack...) to initialize the load balancing policy
                 loadBalancingPolicy().init(Cluster.this, contactPointHosts);
                 speculativeRetryPolicy().init(Cluster.this);
-                
+
                 for (Host host : removedContactPointHosts) {
                     loadBalancingPolicy().onRemove(host);
                     for (Host.StateListener listener : listeners)
@@ -1484,7 +1461,7 @@ public class Cluster implements Closeable {
                         logUnsupportedVersionProtocol(host, connectionFactory.protocolVersion);
                         continue;
                     }
-                    
+
                     if (!contactPointHosts.contains(host))
                         loadBalancingPolicy().onAdd(host);
 
@@ -1516,11 +1493,11 @@ public class Cluster implements Closeable {
 
         private ListeningExecutorService makeExecutor(int threads, String name, LinkedBlockingQueue<Runnable> workQueue) {
             ThreadPoolExecutor executor = new ThreadPoolExecutor(threads,
-                threads,
-                DEFAULT_THREAD_KEEP_ALIVE,
-                TimeUnit.SECONDS,
-                workQueue,
-                threadFactory(name));
+                    threads,
+                    DEFAULT_THREAD_KEEP_ALIVE,
+                    TimeUnit.SECONDS,
+                    workQueue,
+                    threadFactory(name));
 
             executor.allowCoreThreadTimeOut(true);
             return MoreExecutors.listeningDecorator(executor);
@@ -1598,13 +1575,13 @@ public class Cluster implements Closeable {
                 // And the load balancing policy
                 LoadBalancingPolicy loadBalancingPolicy = loadBalancingPolicy();
                 if (loadBalancingPolicy instanceof CloseableLoadBalancingPolicy)
-                    ((CloseableLoadBalancingPolicy)loadBalancingPolicy).close();
+                    ((CloseableLoadBalancingPolicy) loadBalancingPolicy).close();
 
                 speculativeRetryPolicy().close();
 
                 AddressTranslater translater = configuration.getPolicies().getAddressTranslater();
                 if (translater instanceof CloseableAddressTranslater)
-                    ((CloseableAddressTranslater)translater).close();
+                    ((CloseableAddressTranslater) translater).close();
 
                 for (SchemaChangeListener listener : schemaChangeListeners) {
                     listener.onUnregister(Cluster.this);
@@ -1623,8 +1600,8 @@ public class Cluster implements Closeable {
             }
 
             return closeFuture.compareAndSet(null, future)
-                ? future
-                : closeFuture.get(); // We raced, it's ok, return the future that was actually set
+                    ? future
+                    : closeFuture.get(); // We raced, it's ok, return the future that was actually set
         }
 
         private void shutdownNow(ExecutorService executor) {
@@ -1632,20 +1609,20 @@ public class Cluster implements Closeable {
             // If some tasks were submitted to this executor but not yet commenced, make sure the corresponding futures complete
             for (Runnable pendingTask : pendingTasks) {
                 if (pendingTask instanceof FutureTask<?>)
-                    ((FutureTask<?>)pendingTask).cancel(false);
+                    ((FutureTask<?>) pendingTask).cancel(false);
             }
         }
 
         void logUnsupportedVersionProtocol(Host host, ProtocolVersion version) {
             logger.warn("Detected added or restarted Cassandra host {} but ignoring it since it does not support the version {} of the native "
-                      + "protocol which is currently in use. If you want to force the use of a particular version of the native protocol, use "
-                      + "Cluster.Builder#usingProtocolVersion() when creating the Cluster instance.", host, version);
+                    + "protocol which is currently in use. If you want to force the use of a particular version of the native protocol, use "
+                    + "Cluster.Builder#usingProtocolVersion() when creating the Cluster instance.", host, version);
         }
 
         void logClusterNameMismatch(Host host, String expectedClusterName, String actualClusterName) {
             logger.warn("Detected added or restarted Cassandra host {} but ignoring it since its cluster name '{}' does not match the one "
-                    + "currently known ({})",
-                host, actualClusterName, expectedClusterName);
+                            + "currently known ({})",
+                    host, actualClusterName, expectedClusterName);
         }
 
         public ListenableFuture<?> triggerOnUp(final Host host) {
@@ -1679,7 +1656,7 @@ public class Cluster implements Closeable {
                     return;
                 }
                 try {
-                    
+
                     // We don't want to use the public Host.isUp() as this would make us skip the rest for suspected hosts
                     if (host.state == Host.State.UP)
                         return;
@@ -1768,7 +1745,7 @@ public class Cluster implements Closeable {
         }
 
         public ListenableFuture<?> triggerOnDown(final Host host, final boolean isHostAddition, final boolean startReconnection) {
-            if(!isClosed()) {
+            if (!isClosed()) {
                 return executor.submit(new ExceptionCatchingRunnable() {
                     @Override
                     public void runMayThrow() throws InterruptedException, ExecutionException {
@@ -2123,7 +2100,7 @@ public class Cluster implements Closeable {
             PreparedStatement previous = preparedQueries.putIfAbsent(stmt.getPreparedId().id, stmt);
             if (previous != null) {
                 logger.warn("Re-preparing already prepared query {}. Please note that preparing the same query more than once is "
-                          + "generally an anti-pattern and will likely affect performance. Consider preparing the statement only once.", stmt.getQueryString());
+                        + "generally an anti-pattern and will likely affect performance. Consider preparing the statement only once.", stmt.getQueryString());
 
                 // The one object in the cache will get GCed once it's not referenced by the client anymore since we use a weak reference.
                 // So we need to make sure that the instance we do return to the user is the one that is in the cache.
@@ -2136,7 +2113,7 @@ public class Cluster implements Closeable {
          * @param reusedConnection an existing connection (from a reconnection attempt) that we want to
          *                         reuse to prepare the statements (might be null).
          * @return a connection that the rest of the initialization process can use (it will be made part
-         *         of a connection pool). Can be reusedConnection, or one that was open in the method.
+         * of a connection pool). Can be reusedConnection, or one that was open in the method.
          */
         private Connection prepareAllQueries(Host host, Connection reusedConnection) throws InterruptedException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
             if (preparedQueries.isEmpty())
@@ -2146,8 +2123,8 @@ public class Cluster implements Closeable {
             Connection connection = null;
             try {
                 connection = (reusedConnection == null)
-                    ? connectionFactory.open(host)
-                    : reusedConnection;
+                        ? connectionFactory.open(host)
+                        : reusedConnection;
 
                 try {
                     controlConnection.waitForSchemaAgreement();
@@ -2235,8 +2212,8 @@ public class Cluster implements Closeable {
         public void refreshSchemaAndSignal(final Connection connection, final DefaultResultSetFuture future, final ResultSet rs, final SchemaElement target, final String keyspace, final String name) {
             if (logger.isDebugEnabled())
                 logger.debug("Refreshing schema for {}{}",
-                    target == null ? "everything" : keyspace,
-                    (target == KEYSPACE) ? "" : "." + name + " (" + target + ")");
+                        target == null ? "everything" : keyspace,
+                        (target == KEYSPACE) ? "" : "." + name + " (" + target + ")");
 
             maybeRefreshSchemaAndSignal(connection, future, rs, target, keyspace, name);
         }
@@ -2289,13 +2266,13 @@ public class Cluster implements Closeable {
                 return;
             }
 
-            final ProtocolEvent event = ((Responses.Event)response).event;
+            final ProtocolEvent event = ((Responses.Event) response).event;
 
             logger.debug("Received event {}, scheduling delivery", response);
 
             switch (event.type) {
                 case TOPOLOGY_CHANGE:
-                    ProtocolEvent.TopologyChange tpc = (ProtocolEvent.TopologyChange)event;
+                    ProtocolEvent.TopologyChange tpc = (ProtocolEvent.TopologyChange) event;
                     InetSocketAddress tpAddr = translateAddress(tpc.node.getAddress());
                     Host.statesLogger.debug("[{}] received event {}", tpAddr, tpc.change);
                     switch (tpc.change) {
@@ -2311,7 +2288,7 @@ public class Cluster implements Closeable {
                     }
                     break;
                 case STATUS_CHANGE:
-                    ProtocolEvent.StatusChange stc = (ProtocolEvent.StatusChange)event;
+                    ProtocolEvent.StatusChange stc = (ProtocolEvent.StatusChange) event;
                     InetSocketAddress stAddr = translateAddress(stc.node.getAddress());
                     Host.statesLogger.debug("[{}] received event {}", stAddr, stc.status);
                     switch (stc.status) {
@@ -2327,7 +2304,7 @@ public class Cluster implements Closeable {
                     if (!configuration.getQueryOptions().isMetadataEnabled())
                         return;
 
-                    ProtocolEvent.SchemaChange scc = (ProtocolEvent.SchemaChange)event;
+                    ProtocolEvent.SchemaChange scc = (ProtocolEvent.SchemaChange) event;
                     switch (scc.change) {
                         case CREATED:
                         case UPDATED:
@@ -2338,7 +2315,7 @@ public class Cluster implements Closeable {
                             switch (scc.targetType) {
                                 case KEYSPACE:
                                     final KeyspaceMetadata removedKeyspace = manager.metadata.removeKeyspace(scc.targetKeyspace);
-                                    if(removedKeyspace != null) {
+                                    if (removedKeyspace != null) {
                                         executor.submit(new Runnable() {
                                             @Override
                                             public void run() {
@@ -2351,7 +2328,7 @@ public class Cluster implements Closeable {
                                     keyspace = manager.metadata.getKeyspaceInternal(scc.targetKeyspace);
                                     if (keyspace == null)
                                         logger.warn("Received a DROPPED notification for table {}.{}, but this keyspace is unknown in our metadata",
-                                            scc.targetKeyspace, scc.targetName);
+                                                scc.targetKeyspace, scc.targetName);
                                     else {
                                         final TableMetadata removedTable = keyspace.removeTable(scc.targetName);
                                         if (removedTable != null) {
@@ -2368,7 +2345,7 @@ public class Cluster implements Closeable {
                                     keyspace = manager.metadata.getKeyspaceInternal(scc.targetKeyspace);
                                     if (keyspace == null)
                                         logger.warn("Received a DROPPED notification for UDT {}.{}, but this keyspace is unknown in our metadata",
-                                            scc.targetKeyspace, scc.targetName);
+                                                scc.targetKeyspace, scc.targetName);
                                     else {
                                         final UserType removedType = keyspace.removeUserType(scc.targetName);
                                         if (removedType != null) {
@@ -2464,7 +2441,8 @@ public class Cluster implements Closeable {
         }
 
         private class CleanupIdleConnectionsTask implements Runnable {
-            @Override public void run() {
+            @Override
+            public void run() {
                 try {
                     long now = System.currentTimeMillis();
                     for (SessionManager session : sessions) {
@@ -2594,7 +2572,7 @@ public class Cluster implements Closeable {
                                 // If host already existed, retrieve it and check its state, if it's not up schedule a
                                 // hostUp event.
                                 Host existingHost = metadata.getHost(address);
-                                if(!existingHost.isUp())
+                                if (!existingHost.isUp())
                                     futures.add(schedule(hostUp(existingHost)));
                             }
                             break;
@@ -2733,7 +2711,7 @@ public class Cluster implements Closeable {
 
     /**
      * Periodically ensures that closed connections are properly terminated once they have no more pending requests.
-     *
+     * <p/>
      * This is normally done when the connection errors out, or when the last request is processed; this class acts as
      * a last-effort protection since unterminated connections can lead to deadlocks. If it terminates a connection,
      * this indicates a bug; warnings are logged so that this can be reported.

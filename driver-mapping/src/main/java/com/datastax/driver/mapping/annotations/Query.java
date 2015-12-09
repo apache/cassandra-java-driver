@@ -28,7 +28,7 @@ import java.lang.annotation.Target;
 public @interface Query {
     /**
      * The CQL query to use.
-     * <p>
+     * <p/>
      * In that query string, the parameter of the annotated method can be referenced using
      * name bind markers. For instance, the first parameter can be refered by {@code :arg0},
      * the second one by {@code :arg1}, ... Alternatively, if a parameter of the annonated

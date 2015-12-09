@@ -17,9 +17,7 @@ package com.datastax.driver.core.schemabuilder;
 
 import com.google.common.base.Optional;
 
-import static com.datastax.driver.core.schemabuilder.SchemaStatement.STATEMENT_START;
-import static com.datastax.driver.core.schemabuilder.SchemaStatement.validateNotEmpty;
-import static com.datastax.driver.core.schemabuilder.SchemaStatement.validateNotKeyWord;
+import static com.datastax.driver.core.schemabuilder.SchemaStatement.*;
 
 /**
  * A built CREATE INDEX statement.
@@ -53,7 +51,7 @@ public class CreateIndex implements StatementStart {
      * Specify the keyspace and table to create the index on.
      *
      * @param keyspaceName the keyspace name.
-     * @param tableName the table name.
+     * @param tableName    the table name.
      * @return a {@link CreateIndexOn} that will allow the specification of the column.
      */
     public CreateIndexOn onTable(String keyspaceName, String tableName) {
@@ -95,6 +93,7 @@ public class CreateIndex implements StatementStart {
 
         /**
          * Create an index on the keys of the given map column.
+         *
          * @param columnName the column name.
          * @return the final CREATE INDEX statement.
          */

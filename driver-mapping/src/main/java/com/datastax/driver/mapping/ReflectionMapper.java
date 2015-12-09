@@ -15,6 +15,10 @@
  */
 package com.datastax.driver.mapping;
 
+import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.core.DataType;
+import com.datastax.driver.core.UDTValue;
+
 import java.beans.IntrospectionException;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
@@ -24,10 +28,6 @@ import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import com.datastax.driver.core.ConsistencyLevel;
-import com.datastax.driver.core.DataType;
-import com.datastax.driver.core.UDTValue;
 
 /**
  * An {@link EntityMapper} implementation that use reflection to read and write fields
@@ -119,7 +119,7 @@ class ReflectionMapper<T> extends EntityMapper<T> {
                 case STRING:
                     return (value == null) ? null : value.toString();
                 case ORDINAL:
-                    return (value == null) ? null : ((Enum)value).ordinal();
+                    return (value == null) ? null : ((Enum) value).ordinal();
             }
             throw new AssertionError();
         }
@@ -132,7 +132,7 @@ class ReflectionMapper<T> extends EntityMapper<T> {
                     converted = fromString.get(value.toString().toLowerCase());
                     break;
                 case ORDINAL:
-                    converted = javaType.getEnumConstants()[(Integer)value];
+                    converted = javaType.getEnumConstants()[(Integer) value];
                     break;
             }
             super.setValue(entity, converted);
@@ -150,14 +150,14 @@ class ReflectionMapper<T> extends EntityMapper<T> {
         @Override
         public Object getValue(T entity) {
             @SuppressWarnings("unchecked")
-            U udtEntity = (U)super.getValue(entity);
+            U udtEntity = (U) super.getValue(entity);
             return udtEntity == null ? null : udtMapper.toUDT(udtEntity);
         }
 
         @Override
         public void setValue(Object entity, Object value) {
             assert value instanceof UDTValue;
-            UDTValue udtValue = (UDTValue)value;
+            UDTValue udtValue = (UDTValue) value;
             assert udtValue.getType().equals(udtMapper.getUserType());
 
             super.setValue(entity, udtMapper.toEntity((udtValue)));
@@ -176,7 +176,7 @@ class ReflectionMapper<T> extends EntityMapper<T> {
         @SuppressWarnings("unchecked")
         public Object getValue(T entity) {
             Object valueWithEntities = super.getValue(entity);
-            return (T)UDTMapper.convertEntitiesToUDTs(valueWithEntities, inferredCQLType);
+            return (T) UDTMapper.convertEntitiesToUDTs(valueWithEntities, inferredCQLType);
         }
 
         @Override
@@ -193,7 +193,7 @@ class ReflectionMapper<T> extends EntityMapper<T> {
         if (!(type instanceof Class))
             throw new IllegalArgumentException(String.format("Cannot map class %s for field %s", type, f.getName()));
 
-        return TypeMappings.getSimpleType((Class<?>)type, f.getName());
+        return TypeMappings.getSimpleType((Class<?>) type, f.getName());
     }
 
     private static class ReflectionFactory implements Factory {
@@ -202,7 +202,7 @@ class ReflectionMapper<T> extends EntityMapper<T> {
             return new ReflectionMapper<T>(entityClass, keyspace, table, writeConsistency, readConsistency);
         }
 
-        @SuppressWarnings({ "unchecked", "rawtypes" })
+        @SuppressWarnings({"unchecked", "rawtypes"})
         public <T> ColumnMapper<T> createColumnMapper(Class<T> entityClass, Field field, int position, MappingManager mappingManager, AtomicInteger columnCounter) {
             String fieldName = field.getName();
             try {
@@ -221,7 +221,7 @@ class ReflectionMapper<T> extends EntityMapper<T> {
                     InferredCQLType inferredCQLType = InferredCQLType.from(field, mappingManager);
                     if (inferredCQLType.containsMappedUDT) {
                         // We need a specialized mapper to convert UDT instances in the hierarchy.
-                        return (ColumnMapper<T>)new NestedUDTMapper(field, position, pd, inferredCQLType, columnCounter);
+                        return (ColumnMapper<T>) new NestedUDTMapper(field, position, pd, inferredCQLType, columnCounter);
                     } else {
                         // The default codecs will know how to handle the extracted datatype.
                         return new LiteralMapper<T>(field, inferredCQLType.dataType, position, pd, columnCounter);

@@ -15,6 +15,9 @@
  */
 package com.datastax.driver.core;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableList.Builder;
+
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
@@ -23,13 +26,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableList.Builder;
-
 import static org.mockito.Mockito.mock;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.*;
 
 /**
  * Base class for replication strategy tests. Currently only supports testing
@@ -68,7 +66,7 @@ public class AbstractReplicationStrategyTest {
             if (!(o instanceof HostMock))
                 return false;
 
-            return address.equals(((HostMock)o).address);
+            return address.equals(((HostMock) o).address);
         }
 
         @Override
@@ -102,7 +100,7 @@ public class AbstractReplicationStrategyTest {
      * Returns null if parameter host is not a mock
      */
     protected static HostMock asMock(Host host) {
-        return (host instanceof HostMock ? (HostMock)host : null);
+        return (host instanceof HostMock ? (HostMock) host : null);
     }
 
     /**
@@ -158,7 +156,7 @@ public class AbstractReplicationStrategyTest {
     protected static InetSocketAddress socketAddress(String address) {
         try {
             return new InetSocketAddress(InetAddress.getByName(address), 9042);
-        } catch(UnknownHostException ex) {
+        } catch (UnknownHostException ex) {
             throw new RuntimeException(ex);
         }
     }

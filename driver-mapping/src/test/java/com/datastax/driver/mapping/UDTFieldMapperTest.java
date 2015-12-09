@@ -15,20 +15,18 @@
  */
 package com.datastax.driver.mapping;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import com.google.common.collect.ImmutableMap;
-import org.testng.annotations.Test;
-
 import com.datastax.driver.core.CCMBridge;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Session;
-import com.datastax.driver.core.TestUtils;
 import com.datastax.driver.core.utils.CassandraVersion;
 import com.datastax.driver.mapping.annotations.*;
+import com.google.common.collect.ImmutableMap;
+import org.testng.annotations.Test;
 
-@CassandraVersion(major=2.1)
+import java.util.HashMap;
+import java.util.Map;
+
+@CassandraVersion(major = 2.1)
 public class UDTFieldMapperTest {
 
     @Test(groups = "short")
@@ -42,13 +40,13 @@ public class UDTFieldMapperTest {
             cluster = Cluster.builder().addContactPoint(CCMBridge.ipOfNode(1)).build();
             Session session1 = cluster.connect();
             session1.execute("create schema if not exists java_509 " +
-                "with replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };");
+                    "with replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };");
             session1.execute("create type java_509.my_tuple (" +
-                "type text, " +
-                "value text);");
+                    "type text, " +
+                    "value text);");
             session1.execute("create table java_509.my_hash (" +
-                "key int primary key, " +
-                "properties map<text, frozen<java_509.my_tuple>>);");
+                    "key int primary key, " +
+                    "properties map<text, frozen<java_509.my_tuple>>);");
             cluster.close();
 
             // Create entities with another connection
@@ -56,20 +54,20 @@ public class UDTFieldMapperTest {
             Session session2 = cluster.newSession();
             Mapper<MyHashWithKeyspace> hashMapper = new MappingManager(session2).mapper(MyHashWithKeyspace.class);
             hashMapper.save(new MyHashWithKeyspace(
-                1,
-                ImmutableMap.of("key-1", new MyTupleWithKeyspace("first-half-1", "second-half-1"))));
+                    1,
+                    ImmutableMap.of("key-1", new MyTupleWithKeyspace("first-half-1", "second-half-1"))));
             hashMapper.save(new MyHashWithKeyspace(
-                2,
-                ImmutableMap.of("key-2", new MyTupleWithKeyspace("first-half-2", null))));
+                    2,
+                    ImmutableMap.of("key-2", new MyTupleWithKeyspace("first-half-2", null))));
             hashMapper.save(new MyHashWithKeyspace(
-                3,
-                ImmutableMap.of("key-3", new MyTupleWithKeyspace(null, "second-half-3"))));
+                    3,
+                    ImmutableMap.of("key-3", new MyTupleWithKeyspace(null, "second-half-3"))));
             hashMapper.save(new MyHashWithKeyspace(
-                4,
-                new HashMap<String, MyTupleWithKeyspace>()));
+                    4,
+                    new HashMap<String, MyTupleWithKeyspace>()));
             hashMapper.save(new MyHashWithKeyspace(
-                5,
-                null));
+                    5,
+                    null));
         } finally {
             if (cluster != null)
                 cluster.close();
@@ -89,14 +87,14 @@ public class UDTFieldMapperTest {
             cluster = Cluster.builder().addContactPoint(CCMBridge.ipOfNode(1)).build();
             Session session1 = cluster.connect();
             session1.execute("create schema if not exists java_509 " +
-                "with replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };");
+                    "with replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };");
             session1.execute("use java_509");
             session1.execute("create type my_tuple (" +
-                "type text, " +
-                "value text);");
+                    "type text, " +
+                    "value text);");
             session1.execute("create table my_hash (" +
-                "key int primary key, " +
-                "properties map<text, frozen<my_tuple>>);");
+                    "key int primary key, " +
+                    "properties map<text, frozen<my_tuple>>);");
             cluster.close();
 
             // Create entities with another connection
@@ -106,20 +104,20 @@ public class UDTFieldMapperTest {
             session2.execute("use java_509");
             Mapper<MyHash> hashMapper = new MappingManager(session2).mapper(MyHash.class);
             hashMapper.save(new MyHash(
-                1,
-                ImmutableMap.of("key-1", new MyTuple("first-half-1", "second-half-1"))));
+                    1,
+                    ImmutableMap.of("key-1", new MyTuple("first-half-1", "second-half-1"))));
             hashMapper.save(new MyHash(
-                2,
-                ImmutableMap.of("key-2", new MyTuple("first-half-2", null))));
+                    2,
+                    ImmutableMap.of("key-2", new MyTuple("first-half-2", null))));
             hashMapper.save(new MyHash(
-                3,
-                ImmutableMap.of("key-3", new MyTuple(null, "second-half-3"))));
+                    3,
+                    ImmutableMap.of("key-3", new MyTuple(null, "second-half-3"))));
             hashMapper.save(new MyHash(
-                4,
-                new HashMap<String, MyTuple>()));
+                    4,
+                    new HashMap<String, MyTuple>()));
             hashMapper.save(new MyHash(
-                5,
-                null));
+                    5,
+                    null));
         } finally {
             if (cluster != null)
                 cluster.close();

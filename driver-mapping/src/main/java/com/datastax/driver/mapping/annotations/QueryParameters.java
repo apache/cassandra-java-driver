@@ -15,17 +15,17 @@
  */
 package com.datastax.driver.mapping.annotations;
 
+import com.datastax.driver.core.Configuration;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import com.datastax.driver.core.Configuration;
-
 /**
  * Query parameters to use in the (generated) implementation of a method of an {@link Accessor}
  * interface.
- * <p>
+ * <p/>
  * All the parameters of this annotation are optional, and when not provided default to whatever
  * default the {@code Cluster} instance used underneath are (those set in
  * {@link Configuration#getQueryOptions}).

@@ -15,10 +15,10 @@
  */
 package com.datastax.driver.core.exceptions;
 
-import java.net.InetSocketAddress;
-
 import com.datastax.driver.core.ConsistencyLevel;
 import com.datastax.driver.core.WriteType;
+
+import java.net.InetSocketAddress;
 
 /**
  * A Cassandra timeout during a write query.
@@ -39,11 +39,11 @@ public class WriteTimeoutException extends QueryTimeoutException {
 
     public WriteTimeoutException(InetSocketAddress address, ConsistencyLevel consistency, WriteType writeType, int received, int required) {
         super(
-            address,
-            String.format("Cassandra timeout during write query at consistency %s (%d replica were required but only %d acknowledged the write)", consistency, required, received),
-            consistency,
-            received,
-            required);
+                address,
+                String.format("Cassandra timeout during write query at consistency %s (%d replica were required but only %d acknowledged the write)", consistency, required, received),
+                consistency,
+                received,
+                required);
         this.writeType = writeType;
     }
 
@@ -64,26 +64,26 @@ public class WriteTimeoutException extends QueryTimeoutException {
     @Override
     public DriverException copy() {
         return new WriteTimeoutException(
-            getAddress(),
-            getMessage(),
-            this,
-            getConsistencyLevel(),
-            getWriteType(),
-            getReceivedAcknowledgements(),
-            getRequiredAcknowledgements()
+                getAddress(),
+                getMessage(),
+                this,
+                getConsistencyLevel(),
+                getWriteType(),
+                getReceivedAcknowledgements(),
+                getRequiredAcknowledgements()
         );
     }
 
     /**
      * Create a copy of this exception with a nicer stack trace, and including the coordinator
      * address that caused this exception to be raised.
-     * <p>
+     * <p/>
      * This method is mainly intended for internal use by the driver and exists mainly because:
      * <ol>
-     *   <li>the original exception was decoded from a response frame
-     *   and at that time, the coordinator address was not available; and</li>
-     *   <li>the newly-created exception will refer to the current thread in its stack trace,
-     *   which generally yields a more user-friendly stack trace that the original one.</li>
+     * <li>the original exception was decoded from a response frame
+     * and at that time, the coordinator address was not available; and</li>
+     * <li>the newly-created exception will refer to the current thread in its stack trace,
+     * which generally yields a more user-friendly stack trace that the original one.</li>
      * </ol>
      *
      * @param address The full address of the host that caused this exception to be thrown.
@@ -91,13 +91,13 @@ public class WriteTimeoutException extends QueryTimeoutException {
      */
     public WriteTimeoutException copy(InetSocketAddress address) {
         return new WriteTimeoutException(
-            address,
-            getMessage(),
-            this,
-            getConsistencyLevel(),
-            getWriteType(),
-            getReceivedAcknowledgements(),
-            getRequiredAcknowledgements()
+                address,
+                getMessage(),
+                this,
+                getConsistencyLevel(),
+                getWriteType(),
+                getReceivedAcknowledgements(),
+                getRequiredAcknowledgements()
         );
     }
 

@@ -32,7 +32,7 @@ public class DataTypeAssert extends AbstractAssert<DataTypeAssert, DataType> {
 
     public DataTypeAssert isUserType(String keyspaceName, String userTypeName) {
         assertThat(actual).isInstanceOf(UserType.class);
-        UserType userType = (UserType)this.actual;
+        UserType userType = (UserType) this.actual;
         assertThat(userType.getKeyspace()).isEqualTo(keyspaceName);
         assertThat(userType.getTypeName()).isEqualTo(userTypeName);
         return this;

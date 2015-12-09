@@ -15,15 +15,14 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.exceptions.InvalidTypeException;
+import com.google.common.reflect.TypeToken;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
-
-import com.google.common.reflect.TypeToken;
-
-import com.datastax.driver.core.exceptions.InvalidTypeException;
 
 /**
  * Collection of (typed) CQL values that can be retrieved by index (starting a 0).
@@ -35,9 +34,8 @@ public interface GettableByIndexData {
      *
      * @param i the index ({@code 0 <= i < size()}) of the value to check.
      * @return whether the {@code i}th value is NULL.
-     *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for
-     * this object.
+     *                                   this object.
      */
     public boolean isNull(int i);
 
@@ -47,9 +45,8 @@ public interface GettableByIndexData {
      * @param i the index ({@code 0 <= i < size()}) to retrieve.
      * @return the boolean value of the {@code i}th element. If the
      * value is NULL, {@code false} is returned.
-     *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not of type BOOLEAN.
+     * @throws InvalidTypeException      if value {@code i} is not of type BOOLEAN.
      */
     public boolean getBool(int i);
 
@@ -59,9 +56,8 @@ public interface GettableByIndexData {
      * @param i the index ({@code 0 <= i < size()}) to retrieve.
      * @return the value of the {@code i}th element as an integer. If the
      * value is NULL, {@code 0} is returned.
-     *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not of type INT.
+     * @throws InvalidTypeException      if value {@code i} is not of type INT.
      */
     public int getInt(int i);
 
@@ -71,9 +67,8 @@ public interface GettableByIndexData {
      * @param i the index ({@code 0 <= i < size()}) to retrieve.
      * @return the value of the {@code i}th element as a long. If the
      * value is NULL, {@code 0L} is returned.
-     *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not of type BIGINT or COUNTER.
+     * @throws InvalidTypeException      if value {@code i} is not of type BIGINT or COUNTER.
      */
     public long getLong(int i);
 
@@ -83,9 +78,8 @@ public interface GettableByIndexData {
      * @param i the index ({@code 0 <= i < size()}) to retrieve.
      * @return the value of the {@code i}th element as a data. If the
      * value is NULL, {@code null} is returned.
-     *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not of type TIMESTAMP.
+     * @throws InvalidTypeException      if value {@code i} is not of type TIMESTAMP.
      */
     public Date getDate(int i);
 
@@ -95,9 +89,8 @@ public interface GettableByIndexData {
      * @param i the index ({@code 0 <= i < size()}) to retrieve.
      * @return the value of the {@code i}th element as a float. If the
      * value is NULL, {@code 0.0f} is returned.
-     *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not of type FLOAT.
+     * @throws InvalidTypeException      if value {@code i} is not of type FLOAT.
      */
     public float getFloat(int i);
 
@@ -107,15 +100,14 @@ public interface GettableByIndexData {
      * @param i the index ({@code 0 <= i < size()}) to retrieve.
      * @return the value of the {@code i}th element as a double. If the
      * value is NULL, {@code 0.0} is returned.
-     *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not of type DOUBLE.
+     * @throws InvalidTypeException      if value {@code i} is not of type DOUBLE.
      */
     public double getDouble(int i);
 
     /**
      * Returns the {@code i}th value as a ByteBuffer.
-     *
+     * <p/>
      * Note: this method always return the bytes composing the value, even if
      * the column is not of type BLOB. That is, this method never throw an
      * InvalidTypeException. However, if the type is not BLOB, it is up to the
@@ -124,23 +116,21 @@ public interface GettableByIndexData {
      * @param i the index ({@code 0 <= i < size()}) to retrieve.
      * @return the value of the {@code i}th element as a ByteBuffer. If the
      * value is NULL, {@code null} is returned.
-     *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
      */
     public ByteBuffer getBytesUnsafe(int i);
 
     /**
      * Returns the {@code i}th value as a byte array.
-     * <p>
+     * <p/>
      * Note that this method validate that the column is of type BLOB. If you want to retrieve
      * the bytes for any type, use {@link #getBytesUnsafe(int)} instead.
      *
      * @param i the index ({@code 0 <= i < size()}) to retrieve.
      * @return the value of the {@code i}th element as a byte array. If the
      * value is NULL, {@code null} is returned.
-     *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} type is not of type BLOB.
+     * @throws InvalidTypeException      if value {@code i} type is not of type BLOB.
      */
     public ByteBuffer getBytes(int i);
 
@@ -150,10 +140,9 @@ public interface GettableByIndexData {
      * @param i the index ({@code 0 <= i < size()}) to retrieve.
      * @return the value of the {@code i}th element as a string. If the
      * value is NULL, {@code null} is returned.
-     *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} type is none of:
-     * VARCHAR, TEXT or ASCII.
+     * @throws InvalidTypeException      if value {@code i} type is none of:
+     *                                   VARCHAR, TEXT or ASCII.
      */
     public String getString(int i);
 
@@ -163,9 +152,8 @@ public interface GettableByIndexData {
      * @param i the index ({@code 0 <= i < size()}) to retrieve.
      * @return the value of the {@code i}th element as a variable
      * length integer. If the value is NULL, {@code null} is returned.
-     *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not of type VARINT.
+     * @throws InvalidTypeException      if value {@code i} is not of type VARINT.
      */
     public BigInteger getVarint(int i);
 
@@ -175,9 +163,8 @@ public interface GettableByIndexData {
      * @param i the index ({@code 0 <= i < size()}) to retrieve.
      * @return the value of the {@code i}th element as a variable
      * length decimal. If the value is NULL, {@code null} is returned.
-     *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not of type DECIMAL.
+     * @throws InvalidTypeException      if value {@code i} is not of type DECIMAL.
      */
     public BigDecimal getDecimal(int i);
 
@@ -187,10 +174,9 @@ public interface GettableByIndexData {
      * @param i the index ({@code 0 <= i < size()}) to retrieve.
      * @return the value of the {@code i}th element as a UUID.
      * If the value is NULL, {@code null} is returned.
-     *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not of type UUID
-     * or TIMEUUID.
+     * @throws InvalidTypeException      if value {@code i} is not of type UUID
+     *                                   or TIMEUUID.
      */
     public UUID getUUID(int i);
 
@@ -200,133 +186,126 @@ public interface GettableByIndexData {
      * @param i the index ({@code 0 <= i < size()}) to retrieve.
      * @return the value of the {@code i}th element as an InetAddress.
      * If the value is NULL, {@code null} is returned.
-     *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not of type INET.
+     * @throws InvalidTypeException      if value {@code i} is not of type INET.
      */
     public InetAddress getInet(int i);
 
     /**
      * Returns the {@code i}th value as a list.
-     * <p>
+     * <p/>
      * If the type of the elements is generic, use {@link #getList(int, TypeToken)}.
      *
-     * @param i the index ({@code 0 <= i < size()}) to retrieve.
+     * @param i             the index ({@code 0 <= i < size()}) to retrieve.
      * @param elementsClass the class for the elements of the list to retrieve.
      * @return the value of the {@code i}th element as a list of
      * {@code T} objects. If the value is NULL, an empty list is
      * returned (note that Cassandra makes no difference between an empty list
      * and column of type list that is not set). The returned list is immutable.
-     *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not a list or if its
-     * elements are not of class {@code T}.
+     * @throws InvalidTypeException      if value {@code i} is not a list or if its
+     *                                   elements are not of class {@code T}.
      */
     public <T> List<T> getList(int i, Class<T> elementsClass);
 
     /**
      * Returns the {@code i}th value as a list.
-     * <p>
+     * <p/>
      * Use this variant with nested collections, which produce a generic element type:
      * <pre>
      * {@code List<List<String>> l = row.getList(1, new TypeToken<List<String>>() {});}
      * </pre>
      *
-     * @param i the index ({@code 0 <= i < size()}) to retrieve.
+     * @param i            the index ({@code 0 <= i < size()}) to retrieve.
      * @param elementsType the type of the elements of the list to retrieve.
      * @return the value of the {@code i}th element as a list of
      * {@code T} objects. If the value is NULL, an empty list is
      * returned (note that Cassandra makes no difference between an empty list
      * and column of type list that is not set). The returned list is immutable.
-     *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not a list or if its
-     * elements are not of class {@code T}.
+     * @throws InvalidTypeException      if value {@code i} is not a list or if its
+     *                                   elements are not of class {@code T}.
      */
     public <T> List<T> getList(int i, TypeToken<T> elementsType);
 
     /**
      * Returns the {@code i}th value as a set.
-     * <p>
+     * <p/>
      * If the type of the elements is generic, use {@link #getSet(int, TypeToken)}.
      *
-     * @param i the index ({@code 0 <= i < size()}) to retrieve.
+     * @param i             the index ({@code 0 <= i < size()}) to retrieve.
      * @param elementsClass the class for the elements of the set to retrieve.
      * @return the value of the {@code i}th element as a set of
      * {@code T} objects. If the value is NULL, an empty set is
      * returned (note that Cassandra makes no difference between an empty set
      * and column of type set that is not set). The returned set is immutable.
-     *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not a set or if its
-     * elements are not of class {@code T}.
+     * @throws InvalidTypeException      if value {@code i} is not a set or if its
+     *                                   elements are not of class {@code T}.
      */
     public <T> Set<T> getSet(int i, Class<T> elementsClass);
 
     /**
      * Returns the {@code i}th value as a set.
-     * <p>
+     * <p/>
      * Use this variant with nested collections, which produce a generic element type:
      * <pre>
      * {@code Set<List<String>> l = row.getSet(1, new TypeToken<List<String>>() {});}
      * </pre>
      *
-     * @param i the index ({@code 0 <= i < size()}) to retrieve.
+     * @param i            the index ({@code 0 <= i < size()}) to retrieve.
      * @param elementsType the type for the elements of the set to retrieve.
      * @return the value of the {@code i}th element as a set of
      * {@code T} objects. If the value is NULL, an empty set is
      * returned (note that Cassandra makes no difference between an empty set
      * and column of type set that is not set). The returned set is immutable.
-     *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not a set or if its
-     * elements are not of class {@code T}.
+     * @throws InvalidTypeException      if value {@code i} is not a set or if its
+     *                                   elements are not of class {@code T}.
      */
     public <T> Set<T> getSet(int i, TypeToken<T> elementsType);
 
     /**
      * Returns the {@code i}th value as a map.
-     * <p>
+     * <p/>
      * If the type of the keys and/or values is generic, use {@link #getMap(int, TypeToken, TypeToken)}.
      *
-     * @param i the index ({@code 0 <= i < size()}) to retrieve.
-     * @param keysClass the class for the keys of the map to retrieve.
+     * @param i           the index ({@code 0 <= i < size()}) to retrieve.
+     * @param keysClass   the class for the keys of the map to retrieve.
      * @param valuesClass the class for the values of the map to retrieve.
      * @return the value of the {@code i}th element as a map of
      * {@code K} to {@code V} objects. If the value is NULL,
      * an empty map is returned (note that Cassandra makes no difference
      * between an empty map and column of type map that is not set). The
      * returned map is immutable.
-     *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not a map, if its
-     * keys are not of class {@code K} or if its values are not of
-     * class {@code V}.
+     * @throws InvalidTypeException      if value {@code i} is not a map, if its
+     *                                   keys are not of class {@code K} or if its values are not of
+     *                                   class {@code V}.
      */
     public <K, V> Map<K, V> getMap(int i, Class<K> keysClass, Class<V> valuesClass);
 
 
     /**
      * Returns the {@code i}th value as a map.
-     * <p>
+     * <p/>
      * Use this variant with nested collections, which produce a generic element type:
      * <pre>
      * {@code Map<Int, List<String>> l = row.getMap(1, TypeToken.of(Integer.class), new TypeToken<List<String>>() {});}
      * </pre>
      *
-     * @param i the index ({@code 0 <= i < size()}) to retrieve.
-     * @param keysType the type for the keys of the map to retrieve.
+     * @param i          the index ({@code 0 <= i < size()}) to retrieve.
+     * @param keysType   the type for the keys of the map to retrieve.
      * @param valuesType the type for the values of the map to retrieve.
      * @return the value of the {@code i}th element as a map of
      * {@code K} to {@code V} objects. If the value is NULL,
      * an empty map is returned (note that Cassandra makes no difference
      * between an empty map and column of type map that is not set). The
      * returned map is immutable.
-     *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not a map, if its
-     * keys are not of class {@code K} or if its values are not of
-     * class {@code V}.
+     * @throws InvalidTypeException      if value {@code i} is not a map, if its
+     *                                   keys are not of class {@code K} or if its values are not of
+     *                                   class {@code V}.
      */
     public <K, V> Map<K, V> getMap(int i, TypeToken<K> keysType, TypeToken<V> valuesType);
 
@@ -336,9 +315,8 @@ public interface GettableByIndexData {
      * @param i the index ({@code 0 <= i < size()}) to retrieve.
      * @return the value of the {@code i}th element as a UDT value. If the value is NULL,
      * then {@code null} will be returned.
-     *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not a UDT value.
+     * @throws InvalidTypeException      if value {@code i} is not a UDT value.
      */
     public UDTValue getUDTValue(int i);
 
@@ -348,9 +326,8 @@ public interface GettableByIndexData {
      * @param i the index ({@code 0 <= i < size()}) to retrieve.
      * @return the value of the {@code i}th element as a tuple value. If the value is NULL,
      * then {@code null} will be returned.
-     *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     * @throws InvalidTypeException if value {@code i} is not a tuple value.
+     * @throws InvalidTypeException      if value {@code i} is not a tuple value.
      */
     public TupleValue getTupleValue(int i);
 
@@ -361,7 +338,6 @@ public interface GettableByIndexData {
      * @return the value of the {@code i}th value as the Java type matching its CQL type.
      * If the value is NULL and is a simple type, UDT or tuple, {@code null} is returned.
      * If it is NULL and is a collection type, an empty (immutable) collection is returned.
-     *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
      */
     public Object getObject(int i);

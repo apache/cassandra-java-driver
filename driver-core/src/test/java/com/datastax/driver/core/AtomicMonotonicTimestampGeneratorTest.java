@@ -15,19 +15,19 @@
  */
 package com.datastax.driver.core;
 
-import java.util.List;
-import java.util.SortedSet;
-import java.util.concurrent.ConcurrentSkipListSet;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import org.testng.annotations.Test;
+
+import java.util.List;
+import java.util.SortedSet;
+import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
@@ -49,13 +49,13 @@ public class AtomicMonotonicTimestampGeneratorTest {
         List<ListenableFuture<?>> futures = Lists.newArrayListWithExpectedSize(testThreadsCount);
         for (int i = 0; i < testThreadsCount; i++) {
             futures.add(executor.submit(
-                                new Runnable() {
-                                    @Override
-                                    public void run() {
-                                        for (int i = 0; i < 1000 / testThreadsCount; i++)
-                                            allTimestamps.add(generator.next());
-                                    }
-                                }));
+                    new Runnable() {
+                        @Override
+                        public void run() {
+                            for (int i = 0; i < 1000 / testThreadsCount; i++)
+                                allTimestamps.add(generator.next());
+                        }
+                    }));
         }
         executor.shutdown();
         executor.awaitTermination(1, TimeUnit.SECONDS);
@@ -65,7 +65,7 @@ public class AtomicMonotonicTimestampGeneratorTest {
         } catch (ExecutionException e) {
             Throwable cause = e.getCause();
             if (cause instanceof AssertionError)
-                throw (AssertionError)cause;
+                throw (AssertionError) cause;
             else
                 fail("Error in a test thread", cause);
         }

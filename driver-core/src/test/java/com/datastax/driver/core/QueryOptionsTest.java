@@ -15,13 +15,14 @@
  */
 package com.datastax.driver.core;
 
+import com.google.common.collect.Lists;
+import org.scassandra.http.client.PreparedStatementPreparation;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-
-import com.google.common.collect.Lists;
-import org.scassandra.Scassandra;
-import org.scassandra.http.client.PreparedStatementPreparation;
-import org.testng.annotations.*;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.TestUtils.nonQuietClusterCloseOptions;
@@ -46,11 +47,11 @@ public class QueryOptionsTest {
         queryOptions = new QueryOptions();
         loadBalancingPolicy = new SortingLoadBalancingPolicy();
         cluster = Cluster.builder()
-            .addContactPoint(CCMBridge.ipOfNode(2))
-            .withLoadBalancingPolicy(loadBalancingPolicy)
-            .withQueryOptions(queryOptions)
-            .withNettyOptions(nonQuietClusterCloseOptions)
-            .build();
+                .addContactPoint(CCMBridge.ipOfNode(2))
+                .withLoadBalancingPolicy(loadBalancingPolicy)
+                .withQueryOptions(queryOptions)
+                .withNettyOptions(nonQuietClusterCloseOptions)
+                .build();
 
         session = cluster.connect();
 

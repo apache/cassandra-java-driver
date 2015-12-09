@@ -15,10 +15,10 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.utils.Bytes;
+
 import java.nio.ByteBuffer;
 import java.util.List;
-
-import com.datastax.driver.core.utils.Bytes;
 
 /**
  * Basic information on the execution of a query.
@@ -64,7 +64,7 @@ public class ExecutionInfo {
 
     /**
      * The list of tried hosts for this query.
-     * <p>
+     * <p/>
      * In general, this will be a singleton list with the host that coordinated
      * that query. However:
      * <ul>
@@ -76,7 +76,7 @@ public class ExecutionInfo {
      * <li>if {@link com.datastax.driver.core.policies.SpeculativeExecutionPolicy speculative executions}
      * are enabled, other hosts might have been tried speculatively as well.</li>
      * </ul>
-     * <p>
+     * <p/>
      * If you are only interested in fetching the final (and often only) node
      * coordinating the query, {@link #getQueriedHost} provides a shortcut to
      * fetch the last element of the list returned by this method.
@@ -89,7 +89,7 @@ public class ExecutionInfo {
 
     /**
      * Return the Cassandra host that coordinated this query.
-     * <p>
+     * <p/>
      * This is a shortcut for {@code getTriedHosts().get(getTriedHosts().size())}.
      *
      * @return return the Cassandra host that coordinated this query.
@@ -103,7 +103,7 @@ public class ExecutionInfo {
      * due to the {@link com.datastax.driver.core.policies.RetryPolicy}, this
      * return the biggest consistency level that has been actually achieved by
      * the query.
-     * <p>
+     * <p/>
      * Note that the default {@code RetryPolicy}
      * ({@link com.datastax.driver.core.policies.DefaultRetryPolicy})
      * will never allow a query to be successful without achieving the
@@ -133,12 +133,11 @@ public class ExecutionInfo {
 
     /**
      * The paging state of the query.
-     *
+     * <p/>
      * This object represents the next page to be fetched if this query is
      * multi page. It can be saved and reused later on the same statement.
      *
      * @return the paging state or null if there is no next page.
-     *
      * @see Statement#setPagingState(PagingState)
      */
     public PagingState getPagingState() {
@@ -149,12 +148,11 @@ public class ExecutionInfo {
 
     /**
      * Returns the "raw" paging state of the query.
-     *
+     * <p/>
      * Contrary to {@link #getPagingState()}, there will be no validation when
      * this is later reinjected into a statement.
      *
      * @return the paging state or null if there is no next page.
-     *
      * @see Statement#setPagingStateUnsafe(byte[])
      */
     public byte[] getPagingStateUnsafe() {
@@ -165,15 +163,15 @@ public class ExecutionInfo {
 
     /**
      * Whether the cluster had reached schema agreement after the execution of this query.
-     *
+     * <p/>
      * After a successful schema-altering query (ex: creating a table), the driver
      * will check if the cluster's nodes agree on the new schema version. If not,
      * it will keep retrying for a given delay (configurable via
      * {@link Cluster.Builder#withMaxSchemaAgreementWaitSeconds(int)}).
-     * <p>
+     * <p/>
      * If this method returns {@code false}, clients can call {@link Metadata#checkSchemaAgreement()}
      * later to perform the check manually.
-     * <p>
+     * <p/>
      * Note that the schema agreement check is only performed for schema-altering queries
      * For other query types, this method will always return {@code true}.
      *

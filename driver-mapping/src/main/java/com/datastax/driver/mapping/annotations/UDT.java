@@ -32,6 +32,7 @@ public @interface UDT {
      * @return the name of the keyspace.
      */
     String keyspace() default "";
+
     /**
      * The name of the type.
      *
@@ -45,6 +46,7 @@ public @interface UDT {
      * @return whether the keyspace name is a case sensitive one.
      */
     boolean caseSensitiveKeyspace() default false;
+
     /**
      * Whether the type name is a case sensitive one.
      *

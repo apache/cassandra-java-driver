@@ -15,20 +15,17 @@
  */
 package com.datastax.driver.core;
 
+import org.testng.annotations.Test;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import org.testng.annotations.Test;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
 public class PoolingOptionsIntegrationTest extends CCMBridge.PerClassSingleNodeCluster {
     @Override
@@ -50,14 +47,14 @@ public class PoolingOptionsIntegrationTest extends CCMBridge.PerClassSingleNodeC
     @Test(groups = "short")
     public void should_be_able_to_use_custom_initialization_executor() {
         ThreadPoolExecutor executor = spy(new ThreadPoolExecutor(1, 1, 60, TimeUnit.SECONDS,
-            new LinkedBlockingQueue<Runnable>()));
+                new LinkedBlockingQueue<Runnable>()));
 
         PoolingOptions poolingOptions = new PoolingOptions();
         poolingOptions.setInitializationExecutor(executor);
 
         Cluster cluster = Cluster.builder()
-            .addContactPointsWithPorts(Collections.singletonList(hostAddress))
-            .withPoolingOptions(poolingOptions).build();
+                .addContactPointsWithPorts(Collections.singletonList(hostAddress))
+                .withPoolingOptions(poolingOptions).build();
         try {
             cluster.init();
             // Ensure executor used.
@@ -73,7 +70,7 @@ public class PoolingOptionsIntegrationTest extends CCMBridge.PerClassSingleNodeC
 
             // Expect core connections + control connection.
             assertThat(cluster.getMetrics().getOpenConnections().getValue()).isEqualTo(
-                TestUtils.numberOfLocalCoreConnections(cluster) + 1);
+                    TestUtils.numberOfLocalCoreConnections(cluster) + 1);
 
             reset();
 

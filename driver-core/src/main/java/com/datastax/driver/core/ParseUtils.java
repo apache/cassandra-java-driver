@@ -20,13 +20,14 @@ package com.datastax.driver.core;
  */
 abstract class ParseUtils {
 
-    private ParseUtils() {}
+    private ParseUtils() {
+    }
 
     /**
      * Returns the index of the first character in toParse from idx that is not a "space".
      *
      * @param toParse the string to skip space on.
-     * @param idx the index to start skipping space from.
+     * @param idx     the index to start skipping space from.
      * @return the index of the first character in toParse from idx that is not a "space.
      */
     public static int skipSpaces(String toParse, int idx) {
@@ -40,11 +41,10 @@ abstract class ParseUtils {
      * index of the first character after this value.
      *
      * @param toParse the string to skip a value form.
-     * @param idx the index to start parsing a value from.
+     * @param idx     the index to start parsing a value from.
      * @return the index ending the CQL value starting at {@code idx}.
-     *
      * @throws IllegalArgumentException if idx doesn't point to the start of a valid CQL
-     * value.
+     *                                  value.
      */
     public static int skipCQLValue(String toParse, int idx) {
         if (idx >= toParse.length())
@@ -116,11 +116,10 @@ abstract class ParseUtils {
      * index of the first character after this identifier.
      *
      * @param toParse the string to skip an identifier from.
-     * @param idx the index to start parsing an identifier from.
+     * @param idx     the index to start parsing an identifier from.
      * @return the index ending the CQL identifier starting at {@code idx}.
-     *
      * @throws IllegalArgumentException if idx doesn't point to the start of a valid CQL
-     * identifier.
+     *                                  identifier.
      */
     public static int skipCQLId(String toParse, int idx) {
         if (idx >= toParse.length())
@@ -152,8 +151,8 @@ abstract class ParseUtils {
     // [0..9a..zA..Z-+._&]
     public static boolean isIdentifierChar(int c) {
         return (c >= '0' && c <= '9')
-            || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
-            || c == '-' || c == '+' || c == '.' || c == '_' || c == '&';
+                || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
+                || c == '-' || c == '+' || c == '.' || c == '_' || c == '&';
     }
 
     // [ \t\n]

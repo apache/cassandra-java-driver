@@ -41,7 +41,7 @@ public class SimpleStatement extends RegularStatement {
 
     /**
      * Creates a new {@code SimpleStatement} with the provided query string and values.
-     * <p>
+     * <p/>
      * This version of SimpleStatement is useful when you do not want to execute a
      * query only once (and thus do not want to resort to prepared statement), but
      * do not want to convert all column values to string (typically, if you have blob
@@ -60,11 +60,11 @@ public class SimpleStatement extends RegularStatement {
      * </pre>
      * except that the former version:
      * <ul>
-     *   <li>Requires only one round-trip to a Cassandra node.</li>
-     *   <li>Does not left any prepared statement stored in memory (neither client or
-     *   server side) once it has been executed.</li>
+     * <li>Requires only one round-trip to a Cassandra node.</li>
+     * <li>Does not left any prepared statement stored in memory (neither client or
+     * server side) once it has been executed.</li>
      * </ul>
-     * <p>
+     * <p/>
      * Note that the type of the {@code values} provided to this method will
      * not be validated by the driver as is done by {@link BoundStatement#bind} since
      * {@code query} is not parsed (and hence the driver cannot know what those value
@@ -75,7 +75,7 @@ public class SimpleStatement extends RegularStatement {
      * thrown by this constructor however if one of the value does not correspond to
      * any CQL3 type (for instance, if it is a custom class).
      *
-     * @param query the query string.
+     * @param query  the query string.
      * @param values values required for the execution of {@code query}.
      * @throws IllegalArgumentException if the number of values is greater than 65535.
      */
@@ -92,7 +92,7 @@ public class SimpleStatement extends RegularStatement {
             Object value = values[i];
             try {
                 if (value instanceof Token)
-                    value = ((Token)value).getValue();
+                    value = ((Token) value).getValue();
                 serializedValues[i] = DataType.serializeValue(value, protocolVersion);
             } catch (IllegalArgumentException e) {
                 // Catch and rethrow to provide a more helpful error message (one that include which value is bad)
@@ -131,14 +131,13 @@ public class SimpleStatement extends RegularStatement {
     public boolean hasValues() {
         return values != null && values.length > 0;
     }
-    
+
     /**
      * Returns the {@code i}th value as the Java type matching its CQL type.
      *
      * @param i the index to retrieve.
      * @return the value of the {@code i}th value of this statement.
-     *
-     * @throws IllegalStateException if this statement does not have values.
+     * @throws IllegalStateException     if this statement does not have values.
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
      */
     public Object getObject(int i) {
@@ -151,14 +150,13 @@ public class SimpleStatement extends RegularStatement {
 
     /**
      * Returns the routing key for the query.
-     * <p>
+     * <p/>
      * Unless the routing key has been explicitly set through
      * {@link #setRoutingKey}, this method will return {@code null} to
      * avoid having to parse the query string to retrieve the partition key.
      *
      * @return the routing key set through {@link #setRoutingKey} if such a key
      * was set, {@code null} otherwise.
-     *
      * @see Statement#getRoutingKey
      */
     @Override
@@ -168,18 +166,17 @@ public class SimpleStatement extends RegularStatement {
 
     /**
      * Sets the routing key for this query.
-     * <p>
+     * <p/>
      * This method allows you to manually provide a routing key for this query. It
      * is thus optional since the routing key is only an hint for token aware
      * load balancing policy but is never mandatory.
-     * <p>
+     * <p/>
      * If the partition key for the query is composite, use the
      * {@link #setRoutingKey(ByteBuffer...)} method instead to build the
      * routing key.
      *
      * @param routingKey the raw (binary) value to use as routing key.
      * @return this {@code SimpleStatement} object.
-     *
      * @see Statement#getRoutingKey
      */
     public SimpleStatement setRoutingKey(ByteBuffer routingKey) {
@@ -189,14 +186,13 @@ public class SimpleStatement extends RegularStatement {
 
     /**
      * Returns the keyspace this query operates on.
-     * <p>
+     * <p/>
      * Unless the keyspace has been explicitly set through {@link #setKeyspace},
      * this method will return {@code null} to avoid having to parse the query
      * string.
      *
      * @return the keyspace set through {@link #setKeyspace} if such keyspace was
      * set, {@code null} otherwise.
-     *
      * @see Statement#getKeyspace
      */
     @Override
@@ -206,18 +202,17 @@ public class SimpleStatement extends RegularStatement {
 
     /**
      * Sets the keyspace this query operates on.
-     * <p>
+     * <p/>
      * This method allows you to manually provide a keyspace for this query. It
      * is thus optional since the value returned by this method is only an hint
      * for token aware load balancing policy but is never mandatory.
-     * <p>
+     * <p/>
      * Do note that if the query does not use a fully qualified keyspace, then
      * you do not need to set the keyspace through that method as the
      * currently logged in keyspace will be used.
      *
      * @param keyspace the name of the keyspace this query operates on.
      * @return this {@code SimpleStatement} object.
-     *
      * @see Statement#getKeyspace
      */
     public SimpleStatement setKeyspace(String keyspace) {
@@ -227,15 +222,14 @@ public class SimpleStatement extends RegularStatement {
 
     /**
      * Sets the routing key for this query.
-     * <p>
+     * <p/>
      * See {@link #setRoutingKey(ByteBuffer)} for more information. This
      * method is a variant for when the query partition key is composite and
      * thus the routing key must be built from multiple values.
      *
      * @param routingKeyComponents the raw (binary) values to compose to obtain
-     * the routing key.
+     *                             the routing key.
      * @return this {@code SimpleStatement} object.
-     *
      * @see Statement#getRoutingKey
      */
     public SimpleStatement setRoutingKey(ByteBuffer... routingKeyComponents) {
@@ -250,8 +244,7 @@ public class SimpleStatement extends RegularStatement {
             totalLength += 2 + bb.remaining() + 1;
 
         ByteBuffer out = ByteBuffer.allocate(totalLength);
-        for (ByteBuffer buffer : buffers)
-        {
+        for (ByteBuffer buffer : buffers) {
             ByteBuffer bb = buffer.duplicate();
             putShortLength(out, bb.remaining());
             out.put(bb);

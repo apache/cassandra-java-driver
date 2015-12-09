@@ -15,18 +15,19 @@
  */
 package com.datastax.driver.core;
 
+import com.google.common.collect.ImmutableMap;
+import io.netty.buffer.ByteBuf;
+
 import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 
-import com.google.common.collect.ImmutableMap;
-import io.netty.buffer.ByteBuf;
-
 class Requests {
 
-    private Requests() {}
+    private Requests() {
+    }
 
     public static class Startup extends Message.Request {
         private static final String CQL_VERSION_OPTION = "CQL_VERSION";
@@ -88,9 +89,9 @@ class Requests {
 
     public static class Options extends Message.Request {
 
-        public static final Message.Coder<Options> coder = new Message.Coder<Options>()
-        {
-            public void encode(Options msg, ByteBuf dest, ProtocolVersion version) {}
+        public static final Message.Coder<Options> coder = new Message.Coder<Options>() {
+            public void encode(Options msg, ByteBuf dest, ProtocolVersion version) {
+            }
 
             public int encodedSize(Options msg, ProtocolVersion version) {
                 return 0;
@@ -117,7 +118,7 @@ class Requests {
 
             public int encodedSize(Query msg, ProtocolVersion version) {
                 return CBUtil.sizeOfLongString(msg.query)
-                       + msg.options.encodedSize(version);
+                        + msg.options.encodedSize(version);
             }
         };
 
@@ -160,7 +161,7 @@ class Requests {
 
             public int encodedSize(Execute msg, ProtocolVersion version) {
                 return CBUtil.sizeOfBytes(msg.statementId.bytes)
-                     + msg.options.encodedSize(version);
+                        + msg.options.encodedSize(version);
             }
         };
 
@@ -202,8 +203,7 @@ class Requests {
         public static EnumSet<QueryFlag> deserialize(int flags) {
             EnumSet<QueryFlag> set = EnumSet.noneOf(QueryFlag.class);
             QueryFlag[] values = QueryFlag.values();
-            for (int n = 0; n < values.length; n++)
-            {
+            for (int n = 0; n < values.length; n++) {
                 if ((flags & (1 << n)) != 0)
                     set.add(values[n]);
             }
@@ -221,12 +221,12 @@ class Requests {
     public static class QueryProtocolOptions {
 
         public static final QueryProtocolOptions DEFAULT = new QueryProtocolOptions(ConsistencyLevel.ONE,
-                                                                                    Collections.<ByteBuffer>emptyList(),
-                                                                                    false,
-                                                                                    -1,
-                                                                                    null,
-                                                                                    ConsistencyLevel.SERIAL,
-                                                                                    Long.MIN_VALUE);
+                Collections.<ByteBuffer>emptyList(),
+                false,
+                -1,
+                null,
+                ConsistencyLevel.SERIAL,
+                Long.MIN_VALUE);
 
         private final EnumSet<QueryFlag> flags = EnumSet.noneOf(QueryFlag.class);
         public final ConsistencyLevel consistency;
@@ -282,7 +282,7 @@ class Requests {
                 case V2:
                 case V3:
                     CBUtil.writeConsistencyLevel(consistency, dest);
-                    dest.writeByte((byte)QueryFlag.serialize(flags));
+                    dest.writeByte((byte) QueryFlag.serialize(flags));
                     if (flags.contains(QueryFlag.VALUES))
                         CBUtil.writeValueList(values, dest);
                     if (flags.contains(QueryFlag.PAGE_SIZE))
@@ -303,7 +303,7 @@ class Requests {
             switch (version) {
                 case V1:
                     return CBUtil.sizeOfValueList(values)
-                           + CBUtil.sizeOfConsistencyLevel(consistency);
+                            + CBUtil.sizeOfConsistencyLevel(consistency);
                 case V2:
                 case V3:
                     int size = 0;
@@ -343,11 +343,11 @@ class Requests {
 
                 for (int i = 0; i < queries; i++) {
                     Object q = msg.queryOrIdList.get(i);
-                    dest.writeByte((byte)(q instanceof String ? 0 : 1));
+                    dest.writeByte((byte) (q instanceof String ? 0 : 1));
                     if (q instanceof String)
-                        CBUtil.writeLongString((String)q, dest);
+                        CBUtil.writeLongString((String) q, dest);
                     else
-                        CBUtil.writeBytes(((MD5Digest)q).bytes, dest);
+                        CBUtil.writeBytes(((MD5Digest) q).bytes, dest);
 
                     CBUtil.writeValueList(msg.values.get(i), dest);
                 }
@@ -360,8 +360,8 @@ class Requests {
                 for (int i = 0; i < msg.queryOrIdList.size(); i++) {
                     Object q = msg.queryOrIdList.get(i);
                     size += 1 + (q instanceof String
-                        ? CBUtil.sizeOfLongString((String)q)
-                        : CBUtil.sizeOfBytes(((MD5Digest)q).bytes));
+                            ? CBUtil.sizeOfLongString((String) q)
+                            : CBUtil.sizeOfBytes(((MD5Digest) q).bytes));
 
                     size += CBUtil.sizeOfValueList(msg.values.get(i));
                 }
@@ -371,10 +371,14 @@ class Requests {
 
             private byte fromType(BatchStatement.Type type) {
                 switch (type) {
-                    case LOGGED:   return 0;
-                    case UNLOGGED: return 1;
-                    case COUNTER:  return 2;
-                    default:       throw new AssertionError();
+                    case LOGGED:
+                        return 0;
+                    case UNLOGGED:
+                        return 1;
+                    case COUNTER:
+                        return 2;
+                    default:
+                        throw new AssertionError();
                 }
             }
         };
@@ -401,6 +405,7 @@ class Requests {
         Request copy(ConsistencyLevel newConsistencyLevel) {
             return new Batch(type, queryOrIdList, values, options.copy(newConsistencyLevel), isTracingRequested());
         }
+
         @Override
         public String toString() {
             StringBuilder sb = new StringBuilder();
@@ -442,7 +447,7 @@ class Requests {
                     break;
                 case V3:
                     CBUtil.writeConsistencyLevel(consistency, dest);
-                    dest.writeByte((byte)QueryFlag.serialize(flags));
+                    dest.writeByte((byte) QueryFlag.serialize(flags));
                     if (flags.contains(QueryFlag.SERIAL_CONSISTENCY))
                         CBUtil.writeConsistencyLevel(serialConsistency, dest);
                     if (flags.contains(QueryFlag.DEFAULT_TIMESTAMP))
@@ -474,7 +479,7 @@ class Requests {
         @Override
         public String toString() {
             return String.format("[cl=%s, serialCl=%s, defaultTs=%d]",
-                                 consistency, serialConsistency, defaultTimestamp);
+                    consistency, serialConsistency, defaultTimestamp);
         }
     }
 

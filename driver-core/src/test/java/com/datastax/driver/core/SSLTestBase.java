@@ -15,20 +15,19 @@
  */
 package com.datastax.driver.core;
 
-import java.security.KeyStore;
-import java.security.SecureRandom;
-
 import com.google.common.base.Optional;
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManagerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 
-import static com.datastax.driver.core.CCMBridge.DEFAULT_CLIENT_KEYSTORE_FILE;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManagerFactory;
+import java.security.KeyStore;
+import java.security.SecureRandom;
+
 import static com.datastax.driver.core.CCMBridge.DEFAULT_CLIENT_KEYSTORE_PASSWORD;
-import static com.datastax.driver.core.CCMBridge.DEFAULT_CLIENT_TRUSTSTORE_FILE;
 import static com.datastax.driver.core.CCMBridge.DEFAULT_CLIENT_TRUSTSTORE_PASSWORD;
+
 public abstract class SSLTestBase {
 
     private final boolean requireClientAuth;
@@ -39,14 +38,14 @@ public abstract class SSLTestBase {
         this.requireClientAuth = requireClientAuth;
     }
 
-    @BeforeClass(groups={"isolated", "short", "long"})
+    @BeforeClass(groups = {"isolated", "short", "long"})
     public void beforeClass() {
         ccm = CCMBridge.builder("test")
-            .withSSL(requireClientAuth)
-            .build();
+                .withSSL(requireClientAuth)
+                .build();
     }
 
-    @AfterClass(groups={"isolated", "short", "long"})
+    @AfterClass(groups = {"isolated", "short", "long"})
     public void afterClass() {
         ccm.remove();
     }
@@ -59,15 +58,15 @@ public abstract class SSLTestBase {
      *
      * @param sslOptions SSLOptions to use.
      * @throws Exception A {@link com.datastax.driver.core.exceptions.NoHostAvailableException} will be
-     *  raised here if connection cannot be established.
+     *                   raised here if connection cannot be established.
      */
     protected void connectWithSSLOptions(SSLOptions sslOptions) throws Exception {
         Cluster cluster = null;
         try {
             cluster = Cluster.builder()
-                .addContactPoint(CCMBridge.IP_PREFIX + '1')
-                .withSSL(sslOptions)
-                .build();
+                    .addContactPoint(CCMBridge.IP_PREFIX + '1')
+                    .withSSL(sslOptions)
+                    .build();
 
             cluster.connect();
         } finally {
@@ -83,15 +82,15 @@ public abstract class SSLTestBase {
      * </p>
      *
      * @throws Exception A {@link com.datastax.driver.core.exceptions.NoHostAvailableException} will be
-     *  raised here if connection cannot be established.
+     *                   raised here if connection cannot be established.
      */
     protected void connectWithSSL() throws Exception {
         Cluster cluster = null;
         try {
             cluster = Cluster.builder()
-                .addContactPoint(CCMBridge.IP_PREFIX + '1')
-                .withSSL()
-                .build();
+                    .addContactPoint(CCMBridge.IP_PREFIX + '1')
+                    .withSSL()
+                    .build();
 
             cluster.connect();
         } finally {
@@ -101,7 +100,7 @@ public abstract class SSLTestBase {
     }
 
     /**
-     * @param keyStorePath Path to keystore, if absent is not used.
+     * @param keyStorePath   Path to keystore, if absent is not used.
      * @param trustStorePath Path to truststore, if absent is not used.
      * @return {@link com.datastax.driver.core.SSLOptions} with the given keystore and truststore path's for
      * server certificate validation and client certificate authentication.
@@ -109,7 +108,7 @@ public abstract class SSLTestBase {
     public SSLOptions getSSLOptions(Optional<String> keyStorePath, Optional<String> trustStorePath) throws Exception {
 
         TrustManagerFactory tmf = null;
-        if(trustStorePath.isPresent()) {
+        if (trustStorePath.isPresent()) {
             KeyStore ks = KeyStore.getInstance("JKS");
             ks.load(this.getClass().getResourceAsStream(trustStorePath.get()), DEFAULT_CLIENT_TRUSTSTORE_PASSWORD.toCharArray());
 
@@ -118,7 +117,7 @@ public abstract class SSLTestBase {
         }
 
         KeyManagerFactory kmf = null;
-        if(keyStorePath.isPresent()) {
+        if (keyStorePath.isPresent()) {
             KeyStore ks = KeyStore.getInstance("JKS");
             ks.load(this.getClass().getResourceAsStream(keyStorePath.get()), DEFAULT_CLIENT_KEYSTORE_PASSWORD.toCharArray());
 

@@ -15,29 +15,28 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.exceptions.InvalidTypeException;
+import com.google.common.reflect.TypeToken;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
 
-import com.google.common.reflect.TypeToken;
-
-import com.datastax.driver.core.exceptions.InvalidTypeException;
-
 /**
  * A prepared statement with values bound to the bind variables.
- * <p>
+ * <p/>
  * Once values has been provided for the variables of the {@link PreparedStatement}
  * it has been created from, such BoundStatement can be executed (through
  * {@link Session#execute(Statement)}).
- * <p>
+ * <p/>
  * The values of a BoundStatement can be set by either index or name. When
  * setting them by name, names follow the case insensitivity rules explained in
  * {@link ColumnDefinitions} but with the difference that if multiple bind
  * variables have the same name, setting that name will set <b>all</b> the
  * variables for that name.
- * <p>
+ * <p/>
  * All the variables of the statement must be bound. If you don't explicitly
  * set a value for a variable, an {@code IllegalStateException} will be
  * thrown when submitting the statement. If you want to set a variable to
@@ -57,6 +56,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     /**
      * Creates a new {@code BoundStatement} from the provided prepared
      * statement.
+     *
      * @param statement the prepared statement from which to create a {@code BoundStatement}.
      */
     public BoundStatement(PreparedStatement statement) {
@@ -96,7 +96,6 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      *
      * @param i the index of the variable to check.
      * @return whether the {@code i}th variable has been bound.
-     *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
      */
     public boolean isSet(int i) {
@@ -110,9 +109,8 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @param name the name of the variable to check.
      * @return whether the first occurrence of variable {@code name} has been
      * bound to a non-null value.
-     *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, that is if {@code !this.preparedStatement().variables().names().contains(name)}.
+     *                                  variable, that is if {@code !this.preparedStatement().variables().names().contains(name)}.
      */
     public boolean isSet(String name) {
         return wrapper.getValue(wrapper.getIndexOf(name)) != UNSET;
@@ -120,33 +118,31 @@ public class BoundStatement extends Statement implements SettableData<BoundState
 
     /**
      * Bound values to the variables of this statement.
-     *
+     * <p/>
      * This is a convenience method to bind all the variables of the
      * {@code BoundStatement} in one call.
      *
      * @param values the values to bind to the variables of the newly created
-     * BoundStatement. The first element of {@code values} will be bound to the
-     * first bind variable, etc. It is legal to provide fewer values than the
-     * statement has bound variables. In that case, the remaining variable need
-     * to be bound before execution. If more values than variables are provided
-     * however, an IllegalArgumentException wil be raised.
+     *               BoundStatement. The first element of {@code values} will be bound to the
+     *               first bind variable, etc. It is legal to provide fewer values than the
+     *               statement has bound variables. In that case, the remaining variable need
+     *               to be bound before execution. If more values than variables are provided
+     *               however, an IllegalArgumentException wil be raised.
      * @return this bound statement.
-     *
      * @throws IllegalArgumentException if more {@code values} are provided
-     * than there is of bound variables in this statement.
-     * @throws InvalidTypeException if any of the provided value is not of
-     * correct type to be bound to the corresponding bind variable.
-     * @throws NullPointerException if one of {@code values} is a collection
-     * (List, Set or Map) containing a null value. Nulls are not supported in
-     * collections by CQL.
+     *                                  than there is of bound variables in this statement.
+     * @throws InvalidTypeException     if any of the provided value is not of
+     *                                  correct type to be bound to the corresponding bind variable.
+     * @throws NullPointerException     if one of {@code values} is a collection
+     *                                  (List, Set or Map) containing a null value. Nulls are not supported in
+     *                                  collections by CQL.
      */
     public BoundStatement bind(Object... values) {
 
         if (values.length > statement.getVariables().size())
             throw new IllegalArgumentException(String.format("Prepared statement has only %d variables, %d values provided", statement.getVariables().size(), values.length));
 
-        for (int i = 0; i < values.length; i++)
-        {
+        for (int i = 0; i < values.length; i++) {
             Object toSet = values[i];
 
             if (toSet == null) {
@@ -160,7 +156,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
                     if (!(toSet instanceof List))
                         throw new InvalidTypeException(String.format("Invalid type for value %d, column is a list but %s provided", i, toSet.getClass()));
 
-                    List<?> l = (List<?>)toSet;
+                    List<?> l = (List<?>) toSet;
                     // If the list is empty, it will never fail validation, but otherwise we should check the list given if of the right type
                     if (!l.isEmpty()) {
                         // Ugly? Yes
@@ -174,7 +170,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
                     if (!(toSet instanceof Set))
                         throw new InvalidTypeException(String.format("Invalid type for value %d, column is a set but %s provided", i, toSet.getClass()));
 
-                    Set<?> s = (Set<?>)toSet;
+                    Set<?> s = (Set<?>) toSet;
                     // If the list is empty, it will never fail validation, but otherwise we should check the list given if of the right type
                     if (!s.isEmpty()) {
                         // Ugly? Yes
@@ -188,7 +184,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
                     if (!(toSet instanceof Map))
                         throw new InvalidTypeException(String.format("Invalid type for value %d, column is a map but %s provided", i, toSet.getClass()));
 
-                    Map<?, ?> m = (Map<?, ?>)toSet;
+                    Map<?, ?> m = (Map<?, ?>) toSet;
                     // If the list is empty, it will never fail validation, but otherwise we should check the list given if of the right type
                     if (!m.isEmpty()) {
                         // Ugly? Yes
@@ -204,7 +200,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
                     break;
                 default:
                     if (toSet instanceof Token)
-                        toSet = ((Token)toSet).getValue();
+                        toSet = ((Token) toSet).getValue();
 
                     Class<?> providedClass = toSet.getClass();
                     Class<?> expectedClass = columnType.getName().javaType;
@@ -219,14 +215,13 @@ public class BoundStatement extends Statement implements SettableData<BoundState
 
     /**
      * Sets the routing key for this bound statement.
-     * <p>
+     * <p/>
      * This is useful when the routing key can neither be set on the {@code PreparedStatement} this bound statement
      * was built from, nor automatically computed from bound variables. In particular, this is the case if the
      * partition key is composite and only some of its components are bound.
      *
      * @param routingKey the raw (binary) value to use as routing key.
      * @return this {@code BoundStatement} object.
-     *
      * @see BoundStatement#getRoutingKey
      */
     public BoundStatement setRoutingKey(ByteBuffer routingKey) {
@@ -236,7 +231,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
 
     /**
      * The routing key for this bound query.
-     * <p>
+     * <p/>
      * This method will return a non-{@code null} value if either of the following occur:
      * <ul>
      * <li>The routing key has been set directly through {@link BoundStatement#setRoutingKey}.</li>
@@ -246,8 +241,8 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * key will then be built using the values provided for these partition key columns.</li>
      * </ul>
      * Otherwise, {@code null} is returned.
-     * <p>
-     *
+     * <p/>
+     * <p/>
      * Note that if the routing key has been set through {@link BoundStatement#setRoutingKey}, then that takes
      * precedence. If the routing key has been set through {@link PreparedStatement#setRoutingKey} then that is used
      * next. If neither of those are set then it is computed.
@@ -284,7 +279,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
 
     /**
      * Returns the keyspace this query operates on.
-     * <p>
+     * <p/>
      * This method will always return a non-{@code null} value (unless the statement
      * has no variables, but you should avoid prepared statement in the first in that
      * case). The keyspace returned will be the one corresponding to the first
@@ -306,9 +301,8 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @param i the index of the variable to set.
      * @param v the value to set.
      * @return this BoundStatement.
-     *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
-     * @throws InvalidTypeException if column {@code i} is not of type BOOLEAN.
+     * @throws InvalidTypeException      if column {@code i} is not of type BOOLEAN.
      */
     public BoundStatement setBool(int i, boolean v) {
         return wrapper.setBool(i, v);
@@ -319,13 +313,12 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * provided boolean.
      *
      * @param name the name of the variable to set; if multiple variables
-     * {@code name} are prepared, all of them are set.
-     * @param v the value to set.
+     *             {@code name} are prepared, all of them are set.
+     * @param v    the value to set.
      * @return this BoundStatement.
-     *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if (any one occurrence of) {@code name} is not of type BOOLEAN.
+     *                                  variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * @throws InvalidTypeException     if (any one occurrence of) {@code name} is not of type BOOLEAN.
      */
     public BoundStatement setBool(String name, boolean v) {
         return wrapper.setBool(name, v);
@@ -337,9 +330,8 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @param i the index of the variable to set.
      * @param v the value to set.
      * @return this BoundStatement.
-     *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
-     * @throws InvalidTypeException if column {@code i} is not of type INT.
+     * @throws InvalidTypeException      if column {@code i} is not of type INT.
      */
     public BoundStatement setInt(int i, int v) {
         return wrapper.setInt(i, v);
@@ -350,13 +342,12 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * provided integer.
      *
      * @param name the name of the variable to set; if multiple variables
-     * {@code name} are prepared, all of them are set.
-     * @param v the value to set.
+     *             {@code name} are prepared, all of them are set.
+     * @param v    the value to set.
      * @return this BoundStatement.
-     *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if (any one occurrence of) {@code name} is not of type INT.
+     *                                  variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * @throws InvalidTypeException     if (any one occurrence of) {@code name} is not of type INT.
      */
     public BoundStatement setInt(String name, int v) {
         return wrapper.setInt(name, v);
@@ -368,9 +359,8 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @param i the index of the variable to set.
      * @param v the value to set.
      * @return this BoundStatement.
-     *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
-     * @throws InvalidTypeException if column {@code i} is not of type BIGINT or COUNTER.
+     * @throws InvalidTypeException      if column {@code i} is not of type BIGINT or COUNTER.
      */
     public BoundStatement setLong(int i, long v) {
         return wrapper.setLong(i, v);
@@ -381,14 +371,13 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * provided long.
      *
      * @param name the name of the variable to set; if multiple variables
-     * {@code name} are prepared, all of them are set.
-     * @param v the value to set.
+     *             {@code name} are prepared, all of them are set.
+     * @param v    the value to set.
      * @return this BoundStatement.
-     *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if (any occurrence of) {@code name} is
-     * not of type BIGINT or COUNTER.
+     *                                  variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * @throws InvalidTypeException     if (any occurrence of) {@code name} is
+     *                                  not of type BIGINT or COUNTER.
      */
     public BoundStatement setLong(String name, long v) {
         return wrapper.setLong(name, v);
@@ -400,9 +389,8 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @param i the index of the variable to set.
      * @param v the value to set.
      * @return this BoundStatement.
-     *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
-     * @throws InvalidTypeException if column {@code i} is not of type TIMESTAMP.
+     * @throws InvalidTypeException      if column {@code i} is not of type TIMESTAMP.
      */
     public BoundStatement setDate(int i, Date v) {
         return wrapper.setDate(i, v);
@@ -413,14 +401,13 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * provided date.
      *
      * @param name the name of the variable to set; if multiple variables
-     * {@code name} are prepared, all of them are set.
-     * @param v the value to set.
+     *             {@code name} are prepared, all of them are set.
+     * @param v    the value to set.
      * @return this BoundStatement.
-     *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if (any occurrence of) {@code name} is
-     * not of type TIMESTAMP.
+     *                                  variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * @throws InvalidTypeException     if (any occurrence of) {@code name} is
+     *                                  not of type TIMESTAMP.
      */
     public BoundStatement setDate(String name, Date v) {
         return wrapper.setDate(name, v);
@@ -432,9 +419,8 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @param i the index of the variable to set.
      * @param v the value to set.
      * @return this BoundStatement.
-     *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
-     * @throws InvalidTypeException if column {@code i} is not of type FLOAT.
+     * @throws InvalidTypeException      if column {@code i} is not of type FLOAT.
      */
     public BoundStatement setFloat(int i, float v) {
         return wrapper.setFloat(i, v);
@@ -445,14 +431,13 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * provided float.
      *
      * @param name the name of the variable to set; if multiple variables
-     * {@code name} are prepared, all of them are set.
-     * @param v the value to set.
+     *             {@code name} are prepared, all of them are set.
+     * @param v    the value to set.
      * @return this BoundStatement.
-     *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if (any occurrence of) {@code name} is
-     * not of type FLOAT.
+     *                                  variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * @throws InvalidTypeException     if (any occurrence of) {@code name} is
+     *                                  not of type FLOAT.
      */
     public BoundStatement setFloat(String name, float v) {
         return wrapper.setFloat(name, v);
@@ -464,9 +449,8 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @param i the index of the variable to set.
      * @param v the value to set.
      * @return this BoundStatement.
-     *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
-     * @throws InvalidTypeException if column {@code i} is not of type DOUBLE.
+     * @throws InvalidTypeException      if column {@code i} is not of type DOUBLE.
      */
     public BoundStatement setDouble(int i, double v) {
         return wrapper.setDouble(i, v);
@@ -477,14 +461,13 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * provided double.
      *
      * @param name the name of the variable to set; if multiple variables
-     * {@code name} are prepared, all of them are set.
-     * @param v the value to set.
+     *             {@code name} are prepared, all of them are set.
+     * @param v    the value to set.
      * @return this BoundStatement.
-     *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if (any occurrence of) {@code name} is
-     * not of type DOUBLE.
+     *                                  variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * @throws InvalidTypeException     if (any occurrence of) {@code name} is
+     *                                  not of type DOUBLE.
      */
     public BoundStatement setDouble(String name, double v) {
         return wrapper.setDouble(name, v);
@@ -496,10 +479,9 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @param i the index of the variable to set.
      * @param v the value to set.
      * @return this BoundStatement.
-     *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
-     * @throws InvalidTypeException if column {@code i} is of neither of the
-     * following types: VARCHAR, TEXT or ASCII.
+     * @throws InvalidTypeException      if column {@code i} is of neither of the
+     *                                   following types: VARCHAR, TEXT or ASCII.
      */
     public BoundStatement setString(int i, String v) {
         return wrapper.setString(i, v);
@@ -510,14 +492,13 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * provided string.
      *
      * @param name the name of the variable to set; if multiple variables
-     * {@code name} are prepared, all of them are set.
-     * @param v the value to set.
+     *             {@code name} are prepared, all of them are set.
+     * @param v    the value to set.
      * @return this BoundStatement.
-     *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if (any occurrence of) {@code name} is
-     * of neither of the following types: VARCHAR, TEXT or ASCII.
+     *                                  variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * @throws InvalidTypeException     if (any occurrence of) {@code name} is
+     *                                  of neither of the following types: VARCHAR, TEXT or ASCII.
      */
     public BoundStatement setString(String name, String v) {
         return wrapper.setString(name, v);
@@ -525,7 +506,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
 
     /**
      * Sets the {@code i}th value to the provided byte buffer.
-     *
+     * <p/>
      * This method validate that the type of the column set is BLOB. If you
      * want to insert manually serialized data into columns of another type,
      * use {@link #setBytesUnsafe} instead.
@@ -533,9 +514,8 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @param i the index of the variable to set.
      * @param v the value to set.
      * @return this BoundStatement.
-     *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
-     * @throws InvalidTypeException if column {@code i} is not of type BLOB.
+     * @throws InvalidTypeException      if column {@code i} is not of type BLOB.
      */
     public BoundStatement setBytes(int i, ByteBuffer v) {
         return wrapper.setBytes(i, v);
@@ -544,19 +524,18 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     /**
      * Sets the value for (all occurrences of) variable {@code name} to the
      * provided byte buffer.
-     *
+     * <p/>
      * This method validate that the type of the column set is BLOB. If you
      * want to insert manually serialized data into columns of another type,
      * use {@link #setBytesUnsafe} instead.
      *
      * @param name the name of the variable to set; if multiple variables
-     * {@code name} are prepared, all of them are set.
-     * @param v the value to set.
+     *             {@code name} are prepared, all of them are set.
+     * @param v    the value to set.
      * @return this BoundStatement.
-     *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, that is if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if (any occurrence of) {@code name} is not of type BLOB.
+     *                                  variable, that is if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * @throws InvalidTypeException     if (any occurrence of) {@code name} is not of type BLOB.
      */
     public BoundStatement setBytes(String name, ByteBuffer v) {
         return wrapper.setBytes(name, v);
@@ -564,7 +543,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
 
     /**
      * Sets the {@code i}th value to the provided byte buffer.
-     *
+     * <p/>
      * Contrary to {@link #setBytes}, this method does not check the
      * type of the column set. If you insert data that is not compatible with
      * the type of the column, you will get an {@code InvalidQueryException} at
@@ -573,7 +552,6 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @param i the index of the variable to set.
      * @param v the value to set.
      * @return this BoundStatement.
-     *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
      */
     public BoundStatement setBytesUnsafe(int i, ByteBuffer v) {
@@ -583,19 +561,18 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     /**
      * Sets the value for (all occurrences of) variable {@code name} to the
      * provided byte buffer.
-     *
+     * <p/>
      * Contrary to {@link #setBytes}, this method does not check the
      * type of the column set. If you insert data that is not compatible with
      * the type of the column, you will get an {@code InvalidQueryException} at
      * execute time.
      *
      * @param name the name of the variable to set; if multiple variables
-     * {@code name} are prepared, all of them are set.
-     * @param v the value to set.
+     *             {@code name} are prepared, all of them are set.
+     * @param v    the value to set.
      * @return this BoundStatement.
-     *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, that is if {@code !this.preparedStatement().variables().names().contains(name)}.
+     *                                  variable, that is if {@code !this.preparedStatement().variables().names().contains(name)}.
      */
     public BoundStatement setBytesUnsafe(String name, ByteBuffer v) {
         return wrapper.setBytesUnsafe(name, v);
@@ -607,9 +584,8 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @param i the index of the variable to set.
      * @param v the value to set.
      * @return this BoundStatement.
-     *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
-     * @throws InvalidTypeException if column {@code i} is not of type VARINT.
+     * @throws InvalidTypeException      if column {@code i} is not of type VARINT.
      */
     public BoundStatement setVarint(int i, BigInteger v) {
         return wrapper.setVarint(i, v);
@@ -620,14 +596,13 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * provided big integer.
      *
      * @param name the name of the variable to set; if multiple variables
-     * {@code name} are prepared, all of them are set.
-     * @param v the value to set.
+     *             {@code name} are prepared, all of them are set.
+     * @param v    the value to set.
      * @return this BoundStatement.
-     *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if (any occurrence of) {@code name} is
-     * not of type VARINT.
+     *                                  variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * @throws InvalidTypeException     if (any occurrence of) {@code name} is
+     *                                  not of type VARINT.
      */
     public BoundStatement setVarint(String name, BigInteger v) {
         return wrapper.setVarint(name, v);
@@ -639,9 +614,8 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @param i the index of the variable to set.
      * @param v the value to set.
      * @return this BoundStatement.
-     *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
-     * @throws InvalidTypeException if column {@code i} is not of type DECIMAL.
+     * @throws InvalidTypeException      if column {@code i} is not of type DECIMAL.
      */
     public BoundStatement setDecimal(int i, BigDecimal v) {
         return wrapper.setDecimal(i, v);
@@ -652,14 +626,13 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * provided big decimal.
      *
      * @param name the name of the variable to set; if multiple variables
-     * {@code name} are prepared, all of them are set.
-     * @param v the value to set.
+     *             {@code name} are prepared, all of them are set.
+     * @param v    the value to set.
      * @return this BoundStatement.
-     *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if (any occurrence of) {@code name} is
-     * not of type DECIMAL.
+     *                                  variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * @throws InvalidTypeException     if (any occurrence of) {@code name} is
+     *                                  not of type DECIMAL.
      */
     public BoundStatement setDecimal(String name, BigDecimal v) {
         return wrapper.setDecimal(name, v);
@@ -671,11 +644,10 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @param i the index of the variable to set.
      * @param v the value to set.
      * @return this BoundStatement.
-     *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
-     * @throws InvalidTypeException if column {@code i} is not of type UUID or
-     * TIMEUUID, or if column {@code i} is of type TIMEUUID but {@code v} is
-     * not a type 1 UUID.
+     * @throws InvalidTypeException      if column {@code i} is not of type UUID or
+     *                                   TIMEUUID, or if column {@code i} is of type TIMEUUID but {@code v} is
+     *                                   not a type 1 UUID.
      */
     public BoundStatement setUUID(int i, UUID v) {
         return wrapper.setUUID(i, v);
@@ -686,15 +658,14 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * provided UUID.
      *
      * @param name the name of the variable to set; if multiple variables
-     * {@code name} are prepared, all of them are set.
-     * @param v the value to set.
+     *             {@code name} are prepared, all of them are set.
+     * @param v    the value to set.
      * @return this BoundStatement.
-     *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if (any occurrence of) {@code name} is
-     * not of type UUID or TIMEUUID, or if column {@code name} is of type
-     * TIMEUUID but {@code v} is not a type 1 UUID.
+     *                                  variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * @throws InvalidTypeException     if (any occurrence of) {@code name} is
+     *                                  not of type UUID or TIMEUUID, or if column {@code name} is of type
+     *                                  TIMEUUID but {@code v} is not a type 1 UUID.
      */
     public BoundStatement setUUID(String name, UUID v) {
         return wrapper.setUUID(name, v);
@@ -706,9 +677,8 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @param i the index of the variable to set.
      * @param v the value to set.
      * @return this BoundStatement.
-     *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
-     * @throws InvalidTypeException if column {@code i} is not of type INET.
+     * @throws InvalidTypeException      if column {@code i} is not of type INET.
      */
     public BoundStatement setInet(int i, InetAddress v) {
         return wrapper.setInet(i, v);
@@ -719,14 +689,13 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * provided inet address.
      *
      * @param name the name of the variable to set; if multiple variables
-     * {@code name} are prepared, all of them are set.
-     * @param v the value to set.
+     *             {@code name} are prepared, all of them are set.
+     * @param v    the value to set.
      * @return this BoundStatement.
-     *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if (any occurrence of) {@code name} is
-     * not of type INET.
+     *                                  variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * @throws InvalidTypeException     if (any occurrence of) {@code name} is
+     *                                  not of type INET.
      */
     public BoundStatement setInet(String name, InetAddress v) {
         return wrapper.setInet(name, v);
@@ -734,16 +703,15 @@ public class BoundStatement extends Statement implements SettableData<BoundState
 
     /**
      * Sets the {@code i}th value to the provided {@link Token}.
-     * <p>
+     * <p/>
      * {@link #setPartitionKeyToken(Token)} should generally be preferred if you
      * have a single token variable.
      *
      * @param i the index of the variable to set.
      * @param v the value to set.
      * @return this BoundStatement.
-     *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
-     * @throws InvalidTypeException if column {@code i} is not of the type of the token's value.
+     * @throws InvalidTypeException      if column {@code i} is not of the type of the token's value.
      */
     public BoundStatement setToken(int i, Token v) {
         return wrapper.setToken(i, v);
@@ -752,10 +720,10 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     /**
      * Sets the value for (all occurrences of) variable {@code name} to the
      * provided token.
-     * <p>
+     * <p/>
      * {@link #setPartitionKeyToken(Token)} should generally be preferred if you
      * have a single token variable.
-     * <p>
+     * <p/>
      * If you have multiple token variables, use positional binding ({@link #setToken(int, Token)},
      * or named bind markers:
      * <pre>
@@ -766,14 +734,13 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * </pre>
      *
      * @param name the name of the variable to set; if multiple variables
-     * {@code name} are prepared, all of them are set.
-     * @param v the value to set.
+     *             {@code name} are prepared, all of them are set.
+     * @param v    the value to set.
      * @return this BoundStatement.
-     *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if (any occurrence of) {@code name} is
-     * not of the type of the token's value.
+     *                                  variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * @throws InvalidTypeException     if (any occurrence of) {@code name} is
+     *                                  not of the type of the token's value.
      */
     public BoundStatement setToken(String name, Token v) {
         return wrapper.setToken(name, v);
@@ -783,7 +750,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * Sets the value for (all occurrences of) variable "{@code partition key token}"
      * to the provided token (this is the name generated by Cassandra for markers
      * corresponding to a {@code token(...)} call).
-     * <p>
+     * <p/>
      * This method is a shorthand for statements with a single token variable:
      * <pre>
      * {@code
@@ -803,11 +770,10 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      *
      * @param v the value to set.
      * @return this BoundStatement.
-     *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if (any occurrence of) {@code name} is
-     * not of the type of the token's value.
+     *                                  variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * @throws InvalidTypeException     if (any occurrence of) {@code name} is
+     *                                  not of the type of the token's value.
      */
     public BoundStatement setPartitionKeyToken(Token v) {
         return setToken("partition key token", v);
@@ -815,20 +781,19 @@ public class BoundStatement extends Statement implements SettableData<BoundState
 
     /**
      * Sets the {@code i}th value to the provided list.
-     * <p>
+     * <p/>
      * Please note that {@code null} values are not supported inside collection by CQL.
      *
      * @param <T> the type of the elements of the list to set.
-     * @param i the index of the variable to set.
-     * @param v the value to set.
+     * @param i   the index of the variable to set.
+     * @param v   the value to set.
      * @return this BoundStatement.
-     *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
-     * @throws InvalidTypeException if column {@code i} is not a list type or
-     * if the elements of {@code v} are not of the type of the elements of
-     * column {@code i}.
-     * @throws NullPointerException if {@code v} contains null values. Nulls are not supported in collections
-     * by CQL.
+     * @throws InvalidTypeException      if column {@code i} is not a list type or
+     *                                   if the elements of {@code v} are not of the type of the elements of
+     *                                   column {@code i}.
+     * @throws NullPointerException      if {@code v} contains null values. Nulls are not supported in collections
+     *                                   by CQL.
      */
     public <T> BoundStatement setList(int i, List<T> v) {
         return wrapper.setList(i, v);
@@ -837,22 +802,21 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     /**
      * Sets the value for (all occurrences of) variable {@code name} to the
      * provided list.
-     * <p>
+     * <p/>
      * Please note that {@code null} values are not supported inside collection by CQL.
      *
-     * @param <T> the type of the elements of the list to set.
+     * @param <T>  the type of the elements of the list to set.
      * @param name the name of the variable to set; if multiple variables
-     * {@code name} are prepared, all of them are set.
-     * @param v the value to set.
+     *             {@code name} are prepared, all of them are set.
+     * @param v    the value to set.
      * @return this BoundStatement.
-     *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if (any occurrence of) {@code name} is
-     * not a list type or if the elements of {@code v} are not of the type of
-     * the elements of column {@code name}.
-     * @throws NullPointerException if {@code v} contains null values. Nulls are not supported in collections
-     * by CQL.
+     *                                  variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * @throws InvalidTypeException     if (any occurrence of) {@code name} is
+     *                                  not a list type or if the elements of {@code v} are not of the type of
+     *                                  the elements of column {@code name}.
+     * @throws NullPointerException     if {@code v} contains null values. Nulls are not supported in collections
+     *                                  by CQL.
      */
     public <T> BoundStatement setList(String name, List<T> v) {
         return wrapper.setList(name, v);
@@ -860,21 +824,20 @@ public class BoundStatement extends Statement implements SettableData<BoundState
 
     /**
      * Sets the {@code i}th value to the provided map.
-     * <p>
+     * <p/>
      * Please note that {@code null} values are not supported inside collection by CQL.
      *
      * @param <K> the type of the keys for the map to set.
      * @param <V> the type of the values for the map to set.
-     * @param i the index of the variable to set.
-     * @param v the value to set.
+     * @param i   the index of the variable to set.
+     * @param v   the value to set.
      * @return this BoundStatement.
-     *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
-     * @throws InvalidTypeException if column {@code i} is not a map type or
-     * if the elements (keys or values) of {@code v} are not of the type of the
-     * elements of column {@code i}.
-     * @throws NullPointerException if {@code v} contains null values. Nulls are not supported in collections
-     * by CQL.
+     * @throws InvalidTypeException      if column {@code i} is not a map type or
+     *                                   if the elements (keys or values) of {@code v} are not of the type of the
+     *                                   elements of column {@code i}.
+     * @throws NullPointerException      if {@code v} contains null values. Nulls are not supported in collections
+     *                                   by CQL.
      */
     public <K, V> BoundStatement setMap(int i, Map<K, V> v) {
         return wrapper.setMap(i, v);
@@ -883,23 +846,22 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     /**
      * Sets the value for (all occurrences of) variable {@code name} to the
      * provided map.
-     * <p>
+     * <p/>
      * Please note that {@code null} values are not supported inside collection by CQL.
      *
-     * @param <K> the type of the keys for the map to set.
-     * @param <V> the type of the values for the map to set.
+     * @param <K>  the type of the keys for the map to set.
+     * @param <V>  the type of the values for the map to set.
      * @param name the name of the variable to set; if multiple variables
-     * {@code name} are prepared, all of them are set.
-     * @param v the value to set.
+     *             {@code name} are prepared, all of them are set.
+     * @param v    the value to set.
      * @return this BoundStatement.
-     *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if (any occurrence of) {@code name} is
-     * not a map type or if the elements (keys or values) of {@code v} are not of
-     * the type of the elements of column {@code name}.
-     * @throws NullPointerException if {@code v} contains null values. Nulls are not supported in collections
-     * by CQL.
+     *                                  variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * @throws InvalidTypeException     if (any occurrence of) {@code name} is
+     *                                  not a map type or if the elements (keys or values) of {@code v} are not of
+     *                                  the type of the elements of column {@code name}.
+     * @throws NullPointerException     if {@code v} contains null values. Nulls are not supported in collections
+     *                                  by CQL.
      */
     public <K, V> BoundStatement setMap(String name, Map<K, V> v) {
         return wrapper.setMap(name, v);
@@ -907,20 +869,19 @@ public class BoundStatement extends Statement implements SettableData<BoundState
 
     /**
      * Sets the {@code i}th value to the provided set.
-     * <p>
+     * <p/>
      * Please note that {@code null} values are not supported inside collection by CQL.
      *
      * @param <T> the type of the elements of the set to set.
-     * @param i the index of the variable to set.
-     * @param v the value to set.
+     * @param i   the index of the variable to set.
+     * @param v   the value to set.
      * @return this BoundStatement.
-     *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
-     * @throws InvalidTypeException if column {@code i} is not a set type or
-     * if the elements of {@code v} are not of the type of the elements of
-     * column {@code i}.
-     * @throws NullPointerException if {@code v} contains null values. Nulls are not supported in collections
-     * by CQL.
+     * @throws InvalidTypeException      if column {@code i} is not a set type or
+     *                                   if the elements of {@code v} are not of the type of the elements of
+     *                                   column {@code i}.
+     * @throws NullPointerException      if {@code v} contains null values. Nulls are not supported in collections
+     *                                   by CQL.
      */
     public <T> BoundStatement setSet(int i, Set<T> v) {
         return wrapper.setSet(i, v);
@@ -929,22 +890,21 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     /**
      * Sets the value for (all occurrences of) variable {@code name} to the
      * provided set.
-     * <p>
+     * <p/>
      * Please note that {@code null} values are not supported inside collection by CQL.
      *
-     * @param <T> the type of the elements of the set to set.
+     * @param <T>  the type of the elements of the set to set.
      * @param name the name of the variable to set; if multiple variables
-     * {@code name} are prepared, all of them are set.
-     * @param v the value to set.
+     *             {@code name} are prepared, all of them are set.
+     * @param v    the value to set.
      * @return this BoundStatement.
-     *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if (any occurrence of) {@code name} is
-     * not a map type or if the elements of {@code v} are not of the type of
-     * the elements of column {@code name}.
-     * @throws NullPointerException if {@code v} contains null values. Nulls are not supported in collections
-     * by CQL.
+     *                                  variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * @throws InvalidTypeException     if (any occurrence of) {@code name} is
+     *                                  not a map type or if the elements of {@code v} are not of the type of
+     *                                  the elements of column {@code name}.
+     * @throws NullPointerException     if {@code v} contains null values. Nulls are not supported in collections
+     *                                  by CQL.
      */
     public <T> BoundStatement setSet(String name, Set<T> v) {
         return wrapper.setSet(name, v);
@@ -956,10 +916,9 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @param i the index of the value to set.
      * @param v the value to set.
      * @return this BoundStatement .
-     *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this BoundStatement.
-     * @throws InvalidTypeException if value {@code i} is not a UDT value or if its definition
-     * does not correspond to the one of {@code v}.
+     * @throws InvalidTypeException      if value {@code i} is not a UDT value or if its definition
+     *                                   does not correspond to the one of {@code v}.
      */
     public BoundStatement setUDTValue(int i, UDTValue v) {
         return wrapper.setUDTValue(i, v);
@@ -970,14 +929,13 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * provided UDT value.
      *
      * @param name the name of the value to set; if {@code name} is present multiple
-     * times, all its values are set.
-     * @param v the value to set.
+     *             times, all its values are set.
+     * @param v    the value to set.
      * @return this BoundStatement.
-     *
      * @throws IllegalArgumentException if {@code name} is not a valid name for this BoundStatement.
-     * @throws InvalidTypeException if (any occurrence of) {@code name} is
-     * not a UDT value or if the definition of column {@code name} does not correspond to
-     * the one of {@code v}.
+     * @throws InvalidTypeException     if (any occurrence of) {@code name} is
+     *                                  not a UDT value or if the definition of column {@code name} does not correspond to
+     *                                  the one of {@code v}.
      */
     public BoundStatement setUDTValue(String name, UDTValue v) {
         return wrapper.setUDTValue(name, v);
@@ -989,10 +947,9 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @param i the index of the value to set.
      * @param v the value to set.
      * @return this BoundStatement.
-     *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this BoundStatement.
-     * @throws InvalidTypeException if value {@code i} is not a tuple value or if its types
-     * do not correspond to the ones of {@code v}.
+     * @throws InvalidTypeException      if value {@code i} is not a tuple value or if its types
+     *                                   do not correspond to the ones of {@code v}.
      */
     public BoundStatement setTupleValue(int i, TupleValue v) {
         return wrapper.setTupleValue(i, v);
@@ -1003,14 +960,13 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * provided tuple value.
      *
      * @param name the name of the value to set; if {@code name} is present multiple
-     * times, all its values are set.
-     * @param v the value to set.
+     *             times, all its values are set.
+     * @param v    the value to set.
      * @return this BoundStatement.
-     *
      * @throws IllegalArgumentException if {@code name} is not a valid name for this BoundStatement.
-     * @throws InvalidTypeException if (any occurrence of) {@code name} is
-     * not a tuple value or if the types of column {@code name} do not correspond to
-     * the ones of {@code v}.
+     * @throws InvalidTypeException     if (any occurrence of) {@code name} is
+     *                                  not a tuple value or if the types of column {@code name} do not correspond to
+     *                                  the ones of {@code v}.
      */
     public BoundStatement setTupleValue(String name, TupleValue v) {
         return wrapper.setTupleValue(name, v);
@@ -1018,7 +974,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
 
     /**
      * Sets the {@code i}th value to {@code null}.
-     * <p>
+     * <p/>
      * This is mainly intended for CQL types which map to native Java types.
      *
      * @param i the index of the value to set.
@@ -1031,11 +987,11 @@ public class BoundStatement extends Statement implements SettableData<BoundState
 
     /**
      * Sets the value for (all occurrences of) variable {@code name} to {@code null}.
-     * <p>
+     * <p/>
      * This is mainly intended for CQL types which map to native Java types.
      *
      * @param name the name of the value to set; if {@code name} is present multiple
-     * times, all its values are set.
+     *             times, all its values are set.
      * @return this object.
      * @throws IllegalArgumentException if {@code name} is not a valid name for this object.
      */
@@ -1387,10 +1343,10 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     void ensureAllSet() {
         int index = 0;
         for (ByteBuffer value : wrapper.values) {
-             if (value == BoundStatement.UNSET)
+            if (value == BoundStatement.UNSET)
                 throw new IllegalStateException("Unset value at index " + index + ". "
-                                                + "If you want this value to be null, please set it to null explicitly.");
-             index += 1;
+                        + "If you want this value to be null, please set it to null explicitly.");
+            index += 1;
         }
     }
 }

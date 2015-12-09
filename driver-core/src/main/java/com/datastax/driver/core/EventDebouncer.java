@@ -15,15 +15,7 @@
  */
 package com.datastax.driver.core;
 
-import java.util.List;
-import java.util.Queue;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
-
-import static java.util.concurrent.TimeUnit.NANOSECONDS;
-import static java.util.concurrent.TimeUnit.SECONDS;
-
+import com.datastax.driver.core.utils.MoreFutures;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -32,13 +24,22 @@ import com.google.common.util.concurrent.SettableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkNotNull;
+import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
-import com.datastax.driver.core.utils.MoreFutures;
+import static com.google.common.base.Preconditions.checkNotNull;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 /**
  * A helper class to debounce events received by the Control Connection.
- *
+ * <p/>
  * This class accumulates received events, and delivers them when either:
  * - no events have been received for delayMs
  * - maxPendingEvents have been received
@@ -87,7 +88,7 @@ class EventDebouncer<T> {
         state = State.RUNNING;
         if (!events.isEmpty()) {
             logger.trace("{} debouncer: {} events were accumulated before the debouncer started: delivering now",
-                name, eventCount.get());
+                    name, eventCount.get());
             scheduleImmediateDelivery();
         }
     }
@@ -114,7 +115,9 @@ class EventDebouncer<T> {
         }
     }
 
-    /** @return a future that will complete once the event has been processed */
+    /**
+     * @return a future that will complete once the event has been processed
+     */
     ListenableFuture<Void> eventReceived(T event) {
         if (state == State.STOPPED) {
             logger.trace("{} debouncer is stopped, rejecting event: {}", name, event);
@@ -130,8 +133,8 @@ class EventDebouncer<T> {
         if (count > MAX_QUEUED_EVENTS && (now = System.nanoTime()) > lastOverflowWarning + OVERFLOW_WARNING_INTERVAL) {
             lastOverflowWarning = now;
             logger.warn("{} debouncer enqueued more than {} events, rejecting new events. "
-                + "This should not happen and is likely a sign that something is wrong.",
-                name, MAX_QUEUED_EVENTS);
+                            + "This should not happen and is likely a sign that something is wrong.",
+                    name, MAX_QUEUED_EVENTS);
             return MoreFutures.VOID_SUCCESS;
         }
 

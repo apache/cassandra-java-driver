@@ -57,7 +57,7 @@ public class UDTValue extends AbstractData<UDTValue> {
         if (!(o instanceof UDTValue))
             return false;
 
-        UDTValue that = (UDTValue)o;
+        UDTValue that = (UDTValue) o;
         if (!definition.equals(that.definition))
             return false;
 

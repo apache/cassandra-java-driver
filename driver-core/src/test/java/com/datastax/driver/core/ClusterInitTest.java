@@ -15,19 +15,11 @@
  */
 package com.datastax.driver.core;
 
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
+import com.datastax.driver.core.exceptions.NoHostAvailableException;
+import com.datastax.driver.core.policies.ConstantReconnectionPolicy;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Uninterruptibles;
 import org.scassandra.Scassandra;
 import org.scassandra.http.client.PrimingClient;
@@ -37,13 +29,14 @@ import org.slf4j.LoggerFactory;
 import org.testng.SkipException;
 import org.testng.annotations.Test;
 
-import static org.mockito.Mockito.atLeast;
-import static org.mockito.Mockito.atMost;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
-
-import com.datastax.driver.core.exceptions.NoHostAvailableException;
-import com.datastax.driver.core.policies.ConstantReconnectionPolicy;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.Assertions.fail;
@@ -51,6 +44,7 @@ import static com.datastax.driver.core.FakeHost.Behavior.THROWING_CONNECT_TIMEOU
 import static com.datastax.driver.core.HostDistance.LOCAL;
 import static com.datastax.driver.core.TestUtils.nonDebouncingQueryOptions;
 import static com.datastax.driver.core.TestUtils.nonQuietClusterCloseOptions;
+import static org.mockito.Mockito.*;
 
 public class ClusterInitTest {
     private static final Logger logger = LoggerFactory.getLogger(ClusterInitTest.class);
@@ -104,19 +98,19 @@ public class ClusterInitTest {
             PoolingOptions poolingOptions = new PoolingOptions().setConnectionsPerHost(LOCAL, 1, 1);
 
             cluster = Cluster.builder()
-                .withPort(scassandra.getBinaryPort())
-                .addContactPoints(
-                    realHostAddress,
-                    failingHosts.get(0).address, failingHosts.get(1).address,
-                    failingHosts.get(2).address, failingHosts.get(3).address,
-                    missingHostAddress
-                )
-                .withSocketOptions(socketOptions)
-                .withReconnectionPolicy(reconnectionPolicy)
-                .withPoolingOptions(poolingOptions)
-                .withProtocolVersion(TestUtils.getDesiredProtocolVersion())
-                .withQueryOptions(nonDebouncingQueryOptions())
-                .build();
+                    .withPort(scassandra.getBinaryPort())
+                    .addContactPoints(
+                            realHostAddress,
+                            failingHosts.get(0).address, failingHosts.get(1).address,
+                            failingHosts.get(2).address, failingHosts.get(3).address,
+                            missingHostAddress
+                    )
+                    .withSocketOptions(socketOptions)
+                    .withReconnectionPolicy(reconnectionPolicy)
+                    .withPoolingOptions(poolingOptions)
+                    .withProtocolVersion(TestUtils.getDesiredProtocolVersion())
+                    .withQueryOptions(nonDebouncingQueryOptions())
+                    .build();
             cluster.connect();
 
             // For information only:
@@ -142,7 +136,7 @@ public class ClusterInitTest {
                 // There is a possible race here in that the host is marked down in a separate Executor in onDown
                 // and then starts a periodic reconnection attempt shortly after.  Since setDown is called before
                 // startPeriodicReconnectionAttempt, we add a slight delay here if the future isn't set yet.
-                if(host.getReconnectionAttemptFuture() == null || host.getReconnectionAttemptFuture().isDone()) {
+                if (host.getReconnectionAttemptFuture() == null || host.getReconnectionAttemptFuture().isDone()) {
                     logger.warn("Periodic Reconnection Attempt hasn't started yet for {}, waiting 1 second and then checking.", host);
                     Uninterruptibles.sleepUninterruptibly(1, TimeUnit.SECONDS);
                 }
@@ -168,19 +162,19 @@ public class ClusterInitTest {
      * @jira_ticket JAVA-954
      * @expected_result No reconnection scheduled.
      */
-    @Test(groups="short", expectedExceptions = NoHostAvailableException.class)
+    @Test(groups = "short", expectedExceptions = NoHostAvailableException.class)
     public void should_not_schedule_reconnections_before_init_complete() {
         // Both contact points time out so we're sure we'll try both of them and init will never complete.
         List<FakeHost> hosts = Lists.newArrayList(
-            new FakeHost(CCMBridge.ipOfNode(0), 9042, THROWING_CONNECT_TIMEOUTS),
-            new FakeHost(CCMBridge.ipOfNode(1), 9042, THROWING_CONNECT_TIMEOUTS));
+                new FakeHost(CCMBridge.ipOfNode(0), 9042, THROWING_CONNECT_TIMEOUTS),
+                new FakeHost(CCMBridge.ipOfNode(1), 9042, THROWING_CONNECT_TIMEOUTS));
         // Use a low reconnection interval and keep the default connect timeout (5 seconds). So if a reconnection was scheduled,
         // we would see a call to the reconnection policy.
         CountingReconnectionPolicy reconnectionPolicy = new CountingReconnectionPolicy(new ConstantReconnectionPolicy(100));
         Cluster cluster = Cluster.builder()
-            .addContactPoints(hosts.get(0).address, hosts.get(1).address)
-            .withReconnectionPolicy(reconnectionPolicy)
-            .build();
+                .addContactPoints(hosts.get(0).address, hosts.get(1).address)
+                .withReconnectionPolicy(reconnectionPolicy)
+                .build();
         try {
             cluster.init();
         } finally {
@@ -205,9 +199,9 @@ public class ClusterInitTest {
     @Test(groups = "short")
     public void should_be_able_to_close_cluster_that_never_successfully_connected() throws Exception {
         Cluster cluster = Cluster.builder()
-            .addContactPointsWithPorts(Collections.singleton(new InetSocketAddress("127.0.0.1", 65534)))
-            .withNettyOptions(nonQuietClusterCloseOptions)
-            .build();
+                .addContactPointsWithPorts(Collections.singleton(new InetSocketAddress("127.0.0.1", 65534)))
+                .withNettyOptions(nonQuietClusterCloseOptions)
+                .build();
         try {
             cluster.connect();
             fail("Should not have been able to connect.");
@@ -228,23 +222,23 @@ public class ClusterInitTest {
      * @jira_ticket JAVA-854
      * @test_category host:state
      */
-    @Test(groups="short")
+    @Test(groups = "short")
     public void should_not_abort_init_if_host_does_not_support_protocol_version() {
         ScassandraCluster scassandraCluster = ScassandraCluster.builder()
-            .withIpPrefix(CCMBridge.IP_PREFIX)
-            .withNodes(5)
-            // For node 2, report an older version which uses protocol v1.
-            .forcePeerInfo(1, 2, "release_version", "1.2.19")
-            .build();
+                .withIpPrefix(CCMBridge.IP_PREFIX)
+                .withNodes(5)
+                        // For node 2, report an older version which uses protocol v1.
+                .forcePeerInfo(1, 2, "release_version", "1.2.19")
+                .build();
         Cluster cluster = Cluster.builder()
-            .addContactPoints(scassandraCluster.address(1))
-            .withNettyOptions(nonQuietClusterCloseOptions)
-            .build();
+                .addContactPoints(scassandraCluster.address(1))
+                .withNettyOptions(nonQuietClusterCloseOptions)
+                .build();
 
         try {
             scassandraCluster.init();
             cluster.init();
-            for(int i = 1; i <= 5; i++) {
+            for (int i = 1; i <= 5; i++) {
                 String hostAddress = scassandraCluster.address(i);
                 if (i == 2) {
                     // As this host is at an older protocol version, it should be ignored and not marked up.
@@ -263,8 +257,8 @@ public class ClusterInitTest {
 
     private void primePeerRows(Scassandra scassandra, List<FakeHost> otherHosts) throws UnknownHostException {
         PrimingClient primingClient = PrimingClient.builder()
-            .withHost("localhost").withPort(scassandra.getAdminPort())
-            .build();
+                .withHost("localhost").withPort(scassandra.getAdminPort())
+                .build();
 
         List<Map<String, ?>> rows = Lists.newArrayListWithCapacity(5);
 
@@ -272,20 +266,20 @@ public class ClusterInitTest {
         for (FakeHost otherHost : otherHosts) {
             InetAddress address = InetAddress.getByName(otherHost.address);
             rows.add(ImmutableMap.<String, Object>builder()
-                .put("peer", address)
-                .put("rpc_address", address)
-                .put("data_center", "datacenter1")
-                .put("rack", "rack1")
-                .put("release_version", "2.0.1")
-                .put("tokens", ImmutableSet.of(Long.toString(Long.MIN_VALUE + i++)))
-                .build());
+                    .put("peer", address)
+                    .put("rpc_address", address)
+                    .put("data_center", "datacenter1")
+                    .put("rack", "rack1")
+                    .put("release_version", "2.0.1")
+                    .put("tokens", ImmutableSet.of(Long.toString(Long.MIN_VALUE + i++)))
+                    .build());
         }
 
         primingClient.prime(
-            PrimingRequest.queryBuilder()
-                .withQuery("SELECT * FROM system.peers")
-                .withColumnTypes(ScassandraCluster.SELECT_PEERS)
-                .withRows(rows)
-                .build());
+                PrimingRequest.queryBuilder()
+                        .withQuery("SELECT * FROM system.peers")
+                        .withColumnTypes(ScassandraCluster.SELECT_PEERS)
+                        .withRows(rows)
+                        .build());
     }
 }

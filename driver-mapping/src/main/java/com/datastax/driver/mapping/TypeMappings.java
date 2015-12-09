@@ -15,17 +15,16 @@
  */
 package com.datastax.driver.mapping;
 
-import java.lang.reflect.Field;
+import com.datastax.driver.core.DataType;
+import com.datastax.driver.core.TupleValue;
+import com.datastax.driver.core.UDTValue;
+import com.datastax.driver.mapping.annotations.UDT;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
-
-import com.datastax.driver.core.DataType;
-import com.datastax.driver.core.TupleValue;
-import com.datastax.driver.core.UDTValue;
-import com.datastax.driver.mapping.annotations.UDT;
 
 /**
  * Utility methods to determine which CQL type we expect for a given Java field type.
@@ -37,7 +36,7 @@ class TypeMappings {
             return DataType.blob();
 
         if (klass == int.class || Integer.class.isAssignableFrom(klass))
-                return DataType.cint();
+            return DataType.cint();
         if (klass == long.class || Long.class.isAssignableFrom(klass))
             return DataType.bigint();
         if (klass == float.class || Float.class.isAssignableFrom(klass))
@@ -89,7 +88,7 @@ class TypeMappings {
 
     static boolean mapsToUserTypeOrTuple(Class<?> klass) {
         return isMappedUDT(klass) ||
-            klass.equals(UDTValue.class) ||
-            klass.equals(TupleValue.class);
+                klass.equals(UDTValue.class) ||
+                klass.equals(TupleValue.class);
     }
 }

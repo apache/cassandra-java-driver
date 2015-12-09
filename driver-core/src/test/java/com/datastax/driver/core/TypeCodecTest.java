@@ -15,16 +15,15 @@
  */
 package com.datastax.driver.core;
 
-import java.nio.ByteBuffer;
-import java.util.Map;
-import java.util.Collections;
-import java.util.List;
-
-import com.google.common.collect.Lists;
 import com.google.common.base.Strings;
-
+import com.google.common.collect.Lists;
 import org.testng.Assert;
 import org.testng.annotations.Test;
+
+import java.nio.ByteBuffer;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 import static com.datastax.driver.core.DataType.text;
 
@@ -56,7 +55,7 @@ public class TypeCodecTest {
         Assert.assertNotNull(mapType);
     }
 
-    @Test(groups = "unit", expectedExceptions = { IllegalArgumentException.class })
+    @Test(groups = "unit", expectedExceptions = {IllegalArgumentException.class})
     public void collectionTooLargeTest() throws Exception {
         TypeCodec<List<Integer>> listType = TypeCodec.listOf(DataType.cint(), ProtocolVersion.V2);
         List<Integer> list = Collections.nCopies(65536, 1);
@@ -64,7 +63,7 @@ public class TypeCodecTest {
         listType.serialize(list);
     }
 
-    @Test(groups = "unit", expectedExceptions = { IllegalArgumentException.class })
+    @Test(groups = "unit", expectedExceptions = {IllegalArgumentException.class})
     public void collectionElementTooLargeTest() throws Exception {
         TypeCodec<List<String>> listType = TypeCodec.listOf(DataType.text(), ProtocolVersion.V2);
         List<String> list = Lists.newArrayList(Strings.repeat("a", 65536));

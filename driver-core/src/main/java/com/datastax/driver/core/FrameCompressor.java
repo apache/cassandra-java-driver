@@ -15,26 +15,27 @@
  */
 package com.datastax.driver.core;
 
-import java.io.IOException;
-
+import com.datastax.driver.core.exceptions.DriverInternalError;
 import io.netty.buffer.Unpooled;
 import net.jpountz.lz4.LZ4Factory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xerial.snappy.Snappy;
 
-import com.datastax.driver.core.exceptions.DriverInternalError;
+import java.io.IOException;
 
 abstract class FrameCompressor {
 
     private static final Logger logger = LoggerFactory.getLogger(FrameCompressor.class);
 
     public abstract Frame compress(Frame frame) throws IOException;
+
     public abstract Frame decompress(Frame frame) throws IOException;
 
     public static class SnappyCompressor extends FrameCompressor {
 
         public static final SnappyCompressor instance;
+
         static {
             SnappyCompressor i;
             try {
@@ -78,6 +79,7 @@ abstract class FrameCompressor {
     public static class LZ4Compressor extends FrameCompressor {
 
         public static final LZ4Compressor instance;
+
         static {
             LZ4Compressor i;
             try {
@@ -111,7 +113,7 @@ abstract class FrameCompressor {
 
             output[0] = (byte) (input.length >>> 24);
             output[1] = (byte) (input.length >>> 16);
-            output[2] = (byte) (input.length >>>  8);
+            output[2] = (byte) (input.length >>> 8);
             output[3] = (byte) (input.length);
 
             try {
@@ -126,9 +128,9 @@ abstract class FrameCompressor {
             byte[] input = CBUtil.readRawBytes(frame.body);
 
             int uncompressedLength = ((input[0] & 0xFF) << 24)
-                                   | ((input[1] & 0xFF) << 16)
-                                   | ((input[2] & 0xFF) <<  8)
-                                   | ((input[3] & 0xFF));
+                    | ((input[1] & 0xFF) << 16)
+                    | ((input[2] & 0xFF) << 8)
+                    | ((input[3] & 0xFF));
 
             byte[] output = new byte[uncompressedLength];
 

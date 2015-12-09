@@ -15,17 +15,14 @@
  */
 package com.datastax.driver.core.policies;
 
+import com.datastax.driver.core.exceptions.ReadTimeoutException;
+import com.datastax.driver.core.exceptions.UnavailableException;
+import com.datastax.driver.core.exceptions.WriteTimeoutException;
 import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
-import static org.scassandra.http.client.PrimingRequest.Result.read_request_timeout;
-import static org.scassandra.http.client.PrimingRequest.Result.unavailable;
-import static org.scassandra.http.client.PrimingRequest.Result.write_request_timeout;
-
-import com.datastax.driver.core.exceptions.ReadTimeoutException;
-import com.datastax.driver.core.exceptions.UnavailableException;
-import com.datastax.driver.core.exceptions.WriteTimeoutException;
+import static org.scassandra.http.client.PrimingRequest.Result.*;
 
 public class FallthroughRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegrationTest {
     public FallthroughRetryPolicyIntegrationTest() {

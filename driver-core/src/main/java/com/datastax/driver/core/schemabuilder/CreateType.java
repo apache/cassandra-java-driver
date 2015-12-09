@@ -15,12 +15,12 @@
  */
 package com.datastax.driver.core.schemabuilder;
 
+import com.google.common.base.Joiner;
+import com.google.common.base.Optional;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
-import com.google.common.base.Joiner;
-import com.google.common.base.Optional;
 
 /**
  * A built CREATE TYPE statement.
@@ -46,6 +46,7 @@ public class CreateType extends AbstractCreateStatement<CreateType> {
 
     /**
      * Generate the script for custom type creation
+     *
      * @return a CREATE TYPE statement
      */
     public String build() {

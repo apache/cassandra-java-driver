@@ -15,18 +15,17 @@
  */
 package com.datastax.driver.core;
 
-import java.nio.ByteBuffer;
-
-import org.testng.annotations.Test;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
-
 import com.datastax.driver.core.querybuilder.Batch;
 import com.datastax.driver.core.querybuilder.Insert;
 import com.datastax.driver.core.utils.CassandraVersion;
+import org.testng.annotations.Test;
+
+import java.nio.ByteBuffer;
 
 import static com.datastax.driver.core.TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 /**
  * Test limitations when using large amounts of data with the driver
@@ -179,10 +178,11 @@ public class LargeDataTest {
 
     /**
      * Test a wide row of size 1,000,000
+     *
      * @throws Throwable
      */
     @Test(groups = "stress")
-    @CassandraVersion(major=2.0, minor=0, description="< 2.0 is skipped as 1.2 does not handle reading wide rows well.")
+    @CassandraVersion(major = 2.0, minor = 0, description = "< 2.0 is skipped as 1.2 does not handle reading wide rows well.")
     public void wideRows() throws Throwable {
         Cluster.Builder builder = Cluster.builder();
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(1, builder);
@@ -203,10 +203,11 @@ public class LargeDataTest {
 
     /**
      * Test a batch that writes a row of size 10,000
+     *
      * @throws Throwable
      */
     @Test(groups = "stress")
-    @CassandraVersion(major=2.0, minor=0, description="< 2.0 is skipped as 1.2 does not handle large batches well.")
+    @CassandraVersion(major = 2.0, minor = 0, description = "< 2.0 is skipped as 1.2 does not handle large batches well.")
     public void wideBatchRows() throws Throwable {
         Cluster.Builder builder = Cluster.builder();
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(1, builder);
@@ -227,6 +228,7 @@ public class LargeDataTest {
 
     /**
      * Test a wide row of size 1,000,000 consisting of a ByteBuffer
+     *
      * @throws Throwable
      */
     @Test(groups = "stress")
@@ -250,6 +252,7 @@ public class LargeDataTest {
 
     /**
      * Test a row with a single extra large text value
+     *
      * @throws Throwable
      */
     @Test(groups = "stress")
@@ -273,6 +276,7 @@ public class LargeDataTest {
 
     /**
      * Creates a table with 330 columns
+     *
      * @throws Throwable
      */
     @Test(groups = "stress")
@@ -305,6 +309,7 @@ public class LargeDataTest {
 
     /**
      * Tests 10 random tests consisting of the other methods in this class
+     *
      * @throws Throwable
      */
     @Test(groups = "duration")
@@ -331,13 +336,24 @@ public class LargeDataTest {
 
         try {
             for (int i = 0; i < 10; ++i) {
-                switch ((int) (Math.random() * 5)){
-                    case 0: testWideRows(c, 0); break;
-                    case 1: testWideBatchRows(c, 0); break;
-                    case 2: testByteRows(c, 0); break;
-                    case 3: testLargeText(c, 0); break;
-                    case 4: testWideTable(c, 0); break;
-                    default: break;
+                switch ((int) (Math.random() * 5)) {
+                    case 0:
+                        testWideRows(c, 0);
+                        break;
+                    case 1:
+                        testWideBatchRows(c, 0);
+                        break;
+                    case 2:
+                        testByteRows(c, 0);
+                        break;
+                    case 3:
+                        testLargeText(c, 0);
+                        break;
+                    case 4:
+                        testWideTable(c, 0);
+                        break;
+                    default:
+                        break;
                 }
             }
         } catch (Throwable e) {

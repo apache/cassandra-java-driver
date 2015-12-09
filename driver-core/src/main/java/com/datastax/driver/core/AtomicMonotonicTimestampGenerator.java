@@ -20,11 +20,11 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * A timestamp generator based on {@code System.currentTimeMillis()}, with an incrementing atomic counter
  * to generate the sub-millisecond part.
- * <p>
+ * <p/>
  * This implementation guarantees incrementing timestamps among all client threads, provided that no more than
  * 1000 are requested for a given clock tick (the exact granularity of of {@link System#currentTimeMillis()}
  * depends on the operating system).
- * <p>
+ * <p/>
  * If that rate is exceeded, a warning is logged and the timestamps don't increment anymore until the next clock
  * tick. If you consistently exceed that rate, consider using {@link ThreadLocalMonotonicTimestampGenerator}.
  */

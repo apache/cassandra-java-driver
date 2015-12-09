@@ -15,14 +15,14 @@
  */
 package com.datastax.driver.core.exceptions;
 
+import com.datastax.driver.core.ConsistencyLevel;
+
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
-import com.datastax.driver.core.ConsistencyLevel;
-
 /**
  * A Cassandra timeout during a query.
- *
+ * <p/>
  * Such an exception is returned when the query has been tried by Cassandra but
  * cannot be achieved with the requested consistency level within the rpc
  * timeout set for Cassandra.

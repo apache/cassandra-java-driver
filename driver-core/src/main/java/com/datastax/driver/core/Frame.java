@@ -15,15 +15,14 @@
  */
 package com.datastax.driver.core;
 
-import java.util.EnumSet;
-import java.util.List;
-
+import com.datastax.driver.core.exceptions.DriverInternalError;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.*;
 
-import com.datastax.driver.core.exceptions.DriverInternalError;
+import java.util.EnumSet;
+import java.util.List;
 
 class Frame {
 
@@ -33,24 +32,24 @@ class Frame {
     /**
      * On-wire frame.
      * Frames for protocol versions 1+2 are defined as:
-     *
-     *   0         8        16        24        32
-     *   +---------+---------+---------+---------+
-     *   | version |  flags  | stream  | opcode  |
-     *   +---------+---------+---------+---------+
-     *   |                length                 |
-     *   +---------+---------+---------+---------+
-     *
+     * <p/>
+     * 0         8        16        24        32
+     * +---------+---------+---------+---------+
+     * | version |  flags  | stream  | opcode  |
+     * +---------+---------+---------+---------+
+     * |                length                 |
+     * +---------+---------+---------+---------+
+     * <p/>
      * Frames for protocol version 3 are defined as:
-     *
-     *   0         8        16        24        32
-     *   +---------+---------+---------+---------+
-     *   | version |  flags  |      stream       |
-     *   +---------+---------+---------+---------+
-     *   | opcode  |      length                 |
-     *   +---------+---------+---------+---------+
-     *   | length  |
-     *   +---------+
+     * <p/>
+     * 0         8        16        24        32
+     * +---------+---------+---------+---------+
+     * | version |  flags  |      stream       |
+     * +---------+---------+---------+---------+
+     * | opcode  |      length                 |
+     * +---------+---------+---------+---------+
+     * | length  |
+     * +---------+
      */
     private Frame(Header header, ByteBuf body) {
         this.header = header;
@@ -64,7 +63,7 @@ class Frame {
         // version first byte is the "direction" of the frame (request or response)
         ProtocolVersion version = ProtocolVersion.fromInt(versionBytes & 0x7F);
         int hdrLen = Header.lengthFor(version);
-        assert fullFrame.readableBytes() >= (hdrLen-1) : String.format("Frame too short (%d bytes)", fullFrame.readableBytes());
+        assert fullFrame.readableBytes() >= (hdrLen - 1) : String.format("Frame too short (%d bytes)", fullFrame.readableBytes());
 
         int flags = fullFrame.readByte();
         int streamId = readStreamid(fullFrame, version);
@@ -123,8 +122,7 @@ class Frame {
             }
         }
 
-        public static enum Flag
-        {
+        public static enum Flag {
             // The order of that enum matters!!
             COMPRESSED,
             TRACING;

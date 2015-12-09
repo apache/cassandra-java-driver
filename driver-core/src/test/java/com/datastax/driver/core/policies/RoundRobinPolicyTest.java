@@ -15,19 +15,12 @@
  */
 package com.datastax.driver.core.policies;
 
+import com.datastax.driver.core.*;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.ConsistencyLevel;
-import com.datastax.driver.core.DataProviders;
-import com.datastax.driver.core.MemoryAppender;
-import com.datastax.driver.core.QueryTracker;
-import com.datastax.driver.core.ScassandraCluster;
-import com.datastax.driver.core.Session;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.TestUtils.nonQuietClusterCloseOptions;
@@ -58,16 +51,16 @@ public class RoundRobinPolicyTest {
      *
      * @test_category load_balancing:round_robin
      */
-    @Test(groups="short")
+    @Test(groups = "short")
     public void should_round_robin_within_single_datacenter() {
         // given: a 5 node cluster using RoundRobinPolicy.
         ScassandraCluster sCluster = ScassandraCluster.builder().withNodes(5).build();
 
         Cluster cluster = Cluster.builder()
-            .addContactPoint(sCluster.address(1))
-            .withLoadBalancingPolicy(new RoundRobinPolicy())
-            .withNettyOptions(nonQuietClusterCloseOptions)
-            .build();
+                .addContactPoint(sCluster.address(1))
+                .withLoadBalancingPolicy(new RoundRobinPolicy())
+                .withNettyOptions(nonQuietClusterCloseOptions)
+                .build();
 
         try {
             sCluster.init();
@@ -77,7 +70,7 @@ public class RoundRobinPolicyTest {
             queryTracker.query(session, 50);
 
             // then: all nodes should be queried equally.
-            for(int i = 1; i <= 5; i++) {
+            for (int i = 1; i <= 5; i++) {
                 queryTracker.assertQueried(sCluster, 1, i, 10);
             }
         } finally {
@@ -93,16 +86,16 @@ public class RoundRobinPolicyTest {
      *
      * @test_category load_balancing:round_robin
      */
-    @Test(groups="short")
+    @Test(groups = "short")
     public void should_round_robin_irrespective_of_topology() {
         // given: a 10 node, 5 DC cluster using RoundRobinPolicy.
-        ScassandraCluster sCluster = ScassandraCluster.builder().withNodes(2,2,2,2,2).build();
+        ScassandraCluster sCluster = ScassandraCluster.builder().withNodes(2, 2, 2, 2, 2).build();
 
         Cluster cluster = Cluster.builder()
-            .addContactPoint(sCluster.address(1))
-            .withLoadBalancingPolicy(new RoundRobinPolicy())
-            .withNettyOptions(nonQuietClusterCloseOptions)
-            .build();
+                .addContactPoint(sCluster.address(1))
+                .withLoadBalancingPolicy(new RoundRobinPolicy())
+                .withNettyOptions(nonQuietClusterCloseOptions)
+                .build();
 
         try {
             sCluster.init();
@@ -112,7 +105,7 @@ public class RoundRobinPolicyTest {
             queryTracker.query(session, 50);
 
             // then: all nodes should be queried equally.
-            for(int dc = 1; dc <= 5; dc++) {
+            for (int dc = 1; dc <= 5; dc++) {
                 for (int i = 1; i <= 2; i++) {
                     queryTracker.assertQueried(sCluster, dc, i, 5);
                 }
@@ -131,16 +124,16 @@ public class RoundRobinPolicyTest {
      *
      * @test_category load_balancing:round_robin
      */
-    @Test(groups="short", dataProvider="consistencyLevels", dataProviderClass=DataProviders.class)
+    @Test(groups = "short", dataProvider = "consistencyLevels", dataProviderClass = DataProviders.class)
     public void should_warn_if_using_dc_local_consistency_level(ConsistencyLevel cl) {
         // given: a 2 node, 2 DC cluster using RoundRobinPolicy.
-        ScassandraCluster sCluster = ScassandraCluster.builder().withNodes(1,1).build();
+        ScassandraCluster sCluster = ScassandraCluster.builder().withNodes(1, 1).build();
 
         Cluster cluster = Cluster.builder()
-            .addContactPoint(sCluster.address(1))
-            .withLoadBalancingPolicy(new RoundRobinPolicy())
-            .withNettyOptions(nonQuietClusterCloseOptions)
-            .build();
+                .addContactPoint(sCluster.address(1))
+                .withLoadBalancingPolicy(new RoundRobinPolicy())
+                .withNettyOptions(nonQuietClusterCloseOptions)
+                .build();
 
         String expectedLogMessage = "Detected request at Consistency Level " + cl + " but the non-DC aware RoundRobinPolicy is in use.";
 
@@ -156,7 +149,7 @@ public class RoundRobinPolicyTest {
             queryTracker.assertQueried(sCluster, 2, 1, 25);
 
             // Should get a warning if using a local DC cl.
-            if(cl.isDCLocal()) {
+            if (cl.isDCLocal()) {
                 assertThat(logs.get()).containsOnlyOnce(expectedLogMessage);
             } else {
                 assertThat(logs.get()).doesNotContain(expectedLogMessage);

@@ -15,9 +15,6 @@
  */
 package com.datastax.driver.core;
 
-import java.util.Arrays;
-import java.util.List;
-
 /**
  * A value for a Tuple.
  */
@@ -60,7 +57,7 @@ public class TupleValue extends AbstractAddressableByIndexData<TupleValue> {
         if (!(o instanceof TupleValue))
             return false;
 
-        TupleValue that = (TupleValue)o;
+        TupleValue that = (TupleValue) o;
         if (!type.equals(that.type))
             return false;
 

@@ -15,16 +15,15 @@
  */
 package com.datastax.driver.mapping;
 
+import com.datastax.driver.mapping.annotations.Frozen;
+import com.datastax.driver.mapping.annotations.FrozenValue;
+import com.datastax.driver.mapping.annotations.UDT;
+import org.testng.annotations.Test;
+
 import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import com.datastax.driver.mapping.annotations.Frozen;
-import com.datastax.driver.mapping.annotations.FrozenValue;
-import com.datastax.driver.mapping.annotations.UDT;
-
-import org.testng.annotations.Test;
 
 import static org.testng.Assert.fail;
 

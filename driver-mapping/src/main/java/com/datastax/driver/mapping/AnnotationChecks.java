@@ -15,12 +15,13 @@
  */
 package com.datastax.driver.mapping;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.*;
-import java.lang.reflect.Field;
-import java.util.*;
-
 import com.datastax.driver.mapping.annotations.*;
+
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.util.Map;
 
 /**
  * Various checks on mapping annotations.
@@ -38,7 +39,7 @@ class AnnotationChecks {
         T instance = annotatedClass.getAnnotation(annotation);
         if (instance == null)
             throw new IllegalArgumentException(String.format("@%s annotation was not found on type %s",
-                                                             annotation.getSimpleName(), annotatedClass.getName()));
+                    annotation.getSimpleName(), annotatedClass.getName()));
 
         // Check that no other mapping annotations are present
         validateAnnotations(annotatedClass, annotation);
@@ -51,8 +52,8 @@ class AnnotationChecks {
         Class<? extends Annotation> invalid = validateAnnotations(clazz.getAnnotations(), allowed);
         if (invalid != null)
             throw new IllegalArgumentException(String.format("Cannot have both @%s and @%s on type %s",
-                                                             allowed.getSimpleName(), invalid.getSimpleName(),
-                                                             clazz.getName()));
+                    allowed.getSimpleName(), invalid.getSimpleName(),
+                    clazz.getName()));
     }
 
     /**
@@ -62,17 +63,17 @@ class AnnotationChecks {
         Class<? extends Annotation> invalid = validateAnnotations(field.getAnnotations(), allowed);
         if (invalid != null)
             throw new IllegalArgumentException(String.format("Annotation @%s is not allowed on field %s of %s %s",
-                                                             invalid.getSimpleName(),
-                                                             field.getName(), classDescription,
-                                                             field.getDeclaringClass().getName()));
+                    invalid.getSimpleName(),
+                    field.getName(), classDescription,
+                    field.getDeclaringClass().getName()));
 
         if (field.getAnnotation(Transient.class) == null) {
             try {
                 checkFrozenTypes(field);
             } catch (IllegalArgumentException e) {
                 throw new IllegalArgumentException(String.format("Error while checking frozen types on field %s of %s %s: %s",
-                                                                 field.getName(), classDescription,
-                                                                 field.getDeclaringClass().getName(), e.getMessage()));
+                        field.getName(), classDescription,
+                        field.getDeclaringClass().getName(), e.getMessage()));
             }
         }
         checkValidComputed(field);
@@ -103,7 +104,7 @@ class AnnotationChecks {
 
     static void checkValidComputed(Field field) {
         Computed computed = field.getAnnotation(Computed.class);
-        if (computed != null && computed.value().isEmpty()){
+        if (computed != null && computed.value().isEmpty()) {
             throw new IllegalArgumentException(String.format("Field %s: attribute 'value' of annotation @Computed is mandatory for computed fields", field.getName()));
         }
     }
@@ -140,11 +141,11 @@ class AnnotationChecks {
         Class<?> javaClass;
         Type[] childrenJavaTypes;
         if (javaType instanceof Class<?>) {
-            javaClass = (Class<?>)javaType;
+            javaClass = (Class<?>) javaType;
             childrenJavaTypes = null;
-        } else if (javaType instanceof ParameterizedType){
-            ParameterizedType pt = (ParameterizedType)javaType;
-            javaClass = (Class<?>)pt.getRawType();
+        } else if (javaType instanceof ParameterizedType) {
+            ParameterizedType pt = (ParameterizedType) javaType;
+            javaClass = (Class<?>) pt.getRawType();
             childrenJavaTypes = pt.getActualTypeArguments();
         } else
             throw new IllegalArgumentException("unexpected type: " + javaType);
@@ -165,11 +166,11 @@ class AnnotationChecks {
 
     private static void checkValidFrozen(Class<?> clazz, boolean isRoot, boolean isDeclaredFrozen) {
         boolean shouldBeFrozen = (TypeMappings.mapsToCollection(clazz) && !isRoot)
-            || TypeMappings.mapsToUserTypeOrTuple(clazz);
+                || TypeMappings.mapsToUserTypeOrTuple(clazz);
         if (shouldBeFrozen != isDeclaredFrozen)
             throw new IllegalArgumentException(String.format("expected %s to be %sfrozen but was %sfrozen",
-                clazz.getSimpleName(),
-                shouldBeFrozen ? "" : "not ",
-                isDeclaredFrozen ? "" : "not "));
+                    clazz.getSimpleName(),
+                    shouldBeFrozen ? "" : "not ",
+                    isDeclaredFrozen ? "" : "not "));
     }
 }

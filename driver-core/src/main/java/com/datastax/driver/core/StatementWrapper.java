@@ -15,19 +15,19 @@
  */
 package com.datastax.driver.core;
 
-import java.nio.ByteBuffer;
-
 import com.datastax.driver.core.policies.LoadBalancingPolicy;
 import com.datastax.driver.core.policies.RetryPolicy;
 import com.datastax.driver.core.policies.SpeculativeExecutionPolicy;
 
+import java.nio.ByteBuffer;
+
 /**
  * Base class for custom {@link Statement} implementations that wrap another statement.
- * <p>
+ * <p/>
  * This is intended for use with a custom {@link RetryPolicy}, {@link LoadBalancingPolicy} or
  * {@link SpeculativeExecutionPolicy}. The client code can wrap a statement to "mark" it, or
  * add information that will lead to special handling in the policy.
- * <p>
+ * <p/>
  * Example:
  * <pre>
  * {@code
@@ -71,8 +71,8 @@ public abstract class StatementWrapper extends Statement {
     Statement getWrappedStatement() {
         // Protect against multiple levels of wrapping (even though there is no practical reason for that)
         return (wrapped instanceof StatementWrapper)
-            ? ((StatementWrapper)wrapped).getWrappedStatement()
-            : wrapped;
+                ? ((StatementWrapper) wrapped).getWrappedStatement()
+                : wrapped;
     }
 
     @Override

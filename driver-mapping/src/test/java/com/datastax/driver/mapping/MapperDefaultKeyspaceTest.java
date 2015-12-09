@@ -15,25 +15,25 @@
  */
 package com.datastax.driver.mapping;
 
-import java.util.*;
-
+import com.datastax.driver.core.CCMBridge;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.utils.CassandraVersion;
+import com.datastax.driver.core.utils.UUIDs;
 import com.datastax.driver.mapping.annotations.*;
 import com.google.common.base.Objects;
 import org.testng.annotations.Test;
 
-import static com.datastax.driver.core.TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.UUID;
+
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNull;
-
-import com.datastax.driver.core.CCMBridge;
-import com.datastax.driver.core.utils.UUIDs;
 
 /**
  * Tests usage of mapping annotations without specifying a keyspace.
  */
-@CassandraVersion(major=2.1)
+@CassandraVersion(major = 2.1)
 public class MapperDefaultKeyspaceTest extends CCMBridge.PerClassSingleNodeCluster {
 
     private static final String KEYSPACE = "mapper_default_keyspace_test_ks";
@@ -56,7 +56,8 @@ public class MapperDefaultKeyspaceTest extends CCMBridge.PerClassSingleNodeClust
 
         private String name;
 
-        public Group() {}
+        public Group() {
+        }
 
         public Group(String name) {
             this.name = name;
@@ -84,9 +85,9 @@ public class MapperDefaultKeyspaceTest extends CCMBridge.PerClassSingleNodeClust
             if (other == null || other.getClass() != this.getClass())
                 return false;
 
-            Group that = (Group)other;
+            Group that = (Group) other;
             return Objects.equal(groupId, that.groupId)
-                && Objects.equal(name, that.name);
+                    && Objects.equal(name, that.name);
         }
 
         @Override
@@ -127,7 +128,8 @@ public class MapperDefaultKeyspaceTest extends CCMBridge.PerClassSingleNodeClust
         @Frozen
         private GroupName name;
 
-        public Group2() {}
+        public Group2() {
+        }
 
         public Group2(GroupName name) {
             this.name = name;
@@ -155,9 +157,9 @@ public class MapperDefaultKeyspaceTest extends CCMBridge.PerClassSingleNodeClust
             if (other == null || other.getClass() != this.getClass())
                 return false;
 
-            Group that = (Group)other;
+            Group that = (Group) other;
             return Objects.equal(groupId, that.groupId)
-                && Objects.equal(name, that.name);
+                    && Objects.equal(name, that.name);
         }
 
         @Override
@@ -231,8 +233,8 @@ public class MapperDefaultKeyspaceTest extends CCMBridge.PerClassSingleNodeClust
     }
 
     @Test(groups = "short",
-        expectedExceptions = IllegalArgumentException.class,
-        expectedExceptionsMessageRegExp = "Error creating mapper for class Group, the @Table annotation declares no default keyspace, and the session is not currently logged to any keyspace")
+            expectedExceptions = IllegalArgumentException.class,
+            expectedExceptionsMessageRegExp = "Error creating mapper for class Group, the @Table annotation declares no default keyspace, and the session is not currently logged to any keyspace")
     public void should_throw_a_meaningful_error_message_when_no_default_table_keyspace_and_session_not_logged() {
         Session session2 = cluster.connect();
         MappingManager manager = new MappingManager(session2);
@@ -240,8 +242,8 @@ public class MapperDefaultKeyspaceTest extends CCMBridge.PerClassSingleNodeClust
     }
 
     @Test(groups = "short",
-        expectedExceptions = IllegalArgumentException.class,
-        expectedExceptionsMessageRegExp = "Error creating UDT mapper for class GroupName, the @UDT annotation declares no default keyspace, and the session is not currently logged to any keyspace")
+            expectedExceptions = IllegalArgumentException.class,
+            expectedExceptionsMessageRegExp = "Error creating UDT mapper for class GroupName, the @UDT annotation declares no default keyspace, and the session is not currently logged to any keyspace")
     public void should_throw_a_meaningful_error_message_when_no_default_udt_keyspace_and_session_not_logged() {
         Session session2 = cluster.connect();
         MappingManager manager = new MappingManager(session2);

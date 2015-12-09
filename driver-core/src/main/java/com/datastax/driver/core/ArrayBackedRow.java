@@ -15,10 +15,10 @@
  */
 package com.datastax.driver.core;
 
-import java.nio.ByteBuffer;
-import java.util.*;
-
 import com.datastax.driver.core.exceptions.DriverInternalError;
+
+import java.nio.ByteBuffer;
+import java.util.List;
 
 /**
  * Implementation of a Row backed by an ArrayList.

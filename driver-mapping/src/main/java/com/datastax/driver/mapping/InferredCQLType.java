@@ -15,20 +15,19 @@
  */
 package com.datastax.driver.mapping;
 
+import com.datastax.driver.core.DataType;
+import com.google.common.collect.Lists;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Collections;
 import java.util.List;
 
-import com.google.common.collect.Lists;
-
-import com.datastax.driver.core.DataType;
-
 /**
  * Describes the CQL type inferred from a generic Java field (which will always map
  * to a collection, possibly with various levels of nesting).
- *
+ * <p/>
  * The reason we wrap {@code DataType} is because we also want to remember if there are mapped UDT
  * types somewhere in the hierarchy.
  */
@@ -50,12 +49,12 @@ class InferredCQLType {
 
     private InferredCQLType(Type javaType, String rootName, Type rootType, MappingManager mappingManager) {
         if (javaType instanceof ParameterizedType) {
-            ParameterizedType pt = (ParameterizedType)javaType;
+            ParameterizedType pt = (ParameterizedType) javaType;
             Type raw = pt.getRawType();
             if (!(raw instanceof Class))
                 throw fail(rootName, rootType);
 
-            Class<?> klass = (Class<?>)raw;
+            Class<?> klass = (Class<?>) raw;
             if (!TypeMappings.mapsToCollection(klass))
                 throw fail(rootName, rootType);
 
@@ -78,7 +77,7 @@ class InferredCQLType {
             } else
                 throw fail(rootName, rootType);
         } else if (javaType instanceof Class) {
-            Class<?> klass = (Class<?>)javaType;
+            Class<?> klass = (Class<?>) javaType;
             if (TypeMappings.isMappedUDT(klass)) {
                 containsMappedUDT = true;
                 udtMapper = mappingManager.udtMapper(klass);

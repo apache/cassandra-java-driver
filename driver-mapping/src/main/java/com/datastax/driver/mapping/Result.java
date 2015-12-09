@@ -15,10 +15,15 @@
  */
 package com.datastax.driver.mapping;
 
-import java.nio.ByteBuffer;
-import java.util.*;
+import com.datastax.driver.core.ExecutionInfo;
+import com.datastax.driver.core.ProtocolVersion;
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.Row;
 
-import com.datastax.driver.core.*;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * A {@code ResultSet} mapped to an entity class.
@@ -92,11 +97,11 @@ public class Result<T> implements Iterable<T> {
 
     /**
      * An iterator over the entities of this mapped result set.
-     *
+     * <p/>
      * The {@link Iterator#next} method is equivalent to calling {@link #one}.
      * So this iterator will consume results and after a full iteration, the
      * mapped result set (and underlying {@code ResultSet}) will be empty.
-     *
+     * <p/>
      * The returned iterator does not support the {@link Iterator#remove} method.
      *
      * @return an iterator that will consume and return the remaining rows of
@@ -122,7 +127,7 @@ public class Result<T> implements Iterable<T> {
 
     /**
      * Returns information on the execution of this query.
-     * <p>
+     * <p/>
      * The returned object includes basic information such as the queried hosts,
      * but also the Cassandra query trace if tracing was enabled for the query.
      *

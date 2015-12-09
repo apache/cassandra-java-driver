@@ -15,10 +15,6 @@
  */
 package com.datastax.driver.core;
 
-import java.lang.reflect.Constructor;
-import java.util.Locale;
-import java.util.concurrent.ThreadFactory;
-
 import com.google.common.base.Throwables;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -26,6 +22,10 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.lang.reflect.Constructor;
+import java.util.Locale;
+import java.util.concurrent.ThreadFactory;
 
 /**
  * A set of utilities related to the underlying Netty layer.
@@ -45,7 +45,7 @@ class NettyUtil {
 
     private static final Class<? extends SocketChannel> EPOLL_CHANNEL_CLASS;
 
-    private static final Class[] EVENT_GROUP_ARGUMENTS = { int.class, ThreadFactory.class };
+    private static final Class[] EVENT_GROUP_ARGUMENTS = {int.class, ThreadFactory.class};
 
     static {
         boolean shaded;
@@ -68,13 +68,13 @@ class NettyUtil {
                 Class<?> epoll = Class.forName("io.netty.channel.epoll.Epoll");
                 if (FORCE_NIO) {
                     LOGGER.info("Found Netty's native epoll transport in the classpath, "
-                        + "but NIO was forced through the FORCE_NIO system property.");
+                            + "but NIO was forced through the FORCE_NIO system property.");
                 } else if (!System.getProperty("os.name", "").toLowerCase(Locale.US).equals("linux")) {
                     LOGGER.warn("Found Netty's native epoll transport, but not running on linux-based operating " +
-                        "system. Using NIO instead.");
-                } else if (!(Boolean)epoll.getMethod("isAvailable").invoke(null)) {
+                            "system. Using NIO instead.");
+                } else if (!(Boolean) epoll.getMethod("isAvailable").invoke(null)) {
                     LOGGER.warn("Found Netty's native epoll transport in the classpath, but epoll is not available. "
-                        + "Using NIO instead.", (Throwable)epoll.getMethod("unavailabilityCause").invoke(null));
+                            + "Using NIO instead.", (Throwable) epoll.getMethod("unavailabilityCause").invoke(null));
                 } else {
                     LOGGER.info("Found Netty's native epoll transport in the classpath, using it");
                     useEpoll = true;
@@ -86,16 +86,16 @@ class NettyUtil {
             }
         } else {
             LOGGER.info("Detected shaded Netty classes in the classpath; native epoll transport will not work properly, "
-                + "defaulting to NIO.");
+                    + "defaulting to NIO.");
         }
         USE_EPOLL = useEpoll;
         Constructor<? extends EventLoopGroup> constructor = null;
         Class<? extends SocketChannel> channelClass = null;
         if (USE_EPOLL) {
             try {
-                channelClass = (Class<? extends SocketChannel>)Class.forName("io.netty.channel.epoll.EpollSocketChannel");
+                channelClass = (Class<? extends SocketChannel>) Class.forName("io.netty.channel.epoll.EpollSocketChannel");
                 Class<?> epoolEventLoupGroupClass = Class.forName("io.netty.channel.epoll.EpollEventLoopGroup");
-                constructor = (Constructor<? extends EventLoopGroup>)epoolEventLoupGroupClass.getDeclaredConstructor(EVENT_GROUP_ARGUMENTS);
+                constructor = (Constructor<? extends EventLoopGroup>) epoolEventLoupGroupClass.getDeclaredConstructor(EVENT_GROUP_ARGUMENTS);
             } catch (Exception e) {
                 throw new AssertionError("Netty's native epoll is in use but cannot locate Epoll classes, this should not happen: " + e);
             }
@@ -105,7 +105,6 @@ class NettyUtil {
     }
 
     /**
-     *
      * @return true if the current driver bundle is using shaded Netty classes, false otherwise.
      */
 
@@ -122,7 +121,7 @@ class NettyUtil {
 
     /**
      * Return a new instance of {@link EventLoopGroup}.
-     * <p>
+     * <p/>
      * Returns an instance of {@link io.netty.channel.epoll.EpollEventLoopGroup} if {@link #isEpollAvailable() epoll is available},
      * or an instance of {@link NioEventLoopGroup} otherwise.
      *
@@ -143,7 +142,7 @@ class NettyUtil {
 
     /**
      * Return the SocketChannel class to use.
-     * <p>
+     * <p/>
      * Returns an instance of {@link io.netty.channel.epoll.EpollSocketChannel} if {@link #isEpollAvailable() epoll is available},
      * or an instance of {@link NioSocketChannel} otherwise.
      *

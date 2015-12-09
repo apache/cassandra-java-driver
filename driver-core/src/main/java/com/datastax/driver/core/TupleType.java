@@ -15,16 +15,16 @@
  */
 package com.datastax.driver.core;
 
-import java.util.*;
-
+import com.datastax.driver.core.exceptions.InvalidTypeException;
 import com.google.common.collect.ImmutableList;
 import com.google.common.reflect.TypeToken;
 
-import com.datastax.driver.core.exceptions.InvalidTypeException;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * A tuple type.
- * <p>
+ * <p/>
  * A tuple type is a essentially a list of types.
  */
 public class TupleType extends DataType {
@@ -39,7 +39,7 @@ public class TupleType extends DataType {
     @SuppressWarnings("unchecked")
     @Override
     TypeCodec<Object> codec(ProtocolVersion protocolVersion) {
-        return (TypeCodec)TypeCodec.tupleOf(this);
+        return (TypeCodec) TypeCodec.tupleOf(this);
     }
 
     /**
@@ -74,21 +74,20 @@ public class TupleType extends DataType {
     /**
      * Returns a new value for this tuple type that uses the provided values
      * for the components.
-     * <p>
+     * <p/>
      * The numbers of values passed to this method must correspond to the
      * number of components in this tuple type. The {@code i}th parameter
      * value will then be assigned to the {@code i}th component of the resulting
      * tuple value.
      *
      * @param values the values to use for the component of the resulting
-     * tuple.
+     *               tuple.
      * @return a new tuple values based on the provided values.
-     *
      * @throws IllegalArgumentException if the number of {@code values}
-     * provided does not correspond to the number of components in this tuple
-     * type.
-     * @throws InvalidTypeException if any of the provided value is not of
-     * the correct type for the component.
+     *                                  provided does not correspond to the number of components in this tuple
+     *                                  type.
+     * @throws InvalidTypeException     if any of the provided value is not of
+     *                                  the correct type for the component.
      */
     public TupleValue newValue(Object... values) {
         if (values.length != types.size())
@@ -112,7 +111,7 @@ public class TupleType extends DataType {
 
     @Override
     public int hashCode() {
-        return Arrays.hashCode(new Object[]{ name, types });
+        return Arrays.hashCode(new Object[]{name, types});
     }
 
     @Override
@@ -120,7 +119,7 @@ public class TupleType extends DataType {
         if (!(o instanceof TupleType))
             return false;
 
-        TupleType d = (TupleType)o;
+        TupleType d = (TupleType) o;
         return name == d.name && types.equals(d.types);
     }
 
