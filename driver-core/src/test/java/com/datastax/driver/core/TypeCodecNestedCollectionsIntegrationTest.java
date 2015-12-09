@@ -49,10 +49,10 @@ public class TypeCodecNestedCollectionsIntegrationTest extends CCMBridge.PerClas
     private int pk = 42;
     private List<Set<Map<MyInt, String>>> v;
 
-    private TypeToken<List<Set<Map<MyInt, String>>>> listType = new TypeToken<List<Set<Map<MyInt, String>>>>() {
-    };
-    private TypeToken<Set<Map<MyInt, String>>> elementsType = new TypeToken<Set<Map<MyInt, String>>>() {
-    };
+    // @formatter:off
+    private TypeToken<List<Set<Map<MyInt, String>>>> listType = new TypeToken<List<Set<Map<MyInt, String>>>>() {};
+    private TypeToken<Set<Map<MyInt, String>>> elementsType = new TypeToken<Set<Map<MyInt, String>>>() {};
+    // @formatter:on
 
     @Override
     protected Collection<String> getTableDefinitions() {

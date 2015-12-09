@@ -567,9 +567,10 @@ public class MapperCustomCodecTest extends CCMBridge.PerClassSingleNodeCluster {
         private final Predicate<T> isAbsent;
 
         public OptionalCodec(TypeCodec<T> codec) {
-            super(codec, new TypeToken<Optional<T>>() {
-            }.where(new TypeParameter<T>() {
-            }, codec.getJavaType()));
+            // @formatter:off
+            super(codec,
+                    new TypeToken<Optional<T>>() {}.where(new TypeParameter<T>() {}, codec.getJavaType()));
+            // @formatter:on
             this.isAbsent = new Predicate<T>() {
                 @Override
                 public boolean apply(T input) {

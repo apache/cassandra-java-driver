@@ -38,6 +38,11 @@ public class TypeCodecTest {
 
     public static final DataType CUSTOM_FOO = DataType.custom("com.example.FooBar");
 
+    // @formatter:off
+    public static final TypeToken<List<A>> LIST_OF_A_TOKEN = new TypeToken<List<A>>() {};
+    public static final TypeToken<List<B>> LIST_OF_B_TOKEN = new TypeToken<List<B>>() {};
+    // @formatter:on
+
     private CodecRegistry codecRegistry = new CodecRegistry();
 
     @Test(groups = "unit")
@@ -167,14 +172,12 @@ public class TypeCodecTest {
             //ok
         }
         TypeCodec<List<A>> expected = TypeCodec.list(aCodec);
-        TypeCodec<List<A>> actual = codecRegistry.codecFor(list(cint()), new TypeToken<List<A>>() {
-        });
+        TypeCodec<List<A>> actual = codecRegistry.codecFor(list(cint()), LIST_OF_A_TOKEN);
         assertThat(actual.getCqlType()).isEqualTo(expected.getCqlType());
         assertThat(actual.getJavaType()).isEqualTo(expected.getJavaType());
         // cannot work: List<B> is not assignable to List<A>
         try {
-            codecRegistry.codecFor(list(cint()), new TypeToken<List<B>>() {
-            });
+            codecRegistry.codecFor(list(cint()), LIST_OF_B_TOKEN);
             fail();
         } catch (CodecNotFoundException e) {
             //ok
@@ -190,15 +193,13 @@ public class TypeCodecTest {
         }
         assertThat(codecRegistry.codecFor(cint(), B.class)).isNotNull().isSameAs(bCodec);
         try {
-            codecRegistry.codecFor(list(cint()), new TypeToken<List<A>>() {
-            });
+            codecRegistry.codecFor(list(cint()), LIST_OF_A_TOKEN);
             fail();
         } catch (CodecNotFoundException e) {
             // ok
         }
         TypeCodec<List<B>> expectedB = TypeCodec.list(bCodec);
-        TypeCodec<List<B>> actualB = codecRegistry.codecFor(list(cint()), new TypeToken<List<B>>() {
-        });
+        TypeCodec<List<B>> actualB = codecRegistry.codecFor(list(cint()), LIST_OF_B_TOKEN);
         assertThat(actualB.getCqlType()).isEqualTo(expectedB.getCqlType());
         assertThat(actualB.getJavaType()).isEqualTo(expectedB.getJavaType());
     }

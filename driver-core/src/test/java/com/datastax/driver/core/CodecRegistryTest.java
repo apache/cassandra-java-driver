@@ -27,8 +27,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class CodecRegistryTest {
-    TypeToken<List<Integer>> LIST_OF_INT_TOKEN = new TypeToken<List<Integer>>() {
-    };
+    TypeToken<List<Integer>> LIST_OF_INT_TOKEN = TypeTokens.listOf(Integer.class);
 
     @Test(groups = "unit")
     public void should_ignore_codec_colliding_with_already_registered_codec() {

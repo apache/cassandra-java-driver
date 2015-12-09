@@ -16,12 +16,10 @@
 package com.datastax.driver.core;
 
 import com.datastax.driver.core.exceptions.InvalidTypeException;
-import com.google.common.reflect.TypeToken;
 import org.testng.annotations.Test;
 
 import java.nio.ByteBuffer;
 import java.util.Collection;
-import java.util.List;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -84,10 +82,8 @@ public class TypeCodecOverlappingJavaTypeIntegrationTest extends CCMBridge.PerCl
         assertThat(row.getList(1, Integer.class)).isEqualTo(newArrayList(42));
         assertThat(row.getList(1, String.class)).isEqualTo(newArrayList("42"));
         assertThat(row.getObject(1)).isEqualTo(newArrayList(42)); // uses the default codec
-        assertThat(row.get(1, new TypeToken<List<Integer>>() {
-        })).isEqualTo(newArrayList(42));
-        assertThat(row.get(1, new TypeToken<List<String>>() {
-        })).isEqualTo(newArrayList("42"));
+        assertThat(row.get(1, TypeTokens.listOf(Integer.class))).isEqualTo(newArrayList(42));
+        assertThat(row.get(1, TypeTokens.listOf(String.class))).isEqualTo(newArrayList("42"));
     }
 
     private class IntToStringCodec extends TypeCodec<String> {

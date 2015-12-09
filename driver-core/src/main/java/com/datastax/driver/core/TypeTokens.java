@@ -39,9 +39,9 @@ public final class TypeTokens {
      * are of the given type.
      */
     public static <T> TypeToken<List<T>> listOf(Class<T> eltType) {
-        return new TypeToken<List<T>>() {
-        }.where(new TypeParameter<T>() {
-        }, eltType);
+        // @formatter:off
+        return new TypeToken<List<T>>(){}.where(new TypeParameter<T>(){}, eltType);
+        // @formatter:on
     }
 
     /**
@@ -54,9 +54,9 @@ public final class TypeTokens {
      * are of the given type.
      */
     public static <T> TypeToken<List<T>> listOf(TypeToken<T> eltType) {
-        return new TypeToken<List<T>>() {
-        }.where(new TypeParameter<T>() {
-        }, eltType);
+        // @formatter:off
+        return new TypeToken<List<T>>(){}.where(new TypeParameter<T>(){}, eltType);
+        // @formatter:on
     }
 
     /**
@@ -69,9 +69,9 @@ public final class TypeTokens {
      * are of the given type.
      */
     public static <T> TypeToken<Set<T>> setOf(Class<T> eltType) {
-        return new TypeToken<Set<T>>() {
-        }.where(new TypeParameter<T>() {
-        }, eltType);
+        // @formatter:off
+        return new TypeToken<Set<T>>(){}.where(new TypeParameter<T>(){}, eltType);
+        // @formatter:on
     }
 
     /**
@@ -84,9 +84,9 @@ public final class TypeTokens {
      * are of the given type.
      */
     public static <T> TypeToken<Set<T>> setOf(TypeToken<T> eltType) {
-        return new TypeToken<Set<T>>() {
-        }.where(new TypeParameter<T>() {
-        }, eltType);
+        // @formatter:off
+        return new TypeToken<Set<T>>(){}.where(new TypeParameter<T>(){}, eltType);
+        // @formatter:on
     }
 
     /**
@@ -101,12 +101,11 @@ public final class TypeTokens {
      * and values are of the given key and value types
      */
     public static <K, V> TypeToken<Map<K, V>> mapOf(Class<K> keyType, Class<V> valueType) {
-        return new TypeToken<Map<K, V>>() {
-        }
-                .where(new TypeParameter<K>() {
-                }, keyType)
-                .where(new TypeParameter<V>() {
-                }, valueType);
+        // @formatter:off
+        return new TypeToken<Map<K, V>>(){}
+            .where(new TypeParameter<K>(){}, keyType)
+            .where(new TypeParameter<V>(){}, valueType);
+        // @formatter:on
     }
 
     /**
@@ -121,11 +120,10 @@ public final class TypeTokens {
      * and values are of the given key and value types
      */
     public static <K, V> TypeToken<Map<K, V>> mapOf(TypeToken<K> keyType, TypeToken<V> valueType) {
-        return new TypeToken<Map<K, V>>() {
-        }
-                .where(new TypeParameter<K>() {
-                }, keyType)
-                .where(new TypeParameter<V>() {
-                }, valueType);
+        // @formatter:off
+        return new TypeToken<Map<K, V>>(){}
+            .where(new TypeParameter<K>(){}, keyType)
+            .where(new TypeParameter<V>(){}, valueType);
+        // @formatter:on
     }
 }

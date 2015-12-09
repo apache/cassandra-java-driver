@@ -21,7 +21,6 @@ import com.datastax.driver.mapping.Mapper;
 import com.datastax.driver.mapping.MappingManager;
 import com.datastax.driver.mapping.annotations.*;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.reflect.TypeToken;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -124,8 +123,7 @@ public class EnumCodecsTest extends CCMBridge.PerClassSingleNodeCluster {
                         .set(1, FOO_1, Foo.class)
                         .setList(2, foos, Foo.class)
                         .set(3, BAR_1, Bar.class)
-                        .set(4, bars, new TypeToken<Set<Bar>>() {
-                        })
+                        .set(4, bars, TypeTokens.setOf(Bar.class))
                         .setMap(5, foobars, Foo.class, Bar.class)
                         .setTupleValue(6, tupleValue)
                         .setUDTValue(7, udtValue)
@@ -199,10 +197,8 @@ public class EnumCodecsTest extends CCMBridge.PerClassSingleNodeCluster {
         assertThat(row.getObject(2)).isEqualTo(newArrayList(FOO_1.ordinal(), FOO_2.ordinal())); // uses the built-in ListCodec(IntCodec) because CQL type is list<int>
         assertThat(row.getList(2, Integer.class)).isEqualTo(newArrayList(FOO_1.ordinal(), FOO_2.ordinal()));
         assertThat(row.getList("foos", Foo.class)).isEqualTo(newArrayList(FOO_1, FOO_2));
-        assertThat(row.get(2, new TypeToken<List<Integer>>() {
-        })).isEqualTo(newArrayList(FOO_1.ordinal(), FOO_2.ordinal()));
-        assertThat(row.get("foos", new TypeToken<List<Foo>>() {
-        })).isEqualTo(newArrayList(FOO_1, FOO_2));
+        assertThat(row.get(2, TypeTokens.listOf(Integer.class))).isEqualTo(newArrayList(FOO_1.ordinal(), FOO_2.ordinal()));
+        assertThat(row.get("foos", TypeTokens.listOf(Foo.class))).isEqualTo(newArrayList(FOO_1, FOO_2));
 
         assertThat(row.getObject(3)).isEqualTo(BAR_1.name()); // uses the built-in VarcharCodec because CQL type is varchar
         assertThat(row.getString("bar")).isEqualTo(BAR_1.name()); // forces VarcharCodec
@@ -212,10 +208,8 @@ public class EnumCodecsTest extends CCMBridge.PerClassSingleNodeCluster {
         assertThat(row.getObject(4)).isEqualTo(newHashSet(BAR_1.name(), BAR_2.name())); // uses the built-in SetCodec(VarcharCodec) because CQL type is set<varchar>
         assertThat(row.getSet(4, String.class)).isEqualTo(newHashSet(BAR_1.name(), BAR_2.name()));
         assertThat(row.getSet("bars", Bar.class)).isEqualTo(newHashSet(BAR_1, BAR_2));
-        assertThat(row.get(4, new TypeToken<Set<String>>() {
-        })).isEqualTo(newHashSet(BAR_1.name(), BAR_2.name()));
-        assertThat(row.get("bars", new TypeToken<Set<Bar>>() {
-        })).isEqualTo(newHashSet(BAR_1, BAR_2));
+        assertThat(row.get(4, TypeTokens.setOf(String.class))).isEqualTo(newHashSet(BAR_1.name(), BAR_2.name()));
+        assertThat(row.get("bars", TypeTokens.setOf(Bar.class))).isEqualTo(newHashSet(BAR_1, BAR_2));
 
         // uses default built-in codec MapCodec(IntCodec, VarcharCodec) because CQL type is map<int, varchar>
         assertThat(row.getObject(5)).isEqualTo(ImmutableMap.of(FOO_1.ordinal(), BAR_1.name(), FOO_2.ordinal(), BAR_2.name()));
@@ -227,14 +221,10 @@ public class EnumCodecsTest extends CCMBridge.PerClassSingleNodeCluster {
         assertThat(row.getMap(5, Foo.class, Bar.class)).isEqualTo(ImmutableMap.of(FOO_1, BAR_1, FOO_2, BAR_2));
 
         // get + TypeToken with combinations of built-in or EnumX codecs
-        assertThat(row.get("foobars", new TypeToken<Map<Integer, String>>() {
-        })).isEqualTo(ImmutableMap.of(FOO_1.ordinal(), BAR_1.name(), FOO_2.ordinal(), BAR_2.name()));
-        assertThat(row.get("foobars", new TypeToken<Map<Foo, String>>() {
-        })).isEqualTo(ImmutableMap.of(FOO_1, BAR_1.name(), FOO_2, BAR_2.name()));
-        assertThat(row.get("foobars", new TypeToken<Map<Integer, Bar>>() {
-        })).isEqualTo(ImmutableMap.of(FOO_1.ordinal(), BAR_1, FOO_2.ordinal(), BAR_2));
-        assertThat(row.get("foobars", new TypeToken<Map<Foo, Bar>>() {
-        })).isEqualTo(ImmutableMap.of(FOO_1, BAR_1, FOO_2, BAR_2));
+        assertThat(row.get("foobars", TypeTokens.mapOf(Integer.class, String.class))).isEqualTo(ImmutableMap.of(FOO_1.ordinal(), BAR_1.name(), FOO_2.ordinal(), BAR_2.name()));
+        assertThat(row.get("foobars", TypeTokens.mapOf(Foo.class, String.class))).isEqualTo(ImmutableMap.of(FOO_1, BAR_1.name(), FOO_2, BAR_2.name()));
+        assertThat(row.get("foobars", TypeTokens.mapOf(Integer.class, Bar.class))).isEqualTo(ImmutableMap.of(FOO_1.ordinal(), BAR_1, FOO_2.ordinal(), BAR_2));
+        assertThat(row.get("foobars", TypeTokens.mapOf(Foo.class, Bar.class))).isEqualTo(ImmutableMap.of(FOO_1, BAR_1, FOO_2, BAR_2));
 
         assertThat(row.getTupleValue(6).getInt(0)).isEqualTo(FOO_1.ordinal());
         assertThat(row.get(6, TupleValue.class).get(0, Foo.class)).isEqualTo(FOO_1);
