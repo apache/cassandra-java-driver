@@ -24,8 +24,10 @@ in-depth knowledge of the codebase.
 
 ## Editor configuration
 
-We use IntelliJ IDEA with the default formatting options. Please format your code and
-organize imports before submitting your changes.
+We use IntelliJ IDEA with the default formatting options, with one exception: check
+"Enable formatter markers in comments" in Preferences > Editor > Code Style.
+
+Please format your code and organize imports before submitting your changes.
 
 ## Running the tests
 
