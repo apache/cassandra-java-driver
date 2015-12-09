@@ -15,16 +15,15 @@
  */
 package com.datastax.driver.core;
 
-import java.util.*;
-import java.util.concurrent.ExecutionException;
-
+import com.datastax.driver.core.exceptions.BusyConnectionException;
+import com.datastax.driver.core.exceptions.ConnectionException;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.datastax.driver.core.exceptions.BusyConnectionException;
-import com.datastax.driver.core.exceptions.ConnectionException;
+import java.util.*;
+import java.util.concurrent.ExecutionException;
 
 import static com.datastax.driver.core.SchemaElement.*;
 
@@ -38,21 +37,21 @@ abstract class SchemaParser {
     private static final SchemaParser V3_PARSER = new V3SchemaParser();
 
     static SchemaParser forVersion(VersionNumber cassandraVersion) {
-        if(cassandraVersion.getMajor() >= 3) return V3_PARSER;
+        if (cassandraVersion.getMajor() >= 3) return V3_PARSER;
         return V2_PARSER;
     }
 
     abstract SystemRows fetchSystemRows(Cluster cluster,
                                         SchemaElement targetType, String targetKeyspace, String targetName, List<String> targetSignature,
                                         Connection connection, VersionNumber cassandraVersion)
-        throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException;
+            throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException;
 
     abstract String tableNameColumn();
 
     void refresh(Cluster cluster,
                  SchemaElement targetType, String targetKeyspace, String targetName, List<String> targetSignature,
                  Connection connection, VersionNumber cassandraVersion)
-        throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
+            throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
 
         SystemRows rows = fetchSystemRows(cluster, targetType, targetKeyspace, targetName, targetSignature, connection, cassandraVersion);
 
@@ -71,7 +70,7 @@ abstract class SchemaParser {
                 // wrong. Log an error and schedule a full schema rebuild.
                 if (keyspace == null) {
                     logger.info(String.format("Asked to rebuild %s %s.%s but I don't know keyspace %s",
-                        targetType, targetKeyspace, targetName, targetKeyspace));
+                            targetType, targetKeyspace, targetName, targetKeyspace));
                     metadata.cluster.submitSchemaRefresh(null, null, null, null);
                 } else {
                     switch (targetType) {
@@ -179,8 +178,8 @@ abstract class SchemaParser {
                 } catch (RuntimeException e) {
                     // See #refresh for why we'd rather not propagate this further
                     logger.error(String.format("Error parsing schema for table %s.%s: "
-                            + "Cluster.getMetadata().getKeyspace(\"%s\").getTable(\"%s\") will be missing or incomplete",
-                        keyspace.getName(), cfName, keyspace.getName(), cfName), e);
+                                    + "Cluster.getMetadata().getKeyspace(\"%s\").getTable(\"%s\") will be missing or incomplete",
+                            keyspace.getName(), cfName, keyspace.getName(), cfName), e);
                 }
             }
         }
@@ -242,13 +241,13 @@ abstract class SchemaParser {
                         continue; // we probably raced, we will update the metadata next time
 
                     MaterializedViewMetadata view = MaterializedViewMetadata.build(keyspace, viewRow, cols, cassandraVersion, cluster);
-                    if(view != null)
+                    if (view != null)
                         views.put(view.getName(), view);
                 } catch (RuntimeException e) {
                     // See #refresh for why we'd rather not propagate this further
                     logger.error(String.format("Error parsing schema for view %s.%s: "
-                            + "Cluster.getMetadata().getKeyspace(\"%s\").getView(\"%s\") will be missing or incomplete",
-                        keyspace.getName(), viewName, keyspace.getName(), viewName), e);
+                                    + "Cluster.getMetadata().getKeyspace(\"%s\").getView(\"%s\") will be missing or incomplete",
+                            keyspace.getName(), viewName, keyspace.getName(), viewName), e);
                 }
             }
         }
@@ -438,7 +437,7 @@ abstract class SchemaParser {
             return Collections.emptyMap();
 
         Map<String, Map<String, Map<String, ColumnMetadata.Raw>>> result =
-            new HashMap<String, Map<String, Map<String, ColumnMetadata.Raw>>>();
+                new HashMap<String, Map<String, Map<String, ColumnMetadata.Raw>>>();
         for (Row row : rs) {
             String ksName = row.getString(KeyspaceMetadata.KS_NAME);
             String cfName = row.getString(tableName);
@@ -497,20 +496,20 @@ abstract class SchemaParser {
 
     private static class V2SchemaParser extends SchemaParser {
 
-        private static final String SELECT_KEYSPACES       = "SELECT * FROM system.schema_keyspaces";
+        private static final String SELECT_KEYSPACES = "SELECT * FROM system.schema_keyspaces";
         private static final String SELECT_COLUMN_FAMILIES = "SELECT * FROM system.schema_columnfamilies";
-        private static final String SELECT_COLUMNS         = "SELECT * FROM system.schema_columns";
-        private static final String SELECT_USERTYPES       = "SELECT * FROM system.schema_usertypes";
-        private static final String SELECT_FUNCTIONS       = "SELECT * FROM system.schema_functions";
-        private static final String SELECT_AGGREGATES      = "SELECT * FROM system.schema_aggregates";
+        private static final String SELECT_COLUMNS = "SELECT * FROM system.schema_columns";
+        private static final String SELECT_USERTYPES = "SELECT * FROM system.schema_usertypes";
+        private static final String SELECT_FUNCTIONS = "SELECT * FROM system.schema_functions";
+        private static final String SELECT_AGGREGATES = "SELECT * FROM system.schema_aggregates";
 
-        private static final String CF_NAME                = "columnfamily_name";
+        private static final String CF_NAME = "columnfamily_name";
 
         @Override
         SystemRows fetchSystemRows(Cluster cluster,
                                    SchemaElement targetType, String targetKeyspace, String targetName, List<String> targetSignature,
                                    Connection connection, VersionNumber cassandraVersion)
-            throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
+                throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
 
             boolean isSchemaOrKeyspace = (targetType == null || targetType == KEYSPACE);
 
@@ -528,11 +527,11 @@ abstract class SchemaParser {
             }
 
             ResultSetFuture ksFuture = null,
-                udtFuture = null,
-                cfFuture = null,
-                colsFuture = null,
-                functionsFuture = null,
-                aggregatesFuture = null;
+                    udtFuture = null,
+                    cfFuture = null,
+                    colsFuture = null,
+                    functionsFuture = null,
+                    aggregatesFuture = null;
 
             ProtocolVersion protocolVersion = cluster.getConfiguration().getProtocolOptions().getProtocolVersion();
 
@@ -554,14 +553,14 @@ abstract class SchemaParser {
                 aggregatesFuture = queryAsync(SELECT_AGGREGATES + whereClause, connection, protocolVersion);
 
             return new SystemRows(get(ksFuture),
-                groupByKeyspace(get(cfFuture)),
-                groupByKeyspaceAndCf(get(colsFuture), cassandraVersion, CF_NAME),
-                groupByKeyspace(get(udtFuture)),
-                groupByKeyspace(get(functionsFuture)),
-                groupByKeyspace(get(aggregatesFuture)),
-                // No views nor separate indexes table in Cassandra 2:
-                Collections.<String, List<Row>>emptyMap(),
-                Collections.<String, Map<String, List<Row>>>emptyMap());
+                    groupByKeyspace(get(cfFuture)),
+                    groupByKeyspaceAndCf(get(colsFuture), cassandraVersion, CF_NAME),
+                    groupByKeyspace(get(udtFuture)),
+                    groupByKeyspace(get(functionsFuture)),
+                    groupByKeyspace(get(aggregatesFuture)),
+                    // No views nor separate indexes table in Cassandra 2:
+                    Collections.<String, List<Row>>emptyMap(),
+                    Collections.<String, Map<String, List<Row>>>emptyMap());
         }
 
         @Override
@@ -581,31 +580,31 @@ abstract class SchemaParser {
 
     private static class V3SchemaParser extends SchemaParser {
 
-        private static final String SELECT_KEYSPACES       = "SELECT * FROM system_schema.keyspaces";
-        private static final String SELECT_TABLES          = "SELECT * FROM system_schema.tables";
-        private static final String SELECT_COLUMNS         = "SELECT * FROM system_schema.columns";
-        private static final String SELECT_USERTYPES       = "SELECT * FROM system_schema.types";
-        private static final String SELECT_FUNCTIONS       = "SELECT * FROM system_schema.functions";
-        private static final String SELECT_AGGREGATES      = "SELECT * FROM system_schema.aggregates";
-        private static final String SELECT_INDEXES         = "SELECT * FROM system_schema.indexes";
-        private static final String SELECT_VIEWS           = "SELECT * FROM system_schema.views";
+        private static final String SELECT_KEYSPACES = "SELECT * FROM system_schema.keyspaces";
+        private static final String SELECT_TABLES = "SELECT * FROM system_schema.tables";
+        private static final String SELECT_COLUMNS = "SELECT * FROM system_schema.columns";
+        private static final String SELECT_USERTYPES = "SELECT * FROM system_schema.types";
+        private static final String SELECT_FUNCTIONS = "SELECT * FROM system_schema.functions";
+        private static final String SELECT_AGGREGATES = "SELECT * FROM system_schema.aggregates";
+        private static final String SELECT_INDEXES = "SELECT * FROM system_schema.indexes";
+        private static final String SELECT_VIEWS = "SELECT * FROM system_schema.views";
 
         private static final String TABLE_NAME = "table_name";
 
         @Override
         SystemRows fetchSystemRows(Cluster cluster, SchemaElement targetType, String targetKeyspace, String targetName, List<String> targetSignature, Connection connection, VersionNumber cassandraVersion)
-            throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
+                throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
 
             boolean isSchemaOrKeyspace = (targetType == null || targetType == KEYSPACE);
 
             ResultSetFuture ksFuture = null,
-                udtFuture = null,
-                cfFuture = null,
-                colsFuture = null,
-                functionsFuture = null,
-                aggregatesFuture = null,
-                indexesFuture = null,
-                viewsFuture = null;
+                    udtFuture = null,
+                    cfFuture = null,
+                    colsFuture = null,
+                    functionsFuture = null,
+                    aggregatesFuture = null,
+                    indexesFuture = null,
+                    viewsFuture = null;
 
             ProtocolVersion protocolVersion = cluster.getConfiguration().getProtocolOptions().getProtocolVersion();
 
@@ -629,13 +628,13 @@ abstract class SchemaParser {
                 aggregatesFuture = queryAsync(SELECT_AGGREGATES + whereClause(targetType, targetKeyspace, targetName, targetSignature), connection, protocolVersion);
 
             return new SystemRows(get(ksFuture),
-                groupByKeyspace(get(cfFuture)),
-                groupByKeyspaceAndCf(get(colsFuture), cassandraVersion, TABLE_NAME),
-                groupByKeyspace(get(udtFuture)),
-                groupByKeyspace(get(functionsFuture)),
-                groupByKeyspace(get(aggregatesFuture)),
-                groupByKeyspace(get(viewsFuture)),
-                groupByKeyspaceAndCf(get(indexesFuture), TABLE_NAME));
+                    groupByKeyspace(get(cfFuture)),
+                    groupByKeyspaceAndCf(get(colsFuture), cassandraVersion, TABLE_NAME),
+                    groupByKeyspace(get(udtFuture)),
+                    groupByKeyspace(get(functionsFuture)),
+                    groupByKeyspace(get(aggregatesFuture)),
+                    groupByKeyspace(get(viewsFuture)),
+                    groupByKeyspaceAndCf(get(indexesFuture), TABLE_NAME));
         }
 
         @Override
@@ -692,14 +691,14 @@ abstract class SchemaParser {
         }
 
         private boolean references(DataType dataType, String typeName) {
-            if (dataType instanceof UserType.Shallow && ((UserType.Shallow)dataType).typeName.equals(typeName))
+            if (dataType instanceof UserType.Shallow && ((UserType.Shallow) dataType).typeName.equals(typeName))
                 return true;
             for (DataType arg : dataType.getTypeArguments()) {
                 if (references(arg, typeName))
                     return true;
             }
             if (dataType instanceof TupleType) {
-                for (DataType arg : ((TupleType)dataType).getComponentTypes()) {
+                for (DataType arg : ((TupleType) dataType).getComponentTypes()) {
                     if (references(arg, typeName))
                         return true;
                 }

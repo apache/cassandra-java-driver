@@ -15,9 +15,8 @@
  */
 package com.datastax.driver.core.exceptions;
 
-import com.google.common.reflect.TypeToken;
-
 import com.datastax.driver.core.DataType;
+import com.google.common.reflect.TypeToken;
 
 /**
  * Thrown when a suitable {@link com.datastax.driver.core.TypeCodec} cannot be found by

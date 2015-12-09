@@ -15,9 +15,9 @@
  */
 package com.datastax.driver.core.querybuilder;
 
-import java.util.List;
-
 import com.datastax.driver.core.CodecRegistry;
+
+import java.util.List;
 
 import static com.datastax.driver.core.querybuilder.Utils.appendName;
 import static com.datastax.driver.core.querybuilder.Utils.appendValue;
@@ -75,8 +75,8 @@ public abstract class Assignment extends Utils.Appendeable {
 
         CounterAssignment(String name, Object value, boolean isIncr) {
             super(name);
-            if (!isIncr && value instanceof Long && ((Long)value) < 0) {
-                this.value = -((Long)value);
+            if (!isIncr && value instanceof Long && ((Long) value) < 0) {
+                this.value = -((Long) value);
                 this.isIncr = true;
             } else {
                 this.value = value;

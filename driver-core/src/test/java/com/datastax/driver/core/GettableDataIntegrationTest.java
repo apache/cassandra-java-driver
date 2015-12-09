@@ -15,31 +15,24 @@
  */
 package com.datastax.driver.core;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.nio.ByteBuffer;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.TypeToken;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import static com.google.common.collect.Lists.newArrayList;
-import static org.assertj.core.api.Assertions.assertThat;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.datastax.driver.core.TypeTokens.listOf;
 import static com.datastax.driver.core.TestUtils.getValue;
 import static com.datastax.driver.core.TestUtils.setValue;
+import static com.google.common.collect.Lists.newArrayList;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class GettableDataIntegrationTest extends CCMBridge.PerClassSingleNodeCluster {
 
@@ -55,8 +48,8 @@ public class GettableDataIntegrationTest extends CCMBridge.PerClassSingleNodeClu
     protected Collection<String> getTableDefinitions() {
         // only add tuples / nested collections at > 2.1.3.
         return newArrayList("CREATE TABLE codec_mapping (k int PRIMARY KEY, "
-            + "v int, l list<int>, m map<int,int>" +
-            (is21 ? ", t tuple<int,int>, s set<frozen<list<int>>>)" : ")"));
+                + "v int, l list<int>, m map<int,int>" +
+                (is21 ? ", t tuple<int,int>, s set<frozen<list<int>>>)" : ")"));
     }
 
     @Override
@@ -66,58 +59,60 @@ public class GettableDataIntegrationTest extends CCMBridge.PerClassSingleNodeClu
 
     @BeforeClass(groups = "short")
     public void setUpRegistry() {
-        for(TypeMapping<?> mapping : mappings) {
+        for (TypeMapping<?> mapping : mappings) {
             registry.register(mapping.codec);
         }
     }
 
     static final ByteBuffer intBuf = ByteBuffer.allocate(4);
+
     static {
         intBuf.putInt(1);
         intBuf.flip();
     }
 
     static InetAddress localhost;
+
     static {
         try {
             localhost = InetAddress.getLocalHost();
-        } catch(UnknownHostException e) {
+        } catch (UnknownHostException e) {
             localhost = null;
         }
     }
 
     // Mappings of Codecs, Data Type to access as (used for determining what get|set method to call), value to set.
     private TypeMapping<?>[] mappings = {
-        // set|getString
-        new TypeMapping<String>(new IntToStringCodec(), DataType.varchar(), "1"),
-        // set|getLong
-        new TypeMapping<Long>(new IntToLongCodec(), DataType.bigint(), 1L),
-        // set|getBytes
-        new TypeMapping<ByteBuffer>(new IntToByteBufferCodec(), DataType.blob(), intBuf),
-        // set|getBool
-        new TypeMapping<Boolean>(new IntToBooleanCodec(), DataType.cboolean(), true),
-        // set|getDecimal
-        new TypeMapping<BigDecimal>(new IntToBigDecimalCodec(), DataType.decimal(), new BigDecimal(1)),
-        // set|getDouble
-        new TypeMapping<Double>(new IntToDoubleCodec(), DataType.cdouble(), 1.0d),
-        // set|getFloat
-        new TypeMapping<Float>(new IntToFloatCodec(), DataType.cfloat(), 1.0f),
-        // set|getInet
-        new TypeMapping<InetAddress>(new IntToInetAddressCodec(), DataType.inet(), localhost),
-        // set|getTime
-        new TypeMapping<Long>(new IntToLongCodec(), DataType.time(), 8675309L),
-        // set|getByte
-        new TypeMapping<Byte>(new IntToByteCodec(), DataType.tinyint(), (byte)0xCF),
-        // set|getShort
-        new TypeMapping<Short>(new IntToShortCodec(), DataType.smallint(), (short)1003),
-        // set|getTimestamp
-        new TypeMapping<Date>(new IntToDateCodec(), DataType.timestamp(), new Date(124677)),
-        // set|getDate
-        new TypeMapping<LocalDate>(new IntToLocalDateCodec(), DataType.date(), LocalDate.fromDaysSinceEpoch(1523)),
-        // set|getUUID
-        new TypeMapping<UUID>(new IntToUUIDCodec(), DataType.uuid(), new UUID(244242, 0)),
-        // set|getVarint
-        new TypeMapping<BigInteger>(new IntToBigIntegerCodec(), DataType.varint(), BigInteger.valueOf(4566432L))
+            // set|getString
+            new TypeMapping<String>(new IntToStringCodec(), DataType.varchar(), "1"),
+            // set|getLong
+            new TypeMapping<Long>(new IntToLongCodec(), DataType.bigint(), 1L),
+            // set|getBytes
+            new TypeMapping<ByteBuffer>(new IntToByteBufferCodec(), DataType.blob(), intBuf),
+            // set|getBool
+            new TypeMapping<Boolean>(new IntToBooleanCodec(), DataType.cboolean(), true),
+            // set|getDecimal
+            new TypeMapping<BigDecimal>(new IntToBigDecimalCodec(), DataType.decimal(), new BigDecimal(1)),
+            // set|getDouble
+            new TypeMapping<Double>(new IntToDoubleCodec(), DataType.cdouble(), 1.0d),
+            // set|getFloat
+            new TypeMapping<Float>(new IntToFloatCodec(), DataType.cfloat(), 1.0f),
+            // set|getInet
+            new TypeMapping<InetAddress>(new IntToInetAddressCodec(), DataType.inet(), localhost),
+            // set|getTime
+            new TypeMapping<Long>(new IntToLongCodec(), DataType.time(), 8675309L),
+            // set|getByte
+            new TypeMapping<Byte>(new IntToByteCodec(), DataType.tinyint(), (byte) 0xCF),
+            // set|getShort
+            new TypeMapping<Short>(new IntToShortCodec(), DataType.smallint(), (short) 1003),
+            // set|getTimestamp
+            new TypeMapping<Date>(new IntToDateCodec(), DataType.timestamp(), new Date(124677)),
+            // set|getDate
+            new TypeMapping<LocalDate>(new IntToLocalDateCodec(), DataType.date(), LocalDate.fromDaysSinceEpoch(1523)),
+            // set|getUUID
+            new TypeMapping<UUID>(new IntToUUIDCodec(), DataType.uuid(), new UUID(244242, 0)),
+            // set|getVarint
+            new TypeMapping<BigInteger>(new IntToBigIntegerCodec(), DataType.varint(), BigInteger.valueOf(4566432L))
     };
 
     /**
@@ -130,13 +125,13 @@ public class GettableDataIntegrationTest extends CCMBridge.PerClassSingleNodeClu
      * type of the column.
      * <p/>
      * Executes the following for each set|get set:
-     *
+     * <p/>
      * <ol>
-     *     <li>Insert row using a prepared statement and binding by name.</li>
-     *     <li>Insert row using a prepared statement and binding by index.</li>
-     *     <li>Insert row using a prepared statement and binding everything at once.</li>
-     *     <li>Retrieve inserted rows and get values by name.</li>
-     *     <li>Retrieve inserted rows and get values by index.</li>
+     * <li>Insert row using a prepared statement and binding by name.</li>
+     * <li>Insert row using a prepared statement and binding by index.</li>
+     * <li>Insert row using a prepared statement and binding everything at once.</li>
+     * <li>Retrieve inserted rows and get values by name.</li>
+     * <li>Retrieve inserted rows and get values by index.</li>
      * </ol>
      *
      * @jira_ticket JAVA-940
@@ -149,14 +144,14 @@ public class GettableDataIntegrationTest extends CCMBridge.PerClassSingleNodeClu
         PreparedStatement select = session.prepare("SELECT v,l,m" + (is21 ? ",t,s" : "") + " from codec_mapping where k=?");
 
         TupleType tupleType = new TupleType(newArrayList(DataType.cint(), DataType.cint()),
-            cluster.getConfiguration().getProtocolOptions().getProtocolVersion(), registry);
+                cluster.getConfiguration().getProtocolOptions().getProtocolVersion(), registry);
 
-        for(TypeMapping<?> mapping : mappings) {
+        for (TypeMapping<?> mapping : mappings) {
             // Keys used to insert data in this iteration.
             List<Integer> keys = newArrayList();
 
             // Values to store.
-            Map<Object,Object> map = ImmutableMap.of(mapping.value, mapping.value);
+            Map<Object, Object> map = ImmutableMap.of(mapping.value, mapping.value);
             List<Object> list = newArrayList(mapping.value);
             Set<List<Object>> set = ImmutableSet.of(list);
             TupleValue tupleValue = new TupleValue(tupleType);
@@ -171,7 +166,7 @@ public class GettableDataIntegrationTest extends CCMBridge.PerClassSingleNodeClu
             setValue(byName, "v", mapping.outerType, mapping.value);
             byName.setList("l", list, mapping.javaType);
             byName.setMap("m", map, mapping.javaType, mapping.javaType);
-            if(is21) {
+            if (is21) {
                 byName.setTupleValue("t", tupleValue);
                 byName.setSet("s", set, TypeTokens.listOf(mapping.javaType));
             }
@@ -185,7 +180,7 @@ public class GettableDataIntegrationTest extends CCMBridge.PerClassSingleNodeClu
             setValue(byIndex, 1, mapping.outerType, mapping.value);
             byIndex.setList(2, list, mapping.javaType);
             byIndex.setMap(3, map, mapping.javaType, mapping.javaType);
-            if(is21) {
+            if (is21) {
                 byIndex.setTupleValue(4, tupleValue);
                 byIndex.setSet(5, set, TypeTokens.listOf(mapping.javaType));
             }
@@ -195,21 +190,21 @@ public class GettableDataIntegrationTest extends CCMBridge.PerClassSingleNodeClu
             BoundStatement fullBind;
             int fullBindKey = keyCounter.incrementAndGet();
             keys.add(fullBindKey);
-            if(is21) {
+            if (is21) {
                 fullBind = insert.bind(fullBindKey, mapping.value, list, map, tupleValue, set);
             } else {
                 fullBind = insert.bind(fullBindKey, mapping.value, list, map);
             }
             session.execute(fullBind);
 
-            for(int key : keys) {
+            for (int key : keys) {
                 // Retrieve by name.
                 Row row = session.execute(select.bind(key)).one();
                 assertThat(getValue(row, "v", mapping.outerType, registry)).isEqualTo(mapping.value);
                 assertThat(row.getList("l", mapping.codec.getJavaType())).isEqualTo(list);
                 assertThat(row.getMap("m", mapping.codec.getJavaType(), mapping.codec.getJavaType())).isEqualTo(map);
 
-                if(is21) {
+                if (is21) {
                     TupleValue returnedTuple = row.getTupleValue("t");
                     assertThat(getValue(returnedTuple, 0, mapping.outerType, registry)).isEqualTo(mapping.value);
                     assertThat(getValue(returnedTuple, 1, mapping.outerType, registry)).isEqualTo(mapping.value);
@@ -222,7 +217,7 @@ public class GettableDataIntegrationTest extends CCMBridge.PerClassSingleNodeClu
                 assertThat(row.getList(1, mapping.codec.getJavaType())).isEqualTo(list);
                 assertThat(row.getMap(2, mapping.codec.getJavaType(), mapping.codec.getJavaType())).isEqualTo(map);
 
-                if(is21) {
+                if (is21) {
                     TupleValue returnedTuple = row.getTupleValue(3);
                     assertThat(getValue(returnedTuple, 0, mapping.outerType, registry)).isEqualTo(mapping.value);
                     assertThat(getValue(returnedTuple, 1, mapping.outerType, registry)).isEqualTo(mapping.value);
@@ -242,7 +237,7 @@ public class GettableDataIntegrationTest extends CCMBridge.PerClassSingleNodeClu
         @SuppressWarnings("unchecked")
         TypeMapping(TypeCodec<T> codec, DataType outerType, T value) {
             this.codec = codec;
-            this.javaType = (TypeToken<Object>)codec.getJavaType();
+            this.javaType = (TypeToken<Object>) codec.getJavaType();
             this.outerType = outerType;
             this.value = value;
         }
@@ -382,7 +377,7 @@ public class GettableDataIntegrationTest extends CCMBridge.PerClassSingleNodeClu
             byte[] address = ByteBuffer.allocate(4).putInt(value).array();
             try {
                 return InetAddress.getByAddress(address);
-            } catch(UnknownHostException e) {
+            } catch (UnknownHostException e) {
                 return null;
             }
         }
@@ -486,7 +481,7 @@ public class GettableDataIntegrationTest extends CCMBridge.PerClassSingleNodeClu
 
         @Override
         protected BigInteger deserialize(Integer value) {
-            return BigInteger.valueOf((long)value);
+            return BigInteger.valueOf((long) value);
         }
 
         @Override

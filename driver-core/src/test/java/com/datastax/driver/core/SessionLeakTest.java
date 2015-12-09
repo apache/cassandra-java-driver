@@ -15,30 +15,27 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.exceptions.InvalidQueryException;
+import com.datastax.driver.core.utils.SocketChannelMonitor;
+import com.google.common.collect.Lists;
+import org.testng.annotations.Test;
+
 import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static java.util.concurrent.TimeUnit.MINUTES;
-
-import com.google.common.collect.Lists;
-import org.testng.annotations.Test;
-
-import static org.assertj.core.api.Assertions.fail;
-
-import com.datastax.driver.core.exceptions.InvalidQueryException;
-import com.datastax.driver.core.utils.SocketChannelMonitor;
-
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.TestUtils.nonDebouncingQueryOptions;
+import static java.util.concurrent.TimeUnit.MINUTES;
+import static org.assertj.core.api.Assertions.fail;
 
 public class SessionLeakTest {
 
     Cluster cluster;
     List<InetSocketAddress> nodes = Lists.newArrayList(
-        new InetSocketAddress(CCMBridge.IP_PREFIX + '1', 9042),
-        new InetSocketAddress(CCMBridge.IP_PREFIX + '2', 9042));
+            new InetSocketAddress(CCMBridge.IP_PREFIX + '1', 9042),
+            new InetSocketAddress(CCMBridge.IP_PREFIX + '2', 9042));
     SocketChannelMonitor channelMonitor;
 
     @Test(groups = "short")
@@ -116,9 +113,9 @@ public class SessionLeakTest {
         channelMonitor.reportAtFixedInterval(1, TimeUnit.SECONDS);
         try {
             cluster = Cluster.builder()
-                .addContactPointsWithPorts(Collections.singletonList(
-                    new InetSocketAddress(CCMBridge.IP_PREFIX + '1', 9042)))
-                .withNettyOptions(channelMonitor.nettyOptions()).build();
+                    .addContactPointsWithPorts(Collections.singletonList(
+                            new InetSocketAddress(CCMBridge.IP_PREFIX + '1', 9042)))
+                    .withNettyOptions(channelMonitor.nettyOptions()).build();
 
             cluster.init();
 

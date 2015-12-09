@@ -20,15 +20,15 @@ import java.util.*;
 /**
  * Metadata describing the columns returned in a {@link ResultSet} or a
  * {@link PreparedStatement}.
- * <p>
+ * <p/>
  * A {@code columnDefinitions}} instance is mainly a list of
  * {@code ColumnsDefinitions.Definition}. The definitions or metadata for a column
  * can be accessed either by:
  * <ul>
- *   <li>index (indexed from 0)</li>
- *   <li>name</li>
+ * <li>index (indexed from 0)</li>
+ * <li>name</li>
  * </ul>
- * <p>
+ * <p/>
  * When accessed by name, column selection is case insensitive. In case multiple
  * columns only differ by the case of their name, then the column returned with
  * be the first column that has been defined in CQL without forcing case sensitivity
@@ -36,17 +36,17 @@ import java.util.*;
  * If none of the columns have been defined in this manner, the first column matching
  * (with case insensitivity) is returned. You can force the case of a selection
  * by double quoting the name.
- * <p>
+ * <p/>
  * For example:
  * <ul>
- *   <li>If {@code cd} contains column {@code fOO}, then {@code cd.contains("foo")},
- *   {@code cd.contains("fOO")} and {@code cd.contains("Foo")} will return {@code true}.</li>
- *   <li>If {@code cd} contains both {@code foo} and {@code FOO} then:
- *      <ul>
- *          <li>{@code cd.getType("foo")}, {@code cd.getType("fOO")} and {@code cd.getType("FOO")}
- *          will all match column {@code foo}.</li>
- *          <li>{@code cd.getType("\"FOO\"")} will match column {@code FOO}</li>
- *      </ul>
+ * <li>If {@code cd} contains column {@code fOO}, then {@code cd.contains("foo")},
+ * {@code cd.contains("fOO")} and {@code cd.contains("Foo")} will return {@code true}.</li>
+ * <li>If {@code cd} contains both {@code foo} and {@code FOO} then:
+ * <ul>
+ * <li>{@code cd.getType("foo")}, {@code cd.getType("fOO")} and {@code cd.getType("FOO")}
+ * will all match column {@code foo}.</li>
+ * <li>{@code cd.getType("\"FOO\"")} will match column {@code FOO}</li>
+ * </ul>
  * </ul>
  * Note that the preceding rules mean that if a {@code ColumnDefinitions} object
  * contains multiple occurrences of the exact same name (be it the same column
@@ -69,7 +69,7 @@ public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition>
 
         for (int i = 0; i < defs.length; i++) {
             // Be optimistic, 99% of the time, previous will be null.
-            int[] previous = this.byName.put(defs[i].name.toLowerCase(), new int[]{ i });
+            int[] previous = this.byName.put(defs[i].name.toLowerCase(), new int[]{i});
             if (previous != null) {
                 int[] indexes = new int[previous.length + 1];
                 System.arraycopy(previous, 0, indexes, 0, previous.length);
@@ -113,7 +113,7 @@ public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition>
 
     /**
      * Returns an iterator over the {@link Definition} contained in this metadata.
-     *
+     * <p/>
      * The order of the iterator will be the one of this metadata.
      *
      * @return an iterator over the {@link Definition} contained in this metadata.
@@ -137,7 +137,6 @@ public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition>
      *
      * @param i the index in this metadata.
      * @return the name of the {@code i}th column in this metadata.
-     *
      * @throws IndexOutOfBoundsException if {@code i < 0} or {@code i >= size()}
      */
     public String getName(int i) {
@@ -149,7 +148,6 @@ public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition>
      *
      * @param i the index in this metadata.
      * @return the type of the {@code i}th column in this metadata.
-     *
      * @throws IndexOutOfBoundsException if {@code i < 0} or {@code i >= size()}
      */
     public DataType getType(int i) {
@@ -161,7 +159,6 @@ public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition>
      *
      * @param name the name of the column.
      * @return the type of (the first occurrence of) {@code name} in this metadata.
-     *
      * @throws IllegalArgumentException if {@code name} is not in this metadata.
      */
     public DataType getType(String name) {
@@ -173,7 +170,6 @@ public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition>
      *
      * @param i the index in this metadata.
      * @return the keyspace of the {@code i}th column in this metadata.
-     *
      * @throws IndexOutOfBoundsException if {@code i < 0} or {@code i >= size()}
      */
     public String getKeyspace(int i) {
@@ -185,7 +181,6 @@ public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition>
      *
      * @param name the name of the column.
      * @return the keyspace of (the first occurrence of) column {@code name} in this metadata.
-     *
      * @throws IllegalArgumentException if {@code name} is not in this metadata.
      */
     public String getKeyspace(String name) {
@@ -197,7 +192,6 @@ public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition>
      *
      * @param i the index in this metadata.
      * @return the table of the {@code i}th column in this metadata.
-     *
      * @throws IndexOutOfBoundsException if {@code i < 0} or {@code i >= size()}
      */
     public String getTable(int i) {
@@ -209,7 +203,6 @@ public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition>
      *
      * @param name the name of the column.
      * @return the table of (the first occurrence of) column {@code name} in this metadata.
-     *
      * @throws IllegalArgumentException if {@code name} is not in this metadata.
      */
     public String getTable(String name) {
@@ -334,19 +327,19 @@ public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition>
 
         @Override
         public final int hashCode() {
-            return Arrays.hashCode(new Object[]{ keyspace, table, name, type});
+            return Arrays.hashCode(new Object[]{keyspace, table, name, type});
         }
 
         @Override
         public final boolean equals(Object o) {
-            if(!(o instanceof Definition))
+            if (!(o instanceof Definition))
                 return false;
 
-            Definition other = (Definition)o;
+            Definition other = (Definition) o;
             return keyspace.equals(other.keyspace)
-                && table.equals(other.table)
-                && name.equals(other.name)
-                && type.equals(other.type);
+                    && table.equals(other.table)
+                    && name.equals(other.name)
+                    && type.equals(other.type);
         }
     }
 }

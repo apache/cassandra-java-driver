@@ -15,25 +15,25 @@
  */
 package com.datastax.driver.core;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Lists;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Lists;
-
 /**
  * Describes a keyspace defined in this cluster.
  */
 public class KeyspaceMetadata {
 
-    public  static final String KS_NAME          = "keyspace_name";
-    private static final String DURABLE_WRITES   = "durable_writes";
-    private static final String STRATEGY_CLASS   = "strategy_class";
+    public static final String KS_NAME = "keyspace_name";
+    private static final String DURABLE_WRITES = "durable_writes";
+    private static final String STRATEGY_CLASS = "strategy_class";
     private static final String STRATEGY_OPTIONS = "strategy_options";
-    private static final String REPLICATION      = "replication";
+    private static final String REPLICATION = "replication";
 
     private final String name;
     private final boolean durableWrites;
@@ -177,9 +177,8 @@ public class KeyspaceMetadata {
     /**
      * Returns the definition of a function in this keyspace.
      *
-     * @param name the name of the function.
+     * @param name          the name of the function.
      * @param argumentTypes the types of the function's arguments.
-     *
      * @return the function definition if it exists in this keyspace, {@code null} otherwise.
      */
     public FunctionMetadata getFunction(String name, Collection<DataType> argumentTypes) {
@@ -189,9 +188,8 @@ public class KeyspaceMetadata {
     /**
      * Returns the definition of a function in this keyspace.
      *
-     * @param name the name of the function.
+     * @param name          the name of the function.
      * @param argumentTypes the types of the function's arguments.
-     *
      * @return the function definition if it exists in this keyspace, {@code null} otherwise.
      */
     public FunctionMetadata getFunction(String name, DataType... argumentTypes) {
@@ -215,9 +213,8 @@ public class KeyspaceMetadata {
     /**
      * Returns the definition of an aggregate in this keyspace.
      *
-     * @param name the name of the aggregate.
+     * @param name          the name of the aggregate.
      * @param argumentTypes the types of the aggregate's arguments.
-     *
      * @return the aggregate definition if it exists in this keyspace, {@code null} otherwise.
      */
     public AggregateMetadata getAggregate(String name, Collection<DataType> argumentTypes) {
@@ -227,9 +224,8 @@ public class KeyspaceMetadata {
     /**
      * Returns the definition of an aggregate in this keyspace.
      *
-     * @param name the name of the aggregate.
+     * @param name          the name of the aggregate.
      * @param argumentTypes the types of the aggregate's arguments.
-     *
      * @return the aggregate definition if it exists in this keyspace, {@code null} otherwise.
      */
     public AggregateMetadata getAggregate(String name, DataType... argumentTypes) {
@@ -253,11 +249,11 @@ public class KeyspaceMetadata {
     /**
      * Returns a {@code String} containing CQL queries representing this
      * keyspace and the user types and tables it contains.
-     * <p>
+     * <p/>
      * In other words, this method returns the queries that would allow to
      * recreate the schema of this keyspace, along with all its user
      * types/tables.
-     * <p>
+     * <p/>
      * Note that the returned String is formatted to be human readable (for
      * some definition of human readable at least).
      *
@@ -275,10 +271,10 @@ public class KeyspaceMetadata {
         for (TableMetadata tm : tables.values())
             sb.append('\n').append(tm.exportAsString()).append('\n');
 
-        for (FunctionMetadata fm: functions.values())
+        for (FunctionMetadata fm : functions.values())
             sb.append('\n').append(fm.exportAsString()).append('\n');
 
-        for (AggregateMetadata am: aggregates.values())
+        for (AggregateMetadata am : aggregates.values())
             sb.append('\n').append(am.exportAsString()).append('\n');
 
         return sb.toString();
@@ -286,7 +282,7 @@ public class KeyspaceMetadata {
 
     /**
      * Returns a CQL query representing this keyspace.
-     * <p>
+     * <p/>
      * This method returns a single 'CREATE KEYSPACE' query with the options
      * corresponding to this keyspace definition.
      *
@@ -320,7 +316,7 @@ public class KeyspaceMetadata {
         if (o == null || getClass() != o.getClass())
             return false;
 
-        KeyspaceMetadata that = (KeyspaceMetadata)o;
+        KeyspaceMetadata that = (KeyspaceMetadata) o;
 
         if (durableWrites != that.durableWrites)
             return false;

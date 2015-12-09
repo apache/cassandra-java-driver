@@ -15,17 +15,15 @@
  */
 package com.datastax.driver.core;
 
-import java.util.Collection;
-import java.util.Collections;
-
+import com.datastax.driver.core.exceptions.CodecNotFoundException;
 import com.google.common.collect.Lists;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import java.util.Collection;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
-
-import com.datastax.driver.core.exceptions.CodecNotFoundException;
 
 public class BoundStatementTest extends CCMBridge.PerClassSingleNodeCluster {
 
@@ -47,16 +45,16 @@ public class BoundStatementTest extends CCMBridge.PerClassSingleNodeCluster {
         BoundStatement statement = prepared.bind(1, "test", Lists.newArrayList(1));
 
         assertThat(statement.getInt(0))
-            .isEqualTo(statement.getInt("k"))
-            .isEqualTo(1);
+                .isEqualTo(statement.getInt("k"))
+                .isEqualTo(1);
 
         assertThat(statement.getString(1))
-            .isEqualTo(statement.getString("v1"))
-            .isEqualTo("test");
+                .isEqualTo(statement.getString("v1"))
+                .isEqualTo("test");
 
         assertThat(statement.getList(2, Integer.class))
-            .isEqualTo(statement.getList("v2", Integer.class))
-            .isEqualTo(Lists.newArrayList(1));
+                .isEqualTo(statement.getList("v2", Integer.class))
+                .isEqualTo(Lists.newArrayList(1));
 
         try {
             statement.getString(0);

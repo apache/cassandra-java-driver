@@ -15,18 +15,16 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.utils.CassandraVersion;
+import com.google.common.collect.Lists;
+import org.testng.annotations.Test;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.UUID;
 
-import com.google.common.collect.Lists;
-import org.testng.annotations.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
-import com.datastax.driver.core.utils.CassandraVersion;
-
 import static com.datastax.driver.core.DataType.cfloat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @CassandraVersion(major = 2.1)
 public class TypeCodecTupleIntegrationTest extends CCMBridge.PerClassSingleNodeCluster {
@@ -46,7 +44,7 @@ public class TypeCodecTupleIntegrationTest extends CCMBridge.PerClassSingleNodeC
     @Override
     protected Collection<String> getTableDefinitions() {
         return Lists.newArrayList(
-            "CREATE TABLE IF NOT EXISTS \"users\" (id uuid PRIMARY KEY, name text, location frozen<tuple<float,float>>)"
+                "CREATE TABLE IF NOT EXISTS \"users\" (id uuid PRIMARY KEY, name text, location frozen<tuple<float,float>>)"
         );
     }
 
@@ -96,15 +94,15 @@ public class TypeCodecTupleIntegrationTest extends CCMBridge.PerClassSingleNodeC
     public void should_handle_tuples_with_custom_codecs() {
         CodecRegistry codecRegistry = new CodecRegistry();
         Cluster cluster = Cluster.builder()
-            .addContactPointsWithPorts(Collections.singleton(hostAddress))
-            .withCodecRegistry(codecRegistry)
-            .build();
+                .addContactPointsWithPorts(Collections.singleton(hostAddress))
+                .withCodecRegistry(codecRegistry)
+                .build();
 
         try {
             Session session = cluster.connect(keyspace);
             setUpTupleTypes(cluster);
             codecRegistry
-                .register(new LocationCodec(TypeCodec.tuple(locationType)))
+                    .register(new LocationCodec(TypeCodec.tuple(locationType)))
             ;
             session.execute(insertQuery, uuid, "John Doe", locationValue);
             ResultSet rows = session.execute(selectQuery, uuid);
@@ -132,15 +130,15 @@ public class TypeCodecTupleIntegrationTest extends CCMBridge.PerClassSingleNodeC
     public void should_handle_partial_tuples_with_custom_codecs() {
         CodecRegistry codecRegistry = new CodecRegistry();
         Cluster cluster = Cluster.builder()
-            .addContactPointsWithPorts(Collections.singleton(hostAddress))
-            .withCodecRegistry(codecRegistry)
-            .build();
+                .addContactPointsWithPorts(Collections.singleton(hostAddress))
+                .withCodecRegistry(codecRegistry)
+                .build();
 
         try {
             Session session = cluster.connect(keyspace);
             setUpTupleTypes(cluster);
             codecRegistry
-                .register(new LocationCodec(TypeCodec.tuple(locationType)))
+                    .register(new LocationCodec(TypeCodec.tuple(locationType)))
             ;
             session.execute(insertQuery, uuid, "John Doe", partialLocationValueInserted);
             ResultSet rows = session.execute(selectQuery, uuid);
@@ -191,8 +189,8 @@ public class TypeCodecTupleIntegrationTest extends CCMBridge.PerClassSingleNodeC
     private void setUpTupleTypes(Cluster cluster) {
         locationType = cluster.getMetadata().newTupleType(cfloat(), cfloat());
         locationValue = locationType.newValue()
-            .setFloat(0, 37.387224f)
-            .setFloat(1, -121.9733837f);
+                .setFloat(0, 37.387224f)
+                .setFloat(1, -121.9733837f);
         // insert a tuple of a different dimension
         partialLocationValueInserted = cluster.getMetadata().newTupleType(cfloat()).newValue().setFloat(0, 37.387224f);
         // retrieve the partial tuple with null missing values
@@ -239,7 +237,7 @@ public class TypeCodecTupleIntegrationTest extends CCMBridge.PerClassSingleNodeC
             if (o == null || getClass() != o.getClass())
                 return false;
 
-            Location location = (Location)o;
+            Location location = (Location) o;
 
             return Float.compare(location.latitude, latitude) == 0 && Float.compare(location.longitude, longitude) == 0;
 

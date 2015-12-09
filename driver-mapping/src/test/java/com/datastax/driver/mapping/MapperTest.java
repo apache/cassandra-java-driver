@@ -15,22 +15,20 @@
  */
 package com.datastax.driver.mapping;
 
-import java.net.InetAddress;
-
+import com.datastax.driver.core.*;
 import com.datastax.driver.core.utils.CassandraVersion;
-import com.datastax.driver.mapping.annotations.Table;
-import java.util.*;
-
+import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.driver.mapping.annotations.*;
 import com.google.common.base.Objects;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.testng.annotations.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.testng.Assert.*;
+import java.net.InetAddress;
+import java.util.*;
 
-import com.datastax.driver.mapping.annotations.*;
-import com.datastax.driver.core.*;
-import com.datastax.driver.core.utils.UUIDs;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 /**
  * Basic tests for the mapping module.
@@ -42,7 +40,7 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
         // We'll allow to generate those create statement from the annotated entities later, but it's currently
         // a TODO
         return Arrays.asList("CREATE TABLE users (user_id uuid PRIMARY KEY, name text, email text, year int, gender text)",
-                             "CREATE TABLE posts (user_id uuid, post_id timeuuid, title text, content text, device inet, tags set<text>, PRIMARY KEY(user_id, post_id))");
+                "CREATE TABLE posts (user_id uuid, post_id timeuuid, title text, content text, device inet, tags set<text>, PRIMARY KEY(user_id, post_id))");
     }
 
     /*
@@ -58,8 +56,8 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
      */
     @SuppressWarnings("unused")
     @Table(name = "users",
-           readConsistency="QUORUM",
-           writeConsistency="QUORUM")
+            readConsistency = "QUORUM",
+            writeConsistency = "QUORUM")
     public static class User {
 
         // Dummy constant to test that static fields are properly ignored
@@ -74,7 +72,8 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
         @Column // not strictly required, but we want to check that the annotation works without a name
         private int year;
 
-        public User() {}
+        public User() {
+        }
 
         public User(String name, String email) {
             this.userId = UUIDs.random();
@@ -119,11 +118,11 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
             if (other == null || other.getClass() != this.getClass())
                 return false;
 
-            User that = (User)other;
+            User that = (User) other;
             return Objects.equal(userId, that.userId)
-                && Objects.equal(name, that.name)
-                && Objects.equal(email, that.email)
-                && Objects.equal(year, that.year);
+                    && Objects.equal(name, that.name)
+                    && Objects.equal(email, that.email)
+                    && Objects.equal(year, that.year);
         }
 
         @Override
@@ -156,7 +155,8 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
 
         private Set<String> tags;
 
-        public Post() {}
+        public Post() {
+        }
 
         public Post(User user, String title) {
             this.userId = user.getUserId();
@@ -217,13 +217,13 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
             if (other == null || other.getClass() != this.getClass())
                 return false;
 
-            Post that = (Post)other;
+            Post that = (Post) other;
             return Objects.equal(userId, that.userId)
-                && Objects.equal(postId, that.postId)
-                && Objects.equal(title, that.title)
-                && Objects.equal(content, that.content)
-                && Objects.equal(device, that.device)
-                && Objects.equal(tags, that.tags);
+                    && Objects.equal(postId, that.postId)
+                    && Objects.equal(title, that.title)
+                    && Objects.equal(content, that.content)
+                    && Objects.equal(device, that.device)
+                    && Objects.equal(tags, that.tags);
         }
 
         @Override
@@ -257,13 +257,13 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
         // somehow, but well, not a huge deal.
         @Query("SELECT * FROM posts WHERE user_id=:userId AND post_id=:postId")
         Post getOne(@Param("userId") UUID userId,
-                           @Param("postId") UUID postId);
+                    @Param("postId") UUID postId);
 
         // Note that the following method will be asynchronous (it will use executeAsync
         // underneath) because it's return type is a ListenableFuture. Similarly, we know
         // that we need to map the result to the Post entity thanks to the return type.
         @Query("SELECT * FROM posts WHERE user_id=?")
-        @QueryParameters(consistency="QUORUM")
+        @QueryParameters(consistency = "QUORUM")
         ListenableFuture<Result<Post>> getAllAsync(UUID userId);
 
         // The method above actually query stuff, but if a method is declared to return
@@ -295,7 +295,7 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     @Test(groups = "short")
-    @CassandraVersion(major=2.0)
+    @CassandraVersion(major = 2.0)
     public void testDynamicEntity() throws Exception {
         MappingManager manager = new MappingManager(session);
 
@@ -355,7 +355,7 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
 
     }
 
-    @Test(groups="short")
+    @Test(groups = "short")
     public void should_map_objects_from_partial_queries() throws Exception {
         MappingManager manager = new MappingManager(session);
 
@@ -392,7 +392,7 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
 
-    @Test(groups="short")
+    @Test(groups = "short")
     public void should_return_table_metadata() throws Exception {
         MappingManager manager = new MappingManager(session);
 
@@ -403,7 +403,7 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
         assertThat(m.getTableMetadata().getPartitionKey()).hasSize(1);
     }
 
-    @Test(groups="short")
+    @Test(groups = "short")
     public void should_not_initialize_session_when_protocol_version_provided() {
         Session newSession = cluster.newSession();
 

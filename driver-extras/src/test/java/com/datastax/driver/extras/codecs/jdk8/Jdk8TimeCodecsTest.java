@@ -15,20 +15,6 @@
  */
 package com.datastax.driver.extras.codecs.jdk8;
 
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.time.ZonedDateTime;
-import java.util.*;
-
-import com.google.common.collect.ImmutableMap;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
-import static com.google.common.collect.Lists.newArrayList;
-import static com.google.common.collect.Sets.newHashSet;
-import static org.assertj.core.api.Assertions.assertThat;
-
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.utils.CassandraVersion;
 import com.datastax.driver.mapping.Mapper;
@@ -36,27 +22,39 @@ import com.datastax.driver.mapping.MappingManager;
 import com.datastax.driver.mapping.annotations.Column;
 import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
+import com.google.common.collect.ImmutableMap;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZonedDateTime;
+import java.util.*;
 
 import static com.datastax.driver.core.DataType.timestamp;
 import static com.datastax.driver.core.DataType.varchar;
+import static com.google.common.collect.Lists.newArrayList;
+import static com.google.common.collect.Sets.newHashSet;
+import static org.assertj.core.api.Assertions.assertThat;
 
-@CassandraVersion(major=2.2)
+@CassandraVersion(major = 2.2)
 public class Jdk8TimeCodecsTest extends CCMBridge.PerClassSingleNodeCluster {
 
     @Override
     protected Collection<String> getTableDefinitions() {
         return Collections.singletonList(
                 "CREATE TABLE IF NOT EXISTS foo ("
-                    + "c1 text PRIMARY KEY, "
-                    + "cdate date, "
-                    + "ctime time, "
-                    + "ctimestamp timestamp, "
-                    + "ctuple tuple<timestamp,varchar>, "
-                    + "cdates frozen<list<date>>, "
-                    + "ctimes frozen<set<time>>, "
-                    + "ctimestamps frozen<map<text,timestamp>>, "
-                    + "ctuples frozen<map<tuple<timestamp,varchar>,varchar>>"
-                    + ")");
+                        + "c1 text PRIMARY KEY, "
+                        + "cdate date, "
+                        + "ctime time, "
+                        + "ctimestamp timestamp, "
+                        + "ctuple tuple<timestamp,varchar>, "
+                        + "cdates frozen<list<date>>, "
+                        + "ctimes frozen<set<time>>, "
+                        + "ctimestamps frozen<map<text,timestamp>>, "
+                        + "ctuples frozen<map<tuple<timestamp,varchar>,varchar>>"
+                        + ")");
     }
 
     @BeforeClass(groups = "short")
@@ -64,10 +62,10 @@ public class Jdk8TimeCodecsTest extends CCMBridge.PerClassSingleNodeCluster {
         TupleType dateWithTimeZoneType = cluster.getMetadata().newTupleType(timestamp(), varchar());
         CodecRegistry codecRegistry = cluster.getConfiguration().getCodecRegistry();
         codecRegistry
-            .register(LocalTimeCodec.instance)
-            .register(LocalDateCodec.instance)
-            .register(InstantCodec.instance)
-            .register(new ZonedDateTimeCodec(dateWithTimeZoneType));
+                .register(LocalTimeCodec.instance)
+                .register(LocalDateCodec.instance)
+                .register(InstantCodec.instance)
+                .register(new ZonedDateTimeCodec(dateWithTimeZoneType));
     }
 
     /**
@@ -81,7 +79,7 @@ public class Jdk8TimeCodecsTest extends CCMBridge.PerClassSingleNodeCluster {
      * @jira_ticket JAVA-606
      * @since 2.2.0
      */
-    @Test(groups="short")
+    @Test(groups = "short")
     public void should_map_time_to_localtime() {
         // given
         LocalTime time = LocalTime.of(12, 16, 34, 999);
@@ -106,7 +104,7 @@ public class Jdk8TimeCodecsTest extends CCMBridge.PerClassSingleNodeCluster {
      * @jira_ticket JAVA-606
      * @since 2.2.0
      */
-    @Test(groups="short")
+    @Test(groups = "short")
     public void should_map_date_to_localdate() {
         // given
         LocalDate localDate = LocalDate.of(2015, 1, 1);
@@ -132,7 +130,7 @@ public class Jdk8TimeCodecsTest extends CCMBridge.PerClassSingleNodeCluster {
      * @jira_ticket JAVA-606
      * @since 2.2.0
      */
-    @Test(groups="short")
+    @Test(groups = "short")
     public void should_map_timestamp_to_instant() {
         // given
         Instant instant = Instant.parse("2010-06-30T01:20:30Z");
@@ -157,7 +155,7 @@ public class Jdk8TimeCodecsTest extends CCMBridge.PerClassSingleNodeCluster {
      * @jira_ticket JAVA-606
      * @since 2.2.0
      */
-    @Test(groups="short")
+    @Test(groups = "short")
     public void should_map_tuple_to_zoneddatetime() {
         // given
         ZonedDateTime expected = ZonedDateTime.parse("2010-06-30T01:20+05:30");
@@ -176,7 +174,7 @@ public class Jdk8TimeCodecsTest extends CCMBridge.PerClassSingleNodeCluster {
         assertThat(actual.getZone()).isEqualTo(expected.getZone());
     }
 
-    @Test(groups="short")
+    @Test(groups = "short")
     public void should_use_mapper_to_store_and_retrieve_values_with_custom_jdk8_codecs() {
         // given
         MappingManager manager = new MappingManager(session);

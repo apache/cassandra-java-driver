@@ -15,11 +15,13 @@
  */
 package com.datastax.driver.extras.codecs.joda;
 
-import java.util.*;
-
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static java.util.concurrent.TimeUnit.NANOSECONDS;
-
+import com.datastax.driver.core.*;
+import com.datastax.driver.core.utils.CassandraVersion;
+import com.datastax.driver.mapping.Mapper;
+import com.datastax.driver.mapping.MappingManager;
+import com.datastax.driver.mapping.annotations.Column;
+import com.datastax.driver.mapping.annotations.PartitionKey;
+import com.datastax.driver.mapping.annotations.Table;
 import com.google.common.collect.ImmutableMap;
 import org.joda.time.DateTime;
 import org.joda.time.Instant;
@@ -28,38 +30,33 @@ import org.joda.time.LocalTime;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import static com.google.common.collect.Lists.newArrayList;
-import static com.google.common.collect.Sets.newHashSet;
-import static org.assertj.core.api.Assertions.assertThat;
-
-import com.datastax.driver.core.*;
-import com.datastax.driver.core.utils.CassandraVersion;
-import com.datastax.driver.mapping.Mapper;
-import com.datastax.driver.mapping.MappingManager;
-import com.datastax.driver.mapping.annotations.Column;
-import com.datastax.driver.mapping.annotations.PartitionKey;
-import com.datastax.driver.mapping.annotations.Table;
+import java.util.*;
 
 import static com.datastax.driver.core.DataType.timestamp;
 import static com.datastax.driver.core.DataType.varchar;
+import static com.google.common.collect.Lists.newArrayList;
+import static com.google.common.collect.Sets.newHashSet;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
+import static org.assertj.core.api.Assertions.assertThat;
 
-@CassandraVersion(major=2.2)
+@CassandraVersion(major = 2.2)
 public class JodaTimeCodecsTest extends CCMBridge.PerClassSingleNodeCluster {
 
     @Override
     protected Collection<String> getTableDefinitions() {
         return Collections.singletonList(
-            "CREATE TABLE IF NOT EXISTS foo ("
-                + "c1 text PRIMARY KEY, "
-                + "cdate date, "
-                + "ctime time, "
-                + "ctimestamp timestamp, "
-                + "ctuple tuple<timestamp,varchar>, "
-                + "cdates frozen<list<date>>, "
-                + "ctimes frozen<set<time>>, "
-                + "ctimestamps frozen<map<text,timestamp>>, "
-                + "ctuples frozen<map<tuple<timestamp,varchar>,varchar>>"
-                + ")");
+                "CREATE TABLE IF NOT EXISTS foo ("
+                        + "c1 text PRIMARY KEY, "
+                        + "cdate date, "
+                        + "ctime time, "
+                        + "ctimestamp timestamp, "
+                        + "ctuple tuple<timestamp,varchar>, "
+                        + "cdates frozen<list<date>>, "
+                        + "ctimes frozen<set<time>>, "
+                        + "ctimestamps frozen<map<text,timestamp>>, "
+                        + "ctuples frozen<map<tuple<timestamp,varchar>,varchar>>"
+                        + ")");
     }
 
     @BeforeClass(groups = "short")
@@ -67,10 +64,10 @@ public class JodaTimeCodecsTest extends CCMBridge.PerClassSingleNodeCluster {
         TupleType dateWithTimeZoneType = cluster.getMetadata().newTupleType(timestamp(), varchar());
         CodecRegistry codecRegistry = cluster.getConfiguration().getCodecRegistry();
         codecRegistry
-            .register(LocalTimeCodec.instance)
-            .register(LocalDateCodec.instance)
-            .register(InstantCodec.instance)
-            .register(new DateTimeCodec(dateWithTimeZoneType));
+                .register(LocalTimeCodec.instance)
+                .register(LocalDateCodec.instance)
+                .register(InstantCodec.instance)
+                .register(new DateTimeCodec(dateWithTimeZoneType));
     }
 
     /**
@@ -84,7 +81,7 @@ public class JodaTimeCodecsTest extends CCMBridge.PerClassSingleNodeCluster {
      * @jira_ticket JAVA-846
      * @since 2.2.0
      */
-    @Test(groups="short")
+    @Test(groups = "short")
     public void should_map_time_to_localtime() {
         // given
         LocalTime time = new LocalTime(12, 16, 34, 999);
@@ -109,7 +106,7 @@ public class JodaTimeCodecsTest extends CCMBridge.PerClassSingleNodeCluster {
      * @jira_ticket JAVA-846
      * @since 2.2.0
      */
-    @Test(groups="short")
+    @Test(groups = "short")
     public void should_map_date_to_localdate() {
         // given
         LocalDate localDate = new LocalDate(2015, 1, 1);
@@ -135,7 +132,7 @@ public class JodaTimeCodecsTest extends CCMBridge.PerClassSingleNodeCluster {
      * @jira_ticket JAVA-846
      * @since 2.2.0
      */
-    @Test(groups="short")
+    @Test(groups = "short")
     public void should_map_timestamp_to_instant() {
         // given
         Instant instant = Instant.parse("2010-06-30T01:20+05:00");
@@ -160,7 +157,7 @@ public class JodaTimeCodecsTest extends CCMBridge.PerClassSingleNodeCluster {
      * @jira_ticket JAVA-846
      * @since 2.2.0
      */
-    @Test(groups="short")
+    @Test(groups = "short")
     public void should_map_tuple_to_datetime() {
         // given
         DateTime expected = DateTime.parse("2010-06-30T01:20+05:30");
@@ -178,7 +175,7 @@ public class JodaTimeCodecsTest extends CCMBridge.PerClassSingleNodeCluster {
         assertThat(row.get("ctuple", DateTime.class).getZone()).isEqualTo(expected.getZone());
     }
 
-    @Test(groups="short")
+    @Test(groups = "short")
     public void should_use_mapper_to_store_and_retrieve_values_with_custom_joda_codecs() {
         // given
         MappingManager manager = new MappingManager(session);

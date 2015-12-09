@@ -15,12 +15,11 @@
  */
 package com.datastax.driver.core;
 
-import java.util.Collection;
-
+import com.datastax.driver.core.utils.CassandraVersion;
 import com.google.common.collect.Lists;
 import org.testng.annotations.Test;
 
-import com.datastax.driver.core.utils.CassandraVersion;
+import java.util.Collection;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.DataType.*;
@@ -92,7 +91,7 @@ public class DataTypeCqlNameParserTest extends CCMBridge.PerClassSingleNodeClust
         UserType keyType = keyspaceMetadata.getUserType(quote("Incr,edibly\" EvilTy<>><<><p\"e"));
         UserType valueType = keyspaceMetadata.getUserType(quote("A"));
         assertThat(parse("map<frozen<\"Incr,edibly\"\" EvilTy<>><<><p\"\"e\">,frozen<\"A\">>", cluster, keyspace, keyspaceMetadata.userTypes, null, false, false))
-            .isEqualTo(map(keyType, valueType, false));
+                .isEqualTo(map(keyType, valueType, false));
     }
 
     @Test(groups = "short")
@@ -122,8 +121,8 @@ public class DataTypeCqlNameParserTest extends CCMBridge.PerClassSingleNodeClust
     @Override
     protected Collection<String> getTableDefinitions() {
         return Lists.newArrayList(
-            String.format("CREATE TYPE %s.\"A\" (f1 int)", keyspace),
-            String.format("CREATE TYPE %s.\"Incr,edibly\"\" EvilTy<>><<><p\"\"e\" (a frozen<\"A\">)", keyspace)
+                String.format("CREATE TYPE %s.\"A\" (f1 int)", keyspace),
+                String.format("CREATE TYPE %s.\"Incr,edibly\"\" EvilTy<>><<><p\"\"e\" (a frozen<\"A\">)", keyspace)
         );
     }
 

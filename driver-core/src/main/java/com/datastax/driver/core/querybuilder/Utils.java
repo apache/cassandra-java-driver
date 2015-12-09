@@ -15,6 +15,12 @@
  */
 package com.datastax.driver.core.querybuilder;
 
+import com.datastax.driver.core.CodecRegistry;
+import com.datastax.driver.core.ProtocolVersion;
+import com.datastax.driver.core.Token;
+import com.datastax.driver.core.TypeCodec;
+import com.datastax.driver.core.exceptions.InvalidTypeException;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
@@ -25,12 +31,6 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-
-import com.datastax.driver.core.CodecRegistry;
-import com.datastax.driver.core.ProtocolVersion;
-import com.datastax.driver.core.Token;
-import com.datastax.driver.core.TypeCodec;
-import com.datastax.driver.core.exceptions.InvalidTypeException;
 
 // Static utilities private to the query builder
 abstract class Utils {
@@ -70,7 +70,7 @@ abstract class Utils {
         } else if (value instanceof BindMarker) {
             sb.append(value);
         } else if (value instanceof FCall) {
-            FCall fcall = (FCall)value;
+            FCall fcall = (FCall) value;
             sb.append(fcall.name).append('(');
             for (int i = 0; i < fcall.parameters.length; i++) {
                 if (i > 0)
@@ -79,18 +79,18 @@ abstract class Utils {
             }
             sb.append(')');
         } else if (value instanceof CName) {
-            appendName(((CName)value).name, codecRegistry, sb);
+            appendName(((CName) value).name, codecRegistry, sb);
         } else if (value instanceof RawString) {
             sb.append(value.toString());
-        } else if(value instanceof List && !isSerializable(value)) {
+        } else if (value instanceof List && !isSerializable(value)) {
             // bind variables are not supported inside collection literals
-            appendList((List<?>)value, codecRegistry, sb, null);
-        } else if(value instanceof Set && !isSerializable(value)) {
+            appendList((List<?>) value, codecRegistry, sb, null);
+        } else if (value instanceof Set && !isSerializable(value)) {
             // bind variables are not supported inside collection literals
-            appendSet((Set<?>)value, codecRegistry, sb, null);
-        } else if(value instanceof Map && !isSerializable(value)) {
+            appendSet((Set<?>) value, codecRegistry, sb, null);
+        } else if (value instanceof Map && !isSerializable(value)) {
             // bind variables are not supported inside collection literals
-            appendMap((Map<?,?>)value, codecRegistry, sb, null);
+            appendMap((Map<?, ?>) value, codecRegistry, sb, null);
         } else if (variables == null || !isSerializable(value)) {
             // we are not collecting statement values (variables == null)
             // or the value is meant to be forcefully appended to the query string:
@@ -123,7 +123,8 @@ abstract class Utils {
         sb.append('{');
         boolean first = true;
         for (Object elt : s) {
-            if (first) first = false; else sb.append(',');
+            if (first) first = false;
+            else sb.append(',');
             appendValue(elt, codecRegistry, sb, variables);
         }
         sb.append('}');
@@ -150,15 +151,15 @@ abstract class Utils {
         if (value instanceof BindMarker)
             return true;
         if (value instanceof FCall)
-            for (Object param : ((FCall)value).parameters)
-            if (containsBindMarker(param))
-                return true;
+            for (Object param : ((FCall) value).parameters)
+                if (containsBindMarker(param))
+                    return true;
         if (value instanceof Collection)
-            for (Object elt : (Collection)value)
+            for (Object elt : (Collection) value)
                 if (containsBindMarker(elt))
                     return true;
         if (value instanceof Map)
-            for (Map.Entry<?,?> entry : ((Map<?,?>)value).entrySet())
+            for (Map.Entry<?, ?> entry : ((Map<?, ?>) value).entrySet())
                 if (containsBindMarker(entry.getKey()) || containsBindMarker(entry.getValue()))
                     return true;
         return false;
@@ -168,11 +169,11 @@ abstract class Utils {
         if (value instanceof BindMarker || value instanceof FCall || value instanceof CName || value instanceof RawString)
             return true;
         if (value instanceof Collection)
-            for (Object elt : (Collection)value)
+            for (Object elt : (Collection) value)
                 if (containsSpecialValue(elt))
                     return true;
         if (value instanceof Map)
-            for (Map.Entry<?,?> entry : ((Map<?,?>)value).entrySet())
+            for (Map.Entry<?, ?> entry : ((Map<?, ?>) value).entrySet())
                 if (containsSpecialValue(entry.getKey()) || containsSpecialValue(entry.getValue()))
                     return true;
         return false;
@@ -197,34 +198,34 @@ abstract class Utils {
         if (value instanceof Number && !(value instanceof BigInteger || value instanceof BigDecimal))
             return false;
         if (value instanceof Collection)
-            for (Object elt : (Collection)value)
+            for (Object elt : (Collection) value)
                 if (!isSerializable(elt))
                     return false;
         if (value instanceof Map)
-            for (Map.Entry<?,?> entry : ((Map<?,?>)value).entrySet())
+            for (Map.Entry<?, ?> entry : ((Map<?, ?>) value).entrySet())
                 if (!isSerializable(entry.getKey()) || !isSerializable(entry.getValue()))
                     return false;
         return true;
     }
 
     static boolean isIdempotent(Object value) {
-        if(value == null) {
+        if (value == null) {
             return true;
         } else if (value instanceof Assignment) {
-            Assignment assignment = (Assignment)value;
+            Assignment assignment = (Assignment) value;
             return assignment.isIdempotent();
         } else if (value instanceof FCall) {
             return false;
         } else if (value instanceof RawString) {
             return false;
-        } else if(value instanceof Collection) {
-            for (Object elt : ((Collection)value)) {
-                if(!isIdempotent(elt))
+        } else if (value instanceof Collection) {
+            for (Object elt : ((Collection) value)) {
+                if (!isIdempotent(elt))
                     return false;
             }
             return true;
         } else if (value instanceof Map) {
-            for (Map.Entry<?, ?> entry : ((Map<?, ?>)value).entrySet()) {
+            for (Map.Entry<?, ?> entry : ((Map<?, ?>) value).entrySet()) {
                 if (!isIdempotent(entry.getKey()) || !isIdempotent(entry.getValue()))
                     return false;
             }
@@ -244,11 +245,11 @@ abstract class Utils {
 
     static StringBuilder appendName(Object name, CodecRegistry codecRegistry, StringBuilder sb) {
         if (name instanceof String) {
-            appendName((String)name, sb);
+            appendName((String) name, sb);
         } else if (name instanceof CName) {
-            appendName(((CName)name).name, codecRegistry, sb);
+            appendName(((CName) name).name, codecRegistry, sb);
         } else if (name instanceof FCall) {
-            FCall fcall = (FCall)name;
+            FCall fcall = (FCall) name;
             sb.append(fcall.name).append('(');
             for (int i = 0; i < fcall.parameters.length; i++) {
                 if (i > 0)
@@ -257,11 +258,11 @@ abstract class Utils {
             }
             sb.append(')');
         } else if (name instanceof Alias) {
-            Alias alias = (Alias)name;
+            Alias alias = (Alias) name;
             appendName(alias.column, codecRegistry, sb);
             sb.append(" AS ").append(alias.alias);
         } else if (name instanceof RawString) {
-            sb.append(((RawString)name).str);
+            sb.append(((RawString) name).str);
         } else {
             throw new IllegalArgumentException(String.format("Invalid column %s of type unknown of the query builder", name));
         }
@@ -270,23 +271,23 @@ abstract class Utils {
 
     /**
      * This method is a copy of the one declared in {@link com.datastax.driver.core.SimpleStatement}.
-     * <p>
+     * <p/>
      * Utility method to serialize user-provided values.
-     * <p>
+     * <p/>
      * This method is useful in situations where there is no metadata available and the underlying CQL
      * type for the values is not known.
-     * <p>
+     * <p/>
      * This situation happens when a {@link com.datastax.driver.core.SimpleStatement}
      * or a {@link com.datastax.driver.core.querybuilder.BuiltStatement} (Query Builder) contain values;
      * in these places, the driver has no way to determine the right CQL type to use.
-     * <p>
+     * <p/>
      * This method performs a best-effort heuristic to guess which codec to use.
      * Note that this is not particularly efficient as the codec registry needs to iterate over
      * the registered codecs until it finds a suitable one.
      *
-     * @param values The values to convert.
+     * @param values          The values to convert.
      * @param protocolVersion The protocol version to use.
-     * @param codecRegistry The {@link CodecRegistry} to use.
+     * @param codecRegistry   The {@link CodecRegistry} to use.
      * @return The converted values.
      */
     public static ByteBuffer[] convert(Object[] values, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
@@ -300,7 +301,7 @@ abstract class Utils {
             } else {
                 if (value instanceof Token) {
                     // bypass CodecRegistry for Token instances
-                    serializedValues[i] = ((Token)value).serialize(protocolVersion);
+                    serializedValues[i] = ((Token) value).serialize(protocolVersion);
                 } else {
                     try {
                         TypeCodec<Object> codec = codecRegistry.codecFor(value);
@@ -336,19 +337,20 @@ abstract class Utils {
             ByteBuffer bb = buffer.duplicate();
             putShortLength(out, bb.remaining());
             out.put(bb);
-            out.put((byte)0);
+            out.put((byte) 0);
         }
         out.flip();
         return out;
     }
 
     static void putShortLength(ByteBuffer bb, int length) {
-        bb.put((byte)((length >> 8) & 0xFF));
-        bb.put((byte)(length & 0xFF));
+        bb.put((byte) ((length >> 8) & 0xFF));
+        bb.put((byte) (length & 0xFF));
     }
 
     static abstract class Appendeable {
         abstract void appendTo(StringBuilder sb, List<Object> values, CodecRegistry codecRegistry);
+
         abstract boolean containsBindMarker();
     }
 

@@ -17,7 +17,7 @@ package com.datastax.driver.core.exceptions;
 
 /**
  * An unexpected error happened internally.
- *
+ * <p/>
  * This should never be raised and indicates a bug (either in the driver or in
  * Cassandra).
  */

@@ -22,6 +22,7 @@ public interface MailboxService {
 
     /**
      * Retrieve all messages for a given recipient.
+     *
      * @param recipient User whose mailbox is being read.
      * @return All messages in the mailbox.
      */
@@ -29,6 +30,7 @@ public interface MailboxService {
 
     /**
      * Stores the given message in the appropriate mailbox.
+     *
      * @param message Message to send.
      * @return UUID generated for the message.
      */
@@ -36,6 +38,7 @@ public interface MailboxService {
 
     /**
      * Deletes all mail for the given recipient.
+     *
      * @param recipient User whose mailbox will be cleared.
      */
     public void clearMailbox(String recipient) throws MailboxException;

@@ -15,24 +15,23 @@
  */
 package com.datastax.driver.core;
 
-import java.nio.ByteBuffer;
-import java.util.*;
-
+import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
 import com.google.common.collect.ImmutableList;
 
-import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
+import java.nio.ByteBuffer;
+import java.util.*;
 
 /**
  * A statement that groups a number of {@link Statement} so they get executed as
  * a batch.
- * <p>
+ * <p/>
  * Note: BatchStatement is not supported with the native protocol version 1: you
  * will get an {@link UnsupportedFeatureException} when submitting one if
  * version 1 of the protocol is in use (i.e. if you've force version 1 through
  * {@link Cluster.Builder#withProtocolVersion} or you use Cassandra 1.2). Note
  * however that you can still use <a href="http://cassandra.apache.org/doc/cql3/CQL.html#batchStmt">CQL Batch statements</a>
  * even with the protocol version 1.
- * <p>
+ * <p/>
  * Setting a BatchStatement's serial consistency level is only supported with the
  * native protocol version 3 or higher (see {@link #setSerialConsistencyLevel(ConsistencyLevel)}).
  */
@@ -60,7 +59,9 @@ public class BatchStatement extends Statement {
          * operations and it can only contain these.
          */
         COUNTER
-    };
+    }
+
+    ;
 
     final Type batchType;
     private final List<Statement> statements = new ArrayList<Statement>();
@@ -84,10 +85,10 @@ public class BatchStatement extends Statement {
     IdAndValues getIdAndValues(ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
         IdAndValues idAndVals = new IdAndValues(statements.size());
         for (Statement statement : statements) {
-            if(statement instanceof StatementWrapper)
+            if (statement instanceof StatementWrapper)
                 statement = ((StatementWrapper) statement).getWrappedStatement();
             if (statement instanceof RegularStatement) {
-                RegularStatement st = (RegularStatement)statement;
+                RegularStatement st = (RegularStatement) statement;
                 ByteBuffer[] vals = st.getValues(protocolVersion, codecRegistry);
                 String query = st.getQueryString();
                 idAndVals.ids.add(query);
@@ -95,7 +96,7 @@ public class BatchStatement extends Statement {
             } else {
                 // We handle BatchStatement in add() so ...
                 assert statement instanceof BoundStatement;
-                BoundStatement st = (BoundStatement)statement;
+                BoundStatement st = (BoundStatement) statement;
                 idAndVals.ids.add(st.statement.getPreparedId().id);
                 idAndVals.values.add(Arrays.asList(st.wrapper.values));
             }
@@ -105,18 +106,18 @@ public class BatchStatement extends Statement {
 
     /**
      * Adds a new statement to this batch.
-     * <p>
+     * <p/>
      * Note that {@code statement} can be any {@code Statement}. It is allowed to mix
      * {@code RegularStatement} and {@code BoundStatement} in the same
      * {@code BatchStatement} in particular. Adding another {@code BatchStatement}
      * is also allowed for convenience and is equivalent to adding all the {@code Statement}
      * contained in that other {@code BatchStatement}.
-     * <p>
+     * <p/>
      * When adding a {@code BoundStatement}, all of its values must be set, otherwise an
      * {@code IllegalStateException} will be thrown when submitting the batch statement.
      * See {@link BoundStatement} for more details, in particular how to handle {@code null}
      * values.
-     * <p>
+     * <p/>
      * Please note that the options of the added Statement (all those defined directly by the
      * {@link Statement} class: consistency level, fetch size, tracing, ...) will be ignored
      * for the purpose of the execution of the Batch. Instead, the options used are the one
@@ -124,10 +125,9 @@ public class BatchStatement extends Statement {
      *
      * @param statement the new statement to add.
      * @return this batch statement.
-     *
      * @throws IllegalStateException if adding the new statement means that this
-     * {@code BatchStatement} has more than 65536 statements (since this is the maximum number
-     * of statements for a BatchStatement allowed by the underlying protocol).
+     *                               {@code BatchStatement} has more than 65536 statements (since this is the maximum number
+     *                               of statements for a BatchStatement allowed by the underlying protocol).
      */
     public BatchStatement add(Statement statement) {
 
@@ -135,7 +135,7 @@ public class BatchStatement extends Statement {
         // easier to avoid endless loops if the user mistakenly passes a batch that depends on this
         // object (or this directly).
         if (statement instanceof BatchStatement) {
-            for (Statement subStatements : ((BatchStatement)statement).statements) {
+            for (Statement subStatements : ((BatchStatement) statement).statements) {
                 add(subStatements);
             }
         } else {
@@ -148,7 +148,7 @@ public class BatchStatement extends Statement {
 
     /**
      * Adds multiple statements to this batch.
-     * <p>
+     * <p/>
      * This is a shortcut method that calls {@link #add} on all the statements
      * from {@code statements}.
      *
@@ -192,7 +192,7 @@ public class BatchStatement extends Statement {
 
     /**
      * Sets the serial consistency level for the query.
-     * <p>
+     * <p/>
      * This is only supported with version 3 or higher of the native protocol. If you call
      * this method when version 2 is in use, you will get an {@link UnsupportedFeatureException}
      * when submitting the statement. With version 2, protocol batches with conditions
@@ -201,10 +201,8 @@ public class BatchStatement extends Statement {
      *
      * @param serialConsistency the serial consistency level to set.
      * @return this {@code Statement} object.
-     *
      * @throws IllegalArgumentException if {@code serialConsistency} is not one of
-     * {@code ConsistencyLevel.SERIAL} or {@code ConsistencyLevel.LOCAL_SERIAL}.
-     *
+     *                                  {@code ConsistencyLevel.SERIAL} or {@code ConsistencyLevel.LOCAL_SERIAL}.
      * @see Statement#setSerialConsistencyLevel(ConsistencyLevel)
      */
     @Override
@@ -215,7 +213,7 @@ public class BatchStatement extends Statement {
     @Override
     public ByteBuffer getRoutingKey(ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
         for (Statement statement : statements) {
-            if(statement instanceof StatementWrapper)
+            if (statement instanceof StatementWrapper)
                 statement = ((StatementWrapper) statement).getWrappedStatement();
             ByteBuffer rk = statement.getRoutingKey(protocolVersion, codecRegistry);
             if (rk != null)

@@ -17,19 +17,18 @@ package com.datastax.driver.core.policies;
 
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.exceptions.*;
-
 import org.assertj.core.api.Fail;
 import org.scassandra.Scassandra;
 import org.scassandra.http.client.PrimingRequest;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import java.util.Collections;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.scassandra.http.client.PrimingRequest.Result.*;
 import static org.scassandra.http.client.PrimingRequest.then;
-
-import java.util.Collections;
 
 public class DefaultRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegrationTest {
     public DefaultRetryPolicyIntegrationTest() {
@@ -115,7 +114,7 @@ public class DefaultRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegr
 
         Cluster whiteListedCluster = Cluster.builder()
                 .addContactPoint(CCMBridge.ipOfNode(1))
-                // Scassandra does not support V3 nor V4 yet, and V4 may cause the server to crash
+                        // Scassandra does not support V3 nor V4 yet, and V4 may cause the server to crash
                 .withProtocolVersion(ProtocolVersion.V2)
                 .withRetryPolicy(retryPolicy)
                 .withLoadBalancingPolicy(firstHostOnlyPolicy)
@@ -124,7 +123,7 @@ public class DefaultRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegr
         try {
             Session whiteListedSession = whiteListedCluster.connect();
             // Clear all activity as result of connect.
-            for(Scassandra node : scassandras.nodes()) {
+            for (Scassandra node : scassandras.nodes()) {
                 node.activityClient().clearAllRecordedActivity();
             }
 
@@ -133,7 +132,7 @@ public class DefaultRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegr
             try {
                 query(whiteListedSession);
                 fail("expected an NoHostAvailableException");
-            } catch(NoHostAvailableException e) {
+            } catch (NoHostAvailableException e) {
                 // ok
                 Throwable error = e.getErrors().get(host1.getSocketAddress());
                 assertThat(error).isNotNull();
@@ -157,17 +156,17 @@ public class DefaultRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegr
         cluster.getConfiguration().getSocketOptions().setReadTimeoutMillis(1);
         try {
             scassandras
-                .node(1).primingClient().prime(PrimingRequest.queryBuilder()
+                    .node(1).primingClient().prime(PrimingRequest.queryBuilder()
                     .withQuery("mock query")
                     .withThen(then().withFixedDelay(1000L).withRows(row("result", "result1")))
                     .build());
             scassandras
-                .node(2).primingClient().prime(PrimingRequest.queryBuilder()
+                    .node(2).primingClient().prime(PrimingRequest.queryBuilder()
                     .withQuery("mock query")
                     .withThen(then().withFixedDelay(1000L).withRows(row("result", "result2")))
                     .build());
             scassandras
-                .node(3).primingClient().prime(PrimingRequest.queryBuilder()
+                    .node(3).primingClient().prime(PrimingRequest.queryBuilder()
                     .withQuery("mock query")
                     .withThen(then().withFixedDelay(1000L).withRows(row("result", "result3")))
                     .build());
@@ -176,17 +175,17 @@ public class DefaultRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegr
                 fail("expected a NoHostAvailableException");
             } catch (NoHostAvailableException e) {
                 assertThat(e.getErrors().keySet()).hasSize(3).containsOnlyOnce(
-                    host1.getSocketAddress(),
-                    host2.getSocketAddress(),
-                    host3.getSocketAddress());
+                        host1.getSocketAddress(),
+                        host2.getSocketAddress(),
+                        host3.getSocketAddress());
                 assertThat(e.getErrors().values())
-                    .hasOnlyElementsOfType(OperationTimedOutException.class)
-                    .extractingResultOf("getMessage")
-                    .containsOnlyOnce(
-                        String.format("[%s] Timed out waiting for server response", host1.getAddress()),
-                        String.format("[%s] Timed out waiting for server response", host2.getAddress()),
-                        String.format("[%s] Timed out waiting for server response", host3.getAddress())
-                    );
+                        .hasOnlyElementsOfType(OperationTimedOutException.class)
+                        .extractingResultOf("getMessage")
+                        .containsOnlyOnce(
+                                String.format("[%s] Timed out waiting for server response", host1.getAddress()),
+                                String.format("[%s] Timed out waiting for server response", host2.getAddress()),
+                                String.format("[%s] Timed out waiting for server response", host3.getAddress())
+                        );
             }
             assertOnRequestErrorWasCalled(3, OperationTimedOutException.class);
             assertThat(errors.getRetries().getCount()).isEqualTo(3);
@@ -203,8 +202,8 @@ public class DefaultRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegr
     @DataProvider
     public static Object[][] serverSideErrors() {
         return new Object[][]{
-            {server_error, ServerError.class},
-            {overloaded, OverloadedException.class}
+                {server_error, ServerError.class},
+                {overloaded, OverloadedException.class}
         };
     }
 
@@ -218,9 +217,9 @@ public class DefaultRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegr
             Fail.fail("expected a NoHostAvailableException");
         } catch (NoHostAvailableException e) {
             assertThat(e.getErrors().keySet()).hasSize(3).containsOnlyOnce(
-                host1.getSocketAddress(),
-                host2.getSocketAddress(),
-                host3.getSocketAddress());
+                    host1.getSocketAddress(),
+                    host2.getSocketAddress(),
+                    host3.getSocketAddress());
             assertThat(e.getErrors().values()).hasOnlyElementsOfType(exception);
         }
         assertOnRequestErrorWasCalled(3, exception);

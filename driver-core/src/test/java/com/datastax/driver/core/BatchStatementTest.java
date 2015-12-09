@@ -15,16 +15,15 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
+import com.datastax.driver.core.utils.CassandraVersion;
+import org.testng.annotations.Test;
+
 import java.util.Collection;
 import java.util.Collections;
 
-import org.testng.annotations.Test;
-
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
-
-import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
-import com.datastax.driver.core.utils.CassandraVersion;
 
 public class BatchStatementTest extends CCMBridge.PerClassSingleNodeCluster {
 
@@ -80,7 +79,7 @@ public class BatchStatementTest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     @Test(groups = "short")
-    @CassandraVersion(major=2.0, minor=9, description="This will only work with C* 2.0.9 (CASSANDRA-7337)")
+    @CassandraVersion(major = 2.0, minor = 9, description = "This will only work with C* 2.0.9 (CASSANDRA-7337)")
     public void casBatchTest() throws Throwable {
         try {
             PreparedStatement st = session.prepare("INSERT INTO test (k, v) VALUES (?, ?) IF NOT EXISTS");

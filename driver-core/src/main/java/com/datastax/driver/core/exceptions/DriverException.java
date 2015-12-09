@@ -36,7 +36,7 @@ public class DriverException extends RuntimeException {
 
     /**
      * Copy the exception.
-     * <p>
+     * <p/>
      * This returns a new exception, equivalent to the original one, except that
      * because a new object is created in the current thread, the top-most
      * element in the stacktrace of the exception will refer to the current

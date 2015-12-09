@@ -21,7 +21,7 @@ import io.netty.handler.ssl.SslHandler;
 
 /**
  * {@link SSLOptions} implementation based on Netty's SSL context.
- * <p>
+ * <p/>
  * Netty has the ability to use OpenSSL if available, instead of the JDK's built-in engine. This yields better performance.
  */
 public class NettySSLOptions implements SSLOptions {

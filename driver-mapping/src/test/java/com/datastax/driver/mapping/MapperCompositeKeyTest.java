@@ -15,13 +15,14 @@
  */
 package com.datastax.driver.mapping;
 
-import java.util.Arrays;
-import java.util.Collection;
-
-import com.datastax.driver.mapping.annotations.*;
+import com.datastax.driver.core.CCMBridge;
+import com.datastax.driver.mapping.annotations.ClusteringColumn;
+import com.datastax.driver.mapping.annotations.PartitionKey;
+import com.datastax.driver.mapping.annotations.Table;
 import org.testng.annotations.Test;
 
-import com.datastax.driver.core.CCMBridge;
+import java.util.Arrays;
+import java.util.Collection;
 
 /**
  * Tests for the mapper with composite partition keys and multiple clustering columns.

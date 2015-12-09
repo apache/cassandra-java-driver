@@ -16,14 +16,14 @@
 package com.datastax.driver.core;
 
 
+import com.google.common.util.concurrent.ListenableFuture;
+
 import java.util.Iterator;
 import java.util.List;
 
-import com.google.common.util.concurrent.ListenableFuture;
-
 /**
  * The result of a query.
- * <p>
+ * <p/>
  * The retrieval of the rows of a ResultSet is generally paged (a first page
  * of result is fetched and the next one is only fetched once all the results
  * of the first one has been consumed). The size of the pages can be configured
@@ -36,7 +36,7 @@ import com.google.common.util.concurrent.ListenableFuture;
  * through {@link Cluster.Builder#withProtocolVersion}). If the protocol version 1
  * is in use, a ResultSet is always fetched in it's entirely and it's up to the
  * client to make sure that no query can yield ResultSet that won't hold in memory.
- * <p>
+ * <p/>
  * Note that this class is not thread-safe.
  */
 public interface ResultSet extends Iterable<Row> {
@@ -65,7 +65,7 @@ public interface ResultSet extends Iterable<Row> {
 
     /**
      * Returns all the remaining rows in this ResultSet as a list.
-     * <p>
+     * <p/>
      * Note that, contrary to {@code iterator()} or successive calls to
      * {@code one()}, this method forces fetching the full content of the ResultSet
      * at once, holding it all in memory in particular. It is thus recommended
@@ -80,11 +80,11 @@ public interface ResultSet extends Iterable<Row> {
 
     /**
      * Returns an iterator over the rows contained in this ResultSet.
-     *
+     * <p/>
      * The {@link Iterator#next} method is equivalent to calling {@link #one}.
      * So this iterator will consume results from this ResultSet and after a
      * full iteration, the ResultSet will be empty.
-     *
+     * <p/>
      * The returned iterator does not support the {@link Iterator#remove} method.
      *
      * @return an iterator that will consume and return the remaining rows of
@@ -106,7 +106,7 @@ public interface ResultSet extends Iterable<Row> {
     /**
      * Whether all results from this result set have been fetched from the
      * database.
-     * <p>
+     * <p/>
      * Note that if {@code isFullyFetched()}, then {@link #getAvailableWithoutFetching}
      * will return how many rows remain in the result set before exhaustion. But
      * please note that {@code !isFullyFetched()} never guarantees that the result set
@@ -118,12 +118,12 @@ public interface ResultSet extends Iterable<Row> {
 
     /**
      * Force fetching the next page of results for this result set, if any.
-     * <p>
+     * <p/>
      * This method is entirely optional. It will be called automatically while
      * the result set is consumed (through {@link #one}, {@link #all} or iteration)
      * when needed (i.e. when {@code getAvailableWithoutFetching() == 0} and
      * {@code isFullyFetched() == false}).
-     * <p>
+     * <p/>
      * You can however call this method manually to force the fetching of the
      * next page of results. This can allow to prefetch results before they are
      * strictly needed. For instance, if you want to prefetch the next page of
@@ -143,7 +143,7 @@ public interface ResultSet extends Iterable<Row> {
      * fetchMoreResults} will not block the processing of the 100 currently available
      * rows (but {@code iter.hasNext()} will block once those rows have been processed
      * until the fetch query returns, if it hasn't yet).
-     * <p>
+     * <p/>
      * Only one page of results (for a given result set) can be
      * fetched at any given time. If this method is called twice and the query
      * triggered by the first call has not returned yet when the second one is
@@ -160,12 +160,12 @@ public interface ResultSet extends Iterable<Row> {
 
     /**
      * Returns information on the execution of the last query made for this ResultSet.
-     * <p>
+     * <p/>
      * Note that in most cases, a ResultSet is fetched with only one query, but large
      * result sets can be paged and thus be retrieved by multiple queries. In that
      * case this method return the {@code ExecutionInfo} for the last query
      * performed. To retrieve the information for all queries, use {@link #getAllExecutionInfo}.
-     * <p>
+     * <p/>
      * The returned object includes basic information such as the queried hosts,
      * but also the Cassandra query trace if tracing was enabled for the query.
      *
@@ -176,7 +176,7 @@ public interface ResultSet extends Iterable<Row> {
     /**
      * Return the execution information for all queries made to retrieve this
      * ResultSet.
-     * <p>
+     * <p/>
      * Unless the ResultSet is large enough to get paged underneath, the returned
      * list will be singleton. If paging has been used however, the returned list
      * contains the {@code ExecutionInfo} for all the queries done to obtain this
@@ -189,26 +189,25 @@ public interface ResultSet extends Iterable<Row> {
     /**
      * If the query that produced this ResultSet was a conditional update,
      * return whether it was successfully applied.
-     * <p>
+     * <p/>
      * This is equivalent to calling:
-     *
+     * <p/>
      * <pre>
      * rs.one().getBool("[applied]");
      * </pre>
-     * <p>
+     * <p/>
      * For consistency, this method always returns {@code true} for
      * non-conditional queries (although there is no reason to call the method
      * in that case). This is also the case for conditional DDL statements
      * ({@code CREATE KEYSPACE... IF NOT EXISTS}, {@code CREATE TABLE... IF NOT EXISTS}),
      * for which Cassandra doesn't return an {@code [applied]} column.
-     * <p>
+     * <p/>
      * Note that, for versions of Cassandra strictly lower than 2.0.9 and 2.1.0-rc2,
      * a server-side bug (CASSANDRA-7337) causes this method to always return
      * {@code true} for batches containing conditional queries.
      *
      * @return if the query was a conditional update, whether it was applied.
      * {@code true} for other types of queries.
-     *
      * @see <a href="https://issues.apache.org/jira/browse/CASSANDRA-7337">CASSANDRA-7337</a>
      */
     public boolean wasApplied();

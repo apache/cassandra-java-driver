@@ -15,34 +15,26 @@
  */
 package com.datastax.driver.extras.codecs.date;
 
+import com.datastax.driver.core.*;
+import com.datastax.driver.core.exceptions.InvalidTypeException;
+
 import java.nio.ByteBuffer;
 import java.text.ParseException;
 import java.util.Date;
 
+import static com.datastax.driver.core.CodecUtils.*;
+import static com.datastax.driver.core.ParseUtils.*;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-
-import com.datastax.driver.core.*;
-import com.datastax.driver.core.exceptions.InvalidTypeException;
-
-import static com.datastax.driver.core.CodecUtils.fromCqlDateToDaysSinceEpoch;
-import static com.datastax.driver.core.CodecUtils.fromDaysSinceEpochToCqlDate;
-import static com.datastax.driver.core.CodecUtils.fromSignedToUnsignedInt;
-import static com.datastax.driver.core.CodecUtils.fromUnsignedToSignedInt;
-import static com.datastax.driver.core.ParseUtils.isLongLiteral;
-import static com.datastax.driver.core.ParseUtils.isQuoted;
-import static com.datastax.driver.core.ParseUtils.parseDate;
-import static com.datastax.driver.core.ParseUtils.quote;
-import static com.datastax.driver.core.ParseUtils.unquote;
 
 /**
  * A {@link TypeCodec} that maps CQL dates to Java primitive ints,
  * representing the number of days since the Epoch.
- * <p>
+ * <p/>
  * This codec can serve as a replacement for the driver's built-in
  * {@link TypeCodec#date() date} codec,
  * when application code prefers to deal with raw days than with
  * {@link LocalDate} instances.
- * <p>
+ * <p/>
  * <strong>Important</strong>: this codec cannot work with {@link SimpleStatement}s!
  * If you try to insert CQL date values as {@code int}s in a {@link SimpleStatement},
  * the insertion would succeed but the values wouldn't be properly encoded.
@@ -96,7 +88,7 @@ public class SimpleDateCodec extends TypeCodec.PrimitiveIntCodec {
 
         try {
             Date date = parseDate(value, pattern);
-            return (int)MILLISECONDS.toDays(date.getTime());
+            return (int) MILLISECONDS.toDays(date.getTime());
         } catch (ParseException e) {
             throw new InvalidTypeException(String.format("Cannot parse date value from \"%s\"", value), e);
         }

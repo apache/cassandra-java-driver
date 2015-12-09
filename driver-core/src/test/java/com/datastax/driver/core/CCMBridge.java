@@ -15,17 +15,9 @@
  */
 package com.datastax.driver.core;
 
-import java.io.*;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.net.UnknownHostException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
-
+import com.datastax.driver.core.exceptions.AlreadyExistsException;
+import com.datastax.driver.core.exceptions.DriverException;
+import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -38,14 +30,20 @@ import org.slf4j.LoggerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 
-import static org.testng.Assert.fail;
-
-import com.datastax.driver.core.exceptions.AlreadyExistsException;
-import com.datastax.driver.core.exceptions.DriverException;
-import com.datastax.driver.core.exceptions.NoHostAvailableException;
+import java.io.*;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.net.UnknownHostException;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static com.datastax.driver.core.TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT;
 import static com.datastax.driver.core.TestUtils.SIMPLE_KEYSPACE;
+import static org.testng.Assert.fail;
 
 public class CCMBridge {
 
@@ -85,11 +83,11 @@ public class CCMBridge {
      * The environment variables to use when invoking CCM.  Inherits the current processes environment, but will also
      * prepend to the PATH variable the value of the 'ccm.path' property and set JAVA_HOME variable to the
      * 'ccm.java.home' variable.
-     *
+     * <p/>
      * At times it is necessary to use a separate java install for CCM then what is being used for running tests.
      * For example, if you want to run tests with JDK 6 but against Cassandra 2.0, which requires JDK 7.
      */
-    private static final Map<String,String> ENVIRONMENT_MAP;
+    private static final Map<String, String> ENVIRONMENT_MAP;
 
     /**
      * The command to use to launch CCM
@@ -102,7 +100,7 @@ public class CCMBridge {
         String branch = System.getProperty("cassandra.branch");
         if (installDirectory != null && !installDirectory.trim().isEmpty()) {
             CASSANDRA_INSTALL_ARGS = "--install-dir=" + new File(installDirectory).getAbsolutePath();
-        } else if(branch != null && !branch.trim().isEmpty()) {
+        } else if (branch != null && !branch.trim().isEmpty()) {
             CASSANDRA_INSTALL_ARGS = "-v " + branch.replaceAll("\"", "");
         } else {
             CASSANDRA_INSTALL_ARGS = "-v " + CASSANDRA_VERSION;
@@ -115,12 +113,12 @@ public class CCMBridge {
         IP_PREFIX = ip_prefix;
 
         // Inherit the current environment.
-        Map<String,String> envMap = Maps.newHashMap(new ProcessBuilder().environment());
+        Map<String, String> envMap = Maps.newHashMap(new ProcessBuilder().environment());
         // If ccm.path is set, override the PATH variable with it.
         String ccmPath = System.getProperty("ccm.path");
-        if(ccmPath != null) {
+        if (ccmPath != null) {
             String existingPath = envMap.get("PATH");
-            if(existingPath == null) {
+            if (existingPath == null) {
                 existingPath = "";
             }
             envMap.put("PATH", ccmPath + File.pathSeparator + existingPath);
@@ -134,7 +132,7 @@ public class CCMBridge {
 
         // If ccm.java.home is set, override the JAVA_HOME variable with it.
         String ccmJavaHome = System.getProperty("ccm.java.home");
-        if(ccmJavaHome != null) {
+        if (ccmJavaHome != null) {
             envMap.put("JAVA_HOME", ccmJavaHome);
         }
         ENVIRONMENT_MAP = ImmutableMap.copyOf(envMap);
@@ -142,6 +140,7 @@ public class CCMBridge {
 
     /**
      * Checks if the operating system is a Windows one
+     *
      * @return <code>true</code> if the operating system is a Windows one, <code>false</code> otherwise.
      */
     private static boolean isWindows() {
@@ -160,11 +159,12 @@ public class CCMBridge {
      * <p>
      * Extracts a keystore from the classpath into a temporary file.
      * </p>
-     *
+     * <p/>
      * <p>
      * This is needed as the keystore could be part of a built test jar used by other
      * projects, and they need to be extracted to a file system so cassandra may use them.
      * </p>
+     *
      * @param storePath Path in classpath where the keystore exists.
      * @return The generated File.
      */
@@ -232,7 +232,7 @@ public class CCMBridge {
 
     public void stop(String clusterName) {
         logger.info("Stopping Cluster : " + clusterName);
-        execute(CCM_COMMAND + " stop "+clusterName);
+        execute(CCM_COMMAND + " stop " + clusterName);
     }
 
     public void forceStop(int n) {
@@ -273,8 +273,8 @@ public class CCMBridge {
         String binaryItf = IP_PREFIX + n + ":" + binaryPort;
         String remoteLogItf = IP_PREFIX + n + ":" + remoteDebugPort;
         execute(CCM_COMMAND + " add node%d -i %s%d -b -t %s -l %s --binary-itf %s -j %d -r %s -s",
-            n, IP_PREFIX, n, thriftItf, storageItf, binaryItf, jmxPort, remoteLogItf);
-        if(option == null) start(n);
+                n, IP_PREFIX, n, thriftItf, storageItf, binaryItf, jmxPort, remoteLogItf);
+        if (option == null) start(n);
         else start(n, option);
     }
 
@@ -299,12 +299,14 @@ public class CCMBridge {
             Executor executor = new DefaultExecutor();
 
             LogOutputStream outStream = new LogOutputStream() {
-                @Override protected void processLine(String line, int logLevel) {
+                @Override
+                protected void processLine(String line, int logLevel) {
                     logger.debug("ccmout> " + line);
                 }
             };
             LogOutputStream errStream = new LogOutputStream() {
-                @Override protected void processLine(String line, int logLevel) {
+                @Override
+                protected void processLine(String line, int logLevel) {
                     logger.error("ccmerr> " + line);
                 }
             };
@@ -413,7 +415,7 @@ public class CCMBridge {
 
         private static CCMBridge ccmBridge;
         private static boolean erroredOut;
-        private static boolean clusterInitialized=false;
+        private static boolean clusterInitialized = false;
         private static AtomicLong ksNumber;
         private static final String jvmArgs = "-Dcassandra.custom_query_handler_class=org.apache.cassandra.cql3.CustomPayloadMirroringQueryHandler";
         protected String keyspace;
@@ -423,7 +425,7 @@ public class CCMBridge {
 
         protected static Cluster cluster;
         protected static Session session;
-        
+
         protected final VersionNumber cassandraVersion = VersionNumber.parse(System.getProperty("cassandra.version"));
 
         protected abstract Collection<String> getTableDefinitions();
@@ -437,25 +439,25 @@ public class CCMBridge {
             erroredOut = true;
         }
 
-        @BeforeClass(groups = { "isolated", "short", "long" })
+        @BeforeClass(groups = {"isolated", "short", "long"})
         public void beforeClass() {
             maybeInitCluster();
             initKeyspace();
         }
 
-        @AfterClass(groups = { "isolated", "short", "long" })
+        @AfterClass(groups = {"isolated", "short", "long"})
         public void afterClass() {
             try {
                 clearSimpleKeyspace();
             } finally {
-                if(cluster != null) {
+                if (cluster != null) {
                     cluster.close();
                 }
             }
         }
 
-        private void maybeInitCluster(){
-            if (!clusterInitialized){
+        private void maybeInitCluster() {
+            if (!clusterInitialized) {
                 try {
                     ProtocolVersion protocolVersion = TestUtils.getDesiredProtocolVersion();
 
@@ -463,7 +465,7 @@ public class CCMBridge {
                             .withoutNodes()
                             .notStarted();
 
-                    if(protocolVersion.compareTo(ProtocolVersion.V4) >= 0) {
+                    if (protocolVersion.compareTo(ProtocolVersion.V4) >= 0) {
                         builder = builder.withCassandraConfiguration("enable_user_defined_functions", "true");
                     }
                     ccmBridge = builder.build();
@@ -523,7 +525,7 @@ public class CCMBridge {
         }
 
         private void clearSimpleKeyspace() {
-            if(keyspace != null) {
+            if (keyspace != null) {
                 // Temporarily extend read timeout to 1 minute to accommodate keyspaces with many tables.
                 // This should be more than enough although some tests create many tables, so dropping a keyspace
                 // could take as long as 12 seconds on restricted hardware.
@@ -618,10 +620,12 @@ public class CCMBridge {
         }
     }
 
-    /** use {@link #builder(String)} to get an instance */
+    /**
+     * use {@link #builder(String)} to get an instance
+     */
     public static class Builder {
         private final String clusterName;
-        private Integer[] nodes = { 1 };
+        private Integer[] nodes = {1};
         private boolean start = true;
         private String cassandraInstallArgs = CASSANDRA_INSTALL_ARGS;
         private String[] startOptions = new String[0];
@@ -632,7 +636,9 @@ public class CCMBridge {
             this.clusterName = clusterName;
         }
 
-        /** Number of nodes for each DC. Defaults to [1] (1 DC with 1 node) */
+        /**
+         * Number of nodes for each DC. Defaults to [1] (1 DC with 1 node)
+         */
         public Builder withNodes(Integer... nodes) {
             this.nodes = nodes;
             return this;
@@ -655,25 +661,33 @@ public class CCMBridge {
             return this;
         }
 
-        /** Whether to start the cluster immediately (defaults to true if this is never called) */
+        /**
+         * Whether to start the cluster immediately (defaults to true if this is never called)
+         */
         public Builder notStarted() {
             this.start = false;
             return this;
         }
 
-        /** Defaults to system property cassandra.version */
+        /**
+         * Defaults to system property cassandra.version
+         */
         public Builder withCassandraVersion(String cassandraVersion) {
             this.cassandraInstallArgs = "-v " + cassandraVersion;
             return this;
         }
 
-        /** Free-form options that will be added at the end of the start command */
+        /**
+         * Free-form options that will be added at the end of the start command
+         */
         public Builder withStartOptions(String... options) {
             this.startOptions = options;
             return this;
         }
 
-        /** Customizes entries in cassandra.yaml (can be called multiple times) */
+        /**
+         * Customizes entries in cassandra.yaml (can be called multiple times)
+         */
         public Builder withCassandraConfiguration(String key, String value) {
             this.cassandraConfiguration.put(key, value);
             return this;

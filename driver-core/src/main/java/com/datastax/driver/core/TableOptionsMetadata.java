@@ -15,11 +15,11 @@
  */
 package com.datastax.driver.core;
 
-import java.nio.ByteBuffer;
-import java.util.Map;
-
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
+
+import java.nio.ByteBuffer;
+import java.util.Map;
 
 public class TableOptionsMetadata {
 
@@ -111,11 +111,11 @@ public class TableOptionsMetadata {
 
         if (is210OrHigher) {
             this.minIndexInterval = isNullOrAbsent(row, MIN_INDEX_INTERVAL)
-                ? DEFAULT_MIN_INDEX_INTERVAL
-                : row.getInt(MIN_INDEX_INTERVAL);
+                    ? DEFAULT_MIN_INDEX_INTERVAL
+                    : row.getInt(MIN_INDEX_INTERVAL);
             this.maxIndexInterval = isNullOrAbsent(row, MAX_INDEX_INTERVAL)
-                ? DEFAULT_MAX_INDEX_INTERVAL
-                : row.getInt(MAX_INDEX_INTERVAL);
+                    ? DEFAULT_MAX_INDEX_INTERVAL
+                    : row.getInt(MAX_INDEX_INTERVAL);
         } else {
             this.minIndexInterval = null;
             this.maxIndexInterval = null;
@@ -133,9 +133,9 @@ public class TableOptionsMetadata {
             this.compaction = ImmutableMap.copyOf(row.getMap(COMPACTION, String.class, String.class));
         else {
             this.compaction = ImmutableMap.<String, String>builder()
-                .put("class", row.getString(COMPACTION_CLASS))
-                .putAll(SimpleJSONParser.parseStringMap(row.getString(COMPACTION_OPTIONS)))
-                .build();
+                    .put("class", row.getString(COMPACTION_CLASS))
+                    .putAll(SimpleJSONParser.parseStringMap(row.getString(COMPACTION_OPTIONS)))
+                    .build();
         }
 
         if (is300OrHigher)
@@ -145,12 +145,12 @@ public class TableOptionsMetadata {
 
         if (is300OrHigher)
             this.crcCheckChance = isNullOrAbsent(row, CRC_CHECK_CHANCE)
-                ? DEFAULT_CRC_CHECK_CHANCE
-                : row.getDouble(CRC_CHECK_CHANCE);
+                    ? DEFAULT_CRC_CHECK_CHANCE
+                    : row.getDouble(CRC_CHECK_CHANCE);
         else
             this.crcCheckChance = null;
 
-        if(is300OrHigher)
+        if (is300OrHigher)
             this.extensions = ImmutableMap.copyOf(row.getMap(EXTENSIONS, String.class, ByteBuffer.class));
         else
             this.extensions = ImmutableMap.of();
@@ -158,7 +158,7 @@ public class TableOptionsMetadata {
 
     private static boolean isNullOrAbsent(Row row, String name) {
         return row.getColumnDefinitions().getIndexOf(name) < 0
-            || row.isNull(name);
+                || row.isNull(name);
     }
 
     /**
@@ -199,7 +199,7 @@ public class TableOptionsMetadata {
 
     /**
      * Returns whether replicateOnWrite is set for this table.
-     *
+     * <p/>
      * This is only meaningful for tables holding counters.
      *
      * @return whether replicateOnWrite is set for this table.
@@ -259,7 +259,7 @@ public class TableOptionsMetadata {
 
     /**
      * Returns the default TTL for this table.
-     * <p>
+     * <p/>
      * Note: this option is not available in Cassandra 1.2 and will return 0 (no default
      * TTL) when connected to 1.2 nodes.
      *
@@ -272,7 +272,7 @@ public class TableOptionsMetadata {
 
     /**
      * Returns the speculative retry option for this table.
-     * <p>
+     * <p/>
      * Note: this option is not available in Cassandra 1.2 and will return "NONE" (no
      * speculative retry) when connected to 1.2 nodes.
      *
@@ -284,7 +284,7 @@ public class TableOptionsMetadata {
 
     /**
      * Returns the index interval option for this table.
-     * <p>
+     * <p/>
      * Note: this option is not available in Cassandra 1.2 (more precisely, it is not
      * configurable per-table) and will return 128 (the default index interval) when
      * connected to 1.2 nodes. It is deprecated in Cassandra 2.1 and above, and will
@@ -298,7 +298,7 @@ public class TableOptionsMetadata {
 
     /**
      * Returns the minimum index interval option for this table.
-     * <p>
+     * <p/>
      * Note: this option is available in Cassandra 2.1 and above, and will return
      * {@code null} for earlier versions.
      *
@@ -310,7 +310,7 @@ public class TableOptionsMetadata {
 
     /**
      * Returns the maximum index interval option for this table.
-     * <p>
+     * <p/>
      * Note: this option is available in Cassandra 2.1 and above, and will return
      * {@code null} for earlier versions.
      *
@@ -324,11 +324,11 @@ public class TableOptionsMetadata {
      * When compression is enabled, this option defines the probability
      * with which checksums for compressed blocks are checked during reads.
      * The default value for this options is 1.0 (always check).
-     * <p>
+     * <p/>
      * Note that this option is available in Cassandra 3.0.0 and above, when it
      * became a "top-level" table option, whereas previously it was a suboption
      * of the {@link #getCompression() compression} option.
-     * <p>
+     * <p/>
      * For Cassandra versions prior to 3.0.0, this method always returns {@code null}.
      *
      * @return the probability with which checksums for compressed blocks are checked during reads
@@ -357,7 +357,7 @@ public class TableOptionsMetadata {
 
     /**
      * Returns the extension options for this table.
-     * <p>
+     * <p/>
      * For Cassandra versions prior to 3.0.0, this method always returns an empty map.
      *
      * @return an immutable map containing the extension options for this table.
@@ -373,32 +373,32 @@ public class TableOptionsMetadata {
         if (!(other instanceof TableOptionsMetadata))
             return false;
 
-        TableOptionsMetadata that = (TableOptionsMetadata)other;
+        TableOptionsMetadata that = (TableOptionsMetadata) other;
         return this.isCompactStorage == that.isCompactStorage &&
-            Objects.equal(this.comment, that.comment) &&
-            this.readRepair == that.readRepair &&
-            this.localReadRepair == that.localReadRepair &&
-            this.replicateOnWrite == that.replicateOnWrite &&
-            this.gcGrace == that.gcGrace &&
-            this.bfFpChance == that.bfFpChance &&
-            Objects.equal(this.caching, that.caching) &&
-            this.populateCacheOnFlush == that.populateCacheOnFlush &&
-            this.memtableFlushPeriodMs == that.memtableFlushPeriodMs &&
-            this.defaultTTL == that.defaultTTL &&
-            Objects.equal(this.speculativeRetry, that.speculativeRetry) &&
-            Objects.equal(this.indexInterval, that.indexInterval) &&
-            Objects.equal(this.minIndexInterval, that.minIndexInterval) &&
-            Objects.equal(this.maxIndexInterval, that.maxIndexInterval) &&
-            Objects.equal(this.compaction, that.compaction) &&
-            Objects.equal(this.compression, that.compression) &&
-            Objects.equal(this.crcCheckChance, that.crcCheckChance) &&
-            Objects.equal(this.extensions, that.extensions);
+                Objects.equal(this.comment, that.comment) &&
+                this.readRepair == that.readRepair &&
+                this.localReadRepair == that.localReadRepair &&
+                this.replicateOnWrite == that.replicateOnWrite &&
+                this.gcGrace == that.gcGrace &&
+                this.bfFpChance == that.bfFpChance &&
+                Objects.equal(this.caching, that.caching) &&
+                this.populateCacheOnFlush == that.populateCacheOnFlush &&
+                this.memtableFlushPeriodMs == that.memtableFlushPeriodMs &&
+                this.defaultTTL == that.defaultTTL &&
+                Objects.equal(this.speculativeRetry, that.speculativeRetry) &&
+                Objects.equal(this.indexInterval, that.indexInterval) &&
+                Objects.equal(this.minIndexInterval, that.minIndexInterval) &&
+                Objects.equal(this.maxIndexInterval, that.maxIndexInterval) &&
+                Objects.equal(this.compaction, that.compaction) &&
+                Objects.equal(this.compression, that.compression) &&
+                Objects.equal(this.crcCheckChance, that.crcCheckChance) &&
+                Objects.equal(this.extensions, that.extensions);
     }
 
     @Override
     public int hashCode() {
         return Objects.hashCode(isCompactStorage, comment, readRepair, localReadRepair, replicateOnWrite, gcGrace,
-            bfFpChance, caching, populateCacheOnFlush, memtableFlushPeriodMs, defaultTTL, speculativeRetry,
-            indexInterval, minIndexInterval, maxIndexInterval, compaction, compression, crcCheckChance, extensions);
+                bfFpChance, caching, populateCacheOnFlush, memtableFlushPeriodMs, defaultTTL, speculativeRetry,
+                indexInterval, minIndexInterval, maxIndexInterval, compaction, compression, crcCheckChance, extensions);
     }
 }

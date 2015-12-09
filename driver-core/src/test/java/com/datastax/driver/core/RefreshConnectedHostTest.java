@@ -15,17 +15,15 @@
  */
 package com.datastax.driver.core;
 
-import static java.util.concurrent.TimeUnit.SECONDS;
-
-import org.mockito.Mockito;
-import org.testng.annotations.Test;
-
 import com.datastax.driver.core.Host.State;
 import com.datastax.driver.core.policies.ConstantReconnectionPolicy;
 import com.datastax.driver.core.policies.LimitingLoadBalancingPolicy;
 import com.datastax.driver.core.policies.RoundRobinPolicy;
+import org.mockito.Mockito;
+import org.testng.annotations.Test;
 
 import static com.datastax.driver.core.Assertions.assertThat;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 public class RefreshConnectedHostTest {
 
@@ -49,40 +47,40 @@ public class RefreshConnectedHostTest {
 
             PoolingOptions poolingOptions = Mockito.spy(new PoolingOptions());
             cluster = Cluster.builder()
-                             .addContactPoint(CCMBridge.ipOfNode(1))
-                             .withPoolingOptions(poolingOptions)
-                             .withLoadBalancingPolicy(loadBalancingPolicy)
-                             .withReconnectionPolicy(new ConstantReconnectionPolicy(1000))
-                             .withQueryOptions(TestUtils.nonDebouncingQueryOptions())
-                             .build();
+                    .addContactPoint(CCMBridge.ipOfNode(1))
+                    .withPoolingOptions(poolingOptions)
+                    .withLoadBalancingPolicy(loadBalancingPolicy)
+                    .withReconnectionPolicy(new ConstantReconnectionPolicy(1000))
+                    .withQueryOptions(TestUtils.nonDebouncingQueryOptions())
+                    .build();
 
             Session session = cluster.connect();
 
             assertThat(cluster).usesControlHost(1);
             assertThat(cluster).host(1)
-                               .hasState(State.UP)
-                               .isAtDistance(HostDistance.LOCAL);
+                    .hasState(State.UP)
+                    .isAtDistance(HostDistance.LOCAL);
             // Wait for the node to be up, because apparently on Jenkins it's still only ADDED when we reach this line
             // Waiting for NEW_NODE_DELAY_SECONDS+1 allows the driver to create a connection pool and mark the node up
             assertThat(cluster).host(2)
-                               .comesUpWithin(Cluster.NEW_NODE_DELAY_SECONDS+1, SECONDS)
-                               .isAtDistance(HostDistance.LOCAL);
+                    .comesUpWithin(Cluster.NEW_NODE_DELAY_SECONDS + 1, SECONDS)
+                    .isAtDistance(HostDistance.LOCAL);
 
             // Bring host 3 up, its presence should be acknowledged but it should be ignored
             ccm.start(3);
             ccm.waitForUp(3);
 
             assertThat(cluster).host(1)
-                               .hasState(State.UP)
-                               .isAtDistance(HostDistance.LOCAL);
+                    .hasState(State.UP)
+                    .isAtDistance(HostDistance.LOCAL);
             assertThat(cluster).host(2)
-                               .hasState(State.UP)
-                               .isAtDistance(HostDistance.LOCAL);
+                    .hasState(State.UP)
+                    .isAtDistance(HostDistance.LOCAL);
 
             // Ensure that the host is added to the Cluster.
             assertThat(cluster).host(3)
-                               .comesUpWithin(Cluster.NEW_NODE_DELAY_SECONDS+1, SECONDS)
-                               .isAtDistance(HostDistance.IGNORED);
+                    .comesUpWithin(Cluster.NEW_NODE_DELAY_SECONDS + 1, SECONDS)
+                    .isAtDistance(HostDistance.IGNORED);
             assertThat(session).hasNoPoolFor(3);
 
             // Kill host 2, host 3 should take its place
@@ -90,19 +88,19 @@ public class RefreshConnectedHostTest {
             TestUtils.waitFor(CCMBridge.ipOfNode(3), cluster);
 
             assertThat(cluster).host(1)
-                               .hasState(State.UP)
-                               .isAtDistance(HostDistance.LOCAL);
+                    .hasState(State.UP)
+                    .isAtDistance(HostDistance.LOCAL);
             assertThat(cluster).host(2)
-                               .hasState(State.DOWN);
+                    .hasState(State.DOWN);
             assertThat(cluster).host(3)
-                               .hasState(State.UP)
-                               .isAtDistance(HostDistance.LOCAL);
+                    .hasState(State.UP)
+                    .isAtDistance(HostDistance.LOCAL);
             assertThat(session).hasPoolFor(3);
 
             // This is when refreshConnectedHost should have been invoked, it triggers pool creation when
             // we switch the node from IGNORED to UP:
             Mockito.verify(poolingOptions)
-                   .refreshConnectedHost(TestUtils.findHost(cluster, 3));
+                    .refreshConnectedHost(TestUtils.findHost(cluster, 3));
 
         } finally {
             if (cluster != null)

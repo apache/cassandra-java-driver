@@ -15,12 +15,8 @@
  */
 package com.datastax.driver.core;
 
-import java.nio.ByteBuffer;
-import java.util.*;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.LinkedBlockingDeque;
-
+import com.datastax.driver.core.exceptions.ConnectionException;
+import com.datastax.driver.core.exceptions.DriverInternalError;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
@@ -28,8 +24,11 @@ import com.google.common.util.concurrent.Uninterruptibles;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.datastax.driver.core.exceptions.ConnectionException;
-import com.datastax.driver.core.exceptions.DriverInternalError;
+import java.nio.ByteBuffer;
+import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.LinkedBlockingDeque;
 
 /**
  * Default implementation of a result set, backed by an ArrayDeque of ArrayList.
@@ -62,27 +61,27 @@ abstract class ArrayBackedResultSet implements ResultSet {
             case VOID:
                 return empty(info);
             case ROWS:
-                Responses.Result.Rows r = (Responses.Result.Rows)msg;
+                Responses.Result.Rows r = (Responses.Result.Rows) msg;
 
                 ColumnDefinitions columnDefs;
                 if (r.metadata.columns == null) {
                     assert statement instanceof BoundStatement;
-                    columnDefs = ((BoundStatement)statement).statement.getPreparedId().resultSetMetadata;
+                    columnDefs = ((BoundStatement) statement).statement.getPreparedId().resultSetMetadata;
                     assert columnDefs != null;
                 } else {
                     columnDefs = r.metadata.columns;
                 }
 
                 Token.Factory tokenFactory = (session == null) ? null
-                    : session.getCluster().manager.metadata.tokenFactory();
+                        : session.getCluster().manager.metadata.tokenFactory();
 
                 // info can be null only for internal calls, but we don't page those. We assert
                 // this explicitly because MultiPage implementation don't support info == null.
                 assert r.metadata.pagingState == null || info != null;
 
                 return r.metadata.pagingState == null
-                    ? new SinglePage(columnDefs, tokenFactory, protocolVersion, columnDefs.codecRegistry, r.data, info)
-                    : new MultiPage(columnDefs, tokenFactory, protocolVersion, columnDefs.codecRegistry, r.data, info, r.metadata.pagingState, session, statement);
+                        ? new SinglePage(columnDefs, tokenFactory, protocolVersion, columnDefs.codecRegistry, r.data, info)
+                        : new MultiPage(columnDefs, tokenFactory, protocolVersion, columnDefs.codecRegistry, r.data, info, r.metadata.pagingState, session, statement);
 
             case SET_KEYSPACE:
             case SCHEMA_CHANGE:
@@ -107,7 +106,7 @@ abstract class ArrayBackedResultSet implements ResultSet {
 
     private static ArrayBackedResultSet empty(ExecutionInfo info) {
         // We could pass the protocol version but we know we won't need it so passing a bogus value (null)
-        return new SinglePage(ColumnDefinitions.EMPTY, null,  null, null, EMPTY_QUEUE, info);
+        return new SinglePage(ColumnDefinitions.EMPTY, null, null, null, EMPTY_QUEUE, info);
     }
 
     public ColumnDefinitions getColumnDefinitions() {
@@ -337,10 +336,10 @@ abstract class ArrayBackedResultSet implements ResultSet {
                     try {
                         switch (response.type) {
                             case RESULT:
-                                Responses.Result rm = (Responses.Result)response;
+                                Responses.Result rm = (Responses.Result) response;
                                 info = update(info, rm, MultiPage.this.session);
                                 if (rm.kind == Responses.Result.Kind.ROWS) {
-                                    Responses.Result.Rows rows = (Responses.Result.Rows)rm;
+                                    Responses.Result.Rows rows = (Responses.Result.Rows) rm;
                                     if (rows.metadata.pagingState != null)
                                         info = info.withPagingState(rows.metadata.pagingState, protocolVersion, codecRegistry).withStatement(statement);
                                     MultiPage.this.nextPages.offer(rows.data);
@@ -360,7 +359,7 @@ abstract class ArrayBackedResultSet implements ResultSet {
                                 future.set(MultiPage.this);
                                 break;
                             case ERROR:
-                                future.setException(((Responses.Error)response).asException(connection.address));
+                                future.setException(((Responses.Error) response).asException(connection.address));
                                 break;
                             default:
                                 // This mean we have probably have a bad node, so defunct the connection

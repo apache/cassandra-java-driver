@@ -15,11 +15,6 @@
  */
 package com.datastax.driver.core;
 
-import java.net.InetSocketAddress;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMap.Builder;
@@ -28,6 +23,11 @@ import com.google.common.collect.Maps;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.testng.annotations.Test;
+
+import java.net.InetSocketAddress;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -49,7 +49,7 @@ public class NetworkTopologyStrategyTest extends AbstractReplicationStrategyTest
 
     private static ReplicationStrategy networkTopologyStrategy(ReplicationFactorDefinition... rfs) {
         Builder<String, String> builder = ImmutableMap.<String, String>builder()
-                                          .put("class", "NetworkTopologyStrategy");
+                .put("class", "NetworkTopologyStrategy");
 
         for (ReplicationFactorDefinition rf : rfs)
             builder.put(rf.dc, String.valueOf(rf.replicationFactor));
@@ -124,46 +124,46 @@ public class NetworkTopologyStrategyTest extends AbstractReplicationStrategyTest
     }
 
     private static final List<Token> exampleRing = ImmutableList.<Token>builder()
-                                                   .add(TOKEN01)
-                                                   .add(TOKEN02)
-                                                   .add(TOKEN03)
-                                                   .add(TOKEN04)
-                                                   .add(TOKEN05)
-                                                   .add(TOKEN06)
-                                                   .add(TOKEN07)
-                                                   .add(TOKEN08)
-                                                   .add(TOKEN09)
-                                                   .add(TOKEN10)
-                                                   .add(TOKEN11)
-                                                   .add(TOKEN12)
-                                                   .add(TOKEN13)
-                                                   .add(TOKEN14)
-                                                   .add(TOKEN15)
-                                                   .add(TOKEN16)
-                                                   .add(TOKEN17)
-                                                   .add(TOKEN18)
-                                                   .build();
+            .add(TOKEN01)
+            .add(TOKEN02)
+            .add(TOKEN03)
+            .add(TOKEN04)
+            .add(TOKEN05)
+            .add(TOKEN06)
+            .add(TOKEN07)
+            .add(TOKEN08)
+            .add(TOKEN09)
+            .add(TOKEN10)
+            .add(TOKEN11)
+            .add(TOKEN12)
+            .add(TOKEN13)
+            .add(TOKEN14)
+            .add(TOKEN15)
+            .add(TOKEN16)
+            .add(TOKEN17)
+            .add(TOKEN18)
+            .build();
 
     private static final Map<Token, Host> exampleTokenToPrimary = ImmutableMap.<Token, Host>builder()
-                                                                  .put(TOKEN01, host(IP1, DC1, RACK11))
-                                                                  .put(TOKEN02, host(IP1, DC1, RACK11))
-                                                                  .put(TOKEN03, host(IP5, DC1, RACK12))
-                                                                  .put(TOKEN04, host(IP3, DC1, RACK11))
-                                                                  .put(TOKEN05, host(IP1, DC1, RACK11))
-                                                                  .put(TOKEN06, host(IP5, DC1, RACK12))
-                                                                  .put(TOKEN07, host(IP2, DC2, RACK21))
-                                                                  .put(TOKEN08, host(IP6, DC2, RACK22))
-                                                                  .put(TOKEN09, host(IP3, DC1, RACK11))
-                                                                  .put(TOKEN10, host(IP4, DC2, RACK21))
-                                                                  .put(TOKEN11, host(IP5, DC1, RACK12))
-                                                                  .put(TOKEN12, host(IP4, DC2, RACK21))
-                                                                  .put(TOKEN13, host(IP4, DC2, RACK21))
-                                                                  .put(TOKEN14, host(IP2, DC2, RACK21))
-                                                                  .put(TOKEN15, host(IP6, DC2, RACK22))
-                                                                  .put(TOKEN16, host(IP3, DC1, RACK11))
-                                                                  .put(TOKEN17, host(IP2, DC2, RACK21))
-                                                                  .put(TOKEN18, host(IP6, DC2, RACK22))
-                                                                  .build();
+            .put(TOKEN01, host(IP1, DC1, RACK11))
+            .put(TOKEN02, host(IP1, DC1, RACK11))
+            .put(TOKEN03, host(IP5, DC1, RACK12))
+            .put(TOKEN04, host(IP3, DC1, RACK11))
+            .put(TOKEN05, host(IP1, DC1, RACK11))
+            .put(TOKEN06, host(IP5, DC1, RACK12))
+            .put(TOKEN07, host(IP2, DC2, RACK21))
+            .put(TOKEN08, host(IP6, DC2, RACK22))
+            .put(TOKEN09, host(IP3, DC1, RACK11))
+            .put(TOKEN10, host(IP4, DC2, RACK21))
+            .put(TOKEN11, host(IP5, DC1, RACK12))
+            .put(TOKEN12, host(IP4, DC2, RACK21))
+            .put(TOKEN13, host(IP4, DC2, RACK21))
+            .put(TOKEN14, host(IP2, DC2, RACK21))
+            .put(TOKEN15, host(IP6, DC2, RACK22))
+            .put(TOKEN16, host(IP3, DC1, RACK11))
+            .put(TOKEN17, host(IP2, DC2, RACK21))
+            .put(TOKEN18, host(IP6, DC2, RACK22))
+            .build();
 
     /*
      * --------------
@@ -174,18 +174,18 @@ public class NetworkTopologyStrategyTest extends AbstractReplicationStrategyTest
     @Test(groups = "unit")
     public void networkTopologyWithSimpleDCLayoutTest1() {
         List<Token> ring = ImmutableList.<Token>builder()
-                           .add(TOKEN01)
-                           .add(TOKEN04)
-                           .add(TOKEN14)
-                           .add(TOKEN19)
-                           .build();
+                .add(TOKEN01)
+                .add(TOKEN04)
+                .add(TOKEN14)
+                .add(TOKEN19)
+                .build();
 
         Map<Token, Host> tokenToPrimary = ImmutableMap.<Token, Host>builder()
-                                          .put(TOKEN01, host(IP1, DC1, RACK11))
-                                          .put(TOKEN04, host(IP2, DC2, RACK21))
-                                          .put(TOKEN14, host(IP1, DC1, RACK11))
-                                          .put(TOKEN19, host(IP2, DC2, RACK21))
-                                          .build();
+                .put(TOKEN01, host(IP1, DC1, RACK11))
+                .put(TOKEN04, host(IP2, DC2, RACK21))
+                .put(TOKEN14, host(IP1, DC1, RACK11))
+                .put(TOKEN19, host(IP2, DC2, RACK21))
+                .build();
 
         ReplicationStrategy strategy = networkTopologyStrategy(rf(DC1, 1), rf(DC2, 1));
 
@@ -200,26 +200,26 @@ public class NetworkTopologyStrategyTest extends AbstractReplicationStrategyTest
     @Test(groups = "unit")
     public void networkTopologyWithSimpleDCLayoutTest2() {
         List<Token> ring = ImmutableList.<Token>builder()
-                           .add(TOKEN01)
-                           .add(TOKEN03)
-                           .add(TOKEN05)
-                           .add(TOKEN07)
-                           .add(TOKEN13)
-                           .add(TOKEN15)
-                           .add(TOKEN17)
-                           .add(TOKEN19)
-                           .build();
+                .add(TOKEN01)
+                .add(TOKEN03)
+                .add(TOKEN05)
+                .add(TOKEN07)
+                .add(TOKEN13)
+                .add(TOKEN15)
+                .add(TOKEN17)
+                .add(TOKEN19)
+                .build();
 
         Map<Token, Host> tokenToPrimary = ImmutableMap.<Token, Host>builder()
-                                          .put(TOKEN01, host(IP1, DC1, RACK11))
-                                          .put(TOKEN03, host(IP2, DC2, RACK21))
-                                          .put(TOKEN05, host(IP3, DC1, RACK11))
-                                          .put(TOKEN07, host(IP4, DC2, RACK21))
-                                          .put(TOKEN13, host(IP1, DC1, RACK11))
-                                          .put(TOKEN15, host(IP2, DC2, RACK21))
-                                          .put(TOKEN17, host(IP3, DC1, RACK11))
-                                          .put(TOKEN19, host(IP4, DC2, RACK21))
-                                          .build();
+                .put(TOKEN01, host(IP1, DC1, RACK11))
+                .put(TOKEN03, host(IP2, DC2, RACK21))
+                .put(TOKEN05, host(IP3, DC1, RACK11))
+                .put(TOKEN07, host(IP4, DC2, RACK21))
+                .put(TOKEN13, host(IP1, DC1, RACK11))
+                .put(TOKEN15, host(IP2, DC2, RACK21))
+                .put(TOKEN17, host(IP3, DC1, RACK11))
+                .put(TOKEN19, host(IP4, DC2, RACK21))
+                .build();
 
         ReplicationStrategy strategy = networkTopologyStrategy(rf(DC1, 1), rf(DC2, 1));
 
@@ -238,22 +238,22 @@ public class NetworkTopologyStrategyTest extends AbstractReplicationStrategyTest
     @Test(groups = "unit")
     public void networkTopologyWithSimple3DCLayoutTest() {
         List<Token> ring = ImmutableList.<Token>builder()
-                           .add(TOKEN01)
-                           .add(TOKEN05)
-                           .add(TOKEN09)
-                           .add(TOKEN11)
-                           .add(TOKEN15)
-                           .add(TOKEN19)
-                           .build();
+                .add(TOKEN01)
+                .add(TOKEN05)
+                .add(TOKEN09)
+                .add(TOKEN11)
+                .add(TOKEN15)
+                .add(TOKEN19)
+                .build();
 
         Map<Token, Host> tokenToPrimary = ImmutableMap.<Token, Host>builder()
-                                          .put(TOKEN01, host(IP1, DC1, RACK11))
-                                          .put(TOKEN05, host(IP2, DC2, RACK21))
-                                          .put(TOKEN09, host(IP3, DC3, RACK31))
-                                          .put(TOKEN11, host(IP1, DC1, RACK11))
-                                          .put(TOKEN15, host(IP2, DC2, RACK21))
-                                          .put(TOKEN19, host(IP3, DC3, RACK31))
-                                          .build();
+                .put(TOKEN01, host(IP1, DC1, RACK11))
+                .put(TOKEN05, host(IP2, DC2, RACK21))
+                .put(TOKEN09, host(IP3, DC3, RACK31))
+                .put(TOKEN11, host(IP1, DC1, RACK11))
+                .put(TOKEN15, host(IP2, DC2, RACK21))
+                .put(TOKEN19, host(IP3, DC3, RACK31))
+                .build();
 
         ReplicationStrategy strategy = networkTopologyStrategy(rf(DC1, 1), rf(DC2, 1), rf(DC3, 1));
 
@@ -270,30 +270,30 @@ public class NetworkTopologyStrategyTest extends AbstractReplicationStrategyTest
     @Test(groups = "unit")
     public void networkTopologyWithUnbalancedRingTest() {
         List<Token> ring = ImmutableList.<Token>builder()
-                           .add(TOKEN01)
-                           .add(TOKEN03)
-                           .add(TOKEN05)
-                           .add(TOKEN07)
-                           .add(TOKEN09)
-                           .add(TOKEN11)
-                           .add(TOKEN13)
-                           .add(TOKEN15)
-                           .add(TOKEN17)
-                           .add(TOKEN19)
-                           .build();
+                .add(TOKEN01)
+                .add(TOKEN03)
+                .add(TOKEN05)
+                .add(TOKEN07)
+                .add(TOKEN09)
+                .add(TOKEN11)
+                .add(TOKEN13)
+                .add(TOKEN15)
+                .add(TOKEN17)
+                .add(TOKEN19)
+                .build();
 
         Map<Token, Host> tokenToPrimary = ImmutableMap.<Token, Host>builder()
-                                          .put(TOKEN01, host(IP1, DC1, RACK11))
-                                          .put(TOKEN03, host(IP1, DC1, RACK11))
-                                          .put(TOKEN05, host(IP2, DC2, RACK21))
-                                          .put(TOKEN07, host(IP3, DC1, RACK11))
-                                          .put(TOKEN09, host(IP4, DC2, RACK21))
-                                          .put(TOKEN11, host(IP1, DC1, RACK11))
-                                          .put(TOKEN13, host(IP1, DC1, RACK11))
-                                          .put(TOKEN15, host(IP2, DC2, RACK21))
-                                          .put(TOKEN17, host(IP3, DC1, RACK11))
-                                          .put(TOKEN19, host(IP4, DC2, RACK21))
-                                          .build();
+                .put(TOKEN01, host(IP1, DC1, RACK11))
+                .put(TOKEN03, host(IP1, DC1, RACK11))
+                .put(TOKEN05, host(IP2, DC2, RACK21))
+                .put(TOKEN07, host(IP3, DC1, RACK11))
+                .put(TOKEN09, host(IP4, DC2, RACK21))
+                .put(TOKEN11, host(IP1, DC1, RACK11))
+                .put(TOKEN13, host(IP1, DC1, RACK11))
+                .put(TOKEN15, host(IP2, DC2, RACK21))
+                .put(TOKEN17, host(IP3, DC1, RACK11))
+                .put(TOKEN19, host(IP4, DC2, RACK21))
+                .build();
 
         ReplicationStrategy strategy = networkTopologyStrategy(rf(DC1, 2), rf(DC2, 2));
 
@@ -314,42 +314,42 @@ public class NetworkTopologyStrategyTest extends AbstractReplicationStrategyTest
     @Test(groups = "unit")
     public void networkTopologyWithDCMultirackLayoutTest() {
         List<Token> ring = ImmutableList.<Token>builder()
-                           .add(TOKEN01)
-                           .add(TOKEN02)
-                           .add(TOKEN03)
-                           .add(TOKEN04)
-                           .add(TOKEN05)
-                           .add(TOKEN06)
-                           .add(TOKEN07)
-                           .add(TOKEN08)
-                           .add(TOKEN12)
-                           .add(TOKEN13)
-                           .add(TOKEN14)
-                           .add(TOKEN15)
-                           .add(TOKEN16)
-                           .add(TOKEN17)
-                           .add(TOKEN18)
-                           .add(TOKEN19)
-                           .build();
+                .add(TOKEN01)
+                .add(TOKEN02)
+                .add(TOKEN03)
+                .add(TOKEN04)
+                .add(TOKEN05)
+                .add(TOKEN06)
+                .add(TOKEN07)
+                .add(TOKEN08)
+                .add(TOKEN12)
+                .add(TOKEN13)
+                .add(TOKEN14)
+                .add(TOKEN15)
+                .add(TOKEN16)
+                .add(TOKEN17)
+                .add(TOKEN18)
+                .add(TOKEN19)
+                .build();
 
         Map<Token, Host> tokenToPrimary = ImmutableMap.<Token, Host>builder()
-                                          .put(TOKEN01, host(IP1, DC1, RACK11))
-                                          .put(TOKEN02, host(IP2, DC2, RACK21))
-                                          .put(TOKEN03, host(IP3, DC1, RACK12))
-                                          .put(TOKEN04, host(IP4, DC2, RACK22))
-                                          .put(TOKEN05, host(IP5, DC1, RACK11))
-                                          .put(TOKEN06, host(IP6, DC2, RACK21))
-                                          .put(TOKEN07, host(IP7, DC1, RACK12))
-                                          .put(TOKEN08, host(IP8, DC2, RACK22))
-                                          .put(TOKEN12, host(IP1, DC1, RACK11))
-                                          .put(TOKEN13, host(IP2, DC2, RACK21))
-                                          .put(TOKEN14, host(IP3, DC1, RACK12))
-                                          .put(TOKEN15, host(IP4, DC2, RACK22))
-                                          .put(TOKEN16, host(IP5, DC1, RACK11))
-                                          .put(TOKEN17, host(IP6, DC2, RACK21))
-                                          .put(TOKEN18, host(IP7, DC1, RACK12))
-                                          .put(TOKEN19, host(IP8, DC2, RACK22))
-                                          .build();
+                .put(TOKEN01, host(IP1, DC1, RACK11))
+                .put(TOKEN02, host(IP2, DC2, RACK21))
+                .put(TOKEN03, host(IP3, DC1, RACK12))
+                .put(TOKEN04, host(IP4, DC2, RACK22))
+                .put(TOKEN05, host(IP5, DC1, RACK11))
+                .put(TOKEN06, host(IP6, DC2, RACK21))
+                .put(TOKEN07, host(IP7, DC1, RACK12))
+                .put(TOKEN08, host(IP8, DC2, RACK22))
+                .put(TOKEN12, host(IP1, DC1, RACK11))
+                .put(TOKEN13, host(IP2, DC2, RACK21))
+                .put(TOKEN14, host(IP3, DC1, RACK12))
+                .put(TOKEN15, host(IP4, DC2, RACK22))
+                .put(TOKEN16, host(IP5, DC1, RACK11))
+                .put(TOKEN17, host(IP6, DC2, RACK21))
+                .put(TOKEN18, host(IP7, DC1, RACK12))
+                .put(TOKEN19, host(IP8, DC2, RACK22))
+                .build();
 
         ReplicationStrategy strategy = networkTopologyStrategy(rf(DC1, 2), rf(DC2, 2));
 
@@ -376,44 +376,44 @@ public class NetworkTopologyStrategyTest extends AbstractReplicationStrategyTest
     @Test(groups = "unit")
     public void networkTopologyWithMultirackHostSkippingTest1() {
         List<Token> ring = ImmutableList.<Token>builder()
-                           .add(TOKEN01)
-                           .add(TOKEN02)
-                           .add(TOKEN03)
-                           .add(TOKEN04)
-                           .add(TOKEN05)
-                           .add(TOKEN06)
-                           .add(TOKEN07)
-                           .add(TOKEN08)
-                           .add(TOKEN12)
-                           .add(TOKEN13)
-                           .add(TOKEN14)
-                           .add(TOKEN15)
-                           .add(TOKEN16)
-                           .add(TOKEN17)
-                           .add(TOKEN18)
-                           .add(TOKEN19)
-                           .build();
+                .add(TOKEN01)
+                .add(TOKEN02)
+                .add(TOKEN03)
+                .add(TOKEN04)
+                .add(TOKEN05)
+                .add(TOKEN06)
+                .add(TOKEN07)
+                .add(TOKEN08)
+                .add(TOKEN12)
+                .add(TOKEN13)
+                .add(TOKEN14)
+                .add(TOKEN15)
+                .add(TOKEN16)
+                .add(TOKEN17)
+                .add(TOKEN18)
+                .add(TOKEN19)
+                .build();
 
         //this is to simulate when we hit the same rack in a DC first as a second replica
         //so that'll get skipped and re-added later as a third
         Map<Token, Host> tokenToPrimary = ImmutableMap.<Token, Host>builder()
-                                          .put(TOKEN01, host(IP1, DC1, RACK11))
-                                          .put(TOKEN02, host(IP2, DC2, RACK21))
-                                          .put(TOKEN03, host(IP3, DC1, RACK11))
-                                          .put(TOKEN04, host(IP4, DC2, RACK21))
-                                          .put(TOKEN05, host(IP5, DC1, RACK12))
-                                          .put(TOKEN06, host(IP6, DC2, RACK22))
-                                          .put(TOKEN07, host(IP7, DC1, RACK12))
-                                          .put(TOKEN08, host(IP8, DC2, RACK22))
-                                          .put(TOKEN12, host(IP1, DC1, RACK11))
-                                          .put(TOKEN13, host(IP2, DC2, RACK21))
-                                          .put(TOKEN14, host(IP3, DC1, RACK11))
-                                          .put(TOKEN15, host(IP4, DC2, RACK21))
-                                          .put(TOKEN16, host(IP5, DC1, RACK12))
-                                          .put(TOKEN17, host(IP6, DC2, RACK22))
-                                          .put(TOKEN18, host(IP7, DC1, RACK12))
-                                          .put(TOKEN19, host(IP8, DC2, RACK22))
-                                          .build();
+                .put(TOKEN01, host(IP1, DC1, RACK11))
+                .put(TOKEN02, host(IP2, DC2, RACK21))
+                .put(TOKEN03, host(IP3, DC1, RACK11))
+                .put(TOKEN04, host(IP4, DC2, RACK21))
+                .put(TOKEN05, host(IP5, DC1, RACK12))
+                .put(TOKEN06, host(IP6, DC2, RACK22))
+                .put(TOKEN07, host(IP7, DC1, RACK12))
+                .put(TOKEN08, host(IP8, DC2, RACK22))
+                .put(TOKEN12, host(IP1, DC1, RACK11))
+                .put(TOKEN13, host(IP2, DC2, RACK21))
+                .put(TOKEN14, host(IP3, DC1, RACK11))
+                .put(TOKEN15, host(IP4, DC2, RACK21))
+                .put(TOKEN16, host(IP5, DC1, RACK12))
+                .put(TOKEN17, host(IP6, DC2, RACK22))
+                .put(TOKEN18, host(IP7, DC1, RACK12))
+                .put(TOKEN19, host(IP8, DC2, RACK22))
+                .build();
 
         ReplicationStrategy strategy = networkTopologyStrategy(rf(DC1, 3), rf(DC2, 3));
 
@@ -441,42 +441,42 @@ public class NetworkTopologyStrategyTest extends AbstractReplicationStrategyTest
     @Test(groups = "unit")
     public void networkTopologyWithMultirackHostSkippingTest2() {
         List<Token> ring = ImmutableList.<Token>builder()
-                           .add(TOKEN01)
-                           .add(TOKEN02)
-                           .add(TOKEN03)
-                           .add(TOKEN04)
-                           .add(TOKEN05)
-                           .add(TOKEN06)
-                           .add(TOKEN07)
-                           .add(TOKEN08)
-                           .add(TOKEN12)
-                           .add(TOKEN13)
-                           .add(TOKEN14)
-                           .add(TOKEN15)
-                           .add(TOKEN16)
-                           .add(TOKEN17)
-                           .add(TOKEN18)
-                           .add(TOKEN19)
-                           .build();
+                .add(TOKEN01)
+                .add(TOKEN02)
+                .add(TOKEN03)
+                .add(TOKEN04)
+                .add(TOKEN05)
+                .add(TOKEN06)
+                .add(TOKEN07)
+                .add(TOKEN08)
+                .add(TOKEN12)
+                .add(TOKEN13)
+                .add(TOKEN14)
+                .add(TOKEN15)
+                .add(TOKEN16)
+                .add(TOKEN17)
+                .add(TOKEN18)
+                .add(TOKEN19)
+                .build();
 
         Map<Token, Host> tokenToPrimary = ImmutableMap.<Token, Host>builder()
-                                          .put(TOKEN01, host(IP1, DC1, RACK11))
-                                          .put(TOKEN02, host(IP1, DC1, RACK11))
-                                          .put(TOKEN03, host(IP3, DC1, RACK11))
-                                          .put(TOKEN04, host(IP3, DC1, RACK11))
-                                          .put(TOKEN05, host(IP5, DC1, RACK12))
-                                          .put(TOKEN06, host(IP5, DC1, RACK12))
-                                          .put(TOKEN07, host(IP7, DC1, RACK12))
-                                          .put(TOKEN08, host(IP7, DC1, RACK12))
-                                          .put(TOKEN12, host(IP2, DC2, RACK21))
-                                          .put(TOKEN13, host(IP2, DC2, RACK21))
-                                          .put(TOKEN14, host(IP4, DC2, RACK21))
-                                          .put(TOKEN15, host(IP4, DC2, RACK21))
-                                          .put(TOKEN16, host(IP6, DC2, RACK22))
-                                          .put(TOKEN17, host(IP6, DC2, RACK22))
-                                          .put(TOKEN18, host(IP8, DC2, RACK22))
-                                          .put(TOKEN19, host(IP8, DC2, RACK22))
-                                          .build();
+                .put(TOKEN01, host(IP1, DC1, RACK11))
+                .put(TOKEN02, host(IP1, DC1, RACK11))
+                .put(TOKEN03, host(IP3, DC1, RACK11))
+                .put(TOKEN04, host(IP3, DC1, RACK11))
+                .put(TOKEN05, host(IP5, DC1, RACK12))
+                .put(TOKEN06, host(IP5, DC1, RACK12))
+                .put(TOKEN07, host(IP7, DC1, RACK12))
+                .put(TOKEN08, host(IP7, DC1, RACK12))
+                .put(TOKEN12, host(IP2, DC2, RACK21))
+                .put(TOKEN13, host(IP2, DC2, RACK21))
+                .put(TOKEN14, host(IP4, DC2, RACK21))
+                .put(TOKEN15, host(IP4, DC2, RACK21))
+                .put(TOKEN16, host(IP6, DC2, RACK22))
+                .put(TOKEN17, host(IP6, DC2, RACK22))
+                .put(TOKEN18, host(IP8, DC2, RACK22))
+                .put(TOKEN19, host(IP8, DC2, RACK22))
+                .build();
 
         ReplicationStrategy strategy = networkTopologyStrategy(rf(DC1, 3), rf(DC2, 3));
 
@@ -504,42 +504,42 @@ public class NetworkTopologyStrategyTest extends AbstractReplicationStrategyTest
     public void networkTopologyWithMultirackHostSkippingTest3() {
         //this is the same topology as in the previous test, but with different rfs
         List<Token> ring = ImmutableList.<Token>builder()
-                           .add(TOKEN01)
-                           .add(TOKEN02)
-                           .add(TOKEN03)
-                           .add(TOKEN04)
-                           .add(TOKEN05)
-                           .add(TOKEN06)
-                           .add(TOKEN07)
-                           .add(TOKEN08)
-                           .add(TOKEN12)
-                           .add(TOKEN13)
-                           .add(TOKEN14)
-                           .add(TOKEN15)
-                           .add(TOKEN16)
-                           .add(TOKEN17)
-                           .add(TOKEN18)
-                           .add(TOKEN19)
-                           .build();
+                .add(TOKEN01)
+                .add(TOKEN02)
+                .add(TOKEN03)
+                .add(TOKEN04)
+                .add(TOKEN05)
+                .add(TOKEN06)
+                .add(TOKEN07)
+                .add(TOKEN08)
+                .add(TOKEN12)
+                .add(TOKEN13)
+                .add(TOKEN14)
+                .add(TOKEN15)
+                .add(TOKEN16)
+                .add(TOKEN17)
+                .add(TOKEN18)
+                .add(TOKEN19)
+                .build();
 
         Map<Token, Host> tokenToPrimary = ImmutableMap.<Token, Host>builder()
-                                          .put(TOKEN01, host(IP1, DC1, RACK11))
-                                          .put(TOKEN02, host(IP1, DC1, RACK11))
-                                          .put(TOKEN03, host(IP3, DC1, RACK11))
-                                          .put(TOKEN04, host(IP3, DC1, RACK11))
-                                          .put(TOKEN05, host(IP5, DC1, RACK12))
-                                          .put(TOKEN06, host(IP5, DC1, RACK12))
-                                          .put(TOKEN07, host(IP7, DC1, RACK12))
-                                          .put(TOKEN08, host(IP7, DC1, RACK12))
-                                          .put(TOKEN12, host(IP2, DC2, RACK21))
-                                          .put(TOKEN13, host(IP2, DC2, RACK21))
-                                          .put(TOKEN14, host(IP4, DC2, RACK21))
-                                          .put(TOKEN15, host(IP4, DC2, RACK21))
-                                          .put(TOKEN16, host(IP6, DC2, RACK22))
-                                          .put(TOKEN17, host(IP6, DC2, RACK22))
-                                          .put(TOKEN18, host(IP8, DC2, RACK22))
-                                          .put(TOKEN19, host(IP8, DC2, RACK22))
-                                          .build();
+                .put(TOKEN01, host(IP1, DC1, RACK11))
+                .put(TOKEN02, host(IP1, DC1, RACK11))
+                .put(TOKEN03, host(IP3, DC1, RACK11))
+                .put(TOKEN04, host(IP3, DC1, RACK11))
+                .put(TOKEN05, host(IP5, DC1, RACK12))
+                .put(TOKEN06, host(IP5, DC1, RACK12))
+                .put(TOKEN07, host(IP7, DC1, RACK12))
+                .put(TOKEN08, host(IP7, DC1, RACK12))
+                .put(TOKEN12, host(IP2, DC2, RACK21))
+                .put(TOKEN13, host(IP2, DC2, RACK21))
+                .put(TOKEN14, host(IP4, DC2, RACK21))
+                .put(TOKEN15, host(IP4, DC2, RACK21))
+                .put(TOKEN16, host(IP6, DC2, RACK22))
+                .put(TOKEN17, host(IP6, DC2, RACK22))
+                .put(TOKEN18, host(IP8, DC2, RACK22))
+                .put(TOKEN19, host(IP8, DC2, RACK22))
+                .build();
 
         //all nodes will contain all data, question is the replica order
         ReplicationStrategy strategy = networkTopologyStrategy(rf(DC1, 4), rf(DC2, 4));
@@ -592,24 +592,24 @@ public class NetworkTopologyStrategyTest extends AbstractReplicationStrategyTest
     @Test(groups = "unit")
     public void networkTopologyStrategyNoNodesInDCTest() {
         long t1 = System.currentTimeMillis();
-        Map<Token, Set<Host>> replicaMap =  networkTopologyStrategy(rf(DC1, 2), rf(DC2, 2))
+        Map<Token, Set<Host>> replicaMap = networkTopologyStrategy(rf(DC1, 2), rf(DC2, 2))
                 .computeTokenToReplicaMap(keyspace, largeRingTokenToPrimary, largeRing);
         assertThat(System.currentTimeMillis() - t1).isLessThan(10000);
 
         InetSocketAddress currNode = null;
         InetSocketAddress nextNode;
         for (int node = 0; node < 99; node++) { // 100th wraps so doesn't match this, check after
-            if(currNode == null) {
+            if (currNode == null) {
                 currNode = socketAddress("127.0.0." + node);
             }
-            nextNode = socketAddress("127.0.0." + (node+1));
+            nextNode = socketAddress("127.0.0." + (node + 1));
             for (int vnodes = 0; vnodes < 256; vnodes++) {
                 Token token = token("" + ((node * 256) + vnodes));
                 assertReplicaPlacement(replicaMap, token, currNode, nextNode);
             }
             currNode = nextNode;
         }
-        assertReplicaPlacement(replicaMap, token(""+ 99 * 256), currNode, socketAddress("127.0.0.0"));
+        assertReplicaPlacement(replicaMap, token("" + 99 * 256), currNode, socketAddress("127.0.0.0"));
     }
 
 
@@ -645,30 +645,30 @@ public class NetworkTopologyStrategyTest extends AbstractReplicationStrategyTest
         logger.addAppender(logs);
 
         List<Token> ring = ImmutableList.<Token>builder()
-            .add(TOKEN01)
-            .add(TOKEN02)
-            .add(TOKEN03)
-            .add(TOKEN04)
-            .build();
+                .add(TOKEN01)
+                .add(TOKEN02)
+                .add(TOKEN03)
+                .add(TOKEN04)
+                .build();
 
         Map<Token, Host> tokenToPrimary = ImmutableMap.<Token, Host>builder()
-            .put(TOKEN01, host(IP1, DC1, RACK11))
-            .put(TOKEN02, host(IP2, DC1, RACK12))
-            .put(TOKEN03, host(IP3, DC2, RACK21))
-            .put(TOKEN04, host(IP4, DC2, RACK22))
-            .build();
+                .put(TOKEN01, host(IP1, DC1, RACK11))
+                .put(TOKEN02, host(IP2, DC1, RACK12))
+                .put(TOKEN03, host(IP3, DC2, RACK21))
+                .put(TOKEN04, host(IP4, DC2, RACK22))
+                .build();
 
         // Wrong configuration: impossible replication factor for DC2
         networkTopologyStrategy(rf(DC1, 2), rf(DC2, 3))
-            .computeTokenToReplicaMap(keyspace, tokenToPrimary, ring);
+                .computeTokenToReplicaMap(keyspace, tokenToPrimary, ring);
         assertThat(logs.getNext())
-            .contains(String.format("Error while computing token map for keyspace %s with datacenter %s", keyspace, DC2));
+                .contains(String.format("Error while computing token map for keyspace %s with datacenter %s", keyspace, DC2));
 
         // Wrong configuration: non-existing datacenter
         networkTopologyStrategy(rf(DC1, 2), rf("does_not_exist", 2))
-            .computeTokenToReplicaMap(keyspace, tokenToPrimary, ring);
+                .computeTokenToReplicaMap(keyspace, tokenToPrimary, ring);
         assertThat(logs.getNext())
-            .contains(String.format("Error while computing token map for keyspace %s with datacenter %s", keyspace, "does_not_exist"));
+                .contains(String.format("Error while computing token map for keyspace %s with datacenter %s", keyspace, "does_not_exist"));
 
         logger.setLevel(null);
         logger.removeAppender(logs);

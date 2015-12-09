@@ -26,12 +26,11 @@ public interface CoordinatorException {
 
     /**
      * The coordinator host that was contacted.
-     * <p>
+     * <p/>
      * This is a shortcut for {@link InetSocketAddress#getAddress() getAddress().getAddress()}.
      *
      * @return The coordinator host that was contacted;
      * may be {@code null} if the coordinator is not known.
-     *
      */
     InetAddress getHost();
 

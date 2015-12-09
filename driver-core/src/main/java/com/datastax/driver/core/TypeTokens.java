@@ -15,12 +15,12 @@
  */
 package com.datastax.driver.core;
 
+import com.google.common.reflect.TypeParameter;
+import com.google.common.reflect.TypeToken;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import com.google.common.reflect.TypeParameter;
-import com.google.common.reflect.TypeToken;
 
 /**
  * Utility methods to create {@code TypeToken} instances.
@@ -34,12 +34,14 @@ public final class TypeTokens {
      * are of the given type.
      *
      * @param eltType The list element type.
-     * @param <T> The list element type.
+     * @param <T>     The list element type.
      * @return A {@link TypeToken} that represents a {@link List} whose elements
      * are of the given type.
      */
     public static <T> TypeToken<List<T>> listOf(Class<T> eltType) {
-        return new TypeToken<List<T>>(){}.where(new TypeParameter<T>(){}, eltType);
+        return new TypeToken<List<T>>() {
+        }.where(new TypeParameter<T>() {
+        }, eltType);
     }
 
     /**
@@ -47,12 +49,14 @@ public final class TypeTokens {
      * are of the given type.
      *
      * @param eltType The list element type.
-     * @param <T> The list element type.
+     * @param <T>     The list element type.
      * @return A {@link TypeToken} that represents a {@link List} whose elements
      * are of the given type.
      */
     public static <T> TypeToken<List<T>> listOf(TypeToken<T> eltType) {
-        return new TypeToken<List<T>>(){}.where(new TypeParameter<T>(){}, eltType);
+        return new TypeToken<List<T>>() {
+        }.where(new TypeParameter<T>() {
+        }, eltType);
     }
 
     /**
@@ -60,12 +64,14 @@ public final class TypeTokens {
      * are of the given type.
      *
      * @param eltType The set element type.
-     * @param <T> The set element type.
+     * @param <T>     The set element type.
      * @return A {@link TypeToken} that represents a {@link Set} whose elements
      * are of the given type.
      */
     public static <T> TypeToken<Set<T>> setOf(Class<T> eltType) {
-        return new TypeToken<Set<T>>(){}.where(new TypeParameter<T>(){}, eltType);
+        return new TypeToken<Set<T>>() {
+        }.where(new TypeParameter<T>() {
+        }, eltType);
     }
 
     /**
@@ -73,45 +79,53 @@ public final class TypeTokens {
      * are of the given type.
      *
      * @param eltType The set element type.
-     * @param <T> The set element type.
+     * @param <T>     The set element type.
      * @return A {@link TypeToken} that represents a {@link Set} whose elements
      * are of the given type.
      */
     public static <T> TypeToken<Set<T>> setOf(TypeToken<T> eltType) {
-        return new TypeToken<Set<T>>(){}.where(new TypeParameter<T>(){}, eltType);
+        return new TypeToken<Set<T>>() {
+        }.where(new TypeParameter<T>() {
+        }, eltType);
     }
 
     /**
      * Create a {@link TypeToken} that represents a {@link Map} whose keys
      * and values are of the given key and value types.
      *
-     * @param keyType The map key type.
+     * @param keyType   The map key type.
      * @param valueType The map value type
-     * @param <K> The map key type.
-     * @param <V> The map value type
+     * @param <K>       The map key type.
+     * @param <V>       The map value type
      * @return A {@link TypeToken} that represents a {@link Map} whose keys
      * and values are of the given key and value types
      */
     public static <K, V> TypeToken<Map<K, V>> mapOf(Class<K> keyType, Class<V> valueType) {
-        return new TypeToken<Map<K, V>>(){}
-            .where(new TypeParameter<K>(){}, keyType)
-            .where(new TypeParameter<V>(){}, valueType);
+        return new TypeToken<Map<K, V>>() {
+        }
+                .where(new TypeParameter<K>() {
+                }, keyType)
+                .where(new TypeParameter<V>() {
+                }, valueType);
     }
 
     /**
      * Create a {@link TypeToken} that represents a {@link Map} whose keys
      * and values are of the given key and value types.
      *
-     * @param keyType The map key type.
+     * @param keyType   The map key type.
      * @param valueType The map value type
-     * @param <K> The map key type.
-     * @param <V> The map value type
+     * @param <K>       The map key type.
+     * @param <V>       The map value type
      * @return A {@link TypeToken} that represents a {@link Map} whose keys
      * and values are of the given key and value types
      */
     public static <K, V> TypeToken<Map<K, V>> mapOf(TypeToken<K> keyType, TypeToken<V> valueType) {
-        return new TypeToken<Map<K, V>>(){}
-            .where(new TypeParameter<K>(){}, keyType)
-            .where(new TypeParameter<V>(){}, valueType);
+        return new TypeToken<Map<K, V>>() {
+        }
+                .where(new TypeParameter<K>() {
+                }, keyType)
+                .where(new TypeParameter<V>() {
+                }, valueType);
     }
 }

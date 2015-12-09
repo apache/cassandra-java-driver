@@ -15,17 +15,16 @@
  */
 package com.datastax.driver.mapping;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
-
-import com.google.common.base.Objects;
-
 import com.datastax.driver.core.TableMetadata;
 import com.datastax.driver.core.querybuilder.Delete;
 import com.datastax.driver.core.querybuilder.Insert;
 import com.datastax.driver.core.querybuilder.Select;
+import com.google.common.base.Objects;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 
@@ -61,12 +60,12 @@ class QueryType {
         switch (kind) {
             case SAVE: {
                 Insert insert = table == null
-                    ? insertInto(mapper.getKeyspace(), mapper.getTable())
-                    : insertInto(table);
+                        ? insertInto(mapper.getKeyspace(), mapper.getTable())
+                        : insertInto(table);
                 for (ColumnMapper<?> cm : columns)
                     if (cm.kind != ColumnMapper.Kind.COMPUTED)
                         insert.value(cm.getColumnName(), bindMarker());
-                
+
                 Insert.Options usings = insert.using();
                 for (Mapper.Option opt : options) {
                     opt.checkValidFor(QueryType.SAVE, manager);
@@ -79,8 +78,8 @@ class QueryType {
                 Select.Selection selection = select();
                 for (ColumnMapper cm : mapper.allColumns()) {
                     Select.SelectionOrAlias column = (cm.kind == ColumnMapper.Kind.COMPUTED)
-                        ? ((Select.SelectionOrAlias)selection).raw(cm.getColumnName())
-                        : selection.column(cm.getColumnName());
+                            ? ((Select.SelectionOrAlias) selection).raw(cm.getColumnName())
+                            : selection.column(cm.getColumnName());
 
                     if (cm.getAlias() == null) {
                         selection = column;
@@ -97,15 +96,15 @@ class QueryType {
                 Select.Where where = select.where();
                 for (int i = 0; i < mapper.primaryKeySize(); i++)
                     where.and(eq(mapper.getPrimaryKeyColumn(i).getColumnName(), bindMarker()));
-            
+
                 for (Mapper.Option opt : options)
                     opt.checkValidFor(QueryType.GET, manager);
                 return select.toString();
             }
             case DEL: {
                 Delete delete = table == null
-                    ? delete().all().from(mapper.getKeyspace(), mapper.getTable())
-                    : delete().all().from(table);
+                        ? delete().all().from(mapper.getKeyspace(), mapper.getTable())
+                        : delete().all().from(table);
                 Delete.Where where = delete.where();
                 for (int i = 0; i < mapper.primaryKeySize(); i++)
                     where.and(eq(mapper.getPrimaryKeyColumn(i).getColumnName(), bindMarker()));
@@ -120,8 +119,8 @@ class QueryType {
             case SLICE:
             case REVERSED_SLICE: {
                 Select select = table == null
-                    ? select().all().from(mapper.getKeyspace(), mapper.getTable())
-                    : select().all().from(table);
+                        ? select().all().from(mapper.getKeyspace(), mapper.getTable())
+                        : select().all().from(table);
                 Select.Where where = select.where();
                 for (int i = 0; i < mapper.partitionKeys.size(); i++)
                     where.and(eq(mapper.partitionKeys.get(i).getColumnName(), bindMarker()));
@@ -174,12 +173,12 @@ class QueryType {
         if (obj == null || this.getClass() != obj.getClass())
             return false;
 
-        QueryType that = (QueryType)obj;
+        QueryType that = (QueryType) obj;
         return kind == that.kind
-            && startBoundSize == that.startBoundSize
-            && startInclusive == that.startInclusive
-            && endBoundSize == that.endBoundSize
-            && endInclusive == that.endInclusive;
+                && startBoundSize == that.startBoundSize
+                && startInclusive == that.startInclusive
+                && endBoundSize == that.endBoundSize
+                && endInclusive == that.endInclusive;
     }
 
     @Override

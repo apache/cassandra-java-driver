@@ -24,13 +24,13 @@ import java.util.Map;
 /**
  * Exception thrown when a query cannot be performed because no host is
  * available.
- * <p>
+ * <p/>
  * This exception is thrown if either:
  * <ul>
- *   <li>there is no host live in the cluster at the moment of the query;</li>
- *   <li>all hosts that have been tried have failed.</li>
+ * <li>there is no host live in the cluster at the moment of the query;</li>
+ * <li>all hosts that have been tried have failed.</li>
  * </ul>
- *
+ * <p/>
  * For debugging purposes, the list of hosts that have been tried along with the
  * failure cause can be retrieved using the {@link #getErrors()} method.
  */
@@ -66,9 +66,9 @@ public class NoHostAvailableException extends DriverException {
     /**
      * Builds a custom message for this exception.
      *
-     * @param maxErrors the maximum number of errors displayed (useful to limit the size of the message for big clusters). Beyond this limit,
-     *                  host names are still displayed, but not the associated errors. Set to {@code Integer.MAX_VALUE} to display all hosts.
-     * @param formatted whether to format the output (line break between each host).
+     * @param maxErrors          the maximum number of errors displayed (useful to limit the size of the message for big clusters). Beyond this limit,
+     *                           host names are still displayed, but not the associated errors. Set to {@code Integer.MAX_VALUE} to display all hosts.
+     * @param formatted          whether to format the output (line break between each host).
      * @param includeStackTraces whether to include the full stacktrace of each host error. Note that this automatically implies
      *                           {@code formatted}.
      * @return the message.
@@ -96,8 +96,7 @@ public class NoHostAvailableException extends DriverException {
 
         int n = 0;
         boolean truncated = false;
-        for (Map.Entry<InetSocketAddress, Throwable> entry : errors.entrySet())
-        {
+        for (Map.Entry<InetSocketAddress, Throwable> entry : errors.entrySet()) {
             if (n > 0) out.print(formatted ? "\n" : ", ");
             out.print(entry.getKey());
             if (n < maxErrorsInMessage) {

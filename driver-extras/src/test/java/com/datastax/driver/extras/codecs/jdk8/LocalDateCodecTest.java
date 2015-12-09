@@ -15,16 +15,14 @@
  */
 package com.datastax.driver.extras.codecs.jdk8;
 
-import java.time.LocalDate;
-
+import com.datastax.driver.core.Assertions;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-import com.datastax.driver.core.Assertions;
+import java.time.LocalDate;
 
 import static com.datastax.driver.core.ProtocolVersion.V4;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class LocalDateCodecTest {
 
@@ -34,23 +32,23 @@ public class LocalDateCodecTest {
     @DataProvider(name = "LocalDateCodecTest.parse")
     public Object[][] parseParameters() {
         return new Object[][]{
-            { null                , null },
-            { ""                  , null },
-            { "NULL"              , null },
-            { "0"                 , MIN },
-            { "'2147483648'"      , EPOCH },
-            { "'-5877641-06-23'"  , MIN },
-            { "'1970-01-01'"      , EPOCH },
-            { "'2014-01-01'"      , LocalDate.parse("2014-01-01") }
+                {null, null},
+                {"", null},
+                {"NULL", null},
+                {"0", MIN},
+                {"'2147483648'", EPOCH},
+                {"'-5877641-06-23'", MIN},
+                {"'1970-01-01'", EPOCH},
+                {"'2014-01-01'", LocalDate.parse("2014-01-01")}
         };
     }
 
     @DataProvider(name = "LocalDateCodecTest.format")
     public Object[][] formatParameters() {
         return new Object[][]{
-            { null                         , "NULL" },
-            { LocalDate.ofEpochDay(0)      , "'1970-01-01'" },
-            { LocalDate.parse("2010-06-30"), "'2010-06-30'" }
+                {null, "NULL"},
+                {LocalDate.ofEpochDay(0), "'1970-01-01'"},
+                {LocalDate.parse("2010-06-30"), "'2010-06-30'"}
         };
     }
 

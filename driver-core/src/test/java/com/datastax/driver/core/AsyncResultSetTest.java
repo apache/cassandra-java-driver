@@ -15,10 +15,7 @@
  */
 package com.datastax.driver.core;
 
-import java.util.Collection;
-import java.util.Set;
-import java.util.concurrent.ConcurrentSkipListSet;
-
+import com.datastax.driver.core.utils.CassandraVersion;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
@@ -26,16 +23,18 @@ import com.google.common.util.concurrent.ListenableFuture;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import java.util.Collection;
+import java.util.Set;
+import java.util.concurrent.ConcurrentSkipListSet;
 
-import com.datastax.driver.core.utils.CassandraVersion;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @CassandraVersion(major = 2.0, description = "uses paging")
 public class AsyncResultSetTest extends CCMBridge.PerClassSingleNodeCluster {
     @Override
     protected Collection<String> getTableDefinitions() {
         return Lists.newArrayList(
-            "create table ints (i int primary key)");
+                "create table ints (i int primary key)");
     }
 
     @BeforeMethod(groups = "short")
@@ -61,15 +60,17 @@ public class AsyncResultSetTest extends CCMBridge.PerClassSingleNodeCluster {
         ResultsAccumulator results = new ResultsAccumulator();
 
         ListenableFuture<ResultSet> future = Futures.transform(
-            session.executeAsync(statement),
-            results);
+                session.executeAsync(statement),
+                results);
 
         Futures.getUnchecked(future);
 
         assertThat(results.all.size()).isEqualTo(totalCount);
     }
 
-    /** Dummy tranformation that accumulates all traversed results */
+    /**
+     * Dummy tranformation that accumulates all traversed results
+     */
     static class ResultsAccumulator implements AsyncFunction<ResultSet, ResultSet> {
         final Set<Integer> all = new ConcurrentSkipListSet<Integer>();
 

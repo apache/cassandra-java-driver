@@ -15,9 +15,8 @@
  */
 package com.datastax.driver.core;
 
-import java.nio.ByteBuffer;
-import java.util.*;
-
+import com.datastax.driver.core.exceptions.DriverInternalError;
+import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
@@ -27,8 +26,8 @@ import io.netty.util.AttributeKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.datastax.driver.core.exceptions.DriverInternalError;
-import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
+import java.nio.ByteBuffer;
+import java.util.*;
 
 /**
  * A message from the CQL binary protocol.
@@ -41,6 +40,7 @@ abstract class Message {
 
     public interface Coder<R extends Request> {
         public void encode(R request, ByteBuf dest, ProtocolVersion version);
+
         public int encodedSize(R request, ProtocolVersion version);
     }
 
@@ -53,11 +53,13 @@ abstract class Message {
     /**
      * A generic key-value custom payload. Custom payloads are simply
      * ignored by the default QueryHandler implementation server-side.
+     *
      * @since Protocol V4
      */
     private volatile Map<String, ByteBuffer> customPayload;
 
-    protected Message() {}
+    protected Message() {
+    }
 
     public Message setStreamId(int streamId) {
         this.streamId = streamId;
@@ -68,11 +70,11 @@ abstract class Message {
         return streamId;
     }
 
-    public Map<String,ByteBuffer> getCustomPayload() {
+    public Map<String, ByteBuffer> getCustomPayload() {
         return customPayload;
     }
 
-    public Message setCustomPayload(Map<String,ByteBuffer> customPayload) {
+    public Message setCustomPayload(Map<String, ByteBuffer> customPayload) {
         this.customPayload = customPayload;
         return this;
     }
@@ -80,15 +82,15 @@ abstract class Message {
     public static abstract class Request extends Message {
 
         public enum Type {
-            STARTUP        (1, Requests.Startup.coder),
-            CREDENTIALS    (4, Requests.Credentials.coder),
-            OPTIONS        (5, Requests.Options.coder),
-            QUERY          (7, Requests.Query.coder),
-            PREPARE        (9, Requests.Prepare.coder),
-            EXECUTE        (10, Requests.Execute.coder),
-            REGISTER       (11, Requests.Register.coder),
-            BATCH          (13, Requests.Batch.coder),
-            AUTH_RESPONSE  (15, Requests.AuthResponse.coder);
+            STARTUP(1, Requests.Startup.coder),
+            CREDENTIALS(4, Requests.Credentials.coder),
+            OPTIONS(5, Requests.Options.coder),
+            QUERY(7, Requests.Query.coder),
+            PREPARE(9, Requests.Prepare.coder),
+            EXECUTE(10, Requests.Execute.coder),
+            REGISTER(11, Requests.Register.coder),
+            BATCH(13, Requests.Batch.coder),
+            AUTH_RESPONSE(15, Requests.AuthResponse.coder);
 
             public final int opcode;
             public final Coder<?> coder;
@@ -117,36 +119,51 @@ abstract class Message {
 
         ConsistencyLevel consistency() {
             switch (this.type) {
-                case QUERY:   return ((Requests.Query)this).options.consistency;
-                case EXECUTE: return ((Requests.Execute)this).options.consistency;
-                case BATCH:   return ((Requests.Batch)this).options.consistency;
-                default:      return null;
+                case QUERY:
+                    return ((Requests.Query) this).options.consistency;
+                case EXECUTE:
+                    return ((Requests.Execute) this).options.consistency;
+                case BATCH:
+                    return ((Requests.Batch) this).options.consistency;
+                default:
+                    return null;
             }
         }
 
         ConsistencyLevel serialConsistency() {
             switch (this.type) {
-                case QUERY:   return ((Requests.Query)this).options.serialConsistency;
-                case EXECUTE: return ((Requests.Execute)this).options.serialConsistency;
-                case BATCH:   return ((Requests.Batch)this).options.serialConsistency;
-                default:      return null;
+                case QUERY:
+                    return ((Requests.Query) this).options.serialConsistency;
+                case EXECUTE:
+                    return ((Requests.Execute) this).options.serialConsistency;
+                case BATCH:
+                    return ((Requests.Batch) this).options.serialConsistency;
+                default:
+                    return null;
             }
         }
 
         long defaultTimestamp() {
             switch (this.type) {
-                case QUERY:   return ((Requests.Query)this).options.defaultTimestamp;
-                case EXECUTE: return ((Requests.Execute)this).options.defaultTimestamp;
-                case BATCH:   return ((Requests.Batch)this).options.defaultTimestamp;
-                default:      return 0;
+                case QUERY:
+                    return ((Requests.Query) this).options.defaultTimestamp;
+                case EXECUTE:
+                    return ((Requests.Execute) this).options.defaultTimestamp;
+                case BATCH:
+                    return ((Requests.Batch) this).options.defaultTimestamp;
+                default:
+                    return 0;
             }
         }
 
         ByteBuffer pagingState() {
             switch (this.type) {
-                case QUERY:   return ((Requests.Query)this).options.pagingState;
-                case EXECUTE: return ((Requests.Execute)this).options.pagingState;
-                default:      return null;
+                case QUERY:
+                    return ((Requests.Query) this).options.pagingState;
+                case EXECUTE:
+                    return ((Requests.Execute) this).options.pagingState;
+                default:
+                    return null;
             }
         }
 
@@ -162,19 +179,20 @@ abstract class Message {
     public static abstract class Response extends Message {
 
         public enum Type {
-            ERROR          (0, Responses.Error.decoder),
-            READY          (2, Responses.Ready.decoder),
-            AUTHENTICATE   (3, Responses.Authenticate.decoder),
-            SUPPORTED      (6, Responses.Supported.decoder),
-            RESULT         (8, Responses.Result.decoder),
-            EVENT          (12, Responses.Event.decoder),
-            AUTH_CHALLENGE (14, Responses.AuthChallenge.decoder),
-            AUTH_SUCCESS   (16, Responses.AuthSuccess.decoder);
+            ERROR(0, Responses.Error.decoder),
+            READY(2, Responses.Ready.decoder),
+            AUTHENTICATE(3, Responses.Authenticate.decoder),
+            SUPPORTED(6, Responses.Supported.decoder),
+            RESULT(8, Responses.Result.decoder),
+            EVENT(12, Responses.Event.decoder),
+            AUTH_CHALLENGE(14, Responses.AuthChallenge.decoder),
+            AUTH_SUCCESS(16, Responses.AuthSuccess.decoder);
 
             public final int opcode;
             public final Decoder<?> decoder;
 
             private static final Type[] opcodeIdx;
+
             static {
                 int maxOpcode = -1;
                 for (Type type : Type.values())
@@ -247,10 +265,10 @@ abstract class Message {
                 assert codecRegistry != null;
                 Response response = Response.Type.fromOpcode(frame.header.opcode).decoder.decode(frame.body, frame.header.version, codecRegistry);
                 response
-                    .setTracingId(tracingId)
-                    .setWarnings(warnings)
-                    .setCustomPayload(customPayload)
-                    .setStreamId(frame.header.streamId);
+                        .setTracingId(tracingId)
+                        .setWarnings(warnings)
+                        .setCustomPayload(customPayload)
+                        .setStreamId(frame.header.streamId);
                 out.add(response);
             } finally {
                 frame.body.release();
@@ -277,13 +295,13 @@ abstract class Message {
             if (customPayload != null) {
                 if (protocolVersion.compareTo(ProtocolVersion.V4) < 0)
                     throw new UnsupportedFeatureException(
-                        protocolVersion,
-                        "Custom payloads are only supported since native protocol V4");
+                            protocolVersion,
+                            "Custom payloads are only supported since native protocol V4");
                 flags.add(Frame.Header.Flag.CUSTOM_PAYLOAD);
             }
 
             @SuppressWarnings("unchecked")
-            Coder<Request> coder = (Coder<Request>)request.type.coder;
+            Coder<Request> coder = (Coder<Request>) request.type.coder;
             int messageSize = coder.encodedSize(request, protocolVersion);
             int payloadLength = -1;
             if (customPayload != null) {

@@ -15,11 +15,10 @@
  */
 package com.datastax.driver.core.schemabuilder;
 
-import java.util.List;
-
+import com.datastax.driver.core.DataType;
 import com.google.common.base.Optional;
 
-import com.datastax.driver.core.DataType;
+import java.util.List;
 
 import static com.datastax.driver.core.schemabuilder.SchemaStatement.validateNotEmpty;
 import static com.datastax.driver.core.schemabuilder.SchemaStatement.validateNotKeyWord;
@@ -49,7 +48,7 @@ public class Alter implements StatementStart {
 
     /**
      * Add an ALTER column clause (to change the column type) to this ALTER TABLE statement.
-
+     *
      * @param columnName the name of the column to be altered.
      * @return a new {@link Alter.AlterColumn} instance.
      */
@@ -85,9 +84,9 @@ public class Alter implements StatementStart {
 
     /**
      * Add a new DROP column clause to this ALTER TABLE statement.
-     * <p>
+     * <p/>
      * Note that you cannot drop a column that is part of the primary key.
-
+     *
      * @param columnName the name of the column to be dropped.
      * @return the final ALTER TABLE DROP COLUMN statement.
      */
@@ -99,7 +98,7 @@ public class Alter implements StatementStart {
 
     /**
      * Add a new RENAME column clause to this ALTER TABLE statement.
-     * <p>
+     * <p/>
      * Note that you can only rename a column that is part of the primary key.
      *
      * @param columnName the name of the column to be renamed.
@@ -141,7 +140,7 @@ public class Alter implements StatementStart {
          */
         public SchemaStatement type(DataType type) {
             return SchemaStatement.fromQueryString(
-                alter.buildInternal() + " ALTER " + columnName + " TYPE " + type.toString());
+                    alter.buildInternal() + " ALTER " + columnName + " TYPE " + type.toString());
         }
 
         /**
@@ -152,7 +151,7 @@ public class Alter implements StatementStart {
          */
         public SchemaStatement udtType(UDTType udtType) {
             return SchemaStatement.fromQueryString(
-                alter.buildInternal() + " ALTER " + columnName + " TYPE " + udtType.asCQLString());
+                    alter.buildInternal() + " ALTER " + columnName + " TYPE " + udtType.asCQLString());
         }
     }
 
@@ -179,8 +178,8 @@ public class Alter implements StatementStart {
          */
         public SchemaStatement type(DataType type) {
             return SchemaStatement.fromQueryString(
-                alter.buildInternal() + " ADD " + columnName + " " + type.toString()
-                    + (staticColumn ? " static" : ""));
+                    alter.buildInternal() + " ADD " + columnName + " " + type.toString()
+                            + (staticColumn ? " static" : ""));
         }
 
         /**
@@ -191,8 +190,8 @@ public class Alter implements StatementStart {
          */
         public SchemaStatement udtType(UDTType udtType) {
             return SchemaStatement.fromQueryString(
-                alter.buildInternal() + " ADD " + columnName + " " + udtType.asCQLString()
-                    + (staticColumn ? " static" : ""));
+                    alter.buildInternal() + " ADD " + columnName + " " + udtType.asCQLString()
+                            + (staticColumn ? " static" : ""));
         }
     }
 
@@ -219,7 +218,7 @@ public class Alter implements StatementStart {
             validateNotEmpty(newColumnName, "New column name");
             validateNotKeyWord(newColumnName, String.format("The new column name '%s' is not allowed because it is a reserved keyword", newColumnName));
             return SchemaStatement.fromQueryString(
-                alter.buildInternal() + " RENAME " + columnName + " TO " + newColumnName);
+                    alter.buildInternal() + " RENAME " + columnName + " TO " + newColumnName);
         }
     }
 
@@ -241,8 +240,8 @@ public class Alter implements StatementStart {
     @Override
     public String buildInternal() {
         String tableSpec = keyspaceName.isPresent()
-            ? keyspaceName.get() + "." + tableName
-            : tableName;
+                ? keyspaceName.get() + "." + tableName
+                : tableName;
 
         return SchemaStatement.STATEMENT_START + "ALTER TABLE " + tableSpec;
     }

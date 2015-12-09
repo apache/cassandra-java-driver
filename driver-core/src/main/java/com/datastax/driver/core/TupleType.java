@@ -15,16 +15,15 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.exceptions.InvalidTypeException;
+import com.google.common.collect.ImmutableList;
+
 import java.util.Arrays;
 import java.util.List;
 
-import com.google.common.collect.ImmutableList;
-
-import com.datastax.driver.core.exceptions.InvalidTypeException;
-
 /**
  * A tuple type.
- * <p>
+ * <p/>
  * A tuple type is a essentially a list of types.
  */
 public class TupleType extends DataType {
@@ -44,7 +43,7 @@ public class TupleType extends DataType {
      * Creates a "disconnected" tuple type (<b>you should prefer
      * {@link Metadata#newTupleType(DataType...) cluster.getMetadata().newTupleType(...)}
      * whenever possible</b>).
-     * <p>
+     * <p/>
      * This method is only exposed for situations where you don't have a {@code Cluster}
      * instance available. If you create a type with this method and use it with a
      * {@code Cluster} later, you won't be able to set tuple fields with custom codecs
@@ -52,9 +51,8 @@ public class TupleType extends DataType {
      * match.
      *
      * @param protocolVersion the protocol version to use.
-     * @param codecRegistry the codec registry to use.
-     * @param types the types for the tuple type.
-     *
+     * @param codecRegistry   the codec registry to use.
+     * @param types           the types for the tuple type.
      * @return the newly created tuple type.
      */
     public static TupleType of(ProtocolVersion protocolVersion, CodecRegistry codecRegistry, DataType... types) {
@@ -83,21 +81,20 @@ public class TupleType extends DataType {
     /**
      * Returns a new value for this tuple type that uses the provided values
      * for the components.
-     * <p>
+     * <p/>
      * The numbers of values passed to this method must correspond to the
      * number of components in this tuple type. The {@code i}th parameter
      * value will then be assigned to the {@code i}th component of the resulting
      * tuple value.
      *
      * @param values the values to use for the component of the resulting
-     * tuple.
+     *               tuple.
      * @return a new tuple values based on the provided values.
-     *
      * @throws IllegalArgumentException if the number of {@code values}
-     * provided does not correspond to the number of components in this tuple
-     * type.
-     * @throws InvalidTypeException if any of the provided value is not of
-     * the correct type for the component.
+     *                                  provided does not correspond to the number of components in this tuple
+     *                                  type.
+     * @throws InvalidTypeException     if any of the provided value is not of
+     *                                  the correct type for the component.
      */
     public TupleValue newValue(Object... values) {
         if (values.length != types.size())
@@ -106,7 +103,7 @@ public class TupleType extends DataType {
         TupleValue t = newValue();
         for (int i = 0; i < values.length; i++) {
             DataType dataType = types.get(i);
-            if(values[i] == null)
+            if (values[i] == null)
                 t.setValue(i, null);
             else
                 t.setValue(i, codecRegistry.codecFor(dataType, values[i]).serialize(values[i], protocolVersion));
@@ -145,7 +142,7 @@ public class TupleType extends DataType {
 
     @Override
     public int hashCode() {
-        return Arrays.hashCode(new Object[]{ name, types });
+        return Arrays.hashCode(new Object[]{name, types});
     }
 
     @Override
@@ -153,20 +150,20 @@ public class TupleType extends DataType {
         if (!(o instanceof TupleType))
             return false;
 
-        TupleType d = (TupleType)o;
+        TupleType d = (TupleType) o;
         return name == d.name && types.equals(d.types);
     }
 
     /**
      * Return {@code true} if this tuple type contains the given tuple type,
      * and {@code false} otherwise.
-     * <p>
+     * <p/>
      * A tuple type is said to contain another one
      * if the latter has fewer components than the former,
      * but all of them are of the same type.
      * E.g. the type {@code tuple<int, text>}
      * is contained by the type {@code tuple<int, text, double>}.
-     * <p>
+     * <p/>
      * A contained type can be seen as a "partial" view
      * of a containing type, where the missing components
      * are supposed to be {@code null}.
@@ -176,9 +173,9 @@ public class TupleType extends DataType {
      * and {@code false} otherwise.
      */
     public boolean contains(TupleType other) {
-        if(this.equals(other))
+        if (this.equals(other))
             return true;
-        if(other.types.size() > this.types.size())
+        if (other.types.size() > this.types.size())
             return false;
         return types.subList(0, other.types.size()).equals(other.types);
     }

@@ -15,24 +15,24 @@
  */
 package com.datastax.driver.core.querybuilder;
 
+import com.datastax.driver.core.*;
+import com.datastax.driver.core.exceptions.CodecNotFoundException;
+import com.datastax.driver.core.policies.RetryPolicy;
+
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import com.datastax.driver.core.*;
-import com.datastax.driver.core.exceptions.CodecNotFoundException;
-import com.datastax.driver.core.policies.RetryPolicy;
-
 /**
  * Common ancestor to statements generated with the {@link QueryBuilder}.
- * <p>
+ * <p/>
  * The actual query string will be generated and cached the first time it is requested,
  * which is either when the driver tries to execute the query, or when you call certain
  * public methods (for example {@link RegularStatement#getQueryString(CodecRegistry)},
  * {@link #getObject(int, CodecRegistry)}).
- * <p>
+ * <p/>
  * Whenever possible (and unless you call {@link #setForceNoValues(boolean)}, the builder
  * will try to handle values passed to its methods as standalone values bound to the query
  * string with placeholders. For instance:
@@ -43,12 +43,12 @@ import com.datastax.driver.core.policies.RetryPolicy;
  * </pre>
  * There are a few exceptions to this rule:
  * <ul>
- *     <li>for fixed-size number types, the builder can't guess what the actual CQL type
- *     is. Standalone values are sent to Cassandra in their serialized form, and number
- *     types aren't all serialized in the same way, so picking the wrong type could
- *     lead to a query error;</li>
- *     <li>if the value is a "special" element like a function call, it can't be serialized.
- *     This also applies to collections mixing special elements and regular objects.</li>
+ * <li>for fixed-size number types, the builder can't guess what the actual CQL type
+ * is. Standalone values are sent to Cassandra in their serialized form, and number
+ * types aren't all serialized in the same way, so picking the wrong type could
+ * lead to a query error;</li>
+ * <li>if the value is a "special" element like a function call, it can't be serialized.
+ * This also applies to collections mixing special elements and regular objects.</li>
  * </ul>
  * In these cases, the builder will inline the value in the query string:
  * <pre>
@@ -120,16 +120,14 @@ public abstract class BuiltStatement extends RegularStatement {
     /**
      * Returns the {@code i}th value as the Java type matching its CQL type.
      *
-     * @param i the index to retrieve.
+     * @param i             the index to retrieve.
      * @param codecRegistry the codec registry that will be used if the statement must be
      *                      rebuilt in order to determine if it has values, and Java objects
      *                      must be inlined in the process (see {@link BuiltStatement} for
      *                      more explanations on why this is so).
      * @return the value of the {@code i}th value of this statement.
-     *
-     * @throws IllegalStateException if this statement does not have values.
+     * @throws IllegalStateException     if this statement does not have values.
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
-     *
      * @see #getObject(int)
      */
     public Object getObject(int i, CodecRegistry codecRegistry) {
@@ -140,9 +138,10 @@ public abstract class BuiltStatement extends RegularStatement {
             throw new ArrayIndexOutOfBoundsException(i);
         return values.get(i);
     }
+
     /**
      * Returns the {@code i}th value as the Java type matching its CQL type.
-     * <p>
+     * <p/>
      * This method calls {@link #getObject(int, CodecRegistry)} with
      * {@link CodecRegistry#DEFAULT_INSTANCE}.
      * It's safe to use if you don't use any custom codecs, or if your custom codecs are in
@@ -151,8 +150,7 @@ public abstract class BuiltStatement extends RegularStatement {
      *
      * @param i the index to retrieve.
      * @return the value of the {@code i}th value of this statement.
-     *
-     * @throws IllegalStateException if this statement does not have values.
+     * @throws IllegalStateException     if this statement does not have values.
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
      */
     public Object getObject(int i) {
@@ -174,7 +172,7 @@ public abstract class BuiltStatement extends RegularStatement {
 
             if (values.size() > 65535)
                 throw new IllegalArgumentException("Too many values for built statement, the maximum allowed is 65535");
-            
+
             if (values.isEmpty())
                 values = null;
         }
@@ -249,14 +247,14 @@ public abstract class BuiltStatement extends RegularStatement {
         ByteBuffer[] routingKeyParts = new ByteBuffer[partitionKey.size()];
         for (int i = 0; i < partitionKey.size(); i++) {
             Object value = routingKeyValues.get(i);
-            if(value == null)
+            if (value == null)
                 return null;
             TypeCodec<Object> codec = codecRegistry.codecFor(partitionKey.get(i).getType(), value);
             routingKeyParts[i] = codec.serialize(value, protocolVersion);
         }
         return routingKeyParts.length == 1
-            ? routingKeyParts[0]
-            : Utils.compose(routingKeyParts);
+                ? routingKeyParts[0]
+                : Utils.compose(routingKeyParts);
     }
 
     @Override
@@ -302,7 +300,7 @@ public abstract class BuiltStatement extends RegularStatement {
 
     /**
      * Allows to force this builder to not generate values (through its {@code getValues()} method).
-     * <p>
+     * <p/>
      * By default (and unless the protocol version 1 is in use, see below) and
      * for performance reasons, the query builder will not serialize all values
      * provided to strings. This means that {@link #getQueryString(CodecRegistry)}
@@ -315,13 +313,13 @@ public abstract class BuiltStatement extends RegularStatement {
      * return {@code null} and that the string returned by {@code
      * getQueryString()} will contain no other bind markers than the ones
      * specified by the user.
-     * <p>
+     * <p/>
      * If the native protocol version 1 is in use, the driver will default
      * to not generating values since those are not supported by that version of
      * the protocol. In practice, the driver will automatically call this method
      * with {@code true} as argument prior to execution. Hence, calling this
      * method when the protocol version 1 is in use is basically a no-op.
-     * <p>
+     * <p/>
      * Note that this method is mainly useful for debugging purpose. In general,
      * the default behavior should be the correct and most efficient one.
      *
@@ -342,7 +340,7 @@ public abstract class BuiltStatement extends RegularStatement {
         T statement;
 
         ForwardingStatement(T statement) {
-            super((String)null);
+            super((String) null);
             this.statement = statement;
         }
 

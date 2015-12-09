@@ -40,19 +40,19 @@ public class MapperPrimitiveTypesTest extends CCMBridge.PerClassSingleNodeCluste
 
     protected Collection<String> getTableDefinitions() {
         return Arrays.asList("CREATE TABLE primitiveTypes ("
-                             + "byteBufferCol blob primary key,"
-                             + "intCol int, intWrapperCol int,"
-                             + "longCol bigint, longWrapperCol bigint,"
-                             + "floatCol float, floatWrapperCol float,"
-                             + "doubleCol double, doubleWrapperCol double,"
-                             + "booleanCol boolean, booleanWrapperCol boolean,"
-                             + "bigDecimalCol decimal,"
-                             + "bigIntegerCol varint,"
-                             + "stringCol text,"
-                             + "inetCol inet,"
-                             + "dateCol timestamp,"
-                             + "uuidCol uuid,"
-                             + "timeUuidCol timeuuid)");
+                + "byteBufferCol blob primary key,"
+                + "intCol int, intWrapperCol int,"
+                + "longCol bigint, longWrapperCol bigint,"
+                + "floatCol float, floatWrapperCol float,"
+                + "doubleCol double, doubleWrapperCol double,"
+                + "booleanCol boolean, booleanWrapperCol boolean,"
+                + "bigDecimalCol decimal,"
+                + "bigIntegerCol varint,"
+                + "stringCol text,"
+                + "inetCol inet,"
+                + "dateCol timestamp,"
+                + "uuidCol uuid,"
+                + "timeUuidCol timeuuid)");
     }
 
     @Test(groups = "short")

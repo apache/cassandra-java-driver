@@ -15,20 +15,16 @@
  */
 package com.datastax.driver.core.policies;
 
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.slf4j.helpers.MessageFormatter;
-import org.testng.annotations.*;
-
-import static org.apache.log4j.Level.INFO;
-import static org.scassandra.http.client.PrimingRequest.Result.read_request_timeout;
-import static org.scassandra.http.client.PrimingRequest.Result.server_error;
-import static org.scassandra.http.client.PrimingRequest.Result.unavailable;
-import static org.scassandra.http.client.PrimingRequest.Result.write_request_timeout;
-
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.exceptions.DriverException;
 import com.datastax.driver.core.exceptions.ServerError;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.slf4j.helpers.MessageFormatter;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.ConsistencyLevel.LOCAL_ONE;
@@ -36,6 +32,8 @@ import static com.datastax.driver.core.WriteType.SIMPLE;
 import static com.datastax.driver.core.policies.LoggingRetryPolicy.*;
 import static com.datastax.driver.core.policies.RetryPolicy.RetryDecision.ignore;
 import static com.datastax.driver.core.policies.RetryPolicy.RetryDecision.tryNextHost;
+import static org.apache.log4j.Level.INFO;
+import static org.scassandra.http.client.PrimingRequest.Result.*;
 
 /**
  * Integration tests with LoggingRetryPolicy.
@@ -51,24 +49,24 @@ public class LoggingRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegr
     private Level originalLevel;
     private ConsistencyLevel defaultCL;
 
-    @BeforeClass(groups = { "short", "unit" })
+    @BeforeClass(groups = {"short", "unit"})
     public void setUpRetryPolicy() {
         setRetryPolicy(new LoggingRetryPolicy(new CustomRetryPolicy()));
     }
 
-    @BeforeMethod(groups = { "short", "unit" })
+    @BeforeMethod(groups = {"short", "unit"})
     public void storeDefaultCL() {
         defaultCL = cluster.getConfiguration().getQueryOptions().getConsistencyLevel();
     }
 
-    @BeforeMethod(groups = { "short", "unit" })
+    @BeforeMethod(groups = {"short", "unit"})
     public void startCapturingLogs() {
         originalLevel = logger.getLevel();
         logger.setLevel(INFO);
         logger.addAppender(appender = new MemoryAppender());
     }
 
-    @AfterMethod(groups = { "short", "unit" })
+    @AfterMethod(groups = {"short", "unit"})
     public void stopCapturingLogs() {
         logger.setLevel(originalLevel);
         logger.removeAppender(appender);

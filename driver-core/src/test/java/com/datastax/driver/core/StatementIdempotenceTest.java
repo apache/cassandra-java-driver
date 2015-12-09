@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.querybuilder.BuiltStatement;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -22,13 +23,10 @@ import com.google.common.collect.Sets;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-
-import com.datastax.driver.core.querybuilder.BuiltStatement;
-
-import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 
 public class StatementIdempotenceTest {
 
@@ -59,7 +57,7 @@ public class StatementIdempotenceTest {
         QueryOptions queryOptions = new QueryOptions();
         SimpleStatement statement = new SimpleStatement("", cluster);
 
-        for (boolean valueInOptions : new boolean[]{ true, false }) {
+        for (boolean valueInOptions : new boolean[]{true, false}) {
             queryOptions.setDefaultIdempotence(valueInOptions);
             assertThat(statement.isIdempotentWithDefault(queryOptions)).isEqualTo(valueInOptions);
         }
@@ -70,8 +68,8 @@ public class StatementIdempotenceTest {
         QueryOptions queryOptions = new QueryOptions();
         SimpleStatement statement = new SimpleStatement("", cluster);
 
-        for (boolean valueInOptions : new boolean[]{ true, false })
-            for (boolean valueInStatement : new boolean[]{ true, false }) {
+        for (boolean valueInOptions : new boolean[]{true, false})
+            for (boolean valueInStatement : new boolean[]{true, false}) {
                 queryOptions.setDefaultIdempotence(valueInOptions);
                 statement.setIdempotent(valueInStatement);
                 assertThat(statement.isIdempotentWithDefault(queryOptions)).isEqualTo(valueInStatement);
@@ -82,18 +80,18 @@ public class StatementIdempotenceTest {
     public void should_infer_for_built_statement() {
         for (BuiltStatement statement : idempotentBuiltStatements())
             assertThat(statement.isIdempotent())
-                .as(statement.getQueryString())
-                .isTrue();
+                    .as(statement.getQueryString())
+                    .isTrue();
 
         for (BuiltStatement statement : nonIdempotentBuiltStatements())
             assertThat(statement.isIdempotent())
-                .as(statement.getQueryString())
-                .isFalse();
+                    .as(statement.getQueryString())
+                    .isFalse();
     }
 
     @Test(groups = "unit")
     public void should_override_inferred_value_when_manually_set_on_built_statement() {
-        for (boolean manualValue : new boolean[]{ true, false }) {
+        for (boolean manualValue : new boolean[]{true, false}) {
             for (BuiltStatement statement : idempotentBuiltStatements()) {
                 statement.setIdempotent(manualValue);
                 assertThat(statement.isIdempotent()).isEqualTo(manualValue);
@@ -108,66 +106,66 @@ public class StatementIdempotenceTest {
 
     private ImmutableList<BuiltStatement> idempotentBuiltStatements() {
         return ImmutableList.<BuiltStatement>of(
-            update("foo").with(set("v", 1)).where(eq("k", 1)), // set simple value
-            update("foo").with(add("s", 1)).where(eq("k", 1)), // add to set
-            update("foo").with(put("m", "a", 1)).where(eq("k", 1)), // put in map
+                update("foo").with(set("v", 1)).where(eq("k", 1)), // set simple value
+                update("foo").with(add("s", 1)).where(eq("k", 1)), // add to set
+                update("foo").with(put("m", "a", 1)).where(eq("k", 1)), // put in map
 
-            // select statements should be idempotent even with function calls
-            select().countAll()         .from("foo").where(eq("k", 1)),
-            select().ttl("v")           .from("foo").where(eq("k", 1)),
-            select().writeTime("v")     .from("foo").where(eq("k", 1)),
-            select().fcall("token", "k").from("foo").where(eq("k", 1))
+                // select statements should be idempotent even with function calls
+                select().countAll().from("foo").where(eq("k", 1)),
+                select().ttl("v").from("foo").where(eq("k", 1)),
+                select().writeTime("v").from("foo").where(eq("k", 1)),
+                select().fcall("token", "k").from("foo").where(eq("k", 1))
 
         );
     }
 
     private ImmutableList<BuiltStatement> nonIdempotentBuiltStatements() {
         return ImmutableList.of(
-            update("foo").with(append("l", 1)).where(eq("k", 1)), // append to list
-            update("foo").with(set("v", 1)).and(prepend("l", 1)).where(eq("k", 1)), // prepend to list
-            update("foo").with(incr("c")).where(eq("k", 1)), // counter update
+                update("foo").with(append("l", 1)).where(eq("k", 1)), // append to list
+                update("foo").with(set("v", 1)).and(prepend("l", 1)).where(eq("k", 1)), // prepend to list
+                update("foo").with(incr("c")).where(eq("k", 1)), // counter update
 
-            // function calls
+                // function calls
 
-            insertInto("foo").value("k", 1).value("v", fcall("token", "k")),
-            insertInto("foo").value("k", 1).value("v", now()),
-            insertInto("foo").value("k", 1).value("v", uuid()),
+                insertInto("foo").value("k", 1).value("v", fcall("token", "k")),
+                insertInto("foo").value("k", 1).value("v", now()),
+                insertInto("foo").value("k", 1).value("v", uuid()),
 
-            insertInto("foo").value("k", 1).value("v", Sets.newHashSet(fcall("token", "k"))),
-            insertInto("foo").value("k", 1).value("v", Sets.newHashSet(now())),
-            insertInto("foo").value("k", 1).value("v", Sets.newHashSet(uuid())),
+                insertInto("foo").value("k", 1).value("v", Sets.newHashSet(fcall("token", "k"))),
+                insertInto("foo").value("k", 1).value("v", Sets.newHashSet(now())),
+                insertInto("foo").value("k", 1).value("v", Sets.newHashSet(uuid())),
 
-            insertInto("foo").values(new String[]{"k", "v"}, new Object[]{1, fcall("token", "k")}),
-            insertInto("foo").values(new String[]{"k", "v"}, new Object[]{1, now()}),
-            insertInto("foo").values(new String[]{"k", "v"}, new Object[]{1, uuid()}),
+                insertInto("foo").values(new String[]{"k", "v"}, new Object[]{1, fcall("token", "k")}),
+                insertInto("foo").values(new String[]{"k", "v"}, new Object[]{1, now()}),
+                insertInto("foo").values(new String[]{"k", "v"}, new Object[]{1, uuid()}),
 
-            insertInto("foo").values(new String[]{"k", "v"}, new Object[]{1, ImmutableMap.of("foo", fcall("token", "k"))}),
-            insertInto("foo").values(new String[]{"k", "v"}, new Object[]{1, ImmutableMap.of("foo", now())}),
-            insertInto("foo").values(new String[]{"k", "v"}, new Object[]{1, ImmutableMap.of("foo", uuid())}),
+                insertInto("foo").values(new String[]{"k", "v"}, new Object[]{1, ImmutableMap.of("foo", fcall("token", "k"))}),
+                insertInto("foo").values(new String[]{"k", "v"}, new Object[]{1, ImmutableMap.of("foo", now())}),
+                insertInto("foo").values(new String[]{"k", "v"}, new Object[]{1, ImmutableMap.of("foo", uuid())}),
 
-            insertInto("foo").values(new String[]{"k", "v"}, new Object[]{1, ImmutableMap.of(fcall("token", "k"), "foo")}),
-            insertInto("foo").values(new String[]{"k", "v"}, new Object[]{1, ImmutableMap.of(now()              , "foo")}),
-            insertInto("foo").values(new String[]{"k", "v"}, new Object[]{1, ImmutableMap.of(uuid()             , "foo")}),
+                insertInto("foo").values(new String[]{"k", "v"}, new Object[]{1, ImmutableMap.of(fcall("token", "k"), "foo")}),
+                insertInto("foo").values(new String[]{"k", "v"}, new Object[]{1, ImmutableMap.of(now(), "foo")}),
+                insertInto("foo").values(new String[]{"k", "v"}, new Object[]{1, ImmutableMap.of(uuid(), "foo")}),
 
-            update("foo").with(set("v", fcall("token", "k")))                    .where(eq("k", 1)),
-            update("foo").with(set("v", now()))                                  .where(eq("k", 1)),
-            update("foo").with(set("v", uuid()))                                 .where(eq("k", 1)),
+                update("foo").with(set("v", fcall("token", "k"))).where(eq("k", 1)),
+                update("foo").with(set("v", now())).where(eq("k", 1)),
+                update("foo").with(set("v", uuid())).where(eq("k", 1)),
 
-            update("foo").with(set("v", Lists.newArrayList(fcall("token", "k")))).where(eq("k", 1)),
-            update("foo").with(set("v", Lists.newArrayList(now())))              .where(eq("k", 1)),
-            update("foo").with(set("v", Lists.newArrayList(uuid())))             .where(eq("k", 1)),
+                update("foo").with(set("v", Lists.newArrayList(fcall("token", "k")))).where(eq("k", 1)),
+                update("foo").with(set("v", Lists.newArrayList(now()))).where(eq("k", 1)),
+                update("foo").with(set("v", Lists.newArrayList(uuid()))).where(eq("k", 1)),
 
-            // raw() calls
+                // raw() calls
 
-            insertInto("foo").value("k", 1).value("v", raw("foo()")),
-            insertInto("foo").value("k", 1).value("v", Sets.newHashSet(raw("foo()"))),
+                insertInto("foo").value("k", 1).value("v", raw("foo()")),
+                insertInto("foo").value("k", 1).value("v", Sets.newHashSet(raw("foo()"))),
 
-            insertInto("foo").values(new String[]{"k", "v"}, new Object[]{1, raw("foo()")}),
-            insertInto("foo").values(new String[]{"k", "v"}, new Object[]{1, ImmutableMap.of("foo", raw("foo()"))}),
-            insertInto("foo").values(new String[]{"k", "v"}, new Object[]{1, ImmutableMap.of(raw("foo()"), "foo")}),
+                insertInto("foo").values(new String[]{"k", "v"}, new Object[]{1, raw("foo()")}),
+                insertInto("foo").values(new String[]{"k", "v"}, new Object[]{1, ImmutableMap.of("foo", raw("foo()"))}),
+                insertInto("foo").values(new String[]{"k", "v"}, new Object[]{1, ImmutableMap.of(raw("foo()"), "foo")}),
 
-            update("foo").with(set("v", raw("foo()")))                    .where(eq("k", 1)),
-            update("foo").with(set("v", Lists.newArrayList(raw("foo()")))).where(eq("k", 1))
+                update("foo").with(set("v", raw("foo()"))).where(eq("k", 1)),
+                update("foo").with(set("v", Lists.newArrayList(raw("foo()")))).where(eq("k", 1))
 
         );
     }

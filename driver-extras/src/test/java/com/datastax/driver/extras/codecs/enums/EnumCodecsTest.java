@@ -15,25 +15,20 @@
  */
 package com.datastax.driver.extras.codecs.enums;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import com.google.common.collect.ImmutableMap;
-import com.google.common.reflect.TypeToken;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
-import static com.google.common.collect.Lists.newArrayList;
-import static com.google.common.collect.Sets.newHashSet;
-import static org.assertj.core.api.Assertions.assertThat;
-
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.utils.CassandraVersion;
 import com.datastax.driver.mapping.Mapper;
 import com.datastax.driver.mapping.MappingManager;
 import com.datastax.driver.mapping.annotations.*;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.reflect.TypeToken;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static com.datastax.driver.core.DataType.cint;
 import static com.datastax.driver.core.DataType.text;
@@ -41,13 +36,16 @@ import static com.datastax.driver.extras.codecs.enums.EnumCodecsTest.Bar.BAR_1;
 import static com.datastax.driver.extras.codecs.enums.EnumCodecsTest.Bar.BAR_2;
 import static com.datastax.driver.extras.codecs.enums.EnumCodecsTest.Foo.FOO_1;
 import static com.datastax.driver.extras.codecs.enums.EnumCodecsTest.Foo.FOO_2;
+import static com.google.common.collect.Lists.newArrayList;
+import static com.google.common.collect.Sets.newHashSet;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * A test that validates that Enums are correctly mapped to varchars (with EnumNameCodec)
  * and ints (with EnumOrdinalCodec).
  * It also validates that both codecs may coexist in the same CodecRegistry.
  */
-@CassandraVersion(major=2.1)
+@CassandraVersion(major = 2.1)
 public class EnumCodecsTest extends CCMBridge.PerClassSingleNodeCluster {
 
     private final String insertQuery = "INSERT INTO t1 (pk, foo, foos, bar, bars, foobars, tup, udt) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
@@ -65,41 +63,41 @@ public class EnumCodecsTest extends CCMBridge.PerClassSingleNodeCluster {
     @Override
     protected Collection<String> getTableDefinitions() {
         return newArrayList(
-            "CREATE TYPE IF NOT EXISTS udt1 ("
-                + "foo int,"
-                + "bar text)",
-            "CREATE TABLE IF NOT EXISTS t1 ("
-                + "pk int, "
-                + "foo int, "
-                + "foos list<int>, "
-                + "bar text, "
-                + "bars set<text>, "
-                + "foobars map<int,text>, "
-                + "tup frozen<tuple<int,varchar>>, "
-                + "udt frozen<udt1>,"
-                + "primary key (pk, foo))"
+                "CREATE TYPE IF NOT EXISTS udt1 ("
+                        + "foo int,"
+                        + "bar text)",
+                "CREATE TABLE IF NOT EXISTS t1 ("
+                        + "pk int, "
+                        + "foo int, "
+                        + "foos list<int>, "
+                        + "bar text, "
+                        + "bars set<text>, "
+                        + "foobars map<int,text>, "
+                        + "tup frozen<tuple<int,varchar>>, "
+                        + "udt frozen<udt1>,"
+                        + "primary key (pk, foo))"
         );
     }
 
     @Override
     protected Cluster.Builder configure(Cluster.Builder builder) {
         return builder.withCodecRegistry(
-            new CodecRegistry()
-                .register(new EnumOrdinalCodec<Foo>(Foo.class))
-                .register(new EnumNameCodec<Bar>(Bar.class))
+                new CodecRegistry()
+                        .register(new EnumOrdinalCodec<Foo>(Foo.class))
+                        .register(new EnumNameCodec<Bar>(Bar.class))
         );
     }
 
-    @BeforeMethod(groups="short")
+    @BeforeMethod(groups = "short")
     public void before() {
         TupleType tup = cluster.getMetadata().newTupleType(cint(), text());
         tupleValue = tup.newValue()
-            .set(0, FOO_1, Foo.class)
-            .set(1, BAR_1, Bar.class);
+                .set(0, FOO_1, Foo.class)
+                .set(1, BAR_1, Bar.class);
         UserType udt = cluster.getMetadata().getKeyspace(keyspace).getUserType("udt1");
         udtValue = udt.newValue()
-            .set("foo", FOO_1, Foo.class)
-            .set("bar", BAR_1, Bar.class);
+                .set("foo", FOO_1, Foo.class)
+                .set("bar", BAR_1, Bar.class);
     }
 
     @Test(groups = "short")
@@ -122,18 +120,19 @@ public class EnumCodecsTest extends CCMBridge.PerClassSingleNodeCluster {
     @Test(groups = "short")
     public void should_use_enum_codecs_with_prepared_statements_2() {
         session.execute(session.prepare(insertQuery).bind()
-            .setInt(0, pk)
-            .set(1, FOO_1, Foo.class)
-            .setList(2, foos, Foo.class)
-            .set(3, BAR_1, Bar.class)
-            .set(4, bars, new TypeToken<Set<Bar>>(){})
-            .setMap(5, foobars, Foo.class, Bar.class)
-            .setTupleValue(6, tupleValue)
-            .setUDTValue(7, udtValue)
+                        .setInt(0, pk)
+                        .set(1, FOO_1, Foo.class)
+                        .setList(2, foos, Foo.class)
+                        .set(3, BAR_1, Bar.class)
+                        .set(4, bars, new TypeToken<Set<Bar>>() {
+                        })
+                        .setMap(5, foobars, Foo.class, Bar.class)
+                        .setTupleValue(6, tupleValue)
+                        .setUDTValue(7, udtValue)
         );
         PreparedStatement ps = session.prepare(selectQuery);
         ResultSet rows = session.execute(ps.bind()
-            .setInt(0, pk)
+                        .setInt(0, pk)
         );
         Row row = rows.one();
         assertRow(row);
@@ -200,8 +199,10 @@ public class EnumCodecsTest extends CCMBridge.PerClassSingleNodeCluster {
         assertThat(row.getObject(2)).isEqualTo(newArrayList(FOO_1.ordinal(), FOO_2.ordinal())); // uses the built-in ListCodec(IntCodec) because CQL type is list<int>
         assertThat(row.getList(2, Integer.class)).isEqualTo(newArrayList(FOO_1.ordinal(), FOO_2.ordinal()));
         assertThat(row.getList("foos", Foo.class)).isEqualTo(newArrayList(FOO_1, FOO_2));
-        assertThat(row.get(2, new TypeToken<List<Integer>>(){})).isEqualTo(newArrayList(FOO_1.ordinal(), FOO_2.ordinal()));
-        assertThat(row.get("foos", new TypeToken<List<Foo>>(){})).isEqualTo(newArrayList(FOO_1, FOO_2));
+        assertThat(row.get(2, new TypeToken<List<Integer>>() {
+        })).isEqualTo(newArrayList(FOO_1.ordinal(), FOO_2.ordinal()));
+        assertThat(row.get("foos", new TypeToken<List<Foo>>() {
+        })).isEqualTo(newArrayList(FOO_1, FOO_2));
 
         assertThat(row.getObject(3)).isEqualTo(BAR_1.name()); // uses the built-in VarcharCodec because CQL type is varchar
         assertThat(row.getString("bar")).isEqualTo(BAR_1.name()); // forces VarcharCodec
@@ -211,8 +212,10 @@ public class EnumCodecsTest extends CCMBridge.PerClassSingleNodeCluster {
         assertThat(row.getObject(4)).isEqualTo(newHashSet(BAR_1.name(), BAR_2.name())); // uses the built-in SetCodec(VarcharCodec) because CQL type is set<varchar>
         assertThat(row.getSet(4, String.class)).isEqualTo(newHashSet(BAR_1.name(), BAR_2.name()));
         assertThat(row.getSet("bars", Bar.class)).isEqualTo(newHashSet(BAR_1, BAR_2));
-        assertThat(row.get(4, new TypeToken<Set<String>>(){})).isEqualTo(newHashSet(BAR_1.name(), BAR_2.name()));
-        assertThat(row.get("bars", new TypeToken<Set<Bar>>(){})).isEqualTo(newHashSet(BAR_1, BAR_2));
+        assertThat(row.get(4, new TypeToken<Set<String>>() {
+        })).isEqualTo(newHashSet(BAR_1.name(), BAR_2.name()));
+        assertThat(row.get("bars", new TypeToken<Set<Bar>>() {
+        })).isEqualTo(newHashSet(BAR_1, BAR_2));
 
         // uses default built-in codec MapCodec(IntCodec, VarcharCodec) because CQL type is map<int, varchar>
         assertThat(row.getObject(5)).isEqualTo(ImmutableMap.of(FOO_1.ordinal(), BAR_1.name(), FOO_2.ordinal(), BAR_2.name()));
@@ -224,10 +227,14 @@ public class EnumCodecsTest extends CCMBridge.PerClassSingleNodeCluster {
         assertThat(row.getMap(5, Foo.class, Bar.class)).isEqualTo(ImmutableMap.of(FOO_1, BAR_1, FOO_2, BAR_2));
 
         // get + TypeToken with combinations of built-in or EnumX codecs
-        assertThat(row.get("foobars", new TypeToken<Map<Integer, String>>(){})).isEqualTo(ImmutableMap.of(FOO_1.ordinal(), BAR_1.name(), FOO_2.ordinal(), BAR_2.name()));
-        assertThat(row.get("foobars", new TypeToken<Map<Foo, String>>(){})).isEqualTo(ImmutableMap.of(FOO_1, BAR_1.name(), FOO_2, BAR_2.name()));
-        assertThat(row.get("foobars", new TypeToken<Map<Integer, Bar>>(){})).isEqualTo(ImmutableMap.of(FOO_1.ordinal(), BAR_1, FOO_2.ordinal(), BAR_2));
-        assertThat(row.get("foobars", new TypeToken<Map<Foo, Bar>>(){})).isEqualTo(ImmutableMap.of(FOO_1, BAR_1, FOO_2, BAR_2));
+        assertThat(row.get("foobars", new TypeToken<Map<Integer, String>>() {
+        })).isEqualTo(ImmutableMap.of(FOO_1.ordinal(), BAR_1.name(), FOO_2.ordinal(), BAR_2.name()));
+        assertThat(row.get("foobars", new TypeToken<Map<Foo, String>>() {
+        })).isEqualTo(ImmutableMap.of(FOO_1, BAR_1.name(), FOO_2, BAR_2.name()));
+        assertThat(row.get("foobars", new TypeToken<Map<Integer, Bar>>() {
+        })).isEqualTo(ImmutableMap.of(FOO_1.ordinal(), BAR_1, FOO_2.ordinal(), BAR_2));
+        assertThat(row.get("foobars", new TypeToken<Map<Foo, Bar>>() {
+        })).isEqualTo(ImmutableMap.of(FOO_1, BAR_1, FOO_2, BAR_2));
 
         assertThat(row.getTupleValue(6).getInt(0)).isEqualTo(FOO_1.ordinal());
         assertThat(row.get(6, TupleValue.class).get(0, Foo.class)).isEqualTo(FOO_1);

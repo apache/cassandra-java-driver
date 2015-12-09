@@ -15,11 +15,10 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.IndexMetadata.Kind;
 import org.assertj.core.api.AbstractAssert;
 
 import static org.assertj.core.api.Assertions.assertThat;
-
-import com.datastax.driver.core.IndexMetadata.Kind;
 
 public class IndexMetadataAssert extends AbstractAssert<IndexMetadataAssert, IndexMetadata> {
 
@@ -41,7 +40,7 @@ public class IndexMetadataAssert extends AbstractAssert<IndexMetadataAssert, Ind
         assertThat(actual.getOption(name)).isEqualTo(value);
         return this;
     }
-    
+
     public IndexMetadataAssert asCqlQuery(String cqlQuery) {
         assertThat(actual.asCQLQuery()).isEqualTo(cqlQuery);
         return this;
@@ -51,7 +50,7 @@ public class IndexMetadataAssert extends AbstractAssert<IndexMetadataAssert, Ind
         assertThat(actual.isCustomIndex()).isTrue();
         return this;
     }
-    
+
     public IndexMetadataAssert isNotCustomIndex() {
         assertThat(actual.isCustomIndex()).isFalse();
         return this;

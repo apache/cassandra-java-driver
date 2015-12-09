@@ -17,9 +17,8 @@ package com.datastax.driver.core.schemabuilder;
 
 import org.testng.annotations.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import static com.datastax.driver.core.schemabuilder.SchemaBuilder.createIndex;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class CreateIndexTest {
 

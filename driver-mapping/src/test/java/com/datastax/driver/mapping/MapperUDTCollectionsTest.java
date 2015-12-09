@@ -15,8 +15,7 @@
  */
 package com.datastax.driver.mapping;
 
-import java.util.*;
-
+import com.datastax.driver.core.CCMBridge;
 import com.datastax.driver.mapping.annotations.*;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
@@ -24,9 +23,9 @@ import com.google.common.collect.Sets;
 import org.testng.annotations.Test;
 import org.testng.collections.Lists;
 
-import static org.testng.Assert.assertEquals;
+import java.util.*;
 
-import com.datastax.driver.core.CCMBridge;
+import static org.testng.Assert.assertEquals;
 
 /**
  * Tests mapping of collections of UDTs.
@@ -35,7 +34,7 @@ public class MapperUDTCollectionsTest extends CCMBridge.PerClassSingleNodeCluste
 
     protected Collection<String> getTableDefinitions() {
         return Arrays.asList("CREATE TYPE sub(i int)",
-                             "CREATE TABLE collection_examples (id int PRIMARY KEY, l list<frozen<sub>>, s set<frozen<sub>>, m1 map<int,frozen<sub>>, m2 map<frozen<sub>,int>, m3 map<frozen<sub>,frozen<sub>>)");
+                "CREATE TABLE collection_examples (id int PRIMARY KEY, l list<frozen<sub>>, s set<frozen<sub>>, m1 map<int,frozen<sub>>, m2 map<frozen<sub>,int>, m3 map<frozen<sub>,frozen<sub>>)");
     }
 
     @UDT(name = "sub")
@@ -60,7 +59,7 @@ public class MapperUDTCollectionsTest extends CCMBridge.PerClassSingleNodeCluste
         @Override
         public boolean equals(Object other) {
             if (other instanceof Sub) {
-                Sub that = (Sub)other;
+                Sub that = (Sub) other;
                 return this.i == that.i;
             }
             return false;
@@ -159,13 +158,13 @@ public class MapperUDTCollectionsTest extends CCMBridge.PerClassSingleNodeCluste
         @Override
         public boolean equals(Object other) {
             if (other instanceof CollectionExamples) {
-                CollectionExamples that = (CollectionExamples)other;
+                CollectionExamples that = (CollectionExamples) other;
                 return Objects.equal(this.id, that.id) &&
-                       Objects.equal(this.l, that.l) &&
-                       Objects.equal(this.s, that.s) &&
-                       Objects.equal(this.m1, that.m1) &&
-                       Objects.equal(this.m2, that.m2) &&
-                       Objects.equal(this.m3, that.m3);
+                        Objects.equal(this.l, that.l) &&
+                        Objects.equal(this.s, that.s) &&
+                        Objects.equal(this.m1, that.m1) &&
+                        Objects.equal(this.m2, that.m2) &&
+                        Objects.equal(this.m3, that.m3);
             }
             return false;
         }

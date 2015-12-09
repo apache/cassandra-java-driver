@@ -15,19 +15,18 @@
  */
 package com.datastax.driver.mapping;
 
-import java.util.Collection;
-
-import com.google.common.collect.Lists;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.CCMBridge;
 import com.datastax.driver.mapping.Mapper.Option;
 import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
+import com.google.common.collect.Lists;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
+import java.util.Collection;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class MapperSaveNullFieldsTest extends CCMBridge.PerClassSingleNodeCluster {
 
@@ -75,7 +74,7 @@ public class MapperSaveNullFieldsTest extends CCMBridge.PerClassSingleNodeCluste
     private void should_save_null_fields(boolean nullName, boolean nullPhone, boolean saveExpected, Option... options) {
         // Start with clean data
         session.execute("insert into user(login, name, phone) "
-            + "values ('test_login', 'previous_name', 'previous_phone')");
+                + "values ('test_login', 'previous_name', 'previous_phone')");
 
         String newName = nullName ? null : "new_name";
         String newPhone = nullPhone ? null : "new_phone";
@@ -83,7 +82,7 @@ public class MapperSaveNullFieldsTest extends CCMBridge.PerClassSingleNodeCluste
         User newUser = new User("test_login", newName, newPhone);
 
         // Check if null fields are included in generated statement:
-        BoundStatement bs = (BoundStatement)mapper.saveQuery(newUser, options);
+        BoundStatement bs = (BoundStatement) mapper.saveQuery(newUser, options);
         String queryString = bs.preparedStatement().getQueryString();
         if (nullName && !saveExpected)
             assertThat(queryString).as(description).doesNotContain("\"name\"");
@@ -99,11 +98,11 @@ public class MapperSaveNullFieldsTest extends CCMBridge.PerClassSingleNodeCluste
         mapper.save(newUser, options);
         User savedUser = mapper.get("test_login");
         String expectedName = nullName
-            ? (saveExpected ? null : "previous_name")
-            : "new_name";
+                ? (saveExpected ? null : "previous_name")
+                : "new_name";
         String expectedPhone = nullPhone
-            ? (saveExpected ? null : "previous_phone")
-            : "new_phone";
+                ? (saveExpected ? null : "previous_phone")
+                : "new_phone";
         assertThat(savedUser.getName()).as(description).isEqualTo(expectedName);
         assertThat(savedUser.getPhone()).as(description).isEqualTo(expectedPhone);
     }

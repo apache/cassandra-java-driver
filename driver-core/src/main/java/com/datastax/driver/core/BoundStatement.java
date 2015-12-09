@@ -15,34 +15,33 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.exceptions.InvalidTypeException;
+import com.google.common.reflect.TypeToken;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
 
-import com.google.common.reflect.TypeToken;
-
-import com.datastax.driver.core.exceptions.InvalidTypeException;
-
 /**
  * A prepared statement with values bound to the bind variables.
- * <p>
+ * <p/>
  * Once values has been provided for the variables of the {@link PreparedStatement}
  * it has been created from, such BoundStatement can be executed (through
  * {@link Session#execute(Statement)}).
- * <p>
+ * <p/>
  * The values of a BoundStatement can be set by either index or name. When
  * setting them by name, names follow the case insensitivity rules explained in
  * {@link ColumnDefinitions} but with the difference that if multiple bind
  * variables have the same name, setting that name will set <b>all</b> the
  * variables for that name.
- * <p>
+ * <p/>
  * With native protocol V3 or below, all variables of the statement must be bound.
  * If you don't explicitly set a value for a variable, an {@code IllegalStateException}
  * will be thrown when submitting the statement. If you want to set a variable to
  * {@code null}, use {@link #setToNull(int) setToNull}.
- * <p>
+ * <p/>
  * With native protocol V4 or above, variables can be left unset, in which case they
  * will be ignored server side (no tombstones will be generated). If you're reusing
  * a bound statement, you can {@link #unset(int) unset} variables that were previously
@@ -64,6 +63,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     /**
      * Creates a new {@code BoundStatement} from the provided prepared
      * statement.
+     *
      * @param statement the prepared statement from which to create a {@code BoundStatement}.
      */
     public BoundStatement(PreparedStatement statement) {
@@ -106,7 +106,6 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      *
      * @param i the index of the variable to check.
      * @return whether the {@code i}th variable has been bound.
-     *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
      */
     public boolean isSet(int i) {
@@ -120,9 +119,8 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @param name the name of the variable to check.
      * @return whether the first occurrence of variable {@code name} has been
      * bound to a non-null value.
-     *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, that is if {@code !this.preparedStatement().variables().names().contains(name)}.
+     *                                  variable, that is if {@code !this.preparedStatement().variables().names().contains(name)}.
      */
     public boolean isSet(String name) {
         return wrapper.getValue(wrapper.getIndexOf(name)) != UNSET;
@@ -131,12 +129,11 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     /**
      * Unsets the {@code i}th variable. This will leave the statement in the same state as if no setter was
      * ever called for this variable.
-     * <p>
+     * <p/>
      * The treatment of unset variables depends on the native protocol version, see {@link BoundStatement}
      * for explanations.
      *
      * @param i the index of the variable.
-     *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
      */
     public void unset(int i) {
@@ -146,14 +143,13 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     /**
      * Unsets all occurrences of variable {@code name}.  This will leave the statement in the same state
      * as if no setter was ever called for this variable.
-     * <p>
+     * <p/>
      * The treatment of unset variables depends on the native protocol version, see {@link BoundStatement}
      * for explanations.
      *
      * @param name the name of the variable.
-     *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, that is if {@code !this.preparedStatement().variables().names().contains(name)}.
+     *                                  variable, that is if {@code !this.preparedStatement().variables().names().contains(name)}.
      */
     public void unset(String name) {
         for (int i : wrapper.getAllIndexesOf(name)) {
@@ -163,25 +159,24 @@ public class BoundStatement extends Statement implements SettableData<BoundState
 
     /**
      * Bound values to the variables of this statement.
-     *
+     * <p/>
      * This is a convenience method to bind all the variables of the
      * {@code BoundStatement} in one call.
      *
      * @param values the values to bind to the variables of the newly created
-     * BoundStatement. The first element of {@code values} will be bound to the
-     * first bind variable, etc. It is legal to provide fewer values than the
-     * statement has bound variables. In that case, the remaining variable need
-     * to be bound before execution. If more values than variables are provided
-     * however, an IllegalArgumentException wil be raised.
+     *               BoundStatement. The first element of {@code values} will be bound to the
+     *               first bind variable, etc. It is legal to provide fewer values than the
+     *               statement has bound variables. In that case, the remaining variable need
+     *               to be bound before execution. If more values than variables are provided
+     *               however, an IllegalArgumentException wil be raised.
      * @return this bound statement.
-     *
      * @throws IllegalArgumentException if more {@code values} are provided
-     * than there is of bound variables in this statement.
-     * @throws InvalidTypeException if any of the provided value is not of
-     * correct type to be bound to the corresponding bind variable.
-     * @throws NullPointerException if one of {@code values} is a collection
-     * (List, Set or Map) containing a null value. Nulls are not supported in
-     * collections by CQL.
+     *                                  than there is of bound variables in this statement.
+     * @throws InvalidTypeException     if any of the provided value is not of
+     *                                  correct type to be bound to the corresponding bind variable.
+     * @throws NullPointerException     if one of {@code values} is a collection
+     *                                  (List, Set or Map) containing a null value. Nulls are not supported in
+     *                                  collections by CQL.
      */
     public BoundStatement bind(Object... values) {
 
@@ -196,7 +191,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
                 ProtocolVersion protocolVersion = statement.getPreparedId().protocolVersion;
                 if (value instanceof Token)
                     // bypass CodecRegistry for token values
-                    wrapper.values[i] = ((Token)value).serialize(protocolVersion);
+                    wrapper.values[i] = ((Token) value).serialize(protocolVersion);
                 else
                     wrapper.values[i] = wrapper.codecFor(i, value).serialize(value, protocolVersion);
             }
@@ -206,7 +201,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
 
     /**
      * The routing key for this bound query.
-     * <p>
+     * <p/>
      * This method will return a non-{@code null} value if either of the following occur:
      * <ul>
      * <li>The routing key has been set directly through {@link BoundStatement#setRoutingKey}.</li>
@@ -216,15 +211,14 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * key will then be built using the values provided for these partition key columns.</li>
      * </ul>
      * Otherwise, {@code null} is returned.
-     * <p>
-     *
+     * <p/>
+     * <p/>
      * Note that if the routing key has been set through {@link BoundStatement#setRoutingKey}, then that takes
      * precedence. If the routing key has been set through {@link PreparedStatement#setRoutingKey} then that is used
      * next. If neither of those are set then it is computed.
      *
      * @param protocolVersion unused by this implementation (no internal serialization is required to compute the key).
-     * @param codecRegistry unused by this implementation (no internal serialization is required to compute the key).
-     *
+     * @param codecRegistry   unused by this implementation (no internal serialization is required to compute the key).
      * @return the routing key for this statement or {@code null}.
      */
     @Override
@@ -257,14 +251,13 @@ public class BoundStatement extends Statement implements SettableData<BoundState
 
     /**
      * Sets the routing key for this bound statement.
-     * <p>
+     * <p/>
      * This is useful when the routing key can neither be set on the {@code PreparedStatement} this bound statement
      * was built from, nor automatically computed from bound variables. In particular, this is the case if the
      * partition key is composite and only some of its components are bound.
      *
      * @param routingKey the raw (binary) value to use as routing key.
      * @return this {@code BoundStatement} object.
-     *
      * @see BoundStatement#getRoutingKey
      */
     public BoundStatement setRoutingKey(ByteBuffer routingKey) {
@@ -366,9 +359,8 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * @param i the index of the variable to set.
      * @param v the value to set.
      * @return this BoundStatement.
-     *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
-     * @throws InvalidTypeException if column {@code i} is not of type TIMESTAMP.
+     * @throws InvalidTypeException      if column {@code i} is not of type TIMESTAMP.
      * @deprecated deprecated in favor of {@link #setTimestamp(int, Date)}
      */
     @Deprecated
@@ -381,14 +373,13 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * provided date.
      *
      * @param name the name of the variable to set; if multiple variables
-     * {@code name} are prepared, all of them are set.
-     * @param v the value to set.
+     *             {@code name} are prepared, all of them are set.
+     * @param v    the value to set.
      * @return this BoundStatement.
-     *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if (any occurrence of) {@code name} is
-     * not of type TIMESTAMP.
+     *                                  variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * @throws InvalidTypeException     if (any occurrence of) {@code name} is
+     *                                  not of type TIMESTAMP.
      * @deprecated deprecated in favor of {@link #setTimestamp(String, Date)}
      */
     @Deprecated
@@ -590,16 +581,15 @@ public class BoundStatement extends Statement implements SettableData<BoundState
 
     /**
      * Sets the {@code i}th value to the provided {@link Token}.
-     * <p>
+     * <p/>
      * {@link #setPartitionKeyToken(Token)} should generally be preferred if you
      * have a single token variable.
      *
      * @param i the index of the variable to set.
      * @param v the value to set.
      * @return this BoundStatement.
-     *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
-     * @throws InvalidTypeException if column {@code i} is not of the type of the token's value.
+     * @throws InvalidTypeException      if column {@code i} is not of the type of the token's value.
      */
     public BoundStatement setToken(int i, Token v) {
         return wrapper.setToken(i, v);
@@ -608,10 +598,10 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     /**
      * Sets the value for (all occurrences of) variable {@code name} to the
      * provided token.
-     * <p>
+     * <p/>
      * {@link #setPartitionKeyToken(Token)} should generally be preferred if you
      * have a single token variable.
-     * <p>
+     * <p/>
      * If you have multiple token variables, use positional binding ({@link #setToken(int, Token)},
      * or named bind markers:
      * <pre>
@@ -622,14 +612,13 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * </pre>
      *
      * @param name the name of the variable to set; if multiple variables
-     * {@code name} are prepared, all of them are set.
-     * @param v the value to set.
+     *             {@code name} are prepared, all of them are set.
+     * @param v    the value to set.
      * @return this BoundStatement.
-     *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if (any occurrence of) {@code name} is
-     * not of the type of the token's value.
+     *                                  variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * @throws InvalidTypeException     if (any occurrence of) {@code name} is
+     *                                  not of the type of the token's value.
      */
     public BoundStatement setToken(String name, Token v) {
         return wrapper.setToken(name, v);
@@ -639,7 +628,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * Sets the value for (all occurrences of) variable "{@code partition key token}"
      * to the provided token (this is the name generated by Cassandra for markers
      * corresponding to a {@code token(...)} call).
-     * <p>
+     * <p/>
      * This method is a shorthand for statements with a single token variable:
      * <pre>
      * {@code
@@ -659,11 +648,10 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      *
      * @param v the value to set.
      * @return this BoundStatement.
-     *
      * @throws IllegalArgumentException if {@code name} is not a prepared
-     * variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException if (any occurrence of) {@code name} is
-     * not of the type of the token's value.
+     *                                  variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
+     * @throws InvalidTypeException     if (any occurrence of) {@code name} is
+     *                                  not of the type of the token's value.
      */
     public BoundStatement setPartitionKeyToken(Token v) {
         return setToken("partition key token", v);
@@ -730,7 +718,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      */
     @Override
     public <K, V> BoundStatement setMap(int i, Map<K, V> v, Class<K> keysClass, Class<V> valuesClass) {
-        return wrapper.setMap(i,v, keysClass, valuesClass);
+        return wrapper.setMap(i, v, keysClass, valuesClass);
     }
 
     /**
@@ -812,7 +800,7 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     public <E> BoundStatement setSet(String name, Set<E> v, TypeToken<E> elementsType) {
         return wrapper.setSet(name, v, elementsType);
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -1393,10 +1381,10 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     void ensureAllSet() {
         int index = 0;
         for (ByteBuffer value : wrapper.values) {
-             if (value == BoundStatement.UNSET)
+            if (value == BoundStatement.UNSET)
                 throw new IllegalStateException("Unset value at index " + index + ". "
-                                                + "If you want this value to be null, please set it to null explicitly.");
-             index += 1;
+                        + "If you want this value to be null, please set it to null explicitly.");
+            index += 1;
         }
     }
 

@@ -15,9 +15,8 @@
  */
 package com.datastax.driver.extras.codecs.joda;
 
-import java.nio.ByteBuffer;
-import java.util.List;
-
+import com.datastax.driver.core.*;
+import com.datastax.driver.core.exceptions.InvalidTypeException;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.joda.time.format.DateTimeFormat;
@@ -25,23 +24,22 @@ import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.DateTimeFormatterBuilder;
 import org.joda.time.format.ISODateTimeFormat;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static org.joda.time.DateTimeZone.UTC;
-
-import com.datastax.driver.core.*;
-import com.datastax.driver.core.exceptions.InvalidTypeException;
+import java.nio.ByteBuffer;
+import java.util.List;
 
 import static com.datastax.driver.core.ParseUtils.isLongLiteral;
 import static com.datastax.driver.core.ParseUtils.quote;
+import static com.google.common.base.Preconditions.checkArgument;
+import static org.joda.time.DateTimeZone.UTC;
 
 /**
- * <p>
+ * <p/>
  * {@link TypeCodec} that maps
  * {@link DateTime} to CQL {@code tuple<timestamp,varchar>},
  * providing a pattern for maintaining timezone information in
  * Cassandra.
- *
- * <p>
+ * <p/>
+ * <p/>
  * Since Cassandra's <code>timestamp</code> type preserves only
  * milliseconds since epoch, any timezone information
  * would normally be lost. By using a
@@ -60,13 +58,13 @@ public class DateTimeCodec extends TypeCodec.AbstractTupleCodec<DateTime> {
      * the ISO formats accepted in CQL.
      */
     private static final DateTimeFormatter FORMATTER = new DateTimeFormatterBuilder()
-        .append(ISODateTimeFormat.dateOptionalTimeParser().getParser())
-        .appendOptional(
-            new DateTimeFormatterBuilder()
-                .appendTimeZoneOffset("Z", true, 2, 4)
-                .toParser())
-        .toFormatter()
-        .withZoneUTC();
+            .append(ISODateTimeFormat.dateOptionalTimeParser().getParser())
+            .appendOptional(
+                    new DateTimeFormatterBuilder()
+                            .appendTimeZoneOffset("Z", true, 2, 4)
+                            .toParser())
+            .toFormatter()
+            .withZoneUTC();
 
     private static final DateTimeFormatter ZONE_FORMATTER = DateTimeFormat.forPattern("ZZ");
 
@@ -74,9 +72,9 @@ public class DateTimeCodec extends TypeCodec.AbstractTupleCodec<DateTime> {
         super(tupleType, DateTime.class);
         List<DataType> types = tupleType.getComponentTypes();
         checkArgument(
-            types.size() == 2 && types.get(0).equals(DataType.timestamp()) && types.get(1).equals(DataType.varchar()),
-            "Expected tuple<timestamp,varchar>, got %s",
-            tupleType);
+                types.size() == 2 && types.get(0).equals(DataType.timestamp()) && types.get(1).equals(DataType.varchar()),
+                "Expected tuple<timestamp,varchar>, got %s",
+                tupleType);
     }
 
     @Override
@@ -86,43 +84,43 @@ public class DateTimeCodec extends TypeCodec.AbstractTupleCodec<DateTime> {
 
     @Override
     protected ByteBuffer serializeField(DateTime source, int index, ProtocolVersion protocolVersion) {
-        if(index == 0) {
+        if (index == 0) {
             long millis = source.getMillis();
             return bigint().serializeNoBoxing(millis, protocolVersion);
         }
-        if(index == 1) {
+        if (index == 1) {
             return varchar().serialize(ZONE_FORMATTER.print(source), protocolVersion);
         }
-        throw new IndexOutOfBoundsException("Tuple index out of bounds. "+ index);
+        throw new IndexOutOfBoundsException("Tuple index out of bounds. " + index);
     }
 
     @Override
     protected DateTime deserializeAndSetField(ByteBuffer input, DateTime target, int index, ProtocolVersion protocolVersion) {
-        if(index == 0) {
+        if (index == 0) {
             long millis = bigint().deserializeNoBoxing(input, protocolVersion);
             return new DateTime(millis);
         }
-        if(index == 1) {
+        if (index == 1) {
             String zoneId = varchar().deserialize(input, protocolVersion);
             return target.withZone(DateTimeZone.forID(zoneId));
         }
-        throw new IndexOutOfBoundsException("Tuple index out of bounds. "+ index);
+        throw new IndexOutOfBoundsException("Tuple index out of bounds. " + index);
     }
 
     @Override
     protected String formatField(DateTime value, int index) {
-        if(index == 0) {
+        if (index == 0) {
             return quote(value.withZone(UTC).toString());
         }
-        if(index == 1) {
+        if (index == 1) {
             return quote(ZONE_FORMATTER.print(value));
         }
-        throw new IndexOutOfBoundsException("Tuple index out of bounds. "+ index);
+        throw new IndexOutOfBoundsException("Tuple index out of bounds. " + index);
     }
 
     @Override
     protected DateTime parseAndSetField(String input, DateTime target, int index) {
-        if(index == 0) {
+        if (index == 0) {
             // strip enclosing single quotes, if any
             if (ParseUtils.isQuoted(input))
                 input = ParseUtils.unquote(input);
@@ -140,11 +138,11 @@ public class DateTimeCodec extends TypeCodec.AbstractTupleCodec<DateTime> {
                 throw new InvalidTypeException(String.format("Cannot parse timestamp value from \"%s\"", target));
             }
         }
-        if(index == 1) {
+        if (index == 1) {
             String zoneId = varchar().parse(input);
             return target.withZone(DateTimeZone.forID(zoneId));
         }
-        throw new IndexOutOfBoundsException("Tuple index out of bounds. "+ index);
+        throw new IndexOutOfBoundsException("Tuple index out of bounds. " + index);
     }
 
 }

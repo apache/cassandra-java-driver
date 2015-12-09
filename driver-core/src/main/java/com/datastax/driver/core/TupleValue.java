@@ -61,7 +61,7 @@ public class TupleValue extends AbstractAddressableByIndexData<TupleValue> {
         if (!(o instanceof TupleValue))
             return false;
 
-        TupleValue that = (TupleValue)o;
+        TupleValue that = (TupleValue) o;
         if (!type.equals(that.type))
             return false;
 

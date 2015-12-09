@@ -21,7 +21,7 @@ import com.datastax.driver.extras.codecs.ParsingCodec;
 /**
  * A codec that serializes {@link Enum} instances as CQL {@code varchar}s
  * representing their programmatic names as returned by {@link Enum#name()}.
- * <p>
+ * <p/>
  * <strong>Note that this codec relies on the enum constant names;
  * it is therefore vital that enum names never change.</strong>
  *

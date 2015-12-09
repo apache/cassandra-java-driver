@@ -20,10 +20,10 @@ import com.datastax.driver.core.exceptions.DriverException;
 
 /**
  * A retry policy that avoids retrying non-idempotent statements.
- * <p>
+ * <p/>
  * In case of write timeouts or unexpected errors, this policy will always return {@link RetryDecision#rethrow()}
  * if the statement is deemed non-idempotent (see {@link #isIdempotent(Statement)}).
- * <p>
+ * <p/>
  * For all other cases, this policy delegates the decision to the child policy.
  */
 public class IdempotenceAwareRetryPolicy implements RetryPolicy {
@@ -34,6 +34,7 @@ public class IdempotenceAwareRetryPolicy implements RetryPolicy {
 
     /**
      * Creates a new instance.
+     *
      * @param childPolicy the policy to wrap.
      */
     public IdempotenceAwareRetryPolicy(RetryPolicy childPolicy) {
@@ -47,7 +48,7 @@ public class IdempotenceAwareRetryPolicy implements RetryPolicy {
 
     @Override
     public RetryDecision onWriteTimeout(Statement statement, ConsistencyLevel cl, WriteType writeType, int requiredAcks, int receivedAcks, int nbRetry) {
-        if(isIdempotent(statement))
+        if (isIdempotent(statement))
             return childPolicy.onWriteTimeout(statement, cl, writeType, requiredAcks, receivedAcks, nbRetry);
         else
             return RetryDecision.rethrow();
@@ -60,7 +61,7 @@ public class IdempotenceAwareRetryPolicy implements RetryPolicy {
 
     @Override
     public RetryDecision onRequestError(Statement statement, ConsistencyLevel cl, DriverException e, int nbRetry) {
-        if(isIdempotent(statement))
+        if (isIdempotent(statement))
             return childPolicy.onRequestError(statement, cl, e, nbRetry);
         else
             return RetryDecision.rethrow();
@@ -78,12 +79,12 @@ public class IdempotenceAwareRetryPolicy implements RetryPolicy {
 
     /**
      * Determines whether the given statement is idempotent or not.
-     * <p>
+     * <p/>
      * The current implementation inspects the statement's
      * {@link Statement#isIdempotent() idempotent flag};
      * if this flag is not set, then it inspects
      * {@link QueryOptions#getDefaultIdempotence()}.
-     * <p>
+     * <p/>
      * Subclasses may override if they have better knowledge of
      * the statement being executed.
      *

@@ -15,11 +15,10 @@
  */
 package com.datastax.driver.core;
 
-import java.util.concurrent.TimeUnit;
-
+import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import org.testng.annotations.Test;
 
-import com.datastax.driver.core.exceptions.NoHostAvailableException;
+import java.util.concurrent.TimeUnit;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 
@@ -38,7 +37,7 @@ public class SSLEncryptionTest extends SSLTestBase {
      * @test_category connection:ssl
      * @expected_result Connection can be established to a cassandra node using SSL.
      */
-    @Test(groups="short", dataProvider = "sslImplementation", dataProviderClass = SSLTestBase.class)
+    @Test(groups = "short", dataProvider = "sslImplementation", dataProviderClass = SSLTestBase.class)
     public void should_connect_with_ssl_without_client_auth_and_node_doesnt_require_auth(SslImplementation sslImplementation) throws Exception {
         connectWithSSLOptions(getSSLOptions(sslImplementation, false, true));
     }
@@ -52,7 +51,7 @@ public class SSLEncryptionTest extends SSLTestBase {
      * @test_category connection:ssl
      * @expected_result Connection can not be established to a cassandra node using SSL with an untrusted cert.
      */
-    @Test(groups="short", dataProvider = "sslImplementation", dataProviderClass = SSLTestBase.class, expectedExceptions={NoHostAvailableException.class})
+    @Test(groups = "short", dataProvider = "sslImplementation", dataProviderClass = SSLTestBase.class, expectedExceptions = {NoHostAvailableException.class})
     public void should_not_connect_with_ssl_without_trusting_server_cert(SslImplementation sslImplementation) throws Exception {
         connectWithSSLOptions(getSSLOptions(sslImplementation, false, false));
     }
@@ -62,7 +61,7 @@ public class SSLEncryptionTest extends SSLTestBase {
      * Validates that an SSL connection can not be established if the client is not specifying SSL, but
      * the cassandra node is using SSL.
      * </p>
-     *
+     * <p/>
      * <p>
      * Note that future versions of cassandra may support both SSL-encrypted and non-SSL connections
      * simultaneously (CASSANDRA-8803)
@@ -71,13 +70,13 @@ public class SSLEncryptionTest extends SSLTestBase {
      * @test_category connection:ssl
      * @expected_result Connection can not be established to a cassandra node using SSL and the client not using SSL.
      */
-    @Test(groups="short", expectedExceptions={NoHostAvailableException.class})
+    @Test(groups = "short", expectedExceptions = {NoHostAvailableException.class})
     public void should_not_connect_without_ssl_but_node_uses_ssl() throws Exception {
         Cluster cluster = null;
         try {
             cluster = Cluster.builder()
-                .addContactPoint(CCMBridge.IP_PREFIX + '1')
-                .build();
+                    .addContactPoint(CCMBridge.IP_PREFIX + '1')
+                    .build();
 
             cluster.connect();
         } finally {
@@ -95,14 +94,14 @@ public class SSLEncryptionTest extends SSLTestBase {
      * @test_category connection:ssl
      * @expected_result Connection is re-established within a sufficient amount of time after a node comes back online.
      */
-    @Test(groups="long", dataProvider = "sslImplementation", dataProviderClass = SSLTestBase.class)
+    @Test(groups = "long", dataProvider = "sslImplementation", dataProviderClass = SSLTestBase.class)
     public void should_reconnect_with_ssl_on_node_up(SslImplementation sslImplementation) throws Exception {
         Cluster cluster = null;
         try {
             cluster = Cluster.builder()
-                .addContactPoint(CCMBridge.IP_PREFIX + '1')
-                .withSSL(getSSLOptions(sslImplementation, true, true))
-                .build();
+                    .addContactPoint(CCMBridge.IP_PREFIX + '1')
+                    .withSSL(getSSLOptions(sslImplementation, true, true))
+                    .build();
 
             cluster.connect();
 
@@ -124,7 +123,7 @@ public class SSLEncryptionTest extends SSLTestBase {
      * @test_category connection:ssl
      * @expected_result Connection can be established.
      */
-    @Test(groups="isolated")
+    @Test(groups = "isolated")
     public void should_use_system_properties_with_default_ssl_options() throws Exception {
         System.setProperty("javax.net.ssl.trustStore", CCMBridge.DEFAULT_CLIENT_TRUSTSTORE_FILE.getAbsolutePath());
         System.setProperty("javax.net.ssl.trustStorePassword", CCMBridge.DEFAULT_CLIENT_TRUSTSTORE_PASSWORD);

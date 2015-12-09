@@ -15,14 +15,13 @@
  */
 package com.datastax.driver.core;
 
-import java.util.*;
-
+import com.datastax.driver.core.exceptions.DriverInternalError;
+import com.datastax.driver.core.utils.Bytes;
 import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.datastax.driver.core.exceptions.DriverInternalError;
-import com.datastax.driver.core.utils.Bytes;
+import java.util.*;
 
 /*
  * Parse data types from schema tables, for Cassandra 3.0 and above.
@@ -51,27 +50,27 @@ class DataTypeClassNameParser {
     private static final String TUPLE_TYPE = "org.apache.cassandra.db.marshal.TupleType";
 
     private static ImmutableMap<String, DataType> cassTypeToDataType =
-        new ImmutableMap.Builder<String, DataType>()
-            .put("org.apache.cassandra.db.marshal.AsciiType",         DataType.ascii())
-            .put("org.apache.cassandra.db.marshal.LongType",          DataType.bigint())
-            .put("org.apache.cassandra.db.marshal.BytesType",         DataType.blob())
-            .put("org.apache.cassandra.db.marshal.BooleanType",       DataType.cboolean())
-            .put("org.apache.cassandra.db.marshal.CounterColumnType", DataType.counter())
-            .put("org.apache.cassandra.db.marshal.DecimalType",       DataType.decimal())
-            .put("org.apache.cassandra.db.marshal.DoubleType",        DataType.cdouble())
-            .put("org.apache.cassandra.db.marshal.FloatType",         DataType.cfloat())
-            .put("org.apache.cassandra.db.marshal.InetAddressType",   DataType.inet())
-            .put("org.apache.cassandra.db.marshal.Int32Type",         DataType.cint())
-            .put("org.apache.cassandra.db.marshal.UTF8Type",          DataType.text())
-            .put("org.apache.cassandra.db.marshal.TimestampType",     DataType.timestamp())
-            .put("org.apache.cassandra.db.marshal.SimpleDateType",    DataType.date())
-            .put("org.apache.cassandra.db.marshal.TimeType",          DataType.time())
-            .put("org.apache.cassandra.db.marshal.UUIDType",          DataType.uuid())
-            .put("org.apache.cassandra.db.marshal.IntegerType",       DataType.varint())
-            .put("org.apache.cassandra.db.marshal.TimeUUIDType",      DataType.timeuuid())
-            .put("org.apache.cassandra.db.marshal.ByteType",          DataType.tinyint())
-            .put("org.apache.cassandra.db.marshal.ShortType",         DataType.smallint())
-            .build();
+            new ImmutableMap.Builder<String, DataType>()
+                    .put("org.apache.cassandra.db.marshal.AsciiType", DataType.ascii())
+                    .put("org.apache.cassandra.db.marshal.LongType", DataType.bigint())
+                    .put("org.apache.cassandra.db.marshal.BytesType", DataType.blob())
+                    .put("org.apache.cassandra.db.marshal.BooleanType", DataType.cboolean())
+                    .put("org.apache.cassandra.db.marshal.CounterColumnType", DataType.counter())
+                    .put("org.apache.cassandra.db.marshal.DecimalType", DataType.decimal())
+                    .put("org.apache.cassandra.db.marshal.DoubleType", DataType.cdouble())
+                    .put("org.apache.cassandra.db.marshal.FloatType", DataType.cfloat())
+                    .put("org.apache.cassandra.db.marshal.InetAddressType", DataType.inet())
+                    .put("org.apache.cassandra.db.marshal.Int32Type", DataType.cint())
+                    .put("org.apache.cassandra.db.marshal.UTF8Type", DataType.text())
+                    .put("org.apache.cassandra.db.marshal.TimestampType", DataType.timestamp())
+                    .put("org.apache.cassandra.db.marshal.SimpleDateType", DataType.date())
+                    .put("org.apache.cassandra.db.marshal.TimeType", DataType.time())
+                    .put("org.apache.cassandra.db.marshal.UUIDType", DataType.uuid())
+                    .put("org.apache.cassandra.db.marshal.IntegerType", DataType.varint())
+                    .put("org.apache.cassandra.db.marshal.TimeUUIDType", DataType.timeuuid())
+                    .put("org.apache.cassandra.db.marshal.ByteType", DataType.tinyint())
+                    .put("org.apache.cassandra.db.marshal.ShortType", DataType.smallint())
+                    .build();
 
     static DataType parseOne(String className, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
         boolean frozen = false;
@@ -99,7 +98,7 @@ class DataTypeClassNameParser {
 
         if (frozen)
             logger.warn("Got o.a.c.db.marshal.FrozenType for something else than a collection, "
-                + "this driver version might be too old for your version of Cassandra");
+                    + "this driver version might be too old for your version of Cassandra");
 
         if (isUserType(next)) {
             ++parser.idx; // skipping '('
@@ -200,9 +199,9 @@ class DataTypeClassNameParser {
 
         private ParseResult(DataType type, boolean reversed) {
             this(false,
-                 Collections.<DataType>singletonList(type),
-                 Collections.<Boolean>singletonList(reversed),
-                 Collections.<String, DataType>emptyMap());
+                    Collections.<DataType>singletonList(type),
+                    Collections.<Boolean>singletonList(reversed),
+                    Collections.<String, DataType>emptyMap());
         }
 
         private ParseResult(boolean isComposite, List<DataType> types, List<Boolean> reversed, Map<String, DataType> collections) {
@@ -399,7 +398,7 @@ class DataTypeClassNameParser {
 
         @Override
         public String toString() {
-            return str.substring(0, idx) + "[" + (idx == str.length() ? "" : str.charAt(idx)) + "]" + str.substring(idx+1);
+            return str.substring(0, idx) + "[" + (idx == str.length() ? "" : str.charAt(idx)) + "]" + str.substring(idx + 1);
         }
     }
 }

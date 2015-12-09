@@ -15,19 +15,19 @@
  */
 package com.datastax.driver.core;
 
-import java.util.Collection;
-
 import com.google.common.collect.Lists;
 import org.testng.annotations.Test;
 
-import static com.datastax.driver.core.Assertions.*;
+import java.util.Collection;
+
+import static com.datastax.driver.core.Assertions.assertThat;
 
 public class PreparedIdTest extends CCMBridge.PerClassSingleNodeCluster {
 
     @Override
     protected Collection<String> getTableDefinitions() {
         return Lists.newArrayList(
-            "CREATE TABLE foo(k1 int, k2 int, k3 int, v int, PRIMARY KEY ((k1, k2, k3)))"
+                "CREATE TABLE foo(k1 int, k2 int, k3 int, v int, PRIMARY KEY ((k1, k2, k3)))"
         );
     }
 

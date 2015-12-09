@@ -15,12 +15,12 @@
  */
 package com.datastax.driver.core.querybuilder;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.datastax.driver.core.CodecRegistry;
 import com.datastax.driver.core.TableMetadata;
 import com.datastax.driver.core.querybuilder.Assignment.CounterAssignment;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A built UPDATE statement.
@@ -92,7 +92,7 @@ public class Update extends BuiltStatement {
 
     /**
      * Adds an assignment to this UPDATE statement.
-     *
+     * <p/>
      * This is a shorter/more readable version for {@code with().and(assignment)}.
      *
      * @param assignment the assignment to add.
@@ -113,7 +113,7 @@ public class Update extends BuiltStatement {
 
     /**
      * Adds a WHERE clause to this statement.
-     *
+     * <p/>
      * This is a shorter/more readable version for {@code where().and(clause)}.
      *
      * @param clause the clause to add.
@@ -134,7 +134,7 @@ public class Update extends BuiltStatement {
 
     /**
      * Adds a conditions clause (IF) to this statement.
-     * <p>
+     * <p/>
      * This is a shorter/more readable version for {@code onlyIf().and(condition)}.
      *
      * @param condition the condition to add.
@@ -274,11 +274,11 @@ public class Update extends BuiltStatement {
         public Conditions onlyIf(Clause condition) {
             return statement.onlyIf(condition);
         }
-        
+
         /**
          * Sets the 'IF EXISTS' option for the UPDATE statement this WHERE clause
          * is part of.
-         *
+         * <p/>
          * <p>
          * An update with that option will report whether the statement actually
          * resulted in data being updated. The existence check and update are
@@ -354,10 +354,10 @@ public class Update extends BuiltStatement {
 
     /**
      * Conditions for an UPDATE statement.
-     * <p>
+     * <p/>
      * When provided some conditions, an update will not apply unless the
      * provided conditions applies.
-     * <p>
+     * <p/>
      * Please keep in mind that provided conditions has a non negligible
      * performance impact and should be avoided when possible.
      */
@@ -371,7 +371,7 @@ public class Update extends BuiltStatement {
 
         /**
          * Adds the provided condition for the update.
-         * <p>
+         * <p/>
          * Note that while the query builder accept any type of {@code Clause}
          * as conditions, Cassandra currently only allow equality ones.
          *
@@ -413,9 +413,9 @@ public class Update extends BuiltStatement {
         public Options using(Using using) {
             return statement.using(using);
         }
-        
+
     }
-    
+
     public static class IfExists extends BuiltStatement.ForwardingStatement<Update> {
         IfExists(Update statement) {
             super(statement);

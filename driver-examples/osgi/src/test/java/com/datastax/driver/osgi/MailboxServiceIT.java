@@ -15,71 +15,70 @@
  */
 package com.datastax.driver.osgi;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.GregorianCalendar;
-
-import javax.inject.Inject;
+import com.datastax.driver.osgi.api.MailboxException;
+import com.datastax.driver.osgi.api.MailboxMessage;
+import com.datastax.driver.osgi.api.MailboxService;
 import org.ops4j.pax.exam.Configuration;
 import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.testng.listener.PaxExam;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
+import javax.inject.Inject;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.GregorianCalendar;
+
+import static com.datastax.driver.osgi.BundleOptions.*;
 import static org.ops4j.pax.exam.CoreOptions.options;
 import static org.testng.Assert.assertEquals;
 
-import com.datastax.driver.osgi.api.MailboxException;
-import com.datastax.driver.osgi.api.MailboxMessage;
-import com.datastax.driver.osgi.api.MailboxService;
-
-import static com.datastax.driver.osgi.BundleOptions.*;
-
 @Listeners({CCMBridgeListener.class, PaxExam.class})
-@Test(groups="short")
+@Test(groups = "short")
 public class MailboxServiceIT {
-    @Inject MailboxService service;
+    @Inject
+    MailboxService service;
 
     @Configuration
     public Option[] shadedConfig() {
         return options(
-            driverBundle(true),
-            mailboxBundle(),
-            guavaBundle(),
-            defaultOptions()
+                driverBundle(true),
+                mailboxBundle(),
+                guavaBundle(),
+                defaultOptions()
         );
     }
 
     @Configuration
     public Option[] defaultConfig() {
         return options(
-            driverBundle(),
-            mailboxBundle(),
-            guavaBundle(),
-            nettyBundles(),
-            defaultOptions()
+                driverBundle(),
+                mailboxBundle(),
+                guavaBundle(),
+                nettyBundles(),
+                defaultOptions()
         );
     }
 
     @Configuration
     public Option[] guava17Config() {
         return options(
-            driverBundle(),
-            mailboxBundle(),
-            nettyBundles(),
-            guavaBundle().version("17.0"),
-            defaultOptions()
+                driverBundle(),
+                mailboxBundle(),
+                nettyBundles(),
+                guavaBundle().version("17.0"),
+                defaultOptions()
         );
     }
 
     @Configuration
     public Option[] guava18Config() {
         return options(
-            driverBundle(),
-            mailboxBundle(),
-            nettyBundles(),
-            guavaBundle().version("18.0"),
-            defaultOptions()
+                driverBundle(),
+                mailboxBundle(),
+                nettyBundles(),
+                guavaBundle().version("18.0"),
+                defaultOptions()
         );
     }
 
@@ -88,14 +87,14 @@ public class MailboxServiceIT {
      * Exercises a 'mailbox' service provided by an OSGi bundle that depends on the driver.  Ensures that
      * queries can be made through the service with the current given configuration.
      * </p>
-     *
+     * <p/>
      * The following configurations are tried (defined via methods with the @Configuration annotation):
      * <ol>
-     *   <li>Default bundle (Driver with all of it's dependencies)</li>
-     *   <li>Shaded bundle (Driver with netty shaded)</li>
-     *   <li>With Guava 16.0.1</li>
-     *   <li>With Guava 17</li>
-     *   <li>With Guava 18</li>
+     * <li>Default bundle (Driver with all of it's dependencies)</li>
+     * <li>Shaded bundle (Driver with netty shaded)</li>
+     * <li>With Guava 16.0.1</li>
+     * <li>With Guava 17</li>
+     * <li>With Guava 18</li>
      * </ol>
      *
      * @test_category packaging

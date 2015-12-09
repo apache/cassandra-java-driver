@@ -15,9 +15,9 @@
  */
 package com.datastax.driver.core.querybuilder;
 
-import java.util.List;
-
 import com.datastax.driver.core.CodecRegistry;
+
+import java.util.List;
 
 public abstract class Using extends Utils.Appendeable {
 

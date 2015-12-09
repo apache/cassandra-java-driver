@@ -15,27 +15,26 @@
  */
 package com.datastax.driver.core.policies;
 
+import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.Host;
+import com.datastax.driver.core.HostDistance;
+import com.datastax.driver.core.Statement;
+import com.google.common.collect.Sets;
+
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import com.google.common.collect.Sets;
-
-import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.Host;
-import com.datastax.driver.core.HostDistance;
-import com.datastax.driver.core.Statement;
-
 /**
  * Sample load balancing policy that limits the number of nodes the driver connects to.
- *
+ * <p/>
  * If more nodes are available, they are marked as IGNORED. When one of the "chosen" nodes
  * goes down, the policy picks one of the ignored nodes to replace it.
- * <p>
+ * <p/>
  * This kind of policy can be used to alleviate the load on a cluster that has a lot of
  * clients.
- * <p>
+ * <p/>
  * For simplicity, this policy does not distinguish LOCAL and REMOTE nodes.
  */
 public class LimitingLoadBalancingPolicy extends DelegatingLoadBalancingPolicy {
@@ -48,8 +47,8 @@ public class LimitingLoadBalancingPolicy extends DelegatingLoadBalancingPolicy {
     private volatile Cluster cluster;
 
     /**
-     * @param delegate the underlying policy that will be fed with the chosen nodes
-     * @param maxHosts the maximum number of chosen nodes
+     * @param delegate  the underlying policy that will be fed with the chosen nodes
+     * @param maxHosts  the maximum number of chosen nodes
      * @param threshold how many chosen nodes we accept to lose before we start picking new ones
      */
     public LimitingLoadBalancingPolicy(LoadBalancingPolicy delegate, int maxHosts, int threshold) {
@@ -63,7 +62,7 @@ public class LimitingLoadBalancingPolicy extends DelegatingLoadBalancingPolicy {
         this.cluster = cluster;
 
         Iterator<Host> hostIt = hosts.iterator();
-        while(hostIt.hasNext() && chosenHosts.size() <= maxHosts - threshold) {
+        while (hostIt.hasNext() && chosenHosts.size() <= maxHosts - threshold) {
             chosenHosts.add(hostIt.next());
         }
 

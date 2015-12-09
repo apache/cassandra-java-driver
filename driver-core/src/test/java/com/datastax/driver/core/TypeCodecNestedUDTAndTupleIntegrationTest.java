@@ -15,15 +15,13 @@
  */
 package com.datastax.driver.core;
 
-import java.util.*;
-
+import com.datastax.driver.core.utils.CassandraVersion;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import org.testng.annotations.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import java.util.Collection;
 
-import com.datastax.driver.core.utils.CassandraVersion;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * This tests that the CodecRegistry is able to create codecs on the fly
@@ -39,20 +37,20 @@ public class TypeCodecNestedUDTAndTupleIntegrationTest extends CCMBridge.PerClas
     @Override
     protected Collection<String> getTableDefinitions() {
         return Lists.newArrayList(
-            "CREATE TYPE IF NOT EXISTS \"udt3\" (f3 text)",
-            "CREATE TYPE IF NOT EXISTS \"udt2\" (f2 frozen<udt3>)",
-            "CREATE TYPE IF NOT EXISTS \"udt1\" (f1 frozen<udt2>)",
-            "CREATE TABLE IF NOT EXISTS \"t1\" (pk int PRIMARY KEY, "
-                + "c1 frozen<udt1>, "
-                + "c2 frozen<tuple<tuple<tuple<text>>>>, "
-                + "c3 frozen<tuple<tuple<tuple<udt1>>>>"
-                + ")",
-            // it's important to insert values using CQL literals
-            // so that the CodecRegistry will not be required until
-            // we receive a ResultSet
-            "INSERT INTO t1 (pk, c1) VALUES (1, {f1:{f2:{f3:'foo'}}})",
-            "INSERT INTO t1 (pk, c2) VALUES (2, ((('foo'))))",
-            "INSERT INTO t1 (pk, c3) VALUES (3, ((({f1:{f2:{f3:'foo'}}}))))"
+                "CREATE TYPE IF NOT EXISTS \"udt3\" (f3 text)",
+                "CREATE TYPE IF NOT EXISTS \"udt2\" (f2 frozen<udt3>)",
+                "CREATE TYPE IF NOT EXISTS \"udt1\" (f1 frozen<udt2>)",
+                "CREATE TABLE IF NOT EXISTS \"t1\" (pk int PRIMARY KEY, "
+                        + "c1 frozen<udt1>, "
+                        + "c2 frozen<tuple<tuple<tuple<text>>>>, "
+                        + "c3 frozen<tuple<tuple<tuple<udt1>>>>"
+                        + ")",
+                // it's important to insert values using CQL literals
+                // so that the CodecRegistry will not be required until
+                // we receive a ResultSet
+                "INSERT INTO t1 (pk, c1) VALUES (1, {f1:{f2:{f3:'foo'}}})",
+                "INSERT INTO t1 (pk, c2) VALUES (2, ((('foo'))))",
+                "INSERT INTO t1 (pk, c3) VALUES (3, ((({f1:{f2:{f3:'foo'}}}))))"
         );
     }
 

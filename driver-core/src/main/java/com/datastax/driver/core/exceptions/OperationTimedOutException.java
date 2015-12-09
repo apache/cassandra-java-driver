@@ -15,9 +15,9 @@
  */
 package com.datastax.driver.core.exceptions;
 
-import java.net.InetSocketAddress;
-
 import com.datastax.driver.core.SocketOptions;
+
+import java.net.InetSocketAddress;
 
 /**
  * Thrown on a client-side timeout, i.e. when the client didn't hear back from the server within

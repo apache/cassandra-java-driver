@@ -15,12 +15,12 @@
  */
 package com.datastax.driver.mapping.annotations;
 
+import com.datastax.driver.mapping.Mapper;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-
-import com.datastax.driver.mapping.Mapper;
 
 /**
  * Defines to which table a class must be mapped to.
@@ -34,6 +34,7 @@ public @interface Table {
      * @return the name of the keyspace.
      */
     String keyspace() default "";
+
     /**
      * The name of the table.
      *
@@ -47,6 +48,7 @@ public @interface Table {
      * @return whether the keyspace name is a case sensitive one.
      */
     boolean caseSensitiveKeyspace() default false;
+
     /**
      * Whether the table name is a case sensitive one.
      *

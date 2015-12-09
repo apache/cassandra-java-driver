@@ -212,10 +212,10 @@ public class SessionStressTest extends CCMBridge.PerClassSingleNodeCluster {
 
         // Immediately wait for CloseFutures, this should be very quick since all this work does is call closeAsync.
         List<ListenableFuture<Void>> futures = Lists.newArrayListWithCapacity(iterations);
-        for(ListenableFuture<CloseFuture> closeFuture : closeFutures) {
+        for (ListenableFuture<CloseFuture> closeFuture : closeFutures) {
             try {
                 futures.add(closeFuture.get());
-            } catch(Exception e) {
+            } catch (Exception e) {
                 logger.error("Got interrupted exception while waiting on closeFuture.", e);
             }
         }

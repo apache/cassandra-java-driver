@@ -15,12 +15,9 @@
  */
 package com.datastax.driver.stress;
 
-import java.util.Iterator;
-
-import com.google.common.util.concurrent.Uninterruptibles;
-
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.exceptions.DriverException;
+import com.google.common.util.concurrent.Uninterruptibles;
 
 public class BlockingConsumer implements Consumer {
 

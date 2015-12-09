@@ -15,21 +15,20 @@
  */
 package com.datastax.driver.mapping;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Field;
-import java.lang.reflect.*;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import com.google.common.base.Strings;
-import com.google.common.collect.Maps;
-import com.google.common.reflect.TypeToken;
-
 import com.datastax.driver.core.ConsistencyLevel;
 import com.datastax.driver.core.TypeCodec;
 import com.datastax.driver.core.UserType;
 import com.datastax.driver.mapping.MethodMapper.ParamMapper;
 import com.datastax.driver.mapping.annotations.*;
+import com.google.common.base.Strings;
+import com.google.common.collect.Maps;
+import com.google.common.reflect.TypeToken;
+
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
+import java.lang.reflect.*;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Static metods that facilitates parsing class annotations into the corresponding {@link EntityMapper}.
@@ -42,7 +41,8 @@ class AnnotationParser {
         }
     };
 
-    private AnnotationParser() {}
+    private AnnotationParser() {
+    }
 
     public static <T> EntityMapper<T> parseEntity(Class<T> entityClass, EntityMapper.Factory factory, MappingManager mappingManager) {
         Table table = AnnotationChecks.getTypeAnnotation(Table.class, entityClass);
@@ -57,9 +57,9 @@ class AnnotationParser {
             ksName = mappingManager.getSession().getLoggedKeyspace();
             if (Strings.isNullOrEmpty(ksName))
                 throw new IllegalArgumentException(String.format(
-                    "Error creating mapper for class %s, the @%s annotation declares no default keyspace, and the session is not currently logged to any keyspace",
-                    entityClass.getSimpleName(),
-                    Table.class.getSimpleName()
+                        "Error creating mapper for class %s, the @%s annotation declares no default keyspace, and the session is not currently logged to any keyspace",
+                        entityClass.getSimpleName(),
+                        Table.class.getSimpleName()
                 ));
         }
 
@@ -70,15 +70,15 @@ class AnnotationParser {
         List<Field> rgs = new ArrayList<Field>();
 
         for (Field field : entityClass.getDeclaredFields()) {
-            if(field.isSynthetic() || (field.getModifiers() & Modifier.STATIC) == Modifier.STATIC)
+            if (field.isSynthetic() || (field.getModifiers() & Modifier.STATIC) == Modifier.STATIC)
                 continue;
 
             if (mappingManager.isCassandraV1 && field.getAnnotation(Computed.class) != null)
                 throw new UnsupportedOperationException("Computed fields are not supported with native protocol v1");
 
             AnnotationChecks.validateAnnotations(field, "entity",
-                                                 Column.class, ClusteringColumn.class, Frozen.class, FrozenKey.class,
-                                                 FrozenValue.class, PartitionKey.class, Transient.class, Computed.class);
+                    Column.class, ClusteringColumn.class, Frozen.class, FrozenKey.class,
+                    FrozenValue.class, PartitionKey.class, Transient.class, Computed.class);
 
             if (field.getAnnotation(Transient.class) != null)
                 continue;
@@ -105,8 +105,8 @@ class AnnotationParser {
         validateOrder(ccs, "@ClusteringColumn");
 
         mapper.addColumns(createColumnMappers(pks, factory, mapper.entityClass, mappingManager, columnCounter),
-                          createColumnMappers(ccs, factory, mapper.entityClass, mappingManager, columnCounter),
-                          createColumnMappers(rgs, factory, mapper.entityClass, mappingManager, columnCounter));
+                createColumnMappers(ccs, factory, mapper.entityClass, mappingManager, columnCounter),
+                createColumnMappers(rgs, factory, mapper.entityClass, mappingManager, columnCounter));
         return mapper;
     }
 
@@ -130,9 +130,9 @@ class AnnotationParser {
             ksName = mappingManager.getSession().getLoggedKeyspace();
             if (Strings.isNullOrEmpty(ksName))
                 throw new IllegalArgumentException(String.format(
-                    "Error creating UDT codec for class %s, the @%s annotation declares no default keyspace, and the session is not currently logged to any keyspace",
-                    udtClass.getSimpleName(),
-                    UDT.class.getSimpleName()
+                        "Error creating UDT codec for class %s, the @%s annotation declares no default keyspace, and the session is not currently logged to any keyspace",
+                        udtClass.getSimpleName(),
+                        UDT.class.getSimpleName()
                 ));
         }
 
@@ -141,12 +141,12 @@ class AnnotationParser {
         List<Field> columns = new ArrayList<Field>();
 
         for (Field field : udtClass.getDeclaredFields()) {
-            if(field.isSynthetic() || (field.getModifiers() & Modifier.STATIC) == Modifier.STATIC)
+            if (field.isSynthetic() || (field.getModifiers() & Modifier.STATIC) == Modifier.STATIC)
                 continue;
 
             AnnotationChecks.validateAnnotations(field, "UDT",
-                com.datastax.driver.mapping.annotations.Field.class, Frozen.class, FrozenKey.class,
-                FrozenValue.class, Transient.class);
+                    com.datastax.driver.mapping.annotations.Field.class, Frozen.class, FrozenKey.class,
+                    FrozenValue.class, Transient.class);
 
             if (field.getAnnotation(Transient.class) != null)
                 continue;
@@ -182,7 +182,7 @@ class AnnotationParser {
             int pos = position(field);
             if (pos != i)
                 throw new IllegalArgumentException(String.format("Invalid ordering value %d for annotation %s of column %s, was expecting %d",
-                                                                 pos, annotation, field.getName(), i));
+                        pos, annotation, field.getName(), i));
         }
     }
 
@@ -220,7 +220,7 @@ class AnnotationParser {
         Column column = field.getAnnotation(Column.class);
         Computed computedField = field.getAnnotation(Computed.class);
         if (column != null && !column.name().isEmpty()) {
-            if (computedField != null){
+            if (computedField != null) {
                 throw new IllegalArgumentException("Cannot use @Column and @Computed on the same field");
             }
             return column.caseSensitive() ? column.name() : column.name().toLowerCase();
@@ -251,12 +251,12 @@ class AnnotationParser {
 
         try {
             @SuppressWarnings("unchecked")
-            TypeCodec<Object> instance = (TypeCodec<Object>)codecClass.newInstance();
+            TypeCodec<Object> instance = (TypeCodec<Object>) codecClass.newInstance();
             return instance;
         } catch (Exception e) {
             throw new IllegalArgumentException(String.format(
-                "Cannot create an instance of custom codec %s for field %s",
-                codecClass, field
+                    "Cannot create an instance of custom codec %s for field %s",
+                    codecClass, field
             ), e);
         }
     }
@@ -296,7 +296,7 @@ class AnnotationParser {
                 Class<? extends TypeCodec<?>> codecClass = null;
                 for (Annotation a : paramAnnotations[i]) {
                     if (a.annotationType().equals(Param.class)) {
-                        Param param = (Param)a;
+                        Param param = (Param) a;
                         paramName = param.value();
                         if (paramName.isEmpty())
                             paramName = null;
@@ -332,7 +332,7 @@ class AnnotationParser {
         return factory.create(accClass, methods);
     }
 
-    @SuppressWarnings({ "unchecked", "rawtypes" })
+    @SuppressWarnings({"unchecked", "rawtypes"})
     private static ParamMapper newParamMapper(String className, String methodName, int idx, String paramName, Class<? extends TypeCodec<?>> codecClass, Type paramType, Annotation[] paramAnnotations, MappingManager mappingManager) {
         if (paramType instanceof Class) {
             Class<?> paramClass = (Class<?>) paramType;

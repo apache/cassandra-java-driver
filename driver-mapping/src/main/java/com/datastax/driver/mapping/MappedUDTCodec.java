@@ -15,14 +15,10 @@
  */
 package com.datastax.driver.mapping;
 
-import java.nio.ByteBuffer;
-import java.util.List;
-import java.util.Map;
-
-import com.google.common.collect.Lists;
-
 import com.datastax.driver.core.*;
-import com.datastax.driver.core.exceptions.InvalidTypeException;
+
+import java.nio.ByteBuffer;
+import java.util.Map;
 
 /**
  * Serializes a class annotated with {@code @UDT} to the corresponding CQL user-defined type.

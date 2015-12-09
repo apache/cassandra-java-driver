@@ -15,10 +15,10 @@
  */
 package com.datastax.driver.core.exceptions;
 
+import com.datastax.driver.core.ProtocolVersion;
+
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-
-import com.datastax.driver.core.ProtocolVersion;
 
 /**
  * Indicates that we've attempted to connect to a Cassandra node with a protocol version

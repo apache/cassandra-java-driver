@@ -15,21 +15,21 @@
  */
 package com.datastax.driver.extras.codecs.arrays;
 
-import java.lang.reflect.Array;
-import java.nio.BufferUnderflowException;
-import java.nio.ByteBuffer;
-
 import com.datastax.driver.core.CodecUtils;
 import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.ProtocolVersion;
 import com.datastax.driver.core.TypeCodec;
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 
+import java.lang.reflect.Array;
+import java.nio.BufferUnderflowException;
+import java.nio.ByteBuffer;
+
 /**
  * Codec dealing with Java object arrays.
  * Serialization and deserialization of elements in the array is
  * delegated to the provided element codec.
- * <p>
+ * <p/>
  * For example, to create a codec that maps {@code list<text>} to {@code String[]},
  * declare the following:
  * <pre>{@code
@@ -65,8 +65,8 @@ public class ObjectArrayCodec<E> extends AbstractArrayCodec<E[]> {
                 bb = eltCodec.serialize(elt, protocolVersion);
             } catch (ClassCastException e) {
                 throw new InvalidTypeException(
-                    String.format("Invalid type for %s element, expecting %s but got %s",
-                        cqlType, eltCodec.getJavaType(), elt.getClass()), e);
+                        String.format("Invalid type for %s element, expecting %s but got %s",
+                                cqlType, eltCodec.getJavaType(), elt.getClass()), e);
             }
             bbs[i++] = bb;
         }
@@ -104,6 +104,6 @@ public class ObjectArrayCodec<E> extends AbstractArrayCodec<E[]> {
     @Override
     @SuppressWarnings("unchecked")
     protected E[] newInstance(int size) {
-        return (E[])Array.newInstance(getJavaType().getRawType().getComponentType(), size);
+        return (E[]) Array.newInstance(getJavaType().getRawType().getComponentType(), size);
     }
 }

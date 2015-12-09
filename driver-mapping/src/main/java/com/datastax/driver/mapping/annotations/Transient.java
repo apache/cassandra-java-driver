@@ -23,7 +23,7 @@ import java.lang.annotation.Target;
 /**
  * Whenever this annotation is added on a field, the field will not be mapped
  * to any column (neither during reads nor writes).
- * <p>
+ * <p/>
  * Please note that it is thus illegal to have a field that has both the
  * {@code Transcient} annotation and one of the {@link Column}, {@link PartitionKey}
  * or {@link ClusteringColumn} annotation.

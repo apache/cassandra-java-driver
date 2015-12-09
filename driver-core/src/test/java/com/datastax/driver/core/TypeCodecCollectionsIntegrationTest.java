@@ -15,6 +15,13 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.querybuilder.BuiltStatement;
+import com.datastax.driver.core.utils.CassandraVersion;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.reflect.TypeToken;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Collection;
@@ -22,24 +29,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.reflect.TypeToken;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
+import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 import static com.google.common.collect.Lists.newArrayList;
 import static com.google.common.collect.Sets.newHashSet;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.datastax.driver.core.querybuilder.BuiltStatement;
-import com.datastax.driver.core.utils.CassandraVersion;
-
-import static com.datastax.driver.core.querybuilder.QueryBuilder.bindMarker;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.insertInto;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
-
-@CassandraVersion(major=2.0)
+@CassandraVersion(major = 2.0)
 public class TypeCodecCollectionsIntegrationTest extends CCMBridge.PerClassSingleNodeCluster {
 
     private final String insertQuery = "INSERT INTO \"myTable2\" (c_int, l_int, l_bigint, s_float, s_double, m_varint, m_decimal) VALUES (?, ?, ?, ?, ?, ?, ?)";
@@ -60,30 +55,30 @@ public class TypeCodecCollectionsIntegrationTest extends CCMBridge.PerClassSingl
     @Override
     protected Collection<String> getTableDefinitions() {
         return newArrayList(
-            "CREATE TABLE IF NOT EXISTS \"myTable2\" ("
-                + "c_int int PRIMARY KEY, "
-                + "l_int list<int>, "
-                + "l_bigint list<bigint>, "
-                + "s_float set<float>, "
-                + "s_double set<double>, "
-                + "m_varint map<int,varint>, "
-                + "m_decimal map<int,decimal>"
-                + ")");
+                "CREATE TABLE IF NOT EXISTS \"myTable2\" ("
+                        + "c_int int PRIMARY KEY, "
+                        + "l_int list<int>, "
+                        + "l_bigint list<bigint>, "
+                        + "s_float set<float>, "
+                        + "s_double set<double>, "
+                        + "m_varint map<int,varint>, "
+                        + "m_decimal map<int,decimal>"
+                        + ")");
     }
 
     @BeforeMethod(groups = "short")
     public void createBuiltStatements() throws Exception {
         insertStmt = insertInto("\"myTable2\"")
-            .value("c_int", bindMarker())
-            .value("l_int", bindMarker())
-            .value("l_bigint", bindMarker())
-            .value("s_float", bindMarker())
-            .value("s_double", bindMarker())
-            .value("m_varint", bindMarker())
-            .value("m_decimal", bindMarker());
+                .value("c_int", bindMarker())
+                .value("l_int", bindMarker())
+                .value("l_bigint", bindMarker())
+                .value("s_float", bindMarker())
+                .value("s_double", bindMarker())
+                .value("m_varint", bindMarker())
+                .value("m_decimal", bindMarker());
         selectStmt = select("c_int", "l_int", "l_bigint", "s_float", "s_double", "m_varint", "m_decimal")
-            .from("\"myTable2\"")
-            .where(eq("c_int", bindMarker()));
+                .from("\"myTable2\"")
+                .where(eq("c_int", bindMarker()));
     }
 
     @Test(groups = "short")
@@ -106,17 +101,17 @@ public class TypeCodecCollectionsIntegrationTest extends CCMBridge.PerClassSingl
     @Test(groups = "short")
     public void should_use_collection_codecs_with_prepared_statements_2() {
         session.execute(session.prepare(insertQuery).bind()
-            .setInt(0, n_int)
-            .setList(1, l_int)
-            .setList(2, l_bigint, Long.class) // variant with element type explicitly set
-            .setSet(3, s_float)
-            .setSet(4, s_double, TypeToken.of(Double.class))  // variant with element type explicitly set
-            .setMap(5, m_varint)
-            .setMap(6, m_decimal, Integer.class, BigDecimal.class)  // variant with element type explicitly set
+                .setInt(0, n_int)
+                .setList(1, l_int)
+                .setList(2, l_bigint, Long.class) // variant with element type explicitly set
+                .setSet(3, s_float)
+                .setSet(4, s_double, TypeToken.of(Double.class))  // variant with element type explicitly set
+                .setMap(5, m_varint)
+                .setMap(6, m_decimal, Integer.class, BigDecimal.class)  // variant with element type explicitly set
         );
         PreparedStatement ps = session.prepare(selectQuery);
         ResultSet rows = session.execute(ps.bind()
-            .setInt(0, n_int)
+                        .setInt(0, n_int)
         );
         Row row = rows.one();
         assertRow(row);
@@ -125,13 +120,13 @@ public class TypeCodecCollectionsIntegrationTest extends CCMBridge.PerClassSingl
     @Test(groups = "short")
     public void should_use_collection_codecs_with_prepared_statements_3() {
         session.execute(session.prepare(insertQuery).bind()
-            .setInt(0, n_int)
-            .set(1, l_int, TypeTokens.listOf(Integer.class))
-            .set(2, l_bigint, TypeTokens.listOf(Long.class))
-            .set(3, s_float, TypeTokens.setOf(Float.class))
-            .set(4, s_double, TypeTokens.setOf(Double.class))
-            .set(5, m_varint, TypeTokens.mapOf(Integer.class, BigInteger.class))
-            .set(6, m_decimal, TypeTokens.mapOf(Integer.class, BigDecimal.class))
+                        .setInt(0, n_int)
+                        .set(1, l_int, TypeTokens.listOf(Integer.class))
+                        .set(2, l_bigint, TypeTokens.listOf(Long.class))
+                        .set(3, s_float, TypeTokens.setOf(Float.class))
+                        .set(4, s_double, TypeTokens.setOf(Double.class))
+                        .set(5, m_varint, TypeTokens.mapOf(Integer.class, BigInteger.class))
+                        .set(6, m_decimal, TypeTokens.mapOf(Integer.class, BigDecimal.class))
         );
         PreparedStatement ps = session.prepare(selectQuery);
         ResultSet rows = session.execute(ps.bind()
@@ -144,21 +139,22 @@ public class TypeCodecCollectionsIntegrationTest extends CCMBridge.PerClassSingl
     @Test(groups = "short")
     public void should_use_collection_codecs_with_built_statements() {
         session.execute(session.prepare(insertStmt).bind()
-            .setInt(0, n_int)
-            .set(1, l_int, TypeTokens.listOf(Integer.class))
-            .set(2, l_bigint, TypeTokens.listOf(Long.class))
-            .set(3, s_float, TypeTokens.setOf(Float.class))
-            .set(4, s_double, TypeTokens.setOf(Double.class))
-            .set(5, m_varint, TypeTokens.mapOf(Integer.class, BigInteger.class))
-            .set(6, m_decimal, TypeTokens.mapOf(Integer.class, BigDecimal.class))
+                        .setInt(0, n_int)
+                        .set(1, l_int, TypeTokens.listOf(Integer.class))
+                        .set(2, l_bigint, TypeTokens.listOf(Long.class))
+                        .set(3, s_float, TypeTokens.setOf(Float.class))
+                        .set(4, s_double, TypeTokens.setOf(Double.class))
+                        .set(5, m_varint, TypeTokens.mapOf(Integer.class, BigInteger.class))
+                        .set(6, m_decimal, TypeTokens.mapOf(Integer.class, BigDecimal.class))
         );
         PreparedStatement ps = session.prepare(selectStmt);
         ResultSet rows = session.execute(ps.bind()
-            .setInt(0, n_int)
+                        .setInt(0, n_int)
         );
         Row row = rows.one();
         assertRow(row);
     }
+
     private void assertRow(Row row) {
         assertThat(row.getInt(0)).isEqualTo(n_int);
         assertThat(row.getList(1, Integer.class)).isEqualTo(l_int);

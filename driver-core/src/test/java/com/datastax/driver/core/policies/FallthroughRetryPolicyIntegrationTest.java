@@ -15,6 +15,8 @@
  */
 package com.datastax.driver.core.policies;
 
+import com.datastax.driver.core.SocketOptions;
+import com.datastax.driver.core.exceptions.*;
 import org.assertj.core.api.Fail;
 import org.scassandra.http.client.PrimingRequest;
 import org.testng.annotations.DataProvider;
@@ -24,9 +26,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.scassandra.http.client.PrimingRequest.Result.*;
 import static org.scassandra.http.client.PrimingRequest.then;
-
-import com.datastax.driver.core.SocketOptions;
-import com.datastax.driver.core.exceptions.*;
 
 public class FallthroughRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegrationTest {
     public FallthroughRetryPolicyIntegrationTest() {
@@ -86,7 +85,7 @@ public class FallthroughRetryPolicyIntegrationTest extends AbstractRetryPolicyIn
         cluster.getConfiguration().getSocketOptions().setReadTimeoutMillis(1);
         try {
             scassandras
-                .node(1).primingClient().prime(PrimingRequest.queryBuilder()
+                    .node(1).primingClient().prime(PrimingRequest.queryBuilder()
                     .withQuery("mock query")
                     .withThen(then().withFixedDelay(1000L).withRows(row("result", "result1")))
                     .build());
@@ -95,7 +94,7 @@ public class FallthroughRetryPolicyIntegrationTest extends AbstractRetryPolicyIn
                 Fail.fail("expected an OperationTimedOutException");
             } catch (OperationTimedOutException e) {
                 assertThat(e.getMessage()).isEqualTo(
-                    String.format("[%s] Timed out waiting for server response", host1.getAddress())
+                        String.format("[%s] Timed out waiting for server response", host1.getAddress())
                 );
             }
             assertOnRequestErrorWasCalled(1, OperationTimedOutException.class);
@@ -113,8 +112,8 @@ public class FallthroughRetryPolicyIntegrationTest extends AbstractRetryPolicyIn
     @DataProvider
     public static Object[][] serverSideErrors() {
         return new Object[][]{
-            {server_error, ServerError.class},
-            {overloaded, OverloadedException.class}
+                {server_error, ServerError.class},
+                {overloaded, OverloadedException.class}
         };
     }
 

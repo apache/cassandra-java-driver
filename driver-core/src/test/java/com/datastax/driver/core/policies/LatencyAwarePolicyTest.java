@@ -15,22 +15,20 @@
  */
 package com.datastax.driver.core.policies;
 
+import com.datastax.driver.core.*;
+import com.datastax.driver.core.exceptions.NoHostAvailableException;
+import com.datastax.driver.core.exceptions.ReadTimeoutException;
+import com.datastax.driver.core.exceptions.UnavailableException;
+import org.testng.annotations.Test;
+
 import java.util.concurrent.CountDownLatch;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
-
-import com.datastax.driver.core.exceptions.NoHostAvailableException;
-import org.testng.annotations.Test;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.scassandra.http.client.PrimingRequest.Result.read_request_timeout;
 import static org.scassandra.http.client.PrimingRequest.Result.unavailable;
 import static org.scassandra.http.client.PrimingRequest.queryBuilder;
-
-import com.datastax.driver.core.*;
-import com.datastax.driver.core.exceptions.ReadTimeoutException;
-import com.datastax.driver.core.exceptions.UnavailableException;
 
 public class LatencyAwarePolicyTest extends ScassandraTestBase {
 
@@ -55,10 +53,12 @@ public class LatencyAwarePolicyTest extends ScassandraTestBase {
         }
 
         @Override
-        public void onRegister(Cluster cluster) {}
+        public void onRegister(Cluster cluster) {
+        }
 
         @Override
-        public void onUnregister(Cluster cluster) {}
+        public void onUnregister(Cluster cluster) {
+        }
     }
 
     @Test(groups = "short")
@@ -66,13 +66,13 @@ public class LatencyAwarePolicyTest extends ScassandraTestBase {
         // given
         String query = "SELECT foo FROM bar";
         primingClient.prime(
-            queryBuilder()
-                .withQuery(query)
-                .build()
+                queryBuilder()
+                        .withQuery(query)
+                        .build()
         );
         LatencyAwarePolicy latencyAwarePolicy = LatencyAwarePolicy.builder(new RoundRobinPolicy())
-            .withMininumMeasurements(1)
-            .build();
+                .withMininumMeasurements(1)
+                .build();
         Cluster.Builder builder = super.createClusterBuilder();
         builder.withLoadBalancingPolicy(latencyAwarePolicy);
         Cluster cluster = builder.build();
@@ -104,14 +104,14 @@ public class LatencyAwarePolicyTest extends ScassandraTestBase {
         // given
         String query = "SELECT foo FROM bar";
         primingClient.prime(
-            queryBuilder()
-                .withQuery(query)
-                .withResult(unavailable)
-                .build()
+                queryBuilder()
+                        .withQuery(query)
+                        .withResult(unavailable)
+                        .build()
         );
         LatencyAwarePolicy latencyAwarePolicy = LatencyAwarePolicy.builder(new RoundRobinPolicy())
-            .withMininumMeasurements(1)
-            .build();
+                .withMininumMeasurements(1)
+                .build();
         Cluster.Builder builder = super.createClusterBuilder();
         builder.withLoadBalancingPolicy(latencyAwarePolicy);
         Cluster cluster = builder.build();
@@ -144,14 +144,14 @@ public class LatencyAwarePolicyTest extends ScassandraTestBase {
         }
     }
 
-    @Test(groups= "short")
+    @Test(groups = "short")
     public void should_consider_latency_when_read_timeout() throws Exception {
         String query = "SELECT foo FROM bar";
         primingClient.prime(
-            queryBuilder()
-                .withQuery(query)
-                .withResult(read_request_timeout)
-                .build()
+                queryBuilder()
+                        .withQuery(query)
+                        .withResult(read_request_timeout)
+                        .build()
         );
 
         LatencyAwarePolicy latencyAwarePolicy = LatencyAwarePolicy.builder(new RoundRobinPolicy())

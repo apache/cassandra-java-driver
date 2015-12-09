@@ -20,7 +20,8 @@ public class M3PTokenVnodeIntegrationTest extends TokenIntegrationTest {
         super("", DataType.bigint(), true);
     }
 
-    @Override protected Token.Factory tokenFactory() {
+    @Override
+    protected Token.Factory tokenFactory() {
         return Token.M3PToken.FACTORY;
     }
 }

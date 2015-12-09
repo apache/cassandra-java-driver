@@ -15,16 +15,16 @@
  */
 package com.datastax.driver.core;
 
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.Uninterruptibles;
+import org.assertj.core.util.Maps;
+
 import java.net.InetAddress;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.Uninterruptibles;
-import org.assertj.core.util.Maps;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -49,7 +49,7 @@ public class QueryTracker {
 
     public void query(Session session, int times, ConsistencyLevel cl, Class<? extends Exception> expectedException) {
         Statement statement = new SimpleStatement(QUERY);
-        if(cl != null) {
+        if (cl != null) {
             statement.setConsistencyLevel(cl);
         }
 
@@ -63,20 +63,20 @@ public class QueryTracker {
     public void query(Session session, int times, Statement statement, Class<? extends Exception> expectedException) {
         List<ListenableFuture<ResultSet>> futures = newArrayList();
 
-        for(int i = 0; i < times; i++) {
+        for (int i = 0; i < times; i++) {
             futures.add(session.executeAsync(statement));
         }
 
         try {
             List<ResultSet> results = Uninterruptibles.getUninterruptibly(Futures.allAsList(futures), 1, TimeUnit.MINUTES);
-            for(ResultSet result : results) {
+            for (ResultSet result : results) {
                 InetAddress coordinator = result.getExecutionInfo().getQueriedHost().getAddress();
                 Integer n = coordinators.get(coordinator);
                 coordinators.put(coordinator, n == null ? 1 : n + 1);
             }
         } catch (ExecutionException ex) {
             Throwable cause = ex.getCause();
-            if(expectedException == null) {
+            if (expectedException == null) {
                 fail("Queries failed", ex);
             } else {
                 assertThat(cause).isInstanceOf(expectedException);
@@ -99,8 +99,8 @@ public class QueryTracker {
     public void assertQueried(ScassandraCluster sCluster, int dc, int node, int n) {
         int queryCount = queryCount(sCluster, dc, node);
         assertThat(queryCount)
-            .as("Expected node %d:%d to be queried %d times but was %d", dc, node, n, queryCount)
-            .isEqualTo(n);
+                .as("Expected node %d:%d to be queried %d times but was %d", dc, node, n, queryCount)
+                .isEqualTo(n);
     }
 
     public void reset() {

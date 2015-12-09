@@ -20,7 +20,7 @@ import com.datastax.driver.core.Statement;
 
 /**
  * Base class for tests that want to wrap a policy to add some instrumentation.
- *
+ * <p/>
  * NB: this is currently only used in tests, but could be provided as a convenience in the production code.
  */
 public abstract class DelegatingSpeculativeExecutionPolicy implements SpeculativeExecutionPolicy {

@@ -15,18 +15,16 @@
  */
 package com.datastax.driver.core.policies;
 
+import com.datastax.driver.core.*;
+import com.datastax.driver.core.exceptions.*;
 import org.scassandra.http.client.PrimingRequest;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import static com.datastax.driver.core.Assertions.assertThat;
 import static org.assertj.core.api.Fail.fail;
 import static org.scassandra.http.client.PrimingRequest.Result.*;
 import static org.scassandra.http.client.PrimingRequest.then;
-
-import com.datastax.driver.core.*;
-import com.datastax.driver.core.exceptions.*;
-
-import static com.datastax.driver.core.Assertions.assertThat;
 
 /**
  * Integration test with a custom implementation, to test retry and ignore decisions.
@@ -76,7 +74,7 @@ public class CustomRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegra
         cluster.getConfiguration().getSocketOptions().setReadTimeoutMillis(1);
         try {
             scassandras
-                .node(1).primingClient().prime(PrimingRequest.queryBuilder()
+                    .node(1).primingClient().prime(PrimingRequest.queryBuilder()
                     .withQuery("mock query")
                     .withThen(then().withFixedDelay(1000L).withRows(row("result", "result1")))
                     .build());
@@ -85,7 +83,7 @@ public class CustomRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegra
                 fail("expected an OperationTimedOutException");
             } catch (OperationTimedOutException e) {
                 assertThat(e.getMessage()).isEqualTo(
-                    String.format("[%s] Timed out waiting for server response", host1.getAddress())
+                        String.format("[%s] Timed out waiting for server response", host1.getAddress())
                 );
             }
             assertOnRequestErrorWasCalled(1, OperationTimedOutException.class);
@@ -103,8 +101,8 @@ public class CustomRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegra
     @DataProvider
     public static Object[][] serverSideErrors() {
         return new Object[][]{
-            {server_error, ServerError.class},
-            {overloaded, OverloadedException.class}
+                {server_error, ServerError.class},
+                {overloaded, OverloadedException.class}
         };
     }
 
@@ -145,8 +143,8 @@ public class CustomRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegra
         @Override
         public RetryDecision onUnavailable(Statement statement, ConsistencyLevel cl, int requiredReplica, int aliveReplica, int nbRetry) {
             return (nbRetry == 0)
-                ? RetryDecision.retry(cl)
-                : RetryDecision.rethrow();
+                    ? RetryDecision.retry(cl)
+                    : RetryDecision.rethrow();
         }
 
         @Override

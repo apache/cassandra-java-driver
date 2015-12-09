@@ -27,7 +27,8 @@ class NativeColumnType implements ColumnType {
         asCQLString = nativeType.toString();
     }
 
-    @Override public String asCQLString() {
+    @Override
+    public String asCQLString() {
         return asCQLString;
     }
 }

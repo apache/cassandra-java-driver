@@ -15,12 +15,11 @@
  */
 package com.datastax.driver.core.schemabuilder;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-
+import com.datastax.driver.core.DataType;
 import com.google.common.base.Optional;
 
-import com.datastax.driver.core.DataType;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public abstract class AbstractCreateStatement<T extends AbstractCreateStatement<T>> extends SchemaStatement {
 
@@ -29,7 +28,7 @@ public abstract class AbstractCreateStatement<T extends AbstractCreateStatement<
     protected Map<String, ColumnType> simpleColumns = new LinkedHashMap<String, ColumnType>();
 
     @SuppressWarnings("unchecked")
-    private T self = (T)this;
+    private T self = (T) this;
 
     /**
      * Add the 'IF NOT EXISTS' condition to this CREATE statement.
@@ -43,25 +42,25 @@ public abstract class AbstractCreateStatement<T extends AbstractCreateStatement<
 
     /**
      * Add a column definition to this CREATE statement.
-     *
-     * <p>
+     * <p/>
+     * <p/>
      * To add a list column:
      * <pre class="code"><code class="java">
-     *     addColumn("myList",DataType.list(DataType.text()))
+     * addColumn("myList",DataType.list(DataType.text()))
      * </code></pre>
-     *
+     * <p/>
      * To add a set column:
      * <pre class="code"><code class="java">
-     *     addColumn("mySet",DataType.set(DataType.text()))
+     * addColumn("mySet",DataType.set(DataType.text()))
      * </code></pre>
-     *
+     * <p/>
      * To add a map column:
      * <pre class="code"><code class="java">
-     *     addColumn("myMap",DataType.map(DataType.cint(),DataType.text()))
+     * addColumn("myMap",DataType.map(DataType.cint(),DataType.text()))
      * </code></pre>
      *
      * @param columnName the name of the column to be added.
-     * @param dataType the data type of the column to be added.
+     * @param dataType   the data type of the column to be added.
      * @return this CREATE statement.
      */
     public T addColumn(String columnName, DataType dataType) {
@@ -76,7 +75,7 @@ public abstract class AbstractCreateStatement<T extends AbstractCreateStatement<
      * Add a column definition to this CREATE statement, when the type contains a UDT.
      *
      * @param columnName the name of the column to be added.
-     * @param udtType the UDT type of the column to be added. Use {@link SchemaBuilder#frozen(String)} or {@link SchemaBuilder#udtLiteral(String)}.
+     * @param udtType    the UDT type of the column to be added. Use {@link SchemaBuilder#frozen(String)} or {@link SchemaBuilder#udtLiteral(String)}.
      * @return this CREATE statement.
      */
     public T addUDTColumn(String columnName, UDTType udtType) {
@@ -91,7 +90,7 @@ public abstract class AbstractCreateStatement<T extends AbstractCreateStatement<
      * Shorthand to add a column definition to this CREATE statement, when the type is a list of UDT.
      *
      * @param columnName the name of the column to be added
-     * @param udtType the udt type of the column to be added. Use {@link SchemaBuilder#frozen(String)}.
+     * @param udtType    the udt type of the column to be added. Use {@link SchemaBuilder#frozen(String)}.
      * @return this CREATE statement.
      */
     public T addUDTListColumn(String columnName, UDTType udtType) {
@@ -106,7 +105,7 @@ public abstract class AbstractCreateStatement<T extends AbstractCreateStatement<
      * Shorthand to add a column definition to this CREATE statement, when the type is a set of UDT.
      *
      * @param columnName the name of the column to be added
-     * @param udtType the udt type of the column to be added. Use {@link SchemaBuilder#frozen(String)}.
+     * @param udtType    the udt type of the column to be added. Use {@link SchemaBuilder#frozen(String)}.
      * @return this CREATE statement.
      */
     public T addUDTSetColumn(String columnName, UDTType udtType) {
@@ -119,14 +118,14 @@ public abstract class AbstractCreateStatement<T extends AbstractCreateStatement<
 
     /**
      * Shorthand to add a column definition to this CREATE statement, when the type is a map with a UDT value type.
-     * <p>
+     * <p/>
      * Example:
      * <pre>
      *     addUDTMapColumn("addresses", DataType.text(), frozen("address"));
      * </pre>
      *
-     * @param columnName the name of the column to be added.
-     * @param keyType the key type of the column to be added.
+     * @param columnName   the name of the column to be added.
+     * @param keyType      the key type of the column to be added.
      * @param valueUdtType the value UDT type of the column to be added. Use {@link SchemaBuilder#frozen(String)}.
      * @return this CREATE statement.
      */
@@ -141,7 +140,7 @@ public abstract class AbstractCreateStatement<T extends AbstractCreateStatement<
 
     /**
      * Shorthand to add a column definition to this CREATE statement, when the type is a map with a UDT key type.
-     * <p>
+     * <p/>
      * Example:
      * <pre>
      *     addUDTMapColumn("roles", frozen("user"), DataType.text());
@@ -149,7 +148,7 @@ public abstract class AbstractCreateStatement<T extends AbstractCreateStatement<
      *
      * @param columnName the name of the column to be added.
      * @param udtKeyType the key UDT type of the column to be added. Use {@link SchemaBuilder#frozen(String)}.
-     * @param valueType the value raw type of the column to be added.
+     * @param valueType  the value raw type of the column to be added.
      * @return this CREATE statement.
      */
     public T addUDTMapColumn(String columnName, UDTType udtKeyType, DataType valueType) {
@@ -163,17 +162,16 @@ public abstract class AbstractCreateStatement<T extends AbstractCreateStatement<
 
     /**
      * Shorthand to add a column definition to this CREATE statement, when the type is a map with UDT key and value types.
-     * <p>
+     * <p/>
      * Example:
      * <pre>
      *     addUDTMapColumn("users", frozen("user"), frozen("address"));
      * </pre>
      *
-     * @param columnName the name of the column to be added.
-     * @param udtKeyType the key UDT type of the column to be added. Use {@link SchemaBuilder#frozen(String)}.
+     * @param columnName   the name of the column to be added.
+     * @param udtKeyType   the key UDT type of the column to be added. Use {@link SchemaBuilder#frozen(String)}.
      * @param udtValueType the value UDT type of the column to be added. Use {@link SchemaBuilder#frozen(String)}.
      * @return this CREATE statement.
-     *
      */
     public T addUDTMapColumn(String columnName, UDTType udtKeyType, UDTType udtValueType) {
         validateNotEmpty(columnName, "Column name");

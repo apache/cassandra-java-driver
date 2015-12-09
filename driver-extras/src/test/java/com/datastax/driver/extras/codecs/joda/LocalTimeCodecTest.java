@@ -15,18 +15,15 @@
  */
 package com.datastax.driver.extras.codecs.joda;
 
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-
+import com.datastax.driver.core.Assertions;
 import org.joda.time.LocalTime;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-import com.datastax.driver.core.Assertions;
-
 import static com.datastax.driver.core.ParseUtils.quote;
 import static com.datastax.driver.core.ProtocolVersion.V4;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class LocalTimeCodecTest {
 
@@ -35,23 +32,23 @@ public class LocalTimeCodecTest {
         LocalTime time = LocalTime.parse("13:25:47.123456789");
         String nanosOfDay = quote(Long.toString(MILLISECONDS.toNanos(time.getMillisOfDay())));
         return new Object[][]{
-            { null                  , null },
-            { ""                    , null },
-            { "NULL"                , null },
-            { nanosOfDay            , LocalTime.parse("13:25:47.123456789") },
-            { "'13:25:47'"          , LocalTime.parse("13:25:47") },
-            { "'13:25:47.123'"      , LocalTime.parse("13:25:47.123") },
-            { "'13:25:47.123456'"   , LocalTime.parse("13:25:47.123456") },
-            { "'13:25:47.123456789'", LocalTime.parse("13:25:47.123456789") }
+                {null, null},
+                {"", null},
+                {"NULL", null},
+                {nanosOfDay, LocalTime.parse("13:25:47.123456789")},
+                {"'13:25:47'", LocalTime.parse("13:25:47")},
+                {"'13:25:47.123'", LocalTime.parse("13:25:47.123")},
+                {"'13:25:47.123456'", LocalTime.parse("13:25:47.123456")},
+                {"'13:25:47.123456789'", LocalTime.parse("13:25:47.123456789")}
         };
     }
 
     @DataProvider(name = "LocalTimeCodecTest.format")
     public Object[][] formatParameters() {
         return new Object[][]{
-            { null                              , "NULL" },
-            { LocalTime.parse("12:00")          , "'12:00:00.000'" },
-            { LocalTime.parse("02:20:47.999999"), "'02:20:47.999'" }
+                {null, "NULL"},
+                {LocalTime.parse("12:00"), "'12:00:00.000'"},
+                {LocalTime.parse("02:20:47.999999"), "'02:20:47.999'"}
         };
     }
 

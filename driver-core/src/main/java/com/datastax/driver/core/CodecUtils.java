@@ -16,14 +16,6 @@
 package com.datastax.driver.core;
 
 import java.nio.ByteBuffer;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import com.google.common.reflect.TypeParameter;
-import com.google.common.reflect.TypeToken;
-
-import com.datastax.driver.core.exceptions.InvalidTypeException;
 
 /**
  * A set of utility methods to deal with type conversion and serialization.
@@ -34,16 +26,17 @@ public final class CodecUtils {
 
     private static final long EPOCH_AS_CQL_LONG = (1L << 31);
 
-    private CodecUtils(){}
+    private CodecUtils() {
+    }
 
     /**
      * Utility method that "packs" together a list of {@link ByteBuffer}s containing
      * serialized collection elements.
      * Mainly intended for use with collection codecs when serializing collections.
      *
-     * @param buffers the collection elements
+     * @param buffers  the collection elements
      * @param elements the total number of elements
-     * @param version the protocol version to use
+     * @param version  the protocol version to use
      * @return The serialized collection
      */
     public static ByteBuffer pack(ByteBuffer[] buffers, int elements, ProtocolVersion version) {
@@ -56,13 +49,14 @@ public final class CodecUtils {
         writeSize(result, elements, version);
         for (ByteBuffer bb : buffers)
             writeValue(result, bb, version);
-        return (ByteBuffer)result.flip();
+        return (ByteBuffer) result.flip();
     }
 
     /**
      * Utility method that reads a size value.
      * Mainly intended for collection codecs when deserializing CQL collections.
-     * @param input The ByteBuffer to read from.
+     *
+     * @param input   The ByteBuffer to read from.
      * @param version The protocol version to use.
      * @return The size value.
      */
@@ -83,8 +77,8 @@ public final class CodecUtils {
      * Utility method that writes a size value.
      * Mainly intended for collection codecs when serializing CQL collections.
      *
-     * @param output The ByteBuffer to write to.
-     * @param size The collection size.
+     * @param output  The ByteBuffer to write to.
+     * @param size    The collection size.
      * @param version The protocol version to use.
      */
     public static void writeSize(ByteBuffer output, int size, ProtocolVersion version) {
@@ -93,7 +87,7 @@ public final class CodecUtils {
             case V2:
                 if (size > 65535)
                     throw new IllegalArgumentException(String.format("Native protocol version %d supports up to 65535 elements in any collection - but collection contains %d elements", version.toInt(), size));
-                output.putShort((short)size);
+                output.putShort((short) size);
                 break;
             case V3:
             case V4:
@@ -108,7 +102,7 @@ public final class CodecUtils {
      * Utility method that reads a value.
      * Mainly intended for collection codecs when deserializing CQL collections.
      *
-     * @param input The ByteBuffer to read from.
+     * @param input   The ByteBuffer to read from.
      * @param version The protocol version to use.
      * @return The collection element.
      */
@@ -120,9 +114,9 @@ public final class CodecUtils {
     /**
      * Utility method that writes a value.
      * Mainly intended for collection codecs when deserializing CQL collections.
-
-     * @param output The ByteBuffer to write to.
-     * @param value The value to write.
+     *
+     * @param output  The ByteBuffer to write to.
+     * @param value   The value to write.
      * @param version The protocol version to use.
      */
     public static void writeValue(ByteBuffer output, ByteBuffer value, ProtocolVersion version) {
@@ -130,7 +124,7 @@ public final class CodecUtils {
             case V1:
             case V2:
                 assert value != null;
-                output.putShort((short)value.remaining());
+                output.putShort((short) value.remaining());
                 output.put(value.duplicate());
                 break;
             case V3:
@@ -150,7 +144,7 @@ public final class CodecUtils {
     /**
      * Read {@code length} bytes from {@code bb} into a new ByteBuffer.
      *
-     * @param bb The ByteBuffer to read.
+     * @param bb     The ByteBuffer to read.
      * @param length The number of bytes to read.
      * @return The read bytes.
      */
@@ -163,7 +157,7 @@ public final class CodecUtils {
 
     /**
      * Converts an "unsigned" int read from a DATE value into a signed int.
-     * <p>
+     * <p/>
      * The protocol encodes DATE values as <em>unsigned</em> ints with the Epoch in the middle of the range (2^31).
      * This method handles the conversion from an "unsigned" to a signed int.
      */
@@ -173,7 +167,7 @@ public final class CodecUtils {
 
     /**
      * Converts an int into an "unsigned" int suitable to be written as a DATE value.
-     * <p>
+     * <p/>
      * The protocol encodes DATE values as <em>unsigned</em> ints with the Epoch in the middle of the range (2^31).
      * This method handles the conversion from a signed to an "unsigned" int.
      */
@@ -195,13 +189,13 @@ public final class CodecUtils {
     public static int fromCqlDateToDaysSinceEpoch(long raw) {
         if (raw < 0 || raw > MAX_CQL_LONG_VALUE)
             throw new IllegalArgumentException(String.format("Numeric literals for DATE must be between 0 and %d (got %d)", MAX_CQL_LONG_VALUE, raw));
-        return (int)(raw - EPOCH_AS_CQL_LONG);
+        return (int) (raw - EPOCH_AS_CQL_LONG);
     }
 
     /**
      * Convert the number of days since the Epoch into
      * a raw CQL long representing a numeric DATE literal.
-     *
+     * <p/>
      * In CQL, numeric DATE literals are longs (unsigned integers actually)
      * between 0 and 2^32 - 1, with the epoch in the middle;
      * this method re-centers the epoch at 2^31.
@@ -210,7 +204,7 @@ public final class CodecUtils {
      * @return The CQL date value corresponding to the given value.
      */
     public static long fromDaysSinceEpochToCqlDate(int days) {
-        return ((long)days + EPOCH_AS_CQL_LONG);
+        return ((long) days + EPOCH_AS_CQL_LONG);
     }
 
     private static int sizeOfCollectionSize(ProtocolVersion version) {

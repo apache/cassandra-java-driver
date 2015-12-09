@@ -15,18 +15,16 @@
  */
 package com.datastax.driver.core;
 
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
 import java.util.Collection;
 
-import org.testng.annotations.*;
-
-import static com.google.common.collect.Lists.newArrayList;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.timeout;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-
 import static com.datastax.driver.core.TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT;
+import static com.google.common.collect.Lists.newArrayList;
+import static org.mockito.Mockito.*;
 
 public class NodeListRefreshDebouncerTest extends CCMBridge.PerClassSingleNodeCluster {
 
@@ -57,9 +55,9 @@ public class NodeListRefreshDebouncerTest extends CCMBridge.PerClassSingleNodeCl
         queryOptions.setRefreshSchemaIntervalMillis(0);
         // Create a separate cluster that will receive the schema events on its control connection.
         cluster2 = this.configure(Cluster.builder())
-            .addContactPointsWithPorts(newArrayList(hostAddress))
-            .withQueryOptions(queryOptions)
-            .build();
+                .addContactPointsWithPorts(newArrayList(hostAddress))
+                .withQueryOptions(queryOptions)
+                .build();
         session2 = cluster2.connect();
 
         // Create a spy of the Cluster's control connection and replace it with the spy.
@@ -77,7 +75,7 @@ public class NodeListRefreshDebouncerTest extends CCMBridge.PerClassSingleNodeCl
     public void teardown() {
         cluster2.close();
         // drop all keyspaces
-        for(String keyspace : keyspaces) {
+        for (String keyspace : keyspaces) {
             session.execute("DROP KEYSPACE " + keyspace);
         }
     }
@@ -112,7 +110,7 @@ public class NodeListRefreshDebouncerTest extends CCMBridge.PerClassSingleNodeCl
         // Create keyspaces 5 times to cause
         // refreshNodeListAndTokenMap to be called.
         String prefix = "srwmprr";
-        for(int i = 0; i < 5; i++) {
+        for (int i = 0; i < 5; i++) {
             String keyspace = prefix + i;
             session.execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, keyspace, 1));
             keyspaces.add(keyspace);

@@ -15,19 +15,19 @@
  */
 package com.datastax.driver.core;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
-
 import com.datastax.driver.core.policies.DowngradingConsistencyRetryPolicy;
 import com.datastax.driver.core.utils.CassandraVersion;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CassandraVersion(major=2.0)
+@CassandraVersion(major = 2.0)
 public class TracingTest extends CCMBridge.PerClassSingleNodeCluster {
 
     @Override
@@ -73,12 +73,12 @@ public class TracingTest extends CCMBridge.PerClassSingleNodeCluster {
         }
 
         assertThat(result.getExecutionInfo().getQueryTrace().getEvents()).isNotNull()
-                                                                         .isNotEmpty();
+                .isNotEmpty();
     }
 
     /**
      * Validates that if a query gets retried, the second internal query will still have tracing enabled.
-     *
+     * <p/>
      * To force a retry, we use the downgrading policy with an impossible CL.
      *
      * @test_category tracing

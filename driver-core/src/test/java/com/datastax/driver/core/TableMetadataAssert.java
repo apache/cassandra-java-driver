@@ -60,7 +60,7 @@ public class TableMetadataAssert extends AbstractAssert<TableMetadataAssert, Tab
         assertThat(actual.getOptions().getComment()).isNotEqualTo(comment);
         return this;
     }
-    
+
     public TableMetadataAssert isCompactStorage() {
         assertThat(actual.getOptions().isCompactStorage()).isTrue();
         return this;

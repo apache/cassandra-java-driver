@@ -15,13 +15,13 @@
  */
 package com.datastax.driver.mapping;
 
+import com.datastax.driver.core.ConsistencyLevel;
+
 import java.beans.IntrospectionException;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import com.datastax.driver.core.ConsistencyLevel;
 
 /**
  * An {@link EntityMapper} implementation that use reflection to read and write fields
@@ -88,7 +88,7 @@ class ReflectionMapper<T> extends EntityMapper<T> {
             return new ReflectionMapper<T>(entityClass, keyspace, table, writeConsistency, readConsistency);
         }
 
-        @SuppressWarnings({ "unchecked", "rawtypes" })
+        @SuppressWarnings({"unchecked", "rawtypes"})
         public <T> ColumnMapper<T> createColumnMapper(Class<T> entityClass, Field field, int position, MappingManager mappingManager, AtomicInteger columnCounter) {
             String fieldName = field.getName();
             try {

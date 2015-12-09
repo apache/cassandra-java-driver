@@ -15,27 +15,26 @@
  */
 package com.datastax.driver.core;
 
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicReference;
-
-import com.google.common.annotations.VisibleForTesting;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.AbstractFuture;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.datastax.driver.core.exceptions.AuthenticationException;
 import com.datastax.driver.core.exceptions.ConnectionException;
 import com.datastax.driver.core.exceptions.UnsupportedProtocolVersionException;
 import com.datastax.driver.core.policies.ReconnectionPolicy;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.util.concurrent.AbstractFuture;
+import com.google.common.util.concurrent.ListenableFuture;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Manages periodic reconnection attempts after a host has been marked down.
- * <p>
+ * <p/>
  * Concurrent attempts are handled via the {@link #currentAttempt} reference passed to the constructor.
  * For a given reference, only one handler will run at a given time. Additional handlers will cancel
  * themselves if they find a previous handler running.
- * <p>
+ * <p/>
  * This class is designed for concurrency, but instances must not be shared: each thread creates and
  * starts its own private handler, all interactions happen through {@link #currentAttempt}.
  */
@@ -70,18 +69,31 @@ abstract class AbstractReconnectionHandler implements Runnable {
     }
 
     protected abstract Connection tryReconnect() throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException, ClusterNameMismatchException;
+
     protected abstract void onReconnection(Connection connection);
 
-    protected boolean onConnectionException(ConnectionException e, long nextDelayMs) { return true; }
-    protected boolean onUnknownException(Exception e, long nextDelayMs) { return true; }
+    protected boolean onConnectionException(ConnectionException e, long nextDelayMs) {
+        return true;
+    }
+
+    protected boolean onUnknownException(Exception e, long nextDelayMs) {
+        return true;
+    }
 
     // Retrying on authentication errors makes sense for applications that can update the credentials at runtime, we don't want to force them
     // to restart.
-    protected boolean onAuthenticationException(AuthenticationException e, long nextDelayMs) { return true; }
+    protected boolean onAuthenticationException(AuthenticationException e, long nextDelayMs) {
+        return true;
+    }
 
     // Retrying on these errors is unlikely to work
-    protected boolean onUnsupportedProtocolVersionException(UnsupportedProtocolVersionException e, long nextDelayMs) { return false; }
-    protected boolean onClusterNameMismatchException(ClusterNameMismatchException e, long nextDelayMs) { return false; }
+    protected boolean onUnsupportedProtocolVersionException(UnsupportedProtocolVersionException e, long nextDelayMs) {
+        return false;
+    }
+
+    protected boolean onClusterNameMismatchException(ClusterNameMismatchException e, long nextDelayMs) {
+        return false;
+    }
 
     public void start() {
         long firstDelay = (initialDelayMs >= 0) ? initialDelayMs : schedule.nextDelayMs();

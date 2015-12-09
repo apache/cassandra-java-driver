@@ -15,6 +15,15 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.policies.*;
+import com.datastax.driver.core.utils.CassandraVersion;
+import com.google.common.base.Function;
+import com.google.common.collect.HashMultiset;
+import com.google.common.collect.Maps;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.testng.annotations.Test;
+
 import java.net.InetAddress;
 import java.util.Collection;
 import java.util.Iterator;
@@ -22,22 +31,10 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.google.common.base.Function;
-import com.google.common.collect.HashMultiset;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Maps;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.testng.annotations.Test;
-
-import static com.google.common.collect.Lists.newArrayList;
-
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.TestUtils.nonDebouncingQueryOptions;
 import static com.datastax.driver.core.TestUtils.nonQuietClusterCloseOptions;
-
-import com.datastax.driver.core.policies.*;
-import com.datastax.driver.core.utils.CassandraVersion;
+import static com.google.common.collect.Lists.newArrayList;
 
 public class ControlConnectionTest {
 
@@ -62,10 +59,10 @@ public class ControlConnectionTest {
             ccm = CCMBridge.builder("test").withNodes(2).build();
             // We pass only the first host as contact point, so we know the control connection will be on this host
             cluster = Cluster.builder()
-                .addContactPoint(CCMBridge.ipOfNode(1))
-                .withReconnectionPolicy(reconnectionPolicy)
-                .withLoadBalancingPolicy(loadBalancingPolicy)
-                .build();
+                    .addContactPoint(CCMBridge.ipOfNode(1))
+                    .withReconnectionPolicy(reconnectionPolicy)
+                    .withLoadBalancingPolicy(loadBalancingPolicy)
+                    .build();
             cluster.init();
 
             // Kill the control connection host, there should be exactly one reconnection attempt
@@ -87,12 +84,12 @@ public class ControlConnectionTest {
 
     /**
      * Test for JAVA-509: UDT definitions were not properly parsed when using the default protocol version.
-     *
+     * <p/>
      * This did not appear with other tests because the UDT needs to already exist when the driver initializes.
      * Therefore we use two different driver instances in this test.
      */
     @Test(groups = "short")
-    @CassandraVersion(major=2.1)
+    @CassandraVersion(major = 2.1)
     public void should_parse_UDT_definitions_when_using_default_protocol_version() {
         CCMBridge ccm = null;
         Cluster cluster = null;
@@ -119,15 +116,15 @@ public class ControlConnectionTest {
                 ccm.remove();
         }
     }
-    
+
     /**
      * Ensures that if the host that the Control Connection is connected to is removed/decommissioned that the
      * Control Connection is reestablished to another host.
      *
-     * @since 2.0.9
      * @jira_ticket JAVA-597
      * @expected_result Control Connection is reestablished to another host.
      * @test_category control_connection
+     * @since 2.0.9
      */
     @Test(groups = "long")
     public void should_reestablish_if_control_node_decommissioned() throws InterruptedException {
@@ -171,7 +168,7 @@ public class ControlConnectionTest {
      *
      * @jira_ticket JAVA-618
      * @expected_result All 5 hosts were chosen within 100 attempts.  There is a very small possibility
-     *  that this may not be the case and this is not actually an error.
+     * that this may not be the case and this is not actually an error.
      * @test_category control_connection
      * @since 2.0.11, 2.1.8, 2.2.0
      */
@@ -184,15 +181,15 @@ public class ControlConnectionTest {
 
         try {
             Collection<String> contactPoints = newArrayList();
-            for(int i = 1; i <= hostCount; i++) {
+            for (int i = 1; i <= hostCount; i++) {
                 contactPoints.add(scassandras.address(i));
             }
             final HashMultiset<InetAddress> occurrencesByHost = HashMultiset.create(hostCount);
-            for(int i = 0; i < iterations; i++) {
+            for (int i = 0; i < iterations; i++) {
                 Cluster cluster = Cluster.builder()
-                    .addContactPoints(contactPoints.toArray(new String[hostCount]))
-                    .withNettyOptions(nonQuietClusterCloseOptions)
-                    .build();
+                        .addContactPoints(contactPoints.toArray(new String[hostCount]))
+                        .withNettyOptions(nonQuietClusterCloseOptions)
+                        .build();
 
                 try {
                     cluster.init();
@@ -201,7 +198,7 @@ public class ControlConnectionTest {
                     cluster.close();
                 }
             }
-            if(logger.isDebugEnabled()) {
+            if (logger.isDebugEnabled()) {
                 Map<InetAddress, Integer> hostCounts = Maps.toMap(occurrencesByHost.elementSet(), new Function<InetAddress, Integer>() {
                     @Override
                     public Integer apply(InetAddress input) {
@@ -213,17 +210,17 @@ public class ControlConnectionTest {
             // There is an incredibly low chance that a host may not be used based on randomness.
             // This probability is very low however.
             assertThat(occurrencesByHost.elementSet().size())
-                .as("Not all hosts were used as contact points.  There is a very small chance"
-                    + " of this happening based on randomness, investigate whether or not this"
-                    + " is a bug.")
-                .isEqualTo(hostCount);
+                    .as("Not all hosts were used as contact points.  There is a very small chance"
+                            + " of this happening based on randomness, investigate whether or not this"
+                            + " is a bug.")
+                    .isEqualTo(hostCount);
         } finally {
             scassandras.stop();
         }
 
     }
 
-   static class QueryPlanCountingPolicy extends DelegatingLoadBalancingPolicy {
+    static class QueryPlanCountingPolicy extends DelegatingLoadBalancingPolicy {
 
         final AtomicInteger counter = new AtomicInteger();
 

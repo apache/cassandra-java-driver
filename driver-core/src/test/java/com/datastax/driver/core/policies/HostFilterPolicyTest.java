@@ -15,9 +15,10 @@
  */
 package com.datastax.driver.core.policies;
 
-import java.net.InetSocketAddress;
-import java.util.Collection;
-
+import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.Host;
+import com.datastax.driver.core.HostDistance;
+import com.datastax.driver.core.Statement;
 import com.google.common.base.Predicate;
 import com.google.common.base.Predicates;
 import com.google.common.collect.Iterators;
@@ -29,13 +30,11 @@ import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.net.InetSocketAddress;
+import java.util.Collection;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
-
-import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.Host;
-import com.datastax.driver.core.HostDistance;
-import com.datastax.driver.core.Statement;
 
 public class HostFilterPolicyTest {
     @Mock
@@ -130,12 +129,12 @@ public class HostFilterPolicyTest {
     @Test(groups = "unit")
     public void should_return_query_plan_of_wrapped_policy() {
         when(wrappedPolicy.newQueryPlan(any(String.class), any(Statement.class)))
-            .thenReturn(Iterators.forArray(host1, host2, host3));
+                .thenReturn(Iterators.forArray(host1, host2, host3));
 
         HostFilterPolicy policy = new HostFilterPolicy(wrappedPolicy, null);
 
         assertThat(policy.newQueryPlan("keyspace", mock(Statement.class)))
-            .containsExactly(host1, host2, host3);
+                .containsExactly(host1, host2, host3);
     }
 
     @Test(groups = "unit")
@@ -145,7 +144,7 @@ public class HostFilterPolicyTest {
         when(host3.getDatacenter()).thenReturn(null);
 
         HostFilterPolicy policy = HostFilterPolicy.fromDCBlackList(wrappedPolicy,
-            Lists.newArrayList("dc2"));
+                Lists.newArrayList("dc2"));
 
         assertThat(policy.distance(host1)).isSameAs(HostDistance.LOCAL);
         assertThat(policy.distance(host2)).isSameAs(HostDistance.IGNORED);
@@ -159,7 +158,7 @@ public class HostFilterPolicyTest {
         when(host3.getDatacenter()).thenReturn(null);
 
         HostFilterPolicy policy = HostFilterPolicy.fromDCWhiteList(wrappedPolicy,
-            Lists.newArrayList("dc1"));
+                Lists.newArrayList("dc1"));
 
         assertThat(policy.distance(host1)).isSameAs(HostDistance.LOCAL);
         assertThat(policy.distance(host2)).isSameAs(HostDistance.IGNORED);

@@ -15,24 +15,23 @@
  */
 package com.datastax.driver.core;
 
-import java.nio.ByteBuffer;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
-
+import com.datastax.driver.core.utils.CassandraVersion;
 import com.google.common.collect.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
+import java.nio.ByteBuffer;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
-import com.datastax.driver.core.utils.CassandraVersion;
-
 /**
  * The goal of this test is to cover the serialization and deserialization of datatypes.
- *
+ * <p/>
  * It creates a table with a column of a given type, inserts a value and then tries to retrieve it.
  * There are 3 variants for the insert query: a raw string, a simple statement with a parameter
  * (protocol > v2 only) and a prepared statement.
@@ -55,7 +54,7 @@ public class DataTypeIntegrationTest extends CCMBridge.PerClassSingleNodeCluster
         for (TestTable table : tables) {
             if (cassandraVersion.compareTo(table.minCassandraVersion) < 0)
                 logger.debug("Skipping table because it uses a feature not supported by Cassandra {}: {}",
-                    cassandraVersion, table.createStatement);
+                        cassandraVersion, table.createStatement);
             else
                 statements.add(table.createStatement);
         }
@@ -160,8 +159,8 @@ public class DataTypeIntegrationTest extends CCMBridge.PerClassSingleNodeCluster
         ByteBuffer[] values = statement.getValues(protocolVersion, codecRegistry);
         assertThat(values.length).isEqualTo(1);
         assertThat(values[0])
-            .as("Value not serialized as expected for " + table.sampleValue)
-            .isEqualTo(codecRegistry.codecFor(table.testColumnType).serialize(table.sampleValue, protocolVersion));
+                .as("Value not serialized as expected for " + table.sampleValue)
+                .isEqualTo(codecRegistry.codecFor(table.testColumnType).serialize(table.sampleValue, protocolVersion));
     }
 
     /**
@@ -229,7 +228,7 @@ public class DataTypeIntegrationTest extends CCMBridge.PerClassSingleNodeCluster
         for (DataType dataType : DataType.allPrimitiveTypes(TestUtils.getDesiredProtocolVersion())) {
             Object expectedPrimitiveValue = null;
             Object expectedValue = null;
-            switch(dataType.getName()) {
+            switch (dataType.getName()) {
                 case BIGINT:
                 case TIME:
                     expectedPrimitiveValue = 0L;
@@ -244,17 +243,17 @@ public class DataTypeIntegrationTest extends CCMBridge.PerClassSingleNodeCluster
                     expectedPrimitiveValue = 0;
                     break;
                 case SMALLINT:
-                    expectedPrimitiveValue = (short)0;
+                    expectedPrimitiveValue = (short) 0;
                     break;
                 case TINYINT:
-                    expectedPrimitiveValue = (byte)0;
+                    expectedPrimitiveValue = (byte) 0;
                     break;
                 case BOOLEAN:
                     expectedPrimitiveValue = false;
                     break;
             }
 
-            if(!dataType.getName().equals(DataType.Name.COUNTER)) {
+            if (!dataType.getName().equals(DataType.Name.COUNTER)) {
                 tables.add(new TestTable(dataType, null, expectedValue, expectedPrimitiveValue, "1.2.0"));
             }
         }
@@ -285,8 +284,8 @@ public class DataTypeIntegrationTest extends CCMBridge.PerClassSingleNodeCluster
                 Object valueSample = valueEntry.getValue();
 
                 tables.add(new TestTable(DataType.map(keyType, valueType),
-                    ImmutableMap.builder().put(keySample, valueSample).build(),
-                    "1.2.0"));
+                        ImmutableMap.builder().put(keySample, valueSample).build(),
+                        "1.2.0"));
             }
         }
         return tables;
@@ -300,10 +299,10 @@ public class DataTypeIntegrationTest extends CCMBridge.PerClassSingleNodeCluster
 
         // Types and samples for the inner collections like frozen<list<int>>
         Map<DataType, Object> childCollectionSamples = ImmutableMap.<DataType, Object>builder()
-            .put(DataType.frozenList(DataType.cint()), Lists.newArrayList(1, 1))
-            .put(DataType.frozenSet(DataType.cint()), Sets.newHashSet(1, 2))
-            .put(DataType.frozenMap(DataType.cint(), DataType.cint()), ImmutableMap.<Integer, Integer>builder().put(1, 2).put(3, 4).build())
-            .build();
+                .put(DataType.frozenList(DataType.cint()), Lists.newArrayList(1, 1))
+                .put(DataType.frozenSet(DataType.cint()), Sets.newHashSet(1, 2))
+                .put(DataType.frozenMap(DataType.cint(), DataType.cint()), ImmutableMap.<Integer, Integer>builder().put(1, 2).put(3, 4).build())
+                .build();
 
         for (Map.Entry<DataType, Object> entry : childCollectionSamples.entrySet()) {
             DataType elementType = entry.getKey();
@@ -317,7 +316,7 @@ public class DataTypeIntegrationTest extends CCMBridge.PerClassSingleNodeCluster
                 Object valueSample = valueEntry.getValue();
 
                 tables.add(new TestTable(DataType.map(elementType, valueType),
-                    ImmutableMap.builder().put(elementSample, valueSample).build(), "2.1.3"));
+                        ImmutableMap.builder().put(elementSample, valueSample).build(), "2.1.3"));
             }
         }
         return tables;
@@ -345,8 +344,8 @@ public class DataTypeIntegrationTest extends CCMBridge.PerClassSingleNodeCluster
         DataType argument = type.getTypeArguments().get(typeIdx);
         boolean isAtBottom = !(argument instanceof DataType.CollectionType);
 
-        if(isAtBottom) {
-            switch(type.getName()) {
+        if (isAtBottom) {
+            switch (type.getName()) {
                 case LIST:
                     return Lists.newArrayList(1, 2, 3);
                 case SET:
@@ -358,24 +357,23 @@ public class DataTypeIntegrationTest extends CCMBridge.PerClassSingleNodeCluster
                     map.put(5, 6);
                     return map;
             }
-        }
-        else {
-            switch(type.getName()) {
+        } else {
+            switch (type.getName()) {
                 case LIST:
                     List<Object> l = Lists.newArrayListWithExpectedSize(2);
-                    for(int i = 0; i < 5; i++) {
+                    for (int i = 0; i < 5; i++) {
                         l.add(nestedObject(argument));
                     }
                     return l;
                 case SET:
                     Set<Object> s = Sets.newHashSet();
-                    for(int i = 0; i < 5; i++) {
+                    for (int i = 0; i < 5; i++) {
                         s.add(nestedObject(argument));
                     }
                     return s;
                 case MAP:
                     Map<Integer, Object> map = Maps.newHashMap();
-                    for(int i = 0; i < 5; i++) {
+                    for (int i = 0; i < 5; i++) {
                         map.put(i, nestedObject(argument));
                     }
                     return map;
@@ -386,7 +384,7 @@ public class DataTypeIntegrationTest extends CCMBridge.PerClassSingleNodeCluster
 
     /**
      * @param baseType The base type to use, one of SET, MAP, LIST.
-     * @param depth How many subcollections to generate.
+     * @param depth    How many subcollections to generate.
      * @return a DataType that is a nested collection with the given baseType with the
      * given depth.
      */
@@ -396,16 +394,16 @@ public class DataTypeIntegrationTest extends CCMBridge.PerClassSingleNodeCluster
 
         for (int i = 1; i <= depth; i++) {
             int chooser = r.nextInt(3);
-            if(t == null) {
-                if(chooser == 0) {
+            if (t == null) {
+                if (chooser == 0) {
                     t = DataType.frozenList(DataType.cint());
-                } else if(chooser == 1) {
+                } else if (chooser == 1) {
                     t = DataType.frozenSet(DataType.cint());
                 } else {
                     t = DataType.frozenMap(DataType.cint(), DataType.cint());
                 }
-            } else if(i == depth) {
-                switch(baseType) {
+            } else if (i == depth) {
+                switch (baseType) {
                     case LIST:
                         return DataType.list(t);
                     case SET:
@@ -414,9 +412,9 @@ public class DataTypeIntegrationTest extends CCMBridge.PerClassSingleNodeCluster
                         return DataType.map(DataType.cint(), t);
                 }
             } else {
-                if(chooser == 0) {
+                if (chooser == 0) {
                     t = DataType.frozenList(t);
-                } else if(chooser == 1) {
+                } else if (chooser == 1) {
                     t = DataType.frozenSet(t);
                 } else {
                     t = DataType.frozenMap(DataType.cint(), t);
@@ -472,8 +470,8 @@ public class DataTypeIntegrationTest extends CCMBridge.PerClassSingleNodeCluster
                 return data.getSet(0, codecRegistry.codecFor(dataType.getTypeArguments().get(0)).getJavaType());
             case MAP:
                 return data.getMap(0,
-                    codecRegistry.codecFor(dataType.getTypeArguments().get(0)).getJavaType(),
-                    codecRegistry.codecFor(dataType.getTypeArguments().get(1)).getJavaType());
+                        codecRegistry.codecFor(dataType.getTypeArguments().get(0)).getJavaType(),
+                        codecRegistry.codecFor(dataType.getTypeArguments().get(1)).getJavaType());
             case CUSTOM:
             case COUNTER:
             default:

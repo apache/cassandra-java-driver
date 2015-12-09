@@ -15,22 +15,20 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.exceptions.InvalidTypeException;
+import com.datastax.driver.core.utils.Bytes;
+import org.testng.annotations.Test;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
 
-import org.testng.annotations.Test;
-
+import static com.datastax.driver.core.Assertions.assertThat;
 import static com.google.common.collect.Lists.newArrayList;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
-
-import com.datastax.driver.core.exceptions.InvalidTypeException;
-import com.datastax.driver.core.utils.Bytes;
-
-import static com.datastax.driver.core.Assertions.assertThat;
 
 /**
  * DataType simple unit tests.
@@ -45,13 +43,21 @@ public class DataTypeTest {
         return t.getName() == DataType.Name.COUNTER;
     }
 
-    /** A test value for a primitive data type */
+    /**
+     * A test value for a primitive data type
+     */
     static class TestValue {
-        /** The value as a Java object */
+        /**
+         * The value as a Java object
+         */
         final Object javaObject;
-        /** A CQL string that should parse to the value */
+        /**
+         * A CQL string that should parse to the value
+         */
         final String cqlInputString;
-        /** How the value should be formatted in CQL */
+        /**
+         * How the value should be formatted in CQL
+         */
         final String cqlOutputString;
 
         TestValue(Object javaObject, String cqlInputString, String cqlOutputString) {
@@ -67,98 +73,98 @@ public class DataTypeTest {
             case TEXT:
             case VARCHAR:
                 return new TestValue[]{
-                    new TestValue("foo", "'foo'", "'foo'"),
-                    new TestValue("fo'o", "'fo''o'", "'fo''o'"),
-                    new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL") };
+                        new TestValue("foo", "'foo'", "'foo'"),
+                        new TestValue("fo'o", "'fo''o'", "'fo''o'"),
+                        new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL")};
             case BIGINT:
                 return new TestValue[]{
-                    new TestValue(42L, "42", "42"),
-                    new TestValue(91294377723L, "91294377723", "91294377723"),
-                    new TestValue(-133L, "-133", "-133"),
-                    new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL") };
+                        new TestValue(42L, "42", "42"),
+                        new TestValue(91294377723L, "91294377723", "91294377723"),
+                        new TestValue(-133L, "-133", "-133"),
+                        new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL")};
             case TIMESTAMP:
                 // input: single quotes are optional for long literals, mandatory for date patterns
                 return new TestValue[]{
-                    new TestValue(new Date(42L), "42", "42"),
-                    new TestValue(new Date(91294377723L), "91294377723", "91294377723"),
-                    new TestValue(new Date(-133L), "-133", "-133"),
-                    new TestValue(new Date(784041330999L), "'1994-11-05T14:15:30.999+0100'", "784041330999"),
-                    new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL") };
+                        new TestValue(new Date(42L), "42", "42"),
+                        new TestValue(new Date(91294377723L), "91294377723", "91294377723"),
+                        new TestValue(new Date(-133L), "-133", "-133"),
+                        new TestValue(new Date(784041330999L), "'1994-11-05T14:15:30.999+0100'", "784041330999"),
+                        new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL")};
             case DATE:
                 // input: single quotes are optional for long literals, mandatory for date patterns
                 return new TestValue[]{
-                    new TestValue(LocalDate.fromDaysSinceEpoch(16071), "'2014-01-01'", "'2014-01-01'"),
-                    new TestValue(LocalDate.fromDaysSinceEpoch(0), "'1970-01-01'", "'1970-01-01'"),
-                    new TestValue(LocalDate.fromDaysSinceEpoch((int)(2147483648L - (1L << 31))), "'2147483648'", "'1970-01-01'"),
-                    new TestValue(LocalDate.fromDaysSinceEpoch((int)(0 - (1L << 31))), "0", "'-5877641-06-23'"),
-                    new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL") };
+                        new TestValue(LocalDate.fromDaysSinceEpoch(16071), "'2014-01-01'", "'2014-01-01'"),
+                        new TestValue(LocalDate.fromDaysSinceEpoch(0), "'1970-01-01'", "'1970-01-01'"),
+                        new TestValue(LocalDate.fromDaysSinceEpoch((int) (2147483648L - (1L << 31))), "'2147483648'", "'1970-01-01'"),
+                        new TestValue(LocalDate.fromDaysSinceEpoch((int) (0 - (1L << 31))), "0", "'-5877641-06-23'"),
+                        new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL")};
             case TIME:
                 // input: all literals must by enclosed in single quotes
                 return new TestValue[]{
-                    new TestValue(54012123450000L, "'54012123450000'", "'15:00:12.123450000'"),
-                    new TestValue(0L, "'0'", "'00:00:00.000000000'"),
-                    new TestValue(54012012345000L, "'15:00:12.012345000'", "'15:00:12.012345000'"),
-                    new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL") };
+                        new TestValue(54012123450000L, "'54012123450000'", "'15:00:12.123450000'"),
+                        new TestValue(0L, "'0'", "'00:00:00.000000000'"),
+                        new TestValue(54012012345000L, "'15:00:12.012345000'", "'15:00:12.012345000'"),
+                        new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL")};
             case BLOB:
                 return new TestValue[]{
-                    new TestValue(Bytes.fromHexString("0x2450"), "0x2450", "0x2450"),
-                    new TestValue(ByteBuffer.allocate(0), "0x", "0x"),
-                    new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL") };
+                        new TestValue(Bytes.fromHexString("0x2450"), "0x2450", "0x2450"),
+                        new TestValue(ByteBuffer.allocate(0), "0x", "0x"),
+                        new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL")};
             case BOOLEAN:
                 return new TestValue[]{
-                    new TestValue(true, "true", "true"),
-                    new TestValue(false, "false", "false"),
-                    new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL") };
+                        new TestValue(true, "true", "true"),
+                        new TestValue(false, "false", "false"),
+                        new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL")};
             case DECIMAL:
                 return new TestValue[]{
-                    new TestValue(new BigDecimal("1.23E+8"), "1.23E+8", "1.23E+8"),
-                    new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL") };
+                        new TestValue(new BigDecimal("1.23E+8"), "1.23E+8", "1.23E+8"),
+                        new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL")};
             case DOUBLE:
                 return new TestValue[]{
-                    new TestValue(2.39324324, "2.39324324", "2.39324324"),
-                    new TestValue(-12., "-12.0", "-12.0"),
-                    new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL") };
+                        new TestValue(2.39324324, "2.39324324", "2.39324324"),
+                        new TestValue(-12., "-12.0", "-12.0"),
+                        new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL")};
             case FLOAT:
                 return new TestValue[]{
-                    new TestValue(2.39f, "2.39", "2.39"),
-                    new TestValue(-12.f, "-12.0", "-12.0"),
-                    new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL") };
+                        new TestValue(2.39f, "2.39", "2.39"),
+                        new TestValue(-12.f, "-12.0", "-12.0"),
+                        new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL")};
             case INET:
                 try {
                     return new TestValue[]{
-                        new TestValue(InetAddress.getByName("128.2.12.3"), "'128.2.12.3'", "'128.2.12.3'"),
-                        new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL") };
+                            new TestValue(InetAddress.getByName("128.2.12.3"), "'128.2.12.3'", "'128.2.12.3'"),
+                            new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL")};
                 } catch (java.net.UnknownHostException e) {
                     throw new RuntimeException();
                 }
             case TINYINT:
                 return new TestValue[]{
-                    new TestValue((byte)-4, "-4", "-4"),
-                    new TestValue((byte)44, "44", "44"),
-                    new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL") };
+                        new TestValue((byte) -4, "-4", "-4"),
+                        new TestValue((byte) 44, "44", "44"),
+                        new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL")};
             case SMALLINT:
                 return new TestValue[]{
-                    new TestValue((short)-3, "-3", "-3"),
-                    new TestValue((short)43, "43", "43"),
-                    new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL") };
+                        new TestValue((short) -3, "-3", "-3"),
+                        new TestValue((short) 43, "43", "43"),
+                        new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL")};
             case INT:
                 return new TestValue[]{
-                    new TestValue(-2, "-2", "-2"),
-                    new TestValue(42, "42", "42"),
-                    new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL") };
+                        new TestValue(-2, "-2", "-2"),
+                        new TestValue(42, "42", "42"),
+                        new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL")};
             case TIMEUUID:
                 return new TestValue[]{
-                    new TestValue(UUID.fromString("FE2B4360-28C6-11E2-81C1-0800200C9A66"), "fe2b4360-28c6-11e2-81c1-0800200c9a66", "fe2b4360-28c6-11e2-81c1-0800200c9a66"),
-                    new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL") };
+                        new TestValue(UUID.fromString("FE2B4360-28C6-11E2-81C1-0800200C9A66"), "fe2b4360-28c6-11e2-81c1-0800200c9a66", "fe2b4360-28c6-11e2-81c1-0800200c9a66"),
+                        new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL")};
             case UUID:
                 return new TestValue[]{
-                    new TestValue(UUID.fromString("FE2B4360-28C6-11E2-81C1-0800200C9A66"), "fe2b4360-28c6-11e2-81c1-0800200c9a66", "fe2b4360-28c6-11e2-81c1-0800200c9a66"),
-                    new TestValue(UUID.fromString("067e6162-3b6f-4ae2-a171-2470b63dff00"), "067e6162-3b6f-4ae2-a171-2470b63dff00", "067e6162-3b6f-4ae2-a171-2470b63dff00"),
-                    new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL") };
+                        new TestValue(UUID.fromString("FE2B4360-28C6-11E2-81C1-0800200C9A66"), "fe2b4360-28c6-11e2-81c1-0800200c9a66", "fe2b4360-28c6-11e2-81c1-0800200c9a66"),
+                        new TestValue(UUID.fromString("067e6162-3b6f-4ae2-a171-2470b63dff00"), "067e6162-3b6f-4ae2-a171-2470b63dff00", "067e6162-3b6f-4ae2-a171-2470b63dff00"),
+                        new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL")};
             case VARINT:
                 return new TestValue[]{
-                    new TestValue(new BigInteger("12387290982347987032483422342432"), "12387290982347987032483422342432", "12387290982347987032483422342432"),
-                    new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL") };
+                        new TestValue(new BigInteger("12387290982347987032483422342432"), "12387290982347987032483422342432", "12387290982347987032483422342432"),
+                        new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL")};
             default:
                 throw new RuntimeException("Missing handling of " + dt);
         }
@@ -172,8 +178,8 @@ public class DataTypeTest {
 
             for (TestValue value : primitiveTestValues(dt))
                 assertThat(codecRegistry.codecFor(dt).parse(value.cqlInputString))
-                    .as("Parsing input %s to a %s", value.cqlInputString, dt)
-                    .isEqualTo(value.javaObject);
+                        .as("Parsing input %s to a %s", value.cqlInputString, dt)
+                        .isEqualTo(value.javaObject);
         }
     }
 
@@ -185,8 +191,8 @@ public class DataTypeTest {
 
             for (TestValue value : primitiveTestValues(dt))
                 assertThat(codecRegistry.codecFor(dt).format(value.javaObject))
-                    .as("Formatting a %s expecting %s", dt, value.cqlOutputString)
-                    .isEqualTo(value.cqlOutputString);
+                        .as("Formatting a %s expecting %s", dt, value.cqlOutputString)
+                        .isEqualTo(value.cqlOutputString);
         }
     }
 
@@ -234,17 +240,19 @@ public class DataTypeTest {
 
         final UserType udt1 = new UserType("ks", "t", Arrays.asList(new UserType.Field("a", DataType.blob())), protocolVersion, codecRegistry);
         UserType udt2 = new UserType("ks", "t", Arrays.asList(
-            new UserType.Field("t", DataType.text()),
-            new UserType.Field("i", DataType.cint()),
-            new UserType.Field("L", DataType.list(DataType.text())),
-            new UserType.Field("s", DataType.map(DataType.cint(), udt1))
+                new UserType.Field("t", DataType.text()),
+                new UserType.Field("i", DataType.cint()),
+                new UserType.Field("L", DataType.list(DataType.text())),
+                new UserType.Field("s", DataType.map(DataType.cint(), udt1))
         ), protocolVersion, codecRegistry);
 
         UDTValue toFormat = udt2.newValue();
         toFormat.setString("t", "fo'o");
         toFormat.setInt("i", 3);
         toFormat.setList("\"L\"", Arrays.<String>asList("a", "b"));
-        toFormat.setMap("s", new HashMap<Integer, UDTValue>(){{ put(3, udt1.newValue().setBytes("a", ByteBuffer.wrap(new byte[]{1}))); }});
+        toFormat.setMap("s", new HashMap<Integer, UDTValue>() {{
+            put(3, udt1.newValue().setBytes("a", ByteBuffer.wrap(new byte[]{1})));
+        }});
 
         assertEquals(codecRegistry.codecFor(udt2).parse(toParse), toFormat);
         assertEquals(codecRegistry.codecFor(udt2).format(toFormat), toParse);

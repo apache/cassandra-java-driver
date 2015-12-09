@@ -15,20 +15,20 @@
  */
 package com.datastax.driver.core.exceptions;
 
+import com.datastax.driver.core.ConsistencyLevel;
+
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
-import com.datastax.driver.core.ConsistencyLevel;
-
 /**
  * A failure to reach the required consistency level during the execution of a query.
- *
+ * <p/>
  * Such an exception is returned when the query has been tried by Cassandra but
  * cannot be achieved with the requested consistency level because either:
  * <ul>
- *     <li>the coordinator did not receive enough replica responses within the rpc timeout
- *     set for Cassandra;</li>
- *     <li>some replicas replied with an error.</li>
+ * <li>the coordinator did not receive enough replica responses within the rpc timeout
+ * set for Cassandra;</li>
+ * <li>some replicas replied with an error.</li>
  * </ul>.
  */
 @SuppressWarnings("serial")

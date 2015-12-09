@@ -15,16 +15,15 @@
  */
 package com.datastax.driver.extras.codecs.arrays;
 
-import java.lang.reflect.Array;
-
-import static com.google.common.base.Preconditions.checkArgument;
-
 import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.ParseUtils;
 import com.datastax.driver.core.TypeCodec;
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 
+import java.lang.reflect.Array;
+
 import static com.datastax.driver.core.ParseUtils.skipSpaces;
+import static com.google.common.base.Preconditions.checkArgument;
 
 /**
  * Base class for all codecs dealing with Java arrays.
@@ -35,7 +34,7 @@ import static com.datastax.driver.core.ParseUtils.skipSpaces;
 public abstract class AbstractArrayCodec<T> extends TypeCodec<T> {
 
     /**
-     * @param cqlType The CQL type. Must be a list type.
+     * @param cqlType   The CQL type. Must be a list type.
      * @param javaClass The Java type. Must be an array class.
      */
     public AbstractArrayCodec(DataType.CollectionType cqlType, Class<T> javaClass) {
@@ -80,7 +79,7 @@ public abstract class AbstractArrayCodec<T> extends TypeCodec<T> {
         // second pass: parse elements
         T array = newInstance(length);
         int i = 0;
-        for( ; idx < value.length(); i++) {
+        for (; idx < value.length(); i++) {
             int n = skipLiteral(value, idx);
             parseElement(value.substring(idx, n), array, i);
             idx = skipSpaces(value, n);
@@ -105,8 +104,8 @@ public abstract class AbstractArrayCodec<T> extends TypeCodec<T> {
      * Format the {@code index}th element of {@code array} to {@code output}.
      *
      * @param output The StringBuilder to write to.
-     * @param array The array to read from.
-     * @param index The element index.
+     * @param array  The array to read from.
+     * @param index  The element index.
      */
     protected abstract void formatElement(StringBuilder output, T array, int index);
 
@@ -121,7 +120,7 @@ public abstract class AbstractArrayCodec<T> extends TypeCodec<T> {
 
     private int getArrayLength(String value, int idx) {
         int length = 1;
-        for( ; idx < value.length(); length++) {
+        for (; idx < value.length(); length++) {
             idx = skipLiteral(value, idx);
             idx = skipSpaces(value, idx);
             if (value.charAt(idx) == ']')

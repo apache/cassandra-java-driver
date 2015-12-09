@@ -15,11 +15,11 @@
  */
 package com.datastax.driver.core;
 
-import java.util.*;
-
 import com.google.common.base.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.*;
 
 /**
  * Describes a Table.
@@ -28,27 +28,27 @@ public class TableMetadata extends TableOrView {
 
     private static final Logger logger = LoggerFactory.getLogger(TableMetadata.class);
 
-    private static final String CF_ID_V2             = "cf_id";
-    private static final String CF_ID_V3             = "id";
+    private static final String CF_ID_V2 = "cf_id";
+    private static final String CF_ID_V3 = "id";
 
-    private static final String KEY_VALIDATOR        = "key_validator";
-    private static final String COMPARATOR           = "comparator";
-    private static final String VALIDATOR            = "default_validator";
+    private static final String KEY_VALIDATOR = "key_validator";
+    private static final String COMPARATOR = "comparator";
+    private static final String VALIDATOR = "default_validator";
 
-    private static final String KEY_ALIASES          = "key_aliases";
-    private static final String COLUMN_ALIASES       = "column_aliases";
-    private static final String VALUE_ALIAS          = "value_alias";
+    private static final String KEY_ALIASES = "key_aliases";
+    private static final String COLUMN_ALIASES = "column_aliases";
+    private static final String VALUE_ALIAS = "value_alias";
 
-    private static final String DEFAULT_KEY_ALIAS    = "key";
+    private static final String DEFAULT_KEY_ALIAS = "key";
     private static final String DEFAULT_COLUMN_ALIAS = "column";
-    private static final String DEFAULT_VALUE_ALIAS  = "value";
+    private static final String DEFAULT_VALUE_ALIAS = "value";
 
-    private static final String FLAGS                = "flags";
-    private static final String DENSE                = "dense";
-    private static final String SUPER                = "super";
-    private static final String COMPOUND             = "compound";
+    private static final String FLAGS = "flags";
+    private static final String DENSE = "dense";
+    private static final String SUPER = "super";
+    private static final String COMPOUND = "compound";
 
-    private static final String EMPTY_TYPE           = "empty";
+    private static final String EMPTY_TYPE = "empty";
 
     private final Map<String, IndexMetadata> indexes;
 
@@ -91,8 +91,8 @@ public class TableMetadata extends TableOrView {
             comparator = DataTypeClassNameParser.parseWithComposite(row.getString(COMPARATOR), protocolVersion, codecRegistry);
             keyValidator = DataTypeClassNameParser.parseWithComposite(row.getString(KEY_VALIDATOR), protocolVersion, codecRegistry);
             columnAliases = cassandraVersion.getMajor() >= 2 || row.getString(COLUMN_ALIASES) == null
-                ? Collections.<String>emptyList()
-                : SimpleJSONParser.parseStringList(row.getString(COLUMN_ALIASES));
+                    ? Collections.<String>emptyList()
+                    : SimpleJSONParser.parseStringList(row.getString(COLUMN_ALIASES));
         }
 
         int partitionKeySize = findPartitionKeySize(rawCols.values(), keyValidator);
@@ -139,8 +139,8 @@ public class TableMetadata extends TableOrView {
             // See ControlConnection#refreshSchema for why we'd rather not probably this further. Since table options is one thing
             // that tends to change often in Cassandra, it's worth special casing this.
             logger.error(String.format("Error parsing schema options for table %s.%s: "
-                    + "Cluster.getMetadata().getKeyspace(\"%s\").getTable(\"%s\").getOptions() will return null",
-                ksm.getName(), name, ksm.getName(), name), e);
+                            + "Cluster.getMetadata().getKeyspace(\"%s\").getTable(\"%s\").getOptions() will return null",
+                    ksm.getName(), name, ksm.getName(), name), e);
         }
 
         TableMetadata tm = new TableMetadata(ksm, name, id, partitionKey, clusteringColumns, columns, indexes, options, clusteringOrder, cassandraVersion);
@@ -158,8 +158,8 @@ public class TableMetadata extends TableOrView {
             // In C* 1.2, only the REGULAR columns are in the columns schema table, so we need to add the names from
             // the aliases (and make sure we handle default aliases).
             List<String> keyAliases = row.getString(KEY_ALIASES) == null
-                ? Collections.<String>emptyList()
-                : SimpleJSONParser.parseStringList(row.getString(KEY_ALIASES));
+                    ? Collections.<String>emptyList()
+                    : SimpleJSONParser.parseStringList(row.getString(KEY_ALIASES));
             for (int i = 0; i < partitionKey.size(); i++) {
                 String alias = keyAliases.size() > i ? keyAliases.get(i) : (i == 0 ? DEFAULT_KEY_ALIAS : DEFAULT_KEY_ALIAS + (i + 1));
                 partitionKey.set(i, ColumnMetadata.forAlias(tm, alias, keyValidator.types.get(i)));
@@ -184,7 +184,7 @@ public class TableMetadata extends TableOrView {
 
         for (ColumnMetadata.Raw rawCol : rawCols.values()) {
             DataType dataType;
-            if(cassandraVersion.getMajor() >= 3) {
+            if (cassandraVersion.getMajor() >= 3) {
                 dataType = DataTypeCqlNameParser.parse(rawCol.dataType, cluster, ksm.getName(), ksm.userTypes, null, false, false);
             } else {
                 dataType = DataTypeClassNameParser.parseOne(rawCol.dataType, protocolVersion, codecRegistry);
@@ -205,7 +205,7 @@ public class TableMetadata extends TableOrView {
 
             // legacy secondary indexes (C* < 3.0)
             IndexMetadata index = IndexMetadata.fromLegacy(col, rawCol);
-            if(index != null)
+            if (index != null)
                 indexes.put(index.getName(), index);
         }
 
@@ -234,15 +234,15 @@ public class TableMetadata extends TableOrView {
     private static Map<String, ColumnMetadata.Raw> pruneStaticCompactTableColumns(Map<String, ColumnMetadata.Raw> rawCols) {
         Collection<ColumnMetadata.Raw> cols = rawCols.values();
         Iterator<ColumnMetadata.Raw> it = cols.iterator();
-        while(it.hasNext()) {
+        while (it.hasNext()) {
             ColumnMetadata.Raw col = it.next();
-            if(col.kind == ColumnMetadata.Raw.Kind.CLUSTERING_COLUMN) {
+            if (col.kind == ColumnMetadata.Raw.Kind.CLUSTERING_COLUMN) {
                 // remove "column1 text" clustering column
                 it.remove();
-            } else if(col.kind == ColumnMetadata.Raw.Kind.REGULAR) {
+            } else if (col.kind == ColumnMetadata.Raw.Kind.REGULAR) {
                 // remove "value blob" regular column
                 it.remove();
-            } else if(col.kind == ColumnMetadata.Raw.Kind.STATIC) {
+            } else if (col.kind == ColumnMetadata.Raw.Kind.STATIC) {
                 // remove "static" keyword
                 col.kind = ColumnMetadata.Raw.Kind.REGULAR;
             }
@@ -257,10 +257,10 @@ public class TableMetadata extends TableOrView {
     private static Map<String, ColumnMetadata.Raw> pruneDenseTableColumnsV3(Map<String, ColumnMetadata.Raw> rawCols) {
         Collection<ColumnMetadata.Raw> cols = rawCols.values();
         Iterator<ColumnMetadata.Raw> it = cols.iterator();
-        while(it.hasNext()) {
+        while (it.hasNext()) {
             ColumnMetadata.Raw col = it.next();
             if (col.kind == ColumnMetadata.Raw.Kind.REGULAR
-                && col.dataType.equals(EMPTY_TYPE)) {
+                    && col.dataType.equals(EMPTY_TYPE)) {
                 // remove "value empty" regular column
                 it.remove();
             }
@@ -271,9 +271,9 @@ public class TableMetadata extends TableOrView {
     private static Map<String, ColumnMetadata.Raw> pruneDenseTableColumnsV2(Map<String, ColumnMetadata.Raw> rawCols) {
         Collection<ColumnMetadata.Raw> cols = rawCols.values();
         Iterator<ColumnMetadata.Raw> it = cols.iterator();
-        while(it.hasNext()) {
+        while (it.hasNext()) {
             ColumnMetadata.Raw col = it.next();
-            if(col.kind == ColumnMetadata.Raw.Kind.COMPACT_VALUE && col.name.isEmpty()) {
+            if (col.kind == ColumnMetadata.Raw.Kind.COMPACT_VALUE && col.name.isEmpty()) {
                 // remove "" blob regular COMPACT_VALUE column
                 it.remove();
             }
@@ -283,7 +283,7 @@ public class TableMetadata extends TableOrView {
 
     private static int findPartitionKeySize(Collection<ColumnMetadata.Raw> cols, DataTypeClassNameParser.ParseResult keyValidator) {
         // C* 1.2, 2.0, 2.1 and 2.2
-        if(keyValidator != null)
+        if (keyValidator != null)
             return keyValidator.types.size();
         // C* 3.0 onwards
         int maxId = -1;
@@ -320,8 +320,8 @@ public class TableMetadata extends TableOrView {
      * Returns metadata on a index of this table.
      *
      * @param name the name of the index to retrieve ({@code name} will be
-     * interpreted as a case-insensitive identifier unless enclosed in double-quotes,
-     * see {@link Metadata#quote}).
+     *             interpreted as a case-insensitive identifier unless enclosed in double-quotes,
+     *             see {@link Metadata#quote}).
      * @return the metadata for the {@code name} index if it exists, or
      * {@code null} otherwise.
      */
@@ -342,8 +342,8 @@ public class TableMetadata extends TableOrView {
      * Returns metadata on a view of this table.
      *
      * @param name the name of the view to retrieve ({@code name} will be
-     * interpreted as a case-insensitive identifier unless enclosed in double-quotes,
-     * see {@link Metadata#quote}).
+     *             interpreted as a case-insensitive identifier unless enclosed in double-quotes,
+     *             see {@link Metadata#quote}).
      * @return the metadata for the {@code name} view if it exists, or
      * {@code null} otherwise.
      */
@@ -367,11 +367,11 @@ public class TableMetadata extends TableOrView {
     /**
      * Returns a {@code String} containing CQL queries representing this
      * table and the index on it.
-     * <p>
+     * <p/>
      * In other words, this method returns the queries that would allow you to
      * recreate the schema of this table, along with the indexes and views defined on
      * this table, if any.
-     * <p>
+     * <p/>
      * Note that the returned String is formatted to be human readable (for
      * some definition of human readable at least).
      *
@@ -437,17 +437,17 @@ public class TableMetadata extends TableOrView {
         if (!(other instanceof TableMetadata))
             return false;
 
-        TableMetadata that = (TableMetadata)other;
+        TableMetadata that = (TableMetadata) other;
 
         return Objects.equal(this.name, that.name) &&
-            Objects.equal(this.id, that.id) &&
-            Objects.equal(this.partitionKey, that.partitionKey) &&
-            Objects.equal(this.clusteringColumns, that.clusteringColumns) &&
-            Objects.equal(this.columns, that.columns) &&
-            Objects.equal(this.options, that.options) &&
-            Objects.equal(this.clusteringOrder, that.clusteringOrder) &&
-            Objects.equal(this.indexes, that.indexes) &&
-            Objects.equal(this.views, that.views);
+                Objects.equal(this.id, that.id) &&
+                Objects.equal(this.partitionKey, that.partitionKey) &&
+                Objects.equal(this.clusteringColumns, that.clusteringColumns) &&
+                Objects.equal(this.columns, that.columns) &&
+                Objects.equal(this.options, that.options) &&
+                Objects.equal(this.clusteringOrder, that.clusteringOrder) &&
+                Objects.equal(this.indexes, that.indexes) &&
+                Objects.equal(this.views, that.views);
     }
 
     @Override

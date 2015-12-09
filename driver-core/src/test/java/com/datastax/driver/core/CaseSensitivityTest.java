@@ -17,11 +17,8 @@ package com.datastax.driver.core;
 
 import org.testng.annotations.Test;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertNull;
-
 import static com.datastax.driver.core.TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT;
+import static org.testng.Assert.*;
 
 public class CaseSensitivityTest {
 
@@ -38,11 +35,11 @@ public class CaseSensitivityTest {
     @Test(groups = "short")
     public void testCaseInsensitiveKeyspace() throws Throwable {
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(1, Cluster.builder()
-            .withQueryOptions(new QueryOptions()
-                .setRefreshNodeIntervalMillis(0)
-                .setRefreshNodeListIntervalMillis(0)
-                .setRefreshSchemaIntervalMillis(0)
-            )
+                        .withQueryOptions(new QueryOptions()
+                                        .setRefreshNodeIntervalMillis(0)
+                                        .setRefreshNodeListIntervalMillis(0)
+                                        .setRefreshSchemaIntervalMillis(0)
+                        )
         );
         Session s = c.session;
         try {
@@ -64,11 +61,11 @@ public class CaseSensitivityTest {
     @Test(groups = "short")
     public void testCaseSensitiveKeyspace() throws Throwable {
         CCMBridge.CCMCluster c = CCMBridge.buildCluster(1, Cluster.builder()
-            .withQueryOptions(new QueryOptions()
-                .setRefreshNodeIntervalMillis(0)
-                .setRefreshNodeListIntervalMillis(0)
-                .setRefreshSchemaIntervalMillis(0)
-            )
+                        .withQueryOptions(new QueryOptions()
+                                        .setRefreshNodeIntervalMillis(0)
+                                        .setRefreshNodeListIntervalMillis(0)
+                                        .setRefreshSchemaIntervalMillis(0)
+                        )
         );
         Session s = c.session;
         try {

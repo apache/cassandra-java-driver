@@ -32,14 +32,12 @@ import java.util.Map;
  * the authentication protocol as {@code PrivilegedAction}s with the
  * assumed identity of the {@code Subject} supplied in the constructor.
  */
-public class PrivilegedSaslClient
-{
+public class PrivilegedSaslClient {
     private static final Logger logger = LoggerFactory.getLogger(PrivilegedSaslClient.class);
 
-    public static final Map<String, String> DEFAULT_PROPERTIES = new HashMap<String, String>()
-    {{
-            put(Sasl.SERVER_AUTH, "true");
-            put(Sasl.QOP, "auth");
+    public static final Map<String, String> DEFAULT_PROPERTIES = new HashMap<String, String>() {{
+        put(Sasl.SERVER_AUTH, "true");
+        put(Sasl.QOP, "auth");
     }};
     private static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
 
@@ -60,17 +58,13 @@ public class PrivilegedSaslClient
                                 final String protocol,
                                 final String hostname,
                                 final Map<String, String> properties,
-                                final CallbackHandler callbackHandler)
-    {
+                                final CallbackHandler callbackHandler) {
         logger.trace("Initalising SASL client");
         this.clientIdentity = clientIdentity;
-        saslClient = Subject.doAs(this.clientIdentity, new PrivilegedAction<SaslClient>()
-        {
+        saslClient = Subject.doAs(this.clientIdentity, new PrivilegedAction<SaslClient>() {
             @Override
-            public javax.security.sasl.SaslClient run()
-            {
-                try
-                {
+            public javax.security.sasl.SaslClient run() {
+                try {
                     return Sasl.createSaslClient(
                             mechanisms,
                             authzId,
@@ -78,8 +72,7 @@ public class PrivilegedSaslClient
                             hostname,
                             properties,
                             callbackHandler);
-                } catch (Exception e)
-                {
+                } catch (Exception e) {
                     logger.error("Error initialising SASL client", e);
                     throw new RuntimeException(e);
                 }
@@ -91,24 +84,19 @@ public class PrivilegedSaslClient
 
     /**
      * Generate an initial token to start the SASL handshake with server.
+     *
      * @return SaslTokenRequestMessage message to be sent to server.
      */
-    public byte[] getInitialResponse()
-    {
+    public byte[] getInitialResponse() {
         logger.trace("Initialising SASL handshake from client");
         byte[] initialResponse = null;
-        if (saslClient.hasInitialResponse())
-        {
-            initialResponse = Subject.doAs(clientIdentity, new PrivilegedAction<byte[]>()
-            {
+        if (saslClient.hasInitialResponse()) {
+            initialResponse = Subject.doAs(clientIdentity, new PrivilegedAction<byte[]>() {
                 @Override
-                public byte[] run()
-                {
-                    try
-                    {
+                public byte[] run() {
+                    try {
                         return saslClient.evaluateChallenge(EMPTY_BYTE_ARRAY);
-                    } catch (Exception e)
-                    {
+                    } catch (Exception e) {
                         throw new RuntimeException(e);
                     }
                 }
@@ -119,30 +107,24 @@ public class PrivilegedSaslClient
 
     /**
      * Respond to server's SASL token
+     *
      * @param challenge contains server's SASL token
      * @return client's response SASL token, which will be null if authentication is complete
      */
-    public byte[] evaluateChallenge(final byte[] challenge)
-    {
+    public byte[] evaluateChallenge(final byte[] challenge) {
         logger.trace("Evaluating SASL server token");
-        if (saslClient.isComplete())
-        {
+        if (saslClient.isComplete()) {
             return null;
         }
-        byte[] retval = Subject.doAs(clientIdentity, new PrivilegedAction<byte[]>()
-        {
+        byte[] retval = Subject.doAs(clientIdentity, new PrivilegedAction<byte[]>() {
             @Override
-            public byte[] run()
-            {
-                try
-                {
+            public byte[] run() {
+                try {
                     logger.trace("SASL client evaluating challenge");
                     byte[] retval = saslClient.evaluateChallenge(challenge);
                     logger.trace("SASL client is complete = " + saslClient.isComplete());
                     return retval;
-                }
-                catch (SaslException e)
-                {
+                } catch (SaslException e) {
                     logger.error("Failed to generate response to SASL server's token:", e);
                     throw new RuntimeException(e);
                 }
@@ -153,10 +135,10 @@ public class PrivilegedSaslClient
 
     /**
      * Is the SASL negotiation with the server complete
+     *
      * @return true iff SASL authentication has successfully completed
      */
-    public boolean isComplete()
-    {
+    public boolean isComplete() {
         return saslClient.isComplete();
     }
 }

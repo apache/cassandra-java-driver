@@ -15,16 +15,7 @@
  */
 package com.datastax.driver.core;
 
-import java.util.Set;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static java.util.concurrent.TimeUnit.MINUTES;
-import static java.util.concurrent.TimeUnit.NANOSECONDS;
-
+import com.datastax.driver.core.exceptions.*;
 import com.google.common.annotations.Beta;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.MapMaker;
@@ -36,14 +27,19 @@ import org.HdrHistogram.Recorder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.google.common.base.Preconditions.checkArgument;
+import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
-import com.datastax.driver.core.exceptions.*;
+import static com.google.common.base.Preconditions.checkArgument;
+import static java.util.concurrent.TimeUnit.*;
 
 /**
  * A {@link LatencyTracker} that records latencies for each host over a sliding time interval, and exposes an
  * API to retrieve the latency at a given percentile.
- * <p>
+ * <p/>
  * To use this class, build an instance with {@link #builderWithHighestTrackableLatencyMillis(long)} and register
  * it with your {@link com.datastax.driver.core.Cluster} instance:
  * <pre>
@@ -55,13 +51,13 @@ import com.datastax.driver.core.exceptions.*;
  * ...
  * tracker.getLatencyAtPercentile(host1, 99.0);
  * </pre>
- * <p>
+ * <p/>
  * This class uses <a href="http://hdrhistogram.github.io/HdrHistogram/">HdrHistogram</a> to record latencies:
  * for each host, there is a "live" histogram where current latencies are recorded, and a "cached", read-only histogram
  * that is used when clients call {@link #getLatencyAtPercentile(Host, double)}. Each time the cached histogram becomes
  * older than the interval, the two histograms are switched. Note that statistics will not be available during the first
  * interval at cluster startup, since we don't have a cached histogram yet.
- * <p>
+ * <p/>
  * Note that this class is currently marked "beta": it hasn't been extensively tested yet, and the API is still subject
  * to change.
  */
@@ -117,9 +113,9 @@ public class PerHostPercentileTracker implements LatencyTracker {
         /**
          * Sets the number of significant decimal digits to which histograms will maintain value
          * resolution and separation. This must be an integer between 0 and 5.
-         * <p>
+         * <p/>
          * If not set explicitly, this value defaults to 3.
-         * <p>
+         * <p/>
          * See <a href="http://hdrhistogram.github.io/HdrHistogram/JavaDoc/org/HdrHistogram/Histogram.html">the HdrHistogram Javadocs</a>
          * for a more detailed explanation on how this parameter affects the resolution of recorded samples.
          *
@@ -134,11 +130,11 @@ public class PerHostPercentileTracker implements LatencyTracker {
         /**
          * Sets the minimum number of values that must be recorded for a host before we consider
          * the sample size significant.
-         * <p>
+         * <p/>
          * If this count is not reached during a given interval, {@link #getLatencyAtPercentile(Host, double)}
          * will return a negative value, indicating that statistics are not available. In particular, this is true
          * during the first interval.
-         * <p>
+         * <p/>
          * If not set explicitly, this value default to 1000.
          *
          * @param minRecordedValues the new value.
@@ -151,9 +147,9 @@ public class PerHostPercentileTracker implements LatencyTracker {
 
         /**
          * Sets the number of distinct hosts that the driver will ever connect to.
-         * <p>
+         * <p/>
          * This parameter is only used to pre-size internal maps in order to avoid unnecessary rehashing.
-         * <p>
+         * <p/>
          * If not set explicitly, this value defaults to 16.
          *
          * @param numberOfHosts the new value.
@@ -166,16 +162,16 @@ public class PerHostPercentileTracker implements LatencyTracker {
 
         /**
          * Sets the time interval over which samples are recorded.
-         * <p>
+         * <p/>
          * For each host, there is a "live" histogram where current latencies are recorded, and a "cached", read-only histogram
          * that is used when clients call {@link #getLatencyAtPercentile(Host, double)}. Each time the cached histogram becomes
          * older than the interval, the two histograms are switched. Note that statistics will not be available during the first
          * interval at cluster startup, since we don't have a cached histogram yet.
-         * <p>
+         * <p/>
          * If not set explicitly, this value defaults to 5 minutes.
          *
          * @param interval the new interval.
-         * @param unit the unit that the interval is expressed in.
+         * @param unit     the unit that the interval is expressed in.
          * @return this builder.
          */
         public Builder withInterval(long interval, TimeUnit unit) {
@@ -203,20 +199,20 @@ public class PerHostPercentileTracker implements LatencyTracker {
             getRecorder(host).recordValue(latencyMs);
         } catch (ArrayIndexOutOfBoundsException e) {
             logger.warn("Got request with latency of {} ms, which exceeds the configured maximum trackable value {}",
-                latencyMs, highestTrackableLatencyMillis);
+                    latencyMs, highestTrackableLatencyMillis);
         }
     }
 
     /**
      * Returns the request latency for a host at a given percentile.
      *
-     * @param host the host.
+     * @param host       the host.
      * @param percentile the percentile (for example, {@code 99.0} for the 99th percentile).
      * @return the latency (in milliseconds) at the given percentile, or a negative value if it's not available yet.
      */
     public long getLatencyAtPercentile(Host host, double percentile) {
         checkArgument(percentile >= 0.0 && percentile < 100,
-            "percentile must be between 0.0 and 100 (was %f)");
+                "percentile must be between 0.0 and 100 (was %f)");
         Histogram histogram = getLastIntervalHistogram(host);
         if (histogram == null || histogram.getTotalCount() < minRecordedValues)
             return -1;
@@ -240,7 +236,9 @@ public class PerHostPercentileTracker implements LatencyTracker {
         return recorder;
     }
 
-    /** @return null if no histogram is available yet (no entries recorded, or not for long enough) */
+    /**
+     * @return null if no histogram is available yet (no entries recorded, or not for long enough)
+     */
     private Histogram getLastIntervalHistogram(Host host) {
         try {
             while (true) {
@@ -308,11 +306,11 @@ public class PerHostPercentileTracker implements LatencyTracker {
      * and tend to make the host's score look better than it actually is.
      */
     private static final Set<Class<? extends Exception>> EXCLUDED_EXCEPTIONS = ImmutableSet.<Class<? extends Exception>>of(
-        UnavailableException.class, // this is done via the snitch and is usually very fast
-        OverloadedException.class,
-        BootstrappingException.class,
-        UnpreparedException.class,
-        QueryValidationException.class // query validation also happens at early stages in the coordinator
+            UnavailableException.class, // this is done via the snitch and is usually very fast
+            OverloadedException.class,
+            BootstrappingException.class,
+            UnpreparedException.class,
+            QueryValidationException.class // query validation also happens at early stages in the coordinator
     );
 
     @Override

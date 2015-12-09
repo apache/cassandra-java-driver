@@ -15,10 +15,10 @@
  */
 package com.datastax.driver.core;
 
-import java.util.concurrent.ExecutionException;
-
 import com.datastax.driver.core.exceptions.DriverException;
 import com.datastax.driver.core.exceptions.DriverInternalError;
+
+import java.util.concurrent.ExecutionException;
 
 class DriverThrowables {
 
@@ -26,7 +26,7 @@ class DriverThrowables {
         Throwable cause = e.getCause();
 
         if (cause instanceof Error)
-            throw ((Error)cause);
+            throw ((Error) cause);
 
         // We could just rethrow e.getCause(). However, the cause of the ExecutionException has likely been
         // created on the I/O thread receiving the response. Which means that the stacktrace associated
@@ -34,7 +34,7 @@ class DriverThrowables {
         // out which execute() statement actually raised the exception. So instead, we re-create the
         // exception.
         if (cause instanceof DriverException)
-            throw ((DriverException)cause).copy();
+            throw ((DriverException) cause).copy();
         else
             throw new DriverInternalError("Unexpected exception thrown", cause);
     }

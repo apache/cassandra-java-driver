@@ -15,19 +15,18 @@
  */
 package com.datastax.driver.core.policies;
 
-import com.google.common.annotations.VisibleForTesting;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.ConsistencyLevel;
 import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.WriteType;
 import com.datastax.driver.core.exceptions.DriverException;
+import com.google.common.annotations.VisibleForTesting;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A retry policy that wraps another policy, logging the decision made by its sub-policy.
- * <p>
+ * <p/>
  * Note that this policy only log the IGNORE and RETRY decisions (since
  * RETHROW decisions are just meant to propagate the cassandra exception). The
  * logging is done at the INFO level.
@@ -36,29 +35,37 @@ public class LoggingRetryPolicy implements RetryPolicy {
 
     private static final Logger logger = LoggerFactory.getLogger(LoggingRetryPolicy.class);
 
-    @VisibleForTesting static final String IGNORING_READ_TIMEOUT =
-        "Ignoring read timeout (initial consistency: {}, required responses: {}, received responses: {}, data retrieved: {}, retries: {})";
+    @VisibleForTesting
+    static final String IGNORING_READ_TIMEOUT =
+            "Ignoring read timeout (initial consistency: {}, required responses: {}, received responses: {}, data retrieved: {}, retries: {})";
 
-    @VisibleForTesting static final String RETRYING_ON_READ_TIMEOUT =
-        "Retrying on read timeout on {} at consistency {} (initial consistency: {}, required responses: {}, received responses: {}, data retrieved: {}, retries: {})";
+    @VisibleForTesting
+    static final String RETRYING_ON_READ_TIMEOUT =
+            "Retrying on read timeout on {} at consistency {} (initial consistency: {}, required responses: {}, received responses: {}, data retrieved: {}, retries: {})";
 
-    @VisibleForTesting static final String IGNORING_WRITE_TIMEOUT =
-        "Ignoring write timeout (initial consistency: {}, write type: {}, required acknowledgments: {}, received acknowledgments: {}, retries: {})";
+    @VisibleForTesting
+    static final String IGNORING_WRITE_TIMEOUT =
+            "Ignoring write timeout (initial consistency: {}, write type: {}, required acknowledgments: {}, received acknowledgments: {}, retries: {})";
 
-    @VisibleForTesting static final String RETRYING_ON_WRITE_TIMEOUT =
-        "Retrying on write timeout on {} at consistency {} (initial consistency: {}, write type: {}, required acknowledgments: {}, received acknowledgments: {}, retries: {})";
+    @VisibleForTesting
+    static final String RETRYING_ON_WRITE_TIMEOUT =
+            "Retrying on write timeout on {} at consistency {} (initial consistency: {}, write type: {}, required acknowledgments: {}, received acknowledgments: {}, retries: {})";
 
-    @VisibleForTesting static final String IGNORING_UNAVAILABLE =
-        "Ignoring unavailable exception (initial consistency: {}, required replica: {}, alive replica: {}, retries: {})";
+    @VisibleForTesting
+    static final String IGNORING_UNAVAILABLE =
+            "Ignoring unavailable exception (initial consistency: {}, required replica: {}, alive replica: {}, retries: {})";
 
-    @VisibleForTesting static final String RETRYING_ON_UNAVAILABLE =
-        "Retrying on unavailable exception on {} at consistency {} (initial consistency: {}, required replica: {}, alive replica: {}, retries: {})";
+    @VisibleForTesting
+    static final String RETRYING_ON_UNAVAILABLE =
+            "Retrying on unavailable exception on {} at consistency {} (initial consistency: {}, required replica: {}, alive replica: {}, retries: {})";
 
-    @VisibleForTesting static final String IGNORING_REQUEST_ERROR =
-        "Ignoring request error (initial consistency: {}, retries: {}, exception: {})";
+    @VisibleForTesting
+    static final String IGNORING_REQUEST_ERROR =
+            "Ignoring request error (initial consistency: {}, retries: {}, exception: {})";
 
-    @VisibleForTesting static final String RETRYING_ON_REQUEST_ERROR =
-        "Retrying on request error on {} at consistency {} (initial consistency: {}, retries: {}, exception: {})";
+    @VisibleForTesting
+    static final String RETRYING_ON_REQUEST_ERROR =
+            "Retrying on request error on {} at consistency {} (initial consistency: {}, retries: {}, exception: {})";
 
     private final RetryPolicy policy;
 
@@ -66,7 +73,7 @@ public class LoggingRetryPolicy implements RetryPolicy {
      * Creates a new {@code RetryPolicy} that logs the decision of {@code policy}.
      *
      * @param policy the policy to wrap. The policy created by this constructor
-     * will return the same decision than {@code policy} but will log them.
+     *               will return the same decision than {@code policy} but will log them.
      */
     public LoggingRetryPolicy(RetryPolicy policy) {
         this.policy = policy;
@@ -150,7 +157,7 @@ public class LoggingRetryPolicy implements RetryPolicy {
      * Logs the decision according to the given template and parameters.
      * The log level is INFO, but subclasses may override.
      *
-     * @param template The template to use; arguments must be specified in SLF4J style, i.e. {@code "{}"}.
+     * @param template   The template to use; arguments must be specified in SLF4J style, i.e. {@code "{}"}.
      * @param parameters The template parameters.
      */
     protected void logDecision(String template, Object... parameters) {

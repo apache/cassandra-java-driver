@@ -15,17 +15,15 @@
  */
 package com.datastax.driver.core;
 
-import java.util.Collection;
-
+import com.datastax.driver.core.utils.CassandraVersion;
 import org.testng.annotations.Test;
 
-import static com.google.common.collect.Lists.newArrayList;
-import static org.assertj.core.api.Assertions.entry;
-
-import com.datastax.driver.core.utils.CassandraVersion;
+import java.util.Collection;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.DataType.cint;
+import static com.google.common.collect.Lists.newArrayList;
+import static org.assertj.core.api.Assertions.entry;
 
 @CassandraVersion(major = 2.2)
 public class FunctionMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
@@ -45,21 +43,21 @@ public class FunctionMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
         assertThat(function.getSimpleName()).isEqualTo("plus");
         assertThat(function.getReturnType()).isEqualTo(cint());
         assertThat(function.getArguments())
-            .containsEntry("s", cint())
-            .containsEntry("v", cint());
+                .containsEntry("s", cint())
+                .containsEntry("v", cint());
         assertThat(function.getLanguage()).isEqualTo("java");
         assertThat(function.getBody()).isEqualTo("return s+v;");
         assertThat(function.isCalledOnNullInput()).isFalse();
         assertThat(function.toString())
-            .isEqualTo(cql);
+                .isEqualTo(cql);
         assertThat(function.exportAsString())
-            .isEqualTo(String.format("CREATE FUNCTION %s.plus(\n"
-                + "    s int,\n"
-                + "    v int)\n"
-                + "RETURNS NULL ON NULL INPUT\n"
-                + "RETURNS int\n"
-                + "LANGUAGE java\n"
-                + "AS 'return s+v;';", this.keyspace));
+                .isEqualTo(String.format("CREATE FUNCTION %s.plus(\n"
+                        + "    s int,\n"
+                        + "    v int)\n"
+                        + "RETURNS NULL ON NULL INPUT\n"
+                        + "RETURNS int\n"
+                        + "LANGUAGE java\n"
+                        + "AS 'return s+v;';", this.keyspace));
     }
 
     @Test(groups = "short")
@@ -81,33 +79,33 @@ public class FunctionMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
         assertThat(function.getBody()).isEqualTo("return Math.PI;");
         assertThat(function.isCalledOnNullInput()).isTrue();
         assertThat(function.toString())
-            .isEqualTo(cql);
+                .isEqualTo(cql);
         assertThat(function.exportAsString())
-            .isEqualTo(String.format("CREATE FUNCTION %s.pi()\n"
-                + "CALLED ON NULL INPUT\n"
-                + "RETURNS double\n"
-                + "LANGUAGE java\n"
-                + "AS 'return Math.PI;';", this.keyspace));
+                .isEqualTo(String.format("CREATE FUNCTION %s.pi()\n"
+                        + "CALLED ON NULL INPUT\n"
+                        + "RETURNS double\n"
+                        + "LANGUAGE java\n"
+                        + "AS 'return Math.PI;';", this.keyspace));
     }
 
     @Test(groups = "short")
     public void should_parse_and_format_function_with_udts() {
         // given
         String body =
-            "//If \"called on null input\", handle nulls\n"
-            + "if(ADDRESS == null) return previous_total + 0;\n"
-            + "//User types are converted to com.datastax.driver.core.UDTValue types\n"
-            + "java.util.Set phones = ADDRESS.getSet(\"phones\", com.datastax.driver.core.UDTValue.class);\n"
-            + "return previous_total + phones.size();\n";
+                "//If \"called on null input\", handle nulls\n"
+                        + "if(ADDRESS == null) return previous_total + 0;\n"
+                        + "//User types are converted to com.datastax.driver.core.UDTValue types\n"
+                        + "java.util.Set phones = ADDRESS.getSet(\"phones\", com.datastax.driver.core.UDTValue.class);\n"
+                        + "return previous_total + phones.size();\n";
         String cqlFunction = String.format(
-            "CREATE FUNCTION %s.\"NUM_PHONES_ACCU\"(previous_total int,\"ADDRESS\" \"Address\") "
-                + "CALLED ON NULL INPUT "
-                + "RETURNS int "
-                + "LANGUAGE java "
-                + "AS "
-                + "'"
-                + body
-                + "';", keyspace);
+                "CREATE FUNCTION %s.\"NUM_PHONES_ACCU\"(previous_total int,\"ADDRESS\" \"Address\") "
+                        + "CALLED ON NULL INPUT "
+                        + "RETURNS int "
+                        + "LANGUAGE java "
+                        + "AS "
+                        + "'"
+                        + body
+                        + "';", keyspace);
         // when
         session.execute(cqlFunction);
         // then
@@ -130,14 +128,14 @@ public class FunctionMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
     @Override
     protected Collection<String> getTableDefinitions() {
         return newArrayList(
-            String.format("CREATE TYPE IF NOT EXISTS %s.\"Phone\" (number text)", keyspace),
-            String.format("CREATE TYPE IF NOT EXISTS %s.\"Address\" ("
-                + "    street text,"
-                + "    city text,"
-                + "    zip int,"
-                + "    phones frozen<set<frozen<\"Phone\">>>,"
-                + "    location frozen<tuple<float, float>>"
-                + ")", keyspace)
+                String.format("CREATE TYPE IF NOT EXISTS %s.\"Phone\" (number text)", keyspace),
+                String.format("CREATE TYPE IF NOT EXISTS %s.\"Address\" ("
+                        + "    street text,"
+                        + "    city text,"
+                        + "    zip int,"
+                        + "    phones frozen<set<frozen<\"Phone\">>>,"
+                        + "    location frozen<tuple<float, float>>"
+                        + ")", keyspace)
         );
     }
 

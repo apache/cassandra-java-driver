@@ -28,10 +28,10 @@ public interface SSLOptions {
 
     /**
      * Creates a new SSL handler for the given Netty channel.
-     * <p>
+     * <p/>
      * This gets called each time the driver opens a new connection to a Cassandra host. The newly created handler will be added
      * to the channel's pipeline to provide SSL support for the connection.
-     * <p>
+     * <p/>
      * You don't necessarily need to implement this method directly; see the provided implementations: {@link JdkSSLOptions} and
      * {@link NettySSLOptions}.
      *

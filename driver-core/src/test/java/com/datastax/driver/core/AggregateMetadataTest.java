@@ -15,17 +15,15 @@
  */
 package com.datastax.driver.core;
 
-import java.util.Collection;
-
+import com.datastax.driver.core.utils.CassandraVersion;
 import org.testng.annotations.Test;
 
-import static com.google.common.collect.Lists.newArrayList;
-
-import com.datastax.driver.core.utils.CassandraVersion;
+import java.util.Collection;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.DataType.cint;
 import static com.datastax.driver.core.DataType.text;
+import static com.google.common.collect.Lists.newArrayList;
 
 @CassandraVersion(major = 2.2)
 public class AggregateMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
@@ -53,8 +51,8 @@ public class AggregateMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
         assertThat(aggregate.getStateType()).isEqualTo(text());
         assertThat(aggregate.toString()).isEqualTo(cqlAggregate);
         assertThat(aggregate.exportAsString()).isEqualTo(String.format("CREATE AGGREGATE %s.cat_tos(int)\n"
-            + "SFUNC cat STYPE text\n"
-            + "INITCOND '0';", this.keyspace));
+                + "SFUNC cat STYPE text\n"
+                + "INITCOND '0';", this.keyspace));
     }
 
     @Test(groups = "short")
@@ -80,8 +78,8 @@ public class AggregateMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
         assertThat(aggregate.getStateType()).isEqualTo(cint());
         assertThat(aggregate.toString()).isEqualTo(cqlAggregate);
         assertThat(aggregate.exportAsString()).isEqualTo(String.format("CREATE AGGREGATE %s.mycount()\n"
-            + "SFUNC inc STYPE int\n"
-            + "INITCOND 0;", this.keyspace));
+                + "SFUNC inc STYPE int\n"
+                + "INITCOND 0;", this.keyspace));
     }
 
     @Test(groups = "short")
@@ -110,9 +108,9 @@ public class AggregateMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
         assertThat(aggregate.getStateType()).isEqualTo(cint());
         assertThat(aggregate.toString()).isEqualTo(cqlAggregate);
         assertThat(aggregate.exportAsString()).isEqualTo(String.format("CREATE AGGREGATE %s.prettysum(int)\n"
-            + "SFUNC plus STYPE int\n"
-            + "FINALFUNC announce\n"
-            + "INITCOND 0;", this.keyspace));
+                + "SFUNC plus STYPE int\n"
+                + "FINALFUNC announce\n"
+                + "INITCOND 0;", this.keyspace));
     }
 
     @Test(groups = "short")
@@ -138,23 +136,23 @@ public class AggregateMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
         assertThat(aggregate.getStateType()).isEqualTo(cint());
         assertThat(aggregate.toString()).isEqualTo(cqlAggregate);
         assertThat(aggregate.exportAsString()).isEqualTo(String.format("CREATE AGGREGATE %s.sum(int)\n"
-            + "SFUNC plus2 STYPE int;", this.keyspace));
+                + "SFUNC plus2 STYPE int;", this.keyspace));
     }
 
     @Test(groups = "short")
     public void should_parse_and_format_aggregate_with_udts() {
         // given
         String cqlFunction = String.format(
-            "CREATE FUNCTION %s.\"MY_FUNC\"(address1 \"Address\", address2 \"Address\") "
-            + "CALLED ON NULL INPUT "
-            + "RETURNS \"Address\" "
-            + "LANGUAGE java "
-            + "AS 'return address1;'", keyspace);
+                "CREATE FUNCTION %s.\"MY_FUNC\"(address1 \"Address\", address2 \"Address\") "
+                        + "CALLED ON NULL INPUT "
+                        + "RETURNS \"Address\" "
+                        + "LANGUAGE java "
+                        + "AS 'return address1;'", keyspace);
         String cqlAggregate = String.format(
-            "CREATE AGGREGATE %s.\"MY_AGGREGATE\"(\"Address\") "
-            + "SFUNC \"MY_FUNC\" "
-            + "STYPE \"Address\";",
-            keyspace);
+                "CREATE AGGREGATE %s.\"MY_AGGREGATE\"(\"Address\") "
+                        + "SFUNC \"MY_FUNC\" "
+                        + "STYPE \"Address\";",
+                keyspace);
         // when
         session.execute(cqlFunction);
         session.execute(cqlAggregate);
@@ -178,14 +176,14 @@ public class AggregateMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
     @Override
     protected Collection<String> getTableDefinitions() {
         return newArrayList(
-            String.format("CREATE TYPE IF NOT EXISTS %s.phone (number text)", keyspace),
-            String.format("CREATE TYPE IF NOT EXISTS %s.\"Address\" ("
-            + "    street text,"
-            + "    city text,"
-            + "    zip int,"
-            + "    phones frozen<set<frozen<phone>>>,"
-            + "    location frozen<tuple<float, float>>"
-            + ")", keyspace)
+                String.format("CREATE TYPE IF NOT EXISTS %s.phone (number text)", keyspace),
+                String.format("CREATE TYPE IF NOT EXISTS %s.\"Address\" ("
+                        + "    street text,"
+                        + "    city text,"
+                        + "    zip int,"
+                        + "    phones frozen<set<frozen<phone>>>,"
+                        + "    location frozen<tuple<float, float>>"
+                        + ")", keyspace)
         );
     }
 

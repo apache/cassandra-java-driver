@@ -31,27 +31,27 @@ public abstract class ParseUtils {
      * Valid ISO-8601 patterns for CQL timestamp literals.
      */
     private static final String[] iso8601Patterns = new String[]{
-        "yyyy-MM-dd HH:mm",
-        "yyyy-MM-dd HH:mm:ss",
-        "yyyy-MM-dd HH:mmZ",
-        "yyyy-MM-dd HH:mm:ssZ",
-        "yyyy-MM-dd HH:mm:ss.SSS",
-        "yyyy-MM-dd HH:mm:ss.SSSZ",
-        "yyyy-MM-dd'T'HH:mm",
-        "yyyy-MM-dd'T'HH:mmZ",
-        "yyyy-MM-dd'T'HH:mm:ss",
-        "yyyy-MM-dd'T'HH:mm:ssZ",
-        "yyyy-MM-dd'T'HH:mm:ss.SSS",
-        "yyyy-MM-dd'T'HH:mm:ss.SSSZ",
-        "yyyy-MM-dd",
-        "yyyy-MM-ddZ"
+            "yyyy-MM-dd HH:mm",
+            "yyyy-MM-dd HH:mm:ss",
+            "yyyy-MM-dd HH:mmZ",
+            "yyyy-MM-dd HH:mm:ssZ",
+            "yyyy-MM-dd HH:mm:ss.SSS",
+            "yyyy-MM-dd HH:mm:ss.SSSZ",
+            "yyyy-MM-dd'T'HH:mm",
+            "yyyy-MM-dd'T'HH:mmZ",
+            "yyyy-MM-dd'T'HH:mm:ss",
+            "yyyy-MM-dd'T'HH:mm:ssZ",
+            "yyyy-MM-dd'T'HH:mm:ss.SSS",
+            "yyyy-MM-dd'T'HH:mm:ss.SSSZ",
+            "yyyy-MM-dd",
+            "yyyy-MM-ddZ"
     };
 
     /**
      * Returns the index of the first character in toParse from idx that is not a "space".
      *
      * @param toParse the string to skip space on.
-     * @param idx the index to start skipping space from.
+     * @param idx     the index to start skipping space from.
      * @return the index of the first character in toParse from idx that is not a "space.
      */
     public static int skipSpaces(String toParse, int idx) {
@@ -65,11 +65,10 @@ public abstract class ParseUtils {
      * index of the first character after this value.
      *
      * @param toParse the string to skip a value form.
-     * @param idx the index to start parsing a value from.
+     * @param idx     the index to start parsing a value from.
      * @return the index ending the CQL value starting at {@code idx}.
-     *
      * @throws IllegalArgumentException if idx doesn't point to the start of a valid CQL
-     * value.
+     *                                  value.
      */
     public static int skipCQLValue(String toParse, int idx) {
         if (idx >= toParse.length())
@@ -141,11 +140,10 @@ public abstract class ParseUtils {
      * index of the first character after this identifier.
      *
      * @param toParse the string to skip an identifier from.
-     * @param idx the index to start parsing an identifier from.
+     * @param idx     the index to start parsing an identifier from.
      * @return the index ending the CQL identifier starting at {@code idx}.
-     *
      * @throws IllegalArgumentException if idx doesn't point to the start of a valid CQL
-     * identifier.
+     *                                  identifier.
      */
     public static int skipCQLId(String toParse, int idx) {
         if (idx >= toParse.length())
@@ -185,8 +183,8 @@ public abstract class ParseUtils {
      */
     public static boolean isIdentifierChar(int c) {
         return (c >= '0' && c <= '9')
-            || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
-            || c == '-' || c == '+' || c == '.' || c == '_' || c == '&';
+                || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
+                || c == '-' || c == '+' || c == '.' || c == '_' || c == '&';
     }
 
     /**
@@ -202,7 +200,7 @@ public abstract class ParseUtils {
     public static boolean isBlank(int c) {
         return c == ' ' || c == '\t' || c == '\n';
     }
-    
+
     /**
      * Check whether the given string corresponds
      * to a valid CQL long literal.
@@ -260,13 +258,13 @@ public abstract class ParseUtils {
 
     /**
      * Parse the given string as a date, using one of the accepted ISO-8601 date patterns.
-     * <p>
+     * <p/>
      * This method is adapted from Apache Commons {@code DateUtils.parseStrictly()} method (that is used Cassandra side
      * to parse date strings)..
      *
+     * @throws ParseException If the given string is not a valid ISO-8601 date.
      * @see <a href="https://cassandra.apache.org/doc/cql3/CQL-2.2.html#usingtimestamps">Working with timestamps</a>
      * section of CQL specification.
-     * @throws ParseException If the given string is not a valid ISO-8601 date.
      */
     public static Date parseDate(String str) throws ParseException {
         SimpleDateFormat parser = new SimpleDateFormat();
@@ -295,13 +293,13 @@ public abstract class ParseUtils {
 
     /**
      * Parse the given string as a date, using the supplied date pattern.
-     * <p>
+     * <p/>
      * This method is adapted from Apache Commons {@code DateUtils.parseStrictly()} method (that is used Cassandra side
      * to parse date strings)..
      *
+     * @throws ParseException If the given string cannot be parsed with the given pattern.
      * @see <a href="https://cassandra.apache.org/doc/cql3/CQL-2.2.html#usingtimestamps">Working with timestamps</a>
      * section of CQL specification.
-     * @throws ParseException If the given string cannot be parsed with the given pattern.
      */
     public static Date parseDate(String str, String pattern) throws ParseException {
         SimpleDateFormat parser = new SimpleDateFormat();
@@ -328,7 +326,7 @@ public abstract class ParseUtils {
 
     /**
      * Parse the given string as a time, using the following time pattern: {@code hh:mm:ss[.fffffffff]}.
-     * <p>
+     * <p/>
      * This method is loosely based on {@code java.sql.Timestamp}.
      *
      * @param str The string to parse.
@@ -406,16 +404,16 @@ public abstract class ParseUtils {
      * section of CQL specification.
      */
     public static String formatTime(long value) {
-        int nano = (int)(value % 1000000000);
+        int nano = (int) (value % 1000000000);
         value -= nano;
         value /= 1000000000;
-        int seconds = (int)(value % 60);
+        int seconds = (int) (value % 60);
         value -= seconds;
         value /= 60;
-        int minutes = (int)(value % 60);
+        int minutes = (int) (value % 60);
         value -= minutes;
         value /= 60;
-        int hours = (int)(value % 24);
+        int hours = (int) (value % 24);
         value -= hours;
         value /= 24;
         assert (value == 0);
@@ -435,13 +433,13 @@ public abstract class ParseUtils {
      * {@code String.replace()} is a bit too inefficient (see JAVA-67).
      * This methods is specially useful for escaping single quotes
      * in CQL strings:
-     *
+     * <p/>
      * <pre>{@code
      * ParseUtils.replaceChar(value, '\'', "''");
      * }</pre>
      *
-     * @param text The text.
-     * @param search The character to search for.
+     * @param text        The text.
+     * @param search      The character to search for.
      * @param replacement The replacement.
      * @return The text with all occurrences of {@code search} replaced with {@code replacement}.
      */
@@ -479,6 +477,7 @@ public abstract class ParseUtils {
         sb.append(String.format("%0" + digits + "d", value));
     }
 
-    private ParseUtils() {}
+    private ParseUtils() {
+    }
 
 }

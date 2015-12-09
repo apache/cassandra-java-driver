@@ -15,9 +15,9 @@
  */
 package com.datastax.driver.core;
 
-import java.util.concurrent.atomic.AtomicInteger;
-
 import com.datastax.driver.core.policies.ReconnectionPolicy;
+
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * A reconnection policy that tracks how many times its schedule has been invoked.
@@ -50,9 +50,12 @@ public class CountingReconnectionPolicy implements ReconnectionPolicy {
     }
 
     @Override
-    public void init(Cluster cluster) {}
+    public void init(Cluster cluster) {
+    }
 
     @Override
-    public void close() { childPolicy.close(); }
+    public void close() {
+        childPolicy.close();
+    }
 
 }

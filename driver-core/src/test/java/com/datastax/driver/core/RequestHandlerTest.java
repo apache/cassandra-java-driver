@@ -15,13 +15,13 @@
  */
 package com.datastax.driver.core;
 
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
 import com.google.common.collect.ImmutableMap;
 import org.scassandra.Scassandra;
 import org.scassandra.http.client.PrimingRequest;
 import org.testng.annotations.Test;
+
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -36,23 +36,23 @@ public class RequestHandlerTest {
             // Use a mock server that takes a constant time to reply
             scassandra.start();
             scassandra.primingClient().prime(
-                PrimingRequest.queryBuilder()
-                    .withQuery("mock query")
-                    .withRows(ImmutableMap.of("key", 1))
-                    .withFixedDelay(10)
-                    .build()
+                    PrimingRequest.queryBuilder()
+                            .withQuery("mock query")
+                            .withRows(ImmutableMap.of("key", 1))
+                            .withFixedDelay(10)
+                            .build()
             );
 
             cluster = Cluster.builder()
-                .addContactPoint("127.0.0.1")
-                .withPort(scassandra.getBinaryPort())
-                // Scassandra does not support V3 nor V4 yet, and V4 may cause the server to crash
-                .withProtocolVersion(ProtocolVersion.V2)
-                .withPoolingOptions(new PoolingOptions()
-                    .setCoreConnectionsPerHost(HostDistance.LOCAL, 1)
-                    .setMaxConnectionsPerHost(HostDistance.LOCAL, 1)
-                    .setHeartbeatIntervalSeconds(0))
-                .build();
+                    .addContactPoint("127.0.0.1")
+                    .withPort(scassandra.getBinaryPort())
+                            // Scassandra does not support V3 nor V4 yet, and V4 may cause the server to crash
+                    .withProtocolVersion(ProtocolVersion.V2)
+                    .withPoolingOptions(new PoolingOptions()
+                            .setCoreConnectionsPerHost(HostDistance.LOCAL, 1)
+                            .setMaxConnectionsPerHost(HostDistance.LOCAL, 1)
+                            .setHeartbeatIntervalSeconds(0))
+                    .build();
 
             Session session = cluster.connect();
 
@@ -86,7 +86,7 @@ public class RequestHandlerTest {
     }
 
     private Connection getSingleConnection(Session session) {
-        HostConnectionPool pool = ((SessionManager)session).pools.values().iterator().next();
+        HostConnectionPool pool = ((SessionManager) session).pools.values().iterator().next();
         return pool.connections.get(0);
     }
 }

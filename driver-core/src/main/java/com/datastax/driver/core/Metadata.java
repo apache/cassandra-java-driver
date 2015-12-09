@@ -15,6 +15,12 @@
  */
 package com.datastax.driver.core;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
@@ -22,13 +28,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Pattern;
-
-import com.google.common.base.Joiner;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Maps;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Keeps metadata on the connected cluster, including known nodes and schema definitions.
@@ -60,12 +59,12 @@ public class Metadata {
                 return;
 
             Token.Factory factory = partitioner == null
-                ? (tokenMap == null ? null : tokenMap.factory)
-                : Token.getFactory(partitioner);
+                    ? (tokenMap == null ? null : tokenMap.factory)
+                    : Token.getFactory(partitioner);
             if (factory == null)
                 return;
 
-        this.tokenMap = TokenMap.build(factory, allTokens, keyspaces.values());
+            this.tokenMap = TokenMap.build(factory, allTokens, keyspaces.values());
         } finally {
             lock.unlock();
         }
@@ -158,7 +157,7 @@ public class Metadata {
             // without keyspace prefix, because that's how
             // they appear in a schema change event (in targetSignature)
             if (argumentType instanceof UserType) {
-                UserType userType = (UserType)argumentType;
+                UserType userType = (UserType) argumentType;
                 String typeName = Metadata.escapeId(userType.getTypeName());
                 if (userType.isFrozen())
                     sb.append("frozen<");
@@ -175,7 +174,7 @@ public class Metadata {
 
     /**
      * Quote a keyspace, table or column identifier to make it case sensitive.
-     * <p>
+     * <p/>
      * CQL identifiers, including keyspace, table and column ones, are case insensitive
      * by default. Case sensitive identifiers can however be provided by enclosing
      * the identifier in double quotes (see the
@@ -195,7 +194,7 @@ public class Metadata {
 
     /**
      * Returns the token ranges that define data distribution in the ring.
-     * <p>
+     * <p/>
      * Note that this information is refreshed asynchronously by the control
      * connection, when schema or ring topology changes. It might occasionally
      * be stale.
@@ -211,13 +210,13 @@ public class Metadata {
     /**
      * Returns the token ranges that are replicated on the given host, for the given
      * keyspace.
-     * <p>
+     * <p/>
      * Note that this information is refreshed asynchronously by the control
      * connection, when schema or ring topology changes. It might occasionally
      * be stale (or even empty).
      *
      * @param keyspace the name of the keyspace to get token ranges for.
-     * @param host the host.
+     * @param host     the host.
      * @return the (immutable) set of token ranges for {@code host} as known
      * by the driver. Note that the result might be stale or empty if metadata
      * was explicitly disabled with {@link QueryOptions#setMetadataEnabled(boolean)}.
@@ -240,14 +239,14 @@ public class Metadata {
 
     /**
      * Returns the set of hosts that are replica for a given partition key.
-     * <p>
+     * <p/>
      * Note that this information is refreshed asynchronously by the control
      * connection, when schema or ring topology changes. It might occasionally
      * be stale (or even empty).
      *
-     * @param keyspace the name of the keyspace to get replicas for.
+     * @param keyspace     the name of the keyspace to get replicas for.
      * @param partitionKey the partition key for which to find the set of
-     * replica.
+     *                     replica.
      * @return the (immutable) set of replicas for {@code partitionKey} as known
      * by the driver. Note that the result might be stale or empty if metadata was
      * explicitly disabled with {@link QueryOptions#setMetadataEnabled(boolean)}.
@@ -265,13 +264,13 @@ public class Metadata {
 
     /**
      * Returns the set of hosts that are replica for a given token range.
-     * <p>
+     * <p/>
      * Note that this information is refreshed asynchronously by the control
      * connection, when schema or ring topology changes. It might occasionally
      * be stale (or even empty).
      *
      * @param keyspace the name of the keyspace to get replicas for.
-     * @param range the token range.
+     * @param range    the token range.
      * @return the (immutable) set of replicas for {@code range} as known by the driver.
      * Note that the result might be stale or empty if metadata was explicitly disabled
      * with {@link QueryOptions#setMetadataEnabled(boolean)}.
@@ -316,7 +315,7 @@ public class Metadata {
 
     /**
      * Checks whether hosts that are currently up agree on the schema definition.
-     * <p>
+     * <p/>
      * This method performs a one-time check only, without any form of retry; therefore {@link Cluster.Builder#withMaxSchemaAgreementWaitSeconds(int)}
      * does not apply in this case.
      *
@@ -336,7 +335,7 @@ public class Metadata {
      * Returns the metadata of a keyspace given its name.
      *
      * @param keyspace the name of the keyspace for which metadata should be
-     * returned.
+     *                 returned.
      * @return the metadata of the requested keyspace or {@code null} if {@code
      * keyspace} is not a known keyspace. Note that the result might be stale or null if
      * metadata was explicitly disabled with {@link QueryOptions#setMetadataEnabled(boolean)}.
@@ -365,13 +364,13 @@ public class Metadata {
     /**
      * Returns a {@code String} containing CQL queries representing the schema
      * of this cluster.
-     *
+     * <p/>
      * In other words, this method returns the queries that would allow to
      * recreate the schema of this cluster.
-     *
+     * <p/>
      * Note that the returned String is formatted to be human readable (for
      * some definition of human readable at least).
-     *
+     * <p/>
      * It might be stale or empty if metadata was explicitly disabled with
      * {@link QueryOptions#setMetadataEnabled(boolean)}.
      *
@@ -413,10 +412,9 @@ public class Metadata {
      *
      * @param tokenStr the string representation.
      * @return the token.
-     *
      * @throws IllegalStateException if the token factory was not initialized. This would typically
-     * happen if metadata was explicitly disabled with {@link QueryOptions#setMetadataEnabled(boolean)}
-     * before startup.
+     *                               happen if metadata was explicitly disabled with {@link QueryOptions#setMetadataEnabled(boolean)}
+     *                               before startup.
      */
     public Token newToken(String tokenStr) {
         TokenMap current = tokenMap;
@@ -429,12 +427,11 @@ public class Metadata {
      * Builds a new {@link TokenRange}.
      *
      * @param start the start token.
-     * @param end the end token.
+     * @param end   the end token.
      * @return the range.
-     *
      * @throws IllegalStateException if the token factory was not initialized. This would typically
-     * happen if metadata was explicitly disabled with {@link QueryOptions#setMetadataEnabled(boolean)}
-     * before startup.
+     *                               happen if metadata was explicitly disabled with {@link QueryOptions#setMetadataEnabled(boolean)}
+     *                               before startup.
      */
     public TokenRange newTokenRange(Token start, Token end) {
         TokenMap current = tokenMap;
@@ -615,14 +612,13 @@ public class Metadata {
             Map<String, Map<Token, Set<Host>>> tokenToHosts = new HashMap<String, Map<Token, Set<Host>>>();
             Map<ReplicationStrategy, Map<Token, Set<Host>>> replStrategyToHosts = new HashMap<ReplicationStrategy, Map<Token, Set<Host>>>();
             Map<String, Map<Host, Set<TokenRange>>> hostsToRanges = new HashMap<String, Map<Host, Set<TokenRange>>>();
-            for (KeyspaceMetadata keyspace : keyspaces)
-            {
+            for (KeyspaceMetadata keyspace : keyspaces) {
                 ReplicationStrategy strategy = keyspace.replicationStrategy();
                 Map<Token, Set<Host>> ksTokens = replStrategyToHosts.get(strategy);
                 if (ksTokens == null) {
                     ksTokens = (strategy == null)
-                        ? makeNonReplicatedMap(tokenToPrimary)
-                        : strategy.computeTokenToReplicaMap(keyspace.getName(), tokenToPrimary, ring);
+                            ? makeNonReplicatedMap(tokenToPrimary)
+                            : strategy.computeTokenToReplicaMap(keyspace.getName(), tokenToPrimary, ring);
                     replStrategyToHosts.put(strategy, ksTokens);
                 }
 
@@ -675,8 +671,8 @@ public class Metadata {
         private static Set<TokenRange> makeTokenRanges(List<Token> ring, Token.Factory factory) {
             ImmutableSet.Builder<TokenRange> builder = ImmutableSet.builder();
             // JAVA-684: if there is only one token, return the range ]minToken, minToken]
-            if(ring.size() == 1) {
-                builder.add(new TokenRange(factory.minToken(), factory.minToken(), factory));                
+            if (ring.size() == 1) {
+                builder.add(new TokenRange(factory.minToken(), factory.minToken(), factory));
             } else {
                 for (int i = 0; i < ring.size(); i++) {
                     Token start = ring.get(i);

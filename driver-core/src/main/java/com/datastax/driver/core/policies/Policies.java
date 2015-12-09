@@ -15,11 +15,10 @@
  */
 package com.datastax.driver.core.policies;
 
-import com.google.common.base.Objects;
-
 import com.datastax.driver.core.AtomicMonotonicTimestampGenerator;
 import com.datastax.driver.core.ServerSideTimestampGenerator;
 import com.datastax.driver.core.TimestampGenerator;
+import com.google.common.base.Objects;
 
 /**
  * Policies configured for a {@link com.datastax.driver.core.Cluster} instance.
@@ -48,11 +47,11 @@ public class Policies {
     private final SpeculativeExecutionPolicy speculativeExecutionPolicy;
 
     private Policies(LoadBalancingPolicy loadBalancingPolicy,
-                    ReconnectionPolicy reconnectionPolicy,
-                    RetryPolicy retryPolicy,
-                    AddressTranslator addressTranslator,
-                    TimestampGenerator timestampGenerator,
-                    SpeculativeExecutionPolicy speculativeExecutionPolicy) {
+                     ReconnectionPolicy reconnectionPolicy,
+                     RetryPolicy retryPolicy,
+                     AddressTranslator addressTranslator,
+                     TimestampGenerator timestampGenerator,
+                     SpeculativeExecutionPolicy speculativeExecutionPolicy) {
         this.loadBalancingPolicy = loadBalancingPolicy;
         this.reconnectionPolicy = reconnectionPolicy;
         this.retryPolicy = retryPolicy;
@@ -63,10 +62,10 @@ public class Policies {
 
     /**
      * The default load balancing policy.
-     * <p>
+     * <p/>
      * The default load balancing policy is {@link DCAwareRoundRobinPolicy} with token
      * awareness (so {@code new TokenAwarePolicy(new DCAwareRoundRobinPolicy())}).
-     * <p>
+     * <p/>
      * Note that this policy shuffles the replicas when token awareness is used, see
      * {@link TokenAwarePolicy#TokenAwarePolicy(LoadBalancingPolicy, boolean)} for an
      * explanation of the tradeoffs.
@@ -81,7 +80,7 @@ public class Policies {
 
     /**
      * The default reconnection policy.
-     * <p>
+     * <p/>
      * The default reconnection policy is an {@link ExponentialReconnectionPolicy}
      * where the base delay is 1 second and the max delay is 10 minutes;
      *
@@ -93,7 +92,7 @@ public class Policies {
 
     /**
      * The default retry policy.
-     * <p>
+     * <p/>
      * The default retry policy is {@link DefaultRetryPolicy}.
      *
      * @return the default retry policy.
@@ -104,7 +103,7 @@ public class Policies {
 
     /**
      * The default address translator.
-     * <p>
+     * <p/>
      * The default address translator is {@link IdentityTranslator}.
      *
      * @return the default address translator.
@@ -115,7 +114,7 @@ public class Policies {
 
     /**
      * The default timestamp generator.
-     * <p>
+     * <p/>
      * This is an instance of {@link ServerSideTimestampGenerator}.
      *
      * @return the default timestamp generator.
@@ -126,7 +125,7 @@ public class Policies {
 
     /**
      * The default speculative retry policy.
-     * <p>
+     * <p/>
      * The default speculative retry policy is a {@link NoSpeculativeExecutionPolicy}.
      *
      * @return the default speculative retry policy.
@@ -137,7 +136,7 @@ public class Policies {
 
     /**
      * The load balancing policy in use.
-     * <p>
+     * <p/>
      * The load balancing policy defines how Cassandra hosts are picked for queries.
      *
      * @return the load balancing policy in use.
@@ -148,7 +147,7 @@ public class Policies {
 
     /**
      * The reconnection policy in use.
-     * <p>
+     * <p/>
      * The reconnection policy defines how often the driver tries to reconnect to a dead node.
      *
      * @return the reconnection policy in use.
@@ -159,7 +158,7 @@ public class Policies {
 
     /**
      * The retry policy in use.
-     * <p>
+     * <p/>
      * The retry policy defines in which conditions a query should be
      * automatically retries by the driver.
      *
@@ -275,19 +274,19 @@ public class Policies {
 
         /**
          * Builds the final object from this builder.
-         * <p>
+         * <p/>
          * Any field that hasn't been set explicitly will get its default value.
          *
          * @return the object.
          */
         public Policies build() {
             return new Policies(
-                loadBalancingPolicy == null ? Policies.defaultLoadBalancingPolicy() : loadBalancingPolicy,
-                Objects.firstNonNull(reconnectionPolicy, Policies.defaultReconnectionPolicy()),
-                Objects.firstNonNull(retryPolicy, Policies.defaultRetryPolicy()),
-                Objects.firstNonNull(addressTranslator, Policies.defaultAddressTranslator()),
-                Objects.firstNonNull(timestampGenerator, Policies.defaultTimestampGenerator()),
-                Objects.firstNonNull(speculativeExecutionPolicy, Policies.defaultSpeculativeExecutionPolicy()));
+                    loadBalancingPolicy == null ? Policies.defaultLoadBalancingPolicy() : loadBalancingPolicy,
+                    Objects.firstNonNull(reconnectionPolicy, Policies.defaultReconnectionPolicy()),
+                    Objects.firstNonNull(retryPolicy, Policies.defaultRetryPolicy()),
+                    Objects.firstNonNull(addressTranslator, Policies.defaultAddressTranslator()),
+                    Objects.firstNonNull(timestampGenerator, Policies.defaultTimestampGenerator()),
+                    Objects.firstNonNull(speculativeExecutionPolicy, Policies.defaultSpeculativeExecutionPolicy()));
         }
     }
 }

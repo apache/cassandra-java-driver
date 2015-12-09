@@ -15,12 +15,9 @@
  */
 package com.datastax.driver.core;
 
-import java.nio.ByteBuffer;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-
+import com.datastax.driver.core.exceptions.NoHostAvailableException;
+import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
+import com.datastax.driver.core.utils.CassandraVersion;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -29,17 +26,18 @@ import org.assertj.core.api.iterable.Extractor;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import static org.apache.log4j.Level.TRACE;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Fail.fail;
-
-import com.datastax.driver.core.exceptions.NoHostAvailableException;
-import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
-import com.datastax.driver.core.utils.CassandraVersion;
+import java.nio.ByteBuffer;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 import static com.datastax.driver.core.ProtocolVersion.V3;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
+import static org.apache.log4j.Level.TRACE;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Fail.fail;
 
 @CassandraVersion(major = 2.2)
 public class CustomPayloadTest extends CCMBridge.PerClassSingleNodeCluster {
@@ -48,15 +46,15 @@ public class CustomPayloadTest extends CCMBridge.PerClassSingleNodeCluster {
 
     private Map<String, ByteBuffer> payload2;
 
-    @BeforeMethod(groups = { "short", "unit" })
+    @BeforeMethod(groups = {"short", "unit"})
     public void initPayloads() {
         payload1 = ImmutableMap.of(
-            "k1", ByteBuffer.wrap(new byte[]{ 1, 2, 3 }),
-            "k2", ByteBuffer.wrap(new byte[]{ 4, 5, 6 })
+                "k1", ByteBuffer.wrap(new byte[]{1, 2, 3}),
+                "k2", ByteBuffer.wrap(new byte[]{4, 5, 6})
         );
         payload2 = ImmutableMap.of(
-            "k2", ByteBuffer.wrap(new byte[]{ 1, 2 }),
-            "k3", ByteBuffer.wrap(new byte[]{ 3, 4 })
+                "k2", ByteBuffer.wrap(new byte[]{1, 2}),
+                "k3", ByteBuffer.wrap(new byte[]{3, 4})
         );
     }
 
@@ -92,6 +90,7 @@ public class CustomPayloadTest extends CCMBridge.PerClassSingleNodeCluster {
 
     /**
      * Ensures that an incoming payload is propagated from prepared to bound statements.
+     *
      * @throws Exception
      */
     @Test(groups = "short")
@@ -119,6 +118,7 @@ public class CustomPayloadTest extends CCMBridge.PerClassSingleNodeCluster {
     /**
      * Ensures that an incoming payload is overridden by an explicitly set outgoing payload
      * when propagated to bound statements.
+     *
      * @throws Exception
      */
     @Test(groups = "short")
@@ -146,6 +146,7 @@ public class CustomPayloadTest extends CCMBridge.PerClassSingleNodeCluster {
     /**
      * Ensures that payloads can still be set individually on bound statements
      * if the prepared statement does not have a default payload.
+     *
      * @throws Exception
      */
     @Test(groups = "short")
@@ -175,6 +176,7 @@ public class CustomPayloadTest extends CCMBridge.PerClassSingleNodeCluster {
 
     /**
      * Ensures that a custom payload is propagated throughout pages.
+     *
      * @throws Exception
      */
     @Test(groups = "short")
@@ -207,7 +209,7 @@ public class CustomPayloadTest extends CCMBridge.PerClassSingleNodeCluster {
     @Test(groups = "unit", expectedExceptions = NullPointerException.class)
     public void should_throw_npe_when_null_key_on_regular_statement() throws Exception {
         Map<String, ByteBuffer> payload = new HashMap<String, ByteBuffer>();
-        payload.put(null, ByteBuffer.wrap(new byte[]{ 1 }));
+        payload.put(null, ByteBuffer.wrap(new byte[]{1}));
         new SimpleStatement("SELECT c2 FROM t1 where c1 = ?", 1).setOutgoingPayload(payload);
     }
 
@@ -221,7 +223,7 @@ public class CustomPayloadTest extends CCMBridge.PerClassSingleNodeCluster {
     @Test(groups = "short", expectedExceptions = NullPointerException.class)
     public void should_throw_npe_when_null_key_on_prepared_statement() throws Exception {
         Map<String, ByteBuffer> payload = new HashMap<String, ByteBuffer>();
-        payload.put(null, ByteBuffer.wrap(new byte[]{ 1 }));
+        payload.put(null, ByteBuffer.wrap(new byte[]{1}));
         session.prepare(new SimpleStatement("SELECT c2 FROM t1 where c1 = 1")).setOutgoingPayload(payload);
     }
 
@@ -238,10 +240,10 @@ public class CustomPayloadTest extends CCMBridge.PerClassSingleNodeCluster {
         Session v3session = null;
         try {
             v3cluster = Cluster.builder()
-                .addContactPointsWithPorts(ImmutableList.of(hostAddress))
-                .withProtocolVersion(V3)
-                .build()
-                .init();
+                    .addContactPointsWithPorts(ImmutableList.of(hostAddress))
+                    .withProtocolVersion(V3)
+                    .build()
+                    .init();
             v3session = v3cluster.connect();
             Statement statement = new SimpleStatement("SELECT c2 FROM t1 where c1 = ?", 1);
             statement.setOutgoingPayload(payload1);
@@ -249,15 +251,15 @@ public class CustomPayloadTest extends CCMBridge.PerClassSingleNodeCluster {
             fail("Should not send custom payloads with protocol V3");
         } catch (NoHostAvailableException nhae) {
             assertThat(nhae.getErrors().values())
-                .extracting(new Extractor<Throwable, Throwable>() {
-                    @Override
-                    public Throwable extract(Throwable input) {
-                        return Throwables.getRootCause(input);
-                    }
-                })
-                .hasOnlyElementsOfType(UnsupportedFeatureException.class)
-                .extracting("message")
-                .containsOnly("Unsupported feature with the native protocol V3 (which is currently in use): Custom payloads are only supported since native protocol V4");
+                    .extracting(new Extractor<Throwable, Throwable>() {
+                        @Override
+                        public Throwable extract(Throwable input) {
+                            return Throwables.getRootCause(input);
+                        }
+                    })
+                    .hasOnlyElementsOfType(UnsupportedFeatureException.class)
+                    .extracting("message")
+                    .containsOnly("Unsupported feature with the native protocol V3 (which is currently in use): Custom payloads are only supported since native protocol V4");
         } finally {
             if (v3session != null)
                 v3session.close();
@@ -270,6 +272,7 @@ public class CustomPayloadTest extends CCMBridge.PerClassSingleNodeCluster {
 
     /**
      * Ensures that when debugging custom payloads, the driver will print appropriate log messages.
+     *
      * @throws Exception
      */
     @Test(groups = "short")
@@ -284,8 +287,8 @@ public class CustomPayloadTest extends CCMBridge.PerClassSingleNodeCluster {
             session.execute(statement);
             String logs = appender.waitAndGet(10000);
             assertThat(logs)
-                .contains("Sending payload: {k1:0x010203, k2:0x040506} (20 bytes total)")
-                .contains("Received payload: {k1:0x010203, k2:0x040506} (20 bytes total)");
+                    .contains("Sending payload: {k1:0x010203, k2:0x040506} (20 bytes total)")
+                    .contains("Received payload: {k1:0x010203, k2:0x040506} (20 bytes total)");
         } finally {
             logger.setLevel(null);
             logger.removeAppender(appender);

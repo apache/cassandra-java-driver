@@ -19,7 +19,7 @@ import com.datastax.driver.core.exceptions.InvalidTypeException;
 
 /**
  * A CQL Row returned in a {@link ResultSet}.
- * <p>
+ * <p/>
  * The values of a CQL Row can be retrieve by either index (index starts at 0)
  * or name. When setting them by name, names follow the case insensitivity
  * rules explained in {@link ColumnDefinitions}.
@@ -35,38 +35,36 @@ public interface Row extends GettableData {
 
     /**
      * Returns the {@code i}th value of this row as a {@link Token}.
-     * <p>
+     * <p/>
      * {@link #getPartitionKeyToken()} should generally be preferred to this method (unless the
      * token column is aliased).
      *
      * @param i the index ({@code 0 <= i < size()}) of the column to retrieve.
      * @return the value of the {@code i}th column in this row as an Token.
-     *
      * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.columns().size()}.
-     * @throws InvalidTypeException if column {@code i} is not of the type of token values
-     * for this cluster (this depends on the configured partitioner).
+     * @throws InvalidTypeException      if column {@code i} is not of the type of token values
+     *                                   for this cluster (this depends on the configured partitioner).
      */
     public Token getToken(int i);
 
     /**
      * Returns the value of column {@code name} as a {@link Token}.
-     * <p>
+     * <p/>
      * {@link #getPartitionKeyToken()} should generally be preferred to this method (unless the
      * token column is aliased).
      *
      * @param name the name of the column to retrieve.
      * @return the value of column {@code name} as a Token.
-     *
      * @throws IllegalArgumentException if {@code name} is not part of the
-     * ResultSet this row is part of, i.e. if {@code !this.columns().names().contains(name)}.
-     * @throws InvalidTypeException if column {@code name} is not of the type of token values
-     * for this cluster (this depends on the configured partitioner).
+     *                                  ResultSet this row is part of, i.e. if {@code !this.columns().names().contains(name)}.
+     * @throws InvalidTypeException     if column {@code name} is not of the type of token values
+     *                                  for this cluster (this depends on the configured partitioner).
      */
     public Token getToken(String name);
 
     /**
      * Returns the value of the first column containing a {@link Token}.
-     * <p>
+     * <p/>
      * This method is a shorthand for queries returning a single token in an unaliased
      * column. It will look for the first name matching {@code token(...)}:
      * <pre>
@@ -79,11 +77,10 @@ public interface Row extends GettableData {
      * {@link #getToken(int)} or {@link #getToken(String)}.
      *
      * @return the value of column {@code name} as a Token.
-     *
      * @throws IllegalStateException if no column named {@code token(...)} exists in this
-     * ResultSet.
-     * @throws InvalidTypeException if the first column named {@code token(...)} is not of
-     * the type of token values for this cluster (this depends on the configured partitioner).
+     *                               ResultSet.
+     * @throws InvalidTypeException  if the first column named {@code token(...)} is not of
+     *                               the type of token values for this cluster (this depends on the configured partitioner).
      */
     public Token getPartitionKeyToken();
 

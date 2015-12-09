@@ -15,15 +15,14 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.policies.LoadBalancingPolicy;
+import com.google.common.primitives.UnsignedBytes;
+
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.SortedSet;
 import java.util.concurrent.ConcurrentSkipListSet;
-
-import com.google.common.primitives.UnsignedBytes;
-
-import com.datastax.driver.core.policies.LoadBalancingPolicy;
 
 /**
  * A load balancing policy that sorts hosts on the last byte of the address,
@@ -37,8 +36,8 @@ public class SortingLoadBalancingPolicy implements LoadBalancingPolicy {
             byte[] address1 = host1.getAddress().getAddress();
             byte[] address2 = host2.getAddress().getAddress();
             return UnsignedBytes.compare(
-                address1[address1.length - 1],
-                address2[address2.length - 1]);
+                    address1[address1.length - 1],
+                    address2[address2.length - 1]);
         }
     });
 

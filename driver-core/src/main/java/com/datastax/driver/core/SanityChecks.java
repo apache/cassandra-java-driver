@@ -15,11 +15,11 @@
  */
 package com.datastax.driver.core;
 
+import com.google.common.reflect.TypeToken;
+
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Map;
-
-import com.google.common.reflect.TypeToken;
 
 class SanityChecks {
 
@@ -47,22 +47,22 @@ class SanityChecks {
      */
     static void checkGuava() {
         boolean resolved = false;
-        TypeToken<Map<String,String>> mapOfString = TypeTokens.mapOf(String.class, String.class);
+        TypeToken<Map<String, String>> mapOfString = TypeTokens.mapOf(String.class, String.class);
         Type type = mapOfString.getType();
-        if(type instanceof ParameterizedType) {
-            ParameterizedType pType = (ParameterizedType)type;
+        if (type instanceof ParameterizedType) {
+            ParameterizedType pType = (ParameterizedType) type;
             Type[] types = pType.getActualTypeArguments();
-            if(types.length == 2) {
+            if (types.length == 2) {
                 TypeToken valueType = TypeToken.of(types[1]);
                 resolved = valueType.getRawType().equals(String.class);
             }
         }
 
-        if(!resolved) {
+        if (!resolved) {
             throw new IllegalStateException(
-                "Detected Guava issue #1635 which indicates that a version of Guava less than 16.01 is in use.  "
-                    + "This introduces codec resolution issues and potentially other incompatibility issues in the driver.  "
-                    + "Please upgrade to Guava 16.01 or later.");
+                    "Detected Guava issue #1635 which indicates that a version of Guava less than 16.01 is in use.  "
+                            + "This introduces codec resolution issues and potentially other incompatibility issues in the driver.  "
+                            + "Please upgrade to Guava 16.01 or later.");
         }
     }
 

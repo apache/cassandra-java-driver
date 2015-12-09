@@ -15,6 +15,8 @@
  */
 package com.datastax.driver.core.policies;
 
+import com.datastax.driver.core.*;
+import com.datastax.driver.core.exceptions.*;
 import org.scassandra.http.client.PrimingRequest;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
@@ -22,13 +24,8 @@ import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
-import static org.scassandra.http.client.PrimingRequest.Result.overloaded;
-import static org.scassandra.http.client.PrimingRequest.Result.server_error;
-import static org.scassandra.http.client.PrimingRequest.Result.write_request_timeout;
+import static org.scassandra.http.client.PrimingRequest.Result.*;
 import static org.scassandra.http.client.PrimingRequest.then;
-
-import com.datastax.driver.core.*;
-import com.datastax.driver.core.exceptions.*;
 
 /**
  * Integration test with an IdempotenceAwareRetryPolicy.
@@ -40,7 +37,7 @@ public class IdempotenceAwareRetryPolicyIntegrationTest extends AbstractRetryPol
     }
 
     @BeforeMethod(groups = "short")
-    public void setUpDefaultIdempotence(){
+    public void setUpDefaultIdempotence() {
         cluster.getConfiguration().getQueryOptions().setDefaultIdempotence(false);
     }
 
@@ -78,7 +75,7 @@ public class IdempotenceAwareRetryPolicyIntegrationTest extends AbstractRetryPol
         cluster.getConfiguration().getSocketOptions().setReadTimeoutMillis(1);
         try {
             scassandras
-                .node(1).primingClient().prime(PrimingRequest.queryBuilder()
+                    .node(1).primingClient().prime(PrimingRequest.queryBuilder()
                     .withQuery("mock query")
                     .withThen(then().withFixedDelay(1000L).withRows(row("result", "result1")))
                     .build());
@@ -87,7 +84,7 @@ public class IdempotenceAwareRetryPolicyIntegrationTest extends AbstractRetryPol
                 fail("expected an OperationTimedOutException");
             } catch (OperationTimedOutException e) {
                 assertThat(e.getMessage()).isEqualTo(
-                    String.format("[%s] Timed out waiting for server response", host1.getAddress())
+                        String.format("[%s] Timed out waiting for server response", host1.getAddress())
                 );
             }
             assertOnRequestErrorWasCalled(1, OperationTimedOutException.class);
@@ -107,7 +104,7 @@ public class IdempotenceAwareRetryPolicyIntegrationTest extends AbstractRetryPol
         cluster.getConfiguration().getSocketOptions().setReadTimeoutMillis(1);
         try {
             scassandras
-                .node(1).primingClient().prime(PrimingRequest.queryBuilder()
+                    .node(1).primingClient().prime(PrimingRequest.queryBuilder()
                     .withQuery("mock query")
                     .withThen(then().withFixedDelay(1000L).withRows(row("result", "result1")))
                     .build());
@@ -127,8 +124,8 @@ public class IdempotenceAwareRetryPolicyIntegrationTest extends AbstractRetryPol
     @DataProvider
     public static Object[][] serverSideErrors() {
         return new Object[][]{
-            {server_error, ServerError.class},
-            {overloaded, OverloadedException.class}
+                {server_error, ServerError.class},
+                {overloaded, OverloadedException.class}
         };
     }
 
@@ -161,9 +158,9 @@ public class IdempotenceAwareRetryPolicyIntegrationTest extends AbstractRetryPol
             fail("expected a NoHostAvailableException");
         } catch (NoHostAvailableException e) {
             assertThat(e.getErrors().keySet()).hasSize(3).containsOnly(
-                host1.getSocketAddress(),
-                host2.getSocketAddress(),
-                host3.getSocketAddress());
+                    host1.getSocketAddress(),
+                    host2.getSocketAddress(),
+                    host3.getSocketAddress());
             assertThat(e.getErrors().values()).hasOnlyElementsOfType(exception);
         }
         assertOnRequestErrorWasCalled(3, exception);

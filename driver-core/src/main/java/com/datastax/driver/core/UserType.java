@@ -15,19 +15,19 @@
  */
 package com.datastax.driver.core;
 
-import java.util.*;
-
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterators;
 
+import java.util.*;
+
 /**
  * A User Defined Type (UDT).
- * <p>
+ * <p/>
  * A UDT is a essentially a named collection of fields (with a name and a type).
  */
 public class UserType extends DataType implements Iterable<UserType.Field> {
 
-    static final String TYPE_NAME  = "type_name";
+    static final String TYPE_NAME = "type_name";
     private static final String COLS_NAMES = "field_names";
     static final String COLS_TYPES = "field_types";
 
@@ -58,7 +58,7 @@ public class UserType extends DataType implements Iterable<UserType.Field> {
 
         ImmutableMap.Builder<String, int[]> builder = new ImmutableMap.Builder<String, int[]>();
         for (int i = 0; i < byIdx.length; i++)
-            builder.put(byIdx[i].getName(), new int[]{ i });
+            builder.put(byIdx[i].getName(), new int[]{i});
         this.byName = builder.build();
     }
 
@@ -125,8 +125,8 @@ public class UserType extends DataType implements Iterable<UserType.Field> {
      * Returns whether this UDT contains a given field.
      *
      * @param name the name to check. Note that {@code name} obey the usual
-     * CQL identifier rules: it should be quoted if it denotes a case sensitive
-     * identifier (you can use {@link Metadata#quote} for the quoting).
+     *             CQL identifier rules: it should be quoted if it denotes a case sensitive
+     *             identifier (you can use {@link Metadata#quote} for the quoting).
      * @return {@code true} if this UDT contains a field named {@code name},
      * {@code false} otherwise.
      */
@@ -157,13 +157,12 @@ public class UserType extends DataType implements Iterable<UserType.Field> {
      * Returns the type of a given field.
      *
      * @param name the name of the field. Note that {@code name} obey the usual
-     * CQL identifier rules: it should be quoted if it denotes a case sensitive
-     * identifier (you can use {@link Metadata#quote} for the quoting).
+     *             CQL identifier rules: it should be quoted if it denotes a case sensitive
+     *             identifier (you can use {@link Metadata#quote} for the quoting).
      * @return the type of field {@code name} if this UDT has a field of this
      * name, {@code null} otherwise.
-     *
      * @throws IllegalArgumentException if {@code name} is not a field of this
-     * UDT definition.
+     *                                  UDT definition.
      */
     public DataType getFieldType(String name) {
         int[] idx = byName.get(Metadata.handleId(name));
@@ -192,19 +191,19 @@ public class UserType extends DataType implements Iterable<UserType.Field> {
         if (!(o instanceof UserType))
             return false;
 
-        UserType other = (UserType)o;
+        UserType other = (UserType) o;
 
         // Note: we don't test byName because it's redundant with byIdx in practice,
         // but also because the map holds 'int[]' which don't have proper equal.
         return name.equals(other.name)
-            && keyspace.equals(other.keyspace)
-            && typeName.equals(other.typeName)
-            && Arrays.equals(byIdx, other.byIdx);
+                && keyspace.equals(other.keyspace)
+                && typeName.equals(other.typeName)
+                && Arrays.equals(byIdx, other.byIdx);
     }
 
     /**
      * Returns a CQL query representing this user type in human readable form.
-     * <p>
+     * <p/>
      * This method is equivalent to {@link #asCQLQuery} but the ouptut is
      * formatted to be human readable (for some definition of human readable).
      *
@@ -216,10 +215,10 @@ public class UserType extends DataType implements Iterable<UserType.Field> {
 
     /**
      * Returns a CQL query representing this user type.
-     * <p>
+     * <p/>
      * This method returns a single 'CREATE TYPE' query corresponding
      * to this UDT definition.
-     * <p>
+     * <p/>
      * Note that the returned string is a single line; the returned query
      * is not formatted in any way.
      *
@@ -310,7 +309,7 @@ public class UserType extends DataType implements Iterable<UserType.Field> {
 
         @Override
         public final int hashCode() {
-            return Arrays.hashCode(new Object[]{ name, type });
+            return Arrays.hashCode(new Object[]{name, type});
         }
 
         @Override
@@ -318,9 +317,9 @@ public class UserType extends DataType implements Iterable<UserType.Field> {
             if (!(o instanceof Field))
                 return false;
 
-            Field other = (Field)o;
+            Field other = (Field) o;
             return name.equals(other.name)
-                && type.equals(other.type);
+                    && type.equals(other.type);
         }
 
         @Override
@@ -332,7 +331,7 @@ public class UserType extends DataType implements Iterable<UserType.Field> {
     /**
      * A "shallow" definition of a UDT that only contains the keyspace and type name, without any information
      * about the type's structure.
-     *
+     * <p/>
      * This is used for internal dependency analysis only, and never returned to the client.
      *
      * @since 3.0.0

@@ -29,16 +29,16 @@ import java.util.Collection;
 
 import static org.testng.Assert.assertEquals;
 
-@CassandraVersion(major=2.2)
+@CassandraVersion(major = 2.2)
 public class MapperPrimitiveTypes22Test extends CCMBridge.PerClassSingleNodeCluster {
 
     protected Collection<String> getTableDefinitions() {
         return Arrays.asList("CREATE TABLE primitiveTypes22 ("
-                        + "byteBufferCol blob primary key,"
-                        + "localDateCol date,"
-                        + "timeCol time, timeWrapperCol time,"
-                        + "byteCol tinyint, byteWrapperCol tinyint,"
-                        + "shortCol smallint, shortWrapperCol smallint)");
+                + "byteBufferCol blob primary key,"
+                + "localDateCol date,"
+                + "timeCol time, timeWrapperCol time,"
+                + "byteCol tinyint, byteWrapperCol tinyint,"
+                + "shortCol smallint, shortWrapperCol smallint)");
     }
 
     @Test(groups = "short")

@@ -15,32 +15,27 @@
  */
 package com.datastax.driver.mapping;
 
-import java.util.*;
-
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.exceptions.CodecNotFoundException;
+import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.driver.mapping.annotations.*;
+import com.google.common.base.Objects;
 import com.google.common.collect.Maps;
 import org.assertj.core.data.MapEntry;
 import org.testng.annotations.BeforeMethod;
-
-import com.google.common.base.Objects;
 import org.testng.annotations.Test;
+
+import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNull;
-import static org.testng.Assert.assertTrue;
-
-import com.datastax.driver.core.utils.UUIDs;
-
-import com.datastax.driver.mapping.annotations.*;
+import static org.testng.Assert.*;
 
 public class MapperUDTTest extends CCMBridge.PerClassSingleNodeCluster {
 
     protected Collection<String> getTableDefinitions() {
         return Arrays.asList("CREATE TYPE address (street text, city text, \"ZIP_code\" int, phones set<text>)",
-                             "CREATE TABLE users (user_id uuid PRIMARY KEY, name text, mainaddress frozen<address>, other_addresses map<text,frozen<address>>)");
+                "CREATE TABLE users (user_id uuid PRIMARY KEY, name text, mainaddress frozen<address>, other_addresses map<text,frozen<address>>)");
     }
 
     @BeforeMethod(groups = "short")
@@ -49,8 +44,8 @@ public class MapperUDTTest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     @Table(name = "users",
-           readConsistency = "QUORUM",
-           writeConsistency = "QUORUM")
+            readConsistency = "QUORUM",
+            writeConsistency = "QUORUM")
     public static class User {
         @PartitionKey
         @Column(name = "user_id")
@@ -118,9 +113,9 @@ public class MapperUDTTest extends CCMBridge.PerClassSingleNodeCluster {
             if (other instanceof User) {
                 User that = (User) other;
                 return Objects.equal(this.userId, that.userId) &&
-                       Objects.equal(this.name, that.name) &&
-                       Objects.equal(this.mainAddress, that.mainAddress) &&
-                       Objects.equal(this.otherAddresses, that.otherAddresses);
+                        Objects.equal(this.name, that.name) &&
+                        Objects.equal(this.mainAddress, that.mainAddress) &&
+                        Objects.equal(this.otherAddresses, that.otherAddresses);
             }
             return false;
         }
@@ -133,11 +128,11 @@ public class MapperUDTTest extends CCMBridge.PerClassSingleNodeCluster {
         @Override
         public String toString() {
             return Objects.toStringHelper(User.class)
-                .add("userId", userId)
-                .add("name", name)
-                .add("mainAddress", mainAddress)
-                .add("otherAddresses", otherAddresses)
-                .toString();
+                    .add("userId", userId)
+                    .add("name", name)
+                    .add("mainAddress", mainAddress)
+                    .add("otherAddresses", otherAddresses)
+                    .toString();
         }
     }
 
@@ -210,9 +205,9 @@ public class MapperUDTTest extends CCMBridge.PerClassSingleNodeCluster {
             if (other instanceof Address) {
                 Address that = (Address) other;
                 return Objects.equal(this.street, that.street) &&
-                       Objects.equal(this.city, that.city) &&
-                       Objects.equal(this.zipCode, that.zipCode) &&
-                       Objects.equal(this.phones, that.phones);
+                        Objects.equal(this.city, that.city) &&
+                        Objects.equal(this.zipCode, that.zipCode) &&
+                        Objects.equal(this.phones, that.phones);
             }
             return false;
         }
@@ -225,11 +220,11 @@ public class MapperUDTTest extends CCMBridge.PerClassSingleNodeCluster {
         @Override
         public String toString() {
             return Objects.toStringHelper(Address.class)
-                .add("street", street)
-                .add("city", city)
-                .add("zip", zipCode)
-                .add("phones", phones)
-                .toString();
+                    .add("street", street)
+                    .add("city", city)
+                    .add("zip", zipCode)
+                    .add("phones", phones)
+                    .toString();
         }
     }
 

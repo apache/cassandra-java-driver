@@ -15,16 +15,15 @@
  */
 package com.datastax.driver.core;
 
-import java.util.Collection;
-import java.util.List;
-
+import com.datastax.driver.core.utils.CassandraVersion;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import org.testng.annotations.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import java.util.Collection;
+import java.util.List;
 
-import com.datastax.driver.core.utils.CassandraVersion;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class WarningsTest extends CCMBridge.PerClassSingleNodeCluster {
 
@@ -36,7 +35,7 @@ public class WarningsTest extends CCMBridge.PerClassSingleNodeCluster {
     @Override
     protected Collection<String> getTableDefinitions() {
         return Lists.newArrayList(
-            "CREATE TABLE foo(k int primary key, v text)"
+                "CREATE TABLE foo(k int primary key, v text)"
         );
     }
 
@@ -44,7 +43,7 @@ public class WarningsTest extends CCMBridge.PerClassSingleNodeCluster {
     @Test(groups = "short")
     public void should_expose_warnings_on_execution_info() {
         ResultSet rs = session.execute(String.format("BEGIN UNLOGGED BATCH INSERT INTO foo (k, v) VALUES (1, '%s') APPLY BATCH",
-            Strings.repeat("1", BATCH_SIZE_WARN_THRESHOLD_IN_BYTES)));
+                Strings.repeat("1", BATCH_SIZE_WARN_THRESHOLD_IN_BYTES)));
 
         List<String> warnings = rs.getExecutionInfo().getWarnings();
         assertThat(warnings).hasSize(1);

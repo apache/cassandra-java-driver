@@ -15,6 +15,10 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.utils.CassandraVersion;
+import org.testng.annotations.Test;
+import org.testng.collections.Lists;
+
 import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.concurrent.Executors;
@@ -22,14 +26,9 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.testng.annotations.Test;
-import org.testng.collections.Lists;
-
 import static org.testng.Assert.fail;
 
-import com.datastax.driver.core.utils.CassandraVersion;
-
-@CassandraVersion(major=2.1)
+@CassandraVersion(major = 2.1)
 public class SingleConnectionPoolTest extends CCMBridge.PerClassSingleNodeCluster {
     @Override
     protected Collection<String> getTableDefinitions() {
@@ -41,7 +40,7 @@ public class SingleConnectionPoolTest extends CCMBridge.PerClassSingleNodeCluste
         // Throttle to a very low value. Even a single thread can generate a higher throughput.
         final int maxRequests = 10;
         cluster.getConfiguration().getPoolingOptions()
-               .setMaxRequestsPerConnection(HostDistance.LOCAL, maxRequests);
+                .setMaxRequestsPerConnection(HostDistance.LOCAL, maxRequests);
 
         // Track in flight requests in a dedicated thread every second
         final AtomicBoolean excessInflightQueriesSpotted = new AtomicBoolean(false);

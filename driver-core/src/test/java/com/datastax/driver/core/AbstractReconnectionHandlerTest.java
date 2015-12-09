@@ -15,13 +15,11 @@
  */
 package com.datastax.driver.core;
 
-import java.net.InetSocketAddress;
-import java.util.concurrent.CyclicBarrier;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
-
+import com.datastax.driver.core.AbstractReconnectionHandler.HandlerFuture;
+import com.datastax.driver.core.AbstractReconnectionHandlerTest.MockReconnectionWork.ReconnectBehavior;
+import com.datastax.driver.core.exceptions.ConnectionException;
+import com.datastax.driver.core.exceptions.UnsupportedProtocolVersionException;
+import com.datastax.driver.core.policies.ReconnectionPolicy.ReconnectionSchedule;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
@@ -32,17 +30,16 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.timeout;
-import static org.mockito.Mockito.verify;
-import static org.testng.Assert.fail;
+import java.net.InetSocketAddress;
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
-import com.datastax.driver.core.AbstractReconnectionHandler.HandlerFuture;
-import com.datastax.driver.core.AbstractReconnectionHandlerTest.MockReconnectionWork.ReconnectBehavior;
-import com.datastax.driver.core.exceptions.ConnectionException;
-import com.datastax.driver.core.exceptions.UnsupportedProtocolVersionException;
-import com.datastax.driver.core.policies.ReconnectionPolicy.ReconnectionSchedule;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.*;
+import static org.testng.Assert.fail;
 
 public class AbstractReconnectionHandlerTest {
     private static final Logger logger = LoggerFactory.getLogger(AbstractReconnectionHandlerTest.class);
@@ -171,7 +168,7 @@ public class AbstractReconnectionHandlerTest {
         // The future will be marked cancelled and thus not executed.
         ListenableFuture<?> currentAttempt = future.get();
         assertThat(currentAttempt).isInstanceOf(HandlerFuture.class);
-        HandlerFuture handlerFuture = (HandlerFuture)currentAttempt;
+        HandlerFuture handlerFuture = (HandlerFuture) currentAttempt;
         assertThat(handlerFuture.isCancelled());
 
         // The next try should also be cancelled.
@@ -278,7 +275,7 @@ public class AbstractReconnectionHandlerTest {
 
     /**
      * A reconnection schedule that allows manually setting the delay.
-     *
+     * <p/>
      * To make testing easier, nextDelay blocks until tick() is called from the main thread.
      */
     static class MockReconnectionSchedule implements ReconnectionSchedule {
@@ -323,14 +320,16 @@ public class AbstractReconnectionHandlerTest {
 
     /**
      * Simulates the work done by the overridable methods of the handler.
-     *
+     * <p/>
      * Allows choosing whether the next reconnect will succeed or throw an exception.
      * To make testing easier, tryReconnect blocks until tick() is called from the main thread.
      */
     static class MockReconnectionWork {
         enum ReconnectBehavior {
             SUCCEED, THROW_EXCEPTION
-        };
+        }
+
+        ;
 
         private final CyclicBarrier barrier = new CyclicBarrier(2);
 
@@ -355,7 +354,7 @@ public class AbstractReconnectionHandlerTest {
                 case THROW_EXCEPTION:
                     logger.debug("simulate reconnection error");
                     throw new ConnectionException(new InetSocketAddress(8888),
-                                                  "Simulated exception from mock reconnection");
+                            "Simulated exception from mock reconnection");
                 default:
                     throw new AssertionError();
             }

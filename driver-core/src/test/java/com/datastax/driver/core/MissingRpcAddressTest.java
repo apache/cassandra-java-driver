@@ -15,21 +15,20 @@
  */
 package com.datastax.driver.core;
 
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-
+import com.datastax.driver.core.policies.Policies;
+import com.datastax.driver.core.policies.WhiteListPolicy;
 import com.google.common.collect.Lists;
 import org.testng.annotations.Test;
+
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNull;
 
-import com.datastax.driver.core.policies.Policies;
-import com.datastax.driver.core.policies.WhiteListPolicy;
-
 /**
  * Tests the behavior of the driver when some hosts have no rpc_address in the control host's system tables (JAVA-428).
- *
+ * <p/>
  * This can happen because of gossip bugs. We want to ignore these hosts because this is most likely indicative of an error state.
  */
 public class MissingRpcAddressTest {
@@ -43,8 +42,8 @@ public class MissingRpcAddressTest {
             deleteNode2RpcAddressFromNode1();
             // Use only one contact point to make sure that the control connection is on node1
             cluster = Cluster.builder()
-                             .addContactPoint(CCMBridge.IP_PREFIX + "1")
-                             .build();
+                    .addContactPoint(CCMBridge.IP_PREFIX + "1")
+                    .build();
             cluster.connect();
 
             // Since node2's RPC address is unknown on our control host, it should have been ignored
@@ -62,11 +61,11 @@ public class MissingRpcAddressTest {
         Cluster cluster = null;
         try {
             cluster = Cluster.builder()
-                             .addContactPoint(CCMBridge.IP_PREFIX + "1")
-                             // ensure we will only connect to node1
-                             .withLoadBalancingPolicy(new WhiteListPolicy(Policies.defaultLoadBalancingPolicy(),
-                                                                          Lists.newArrayList(socketAddress(1))))
-                             .build();
+                    .addContactPoint(CCMBridge.IP_PREFIX + "1")
+                            // ensure we will only connect to node1
+                    .withLoadBalancingPolicy(new WhiteListPolicy(Policies.defaultLoadBalancingPolicy(),
+                            Lists.newArrayList(socketAddress(1))))
+                    .build();
             Session session = cluster.connect();
             String deleteStmt = String.format("DELETE rpc_address FROM system.peers WHERE peer = '%s'",
                     InetAddress.getByName(CCMBridge.IP_PREFIX + "2").getHostName());

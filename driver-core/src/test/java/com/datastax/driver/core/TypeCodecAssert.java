@@ -67,14 +67,14 @@ public class TypeCodecAssert extends AbstractAssert<TypeCodecAssert, TypeCodec> 
     }
 
     public TypeCodecAssert withProtocolVersion(ProtocolVersion version) {
-        if(version == null) fail("ProtocolVersion cannot be null");
+        if (version == null) fail("ProtocolVersion cannot be null");
         this.version = version;
         return this;
     }
 
     @SuppressWarnings("unchecked")
     public TypeCodecAssert canSerialize(Object value) {
-        if(version == null) fail("ProtocolVersion cannot be null");
+        if (version == null) fail("ProtocolVersion cannot be null");
         try {
             assertThat(actual.deserialize(actual.serialize(value, version), version)).isEqualTo(value);
         } catch (Exception e) {
@@ -85,7 +85,7 @@ public class TypeCodecAssert extends AbstractAssert<TypeCodecAssert, TypeCodec> 
 
     @SuppressWarnings("unchecked")
     public TypeCodecAssert cannotSerialize(Object value) {
-        if(version == null) fail("ProtocolVersion cannot be null");
+        if (version == null) fail("ProtocolVersion cannot be null");
         try {
             actual.serialize(value, version);
             fail("Should not have been able to serialize " + value + " with " + actual);

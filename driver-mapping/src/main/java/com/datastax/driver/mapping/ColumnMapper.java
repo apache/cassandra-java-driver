@@ -15,22 +15,25 @@
  */
 package com.datastax.driver.mapping;
 
+import com.datastax.driver.core.Metadata;
+import com.datastax.driver.core.TypeCodec;
+import com.google.common.reflect.TypeToken;
+
 import java.lang.reflect.Field;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.google.common.reflect.TypeToken;
-
-import com.datastax.driver.core.Metadata;
-import com.datastax.driver.core.TypeCodec;
-
 abstract class ColumnMapper<T> {
 
-    public enum Kind {PARTITION_KEY, CLUSTERING_COLUMN, REGULAR, COMPUTED};
+    public enum Kind {PARTITION_KEY, CLUSTERING_COLUMN, REGULAR, COMPUTED}
+
+    ;
 
     private final String columnName;
     private final String alias;
     protected final String fieldName;
-    /** The type of the Java field in the mapped class */
+    /**
+     * The type of the Java field in the mapped class
+     */
     protected final TypeToken<Object> fieldType;
     protected final Kind kind;
     protected final int position;
@@ -40,10 +43,10 @@ abstract class ColumnMapper<T> {
     protected ColumnMapper(Field field, int position, AtomicInteger columnCounter) {
         this.columnName = AnnotationParser.columnName(field);
         this.alias = (columnCounter != null)
-            ? AnnotationParser.newAlias(field, columnCounter.incrementAndGet())
-            : null;
+                ? AnnotationParser.newAlias(field, columnCounter.incrementAndGet())
+                : null;
         this.fieldName = field.getName();
-        this.fieldType = (TypeToken<Object>)TypeToken.of(field.getGenericType());
+        this.fieldType = (TypeToken<Object>) TypeToken.of(field.getGenericType());
         this.kind = AnnotationParser.kind(field);
         this.position = position;
         this.customCodec = AnnotationParser.customCodec(field);
@@ -55,8 +58,8 @@ abstract class ColumnMapper<T> {
 
     public String getColumnName() {
         return kind == Kind.COMPUTED
-            ? columnName
-            : Metadata.quote(columnName);
+                ? columnName
+                : Metadata.quote(columnName);
     }
 
     public String getAlias() {

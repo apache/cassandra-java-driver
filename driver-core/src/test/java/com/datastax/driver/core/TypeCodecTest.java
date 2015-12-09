@@ -15,9 +15,9 @@
  */
 package com.datastax.driver.core;
 
-import java.nio.ByteBuffer;
-import java.util.*;
-
+import com.datastax.driver.core.UserType.Field;
+import com.datastax.driver.core.exceptions.CodecNotFoundException;
+import com.datastax.driver.core.exceptions.InvalidTypeException;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
@@ -25,17 +25,14 @@ import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import org.testng.annotations.Test;
 
-import static com.google.common.collect.Lists.newArrayList;
-import static org.testng.Assert.fail;
-
-import com.datastax.driver.core.UserType.Field;
-import com.datastax.driver.core.exceptions.CodecNotFoundException;
-import com.datastax.driver.core.exceptions.InvalidTypeException;
+import java.nio.ByteBuffer;
+import java.util.*;
 
 import static com.datastax.driver.core.Assertions.assertThat;
-import static com.datastax.driver.core.TypeTokens.listOf;
 import static com.datastax.driver.core.DataType.*;
 import static com.datastax.driver.core.ProtocolVersion.V3;
+import static com.google.common.collect.Lists.newArrayList;
+import static org.testng.Assert.fail;
 
 public class TypeCodecTest {
 
@@ -71,7 +68,7 @@ public class TypeCodecTest {
         assertThat(codec).isNotNull().accepts(cqlType);
     }
 
-    @Test(groups = "unit", expectedExceptions = { IllegalArgumentException.class })
+    @Test(groups = "unit", expectedExceptions = {IllegalArgumentException.class})
     public void collectionTooLargeTest() throws Exception {
         DataType cqlType = DataType.list(DataType.cint());
         List<Integer> list = Collections.nCopies(65536, 1);
@@ -79,7 +76,7 @@ public class TypeCodecTest {
         codec.serialize(list, ProtocolVersion.V2);
     }
 
-    @Test(groups = "unit", expectedExceptions = { IllegalArgumentException.class })
+    @Test(groups = "unit", expectedExceptions = {IllegalArgumentException.class})
     public void collectionElementTooLargeTest() throws Exception {
         DataType cqlType = DataType.list(DataType.text());
         List<String> list = newArrayList(Strings.repeat("a", 65536));
@@ -103,57 +100,57 @@ public class TypeCodecTest {
         String ascii = "The quick brown fox jumps over the lazy dog!";
         String utf8 = "Dès Noël, où un zéphyr haï me vêt de glaçons würmiens, je dîne d’exquis rôtis de bœuf au kir à l’aÿ d’âge mûr & cætera!";
         assertThat(asciiCodec)
-            .accepts(String.class)
-            .accepts(ascii())
-            .doesNotAccept(varchar())
-            .doesNotAccept(text())
-            .accepts(ascii)
-            .canSerialize(ascii)
-            .cannotSerialize(utf8);
+                .accepts(String.class)
+                .accepts(ascii())
+                .doesNotAccept(varchar())
+                .doesNotAccept(text())
+                .accepts(ascii)
+                .canSerialize(ascii)
+                .cannotSerialize(utf8);
         assertThat(utf8Codec)
-            .accepts(String.class)
-            .doesNotAccept(ascii())
-            .accepts(varchar())
-            .accepts(text())
-            .accepts(ascii)
-            .accepts(utf8)
-            .canSerialize(ascii)
-            .canSerialize(utf8);
+                .accepts(String.class)
+                .doesNotAccept(ascii())
+                .accepts(varchar())
+                .accepts(text())
+                .accepts(ascii)
+                .accepts(utf8)
+                .canSerialize(ascii)
+                .canSerialize(utf8);
     }
 
     @Test(groups = "unit")
     public void test_varchar_vs_text() {
         assertThat(TypeCodec.varchar())
-            .accepts(String.class)
-            .accepts(varchar())
-            .accepts(text());
+                .accepts(String.class)
+                .accepts(varchar())
+                .accepts(text());
         assertThat(TypeCodec.list(TypeCodec.varchar()))
-            .accepts(list(varchar()))
-            .accepts(list(text()));
+                .accepts(list(varchar()))
+                .accepts(list(text()));
         assertThat(TypeCodec.set(TypeCodec.varchar()))
-            .accepts(set(varchar()))
-            .accepts(set(text()));
+                .accepts(set(varchar()))
+                .accepts(set(text()));
         assertThat(TypeCodec.map(TypeCodec.varchar(), TypeCodec.varchar()))
-            .accepts(map(varchar(), varchar()))
-            .accepts(map(varchar(), text()))
-            .accepts(map(text(), varchar()))
-            .accepts(map(text(), text()));
+                .accepts(map(varchar(), varchar()))
+                .accepts(map(varchar(), text()))
+                .accepts(map(text(), varchar()))
+                .accepts(map(text(), text()));
         TupleType t1 = new TupleType(newArrayList(varchar(), varchar()), V3, new CodecRegistry());
         TupleType t2 = new TupleType(newArrayList(text(), varchar()), V3, new CodecRegistry());
         TupleType t3 = new TupleType(newArrayList(varchar(), text()), V3, new CodecRegistry());
         TupleType t4 = new TupleType(newArrayList(text(), text()), V3, new CodecRegistry());
         assertThat(TypeCodec.tuple(t1))
-            .accepts(t2)
-            .accepts(t3)
-            .accepts(t4);
+                .accepts(t2)
+                .accepts(t3)
+                .accepts(t4);
         UserType u1 = new UserType("ks", "table", newArrayList(new Field("f1", varchar()), new Field("f2", varchar())), V3, new CodecRegistry());
         UserType u2 = new UserType("ks", "table", newArrayList(new Field("f1", text()), new Field("f2", varchar())), V3, new CodecRegistry());
         UserType u3 = new UserType("ks", "table", newArrayList(new Field("f1", varchar()), new Field("f2", text())), V3, new CodecRegistry());
         UserType u4 = new UserType("ks", "table", newArrayList(new Field("f1", text()), new Field("f2", text())), V3, new CodecRegistry());
         assertThat(TypeCodec.userType(u1))
-            .accepts(u2)
-            .accepts(u3)
-            .accepts(u4);
+                .accepts(u2)
+                .accepts(u3)
+                .accepts(u4);
     }
 
     @Test(groups = "unit")
@@ -170,12 +167,14 @@ public class TypeCodecTest {
             //ok
         }
         TypeCodec<List<A>> expected = TypeCodec.list(aCodec);
-        TypeCodec<List<A>> actual = codecRegistry.codecFor(list(cint()), new TypeToken<List<A>>(){});
+        TypeCodec<List<A>> actual = codecRegistry.codecFor(list(cint()), new TypeToken<List<A>>() {
+        });
         assertThat(actual.getCqlType()).isEqualTo(expected.getCqlType());
         assertThat(actual.getJavaType()).isEqualTo(expected.getJavaType());
         // cannot work: List<B> is not assignable to List<A>
         try {
-            codecRegistry.codecFor(list(cint()), new TypeToken<List<B>>(){});
+            codecRegistry.codecFor(list(cint()), new TypeToken<List<B>>() {
+            });
             fail();
         } catch (CodecNotFoundException e) {
             //ok
@@ -191,13 +190,15 @@ public class TypeCodecTest {
         }
         assertThat(codecRegistry.codecFor(cint(), B.class)).isNotNull().isSameAs(bCodec);
         try {
-            codecRegistry.codecFor(list(cint()), new TypeToken<List<A>>(){});
+            codecRegistry.codecFor(list(cint()), new TypeToken<List<A>>() {
+            });
             fail();
         } catch (CodecNotFoundException e) {
             // ok
         }
         TypeCodec<List<B>> expectedB = TypeCodec.list(bCodec);
-        TypeCodec<List<B>> actualB = codecRegistry.codecFor(list(cint()), new TypeToken<List<B>>(){});
+        TypeCodec<List<B>> actualB = codecRegistry.codecFor(list(cint()), new TypeToken<List<B>>() {
+        });
         assertThat(actualB.getCqlType()).isEqualTo(expectedB.getCqlType());
         assertThat(actualB.getJavaType()).isEqualTo(expectedB.getJavaType());
     }
@@ -218,9 +219,9 @@ public class TypeCodecTest {
     public void should_deserialize_empty_buffer_as_udt_with_null_values() {
         CodecRegistry codecRegistry = new CodecRegistry();
         UserType udt = new UserType("ks", "t", Arrays.asList(
-            new UserType.Field("t", DataType.text()),
-            new UserType.Field("i", DataType.cint()),
-            new UserType.Field("l", DataType.list(DataType.text()))
+                new UserType.Field("t", DataType.text()),
+                new UserType.Field("i", DataType.cint()),
+                new UserType.Field("l", DataType.list(DataType.text()))
         ), ProtocolVersion.NEWEST_SUPPORTED, codecRegistry);
         UDTValue expected = udt.newValue();
         expected.setString("t", null);
@@ -245,9 +246,9 @@ public class TypeCodecTest {
         TypeCodec<UUID> codec = codecRegistry.codecFor(DataType.timeuuid(), type4UUID);
         // Should resolve the TimeUUIDCodec, but not serialize/format a type4 uuid with it.
         assertThat(codec).isSameAs(TypeCodec.timeUUID())
-            .accepts(UUID.class)
-            .cannotSerialize(type4UUID)
-            .cannotFormat(type4UUID);
+                .accepts(UUID.class)
+                .cannotSerialize(type4UUID)
+                .cannotFormat(type4UUID);
     }
 
 
@@ -294,7 +295,7 @@ public class TypeCodecTest {
             throw new UnsupportedOperationException();
         }
     }
-    
+
     class A {
 
         int i = 0;

@@ -15,34 +15,33 @@
  */
 package com.datastax.driver.extras.codecs.json;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.type.TypeFactory;
-
 import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.ParseUtils;
 import com.datastax.driver.core.ProtocolVersion;
 import com.datastax.driver.core.TypeCodec;
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 import com.datastax.driver.core.utils.Bytes;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.type.TypeFactory;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
 
 /**
  * A JSON codec that uses the <a href="http://wiki.fasterxml.com/JacksonHome">Jackson</a>
  * library to perform serialization and deserialization of JSON objects.
- *
- * <p>
+ * <p/>
+ * <p/>
  * This codec maps a single Java object to a single JSON structure at a time;
  * mapping of arrays or collections to root-level JSON arrays is not supported,
  * but such a codec can be easily crafted after this one.
- *
- * <p>
+ * <p/>
+ * <p/>
  * Note that this codec requires the presence of Jackson library at runtime.
  * If you use Maven, this can be done by declaring the following dependency in your project:
- *
+ * <p/>
  * <pre>{@code
  * <dependency>
  *   <groupId>com.fasterxml.jackson.core</groupId>
@@ -50,7 +49,6 @@ import com.datastax.driver.core.utils.Bytes;
  *   <version>2.6.3</version>
  * </dependency>
  * }</pre>
- *
  */
 public class JacksonJsonCodec<T> extends TypeCodec<T> {
 
@@ -77,7 +75,7 @@ public class JacksonJsonCodec<T> extends TypeCodec<T> {
         if (bytes == null)
             return null;
         try {
-            return (T)objectMapper.readValue(Bytes.getArray(bytes), toJacksonJavaType());
+            return (T) objectMapper.readValue(Bytes.getArray(bytes), toJacksonJavaType());
         } catch (IOException e) {
             throw new InvalidTypeException(e.getMessage(), e);
         }
@@ -105,7 +103,7 @@ public class JacksonJsonCodec<T> extends TypeCodec<T> {
             throw new InvalidTypeException("JSON strings must be enclosed by single quotes");
         String json = ParseUtils.unquote(value);
         try {
-            return (T)objectMapper.readValue(json, toJacksonJavaType());
+            return (T) objectMapper.readValue(json, toJacksonJavaType());
         } catch (IOException e) {
             throw new InvalidTypeException(e.getMessage(), e);
         }
@@ -114,6 +112,7 @@ public class JacksonJsonCodec<T> extends TypeCodec<T> {
     /**
      * This method acts as a bridge between Guava's {@link com.google.common.reflect.TypeToken TypeToken} API, which is used
      * by the driver, and Jackson's {@link JavaType} API.
+     *
      * @return A {@link JavaType} instance corresponding to the codec's {@link #getJavaType() Java type}.
      */
     protected JavaType toJacksonJavaType() {

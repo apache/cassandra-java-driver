@@ -15,6 +15,11 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.exceptions.DriverInternalError;
+import com.google.common.collect.ImmutableMap;
+import io.netty.buffer.ByteBuf;
+import io.netty.util.CharsetUtil;
+
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
@@ -22,18 +27,13 @@ import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.util.*;
 
-import com.google.common.collect.ImmutableMap;
-import io.netty.buffer.ByteBuf;
-import io.netty.util.CharsetUtil;
-
-import com.datastax.driver.core.exceptions.DriverInternalError;
-
 /**
  * ByteBuf utility methods.
  */
 abstract class CBUtil { // TODO rename
 
-    private CBUtil() {}
+    private CBUtil() {
+    }
 
     private static String readString(ByteBuf cb, int length) {
         try {

@@ -15,23 +15,21 @@
  */
 package com.datastax.driver.extras.codecs.date;
 
-import java.util.*;
-
-import com.google.common.collect.ImmutableMap;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
-import static com.google.common.collect.Lists.newArrayList;
-import static org.assertj.core.api.Assertions.assertThat;
-
 import com.datastax.driver.core.*;
-import com.datastax.driver.core.LocalDate;
 import com.datastax.driver.core.utils.CassandraVersion;
 import com.datastax.driver.mapping.Mapper;
 import com.datastax.driver.mapping.MappingManager;
 import com.datastax.driver.mapping.annotations.Column;
 import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
+import com.google.common.collect.ImmutableMap;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
+import java.util.*;
+
+import static com.google.common.collect.Lists.newArrayList;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @CassandraVersion(major = 2.2)
 public class SimpleDateCodecsTest extends CCMBridge.PerClassSingleNodeCluster {
@@ -39,21 +37,21 @@ public class SimpleDateCodecsTest extends CCMBridge.PerClassSingleNodeCluster {
     @Override
     protected Collection<String> getTableDefinitions() {
         return Collections.singletonList(
-            "CREATE TABLE IF NOT EXISTS foo ("
-                + "c1 text PRIMARY KEY, "
-                + "cdate date, "
-                + "ctimestamp timestamp, "
-                + "cdates frozen<list<date>>, "
-                + "ctimestamps frozen<map<text,timestamp>> "
-                + ")");
+                "CREATE TABLE IF NOT EXISTS foo ("
+                        + "c1 text PRIMARY KEY, "
+                        + "cdate date, "
+                        + "ctimestamp timestamp, "
+                        + "cdates frozen<list<date>>, "
+                        + "ctimestamps frozen<map<text,timestamp>> "
+                        + ")");
     }
 
     @BeforeClass(groups = "short")
     public void registerCodecs() throws Exception {
         CodecRegistry codecRegistry = cluster.getConfiguration().getCodecRegistry();
         codecRegistry
-            .register(SimpleDateCodec.instance)
-            .register(SimpleTimestampCodec.instance);
+                .register(SimpleDateCodec.instance)
+                .register(SimpleTimestampCodec.instance);
     }
 
 
@@ -67,7 +65,7 @@ public class SimpleDateCodecsTest extends CCMBridge.PerClassSingleNodeCluster {
      * @expected_result properly maps.
      * @since 2.2.0
      */
-    @Test(groups="short")
+    @Test(groups = "short")
     public void should_map_date_to_days_since_epoch() {
         // given
         int days = 12345;
@@ -96,7 +94,7 @@ public class SimpleDateCodecsTest extends CCMBridge.PerClassSingleNodeCluster {
      * @expected_result properly maps.
      * @since 2.2.0
      */
-    @Test(groups="short")
+    @Test(groups = "short")
     public void should_map_timestamp_to_millis_since_epoch() {
         // given
         long millis = new Date().getTime();
@@ -142,17 +140,17 @@ public class SimpleDateCodecsTest extends CCMBridge.PerClassSingleNodeCluster {
         private int days;
 
         @Column(name = "ctimestamps")
-        private Map<String,Long> mapOfMillis;
+        private Map<String, Long> mapOfMillis;
 
         @Column(name = "cdates")
         private List<Integer> listOfDays;
 
-        public Mapped(){
+        public Mapped() {
             c1 = "mapper";
             millis = 123456;
             days = 123;
             mapOfMillis = ImmutableMap.of("foo", 123456L);
-            listOfDays = newArrayList(123,456);
+            listOfDays = newArrayList(123, 456);
         }
 
         public String getC1() {

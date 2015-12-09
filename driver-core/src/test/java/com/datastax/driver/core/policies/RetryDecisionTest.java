@@ -15,16 +15,12 @@
  */
 package com.datastax.driver.core.policies;
 
+import com.datastax.driver.core.policies.RetryPolicy.RetryDecision;
 import org.testng.annotations.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-import com.datastax.driver.core.policies.RetryPolicy.RetryDecision;
-
 import static com.datastax.driver.core.ConsistencyLevel.ONE;
-import static com.datastax.driver.core.policies.RetryPolicy.RetryDecision.Type.IGNORE;
-import static com.datastax.driver.core.policies.RetryPolicy.RetryDecision.Type.RETHROW;
-import static com.datastax.driver.core.policies.RetryPolicy.RetryDecision.Type.RETRY;
+import static com.datastax.driver.core.policies.RetryPolicy.RetryDecision.Type.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class RetryDecisionTest {
 
@@ -32,34 +28,34 @@ public class RetryDecisionTest {
     public void should_expose_decision_properties() throws Throwable {
         RetryDecision retryAtOne = RetryDecision.retry(ONE);
         assertThat(retryAtOne.getType())
-            .isEqualTo(RETRY);
+                .isEqualTo(RETRY);
         assertThat(retryAtOne.getRetryConsistencyLevel())
-            .isEqualTo(ONE);
+                .isEqualTo(ONE);
         assertThat(retryAtOne.isRetryCurrent())
-            .isTrue();
+                .isTrue();
         assertThat(retryAtOne.toString())
-            .isEqualTo("Retry at ONE on same host.");
+                .isEqualTo("Retry at ONE on same host.");
 
         RetryDecision tryNextAtOne = RetryDecision.tryNextHost(ONE);
         assertThat(tryNextAtOne.getType())
-            .isEqualTo(RETRY);
+                .isEqualTo(RETRY);
         assertThat(tryNextAtOne.getRetryConsistencyLevel())
-            .isEqualTo(ONE);
+                .isEqualTo(ONE);
         assertThat(tryNextAtOne.isRetryCurrent())
-            .isFalse();
+                .isFalse();
         assertThat(tryNextAtOne.toString())
-            .isEqualTo("Retry at ONE on next host.");
+                .isEqualTo("Retry at ONE on next host.");
 
         RetryDecision rethrow = RetryDecision.rethrow();
         assertThat(rethrow.getType())
-            .isEqualTo(RETHROW);
+                .isEqualTo(RETHROW);
         assertThat(rethrow.toString())
-            .isEqualTo("Rethrow");
+                .isEqualTo("Rethrow");
 
         RetryDecision ignore = RetryDecision.ignore();
         assertThat(ignore.getType())
-            .isEqualTo(IGNORE);
+                .isEqualTo(IGNORE);
         assertThat(ignore.toString())
-            .isEqualTo("Ignore");
+                .isEqualTo("Ignore");
     }
 }

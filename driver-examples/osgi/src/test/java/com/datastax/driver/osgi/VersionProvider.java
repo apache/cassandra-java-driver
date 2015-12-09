@@ -15,15 +15,15 @@
  */
 package com.datastax.driver.osgi;
 
+import com.jcabi.manifests.Manifests;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import com.jcabi.manifests.Manifests;
 
 /**
  * Attempts to resolve the project version from the Bundle manifest.  If not present, will throw RuntimeException
  * on initialization.   If this happens, try building with 'mvn compile' to generate the Bundle manifest.
- *
+ * <p/>
  * In IntelliJ you can have compile run after make by right clicking on 'compile' in the 'Maven Projects' tool window.
  */
 public class VersionProvider {
@@ -31,12 +31,13 @@ public class VersionProvider {
     private static final Pattern versionPattern = Pattern.compile(("(\\d+.\\d+\\.\\d+)(.*)"));
 
     private static final String PROJECT_VERSION;
+
     static {
         String bundleName = Manifests.read("Bundle-SymbolicName");
         if (bundleName.equals("com.datastax.driver.osgi")) {
             String bundleVersion = Manifests.read("Bundle-Version");
             Matcher matcher = versionPattern.matcher(bundleVersion);
-            if(matcher.matches()) {
+            if (matcher.matches()) {
                 String majorVersion = matcher.group(1);
                 // Replace all instances of '.' after the main version with '-' to properly
                 // resolve the correct version.

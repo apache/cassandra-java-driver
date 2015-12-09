@@ -15,12 +15,11 @@
  */
 package com.datastax.driver.mapping;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.*;
-import java.lang.reflect.Field;
-import java.util.*;
+import com.datastax.driver.mapping.annotations.Computed;
+import com.datastax.driver.mapping.annotations.Table;
 
-import com.datastax.driver.mapping.annotations.*;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
 
 /**
  * Various checks on mapping annotations.
@@ -38,7 +37,7 @@ class AnnotationChecks {
         T instance = annotatedClass.getAnnotation(annotation);
         if (instance == null)
             throw new IllegalArgumentException(String.format("@%s annotation was not found on type %s",
-                                                             annotation.getSimpleName(), annotatedClass.getName()));
+                    annotation.getSimpleName(), annotatedClass.getName()));
 
         // Check that no other mapping annotations are present
         validateAnnotations(annotatedClass, annotation);
@@ -51,8 +50,8 @@ class AnnotationChecks {
         Class<? extends Annotation> invalid = validateAnnotations(clazz.getAnnotations(), allowed);
         if (invalid != null)
             throw new IllegalArgumentException(String.format("Cannot have both @%s and @%s on type %s",
-                                                             allowed.getSimpleName(), invalid.getSimpleName(),
-                                                             clazz.getName()));
+                    allowed.getSimpleName(), invalid.getSimpleName(),
+                    clazz.getName()));
     }
 
     /**
@@ -62,9 +61,9 @@ class AnnotationChecks {
         Class<? extends Annotation> invalid = validateAnnotations(field.getAnnotations(), allowed);
         if (invalid != null)
             throw new IllegalArgumentException(String.format("Annotation @%s is not allowed on field %s of %s %s",
-                                                             invalid.getSimpleName(),
-                                                             field.getName(), classDescription,
-                                                             field.getDeclaringClass().getName()));
+                    invalid.getSimpleName(),
+                    field.getName(), classDescription,
+                    field.getDeclaringClass().getName()));
 
         checkValidComputed(field);
     }
@@ -88,7 +87,7 @@ class AnnotationChecks {
 
     static void checkValidComputed(Field field) {
         Computed computed = field.getAnnotation(Computed.class);
-        if (computed != null && computed.value().isEmpty()){
+        if (computed != null && computed.value().isEmpty()) {
             throw new IllegalArgumentException(String.format("Field %s: attribute 'value' of annotation @Computed is mandatory for computed fields", field.getName()));
         }
     }

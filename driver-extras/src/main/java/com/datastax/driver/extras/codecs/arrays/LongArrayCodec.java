@@ -15,14 +15,14 @@
  */
 package com.datastax.driver.extras.codecs.arrays;
 
-import java.nio.ByteBuffer;
-
 import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.ProtocolVersion;
 
+import java.nio.ByteBuffer;
+
 /**
  * A codec that maps the CQL type {@code list<long>} to the Java type {@code long[]}.
- * <p>
+ * <p/>
  * Note that this codec is designed for performance and converts CQL lists
  * <em>directly</em> to {@code long[]}, thus avoiding any unnecessary
  * boxing and unboxing of Java primitive {@code long} values;

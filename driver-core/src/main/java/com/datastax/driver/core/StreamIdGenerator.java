@@ -20,11 +20,11 @@ import java.util.concurrent.atomic.AtomicLongArray;
 
 /**
  * Manages a set of integer identifiers.
- * <p>
+ * <p/>
  * Clients can borrow an id with {@link #next()}, and return it to the set with {@link #release(int)}.
  * It is guaranteed that a given id can't be borrowed by two clients at the same time.
  * This class is thread-safe and non-blocking.
- * <p>
+ * <p/>
  * Implementation notes: we use an atomic long array where each bit represents an id. It is set to 1 if
  * the id is available, 0 otherwise. When looking for an id, we find a long that has remaining 1's and
  * pick the rightmost one.

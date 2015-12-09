@@ -15,27 +15,26 @@
  */
 package com.datastax.driver.core;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.concurrent.*;
-
+import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.*;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.*;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
-import com.datastax.driver.core.exceptions.InvalidQueryException;
-
 public class AsyncQueryTest extends CCMBridge.PerClassSingleNodeCluster {
 
-    @DataProvider(name="keyspace")
+    @DataProvider(name = "keyspace")
     public static Object[][] keyspace() {
-        return new Object[][]{ { "asyncquerytest" }, { "\"AsyncQueryTest\"" } };
+        return new Object[][]{{"asyncquerytest"}, {"\"AsyncQueryTest\""}};
     }
 
     @Override
@@ -43,7 +42,7 @@ public class AsyncQueryTest extends CCMBridge.PerClassSingleNodeCluster {
         List<String> definitions = Lists.newArrayList();
 
         for (Object[] objects : keyspace()) {
-            String keyspace = (String)objects[0];
+            String keyspace = (String) objects[0];
 
             definitions.add(String.format("create keyspace %s WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1}", keyspace));
             definitions.add(String.format("create table %s.foo(k int primary key, v int)", keyspace));
@@ -79,8 +78,8 @@ public class AsyncQueryTest extends CCMBridge.PerClassSingleNodeCluster {
         Cluster cluster2 = null;
         try {
             cluster2 = Cluster.builder()
-                .addContactPointsWithPorts(Lists.newArrayList(host.getSocketAddress()))
-                .build();
+                    .addContactPointsWithPorts(Lists.newArrayList(host.getSocketAddress()))
+                    .build();
             Session session2 = cluster2.newSession();
 
             // Neither cluster2 nor session2 are initialized at this point
@@ -97,7 +96,7 @@ public class AsyncQueryTest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     @Test(groups = "short", dataProvider = "keyspace", enabled = false,
-        description = "disabled because the blocking USE call in the current pool implementation makes it deadlock")
+            description = "disabled because the blocking USE call in the current pool implementation makes it deadlock")
     public void should_chain_query_on_async_session_init_with_same_executor(String keyspace) throws Exception {
         ListenableFuture<Integer> resultFuture = connectAndQuery(keyspace, MoreExecutors.sameThreadExecutor());
 
@@ -125,8 +124,8 @@ public class AsyncQueryTest extends CCMBridge.PerClassSingleNodeCluster {
             Uninterruptibles.getUninterruptibly(resultFuture);
         } catch (ExecutionException e) {
             assertThat(e.getCause())
-                .isInstanceOf(InvalidQueryException.class)
-                .hasMessage("Keyspace 'wrong_keyspace' does not exist");
+                    .isInstanceOf(InvalidQueryException.class)
+                    .hasMessage("Keyspace 'wrong_keyspace' does not exist");
         }
     }
 
@@ -147,7 +146,7 @@ public class AsyncQueryTest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     private static HostConnectionPool getPool(Session session) {
-        Collection<HostConnectionPool> pools = ((SessionManager)session).pools.values();
+        Collection<HostConnectionPool> pools = ((SessionManager) session).pools.values();
         assertEquals(pools.size(), 1);
         return pools.iterator().next();
     }

@@ -15,18 +15,17 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.utils.CassandraVersion;
+import org.testng.annotations.Test;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Collection;
 
-import org.testng.annotations.Test;
-
 import static com.google.common.collect.Lists.newArrayList;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.datastax.driver.core.utils.CassandraVersion;
-
-public class TypeCodecNumbersIntegrationTest extends CCMBridge.PerClassSingleNodeCluster{
+public class TypeCodecNumbersIntegrationTest extends CCMBridge.PerClassSingleNodeCluster {
 
     private final String insertQuery = "INSERT INTO \"myTable\" (c_int, c_bigint, c_float, c_double, c_varint, c_decimal) VALUES (?, ?, ?, ?, ?, ?)";
 
@@ -43,20 +42,20 @@ public class TypeCodecNumbersIntegrationTest extends CCMBridge.PerClassSingleNod
     @Override
     protected Collection<String> getTableDefinitions() {
         return newArrayList(
-            "CREATE TABLE \"myTable\" ("
-                + "c_int int, "
-                + "c_bigint bigint, "
-                + "c_float float, "
-                + "c_double double, "
-                + "c_varint varint, "
-                + "c_decimal decimal, "
-                + "PRIMARY KEY (c_int, c_bigint)"
-                + ")"
+                "CREATE TABLE \"myTable\" ("
+                        + "c_int int, "
+                        + "c_bigint bigint, "
+                        + "c_float float, "
+                        + "c_double double, "
+                        + "c_varint varint, "
+                        + "c_decimal decimal, "
+                        + "PRIMARY KEY (c_int, c_bigint)"
+                        + ")"
         );
     }
 
     @Test(groups = "short")
-    @CassandraVersion(major=2.0)
+    @CassandraVersion(major = 2.0)
     public void should_use_defaut_codecs_with_simple_statements() {
         session.execute(insertQuery, n_int, n_bigint, n_float, n_double, n_varint, n_decimal);
         ResultSet rows = session.execute(selectQuery, n_int, n_bigint);
@@ -76,17 +75,17 @@ public class TypeCodecNumbersIntegrationTest extends CCMBridge.PerClassSingleNod
     @Test(groups = "short")
     public void should_use_default_codecs_with_prepared_statements_2() {
         session.execute(session.prepare(insertQuery).bind()
-            .setInt(0, n_int)
-            .setLong(1, n_bigint)
-            .setFloat(2, n_float)
-            .setDouble(3, n_double)
-            .setVarint(4, n_varint)
-            .setDecimal(5, n_decimal)
+                        .setInt(0, n_int)
+                        .setLong(1, n_bigint)
+                        .setFloat(2, n_float)
+                        .setDouble(3, n_double)
+                        .setVarint(4, n_varint)
+                        .setDecimal(5, n_decimal)
         );
         PreparedStatement ps = session.prepare(selectQuery);
         ResultSet rows = session.execute(ps.bind()
-            .setInt(0, n_int)
-            .setLong(1, n_bigint)
+                        .setInt(0, n_int)
+                        .setLong(1, n_bigint)
         );
         Row row = rows.one();
         assertRow(row);
@@ -95,17 +94,17 @@ public class TypeCodecNumbersIntegrationTest extends CCMBridge.PerClassSingleNod
     @Test(groups = "short")
     public void should_use_default_codecs_with_prepared_statements_3() {
         session.execute(session.prepare(insertQuery).bind()
-            .set(0, n_int, Integer.class)
-            .set(1, n_bigint, Long.class)
-            .set(2, n_float, Float.class)
-            .set(3, n_double, Double.class)
-            .set(4, n_varint, BigInteger.class)
-            .set(5, n_decimal, BigDecimal.class)
+                        .set(0, n_int, Integer.class)
+                        .set(1, n_bigint, Long.class)
+                        .set(2, n_float, Float.class)
+                        .set(3, n_double, Double.class)
+                        .set(4, n_varint, BigInteger.class)
+                        .set(5, n_decimal, BigDecimal.class)
         );
         PreparedStatement ps = session.prepare(selectQuery);
         ResultSet rows = session.execute(ps.bind()
-            .setInt(0, n_int)
-            .setLong(1, n_bigint)
+                        .setInt(0, n_int)
+                        .setLong(1, n_bigint)
         );
         Row row = rows.one();
         assertRow(row);

@@ -15,20 +15,15 @@
  */
 package com.datastax.driver.core.policies;
 
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.util.List;
-
+import com.datastax.driver.core.*;
+import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.google.common.collect.Lists;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.ConsistencyLevel;
-import com.datastax.driver.core.QueryTracker;
-import com.datastax.driver.core.ScassandraCluster;
-import com.datastax.driver.core.Session;
-import com.datastax.driver.core.exceptions.NoHostAvailableException;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.util.List;
 
 import static com.datastax.driver.core.TestUtils.nonQuietClusterCloseOptions;
 
@@ -46,25 +41,25 @@ public class WhiteListPolicyTest {
      * <p/>
      * Ensures that:
      * <ol>
-     *     <li>Only addresses provided in the whitelist are every used for querying.</li>
-     *     <li>If no nodes present in the whitelist are available, queries fail with a {@link NoHostAvailableException}</li>
+     * <li>Only addresses provided in the whitelist are every used for querying.</li>
+     * <li>If no nodes present in the whitelist are available, queries fail with a {@link NoHostAvailableException}</li>
      * </ol>
      *
      * @test_category load_balancing:white_list
      */
-    @Test(groups="short")
+    @Test(groups = "short")
     public void should_only_query_hosts_in_white_list() throws Exception {
         // given: a 5 node cluster with a WhiteListPolicy targeting nodes 3 and 5.
         ScassandraCluster sCluster = ScassandraCluster.builder().withNodes(5).build();
         List<InetSocketAddress> whiteList = Lists.newArrayList(
-            new InetSocketAddress(InetAddress.getByName(sCluster.address(3)), 9042),
-            new InetSocketAddress(InetAddress.getByName(sCluster.address(5)), 9042));
+                new InetSocketAddress(InetAddress.getByName(sCluster.address(3)), 9042),
+                new InetSocketAddress(InetAddress.getByName(sCluster.address(5)), 9042));
 
         Cluster cluster = Cluster.builder()
-            .addContactPoint(sCluster.address(5))
-            .withLoadBalancingPolicy(new WhiteListPolicy(new RoundRobinPolicy(), whiteList))
-            .withNettyOptions(nonQuietClusterCloseOptions)
-            .build();
+                .addContactPoint(sCluster.address(5))
+                .withLoadBalancingPolicy(new WhiteListPolicy(new RoundRobinPolicy(), whiteList))
+                .withNettyOptions(nonQuietClusterCloseOptions)
+                .build();
 
         try {
             sCluster.init();
@@ -106,7 +101,7 @@ public class WhiteListPolicyTest {
      *
      * @test_category load_balancing:white_list
      */
-    @Test(groups="short", expectedExceptions = {IllegalArgumentException.class})
+    @Test(groups = "short", expectedExceptions = {IllegalArgumentException.class})
     public void should_require_contact_point_in_white_list() throws Exception {
         // given: a 5 node cluster with a WhiteListPolicy targeting node2.
         ScassandraCluster sCluster = ScassandraCluster.builder().withNodes(5).build();
@@ -114,12 +109,12 @@ public class WhiteListPolicyTest {
         // when: using a Cluster instance with none of the contact points in the declared
         // WhiteListPolicy.
         List<InetSocketAddress> whiteList = Lists.newArrayList(
-            new InetSocketAddress(InetAddress.getByName(sCluster.address(2)), 9042));
+                new InetSocketAddress(InetAddress.getByName(sCluster.address(2)), 9042));
         Cluster cluster = Cluster.builder()
-            .addContactPoint(sCluster.address(3))
-            .withLoadBalancingPolicy(new WhiteListPolicy(new RoundRobinPolicy(), whiteList))
-            .withNettyOptions(nonQuietClusterCloseOptions)
-            .build();
+                .addContactPoint(sCluster.address(3))
+                .withLoadBalancingPolicy(new WhiteListPolicy(new RoundRobinPolicy(), whiteList))
+                .withNettyOptions(nonQuietClusterCloseOptions)
+                .build();
 
         try {
             sCluster.init();

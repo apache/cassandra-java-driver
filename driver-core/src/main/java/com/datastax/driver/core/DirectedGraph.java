@@ -15,15 +15,14 @@
  */
 package com.datastax.driver.core;
 
-import java.util.*;
-
+import com.datastax.driver.core.exceptions.DriverInternalError;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 
-import com.datastax.driver.core.exceptions.DriverInternalError;
+import java.util.*;
 
 /**
  * A basic directed graph implementation to perform topological sorts.
@@ -48,14 +47,18 @@ class DirectedGraph<V> {
         this(Arrays.asList(vertices));
     }
 
-    /** this assumes that {@code from} and {@code to} were part of the vertices passed to the constructor */
+    /**
+     * this assumes that {@code from} and {@code to} were part of the vertices passed to the constructor
+     */
     void addEdge(V from, V to) {
         Preconditions.checkArgument(vertices.containsKey(from) && vertices.containsKey(to));
         adjacencyList.put(from, to);
         vertices.put(to, vertices.get(to) + 1);
     }
 
-    /** one-time use only, calling this multiple times on the same graph won't work */
+    /**
+     * one-time use only, calling this multiple times on the same graph won't work
+     */
     List<V> topologicalSort() {
         Preconditions.checkState(!wasSorted);
         wasSorted = true;

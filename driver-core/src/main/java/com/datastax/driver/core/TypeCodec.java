@@ -15,6 +15,11 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.exceptions.InvalidTypeException;
+import com.datastax.driver.core.utils.Bytes;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.reflect.TypeToken;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
@@ -26,78 +31,68 @@ import java.text.ParseException;
 import java.util.*;
 import java.util.regex.Pattern;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.reflect.TypeToken;
-
+import static com.datastax.driver.core.DataType.*;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
-
-import com.datastax.driver.core.exceptions.InvalidTypeException;
-import com.datastax.driver.core.utils.Bytes;
-
-import static com.datastax.driver.core.TypeTokens.listOf;
-import static com.datastax.driver.core.TypeTokens.mapOf;
-import static com.datastax.driver.core.TypeTokens.setOf;
-import static com.datastax.driver.core.DataType.*;
 
 /**
  * A Codec that can serialize and deserialize to and from a given
  * {@link #getCqlType() CQL type} and a given {@link #getJavaType() Java Type}.
- *
+ * <p/>
  * <h3>Serializing and deserializing</h3>
- *
+ * <p/>
  * Two methods handle the serialization and deserialization of Java types into
  * CQL types according to the native protocol specifications:
  * <ol>
- *     <li>{@link #serialize(Object, ProtocolVersion)}: used to serialize from the codec's Java type to a
- *     {@link ByteBuffer} instance corresponding to the codec's CQL type;</li>
- *     <li>{@link #deserialize(ByteBuffer, ProtocolVersion)}: used to deserialize a {@link ByteBuffer} instance
- *     corresponding to the codec's CQL type to the codec's Java type.</li>
+ * <li>{@link #serialize(Object, ProtocolVersion)}: used to serialize from the codec's Java type to a
+ * {@link ByteBuffer} instance corresponding to the codec's CQL type;</li>
+ * <li>{@link #deserialize(ByteBuffer, ProtocolVersion)}: used to deserialize a {@link ByteBuffer} instance
+ * corresponding to the codec's CQL type to the codec's Java type.</li>
  * </ol>
- *
+ * <p/>
  * <h3>Formatting and parsing</h3>
- *
+ * <p/>
  * Two methods handle the formatting and parsing of Java types into
  * CQL strings:
  * <ol>
- *     <li>{@link #format(Object)}: formats the Java type handled by the codec as a CQL string;</li>
- *     <li>{@link #parse(String)}; parses a CQL string into the Java type handled by the codec.</li>
+ * <li>{@link #format(Object)}: formats the Java type handled by the codec as a CQL string;</li>
+ * <li>{@link #parse(String)}; parses a CQL string into the Java type handled by the codec.</li>
  * </ol>
- *
+ * <p/>
  * <h3>Inspection</h3>
- *
+ * <p/>
  * Codecs also have the following inspection methods:
- *
+ * <p/>
  * <ol>
- *     <li>{@link #accepts(DataType)}: returns true if the codec can deserialize the given CQL type;</li>
- *     <li>{@link #accepts(TypeToken)}: returns true if the codec can serialize the given Java type;</li>
- *     <li>{@link #accepts(Object)}; returns true if the codec can serialize the given object.</li>
+ * <li>{@link #accepts(DataType)}: returns true if the codec can deserialize the given CQL type;</li>
+ * <li>{@link #accepts(TypeToken)}: returns true if the codec can serialize the given Java type;</li>
+ * <li>{@link #accepts(Object)}; returns true if the codec can serialize the given object.</li>
  * </ol>
- *
+ * <p/>
  * <h3>Implementation notes</h3>
- *
+ * <p/>
  * <ol>
- *     <li>TypeCodec implementations <em>must</em> be thread-safe.</li>
- *     <li>TypeCodec implementations <em>must</em> perform fast and never block.</li>
- *     <li>TypeCodec implementations <em>must</em> support all native protocol versions; it is not possible
- *         to use different codecs for the same types but under different protocol versions.</li>
- *     <li>TypeCodec implementations must comply with the native protocol specifications; failing
- *         to do so will result in unexpected results and could cause the driver to crash.</li>
- *     <li>TypeCodec implementations <em>should</em> be stateless and immutable.</li>
- *     <li>TypeCodec implementations <em>should</em> interpret {@code null} values and empty ByteBuffers
- *         (i.e. <code>{@link ByteBuffer#remaining()} == 0</code>) in a <em>reasonable</em> way;
- *         usually, {@code NULL} CQL values should map to {@code null} references, but exceptions exist;
- *         e.g. for varchar types, a {@code NULL} CQL value maps to a {@code null} reference,
- *         whereas an empty buffer maps to an empty String. For collection types, it is also admitted that
- *         {@code NULL} CQL values map to empty Java collections instead of {@code null} references.
- *         In any case, the codec's behavior in respect to {@code null} values and empty ByteBuffers
- *         should be clearly documented.</li>
- *     <li>TypeCodec implementations that wish to handle Java primitive types <em>must</em> be instantiated with
- *         the wrapper Java class instead, and implement the appropriate interface
- *         (e.g. {@link com.datastax.driver.core.TypeCodec.PrimitiveBooleanCodec} for primitive {@code boolean} types;
- *         there is one such interface for each Java primitive type).</li>
- *     <li>TypeCodec implementations should not consume {@link ByteBuffer} instances by performing read operations
- *         that modify their current position; if necessary, codecs should {@link ByteBuffer#duplicate()} duplicate} them.</li>
+ * <li>TypeCodec implementations <em>must</em> be thread-safe.</li>
+ * <li>TypeCodec implementations <em>must</em> perform fast and never block.</li>
+ * <li>TypeCodec implementations <em>must</em> support all native protocol versions; it is not possible
+ * to use different codecs for the same types but under different protocol versions.</li>
+ * <li>TypeCodec implementations must comply with the native protocol specifications; failing
+ * to do so will result in unexpected results and could cause the driver to crash.</li>
+ * <li>TypeCodec implementations <em>should</em> be stateless and immutable.</li>
+ * <li>TypeCodec implementations <em>should</em> interpret {@code null} values and empty ByteBuffers
+ * (i.e. <code>{@link ByteBuffer#remaining()} == 0</code>) in a <em>reasonable</em> way;
+ * usually, {@code NULL} CQL values should map to {@code null} references, but exceptions exist;
+ * e.g. for varchar types, a {@code NULL} CQL value maps to a {@code null} reference,
+ * whereas an empty buffer maps to an empty String. For collection types, it is also admitted that
+ * {@code NULL} CQL values map to empty Java collections instead of {@code null} references.
+ * In any case, the codec's behavior in respect to {@code null} values and empty ByteBuffers
+ * should be clearly documented.</li>
+ * <li>TypeCodec implementations that wish to handle Java primitive types <em>must</em> be instantiated with
+ * the wrapper Java class instead, and implement the appropriate interface
+ * (e.g. {@link com.datastax.driver.core.TypeCodec.PrimitiveBooleanCodec} for primitive {@code boolean} types;
+ * there is one such interface for each Java primitive type).</li>
+ * <li>TypeCodec implementations should not consume {@link ByteBuffer} instances by performing read operations
+ * that modify their current position; if necessary, codecs should {@link ByteBuffer#duplicate()} duplicate} them.</li>
  * </ol>
  *
  * @param <T> The codec's Java type
@@ -105,22 +100,23 @@ import static com.datastax.driver.core.DataType.*;
 public abstract class TypeCodec<T> {
 
     private static final Map<TypeToken<?>, TypeToken<?>> primitiveToWrapperMap = ImmutableMap.<TypeToken<?>, TypeToken<?>>builder()
-        .put(TypeToken.of(Boolean.TYPE)  , TypeToken.of(Boolean.class))
-        .put(TypeToken.of(Byte.TYPE)     , TypeToken.of(Byte.class))
-        .put(TypeToken.of(Character.TYPE), TypeToken.of(Character.class))
-        .put(TypeToken.of(Short.TYPE)    , TypeToken.of(Short.class))
-        .put(TypeToken.of(Integer.TYPE)  , TypeToken.of(Integer.class))
-        .put(TypeToken.of(Long.TYPE)     , TypeToken.of(Long.class))
-        .put(TypeToken.of(Double.TYPE)   , TypeToken.of(Double.class))
-        .put(TypeToken.of(Float.TYPE)    , TypeToken.of(Float.class))
-        .build();
+            .put(TypeToken.of(Boolean.TYPE), TypeToken.of(Boolean.class))
+            .put(TypeToken.of(Byte.TYPE), TypeToken.of(Byte.class))
+            .put(TypeToken.of(Character.TYPE), TypeToken.of(Character.class))
+            .put(TypeToken.of(Short.TYPE), TypeToken.of(Short.class))
+            .put(TypeToken.of(Integer.TYPE), TypeToken.of(Integer.class))
+            .put(TypeToken.of(Long.TYPE), TypeToken.of(Long.class))
+            .put(TypeToken.of(Double.TYPE), TypeToken.of(Double.class))
+            .put(TypeToken.of(Float.TYPE), TypeToken.of(Float.class))
+            .build();
 
     /**
      * Return the default codec for the CQL type {@code boolean}.
      * The returned codec maps the CQL type {@code boolean} into the Java type {@link Boolean}.
      * The returned instance is a singleton.
+     *
      * @return the default codec for CQL type {@code boolean}.
-     **/
+     */
     public static PrimitiveBooleanCodec cboolean() {
         return BooleanCodec.instance;
     }
@@ -129,8 +125,9 @@ public abstract class TypeCodec<T> {
      * Return the default codec for the CQL type {@code tinyint}.
      * The returned codec maps the CQL type {@code tinyint} into the Java type {@link Byte}.
      * The returned instance is a singleton.
+     *
      * @return the default codec for CQL type {@code tinyint}.
-     **/
+     */
     public static PrimitiveByteCodec tinyInt() {
         return TinyIntCodec.instance;
     }
@@ -139,8 +136,9 @@ public abstract class TypeCodec<T> {
      * Return the default codec for the CQL type {@code smallint}.
      * The returned codec maps the CQL type {@code smallint} into the Java type {@link Short}.
      * The returned instance is a singleton.
+     *
      * @return the default codec for CQL type {@code smallint}.
-     **/
+     */
     public static PrimitiveShortCodec smallInt() {
         return SmallIntCodec.instance;
     }
@@ -149,8 +147,9 @@ public abstract class TypeCodec<T> {
      * Return the default codec for the CQL type {@code int}.
      * The returned codec maps the CQL type {@code int} into the Java type {@link Integer}.
      * The returned instance is a singleton.
+     *
      * @return the default codec for CQL type {@code int}.
-     **/
+     */
     public static PrimitiveIntCodec cint() {
         return IntCodec.instance;
     }
@@ -159,8 +158,9 @@ public abstract class TypeCodec<T> {
      * Return the default codec for the CQL type {@code bigint}.
      * The returned codec maps the CQL type {@code bigint} into the Java type {@link Long}.
      * The returned instance is a singleton.
+     *
      * @return the default codec for CQL type {@code bigint}.
-     **/
+     */
     public static PrimitiveLongCodec bigint() {
         return BigintCodec.instance;
     }
@@ -169,8 +169,9 @@ public abstract class TypeCodec<T> {
      * Return the default codec for the CQL type {@code counter}.
      * The returned codec maps the CQL type {@code counter} into the Java type {@link Long}.
      * The returned instance is a singleton.
+     *
      * @return the default codec for CQL type {@code counter}.
-     **/
+     */
     public static PrimitiveLongCodec counter() {
         return CounterCodec.instance;
     }
@@ -179,8 +180,9 @@ public abstract class TypeCodec<T> {
      * Return the default codec for the CQL type {@code float}.
      * The returned codec maps the CQL type {@code float} into the Java type {@link Float}.
      * The returned instance is a singleton.
+     *
      * @return the default codec for CQL type {@code float}.
-     **/
+     */
     public static PrimitiveFloatCodec cfloat() {
         return FloatCodec.instance;
     }
@@ -189,8 +191,9 @@ public abstract class TypeCodec<T> {
      * Return the default codec for the CQL type {@code double}.
      * The returned codec maps the CQL type {@code double} into the Java type {@link Double}.
      * The returned instance is a singleton.
+     *
      * @return the default codec for CQL type {@code double}.
-     **/
+     */
     public static PrimitiveDoubleCodec cdouble() {
         return DoubleCodec.instance;
     }
@@ -199,8 +202,9 @@ public abstract class TypeCodec<T> {
      * Return the default codec for the CQL type {@code varint}.
      * The returned codec maps the CQL type {@code varint} into the Java type {@link BigInteger}.
      * The returned instance is a singleton.
+     *
      * @return the default codec for CQL type {@code varint}.
-     **/
+     */
     public static TypeCodec<BigInteger> varint() {
         return VarintCodec.instance;
     }
@@ -209,8 +213,9 @@ public abstract class TypeCodec<T> {
      * Return the default codec for the CQL type {@code decimal}.
      * The returned codec maps the CQL type {@code decimal} into the Java type {@link BigDecimal}.
      * The returned instance is a singleton.
+     *
      * @return the default codec for CQL type {@code decimal}.
-     **/
+     */
     public static TypeCodec<BigDecimal> decimal() {
         return DecimalCodec.instance;
     }
@@ -219,8 +224,9 @@ public abstract class TypeCodec<T> {
      * Return the default codec for the CQL type {@code ascii}.
      * The returned codec maps the CQL type {@code ascii} into the Java type {@link String}.
      * The returned instance is a singleton.
+     *
      * @return the default codec for CQL type {@code ascii}.
-     **/
+     */
     public static TypeCodec<String> ascii() {
         return AsciiCodec.instance;
     }
@@ -229,8 +235,9 @@ public abstract class TypeCodec<T> {
      * Return the default codec for the CQL type {@code varchar}.
      * The returned codec maps the CQL type {@code varchar} into the Java type {@link String}.
      * The returned instance is a singleton.
+     *
      * @return the default codec for CQL type {@code varchar}.
-     **/
+     */
     public static TypeCodec<String> varchar() {
         return VarcharCodec.instance;
     }
@@ -239,8 +246,9 @@ public abstract class TypeCodec<T> {
      * Return the default codec for the CQL type {@code blob}.
      * The returned codec maps the CQL type {@code blob} into the Java type {@link ByteBuffer}.
      * The returned instance is a singleton.
+     *
      * @return the default codec for CQL type {@code blob}.
-     **/
+     */
     public static TypeCodec<ByteBuffer> blob() {
         return BlobCodec.instance;
     }
@@ -249,8 +257,9 @@ public abstract class TypeCodec<T> {
      * Return the default codec for the CQL type {@code date}.
      * The returned codec maps the CQL type {@code date} into the Java type {@link LocalDate}.
      * The returned instance is a singleton.
+     *
      * @return the default codec for CQL type {@code date}.
-     **/
+     */
     public static TypeCodec<LocalDate> date() {
         return DateCodec.instance;
     }
@@ -259,8 +268,9 @@ public abstract class TypeCodec<T> {
      * Return the default codec for the CQL type {@code time}.
      * The returned codec maps the CQL type {@code time} into the Java type {@link Long}.
      * The returned instance is a singleton.
+     *
      * @return the default codec for CQL type {@code time}.
-     **/
+     */
     public static PrimitiveLongCodec time() {
         return TimeCodec.instance;
     }
@@ -269,8 +279,9 @@ public abstract class TypeCodec<T> {
      * Return the default codec for the CQL type {@code timestamp}.
      * The returned codec maps the CQL type {@code timestamp} into the Java type {@link Date}.
      * The returned instance is a singleton.
+     *
      * @return the default codec for CQL type {@code timestamp}.
-     **/
+     */
     public static TypeCodec<Date> timestamp() {
         return TimestampCodec.instance;
     }
@@ -279,8 +290,9 @@ public abstract class TypeCodec<T> {
      * Return the default codec for the CQL type {@code uuid}.
      * The returned codec maps the CQL type {@code uuid} into the Java type {@link UUID}.
      * The returned instance is a singleton.
+     *
      * @return the default codec for CQL type {@code uuid}.
-     **/
+     */
     public static TypeCodec<UUID> uuid() {
         return UUIDCodec.instance;
     }
@@ -289,8 +301,9 @@ public abstract class TypeCodec<T> {
      * Return the default codec for the CQL type {@code timeuuid}.
      * The returned codec maps the CQL type {@code timeuuid} into the Java type {@link UUID}.
      * The returned instance is a singleton.
+     *
      * @return the default codec for CQL type {@code timeuuid}.
-     **/
+     */
     public static TypeCodec<UUID> timeUUID() {
         return TimeUUIDCodec.instance;
     }
@@ -299,8 +312,9 @@ public abstract class TypeCodec<T> {
      * Return the default codec for the CQL type {@code inet}.
      * The returned codec maps the CQL type {@code inet} into the Java type {@link InetAddress}.
      * The returned instance is a singleton.
+     *
      * @return the default codec for CQL type {@code inet}.
-     **/
+     */
     public static TypeCodec<InetAddress> inet() {
         return InetCodec.instance;
     }
@@ -311,9 +325,10 @@ public abstract class TypeCodec<T> {
      * The returned codec maps the CQL type {@code list} into the Java type {@link List}.
      * This method does not cache returned instances and returns a newly-allocated object
      * at each invocation.
+     *
      * @param elementCodec the codec that will handle elements of this list.
      * @return A newly-created codec for CQL type {@code list}.
-     **/
+     */
     public static <T> TypeCodec<List<T>> list(TypeCodec<T> elementCodec) {
         return new ListCodec<T>(elementCodec);
     }
@@ -324,9 +339,10 @@ public abstract class TypeCodec<T> {
      * The returned codec maps the CQL type {@code set} into the Java type {@link Set}.
      * This method does not cache returned instances and returns a newly-allocated object
      * at each invocation.
+     *
      * @param elementCodec the codec that will handle elements of this set.
      * @return A newly-created codec for CQL type {@code set}.
-     **/
+     */
     public static <T> TypeCodec<Set<T>> set(TypeCodec<T> elementCodec) {
         return new SetCodec<T>(elementCodec);
     }
@@ -337,10 +353,11 @@ public abstract class TypeCodec<T> {
      * The returned codec maps the CQL type {@code map} into the Java type {@link Map}.
      * This method does not cache returned instances and returns a newly-allocated object
      * at each invocation.
-     * @param keyCodec the codec that will handle keys of this map.
+     *
+     * @param keyCodec   the codec that will handle keys of this map.
      * @param valueCodec the codec that will handle values of this map.
      * @return A newly-created codec for CQL type {@code map}.
-     **/
+     */
     public static <K, V> TypeCodec<Map<K, V>> map(TypeCodec<K> keyCodec, TypeCodec<V> valueCodec) {
         return new MapCodec<K, V>(keyCodec, valueCodec);
     }
@@ -350,9 +367,10 @@ public abstract class TypeCodec<T> {
      * The returned codec maps the user-defined type into the Java type {@link UDTValue}.
      * This method does not cache returned instances and returns a newly-allocated object
      * at each invocation.
+     *
      * @param type the user-defined type this codec should handle.
      * @return A newly-created codec for the given user-defined CQL type.
-     **/
+     */
     public static TypeCodec<UDTValue> userType(UserType type) {
         return new UDTCodec(type);
     }
@@ -362,9 +380,10 @@ public abstract class TypeCodec<T> {
      * The returned codec maps the tuple type into the Java type {@link TupleValue}.
      * This method does not cache returned instances and returns a newly-allocated object
      * at each invocation.
+     *
      * @param type the tuple type this codec should handle.
      * @return A newly-created codec for the given CQL tuple type.
-     **/
+     */
     public static TypeCodec<TupleValue> tuple(TupleType type) {
         return new TupleCodec(type);
     }
@@ -376,9 +395,10 @@ public abstract class TypeCodec<T> {
      * types that do not have a CQL equivalent.
      * This method does not cache returned instances and returns a newly-allocated object
      * at each invocation.
+     *
      * @param type the custom type this codec should handle.
      * @return A newly-created codec for the given CQL custom type.
-     **/
+     */
     public static TypeCodec<ByteBuffer> custom(CustomType type) {
         return new CustomCodec(type);
     }
@@ -407,6 +427,7 @@ public abstract class TypeCodec<T> {
 
     /**
      * Return the Java type that this codec deserializes to and serializes from.
+     *
      * @return The Java type this codec deserializes to and serializes from.
      */
     public TypeToken<T> getJavaType() {
@@ -415,6 +436,7 @@ public abstract class TypeCodec<T> {
 
     /**
      * Return the CQL type that this codec deserializes from and serializes to.
+     *
      * @return The Java type this codec deserializes from and serializes to.
      */
     public DataType getCqlType() {
@@ -424,21 +446,21 @@ public abstract class TypeCodec<T> {
     /**
      * Serialize the given value according to the CQL type
      * handled by this codec.
-     * <p>
+     * <p/>
      * Implementation notes:
      * <ol>
-     *     <li>Null values should be gracefully handled and no exception should be raised;
-     *     these should be considered as the equivalent of a NULL CQL value;</li>
-     *     <li>Codecs for CQL collection types should not permit null elements;</li>
-     *     <li>Codecs for CQL collection types should treat a {@code null} input as
-     *     the equivalent of an empty collection.</li>
+     * <li>Null values should be gracefully handled and no exception should be raised;
+     * these should be considered as the equivalent of a NULL CQL value;</li>
+     * <li>Codecs for CQL collection types should not permit null elements;</li>
+     * <li>Codecs for CQL collection types should treat a {@code null} input as
+     * the equivalent of an empty collection.</li>
      * </ol>
      *
-     * @param value An instance of T; may be {@code null}.
+     * @param value           An instance of T; may be {@code null}.
      * @param protocolVersion the protocol version to use when serializing
-     * {@code bytes}. In most cases, the proper value to provide for this argument
-     * is the value returned by {@link ProtocolOptions#getProtocolVersion} (which
-     * is the protocol version in use by the driver).
+     *                        {@code bytes}. In most cases, the proper value to provide for this argument
+     *                        is the value returned by {@link ProtocolOptions#getProtocolVersion} (which
+     *                        is the protocol version in use by the driver).
      * @return A {@link ByteBuffer} instance containing the serialized form of T
      * @throws InvalidTypeException if the given value does not have the expected type
      */
@@ -447,27 +469,27 @@ public abstract class TypeCodec<T> {
     /**
      * Deserialize the given {@link ByteBuffer} instance according to the CQL type
      * handled by this codec.
-     * <p>
+     * <p/>
      * Implementation notes:
      * <ol>
-     *     <li>Null or empty buffers should be gracefully handled and no exception should be raised;
-     *     these should be considered as the equivalent of a NULL CQL value and, in most cases, should
-     *     map to {@code null} or a default value for the corresponding Java type, if applicable;</li>
-     *     <li>Codecs for CQL collection types should clearly document whether they return immutable collections or not
-     *     (note that the driver's default collection codecs return <em>mutable</em> collections);</li>
-     *     <li>Codecs for CQL collection types should avoid returning {@code null};
-     *     they should return empty collections instead (the driver's default collection codecs all comply with this rule).</li>
-     *     <li>The provided {@link ByteBuffer} should never be consumed by read operations that
-     *     modify its current position; if necessary,
-     *     {@link ByteBuffer#duplicate()} duplicate} it before consuming.</li>
+     * <li>Null or empty buffers should be gracefully handled and no exception should be raised;
+     * these should be considered as the equivalent of a NULL CQL value and, in most cases, should
+     * map to {@code null} or a default value for the corresponding Java type, if applicable;</li>
+     * <li>Codecs for CQL collection types should clearly document whether they return immutable collections or not
+     * (note that the driver's default collection codecs return <em>mutable</em> collections);</li>
+     * <li>Codecs for CQL collection types should avoid returning {@code null};
+     * they should return empty collections instead (the driver's default collection codecs all comply with this rule).</li>
+     * <li>The provided {@link ByteBuffer} should never be consumed by read operations that
+     * modify its current position; if necessary,
+     * {@link ByteBuffer#duplicate()} duplicate} it before consuming.</li>
      * </ol>
      *
-     * @param bytes A {@link ByteBuffer} instance containing the serialized form of T;
-     * may be {@code null} or empty.
+     * @param bytes           A {@link ByteBuffer} instance containing the serialized form of T;
+     *                        may be {@code null} or empty.
      * @param protocolVersion the protocol version to use when serializing
-     * {@code bytes}. In most cases, the proper value to provide for this argument
-     * is the value returned by {@link ProtocolOptions#getProtocolVersion} (which
-     * is the protocol version in use by the driver).
+     *                        {@code bytes}. In most cases, the proper value to provide for this argument
+     *                        is the value returned by {@link ProtocolOptions#getProtocolVersion} (which
+     *                        is the protocol version in use by the driver).
      * @return An instance of T
      * @throws InvalidTypeException if the given {@link ByteBuffer} instance cannot be deserialized
      */
@@ -505,13 +527,13 @@ public abstract class TypeCodec<T> {
     /**
      * Return {@code true} if this codec is capable of serializing
      * the given {@code javaType}.
-     * <p>
+     * <p/>
      * The implementation is <em>invariant</em> with respect to the passed
      * argument (through the usage of {@link TypeToken#equals(Object)}
      * and <em>it's strongly recommended not to modify this behavior</em>.
      * This means that a codec will only ever accept the
      * <em>exact</em> Java type that it has been created for.
-     * <p>
+     * <p/>
      * If the argument represents a Java primitive type, its wrapper type
      * is considered instead.
      *
@@ -548,10 +570,10 @@ public abstract class TypeCodec<T> {
      * from the object' runtime (raw) type, contrary
      * to {@link #accepts(TypeToken)} which is capable of
      * handling generic types.
-     * <p>
+     * <p/>
      * This method is intended mostly to be used by the QueryBuilder
      * when no type information is available when the codec is used.
-     * <p>
+     * <p/>
      * Implementation notes:
      * <ol>
      * <li>The default implementation is <em>covariant</em> with respect to the passed
@@ -637,7 +659,7 @@ public abstract class TypeCodec<T> {
      * A codec that is capable of handling primitive shorts,
      * thus avoiding the overhead of boxing and unboxing such primitives.
      */
-    public static abstract class PrimitiveShortCodec extends TypeCodec<Short>{
+    public static abstract class PrimitiveShortCodec extends TypeCodec<Short> {
 
         protected PrimitiveShortCodec(DataType cqlType) {
             super(cqlType, Short.class);
@@ -795,7 +817,7 @@ public abstract class TypeCodec<T> {
 
         /**
          * {@inheritDoc}
-         *
+         * <p/>
          * Implementation note: this method treats {@code null}s and empty buffers differently:
          * the formers are mapped to {@code null}s while the latters are mapped to empty strings.
          */
@@ -998,8 +1020,8 @@ public abstract class TypeCodec<T> {
      */
     private static class BooleanCodec extends PrimitiveBooleanCodec {
 
-        private static final ByteBuffer TRUE = ByteBuffer.wrap(new byte[]{ 1 });
-        private static final ByteBuffer FALSE = ByteBuffer.wrap(new byte[]{ 0 });
+        private static final ByteBuffer TRUE = ByteBuffer.wrap(new byte[]{1});
+        private static final ByteBuffer FALSE = ByteBuffer.wrap(new byte[]{0});
 
         private static final BooleanCodec instance = new BooleanCodec();
 
@@ -1696,8 +1718,8 @@ public abstract class TypeCodec<T> {
                     bb = eltCodec.serialize(elt, protocolVersion);
                 } catch (ClassCastException e) {
                     throw new InvalidTypeException(
-                        String.format("Invalid type for %s element, expecting %s but got %s",
-                            cqlType, eltCodec.getJavaType(), elt.getClass()), e);
+                            String.format("Invalid type for %s element, expecting %s but got %s",
+                                    cqlType, eltCodec.getJavaType(), elt.getClass()), e);
                 }
                 bbs[i++] = bb;
             }
@@ -1779,7 +1801,7 @@ public abstract class TypeCodec<T> {
         public boolean accepts(Object value) {
             if (getJavaType().getRawType().isAssignableFrom(value.getClass())) {
                 // runtime type ok, now check element type
-                Collection<?> coll = (Collection<?>)value;
+                Collection<?> coll = (Collection<?>) value;
                 if (coll.isEmpty())
                     return true;
                 Object elt = coll.iterator().next();
@@ -1869,7 +1891,7 @@ public abstract class TypeCodec<T> {
         public boolean accepts(Object value) {
             if (value instanceof Map) {
                 // runtime type ok, now check key and value types
-                Map<?, ?> map = (Map<?, ?>)value;
+                Map<?, ?> map = (Map<?, ?>) value;
                 if (map.isEmpty())
                     return true;
                 Map.Entry<?, ?> entry = map.entrySet().iterator().next();
@@ -2071,7 +2093,7 @@ public abstract class TypeCodec<T> {
                     result.put(bb.duplicate());
                 }
             }
-            return (ByteBuffer)result.flip();
+            return (ByteBuffer) result.flip();
         }
 
         @Override
@@ -2177,10 +2199,10 @@ public abstract class TypeCodec<T> {
          * Serialize an individual field in an object, as part of serializing the whole object to a CQL
          * UDT (see {@link #serialize(Object, ProtocolVersion)}).
          *
-         * @param source The object to read the field from.
-         * @param fieldName The name of the field. Note that if it is case-sensitive or contains special
-         *                  characters, it will be double-quoted (i.e. the string will contain actual
-         *                  quote characters, as in {@code "\"foobar\""}).
+         * @param source          The object to read the field from.
+         * @param fieldName       The name of the field. Note that if it is case-sensitive or contains special
+         *                        characters, it will be double-quoted (i.e. the string will contain actual
+         *                        quote characters, as in {@code "\"foobar\""}).
          * @param protocolVersion The protocol version to use.
          * @return The serialized field, or {@code null} if that field should be ignored.
          */
@@ -2190,11 +2212,11 @@ public abstract class TypeCodec<T> {
          * Deserialize an individual field and set it on an object, as part of deserializing the whole
          * object from a CQL UDT (see {@link #deserialize(ByteBuffer, ProtocolVersion)}).
          *
-         * @param input The serialized form of the field.
-         * @param target The object to set the field on.
-         * @param fieldName The name of the field. Note that if it is case-sensitive or contains special
-         *                  characters, it will be double-quoted (i.e. the string will contain actual
-         *                  quote characters, as in {@code "\"foobar\""}).
+         * @param input           The serialized form of the field.
+         * @param target          The object to set the field on.
+         * @param fieldName       The name of the field. Note that if it is case-sensitive or contains special
+         *                        characters, it will be double-quoted (i.e. the string will contain actual
+         *                        quote characters, as in {@code "\"foobar\""}).
          * @param protocolVersion The protocol version to use.
          * @return The target object with the field set. In most cases this should be the same as {@code target}, but if you're dealing
          * with immutable types you'll need to return a different instance.
@@ -2205,7 +2227,7 @@ public abstract class TypeCodec<T> {
          * Format an individual field in an object as a CQL literal, as part of formatting the whole object
          * (see {@link #format(Object)}).
          *
-         * @param source The object to read the field from.
+         * @param source    The object to read the field from.
          * @param fieldName The name of the field. Note that if it is case-sensitive or contains special
          *                  characters, it will be double-quoted (i.e. the string will contain actual
          *                  quote characters, as in {@code "\"foobar\""}).
@@ -2217,8 +2239,8 @@ public abstract class TypeCodec<T> {
          * Parse an individual field and set it on an object, as part of parsing the whole object
          * (see {@link #parse(String)}).
          *
-         * @param input The String to parse the field from.
-         * @param target The value to write to.
+         * @param input     The String to parse the field from.
+         * @param target    The value to write to.
          * @param fieldName The name of the field. Note that if it is case-sensitive or contains special
          *                  characters, it will be double-quoted (i.e. the string will contain actual
          *                  quote characters, as in {@code "\"foobar\""}).
@@ -2239,7 +2261,7 @@ public abstract class TypeCodec<T> {
 
         @Override
         public boolean accepts(Object value) {
-            return super.accepts(value) && ((UDTValue)value).getType().equals(definition);
+            return super.accepts(value) && ((UDTValue) value).getType().equals(definition);
         }
 
         @Override
@@ -2277,7 +2299,7 @@ public abstract class TypeCodec<T> {
      * Base class for codecs mapping CQL {@link TupleType tuples} to Java objects.
      * It can serve as a base class for codecs dealing with
      * direct tuple-to-Pojo mappings.
-
+     *
      * @param <T> The Java type that this codec handles.
      */
     public abstract static class AbstractTupleCodec<T> extends TypeCodec<T> {
@@ -2298,7 +2320,7 @@ public abstract class TypeCodec<T> {
         public boolean accepts(DataType cqlType) {
             // a tuple codec should accept tuple values of a different type,
             // provided that the latter is contained in this codec's type.
-            return super.accepts(cqlType) && definition.contains((TupleType)cqlType);
+            return super.accepts(cqlType) && definition.contains((TupleType) cqlType);
         }
 
         @Override
@@ -2321,7 +2343,7 @@ public abstract class TypeCodec<T> {
                     result.put(bb.duplicate());
                 }
             }
-            return (ByteBuffer)result.flip();
+            return (ByteBuffer) result.flip();
         }
 
         @Override
@@ -2408,8 +2430,8 @@ public abstract class TypeCodec<T> {
          * Serialize an individual field in an object, as part of serializing the whole object to a CQL
          * tuple (see {@link #serialize(Object, ProtocolVersion)}).
          *
-         * @param source The object to read the field from.
-         * @param index The index of the field.
+         * @param source          The object to read the field from.
+         * @param index           The index of the field.
          * @param protocolVersion The protocol version to use.
          * @return The serialized field, or {@code null} if that field should be ignored.
          */
@@ -2419,9 +2441,9 @@ public abstract class TypeCodec<T> {
          * Deserialize an individual field and set it on an object, as part of deserializing the whole
          * object from a CQL tuple (see {@link #deserialize(ByteBuffer, ProtocolVersion)}).
          *
-         * @param input The serialized form of the field.
-         * @param target The object to set the field on.
-         * @param index The index of the field.
+         * @param input           The serialized form of the field.
+         * @param target          The object to set the field on.
+         * @param index           The index of the field.
          * @param protocolVersion The protocol version to use.
          * @return The target object with the field set. In most cases this should be the same as {@code target}, but if you're dealing
          * with immutable types you'll need to return a different instance.
@@ -2433,7 +2455,7 @@ public abstract class TypeCodec<T> {
          * (see {@link #format(Object)}).
          *
          * @param source The object to read the field from.
-         * @param index The index of the field.
+         * @param index  The index of the field.
          * @return The formatted value.
          */
         protected abstract String formatField(T source, int index);
@@ -2442,9 +2464,9 @@ public abstract class TypeCodec<T> {
          * Parse an individual field and set it on an object, as part of parsing the whole object
          * (see {@link #parse(String)}).
          *
-         * @param input The String to parse the field from.
+         * @param input  The String to parse the field from.
          * @param target The value to write to.
-         * @param index The index of the field.
+         * @param index  The index of the field.
          * @return The target object with the field set. In most cases this should be the same as {@code target}, but if you're dealing
          * with immutable types you'll need to return a different instance.
          */
@@ -2465,7 +2487,7 @@ public abstract class TypeCodec<T> {
         public boolean accepts(Object value) {
             // a tuple codec should accept tuple values of a different type,
             // provided that the latter is contained in this codec's type.
-            return super.accepts(value) && definition.contains(((TupleValue)value).getType());
+            return super.accepts(value) && definition.contains(((TupleValue) value).getType());
         }
 
         @Override

@@ -15,16 +15,16 @@
  */
 package com.datastax.driver.core;
 
-import java.nio.ByteBuffer;
-
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 import com.datastax.driver.core.exceptions.UnsupportedProtocolVersionException;
 import com.datastax.driver.core.querybuilder.BuiltStatement;
 import com.datastax.driver.core.schemabuilder.SchemaStatement;
 
+import java.nio.ByteBuffer;
+
 /**
  * A regular (non-prepared and non batched) CQL statement.
- * <p>
+ * <p/>
  * This class represents a query string along with query options (and optionally
  * binary values, see {@code getValues}). It can be extended but {@link SimpleStatement}
  * is provided as a simple implementation to build a {@code RegularStatement} directly
@@ -35,7 +35,8 @@ public abstract class RegularStatement extends Statement {
     /**
      * Creates a new RegularStatement.
      */
-    protected RegularStatement() {}
+    protected RegularStatement() {
+    }
 
     /**
      * Returns the query string for this statement.
@@ -45,28 +46,26 @@ public abstract class RegularStatement extends Statement {
      *                      process of generating the query. Note that it might be
      *                      possible to use the no-arg {@link #getQueryString()}
      *                      depending on the type of statement this is called on.
-     *
      * @return a valid CQL query string.
-     *
      * @see #getQueryString()
      */
     public abstract String getQueryString(CodecRegistry codecRegistry);
 
     /**
      * Returns the query string for this statement.
-     * <p>
+     * <p/>
      * This method calls {@link #getQueryString(CodecRegistry)} with {@link CodecRegistry#DEFAULT_INSTANCE}.
      * Whether you should use this or the other variant depends on the type of statement this is
      * called on:
      * <ul>
-     *     <li>for a {@link SimpleStatement} or {@link SchemaStatement}, the codec registry isn't
-     *     actually needed, so it's always safe to use this method;</li>
-     *     <li>for a {@link BuiltStatement} you can use this method if you use no custom codecs, or if
-     *     your custom codecs are registered with the default registry. Otherwise, use the other method and
-     *     provide the registry that contains your codecs (see {@link BuiltStatement} for more explanations
-     *     on why this is so);</li>
-     *     <li>for a {@link BatchStatement}, use the first rule if it contains no built statements,
-     *     or the second rule otherwise.</li>
+     * <li>for a {@link SimpleStatement} or {@link SchemaStatement}, the codec registry isn't
+     * actually needed, so it's always safe to use this method;</li>
+     * <li>for a {@link BuiltStatement} you can use this method if you use no custom codecs, or if
+     * your custom codecs are registered with the default registry. Otherwise, use the other method and
+     * provide the registry that contains your codecs (see {@link BuiltStatement} for more explanations
+     * on why this is so);</li>
+     * <li>for a {@link BatchStatement}, use the first rule if it contains no built statements,
+     * or the second rule otherwise.</li>
      * </ul>
      *
      * @return a valid CQL query string.
@@ -77,7 +76,7 @@ public abstract class RegularStatement extends Statement {
 
     /**
      * The values to use for this statement.
-     * <p>
+     * <p/>
      * Note: Values for a RegularStatement (i.e. if this method does not return
      * {@code null}) are not supported with the native protocol version 1: you
      * will get an {@link UnsupportedProtocolVersionException} when submitting
@@ -87,11 +86,10 @@ public abstract class RegularStatement extends Statement {
      *
      * @param protocolVersion the protocol version that will be used to serialize
      *                        the values.
-     * @param codecRegistry the codec registry that will be used to serialize the
-     *                      values.
-     *
+     * @param codecRegistry   the codec registry that will be used to serialize the
+     *                        values.
      * @throws InvalidTypeException if one of the values is not of a type
-     * that can be serialized to a CQL3 type
+     *                              that can be serialized to a CQL3 type
      * @see SimpleStatement#SimpleStatement(String, Object...)
      */
     public abstract ByteBuffer[] getValues(ProtocolVersion protocolVersion, CodecRegistry codecRegistry);
@@ -106,10 +104,8 @@ public abstract class RegularStatement extends Statement {
      *                      Note that it might be possible to use the no-arg
      *                      {@link #hasValues()} depending on the type of
      *                      statement this is called on.
-     *
      * @return {@code false} if {@link #getValues} returns {@code null}, {@code true}
      * otherwise.
-     *
      * @see #hasValues()
      */
     public abstract boolean hasValues(CodecRegistry codecRegistry);
@@ -117,19 +113,19 @@ public abstract class RegularStatement extends Statement {
     /**
      * Whether or not this statement has values, that is if {@code getValues}
      * will return {@code null} or not.
-     * <p>
+     * <p/>
      * This method calls {@link #hasValues(CodecRegistry)} with {@link ProtocolVersion#NEWEST_SUPPORTED}.
      * Whether you should use this or the other variant depends on the type of statement this is
      * called on:
      * <ul>
-     *     <li>for a {@link SimpleStatement} or {@link SchemaStatement}, the codec registry isn't
-     *     actually needed, so it's always safe to use this method;</li>
-     *     <li>for a {@link BuiltStatement} you can use this method if you use no custom codecs, or if
-     *     your custom codecs are registered with the default registry. Otherwise, use the other method and
-     *     provide the registry that contains your codecs (see {@link BuiltStatement} for more explanations
-     *     on why this is so);</li>
-     *     <li>for a {@link BatchStatement}, use the first rule if it contains no built statements,
-     *     or the second rule otherwise.</li>
+     * <li>for a {@link SimpleStatement} or {@link SchemaStatement}, the codec registry isn't
+     * actually needed, so it's always safe to use this method;</li>
+     * <li>for a {@link BuiltStatement} you can use this method if you use no custom codecs, or if
+     * your custom codecs are registered with the default registry. Otherwise, use the other method and
+     * provide the registry that contains your codecs (see {@link BuiltStatement} for more explanations
+     * on why this is so);</li>
+     * <li>for a {@link BatchStatement}, use the first rule if it contains no built statements,
+     * or the second rule otherwise.</li>
      * </ul>
      *
      * @return {@code false} if {@link #getValues} returns {@code null}, {@code true}

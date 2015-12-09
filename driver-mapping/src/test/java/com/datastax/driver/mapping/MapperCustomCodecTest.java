@@ -15,10 +15,10 @@
  */
 package com.datastax.driver.mapping;
 
-import java.nio.ByteBuffer;
-import java.util.Collection;
-import java.util.Map;
-
+import com.datastax.driver.core.*;
+import com.datastax.driver.core.exceptions.InvalidTypeException;
+import com.datastax.driver.core.utils.CassandraVersion;
+import com.datastax.driver.mapping.annotations.*;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
@@ -27,40 +27,39 @@ import com.google.common.reflect.TypeParameter;
 import com.google.common.reflect.TypeToken;
 import org.testng.annotations.Test;
 
+import java.nio.ByteBuffer;
+import java.util.Collection;
+import java.util.Map;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
-import com.datastax.driver.core.*;
-import com.datastax.driver.core.exceptions.InvalidTypeException;
-import com.datastax.driver.core.utils.CassandraVersion;
-import com.datastax.driver.mapping.annotations.*;
-
-@CassandraVersion(major=2.1)
+@CassandraVersion(major = 2.1)
 public class MapperCustomCodecTest extends CCMBridge.PerClassSingleNodeCluster {
 
     @Override
     protected Collection<String> getTableDefinitions() {
         return Lists.newArrayList(
-            // Columns mapped to custom types
-            "CREATE TABLE data1 (i int PRIMARY KEY, l bigint)",
-            "INSERT INTO data1 (i, l) VALUES (1, 11)",
+                // Columns mapped to custom types
+                "CREATE TABLE data1 (i int PRIMARY KEY, l bigint)",
+                "INSERT INTO data1 (i, l) VALUES (1, 11)",
 
-            // UDT fields mapped to custom types
-            "CREATE TYPE holder(i int, l bigint)",
-            "CREATE TABLE data2(i int primary key, data frozen<holder>)",
-            "INSERT INTO data2 (i, data) values (1, {i: 1, l: 11})",
+                // UDT fields mapped to custom types
+                "CREATE TYPE holder(i int, l bigint)",
+                "CREATE TABLE data2(i int primary key, data frozen<holder>)",
+                "INSERT INTO data2 (i, data) values (1, {i: 1, l: 11})",
 
-            // nested UDT
-            // both UDT fields and non-UDT elements in the collection are mapped to custom types
-            "CREATE TABLE data3(i int primary key, data map<int, frozen<holder>>)",
-            "INSERT INTO data3 (i, data) values (1, {1: {i: 1, l: 11}})"
+                // nested UDT
+                // both UDT fields and non-UDT elements in the collection are mapped to custom types
+                "CREATE TABLE data3(i int primary key, data map<int, frozen<holder>>)",
+                "INSERT INTO data3 (i, data) values (1, {1: {i: 1, l: 11}})"
         );
     }
 
     @Override
     protected Cluster.Builder configure(Cluster.Builder builder) {
         return builder.withCodecRegistry(new CodecRegistry()
-            .register(new CustomInt.Codec()));
+                .register(new CustomInt.Codec()));
     }
 
     @Test(groups = "short")
@@ -150,12 +149,12 @@ public class MapperCustomCodecTest extends CCMBridge.PerClassSingleNodeCluster {
         mapper.delete(2);
     }
 
-    @Test(groups="short", expectedExceptions = IllegalArgumentException.class)
+    @Test(groups = "short", expectedExceptions = IllegalArgumentException.class)
     public void should_fail_when_invalid_codec_with_no_default_ctor_provided() {
         new MappingManager(session).mapper(Data1InvalidCodecNoDefaultConstructor.class);
     }
 
-    @Test(groups="short", expectedExceptions = InvalidTypeException.class)
+    @Test(groups = "short", expectedExceptions = InvalidTypeException.class)
     public void should_fail_when_invalid_codec_type_mapping() {
         Mapper<Data1InvalidCodecTypeMapping> mapper = new MappingManager(session).mapper(Data1InvalidCodecTypeMapping.class);
 
@@ -174,12 +173,12 @@ public class MapperCustomCodecTest extends CCMBridge.PerClassSingleNodeCluster {
         mapper.save(data12);
     }
 
-    @Test(groups="short", expectedExceptions = IllegalArgumentException.class)
+    @Test(groups = "short", expectedExceptions = IllegalArgumentException.class)
     public void should_fail_when_invalid_codec_with_no_default_ctor_provided_in_accessor() {
         new MappingManager(session).createAccessor(Data1AccessorNoDefaultConstructor.class);
     }
 
-    @Test(groups="short", expectedExceptions = InvalidTypeException.class)
+    @Test(groups = "short", expectedExceptions = InvalidTypeException.class)
     public void should_fail_when_invalid_codec_type_mapping_in_accessor() {
         Data1AccessorInvalidCodecTypeMapping accessor = new MappingManager(session).createAccessor(Data1AccessorInvalidCodecTypeMapping.class);
 
@@ -194,7 +193,7 @@ public class MapperCustomCodecTest extends CCMBridge.PerClassSingleNodeCluster {
         accessor.setL(1, Optional.of(2L));
     }
 
-    @Test(groups="short")
+    @Test(groups = "short")
     public void should_be_able_to_use_parameterized_type() {
         Mapper<Data1ParameterizedType> mapper = new MappingManager(session).mapper(Data1ParameterizedType.class);
 
@@ -454,7 +453,7 @@ public class MapperCustomCodecTest extends CCMBridge.PerClassSingleNodeCluster {
         @Override
         public boolean equals(Object other) {
             if (other instanceof CustomInt) {
-                CustomInt that = (CustomInt)other;
+                CustomInt that = (CustomInt) other;
                 return this.value == that.value;
             }
             return false;
@@ -503,7 +502,7 @@ public class MapperCustomCodecTest extends CCMBridge.PerClassSingleNodeCluster {
         @Override
         public boolean equals(Object other) {
             if (other instanceof CustomLong) {
-                CustomLong that = (CustomLong)other;
+                CustomLong that = (CustomLong) other;
                 return this.value == that.value;
             }
             return false;
@@ -511,7 +510,7 @@ public class MapperCustomCodecTest extends CCMBridge.PerClassSingleNodeCluster {
 
         @Override
         public int hashCode() {
-            return (int)(value ^ (value >>> 32));
+            return (int) (value ^ (value >>> 32));
         }
 
         public static class Codec extends TypeCodec<CustomLong> {
@@ -568,13 +567,15 @@ public class MapperCustomCodecTest extends CCMBridge.PerClassSingleNodeCluster {
         private final Predicate<T> isAbsent;
 
         public OptionalCodec(TypeCodec<T> codec) {
-            super(codec, new TypeToken<Optional<T>>(){}.where(new TypeParameter<T>(){}, codec.getJavaType()));
+            super(codec, new TypeToken<Optional<T>>() {
+            }.where(new TypeParameter<T>() {
+            }, codec.getJavaType()));
             this.isAbsent = new Predicate<T>() {
                 @Override
                 public boolean apply(T input) {
                     return input == null
-                        || input instanceof Collection && ((Collection)input).isEmpty()
-                        || input instanceof Map && ((Map)input).isEmpty();
+                            || input instanceof Collection && ((Collection) input).isEmpty()
+                            || input instanceof Map && ((Map) input).isEmpty();
                 }
             };
         }

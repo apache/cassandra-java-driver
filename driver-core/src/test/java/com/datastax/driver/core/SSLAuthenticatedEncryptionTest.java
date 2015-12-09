@@ -15,9 +15,8 @@
  */
 package com.datastax.driver.core;
 
-import org.testng.annotations.Test;
-
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
+import org.testng.annotations.Test;
 
 public class SSLAuthenticatedEncryptionTest extends SSLTestBase {
 
@@ -35,11 +34,11 @@ public class SSLAuthenticatedEncryptionTest extends SSLTestBase {
      * @test_category connection:ssl, authentication
      * @expected_result Connection can be established to a cassandra node using SSL that requires client auth.
      */
-    @Test(groups="short", dataProvider = "sslImplementation", dataProviderClass = SSLTestBase.class)
+    @Test(groups = "short", dataProvider = "sslImplementation", dataProviderClass = SSLTestBase.class)
     public void should_connect_with_ssl_with_client_auth_and_node_requires_auth(SslImplementation sslImplementation) throws Exception {
         connectWithSSLOptions(getSSLOptions(sslImplementation, true, true));
     }
-    
+
     /**
      * <p>
      * Validates that an SSL connection can not be established with if the target
@@ -50,7 +49,7 @@ public class SSLAuthenticatedEncryptionTest extends SSLTestBase {
      * @test_category connection:ssl, authentication
      * @expected_result Connection is not established.
      */
-    @Test(groups="short", dataProvider = "sslImplementation", dataProviderClass = SSLTestBase.class, expectedExceptions={NoHostAvailableException.class})
+    @Test(groups = "short", dataProvider = "sslImplementation", dataProviderClass = SSLTestBase.class, expectedExceptions = {NoHostAvailableException.class})
     public void should_not_connect_without_client_auth_but_node_requires_auth(SslImplementation sslImplementation) throws Exception {
         connectWithSSLOptions(getSSLOptions(sslImplementation, false, true));
     }
@@ -63,7 +62,7 @@ public class SSLAuthenticatedEncryptionTest extends SSLTestBase {
      * @test_category connection:ssl, authentication
      * @expected_result Connection can be established.
      */
-    @Test(groups="isolated")
+    @Test(groups = "isolated")
     public void should_use_system_properties_with_default_ssl_options() throws Exception {
         System.setProperty("javax.net.ssl.keyStore", CCMBridge.DEFAULT_CLIENT_KEYSTORE_FILE.getAbsolutePath());
         System.setProperty("javax.net.ssl.keyStorePassword", CCMBridge.DEFAULT_CLIENT_KEYSTORE_PASSWORD);

@@ -15,9 +15,9 @@
  */
 package com.datastax.driver.core.policies;
 
-import java.net.InetSocketAddress;
-
 import com.datastax.driver.core.Cluster;
+
+import java.net.InetSocketAddress;
 
 /**
  * The default {@link AddressTranslator} used by the driver that do no
@@ -32,7 +32,7 @@ public class IdentityTranslator implements AddressTranslator {
 
     /**
      * Translates a Cassandra {@code rpc_address} to another address if necessary.
-     * <p>
+     * <p/>
      * This method is the identity function, it always return the address passed
      * in argument, doing no translation.
      *

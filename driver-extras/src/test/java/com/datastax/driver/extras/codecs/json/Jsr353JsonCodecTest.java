@@ -15,32 +15,27 @@
  */
 package com.datastax.driver.extras.codecs.json;
 
+import com.datastax.driver.core.*;
+import com.datastax.driver.core.querybuilder.BuiltStatement;
+import com.datastax.driver.core.utils.CassandraVersion;
+import com.google.common.collect.Lists;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
+
+import javax.json.*;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.Collection;
 
-import com.google.common.collect.Lists;
-import javax.json.*;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
-
+import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 import static org.assertj.core.api.Assertions.assertThat;
-
-import com.datastax.driver.core.*;
-import com.datastax.driver.core.querybuilder.BuiltStatement;
-import com.datastax.driver.core.utils.CassandraVersion;
-
-import static com.datastax.driver.core.querybuilder.QueryBuilder.bindMarker;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.insertInto;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
 
 public class Jsr353JsonCodecTest extends CCMBridge.PerClassSingleNodeCluster {
 
     private static final Jsr353JsonCodec jsonCodec = new Jsr353JsonCodec();
 
-    private static final JsonObject alice   = Json.createObjectBuilder().add("id", 1).add("name", "Alice")  .build();
-    private static final JsonObject bob     = Json.createObjectBuilder().add("id", 2).add("name", "Bob")    .build();
+    private static final JsonObject alice = Json.createObjectBuilder().add("id", 1).add("name", "Alice").build();
+    private static final JsonObject bob = Json.createObjectBuilder().add("id", 2).add("name", "Bob").build();
     private static final JsonObject charlie = Json.createObjectBuilder().add("id", 3).add("name", "Charlie").build();
 
     private static final JsonArray bobAndCharlie = Json.createArrayBuilder().add(bob).add(charlie).build();
@@ -53,22 +48,22 @@ public class Jsr353JsonCodecTest extends CCMBridge.PerClassSingleNodeCluster {
     @Override
     protected Collection<String> getTableDefinitions() {
         return Lists.newArrayList(
-            "CREATE TABLE t1 (c1 text, c2 text, PRIMARY KEY (c1, c2))"
+                "CREATE TABLE t1 (c1 text, c2 text, PRIMARY KEY (c1, c2))"
         );
     }
 
     @Override
     protected Cluster.Builder configure(Cluster.Builder builder) {
         return builder.withCodecRegistry(
-            new CodecRegistry().register(jsonCodec) // global User <-> varchar codec
+                new CodecRegistry().register(jsonCodec) // global User <-> varchar codec
         );
     }
 
     @DataProvider(name = "Jsr353JsonCodecTest")
     public static Object[][] parameters() {
-        return new Object[][] {
-            { alice },
-            { bobAndCharlie }
+        return new Object[][]{
+                {alice},
+                {bobAndCharlie}
         };
     }
 
@@ -89,7 +84,7 @@ public class Jsr353JsonCodecTest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     @Test(groups = "short", dataProvider = "Jsr353JsonCodecTest")
-    @CassandraVersion(major=2.0)
+    @CassandraVersion(major = 2.0)
     public void should_use_custom_codec_with_simple_statements(JsonStructure object) throws IOException {
         session.execute(insertQuery, notAJsonString, object);
         ResultSet rows = session.execute(selectQuery, notAJsonString, object);
@@ -100,12 +95,12 @@ public class Jsr353JsonCodecTest extends CCMBridge.PerClassSingleNodeCluster {
     @Test(groups = "short", dataProvider = "Jsr353JsonCodecTest")
     public void should_use_custom_codec_with_built_statements_1(JsonStructure object) throws IOException {
         BuiltStatement insertStmt = insertInto("t1")
-            .value("c1", bindMarker())
-            .value("c2", bindMarker());
+                .value("c1", bindMarker())
+                .value("c2", bindMarker());
         BuiltStatement selectStmt = select("c1", "c2")
-            .from("t1")
-            .where(eq("c1", bindMarker()))
-            .and(eq("c2", bindMarker()));
+                .from("t1")
+                .where(eq("c1", bindMarker()))
+                .and(eq("c2", bindMarker()));
         session.execute(session.prepare(insertStmt).bind(notAJsonString, object));
         ResultSet rows = session.execute(session.prepare(selectStmt).bind(notAJsonString, object));
         Row row = rows.one();
@@ -115,13 +110,13 @@ public class Jsr353JsonCodecTest extends CCMBridge.PerClassSingleNodeCluster {
     @Test(groups = "short", dataProvider = "Jsr353JsonCodecTest")
     public void should_use_custom_codec_with_built_statements_2(JsonStructure object) throws IOException {
         BuiltStatement insertStmt = insertInto("t1")
-            .value("c1", notAJsonString)
-            .value("c2", object);
+                .value("c1", notAJsonString)
+                .value("c2", object);
         BuiltStatement selectStmt =
-            select("c1", "c2")
-                .from("t1")
-                .where(eq("c1", notAJsonString))
-                .and(eq("c2", object));
+                select("c1", "c2")
+                        .from("t1")
+                        .where(eq("c1", notAJsonString))
+                        .and(eq("c2", object));
         session.execute(insertStmt);
         ResultSet rows = session.execute(selectStmt);
         Row row = rows.one();
@@ -140,13 +135,13 @@ public class Jsr353JsonCodecTest extends CCMBridge.PerClassSingleNodeCluster {
     @Test(groups = "short", dataProvider = "Jsr353JsonCodecTest")
     public void should_use_custom_codec_with_prepared_statements_2(JsonStructure object) throws IOException {
         session.execute(session.prepare(insertQuery).bind()
-            .setString(0, notAJsonString)
-            .set(1, object, JsonStructure.class)
+                        .setString(0, notAJsonString)
+                        .set(1, object, JsonStructure.class)
         );
         PreparedStatement ps = session.prepare(selectQuery);
         ResultSet rows = session.execute(ps.bind()
-            .setString(0, notAJsonString)
-            .set(1, object, JsonStructure.class)
+                        .setString(0, notAJsonString)
+                        .set(1, object, JsonStructure.class)
         );
         Row row = rows.one();
         assertRow(row, object);

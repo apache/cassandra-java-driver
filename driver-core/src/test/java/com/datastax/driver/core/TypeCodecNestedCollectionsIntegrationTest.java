@@ -15,9 +15,9 @@
  */
 package com.datastax.driver.core;
 
-import java.nio.ByteBuffer;
-import java.util.*;
-
+import com.datastax.driver.core.exceptions.InvalidTypeException;
+import com.datastax.driver.core.querybuilder.BuiltStatement;
+import com.datastax.driver.core.utils.CassandraVersion;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
@@ -25,23 +25,18 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.nio.ByteBuffer;
+import java.util.*;
+
+import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 import static com.google.common.collect.Lists.newArrayList;
 import static org.assertj.core.api.Assertions.assertThat;
-
-import com.datastax.driver.core.exceptions.InvalidTypeException;
-import com.datastax.driver.core.querybuilder.BuiltStatement;
-import com.datastax.driver.core.utils.CassandraVersion;
-
-import static com.datastax.driver.core.querybuilder.QueryBuilder.bindMarker;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.insertInto;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
 
 /**
  * Validates that nested collections are properly encoded,
  * even if some inner type requires a custom codec.
  */
-@CassandraVersion(major=2.1)
+@CassandraVersion(major = 2.1)
 public class TypeCodecNestedCollectionsIntegrationTest extends CCMBridge.PerClassSingleNodeCluster {
 
     private final String insertQuery = "INSERT INTO \"myTable\" (pk, v) VALUES (?, ?)";
@@ -54,23 +49,25 @@ public class TypeCodecNestedCollectionsIntegrationTest extends CCMBridge.PerClas
     private int pk = 42;
     private List<Set<Map<MyInt, String>>> v;
 
-    private TypeToken<List<Set<Map<MyInt, String>>>> listType = new TypeToken<List<Set<Map<MyInt, String>>>>(){};
-    private TypeToken<Set<Map<MyInt, String>>> elementsType = new TypeToken<Set<Map<MyInt, String>>>(){};
+    private TypeToken<List<Set<Map<MyInt, String>>>> listType = new TypeToken<List<Set<Map<MyInt, String>>>>() {
+    };
+    private TypeToken<Set<Map<MyInt, String>>> elementsType = new TypeToken<Set<Map<MyInt, String>>>() {
+    };
 
     @Override
     protected Collection<String> getTableDefinitions() {
         return newArrayList(
-            "CREATE TABLE IF NOT EXISTS \"myTable\" ("
-                + "pk int PRIMARY KEY, "
-                + "v frozen<list<frozen<set<frozen<map<int,text>>>>>>"
-                + ")"
+                "CREATE TABLE IF NOT EXISTS \"myTable\" ("
+                        + "pk int PRIMARY KEY, "
+                        + "v frozen<list<frozen<set<frozen<map<int,text>>>>>>"
+                        + ")"
         );
     }
 
     @Override
     protected Cluster.Builder configure(Cluster.Builder builder) {
         return builder.withCodecRegistry(
-            new CodecRegistry().register(new MyIntCodec()) // global User <-> varchar codec
+                new CodecRegistry().register(new MyIntCodec()) // global User <-> varchar codec
         );
     }
 
@@ -86,11 +83,11 @@ public class TypeCodecNestedCollectionsIntegrationTest extends CCMBridge.PerClas
     @BeforeMethod(groups = "short")
     public void createBuiltStatements() throws Exception {
         insertStmt = insertInto("\"myTable\"")
-            .value("pk", bindMarker())
-            .value("v", bindMarker());
+                .value("pk", bindMarker())
+                .value("v", bindMarker());
         selectStmt = select("pk", "v")
-            .from("\"myTable\"")
-            .where(eq("pk", bindMarker()));
+                .from("\"myTable\"")
+                .where(eq("pk", bindMarker()));
     }
 
     @Test(groups = "short")
@@ -113,12 +110,12 @@ public class TypeCodecNestedCollectionsIntegrationTest extends CCMBridge.PerClas
     @Test(groups = "short")
     public void should_work_with_prepared_statements_2() {
         session.execute(session.prepare(insertQuery).bind()
-            .setInt(0, pk)
-            .setList(1, v, elementsType) // variant with element type explicitly set
+                .setInt(0, pk)
+                .setList(1, v, elementsType) // variant with element type explicitly set
         );
         PreparedStatement ps = session.prepare(selectQuery);
         ResultSet rows = session.execute(ps.bind()
-            .setInt(0, pk)
+                        .setInt(0, pk)
         );
         Row row = rows.one();
         assertRow(row);
@@ -127,12 +124,12 @@ public class TypeCodecNestedCollectionsIntegrationTest extends CCMBridge.PerClas
     @Test(groups = "short")
     public void should_work_with_prepared_statements_3() {
         session.execute(session.prepare(insertQuery).bind()
-            .setInt(0, pk)
-            .set(1, v, listType)
+                        .setInt(0, pk)
+                        .set(1, v, listType)
         );
         PreparedStatement ps = session.prepare(selectQuery);
         ResultSet rows = session.execute(ps.bind()
-            .setInt(0, pk)
+                        .setInt(0, pk)
         );
         Row row = rows.one();
         assertRow(row);
@@ -141,12 +138,12 @@ public class TypeCodecNestedCollectionsIntegrationTest extends CCMBridge.PerClas
     @Test(groups = "short")
     public void should_work_with_built_statements() {
         session.execute(session.prepare(insertStmt).bind()
-            .setInt(0, pk)
-            .set(1, v, listType)
+                        .setInt(0, pk)
+                        .set(1, v, listType)
         );
         PreparedStatement ps = session.prepare(selectStmt);
         ResultSet rows = session.execute(ps.bind()
-            .setInt(0, pk)
+                        .setInt(0, pk)
         );
         Row row = rows.one();
         assertRow(row);
@@ -171,7 +168,7 @@ public class TypeCodecNestedCollectionsIntegrationTest extends CCMBridge.PerClas
                 return true;
             if (o == null || getClass() != o.getClass())
                 return false;
-            MyInt myInt = (MyInt)o;
+            MyInt myInt = (MyInt) o;
             return Objects.equal(i, myInt.i);
         }
 

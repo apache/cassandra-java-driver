@@ -15,18 +15,16 @@
  */
 package com.datastax.driver.core.querybuilder;
 
+import com.datastax.driver.core.*;
+import org.testng.annotations.Test;
+
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Collection;
 
-import org.testng.annotations.Test;
-
+import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
-
-import com.datastax.driver.core.*;
-
-import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 
 public class QueryBuilderRoutingKeyTest extends CCMBridge.PerClassSingleNodeCluster {
 
@@ -36,15 +34,15 @@ public class QueryBuilderRoutingKeyTest extends CCMBridge.PerClassSingleNodeClus
     @Override
     protected Collection<String> getTableDefinitions() {
         return Arrays.asList(String.format("CREATE TABLE %s (k text PRIMARY KEY, a int, b int)", TABLE_TEXT),
-                             String.format("CREATE TABLE %s (k int PRIMARY KEY, a int, b int)", TABLE_INT));
+                String.format("CREATE TABLE %s (k int PRIMARY KEY, a int, b int)", TABLE_INT));
     }
 
     @Override
     protected Cluster.Builder configure(Cluster.Builder builder) {
         return builder.withQueryOptions(new QueryOptions()
-            .setRefreshNodeIntervalMillis(0)
-            .setRefreshNodeListIntervalMillis(0)
-            .setRefreshSchemaIntervalMillis(0)
+                        .setRefreshNodeIntervalMillis(0)
+                        .setRefreshNodeListIntervalMillis(0)
+                        .setRefreshSchemaIntervalMillis(0)
         );
     }
 
@@ -115,7 +113,7 @@ public class QueryBuilderRoutingKeyTest extends CCMBridge.PerClassSingleNodeClus
         batch_query += String.format("UPDATE %s.test_int USING TTL 400;", keyspace);
         batch_query += "APPLY BATCH;";
         batch = batch()
-                .add(insertInto(table).values(new String[]{ "k", "a" }, new Object[]{ 42, 1 }))
+                .add(insertInto(table).values(new String[]{"k", "a"}, new Object[]{42, 1}))
                 .add(update(table).using(ttl(400)));
         assertEquals(batch.getRoutingKey(protocolVersion, codecRegistry), bb);
         assertEquals(batch.toString(), batch_query);

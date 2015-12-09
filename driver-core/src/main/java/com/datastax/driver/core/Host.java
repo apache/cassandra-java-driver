@@ -15,20 +15,20 @@
  */
 package com.datastax.driver.core;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.util.concurrent.ListenableFuture;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.util.concurrent.ListenableFuture;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 /**
  * A Cassandra node.
- *
+ * <p/>
  * This class keeps the information the driver maintain on a given Cassandra node.
  */
 public class Host {
@@ -39,9 +39,12 @@ public class Host {
 
     private final InetSocketAddress address;
 
-    enum State { ADDED, DOWN, UP }
+    enum State {ADDED, DOWN, UP}
+
     volatile State state;
-    /** Ensures state change notifications for that host are handled serially */
+    /**
+     * Ensures state change notifications for that host are handled serially
+     */
     final ReentrantLock notificationsLock = new ReentrantLock(true);
 
     final ConvictionPolicy convictionPolicy;
@@ -98,7 +101,7 @@ public class Host {
 
     /**
      * Returns the node address.
-     * <p>
+     * <p/>
      * This is a shortcut for {@code getSocketAddress().getAddress()}.
      *
      * @return the node {@link InetAddress}.
@@ -118,7 +121,7 @@ public class Host {
 
     /**
      * Returns the name of the datacenter this host is part of.
-     * <p>
+     * <p/>
      * The returned datacenter name is the one as known by Cassandra.
      * It is also possible for this information to be unavailable. In that
      * case this method returns {@code null}, and the caller should always be aware
@@ -132,7 +135,7 @@ public class Host {
 
     /**
      * Returns the name of the rack this host is part of.
-     * <p>
+     * <p/>
      * The returned rack name is the one as known by Cassandra.
      * It is also possible for this information to be unavailable. In that case
      * this method returns {@code null}, and the caller should always aware of this
@@ -146,7 +149,7 @@ public class Host {
 
     /**
      * The Cassandra version the host is running.
-     * <p>
+     * <p/>
      * As for other host information fetch from Cassandra above, the returned
      * version can theoretically be null if the information is unavailable.
      *
@@ -171,7 +174,7 @@ public class Host {
 
     /**
      * Returns whether the host is considered up by the driver.
-     * <p>
+     * <p/>
      * Please note that this is only the view of the driver and may not reflect
      * reality. In particular a node can be down but the driver hasn't detected
      * it yet, or it can have been restarted and the driver hasn't detected it
@@ -188,7 +191,7 @@ public class Host {
 
     /**
      * Returns a description of the host's state, as seen by the driver.
-     * <p>
+     * <p/>
      * This is exposed for debugging purposes only; the format of this string might
      * change between driver versions, so clients should not make any assumptions
      * about it.
@@ -202,7 +205,7 @@ public class Host {
     /**
      * Returns a {@code ListenableFuture} representing the completion of the reconnection
      * attempts scheduled after a host is marked {@code DOWN}.
-     * <p>
+     * <p/>
      * <b>If the caller cancels this future,</b> the driver will not try to reconnect to
      * this host until it receives an UP event for it. Note that this could mean never, if
      * the node was marked down because of a driver-side error (e.g. read timeout) but no
@@ -217,14 +220,14 @@ public class Host {
 
     /**
      * Triggers an asynchronous reconnection attempt to this host.
-     * <p>
+     * <p/>
      * This method is intended for load balancing policies that mark hosts as {@link HostDistance#IGNORED IGNORED},
      * but still need a way to periodically check these hosts' states (UP / DOWN).
-     * <p>
+     * <p/>
      * For a host that is at distance {@code IGNORED}, this method will try to reconnect exactly once: if
      * reconnection succeeds, the host is marked {@code UP}; otherwise, no further attempts will be scheduled.
      * It has no effect if the node is already {@code UP}, or if a reconnection attempt is already in progress.
-     * <p>
+     * <p/>
      * Note that if the host is <em>not</em> a distance {@code IGNORED}, this method <em>will</em> trigger a periodic
      * reconnection attempt if the reconnection fails.
      */
@@ -235,7 +238,7 @@ public class Host {
     @Override
     public boolean equals(Object other) {
         if (other instanceof Host) {
-            Host that = (Host)other;
+            Host that = (Host) other;
             return this.address.equals(that.address);
         }
         return false;
@@ -266,7 +269,7 @@ public class Host {
     /**
      * Interface for listeners that are interested in hosts added, up, down and
      * removed events.
-     * <p>
+     * <p/>
      * It is possible for the same event to be fired multiple times,
      * particularly for up or down events. Therefore, a listener should ignore
      * the same event if it has already been notified of a node's state.
@@ -275,7 +278,7 @@ public class Host {
 
         /**
          * Called when a new node is added to the cluster.
-         * <p>
+         * <p/>
          * The newly added node should be considered up.
          *
          * @param host the host that has been newly added.

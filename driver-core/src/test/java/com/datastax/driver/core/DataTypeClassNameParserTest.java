@@ -15,17 +15,13 @@
  */
 package com.datastax.driver.core;
 
+import org.testng.annotations.Test;
+
 import java.util.Arrays;
 import java.util.Iterator;
 
-import org.testng.annotations.Test;
-
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertTrue;
-
 import static com.datastax.driver.core.Assertions.assertThat;
+import static org.testng.Assert.*;
 
 public class DataTypeClassNameParserTest {
 
@@ -73,7 +69,7 @@ public class DataTypeClassNameParserTest {
     public void parseUserTypes() {
 
         String s = "org.apache.cassandra.db.marshal.UserType(foo,61646472657373,737472656574:org.apache.cassandra.db.marshal.UTF8Type,7a6970636f6465:org.apache.cassandra.db.marshal.Int32Type,70686f6e6573:org.apache.cassandra.db.marshal.SetType(org.apache.cassandra.db.marshal.UserType(foo,70686f6e65,6e616d65:org.apache.cassandra.db.marshal.UTF8Type,6e756d626572:org.apache.cassandra.db.marshal.UTF8Type)))";
-        UserType def = (UserType)DataTypeClassNameParser.parseOne(s, protocolVersion, codecRegistry);
+        UserType def = (UserType) DataTypeClassNameParser.parseOne(s, protocolVersion, codecRegistry);
 
         assertEquals(def.getKeyspace(), "foo");
         assertEquals(def.getTypeName(), "address");
@@ -93,7 +89,7 @@ public class DataTypeClassNameParserTest {
 
         DataType st = field3.getType();
         assertEquals(st.getName(), DataType.Name.SET);
-        UserType subDef = (UserType)st.getTypeArguments().get(0);
+        UserType subDef = (UserType) st.getTypeArguments().get(0);
 
         assertEquals(subDef.getKeyspace(), "foo");
         assertEquals(subDef.getTypeName(), "phone");
@@ -112,7 +108,7 @@ public class DataTypeClassNameParserTest {
     @Test(groups = "unit")
     public void parseTupleTest() {
         String s = "org.apache.cassandra.db.marshal.TupleType(org.apache.cassandra.db.marshal.Int32Type,org.apache.cassandra.db.marshal.UTF8Type,org.apache.cassandra.db.marshal.FloatType)";
-        TupleType type = (TupleType)DataTypeClassNameParser.parseOne(s, protocolVersion, codecRegistry);
+        TupleType type = (TupleType) DataTypeClassNameParser.parseOne(s, protocolVersion, codecRegistry);
         assertNotNull(type);
         assertEquals(type.getComponentTypes().get(0), DataType.cint());
         assertEquals(type.getComponentTypes().get(1), DataType.text());
@@ -126,14 +122,14 @@ public class DataTypeClassNameParserTest {
 
         DataType parentMap = DataTypeClassNameParser.parseOne(s, protocolVersion, codecRegistry);
         assertThat(parentMap)
-            .hasName(DataType.Name.MAP)
-            .isNotFrozen()
-            .hasTypeArgument(0, DataType.text());
+                .hasName(DataType.Name.MAP)
+                .isNotFrozen()
+                .hasTypeArgument(0, DataType.text());
 
         DataType childMap = parentMap.getTypeArguments().get(1);
         assertThat(childMap)
-            .hasName(DataType.Name.MAP)
-            .isFrozen()
-            .hasTypeArguments(DataType.cint(), DataType.cint());
+                .hasName(DataType.Name.MAP)
+                .isFrozen()
+                .hasTypeArguments(DataType.cint(), DataType.cint());
     }
 }

@@ -15,31 +15,30 @@
  */
 package com.datastax.driver.core;
 
-import java.util.EnumSet;
-import java.util.List;
-
+import com.datastax.driver.core.exceptions.DriverInternalError;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.*;
 
-import com.datastax.driver.core.exceptions.DriverInternalError;
+import java.util.EnumSet;
+import java.util.List;
 
 /**
  * A frame for the CQL binary protocol.
- * <p>
+ * <p/>
  * Each frame contains a fixed size header (8 bytes for V1 and V2, 9 bytes for V3 and V4)
  * followed by a variable size body. The content of the body depends
  * on the header opcode value (the body can in particular be empty for some
  * opcode values).
- * <p>
+ * <p/>
  * The protocol distinguishes 2 types of frames: requests and responses. Requests
  * are those frames sent by the clients to the server, response are the ones sent
  * by the server. Note however that the protocol supports server pushes (events)
  * so responses does not necessarily come right after a client request.
- * <p>
+ * <p/>
  * Frames for protocol versions 1+2 are defined as:
- *
+ * <p/>
  * <pre>
  *  0         8        16        24        32
  * +---------+---------+---------+---------+
@@ -52,10 +51,10 @@ import com.datastax.driver.core.exceptions.DriverInternalError;
  * .                                       .
  * .                                       .
  * +---------------------------------------- *
- *</pre>
- *
+ * </pre>
+ * <p/>
  * Frames for protocol versions 3+4 are defined as:
- *
+ * <p/>
  * <pre>
  * 0         8        16        24        32         40
  * +---------+---------+---------+---------+---------+
@@ -92,7 +91,7 @@ class Frame {
         // version first byte is the "direction" of the frame (request or response)
         ProtocolVersion version = ProtocolVersion.fromInt(versionBytes & 0x7F);
         int hdrLen = Header.lengthFor(version);
-        assert fullFrame.readableBytes() >= (hdrLen-1) : String.format("Frame too short (%d bytes)", fullFrame.readableBytes());
+        assert fullFrame.readableBytes() >= (hdrLen - 1) : String.format("Frame too short (%d bytes)", fullFrame.readableBytes());
 
         int flags = fullFrame.readByte();
         int streamId = readStreamid(fullFrame, version);
@@ -142,6 +141,7 @@ class Frame {
 
         /**
          * Return the expected frame header length in bytes according to the protocol version in use.
+         *
          * @param version the protocol version in use
          * @return the expected frame header length in bytes
          */
@@ -158,8 +158,7 @@ class Frame {
             }
         }
 
-        public static enum Flag
-        {
+        public static enum Flag {
             // The order of that enum matters!!
             COMPRESSED,
             TRACING,

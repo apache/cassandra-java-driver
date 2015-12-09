@@ -19,21 +19,22 @@ import com.datastax.driver.core.exceptions.DriverInternalError;
 
 public enum ConsistencyLevel {
 
-    ANY          (0),
-    ONE          (1),
-    TWO          (2),
-    THREE        (3),
-    QUORUM       (4),
-    ALL          (5),
-    LOCAL_QUORUM (6),
-    EACH_QUORUM  (7),
-    SERIAL       (8),
-    LOCAL_SERIAL (9),
-    LOCAL_ONE   (10);
+    ANY(0),
+    ONE(1),
+    TWO(2),
+    THREE(3),
+    QUORUM(4),
+    ALL(5),
+    LOCAL_QUORUM(6),
+    EACH_QUORUM(7),
+    SERIAL(8),
+    LOCAL_SERIAL(9),
+    LOCAL_ONE(10);
 
     // Used by the native protocol
     final int code;
     private static final ConsistencyLevel[] codeIdx;
+
     static {
         int maxCode = -1;
         for (ConsistencyLevel cl : ConsistencyLevel.values())

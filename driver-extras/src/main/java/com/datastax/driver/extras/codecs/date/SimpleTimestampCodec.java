@@ -15,22 +15,21 @@
  */
 package com.datastax.driver.extras.codecs.date;
 
-import java.nio.ByteBuffer;
-import java.text.ParseException;
-
-import static java.lang.Long.parseLong;
-
 import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.ProtocolVersion;
 import com.datastax.driver.core.TypeCodec;
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 
+import java.nio.ByteBuffer;
+import java.text.ParseException;
+
 import static com.datastax.driver.core.ParseUtils.*;
+import static java.lang.Long.parseLong;
 
 /**
  * A {@link TypeCodec} that maps CQL timestamps to Java primitive longs,
  * representing the number of milliseconds since the Epoch.
- * <p>
+ * <p/>
  * This codec can serve as a replacement for the driver's built-in
  * {@link TypeCodec#timestamp() timestamp} codec,
  * when application code prefers to deal with raw milliseconds than with

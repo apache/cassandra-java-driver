@@ -25,13 +25,13 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 /**
  * A date with no time components, no time zone, in the ISO 8601 calendar.
- *
+ * <p/>
  * Note that ISO 8601 has a number of differences with the default gregorian calendar used in Java:
  * <ul>
- *     <li>it uses a proleptic gregorian calendar, meaning that it's gregorian indefinitely back in the past (there is no gregorian change);</li>
- *     <li>there is a year 0.</li>
+ * <li>it uses a proleptic gregorian calendar, meaning that it's gregorian indefinitely back in the past (there is no gregorian change);</li>
+ * <li>there is a year 0.</li>
  * </ul>
- *
+ * <p/>
  * This class implements these differences, so that year/month/day fields match exactly the ones in
  * CQL string literals.
  *
@@ -56,7 +56,6 @@ public final class LocalDate {
      * Builds a new instance from a number of days since January 1st, 1970 GMT.
      *
      * @param daysSinceEpoch the number of days.
-     *
      * @return the new instance.
      */
     public static LocalDate fromDaysSinceEpoch(int daysSinceEpoch) {
@@ -69,33 +68,29 @@ public final class LocalDate {
      * it will be rounded towards 0.
      *
      * @param millisSinceEpoch the number of milliseconds since January 1st, 1970 GMT.
-     *
      * @return the new instance.
-     *
      * @throws IllegalArgumentException if the date is not in the range [-5877641-06-23; 5881580-07-11].
      */
     public static LocalDate fromMillisSinceEpoch(long millisSinceEpoch) throws IllegalArgumentException {
         long daysSinceEpoch = TimeUnit.MILLISECONDS.toDays(millisSinceEpoch);
         checkArgument(daysSinceEpoch >= Integer.MIN_VALUE && daysSinceEpoch <= Integer.MAX_VALUE,
-            "Date should be in the range [-5877641-06-23; 5881580-07-11]");
+                "Date should be in the range [-5877641-06-23; 5881580-07-11]");
 
-        return new LocalDate((int)daysSinceEpoch);
+        return new LocalDate((int) daysSinceEpoch);
     }
 
     /**
      * Builds a new instance from a year/month/day specification.
-     *
+     * <p/>
      * This method is not lenient, i.e. '2014-12-32' will not be treated as '2015-01-01', but
      * instead throw an {@code IllegalArgumentException}.
      *
-     * @param year the year in ISO format (see {@link LocalDate this class's Javadoc}).
-     * @param month the month. It is 1-based (e.g. 1 for January).
+     * @param year       the year in ISO format (see {@link LocalDate this class's Javadoc}).
+     * @param month      the month. It is 1-based (e.g. 1 for January).
      * @param dayOfMonth the day of the month.
-     *
      * @return the new instance.
-     *
      * @throws IllegalArgumentException if the corresponding date does not exist in the ISO8601
-     * calendar.
+     *                                  calendar.
      */
     public static LocalDate fromYearMonthDay(int year, int month, int dayOfMonth) {
         int calendarYear = (year <= 0) ? -year + 1 : year;
@@ -166,18 +161,17 @@ public final class LocalDate {
      * Return a new {@link LocalDate} with the specified (signed) amount
      * of time added to (or subtracted from) the given {@link Calendar} field,
      * based on the calendar's rules.
-     * <p>
+     * <p/>
      * Note that adding any amount to a field smaller than
      * {@link Calendar#DAY_OF_MONTH} will remain without effect,
      * as this class does not keep time components.
-     * <p>
+     * <p/>
      * See {@link Calendar} javadocs for more information.
      *
-     * @param field a {@link Calendar} field to modify.
+     * @param field  a {@link Calendar} field to modify.
      * @param amount the amount of date or time to be added to the field.
      * @return a new {@link LocalDate} with the specified (signed) amount
      * of time added to (or subtracted from) the given {@link Calendar} field.
-     *
      * @throws IllegalArgumentException if the new date is not in the range [-5877641-06-23; 5881580-07-11].
      */
     public LocalDate add(int field, int amount) {
@@ -195,7 +189,7 @@ public final class LocalDate {
             return true;
 
         if (o instanceof LocalDate) {
-            LocalDate that = (LocalDate)o;
+            LocalDate that = (LocalDate) o;
             return this.daysSinceEpoch == that.daysSinceEpoch;
         }
         return false;
@@ -209,8 +203,8 @@ public final class LocalDate {
     @Override
     public String toString() {
         return String.format("%d-%s-%s", getYear(),
-            pad2(getMonth()),
-            pad2(getDay()));
+                pad2(getMonth()),
+                pad2(getDay()));
     }
 
     private static String pad2(int i) {

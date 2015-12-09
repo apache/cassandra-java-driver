@@ -15,12 +15,12 @@
  */
 package com.datastax.driver.core.exceptions;
 
+import com.beust.jcommander.internal.Maps;
+import org.testng.annotations.Test;
+
 import java.io.PrintWriter;
 import java.net.InetSocketAddress;
 import java.util.Map;
-
-import com.beust.jcommander.internal.Maps;
-import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -30,9 +30,9 @@ public class NoHostAvailableExceptionTest {
         NoHostAvailableException e = new NoHostAvailableException(buildMockErrors(3));
         String message = e.getMessage();
         assertThat(message).startsWith("All host(s) tried for query failed");
-        assertThat(message).contains( "/127.0.0.1:9042 (com.datastax.driver.core.exceptions.NoHostAvailableExceptionTest$MockError: mock error 1)");
-        assertThat(message).contains( "/127.0.0.2:9042 (com.datastax.driver.core.exceptions.NoHostAvailableExceptionTest$MockError: mock error 2)");
-        assertThat(message).contains( "/127.0.0.3:9042 (com.datastax.driver.core.exceptions.NoHostAvailableExceptionTest$MockError: mock error 3)");
+        assertThat(message).contains("/127.0.0.1:9042 (com.datastax.driver.core.exceptions.NoHostAvailableExceptionTest$MockError: mock error 1)");
+        assertThat(message).contains("/127.0.0.2:9042 (com.datastax.driver.core.exceptions.NoHostAvailableExceptionTest$MockError: mock error 2)");
+        assertThat(message).contains("/127.0.0.3:9042 (com.datastax.driver.core.exceptions.NoHostAvailableExceptionTest$MockError: mock error 3)");
     }
 
     @Test(groups = "unit")
@@ -40,9 +40,9 @@ public class NoHostAvailableExceptionTest {
         NoHostAvailableException e = new NoHostAvailableException(buildMockErrors(4));
         String message = e.getMessage();
         assertThat(message).startsWith("All host(s) tried for query failed");
-        assertThat(message).contains( "/127.0.0.1:9042 (com.datastax.driver.core.exceptions.NoHostAvailableExceptionTest$MockError: mock error 1)");
-        assertThat(message).contains( "/127.0.0.2:9042 (com.datastax.driver.core.exceptions.NoHostAvailableExceptionTest$MockError: mock error 2)");
-        assertThat(message).contains( "/127.0.0.3:9042 (com.datastax.driver.core.exceptions.NoHostAvailableExceptionTest$MockError: mock error 3)");
+        assertThat(message).contains("/127.0.0.1:9042 (com.datastax.driver.core.exceptions.NoHostAvailableExceptionTest$MockError: mock error 1)");
+        assertThat(message).contains("/127.0.0.2:9042 (com.datastax.driver.core.exceptions.NoHostAvailableExceptionTest$MockError: mock error 2)");
+        assertThat(message).contains("/127.0.0.3:9042 (com.datastax.driver.core.exceptions.NoHostAvailableExceptionTest$MockError: mock error 3)");
         assertThat(message).contains("only showing errors of first 3 hosts, use getErrors() for more details");
     }
 
@@ -51,9 +51,9 @@ public class NoHostAvailableExceptionTest {
         NoHostAvailableException e = new NoHostAvailableException(buildMockErrors(3));
         String message = e.getCustomMessage(3, true, false);
         assertThat(message).startsWith("All host(s) tried for query failed (tried:\n");
-        assertThat(message).contains( "/127.0.0.1:9042 (com.datastax.driver.core.exceptions.NoHostAvailableExceptionTest$MockError: mock error 1)\n");
-        assertThat(message).contains( "/127.0.0.2:9042 (com.datastax.driver.core.exceptions.NoHostAvailableExceptionTest$MockError: mock error 2)\n");
-        assertThat(message).contains( "/127.0.0.3:9042 (com.datastax.driver.core.exceptions.NoHostAvailableExceptionTest$MockError: mock error 3)\n");
+        assertThat(message).contains("/127.0.0.1:9042 (com.datastax.driver.core.exceptions.NoHostAvailableExceptionTest$MockError: mock error 1)\n");
+        assertThat(message).contains("/127.0.0.2:9042 (com.datastax.driver.core.exceptions.NoHostAvailableExceptionTest$MockError: mock error 2)\n");
+        assertThat(message).contains("/127.0.0.3:9042 (com.datastax.driver.core.exceptions.NoHostAvailableExceptionTest$MockError: mock error 3)\n");
     }
 
     @Test(groups = "unit")
@@ -82,7 +82,8 @@ public class NoHostAvailableExceptionTest {
             this.i = i;
         }
 
-        @Override public void printStackTrace(PrintWriter writer) {
+        @Override
+        public void printStackTrace(PrintWriter writer) {
             writer.printf("mock stack trace %d", i);
         }
     }

@@ -15,28 +15,23 @@
  */
 package com.datastax.driver.core;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.nio.ByteBuffer;
-import java.util.Collection;
-
+import com.datastax.driver.core.exceptions.InvalidTypeException;
+import com.datastax.driver.core.querybuilder.BuiltStatement;
+import com.datastax.driver.core.utils.CassandraVersion;
 import com.google.common.base.Objects;
 import com.google.common.reflect.TypeParameter;
 import com.google.common.reflect.TypeToken;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.nio.ByteBuffer;
+import java.util.Collection;
+
+import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 import static com.google.common.collect.Lists.newArrayList;
 import static org.assertj.core.api.Assertions.assertThat;
-
-import com.datastax.driver.core.exceptions.InvalidTypeException;
-import com.datastax.driver.core.querybuilder.BuiltStatement;
-import com.datastax.driver.core.utils.CassandraVersion;
-
-import static com.datastax.driver.core.querybuilder.QueryBuilder.bindMarker;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.insertInto;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
 
 public class TypeCodecEncapsulationIntegrationTest extends CCMBridge.PerClassSingleNodeCluster {
 
@@ -57,58 +52,58 @@ public class TypeCodecEncapsulationIntegrationTest extends CCMBridge.PerClassSin
     @Override
     protected Collection<String> getTableDefinitions() {
         return newArrayList(
-            "CREATE TABLE \"myTable\" ("
-                + "c_int int, "
-                + "c_bigint bigint, "
-                + "c_float float, "
-                + "c_double double, "
-                + "c_varint varint, "
-                + "c_decimal decimal, "
-                + "PRIMARY KEY (c_int, c_bigint)"
-                + ")"
+                "CREATE TABLE \"myTable\" ("
+                        + "c_int int, "
+                        + "c_bigint bigint, "
+                        + "c_float float, "
+                        + "c_double double, "
+                        + "c_varint varint, "
+                        + "c_decimal decimal, "
+                        + "PRIMARY KEY (c_int, c_bigint)"
+                        + ")"
         );
     }
 
     @Override
     protected Cluster.Builder configure(Cluster.Builder builder) {
         return builder.withCodecRegistry(
-            new CodecRegistry()
-                .register(
-                    new NumberBoxCodec<Integer>(TypeCodec.cint()),
-                    new NumberBoxCodec<Long>(TypeCodec.bigint()),
-                    new NumberBoxCodec<Float>(TypeCodec.cfloat()),
-                    new NumberBoxCodec<Double>(TypeCodec.cdouble()),
-                    new NumberBoxCodec<BigInteger>(TypeCodec.varint()),
-                    new NumberBoxCodec<BigDecimal>(TypeCodec.decimal())
-                )
+                new CodecRegistry()
+                        .register(
+                                new NumberBoxCodec<Integer>(TypeCodec.cint()),
+                                new NumberBoxCodec<Long>(TypeCodec.bigint()),
+                                new NumberBoxCodec<Float>(TypeCodec.cfloat()),
+                                new NumberBoxCodec<Double>(TypeCodec.cdouble()),
+                                new NumberBoxCodec<BigInteger>(TypeCodec.varint()),
+                                new NumberBoxCodec<BigDecimal>(TypeCodec.decimal())
+                        )
         );
     }
 
     @BeforeMethod(groups = "short")
     public void createBuiltStatements() throws Exception {
         insertStmt = insertInto("\"myTable\"")
-            .value("c_int", bindMarker())
-            .value("c_bigint", bindMarker())
-            .value("c_float", bindMarker())
-            .value("c_double", bindMarker())
-            .value("c_varint", bindMarker())
-            .value("c_decimal", bindMarker());
+                .value("c_int", bindMarker())
+                .value("c_bigint", bindMarker())
+                .value("c_float", bindMarker())
+                .value("c_double", bindMarker())
+                .value("c_varint", bindMarker())
+                .value("c_decimal", bindMarker());
         selectStmt = select("c_int", "c_bigint", "c_float", "c_double", "c_varint", "c_decimal")
-            .from("\"myTable\"")
-            .where(eq("c_int", bindMarker()))
-            .and(eq("c_bigint", bindMarker()));
+                .from("\"myTable\"")
+                .where(eq("c_int", bindMarker()))
+                .and(eq("c_bigint", bindMarker()));
     }
 
     @Test(groups = "short")
-    @CassandraVersion(major=2.0)
+    @CassandraVersion(major = 2.0)
     public void should_use_custom_codecs_with_simple_statements() {
         session.execute(insertQuery,
-            n_int,
-            new NumberBox<Long>(n_bigint),
-            new NumberBox<Float>(n_float),
-            new NumberBox<Double>(n_double),
-            new NumberBox<BigInteger>(n_varint),
-            new NumberBox<BigDecimal>(n_decimal));
+                n_int,
+                new NumberBox<Long>(n_bigint),
+                new NumberBox<Float>(n_float),
+                new NumberBox<Double>(n_double),
+                new NumberBox<BigInteger>(n_varint),
+                new NumberBox<BigDecimal>(n_decimal));
         ResultSet rows = session.execute(selectQuery, n_int, new NumberBox<Long>(n_bigint));
         Row row = rows.one();
         assertRow(row);
@@ -117,12 +112,12 @@ public class TypeCodecEncapsulationIntegrationTest extends CCMBridge.PerClassSin
     @Test(groups = "short")
     public void should_use_custom_codecs_with_prepared_statements_1() {
         session.execute(session.prepare(insertQuery).bind(
-            n_int,
-            new NumberBox<Long>(n_bigint),
-            new NumberBox<Float>(n_float),
-            new NumberBox<Double>(n_double),
-            new NumberBox<BigInteger>(n_varint),
-            new NumberBox<BigDecimal>(n_decimal)));
+                n_int,
+                new NumberBox<Long>(n_bigint),
+                new NumberBox<Float>(n_float),
+                new NumberBox<Double>(n_double),
+                new NumberBox<BigInteger>(n_varint),
+                new NumberBox<BigDecimal>(n_decimal)));
         PreparedStatement ps = session.prepare(selectQuery);
         ResultSet rows = session.execute(ps.bind(n_int, new NumberBox<Long>(n_bigint)));
         Row row = rows.one();
@@ -132,17 +127,25 @@ public class TypeCodecEncapsulationIntegrationTest extends CCMBridge.PerClassSin
     @Test(groups = "short")
     public void should_use_custom_codecs_with_prepared_statements_2() {
         session.execute(session.prepare(insertQuery).bind()
-            .set(0, new NumberBox<Integer>(n_int), new TypeToken<NumberBox<Integer>>() {})
-            .set(1, new NumberBox<Long>(n_bigint), new TypeToken<NumberBox<Long>>() {})
-            .set(2, new NumberBox<Float>(n_float), new TypeToken<NumberBox<Float>>() {})
-            .set(3, new NumberBox<Double>(n_double), new TypeToken<NumberBox<Double>>() {})
-            .set(4, new NumberBox<BigInteger>(n_varint), new TypeToken<NumberBox<BigInteger>>() {})
-            .set(5, new NumberBox<BigDecimal>(n_decimal), new TypeToken<NumberBox<BigDecimal>>() {})
+                        .set(0, new NumberBox<Integer>(n_int), new TypeToken<NumberBox<Integer>>() {
+                        })
+                        .set(1, new NumberBox<Long>(n_bigint), new TypeToken<NumberBox<Long>>() {
+                        })
+                        .set(2, new NumberBox<Float>(n_float), new TypeToken<NumberBox<Float>>() {
+                        })
+                        .set(3, new NumberBox<Double>(n_double), new TypeToken<NumberBox<Double>>() {
+                        })
+                        .set(4, new NumberBox<BigInteger>(n_varint), new TypeToken<NumberBox<BigInteger>>() {
+                        })
+                        .set(5, new NumberBox<BigDecimal>(n_decimal), new TypeToken<NumberBox<BigDecimal>>() {
+                        })
         );
         PreparedStatement ps = session.prepare(selectQuery);
         ResultSet rows = session.execute(ps.bind()
-            .set(0, new NumberBox<Integer>(n_int), new TypeToken<NumberBox<Integer>>() {})
-            .set(1, new NumberBox<Long>(n_bigint), new TypeToken<NumberBox<Long>>() {})
+                        .set(0, new NumberBox<Integer>(n_int), new TypeToken<NumberBox<Integer>>() {
+                        })
+                        .set(1, new NumberBox<Long>(n_bigint), new TypeToken<NumberBox<Long>>() {
+                        })
         );
         Row row = rows.one();
         assertRow(row);
@@ -151,12 +154,12 @@ public class TypeCodecEncapsulationIntegrationTest extends CCMBridge.PerClassSin
     @Test(groups = "short")
     public void should_use_custom_codecs_with_built_statements_1() {
         session.execute(session.prepare(insertStmt).bind(
-            n_int,
-            new NumberBox<Long>(n_bigint),
-            new NumberBox<Float>(n_float),
-            new NumberBox<Double>(n_double),
-            new NumberBox<BigInteger>(n_varint),
-            new NumberBox<BigDecimal>(n_decimal)));
+                n_int,
+                new NumberBox<Long>(n_bigint),
+                new NumberBox<Float>(n_float),
+                new NumberBox<Double>(n_double),
+                new NumberBox<BigInteger>(n_varint),
+                new NumberBox<BigDecimal>(n_decimal)));
         PreparedStatement ps = session.prepare(selectStmt);
         ResultSet rows = session.execute(ps.bind(n_int, new NumberBox<Long>(n_bigint)));
         Row row = rows.one();
@@ -166,17 +169,25 @@ public class TypeCodecEncapsulationIntegrationTest extends CCMBridge.PerClassSin
     @Test(groups = "short")
     public void should_use_custom_codecs_with_built_statements_2() {
         session.execute(session.prepare(insertStmt).bind()
-            .set(0, new NumberBox<Integer>(n_int), new TypeToken<NumberBox<Integer>>() {})
-            .set(1, new NumberBox<Long>(n_bigint), new TypeToken<NumberBox<Long>>() {})
-            .set(2, new NumberBox<Float>(n_float), new TypeToken<NumberBox<Float>>() {})
-            .set(3, new NumberBox<Double>(n_double), new TypeToken<NumberBox<Double>>() {})
-            .set(4, new NumberBox<BigInteger>(n_varint), new TypeToken<NumberBox<BigInteger>>() {})
-            .set(5, new NumberBox<BigDecimal>(n_decimal), new TypeToken<NumberBox<BigDecimal>>() {})
+                        .set(0, new NumberBox<Integer>(n_int), new TypeToken<NumberBox<Integer>>() {
+                        })
+                        .set(1, new NumberBox<Long>(n_bigint), new TypeToken<NumberBox<Long>>() {
+                        })
+                        .set(2, new NumberBox<Float>(n_float), new TypeToken<NumberBox<Float>>() {
+                        })
+                        .set(3, new NumberBox<Double>(n_double), new TypeToken<NumberBox<Double>>() {
+                        })
+                        .set(4, new NumberBox<BigInteger>(n_varint), new TypeToken<NumberBox<BigInteger>>() {
+                        })
+                        .set(5, new NumberBox<BigDecimal>(n_decimal), new TypeToken<NumberBox<BigDecimal>>() {
+                        })
         );
         PreparedStatement ps = session.prepare(selectStmt);
         ResultSet rows = session.execute(ps.bind()
-            .set(0, new NumberBox<Integer>(n_int), new TypeToken<NumberBox<Integer>>() {})
-            .set(1, new NumberBox<Long>(n_bigint), new TypeToken<NumberBox<Long>>() {})
+                        .set(0, new NumberBox<Integer>(n_int), new TypeToken<NumberBox<Integer>>() {
+                        })
+                        .set(1, new NumberBox<Long>(n_bigint), new TypeToken<NumberBox<Long>>() {
+                        })
         );
         Row row = rows.one();
         assertRow(row);
@@ -208,12 +219,18 @@ public class TypeCodecEncapsulationIntegrationTest extends CCMBridge.PerClassSin
         assertThat(row.get(5, BigDecimal.class)).isEqualTo(n_decimal);
         // with get + type, but enforcing NumberBox types
         // we get the NumberBox codecs instead
-        assertThat(row.get(0, new TypeToken<NumberBox<Integer>>() {})).isEqualTo(new NumberBox<Integer>(n_int));
-        assertThat(row.get(1, new TypeToken<NumberBox<Long>>() {})).isEqualTo(new NumberBox<Long>(n_bigint));
-        assertThat(row.get(2, new TypeToken<NumberBox<Float>>() {})).isEqualTo(new NumberBox<Float>(n_float));
-        assertThat(row.get(3, new TypeToken<NumberBox<Double>>() {})).isEqualTo(new NumberBox<Double>(n_double));
-        assertThat(row.get(4, new TypeToken<NumberBox<BigInteger>>() {})).isEqualTo(new NumberBox<BigInteger>(n_varint));
-        assertThat(row.get(5, new TypeToken<NumberBox<BigDecimal>>() {})).isEqualTo(new NumberBox<BigDecimal>(n_decimal));
+        assertThat(row.get(0, new TypeToken<NumberBox<Integer>>() {
+        })).isEqualTo(new NumberBox<Integer>(n_int));
+        assertThat(row.get(1, new TypeToken<NumberBox<Long>>() {
+        })).isEqualTo(new NumberBox<Long>(n_bigint));
+        assertThat(row.get(2, new TypeToken<NumberBox<Float>>() {
+        })).isEqualTo(new NumberBox<Float>(n_float));
+        assertThat(row.get(3, new TypeToken<NumberBox<Double>>() {
+        })).isEqualTo(new NumberBox<Double>(n_double));
+        assertThat(row.get(4, new TypeToken<NumberBox<BigInteger>>() {
+        })).isEqualTo(new NumberBox<BigInteger>(n_varint));
+        assertThat(row.get(5, new TypeToken<NumberBox<BigDecimal>>() {
+        })).isEqualTo(new NumberBox<BigDecimal>(n_decimal));
     }
 
     private class NumberBoxCodec<T extends Number> extends TypeCodec<NumberBox<T>> {
@@ -221,12 +238,14 @@ public class TypeCodecEncapsulationIntegrationTest extends CCMBridge.PerClassSin
         private final TypeCodec<T> numberCodec;
 
         protected NumberBoxCodec(TypeCodec<T> numberCodec) {
-            super(numberCodec.getCqlType(), new TypeToken<NumberBox<T>>(){}.where(new TypeParameter<T>(){}, numberCodec.getJavaType()));
+            super(numberCodec.getCqlType(), new TypeToken<NumberBox<T>>() {
+            }.where(new TypeParameter<T>() {
+            }, numberCodec.getJavaType()));
             this.numberCodec = numberCodec;
         }
 
         public boolean accepts(Object value) {
-            return value instanceof NumberBox && numberCodec.accepts(((NumberBox)value).getNumber());
+            return value instanceof NumberBox && numberCodec.accepts(((NumberBox) value).getNumber());
         }
 
         @Override
@@ -269,7 +288,7 @@ public class TypeCodecEncapsulationIntegrationTest extends CCMBridge.PerClassSin
                 return true;
             if (o == null || getClass() != o.getClass())
                 return false;
-            NumberBox numberBox = (NumberBox)o;
+            NumberBox numberBox = (NumberBox) o;
             return Objects.equal(number, numberBox.number);
         }
 

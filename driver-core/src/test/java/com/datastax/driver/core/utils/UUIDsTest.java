@@ -15,17 +15,19 @@
  */
 package com.datastax.driver.core.utils;
 
-import java.nio.ByteBuffer;
-import java.util.*;
-import java.util.concurrent.ConcurrentSkipListSet;
-
+import com.datastax.driver.core.ProtocolVersion;
+import com.datastax.driver.core.TypeCodec;
 import org.testng.annotations.Test;
+
+import java.nio.ByteBuffer;
+import java.util.HashSet;
+import java.util.Random;
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
-
-import com.datastax.driver.core.ProtocolVersion;
-import com.datastax.driver.core.TypeCodec;
 
 public class UUIDsTest {
 
@@ -102,7 +104,7 @@ public class UUIDsTest {
         int nbPerTstamp = 10;
 
         for (int i = 0; i < nbTstamp; i++) {
-            long tstamp = (long)random.nextInt();
+            long tstamp = (long) random.nextInt();
             for (int j = 0; j < nbPerTstamp; j++) {
                 assertWithin(new UUID(UUIDs.makeMSB(UUIDs.fromUnixTimestamp(tstamp)), random.nextLong()), UUIDs.startOf(tstamp), UUIDs.endOf(tstamp));
             }

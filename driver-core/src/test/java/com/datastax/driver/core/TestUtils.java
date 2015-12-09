@@ -15,6 +15,17 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.policies.RoundRobinPolicy;
+import com.datastax.driver.core.policies.WhiteListPolicy;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.Uninterruptibles;
+import io.netty.channel.EventLoopGroup;
+import org.scassandra.Scassandra;
+import org.scassandra.ScassandraFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.testng.SkipException;
+
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -25,18 +36,6 @@ import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.Uninterruptibles;
-import io.netty.channel.EventLoopGroup;
-import org.scassandra.Scassandra;
-import org.scassandra.ScassandraFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.testng.SkipException;
-
-import com.datastax.driver.core.policies.RoundRobinPolicy;
-import com.datastax.driver.core.policies.WhiteListPolicy;
 
 /**
  * A number of static fields/methods handy for tests.
@@ -58,31 +57,31 @@ public abstract class TestUtils {
     public static void setValue(SettableByIndexData<?> data, int i, DataType type, Object value) {
         switch (type.getName()) {
             case ASCII:
-                data.setString(i, (String)value);
+                data.setString(i, (String) value);
                 break;
             case BIGINT:
-                data.setLong(i, (Long)value);
+                data.setLong(i, (Long) value);
                 break;
             case BLOB:
-                data.setBytes(i, (ByteBuffer)value);
+                data.setBytes(i, (ByteBuffer) value);
                 break;
             case BOOLEAN:
-                data.setBool(i, (Boolean)value);
+                data.setBool(i, (Boolean) value);
                 break;
             case COUNTER:
                 // Just a no-op, we shouldn't handle counters the same way than other types
                 break;
             case DECIMAL:
-                data.setDecimal(i, (BigDecimal)value);
+                data.setDecimal(i, (BigDecimal) value);
                 break;
             case DOUBLE:
-                data.setDouble(i, (Double)value);
+                data.setDouble(i, (Double) value);
                 break;
             case FLOAT:
-                data.setFloat(i, (Float)value);
+                data.setFloat(i, (Float) value);
                 break;
             case INET:
-                data.setInet(i, (InetAddress)value);
+                data.setInet(i, (InetAddress) value);
                 break;
             case TINYINT:
                 data.setByte(i, (Byte) value);
@@ -100,66 +99,66 @@ public abstract class TestUtils {
                 data.setTimestamp(i, (Date) value);
                 break;
             case DATE:
-                data.setDate(i, (LocalDate)value);
+                data.setDate(i, (LocalDate) value);
                 break;
             case TIME:
                 data.setTime(i, (Long) value);
                 break;
             case UUID:
-                data.setUUID(i, (UUID)value);
+                data.setUUID(i, (UUID) value);
                 break;
             case VARCHAR:
-                data.setString(i, (String)value);
+                data.setString(i, (String) value);
                 break;
             case VARINT:
-                data.setVarint(i, (BigInteger)value);
+                data.setVarint(i, (BigInteger) value);
                 break;
             case TIMEUUID:
-                data.setUUID(i, (UUID)value);
+                data.setUUID(i, (UUID) value);
                 break;
             case LIST:
-                data.setList(i, (List)value);
+                data.setList(i, (List) value);
                 break;
             case SET:
-                data.setSet(i, (Set)value);
+                data.setSet(i, (Set) value);
                 break;
             case MAP:
-                data.setMap(i, (Map)value);
+                data.setMap(i, (Map) value);
                 break;
             default:
                 throw new RuntimeException("Missing handling of " + type);
         }
     }
 
-    @SuppressWarnings({ "unchecked", "rawtypes" })
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public static void setValue(SettableByNameData<?> data, String name, DataType type, Object value) {
         switch (type.getName()) {
             case ASCII:
-                data.setString(name, (String)value);
+                data.setString(name, (String) value);
                 break;
             case BIGINT:
-                data.setLong(name, (Long)value);
+                data.setLong(name, (Long) value);
                 break;
             case BLOB:
-                data.setBytes(name, (ByteBuffer)value);
+                data.setBytes(name, (ByteBuffer) value);
                 break;
             case BOOLEAN:
-                data.setBool(name, (Boolean)value);
+                data.setBool(name, (Boolean) value);
                 break;
             case COUNTER:
                 // Just a no-op, we shouldn't handle counters the same way than other types
                 break;
             case DECIMAL:
-                data.setDecimal(name, (BigDecimal)value);
+                data.setDecimal(name, (BigDecimal) value);
                 break;
             case DOUBLE:
-                data.setDouble(name, (Double)value);
+                data.setDouble(name, (Double) value);
                 break;
             case FLOAT:
-                data.setFloat(name, (Float)value);
+                data.setFloat(name, (Float) value);
                 break;
             case INET:
-                data.setInet(name, (InetAddress)value);
+                data.setInet(name, (InetAddress) value);
                 break;
             case TINYINT:
                 data.setByte(name, (Byte) value);
@@ -177,31 +176,31 @@ public abstract class TestUtils {
                 data.setTimestamp(name, (Date) value);
                 break;
             case DATE:
-                data.setDate(name, (LocalDate)value);
+                data.setDate(name, (LocalDate) value);
                 break;
             case TIME:
                 data.setTime(name, (Long) value);
                 break;
             case UUID:
-                data.setUUID(name, (UUID)value);
+                data.setUUID(name, (UUID) value);
                 break;
             case VARCHAR:
-                data.setString(name, (String)value);
+                data.setString(name, (String) value);
                 break;
             case VARINT:
-                data.setVarint(name, (BigInteger)value);
+                data.setVarint(name, (BigInteger) value);
                 break;
             case TIMEUUID:
-                data.setUUID(name, (UUID)value);
+                data.setUUID(name, (UUID) value);
                 break;
             case LIST:
-                data.setList(name, (List)value);
+                data.setList(name, (List) value);
                 break;
             case SET:
-                data.setSet(name, (Set)value);
+                data.setSet(name, (Set) value);
                 break;
             case MAP:
-                data.setMap(name, (Map)value);
+                data.setMap(name, (Map) value);
                 break;
             default:
                 throw new RuntimeException("Missing handling of " + type);
@@ -330,7 +329,7 @@ public abstract class TestUtils {
                 case BIGINT:
                     return 42L;
                 case BLOB:
-                    return ByteBuffer.wrap(new byte[]{ (byte)4, (byte)12, (byte)1 });
+                    return ByteBuffer.wrap(new byte[]{(byte) 4, (byte) 12, (byte) 1});
                 case BOOLEAN:
                     return true;
                 case COUNTER:
@@ -342,11 +341,11 @@ public abstract class TestUtils {
                 case FLOAT:
                     return 3.142519f;
                 case INET:
-                    return InetAddress.getByAddress(new byte[]{ (byte)127, (byte)0, (byte)0, (byte)1 });
+                    return InetAddress.getByAddress(new byte[]{(byte) 127, (byte) 0, (byte) 0, (byte) 1});
                 case TINYINT:
-                    return (byte)25;
+                    return (byte) 25;
                 case SMALLINT:
-                    return (short)26;
+                    return (short) 26;
                 case INT:
                     return 24;
                 case TEXT:
@@ -366,11 +365,17 @@ public abstract class TestUtils {
                 case TIMEUUID:
                     return UUID.fromString("FE2B4360-28C6-11E2-81C1-0800200C9A66");
                 case LIST:
-                    return new ArrayList<Object>(){{ add(getFixedValue(type.getTypeArguments().get(0))); }};
+                    return new ArrayList<Object>() {{
+                        add(getFixedValue(type.getTypeArguments().get(0)));
+                    }};
                 case SET:
-                    return new HashSet<Object>(){{ add(getFixedValue(type.getTypeArguments().get(0))); }};
+                    return new HashSet<Object>() {{
+                        add(getFixedValue(type.getTypeArguments().get(0)));
+                    }};
                 case MAP:
-                    return new HashMap<Object, Object>(){{ put(getFixedValue(type.getTypeArguments().get(0)), getFixedValue(type.getTypeArguments().get(1))); }};
+                    return new HashMap<Object, Object>() {{
+                        put(getFixedValue(type.getTypeArguments().get(0)), getFixedValue(type.getTypeArguments().get(1)));
+                    }};
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -428,11 +433,17 @@ public abstract class TestUtils {
                 case TIMEUUID:
                     return UUID.fromString("FE2B4360-28C6-11E2-81C1-0800200C9A66");
                 case LIST:
-                    return new ArrayList<Object>(){{ add(getFixedValue2(type.getTypeArguments().get(0))); }};
+                    return new ArrayList<Object>() {{
+                        add(getFixedValue2(type.getTypeArguments().get(0)));
+                    }};
                 case SET:
-                    return new HashSet<Object>(){{ add(getFixedValue2(type.getTypeArguments().get(0))); }};
+                    return new HashSet<Object>() {{
+                        add(getFixedValue2(type.getTypeArguments().get(0)));
+                    }};
                 case MAP:
-                    return new HashMap<Object, Object>(){{ put(getFixedValue2(type.getTypeArguments().get(0)), getFixedValue2(type.getTypeArguments().get(1))); }};
+                    return new HashMap<Object, Object>() {{
+                        put(getFixedValue2(type.getTypeArguments().get(0)), getFixedValue2(type.getTypeArguments().get(1)));
+                    }};
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -489,8 +500,8 @@ public abstract class TestUtils {
                 logger.info("Waiting for stopped node: " + node);
             else if (waitForOut)
                 logger.info("Waiting for decommissioned node: " + node);
-        else
-            logger.info("Waiting for upcoming node: " + node);
+            else
+                logger.info("Waiting for upcoming node: " + node);
 
         // In the case where the we've killed the last node in the cluster, if we haven't
         // tried doing an actual query, the driver won't realize that last node is dead until
@@ -502,7 +513,7 @@ public abstract class TestUtils {
 
         InetAddress address;
         try {
-             address = InetAddress.getByName(node);
+            address = InetAddress.getByName(node);
         } catch (Exception e) {
             // That's a problem but that's not *our* problem
             return;
@@ -512,11 +523,17 @@ public abstract class TestUtils {
         for (int i = 0; i < maxTry; ++i) {
             for (Host host : metadata.getAllHosts()) {
                 if (host.getAddress().equals(address) && testHost(host, waitForDead)) {
-                    try { Thread.sleep(10000); } catch (Exception e) {}
+                    try {
+                        Thread.sleep(10000);
+                    } catch (Exception e) {
+                    }
                     return;
                 }
             }
-            try { Thread.sleep(1000); } catch (Exception e) {}
+            try {
+                Thread.sleep(1000);
+            } catch (Exception e) {
+            }
         }
 
         for (Host host : metadata.getAllHosts()) {
@@ -531,7 +548,7 @@ public abstract class TestUtils {
             }
         }
 
-        if (waitForOut){
+        if (waitForOut) {
             return;
         } else {
             logger.info(node + " is not part of the cluster after " + maxTry + 's');
@@ -560,12 +577,12 @@ public abstract class TestUtils {
 
     public static Host findOrWaitForHost(final Cluster cluster, final String address, long duration, TimeUnit unit) {
         Host host = findHost(cluster, address);
-        if(host == null) {
+        if (host == null) {
             final CountDownLatch addSignal = new CountDownLatch(1);
             Host.StateListener addListener = new StateListenerBase() {
                 @Override
                 public void onAdd(Host host) {
-                    if(host.getAddress().getHostAddress().equals(address)) {
+                    if (host.getAddress().getHostAddress().equals(address)) {
                         // for a new node, because of this we also listen for add events.
                         addSignal.countDown();
                     }
@@ -605,8 +622,8 @@ public abstract class TestUtils {
         ControlConnection controlConnection = cluster.manager.controlConnection;
         long durationNs = TimeUnit.NANOSECONDS.convert(duration, unit);
         long start = System.nanoTime();
-        while(System.nanoTime() - start < durationNs) {
-            if(controlConnection.isOpen()) {
+        while (System.nanoTime() - start < durationNs) {
+            if (controlConnection.isOpen()) {
                 return controlConnection.connectedHost();
             }
             Uninterruptibles.sleepUninterruptibly(100, TimeUnit.MILLISECONDS);
@@ -615,7 +632,7 @@ public abstract class TestUtils {
     }
 
     public static HostConnectionPool poolOf(Session session, int hostNumber) {
-        SessionManager sessionManager = (SessionManager)session;
+        SessionManager sessionManager = (SessionManager) session;
         return sessionManager.pools.get(findHost(session.getCluster(), hostNumber));
     }
 
@@ -661,7 +678,7 @@ public abstract class TestUtils {
         String version = System.getProperty("cassandra.version");
         String[] versionArray = version.split("\\.|-");
         double major = Double.parseDouble(versionArray[0] + "." + versionArray[1]);
-        if(major < 2.0) {
+        if (major < 2.0) {
             return ProtocolVersion.V1;
         } else if (major < 2.1) {
             return ProtocolVersion.V2;
@@ -688,9 +705,9 @@ public abstract class TestUtils {
         Host controlHost = cluster.manager.controlConnection.connectedHost();
         List<InetSocketAddress> singleAddress = Collections.singletonList(controlHost.getSocketAddress());
         return Cluster.builder()
-            .addContactPointsWithPorts(singleAddress)
-            .withLoadBalancingPolicy(new WhiteListPolicy(new RoundRobinPolicy(), singleAddress))
-            .build();
+                .addContactPointsWithPorts(singleAddress)
+                .withLoadBalancingPolicy(new WhiteListPolicy(new RoundRobinPolicy(), singleAddress))
+                .build();
     }
 
     /**
@@ -698,8 +715,8 @@ public abstract class TestUtils {
      */
     public static QueryOptions nonDebouncingQueryOptions() {
         return new QueryOptions().setRefreshNodeIntervalMillis(0)
-            .setRefreshNodeListIntervalMillis(0)
-            .setRefreshSchemaIntervalMillis(0);
+                .setRefreshNodeListIntervalMillis(0)
+                .setRefreshSchemaIntervalMillis(0);
     }
 
     /**

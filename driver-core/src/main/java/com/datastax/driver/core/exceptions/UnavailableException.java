@@ -15,10 +15,10 @@
  */
 package com.datastax.driver.core.exceptions;
 
+import com.datastax.driver.core.ConsistencyLevel;
+
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-
-import com.datastax.driver.core.ConsistencyLevel;
 
 /**
  * Exception thrown when the coordinator knows there is not enough replicas
@@ -112,13 +112,13 @@ public class UnavailableException extends QueryExecutionException implements Coo
     /**
      * Create a copy of this exception with a nicer stack trace, and including the coordinator
      * address that caused this exception to be raised.
-     * <p>
+     * <p/>
      * This method is mainly intended for internal use by the driver and exists mainly because:
      * <ol>
-     *   <li>the original exception was decoded from a response frame
-     *   and at that time, the coordinator address was not available; and</li>
-     *   <li>the newly-created exception will refer to the current thread in its stack trace,
-     *   which generally yields a more user-friendly stack trace that the original one.</li>
+     * <li>the original exception was decoded from a response frame
+     * and at that time, the coordinator address was not available; and</li>
+     * <li>the newly-created exception will refer to the current thread in its stack trace,
+     * which generally yields a more user-friendly stack trace that the original one.</li>
      * </ol>
      *
      * @param address The full address of the host that caused this exception to be thrown.

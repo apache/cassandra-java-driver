@@ -15,31 +15,23 @@
  */
 package com.datastax.driver.extras.codecs.jdk8;
 
+import com.datastax.driver.core.*;
+import com.datastax.driver.core.CCMBridge.PerClassSingleNodeCluster;
+import com.datastax.driver.core.querybuilder.BuiltStatement;
+import com.datastax.driver.core.utils.CassandraVersion;
+import com.google.common.collect.Lists;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
+
 import java.math.BigDecimal;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import com.google.common.collect.Lists;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
+import static com.datastax.driver.core.TypeCodec.*;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 import static org.assertj.core.api.Assertions.assertThat;
-
-import com.datastax.driver.core.*;
-import com.datastax.driver.core.CCMBridge.PerClassSingleNodeCluster;
-import com.datastax.driver.core.querybuilder.BuiltStatement;
-import com.datastax.driver.core.utils.CassandraVersion;
-
-import static com.datastax.driver.core.TypeCodec.bigint;
-import static com.datastax.driver.core.TypeCodec.decimal;
-import static com.datastax.driver.core.TypeCodec.list;
-import static com.datastax.driver.core.TypeCodec.varchar;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.bindMarker;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.insertInto;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
 
 public class OptionalCodecTest extends PerClassSingleNodeCluster {
 
@@ -79,8 +71,8 @@ public class OptionalCodecTest extends PerClassSingleNodeCluster {
      * @jira_ticket JAVA-606
      * @since 2.2.0
      */
-    @Test(groups="short")
-    @CassandraVersion(major=2.2)
+    @Test(groups = "short")
+    @CassandraVersion(major = 2.2)
     public void should_map_unset_value_to_empty() {
         PreparedStatement insertPrep = session.prepare(this.insertStmt);
         PreparedStatement selectPrep = session.prepare(this.selectStmt);
@@ -109,7 +101,7 @@ public class OptionalCodecTest extends PerClassSingleNodeCluster {
      * @jira_ticket JAVA-606
      * @since 2.2.0
      */
-    @Test(groups="short")
+    @Test(groups = "short")
     public void should_map_absent_null_value_to_empty() {
         PreparedStatement insertPrep = session.prepare(this.insertStmt);
         PreparedStatement selectPrep = session.prepare(this.selectStmt);
@@ -141,7 +133,7 @@ public class OptionalCodecTest extends PerClassSingleNodeCluster {
      * @jira_ticket JAVA-606
      * @since 2.2.0
      */
-    @Test(groups="short")
+    @Test(groups = "short")
     public void should_map_some_back_to_itself() {
         PreparedStatement insertPrep = session.prepare(this.insertStmt);
         PreparedStatement selectPrep = session.prepare(this.selectStmt);
@@ -169,7 +161,7 @@ public class OptionalCodecTest extends PerClassSingleNodeCluster {
         assertThat(returnData.get()).isEqualTo(data);
     }
 
-    @Test(groups="short")
+    @Test(groups = "short")
     public void should_map_a_primitive_type_to_empty() {
         OptionalCodec<Long> optionalLongCodec = new OptionalCodec<Long>(bigint());
         cluster.getConfiguration().getCodecRegistry().register(optionalLongCodec);
@@ -193,7 +185,7 @@ public class OptionalCodecTest extends PerClassSingleNodeCluster {
         assertThat(row.get("c4", Long.class)).isNull();
     }
 
-    @Test(groups="short")
+    @Test(groups = "short")
     public void should_map_a_nullable_type_to_empty() {
         OptionalCodec<BigDecimal> optionalDecimalCodec = new OptionalCodec<BigDecimal>(decimal());
         cluster.getConfiguration().getCodecRegistry().register(optionalDecimalCodec);

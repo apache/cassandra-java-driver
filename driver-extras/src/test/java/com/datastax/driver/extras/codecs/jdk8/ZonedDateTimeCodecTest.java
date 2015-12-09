@@ -15,28 +15,25 @@
  */
 package com.datastax.driver.extras.codecs.jdk8;
 
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
-
-import static java.time.Instant.ofEpochMilli;
-import static java.time.Instant.parse;
-import static java.time.ZoneOffset.UTC;
-import static java.time.ZonedDateTime.ofInstant;
-
+import com.datastax.driver.core.Assertions;
+import com.datastax.driver.core.TupleType;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import static com.google.common.collect.Lists.newArrayList;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-import com.datastax.driver.core.Assertions;
-import com.datastax.driver.core.TupleType;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 
 import static com.datastax.driver.core.DataType.timestamp;
 import static com.datastax.driver.core.DataType.varchar;
 import static com.datastax.driver.core.ProtocolVersion.V4;
+import static com.google.common.collect.Lists.newArrayList;
+import static java.time.Instant.ofEpochMilli;
+import static java.time.Instant.parse;
+import static java.time.ZoneOffset.UTC;
+import static java.time.ZonedDateTime.ofInstant;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class ZonedDateTimeCodecTest {
 
@@ -45,23 +42,23 @@ public class ZonedDateTimeCodecTest {
     @DataProvider(name = "ZonedDateTimeCodecTest.parse")
     public Object[][] parseParameters() {
         return new Object[][]{
-            { null                , null },
-            { ""                  , null },
-            { "NULL"              , null },
-            { "(0                         ,'+01:00')" , ofInstant(ofEpochMilli(0)                  , ZoneOffset.of("+01:00")) },
-            { "(1277860847999             ,'+01:00')" , ofInstant(parse("2010-06-30T01:20:47.999Z"), ZoneOffset.of("+01:00")) },
-            { "('2010-06-30T01:20Z'       ,'+01:00')" , ofInstant(parse("2010-06-30T01:20:00.000Z"), ZoneOffset.of("+01:00")) },
-            { "('2010-06-30T01:20:47Z'    ,'+01:00')" , ofInstant(parse("2010-06-30T01:20:47.000Z"), ZoneOffset.of("+01:00")) },
-            { "('2010-06-30T01:20:47.999Z','+01:00')" , ofInstant(parse("2010-06-30T01:20:47.999Z"), ZoneOffset.of("+01:00")) }
+                {null, null},
+                {"", null},
+                {"NULL", null},
+                {"(0                         ,'+01:00')", ofInstant(ofEpochMilli(0), ZoneOffset.of("+01:00"))},
+                {"(1277860847999             ,'+01:00')", ofInstant(parse("2010-06-30T01:20:47.999Z"), ZoneOffset.of("+01:00"))},
+                {"('2010-06-30T01:20Z'       ,'+01:00')", ofInstant(parse("2010-06-30T01:20:00.000Z"), ZoneOffset.of("+01:00"))},
+                {"('2010-06-30T01:20:47Z'    ,'+01:00')", ofInstant(parse("2010-06-30T01:20:47.000Z"), ZoneOffset.of("+01:00"))},
+                {"('2010-06-30T01:20:47.999Z','+01:00')", ofInstant(parse("2010-06-30T01:20:47.999Z"), ZoneOffset.of("+01:00"))}
         };
     }
 
     @DataProvider(name = "ZonedDateTimeCodecTest.format")
     public Object[][] formatParameters() {
         return new Object[][]{
-            { null                                                , "NULL" },
-            { ofInstant(ofEpochMilli(0), UTC)                     , "('1970-01-01T00:00:00Z','+00:00')" },
-            { ZonedDateTime.parse("2010-06-30T01:20:47.999+01:00"), "('2010-06-30T00:20:47.999Z','+01:00')" }
+                {null, "NULL"},
+                {ofInstant(ofEpochMilli(0), UTC), "('1970-01-01T00:00:00Z','+00:00')"},
+                {ZonedDateTime.parse("2010-06-30T01:20:47.999+01:00"), "('2010-06-30T00:20:47.999Z','+01:00')"}
         };
     }
 

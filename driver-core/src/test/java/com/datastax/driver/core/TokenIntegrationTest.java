@@ -15,9 +15,11 @@
  */
 package com.datastax.driver.core;
 
-import java.net.InetSocketAddress;
-import java.util.*;
-
+import com.datastax.driver.core.exceptions.InvalidTypeException;
+import com.datastax.driver.core.policies.LoadBalancingPolicy;
+import com.datastax.driver.core.policies.RoundRobinPolicy;
+import com.datastax.driver.core.policies.WhiteListPolicy;
+import com.datastax.driver.core.utils.CassandraVersion;
 import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -25,30 +27,29 @@ import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import com.datastax.driver.core.exceptions.InvalidTypeException;
-import com.datastax.driver.core.policies.LoadBalancingPolicy;
-import com.datastax.driver.core.policies.RoundRobinPolicy;
-import com.datastax.driver.core.policies.WhiteListPolicy;
-import com.datastax.driver.core.utils.CassandraVersion;
+import java.net.InetSocketAddress;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 
 /**
  * This class uses subclasses for each type of partitioner.
- *
+ * <p/>
  * There's normally a way to parametrize a TestNG class with @Factory and @DataProvider,
  * but it doesn't seem to work with multiple methods.
  */
 public abstract class TokenIntegrationTest {
 
     List<String> schema = Lists.newArrayList(
-        "CREATE KEYSPACE test WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1}",
-        "CREATE KEYSPACE test2 WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 2}",
-        "USE test",
-        "CREATE TABLE foo(i int primary key)",
-        "INSERT INTO foo (i) VALUES (1)",
-        "INSERT INTO foo (i) VALUES (2)",
-        "INSERT INTO foo (i) VALUES (3)"
+            "CREATE KEYSPACE test WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1}",
+            "CREATE KEYSPACE test2 WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 2}",
+            "USE test",
+            "CREATE TABLE foo(i int primary key)",
+            "INSERT INTO foo (i) VALUES (1)",
+            "INSERT INTO foo (i) VALUES (2)",
+            "INSERT INTO foo (i) VALUES (3)"
     );
 
     private final String ccmOptions;
@@ -76,17 +77,17 @@ public abstract class TokenIntegrationTest {
 
         // Only connect to node 1, which makes it easier to query system tables in should_expose_tokens_per_host()
         LoadBalancingPolicy lbp = new WhiteListPolicy(new RoundRobinPolicy(),
-            Lists.newArrayList(new InetSocketAddress(CCMBridge.ipOfNode(1), 9042)));
+                Lists.newArrayList(new InetSocketAddress(CCMBridge.ipOfNode(1), 9042)));
 
         cluster = Cluster.builder()
-            .addContactPoints(CCMBridge.ipOfNode(1))
-            .withLoadBalancingPolicy(lbp)
-            .withQueryOptions(new QueryOptions()
-                .setRefreshNodeIntervalMillis(0)
-                .setRefreshNodeListIntervalMillis(0)
-                .setRefreshSchemaIntervalMillis(0)
-            )
-            .build();
+                .addContactPoints(CCMBridge.ipOfNode(1))
+                .withLoadBalancingPolicy(lbp)
+                .withQueryOptions(new QueryOptions()
+                                .setRefreshNodeIntervalMillis(0)
+                                .setRefreshNodeListIntervalMillis(0)
+                                .setRefreshSchemaIntervalMillis(0)
+                )
+                .build();
         cluster.init();
         session = cluster.connect();
 
@@ -94,7 +95,7 @@ public abstract class TokenIntegrationTest {
             session.execute(statement);
     }
 
-    @AfterClass(groups = "short", alwaysRun=true)
+    @AfterClass(groups = "short", alwaysRun = true)
     public void teardown() {
         if (cluster != null)
             cluster.close();
@@ -135,8 +136,8 @@ public abstract class TokenIntegrationTest {
                 if (row.getInt("i") == testKey) {
                     // We should find our test key exactly once
                     assertThat(foundRange)
-                        .describedAs("found the same key in two ranges: " + foundRange + " and " + range)
-                        .isNull();
+                            .describedAs("found the same key in two ranges: " + foundRange + " and " + range)
+                            .isNull();
                     foundRange = range;
                     // That range should be managed by the replica
                     assertThat(metadata.getReplicas("test", range)).contains(replica);
@@ -160,16 +161,16 @@ public abstract class TokenIntegrationTest {
      * Validates that a {@link Token} can be retrieved and parsed by executing 'select token(name)' and
      * then used to find data matching that token.
      * </p>
-     *
-     * <p>
+     * <p/>
+     * <p/>
      * This test does the following:
-     *
+     * <p/>
      * <ol>
-     *     <li>Retrieve the token for the key with value '1', get it by index, and ensure if is of the expected token type.</li>
-     *     <li>Retrieve the token for the partition key with getPartitionKeyToken</li>
-     *     <li>Select data by token with a BoundStatement.</li>
-     *     <li>Select data by token using setToken by index.</li>
-     *     <li>Select data by token with setPartitionKeyToken.</li>
+     * <li>Retrieve the token for the key with value '1', get it by index, and ensure if is of the expected token type.</li>
+     * <li>Retrieve the token for the partition key with getPartitionKeyToken</li>
+     * <li>Select data by token with a BoundStatement.</li>
+     * <li>Select data by token using setToken by index.</li>
+     * <li>Select data by token with setPartitionKeyToken.</li>
      * </ol>
      *
      * @test_category token
@@ -185,7 +186,7 @@ public abstract class TokenIntegrationTest {
         assertThat(token.getType()).isEqualTo(expectedTokenType);
 
         assertThat(
-            row.getPartitionKeyToken()
+                row.getPartitionKeyToken()
         ).isEqualTo(token);
 
         PreparedStatement pst = session.prepare("SELECT * FROM test.foo WHERE token(i) = ?");
@@ -204,17 +205,17 @@ public abstract class TokenIntegrationTest {
      * Validates that a {@link Token} can be retrieved and parsed by using bind variables and
      * aliasing.
      * </p>
-     *
-     * <p>
+     * <p/>
+     * <p/>
      * This test does the following:
-     *
+     * <p/>
      * <ol>
-     *      <li>Retrieve the token by alias for the key '1', and ensure it matches the token by index.</li>
-     *      <li>Select data by token using setToken by name.</li>
+     * <li>Retrieve the token by alias for the key '1', and ensure it matches the token by index.</li>
+     * <li>Select data by token using setToken by name.</li>
      * </ol>
      */
     @Test(groups = "short")
-    @CassandraVersion(major=2)
+    @CassandraVersion(major = 2)
     public void should_get_token_from_row_and_set_token_in_query_with_binding_and_aliasing() {
         Row row = session.execute("SELECT token(i) AS t FROM test.foo WHERE i = 1").one();
         Token token = row.getToken("t");
@@ -249,7 +250,7 @@ public abstract class TokenIntegrationTest {
      * Ensures that @{link TokenRange}s are exposed at a per host level, the ranges are complete,
      * the entire ring is represented, and that ranges do not overlap.
      * </p>
-     *
+     * <p/>
      * <p>
      * Also ensures that ranges from another replica are present when a Host is a replica for
      * another node.
@@ -275,7 +276,7 @@ public abstract class TokenIntegrationTest {
             Host host = TestUtils.findHost(cluster, i);
             Set<TokenRange> hostRanges = cluster.getMetadata().getTokenRanges(keyspace, host);
             // Special case: When using vnodes the tokens are not evenly assigned to each replica.
-            if(!useVnodes) {
+            if (!useVnodes) {
                 assertThat(hostRanges).hasSize(replicationFactor * numTokens);
             }
             allRangesWithReplicas.addAll(hostRanges);
@@ -286,7 +287,7 @@ public abstract class TokenIntegrationTest {
 
         // Once we ignore duplicates, the number of ranges should match the number of nodes.
         Set<TokenRange> allRanges = new HashSet<TokenRange>(allRangesWithReplicas);
-        assertThat(allRanges).hasSize(3*numTokens);
+        assertThat(allRanges).hasSize(3 * numTokens);
 
         // And the ranges should cover the whole ring and no ranges intersect.
         assertThat(cluster).hasValidTokenRanges(keyspace);
@@ -296,7 +297,7 @@ public abstract class TokenIntegrationTest {
      * <p>
      * Ensures that Tokens are exposed for each Host and that the match those in the system tables.
      * </p>
-     *
+     * <p/>
      * <p>
      * Also validates that tokens are not present for multiple hosts.
      * </p>
@@ -315,12 +316,13 @@ public abstract class TokenIntegrationTest {
             // constructed in the first place, but there's not much else we can do.
             // Note that this relies on all queries going to node 1, which is why we use a WhiteList LBP in setup().
             Row row = (host.listenAddress == null)
-                ? session.execute("select tokens from system.local").one()
-                : session.execute("select tokens from system.peers where peer = '" + host.listenAddress.getHostAddress() + "'").one();
+                    ? session.execute("select tokens from system.local").one()
+                    : session.execute("select tokens from system.peers where peer = '" + host.listenAddress.getHostAddress() + "'").one();
             Set<String> tokenStrings = row.getSet("tokens", String.class);
             assertThat(tokenStrings).hasSize(numTokens);
             Iterable<Token> tokensFromSystemTable = Iterables.transform(tokenStrings, new Function<String, Token>() {
-                @Override public Token apply(String input) {
+                @Override
+                public Token apply(String input) {
                     return tokenFactory().fromString(input);
                 }
             });
@@ -348,11 +350,12 @@ public abstract class TokenIntegrationTest {
         assertOnlyOneWrapped(ranges);
 
         Iterable<TokenRange> splitRanges = Iterables.concat(Iterables.transform(ranges,
-            new Function<TokenRange, Iterable<TokenRange>>() {
-                @Override public Iterable<TokenRange> apply(TokenRange input) {
-                    return input.splitEvenly(10);
-                }
-            })
+                        new Function<TokenRange, Iterable<TokenRange>>() {
+                            @Override
+                            public Iterable<TokenRange> apply(TokenRange input) {
+                                return input.splitEvenly(10);
+                            }
+                        })
         );
 
         assertOnlyOneWrapped(splitRanges);
@@ -360,16 +363,17 @@ public abstract class TokenIntegrationTest {
 
     /**
      * Asserts that given the input {@link TokenRange}s that at most one of them wraps the token ring.
+     *
      * @param ranges Ranges to validate against.
      */
     protected void assertOnlyOneWrapped(Iterable<TokenRange> ranges) {
         TokenRange wrappedRange = null;
 
-        for(TokenRange range : ranges) {
-            if(range.isWrappedAround()) {
+        for (TokenRange range : ranges) {
+            if (range.isWrappedAround()) {
                 assertThat(wrappedRange)
-                    .as("Found a wrapped around TokenRange (%s) when one already exists (%s).", range, wrappedRange)
-                    .isNull();
+                        .as("Found a wrapped around TokenRange (%s) when one already exists (%s).", range, wrappedRange)
+                        .isNull();
                 wrappedRange = range;
 
                 assertThat(range).isWrappedAround(); // this also checks the unwrapped ranges
@@ -390,7 +394,7 @@ public abstract class TokenIntegrationTest {
         Token end = metadata.newToken(range.getEnd().toString());
 
         assertThat(metadata.newTokenRange(start, end))
-            .isEqualTo(range);
+                .isEqualTo(range);
     }
 
     protected abstract Token.Factory tokenFactory();

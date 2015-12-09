@@ -15,12 +15,6 @@
  */
 package com.datastax.driver.extras.codecs.json;
 
-import java.io.*;
-import java.nio.ByteBuffer;
-import java.util.Map;
-
-import javax.json.*;
-
 import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.ParseUtils;
 import com.datastax.driver.core.ProtocolVersion;
@@ -28,26 +22,31 @@ import com.datastax.driver.core.TypeCodec;
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 import com.datastax.driver.core.utils.Bytes;
 
+import javax.json.*;
+import java.io.*;
+import java.nio.ByteBuffer;
+import java.util.Map;
+
 /**
  * A JSON codec that uses the
  * <a href="https://jcp.org/en/jsr/detail?id=353">Java API for JSON processing</a>
  * to perform serialization and deserialization of JSON structures.
- * <p>
+ * <p/>
  * More specifically, this codec maps an arbitrary {@link JsonStructure} to
  * a CQL {@code varchar} column.
- * <p>
+ * <p/>
  * This codec handles the Java type {@link JsonStructure}.
  * It is therefore required that values are set and retrieved using that exact Java type;
  * users should manually downcast to either {@link JsonObject} or {@link JsonArray},
  * as in the example below:
  * <pre>{@code
- *
+ * <p/>
  * // setting values
  * JsonObject myObject = ...
  * PreparedStatement ps = ...
  * // set values using JsonStructure as target Java type
  * BoundStatement bs = ps.bind().set(1, myObject, JsonStructure.class);
- *
+ * <p/>
  * // retrieving values
  * Row row = session.execute(bs).one();
  * // use JsonStructure as target Java type to retrieve values
@@ -57,27 +56,26 @@ import com.datastax.driver.core.utils.Bytes;
  *     ...
  * }
  * }</pre>
- *
- * <p>
+ * <p/>
+ * <p/>
  * Note that at runtime, this codec requires the presence of both JSR-353 API
  * and a JSR-353-compatible runtime library, such as
  * <a href="https://jsonp.java.net/download.html">JSR-353's reference implementation</a>.
  * If you use Maven, this can be done by declaring the following dependencies in your project:
- *
+ * <p/>
  * <pre>{@code
  * <dependency>
  *   <groupId>javax.json</groupId>
  *   <artifactId>javax.json-api</artifactId>
  *   <version>1.0</version>
  * </dependency>
- *
+ * <p/>
  * <dependency>
  *   <groupId>org.glassfish</groupId>
  *   <artifactId>javax.json</artifactId>
  *   <version>1.0.4</version>
  * </dependency>
  * }</pre>
- *
  */
 public class Jsr353JsonCodec extends TypeCodec<JsonStructure> {
 

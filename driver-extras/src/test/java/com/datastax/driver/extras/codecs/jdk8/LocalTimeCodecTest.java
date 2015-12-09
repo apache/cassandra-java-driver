@@ -15,17 +15,15 @@
  */
 package com.datastax.driver.extras.codecs.jdk8;
 
-import java.time.LocalTime;
-
+import com.datastax.driver.core.Assertions;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-import com.datastax.driver.core.Assertions;
+import java.time.LocalTime;
 
 import static com.datastax.driver.core.ParseUtils.quote;
 import static com.datastax.driver.core.ProtocolVersion.V4;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class LocalTimeCodecTest {
 
@@ -34,23 +32,23 @@ public class LocalTimeCodecTest {
         LocalTime time = LocalTime.parse("13:25:47.123456789");
         String nanosOfDay = quote(Long.toString(time.toNanoOfDay()));
         return new Object[][]{
-            { null                  , null },
-            { ""                    , null },
-            { "NULL"                , null },
-            { nanosOfDay            , LocalTime.parse("13:25:47.123456789") },
-            { "'13:25:47'"          , LocalTime.parse("13:25:47") },
-            { "'13:25:47.123'"      , LocalTime.parse("13:25:47.123") },
-            { "'13:25:47.123456'"   , LocalTime.parse("13:25:47.123456") },
-            { "'13:25:47.123456789'", LocalTime.parse("13:25:47.123456789") }
+                {null, null},
+                {"", null},
+                {"NULL", null},
+                {nanosOfDay, LocalTime.parse("13:25:47.123456789")},
+                {"'13:25:47'", LocalTime.parse("13:25:47")},
+                {"'13:25:47.123'", LocalTime.parse("13:25:47.123")},
+                {"'13:25:47.123456'", LocalTime.parse("13:25:47.123456")},
+                {"'13:25:47.123456789'", LocalTime.parse("13:25:47.123456789")}
         };
     }
 
     @DataProvider(name = "LocalTimeCodecTest.format")
     public Object[][] formatParameters() {
         return new Object[][]{
-            { null                              , "NULL" },
-            { LocalTime.NOON                    , "'12:00:00.000'" },
-            { LocalTime.parse("02:20:47.999999"), "'02:20:47.999'" }
+                {null, "NULL"},
+                {LocalTime.NOON, "'12:00:00.000'"},
+                {LocalTime.parse("02:20:47.999999"), "'02:20:47.999'"}
         };
     }
 

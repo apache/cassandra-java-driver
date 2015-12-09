@@ -15,13 +15,12 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.policies.RetryPolicy;
+import com.google.common.collect.ImmutableMap;
+
 import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
-
-import com.google.common.collect.ImmutableMap;
-
-import com.datastax.driver.core.policies.RetryPolicy;
 
 import static com.datastax.driver.core.ProtocolVersion.V4;
 
@@ -63,8 +62,8 @@ public class DefaultPreparedStatement implements PreparedStatement {
         }
 
         int[] pkIndices = (protocolVersion.compareTo(V4) >= 0)
-            ? msg.metadata.pkIndices
-            : computePkIndices(cluster.getMetadata(), defs);
+                ? msg.metadata.pkIndices
+                : computePkIndices(cluster.getMetadata(), defs);
 
         PreparedId prepId = new PreparedId(msg.statementId, defs, msg.resultMetadata.columns, pkIndices, protocolVersion);
 

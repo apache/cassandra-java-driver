@@ -17,7 +17,7 @@ package com.datastax.driver.core;
 
 /**
  * Clustering orders.
- * <p>
+ * <p/>
  * This is used by metadata classes to indicate the clustering
  * order of a clustering column in a table or materialized view.
  */

@@ -17,7 +17,8 @@ package com.datastax.driver.mapping;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 class AccessorInvocationHandler<T> implements InvocationHandler {
 
@@ -26,6 +27,7 @@ class AccessorInvocationHandler<T> implements InvocationHandler {
     private static final Method TO_STRING;
     private static final Method EQUALS;
     private static final Method HASH_CODE;
+
     static {
         try {
             TO_STRING = Object.class.getMethod("toString");

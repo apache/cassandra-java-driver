@@ -15,27 +15,21 @@
  */
 package com.datastax.driver.extras.codecs.joda;
 
-import java.nio.ByteBuffer;
-
-import static java.lang.Long.parseLong;
-
+import com.datastax.driver.core.DataType;
+import com.datastax.driver.core.ProtocolVersion;
+import com.datastax.driver.core.TypeCodec;
+import com.datastax.driver.core.exceptions.InvalidTypeException;
 import org.joda.time.Days;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 
+import java.nio.ByteBuffer;
+
+import static com.datastax.driver.core.CodecUtils.*;
+import static com.datastax.driver.core.ParseUtils.*;
+import static java.lang.Long.parseLong;
 import static org.joda.time.Days.daysBetween;
-
-import com.datastax.driver.core.*;
-import com.datastax.driver.core.exceptions.InvalidTypeException;
-
-import static com.datastax.driver.core.CodecUtils.fromCqlDateToDaysSinceEpoch;
-import static com.datastax.driver.core.CodecUtils.fromSignedToUnsignedInt;
-import static com.datastax.driver.core.CodecUtils.fromUnsignedToSignedInt;
-import static com.datastax.driver.core.ParseUtils.isLongLiteral;
-import static com.datastax.driver.core.ParseUtils.isQuoted;
-import static com.datastax.driver.core.ParseUtils.quote;
-import static com.datastax.driver.core.ParseUtils.unquote;
 
 /**
  * {@link TypeCodec} that maps

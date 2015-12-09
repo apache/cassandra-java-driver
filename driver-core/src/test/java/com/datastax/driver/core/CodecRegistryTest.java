@@ -15,17 +15,16 @@
  */
 package com.datastax.driver.core;
 
-import java.util.List;
-
 import com.google.common.reflect.TypeToken;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.testng.annotations.Test;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import java.util.List;
 
 import static com.datastax.driver.core.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class CodecRegistryTest {
     TypeToken<List<Integer>> LIST_OF_INT_TOKEN = new TypeToken<List<Integer>>() {
@@ -46,7 +45,7 @@ public class CodecRegistryTest {
 
         assertThat(logs.getNext()).contains("Ignoring codec newCodec");
         assertThat(
-            registry.codecFor(DataType.cint(), Integer.class)
+                registry.codecFor(DataType.cint(), Integer.class)
         ).isNotSameAs(newCodec);
 
         stopCapturingLogs(logs);
@@ -70,7 +69,7 @@ public class CodecRegistryTest {
 
         assertThat(logs.getNext()).contains("Ignoring codec newCodec");
         assertThat(
-            registry.codecFor(DataType.list(DataType.cint()), LIST_OF_INT_TOKEN)
+                registry.codecFor(DataType.list(DataType.cint()), LIST_OF_INT_TOKEN)
         ).isNotSameAs(newCodec);
 
         stopCapturingLogs(logs);

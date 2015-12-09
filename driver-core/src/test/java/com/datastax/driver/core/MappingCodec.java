@@ -15,13 +15,10 @@
  */
 package com.datastax.driver.core;
 
-import java.nio.ByteBuffer;
-
+import com.datastax.driver.core.exceptions.InvalidTypeException;
 import com.google.common.reflect.TypeToken;
 
-import com.datastax.driver.core.ProtocolVersion;
-import com.datastax.driver.core.TypeCodec;
-import com.datastax.driver.core.exceptions.InvalidTypeException;
+import java.nio.ByteBuffer;
 
 /**
  * This class is a copy of MappingCodec declared in the extras module,

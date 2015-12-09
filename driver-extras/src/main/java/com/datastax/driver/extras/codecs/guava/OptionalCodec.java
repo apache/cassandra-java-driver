@@ -15,16 +15,15 @@
  */
 package com.datastax.driver.extras.codecs.guava;
 
-import java.util.Collection;
-import java.util.Map;
-
+import com.datastax.driver.core.TypeCodec;
+import com.datastax.driver.extras.codecs.MappingCodec;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.reflect.TypeParameter;
 import com.google.common.reflect.TypeToken;
 
-import com.datastax.driver.core.TypeCodec;
-import com.datastax.driver.extras.codecs.MappingCodec;
+import java.util.Collection;
+import java.util.Map;
 
 /**
  * A codec that wraps other codecs around Guava's {@link Optional} API.
@@ -40,14 +39,16 @@ public class OptionalCodec<T> extends MappingCodec<Optional<T>, T> {
             @Override
             public boolean apply(T input) {
                 return input == null
-                    || input instanceof Collection && ((Collection)input).isEmpty()
-                    || input instanceof Map && ((Map)input).isEmpty();
+                        || input instanceof Collection && ((Collection) input).isEmpty()
+                        || input instanceof Map && ((Map) input).isEmpty();
             }
         });
     }
 
     public OptionalCodec(TypeCodec<T> codec, Predicate<T> isAbsent) {
-        super(codec, new TypeToken<Optional<T>>(){}.where(new TypeParameter<T>(){}, codec.getJavaType()));
+        super(codec, new TypeToken<Optional<T>>() {
+        }.where(new TypeParameter<T>() {
+        }, codec.getJavaType()));
         this.isAbsent = isAbsent;
     }
 

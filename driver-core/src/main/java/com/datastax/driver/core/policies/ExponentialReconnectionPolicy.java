@@ -32,8 +32,8 @@ public class ExponentialReconnectionPolicy implements ReconnectionPolicy {
      * Creates a reconnection policy waiting exponentially longer for each new attempt.
      *
      * @param baseDelayMs the base delay in milliseconds to use for
-     * the schedules created by this policy. 
-     * @param maxDelayMs the maximum delay to wait between two attempts.
+     *                    the schedules created by this policy.
+     * @param maxDelayMs  the maximum delay to wait between two attempts.
      */
     public ExponentialReconnectionPolicy(long baseDelayMs, long maxDelayMs) {
         if (baseDelayMs < 0 || maxDelayMs < 0)
@@ -73,7 +73,7 @@ public class ExponentialReconnectionPolicy implements ReconnectionPolicy {
 
     /**
      * A new schedule that used an exponentially growing delay between reconnection attempts.
-     * <p>
+     * <p/>
      * For this schedule, reconnection attempt {@code i} will be tried
      * {@code Math.min(2^(i-1) * getBaseDelayMs(), getMaxDelayMs())} milliseconds after the previous one.
      *

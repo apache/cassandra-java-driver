@@ -28,9 +28,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.net.SocketAddress;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -70,7 +71,7 @@ public class SocketChannelMonitor implements Runnable {
     public void run() {
         try {
             report();
-        } catch(Exception e) {
+        } catch (Exception e) {
             logger.error("Error countered.", e);
         }
     }
@@ -85,7 +86,7 @@ public class SocketChannelMonitor implements Runnable {
 
     /**
      * @return A custom {@link NettyOptions} instance that hooks into afterChannelInitialized added channels may be
-     *         monitored.
+     * monitored.
      */
     public NettyOptions nettyOptions() {
         return nettyOptions;
@@ -100,6 +101,7 @@ public class SocketChannelMonitor implements Runnable {
 
     /**
      * Schedules a {@link #report()} to be called every configured interval.
+     *
      * @param interval how often to report.
      * @param timeUnit at what time precision to report at.
      */
@@ -115,17 +117,17 @@ public class SocketChannelMonitor implements Runnable {
     }
 
     /**
-     * <p>
+     * <p/>
      * Report for all sockets matching the given predicate.  The report format reflects the number of open, closed,
      * live and total sockets created.  This is logged at DEBUG if enabled.
-     *
-     * <p>
+     * <p/>
+     * <p/>
      * If TRACE is enabled, each individual socket will be logged as well.
      *
      * @param channelFilter used to determine which sockets to report on.
      */
     public void report(Predicate<SocketChannel> channelFilter) {
-        if(logger.isDebugEnabled()) {
+        if (logger.isDebugEnabled()) {
             Iterable<SocketChannel> channels = matchingChannels(channelFilter);
             Iterable<SocketChannel> open = Iterables.filter(channels, openChannels);
             Iterable<SocketChannel> closed = Iterables.filter(channels, Predicates.not(openChannels));
@@ -137,7 +139,7 @@ public class SocketChannelMonitor implements Runnable {
                     Iterables.size(channels),
                     channelsCreated.get());
 
-            if(logger.isTraceEnabled()) {
+            if (logger.isTraceEnabled()) {
                 logger.trace("Open channels {}.", open);
                 logger.trace("Closed channels {}.", closed);
             }
@@ -149,7 +151,8 @@ public class SocketChannelMonitor implements Runnable {
         public int compare(SocketChannel t0, SocketChannel t1) {
             // Should not be null as these are filtered previously in matchingChannels.
             assert t0 != null && t0.remoteAddress() != null;
-            assert t1 != null && t1.remoteAddress() != null;;
+            assert t1 != null && t1.remoteAddress() != null;
+            ;
             return t0.remoteAddress().toString().compareTo(t1.remoteAddress().toString());
         }
     };

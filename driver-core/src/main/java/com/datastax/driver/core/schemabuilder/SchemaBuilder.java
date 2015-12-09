@@ -19,16 +19,17 @@ import static com.datastax.driver.core.schemabuilder.Drop.DroppedItem;
 
 /**
  * Static methods to build a CQL3 DDL statement.
- * <p>
+ * <p/>
  * The provided builders perform very little validation of the built query.
  * There is thus no guarantee that a built query is valid, and it is
  * definitively possible to create invalid queries.
- * <p>
+ * <p/>
  * Note that it could be convenient to use an 'import static' to use the methods of this class.
  */
 public final class SchemaBuilder {
 
-    private SchemaBuilder() {}
+    private SchemaBuilder() {
+    }
 
     /**
      * Start building a new CREATE TABLE statement.
@@ -44,7 +45,7 @@ public final class SchemaBuilder {
      * Start building a new CREATE TABLE statement.
      *
      * @param keyspaceName the name of the keyspace to be used.
-     * @param tableName the name of the table to create.
+     * @param tableName    the name of the table to create.
      * @return an in-construction CREATE TABLE statement.
      */
     public static Create createTable(String keyspaceName, String tableName) {
@@ -65,7 +66,7 @@ public final class SchemaBuilder {
      * Start building a new ALTER TABLE statement.
      *
      * @param keyspaceName the name of the keyspace to be used.
-     * @param tableName the name of the table to be altered.
+     * @param tableName    the name of the table to be altered.
      * @return an in-construction ALTER TABLE statement.
      */
     public static Alter alterTable(String keyspaceName, String tableName) {
@@ -86,7 +87,7 @@ public final class SchemaBuilder {
      * Start building a new DROP TABLE statement.
      *
      * @param keyspaceName the name of the keyspace to be used.
-     * @param tableName the name of the table to be dropped.
+     * @param tableName    the name of the table to be dropped.
      * @return an in-construction DROP TABLE statement.
      */
     public static Drop dropTable(String keyspaceName, String tableName) {
@@ -117,7 +118,7 @@ public final class SchemaBuilder {
      * Start building a new DROP INDEX statement.
      *
      * @param keyspaceName the name of the keyspace to be used.
-     * @param indexName the name of the index to be dropped.
+     * @param indexName    the name of the index to be dropped.
      * @return an in-construction DROP INDEX statement.
      */
     public static Drop dropIndex(String keyspaceName, String indexName) {
@@ -138,7 +139,7 @@ public final class SchemaBuilder {
      * Start building a new CREATE TYPE statement.
      *
      * @param keyspaceName the name of the keyspace to be used.
-     * @param typeName the name of the custom type to create.
+     * @param typeName     the name of the custom type to create.
      * @return an in-construction CREATE TYPE statement.
      */
     public static CreateType createType(String keyspaceName, String typeName) {
@@ -159,7 +160,7 @@ public final class SchemaBuilder {
      * Start building a new DROP TYPE statement.
      *
      * @param keyspaceName the name of the keyspace to be used.
-     * @param typeName the name of the type to be dropped.
+     * @param typeName     the name of the type to be dropped.
      * @return an in-construction DROP TYPE statement.
      */
     public static Drop dropType(String keyspaceName, String typeName) {
@@ -172,7 +173,7 @@ public final class SchemaBuilder {
 
     /**
      * Build the datatype representation of a frozen UDT, to include in a schema builder statement.
-     * <p>
+     * <p/>
      * <code>frozen("foo")</code> will produce <code>frozen&lt;foo&gt;</code>.
      *
      * @param udtName the name of the UDT.
@@ -184,7 +185,7 @@ public final class SchemaBuilder {
 
     /**
      * Build the datatype representation of a complex UDT type, to include in a schema builder statement.
-     * <p>
+     * <p/>
      * As of Cassandra 2.1, this method is not strictly necessary because {@link Create} and {@link Alter}
      * provide specialized methods to express simple collections of UDTs, but future versions will make it
      * possible to use types such as <code>map&lt;text, map&lt;text, frozen&lt;user&gt;&gt;&gt;</code>.
@@ -216,7 +217,7 @@ public final class SchemaBuilder {
 
     /**
      * Create options for the date-tiered compaction strategy, to use in a CREATE or ALTER TABLE statement.
-     * <p>
+     * <p/>
      * This strategy was introduced in Cassandra 2.1.1.
      *
      * @return the options.
@@ -357,7 +358,7 @@ public final class SchemaBuilder {
 
     /**
      * Return the row caching strategy that caches all rows ({@code all}), to use in a CREATE or ALTER TABLE statement.
-     * <p>
+     * <p/>
      * <strong>Be careful when choosing this option, you can starve Cassandra memory quickly if your partition is very large.</strong>
      *
      * @return the strategy.

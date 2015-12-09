@@ -16,16 +16,15 @@
 package com.datastax.driver.core;
 
 
-import java.util.*;
-
 import com.google.common.base.Objects;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.*;
+
 /**
- *  An immutable representation of a materialized view.
- *  Materialized views are available starting from Cassandra 3.0.
+ * An immutable representation of a materialized view.
+ * Materialized views are available starting from Cassandra 3.0.
  */
 public class MaterializedViewMetadata extends TableOrView {
 
@@ -38,18 +37,18 @@ public class MaterializedViewMetadata extends TableOrView {
     private final String whereClause;
 
     private MaterializedViewMetadata(
-        KeyspaceMetadata keyspace,
-        TableMetadata baseTable,
-        String name,
-        UUID id,
-        List<ColumnMetadata> partitionKey,
-        List<ColumnMetadata> clusteringColumns,
-        Map<String, ColumnMetadata> columns,
-        boolean includeAllColumns,
-        String whereClause,
-        TableOptionsMetadata options,
-        List<ClusteringOrder> clusteringOrder,
-        VersionNumber cassandraVersion) {
+            KeyspaceMetadata keyspace,
+            TableMetadata baseTable,
+            String name,
+            UUID id,
+            List<ColumnMetadata> partitionKey,
+            List<ColumnMetadata> clusteringColumns,
+            Map<String, ColumnMetadata> columns,
+            boolean includeAllColumns,
+            String whereClause,
+            TableOptionsMetadata options,
+            List<ClusteringOrder> clusteringOrder,
+            VersionNumber cassandraVersion) {
         super(keyspace, name, id, partitionKey, clusteringColumns, columns, options, clusteringOrder, cassandraVersion);
         this.baseTable = baseTable;
         this.includeAllColumns = includeAllColumns;
@@ -61,10 +60,10 @@ public class MaterializedViewMetadata extends TableOrView {
         String name = row.getString("view_name");
         String tableName = row.getString("base_table_name");
         TableMetadata baseTable = keyspace.tables.get(tableName);
-        if(baseTable == null) {
+        if (baseTable == null) {
             logger.trace(String.format("Cannot find base table %s for materialized view %s.%s: "
-                    + "Cluster.getMetadata().getKeyspace(\"%s\").getView(\"%s\") will return null",
-                tableName, keyspace.getName(), name, keyspace.getName(), name));
+                            + "Cluster.getMetadata().getKeyspace(\"%s\").getView(\"%s\") will return null",
+                    tableName, keyspace.getName(), name, keyspace.getName(), name));
             return null;
         }
 
@@ -89,20 +88,20 @@ public class MaterializedViewMetadata extends TableOrView {
             // See ControlConnection#refreshSchema for why we'd rather not probably this further. Since table options is one thing
             // that tends to change often in Cassandra, it's worth special casing this.
             logger.error(String.format("Error parsing schema options for view %s.%s: "
-                    + "Cluster.getMetadata().getKeyspace(\"%s\").getView(\"%s\").getOptions() will return null",
-                keyspace.getName(), name, keyspace.getName(), name), e);
+                            + "Cluster.getMetadata().getKeyspace(\"%s\").getView(\"%s\").getOptions() will return null",
+                    keyspace.getName(), name, keyspace.getName(), name), e);
         }
 
         MaterializedViewMetadata view = new MaterializedViewMetadata(
-            keyspace, baseTable, name, id, partitionKey, clusteringColumns, columns,
-            includeAllColumns, whereClause, options, clusteringOrder, cassandraVersion);
+                keyspace, baseTable, name, id, partitionKey, clusteringColumns, columns,
+                includeAllColumns, whereClause, options, clusteringOrder, cassandraVersion);
 
         // We use this temporary set just so non PK columns are added in lexicographical order, which is the one of a
         // 'SELECT * FROM ...'
         Set<ColumnMetadata> otherColumns = new TreeSet<ColumnMetadata>(columnMetadataComparator);
         for (ColumnMetadata.Raw rawCol : rawCols.values()) {
             DataType dataType;
-            if(cassandraVersion.getMajor() >= 3) {
+            if (cassandraVersion.getMajor() >= 3) {
                 dataType = DataTypeCqlNameParser.parse(rawCol.dataType, cluster, keyspace.getName(), keyspace.userTypes, keyspace.userTypes, false, false);
             } else {
                 ProtocolVersion protocolVersion = cluster.getConfiguration().getProtocolOptions().getProtocolVersion();
@@ -146,6 +145,7 @@ public class MaterializedViewMetadata extends TableOrView {
 
     /**
      * Return this materialized view's base table.
+     *
      * @return this materialized view's base table.
      */
     public TableMetadata getBaseTable() {
@@ -161,20 +161,20 @@ public class MaterializedViewMetadata extends TableOrView {
 
         StringBuilder sb = new StringBuilder();
         sb.append("CREATE MATERIALIZED VIEW ")
-            .append(keyspaceName).append('.').append(viewName)
-            .append(" AS ");
+                .append(keyspaceName).append('.').append(viewName)
+                .append(" AS ");
         newLine(sb, formatted);
 
         // SELECT
         sb.append("SELECT ");
-        if(includeAllColumns) {
+        if (includeAllColumns) {
             sb.append(" * ");
         } else {
             Iterator<ColumnMetadata> it = columns.values().iterator();
-            while(it.hasNext()) {
+            while (it.hasNext()) {
                 ColumnMetadata column = it.next();
                 sb.append(spaces(4, formatted)).append(Metadata.escapeId(column.getName()));
-                if(it.hasNext()) sb.append(",");
+                if (it.hasNext()) sb.append(",");
                 sb.append(" ");
                 newLine(sb, formatted);
             }
@@ -220,21 +220,21 @@ public class MaterializedViewMetadata extends TableOrView {
         if (!(other instanceof MaterializedViewMetadata))
             return false;
 
-        MaterializedViewMetadata that = (MaterializedViewMetadata)other;
+        MaterializedViewMetadata that = (MaterializedViewMetadata) other;
         return Objects.equal(this.name, that.name) &&
-            Objects.equal(this.id, that.id) &&
-            Objects.equal(this.partitionKey, that.partitionKey) &&
-            Objects.equal(this.clusteringColumns, that.clusteringColumns) &&
-            Objects.equal(this.columns, that.columns) &&
-            Objects.equal(this.options, that.options) &&
-            Objects.equal(this.clusteringOrder, that.clusteringOrder) &&
-            Objects.equal(this.baseTable.getName(), that.baseTable.getName()) &&
-            this.includeAllColumns == that.includeAllColumns;
+                Objects.equal(this.id, that.id) &&
+                Objects.equal(this.partitionKey, that.partitionKey) &&
+                Objects.equal(this.clusteringColumns, that.clusteringColumns) &&
+                Objects.equal(this.columns, that.columns) &&
+                Objects.equal(this.options, that.options) &&
+                Objects.equal(this.clusteringOrder, that.clusteringOrder) &&
+                Objects.equal(this.baseTable.getName(), that.baseTable.getName()) &&
+                this.includeAllColumns == that.includeAllColumns;
     }
 
     @Override
     public int hashCode() {
         return Objects.hashCode(name, id, partitionKey, clusteringColumns, columns, options, clusteringOrder,
-            baseTable.getName(), includeAllColumns);
+                baseTable.getName(), includeAllColumns);
     }
 }

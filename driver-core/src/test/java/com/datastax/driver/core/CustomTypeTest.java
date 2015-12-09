@@ -15,15 +15,14 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.utils.CassandraVersion;
+import org.testng.annotations.Test;
+
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-
-import org.testng.annotations.Test;
-
-import com.datastax.driver.core.utils.CassandraVersion;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.DataType.cint;
@@ -35,25 +34,25 @@ import static com.datastax.driver.core.DataType.custom;
 public class CustomTypeTest extends CCMBridge.PerClassSingleNodeCluster {
 
     public static final DataType CUSTOM_DYNAMIC_COMPOSITE = custom(
-        "org.apache.cassandra.db.marshal.DynamicCompositeType("
-        + "s=>org.apache.cassandra.db.marshal.UTF8Type,"
-        + "i=>org.apache.cassandra.db.marshal.Int32Type)");
+            "org.apache.cassandra.db.marshal.DynamicCompositeType("
+                    + "s=>org.apache.cassandra.db.marshal.UTF8Type,"
+                    + "i=>org.apache.cassandra.db.marshal.Int32Type)");
 
     public static final DataType CUSTOM_COMPOSITE = custom(
-        "org.apache.cassandra.db.marshal.CompositeType("
-            + "org.apache.cassandra.db.marshal.UTF8Type,"
-            + "org.apache.cassandra.db.marshal.Int32Type)");
+            "org.apache.cassandra.db.marshal.CompositeType("
+                    + "org.apache.cassandra.db.marshal.UTF8Type,"
+                    + "org.apache.cassandra.db.marshal.Int32Type)");
 
     @Override
     protected Collection<String> getTableDefinitions() {
         return Collections.singleton(
-            "CREATE TABLE test ("
-                + "    k int,"
-                + "    c1 'DynamicCompositeType(s => UTF8Type, i => Int32Type)',"
-                + "    c2 'ReversedType(CompositeType(UTF8Type, Int32Type))'," // reversed translates to CLUSTERING ORDER BY DESC
-                + "    c3 'Int32Type'," // translates to int
-                + "    PRIMARY KEY (k, c1, c2)"
-                + ") WITH COMPACT STORAGE"
+                "CREATE TABLE test ("
+                        + "    k int,"
+                        + "    c1 'DynamicCompositeType(s => UTF8Type, i => Int32Type)',"
+                        + "    c2 'ReversedType(CompositeType(UTF8Type, Int32Type))'," // reversed translates to CLUSTERING ORDER BY DESC
+                        + "    c3 'Int32Type'," // translates to int
+                        + "    PRIMARY KEY (k, c1, c2)"
+                        + ") WITH COMPACT STORAGE"
         );
     }
 
@@ -61,9 +60,9 @@ public class CustomTypeTest extends CCMBridge.PerClassSingleNodeCluster {
      * Validates that columns using custom types are properly handled by the driver in the following ways:
      * <p/>
      * <ol>
-     *     <li>The column metadata appropriately represents the types as {@link DataType#custom(String)}</li>
-     *     <li>ReversedType is appropriately detected and the clustering order of that column is marked as descending.</li>
-     *     <li>ColumnDefinitions for a column in a {@link Row} matches the custom type and that inserted data is read back properly.</li>
+     * <li>The column metadata appropriately represents the types as {@link DataType#custom(String)}</li>
+     * <li>ReversedType is appropriately detected and the clustering order of that column is marked as descending.</li>
+     * <li>ColumnDefinitions for a column in a {@link Row} matches the custom type and that inserted data is read back properly.</li>
      * </ol>
      *
      * @jira_ticket JAVA-993
@@ -112,16 +111,16 @@ public class CustomTypeTest extends CCMBridge.PerClassSingleNodeCluster {
      * Validates that UDTs with fields using custom types are properly handled by the driver in the following ways:
      * <p/>
      * <ol>
-     *     <li>The {@link UserType} metadata appropriately represents the types of fields with custom types as {@link DataType#custom(String)}</li>
-     *     <li>{@link TableMetadata} with a column having a {@link UserType} is properly referenced.</li>
-     *     <li>ColumnDefinitions for a column in a {@link Row} matches the {@link UserType} and that inserted data is read back properly.</li>
+     * <li>The {@link UserType} metadata appropriately represents the types of fields with custom types as {@link DataType#custom(String)}</li>
+     * <li>{@link TableMetadata} with a column having a {@link UserType} is properly referenced.</li>
+     * <li>ColumnDefinitions for a column in a {@link Row} matches the {@link UserType} and that inserted data is read back properly.</li>
      * </ol>
      *
      * @jira_ticket JAVA-993
      * @test_category metadata
      */
     @Test(groups = "short")
-    @CassandraVersion(major=2.1)
+    @CassandraVersion(major = 2.1)
     public void should_handle_udt_with_custom_type() {
         // Given: a UDT with custom types, and a table using it.
         session.execute("CREATE TYPE custom_udt (regular int, c1 'DynamicCompositeType(s => UTF8Type, i => Int32Type)', c2 'LongType')");
@@ -164,20 +163,20 @@ public class CustomTypeTest extends CCMBridge.PerClassSingleNodeCluster {
         for (Object p : params) {
             if (p instanceof Integer) {
                 ByteBuffer elt = ByteBuffer.allocate(2 + 2 + 4 + 1);
-                elt.putShort((short)(0x8000 | 'i'));
+                elt.putShort((short) (0x8000 | 'i'));
                 elt.putShort((short) 4);
-                elt.putInt((Integer)p);
-                elt.put((byte)0);
+                elt.putInt((Integer) p);
+                elt.put((byte) 0);
                 elt.flip();
                 size += elt.remaining();
                 l.add(elt);
             } else if (p instanceof String) {
-                ByteBuffer bytes = ByteBuffer.wrap(((String)p).getBytes());
+                ByteBuffer bytes = ByteBuffer.wrap(((String) p).getBytes());
                 ByteBuffer elt = ByteBuffer.allocate(2 + 2 + bytes.remaining() + 1);
-                elt.putShort((short)(0x8000 | 's'));
+                elt.putShort((short) (0x8000 | 's'));
                 elt.putShort((short) bytes.remaining());
                 elt.put(bytes);
-                elt.put((byte)0);
+                elt.put((byte) 0);
                 elt.flip();
                 size += elt.remaining();
                 l.add(elt);
@@ -200,17 +199,17 @@ public class CustomTypeTest extends CCMBridge.PerClassSingleNodeCluster {
             if (p instanceof Integer) {
                 ByteBuffer elt = ByteBuffer.allocate(2 + 4 + 1);
                 elt.putShort((short) 4);
-                elt.putInt((Integer)p);
-                elt.put((byte)0);
+                elt.putInt((Integer) p);
+                elt.put((byte) 0);
                 elt.flip();
                 size += elt.remaining();
                 l.add(elt);
             } else if (p instanceof String) {
-                ByteBuffer bytes = ByteBuffer.wrap(((String)p).getBytes());
+                ByteBuffer bytes = ByteBuffer.wrap(((String) p).getBytes());
                 ByteBuffer elt = ByteBuffer.allocate(2 + bytes.remaining() + 1);
                 elt.putShort((short) bytes.remaining());
                 elt.put(bytes);
-                elt.put((byte)0);
+                elt.put((byte) 0);
                 elt.flip();
                 size += elt.remaining();
                 l.add(elt);

@@ -15,21 +15,20 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.exceptions.*;
+import com.google.common.util.concurrent.ListenableFuture;
+
 import java.io.Closeable;
 import java.util.Collection;
 
-import com.google.common.util.concurrent.ListenableFuture;
-
-import com.datastax.driver.core.exceptions.*;
-
 /**
  * A session holds connections to a Cassandra cluster, allowing it to be queried.
- *
+ * <p/>
  * Each session maintains multiple connections to the cluster nodes,
  * provides policies to choose which node to use for each query (round-robin on
  * all nodes of the cluster by default), and handles retries for failed query (when
  * it makes sense), etc...
- * <p>
+ * <p/>
  * Session instances are thread-safe and usually a single instance is enough
  * per application. As a given session can only be "logged" into one keyspace at
  * a time (where the "logged" keyspace is the one used by query if the query doesn't
@@ -42,7 +41,7 @@ public interface Session extends Closeable {
 
     /**
      * The keyspace to which this Session is currently logged in, if any.
-     * <p>
+     * <p/>
      * This correspond to the name passed to {@link Cluster#connect(String)}, or to the
      * last keyspace logged into through a "USE" CQL query if one was used.
      *
@@ -54,7 +53,7 @@ public interface Session extends Closeable {
     /**
      * Force the initialization of this Session instance if it hasn't been
      * initialized yet.
-     * <p>
+     * <p/>
      * Please note first that most use won't need to call this method
      * explicitly. If you use the {@link Cluster#connect} method {@code Cluster}
      * to create your Session, the returned session will be already
@@ -63,24 +62,23 @@ public interface Session extends Closeable {
      * initialized the first time that session is used for querying. This method
      * is thus only useful if you use {@link Cluster#newSession} and want to
      * explicitly force initialization without querying.
-     * <p>
+     * <p/>
      * Session initialization consists in connecting the Session to the known
      * Cassandra hosts (at least those that should not be ignored due to
      * the {@code LoadBalancingPolicy} in place).
-     * <p>
+     * <p/>
      * If the Cluster instance this Session depends on is not itself
      * initialized, it will be initialized by this method.
-     * <p>
+     * <p/>
      * If the session is already initialized, this method is a no-op.
      *
      * @return this {@code Session} object.
-     *
      * @throws NoHostAvailableException if this initialization triggers the
-     * Cluster initialization and no host amongst the contact points can be
-     * reached.
-     * @throws AuthenticationException if this initialization triggers the
-     * Cluster initialization and an authentication error occurs while contacting
-     * the initial contact points.
+     *                                  Cluster initialization and no host amongst the contact points can be
+     *                                  reached.
+     * @throws AuthenticationException  if this initialization triggers the
+     *                                  Cluster initialization and an authentication error occurs while contacting
+     *                                  the initial contact points.
      */
     Session init();
 
@@ -88,57 +86,54 @@ public interface Session extends Closeable {
      * Initialize this session asynchronously.
      *
      * @return a future that will complete when the session is fully initialized.
-     *
      * @see #init()
      */
     ListenableFuture<Session> initAsync();
 
     /**
      * Executes the provided query.
-     *
+     * <p/>
      * This is a convenience method for {@code execute(new SimpleStatement(query))}.
      *
      * @param query the CQL query to execute.
      * @return the result of the query. That result will never be null but can
      * be empty (and will be for any non SELECT query).
-     *
      * @throws NoHostAvailableException if no host in the cluster can be
-     * contacted successfully to execute this query.
-     * @throws QueryExecutionException if the query triggered an execution
-     * exception, i.e. an exception thrown by Cassandra when it cannot execute
-     * the query with the requested consistency level successfully.
+     *                                  contacted successfully to execute this query.
+     * @throws QueryExecutionException  if the query triggered an execution
+     *                                  exception, i.e. an exception thrown by Cassandra when it cannot execute
+     *                                  the query with the requested consistency level successfully.
      * @throws QueryValidationException if the query if invalid (syntax error,
-     * unauthorized or any other validation problem).
+     *                                  unauthorized or any other validation problem).
      */
     ResultSet execute(String query);
 
     /**
      * Executes the provided query using the provided value.
-     *
+     * <p/>
      * This is a convenience method for {@code execute(new SimpleStatement(query, values))}.
      *
-     * @param query the CQL query to execute.
+     * @param query  the CQL query to execute.
      * @param values values required for the execution of {@code query}. See
-     * {@link SimpleStatement(String, Object...)} for more detail.
+     *               {@link SimpleStatement(String, Object...)} for more detail.
      * @return the result of the query. That result will never be null but can
      * be empty (and will be for any non SELECT query).
-     *
-     * @throws NoHostAvailableException if no host in the cluster can be
-     * contacted successfully to execute this query.
-     * @throws QueryExecutionException if the query triggered an execution
-     * exception, i.e. an exception thrown by Cassandra when it cannot execute
-     * the query with the requested consistency level successfully.
-     * @throws QueryValidationException if the query if invalid (syntax error,
-     * unauthorized or any other validation problem).
+     * @throws NoHostAvailableException    if no host in the cluster can be
+     *                                     contacted successfully to execute this query.
+     * @throws QueryExecutionException     if the query triggered an execution
+     *                                     exception, i.e. an exception thrown by Cassandra when it cannot execute
+     *                                     the query with the requested consistency level successfully.
+     * @throws QueryValidationException    if the query if invalid (syntax error,
+     *                                     unauthorized or any other validation problem).
      * @throws UnsupportedFeatureException if version 1 of the protocol
-     * is in use (i.e. if you've force version 1 through {@link Cluster.Builder#withProtocolVersion}
-     * or you use Cassandra 1.2).
+     *                                     is in use (i.e. if you've force version 1 through {@link Cluster.Builder#withProtocolVersion}
+     *                                     or you use Cassandra 1.2).
      */
     ResultSet execute(String query, Object... values);
 
     /**
      * Executes the provided query.
-     *
+     * <p/>
      * This method blocks until at least some result has been received from the
      * database. However, for SELECT queries, it does not guarantee that the
      * result has been received in full. But it does guarantee that some
@@ -149,24 +144,23 @@ public interface Session extends Closeable {
      * @param statement the CQL query to execute (that can be any {@code Statement}).
      * @return the result of the query. That result will never be null but can
      * be empty (and will be for any non SELECT query).
-     *
-     * @throws NoHostAvailableException if no host in the cluster can be
-     * contacted successfully to execute this query.
-     * @throws QueryExecutionException if the query triggered an execution
-     * exception, i.e. an exception thrown by Cassandra when it cannot execute
-     * the query with the requested consistency level successfully.
-     * @throws QueryValidationException if the query if invalid (syntax error,
-     * unauthorized or any other validation problem).
+     * @throws NoHostAvailableException    if no host in the cluster can be
+     *                                     contacted successfully to execute this query.
+     * @throws QueryExecutionException     if the query triggered an execution
+     *                                     exception, i.e. an exception thrown by Cassandra when it cannot execute
+     *                                     the query with the requested consistency level successfully.
+     * @throws QueryValidationException    if the query if invalid (syntax error,
+     *                                     unauthorized or any other validation problem).
      * @throws UnsupportedFeatureException if the protocol version 1 is in use and
-     * a feature not supported has been used. Features that are not supported by
-     * the version protocol 1 include: BatchStatement, ResultSet paging and binary
-     * values in RegularStatement.
+     *                                     a feature not supported has been used. Features that are not supported by
+     *                                     the version protocol 1 include: BatchStatement, ResultSet paging and binary
+     *                                     values in RegularStatement.
      */
     ResultSet execute(Statement statement);
 
     /**
      * Executes the provided query asynchronously.
-     * <p>
+     * <p/>
      * This is a convenience method for {@code executeAsync(new SimpleStatement(query))}.
      *
      * @param query the CQL query to execute.
@@ -176,40 +170,38 @@ public interface Session extends Closeable {
 
     /**
      * Executes the provided query asynchronously using the provided values.
-     *
+     * <p/>
      * This is a convenience method for {@code executeAsync(new SimpleStatement(query, values))}.
      *
-     * @param query the CQL query to execute.
+     * @param query  the CQL query to execute.
      * @param values values required for the execution of {@code query}. See
-     * {@link SimpleStatement(String, Object...)} for more detail.
+     *               {@link SimpleStatement(String, Object...)} for more detail.
      * @return a future on the result of the query.
-     *
      * @throws UnsupportedFeatureException if version 1 of the protocol
-     * is in use (i.e. if you've force version 1 through {@link Cluster.Builder#withProtocolVersion}
-     * or you use Cassandra 1.2).
+     *                                     is in use (i.e. if you've force version 1 through {@link Cluster.Builder#withProtocolVersion}
+     *                                     or you use Cassandra 1.2).
      */
     ResultSetFuture executeAsync(String query, Object... values);
 
     /**
      * Executes the provided query asynchronously.
-     *
+     * <p/>
      * This method does not block. It returns as soon as the query has been
      * passed to the underlying network stack. In particular, returning from
      * this method does not guarantee that the query is valid or has even been
      * submitted to a live node. Any exception pertaining to the failure of the
      * query will be thrown when accessing the {@link ResultSetFuture}.
-     * <p>
+     * <p/>
      * Note that for queries that doesn't return a result (INSERT, UPDATE and
      * DELETE), you will need to access the ResultSetFuture (that is call one of
      * its get method to make sure the query was successful.
      *
      * @param statement the CQL query to execute (that can be either any {@code Statement}.
      * @return a future on the result of the query.
-     *
      * @throws UnsupportedFeatureException if the protocol version 1 is in use and
-     * a feature not supported has been used. Features that are not supported by
-     * the version protocol 1 include: BatchStatement, ResultSet paging and binary
-     * values in RegularStatement.
+     *                                     a feature not supported has been used. Features that are not supported by
+     *                                     the version protocol 1 include: BatchStatement, ResultSet paging and binary
+     *                                     values in RegularStatement.
      */
     ResultSetFuture executeAsync(Statement statement);
 
@@ -218,15 +210,14 @@ public interface Session extends Closeable {
      *
      * @param query the CQL query string to prepare
      * @return the prepared statement corresponding to {@code query}.
-     *
      * @throws NoHostAvailableException if no host in the cluster can be
-     * contacted successfully to prepare this query.
+     *                                  contacted successfully to prepare this query.
      */
     PreparedStatement prepare(String query);
 
     /**
      * Prepares the provided query.
-     * <p>
+     * <p/>
      * This method behaves like {@link #prepare(String)},
      * but note that the resulting {@code PreparedStatement} will inherit the query properties
      * set on {@code statement}. Concretely, this means that in the following code:
@@ -236,7 +227,7 @@ public interface Session extends Closeable {
      * session.execute(prepared.bind("someValue"));
      * </pre>
      * the final execution will be performed with Quorum consistency.
-     * <p>
+     * <p/>
      * Please note that if the same CQL statement is prepared more than once, all
      * calls to this method will return the same {@code PreparedStatement} object
      * but the method will still apply the properties of the prepared
@@ -244,19 +235,18 @@ public interface Session extends Closeable {
      *
      * @param statement the statement to prepare
      * @return the prepared statement corresponding to {@code statement}.
-     *
      * @throws NoHostAvailableException if no host in the cluster can be
-     * contacted successfully to prepare this statement.
+     *                                  contacted successfully to prepare this statement.
      * @throws IllegalArgumentException if {@code statement.getValues() != null}
-     * (values for executing a prepared statement should be provided after preparation
-     * though the {@link PreparedStatement#bind} method or through a corresponding
-     * {@link BoundStatement}).
+     *                                  (values for executing a prepared statement should be provided after preparation
+     *                                  though the {@link PreparedStatement#bind} method or through a corresponding
+     *                                  {@link BoundStatement}).
      */
     PreparedStatement prepare(RegularStatement statement);
 
     /**
      * Prepares the provided query string asynchronously.
-     * <p>
+     * <p/>
      * This method is equivalent to {@link #prepare(String)} except that it
      * does not block but return a future instead. Any error during preparation will
      * be thrown when accessing the future, not by this method itself.
@@ -277,7 +267,7 @@ public interface Session extends Closeable {
      * session.execute(prepared.bind("someValue"));
      * </pre>
      * the final execution will be performed with Quorum consistency.
-     * <p>
+     * <p/>
      * Please note that if the same CQL statement is prepared more than once, all
      * calls to this method will return the same {@code PreparedStatement} object
      * but the method will still apply the properties of the prepared
@@ -285,31 +275,29 @@ public interface Session extends Closeable {
      *
      * @param statement the statement to prepare
      * @return a future on the prepared statement corresponding to {@code statement}.
-     *
-     * @see Session#prepare(RegularStatement)
-     *
      * @throws IllegalArgumentException if {@code statement.getValues() != null}
-     * (values for executing a prepared statement should be provided after preparation
-     * though the {@link PreparedStatement#bind} method or through a corresponding
-     * {@link BoundStatement}).
+     *                                  (values for executing a prepared statement should be provided after preparation
+     *                                  though the {@link PreparedStatement#bind} method or through a corresponding
+     *                                  {@link BoundStatement}).
+     * @see Session#prepare(RegularStatement)
      */
     ListenableFuture<PreparedStatement> prepareAsync(RegularStatement statement);
 
     /**
      * Initiates a shutdown of this session instance.
-     * <p>
+     * <p/>
      * This method is asynchronous and return a future on the completion
      * of the shutdown process. As soon a the session is shutdown, no
      * new request will be accepted, but already submitted queries are
      * allowed to complete. This method closes all connections of this
      * session and reclaims all resources used by it.
-     * <p>
+     * <p/>
      * If for some reason you wish to expedite this process, the
      * {@link CloseFuture#force} can be called on the result future.
-     * <p>
+     * <p/>
      * This method has no particular effect if the session was already closed
      * (in which case the returned future will return immediately).
-     * <p>
+     * <p/>
      * Note that this method does not close the corresponding {@code Cluster}
      * instance (which holds additional resources, in particular internal
      * executors that must be shut down in order for the client program to
@@ -324,9 +312,9 @@ public interface Session extends Closeable {
     /**
      * Initiates a shutdown of this session instance and blocks until
      * that shutdown completes.
-     * <p>
+     * <p/>
      * This method is a shortcut for {@code closeAsync().get()}.
-     * <p>
+     * <p/>
      * Note that this method does not close the corresponding {@code Cluster}
      * instance (which holds additional resources, in particular internal
      * executors that must be shut down in order for the client program to
@@ -339,7 +327,7 @@ public interface Session extends Closeable {
 
     /**
      * Whether this Session instance has been closed.
-     * <p>
+     * <p/>
      * Note that this method returns true as soon as one closing this Session
      * has started but it does not guarantee that the closing is done. If you
      * want to guarantee that the closing is done, you can call {@code close()}
@@ -360,7 +348,7 @@ public interface Session extends Closeable {
 
     /**
      * Return a snapshot of the state of this Session.
-     * <p>
+     * <p/>
      * The returned object provides information on which hosts the session is
      * connected to, how many connections are opened to each host, etc...
      * The returned object is immutable, it is a snapshot of the Session State
@@ -372,7 +360,7 @@ public interface Session extends Closeable {
 
     /**
      * The state of a Session.
-     * <p>
+     * <p/>
      * This mostly exposes information on the connections maintained by a Session:
      * which host it is connected to, how many connection is has for each host, etc...
      */
@@ -387,7 +375,7 @@ public interface Session extends Closeable {
         /**
          * The hosts to which the session is currently connected (more precisely, at the time
          * this State has been grabbed).
-         * <p>
+         * <p/>
          * Please note that this method really returns the hosts for which the session currently
          * holds a connection pool. A such, it's unlikely but not impossible for a host to be listed
          * in the output of this method but to have {@code getOpenConnections} return 0, if the
@@ -399,7 +387,7 @@ public interface Session extends Closeable {
 
         /**
          * The number of open connections to a given host.
-         * <p>
+         * <p/>
          * Note that this refers to <em>active</em> connections. The actual number of connections also
          * includes {@link #getTrashedConnections(Host)}.
          *
@@ -411,7 +399,7 @@ public interface Session extends Closeable {
 
         /**
          * The number of "trashed" connections to a given host.
-         * <p>
+         * <p/>
          * When the load to a host decreases, the driver will reclaim some connections in order to save
          * resources. No requests are sent to these connections anymore, but they are kept open for an
          * additional amount of time ({@link PoolingOptions#getIdleTimeoutSeconds()}), in case the load
@@ -425,7 +413,7 @@ public interface Session extends Closeable {
 
         /**
          * The number of queries that are currently being executed though a given host.
-         * <p>
+         * <p/>
          * This correspond to the number of queries that have been sent (by the session this
          * is a State of) to the Cassandra Host on one of its connection but haven't yet returned.
          * In that sense this provide a sort of measure of how busy the connections to that node

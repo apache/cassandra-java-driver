@@ -15,11 +15,11 @@
  */
 package com.datastax.driver.core;
 
+import com.google.common.base.Objects;
+
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-
-import com.google.common.base.Objects;
 
 /**
  * Describes a Column.
@@ -108,10 +108,10 @@ public class ColumnMetadata {
         if (!(other instanceof ColumnMetadata))
             return false;
 
-        ColumnMetadata that = (ColumnMetadata)other;
+        ColumnMetadata that = (ColumnMetadata) other;
         return this.name.equals(that.name) &&
-            this.isStatic == that.isStatic &&
-            this.type.equals(that.type);
+                this.isStatic == that.isStatic &&
+                this.type.equals(that.type);
     }
 
     @Override
@@ -131,11 +131,11 @@ public class ColumnMetadata {
 
         public enum Kind {
 
-            PARTITION_KEY     ("PARTITION_KEY" , "PARTITION_KEY"),
-            CLUSTERING_COLUMN ("CLUSTERING_KEY", "CLUSTERING"   ),
-            REGULAR           ("REGULAR"       , "REGULAR"      ),
-            COMPACT_VALUE     ("COMPACT_VALUE" , ""             ), // v2 only
-            STATIC            ("STATIC"        , "STATIC"       );
+            PARTITION_KEY("PARTITION_KEY", "PARTITION_KEY"),
+            CLUSTERING_COLUMN("CLUSTERING_KEY", "CLUSTERING"),
+            REGULAR("REGULAR", "REGULAR"),
+            COMPACT_VALUE("COMPACT_VALUE", ""), // v2 only
+            STATIC("STATIC", "STATIC");
 
             final String v2;
             final String v3;
@@ -147,7 +147,7 @@ public class ColumnMetadata {
 
             static Kind fromStringV2(String s) {
                 for (Kind kind : Kind.values()) {
-                    if(kind.v2.equalsIgnoreCase(s))
+                    if (kind.v2.equalsIgnoreCase(s))
                         return kind;
                 }
                 throw new IllegalArgumentException(s);
@@ -155,7 +155,7 @@ public class ColumnMetadata {
 
             static Kind fromStringV3(String s) {
                 for (Kind kind : Kind.values()) {
-                    if(kind.v3.equalsIgnoreCase(s))
+                    if (kind.v3.equalsIgnoreCase(s))
                         return kind;
                 }
                 throw new IllegalArgumentException(s);
@@ -182,7 +182,7 @@ public class ColumnMetadata {
             String name = row.getString(COLUMN_NAME);
 
             Kind kind;
-            if(version.getMajor() < 2) {
+            if (version.getMajor() < 2) {
                 kind = Kind.REGULAR;
             } else if (version.getMajor() < 3) {
                 kind = row.isNull(KIND_V2) ? Kind.REGULAR : Kind.fromStringV2(row.getString(KIND_V2));
@@ -191,16 +191,16 @@ public class ColumnMetadata {
             }
 
             int position;
-            if(version.getMajor() >= 3) {
+            if (version.getMajor() >= 3) {
                 position = row.getInt(POSITION); // cannot be null, -1 is used as a special value instead of null to avoid tombstones
-                if(position == -1) position = 0;
+                if (position == -1) position = 0;
             } else {
                 position = row.isNull(COMPONENT_INDEX) ? 0 : row.getInt(COMPONENT_INDEX);
             }
 
             String dataType;
             boolean reversed;
-            if(version.getMajor() >= 3) {
+            if (version.getMajor() >= 3) {
                 dataType = row.getString(TYPE);
                 String clusteringOrderStr = row.getString(CLUSTERING_ORDER);
                 reversed = clusteringOrderStr.equals(DESC);
@@ -213,7 +213,7 @@ public class ColumnMetadata {
 
             // secondary indexes (C* < 3.0.0)
             // from C* 3.0 onwards 2i are defined in a separate table
-            if(version.getMajor() < 3) {
+            if (version.getMajor() < 3) {
                 for (String str : Arrays.asList(INDEX_TYPE, INDEX_NAME, INDEX_OPTIONS))
                     if (row.getColumnDefinitions().contains(str) && !row.isNull(str))
                         c.indexColumns.put(str, row.getString(str));

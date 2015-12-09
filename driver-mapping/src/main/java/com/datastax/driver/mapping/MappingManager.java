@@ -15,16 +15,16 @@
  */
 package com.datastax.driver.mapping;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-
 import com.datastax.driver.core.ProtocolVersion;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.TypeCodec;
 import com.datastax.driver.mapping.annotations.Accessor;
 import com.datastax.driver.mapping.annotations.Table;
 import com.datastax.driver.mapping.annotations.UDT;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Mapping manager from which to obtain entity mappers.
@@ -40,7 +40,7 @@ public class MappingManager {
 
     /**
      * Creates a new {@code MappingManager} using the provided {@code Session}.
-     * <p>
+     * <p/>
      * Note that this constructor forces the initialization of the session (see
      * {@link #MappingManager(Session, ProtocolVersion)} if that is a problem for you).
      *
@@ -57,15 +57,14 @@ public class MappingManager {
 
     /**
      * Creates a new {@code MappingManager} using the provided {@code Session}.
-     * <p>
+     * <p/>
      * This constructor is only provided for backward compatibility: before 2.1.7, {@code MappingManager} could be
      * built from an uninitialized session; since 2.1.7, the mapper needs to know the active protocol version to
      * adapt its internal requests, so {@link #MappingManager(Session)} will now initialize the session if needed.
      * If you rely on the session not being initialized, use this constructor and provide the version manually.
      *
-     * @param session the {@code Session} to use.
+     * @param session         the {@code Session} to use.
      * @param protocolVersion the protocol version that will be used with this session.
-     *
      * @since 2.1.7
      */
     public MappingManager(Session session, ProtocolVersion protocolVersion) {
@@ -79,10 +78,10 @@ public class MappingManager {
 
     /**
      * The underlying {@code Session} used by this manager.
-     * <p>
+     * <p/>
      * Note that you can get obtain the {@code Cluster} object corresponding
      * to that session using {@code getSession().getCluster()}.
-     * <p>
+     * <p/>
      * It is inadvisable to close the returned Session while this manager and
      * its mappers are in use.
      *
@@ -95,15 +94,15 @@ public class MappingManager {
     /**
      * Creates a {@code Mapper} for the provided class (that must be annotated by a
      * {@link Table} annotation).
-     * <p>
+     * <p/>
      * The {@code MappingManager} only ever keeps one Mapper for each class, and so calling this
      * method multiple times on the same class will always return the same object.
-     * <p>
+     * <p/>
      * If the type of any field in the class is an {@link UDT}-annotated classes, a codec for that
      * class will automatically be created and registered with the underlying {@code Cluster}.
      * This works recursively with UDTs nested in other UDTs or in collections.
      *
-     * @param <T> the type of the class to map.
+     * @param <T>   the type of the class to map.
      * @param klass the (annotated) class for which to return the mapper.
      * @return the {@code Mapper} object for class {@code klass}.
      */
@@ -114,15 +113,15 @@ public class MappingManager {
     /**
      * Creates a {@code TypeCodec} for the provided class (that must be annotated by
      * a {@link UDT} annotation).
-     * <p>
+     * <p/>
      * This method also registers the codec against the underlying {@code Cluster}.
      * In addition, the codecs for any nested UDTs will also be created and registered.
-     * <p>
+     * <p/>
      * You don't need to call this method explicitly if you already call {@link #mapper(Class)}
      * for a class that references this UDT class (creating a mapper will automatically
      * process all UDTs that it uses).
      *
-     * @param <T> the type of the class to map.
+     * @param <T>   the type of the class to map.
      * @param klass the (annotated) class for which to return the codec.
      * @return the codec that maps the provided class to the corresponding user-defined type.
      */
@@ -133,11 +132,11 @@ public class MappingManager {
     /**
      * Creates an accessor object based on the provided interface (that must be annotated by
      * a {@link Accessor} annotation).
-     * <p>
+     * <p/>
      * The {@code MappingManager} only ever keep one Accessor for each class, and so calling this
      * method multiple time on the same class will always return the same object.
      *
-     * @param <T> the type of the accessor class.
+     * @param <T>   the type of the accessor class.
      * @param klass the (annotated) class for which to create an accessor object.
      * @return the accessor object for class {@code klass}.
      */
@@ -147,10 +146,10 @@ public class MappingManager {
 
     @SuppressWarnings("unchecked")
     private <T> Mapper<T> getMapper(Class<T> klass) {
-        Mapper<T> mapper = (Mapper<T>)mappers.get(klass);
+        Mapper<T> mapper = (Mapper<T>) mappers.get(klass);
         if (mapper == null) {
             synchronized (mappers) {
-                mapper = (Mapper<T>)mappers.get(klass);
+                mapper = (Mapper<T>) mappers.get(klass);
                 if (mapper == null) {
                     EntityMapper<T> entityMapper = AnnotationParser.parseEntity(klass, ReflectionMapper.factory(), this);
                     mapper = new Mapper<T>(this, klass, entityMapper);
@@ -165,10 +164,10 @@ public class MappingManager {
 
     @SuppressWarnings("unchecked")
     <T> TypeCodec<T> getUDTCodec(Class<T> mappedClass) {
-        MappedUDTCodec<T> codec = (MappedUDTCodec<T>)udtCodecs.get(mappedClass);
+        MappedUDTCodec<T> codec = (MappedUDTCodec<T>) udtCodecs.get(mappedClass);
         if (codec == null) {
             synchronized (udtCodecs) {
-                codec = (MappedUDTCodec<T>)udtCodecs.get(mappedClass);
+                codec = (MappedUDTCodec<T>) udtCodecs.get(mappedClass);
                 if (codec == null) {
                     codec = AnnotationParser.parseUDT(mappedClass, ReflectionMapper.factory(), this);
                     session.getCluster().getConfiguration().getCodecRegistry().register(codec);
@@ -184,10 +183,10 @@ public class MappingManager {
 
     @SuppressWarnings("unchecked")
     private <T> T getAccessor(Class<T> klass) {
-        T accessor = (T)accessors.get(klass);
+        T accessor = (T) accessors.get(klass);
         if (accessor == null) {
             synchronized (accessors) {
-                accessor = (T)accessors.get(klass);
+                accessor = (T) accessors.get(klass);
                 if (accessor == null) {
                     AccessorMapper<T> mapper = AnnotationParser.parseAccessor(klass, AccessorReflectionMapper.factory(), this);
                     mapper.prepare(this);

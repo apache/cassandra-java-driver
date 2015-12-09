@@ -15,17 +15,16 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.exceptions.InvalidTypeException;
+import com.google.common.reflect.TypeToken;
+import org.testng.annotations.Test;
+
 import java.nio.ByteBuffer;
 import java.util.Collection;
 import java.util.List;
 
-import com.google.common.reflect.TypeToken;
-import org.testng.annotations.Test;
-
 import static com.google.common.collect.Lists.newArrayList;
 import static org.assertj.core.api.Assertions.assertThat;
-
-import com.datastax.driver.core.exceptions.InvalidTypeException;
 
 /**
  * Test an edge case where the user register 2 codecs for the same Java type (here, String).
@@ -41,18 +40,18 @@ public class TypeCodecOverlappingJavaTypeIntegrationTest extends CCMBridge.PerCl
     @Override
     protected Collection<String> getTableDefinitions() {
         return newArrayList(
-            "CREATE TABLE \"myTable\" ("
-                + "c_int int PRIMARY KEY, "
-                + "l_int list<int>, "
-                + "c_text text "
-                + ")"
+                "CREATE TABLE \"myTable\" ("
+                        + "c_int int PRIMARY KEY, "
+                        + "l_int list<int>, "
+                        + "c_text text "
+                        + ")"
         );
     }
 
     @Override
     protected Cluster.Builder configure(Cluster.Builder builder) {
         return builder.withCodecRegistry(
-            new CodecRegistry().register(new IntToStringCodec())
+                new CodecRegistry().register(new IntToStringCodec())
         );
     }
 
@@ -60,16 +59,16 @@ public class TypeCodecOverlappingJavaTypeIntegrationTest extends CCMBridge.PerCl
     public void should_use_custom_codecs_with_prepared_statements() {
         PreparedStatement ps = session.prepare(insertQuery);
         session.execute(
-            ps.bind()
-                .setInt(0, 42)
-                .setList(1, newArrayList(42))
-                .setString(2, "42") // here we have the CQL type so VarcharCodec will be used even if IntToStringCodec accepts it
+                ps.bind()
+                        .setInt(0, 42)
+                        .setList(1, newArrayList(42))
+                        .setString(2, "42") // here we have the CQL type so VarcharCodec will be used even if IntToStringCodec accepts it
         );
         session.execute(
-            ps.bind()
-                .setString(0, "42")
-                .setList(1, newArrayList("42"), String.class)
-                .setString(2, "42") // here we have the CQL type so VarcharCodec will be used even if IntToStringCodec accepts it
+                ps.bind()
+                        .setString(0, "42")
+                        .setList(1, newArrayList("42"), String.class)
+                        .setString(2, "42") // here we have the CQL type so VarcharCodec will be used even if IntToStringCodec accepts it
         );
         ps = session.prepare(selectQuery);
         assertRow(session.execute(ps.bind().setInt(0, 42)).one());
@@ -85,8 +84,10 @@ public class TypeCodecOverlappingJavaTypeIntegrationTest extends CCMBridge.PerCl
         assertThat(row.getList(1, Integer.class)).isEqualTo(newArrayList(42));
         assertThat(row.getList(1, String.class)).isEqualTo(newArrayList("42"));
         assertThat(row.getObject(1)).isEqualTo(newArrayList(42)); // uses the default codec
-        assertThat(row.get(1, new TypeToken<List<Integer>>() {})).isEqualTo(newArrayList(42));
-        assertThat(row.get(1, new TypeToken<List<String>>() {})).isEqualTo(newArrayList("42"));
+        assertThat(row.get(1, new TypeToken<List<Integer>>() {
+        })).isEqualTo(newArrayList(42));
+        assertThat(row.get(1, new TypeToken<List<String>>() {
+        })).isEqualTo(newArrayList("42"));
     }
 
     private class IntToStringCodec extends TypeCodec<String> {

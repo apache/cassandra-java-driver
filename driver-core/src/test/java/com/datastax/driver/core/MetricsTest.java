@@ -15,25 +15,23 @@
  */
 package com.datastax.driver.core;
 
-import java.lang.management.ManagementFactory;
-import java.util.Collection;
-import java.util.Collections;
-
-import com.google.common.collect.Lists;
-import javax.management.InstanceNotFoundException;
-import javax.management.MBeanInfo;
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
-import org.testng.annotations.Test;
-
-import static org.testng.Assert.assertEquals;
-
 import com.datastax.driver.core.Metrics.Errors;
 import com.datastax.driver.core.exceptions.DriverException;
 import com.datastax.driver.core.policies.RetryPolicy;
 import com.datastax.driver.core.policies.RetryPolicy.RetryDecision;
+import com.google.common.collect.Lists;
+import org.testng.annotations.Test;
+
+import javax.management.InstanceNotFoundException;
+import javax.management.MBeanInfo;
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
+import java.lang.management.ManagementFactory;
+import java.util.Collection;
+import java.util.Collections;
 
 import static com.datastax.driver.core.Assertions.assertThat;
+import static org.testng.Assert.assertEquals;
 
 public class MetricsTest extends CCMBridge.PerClassSingleNodeCluster {
     private volatile RetryDecision retryDecision;
@@ -64,17 +62,19 @@ public class MetricsTest extends CCMBridge.PerClassSingleNodeCluster {
             }
 
             @Override
-            public void init(Cluster cluster) {}
+            public void init(Cluster cluster) {
+            }
 
             @Override
-            public void close() {}
+            public void close() {
+            }
         });
     }
 
     @Override
     protected Collection<String> getTableDefinitions() {
         return Lists.newArrayList("CREATE TABLE test (k int primary key, v int)",
-                                  "INSERT INTO test (k, v) VALUES (1, 1)");
+                "INSERT INTO test (k, v) VALUES (1, 1)");
     }
 
     @Test(groups = "short")
@@ -105,7 +105,7 @@ public class MetricsTest extends CCMBridge.PerClassSingleNodeCluster {
      *
      * @test_category metrics
      */
-    @Test(groups="short")
+    @Test(groups = "short")
     public void should_enable_metrics_and_jmx_by_default() throws Exception {
         assertThat(cluster.getMetrics()).isNotNull();
         ObjectName clusterMetricsON = ObjectName.getInstance(cluster.getClusterName() + "-metrics:name=connected-to");
@@ -123,12 +123,12 @@ public class MetricsTest extends CCMBridge.PerClassSingleNodeCluster {
      *
      * @test_category metrics
      */
-    @Test(groups="short", expectedExceptions=InstanceNotFoundException.class)
+    @Test(groups = "short", expectedExceptions = InstanceNotFoundException.class)
     public void metrics_should_be_null_when_metrics_disabled() throws Exception {
         Cluster cluster = super.configure(Cluster.builder())
-            .addContactPointsWithPorts(Collections.singletonList(hostAddress))
-            .withoutMetrics()
-            .build();
+                .addContactPointsWithPorts(Collections.singletonList(hostAddress))
+                .withoutMetrics()
+                .build();
         try {
             cluster.init();
             assertThat(cluster.getMetrics()).isNull();
@@ -147,12 +147,12 @@ public class MetricsTest extends CCMBridge.PerClassSingleNodeCluster {
      *
      * @test_category metrics
      */
-    @Test(groups="short", expectedExceptions=InstanceNotFoundException.class)
+    @Test(groups = "short", expectedExceptions = InstanceNotFoundException.class)
     public void should_be_no_jmx_mbean_when_jmx_is_disabled() throws Exception {
         Cluster cluster = super.configure(Cluster.builder())
-            .addContactPointsWithPorts(Collections.singletonList(hostAddress))
-            .withoutJMXReporting()
-            .build();
+                .addContactPointsWithPorts(Collections.singletonList(hostAddress))
+                .withoutJMXReporting()
+                .build();
         try {
             cluster.init();
             assertThat(cluster.getMetrics()).isNotNull();

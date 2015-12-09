@@ -15,24 +15,23 @@
  */
 package com.datastax.driver.core.policies;
 
+import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.Host;
+import com.datastax.driver.core.HostDistance;
+import com.datastax.driver.core.Statement;
+import com.google.common.base.Predicate;
+import com.google.common.base.Predicates;
+import com.google.common.collect.ImmutableSet;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
-import com.google.common.base.Predicate;
-import com.google.common.base.Predicates;
-import com.google.common.collect.ImmutableSet;
-
-import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.Host;
-import com.datastax.driver.core.HostDistance;
-import com.datastax.driver.core.Statement;
-
 /**
  * A load balancing policy wrapper that ensures that only hosts matching the predicate
  * will ever be returned.
- * <p>
+ * <p/>
  * This policy wraps another load balancing policy and will delegate the choice
  * of hosts to the wrapped policy with the exception that only hosts matching
  * the predicate provided when constructing this policy will ever be
@@ -48,8 +47,8 @@ public class HostFilterPolicy implements ChainableLoadBalancingPolicy {
      * matching the predicate.
      *
      * @param childPolicy the wrapped policy.
-     * @param predicate the host predicate. Only hosts matching this predicate may get connected
-     * to (whether they will get connected to or not depends on the child policy).
+     * @param predicate   the host predicate. Only hosts matching this predicate may get connected
+     *                    to (whether they will get connected to or not depends on the child policy).
      */
     public HostFilterPolicy(LoadBalancingPolicy childPolicy, Predicate<Host> predicate) {
         this.childPolicy = childPolicy;
@@ -65,7 +64,7 @@ public class HostFilterPolicy implements ChainableLoadBalancingPolicy {
      * {@inheritDoc}
      *
      * @throws IllegalArgumentException if none of the host in {@code hosts}
-     * (which will correspond to the contact points) matches the predicate.
+     *                                  (which will correspond to the contact points) matches the predicate.
      */
     @Override
     public void init(Cluster cluster, Collection<Host> hosts) {
@@ -89,13 +88,13 @@ public class HostFilterPolicy implements ChainableLoadBalancingPolicy {
     @Override
     public HostDistance distance(Host host) {
         return predicate.apply(host)
-            ? childPolicy.distance(host)
-            : HostDistance.IGNORED;
+                ? childPolicy.distance(host)
+                : HostDistance.IGNORED;
     }
 
     /**
      * {@inheritDoc}
-     * <p>
+     * <p/>
      * It is guaranteed that only hosts matching the predicate will be returned.
      */
     @Override
@@ -140,8 +139,7 @@ public class HostFilterPolicy implements ChainableLoadBalancingPolicy {
      * whose DC belongs to the provided list.
      *
      * @param childPolicy the wrapped policy.
-     * @param dcs the DCs.
-     *
+     * @param dcs         the DCs.
      * @return the policy.
      */
     public static HostFilterPolicy fromDCWhiteList(LoadBalancingPolicy childPolicy, Iterable<String> dcs) {
@@ -153,8 +151,7 @@ public class HostFilterPolicy implements ChainableLoadBalancingPolicy {
      * whose DC belongs to the provided list.
      *
      * @param childPolicy the wrapped policy.
-     * @param dcs the DCs.
-     *
+     * @param dcs         the DCs.
      * @return the policy.
      */
     public static HostFilterPolicy fromDCBlackList(LoadBalancingPolicy childPolicy, Iterable<String> dcs) {

@@ -15,6 +15,11 @@
  */
 package com.datastax.driver.core.policies;
 
+import com.datastax.driver.core.*;
+import com.google.common.collect.AbstractIterator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -22,24 +27,13 @@ import java.util.Random;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.google.common.collect.AbstractIterator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.Configuration;
-import com.datastax.driver.core.ConsistencyLevel;
-import com.datastax.driver.core.Host;
-import com.datastax.driver.core.HostDistance;
-import com.datastax.driver.core.Statement;
-
 /**
  * A Round-robin load balancing policy.
- * <p>
+ * <p/>
  * This policy queries nodes in a round-robin fashion. For a given query,
  * if an host fail, the next one (following the round-robin order) is
  * tried, until all hosts have been tried.
- * <p>
+ * <p/>
  * This policy is not datacenter aware and will include every known
  * Cassandra host in its round robin algorithm. If you use multiple
  * datacenter this will be inefficient and you will want to use the
@@ -59,7 +53,8 @@ public class RoundRobinPolicy implements LoadBalancingPolicy {
      * Creates a load balancing policy that picks host to query in a round robin
      * fashion (on all the hosts of the Cassandra cluster).
      */
-    public RoundRobinPolicy() {}
+    public RoundRobinPolicy() {
+    }
 
     @Override
     public void init(Cluster cluster, Collection<Host> hosts) {
@@ -70,7 +65,7 @@ public class RoundRobinPolicy implements LoadBalancingPolicy {
 
     /**
      * Return the HostDistance for the provided host.
-     * <p>
+     * <p/>
      * This policy consider all nodes as local. This is generally the right
      * thing to do in a single datacenter deployment. If you use multiple
      * datacenter, see {@link DCAwareRoundRobinPolicy} instead.
@@ -85,14 +80,14 @@ public class RoundRobinPolicy implements LoadBalancingPolicy {
 
     /**
      * Returns the hosts to use for a new query.
-     * <p>
+     * <p/>
      * The returned plan will try each known host of the cluster. Upon each
      * call to this method, the {@code i}th host of the plans returned will cycle
      * over all the hosts of the cluster in a round-robin fashion.
      *
      * @param loggedKeyspace the keyspace currently logged in on for this
-     * query.
-     * @param statement the query for which to build the plan.
+     *                       query.
+     * @param statement      the query for which to build the plan.
      * @return a new query plan, i.e. an iterator indicating which host to
      * try first for querying, which one to use as failover, etc...
      */
@@ -101,13 +96,13 @@ public class RoundRobinPolicy implements LoadBalancingPolicy {
 
         if (!hasLoggedLocalCLUse) {
             ConsistencyLevel cl = statement.getConsistencyLevel() == null
-                                ? configuration.getQueryOptions().getConsistencyLevel()
-                                : statement.getConsistencyLevel();
+                    ? configuration.getQueryOptions().getConsistencyLevel()
+                    : statement.getConsistencyLevel();
             if (cl.isDCLocal()) {
                 hasLoggedLocalCLUse = true;
                 logger.warn("Detected request at Consistency Level {} but the non-DC aware RoundRobinPolicy is in use. "
-                          + "It is strongly advised to use DCAwareRoundRobinPolicy if you have multiple DCs/use DC-aware consistency levels "
-                          + "(note: this message will only be logged once)", statement.getConsistencyLevel());
+                        + "It is strongly advised to use DCAwareRoundRobinPolicy if you have multiple DCs/use DC-aware consistency levels "
+                        + "(note: this message will only be logged once)", statement.getConsistencyLevel());
             }
         }
 
@@ -116,7 +111,7 @@ public class RoundRobinPolicy implements LoadBalancingPolicy {
         // would be racy). We use clone() as it don't involve a copy of the
         // underlying array (and thus we rely on liveHosts being a CopyOnWriteArrayList).
         @SuppressWarnings("unchecked")
-        final List<Host> hosts = (List<Host>)liveHosts.clone();
+        final List<Host> hosts = (List<Host>) liveHosts.clone();
         final int startIdx = index.getAndIncrement();
 
         // Overflow protection; not theoretically thread safe but should be good enough

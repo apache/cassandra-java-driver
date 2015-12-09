@@ -15,16 +15,16 @@
  */
 package com.datastax.driver.extras.codecs.enums;
 
-import java.nio.ByteBuffer;
-
 import com.datastax.driver.core.ProtocolVersion;
 import com.datastax.driver.core.TypeCodec;
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 
+import java.nio.ByteBuffer;
+
 /**
  * A codec that serializes {@link Enum} instances as CQL {@code int}s
  * representing their ordinal values as returned by {@link Enum#ordinal()}.
- * <p>
+ * <p/>
  * <strong>Note that this codec relies on the enum constants declaration order;
  * it is therefore vital that this order remains immutable.</strong>
  *

@@ -15,12 +15,11 @@
  */
 package com.datastax.driver.core;
 
-import java.nio.ByteBuffer;
-import java.util.Set;
-
+import com.datastax.driver.core.utils.Bytes;
 import org.testng.annotations.Test;
 
-import com.datastax.driver.core.utils.Bytes;
+import java.nio.ByteBuffer;
+import java.util.Set;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 
@@ -35,18 +34,18 @@ public class SingleTokenIntegrationTest {
 
         try {
             ccm = CCMBridge.builder("test")
-                // force the initial token to a non-min value to validate that the single range will always be ]minToken, minToken]
-                .withCassandraConfiguration("initial_token", "1")
-                .build();
+                    // force the initial token to a non-min value to validate that the single range will always be ]minToken, minToken]
+                    .withCassandraConfiguration("initial_token", "1")
+                    .build();
 
             cluster = Cluster.builder()
-                .addContactPoint(CCMBridge.ipOfNode(1))
-                .withQueryOptions(new QueryOptions()
-                    .setRefreshNodeIntervalMillis(0)
-                    .setRefreshNodeListIntervalMillis(0)
-                    .setRefreshSchemaIntervalMillis(0)
-                )
-                .build();
+                    .addContactPoint(CCMBridge.ipOfNode(1))
+                    .withQueryOptions(new QueryOptions()
+                                    .setRefreshNodeIntervalMillis(0)
+                                    .setRefreshNodeListIntervalMillis(0)
+                                    .setRefreshSchemaIntervalMillis(0)
+                    )
+                    .build();
 
             Session session = cluster.connect();
             session.execute("create keyspace test with replication = {'class': 'SimpleStrategy', 'replication_factor': 1}");
@@ -57,10 +56,10 @@ public class SingleTokenIntegrationTest {
             assertThat(tokenRanges).hasSize(1);
             TokenRange tokenRange = tokenRanges.iterator().next();
             assertThat(tokenRange)
-                .startsWith(Token.M3PToken.FACTORY.minToken())
-                .endsWith(Token.M3PToken.FACTORY.minToken())
-                .isNotEmpty()
-                .isNotWrappedAround();
+                    .startsWith(Token.M3PToken.FACTORY.minToken())
+                    .endsWith(Token.M3PToken.FACTORY.minToken())
+                    .isNotEmpty()
+                    .isNotWrappedAround();
 
             Set<Host> hostsForRange = metadata.getReplicas("test", tokenRange);
             Host host1 = TestUtils.findHost(cluster, 1);

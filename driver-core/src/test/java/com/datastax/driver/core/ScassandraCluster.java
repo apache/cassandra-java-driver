@@ -15,11 +15,6 @@
  */
 package com.datastax.driver.core;
 
-import java.util.List;
-import java.util.Map;
-import java.util.TreeSet;
-import java.util.concurrent.TimeUnit;
-
 import com.beust.jcommander.internal.Lists;
 import com.beust.jcommander.internal.Maps;
 import com.google.common.collect.ImmutableList;
@@ -32,13 +27,17 @@ import org.scassandra.http.client.PrimingRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
+import java.util.Map;
+import java.util.TreeSet;
+import java.util.concurrent.TimeUnit;
+
+import static com.datastax.driver.core.Assertions.assertThat;
 import static org.scassandra.cql.MapType.map;
 import static org.scassandra.cql.PrimitiveType.*;
 import static org.scassandra.cql.SetType.set;
 import static org.scassandra.http.client.PrimingRequest.then;
 import static org.scassandra.http.client.types.ColumnMetadata.column;
-
-import static com.datastax.driver.core.Assertions.assertThat;
 
 public class ScassandraCluster {
 
@@ -152,12 +151,12 @@ public class ScassandraCluster {
     /**
      * First stops each node in {@code dc} and then asserts that each node's {@link Host}
      * is marked down for the given {@link Cluster} instance within 10 seconds.
-     *
+     * <p/>
      * If any of the nodes are the control host, this node is stopped last, to reduce
      * likelihood of control connection choosing a host that will be shut down.
      *
      * @param cluster cluster to wait for down statuses on.
-     * @param dc DC to stop.
+     * @param dc      DC to stop.
      */
     public void stopDC(Cluster cluster, int dc) {
         logger.debug("Stopping all nodes in {}.", datacenter(dc));
@@ -184,7 +183,7 @@ public class ScassandraCluster {
      * for the given {@link Cluster} instance within 10 seconds.
      *
      * @param cluster cluster to wait for down status on.
-     * @param node Node to stop.
+     * @param node    Node to stop.
      */
     public void stop(Cluster cluster, int node) {
         logger.debug("Stopping node {}.", node);
@@ -198,8 +197,8 @@ public class ScassandraCluster {
      * for the given {@link Cluster} instance within 10 seconds.
      *
      * @param cluster cluster to wait for down status on.
-     * @param dc Data center node is in.
-     * @param node Node to stop.
+     * @param dc      Data center node is in.
+     * @param node    Node to stop.
      */
     public void stop(Cluster cluster, int dc, int node) {
         logger.debug("Stopping node {} in {}.", node, datacenter(dc));
@@ -211,7 +210,7 @@ public class ScassandraCluster {
      * is marked up for the given {@link Cluster} instance within 10 seconds.
      *
      * @param cluster cluster to wait for up statuses on.
-     * @param dc DC to start.
+     * @param dc      DC to start.
      */
     public void startDC(Cluster cluster, int dc) {
         logger.debug("Starting all nodes in {}.", datacenter(dc));
@@ -226,7 +225,7 @@ public class ScassandraCluster {
      * for the given {@link Cluster} instance within 10 seconds.
      *
      * @param cluster cluster to wait for up status on.
-     * @param node Node to start.
+     * @param node    Node to start.
      */
     public void start(Cluster cluster, int node) {
         logger.debug("Starting node {}.", node);
@@ -240,8 +239,8 @@ public class ScassandraCluster {
      * for the given {@link Cluster} instance within 10 seconds.
      *
      * @param cluster cluster to wait for up status on.
-     * @param dc Data center node is in.
-     * @param node Node to start.
+     * @param dc      Data center node is in.
+     * @param node    Node to start.
      */
     public void start(Cluster cluster, int dc, int node) {
         logger.debug("Starting node {} in {}.", node, datacenter(dc));
@@ -254,7 +253,7 @@ public class ScassandraCluster {
         int dcNodeCount = nodes(dc).size();
         List<Long> tokens = Lists.newArrayList(dcNodeCount);
         for (int i = 0; i < dcNodeCount; i++) {
-            tokens.add((i * ((long)Math.pow(2, 64) / dcNodeCount) + offset));
+            tokens.add((i * ((long) Math.pow(2, 64) / dcNodeCount) + offset));
         }
         return tokens;
     }
@@ -277,69 +276,69 @@ public class ScassandraCluster {
                     metadata = SELECT_LOCAL;
                     query = "SELECT * FROM system.local WHERE key='local'";
                     row = ImmutableMap.<String, Object>builder()
-                        .put("key", "local")
-                        .put("bootstrapped", "COMPLETED")
-                        .put("broadcast_address", address)
-                        .put("cluster_name", "scassandra")
-                        .put("cql_version", "3.2.0")
-                        .put("data_center", datacenter(dc))
-                        .put("listen_address", address)
-                        .put("partitioner", "org.apache.cassandra.dht.Murmur3Partitioner")
-                        .put("rack", "rack1")
-                        .put("release_version", getPeerInfo(dc, n + 1, "release_version", "2.1.8"))
-                        .put("tokens", ImmutableSet.of(tokens.get(n)))
-                        .build();
+                            .put("key", "local")
+                            .put("bootstrapped", "COMPLETED")
+                            .put("broadcast_address", address)
+                            .put("cluster_name", "scassandra")
+                            .put("cql_version", "3.2.0")
+                            .put("data_center", datacenter(dc))
+                            .put("listen_address", address)
+                            .put("partitioner", "org.apache.cassandra.dht.Murmur3Partitioner")
+                            .put("rack", "rack1")
+                            .put("release_version", getPeerInfo(dc, n + 1, "release_version", "2.1.8"))
+                            .put("tokens", ImmutableSet.of(tokens.get(n)))
+                            .build();
                 } else { // prime system.peers.
                     query = "SELECT * FROM system.peers WHERE peer='" + address + "'";
                     metadata = SELECT_PEERS;
                     row = ImmutableMap.<String, Object>builder()
-                        .put("peer", address)
-                        .put("rpc_address", address)
-                        .put("data_center", datacenter(dc))
-                        .put("rack", "rack1")
-                        .put("release_version", getPeerInfo(dc, n + 1, "release_version", "2.1.8"))
-                        .put("tokens", ImmutableSet.of(Long.toString(tokens.get(n))))
-                        .build();
+                            .put("peer", address)
+                            .put("rpc_address", address)
+                            .put("data_center", datacenter(dc))
+                            .put("rack", "rack1")
+                            .put("release_version", getPeerInfo(dc, n + 1, "release_version", "2.1.8"))
+                            .put("tokens", ImmutableSet.of(Long.toString(tokens.get(n))))
+                            .build();
                     rows.add(row);
                 }
                 client.prime(PrimingRequest.queryBuilder()
-                    .withQuery(query)
-                    .withThen(then()
-                        .withColumnTypes(metadata)
-                        .withRows(row)
-                        .build())
-                    .build());
+                        .withQuery(query)
+                        .withThen(then()
+                                .withColumnTypes(metadata)
+                                .withRows(row)
+                                .build())
+                        .build());
             }
         }
 
         client.prime(PrimingRequest.queryBuilder()
-            .withQuery("SELECT * FROM system.peers")
-            .withThen(then()
-                .withColumnTypes(SELECT_PEERS)
-                .withRows(rows.build())
-                .build())
-            .build());
+                .withQuery("SELECT * FROM system.peers")
+                .withThen(then()
+                        .withColumnTypes(SELECT_PEERS)
+                        .withRows(rows.build())
+                        .build())
+                .build());
 
         // Needed to ensure cluster_name matches what we expect on connection.
         Map<String, Object> clusterNameRow = ImmutableMap.<String, Object>builder()
-            .put("cluster_name", "scassandra")
-            .build();
+                .put("cluster_name", "scassandra")
+                .build();
         client.prime(PrimingRequest.queryBuilder()
-            .withQuery("select cluster_name from system.local")
-            .withThen(then()
-                .withColumnTypes(SELECT_CLUSTER_NAME)
-                .withRows(clusterNameRow)
-                .build())
-            .build());
+                .withQuery("select cluster_name from system.local")
+                .withThen(then()
+                        .withColumnTypes(SELECT_CLUSTER_NAME)
+                        .withRows(clusterNameRow)
+                        .build())
+                .build());
 
         // Prime keyspaces
         client.prime(PrimingRequest.queryBuilder()
-            .withQuery("SELECT * FROM system.schema_keyspaces")
-            .withThen(then()
-                .withColumnTypes(SELECT_SCHEMA_KEYSPACES)
-                .withRows(keyspaceRows)
-                .build())
-            .build());
+                .withQuery("SELECT * FROM system.schema_keyspaces")
+                .withThen(then()
+                        .withColumnTypes(SELECT_SCHEMA_KEYSPACES)
+                        .withRows(keyspaceRows)
+                        .build())
+                .build());
     }
 
     private Object getPeerInfo(int dc, int node, String property, Object defaultValue) {
@@ -352,87 +351,87 @@ public class ScassandraCluster {
             return defaultValue;
 
         return (forNode.containsKey(property))
-            ? forNode.get(property)
-            : defaultValue;
+                ? forNode.get(property)
+                : defaultValue;
     }
 
     static final org.scassandra.http.client.types.ColumnMetadata[] SELECT_PEERS = {
-        column("peer", INET),
-        column("rpc_address", INET),
-        column("data_center", TEXT),
-        column("rack", TEXT),
-        column("release_version", TEXT),
-        column("tokens", set(TEXT))
+            column("peer", INET),
+            column("rpc_address", INET),
+            column("data_center", TEXT),
+            column("rack", TEXT),
+            column("release_version", TEXT),
+            column("tokens", set(TEXT))
     };
 
     static final org.scassandra.http.client.types.ColumnMetadata[] SELECT_LOCAL = {
-        column("key", TEXT),
-        column("bootstrapped", TEXT),
-        column("broadcast_address", INET),
-        column("cluster_name", TEXT),
-        column("cql_version", TEXT),
-        column("data_center", TEXT),
-        column("listen_address", INET),
-        column("partitioner", TEXT),
-        column("rack", TEXT),
-        column("release_version", TEXT),
-        column("tokens", set(TEXT)),
+            column("key", TEXT),
+            column("bootstrapped", TEXT),
+            column("broadcast_address", INET),
+            column("cluster_name", TEXT),
+            column("cql_version", TEXT),
+            column("data_center", TEXT),
+            column("listen_address", INET),
+            column("partitioner", TEXT),
+            column("rack", TEXT),
+            column("release_version", TEXT),
+            column("tokens", set(TEXT)),
     };
 
     static final org.scassandra.http.client.types.ColumnMetadata[] SELECT_CLUSTER_NAME = {
-        column("cluster_name", TEXT)
+            column("cluster_name", TEXT)
     };
 
     static final org.scassandra.http.client.types.ColumnMetadata[] SELECT_SCHEMA_KEYSPACES = {
-        column("durable_writes", BOOLEAN),
-        column("keyspace_name", TEXT),
-        column("strategy_class", TEXT),
-        column("strategy_options", TEXT)
+            column("durable_writes", BOOLEAN),
+            column("keyspace_name", TEXT),
+            column("strategy_class", TEXT),
+            column("strategy_options", TEXT)
     };
 
     static final org.scassandra.http.client.types.ColumnMetadata[] SELECT_SCHEMA_COLUMN_FAMILIES = {
-        column("bloom_filter_fp_chance", DOUBLE),
-        column("caching", TEXT),
-        column("cf_id", UUID),
-        column("column_aliases", TEXT),
-        column("columnfamily_name", TEXT),
-        column("comment", TEXT),
-        column("compaction_strategy_class", TEXT),
-        column("compaction_strategy_options", TEXT),
-        column("comparator", TEXT),
-        column("compression_parameters", TEXT),
-        column("default_time_to_live", INT),
-        column("default_validator", TEXT),
-        column("dropped_columns", map(TEXT, BIG_INT)),
-        column("gc_grace_seconds", INT),
-        column("index_interval", INT),
-        column("is_dense", BOOLEAN),
-        column("key_aliases", TEXT),
-        column("key_validator", TEXT),
-        column("keyspace_name", TEXT),
-        column("local_read_repair_chance", DOUBLE),
-        column("max_compaction_threshold", INT),
-        column("max_index_interval", INT),
-        column("memtable_flush_period_in_ms", INT),
-        column("min_compaction_threshold", INT),
-        column("min_index_interval", INT),
-        column("read_repair_chance", DOUBLE),
-        column("speculative_retry", TEXT),
-        column("subcomparator", TEXT),
-        column("type", TEXT),
-        column("value_alias", TEXT)
+            column("bloom_filter_fp_chance", DOUBLE),
+            column("caching", TEXT),
+            column("cf_id", UUID),
+            column("column_aliases", TEXT),
+            column("columnfamily_name", TEXT),
+            column("comment", TEXT),
+            column("compaction_strategy_class", TEXT),
+            column("compaction_strategy_options", TEXT),
+            column("comparator", TEXT),
+            column("compression_parameters", TEXT),
+            column("default_time_to_live", INT),
+            column("default_validator", TEXT),
+            column("dropped_columns", map(TEXT, BIG_INT)),
+            column("gc_grace_seconds", INT),
+            column("index_interval", INT),
+            column("is_dense", BOOLEAN),
+            column("key_aliases", TEXT),
+            column("key_validator", TEXT),
+            column("keyspace_name", TEXT),
+            column("local_read_repair_chance", DOUBLE),
+            column("max_compaction_threshold", INT),
+            column("max_index_interval", INT),
+            column("memtable_flush_period_in_ms", INT),
+            column("min_compaction_threshold", INT),
+            column("min_index_interval", INT),
+            column("read_repair_chance", DOUBLE),
+            column("speculative_retry", TEXT),
+            column("subcomparator", TEXT),
+            column("type", TEXT),
+            column("value_alias", TEXT)
     };
 
     static final org.scassandra.http.client.types.ColumnMetadata[] SELECT_SCHEMA_COLUMNS = {
-        column("column_name", TEXT),
-        column("columnfamily_name", TEXT),
-        column("component_index", INT),
-        column("index_name", TEXT),
-        column("index_options", TEXT),
-        column("index_type", TEXT),
-        column("keyspace_name", TEXT),
-        column("type", TEXT),
-        column("validator", TEXT),
+            column("column_name", TEXT),
+            column("columnfamily_name", TEXT),
+            column("component_index", INT),
+            column("index_name", TEXT),
+            column("index_options", TEXT),
+            column("index_type", TEXT),
+            column("keyspace_name", TEXT),
+            column("type", TEXT),
+            column("validator", TEXT),
     };
 
     public static ScassandraClusterBuilder builder() {
@@ -441,7 +440,7 @@ public class ScassandraCluster {
 
     public static class ScassandraClusterBuilder {
 
-        private Integer nodes[] = { 1 };
+        private Integer nodes[] = {1};
         private String ipPrefix = CCMBridge.IP_PREFIX;
         private final List<Map<String, ? extends Object>> keyspaceRows = Lists.newArrayList();
         private final Map<Integer, Map<Integer, Map<String, Object>>> forcedPeerInfos = Maps.newHashMap();
@@ -458,11 +457,11 @@ public class ScassandraCluster {
 
         public ScassandraClusterBuilder withSimpleKeyspace(String name, int replicationFactor) {
             Map<String, Object> simpleKeyspaceRow = ImmutableMap.<String, Object>builder()
-                .put("durable_writes", false)
-                .put("keyspace_name", name)
-                .put("strategy_class", "SimpleStrategy")
-                .put("strategy_options", "{\"replication_factor\":\"" + replicationFactor + "\"}")
-                .build();
+                    .put("durable_writes", false)
+                    .put("keyspace_name", name)
+                    .put("strategy_class", "SimpleStrategy")
+                    .put("strategy_options", "{\"replication_factor\":\"" + replicationFactor + "\"}")
+                    .build();
 
             keyspaceRows.add(simpleKeyspaceRow);
             return this;
@@ -481,11 +480,11 @@ public class ScassandraCluster {
             String strategyOptions = strategyOptionsBuilder.substring(0, strategyOptionsBuilder.length() - 1) + "}";
 
             Map<String, Object> ntsKeyspaceRow = ImmutableMap.<String, Object>builder()
-                .put("durable_writes", false)
-                .put("keyspace_name", name)
-                .put("strategy_class", "NetworkTopologyStrategy")
-                .put("strategy_options", strategyOptions)
-                .build();
+                    .put("durable_writes", false)
+                    .put("keyspace_name", name)
+                    .put("strategy_class", "NetworkTopologyStrategy")
+                    .put("strategy_options", strategyOptions)
+                    .build();
 
             keyspaceRows.add(ntsKeyspaceRow);
             return this;

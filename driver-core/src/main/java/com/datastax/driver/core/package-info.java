@@ -15,7 +15,7 @@
  */
 /**
  * The main package for the DataStax Java driver for Cassandra.
- * <p>
+ * <p/>
  * The main entry for this package is the {@link com.datastax.driver.core.Cluster} class.
  */
 package com.datastax.driver.core;

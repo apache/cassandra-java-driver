@@ -15,8 +15,6 @@
  */
 package com.datastax.driver.core;
 
-import java.util.concurrent.ThreadFactory;
-
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
@@ -25,24 +23,23 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.util.HashedWheelTimer;
 import io.netty.util.Timer;
-import org.mockito.ArgumentCaptor;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import java.util.concurrent.ThreadFactory;
+
+import static com.datastax.driver.core.CCMBridge.ipOfNode;
 import static org.mockito.Answers.CALLS_REAL_METHODS;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
-
-import static com.datastax.driver.core.Assertions.assertThat;
-import static com.datastax.driver.core.CCMBridge.ipOfNode;
 
 public class NettyOptionsTest {
 
     @DataProvider(name = "NettyOptionsTest")
     public static Object[][] parameters() {
-        Object[][] params = new Object[][] { {1,1}, {3,4} };
+        Object[][] params = new Object[][]{{1, 1}, {3, 4}};
         return params;
     }
 
@@ -67,12 +64,12 @@ public class NettyOptionsTest {
                 }
             }).when(nettyOptions).afterChannelInitialized(any(SocketChannel.class));
             cluster = Cluster.builder()
-                .addContactPoint(ipOfNode(1))
-                .withPoolingOptions(new PoolingOptions()
-                    .setConnectionsPerHost(HostDistance.LOCAL, coreConnections, coreConnections)
-                )
-                .withNettyOptions(nettyOptions)
-                .build();
+                    .addContactPoint(ipOfNode(1))
+                    .withPoolingOptions(new PoolingOptions()
+                                    .setConnectionsPerHost(HostDistance.LOCAL, coreConnections, coreConnections)
+                    )
+                    .withNettyOptions(nettyOptions)
+                    .build();
             // when
             cluster.connect();// force session creation to populate pools
 

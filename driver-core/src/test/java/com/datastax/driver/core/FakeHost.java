@@ -63,14 +63,15 @@ public class FakeHost {
             this.behavior = behavior;
         }
 
-        @Override public void run() {
+        @Override
+        public void run() {
             ServerSocket server = null;
             Socket client = null;
             try {
                 InetAddress bindAddress = InetAddress.getByName(address);
                 int backlog = (behavior == Behavior.THROWING_CONNECT_TIMEOUTS)
-                    ? 1
-                    : -1; // default
+                        ? 1
+                        : -1; // default
                 server = new ServerSocket(port, backlog, bindAddress);
 
                 if (behavior == Behavior.THROWING_CONNECT_TIMEOUTS) {

@@ -15,68 +15,67 @@
  */
 package com.datastax.driver.mapping;
 
-import java.util.Collection;
-import java.util.Iterator;
-
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.Test;
-
-import static com.google.common.collect.Lists.newArrayList;
-import static org.assertj.core.api.Assertions.assertThat;
-
 import com.datastax.driver.core.CCMBridge;
 import com.datastax.driver.core.utils.CassandraVersion;
 import com.datastax.driver.mapping.annotations.Accessor;
 import com.datastax.driver.mapping.annotations.Param;
 import com.datastax.driver.mapping.annotations.Query;
 import com.datastax.driver.mapping.annotations.Table;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
-@CassandraVersion(major=3.0)
-public class MapperMaterializedViewTest extends CCMBridge.PerClassSingleNodeCluster{
+import java.util.Collection;
+import java.util.Iterator;
+
+import static com.google.common.collect.Lists.newArrayList;
+import static org.assertj.core.api.Assertions.assertThat;
+
+@CassandraVersion(major = 3.0)
+public class MapperMaterializedViewTest extends CCMBridge.PerClassSingleNodeCluster {
 
     @Override
     protected Collection<String> getTableDefinitions() {
         // Example schema taken from: http://www.datastax.com/dev/blog/new-in-cassandra-3-0-materialized-views
         return newArrayList(
-            "CREATE TABLE scores (user TEXT, game TEXT, year INT, month INT, day INT, score INT, PRIMARY KEY(user, game, year, month, day))",
-            "CREATE MATERIALIZED VIEW alltimehigh AS\n"
-                + "       SELECT * FROM scores\n"
-                + "       WHERE game IS NOT NULL AND score IS NOT NULL AND user IS NOT NULL AND year IS NOT NULL AND month IS NOT NULL AND day IS NOT NULL\n"
-                + "       PRIMARY KEY (game, score, user, year, month, day)\n"
-                + "       WITH CLUSTERING ORDER BY (score desc)",
-            "CREATE MATERIALIZED VIEW dailyhigh AS\n"
-                + "       SELECT * FROM scores\n"
-                + "       WHERE game IS NOT NULL AND year IS NOT NULL AND month IS NOT NULL AND day IS NOT NULL AND score IS NOT NULL AND user IS NOT NULL\n"
-                + "       PRIMARY KEY ((game, year, month, day), score, user)\n"
-                + "       WITH CLUSTERING ORDER BY (score DESC)",
-            "CREATE MATERIALIZED VIEW monthlyhigh AS\n"
-                + "       SELECT * FROM scores\n"
-                + "       WHERE game IS NOT NULL AND year IS NOT NULL AND month IS NOT NULL AND score IS NOT NULL AND user IS NOT NULL AND day IS NOT NULL\n"
-                + "       PRIMARY KEY ((game, year, month), score, user, day)\n"
-                + "       WITH CLUSTERING ORDER BY (score DESC)",
-            "CREATE MATERIALIZED VIEW filtereduserhigh AS\n"
-                + "       SELECT * FROM scores\n"
-                + "       WHERE user in ('jbellis', 'pcmanus') AND game IS NOT NULL AND score IS NOT NULL AND year is NOT NULL AND day is not NULL and month IS NOT NULL\n"
-                + "       PRIMARY KEY (game, score, user, year, month, day)\n"
-                + "       WITH CLUSTERING ORDER BY (score DESC)",
-            "INSERT INTO scores (user, game, year, month, day, score) VALUES ('pcmanus', 'Coup', 2015, 5, 1, 4000)",
-            "INSERT INTO scores (user, game, year, month, day, score) VALUES ('jbellis', 'Coup', 2015, 5, 3, 1750)",
-            "INSERT INTO scores (user, game, year, month, day, score) VALUES ('yukim', 'Coup', 2015, 5, 3, 2250)",
-            "INSERT INTO scores (user, game, year, month, day, score) VALUES ('tjake', 'Coup', 2015, 5, 3, 500)",
-            "INSERT INTO scores (user, game, year, month, day, score) VALUES ('iamaleksey', 'Coup', 2015, 6, 1, 2500)",
-            "INSERT INTO scores (user, game, year, month, day, score) VALUES ('tjake', 'Coup', 2015, 6, 2, 1000)",
-            "INSERT INTO scores (user, game, year, month, day, score) VALUES ('pcmanus', 'Coup', 2015, 6, 2, 2000)",
-            "INSERT INTO scores (user, game, year, month, day, score) VALUES ('jmckenzie', 'Coup', 2015, 6, 9, 2700)",
-            "INSERT INTO scores (user, game, year, month, day, score) VALUES ('jbellis', 'Coup', 2015, 6, 20, 3500)",
-            "INSERT INTO scores (user, game, year, month, day, score) VALUES ('jbellis', 'Checkers', 2015, 6, 20, 1200)",
-            "INSERT INTO scores (user, game, year, month, day, score) VALUES ('jbellis', 'Chess', 2015, 6, 21, 3500)",
-            "INSERT INTO scores (user, game, year, month, day, score) VALUES ('pcmanus', 'Chess', 2015, 1, 25, 3200)"
+                "CREATE TABLE scores (user TEXT, game TEXT, year INT, month INT, day INT, score INT, PRIMARY KEY(user, game, year, month, day))",
+                "CREATE MATERIALIZED VIEW alltimehigh AS\n"
+                        + "       SELECT * FROM scores\n"
+                        + "       WHERE game IS NOT NULL AND score IS NOT NULL AND user IS NOT NULL AND year IS NOT NULL AND month IS NOT NULL AND day IS NOT NULL\n"
+                        + "       PRIMARY KEY (game, score, user, year, month, day)\n"
+                        + "       WITH CLUSTERING ORDER BY (score desc)",
+                "CREATE MATERIALIZED VIEW dailyhigh AS\n"
+                        + "       SELECT * FROM scores\n"
+                        + "       WHERE game IS NOT NULL AND year IS NOT NULL AND month IS NOT NULL AND day IS NOT NULL AND score IS NOT NULL AND user IS NOT NULL\n"
+                        + "       PRIMARY KEY ((game, year, month, day), score, user)\n"
+                        + "       WITH CLUSTERING ORDER BY (score DESC)",
+                "CREATE MATERIALIZED VIEW monthlyhigh AS\n"
+                        + "       SELECT * FROM scores\n"
+                        + "       WHERE game IS NOT NULL AND year IS NOT NULL AND month IS NOT NULL AND score IS NOT NULL AND user IS NOT NULL AND day IS NOT NULL\n"
+                        + "       PRIMARY KEY ((game, year, month), score, user, day)\n"
+                        + "       WITH CLUSTERING ORDER BY (score DESC)",
+                "CREATE MATERIALIZED VIEW filtereduserhigh AS\n"
+                        + "       SELECT * FROM scores\n"
+                        + "       WHERE user in ('jbellis', 'pcmanus') AND game IS NOT NULL AND score IS NOT NULL AND year is NOT NULL AND day is not NULL and month IS NOT NULL\n"
+                        + "       PRIMARY KEY (game, score, user, year, month, day)\n"
+                        + "       WITH CLUSTERING ORDER BY (score DESC)",
+                "INSERT INTO scores (user, game, year, month, day, score) VALUES ('pcmanus', 'Coup', 2015, 5, 1, 4000)",
+                "INSERT INTO scores (user, game, year, month, day, score) VALUES ('jbellis', 'Coup', 2015, 5, 3, 1750)",
+                "INSERT INTO scores (user, game, year, month, day, score) VALUES ('yukim', 'Coup', 2015, 5, 3, 2250)",
+                "INSERT INTO scores (user, game, year, month, day, score) VALUES ('tjake', 'Coup', 2015, 5, 3, 500)",
+                "INSERT INTO scores (user, game, year, month, day, score) VALUES ('iamaleksey', 'Coup', 2015, 6, 1, 2500)",
+                "INSERT INTO scores (user, game, year, month, day, score) VALUES ('tjake', 'Coup', 2015, 6, 2, 1000)",
+                "INSERT INTO scores (user, game, year, month, day, score) VALUES ('pcmanus', 'Coup', 2015, 6, 2, 2000)",
+                "INSERT INTO scores (user, game, year, month, day, score) VALUES ('jmckenzie', 'Coup', 2015, 6, 9, 2700)",
+                "INSERT INTO scores (user, game, year, month, day, score) VALUES ('jbellis', 'Coup', 2015, 6, 20, 3500)",
+                "INSERT INTO scores (user, game, year, month, day, score) VALUES ('jbellis', 'Checkers', 2015, 6, 20, 1200)",
+                "INSERT INTO scores (user, game, year, month, day, score) VALUES ('jbellis', 'Chess', 2015, 6, 21, 3500)",
+                "INSERT INTO scores (user, game, year, month, day, score) VALUES ('pcmanus', 'Chess', 2015, 1, 25, 3200)"
         );
     }
 
     private ScoreAccessor accessor;
 
-    @BeforeMethod(groups="short")
+    @BeforeMethod(groups = "short")
     public void setUp() {
         accessor = new MappingManager(session).createAccessor(ScoreAccessor.class);
     }
@@ -85,9 +84,9 @@ public class MapperMaterializedViewTest extends CCMBridge.PerClassSingleNodeClus
      * Validates that an accessor properly maps a single entity over a result from a materialized
      * view.
      *
-     * @test_category materialized_view,mapper
+     * @test_category materialized_view, mapper
      */
-    @Test(groups="short")
+    @Test(groups = "short")
     public void should_access_single_entity() {
         Score score = accessor.allTimeHigh("Coup");
 
@@ -98,9 +97,9 @@ public class MapperMaterializedViewTest extends CCMBridge.PerClassSingleNodeClus
      * Validates that an accessor properly maps to a Result from a materialized
      * view.
      *
-     * @test_category materialized_view,mapper
+     * @test_category materialized_view, mapper
      */
-    @Test(groups="short")
+    @Test(groups = "short")
     public void should_access_mapped_result() {
         Result<Score> scores = accessor.dailyHigh("Coup", 2015, 6, 2);
 
@@ -114,9 +113,9 @@ public class MapperMaterializedViewTest extends CCMBridge.PerClassSingleNodeClus
      * Validates that an accessor properly maps to a Result from a materialized
      * view given a range criteria query.
      *
-     * @test_category materialized_view,mapper
+     * @test_category materialized_view, mapper
      */
-    @Test(groups="short")
+    @Test(groups = "short")
     public void should_access_mapped_result_range() {
         Result<Score> scores = accessor.monthlyHighRange("Coup", 2015, 6, 2500, 3500);
 
@@ -131,9 +130,9 @@ public class MapperMaterializedViewTest extends CCMBridge.PerClassSingleNodeClus
      * Validates that an accessor properly maps to a Result from a materialized
      * view that is filtered on a primary key.
      *
-     * @test_category materialized_view,mapper
+     * @test_category materialized_view, mapper
      */
-    @Test(groups="short")
+    @Test(groups = "short")
     public void should_access_filtered_user_high() {
         Result<Score> scores = accessor.filteredUserHigh("Chess");
 
@@ -158,7 +157,7 @@ public class MapperMaterializedViewTest extends CCMBridge.PerClassSingleNodeClus
         Result<Score> filteredUserHigh(String game);
     }
 
-    @Table(name="scores")
+    @Table(name = "scores")
     public static class Score {
         String user;
 
@@ -172,7 +171,8 @@ public class MapperMaterializedViewTest extends CCMBridge.PerClassSingleNodeClus
 
         int score;
 
-        public Score() {}
+        public Score() {
+        }
 
         public Score(String user, String game, int year, int month, int day, int score) {
             this.user = user;
@@ -234,13 +234,13 @@ public class MapperMaterializedViewTest extends CCMBridge.PerClassSingleNodeClus
         @Override
         public String toString() {
             return "Score{" +
-                "user='" + user + '\'' +
-                ", game='" + game + '\'' +
-                ", year=" + year +
-                ", month=" + month +
-                ", day=" + day +
-                ", score=" + score +
-                '}';
+                    "user='" + user + '\'' +
+                    ", game='" + game + '\'' +
+                    ", year=" + year +
+                    ", month=" + month +
+                    ", day=" + day +
+                    ", score=" + score +
+                    '}';
         }
 
         @Override
@@ -250,7 +250,7 @@ public class MapperMaterializedViewTest extends CCMBridge.PerClassSingleNodeClus
             if (!(o instanceof Score))
                 return false;
 
-            Score score1 = (Score)o;
+            Score score1 = (Score) o;
 
             if (year != score1.year)
                 return false;

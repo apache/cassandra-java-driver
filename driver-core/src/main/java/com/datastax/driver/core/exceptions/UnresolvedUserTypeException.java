@@ -17,7 +17,7 @@ package com.datastax.driver.core.exceptions;
 
 /**
  * Thrown when a user type cannot be resolved.
- * <p>
+ * <p/>
  * This exception can be raised when the driver is rebuilding
  * its schema metadata, and a user-defined type cannot be completely
  * constructed due to some missing information.

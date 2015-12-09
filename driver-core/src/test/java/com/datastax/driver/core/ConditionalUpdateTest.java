@@ -15,18 +15,19 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.utils.CassandraVersion;
+import org.testng.annotations.Test;
+
 import java.util.Collection;
 import java.util.Collections;
 
-import org.testng.annotations.Test;
-import static org.testng.Assert.*;
-
-import com.datastax.driver.core.utils.CassandraVersion;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertTrue;
 
 /**
  * Test {@link ResultSet#wasApplied()} for conditional updates.
  */
-@CassandraVersion(major=2.0, description="Conditional Updates requires 2.0+.")
+@CassandraVersion(major = 2.0, description = "Conditional Updates requires 2.0+.")
 public class ConditionalUpdateTest extends CCMBridge.PerClassSingleNodeCluster {
 
     @Override

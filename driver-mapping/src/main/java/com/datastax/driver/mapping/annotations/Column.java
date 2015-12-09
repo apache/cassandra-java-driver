@@ -15,17 +15,17 @@
  */
 package com.datastax.driver.mapping.annotations;
 
+import com.datastax.driver.core.TypeCodec;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import com.datastax.driver.core.TypeCodec;
-
 /**
  * Annotation that allows to specify the name of the CQL column to which the
  * field should be mapped.
- * <p>
+ * <p/>
  * Note that this annotation is generally optional in the sense that any field
  * of a class annotated by {@link Table} will be mapped by default to a column
  * having the same name than this field unless that field has the

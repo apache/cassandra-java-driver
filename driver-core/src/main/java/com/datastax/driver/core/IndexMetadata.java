@@ -15,13 +15,13 @@
  */
 package com.datastax.driver.core;
 
-import java.util.Iterator;
-import java.util.Map;
-
 import com.google.common.base.Objects;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
+
+import java.util.Iterator;
+import java.util.Map;
 
 /**
  * An immutable representation of secondary index metadata.
@@ -109,16 +109,16 @@ public class IndexMetadata {
             options = SimpleJSONParser.parseStringMap(indexOptionsCol);
         }
         String target = targetFromLegacyOptions(column, options);
-        return new IndexMetadata((TableMetadata)column.getParent(), indexName, kind, target, options);
+        return new IndexMetadata((TableMetadata) column.getParent(), indexName, kind, target, options);
     }
 
     private static String targetFromLegacyOptions(ColumnMetadata column, Map<String, String> options) {
         String columnName = Metadata.escapeId(column.getName());
-        if(options.containsKey(INDEX_KEYS_OPTION_NAME))
+        if (options.containsKey(INDEX_KEYS_OPTION_NAME))
             return String.format("keys(%s)", columnName);
-        if(options.containsKey(INDEX_ENTRIES_OPTION_NAME))
+        if (options.containsKey(INDEX_ENTRIES_OPTION_NAME))
             return String.format("entries(%s)", columnName);
-        if(column.getType() instanceof DataType.CollectionType && column.getType().isFrozen())
+        if (column.getType() instanceof DataType.CollectionType && column.getType().isFrozen())
             return String.format("full(%s)", columnName);
         // Note: the keyword 'values' is not accepted as a valid index target function until 3.0
         return columnName;
@@ -162,7 +162,7 @@ public class IndexMetadata {
 
     /**
      * Returns whether this index is a custom one.
-     * <p>
+     * <p/>
      * If it is indeed a custom index, {@link #getIndexClassName} will
      * return the name of the class used in Cassandra to implement that
      * index.
@@ -195,7 +195,7 @@ public class IndexMetadata {
 
     /**
      * Returns a CQL query representing this index.
-     *
+     * <p/>
      * This method returns a single 'CREATE INDEX' query corresponding to
      * this index definition.
      *
@@ -206,26 +206,26 @@ public class IndexMetadata {
         String tableName = Metadata.escapeId(table.getName());
         String indexName = Metadata.escapeId(this.name);
         return isCustomIndex()
-            ? String.format("CREATE CUSTOM INDEX %s ON %s.%s (%s) USING '%s' %s;", indexName, keyspaceName, tableName, getTarget(), getIndexClassName(), getOptionsAsCql())
-            : String.format("CREATE INDEX %s ON %s.%s (%s);", indexName, keyspaceName, tableName, getTarget());
+                ? String.format("CREATE CUSTOM INDEX %s ON %s.%s (%s) USING '%s' %s;", indexName, keyspaceName, tableName, getTarget(), getIndexClassName(), getOptionsAsCql())
+                : String.format("CREATE INDEX %s ON %s.%s (%s);", indexName, keyspaceName, tableName, getTarget());
     }
 
     /**
      * Builds a string representation of the custom index options.
      *
      * @return String representation of the custom index options, similar to what Cassandra stores in
-     *         the 'index_options' column of the 'schema_columns' table in the 'system' keyspace.
+     * the 'index_options' column of the 'schema_columns' table in the 'system' keyspace.
      */
     private String getOptionsAsCql() {
         Iterable<Map.Entry<String, String>> filtered = Iterables.filter(options.entrySet(), new Predicate<Map.Entry<String, String>>() {
             @Override
             public boolean apply(Map.Entry<String, String> input) {
                 return
-                    !input.getKey().equals(TARGET_OPTION_NAME) &&
-                    !input.getKey().equals(CUSTOM_INDEX_OPTION_NAME);
+                        !input.getKey().equals(TARGET_OPTION_NAME) &&
+                                !input.getKey().equals(CUSTOM_INDEX_OPTION_NAME);
             }
         });
-        if(Iterables.isEmpty(filtered)) return "";
+        if (Iterables.isEmpty(filtered)) return "";
         StringBuilder builder = new StringBuilder();
         builder.append("WITH OPTIONS = {");
         Iterator<Map.Entry<String, String>> it = filtered.iterator();
@@ -250,12 +250,12 @@ public class IndexMetadata {
         if (!(obj instanceof IndexMetadata))
             return false;
 
-        IndexMetadata other = (IndexMetadata)obj;
+        IndexMetadata other = (IndexMetadata) obj;
 
         return Objects.equal(name, other.name)
-            && Objects.equal(kind, other.kind)
-            && Objects.equal(target, other.target)
-            && Objects.equal(options, other.options);
+                && Objects.equal(kind, other.kind)
+                && Objects.equal(target, other.target)
+                && Objects.equal(options, other.options);
     }
 
 }

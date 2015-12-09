@@ -15,17 +15,17 @@
  */
 package com.datastax.driver.mapping.annotations;
 
+import com.datastax.driver.core.TypeCodec;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import com.datastax.driver.core.TypeCodec;
-
 /**
  * Annotation that allows to specify the name of the CQL UDT field to which the
  * Java field should be mapped.
- * <p>
+ * <p/>
  * Note that this annotation is generally optional in the sense that any field
  * of a class annotated by {@link UDT} will be mapped by default to a UDT field
  * having the same name than this Java field unless that Java field has the

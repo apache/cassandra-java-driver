@@ -15,19 +15,14 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.exceptions.InvalidTypeException;
+import com.google.common.reflect.TypeToken;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
-
-import com.google.common.reflect.TypeToken;
-
-import com.datastax.driver.core.exceptions.InvalidTypeException;
-
-import static com.datastax.driver.core.TypeTokens.listOf;
-import static com.datastax.driver.core.TypeTokens.mapOf;
-import static com.datastax.driver.core.TypeTokens.setOf;
 
 abstract class AbstractGettableByIndexData implements GettableByIndexData {
 
@@ -42,7 +37,6 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
      *
      * @param i the index of the type to fetch.
      * @return the type of the value at index {@code i}.
-     *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index.
      */
     protected abstract DataType getType(int i);
@@ -52,7 +46,6 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
      *
      * @param i the index of the name to fetch.
      * @return the name corresponding to the value at index {@code i}.
-     *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index.
      */
     protected abstract String getName(int i);
@@ -62,7 +55,6 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
      *
      * @param i the index to fetch.
      * @return the value at index {@code i}.
-     *
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index.
      */
     protected abstract ByteBuffer getValue(int i);
@@ -73,7 +65,7 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
         return getCodecRegistry().codecFor(getType(i));
     }
 
-    protected <T> TypeCodec<T> codecFor(int i, Class<T> javaClass){
+    protected <T> TypeCodec<T> codecFor(int i, Class<T> javaClass) {
         return getCodecRegistry().codecFor(getType(i), javaClass);
     }
 
@@ -106,7 +98,7 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
     public boolean getBool(int i) {
         ByteBuffer value = getValue(i);
         TypeCodec<Boolean> codec = codecFor(i, Boolean.class);
-        if(codec instanceof TypeCodec.PrimitiveBooleanCodec)
+        if (codec instanceof TypeCodec.PrimitiveBooleanCodec)
             return ((TypeCodec.PrimitiveBooleanCodec) codec).deserializeNoBoxing(value, protocolVersion);
         else
             return codec.deserialize(value, protocolVersion);
@@ -119,7 +111,7 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
     public byte getByte(int i) {
         ByteBuffer value = getValue(i);
         TypeCodec<Byte> codec = codecFor(i, Byte.class);
-        if(codec instanceof TypeCodec.PrimitiveByteCodec)
+        if (codec instanceof TypeCodec.PrimitiveByteCodec)
             return ((TypeCodec.PrimitiveByteCodec) codec).deserializeNoBoxing(value, protocolVersion);
         else
             return codec.deserialize(value, protocolVersion);
@@ -132,7 +124,7 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
     public short getShort(int i) {
         ByteBuffer value = getValue(i);
         TypeCodec<Short> codec = codecFor(i, Short.class);
-        if(codec instanceof TypeCodec.PrimitiveShortCodec)
+        if (codec instanceof TypeCodec.PrimitiveShortCodec)
             return ((TypeCodec.PrimitiveShortCodec) codec).deserializeNoBoxing(value, protocolVersion);
         else
             return codec.deserialize(value, protocolVersion);
@@ -145,7 +137,7 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
     public int getInt(int i) {
         ByteBuffer value = getValue(i);
         TypeCodec<Integer> codec = codecFor(i, Integer.class);
-        if(codec instanceof TypeCodec.PrimitiveIntCodec)
+        if (codec instanceof TypeCodec.PrimitiveIntCodec)
             return ((TypeCodec.PrimitiveIntCodec) codec).deserializeNoBoxing(value, protocolVersion);
         else
             return codec.deserialize(value, protocolVersion);
@@ -158,7 +150,7 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
     public long getLong(int i) {
         ByteBuffer value = getValue(i);
         TypeCodec<Long> codec = codecFor(i, Long.class);
-        if(codec instanceof TypeCodec.PrimitiveLongCodec)
+        if (codec instanceof TypeCodec.PrimitiveLongCodec)
             return ((TypeCodec.PrimitiveLongCodec) codec).deserializeNoBoxing(value, protocolVersion);
         else
             return codec.deserialize(value, protocolVersion);
@@ -189,7 +181,7 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
     public long getTime(int i) {
         ByteBuffer value = getValue(i);
         TypeCodec<Long> codec = codecFor(i, Long.class);
-        if(codec instanceof TypeCodec.PrimitiveLongCodec)
+        if (codec instanceof TypeCodec.PrimitiveLongCodec)
             return ((TypeCodec.PrimitiveLongCodec) codec).deserializeNoBoxing(value, protocolVersion);
         else
             return codec.deserialize(value, protocolVersion);
@@ -202,7 +194,7 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
     public float getFloat(int i) {
         ByteBuffer value = getValue(i);
         TypeCodec<Float> codec = codecFor(i, Float.class);
-        if(codec instanceof TypeCodec.PrimitiveFloatCodec)
+        if (codec instanceof TypeCodec.PrimitiveFloatCodec)
             return ((TypeCodec.PrimitiveFloatCodec) codec).deserializeNoBoxing(value, protocolVersion);
         else
             return codec.deserialize(value, protocolVersion);
@@ -215,7 +207,7 @@ abstract class AbstractGettableByIndexData implements GettableByIndexData {
     public double getDouble(int i) {
         ByteBuffer value = getValue(i);
         TypeCodec<Double> codec = codecFor(i, Double.class);
-        if(codec instanceof TypeCodec.PrimitiveDoubleCodec)
+        if (codec instanceof TypeCodec.PrimitiveDoubleCodec)
             return ((TypeCodec.PrimitiveDoubleCodec) codec).deserializeNoBoxing(value, protocolVersion);
         else
             return codec.deserialize(value, protocolVersion);

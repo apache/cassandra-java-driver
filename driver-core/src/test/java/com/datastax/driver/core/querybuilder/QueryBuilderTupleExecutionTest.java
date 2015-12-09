@@ -15,33 +15,28 @@
  */
 package com.datastax.driver.core.querybuilder;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-
-import com.google.common.collect.ImmutableList;
-import org.testng.annotations.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.testng.Assert.assertEquals;
-
 import com.datastax.driver.core.CCMBridge;
 import com.datastax.driver.core.TupleType;
 import com.datastax.driver.core.TupleValue;
 import com.datastax.driver.core.utils.CassandraVersion;
+import com.google.common.collect.ImmutableList;
+import org.testng.annotations.Test;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 import static com.datastax.driver.core.DataType.cint;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.insertInto;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.set;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.update;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.testng.Assert.assertEquals;
 
-@CassandraVersion(major=2.1, minor=3)
+@CassandraVersion(major = 2.1, minor = 3)
 public class QueryBuilderTupleExecutionTest extends CCMBridge.PerClassSingleNodeCluster {
 
     @Override
     protected Collection<String> getTableDefinitions() {
-            return Collections.emptyList();
+        return Collections.emptyList();
     }
 
     @Test(groups = "short")

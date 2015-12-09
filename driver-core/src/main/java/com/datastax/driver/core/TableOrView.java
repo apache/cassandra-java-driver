@@ -16,10 +16,10 @@
 package com.datastax.driver.core;
 
 
-import java.util.*;
-
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
+
+import java.util.*;
 
 /**
  * Base class for Tables and Materialized Views.
@@ -49,14 +49,14 @@ abstract class TableOrView {
     protected final VersionNumber cassandraVersion;
 
     TableOrView(KeyspaceMetadata keyspace,
-                        String name,
-                        UUID id,
-                        List<ColumnMetadata> partitionKey,
-                        List<ColumnMetadata> clusteringColumns,
-                        Map<String, ColumnMetadata> columns,
-                        TableOptionsMetadata options,
-                        List<ClusteringOrder> clusteringOrder,
-                        VersionNumber cassandraVersion) {
+                String name,
+                UUID id,
+                List<ColumnMetadata> partitionKey,
+                List<ColumnMetadata> clusteringColumns,
+                Map<String, ColumnMetadata> columns,
+                TableOptionsMetadata options,
+                List<ClusteringOrder> clusteringOrder,
+                VersionNumber cassandraVersion) {
         this.keyspace = keyspace;
         this.name = name;
         this.id = id;
@@ -79,7 +79,7 @@ abstract class TableOrView {
 
     /**
      * Returns the unique id of this table.
-     * <p>
+     * <p/>
      * Note: this id is available in Cassandra 2.1 and above. It will be
      * {@code null} for earlier versions.
      *
@@ -102,8 +102,8 @@ abstract class TableOrView {
      * Returns metadata on a column of this table.
      *
      * @param name the name of the column to retrieve ({@code name} will be
-     * interpreted as a case-insensitive identifier unless enclosed in double-quotes,
-     * see {@link Metadata#quote}).
+     *             interpreted as a case-insensitive identifier unless enclosed in double-quotes,
+     *             see {@link Metadata#quote}).
      * @return the metadata for the column if it exists, or
      * {@code null} otherwise.
      */
@@ -113,7 +113,7 @@ abstract class TableOrView {
 
     /**
      * Returns a list containing all the columns of this table.
-     *
+     * <p/>
      * The order of the columns in the list is consistent with
      * the order of the columns returned by a {@code SELECT * FROM thisTable}:
      * the first column is the partition key, next are the clustering
@@ -128,7 +128,7 @@ abstract class TableOrView {
 
     /**
      * Returns the list of columns composing the primary key for this table.
-     *
+     * <p/>
      * A table will always at least have a partition key (that
      * may itself be one or more columns), so the returned list at least
      * has one element.
@@ -144,7 +144,7 @@ abstract class TableOrView {
 
     /**
      * Returns the list of columns composing the partition key for this table.
-     *
+     * <p/>
      * A table always has a partition key so the returned list has
      * at least one element.
      *
@@ -166,7 +166,7 @@ abstract class TableOrView {
 
     /**
      * Returns the clustering order for this table.
-     * <p>
+     * <p/>
      * The returned contains the clustering order of each clustering column. The
      * {@code i}th element of the result correspond to the order (ascending or
      * descending) of the {@code i}th clustering column (see
@@ -196,11 +196,11 @@ abstract class TableOrView {
     /**
      * Returns a {@code String} containing CQL queries representing this
      * table and the index on it.
-     * <p>
+     * <p/>
      * In other words, this method returns the queries that would allow you to
      * recreate the schema of this table, along with the indexes and views defined on
      * this table, if any.
-     * <p>
+     * <p/>
      * Note that the returned String is formatted to be human readable (for
      * some definition of human readable at least).
      *
@@ -217,10 +217,10 @@ abstract class TableOrView {
 
     /**
      * Returns a CQL query representing this table.
-     * <p>
+     * <p/>
      * This method returns a single 'CREATE TABLE' query with the options
      * corresponding to this table definition.
-     * <p>
+     * <p/>
      * Note that the returned string is a single line; the returned query
      * is not formatted in any way.
      *
@@ -233,7 +233,7 @@ abstract class TableOrView {
 
     protected abstract String asCQLQuery(boolean formatted);
 
-    protected StringBuilder appendOptions(StringBuilder sb, boolean formatted){
+    protected StringBuilder appendOptions(StringBuilder sb, boolean formatted) {
         // Options
         sb.append(" WITH ");
         if (options.isCompactStorage())
@@ -251,7 +251,7 @@ abstract class TableOrView {
         else
             and(sb, formatted).append("caching = ").append(formatOptionMap(options.getCaching()));
         if (options.getComment() != null)
-            and(sb, formatted).append("comment = '").append(options.getComment().replace("'","''")).append('\'');
+            and(sb, formatted).append("comment = '").append(options.getComment().replace("'", "''")).append('\'');
         and(sb, formatted).append("compaction = ").append(formatOptionMap(options.getCompaction()));
         and(sb, formatted).append("compression = ").append(formatOptionMap(options.getCompression()));
         if (cassandraVersion.getMajor() >= 2) {
@@ -290,7 +290,8 @@ abstract class TableOrView {
         sb.append("{ ");
         boolean first = true;
         for (Map.Entry<String, String> entry : m.entrySet()) {
-            if (first) first = false; else sb.append(", ");
+            if (first) first = false;
+            else sb.append(", ");
             sb.append('\'').append(entry.getKey()).append('\'');
             sb.append(" : ");
             try {

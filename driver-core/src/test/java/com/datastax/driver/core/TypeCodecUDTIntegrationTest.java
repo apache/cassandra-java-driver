@@ -15,15 +15,14 @@
  */
 package com.datastax.driver.core;
 
-import java.util.*;
-
+import com.datastax.driver.core.utils.CassandraVersion;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.testng.annotations.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import java.util.*;
 
-import com.datastax.driver.core.utils.CassandraVersion;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @CassandraVersion(major = 2.1)
 public class TypeCodecUDTIntegrationTest extends CCMBridge.PerClassSingleNodeCluster {
@@ -45,9 +44,9 @@ public class TypeCodecUDTIntegrationTest extends CCMBridge.PerClassSingleNodeClu
     @Override
     protected Collection<String> getTableDefinitions() {
         return Lists.newArrayList(
-            "CREATE TYPE IF NOT EXISTS \"phone\" (number text, tags set<text>)",
-            "CREATE TYPE IF NOT EXISTS \"address\" (street text, zipcode int, phones list<frozen<phone>>)",
-            "CREATE TABLE IF NOT EXISTS \"users\" (id uuid PRIMARY KEY, name text, address frozen<address>)"
+                "CREATE TYPE IF NOT EXISTS \"phone\" (number text, tags set<text>)",
+                "CREATE TYPE IF NOT EXISTS \"address\" (street text, zipcode int, phones list<frozen<phone>>)",
+                "CREATE TABLE IF NOT EXISTS \"users\" (id uuid PRIMARY KEY, name text, address frozen<address>)"
         );
     }
 
@@ -76,9 +75,9 @@ public class TypeCodecUDTIntegrationTest extends CCMBridge.PerClassSingleNodeClu
     public void should_handle_udts_with_custom_codecs() {
         CodecRegistry codecRegistry = new CodecRegistry();
         Cluster cluster = Cluster.builder()
-            .addContactPointsWithPorts(Collections.singleton(hostAddress))
-            .withCodecRegistry(codecRegistry)
-            .build();
+                .addContactPointsWithPorts(Collections.singleton(hostAddress))
+                .withCodecRegistry(codecRegistry)
+                .build();
 
         try {
             Session session = cluster.connect(keyspace);
@@ -86,8 +85,8 @@ public class TypeCodecUDTIntegrationTest extends CCMBridge.PerClassSingleNodeClu
             TypeCodec<UDTValue> addressTypeCodec = TypeCodec.userType(addressType);
             TypeCodec<UDTValue> phoneTypeCodec = TypeCodec.userType(phoneType);
             codecRegistry
-                .register(new AddressCodec(addressTypeCodec, Address.class))
-                .register(new PhoneCodec(phoneTypeCodec, Phone.class))
+                    .register(new AddressCodec(addressTypeCodec, Address.class))
+                    .register(new PhoneCodec(phoneTypeCodec, Phone.class))
             ;
             session.execute(insertQuery, uuid, "John Doe", address);
             ResultSet rows = session.execute(selectQuery, uuid);
@@ -127,15 +126,15 @@ public class TypeCodecUDTIntegrationTest extends CCMBridge.PerClassSingleNodeClu
         addressType = cluster.getMetadata().getKeyspace(keyspace).getUserType("address");
         phoneType = cluster.getMetadata().getKeyspace(keyspace).getUserType("phone");
         UDTValue phone1Value = phoneType.newValue()
-            .setString("number", phone1.number)
-            .setSet("tags", phone1.tags);
+                .setString("number", phone1.number)
+                .setSet("tags", phone1.tags);
         UDTValue phone2Value = phoneType.newValue()
-            .setString("number", phone2.number)
-            .setSet("tags", phone2.tags);
+                .setString("number", phone2.number)
+                .setSet("tags", phone2.tags);
         addressValue = addressType.newValue()
-            .setString("street", address.street)
-            .setInt(1, address.zipcode)
-            .setList("phones", Lists.newArrayList(phone1Value, phone2Value));
+                .setString("street", address.street)
+                .setInt(1, address.zipcode)
+                .setList("phones", Lists.newArrayList(phone1Value, phone2Value));
     }
 
     static class AddressCodec extends MappingCodec<Address, UDTValue> {
@@ -198,7 +197,7 @@ public class TypeCodecUDTIntegrationTest extends CCMBridge.PerClassSingleNodeClu
                 return true;
             if (o == null || getClass() != o.getClass())
                 return false;
-            Address address = (Address)o;
+            Address address = (Address) o;
             return zipcode == address.zipcode && street.equals(address.street) && phones.equals(address.phones);
         }
 
@@ -228,7 +227,7 @@ public class TypeCodecUDTIntegrationTest extends CCMBridge.PerClassSingleNodeClu
                 return true;
             if (o == null || getClass() != o.getClass())
                 return false;
-            Phone phone = (Phone)o;
+            Phone phone = (Phone) o;
             return number.equals(phone.number) && tags.equals(phone.tags);
         }
 

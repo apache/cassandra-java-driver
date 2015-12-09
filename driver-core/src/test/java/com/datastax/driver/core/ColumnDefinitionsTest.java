@@ -16,6 +16,7 @@
 package com.datastax.driver.core;
 
 import org.testng.annotations.Test;
+
 import static org.testng.Assert.assertTrue;
 
 public class ColumnDefinitionsTest {
@@ -26,9 +27,9 @@ public class ColumnDefinitionsTest {
         ColumnDefinitions defs;
 
         defs = new ColumnDefinitions(new ColumnDefinitions.Definition[]{
-            new ColumnDefinitions.Definition("ks", "cf", "aColumn", DataType.text()),
-            new ColumnDefinitions.Definition("ks", "cf", "fOO", DataType.text()),
-            new ColumnDefinitions.Definition("ks", "cf", "anotherColumn", DataType.text())
+                new ColumnDefinitions.Definition("ks", "cf", "aColumn", DataType.text()),
+                new ColumnDefinitions.Definition("ks", "cf", "fOO", DataType.text()),
+                new ColumnDefinitions.Definition("ks", "cf", "anotherColumn", DataType.text())
         }, CodecRegistry.DEFAULT_INSTANCE);
 
         assertTrue(defs.contains("foo"));
@@ -36,13 +37,13 @@ public class ColumnDefinitionsTest {
         assertTrue(defs.contains("FOO"));
 
         defs = new ColumnDefinitions(new ColumnDefinitions.Definition[]{
-            new ColumnDefinitions.Definition("ks", "cf", "aColumn", DataType.text()),
-            new ColumnDefinitions.Definition("ks", "cf", "foo", DataType.text()),
-            new ColumnDefinitions.Definition("ks", "cf", "anotherColumn", DataType.text()),
-            new ColumnDefinitions.Definition("ks", "cf", "FOO", DataType.cint()),
-            new ColumnDefinitions.Definition("ks", "cf", "with \" quote", DataType.text()),
-            new ColumnDefinitions.Definition("ks", "cf", "\"in quote\"", DataType.text()),
-            new ColumnDefinitions.Definition("ks", "cf", "in quote", DataType.cint()),
+                new ColumnDefinitions.Definition("ks", "cf", "aColumn", DataType.text()),
+                new ColumnDefinitions.Definition("ks", "cf", "foo", DataType.text()),
+                new ColumnDefinitions.Definition("ks", "cf", "anotherColumn", DataType.text()),
+                new ColumnDefinitions.Definition("ks", "cf", "FOO", DataType.cint()),
+                new ColumnDefinitions.Definition("ks", "cf", "with \" quote", DataType.text()),
+                new ColumnDefinitions.Definition("ks", "cf", "\"in quote\"", DataType.text()),
+                new ColumnDefinitions.Definition("ks", "cf", "in quote", DataType.cint()),
         }, CodecRegistry.DEFAULT_INSTANCE);
 
         assertTrue(defs.getType("foo").equals(DataType.text()));
@@ -61,9 +62,9 @@ public class ColumnDefinitionsTest {
     public void multiDefinitionTest() {
 
         ColumnDefinitions defs = new ColumnDefinitions(new ColumnDefinitions.Definition[]{
-            new ColumnDefinitions.Definition("ks", "cf1", "column", DataType.text()),
-            new ColumnDefinitions.Definition("ks", "cf2", "column", DataType.cint()),
-            new ColumnDefinitions.Definition("ks", "cf3", "column", DataType.cfloat())
+                new ColumnDefinitions.Definition("ks", "cf1", "column", DataType.text()),
+                new ColumnDefinitions.Definition("ks", "cf2", "column", DataType.cint()),
+                new ColumnDefinitions.Definition("ks", "cf3", "column", DataType.cfloat())
         }, CodecRegistry.DEFAULT_INSTANCE);
 
         assertTrue(defs.getType("column").equals(DataType.text()));

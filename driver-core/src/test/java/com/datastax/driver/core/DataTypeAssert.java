@@ -31,7 +31,7 @@ public class DataTypeAssert extends AbstractAssert<DataTypeAssert, DataType> {
 
     public DataTypeAssert isUserType(String keyspaceName, String userTypeName) {
         assertThat(actual).isInstanceOf(UserType.class);
-        UserType userType = (UserType)this.actual;
+        UserType userType = (UserType) this.actual;
         assertThat(userType.getKeyspace()).isEqualTo(keyspaceName);
         assertThat(userType.getTypeName()).isEqualTo(userTypeName);
         return this;
@@ -39,7 +39,7 @@ public class DataTypeAssert extends AbstractAssert<DataTypeAssert, DataType> {
 
     public DataTypeAssert isShallowUserType(String keyspaceName, String userTypeName) {
         assertThat(actual).isInstanceOf(UserType.Shallow.class);
-        UserType.Shallow shallow = (UserType.Shallow)actual;
+        UserType.Shallow shallow = (UserType.Shallow) actual;
         assertThat(shallow.keyspaceName).isEqualTo(keyspaceName);
         assertThat(shallow.typeName).isEqualTo(userTypeName);
         return this;
@@ -67,7 +67,7 @@ public class DataTypeAssert extends AbstractAssert<DataTypeAssert, DataType> {
 
     public DataTypeAssert hasField(String name, DataType expected) {
         assertThat(actual).isInstanceOf(UserType.class);
-        UserType userType = (UserType)this.actual;
+        UserType userType = (UserType) this.actual;
         assertThat(userType.getFieldType(name)).isEqualTo(expected);
         return this;
     }

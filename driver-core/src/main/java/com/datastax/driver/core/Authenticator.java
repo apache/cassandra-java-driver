@@ -17,26 +17,26 @@ package com.datastax.driver.core;
 
 /**
  * Handles SASL authentication with Cassandra servers.
- * <p>
+ * <p/>
  * Each time a new connection is created and the server requires authentication,
  * a new instance of this class will be created by the corresponding
  * {@link AuthProvider} to handle that authentication. The lifecycle of that
  * new {@code Authenticator} will be:
  * <ol>
- *   <li>The {@code initialResponse} method will be called. The initial return
- *   value will be sent to the server to initiate the handshake.</li>
- *   <li>The server will respond to each client response by either issuing a
- *   challenge or indicating that the authentication is complete (successfully or not).
- *   If a new challenge is issued, the authenticator {@code evaluateChallenge}
- *   method will be called to produce a response that will be sent to the
- *   server. This challenge/response negotiation will continue until the server
- *   responds that authentication is successful (or an {@code AuthenticationException}
- *   is raised).
- *   </li>
- *   <li>When the server indicates that authentication is successful, the
- *   {@code onAuthenticationSuccess} method will be called with the last information
- *   that the server may optionally have sent.
- *   </li>
+ * <li>The {@code initialResponse} method will be called. The initial return
+ * value will be sent to the server to initiate the handshake.</li>
+ * <li>The server will respond to each client response by either issuing a
+ * challenge or indicating that the authentication is complete (successfully or not).
+ * If a new challenge is issued, the authenticator {@code evaluateChallenge}
+ * method will be called to produce a response that will be sent to the
+ * server. This challenge/response negotiation will continue until the server
+ * responds that authentication is successful (or an {@code AuthenticationException}
+ * is raised).
+ * </li>
+ * <li>When the server indicates that authentication is successful, the
+ * {@code onAuthenticationSuccess} method will be called with the last information
+ * that the server may optionally have sent.
+ * </li>
  * </ol>
  * The exact nature of the negotiation between client and server is specific
  * to the authentication mechanism configured server side.
@@ -66,8 +66,8 @@ public interface Authenticator {
      * optionally sent by the server.
      *
      * @param token the information sent by the server with the authentication
-     * successful message. This will be {@code null} if the server sends no
-     * particular information on authentication success.
+     *              successful message. This will be {@code null} if the server sends no
+     *              particular information on authentication success.
      */
     public void onAuthenticationSuccess(byte[] token);
 }

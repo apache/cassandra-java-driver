@@ -15,6 +15,17 @@
  */
 package com.datastax.driver.core;
 
+import com.codahale.metrics.Timer;
+import com.datastax.driver.core.exceptions.*;
+import com.datastax.driver.core.policies.RetryPolicy;
+import com.datastax.driver.core.policies.RetryPolicy.RetryDecision.Type;
+import com.datastax.driver.core.policies.SpeculativeExecutionPolicy.SpeculativeExecutionPlan;
+import com.google.common.collect.Sets;
+import io.netty.util.Timeout;
+import io.netty.util.TimerTask;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.Iterator;
@@ -24,18 +35,6 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-
-import com.codahale.metrics.Timer;
-import com.google.common.collect.Sets;
-import io.netty.util.Timeout;
-import io.netty.util.TimerTask;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.datastax.driver.core.exceptions.*;
-import com.datastax.driver.core.policies.RetryPolicy;
-import com.datastax.driver.core.policies.RetryPolicy.RetryDecision.Type;
-import com.datastax.driver.core.policies.SpeculativeExecutionPolicy.SpeculativeExecutionPlan;
 
 /**
  * Handles a request to cassandra, dealing with host failover and retries on
@@ -68,7 +67,7 @@ class RequestHandler {
 
     public RequestHandler(SessionManager manager, Callback callback, Statement statement) {
         this.id = Long.toString(System.identityHashCode(this));
-        if(logger.isTraceEnabled())
+        if (logger.isTraceEnabled())
             logger.trace("[{}] {}", id, statement);
         this.manager = manager;
         this.callback = callback;
@@ -79,12 +78,12 @@ class RequestHandler {
         this.queryPlan = new QueryPlan(manager.loadBalancingPolicy().newQueryPlan(manager.poolsState.keyspace, statement));
         this.speculativeExecutionPlan = manager.speculativeExecutionPolicy().newPlan(manager.poolsState.keyspace, statement);
         this.allowSpeculativeExecutions = statement != Statement.DEFAULT
-            && statement.isIdempotentWithDefault(manager.configuration().getQueryOptions());
+                && statement.isIdempotentWithDefault(manager.configuration().getQueryOptions());
         this.statement = statement;
 
         this.timerContext = metricsEnabled()
-            ? metrics().getRequestsTimer().time()
-            : null;
+                ? metrics().getRequestsTimer().time()
+                : null;
         this.startTime = System.nanoTime();
     }
 
@@ -119,7 +118,7 @@ class RequestHandler {
     private void scheduleExecution(long delayMillis) {
         if (isDone.get() || delayMillis <= 0)
             return;
-        if(logger.isTraceEnabled())
+        if (logger.isTraceEnabled())
             logger.trace("[{}] Schedule next speculative execution in {} ms", id, delayMillis);
         scheduledExecutions.add(scheduler.newTimeout(newExecutionTask, delayMillis, TimeUnit.MILLISECONDS));
     }
@@ -158,12 +157,12 @@ class RequestHandler {
 
     private void setFinalResult(SpeculativeExecution execution, Connection connection, Message.Response response) {
         if (!isDone.compareAndSet(false, true)) {
-            if(logger.isTraceEnabled())
+            if (logger.isTraceEnabled())
                 logger.trace("[{}] Got beaten to setting the result", execution.id);
             return;
         }
 
-        if(logger.isTraceEnabled())
+        if (logger.isTraceEnabled())
             logger.trace("[{}] Setting final result", execution.id);
 
         cancelPendingExecutions(execution);
@@ -185,19 +184,19 @@ class RequestHandler {
             callback.onSet(connection, response, info, statement, System.nanoTime() - startTime);
         } catch (Exception e) {
             callback.onException(connection,
-                new DriverInternalError("Unexpected exception while setting final result from " + response, e),
-                System.nanoTime() - startTime, /*unused*/0);
+                    new DriverInternalError("Unexpected exception while setting final result from " + response, e),
+                    System.nanoTime() - startTime, /*unused*/0);
         }
     }
 
     private void setFinalException(SpeculativeExecution execution, Connection connection, Exception exception) {
         if (!isDone.compareAndSet(false, true)) {
-            if(logger.isTraceEnabled())
+            if (logger.isTraceEnabled())
                 logger.trace("[{}] Got beaten to setting final exception", execution.id);
             return;
         }
 
-        if(logger.isTraceEnabled())
+        if (logger.isTraceEnabled())
             logger.trace("[{}] Setting final exception", execution.id);
 
         cancelPendingExecutions(execution);
@@ -216,7 +215,7 @@ class RequestHandler {
         runningExecutions.remove(execution);
         if (runningExecutions.isEmpty())
             setFinalException(execution, null, new NoHostAvailableException(
-                errors == null ? Collections.<InetSocketAddress, Throwable>emptyMap() : errors));
+                    errors == null ? Collections.<InetSocketAddress, Throwable>emptyMap() : errors));
     }
 
     private boolean metricsEnabled() {
@@ -229,12 +228,13 @@ class RequestHandler {
 
     private RetryPolicy retryPolicy() {
         return statement.getRetryPolicy() == null
-            ? manager.configuration().getPolicies().getRetryPolicy()
-            : statement.getRetryPolicy();
+                ? manager.configuration().getPolicies().getRetryPolicy()
+                : statement.getRetryPolicy();
     }
 
     interface Callback extends Connection.ResponseCallback {
         void onSet(Connection connection, Message.Response response, ExecutionInfo info, Statement statement, long latency);
+
         void register(RequestHandler handler);
     }
 
@@ -268,7 +268,7 @@ class RequestHandler {
             this.id = RequestHandler.this.id + "-" + position;
             this.request = request;
             this.queryStateRef = new AtomicReference<QueryState>(QueryState.INITIAL);
-            if(logger.isTraceEnabled())
+            if (logger.isTraceEnabled())
                 logger.trace("[{}] Starting", id);
         }
 
@@ -276,7 +276,7 @@ class RequestHandler {
             try {
                 Host host;
                 while (!isDone.get() && (host = queryPlan.next()) != null && !queryStateRef.get().isCancelled()) {
-                    if(logger.isTraceEnabled())
+                    if (logger.isTraceEnabled())
                         logger.trace("[{}] Querying node {}", id, host);
                     if (query(host))
                         return;
@@ -431,7 +431,7 @@ class RequestHandler {
                 if (previous.isCancelled()) {
                     return;
                 } else if (previous.inProgress && queryStateRef.compareAndSet(previous, QueryState.CANCELLED_WHILE_IN_PROGRESS)) {
-                    if(logger.isTraceEnabled())
+                    if (logger.isTraceEnabled())
                         logger.trace("[{}] Cancelled while in progress", id);
                     // The connectionHandler should be non-null, but we might miss the update if we're racing with write().
                     // If it's still null, this will be handled by re-checking queryStateRef at the end of write().
@@ -439,7 +439,7 @@ class RequestHandler {
                         connectionHandler.connection.release();
                     return;
                 } else if (!previous.inProgress && queryStateRef.compareAndSet(previous, QueryState.CANCELLED_WHILE_COMPLETE)) {
-                    if(logger.isTraceEnabled())
+                    if (logger.isTraceEnabled())
                         logger.trace("[{}] Cancelled while complete", id);
                     return;
                 }
@@ -458,9 +458,9 @@ class RequestHandler {
         public void onSet(Connection connection, Message.Response response, long latency, int retryCount) {
             QueryState queryState = queryStateRef.get();
             if (!queryState.isInProgressAt(retryCount) ||
-                !queryStateRef.compareAndSet(queryState, queryState.complete())) {
+                    !queryStateRef.compareAndSet(queryState, queryState.complete())) {
                 logger.debug("onSet triggered but the response was completed by another thread, cancelling (retryCount = {}, queryState = {}, queryStateRef = {})",
-                    retryCount, queryState, queryStateRef.get());
+                        retryCount, queryState, queryStateRef.get());
                 return;
             }
 
@@ -473,7 +473,7 @@ class RequestHandler {
                         setFinalResult(connection, response);
                         break;
                     case ERROR:
-                        Responses.Error err = (Responses.Error)response;
+                        Responses.Error err = (Responses.Error) response;
                         exceptionToReport = err.asException(connection.address);
                         RetryPolicy.RetryDecision retry = null;
                         RetryPolicy retryPolicy = retryPolicy();
@@ -481,13 +481,13 @@ class RequestHandler {
                             case READ_TIMEOUT:
                                 connection.release();
                                 assert err.infos instanceof ReadTimeoutException;
-                                ReadTimeoutException rte = (ReadTimeoutException)err.infos;
+                                ReadTimeoutException rte = (ReadTimeoutException) err.infos;
                                 retry = retryPolicy.onReadTimeout(statement,
-                                    rte.getConsistencyLevel(),
-                                    rte.getRequiredAcknowledgements(),
-                                    rte.getReceivedAcknowledgements(),
-                                    rte.wasDataRetrieved(),
-                                    retriesByPolicy);
+                                        rte.getConsistencyLevel(),
+                                        rte.getRequiredAcknowledgements(),
+                                        rte.getReceivedAcknowledgements(),
+                                        rte.wasDataRetrieved(),
+                                        retriesByPolicy);
                                 if (metricsEnabled()) {
                                     metrics().getErrorMetrics().getReadTimeouts().inc();
                                     if (retry.getType() == Type.RETRY)
@@ -499,13 +499,13 @@ class RequestHandler {
                             case WRITE_TIMEOUT:
                                 connection.release();
                                 assert err.infos instanceof WriteTimeoutException;
-                                WriteTimeoutException wte = (WriteTimeoutException)err.infos;
+                                WriteTimeoutException wte = (WriteTimeoutException) err.infos;
                                 retry = retryPolicy.onWriteTimeout(statement,
-                                    wte.getConsistencyLevel(),
-                                    wte.getWriteType(),
-                                    wte.getRequiredAcknowledgements(),
-                                    wte.getReceivedAcknowledgements(),
-                                    retriesByPolicy);
+                                        wte.getConsistencyLevel(),
+                                        wte.getWriteType(),
+                                        wte.getRequiredAcknowledgements(),
+                                        wte.getReceivedAcknowledgements(),
+                                        retriesByPolicy);
                                 if (metricsEnabled()) {
                                     metrics().getErrorMetrics().getWriteTimeouts().inc();
                                     if (retry.getType() == Type.RETRY)
@@ -517,12 +517,12 @@ class RequestHandler {
                             case UNAVAILABLE:
                                 connection.release();
                                 assert err.infos instanceof UnavailableException;
-                                UnavailableException ue = (UnavailableException)err.infos;
+                                UnavailableException ue = (UnavailableException) err.infos;
                                 retry = retryPolicy.onUnavailable(statement,
-                                    ue.getConsistencyLevel(),
-                                    ue.getRequiredReplicas(),
-                                    ue.getAliveReplicas(),
-                                    retriesByPolicy);
+                                        ue.getConsistencyLevel(),
+                                        ue.getRequiredReplicas(),
+                                        ue.getAliveReplicas(),
+                                        retriesByPolicy);
                                 if (metricsEnabled()) {
                                     metrics().getErrorMetrics().getUnavailables().inc();
                                     if (retry.getType() == Type.RETRY)
@@ -536,8 +536,8 @@ class RequestHandler {
                                 assert exceptionToReport instanceof OverloadedException;
                                 logger.warn("Host {} is overloaded.", connection.address);
                                 retry = retryPolicy.onRequestError(statement,
-                                    request().consistency(),
-                                    (OverloadedException)exceptionToReport, retriesByPolicy);
+                                        request().consistency(),
+                                        (OverloadedException) exceptionToReport, retriesByPolicy);
                                 if (metricsEnabled()) {
                                     metrics().getErrorMetrics().getOthers().inc();
                                     if (retry.getType() == Type.RETRY)
@@ -553,8 +553,8 @@ class RequestHandler {
                                 // Defunct connection
                                 connection.defunct(exceptionToReport);
                                 retry = retryPolicy.onRequestError(statement,
-                                    request().consistency(),
-                                    (ServerError)exceptionToReport, retriesByPolicy);
+                                        request().consistency(),
+                                        (ServerError) exceptionToReport, retriesByPolicy);
                                 if (metricsEnabled()) {
                                     metrics().getErrorMetrics().getOthers().inc();
                                     if (retry.getType() == Type.RETRY)
@@ -576,7 +576,7 @@ class RequestHandler {
                             case UNPREPARED:
                                 // Do not release connection yet, because we might reuse it to send the PREPARE message (see write() call below)
                                 assert err.infos instanceof MD5Digest;
-                                MD5Digest id = (MD5Digest)err.infos;
+                                MD5Digest id = (MD5Digest) err.infos;
                                 PreparedStatement toPrepare = manager.cluster.manager.preparedQueries.get(id);
                                 if (toPrepare == null) {
                                     // This shouldn't happen
@@ -596,12 +596,12 @@ class RequestHandler {
                                     // that's shared with other requests).
                                     connection.release();
                                     throw new IllegalStateException(String.format("Statement was prepared on keyspace %s, can't execute it on %s (%s)",
-                                        toPrepare.getQueryKeyspace(), connection.keyspace(), toPrepare.getQueryString()));
+                                            toPrepare.getQueryKeyspace(), connection.keyspace(), toPrepare.getQueryString()));
                                 }
 
                                 logger.info("Query {} is not prepared on {}, preparing before retrying executing. "
-                                        + "Seeing this message a few times is fine, but seeing it a lot may be source of performance problems",
-                                    toPrepare.getQueryString(), connection.address);
+                                                + "Seeing this message a few times is fine, but seeing it a lot may be source of performance problems",
+                                        toPrepare.getQueryString(), connection.address);
 
                                 write(connection, prepareAndRetry(toPrepare.getQueryString()));
                                 // we're done for now, the prepareAndRetry callback will handle the rest
@@ -658,9 +658,9 @@ class RequestHandler {
                 public void onSet(Connection connection, Message.Response response, long latency, int retryCount) {
                     QueryState queryState = queryStateRef.get();
                     if (!queryState.isInProgressAt(retryCount) ||
-                        !queryStateRef.compareAndSet(queryState, queryState.complete())) {
+                            !queryStateRef.compareAndSet(queryState, queryState.complete())) {
                         logger.debug("onSet triggered but the response was completed by another thread, cancelling (retryCount = {}, queryState = {}, queryStateRef = {})",
-                            retryCount, queryState, queryStateRef.get());
+                                retryCount, queryState, queryStateRef.get());
                         return;
                     }
 
@@ -668,7 +668,7 @@ class RequestHandler {
 
                     switch (response.type) {
                         case RESULT:
-                            if (((Responses.Result)response).kind == Responses.Result.Kind.PREPARED) {
+                            if (((Responses.Result) response).kind == Responses.Result.Kind.PREPARED) {
                                 logger.debug("Scheduling retry now that query is prepared");
                                 retry(true, null);
                             } else {
@@ -698,9 +698,9 @@ class RequestHandler {
                 public boolean onTimeout(Connection connection, long latency, int retryCount) {
                     QueryState queryState = queryStateRef.get();
                     if (!queryState.isInProgressAt(retryCount) ||
-                        !queryStateRef.compareAndSet(queryState, queryState.complete())) {
+                            !queryStateRef.compareAndSet(queryState, queryState.complete())) {
                         logger.debug("onTimeout triggered but the response was completed by another thread, cancelling (retryCount = {}, queryState = {}, queryStateRef = {})",
-                            retryCount, queryState, queryStateRef.get());
+                                retryCount, queryState, queryStateRef.get());
                         return false;
                     }
                     connection.release();
@@ -715,9 +715,9 @@ class RequestHandler {
         public void onException(Connection connection, Exception exception, long latency, int retryCount) {
             QueryState queryState = queryStateRef.get();
             if (!queryState.isInProgressAt(retryCount) ||
-                !queryStateRef.compareAndSet(queryState, queryState.complete())) {
+                    !queryStateRef.compareAndSet(queryState, queryState.complete())) {
                 logger.debug("onException triggered but the response was completed by another thread, cancelling (retryCount = {}, queryState = {}, queryStateRef = {})",
-                    retryCount, queryState, queryStateRef.get());
+                        retryCount, queryState, queryStateRef.get());
                 return;
             }
 
@@ -727,7 +727,7 @@ class RequestHandler {
 
                 if (exception instanceof ConnectionException) {
                     RetryPolicy retryPolicy = retryPolicy();
-                    RetryPolicy.RetryDecision decision = retryPolicy.onRequestError(statement, request().consistency(), (ConnectionException)exception, retriesByPolicy);
+                    RetryPolicy.RetryDecision decision = retryPolicy.onRequestError(statement, request().consistency(), (ConnectionException) exception, retriesByPolicy);
                     if (metricsEnabled()) {
                         metrics().getErrorMetrics().getConnectionErrors().inc();
                         if (decision.getType() == Type.RETRY)
@@ -752,9 +752,9 @@ class RequestHandler {
         public boolean onTimeout(Connection connection, long latency, int retryCount) {
             QueryState queryState = queryStateRef.get();
             if (!queryState.isInProgressAt(retryCount) ||
-                !queryStateRef.compareAndSet(queryState, queryState.complete())) {
+                    !queryStateRef.compareAndSet(queryState, queryState.complete())) {
                 logger.debug("onTimeout triggered but the response was completed by another thread, cancelling (retryCount = {}, queryState = {}, queryStateRef = {})",
-                    retryCount, queryState, queryStateRef.get());
+                        retryCount, queryState, queryStateRef.get());
                 return false;
             }
 
@@ -801,7 +801,7 @@ class RequestHandler {
 
     /**
      * The state of a SpeculativeExecution.
-     *
+     * <p/>
      * This is used to prevent races between request completion (either success or error) and timeout.
      * A retry is in progress once we have written the request to the connection and until we get back a response (see onSet
      * or onException) or a timeout (see onTimeout).
@@ -855,7 +855,9 @@ class RequestHandler {
             this.iterator = iterator;
         }
 
-        /** @return null if there are no more hosts */
+        /**
+         * @return null if there are no more hosts
+         */
         synchronized Host next() {
             return iterator.hasNext() ? iterator.next() : null;
         }

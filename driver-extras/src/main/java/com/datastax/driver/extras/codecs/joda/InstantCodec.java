@@ -15,25 +15,20 @@
  */
 package com.datastax.driver.extras.codecs.joda;
 
-import java.nio.ByteBuffer;
-
-import static java.lang.Long.parseLong;
-
+import com.datastax.driver.core.DataType;
+import com.datastax.driver.core.ProtocolVersion;
+import com.datastax.driver.core.TypeCodec;
+import com.datastax.driver.core.exceptions.InvalidTypeException;
 import org.joda.time.Instant;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.DateTimeFormatterBuilder;
 import org.joda.time.format.ISODateTimeFormat;
 
-import com.datastax.driver.core.DataType;
-import com.datastax.driver.core.ProtocolVersion;
-import com.datastax.driver.core.TypeCodec;
-import com.datastax.driver.core.exceptions.InvalidTypeException;
+import java.nio.ByteBuffer;
 
-import static com.datastax.driver.core.ParseUtils.isLongLiteral;
-import static com.datastax.driver.core.ParseUtils.isQuoted;
-import static com.datastax.driver.core.ParseUtils.quote;
-import static com.datastax.driver.core.ParseUtils.unquote;
+import static com.datastax.driver.core.ParseUtils.*;
+import static java.lang.Long.parseLong;
 
 /**
  * {@link TypeCodec} that maps {@link Instant} to CQL {@code timestamp}.
@@ -51,13 +46,13 @@ public class InstantCodec extends TypeCodec<Instant> {
      * the ISO formats accepted in CQL.
      */
     private static final DateTimeFormatter PARSER = new DateTimeFormatterBuilder()
-        .append(ISODateTimeFormat.dateOptionalTimeParser().getParser())
-        .appendOptional(
-            new DateTimeFormatterBuilder()
-            .appendTimeZoneOffset("Z", true, 2, 4)
-            .toParser())
-        .toFormatter()
-        .withZoneUTC();
+            .append(ISODateTimeFormat.dateOptionalTimeParser().getParser())
+            .appendOptional(
+                    new DateTimeFormatterBuilder()
+                            .appendTimeZoneOffset("Z", true, 2, 4)
+                            .toParser())
+            .toFormatter()
+            .withZoneUTC();
 
     private static final DateTimeFormatter FORMATTER = DateTimeFormat.forPattern("yyyy-MM-dd'T'HH:mm:ss.SSSZZ").withZoneUTC();
 

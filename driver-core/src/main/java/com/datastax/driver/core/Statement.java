@@ -15,19 +15,18 @@
  */
 package com.datastax.driver.core;
 
-import java.nio.ByteBuffer;
-import java.util.Map;
-
-import com.google.common.collect.ImmutableMap;
-
 import com.datastax.driver.core.exceptions.PagingStateException;
 import com.datastax.driver.core.exceptions.UnsupportedProtocolVersionException;
 import com.datastax.driver.core.policies.RetryPolicy;
 import com.datastax.driver.core.querybuilder.BuiltStatement;
+import com.google.common.collect.ImmutableMap;
+
+import java.nio.ByteBuffer;
+import java.util.Map;
 
 /**
  * An executable query.
- * <p>
+ * <p/>
  * This represents either a {@link RegularStatement}, a {@link BoundStatement} or a
  * {@link BatchStatement} along with the querying options (consistency level,
  * whether to trace the query, ...).
@@ -97,7 +96,7 @@ public abstract class Statement {
 
     /**
      * Sets the serial consistency level for the query.
-     *
+     * <p/>
      * The serial consistency level is only used by conditional updates (so INSERT, UPDATE
      * and DELETE with an IF condition). For those, the serial consistency level defines
      * the consistency level of the serial phase (or "paxos" phase) while the
@@ -107,20 +106,19 @@ public abstract class Statement {
      * QUORUM read is guaranteed to see that write. But if the regular consistency of that
      * write is ANY, then only a read with a consistency of SERIAL is guaranteed to see it
      * (even a read with consistency ALL is not guaranteed to be enough).
-     * <p>
+     * <p/>
      * The serial consistency can only be one of {@code ConsistencyLevel.SERIAL} or
      * {@code ConsistencyLevel.LOCAL_SERIAL}. While {@code ConsistencyLevel.SERIAL} guarantees full
      * linearizability (with other SERIAL updates), {@code ConsistencyLevel.LOCAL_SERIAL} only
      * guarantees it in the local data center.
-     * <p>
+     * <p/>
      * The serial consistency level is ignored for any query that is not a conditional
      * update (serial reads should use the regular consistency level for instance).
      *
      * @param serialConsistency the serial consistency level to set.
      * @return this {@code Statement} object.
-     *
      * @throws IllegalArgumentException if {@code serialConsistency} is not one of
-     * {@code ConsistencyLevel.SERIAL} or {@code ConsistencyLevel.LOCAL_SERIAL}.
+     *                                  {@code ConsistencyLevel.SERIAL} or {@code ConsistencyLevel.LOCAL_SERIAL}.
      */
     public Statement setSerialConsistencyLevel(ConsistencyLevel serialConsistency) {
         if (serialConsistency != ConsistencyLevel.SERIAL && serialConsistency != ConsistencyLevel.LOCAL_SERIAL)
@@ -131,7 +129,7 @@ public abstract class Statement {
 
     /**
      * The serial consistency level for this query.
-     * <p>
+     * <p/>
      * See {@link #setSerialConsistencyLevel} for more detail on the serial consistency level.
      *
      * @return the consistency level for this query, or {@code null} if no serial
@@ -144,7 +142,7 @@ public abstract class Statement {
 
     /**
      * Enables tracing for this query.
-     *
+     * <p/>
      * By default (that is unless you call this method), tracing is not enabled.
      *
      * @return this {@code Statement} object.
@@ -177,7 +175,7 @@ public abstract class Statement {
     /**
      * Returns the routing key (in binary raw form) to use for token aware
      * routing of this query.
-     * <p>
+     * <p/>
      * The routing key is optional in that implementers are free to
      * return {@code null}. The routing key is an hint used for token-aware routing (see
      * {@link com.datastax.driver.core.policies.TokenAwarePolicy}), and
@@ -189,16 +187,16 @@ public abstract class Statement {
      * @param protocolVersion the protocol version that will be used if the actual
      *                        implementation needs to serialize something to compute
      *                        the key.
-     * @param codecRegistry the codec registry that will be used if the actual
-     *                      implementation needs to serialize something to compute
-     *                      this key.
+     * @param codecRegistry   the codec registry that will be used if the actual
+     *                        implementation needs to serialize something to compute
+     *                        this key.
      * @return the routing key for this query or {@code null}.
      */
     public abstract ByteBuffer getRoutingKey(ProtocolVersion protocolVersion, CodecRegistry codecRegistry);
 
     /**
      * Returns the keyspace this query operates on.
-     * <p>
+     * <p/>
      * Note that not all query specify on which keyspace they operate on, and
      * so this method can always return {@code null}. Firstly, some queries do
      * not operate inside a keyspace: keyspace creation, {@code USE} queries,
@@ -218,7 +216,7 @@ public abstract class Statement {
 
     /**
      * Sets the retry policy to use for this query.
-     * <p>
+     * <p/>
      * The default retry policy, if this method is not called, is the one returned by
      * {@link com.datastax.driver.core.policies.Policies#getRetryPolicy} in the
      * cluster configuration. This method is thus only useful in case you want
@@ -245,7 +243,7 @@ public abstract class Statement {
 
     /**
      * Sets the query fetch size.
-     * <p>
+     * <p/>
      * The fetch size controls how much resulting rows will be retrieved
      * simultaneously (the goal being to avoid loading too much results
      * in memory for queries yielding large results). Please note that
@@ -253,9 +251,9 @@ public abstract class Statement {
      * use such a low value in practice as it will yield very poor
      * performance. If in doubt, leaving the default is probably a good
      * idea.
-     * <p>
+     * <p/>
      * Only {@code SELECT} queries only ever make use of that setting.
-     * <p>
+     * <p/>
      * Note: Paging is not supported with the native protocol version 1. If
      * you call this method with {@code fetchSize &gt; 0} and
      * {@code fetchSize != Integer.MAX_VALUE} and the protocol version is in
@@ -264,8 +262,8 @@ public abstract class Statement {
      * when submitting this statement for execution.
      *
      * @param fetchSize the fetch size to use. If {@code fetchSize &lte; 0},
-     * the default fetch size will be used. To disable paging of the
-     * result set, use {@code fetchSize == Integer.MAX_VALUE}.
+     *                  the default fetch size will be used. To disable paging of the
+     *                  result set, use {@code fetchSize == Integer.MAX_VALUE}.
      * @return this {@code Statement} object.
      */
     public Statement setFetchSize(int fetchSize) {
@@ -286,11 +284,11 @@ public abstract class Statement {
 
     /**
      * Sets the default timestamp for this query (in microseconds since the epoch).
-     * <p>
+     * <p/>
      * This feature is only available when version {@link ProtocolVersion#V3 V3} or
      * higher of the native protocol is in use. With earlier versions, calling this
      * method has no effect.
-     * <p>
+     * <p/>
      * The actual timestamp that will be used for this query is, in order of
      * preference:
      * <ul>
@@ -305,9 +303,8 @@ public abstract class Statement {
      * will generate a server-side one (similar to the pre-V3 behavior).
      *
      * @param defaultTimestamp the default timestamp for this query (must be strictly
-     * positive).
+     *                         positive).
      * @return this {@code Statement} object.
-     *
      * @see Cluster.Builder#withTimestampGenerator(TimestampGenerator)
      */
     public Statement setDefaultTimestamp(long defaultTimestamp) {
@@ -326,10 +323,10 @@ public abstract class Statement {
 
     /**
      * Sets the paging state.
-     * <p>
+     * <p/>
      * This will cause the next execution of this statement to fetch results from a given
      * page, rather than restarting from the beginning.
-     * <p>
+     * <p/>
      * You get the paging state from a previous execution of the statement (see
      * {@link ExecutionInfo#getPagingState()}.
      * This is typically used to iterate in a "stateless" manner (e.g. across HTTP requests):
@@ -359,11 +356,11 @@ public abstract class Statement {
      * }
      * }
      * </pre>
-     * <p>
+     * <p/>
      * The paging state can only be reused between perfectly identical statements
      * (same query string, same bound parameters). Altering the contents of the paging state
      * or trying to set it on a different statement will cause this method to fail.
-     * <p>
+     * <p/>
      * Note that, due to internal implementation details, the paging state is not portable
      * across native protocol versions (see the
      * <a href="http://datastax.github.io/java-driver/features/native_protocol">online documentation</a>
@@ -372,14 +369,12 @@ public abstract class Statement {
      * with a higher version. If that is a problem for you, consider using the "unsafe" API (see
      * {@link #setPagingStateUnsafe(byte[])}).
      *
-     * @param pagingState the paging state to set, or {@code null} to remove any state that was
-     *                    previously set on this statement.
+     * @param pagingState   the paging state to set, or {@code null} to remove any state that was
+     *                      previously set on this statement.
      * @param codecRegistry the codec registry that will be used if this method needs to serialize the
      *                      statement's values in order to check that the paging state matches.
      * @return this {@code Statement} object.
-     *
      * @throws PagingStateException if the paging state does not match this statement.
-     *
      * @see #setPagingState(PagingState)
      */
     public Statement setPagingState(PagingState pagingState, CodecRegistry codecRegistry) {
@@ -392,8 +387,8 @@ public abstract class Statement {
                 this.pagingState = pagingState.getRawState();
             } else {
                 throw new PagingStateException("Paging state mismatch, "
-                    + "this means that either the paging state contents were altered, "
-                    + "or you're trying to apply it to a different statement");
+                        + "this means that either the paging state contents were altered, "
+                        + "or you're trying to apply it to a different statement");
             }
         }
         return this;
@@ -401,16 +396,16 @@ public abstract class Statement {
 
     /**
      * Sets the paging state.
-     * <p>
+     * <p/>
      * This method calls {@link #setPagingState(PagingState, CodecRegistry)} with {@link CodecRegistry#DEFAULT_INSTANCE}.
      * Whether you should use this or the other variant depends on the type of statement this is
      * called on:
      * <ul>
-     *     <li>for a {@link BoundStatement}, the codec registry isn't actually needed, so it's always safe to
-     *     use this method;</li>
-     *     <li>for a {@link SimpleStatement} or {@link BuiltStatement}, you can use this method if you use no
-     *     custom codecs, or if your custom codecs are registered with the default registry. Otherwise, use
-     *     the other method and provide the registry that contains your codecs.</li>
+     * <li>for a {@link BoundStatement}, the codec registry isn't actually needed, so it's always safe to
+     * use this method;</li>
+     * <li>for a {@link SimpleStatement} or {@link BuiltStatement}, you can use this method if you use no
+     * custom codecs, or if your custom codecs are registered with the default registry. Otherwise, use
+     * the other method and provide the registry that contains your codecs.</li>
      * </ul>
      *
      * @param pagingState the paging state to set, or {@code null} to remove any state that was
@@ -422,7 +417,7 @@ public abstract class Statement {
 
     /**
      * Sets the paging state.
-     * <p>
+     * <p/>
      * Contrary to {@link #setPagingState(PagingState)}, this method takes the "raw" form of the
      * paging state (previously extracted with {@link ExecutionInfo#getPagingStateUnsafe()}.
      * It won't validate that this statement matches the one that the paging state was extracted from.
@@ -450,7 +445,7 @@ public abstract class Statement {
 
     /**
      * Sets whether this statement is idempotent.
-     * <p>
+     * <p/>
      * See {@link #isIdempotent()} for more explanations about this property.
      *
      * @param idempotent the new value.
@@ -464,21 +459,21 @@ public abstract class Statement {
     /**
      * Whether this statement is idempotent, i.e. whether it can be applied multiple times
      * without changing the result beyond the initial application.
-     * <p>
+     * <p/>
      * Idempotence plays a role in {@link com.datastax.driver.core.policies.SpeculativeExecutionPolicy speculative executions}.
      * If a statement is <em>not idempotent</em>, the driver will not schedule speculative
      * executions for it.
-     * <p>
+     * <p/>
      * Note that this method can return {@code null}, in which case the driver will default to
      * {@link QueryOptions#getDefaultIdempotence()}.
-     * <p>
+     * <p/>
      * By default, this method returns {@code null} for all statements, except for
      * {@link BuiltStatement}s, where the value will be inferred from the query: if it updates
      * counters, prepends/appends to a list, or uses a function call or
      * {@link com.datastax.driver.core.querybuilder.QueryBuilder#raw(String)} anywhere in an inserted value,
      * the result will be {@code false}; otherwise it will be {@code true}.
      * In all cases, calling {@link #setIdempotent(boolean)} forces a value that overrides every other mechanism.
-     * <p>
+     * <p/>
      * Note that when a statement is prepared ({@link Session#prepare(String)}), its idempotence flag will be propagated
      * to all {@link PreparedStatement}s created from it.
      *
@@ -504,11 +499,11 @@ public abstract class Statement {
     /**
      * Set the given outgoing payload on this statement.
      * Each time this statement is executed, this payload will be included in the query request.
-     * <p>
+     * <p/>
      * This method makes a defensive copy of the given map, but its values
      * remain inherently mutable. Care should be taken not to modify the original map
      * once it is passed to this method.
-     * <p>
+     * <p/>
      * This feature is only available with {@link ProtocolVersion#V4} or above.
      * Trying to include custom payloads in requests sent by the driver
      * under lower protocol versions will result in an

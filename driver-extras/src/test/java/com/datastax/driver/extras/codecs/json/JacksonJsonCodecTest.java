@@ -15,37 +15,32 @@
  */
 package com.datastax.driver.extras.codecs.json;
 
-import java.util.ArrayList;
-import java.util.Collection;
-
+import com.datastax.driver.core.*;
+import com.datastax.driver.core.querybuilder.BuiltStatement;
+import com.datastax.driver.core.utils.CassandraVersion;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
 import org.testng.annotations.Test;
 
+import java.util.ArrayList;
+import java.util.Collection;
+
+import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 import static org.assertj.core.api.Assertions.assertThat;
-
-import com.datastax.driver.core.*;
-import com.datastax.driver.core.querybuilder.BuiltStatement;
-import com.datastax.driver.core.utils.CassandraVersion;
-
-import static com.datastax.driver.core.querybuilder.QueryBuilder.bindMarker;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.insertInto;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
 
 public class JacksonJsonCodecTest extends CCMBridge.PerClassSingleNodeCluster {
 
     private static final JacksonJsonCodec<User> jsonCodec = new JacksonJsonCodec<User>(User.class);
 
-    private static final User alice   = new User(1, "Alice");
-    private static final User bob     = new User(2, "Bob");
+    private static final User alice = new User(1, "Alice");
+    private static final User bob = new User(2, "Bob");
     private static final User charlie = new User(3, "Charlie");
 
-    private static final String bobJson     = "{\"id\":2,\"name\":\"Bob\"}";
+    private static final String bobJson = "{\"id\":2,\"name\":\"Bob\"}";
     private static final String charlieJson = "{\"id\":3,\"name\":\"Charlie\"}";
-    private static final String aliceJson   = "{\"id\":1,\"name\":\"Alice\"}";
+    private static final String aliceJson = "{\"id\":1,\"name\":\"Alice\"}";
 
     private static final ArrayList<User> bobAndCharlie = Lists.newArrayList(bob, charlie);
 
@@ -57,14 +52,14 @@ public class JacksonJsonCodecTest extends CCMBridge.PerClassSingleNodeCluster {
     @Override
     protected Collection<String> getTableDefinitions() {
         return Lists.newArrayList(
-            "CREATE TABLE t1 (c1 text, c2 text, c3 list<text>, PRIMARY KEY (c1, c2))"
+                "CREATE TABLE t1 (c1 text, c2 text, c3 list<text>, PRIMARY KEY (c1, c2))"
         );
     }
 
     @Override
     protected Cluster.Builder configure(Cluster.Builder builder) {
         return builder.withCodecRegistry(
-            new CodecRegistry().register(jsonCodec) // global User <-> varchar codec
+                new CodecRegistry().register(jsonCodec) // global User <-> varchar codec
         );
     }
 
@@ -87,7 +82,7 @@ public class JacksonJsonCodecTest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     @Test(groups = "short")
-    @CassandraVersion(major=2.0)
+    @CassandraVersion(major = 2.0)
     public void should_use_custom_codec_with_simple_statements() {
         session.execute(insertQuery, notAJsonString, alice, bobAndCharlie);
         ResultSet rows = session.execute(selectQuery, notAJsonString, alice);
@@ -98,13 +93,13 @@ public class JacksonJsonCodecTest extends CCMBridge.PerClassSingleNodeCluster {
     @Test(groups = "short")
     public void should_use_custom_codec_with_built_statements_1() {
         BuiltStatement insertStmt = insertInto("t1")
-            .value("c1", bindMarker())
-            .value("c2", bindMarker())
-            .value("c3", bindMarker());
+                .value("c1", bindMarker())
+                .value("c2", bindMarker())
+                .value("c3", bindMarker());
         BuiltStatement selectStmt = select("c1", "c2", "c3")
-            .from("t1")
-            .where(eq("c1", bindMarker()))
-            .and(eq("c2", bindMarker()));
+                .from("t1")
+                .where(eq("c1", bindMarker()))
+                .and(eq("c2", bindMarker()));
         session.execute(session.prepare(insertStmt).bind(notAJsonString, alice, bobAndCharlie));
         ResultSet rows = session.execute(session.prepare(selectStmt).bind(notAJsonString, alice));
         Row row = rows.one();
@@ -114,14 +109,14 @@ public class JacksonJsonCodecTest extends CCMBridge.PerClassSingleNodeCluster {
     @Test(groups = "short")
     public void should_use_custom_codec_with_built_statements_2() {
         BuiltStatement insertStmt = insertInto("t1")
-            .value("c1", notAJsonString)
-            .value("c2", alice)
-            .value("c3", bobAndCharlie);
+                .value("c1", notAJsonString)
+                .value("c2", alice)
+                .value("c3", bobAndCharlie);
         BuiltStatement selectStmt =
-            select("c1", "c2", "c3")
-                .from("t1")
-                .where(eq("c1", notAJsonString))
-                .and(eq("c2", alice));
+                select("c1", "c2", "c3")
+                        .from("t1")
+                        .where(eq("c1", notAJsonString))
+                        .and(eq("c2", alice));
         session.execute(insertStmt);
         ResultSet rows = session.execute(selectStmt);
         Row row = rows.one();
@@ -143,17 +138,17 @@ public class JacksonJsonCodecTest extends CCMBridge.PerClassSingleNodeCluster {
     @Test(groups = "short")
     public void should_use_custom_codec_with_prepared_statements_2() {
         session.execute(session.prepare(insertQuery).bind()
-            .setString(0, notAJsonString)
-            .set(1, alice, User.class)
-            .setList(2, bobAndCharlie, User.class)
+                        .setString(0, notAJsonString)
+                        .set(1, alice, User.class)
+                        .setList(2, bobAndCharlie, User.class)
         );
         PreparedStatement ps = session.prepare(selectQuery);
         ResultSet rows = session.execute(ps.bind()
-            .setString(0, notAJsonString)
-            // this set() method conveys information about the java type of alice
-            // so the registry will look for a codec accepting varchar <-> User
-            // and will find jsonCodec because it is the only matching one
-            .set(1, alice, User.class)
+                        .setString(0, notAJsonString)
+                                // this set() method conveys information about the java type of alice
+                                // so the registry will look for a codec accepting varchar <-> User
+                                // and will find jsonCodec because it is the only matching one
+                        .set(1, alice, User.class)
         );
         Row row = rows.one();
         assertRow(row);
@@ -209,9 +204,9 @@ public class JacksonJsonCodecTest extends CCMBridge.PerClassSingleNodeCluster {
                 return true;
             if (o == null || getClass() != o.getClass())
                 return false;
-            User user = (User)o;
+            User user = (User) o;
             return Objects.equal(id, user.id) &&
-                Objects.equal(name, user.name);
+                    Objects.equal(name, user.name);
         }
 
         @Override

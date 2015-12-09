@@ -15,31 +15,29 @@
  */
 package com.datastax.driver.core.policies;
 
+import com.datastax.driver.core.*;
+import com.google.common.collect.AbstractIterator;
+import com.google.common.collect.Lists;
+
 import java.nio.ByteBuffer;
 import java.util.*;
 
-import com.google.common.collect.Lists;
-
-import com.google.common.collect.AbstractIterator;
-
-import com.datastax.driver.core.*;
-
 /**
  * A wrapper load balancing policy that add token awareness to a child policy.
- * <p>
+ * <p/>
  * This policy encapsulates another policy. The resulting policy works in
  * the following way:
  * <ul>
- *   <li>the {@code distance} method is inherited from the child policy.</li>
- *   <li>the iterator return by the {@code newQueryPlan} method will first
- *   return the {@code LOCAL} replicas for the query (based on {@link Statement#getRoutingKey})
- *   <i>if possible</i> (i.e. if the query {@code getRoutingKey} method
- *   doesn't return {@code null} and if {@link Metadata#getReplicas}
- *   returns a non empty set of replicas for that partition key). If no
- *   local replica can be either found or successfully contacted, the rest
- *   of the query plan will fallback to one of the child policy.</li>
+ * <li>the {@code distance} method is inherited from the child policy.</li>
+ * <li>the iterator return by the {@code newQueryPlan} method will first
+ * return the {@code LOCAL} replicas for the query (based on {@link Statement#getRoutingKey})
+ * <i>if possible</i> (i.e. if the query {@code getRoutingKey} method
+ * doesn't return {@code null} and if {@link Metadata#getReplicas}
+ * returns a non empty set of replicas for that partition key). If no
+ * local replica can be either found or successfully contacted, the rest
+ * of the query plan will fallback to one of the child policy.</li>
  * </ul>
- * <p>
+ * <p/>
  * Do note that only replica for which the child policy {@code distance}
  * method returns {@code HostDistance.LOCAL} will be considered having
  * priority. For example, if you wrap {@link DCAwareRoundRobinPolicy} with this
@@ -57,7 +55,7 @@ public class TokenAwarePolicy implements ChainableLoadBalancingPolicy {
     /**
      * Creates a new {@code TokenAware} policy.
      *
-     * @param childPolicy the load balancing policy to wrap with token awareness.
+     * @param childPolicy     the load balancing policy to wrap with token awareness.
      * @param shuffleReplicas whether to shuffle the replicas returned by {@code getRoutingKey}.
      *                        Note that setting this parameter to {@code true} might decrease the
      *                        effectiveness of caching (especially at consistency level ONE), since
@@ -65,7 +63,6 @@ public class TokenAwarePolicy implements ChainableLoadBalancingPolicy {
      *                        "primary" replica without shuffling).
      *                        On the other hand, shuffling will better distribute writes, and can
      *                        alleviate hotspots caused by "fat" partitions.
-     *
      */
     public TokenAwarePolicy(LoadBalancingPolicy childPolicy, boolean shuffleReplicas) {
         this.childPolicy = childPolicy;
@@ -76,8 +73,7 @@ public class TokenAwarePolicy implements ChainableLoadBalancingPolicy {
      * Creates a new {@code TokenAware} policy with shuffling of replicas.
      *
      * @param childPolicy the load balancing policy to wrap with token
-     * awareness.
-     *
+     *                    awareness.
      * @see #TokenAwarePolicy(LoadBalancingPolicy, boolean)
      */
     public TokenAwarePolicy(LoadBalancingPolicy childPolicy) {
@@ -110,7 +106,7 @@ public class TokenAwarePolicy implements ChainableLoadBalancingPolicy {
 
     /**
      * Returns the hosts to use for a new query.
-     * <p>
+     * <p/>
      * The returned plan will first return replicas (whose {@code HostDistance}
      * for the child policy is {@code LOCAL}) for the query if it can determine
      * them (i.e. mainly if {@code statement.getRoutingKey()} is not {@code null}).

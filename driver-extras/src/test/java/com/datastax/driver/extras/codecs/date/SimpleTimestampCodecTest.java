@@ -15,10 +15,10 @@
  */
 package com.datastax.driver.extras.codecs.date;
 
-import java.text.ParseException;
-
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+
+import java.text.ParseException;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.ParseUtils.parseDate;
@@ -29,25 +29,25 @@ public class SimpleTimestampCodecTest {
     @DataProvider(name = "SimpleTimestampCodecTest.parse")
     public Object[][] parseParameters() throws ParseException {
         return new Object[][]{
-            { null                              , null },
-            { ""                                , null },
-            { "NULL"                            , null },
-            { "0"                               , 0L },
-            { "'2010-06-30T01:20'"              , parseDate("2010-06-30T01:20:00.000Z").getTime() },
-            { "'2010-06-30T01:20Z'"             , parseDate("2010-06-30T01:20:00.000Z").getTime() },
-            { "'2010-06-30T01:20:47'"           , parseDate("2010-06-30T01:20:47.000Z").getTime() },
-            { "'2010-06-30T01:20:47+01:00'"     , parseDate("2010-06-30T00:20:47.000Z").getTime() },
-            { "'2010-06-30T01:20:47.999'"       , parseDate("2010-06-30T01:20:47.999Z").getTime() },
-            { "'2010-06-30T01:20:47.999+01:00'" , parseDate("2010-06-30T00:20:47.999Z").getTime() }
+                {null, null},
+                {"", null},
+                {"NULL", null},
+                {"0", 0L},
+                {"'2010-06-30T01:20'", parseDate("2010-06-30T01:20:00.000Z").getTime()},
+                {"'2010-06-30T01:20Z'", parseDate("2010-06-30T01:20:00.000Z").getTime()},
+                {"'2010-06-30T01:20:47'", parseDate("2010-06-30T01:20:47.000Z").getTime()},
+                {"'2010-06-30T01:20:47+01:00'", parseDate("2010-06-30T00:20:47.000Z").getTime()},
+                {"'2010-06-30T01:20:47.999'", parseDate("2010-06-30T01:20:47.999Z").getTime()},
+                {"'2010-06-30T01:20:47.999+01:00'", parseDate("2010-06-30T00:20:47.999Z").getTime()}
         };
     }
 
     @DataProvider(name = "SimpleTimestampCodecTest.format")
     public Object[][] formatParameters() throws ParseException {
         return new Object[][]{
-            { null   , "NULL"     },
-            { 0L     , "'0'"      },
-            { 123456L, "'123456'" }
+                {null, "NULL"},
+                {0L, "'0'"},
+                {123456L, "'123456'"}
         };
     }
 

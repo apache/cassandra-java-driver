@@ -15,13 +15,12 @@
  */
 package com.datastax.driver.core.exceptions;
 
-import java.util.Collection;
-
+import com.datastax.driver.core.CCMBridge;
+import com.datastax.driver.core.utils.CassandraVersion;
 import com.google.common.collect.Lists;
 import org.testng.annotations.Test;
 
-import com.datastax.driver.core.CCMBridge;
-import com.datastax.driver.core.utils.CassandraVersion;
+import java.util.Collection;
 
 @CassandraVersion(major = 2.2)
 public class FunctionExecutionExceptionTest extends CCMBridge.PerClassSingleNodeCluster {
@@ -29,9 +28,9 @@ public class FunctionExecutionExceptionTest extends CCMBridge.PerClassSingleNode
     @Override
     protected Collection<String> getTableDefinitions() {
         return Lists.newArrayList(
-            "CREATE TABLE foo (k int primary key, i int, l list<int>)",
-            "INSERT INTO foo (k, i, l) VALUES (1, 1, [1])",
-            "CREATE FUNCTION element_at(l list<int>, i int) RETURNS NULL ON NULL INPUT RETURNS int LANGUAGE java AS 'return (Integer) l.get(i);'"
+                "CREATE TABLE foo (k int primary key, i int, l list<int>)",
+                "INSERT INTO foo (k, i, l) VALUES (1, 1, [1])",
+                "CREATE FUNCTION element_at(l list<int>, i int) RETURNS NULL ON NULL INPUT RETURNS int LANGUAGE java AS 'return (Integer) l.get(i);'"
         );
     }
 

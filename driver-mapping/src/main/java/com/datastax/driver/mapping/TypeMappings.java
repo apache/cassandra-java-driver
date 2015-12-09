@@ -15,16 +15,15 @@
  */
 package com.datastax.driver.mapping;
 
+import com.datastax.driver.mapping.annotations.UDT;
+import com.google.common.collect.Sets;
+
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import com.google.common.collect.Sets;
-
-import com.datastax.driver.mapping.annotations.UDT;
 
 /**
  * Utility methods to determine which CQL type we expect for a given Java field type.
@@ -58,16 +57,16 @@ class TypeMappings {
     static Set<Class<?>> findUDTs(Type type) {
         Set<Class<?>> udts = findUDTs(type, null);
         return (udts == null)
-            ? Collections.<Class<?>>emptySet()
-            : udts;
+                ? Collections.<Class<?>>emptySet()
+                : udts;
     }
 
     private static Set<Class<?>> findUDTs(Type type, Set<Class<?>> udts) {
         if (type instanceof ParameterizedType) {
-            ParameterizedType pt = (ParameterizedType)type;
+            ParameterizedType pt = (ParameterizedType) type;
             Type raw = pt.getRawType();
             if ((raw instanceof Class)) {
-                Class<?> klass = (Class<?>)raw;
+                Class<?> klass = (Class<?>) raw;
                 if (mapsToCollection(klass)) {
                     Type[] childTypes = pt.getActualTypeArguments();
                     udts = findUDTs(childTypes[0], udts);
@@ -77,7 +76,7 @@ class TypeMappings {
                 }
             }
         } else if (type instanceof Class) {
-            Class<?> klass = (Class<?>)type;
+            Class<?> klass = (Class<?>) type;
             if (isMappedUDT(klass)) {
                 if (udts == null)
                     udts = Sets.newHashSet();

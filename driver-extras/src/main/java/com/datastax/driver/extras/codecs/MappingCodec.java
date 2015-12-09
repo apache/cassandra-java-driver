@@ -15,26 +15,25 @@
  */
 package com.datastax.driver.extras.codecs;
 
-import java.nio.ByteBuffer;
-
-import com.google.common.reflect.TypeToken;
-
 import com.datastax.driver.core.ProtocolVersion;
 import com.datastax.driver.core.TypeCodec;
 import com.datastax.driver.core.exceptions.InvalidTypeException;
+import com.google.common.reflect.TypeToken;
+
+import java.nio.ByteBuffer;
 
 /**
  * An abstract {@link TypeCodec} that maps a Java Pojo to another Java object
  * that can in turn be serialized into a CQL type.
  * This can serve as a base for libraries dealing with Pojo mappings.
- * <p>
+ * <p/>
  * This codec can be seen as a convenience base class for libraries
  * dealing with Pojo-to-Pojo mappings, but it comes
  * with a performance penalty: each Java object is serialized
  * in two steps: first to an intermediate object, and then to a {@link ByteBuffer},
  * which means that each serialization actually incurs in two potentially
  * expensive operations being carried.
- * <p>
+ * <p/>
  * If such operations are really expensive, and your mapping library is capable
  * of serializing objects directly to {@link ByteBuffer}s,
  * consider writing your own codec instead of using this one.

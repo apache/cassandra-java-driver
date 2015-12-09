@@ -15,34 +15,33 @@
  */
 package com.datastax.driver.core;
 
-import java.lang.Exception;
+import com.datastax.driver.core.utils.CassandraVersion;
+import com.google.common.base.Joiner;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
+import org.testng.annotations.Test;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.base.Joiner;
-
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
-import org.testng.annotations.Test;
-import static org.testng.Assert.assertEquals;
-
 import static com.datastax.driver.core.Metadata.quote;
+import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotEquals;
 
-import com.datastax.driver.core.utils.CassandraVersion;
-
-@CassandraVersion(major=2.1)
+@CassandraVersion(major = 2.1)
 public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
 
     private final static List<DataType> DATA_TYPE_PRIMITIVES = new ArrayList<DataType>(DataType.allPrimitiveTypes(TestUtils.getDesiredProtocolVersion()));
+
     static {
         DATA_TYPE_PRIMITIVES.remove(DataType.counter());
     }
+
     private final static List<DataType.Name> DATA_TYPE_NON_PRIMITIVE_NAMES =
             new ArrayList<DataType.Name>(EnumSet.of(DataType.Name.LIST, DataType.Name.SET, DataType.Name.MAP, DataType.Name.TUPLE));
 
@@ -92,6 +91,7 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
 
     /**
      * Run simpleWriteReadTest with unprepared requests.
+     *
      * @throws Exception
      */
     @Test(groups = "short")
@@ -122,6 +122,7 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
 
     /**
      * Test for ensuring udts are defined in a particular keyspace.
+     *
      * @throws Exception
      */
     @Test(groups = "short")
@@ -166,6 +167,7 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
     /**
      * Test for ensuring extra-lengthy udts are handled correctly.
      * Original code found in python-driver:integration.standard.test_udts.py:test_udt_sizes
+     *
      * @throws Exception
      */
     @Test(groups = "short")
@@ -219,6 +221,7 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
     /**
      * Test for inserting various types of DATA_TYPE_PRIMITIVES into UDT's.
      * Original code found in python-driver:integration.standard.test_udts.py:test_primitive_datatypes
+     *
      * @throws Exception
      */
     @Test(groups = "short")
@@ -290,7 +293,7 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
                         alldatatypes.setTimestamp(index, ((Date) sampleData));
                         break;
                     case DATE:
-                        alldatatypes.setDate(index, ((LocalDate)sampleData));
+                        alldatatypes.setDate(index, ((LocalDate) sampleData));
                         break;
                     case TIME:
                         alldatatypes.setTime(index, ((Long) sampleData));
@@ -332,6 +335,7 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
     /**
      * Test for inserting various types of DATA_TYPE_NON_PRIMITIVE into UDT's
      * Original code found in python-driver:integration.standard.test_udts.py:test_nonprimitive_datatypes
+     *
      * @throws Exception
      */
     @Test(groups = "short")
@@ -351,17 +355,15 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
             for (int i = 0; i < DATA_TYPE_NON_PRIMITIVE_NAMES.size(); i++)
                 for (int j = 0; j < DATA_TYPE_PRIMITIVES.size(); j++) {
                     String typeString;
-                    if(DATA_TYPE_NON_PRIMITIVE_NAMES.get(i) == DataType.Name.MAP) {
+                    if (DATA_TYPE_NON_PRIMITIVE_NAMES.get(i) == DataType.Name.MAP) {
                         typeString = (String.format("%s_%s %s<%s, %s>", Character.toString((char) (startIndex + i)),
                                 Character.toString((char) (startIndex + j)), DATA_TYPE_NON_PRIMITIVE_NAMES.get(i),
                                 DATA_TYPE_PRIMITIVES.get(j).getName(), DATA_TYPE_PRIMITIVES.get(j).getName()));
-                    }
-                    else if (DATA_TYPE_NON_PRIMITIVE_NAMES.get(i) == DataType.Name.TUPLE) {
+                    } else if (DATA_TYPE_NON_PRIMITIVE_NAMES.get(i) == DataType.Name.TUPLE) {
                         typeString = (String.format("%s_%s frozen<%s<%s>>", Character.toString((char) (startIndex + i)),
-                                                    Character.toString((char) (startIndex + j)), DATA_TYPE_NON_PRIMITIVE_NAMES.get(i),
-                                                    DATA_TYPE_PRIMITIVES.get(j).getName()));
-                    }
-                    else {
+                                Character.toString((char) (startIndex + j)), DATA_TYPE_NON_PRIMITIVE_NAMES.get(i),
+                                DATA_TYPE_PRIMITIVES.get(j).getName()));
+                    } else {
                         typeString = (String.format("%s_%s %s<%s>", Character.toString((char) (startIndex + i)),
                                 Character.toString((char) (startIndex + j)), DATA_TYPE_NON_PRIMITIVE_NAMES.get(i),
                                 DATA_TYPE_PRIMITIVES.get(j).getName()));
@@ -383,7 +385,7 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
 
                     String index = Character.toString((char) (startIndex + i)) + "_" + Character.toString((char) (startIndex + j));
                     Object sampleElement = PrimitiveTypeSamples.ALL.get(dataType);
-                    switch(name) {
+                    switch (name) {
                         case LIST:
                             alldatatypes.setList(index, Lists.newArrayList(sampleElement));
                             break;
@@ -420,6 +422,7 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
     /**
      * Test for ensuring nested UDT's are handled correctly.
      * Original code found in python-driver:integration.standard.test_udts.py:test_nested_registered_udts
+     *
      * @throws Exception
      */
     @Test(groups = "short")
@@ -436,7 +439,7 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
             session.execute("CREATE TYPE depth_0 (age int, name text)");
 
             for (int i = 1; i <= MAX_NESTING_DEPTH; i++) {
-                session.execute(String.format("CREATE TYPE depth_%s (value frozen<depth_%s>)", String.valueOf(i), String.valueOf(i-1)));
+                session.execute(String.format("CREATE TYPE depth_%s (value frozen<depth_%s>)", String.valueOf(i), String.valueOf(i - 1)));
             }
 
             session.execute(String.format("CREATE TABLE mytable (a int PRIMARY KEY, b frozen<depth_0>, c frozen<depth_1>, d frozen<depth_2>, e frozen<depth_3>," +
@@ -484,6 +487,7 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
     /**
      * Test for inserting null values into UDT's
      * Original code found in python-driver:integration.standard.test_udts.py:test_udts_with_nulls
+     *
      * @throws Exception
      */
     @Test(groups = "short")
@@ -537,6 +541,7 @@ public class UserTypesTest extends CCMBridge.PerClassSingleNodeCluster {
 
     /**
      * Test for inserting null values into collections of UDT's
+     *
      * @throws Exception
      */
     @Test(groups = "short")

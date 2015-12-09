@@ -15,30 +15,22 @@
  */
 package com.datastax.driver.extras.codecs.jdk8;
 
-import java.nio.ByteBuffer;
-import java.time.Instant;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeFormatterBuilder;
-import java.time.format.DateTimeParseException;
-import java.util.Date;
-
-import static java.lang.Long.parseLong;
-import static java.time.Instant.ofEpochMilli;
-import static java.time.ZoneOffset.UTC;
-import static java.time.temporal.ChronoField.HOUR_OF_DAY;
-import static java.time.temporal.ChronoField.MINUTE_OF_HOUR;
-import static java.time.temporal.ChronoField.NANO_OF_SECOND;
-import static java.time.temporal.ChronoField.SECOND_OF_MINUTE;
-
 import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.ProtocolVersion;
 import com.datastax.driver.core.TypeCodec;
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 
-import static com.datastax.driver.core.ParseUtils.isLongLiteral;
-import static com.datastax.driver.core.ParseUtils.isQuoted;
-import static com.datastax.driver.core.ParseUtils.quote;
-import static com.datastax.driver.core.ParseUtils.unquote;
+import java.nio.ByteBuffer;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.format.DateTimeParseException;
+
+import static com.datastax.driver.core.ParseUtils.*;
+import static java.lang.Long.parseLong;
+import static java.time.Instant.ofEpochMilli;
+import static java.time.ZoneOffset.UTC;
+import static java.time.temporal.ChronoField.*;
 
 /**
  * <p>
@@ -46,7 +38,7 @@ import static com.datastax.driver.core.ParseUtils.unquote;
  * allowing the setting and retrieval of {@code timestamp}
  * columns as {@link Instant} instances.
  * </p>
- *
+ * <p/>
  * <p>
  * Since C* <code>timestamp</code> columns do not preserve timezones
  * any attached timezone information will be lost.
@@ -65,30 +57,30 @@ public class InstantCodec extends TypeCodec<Instant> {
      * the ISO formats accepted in CQL.
      */
     private static final DateTimeFormatter PARSER = new DateTimeFormatterBuilder()
-        .parseCaseSensitive()
-        .parseStrict()
-        .append(DateTimeFormatter.ISO_LOCAL_DATE)
-        .optionalStart()
-        .appendLiteral('T')
-        .appendValue(HOUR_OF_DAY, 2)
-        .appendLiteral(':')
-        .appendValue(MINUTE_OF_HOUR, 2)
-        .optionalEnd()
-        .optionalStart()
-        .appendLiteral(':')
-        .appendValue(SECOND_OF_MINUTE, 2)
-        .optionalEnd()
-        .optionalStart()
-        .appendFraction(NANO_OF_SECOND, 0, 9, true)
-        .optionalEnd()
-        .optionalStart()
-        .appendZoneId()
-        .optionalEnd()
-        .toFormatter()
-        .withZone(UTC);
+            .parseCaseSensitive()
+            .parseStrict()
+            .append(DateTimeFormatter.ISO_LOCAL_DATE)
+            .optionalStart()
+            .appendLiteral('T')
+            .appendValue(HOUR_OF_DAY, 2)
+            .appendLiteral(':')
+            .appendValue(MINUTE_OF_HOUR, 2)
+            .optionalEnd()
+            .optionalStart()
+            .appendLiteral(':')
+            .appendValue(SECOND_OF_MINUTE, 2)
+            .optionalEnd()
+            .optionalStart()
+            .appendFraction(NANO_OF_SECOND, 0, 9, true)
+            .optionalEnd()
+            .optionalStart()
+            .appendZoneId()
+            .optionalEnd()
+            .toFormatter()
+            .withZone(UTC);
 
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSxxx")
-        .withZone(UTC);
+            .withZone(UTC);
 
 
     private InstantCodec() {

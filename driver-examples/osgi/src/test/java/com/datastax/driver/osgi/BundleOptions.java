@@ -15,22 +15,15 @@
  */
 package com.datastax.driver.osgi;
 
+import com.datastax.driver.core.CCMBridge;
 import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.options.CompositeOption;
 import org.ops4j.pax.exam.options.MavenArtifactProvisionOption;
 import org.ops4j.pax.exam.options.UrlProvisionOption;
 import org.ops4j.pax.exam.util.PathUtils;
 
-import static org.ops4j.pax.exam.CoreOptions.bootDelegationPackage;
-import static org.ops4j.pax.exam.CoreOptions.bundle;
-import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
-import static org.ops4j.pax.exam.CoreOptions.options;
-import static org.ops4j.pax.exam.CoreOptions.systemPackages;
-import static org.ops4j.pax.exam.CoreOptions.systemProperty;
-
-import com.datastax.driver.core.CCMBridge;
-
 import static com.datastax.driver.osgi.VersionProvider.projectVersion;
+import static org.ops4j.pax.exam.CoreOptions.*;
 
 public class BundleOptions {
 
@@ -40,7 +33,7 @@ public class BundleOptions {
 
     public static UrlProvisionOption driverBundle(boolean useShaded) {
         String classifier = useShaded ? "-shaded" : "";
-        return bundle("reference:file:" + PathUtils.getBaseDir()  + "/../../driver-core/target/cassandra-driver-core-" + projectVersion() + classifier + ".jar");
+        return bundle("reference:file:" + PathUtils.getBaseDir() + "/../../driver-core/target/cassandra-driver-core-" + projectVersion() + classifier + ".jar");
     }
 
     public static MavenArtifactProvisionOption guavaBundle() {
@@ -51,13 +44,14 @@ public class BundleOptions {
         final String nettyVersion = "4.0.33.Final";
         return new CompositeOption() {
 
-            @Override public Option[] getOptions() {
+            @Override
+            public Option[] getOptions() {
                 return options(
-                    mavenBundle("io.netty", "netty-buffer", nettyVersion),
-                    mavenBundle("io.netty", "netty-codec", nettyVersion),
-                    mavenBundle("io.netty", "netty-common", nettyVersion),
-                    mavenBundle("io.netty", "netty-handler", nettyVersion),
-                    mavenBundle("io.netty", "netty-transport", nettyVersion)
+                        mavenBundle("io.netty", "netty-buffer", nettyVersion),
+                        mavenBundle("io.netty", "netty-codec", nettyVersion),
+                        mavenBundle("io.netty", "netty-common", nettyVersion),
+                        mavenBundle("io.netty", "netty-handler", nettyVersion),
+                        mavenBundle("io.netty", "netty-transport", nettyVersion)
                 );
             }
         };
@@ -70,19 +64,20 @@ public class BundleOptions {
     public static CompositeOption defaultOptions() {
         return new CompositeOption() {
 
-            @Override public Option[] getOptions() {
+            @Override
+            public Option[] getOptions() {
                 return options(
-                    // Delegate javax.security.cert to the parent classloader.  javax.security.cert.X509Certificate is used in
-                    // io.netty.util.internal.EmptyArrays, but not directly by the driver.
-                    bootDelegationPackage("javax.security.cert"),
-                    systemProperty("cassandra.contactpoints").value(CCMBridge.IP_PREFIX + 1),
-                    systemProperty("logback.configurationFile").value("file:" + PathUtils.getBaseDir() + "/src/test/resources/logback.xml"),
-                    mavenBundle("org.slf4j", "slf4j-api", "1.7.5"),
-                    mavenBundle("ch.qos.logback", "logback-classic", "1.1.3"),
-                    mavenBundle("ch.qos.logback", "logback-core", "1.1.3"),
-                    mavenBundle("io.dropwizard.metrics", "metrics-core", "3.1.2"),
-                    systemPackages("org.testng", "org.junit", "org.junit.runner", "org.junit.runner.manipulation",
-                        "org.junit.runner.notification", "com.jcabi.manifests")
+                        // Delegate javax.security.cert to the parent classloader.  javax.security.cert.X509Certificate is used in
+                        // io.netty.util.internal.EmptyArrays, but not directly by the driver.
+                        bootDelegationPackage("javax.security.cert"),
+                        systemProperty("cassandra.contactpoints").value(CCMBridge.IP_PREFIX + 1),
+                        systemProperty("logback.configurationFile").value("file:" + PathUtils.getBaseDir() + "/src/test/resources/logback.xml"),
+                        mavenBundle("org.slf4j", "slf4j-api", "1.7.5"),
+                        mavenBundle("ch.qos.logback", "logback-classic", "1.1.3"),
+                        mavenBundle("ch.qos.logback", "logback-core", "1.1.3"),
+                        mavenBundle("io.dropwizard.metrics", "metrics-core", "3.1.2"),
+                        systemPackages("org.testng", "org.junit", "org.junit.runner", "org.junit.runner.manipulation",
+                                "org.junit.runner.notification", "com.jcabi.manifests")
                 );
             }
         };

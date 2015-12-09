@@ -15,14 +15,14 @@
  */
 package com.datastax.driver.core;
 
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
 import com.google.common.util.concurrent.AbstractFuture;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.Uninterruptibles;
+
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * A {@code ResultSetFuture} that will complete when its source future completes.
@@ -51,7 +51,7 @@ class ChainedResultSetFuture extends AbstractFuture<ResultSet> implements Result
     @Override
     public boolean cancel(boolean mayInterruptIfRunning) {
         return (source == null || source.cancel(mayInterruptIfRunning))
-            && super.cancel(mayInterruptIfRunning);
+                && super.cancel(mayInterruptIfRunning);
     }
 
     @Override

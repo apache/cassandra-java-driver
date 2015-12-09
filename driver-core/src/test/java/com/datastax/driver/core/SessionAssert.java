@@ -23,7 +23,7 @@ public class SessionAssert extends AbstractAssert<SessionAssert, SessionManager>
 
     protected SessionAssert(Session actual) {
         // We are cheating a bit by casting, but this is the only implementation anyway
-        super((SessionManager)actual, SessionAssert.class);
+        super((SessionManager) actual, SessionAssert.class);
     }
 
     public SessionAssert hasPoolFor(int hostNumber) {

@@ -15,20 +15,16 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.utils.CassandraVersion;
+import com.google.common.collect.Lists;
+import org.testng.annotations.Test;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 
-import com.google.common.collect.Lists;
-import org.testng.annotations.Test;
-
-import com.datastax.driver.core.utils.CassandraVersion;
-
 import static com.datastax.driver.core.Assertions.assertThat;
-import static com.datastax.driver.core.DataType.cint;
-import static com.datastax.driver.core.DataType.list;
-import static com.datastax.driver.core.DataType.map;
-import static com.datastax.driver.core.DataType.set;
+import static com.datastax.driver.core.DataType.*;
 
 @CassandraVersion(major = 3.0)
 public class UnresolvedUserTypeTest extends CCMBridge.PerClassSingleNodeCluster {
@@ -52,14 +48,14 @@ public class UnresolvedUserTypeTest extends CCMBridge.PerClassSingleNodeCluster 
 
              Topological sort order should be : GH,FE,D,CB,A
              */
-            String.format("CREATE TYPE %s.h (f1 int)", keyspace),
-            String.format("CREATE TYPE %s.g (f1 int)", keyspace),
-            String.format("CREATE TYPE %s.\"F\" (f1 frozen<h>)", keyspace),
-            String.format("CREATE TYPE %s.\"E\" (f1 frozen<list<g>>)", keyspace),
-            String.format("CREATE TYPE %s.\"D\" (f1 frozen<tuple<\"F\",g,h>>)", keyspace),
-            String.format("CREATE TYPE %s.\"C\" (f1 frozen<map<\"E\",\"D\">>)", keyspace),
-            String.format("CREATE TYPE %s.\"B\" (f1 frozen<set<\"D\">>)", keyspace),
-            String.format("CREATE TYPE %s.\"A\" (f1 frozen<\"C\">)", keyspace)
+                String.format("CREATE TYPE %s.h (f1 int)", keyspace),
+                String.format("CREATE TYPE %s.g (f1 int)", keyspace),
+                String.format("CREATE TYPE %s.\"F\" (f1 frozen<h>)", keyspace),
+                String.format("CREATE TYPE %s.\"E\" (f1 frozen<list<g>>)", keyspace),
+                String.format("CREATE TYPE %s.\"D\" (f1 frozen<tuple<\"F\",g,h>>)", keyspace),
+                String.format("CREATE TYPE %s.\"C\" (f1 frozen<map<\"E\",\"D\">>)", keyspace),
+                String.format("CREATE TYPE %s.\"B\" (f1 frozen<set<\"D\">>)", keyspace),
+                String.format("CREATE TYPE %s.\"A\" (f1 frozen<\"C\">)", keyspace)
         );
     }
 

@@ -15,9 +15,8 @@
  */
 package com.datastax.driver.core.policies;
 
-import java.util.List;
-import java.util.Map;
-
+import com.datastax.driver.core.*;
+import com.datastax.driver.core.exceptions.DriverException;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.mockito.Mockito;
@@ -26,23 +25,20 @@ import org.scassandra.http.client.PrimingRequest;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Mockito.times;
-
-import com.datastax.driver.core.*;
-import com.datastax.driver.core.exceptions.DriverException;
+import java.util.List;
+import java.util.Map;
 
 import static com.datastax.driver.core.TestUtils.nonQuietClusterCloseOptions;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Matchers.*;
+import static org.mockito.Mockito.times;
 
 /**
  * Base class for retry policy integration tests.
- *
+ * <p/>
  * We use SCassandra to easily simulate specific errors (unavailable, read timeout...) on nodes,
  * and SortingLoadBalancingPolicy to get a predictable order of the query plan (always host1, host2, host3).
- *
+ * <p/>
  * Note that SCassandra only allows a limited number of test cases, for instance it always returns errors
  * with receivedResponses = 0. If that becomes more finely tuneable in the future, we'll be able to add more
  * tests in child classes.
@@ -73,17 +69,17 @@ public class AbstractRetryPolicyIntegrationTest {
         scassandras.init();
 
         cluster = Cluster.builder()
-            .addContactPoint(CCMBridge.ipOfNode(1))
-            .withRetryPolicy(retryPolicy)
-            .withLoadBalancingPolicy(new SortingLoadBalancingPolicy())
-            // Scassandra does not support V3 nor V4 yet, and V4 may cause the server to crash
-            .withProtocolVersion(ProtocolVersion.V2)
-            .withPoolingOptions(new PoolingOptions()
-                .setCoreConnectionsPerHost(HostDistance.LOCAL, 1)
-                .setMaxConnectionsPerHost(HostDistance.LOCAL, 1)
-                .setHeartbeatIntervalSeconds(0))
-            .withNettyOptions(nonQuietClusterCloseOptions)
-            .build();
+                .addContactPoint(CCMBridge.ipOfNode(1))
+                .withRetryPolicy(retryPolicy)
+                .withLoadBalancingPolicy(new SortingLoadBalancingPolicy())
+                        // Scassandra does not support V3 nor V4 yet, and V4 may cause the server to crash
+                .withProtocolVersion(ProtocolVersion.V2)
+                .withPoolingOptions(new PoolingOptions()
+                        .setCoreConnectionsPerHost(HostDistance.LOCAL, 1)
+                        .setMaxConnectionsPerHost(HostDistance.LOCAL, 1)
+                        .setHeartbeatIntervalSeconds(0))
+                .withNettyOptions(nonQuietClusterCloseOptions)
+                .build();
 
         session = cluster.connect();
 
@@ -95,16 +91,16 @@ public class AbstractRetryPolicyIntegrationTest {
 
         Mockito.reset(retryPolicy);
 
-        for(Scassandra node : scassandras.nodes()) {
+        for (Scassandra node : scassandras.nodes()) {
             node.activityClient().clearAllRecordedActivity();
         }
     }
 
     protected void simulateError(int hostNumber, PrimingRequest.Result result) {
         scassandras.node(hostNumber).primingClient().prime(PrimingRequest.queryBuilder()
-                    .withQuery("mock query")
-                    .withResult(result)
-                    .build());
+                .withQuery("mock query")
+                .withResult(result)
+                .build());
     }
 
     protected void simulateNormalResponse(int hostNumber) {
@@ -128,23 +124,23 @@ public class AbstractRetryPolicyIntegrationTest {
 
     protected void assertOnReadTimeoutWasCalled(int times) {
         Mockito.verify(retryPolicy, times(times)).onReadTimeout(
-            any(Statement.class), any(ConsistencyLevel.class), anyInt(), anyInt(), anyBoolean(), anyInt());
+                any(Statement.class), any(ConsistencyLevel.class), anyInt(), anyInt(), anyBoolean(), anyInt());
 
     }
 
     protected void assertOnWriteTimeoutWasCalled(int times) {
         Mockito.verify(retryPolicy, times(times)).onWriteTimeout(
-            any(Statement.class), any(ConsistencyLevel.class), any(WriteType.class), anyInt(), anyInt(), anyInt());
+                any(Statement.class), any(ConsistencyLevel.class), any(WriteType.class), anyInt(), anyInt(), anyInt());
     }
 
     protected void assertOnUnavailableWasCalled(int times) {
         Mockito.verify(retryPolicy, times(times)).onUnavailable(
-            any(Statement.class), any(ConsistencyLevel.class), anyInt(), anyInt(), anyInt());
+                any(Statement.class), any(ConsistencyLevel.class), anyInt(), anyInt(), anyInt());
     }
 
     protected void assertOnRequestErrorWasCalled(int times, Class<? extends DriverException> expected) {
         Mockito.verify(retryPolicy, times(times)).onRequestError(
-            any(Statement.class), any(ConsistencyLevel.class), any(expected), anyInt());
+                any(Statement.class), any(ConsistencyLevel.class), any(expected), anyInt());
     }
 
     protected void assertQueried(int hostNumber, int times) {

@@ -15,13 +15,13 @@
  */
 package com.datastax.driver.core.exceptions;
 
-import java.net.InetSocketAddress;
-
 import com.datastax.driver.core.ConsistencyLevel;
+
+import java.net.InetSocketAddress;
 
 /**
  * A non-timeout error during a read query.
- * <p>
+ * <p/>
  * This happens when some of the replicas that were contacted by the coordinator replied with an error.
  */
 @SuppressWarnings("serial")
@@ -40,11 +40,11 @@ public class ReadFailureException extends QueryConsistencyException {
 
     public ReadFailureException(InetSocketAddress address, ConsistencyLevel consistency, int received, int required, int failed, boolean dataPresent) {
         super(address, String.format("Cassandra failure during read query at consistency %s "
-                    + "(%d responses were required but only %d replica responded, %d failed)",
-                consistency, required, received, failed),
-            consistency,
-            received,
-            required);
+                                + "(%d responses were required but only %d replica responded, %d failed)",
+                        consistency, required, received, failed),
+                consistency,
+                received,
+                required);
         this.failed = failed;
         this.dataPresent = dataPresent;
     }
@@ -66,7 +66,7 @@ public class ReadFailureException extends QueryConsistencyException {
 
     /**
      * Whether the actual data was amongst the received replica responses.
-     *
+     * <p/>
      * During reads, Cassandra doesn't request data from every replica to
      * minimize internal network traffic. Instead, some replicas are only asked
      * for a checksum of the data. A read timeout may occurred even if enough
@@ -82,18 +82,18 @@ public class ReadFailureException extends QueryConsistencyException {
     @Override
     public ReadFailureException copy() {
         return new ReadFailureException(getAddress(), getMessage(), this, getConsistencyLevel(), getReceivedAcknowledgements(),
-            getRequiredAcknowledgements(), getFailures(), wasDataRetrieved());
+                getRequiredAcknowledgements(), getFailures(), wasDataRetrieved());
     }
 
     public ReadFailureException copy(InetSocketAddress address) {
         return new ReadFailureException(
-            address,
-            getMessage(),
-            this,
-            getConsistencyLevel(),
-            getReceivedAcknowledgements(),
-            getRequiredAcknowledgements(),
-            failed,
-            dataPresent);
+                address,
+                getMessage(),
+                this,
+                getConsistencyLevel(),
+                getReceivedAcknowledgements(),
+                getRequiredAcknowledgements(),
+                failed,
+                dataPresent);
     }
 }

@@ -15,8 +15,7 @@
  */
 package com.datastax.driver.core;
 
-import java.util.*;
-
+import com.datastax.driver.core.exceptions.DriverInternalError;
 import com.google.common.base.Objects;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
@@ -24,7 +23,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import io.netty.buffer.ByteBuf;
 
-import com.datastax.driver.core.exceptions.DriverInternalError;
+import java.util.*;
 
 /**
  * Data types supported by cassandra.
@@ -36,49 +35,49 @@ public abstract class DataType {
      */
     public enum Name {
 
-        ASCII     (1),
-        BIGINT    (2),
-        BLOB      (3),
-        BOOLEAN   (4),
-        COUNTER   (5),
-        DECIMAL   (6),
-        DOUBLE    (7),
-        FLOAT     (8),
-        INET      (16),
-        INT       (9),
-        TEXT      (10){
+        ASCII(1),
+        BIGINT(2),
+        BLOB(3),
+        BOOLEAN(4),
+        COUNTER(5),
+        DECIMAL(6),
+        DOUBLE(7),
+        FLOAT(8),
+        INET(16),
+        INT(9),
+        TEXT(10) {
             @Override
             public boolean isCompatibleWith(Name that) {
                 return this == that || that == VARCHAR;
             }
         },
-        TIMESTAMP (11),
-        UUID      (12),
-        VARCHAR   (13){
+        TIMESTAMP(11),
+        UUID(12),
+        VARCHAR(13) {
             @Override
             public boolean isCompatibleWith(Name that) {
                 return this == that || that == TEXT;
             }
         },
-        VARINT    (14),
-        TIMEUUID  (15),
-        LIST      (32),
-        SET       (34),
-        MAP       (33),
-        CUSTOM    (0),
-        UDT       (48, ProtocolVersion.V3),
-        TUPLE     (49, ProtocolVersion.V3),
-        SMALLINT  (19, ProtocolVersion.V4),
-        TINYINT   (20, ProtocolVersion.V4),
-        DATE      (17, ProtocolVersion.V4),
-        TIME      (18, ProtocolVersion.V4)
-        ;
+        VARINT(14),
+        TIMEUUID(15),
+        LIST(32),
+        SET(34),
+        MAP(33),
+        CUSTOM(0),
+        UDT(48, ProtocolVersion.V3),
+        TUPLE(49, ProtocolVersion.V3),
+        SMALLINT(19, ProtocolVersion.V4),
+        TINYINT(20, ProtocolVersion.V4),
+        DATE(17, ProtocolVersion.V4),
+        TIME(18, ProtocolVersion.V4);
 
         final int protocolId;
 
         final ProtocolVersion minProtocolVersion;
 
         private static final Name[] nameToIds;
+
         static {
             int maxCode = -1;
             for (Name name : Name.values())
@@ -126,6 +125,7 @@ public abstract class DataType {
     }
 
     private static final Map<Name, DataType> primitiveTypeMap = new EnumMap<Name, DataType>(Name.class);
+
     static {
         primitiveTypeMap.put(Name.ASCII, new DataType.NativeType(Name.ASCII));
         primitiveTypeMap.put(Name.BIGINT, new DataType.NativeType(Name.BIGINT));
@@ -163,8 +163,8 @@ public abstract class DataType {
             case CUSTOM:
                 String className = CBUtil.readString(buffer);
                 return DataTypeClassNameParser.isUserType(className) || DataTypeClassNameParser.isTupleType(className)
-                     ? DataTypeClassNameParser.parseOne(className, protocolVersion, codecRegistry)
-                     : custom(className);
+                        ? DataTypeClassNameParser.parseOne(className, protocolVersion, codecRegistry)
+                        : custom(className);
             case LIST:
                 return list(decode(buffer, protocolVersion, codecRegistry));
             case SET:
@@ -380,7 +380,7 @@ public abstract class DataType {
      * Returns the type of lists of {@code elementType} elements.
      *
      * @param elementType the type of the list elements.
-     * @param frozen whether the list is frozen.
+     * @param frozen      whether the list is frozen.
      * @return the type of lists of {@code elementType} elements.
      */
     public static CollectionType list(DataType elementType, boolean frozen) {
@@ -389,7 +389,7 @@ public abstract class DataType {
 
     /**
      * Returns the type of "not frozen" lists of {@code elementType} elements.
-     * <p>
+     * <p/>
      * This is a shorthand for {@code list(elementType, false);}.
      *
      * @param elementType the type of the list elements.
@@ -401,7 +401,7 @@ public abstract class DataType {
 
     /**
      * Returns the type of frozen lists of {@code elementType} elements.
-     * <p>
+     * <p/>
      * This is a shorthand for {@code list(elementType, true);}.
      *
      * @param elementType the type of the list elements.
@@ -415,7 +415,7 @@ public abstract class DataType {
      * Returns the type of sets of {@code elementType} elements.
      *
      * @param elementType the type of the set elements.
-     * @param frozen whether the set is frozen.
+     * @param frozen      whether the set is frozen.
      * @return the type of sets of {@code elementType} elements.
      */
     public static CollectionType set(DataType elementType, boolean frozen) {
@@ -424,7 +424,7 @@ public abstract class DataType {
 
     /**
      * Returns the type of "not frozen" sets of {@code elementType} elements.
-     * <p>
+     * <p/>
      * This is a shorthand for {@code set(elementType, false);}.
      *
      * @param elementType the type of the set elements.
@@ -436,7 +436,7 @@ public abstract class DataType {
 
     /**
      * Returns the type of frozen sets of {@code elementType} elements.
-     * <p>
+     * <p/>
      * This is a shorthand for {@code set(elementType, true);}.
      *
      * @param elementType the type of the set elements.
@@ -449,9 +449,9 @@ public abstract class DataType {
     /**
      * Returns the type of maps of {@code keyType} to {@code valueType} elements.
      *
-     * @param keyType the type of the map keys.
+     * @param keyType   the type of the map keys.
      * @param valueType the type of the map values.
-     * @param frozen whether the map is frozen.
+     * @param frozen    whether the map is frozen.
      * @return the type of maps of {@code keyType} to {@code valueType} elements.
      */
     public static CollectionType map(DataType keyType, DataType valueType, boolean frozen) {
@@ -460,10 +460,10 @@ public abstract class DataType {
 
     /**
      * Returns the type of "not frozen" maps of {@code keyType} to {@code valueType} elements.
-     * <p>
+     * <p/>
      * This is a shorthand for {@code map(keyType, valueType, false);}.
      *
-     * @param keyType the type of the map keys.
+     * @param keyType   the type of the map keys.
      * @param valueType the type of the map values.
      * @return the type of "not frozen" maps of {@code keyType} to {@code valueType} elements.
      */
@@ -473,10 +473,10 @@ public abstract class DataType {
 
     /**
      * Returns the type of frozen maps of {@code keyType} to {@code valueType} elements.
-     * <p>
+     * <p/>
      * This is a shorthand for {@code map(keyType, valueType, true);}.
      *
-     * @param keyType the type of the map keys.
+     * @param keyType   the type of the map keys.
      * @param valueType the type of the map values.
      * @return the type of frozen maps of {@code keyType} to {@code valueType} elements.
      */
@@ -486,11 +486,11 @@ public abstract class DataType {
 
     /**
      * Returns a Custom type.
-     * <p>
+     * <p/>
      * A custom type is defined by the name of the class used on the Cassandra
      * side to implement it. Note that the support for custom type by the
      * driver is limited.
-     * <p>
+     * <p/>
      * The use of custom types is rarely useful and is thus not encouraged.
      *
      * @param typeClassName the server-side fully qualified class name for the type.
@@ -513,7 +513,7 @@ public abstract class DataType {
 
     /**
      * Returns whether this data type is frozen.
-     * <p>
+     * <p/>
      * This applies to User Defined Types, tuples and nested collections. Frozen types are serialized as a single value in
      * Cassandra's storage engine, whereas non-frozen types are stored in a form that allows updates to individual subfields.
      *
@@ -533,17 +533,17 @@ public abstract class DataType {
 
     /**
      * Returns the type arguments of this type.
-     * <p>
+     * <p/>
      * Note that only the collection types (LIST, MAP, SET) have type
      * arguments. For the other types, this will return an empty list.
-     * <p>
+     * <p/>
      * For the collection types:
      * <ul>
-     *   <li>For lists and sets, this method returns one argument, the type of
-     *   the elements.</li>
-     *   <li>For maps, this method returns two arguments, the first one is the
-     *   type of the map keys, the second one is the type of the map
-     *   values.</li>
+     * <li>For lists and sets, this method returns one argument, the type of
+     * the elements.</li>
+     * <li>For maps, this method returns two arguments, the first one is the
+     * type of the map keys, the second one is the type of the map
+     * values.</li>
      * </ul>
      *
      * @return an immutable list containing the type arguments of this type.
@@ -587,7 +587,7 @@ public abstract class DataType {
      * Returns a String representation of this data type
      * suitable for inclusion as a parameter type
      * in a function or aggregate signature.
-     * <p>
+     * <p/>
      * In such places, the String representation might vary
      * from the canonical one as returned by {@link #toString()};
      * e.g. the {@code frozen} keyword is not accepted.
@@ -614,16 +614,16 @@ public abstract class DataType {
         @Override
         public final int hashCode() {
             return (name == Name.TEXT)
-                ? Name.VARCHAR.hashCode()
-                : name.hashCode();
+                    ? Name.VARCHAR.hashCode()
+                    : name.hashCode();
         }
 
         @Override
         public final boolean equals(Object o) {
-            if(!(o instanceof DataType.NativeType))
+            if (!(o instanceof DataType.NativeType))
                 return false;
 
-            NativeType that = (DataType.NativeType)o;
+            NativeType that = (DataType.NativeType) o;
             return this.name.isCompatibleWith(that.name);
         }
 
@@ -661,10 +661,10 @@ public abstract class DataType {
 
         @Override
         public final boolean equals(Object o) {
-            if(!(o instanceof DataType.CollectionType))
+            if (!(o instanceof DataType.CollectionType))
                 return false;
 
-            DataType.CollectionType d = (DataType.CollectionType)o;
+            DataType.CollectionType d = (DataType.CollectionType) o;
             return name == d.name && typeArguments.equals(d.typeArguments);
         }
 
@@ -673,8 +673,7 @@ public abstract class DataType {
             if (name == Name.MAP) {
                 String template = frozen ? "frozen<%s<%s, %s>>" : "%s<%s, %s>";
                 return String.format(template, name, typeArguments.get(0), typeArguments.get(1));
-            }
-            else {
+            } else {
                 String template = frozen ? "frozen<%s<%s>>" : "%s<%s>";
                 return String.format(template, name, typeArguments.get(0));
             }
@@ -685,8 +684,7 @@ public abstract class DataType {
             if (name == Name.MAP) {
                 String template = "%s<%s, %s>";
                 return String.format(template, name, typeArguments.get(0), typeArguments.get(1));
-            }
-            else {
+            } else {
                 String template = "%s<%s>";
                 return String.format(template, name, typeArguments.get(0));
             }
@@ -718,10 +716,10 @@ public abstract class DataType {
 
         @Override
         public final boolean equals(Object o) {
-            if(!(o instanceof DataType.CustomType))
+            if (!(o instanceof DataType.CustomType))
                 return false;
 
-            DataType.CustomType d = (DataType.CustomType)o;
+            DataType.CustomType d = (DataType.CustomType) o;
             return name == d.name && Objects.equal(customClassName, d.customClassName);
         }
 

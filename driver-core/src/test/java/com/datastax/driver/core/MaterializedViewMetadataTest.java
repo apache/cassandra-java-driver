@@ -15,16 +15,15 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.utils.CassandraVersion;
+import org.testng.annotations.Test;
+
 import java.util.Collection;
 import java.util.Collections;
 
-import org.testng.annotations.Test;
-
-import com.datastax.driver.core.utils.CassandraVersion;
-
 import static com.datastax.driver.core.Assertions.assertThat;
-import static com.datastax.driver.core.DataType.*;
 import static com.datastax.driver.core.ClusteringOrder.DESC;
+import static com.datastax.driver.core.DataType.cint;
 
 @CassandraVersion(major = 3)
 public class MaterializedViewMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
@@ -32,7 +31,7 @@ public class MaterializedViewMetadataTest extends CCMBridge.PerClassSingleNodeCl
     /**
      * Validates that a materialized view is properly retrieved and parsed.
      *
-     * @test_category metadata,materialized_view
+     * @test_category metadata, materialized_view
      * @jira_ticket JAVA-825
      */
     @Test(groups = "short")
@@ -40,23 +39,23 @@ public class MaterializedViewMetadataTest extends CCMBridge.PerClassSingleNodeCl
 
         // given
         String createTable = String.format(
-            "CREATE TABLE %s.scores("
-                + "user TEXT,"
-                + "game TEXT,"
-                + "year INT,"
-                + "month INT,"
-                + "day INT,"
-                + "score INT,"
-                + "PRIMARY KEY (user, game, year, month, day)"
-                + ")",
-            keyspace);
+                "CREATE TABLE %s.scores("
+                        + "user TEXT,"
+                        + "game TEXT,"
+                        + "year INT,"
+                        + "month INT,"
+                        + "day INT,"
+                        + "score INT,"
+                        + "PRIMARY KEY (user, game, year, month, day)"
+                        + ")",
+                keyspace);
         String createMV = String.format(
-            "CREATE MATERIALIZED VIEW %s.monthlyhigh AS "
-                + "SELECT game, year, month, score, user, day FROM %s.scores "
-                + "WHERE game IS NOT NULL AND year IS NOT NULL AND month IS NOT NULL AND score IS NOT NULL AND user IS NOT NULL AND day IS NOT NULL "
-                + "PRIMARY KEY ((game, year, month), score, user, day) "
-                + "WITH CLUSTERING ORDER BY (score DESC, user ASC, day ASC)",
-            keyspace, keyspace);
+                "CREATE MATERIALIZED VIEW %s.monthlyhigh AS "
+                        + "SELECT game, year, month, score, user, day FROM %s.scores "
+                        + "WHERE game IS NOT NULL AND year IS NOT NULL AND month IS NOT NULL AND score IS NOT NULL AND user IS NOT NULL AND day IS NOT NULL "
+                        + "PRIMARY KEY ((game, year, month), score, user, day) "
+                        + "WITH CLUSTERING ORDER BY (score DESC, user ASC, day ASC)",
+                keyspace, keyspace);
 
         // when
         session.execute(createTable);
@@ -87,26 +86,26 @@ public class MaterializedViewMetadataTest extends CCMBridge.PerClassSingleNodeCl
     /**
      * Validates that a materialized view is properly retrieved and parsed when using quoted identifiers.
      *
-     * @test_category metadata,materialized_view
+     * @test_category metadata, materialized_view
      * @jira_ticket JAVA-825
      */
     @Test(groups = "short")
     public void should_create_view_metadata_with_quoted_identifiers() {
         // given
         String createTable = String.format(
-            "CREATE TABLE %s.\"T1\" ("
-                + "\"theKey\" int, "
-                + "\"the;Clustering\" int, "
-                + "\"the Value\" int, "
-                + "PRIMARY KEY (\"theKey\", \"the;Clustering\"))",
-            keyspace);
+                "CREATE TABLE %s.\"T1\" ("
+                        + "\"theKey\" int, "
+                        + "\"the;Clustering\" int, "
+                        + "\"the Value\" int, "
+                        + "PRIMARY KEY (\"theKey\", \"the;Clustering\"))",
+                keyspace);
         String createMV = String.format(
-            "CREATE MATERIALIZED VIEW %s.\"Mv1\" AS "
-                + "SELECT \"theKey\", \"the;Clustering\", \"the Value\" "
-                + "FROM %s.\"T1\" "
-                + "WHERE \"theKey\" IS NOT NULL AND \"the;Clustering\" IS NOT NULL AND \"the Value\" IS NOT NULL "
-                + "PRIMARY KEY (\"theKey\", \"the;Clustering\")",
-            keyspace, keyspace);
+                "CREATE MATERIALIZED VIEW %s.\"Mv1\" AS "
+                        + "SELECT \"theKey\", \"the;Clustering\", \"the Value\" "
+                        + "FROM %s.\"T1\" "
+                        + "WHERE \"theKey\" IS NOT NULL AND \"the;Clustering\" IS NOT NULL AND \"the Value\" IS NOT NULL "
+                        + "PRIMARY KEY (\"theKey\", \"the;Clustering\")",
+                keyspace, keyspace);
         // when
         session.execute(createTable);
         session.execute(createMV);

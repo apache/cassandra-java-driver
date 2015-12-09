@@ -15,9 +15,6 @@
  */
 package com.datastax.driver.core;
 
-import java.util.Collection;
-import java.util.Collections;
-
 import org.mockito.ArgumentCaptor;
 import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
@@ -25,14 +22,16 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import static com.google.common.collect.Lists.newArrayList;
-import static org.mockito.ArgumentCaptor.forClass;
-import static org.mockito.Mockito.*;
+import java.util.Collection;
+import java.util.Collections;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.SchemaElement.KEYSPACE;
 import static com.datastax.driver.core.SchemaElement.TABLE;
 import static com.datastax.driver.core.TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT;
+import static com.google.common.collect.Lists.newArrayList;
+import static org.mockito.ArgumentCaptor.forClass;
+import static org.mockito.Mockito.*;
 
 public class SchemaRefreshDebouncerTest extends CCMBridge.PerClassSingleNodeCluster {
 
@@ -64,9 +63,9 @@ public class SchemaRefreshDebouncerTest extends CCMBridge.PerClassSingleNodeClus
         queryOptions.setMaxPendingRefreshSchemaRequests(5);
         // Create a separate cluster that will receive the schema events on its control connection.
         cluster2 = this.configure(Cluster.builder())
-            .addContactPointsWithPorts(newArrayList(hostAddress))
-            .withQueryOptions(queryOptions)
-            .build();
+                .addContactPointsWithPorts(newArrayList(hostAddress))
+                .withQueryOptions(queryOptions)
+                .build();
         session2 = cluster2.connect();
 
         // Create a spy of the Cluster's control connection and replace it with the spy.
@@ -91,7 +90,7 @@ public class SchemaRefreshDebouncerTest extends CCMBridge.PerClassSingleNodeClus
     public void teardown() {
         cluster2.close();
         // drop all keyspaces
-        for(String keyspace : keyspaces) {
+        for (String keyspace : keyspaces) {
             session.execute("DROP KEYSPACE " + keyspace);
         }
     }
@@ -183,7 +182,7 @@ public class SchemaRefreshDebouncerTest extends CCMBridge.PerClassSingleNodeClus
         reset(listener);
 
         int tableCount = 3;
-        for(int i =0 ; i < tableCount; i++) {
+        for (int i = 0; i < tableCount; i++) {
             session.execute(String.format("CREATE TABLE %s (k text PRIMARY KEY, t text, i int, f float)", keyspace + "." + "tbl" + i));
         }
 
@@ -196,7 +195,7 @@ public class SchemaRefreshDebouncerTest extends CCMBridge.PerClassSingleNodeClus
         KeyspaceMetadata ksm = cluster2.getMetadata().getKeyspace(keyspace);
         assertThat(ksm).isNotNull();
         // metadata is present for each table.
-        for(int i = 0; i < tableCount; i++) {
+        for (int i = 0; i < tableCount; i++) {
             String table = "tbl" + i;
             // Should have never been a refreshSchema on the table.
             verify(controlConnection, never()).refreshSchema(TABLE, keyspace, table, null);
@@ -237,16 +236,16 @@ public class SchemaRefreshDebouncerTest extends CCMBridge.PerClassSingleNodeClus
         ArgumentCaptor<TableMetadata> captor = forClass(TableMetadata.class);
         verify(listener, timeout(DEBOUNCE_TIME * 2).times(1)).onTableChanged(captor.capture(), original.capture());
         assertThat(captor.getValue())
-            .hasName(table)
-            .isInKeyspace(keyspace)
-            .hasColumn(columnName)
-            .hasComment(comment);
+                .hasName(table)
+                .isInKeyspace(keyspace)
+                .hasColumn(columnName)
+                .hasComment(comment);
 
         assertThat(original.getValue())
-            .hasName(table)
-            .isInKeyspace(keyspace)
-            .hasNoColumn(columnName)
-            .doesNotHaveComment(comment);
+                .hasName(table)
+                .isInKeyspace(keyspace)
+                .hasNoColumn(columnName)
+                .doesNotHaveComment(comment);
 
         // Verify a refresh of the table was executed, but only once.
         verify(controlConnection, times(1)).refreshSchema(TABLE, keyspace, table, Collections.<String>emptyList());
@@ -255,10 +254,10 @@ public class SchemaRefreshDebouncerTest extends CCMBridge.PerClassSingleNodeClus
         assertThat(ksm).isNotNull();
         TableMetadata tm = ksm.getTable(table);
         assertThat(tm)
-            .hasName(table)
-            .isInKeyspace(keyspace)
-            .hasColumn(columnName)
-            .hasComment(comment);
+                .hasName(table)
+                .isInKeyspace(keyspace)
+                .hasColumn(columnName)
+                .hasComment(comment);
     }
 
     /**
@@ -274,7 +273,7 @@ public class SchemaRefreshDebouncerTest extends CCMBridge.PerClassSingleNodeClus
     @Test(groups = "short")
     public void should_debounce_and_coalesce_multiple_keyspace_creates_into_refresh_entire_schema() throws Exception {
         String prefix = "sdacmkc";
-        for(int i = 0; i < 3; i++) {
+        for (int i = 0; i < 3; i++) {
             session.execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, prefix + i, 1));
             keyspaces.add(prefix + i);
         }
@@ -283,7 +282,7 @@ public class SchemaRefreshDebouncerTest extends CCMBridge.PerClassSingleNodeClus
         // Verify a complete schema refresh was executed, but only once.
         verify(controlConnection, times(1)).refreshSchema(null, null, null, null);
 
-        for(int i = 0; i < 3; i++) {
+        for (int i = 0; i < 3; i++) {
             KeyspaceMetadata ksm = cluster2.getMetadata().getKeyspace(prefix + i);
             assertThat(ksm).isNotNull().hasName(prefix + i);
         }
@@ -301,7 +300,7 @@ public class SchemaRefreshDebouncerTest extends CCMBridge.PerClassSingleNodeClus
     @Test(groups = "short")
     public void should_refresh_when_max_pending_requests_reached() throws Exception {
         String prefix = "srwmprr";
-        for(int i = 0; i < 5; i++) {
+        for (int i = 0; i < 5; i++) {
             session.execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, prefix + i, 1));
             keyspaces.add(prefix + i);
         }
@@ -311,7 +310,7 @@ public class SchemaRefreshDebouncerTest extends CCMBridge.PerClassSingleNodeClus
         // Verify a complete schema refresh was executed, but only once.
         verify(controlConnection, times(1)).refreshSchema(null, null, null, null);
 
-        for(int i = 0; i < 5; i++) {
+        for (int i = 0; i < 5; i++) {
             KeyspaceMetadata ksm = cluster2.getMetadata().getKeyspace(prefix + i);
             assertThat(ksm).isNotNull().hasName(prefix + i);
         }

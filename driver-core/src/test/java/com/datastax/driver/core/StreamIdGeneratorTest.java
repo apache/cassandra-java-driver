@@ -16,10 +16,8 @@
 package com.datastax.driver.core;
 
 import org.testng.annotations.Test;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.fail;
 
-import com.datastax.driver.core.exceptions.BusyConnectionException;
+import static org.testng.Assert.assertEquals;
 
 public class StreamIdGeneratorTest {
 

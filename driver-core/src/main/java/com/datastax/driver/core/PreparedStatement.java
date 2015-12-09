@@ -15,21 +15,21 @@
  */
 package com.datastax.driver.core;
 
-import java.nio.ByteBuffer;
-import java.util.Map;
-
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 import com.datastax.driver.core.policies.RetryPolicy;
+
+import java.nio.ByteBuffer;
+import java.util.Map;
 
 /**
  * Represents a prepared statement, a query with bound variables that has been
  * prepared (pre-parsed) by the database.
- * <p>
+ * <p/>
  * A prepared statement can be executed once concrete values have been provided
  * for the bound variables. A prepared statement and the values for its
  * bound variables constitute a BoundStatement and can be executed (by
  * {@link Session#execute}).
- * <p>
+ * <p/>
  * A {@code PreparedStatement} object allows you to define specific defaults
  * for the different properties of a {@link Statement} (Consistency level, tracing, ...),
  * in which case those properties will be inherited as default by every
@@ -51,35 +51,33 @@ public interface PreparedStatement {
     /**
      * Creates a new BoundStatement object and bind its variables to the
      * provided values.
-     * <p>
+     * <p/>
      * While the number of {@code values} cannot be greater than the number of bound
      * variables, the number of {@code values} may be fewer than the number of bound
      * variables. In that case, the remaining variables will have to be bound
      * to values by another mean because the resulting {@code BoundStatement}
      * being executable.
-     * <p>
+     * <p/>
      * This method is a convenience for {@code new BoundStatement(this).bind(...)}.
      *
      * @param values the values to bind to the variables of the newly created
-     * BoundStatement.
+     *               BoundStatement.
      * @return the newly created {@code BoundStatement} with its variables
      * bound to {@code values}.
-     *
      * @throws IllegalArgumentException if more {@code values} are provided
-     * than there is of bound variables in this statement.
-     * @throws InvalidTypeException if any of the provided value is not of
-     * correct type to be bound to the corresponding bind variable.
-     * @throws NullPointerException if one of {@code values} is a collection
-     * (List, Set or Map) containing a null value. Nulls are not supported in
-     * collections by CQL.
-     *
+     *                                  than there is of bound variables in this statement.
+     * @throws InvalidTypeException     if any of the provided value is not of
+     *                                  correct type to be bound to the corresponding bind variable.
+     * @throws NullPointerException     if one of {@code values} is a collection
+     *                                  (List, Set or Map) containing a null value. Nulls are not supported in
+     *                                  collections by CQL.
      * @see BoundStatement#bind
      */
     public BoundStatement bind(Object... values);
 
     /**
      * Creates a new BoundStatement object for this prepared statement.
-     * <p>
+     * <p/>
      * This method do not bind any values to any of the prepared variables. Said
      * values need to be bound on the resulting statement using BoundStatement's
      * setters methods ({@link BoundStatement#setInt}, {@link BoundStatement#setLong}, ...).
@@ -90,23 +88,22 @@ public interface PreparedStatement {
 
     /**
      * Sets the routing key for this prepared statement.
-     * <p>
+     * <p/>
      * While you can provide a fixed routing key for all executions of this prepared
      * statement with this method, it is not mandatory to provide
      * one through this method. This method should only be used
      * if the partition key of the prepared query is not part of the prepared
      * variables (that is if the partition key is fixed).
-     * <p>
+     * <p/>
      * Note that if the partition key is part of the prepared variables, the
      * routing key will be automatically computed once those variables are bound.
-     * <p>
+     * <p/>
      * If the partition key is neither fixed nor part of the prepared variables (e.g.
      * a composite partition key where only some of the components are bound), the
      * routing key can also be set on each bound statement.
      *
      * @param routingKey the raw (binary) value to use as routing key.
      * @return this {@code PreparedStatement} object.
-     *
      * @see Statement#getRoutingKey
      * @see BoundStatement#getRoutingKey
      */
@@ -114,15 +111,14 @@ public interface PreparedStatement {
 
     /**
      * Sets the routing key for this query.
-     * <p>
+     * <p/>
      * See {@link #setRoutingKey(ByteBuffer)} for more information. This
      * method is a variant for when the query partition key is composite and
      * the routing key must be built from multiple values.
      *
      * @param routingKeyComponents the raw (binary) values to compose to obtain
-     * the routing key.
+     *                             the routing key.
      * @return this {@code PreparedStatement} object.
-     *
      * @see Statement#getRoutingKey
      */
     public PreparedStatement setRoutingKey(ByteBuffer... routingKeyComponents);
@@ -138,10 +134,10 @@ public interface PreparedStatement {
     /**
      * Sets a default consistency level for all bound statements
      * created from this prepared statement.
-     * <p>
+     * <p/>
      * If no consistency level is set through this method, the bound statement
      * created from this object will use the default consistency level (ONE).
-     * <p>
+     * <p/>
      * Changing the default consistency level is not retroactive, it only
      * applies to BoundStatement created after the change.
      *
@@ -162,18 +158,17 @@ public interface PreparedStatement {
     /**
      * Sets a default serial consistency level for all bound statements
      * created from this prepared statement.
-     * <p>
+     * <p/>
      * If no serial consistency level is set through this method, the bound statement
      * created from this object will use the default serial consistency level (SERIAL).
-     * <p>
+     * <p/>
      * Changing the default serial consistency level is not retroactive, it only
      * applies to BoundStatement created after the change.
      *
      * @param serialConsistency the default serial consistency level to set.
      * @return this {@code PreparedStatement} object.
-     *
      * @throws IllegalArgumentException if {@code serialConsistency} is not one of
-     * {@code ConsistencyLevel.SERIAL} or {@code ConsistencyLevel.LOCAL_SERIAL}.
+     *                                  {@code ConsistencyLevel.SERIAL} or {@code ConsistencyLevel.LOCAL_SERIAL}.
      */
     public PreparedStatement setSerialConsistencyLevel(ConsistencyLevel serialConsistency);
 
@@ -189,7 +184,7 @@ public interface PreparedStatement {
     /**
      * Returns the string of the query that was prepared to yield this {@code
      * PreparedStatement}.
-     * <p>
+     * <p/>
      * Note that a CQL3 query may be implicitly applied to the current keyspace
      * (that is, if the keyspace is not explicitly qualified in the query
      * itself). For prepared queries, the current keyspace used is the one at
@@ -242,7 +237,7 @@ public interface PreparedStatement {
     /**
      * Convenience method to set a default retry policy for the {@code BoundStatement}
      * created from this prepared statement.
-     * <p>
+     * <p/>
      * Note that this method is completely optional. By default, the retry policy
      * used is the one returned {@link com.datastax.driver.core.policies.Policies#getRetryPolicy}
      * in the cluster configuration. This method is only useful if you want
@@ -274,17 +269,17 @@ public interface PreparedStatement {
      * Return the incoming payload, that is, the payload that the server
      * sent back with its {@code PREPARED} response, if any,
      * or {@code null}, if the server did not include any custom payload.
-     * <p>
+     * <p/>
      * Note that if an incoming payload is present,
      * and if no outgoing payload has been {@link #setOutgoingPayload(Map) explicitly set}, then each time
      * a {@link BoundStatement} is created (with either {@link #bind()} or {@link #bind(Object...)}),
      * the resulting {@link BoundStatement} will inherit from this value
      * as its default outgoing payload.
-     * <p>
+     * <p/>
      * Implementors should return a read-only view of the original map, but even though,
      * its values would remain inherently mutable.
      * Callers should take care not to modify the returned map in any way.
-     * <p>
+     * <p/>
      * This feature is only available with {@link ProtocolVersion#V4} or above; with lower
      * versions, this method will always return {@code null}.
      *
@@ -296,17 +291,18 @@ public interface PreparedStatement {
 
     /**
      * Return the outgoing payload currently associated with this statement.
-     * <p>
+     * <p/>
      * If this is set to a non-null value, each time a {@link BoundStatement} is
      * created (with either {@link #bind()} or {@link #bind(Object...)}),
      * the resulting {@link BoundStatement} will inherit from this value
      * as its default outgoing payload.
-     * <p>
+     * <p/>
      * Implementors should return a read-only view of the original map, but even though,
      * its values would remain inherently mutable.
      * Callers should take care not to modify the returned map in any way.
-     * <p>
+     * <p/>
      * This feature is only available with {@link ProtocolVersion#V4} or above.
+     *
      * @return this statement's outgoing payload, if any, or {@code null} if no outgoing payload is set
      * @since 2.2
      */
@@ -314,16 +310,16 @@ public interface PreparedStatement {
 
     /**
      * Associate the given payload with this prepared statement.
-     * <p>
+     * <p/>
      * If this is set to a non-null value, each time a {@link BoundStatement} is
      * created (with either {@link #bind()} or {@link #bind(Object...)}),
      * the resulting {@link BoundStatement} will inherit from this value
      * as its default outgoing payload.
-     * <p>
+     * <p/>
      * Implementors should make a defensive, thread-safe copy of the given map, but even though,
      * its values would remain inherently mutable.
      * Callers should take care not to modify the original map once it is passed to this method.
-     * <p>
+     * <p/>
      * This feature is only available with {@link ProtocolVersion#V4} or above.
      * Trying to include custom payloads in requests sent by the driver
      * under lower protocol versions will result in an

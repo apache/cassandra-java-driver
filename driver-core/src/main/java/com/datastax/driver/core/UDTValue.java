@@ -15,8 +15,6 @@
  */
 package com.datastax.driver.core;
 
-import com.google.common.base.Joiner;
-
 /**
  * A value for a User Defined Type.
  */
@@ -63,7 +61,7 @@ public class UDTValue extends AbstractData<UDTValue> {
         if (!(o instanceof UDTValue))
             return false;
 
-        UDTValue that = (UDTValue)o;
+        UDTValue that = (UDTValue) o;
         if (!definition.equals(that.definition))
             return false;
 

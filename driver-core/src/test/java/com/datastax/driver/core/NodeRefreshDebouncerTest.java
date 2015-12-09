@@ -15,20 +15,16 @@
  */
 package com.datastax.driver.core;
 
-import java.util.Collection;
-import java.util.concurrent.TimeUnit;
-
 import org.mockito.ArgumentCaptor;
 import org.testng.annotations.Test;
 
-import static com.google.common.collect.Lists.newArrayList;
-import static org.mockito.ArgumentCaptor.forClass;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.timeout;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
+import java.util.Collection;
+import java.util.concurrent.TimeUnit;
 
 import static com.datastax.driver.core.Assertions.assertThat;
+import static com.google.common.collect.Lists.newArrayList;
+import static org.mockito.ArgumentCaptor.forClass;
+import static org.mockito.Mockito.*;
 
 public class NodeRefreshDebouncerTest extends CCMBridge.PerClassSingleNodeCluster {
 
@@ -41,22 +37,22 @@ public class NodeRefreshDebouncerTest extends CCMBridge.PerClassSingleNodeCluste
      * Ensures that when a new node is bootstrapped into the cluster, stopped, and then subsequently
      * started within {@link QueryOptions#setRefreshNodeIntervalMillis(int)} that an 'onAdd' event
      * event is the only one processed and that the {@link Host} is marked up.
-     * <p>
+     * <p/>
      * Since NEW_NODE_DELAY_SECONDS is typically configured with a high value (60 seconds default
      * in the maven profile) this test can take a very long time.
      *
      * @jira_ticket JAVA-657
      * @since 2.0.11
      */
-    @Test(groups="long")
+    @Test(groups = "long")
     public void should_call_onAdd_with_bootstrap_stop_start() {
         int refreshNodeInterval = 10000;
         QueryOptions queryOptions = new QueryOptions().setRefreshNodeIntervalMillis(refreshNodeInterval);
         CCMBridge ccm = CCMBridge.builder("test").withNodes(1).build();
         Cluster cluster = Cluster.builder()
-            .addContactPoint(CCMBridge.ipOfNode(1))
-            .withQueryOptions(queryOptions)
-            .build();
+                .addContactPoint(CCMBridge.ipOfNode(1))
+                .withQueryOptions(queryOptions)
+                .build();
 
         try {
             cluster.connect();

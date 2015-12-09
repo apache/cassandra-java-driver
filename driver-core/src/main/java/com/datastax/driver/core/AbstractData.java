@@ -15,18 +15,14 @@
  */
 package com.datastax.driver.core;
 
+import com.google.common.base.Objects;
+import com.google.common.reflect.TypeToken;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
-
-import com.google.common.base.Objects;
-import com.google.common.reflect.TypeToken;
-
-import static com.datastax.driver.core.TypeTokens.listOf;
-import static com.datastax.driver.core.TypeTokens.mapOf;
-import static com.datastax.driver.core.TypeTokens.setOf;
 
 // We don't want to expose this one: it's less useful externally and it's a bit ugly to expose anyway (but it's convenient).
 abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableData implements SettableData<T> {
@@ -39,7 +35,7 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
     @SuppressWarnings("unchecked")
     protected AbstractData(ProtocolVersion protocolVersion, int size) {
         super(protocolVersion);
-        this.wrapped = (T)this;
+        this.wrapped = (T) this;
         this.values = new ByteBuffer[size];
     }
 
@@ -74,8 +70,8 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
     public T setBool(int i, boolean v) {
         TypeCodec<Boolean> codec = codecFor(i, Boolean.class);
         ByteBuffer bb;
-        if(codec instanceof TypeCodec.PrimitiveBooleanCodec)
-            bb = ((TypeCodec.PrimitiveBooleanCodec)codec).serializeNoBoxing(v, protocolVersion);
+        if (codec instanceof TypeCodec.PrimitiveBooleanCodec)
+            bb = ((TypeCodec.PrimitiveBooleanCodec) codec).serializeNoBoxing(v, protocolVersion);
         else
             bb = codec.serialize(v, protocolVersion);
         return setValue(i, bb);
@@ -93,8 +89,8 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
     public T setByte(int i, byte v) {
         TypeCodec<Byte> codec = codecFor(i, Byte.class);
         ByteBuffer bb;
-        if(codec instanceof TypeCodec.PrimitiveByteCodec)
-            bb = ((TypeCodec.PrimitiveByteCodec)codec).serializeNoBoxing(v, protocolVersion);
+        if (codec instanceof TypeCodec.PrimitiveByteCodec)
+            bb = ((TypeCodec.PrimitiveByteCodec) codec).serializeNoBoxing(v, protocolVersion);
         else
             bb = codec.serialize(v, protocolVersion);
         return setValue(i, bb);
@@ -112,8 +108,8 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
     public T setShort(int i, short v) {
         TypeCodec<Short> codec = codecFor(i, Short.class);
         ByteBuffer bb;
-        if(codec instanceof TypeCodec.PrimitiveShortCodec)
-            bb = ((TypeCodec.PrimitiveShortCodec)codec).serializeNoBoxing(v, protocolVersion);
+        if (codec instanceof TypeCodec.PrimitiveShortCodec)
+            bb = ((TypeCodec.PrimitiveShortCodec) codec).serializeNoBoxing(v, protocolVersion);
         else
             bb = codec.serialize(v, protocolVersion);
         return setValue(i, bb);
@@ -131,8 +127,8 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
     public T setInt(int i, int v) {
         TypeCodec<Integer> codec = codecFor(i, Integer.class);
         ByteBuffer bb;
-        if(codec instanceof TypeCodec.PrimitiveIntCodec)
-            bb = ((TypeCodec.PrimitiveIntCodec)codec).serializeNoBoxing(v, protocolVersion);
+        if (codec instanceof TypeCodec.PrimitiveIntCodec)
+            bb = ((TypeCodec.PrimitiveIntCodec) codec).serializeNoBoxing(v, protocolVersion);
         else
             bb = codec.serialize(v, protocolVersion);
         return setValue(i, bb);
@@ -150,8 +146,8 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
     public T setLong(int i, long v) {
         TypeCodec<Long> codec = codecFor(i, Long.class);
         ByteBuffer bb;
-        if(codec instanceof TypeCodec.PrimitiveLongCodec)
-            bb = ((TypeCodec.PrimitiveLongCodec)codec).serializeNoBoxing(v, protocolVersion);
+        if (codec instanceof TypeCodec.PrimitiveLongCodec)
+            bb = ((TypeCodec.PrimitiveLongCodec) codec).serializeNoBoxing(v, protocolVersion);
         else
             bb = codec.serialize(v, protocolVersion);
         return setValue(i, bb);
@@ -195,8 +191,8 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
     public T setTime(int i, long v) {
         TypeCodec<Long> codec = codecFor(i, Long.class);
         ByteBuffer bb;
-        if(codec instanceof TypeCodec.PrimitiveLongCodec)
-            bb = ((TypeCodec.PrimitiveLongCodec)codec).serializeNoBoxing(v, protocolVersion);
+        if (codec instanceof TypeCodec.PrimitiveLongCodec)
+            bb = ((TypeCodec.PrimitiveLongCodec) codec).serializeNoBoxing(v, protocolVersion);
         else
             bb = codec.serialize(v, protocolVersion);
         return setValue(i, bb);
@@ -214,8 +210,8 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
     public T setFloat(int i, float v) {
         TypeCodec<Float> codec = codecFor(i, Float.class);
         ByteBuffer bb;
-        if(codec instanceof TypeCodec.PrimitiveFloatCodec)
-            bb = ((TypeCodec.PrimitiveFloatCodec)codec).serializeNoBoxing(v, protocolVersion);
+        if (codec instanceof TypeCodec.PrimitiveFloatCodec)
+            bb = ((TypeCodec.PrimitiveFloatCodec) codec).serializeNoBoxing(v, protocolVersion);
         else
             bb = codec.serialize(v, protocolVersion);
         return setValue(i, bb);
@@ -233,8 +229,8 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
     public T setDouble(int i, double v) {
         TypeCodec<Double> codec = codecFor(i, Double.class);
         ByteBuffer bb;
-        if(codec instanceof TypeCodec.PrimitiveDoubleCodec)
-            bb = ((TypeCodec.PrimitiveDoubleCodec)codec).serializeNoBoxing(v, protocolVersion);
+        if (codec instanceof TypeCodec.PrimitiveDoubleCodec)
+            bb = ((TypeCodec.PrimitiveDoubleCodec) codec).serializeNoBoxing(v, protocolVersion);
         else
             bb = codec.serialize(v, protocolVersion);
         return setValue(i, bb);
@@ -401,7 +397,7 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
     public <K, V> T setMap(int i, Map<K, V> v) {
         return setValue(i, codecFor(i).serialize(v, protocolVersion));
     }
-    
+
     @Override
     public <K, V> T setMap(int i, Map<K, V> v, Class<K> keysClass, Class<V> valuesClass) {
         return setValue(i, codecFor(i, TypeTokens.mapOf(keysClass, valuesClass)).serialize(v, protocolVersion));
@@ -441,7 +437,7 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
     public <E> T setSet(int i, Set<E> v) {
         return setValue(i, codecFor(i).serialize(v, protocolVersion));
     }
-    
+
     @Override
     public <E> T setSet(int i, Set<E> v, Class<E> elementsClass) {
         return setValue(i, codecFor(i, TypeTokens.setOf(elementsClass)).serialize(v, protocolVersion));
@@ -459,7 +455,7 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
         }
         return wrapped;
     }
-    
+
     @Override
     public <E> T setSet(String name, Set<E> v, Class<E> elementsClass) {
         for (int i : getAllIndexesOf(name)) {
@@ -560,11 +556,11 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
         if (!(o instanceof AbstractData))
             return false;
 
-        AbstractData<?> that = (AbstractData<?>)o;
+        AbstractData<?> that = (AbstractData<?>) o;
         if (values.length != that.values.length)
             return false;
 
-        if(this.protocolVersion != that.protocolVersion)
+        if (this.protocolVersion != that.protocolVersion)
             return false;
 
         // Deserializing each value is slightly inefficient, but comparing

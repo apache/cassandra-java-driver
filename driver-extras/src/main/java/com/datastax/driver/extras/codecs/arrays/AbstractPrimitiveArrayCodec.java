@@ -15,15 +15,15 @@
  */
 package com.datastax.driver.extras.codecs.arrays;
 
-import java.lang.reflect.Array;
-import java.nio.ByteBuffer;
-
-import static com.google.common.base.Preconditions.checkArgument;
-
 import com.datastax.driver.core.CodecUtils;
 import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.ProtocolVersion;
 import com.datastax.driver.core.exceptions.InvalidTypeException;
+
+import java.lang.reflect.Array;
+import java.nio.ByteBuffer;
+
+import static com.google.common.base.Preconditions.checkArgument;
 
 /**
  * Base class for all codecs dealing with Java primitive arrays.
@@ -35,7 +35,7 @@ import com.datastax.driver.core.exceptions.InvalidTypeException;
 public abstract class AbstractPrimitiveArrayCodec<T> extends AbstractArrayCodec<T> {
 
     /**
-     * @param cqlType The CQL type. Must be a list type.
+     * @param cqlType   The CQL type. Must be a list type.
      * @param javaClass The Java type. Must be an array class.
      */
     public AbstractPrimitiveArrayCodec(DataType.CollectionType cqlType, Class<T> javaClass) {
@@ -51,8 +51,8 @@ public abstract class AbstractPrimitiveArrayCodec<T> extends AbstractArrayCodec<
         // native method
         int length = Array.getLength(array);
         checkArgument(isProtocolV3OrAbove || length < 65536,
-            "Native protocol version %d supports up to 65535 elements in any collection - but collection contains %d elements",
-            protocolVersion.toInt(), length);
+                "Native protocol version %d supports up to 65535 elements in any collection - but collection contains %d elements",
+                protocolVersion.toInt(), length);
         /*
          * Encoding of lists in the native protocol:
          * [size of list] [size of element 1][element1] [size of element 2][element2]...
@@ -101,18 +101,20 @@ public abstract class AbstractPrimitiveArrayCodec<T> extends AbstractArrayCodec<
 
     /**
      * Write the {@code index}th element of {@code array} to {@code output}.
-     *  @param output The ByteBuffer to write to.
-     * @param array The array to read from.
-     * @param index The element index.
+     *
+     * @param output          The ByteBuffer to write to.
+     * @param array           The array to read from.
+     * @param index           The element index.
      * @param protocolVersion The protocol version to use.
      */
     protected abstract void serializeElement(ByteBuffer output, T array, int index, ProtocolVersion protocolVersion);
 
     /**
      * Read the {@code index}th element of {@code array} from {@code input}.
-     *  @param input The ByteBuffer to read from.
-     * @param array The array to write to.
-     * @param index The element index.
+     *
+     * @param input           The ByteBuffer to read from.
+     * @param array           The array to write to.
+     * @param index           The element index.
      * @param protocolVersion The protocol version to use.
      */
     protected abstract void deserializeElement(ByteBuffer input, T array, int index, ProtocolVersion protocolVersion);

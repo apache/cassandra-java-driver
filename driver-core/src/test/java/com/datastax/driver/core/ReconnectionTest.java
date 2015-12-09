@@ -15,6 +15,14 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.Host.State;
+import com.datastax.driver.core.policies.ConstantReconnectionPolicy;
+import com.datastax.driver.core.policies.DelegatingLoadBalancingPolicy;
+import com.datastax.driver.core.policies.LoadBalancingPolicy;
+import com.datastax.driver.core.policies.RoundRobinPolicy;
+import com.google.common.util.concurrent.ListenableFuture;
+import org.testng.annotations.Test;
+
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Collections;
@@ -24,21 +32,10 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static java.util.concurrent.TimeUnit.SECONDS;
-
-import com.google.common.util.concurrent.ListenableFuture;
-import org.testng.annotations.Test;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-
-import com.datastax.driver.core.Host.State;
-import com.datastax.driver.core.policies.*;
-
 import static com.datastax.driver.core.Assertions.assertThat;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.*;
 
 /**
  * Scenarios where a Cluster loses connection to a host and reconnects.
@@ -53,9 +50,9 @@ public class ReconnectionTest {
             ccm = CCMBridge.builder("test").withNodes(2).build();
             int reconnectionDelay = 1000;
             cluster = Cluster.builder()
-                .addContactPoint(CCMBridge.ipOfNode(1))
-                .withReconnectionPolicy(new ConstantReconnectionPolicy(reconnectionDelay))
-                .build();
+                    .addContactPoint(CCMBridge.ipOfNode(1))
+                    .withReconnectionPolicy(new ConstantReconnectionPolicy(reconnectionDelay))
+                    .build();
             cluster.connect();
 
             assertThat(cluster).usesControlHost(1);
@@ -69,7 +66,7 @@ public class ReconnectionTest {
             ccm.start(2);
             ccm.waitForUp(2);
 
-            assertThat(cluster).host(2).comesUpWithin(Cluster.NEW_NODE_DELAY_SECONDS*2, SECONDS);
+            assertThat(cluster).host(2).comesUpWithin(Cluster.NEW_NODE_DELAY_SECONDS * 2, SECONDS);
 
             // Give the control connection a few moments to reconnect
             TimeUnit.MILLISECONDS.sleep(reconnectionDelay * 2);
@@ -88,9 +85,9 @@ public class ReconnectionTest {
         Cluster cluster = null;
         try {
             ccm = CCMBridge.builder("test")
-                .withCassandraConfiguration("authenticator", "PasswordAuthenticator") // default credentials: cassandra / cassandra
-                .notStarted()
-                .build();
+                    .withCassandraConfiguration("authenticator", "PasswordAuthenticator") // default credentials: cassandra / cassandra
+                    .notStarted()
+                    .build();
             ccm.start(1, "-Dcassandra.superuser_setup_delay_ms=0");
 
             CountingAuthProvider authProvider = new CountingAuthProvider("cassandra", "cassandra");
@@ -98,11 +95,11 @@ public class ReconnectionTest {
             CountingReconnectionPolicy reconnectionPolicy = new CountingReconnectionPolicy(new ConstantReconnectionPolicy(reconnectionDelayMs));
 
             cluster = Cluster.builder()
-                .addContactPoint(CCMBridge.ipOfNode(1))
-                    // Start with the correct auth so that we can initialize the server
-                .withAuthProvider(authProvider)
-                .withReconnectionPolicy(reconnectionPolicy)
-                .build();
+                    .addContactPoint(CCMBridge.ipOfNode(1))
+                            // Start with the correct auth so that we can initialize the server
+                    .withAuthProvider(authProvider)
+                    .withReconnectionPolicy(reconnectionPolicy)
+                    .build();
 
             cluster.init();
             assertThat(cluster).usesControlHost(1);
@@ -128,7 +125,7 @@ public class ReconnectionTest {
             authProvider.setPassword("cassandra");
 
             // The driver should eventually reconnect to the node
-            assertThat(cluster).host(1).comesUpWithin(Cluster.NEW_NODE_DELAY_SECONDS*2, SECONDS);
+            assertThat(cluster).host(1).comesUpWithin(Cluster.NEW_NODE_DELAY_SECONDS * 2, SECONDS);
         } finally {
             if (cluster != null)
                 cluster.close();
@@ -148,9 +145,9 @@ public class ReconnectionTest {
         try {
             ccm = CCMBridge.builder("test").withNodes(2).build();
             cluster = Cluster.builder()
-                .addContactPoint(CCMBridge.ipOfNode(1))
-                .withReconnectionPolicy(reconnectionPolicy)
-                .build();
+                    .addContactPoint(CCMBridge.ipOfNode(1))
+                    .withReconnectionPolicy(reconnectionPolicy)
+                    .build();
             cluster.connect();
 
             // Stop a node and cancel the reconnection attempts to it
@@ -168,7 +165,7 @@ public class ReconnectionTest {
             ccm.waitForUp(2);
 
             // The driver should now see the node as UP again
-            assertThat(cluster).host(2).comesUpWithin(Cluster.NEW_NODE_DELAY_SECONDS*2, SECONDS);
+            assertThat(cluster).host(2).comesUpWithin(Cluster.NEW_NODE_DELAY_SECONDS * 2, SECONDS);
 
         } finally {
             if (cluster != null)
@@ -189,10 +186,10 @@ public class ReconnectionTest {
         try {
             ccm = CCMBridge.builder("test").withNodes(1).build();
             cluster = Cluster.builder()
-                .addContactPoint(CCMBridge.ipOfNode(1))
-                .withLoadBalancingPolicy(loadBalancingPolicy)
-                .withReconnectionPolicy(new ConstantReconnectionPolicy(reconnectionDelayMillis))
-                .build();
+                    .addContactPoint(CCMBridge.ipOfNode(1))
+                    .withLoadBalancingPolicy(loadBalancingPolicy)
+                    .withReconnectionPolicy(new ConstantReconnectionPolicy(reconnectionDelayMillis))
+                    .build();
             cluster.connect();
 
             // Tweak the LBP so that the control connection never reconnects, otherwise
@@ -229,7 +226,7 @@ public class ReconnectionTest {
             // Trigger another one-time reconnection attempt (this will succeed). The
             // host should be back up.
             host1.tryReconnectOnce();
-            assertThat(cluster).host(1).comesUpWithin(Cluster.NEW_NODE_DELAY_SECONDS*2, SECONDS);
+            assertThat(cluster).host(1).comesUpWithin(Cluster.NEW_NODE_DELAY_SECONDS * 2, SECONDS);
         } finally {
             if (cluster != null)
                 cluster.close();
@@ -255,12 +252,12 @@ public class ReconnectionTest {
         try {
             ccm = CCMBridge.builder("test").withNodes(1).build();
             cluster = Cluster.builder()
-                .addContactPoint(CCMBridge.ipOfNode(1))
-                .withReconnectionPolicy(new ConstantReconnectionPolicy(5000))
-                .withLoadBalancingPolicy(loadBalancingPolicy)
-                .withSocketOptions(socketOptions)
-                .withProtocolVersion(TestUtils.getDesiredProtocolVersion())
-                .build();
+                    .addContactPoint(CCMBridge.ipOfNode(1))
+                    .withReconnectionPolicy(new ConstantReconnectionPolicy(5000))
+                    .withLoadBalancingPolicy(loadBalancingPolicy)
+                    .withSocketOptions(socketOptions)
+                    .withProtocolVersion(TestUtils.getDesiredProtocolVersion())
+                    .build();
             // Create two sessions to have multiple pools
             cluster.connect();
             cluster.connect();
@@ -287,7 +284,7 @@ public class ReconnectionTest {
             // Reset the spy and count the number of connections attempts for 1 reconnect
             reset(socketOptions);
             host1.tryReconnectOnce();
-            assertThat(cluster).host(1).comesUpWithin(Cluster.NEW_NODE_DELAY_SECONDS*2, SECONDS);
+            assertThat(cluster).host(1).comesUpWithin(Cluster.NEW_NODE_DELAY_SECONDS * 2, SECONDS);
             // Expect 1 connection from the reconnection attempt  3 for the pools (we need 4
             // but the one from the reconnection attempt gets reused).
             verify(socketOptions, times(corePoolSize * 2)).getKeepAlive();
@@ -299,7 +296,9 @@ public class ReconnectionTest {
         }
     }
 
-    /** Extends the plain text auth provider to track how many times the credentials have been requested */
+    /**
+     * Extends the plain text auth provider to track how many times the credentials have been requested
+     */
     static class CountingAuthProvider extends PlainTextAuthProvider {
         final AtomicInteger count = new AtomicInteger();
 
@@ -332,8 +331,8 @@ public class ReconnectionTest {
         public HostDistance distance(Host host) {
             HostDistance distance = distances.get(host);
             return (distance != null)
-                ? distance
-                : super.distance(host);
+                    ? distance
+                    : super.distance(host);
         }
 
         public void setDistance(Host host, HostDistance distance) {

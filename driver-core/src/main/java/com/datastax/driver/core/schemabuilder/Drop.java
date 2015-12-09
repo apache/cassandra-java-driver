@@ -72,6 +72,7 @@ public class Drop extends SchemaStatement {
 
     /**
      * Generate a DROP TABLE statement
+     *
      * @return the final DROP TABLE statement
      */
     public String build() {

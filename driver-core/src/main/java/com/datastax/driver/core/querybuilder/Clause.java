@@ -15,13 +15,14 @@
  */
 package com.datastax.driver.core.querybuilder;
 
-import java.util.List;
-
 import com.datastax.driver.core.CodecRegistry;
+
+import java.util.List;
 
 public abstract class Clause extends Utils.Appendeable {
 
     abstract String name();
+
     abstract Object firstValue();
 
     private static abstract class AbstractClause extends Clause {

@@ -15,19 +15,6 @@
  */
 package com.datastax.driver.core;
 
-import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
-import java.util.*;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicReference;
-
-import com.google.common.base.Functions;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.datastax.driver.core.Message.Response;
 import com.datastax.driver.core.exceptions.DriverInternalError;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
@@ -37,6 +24,21 @@ import com.datastax.driver.core.policies.LoadBalancingPolicy;
 import com.datastax.driver.core.policies.ReconnectionPolicy;
 import com.datastax.driver.core.policies.SpeculativeExecutionPolicy;
 import com.datastax.driver.core.utils.MoreFutures;
+import com.google.common.base.Functions;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Driver implementation of the Session interface.
@@ -84,14 +86,14 @@ class SessionManager extends AbstractSession {
         Collection<Host> hosts = cluster.getMetadata().allHosts();
         ListenableFuture<?> allPoolsCreatedFuture = createPools(hosts);
         ListenableFuture<?> allPoolsUpdatedFuture = Futures.transform(allPoolsCreatedFuture,
-            new AsyncFunction<Object, Object>() {
-                @Override
-                @SuppressWarnings("unchecked")
-                public ListenableFuture<Object> apply(Object input) throws Exception {
-                    isInit = true;
-                    return (ListenableFuture<Object>)updateCreatedPools();
-                }
-            });
+                new AsyncFunction<Object, Object>() {
+                    @Override
+                    @SuppressWarnings("unchecked")
+                    public ListenableFuture<Object> apply(Object input) throws Exception {
+                        isInit = true;
+                        return (ListenableFuture<Object>) updateCreatedPools();
+                    }
+                });
 
         Futures.addCallback(allPoolsUpdatedFuture, new FutureCallback<Object>() {
             @Override
@@ -167,8 +169,8 @@ class SessionManager extends AbstractSession {
         future = new CloseFuture.Forwarding(futures);
 
         return closeFuture.compareAndSet(null, future)
-            ? future
-            : closeFuture.get(); // We raced, it's ok, return the future that was actually set
+                ? future
+                : closeFuture.get(); // We raced, it's ok, return the future that was actually set
     }
 
     public boolean isClosed() {
@@ -188,10 +190,10 @@ class SessionManager extends AbstractSession {
             public ListenableFuture<PreparedStatement> apply(Response response) {
                 switch (response.type) {
                     case RESULT:
-                        Responses.Result rm = (Responses.Result)response;
+                        Responses.Result rm = (Responses.Result) response;
                         switch (rm.kind) {
                             case PREPARED:
-                                Responses.Result.Prepared pmsg = (Responses.Result.Prepared)rm;
+                                Responses.Result.Prepared pmsg = (Responses.Result.Prepared) rm;
                                 PreparedStatement stmt = DefaultPreparedStatement.fromMessage(pmsg, cluster, query, poolsState.keyspace);
                                 stmt = cluster.manager.addPrepared(stmt);
                                 if (cluster.getConfiguration().getQueryOptions().isPrepareOnAllHosts()) {
@@ -203,14 +205,14 @@ class SessionManager extends AbstractSession {
                                 }
                             default:
                                 return Futures.immediateFailedFuture(
-                                    new DriverInternalError(String.format("%s response received when prepared statement was expected", rm.kind)));
+                                        new DriverInternalError(String.format("%s response received when prepared statement was expected", rm.kind)));
                         }
                     case ERROR:
                         return Futures.immediateFailedFuture(
-                            ((Responses.Error)response).asException(future.getAddress()));
+                                ((Responses.Error) response).asException(future.getAddress()));
                     default:
                         return Futures.immediateFailedFuture(
-                            new DriverInternalError(String.format("%s response received when prepared statement was expected", response.type)));
+                                new DriverInternalError(String.format("%s response received when prepared statement was expected", response.type)));
                 }
             }
         });
@@ -358,10 +360,10 @@ class SessionManager extends AbstractSession {
                     @Override
                     public void onFailure(Throwable t) {
                         if (t instanceof UnsupportedProtocolVersionException) {
-                            cluster.manager.logUnsupportedVersionProtocol(host, ((UnsupportedProtocolVersionException)t).getUnsupportedVersion());
+                            cluster.manager.logUnsupportedVersionProtocol(host, ((UnsupportedProtocolVersionException) t).getUnsupportedVersion());
                             cluster.manager.triggerOnDown(host, false);
                         } else if (t instanceof ClusterNameMismatchException) {
-                            ClusterNameMismatchException e = (ClusterNameMismatchException)t;
+                            ClusterNameMismatchException e = (ClusterNameMismatchException) t;
                             cluster.manager.logClusterNameMismatch(host, e.expectedClusterName, e.actualClusterName);
                             cluster.manager.triggerOnDown(host, false);
                         } else {
@@ -378,8 +380,8 @@ class SessionManager extends AbstractSession {
     CloseFuture removePool(Host host) {
         final HostConnectionPool pool = pools.remove(host);
         return pool == null
-            ? CloseFuture.immediateFuture()
-            : pool.closeAsync();
+                ? CloseFuture.immediateFuture()
+                : pool.closeAsync();
     }
 
     /*
@@ -522,18 +524,18 @@ class SessionManager extends AbstractSession {
         }
 
         if (statement instanceof StatementWrapper)
-            statement = ((StatementWrapper)statement).getWrappedStatement();
+            statement = ((StatementWrapper) statement).getWrappedStatement();
 
         Message.Request request;
 
         if (statement instanceof RegularStatement) {
-            RegularStatement rs = (RegularStatement)statement;
+            RegularStatement rs = (RegularStatement) statement;
 
             // It saddens me that we special case for the query builder here, but for now this is simpler.
             // We could provide a general API in RegularStatement instead at some point but it's unclear what's
             // the cleanest way to do that is right now (and it's probably not really that useful anyway).
             if (protocolVersion == ProtocolVersion.V1 && rs instanceof com.datastax.driver.core.querybuilder.BuiltStatement)
-                ((com.datastax.driver.core.querybuilder.BuiltStatement)rs).setForceNoValues(true);
+                ((com.datastax.driver.core.querybuilder.BuiltStatement) rs).setForceNoValues(true);
 
             ByteBuffer[] rawValues = rs.getValues(protocolVersion, codecRegistry);
 
@@ -545,19 +547,19 @@ class SessionManager extends AbstractSession {
             String qString = rs.getQueryString();
 
             Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(consistency, values, false,
-                                                                                      fetchSize, usedPagingState, serialConsistency, defaultTimestamp);
-            request =  new Requests.Query(qString, options, statement.isTracing());
+                    fetchSize, usedPagingState, serialConsistency, defaultTimestamp);
+            request = new Requests.Query(qString, options, statement.isTracing());
         } else if (statement instanceof BoundStatement) {
-            BoundStatement bs = (BoundStatement)statement;
+            BoundStatement bs = (BoundStatement) statement;
             if (!cluster.manager.preparedQueries.containsKey(bs.statement.getPreparedId().id)) {
                 throw new InvalidQueryException(String.format("Tried to execute unknown prepared query : %s. "
-                    + "You may have used a PreparedStatement that was created with another Cluster instance.", bs.statement.getPreparedId().id));
+                        + "You may have used a PreparedStatement that was created with another Cluster instance.", bs.statement.getPreparedId().id));
             }
             if (protocolVersion.compareTo(ProtocolVersion.V4) < 0)
                 bs.ensureAllSet();
             boolean skipMetadata = protocolVersion != ProtocolVersion.V1 && bs.statement.getPreparedId().resultSetMetadata != null;
             Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(consistency, Arrays.asList(bs.wrapper.values), skipMetadata,
-                                                                                      fetchSize, usedPagingState, serialConsistency, defaultTimestamp);
+                    fetchSize, usedPagingState, serialConsistency, defaultTimestamp);
             request = new Requests.Execute(bs.statement.getPreparedId().id, options, statement.isTracing());
         } else {
             assert statement instanceof BatchStatement : statement;
@@ -566,12 +568,12 @@ class SessionManager extends AbstractSession {
             if (protocolVersion == ProtocolVersion.V1)
                 throw new UnsupportedFeatureException(protocolVersion, "Protocol level batching is not supported");
 
-            BatchStatement bs = (BatchStatement)statement;
+            BatchStatement bs = (BatchStatement) statement;
             if (protocolVersion.compareTo(ProtocolVersion.V4) < 0)
                 bs.ensureAllSet();
             BatchStatement.IdAndValues idAndVals = bs.getIdAndValues(protocolVersion, codecRegistry);
             Requests.BatchProtocolOptions options = new Requests.BatchProtocolOptions(consistency, serialConsistency, defaultTimestamp);
-            request =  new Requests.Batch(bs.batchType, idAndVals.ids, idAndVals.values, options, statement.isTracing());
+            request = new Requests.Batch(bs.batchType, idAndVals.ids, idAndVals.values, options, statement.isTracing());
         }
 
         request.setCustomPayload(statement.getOutgoingPayload());
@@ -580,7 +582,7 @@ class SessionManager extends AbstractSession {
 
     /**
      * Execute the provided request.
-     *
+     * <p/>
      * This method will find a suitable node to connect to using the
      * {@link LoadBalancingPolicy} and handle host failover.
      */
@@ -627,8 +629,8 @@ class SessionManager extends AbstractSession {
         }
         // Return the statement when all futures are done
         return Futures.transform(
-            Futures.successfulAsList(futures),
-            Functions.constant(statement));
+                Futures.successfulAsList(futures),
+                Functions.constant(statement));
     }
 
     ResultSetFuture executeQuery(Message.Request msg, Statement statement) {

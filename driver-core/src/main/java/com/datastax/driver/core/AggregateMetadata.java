@@ -15,13 +15,13 @@
  */
 package com.datastax.driver.core;
 
-import java.nio.ByteBuffer;
-import java.util.Collections;
-import java.util.List;
-
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+
+import java.nio.ByteBuffer;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Describes a CQL aggregate function (created with {@code CREATE AGGREGATE...}).
@@ -41,8 +41,8 @@ public class AggregateMetadata {
     private final TypeCodec<Object> stateTypeCodec;
 
     private AggregateMetadata(KeyspaceMetadata keyspace, String simpleName, List<DataType> argumentTypes,
-                             String finalFuncSimpleName, String finalFuncFullName, Object initCond, DataType returnType,
-                             String stateFuncSimpleName, String stateFuncFullName, DataType stateType, TypeCodec<Object> stateTypeCodec) {
+                              String finalFuncSimpleName, String finalFuncFullName, Object initCond, DataType returnType,
+                              String stateFuncSimpleName, String stateFuncFullName, DataType stateType, TypeCodec<Object> stateTypeCodec) {
         this.keyspace = keyspace;
         this.simpleName = simpleName;
         this.argumentTypes = argumentTypes;
@@ -89,7 +89,7 @@ public class AggregateMetadata {
         List<DataType> argumentTypes = parseTypes(ksm, row.getList("argument_types", String.class), version, cluster);
         String finalFuncSimpleName = row.getString("final_func");
         DataType returnType;
-        if(version.getMajor() >= 3) {
+        if (version.getMajor() >= 3) {
             returnType = DataTypeCqlNameParser.parse(row.getString("return_type"), cluster, ksm.getName(), ksm.userTypes, null, false, false);
         } else {
             returnType = DataTypeClassNameParser.parseOne(row.getString("return_type"), protocolVersion, codecRegistry);
@@ -98,7 +98,7 @@ public class AggregateMetadata {
         String stateTypeName = row.getString("state_type");
         DataType stateType;
         Object initCond;
-        if(version.getMajor() >= 3) {
+        if (version.getMajor() >= 3) {
             stateType = DataTypeCqlNameParser.parse(stateTypeName, cluster, ksm.getName(), ksm.userTypes, null, false, false);
             String rawInitCond = row.getString("initcond");
             initCond = rawInitCond == null ? null : codecRegistry.codecFor(stateType).parse(rawInitCond);
@@ -112,8 +112,8 @@ public class AggregateMetadata {
         String stateFuncFullName = makeStateFuncFullName(stateFuncSimpleName, stateType, argumentTypes);
 
         return new AggregateMetadata(ksm, simpleName, argumentTypes,
-            finalFuncSimpleName, finalFuncFullName, initCond, returnType, stateFuncSimpleName,
-            stateFuncFullName, stateType, codecRegistry.codecFor(stateType));
+                finalFuncSimpleName, finalFuncFullName, initCond, returnType, stateFuncSimpleName,
+                stateFuncFullName, stateType, codecRegistry.codecFor(stateType));
     }
 
     private static String makeStateFuncFullName(String stateFuncSimpleName, DataType stateType, List<DataType> argumentTypes) {
@@ -143,7 +143,7 @@ public class AggregateMetadata {
 
     /**
      * Returns a CQL query representing this function in human readable form.
-     * <p>
+     * <p/>
      * This method is equivalent to {@link #asCQLQuery} but the output is formatted.
      *
      * @return the CQL query representing this function.
@@ -154,7 +154,7 @@ public class AggregateMetadata {
 
     /**
      * Returns a CQL query representing this function.
-     *
+     * <p/>
      * This method returns a single 'CREATE FUNCTION' query corresponding to
      * this function definition.
      *
@@ -172,26 +172,26 @@ public class AggregateMetadata {
     private String asCQLQuery(boolean formatted) {
 
         StringBuilder sb = new StringBuilder("CREATE AGGREGATE ")
-            .append(Metadata.escapeId(keyspace.getName()))
-            .append('.');
+                .append(Metadata.escapeId(keyspace.getName()))
+                .append('.');
 
         appendSignature(sb);
 
         TableMetadata.spaceOrNewLine(sb, formatted)
-            .append("SFUNC ")
-            .append(Metadata.escapeId(stateFuncSimpleName))
-            .append(" STYPE ")
-            .append(stateType.asFunctionParameterString());
+                .append("SFUNC ")
+                .append(Metadata.escapeId(stateFuncSimpleName))
+                .append(" STYPE ")
+                .append(stateType.asFunctionParameterString());
 
         if (finalFuncSimpleName != null)
             TableMetadata.spaceOrNewLine(sb, formatted)
-                .append("FINALFUNC ")
-                .append(Metadata.escapeId(finalFuncSimpleName));
+                    .append("FINALFUNC ")
+                    .append(Metadata.escapeId(finalFuncSimpleName));
 
         if (initCond != null)
             TableMetadata.spaceOrNewLine(sb, formatted)
-                .append("INITCOND ")
-                .append(stateTypeCodec.format(initCond));
+                    .append("INITCOND ")
+                    .append(stateTypeCodec.format(initCond));
 
         sb.append(';');
 
@@ -200,8 +200,8 @@ public class AggregateMetadata {
 
     private void appendSignature(StringBuilder sb) {
         sb
-            .append(Metadata.escapeId(simpleName))
-            .append('(');
+                .append(Metadata.escapeId(simpleName))
+                .append('(');
         boolean first = true;
         for (DataType type : argumentTypes) {
             if (first)
@@ -224,10 +224,10 @@ public class AggregateMetadata {
 
     /**
      * Returns the CQL signature of this aggregate.
-     * <p>
+     * <p/>
      * This is the name of the aggregate, followed by the names of the argument types between parentheses,
      * like it was specified in the {@code CREATE AGGREGATE...} statement, for example {@code sum(int)}.
-     * <p>
+     * <p/>
      * Note that the returned signature is not qualified with the keyspace name.
      *
      * @return the signature of this aggregate.
@@ -240,13 +240,12 @@ public class AggregateMetadata {
 
     /**
      * Returns the simple name of this aggregate.
-     * <p>
+     * <p/>
      * This is the name of the aggregate, without arguments. Note that aggregates can be overloaded with
      * different argument lists, therefore the simple name may not be unique. For example,
      * {@code sum(int)} and {@code sum(int,int)} both have the simple name {@code sum}.
      *
      * @return the simple name of this aggregate.
-     *
      * @see #getSignature()
      */
     public String getSimpleName() {
@@ -264,7 +263,7 @@ public class AggregateMetadata {
 
     /**
      * Returns the final function of this aggregate.
-     * <p>
+     * <p/>
      * This is the function specified with {@code FINALFUNC} in the {@code CREATE AGGREGATE...}
      * statement. It transforms the final value after the aggregation is complete.
      *
@@ -272,13 +271,13 @@ public class AggregateMetadata {
      */
     public FunctionMetadata getFinalFunc() {
         return (finalFuncFullName == null)
-            ? null
-            : keyspace.functions.get(finalFuncFullName);
+                ? null
+                : keyspace.functions.get(finalFuncFullName);
     }
 
     /**
      * Returns the initial state value of this aggregate.
-     * <p>
+     * <p/>
      * This is the value specified with {@code INITCOND} in the {@code CREATE AGGREGATE...}
      * statement. It's passed to the initial invocation of the state function (if that function
      * does not accept null arguments).
@@ -291,7 +290,7 @@ public class AggregateMetadata {
 
     /**
      * Returns the return type of this aggregate.
-     * <p>
+     * <p/>
      * This is the final type of the value computed by this aggregate; in other words, the return
      * type of the final function if it is defined, or the state type otherwise.
      *
@@ -303,7 +302,7 @@ public class AggregateMetadata {
 
     /**
      * Returns the state function of this aggregate.
-     * <p>
+     * <p/>
      * This is the function specified with {@code SFUNC} in the {@code CREATE AGGREGATE...}
      * statement. It aggregates the current state with each row to produce a new state.
      *
@@ -315,7 +314,7 @@ public class AggregateMetadata {
 
     /**
      * Returns the state type of this aggregate.
-     * <p>
+     * <p/>
      * This is the type specified with {@code STYPE} in the {@code CREATE AGGREGATE...}
      * statement. It defines the type of the value that is accumulated as the aggregate
      * iterates through the rows.
@@ -330,19 +329,19 @@ public class AggregateMetadata {
     public boolean equals(Object other) {
         if (other == this)
             return true;
-        
+
         if (other instanceof AggregateMetadata) {
-            AggregateMetadata that = (AggregateMetadata)other;
+            AggregateMetadata that = (AggregateMetadata) other;
             return this.keyspace.getName().equals(that.keyspace.getName()) &&
-                this.argumentTypes.equals(that.argumentTypes) &&
-                Objects.equal(this.finalFuncFullName, that.finalFuncFullName) &&
-                // Note: this might be a problem if a custom codec has been registered for the initCond's type, with a target Java type that
-                // does not properly implement equals. We don't have any control over this, at worst this would lead to spurious change
-                // notifications.
-                Objects.equal(this.initCond, that.initCond) &&
-                this.returnType.equals(that.returnType) &&
-                this.stateFuncFullName.equals(that.stateFuncFullName) &&
-                this.stateType.equals(that.stateType);
+                    this.argumentTypes.equals(that.argumentTypes) &&
+                    Objects.equal(this.finalFuncFullName, that.finalFuncFullName) &&
+                    // Note: this might be a problem if a custom codec has been registered for the initCond's type, with a target Java type that
+                    // does not properly implement equals. We don't have any control over this, at worst this would lead to spurious change
+                    // notifications.
+                    Objects.equal(this.initCond, that.initCond) &&
+                    this.returnType.equals(that.returnType) &&
+                    this.stateFuncFullName.equals(that.stateFuncFullName) &&
+                    this.stateType.equals(that.stateType);
         }
         return false;
     }
@@ -350,6 +349,6 @@ public class AggregateMetadata {
     @Override
     public int hashCode() {
         return Objects.hashCode(this.keyspace.getName(), this.argumentTypes,
-            this.finalFuncFullName, this.initCond, this.returnType, this.stateFuncFullName, this.stateType);
+                this.finalFuncFullName, this.initCond, this.returnType, this.stateFuncFullName, this.stateType);
     }
 }

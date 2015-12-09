@@ -24,20 +24,22 @@ import java.util.Arrays;
  */
 public final class Bytes {
 
-    private Bytes() {}
+    private Bytes() {
+    }
 
     private static final byte[] charToByte = new byte[256];
     private static final char[] byteToChar = new char[16];
+
     static {
         for (char c = 0; c < charToByte.length; ++c) {
             if (c >= '0' && c <= '9')
-                charToByte[c] = (byte)(c - '0');
+                charToByte[c] = (byte) (c - '0');
             else if (c >= 'A' && c <= 'F')
-                charToByte[c] = (byte)(c - 'A' + 10);
+                charToByte[c] = (byte) (c - 'A' + 10);
             else if (c >= 'a' && c <= 'f')
-                charToByte[c] = (byte)(c - 'a' + 10);
+                charToByte[c] = (byte) (c - 'a' + 10);
             else
-                charToByte[c] = (byte)-1;
+                charToByte[c] = (byte) -1;
         }
 
         for (int i = 0; i < 16; ++i) {
@@ -51,6 +53,7 @@ public final class Bytes {
      * That's stolen from Cassandra's code.
      */
     private static final Constructor<String> stringConstructor;
+
     static {
         Constructor<String> c;
         try {
@@ -79,7 +82,7 @@ public final class Bytes {
 
     /**
      * Converts a blob to its CQL hex string representation.
-     * <p>
+     * <p/>
      * A CQL blob string representation consist of the hexadecimal
      * representation of the blob bytes prefixed by "0x".
      *
@@ -102,7 +105,7 @@ public final class Bytes {
 
     /**
      * Converts a blob to its CQL hex string representation.
-     * <p>
+     * <p/>
      * A CQL blob string representation consist of the hexadecimal
      * representation of the blob bytes.
      *
@@ -125,7 +128,7 @@ public final class Bytes {
 
     /**
      * Converts a blob to its CQL hex string representation.
-     * <p>
+     * <p/>
      * A CQL blob string representation consist of the hexadecimal
      * representation of the blob bytes prefixed by "0x".
      *
@@ -139,7 +142,7 @@ public final class Bytes {
 
     /**
      * Parse an hex string representing a CQL blob.
-     * <p>
+     * <p/>
      * The input should be a valid representation of a CQL blob, i.e. it
      * must start by "0x" followed by the hexadecimal representation of the
      * blob bytes.
@@ -147,9 +150,8 @@ public final class Bytes {
      * @param str the CQL blob string representation to parse.
      * @return the bytes corresponding to {@code str}. If {@code str}
      * is {@code null}, this method returns {@code null}.
-     *
      * @throws IllegalArgumentException if {@code str} is not a valid CQL
-     * blob string.
+     *                                  blob string.
      */
     public static ByteBuffer fromHexString(String str) {
         if ((str.length() & 1) == 1)
@@ -163,7 +165,7 @@ public final class Bytes {
 
     /**
      * Extract the content of the provided {@code ByteBuffer} as a byte array.
-     * <p>
+     * <p/>
      * This method work with any type of {@code ByteBuffer} (direct and non-direct
      * ones), but when the {@code ByteBuffer} is backed by an array, this method
      * will try to avoid copy when possible. As a consequence, changes to the
@@ -188,13 +190,13 @@ public final class Bytes {
         bytes.duplicate().get(array);
         return array;
     }
-    
+
     private static String toRawHexString(ByteBuffer bytes, char[] array, int offset) {
         int size = bytes.remaining();
         int bytesOffset = bytes.position();
-        assert array.length >= offset + 2*size;
+        assert array.length >= offset + 2 * size;
         for (int i = 0; i < size; i++) {
-            int bint = bytes.get(i+bytesOffset);
+            int bint = bytes.get(i + bytesOffset);
             array[offset + i * 2] = byteToChar[(bint & 0xf0) >> 4];
             array[offset + 1 + i * 2] = byteToChar[bint & 0x0f];
         }
@@ -203,13 +205,12 @@ public final class Bytes {
 
     /**
      * Converts a CQL hex string representation into a byte array.
-     * <p>
+     * <p/>
      * A CQL blob string representation consist of the hexadecimal
      * representation of the blob bytes.
      *
-     * @param str the string converted in hex representation.
+     * @param str       the string converted in hex representation.
      * @param strOffset he offset for starting the string conversion
-     *
      * @return the byte array which the String was representing.
      */
 
@@ -220,7 +221,7 @@ public final class Bytes {
             byte halfByte2 = charToByte[str.charAt(strOffset + i * 2 + 1)];
             if (halfByte1 == -1 || halfByte2 == -1)
                 throw new IllegalArgumentException("Non-hex characters in " + str);
-            bytes[i] = (byte)((halfByte1 << 4) | halfByte2);
+            bytes[i] = (byte) ((halfByte1 << 4) | halfByte2);
         }
         return bytes;
     }

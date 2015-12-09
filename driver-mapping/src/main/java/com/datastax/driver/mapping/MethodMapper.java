@@ -15,17 +15,16 @@
  */
 package com.datastax.driver.mapping;
 
-import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.util.Set;
-
+import com.datastax.driver.core.*;
 import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
-import com.datastax.driver.core.*;
+import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.util.Set;
 
 // TODO: we probably should make that an abstract class and move some bit in a "ReflexionMethodMapper"
 // subclass for consistency with the rest, but we can see to that later
@@ -78,8 +77,8 @@ class MethodMapper {
 
         if (ListenableFuture.class.isAssignableFrom(returnType)) {
             this.async = true;
-            Type k = ((ParameterizedType)method.getGenericReturnType()).getActualTypeArguments()[0];
-            if (k instanceof Class && ResultSet.class.isAssignableFrom((Class<?>)k))
+            Type k = ((ParameterizedType) method.getGenericReturnType()).getActualTypeArguments()[0];
+            if (k instanceof Class && ResultSet.class.isAssignableFrom((Class<?>) k))
                 return;
 
             mapType(manager, returnType, k);
@@ -101,13 +100,13 @@ class MethodMapper {
 
         if (method.getParameterTypes().length < names.size())
             throw new IllegalArgumentException(String.format("Not enough arguments for method %s, "
-                    + "found %d but it should be at least the number of unique bind parameter names in the @Query (%d)",
-                method.getName(), method.getParameterTypes().length, names.size()));
+                            + "found %d but it should be at least the number of unique bind parameter names in the @Query (%d)",
+                    method.getName(), method.getParameterTypes().length, names.size()));
 
         if (method.getParameterTypes().length > variables.size())
             throw new IllegalArgumentException(String.format("Too many arguments for method %s, "
-                    + "found %d but it should be at most the number of bind parameters in the @Query (%d)",
-                method.getName(), method.getParameterTypes().length, variables.size()));
+                            + "found %d but it should be at most the number of bind parameters in the @Query (%d)",
+                    method.getName(), method.getParameterTypes().length, variables.size()));
 
         // TODO could go further, e.g. check that the types match, inspect @Param annotations to check that all names are bound...
     }
@@ -116,9 +115,9 @@ class MethodMapper {
     private void mapType(MappingManager manager, Class<?> fullReturnType, Type type) {
 
         if (type instanceof ParameterizedType) {
-            ParameterizedType pt = (ParameterizedType)type;
+            ParameterizedType pt = (ParameterizedType) type;
             Type raw = pt.getRawType();
-            if (raw instanceof Class && Result.class.isAssignableFrom((Class)raw)) {
+            if (raw instanceof Class && Result.class.isAssignableFrom((Class) raw)) {
                 type = pt.getActualTypeArguments()[0];
             } else {
                 mapOne = true;
@@ -131,7 +130,7 @@ class MethodMapper {
             throw new RuntimeException(String.format("Cannot map return of method %s to unsupported type %s", method, type));
 
         try {
-            this.returnMapper = (Mapper<?>)manager.mapper((Class<?>)type);
+            this.returnMapper = (Mapper<?>) manager.mapper((Class<?>) type);
         } catch (Exception e) {
             throw new RuntimeException("Cannot map return to class " + fullReturnType, e);
         }
@@ -162,8 +161,8 @@ class MethodMapper {
                 return future;
 
             return mapOne
-                 ? Futures.transform(future, returnMapper.mapOneFunctionWithoutAliases)
-                 : Futures.transform(future, returnMapper.mapAllFunctionWithoutAliases);
+                    ? Futures.transform(future, returnMapper.mapOneFunctionWithoutAliases)
+                    : Futures.transform(future, returnMapper.mapAllFunctionWithoutAliases);
         } else {
             ResultSet rs = session.execute(bs);
             if (returnMapper == null)
@@ -185,13 +184,13 @@ class MethodMapper {
         public ParamMapper(String paramName, int paramIdx, TypeToken<?> paramType, Class<? extends TypeCodec<?>> codecClass) {
             this.paramName = paramName;
             this.paramIdx = paramIdx;
-            this.paramType = (TypeToken<Object>)paramType;
+            this.paramType = (TypeToken<Object>) paramType;
             try {
-                this.codec = (codecClass == null) ? null : (TypeCodec<Object>)codecClass.newInstance();
+                this.codec = (codecClass == null) ? null : (TypeCodec<Object>) codecClass.newInstance();
             } catch (Exception e) {
                 throw new IllegalArgumentException(String.format(
-                    "Cannot create instance of codec %s for parameter %s",
-                    codecClass, (paramName == null) ? paramIdx : paramName
+                        "Cannot create instance of codec %s for parameter %s",
+                        codecClass, (paramName == null) ? paramIdx : paramName
                 ), e);
             }
         }

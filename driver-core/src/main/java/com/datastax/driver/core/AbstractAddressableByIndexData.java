@@ -15,18 +15,14 @@
  */
 package com.datastax.driver.core;
 
+import com.google.common.base.Objects;
+import com.google.common.reflect.TypeToken;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
-
-import com.google.common.base.Objects;
-import com.google.common.reflect.TypeToken;
-
-import static com.datastax.driver.core.TypeTokens.listOf;
-import static com.datastax.driver.core.TypeTokens.mapOf;
-import static com.datastax.driver.core.TypeTokens.setOf;
 
 abstract class AbstractAddressableByIndexData<T extends SettableByIndexData<T>> extends AbstractGettableByIndexData implements SettableByIndexData<T> {
 
@@ -40,7 +36,7 @@ abstract class AbstractAddressableByIndexData<T extends SettableByIndexData<T>> 
     @SuppressWarnings("unchecked")
     protected T setValue(int i, ByteBuffer value) {
         values[i] = value;
-        return (T)this;
+        return (T) this;
     }
 
     protected ByteBuffer getValue(int i) {
@@ -50,8 +46,8 @@ abstract class AbstractAddressableByIndexData<T extends SettableByIndexData<T>> 
     public T setBool(int i, boolean v) {
         TypeCodec<Boolean> codec = codecFor(i, Boolean.class);
         ByteBuffer bb;
-        if(codec instanceof TypeCodec.PrimitiveBooleanCodec)
-            bb = ((TypeCodec.PrimitiveBooleanCodec)codec).serializeNoBoxing(v, protocolVersion);
+        if (codec instanceof TypeCodec.PrimitiveBooleanCodec)
+            bb = ((TypeCodec.PrimitiveBooleanCodec) codec).serializeNoBoxing(v, protocolVersion);
         else
             bb = codec.serialize(v, protocolVersion);
         return setValue(i, bb);
@@ -60,8 +56,8 @@ abstract class AbstractAddressableByIndexData<T extends SettableByIndexData<T>> 
     public T setByte(int i, byte v) {
         TypeCodec<Byte> codec = codecFor(i, Byte.class);
         ByteBuffer bb;
-        if(codec instanceof TypeCodec.PrimitiveByteCodec)
-            bb = ((TypeCodec.PrimitiveByteCodec)codec).serializeNoBoxing(v, protocolVersion);
+        if (codec instanceof TypeCodec.PrimitiveByteCodec)
+            bb = ((TypeCodec.PrimitiveByteCodec) codec).serializeNoBoxing(v, protocolVersion);
         else
             bb = codec.serialize(v, protocolVersion);
         return setValue(i, bb);
@@ -70,8 +66,8 @@ abstract class AbstractAddressableByIndexData<T extends SettableByIndexData<T>> 
     public T setShort(int i, short v) {
         TypeCodec<Short> codec = codecFor(i, Short.class);
         ByteBuffer bb;
-        if(codec instanceof TypeCodec.PrimitiveShortCodec)
-            bb = ((TypeCodec.PrimitiveShortCodec)codec).serializeNoBoxing(v, protocolVersion);
+        if (codec instanceof TypeCodec.PrimitiveShortCodec)
+            bb = ((TypeCodec.PrimitiveShortCodec) codec).serializeNoBoxing(v, protocolVersion);
         else
             bb = codec.serialize(v, protocolVersion);
         return setValue(i, bb);
@@ -80,8 +76,8 @@ abstract class AbstractAddressableByIndexData<T extends SettableByIndexData<T>> 
     public T setInt(int i, int v) {
         TypeCodec<Integer> codec = codecFor(i, Integer.class);
         ByteBuffer bb;
-        if(codec instanceof TypeCodec.PrimitiveIntCodec)
-            bb = ((TypeCodec.PrimitiveIntCodec)codec).serializeNoBoxing(v, protocolVersion);
+        if (codec instanceof TypeCodec.PrimitiveIntCodec)
+            bb = ((TypeCodec.PrimitiveIntCodec) codec).serializeNoBoxing(v, protocolVersion);
         else
             bb = codec.serialize(v, protocolVersion);
         return setValue(i, bb);
@@ -90,8 +86,8 @@ abstract class AbstractAddressableByIndexData<T extends SettableByIndexData<T>> 
     public T setLong(int i, long v) {
         TypeCodec<Long> codec = codecFor(i, Long.class);
         ByteBuffer bb;
-        if(codec instanceof TypeCodec.PrimitiveLongCodec)
-            bb = ((TypeCodec.PrimitiveLongCodec)codec).serializeNoBoxing(v, protocolVersion);
+        if (codec instanceof TypeCodec.PrimitiveLongCodec)
+            bb = ((TypeCodec.PrimitiveLongCodec) codec).serializeNoBoxing(v, protocolVersion);
         else
             bb = codec.serialize(v, protocolVersion);
         return setValue(i, bb);
@@ -108,8 +104,8 @@ abstract class AbstractAddressableByIndexData<T extends SettableByIndexData<T>> 
     public T setTime(int i, long v) {
         TypeCodec<Long> codec = codecFor(i, Long.class);
         ByteBuffer bb;
-        if(codec instanceof TypeCodec.PrimitiveLongCodec)
-            bb = ((TypeCodec.PrimitiveLongCodec)codec).serializeNoBoxing(v, protocolVersion);
+        if (codec instanceof TypeCodec.PrimitiveLongCodec)
+            bb = ((TypeCodec.PrimitiveLongCodec) codec).serializeNoBoxing(v, protocolVersion);
         else
             bb = codec.serialize(v, protocolVersion);
         return setValue(i, bb);
@@ -118,8 +114,8 @@ abstract class AbstractAddressableByIndexData<T extends SettableByIndexData<T>> 
     public T setFloat(int i, float v) {
         TypeCodec<Float> codec = codecFor(i, Float.class);
         ByteBuffer bb;
-        if(codec instanceof TypeCodec.PrimitiveFloatCodec)
-            bb = ((TypeCodec.PrimitiveFloatCodec)codec).serializeNoBoxing(v, protocolVersion);
+        if (codec instanceof TypeCodec.PrimitiveFloatCodec)
+            bb = ((TypeCodec.PrimitiveFloatCodec) codec).serializeNoBoxing(v, protocolVersion);
         else
             bb = codec.serialize(v, protocolVersion);
         return setValue(i, bb);
@@ -128,8 +124,8 @@ abstract class AbstractAddressableByIndexData<T extends SettableByIndexData<T>> 
     public T setDouble(int i, double v) {
         TypeCodec<Double> codec = codecFor(i, Double.class);
         ByteBuffer bb;
-        if(codec instanceof TypeCodec.PrimitiveDoubleCodec)
-            bb = ((TypeCodec.PrimitiveDoubleCodec)codec).serializeNoBoxing(v, protocolVersion);
+        if (codec instanceof TypeCodec.PrimitiveDoubleCodec)
+            bb = ((TypeCodec.PrimitiveDoubleCodec) codec).serializeNoBoxing(v, protocolVersion);
         else
             bb = codec.serialize(v, protocolVersion);
         return setValue(i, bb);
@@ -241,11 +237,11 @@ abstract class AbstractAddressableByIndexData<T extends SettableByIndexData<T>> 
         if (!(o instanceof AbstractAddressableByIndexData))
             return false;
 
-        AbstractAddressableByIndexData<?> that = (AbstractAddressableByIndexData<?>)o;
+        AbstractAddressableByIndexData<?> that = (AbstractAddressableByIndexData<?>) o;
         if (values.length != that.values.length)
             return false;
 
-        if(this.protocolVersion != that.protocolVersion)
+        if (this.protocolVersion != that.protocolVersion)
             return false;
 
         // Deserializing each value is slightly inefficient, but comparing

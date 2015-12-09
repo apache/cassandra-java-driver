@@ -15,19 +15,16 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.exceptions.DriverInternalError;
+import com.datastax.driver.core.exceptions.UnresolvedUserTypeException;
+import com.google.common.collect.ImmutableMap;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import com.google.common.collect.ImmutableMap;
-
-import com.datastax.driver.core.exceptions.DriverInternalError;
-import com.datastax.driver.core.exceptions.UnresolvedUserTypeException;
-
 import static com.datastax.driver.core.DataType.*;
-import static com.datastax.driver.core.ParseUtils.isBlank;
-import static com.datastax.driver.core.ParseUtils.isIdentifierChar;
-import static com.datastax.driver.core.ParseUtils.skipSpaces;
+import static com.datastax.driver.core.ParseUtils.*;
 
 /*
  * Parse data types from schema tables, for Cassandra 3.0 and above.
@@ -40,46 +37,46 @@ import static com.datastax.driver.core.ParseUtils.skipSpaces;
 class DataTypeCqlNameParser {
 
     private static final String FROZEN = "frozen";
-    private static final String LIST   = "list";
-    private static final String SET    = "set";
-    private static final String MAP    = "map";
-    private static final String TUPLE  = "tuple";
-    private static final String EMPTY  = "empty";
+    private static final String LIST = "list";
+    private static final String SET = "set";
+    private static final String MAP = "map";
+    private static final String TUPLE = "tuple";
+    private static final String EMPTY = "empty";
 
     private static final ImmutableMap<String, DataType> NATIVE_TYPES_MAP =
-        new ImmutableMap.Builder<String, DataType>()
-            .put("ascii",     ascii())
-            .put("bigint",    bigint())
-            .put("blob",      blob())
-            .put("boolean",   cboolean())
-            .put("counter",   counter())
-            .put("decimal",   decimal())
-            .put("double",    cdouble())
-            .put("float",     cfloat())
-            .put("inet",      inet())
-            .put("int",       cint())
-            .put("text",      text())
-            .put("varchar",   varchar())
-            .put("timestamp", timestamp())
-            .put("date",      date())
-            .put("time",      time())
-            .put("uuid",      uuid())
-            .put("varint",    varint())
-            .put("timeuuid",  timeuuid())
-            .put("tinyint",   tinyint())
-            .put("smallint",  smallint())
-            .build();
+            new ImmutableMap.Builder<String, DataType>()
+                    .put("ascii", ascii())
+                    .put("bigint", bigint())
+                    .put("blob", blob())
+                    .put("boolean", cboolean())
+                    .put("counter", counter())
+                    .put("decimal", decimal())
+                    .put("double", cdouble())
+                    .put("float", cfloat())
+                    .put("inet", inet())
+                    .put("int", cint())
+                    .put("text", text())
+                    .put("varchar", varchar())
+                    .put("timestamp", timestamp())
+                    .put("date", date())
+                    .put("time", time())
+                    .put("uuid", uuid())
+                    .put("varint", varint())
+                    .put("timeuuid", timeuuid())
+                    .put("tinyint", tinyint())
+                    .put("smallint", smallint())
+                    .build();
 
     /**
      * @param currentUserTypes if this method gets called as part of a refresh that spans multiple user types, this contains the ones
      *                         that have already been refreshed. If the type we are parsing references a user type, we want to pick its
      *                         definition from this map in priority.
-     * @param oldUserTypes this contains all the keyspace's user types as they were before the refresh started. If we can't find a
-     *                     definition in {@code currentUserTypes}, we'll check this map as a fallback.
+     * @param oldUserTypes     this contains all the keyspace's user types as they were before the refresh started. If we can't find a
+     *                         definition in {@code currentUserTypes}, we'll check this map as a fallback.
      */
     static DataType parse(String toParse, Cluster cluster, String currentKeyspaceName, Map<String, UserType> currentUserTypes, Map<String, UserType> oldUserTypes, boolean frozen, boolean shallowUserTypes) {
 
-        if(toParse.startsWith("'"))
+        if (toParse.startsWith("'"))
             return custom(toParse.substring(1, toParse.length() - 1));
 
         Parser parser = new Parser(toParse, 0);
@@ -132,7 +129,7 @@ class DataTypeCqlNameParser {
 
         // return a custom type for the special empty type
         // so that it gets detected later on, see TableMetadata
-        if(type.equalsIgnoreCase(EMPTY))
+        if (type.equalsIgnoreCase(EMPTY))
             return custom(type);
 
         // We need to remove escaped double quotes within the type name as it is stored unescaped.
@@ -204,16 +201,16 @@ class DataTypeCqlNameParser {
         private String readNextIdentifier() {
             int startIdx = idx;
             // if first character is a quote, this is a quoted identifier.
-            if(str.charAt(startIdx) == '"') {
+            if (str.charAt(startIdx) == '"') {
                 ++idx;
                 // read until closing quote.
-                while(!isEOS()) {
+                while (!isEOS()) {
                     boolean atQuote = str.charAt(idx) == '"';
                     ++idx;
                     if (atQuote) {
                         // if the next character is also a quote, this is an escaped
                         // quote, continue reading, otherwise stop.
-                        if(!isEOS() && str.charAt(idx) == '"')
+                        if (!isEOS() && str.charAt(idx) == '"')
                             ++idx;
                         else
                             break;
@@ -251,7 +248,7 @@ class DataTypeCqlNameParser {
                 // Only parse for '<' and '>' characters if not within a quoted identifier.
                 // Note we don't need to handle escaped quotes ("") in type names here, because they just cause inQuotes to flip
                 // to false and immediately back to true
-                if(!inQuotes) {
+                if (!inQuotes) {
                     if (str.charAt(idx) == '"') {
                         inQuotes = true;
                     } else if (str.charAt(idx) == '<') {
@@ -259,7 +256,7 @@ class DataTypeCqlNameParser {
                     } else if (str.charAt(idx) == '>') {
                         open--;
                     }
-                } else if(str.charAt(idx) == '"') {
+                } else if (str.charAt(idx) == '"') {
                     inQuotes = false;
                 }
             }
@@ -292,7 +289,7 @@ class DataTypeCqlNameParser {
 
         @Override
         public String toString() {
-            return str.substring(0, idx) + "[" + (idx == str.length() ? "" : str.charAt(idx)) + "]" + str.substring(idx+1);
+            return str.substring(0, idx) + "[" + (idx == str.length() ? "" : str.charAt(idx)) + "]" + str.substring(idx + 1);
         }
     }
 }

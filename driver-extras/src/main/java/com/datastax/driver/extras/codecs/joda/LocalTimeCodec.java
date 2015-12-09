@@ -15,27 +15,25 @@
  */
 package com.datastax.driver.extras.codecs.joda;
 
-import java.nio.ByteBuffer;
-
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static java.util.concurrent.TimeUnit.NANOSECONDS;
-
-import org.joda.time.LocalTime;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
-
 import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.ParseUtils;
 import com.datastax.driver.core.ProtocolVersion;
 import com.datastax.driver.core.TypeCodec;
 import com.datastax.driver.core.exceptions.InvalidTypeException;
+import org.joda.time.LocalTime;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
+
+import java.nio.ByteBuffer;
 
 import static com.datastax.driver.core.ParseUtils.quote;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 /**
  * {@link TypeCodec} that maps {@link LocalTime} to CQL {@code time} (long representing nanoseconds since midnight).
- *
- * <p>
+ * <p/>
+ * <p/>
  * IMPORTANT: {@link LocalTime} has millisecond precision; nanoseconds below one millisecond will be lost
  * during deserialization.
  */

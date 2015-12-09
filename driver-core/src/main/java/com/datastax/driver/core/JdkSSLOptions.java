@@ -15,12 +15,12 @@
  */
 package com.datastax.driver.core;
 
-import java.security.NoSuchAlgorithmException;
-
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.ssl.SslHandler;
+
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
+import java.security.NoSuchAlgorithmException;
 
 /**
  * {@link SSLOptions} implementation based on built-in JDK classes.
@@ -42,7 +42,7 @@ public class JdkSSLOptions implements SSLOptions {
     /**
      * Creates a new instance.
      *
-     * @param context the SSL context.
+     * @param context      the SSL context.
      * @param cipherSuites the cipher suites to use.
      */
     protected JdkSSLOptions(SSLContext context, String[] cipherSuites) {
@@ -58,8 +58,8 @@ public class JdkSSLOptions implements SSLOptions {
 
     /**
      * Creates an SSL engine each time a connection is established.
-     *
-     * <p>
+     * <p/>
+     * <p/>
      * You might want to override this if you need to fine-tune the engine's configuration
      * (for example enabling hostname verification).
      *
@@ -91,7 +91,7 @@ public class JdkSSLOptions implements SSLOptions {
 
         /**
          * Set the SSL context to use.
-         * <p>
+         * <p/>
          * If this method isn't called, a context with the default options will be used,
          * and you can use the default
          * <a href="http://docs.oracle.com/javase/6/docs/technotes/guides/security/jsse/JSSERefGuide.html#Customization">JSSE System properties</a>
@@ -108,7 +108,7 @@ public class JdkSSLOptions implements SSLOptions {
 
         /**
          * Set the cipher suites to use.
-         * <p>
+         * <p/>
          * If this method isn't called, the default is to present all the eligible client ciphers to the server.
          *
          * @param cipherSuites the cipher suites to use.

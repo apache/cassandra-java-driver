@@ -15,15 +15,15 @@
  */
 package com.datastax.driver.core;
 
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Describes a CQL function (created with {@code CREATE FUNCTION...}).
@@ -94,15 +94,15 @@ public class FunctionMetadata {
         if (argumentNames.size() != argumentTypes.size()) {
             String fullName = Metadata.fullFunctionName(simpleName, arguments.values());
             logger.error(String.format("Error parsing definition of function %1$s.%2$s: the number of argument names and types don't match."
-                    + "Cluster.getMetadata().getKeyspace(\"%1$s\").getFunction(\"%2$s\") will be missing.",
-                ksm.getName(), fullName));
+                            + "Cluster.getMetadata().getKeyspace(\"%1$s\").getFunction(\"%2$s\") will be missing.",
+                    ksm.getName(), fullName));
             return null;
         }
         String body = row.getString("body");
         boolean calledOnNullInput = row.getBool("called_on_null_input");
         String language = row.getString("language");
         DataType returnType;
-        if(version.getMajor() >= 3.0) {
+        if (version.getMajor() >= 3.0) {
             returnType = DataTypeCqlNameParser.parse(row.getString("return_type"), cluster, ksm.getName(), ksm.userTypes, null, false, false);
         } else {
             returnType = DataTypeClassNameParser.parseOne(row.getString("return_type"), protocolVersion, codecRegistry);
@@ -132,7 +132,7 @@ public class FunctionMetadata {
 
     /**
      * Returns a CQL query representing this function in human readable form.
-     * <p>
+     * <p/>
      * This method is equivalent to {@link #asCQLQuery} but the output is formatted.
      *
      * @return the CQL query representing this function.
@@ -143,7 +143,7 @@ public class FunctionMetadata {
 
     /**
      * Returns a CQL query representing this function.
-     *
+     * <p/>
      * This method returns a single 'CREATE FUNCTION' query corresponding to
      * this function definition.
      *
@@ -163,10 +163,10 @@ public class FunctionMetadata {
         StringBuilder sb = new StringBuilder("CREATE FUNCTION ");
 
         sb
-            .append(Metadata.escapeId(keyspace.getName()))
-            .append('.')
-            .append(Metadata.escapeId(simpleName))
-            .append('(');
+                .append(Metadata.escapeId(keyspace.getName()))
+                .append('.')
+                .append(Metadata.escapeId(simpleName))
+                .append('(');
 
         boolean first = true;
         for (Map.Entry<String, DataType> entry : arguments.entrySet()) {
@@ -178,28 +178,28 @@ public class FunctionMetadata {
             String name = entry.getKey();
             DataType type = entry.getValue();
             sb
-                .append(TableMetadata.spaces(4, formatted))
-                .append(Metadata.escapeId(name))
-                .append(' ')
-                .append(type.asFunctionParameterString());
+                    .append(TableMetadata.spaces(4, formatted))
+                    .append(Metadata.escapeId(name))
+                    .append(' ')
+                    .append(type.asFunctionParameterString());
         }
         sb.append(')');
 
         TableMetadata.spaceOrNewLine(sb, formatted)
-            .append(calledOnNullInput ? "CALLED ON NULL INPUT" : "RETURNS NULL ON NULL INPUT");
+                .append(calledOnNullInput ? "CALLED ON NULL INPUT" : "RETURNS NULL ON NULL INPUT");
 
         TableMetadata.spaceOrNewLine(sb, formatted)
-            .append("RETURNS ")
-            .append(returnType);
+                .append("RETURNS ")
+                .append(returnType);
 
         TableMetadata.spaceOrNewLine(sb, formatted)
-            .append("LANGUAGE ")
-            .append(language);
+                .append("LANGUAGE ")
+                .append(language);
 
         TableMetadata.spaceOrNewLine(sb, formatted)
-            .append("AS '")
-            .append(body)
-            .append("';");
+                .append("AS '")
+                .append(body)
+                .append("';");
 
         return sb.toString();
     }
@@ -215,10 +215,10 @@ public class FunctionMetadata {
 
     /**
      * Returns the CQL signature of this function.
-     * <p>
+     * <p/>
      * This is the name of the function, followed by the names of the argument types between parentheses,
      * for example {@code sum(int,int)}.
-     * <p>
+     * <p/>
      * Note that the returned signature is not qualified with the keyspace name.
      *
      * @return the signature of this function.
@@ -226,8 +226,8 @@ public class FunctionMetadata {
     public String getSignature() {
         StringBuilder sb = new StringBuilder();
         sb
-            .append(Metadata.escapeId(simpleName))
-            .append('(');
+                .append(Metadata.escapeId(simpleName))
+                .append('(');
         boolean first = true;
         for (DataType type : arguments.values()) {
             if (first)
@@ -242,13 +242,12 @@ public class FunctionMetadata {
 
     /**
      * Returns the simple name of this function.
-     * <p>
+     * <p/>
      * This is the name of the function, without arguments. Note that functions can be overloaded with
      * different argument lists, therefore the simple name may not be unique. For example,
      * {@code sum(int,int)} and {@code sum(int,int,int)} both have the simple name {@code sum}.
      *
      * @return the simple name of this function.
-     *
      * @see #getSignature()
      */
     public String getSimpleName() {
@@ -275,7 +274,7 @@ public class FunctionMetadata {
 
     /**
      * Indicates whether this function's body gets called on null input.
-     * <p>
+     * <p/>
      * This is {@code true} if the function was created with {@code CALLED ON NULL INPUT},
      * and {@code false} if it was created with {@code RETURNS NULL ON NULL INPUT}.
      *
@@ -309,13 +308,13 @@ public class FunctionMetadata {
             return true;
 
         if (other instanceof FunctionMetadata) {
-            FunctionMetadata that = (FunctionMetadata)other;
+            FunctionMetadata that = (FunctionMetadata) other;
             return this.keyspace.getName().equals(that.keyspace.getName()) &&
-                this.arguments.equals(that.arguments) &&
-                this.body.equals(that.body) &&
-                this.calledOnNullInput == that.calledOnNullInput &&
-                this.language.equals(that.language) &&
-                this.returnType.equals(that.returnType);
+                    this.arguments.equals(that.arguments) &&
+                    this.body.equals(that.body) &&
+                    this.calledOnNullInput == that.calledOnNullInput &&
+                    this.language.equals(that.language) &&
+                    this.returnType.equals(that.returnType);
         }
         return false;
     }
