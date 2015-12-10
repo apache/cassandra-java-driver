@@ -1,5 +1,8 @@
 ## Changelog
 
+### 3.0.0-rc1 (in progress)
+
+
 ### 3.0.0-beta1
 
 - [bug] JAVA-993: Support for "custom" types after CASSANDRA-10365.
