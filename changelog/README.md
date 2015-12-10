@@ -11,6 +11,7 @@
 - [improvement] JAVA-1030: Log token to replica map computation times.
 - [bug] JAVA-1039: Minor bugs in Event Debouncer.
 - [improvement] JAVA-843: Disable frozen checks in mapper.
+- [improvement] JAVA-833: Improve message when a nested type can't be serialized.
 
 Merged from 2.0 branch:
 
