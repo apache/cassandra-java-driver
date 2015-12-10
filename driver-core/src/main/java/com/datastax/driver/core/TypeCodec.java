@@ -1767,7 +1767,7 @@ public abstract class TypeCodec<T> {
 
             int idx = ParseUtils.skipSpaces(value, 0);
             if (value.charAt(idx++) != getOpeningChar())
-                throw new InvalidTypeException(String.format("cannot parse collection value from \"%s\", at character %d expecting '%s' but got '%c'", value, idx, getOpeningChar(), value.charAt(idx)));
+                throw new InvalidTypeException(String.format("Cannot parse collection value from \"%s\", at character %d expecting '%s' but got '%c'", value, idx, getOpeningChar(), value.charAt(idx)));
 
             idx = ParseUtils.skipSpaces(value, idx);
 
