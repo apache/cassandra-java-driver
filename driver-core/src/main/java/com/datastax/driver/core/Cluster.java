@@ -402,9 +402,8 @@ public class Cluster implements Closeable {
     /**
      * The cluster metrics.
      *
-     * @return the cluster metrics, or {@code null} if metrics collection has
-     * been disabled (that is if {@link Configuration#getMetricsOptions}
-     * returns {@code null}).
+     * @return the cluster metrics, or {@code null} if this cluster has not yet been {@link #init() initialized}, or if
+     * metrics collection has been disabled (that is if {@link Configuration#getMetricsOptions} returns {@code null}).
      */
     public Metrics getMetrics() {
         checkNotClosed(manager);
