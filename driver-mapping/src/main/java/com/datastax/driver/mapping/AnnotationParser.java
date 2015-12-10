@@ -16,6 +16,7 @@
 package com.datastax.driver.mapping;
 
 import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.core.Metadata;
 import com.datastax.driver.core.TypeCodec;
 import com.datastax.driver.core.UserType;
 import com.datastax.driver.mapping.MethodMapper.ParamMapper;
@@ -124,7 +125,7 @@ class AnnotationParser {
         UDT udt = AnnotationChecks.getTypeAnnotation(UDT.class, udtClass);
 
         String ksName = udt.caseSensitiveKeyspace() ? udt.keyspace() : udt.keyspace().toLowerCase();
-        String udtName = udt.caseSensitiveType() ? udt.name() : udt.name().toLowerCase();
+        String udtName = udt.caseSensitiveType() ? Metadata.quote(udt.name()) : udt.name().toLowerCase();
 
         if (Strings.isNullOrEmpty(udt.keyspace())) {
             ksName = mappingManager.getSession().getLoggedKeyspace();
