@@ -2062,8 +2062,7 @@ public abstract class TypeCodec<T> {
         protected final UserType definition;
 
         protected AbstractUDTCodec(UserType definition, Class<T> javaClass) {
-            super(definition, javaClass);
-            this.definition = definition;
+            this(definition, TypeToken.of(javaClass));
         }
 
         protected AbstractUDTCodec(UserType definition, TypeToken<T> javaType) {
@@ -2101,16 +2100,20 @@ public abstract class TypeCodec<T> {
             if (bytes == null)
                 return null;
             // empty byte buffers will result in empty values
-            ByteBuffer input = bytes.duplicate();
-            T value = newInstance();
-            for (UserType.Field field : definition) {
-                if (!input.hasRemaining())
-                    break;
-                int n = input.getInt();
-                ByteBuffer element = n < 0 ? null : CodecUtils.readBytes(input, n);
-                value = deserializeAndSetField(element, value, Metadata.escapeId(field.getName()), protocolVersion);
+            try {
+                ByteBuffer input = bytes.duplicate();
+                T value = newInstance();
+                for (UserType.Field field : definition) {
+                    if (!input.hasRemaining())
+                        break;
+                    int n = input.getInt();
+                    ByteBuffer element = n < 0 ? null : CodecUtils.readBytes(input, n);
+                    value = deserializeAndSetField(element, value, Metadata.escapeId(field.getName()), protocolVersion);
+                }
+                return value;
+            } catch (BufferUnderflowException e) {
+                throw new InvalidTypeException("Not enough bytes to deserialize a UDT", e);
             }
-            return value;
         }
 
         @Override
@@ -2307,8 +2310,7 @@ public abstract class TypeCodec<T> {
         protected final TupleType definition;
 
         protected AbstractTupleCodec(TupleType definition, Class<T> javaClass) {
-            super(definition, javaClass);
-            this.definition = definition;
+            this(definition, TypeToken.of(javaClass));
         }
 
         protected AbstractTupleCodec(TupleType definition, TypeToken<T> javaType) {
@@ -2351,15 +2353,19 @@ public abstract class TypeCodec<T> {
             if (bytes == null)
                 return null;
             // empty byte buffers will result in empty values
-            ByteBuffer input = bytes.duplicate();
-            T value = newInstance();
-            int i = 0;
-            while (input.hasRemaining() && i < definition.getComponentTypes().size()) {
-                int n = input.getInt();
-                ByteBuffer element = n < 0 ? null : CodecUtils.readBytes(input, n);
-                value = deserializeAndSetField(element, value, i++, protocolVersion);
+            try {
+                ByteBuffer input = bytes.duplicate();
+                T value = newInstance();
+                int i = 0;
+                while (input.hasRemaining() && i < definition.getComponentTypes().size()) {
+                    int n = input.getInt();
+                    ByteBuffer element = n < 0 ? null : CodecUtils.readBytes(input, n);
+                    value = deserializeAndSetField(element, value, i++, protocolVersion);
+                }
+                return value;
+            } catch (BufferUnderflowException e) {
+                throw new InvalidTypeException("Not enough bytes to deserialize a tuple", e);
             }
-            return value;
         }
 
         @Override
