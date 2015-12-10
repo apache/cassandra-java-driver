@@ -34,6 +34,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
 
 import static com.datastax.driver.core.DataType.Name.*;
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
@@ -404,6 +405,27 @@ public final class CodecRegistry {
     }
 
     /**
+     * Returns a {@link TypeCodec codec} that accepts the given Java type.
+     * <p/>
+     * This method takes an arbitrary {@link TypeToken Java type} and tries to locate a suitable codec for it.
+     * This method returns the first matching codec, regardless of its accepted CQL type.
+     * It should be reserved for situations where the target CQL type is not available or unknown.
+     * This method can be used, for example, to determine the {@link DataType CQL type} corresponding to a
+     * particular {@link TypeToken Java type}, in order to generate a corresponding {@link com.datastax.driver.core.schemabuilder.Create}
+     * statement.
+     * <p/>
+     * Codecs returned by this method are <em>NOT</em> cached (see the {@link CodecRegistry top-level documentation}
+     * of this class for more explanations about caching).
+     *
+     * @param javaType The {@link TypeToken Java type} the codec should accept; must not be {@code null}.
+     * @return A suitable codec.
+     * @throws CodecNotFoundException if a suitable codec cannot be found.
+     */
+    public <T> TypeCodec<T> codecFor(TypeToken<T> javaType) {
+        return findCodec(null, javaType);
+    }
+
+    /**
      * Returns a {@link TypeCodec codec} that accepts the given {@link DataType CQL type}.
      * <p/>
      * This method returns the first matching codec, regardless of its accepted Java type.
@@ -504,13 +526,16 @@ public final class CodecRegistry {
 
     @SuppressWarnings("unchecked")
     private <T> TypeCodec<T> findCodec(DataType cqlType, TypeToken<T> javaType) {
-        checkNotNull(cqlType, "Parameter cqlType cannot be null");
-        logger.trace("Looking for codec [{} <-> {}]", cqlType, javaType == null ? "ANY" : javaType);
+        checkArgument(cqlType != null || javaType != null, "Parameter cqlType and javaType cannot be both null");
+        logger.trace("Looking for codec [{} <-> {}]", cqlType == null? "ANY" : cqlType, javaType == null ? "ANY" : javaType);
         for (TypeCodec<?> codec : codecs) {
-            if (codec.accepts(cqlType) && (javaType == null || codec.accepts(javaType))) {
+            if ((cqlType == null || codec.accepts(cqlType)) && (javaType == null || codec.accepts(javaType))) {
                 logger.trace("Codec found: {}", codec);
                 return (TypeCodec<T>) codec;
             }
+        }
+        if (cqlType == null) {
+            throw notFound(null, javaType);
         }
         return createCodec(cqlType, javaType);
     }
