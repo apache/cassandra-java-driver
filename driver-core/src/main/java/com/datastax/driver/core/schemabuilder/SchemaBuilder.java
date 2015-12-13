@@ -104,6 +104,16 @@ public final class SchemaBuilder {
     }
 
     /**
+     * Start building a new DROP KEYSPACE statement.
+     *
+     * @param keyspaceName the name of the keyspace to be dropped.
+     * @return an in-construction DROP KEYSPACE statement.
+     */
+    public static DropKeyspace dropKeyspace(String keyspaceName) {
+        return new DropKeyspace(keyspaceName);
+    }
+
+    /**
      * Start building a new DROP TABLE statement.
      *
      * @param keyspaceName the name of the keyspace to be used.
