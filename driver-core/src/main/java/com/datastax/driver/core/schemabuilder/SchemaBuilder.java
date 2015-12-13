@@ -63,6 +63,16 @@ public final class SchemaBuilder {
     }
 
     /**
+     * Start building a new ALTER KEYSPACE statement.
+     *
+     * @param keyspaceName the name of the keyspace to be altered.
+     * @return an in-construction ALTER KEYSPACE statement.
+     */
+    public static AlterKeyspace alterKeyspace(String keyspaceName) {
+        return new AlterKeyspace(keyspaceName);
+    }
+
+    /**
      * Start building a new ALTER TABLE statement.
      *
      * @param tableName the name of the table to be altered.
