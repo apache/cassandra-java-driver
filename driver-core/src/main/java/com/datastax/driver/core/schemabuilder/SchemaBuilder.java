@@ -32,6 +32,16 @@ public final class SchemaBuilder {
     }
 
     /**
+     * Start building a new CREATE KEYSPACE statement.
+     *
+     * @param keyspaceName the name of the keyspace to create.
+     * @return an in-construction CREATE KEYSPACE statement.
+     */
+    public static CreateKeyspace createKeyspace(String keyspaceName) {
+        return new CreateKeyspace(keyspaceName);
+    }
+
+    /**
      * Start building a new CREATE TABLE statement.
      *
      * @param tableName the name of the table to create.
