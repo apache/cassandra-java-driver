@@ -76,8 +76,8 @@ public class Assertions extends org.assertj.core.api.Assertions {
         return new IndexMetadataAssert(index);
     }
 
-    public static TypeCodecAssert assertThat(TypeCodec codec) {
-        return new TypeCodecAssert(codec);
+    public static <T> TypeCodecAssert<T> assertThat(TypeCodec<T> codec) {
+        return new TypeCodecAssert<T>(codec);
     }
 
     public static MaterializedViewMetadataAssert assertThat(MaterializedViewMetadata view) {
