@@ -53,21 +53,21 @@ public class GraphTraversalResult {
     /**
      * Get the {@link com.datastax.driver.graph.GraphData} object for the specified key.
      *
-     * @param keyOrIndex Can be either a String or a int/Integer. Must not be null, or an exception will be thrown.
+     * @param key the key corresponding to the desired object in the result.
      * @return A GraphData instance containing the value for the Json entity required.
      */
-    public GraphData get(Object keyOrIndex) {
-        if (keyOrIndex == null) {
-            throw new DriverException("You must provide a valid key or index identifier in a get(Object) call, or use the GraphTraversalResult#get() method if you want to get the root object as a GraphData.");
-        }
-        if (keyOrIndex instanceof String) {
-            return new GraphData(keyOrIndex, this.rootNode.get((String) keyOrIndex), this.objectMapper);
-        }
-        else if (keyOrIndex instanceof Integer) {
-            return new GraphData(keyOrIndex, this.rootNode.get((Integer)keyOrIndex), this.objectMapper);
-        } else {
-            throw new DriverException("You must provide a valid key or index identifier in a get(Object) call.");
-        }
+    public GraphData get(String key){
+        return getRoot().get(key);
+    }
+
+    /**
+     * Get the {@link com.datastax.driver.graph.GraphData} object for the specified key.
+     *
+     * @param index the index corresponding to the desired object in the result if it is an array.
+     * @return A GraphData instance containing the value for the Json entity required.
+     */
+    public GraphData get(int index) {
+        return getRoot().get(index);
     }
 
     /**
@@ -75,7 +75,7 @@ public class GraphTraversalResult {
      *
      * @return A GraphData instance containing the root result.
      */
-    public GraphData get() {
+    public GraphData getRoot() {
         // The key for the first result is 'result', we put it hardcoded because the GraphData needs it to inform user if an Exception.
         return new GraphData("result", this.rootNode, this.objectMapper);
     }

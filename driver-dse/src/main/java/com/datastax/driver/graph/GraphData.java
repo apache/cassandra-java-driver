@@ -49,7 +49,7 @@ public class GraphData {
      * @param keyOrIndex The key to get the value from, if keyOrIndex is a String. The index of the Array, if it is an Integer.
      * @return A new GraphData object containing the encapsulated result.
      */
-    public GraphData get(Object keyOrIndex) {
+    private GraphData get(Object keyOrIndex) {
         if (keyOrIndex == null) {
             throw new DriverException("You must provide a valid key or index identifier in a get() call, 'null' is not valid.");
         }
@@ -60,10 +60,17 @@ public class GraphData {
         if (keyOrIndex instanceof Integer) {
             jsN = this.jsonNode.get((Integer)keyOrIndex);
         } else {
-            assert keyOrIndex instanceof String;
             jsN = this.jsonNode.get((String)keyOrIndex);
         }
         return new GraphData(keyOrIndex, jsN, this.objectMapper);
+    }
+
+    public GraphData get(String key){
+        return get((Object)key);
+    }
+
+    public GraphData get(int index){
+        return get((Object)index);
     }
 
     /**
