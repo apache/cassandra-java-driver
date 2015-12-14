@@ -551,6 +551,22 @@ public abstract class TypeCodec<T> {
     }
 
     /**
+     * Return {@code true} if this codec is capable of serializing
+     * the given {@code javaType}.
+     * <p/>
+     * This implementation simply calls {@link #accepts(TypeToken)}.
+     *
+     * @param javaType The Java type this codec should serialize from and deserialize to; cannot be {@code null}.
+     * @return {@code true} if the codec is capable of serializing
+     * the given {@code javaType}, and {@code false} otherwise.
+     * @throws NullPointerException if {@code javaType} is {@code null}.
+     */
+    public boolean accepts(Class<?> javaType) {
+        checkNotNull(javaType);
+        return accepts(TypeToken.of(javaType));
+    }
+
+    /**
      * Return {@code true} if this codec is capable of deserializing
      * the given {@code cqlType}.
      *
