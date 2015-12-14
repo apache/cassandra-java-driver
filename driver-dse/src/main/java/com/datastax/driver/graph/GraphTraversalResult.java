@@ -51,15 +51,6 @@ public class GraphTraversalResult {
      */
 
     /**
-     * Get the raw JSON string returned by the server.
-     *
-     * @return the raw JSON string received from the server.
-     */
-    public String getResultString() {
-        return this.jsonString;
-    }
-
-    /**
      * Get the {@link com.datastax.driver.graph.GraphData} object for the specified key.
      *
      * @param keyOrIndex Can be either a String or a int/Integer. Must not be null, or an exception will be thrown.
@@ -89,12 +80,14 @@ public class GraphTraversalResult {
         return new GraphData("result", this.rootNode, this.objectMapper);
     }
 
+    /**
+     * Get the raw JSON string returned by the server.
+     *
+     * @return the raw JSON string received from the server.
+     */
     @Override
     public String toString() {
-        if (this.rootNode != null) {
-            return this.rootNode.toString();
-        }
-        return null;
+        return this.jsonString;
     }
 }
 
