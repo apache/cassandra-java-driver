@@ -67,7 +67,7 @@ public class GraphTraversalResult {
      */
     public GraphData get(Object keyOrIndex) {
         if (keyOrIndex == null) {
-            throw new DriverException("You must provide a valid key or index identifier in a get(Object) call, or use the GraphTraversalResult#get() method.");
+            throw new DriverException("You must provide a valid key or index identifier in a get(Object) call, or use the GraphTraversalResult#get() method if you want to get the root object as a GraphData.");
         }
         if (keyOrIndex instanceof String) {
             return new GraphData(keyOrIndex, this.rootNode.get((String) keyOrIndex), this.objectMapper);

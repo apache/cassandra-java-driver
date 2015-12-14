@@ -40,7 +40,7 @@ public class GraphSession {
     // Static keys for the Custom Payload map
     final static String GRAPH_SOURCE_KEY;
     final static String GRAPH_LANGUAGE_KEY;
-    final static String GRAPH_KEYPSACE_KEY;
+    final static String GRAPH_KEYSPACE_KEY;
     final static String GRAPH_REBINDING_KEY;
 
     // Add static DefaultPayload values for Graph
@@ -51,7 +51,7 @@ public class GraphSession {
     static {
         GRAPH_SOURCE_KEY        = "graph-source";
         GRAPH_LANGUAGE_KEY      = "graph-language";
-        GRAPH_KEYPSACE_KEY      = "graph-keyspace";
+        GRAPH_KEYSPACE_KEY      = "graph-keyspace";
         GRAPH_REBINDING_KEY     = "graph-rebinding";
 
 
@@ -206,7 +206,7 @@ public class GraphSession {
      * @return This {@link com.datastax.driver.graph.GraphSession} instance to chain call.
      */
     public GraphSession setDefaultGraphKeyspace(String input) {
-        this.defaultGraphPayload.put(GRAPH_KEYPSACE_KEY, ByteBuffer.wrap(input.getBytes()));
+        this.defaultGraphPayload.put(GRAPH_KEYSPACE_KEY, ByteBuffer.wrap(input.getBytes()));
         return this;
     }
 

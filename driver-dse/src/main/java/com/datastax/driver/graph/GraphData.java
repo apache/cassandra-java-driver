@@ -31,16 +31,12 @@ public class GraphData {
 
     private ObjectMapper objectMapper;
 
+    private Object key;
+
     GraphData(Object key, JsonNode jsonNode, ObjectMapper objectMapper) {
-        if (jsonNode == null) {
-            // Doing this to avoid further NPE.
-            if (key instanceof String)
-                throw new DriverException("The key provided does not exist in the result data : " + key);
-            else
-                throw new DriverException("The array index trying to be accessed does not exist (you may have gone out of array's bound). Index : " + key);
-        }
         this.jsonNode = jsonNode;
         this.objectMapper = objectMapper;
+        this.key = key;
     }
 
     /**
@@ -57,6 +53,9 @@ public class GraphData {
         if (keyOrIndex == null) {
             throw new DriverException("You must provide a valid key or index identifier in a get() call, 'null' is not valid.");
         }
+        if (this.jsonNode == null) {
+            return new GraphData(keyOrIndex, null, this.objectMapper);
+        }
         JsonNode jsN;
         if (keyOrIndex instanceof Integer) {
             jsN = this.jsonNode.get((Integer)keyOrIndex);
@@ -68,11 +67,11 @@ public class GraphData {
     }
 
     /**
-     * Get the raw wrapped JSON object.
+     * Get the raw enclosed JSON object.
      *
-     * @return The wrapped JSON object.
+     * @return The enclosed JSON object.
      */
-    public Object getJsonObject() {
+    public JsonNode getJsonObject() {
         return this.jsonNode;
     }
 
@@ -82,7 +81,9 @@ public class GraphData {
      * @return A String of the encapsulated result.
      */
     public String asString() {
-        return this.jsonNode.asText();
+        if (this.jsonNode != null)
+            return this.jsonNode.asText();
+        return null;
     }
 
     /**
@@ -90,8 +91,10 @@ public class GraphData {
      *
      * @return An integer of the encapsulated result.
      */
-    public int asInt() {
-        return this.jsonNode.asInt();
+    public Integer asInt() {
+        if (this.jsonNode != null)
+            return this.jsonNode.asInt();
+        return null;
     }
 
     /**
@@ -99,8 +102,10 @@ public class GraphData {
      *
      * @return A boolean of the encapsulated result.
      */
-    public boolean asBool() {
-        return this.jsonNode.asBoolean();
+    public Boolean asBool() {
+        if (this.jsonNode != null)
+            return this.jsonNode.asBoolean();
+        return null;
     }
 
     /**
@@ -108,8 +113,10 @@ public class GraphData {
      *
      * @return A long integer of the encapsulated result.
      */
-    public long asLong() {
-        return this.jsonNode.asLong();
+    public Long asLong() {
+        if (this.jsonNode != null)
+            return this.jsonNode.asLong();
+        return null;
     }
 
     /**
@@ -117,8 +124,10 @@ public class GraphData {
      *
      * @return A double of the encapsulated result.
      */
-    public double asDouble() {
-        return this.jsonNode.asDouble();
+    public Double asDouble() {
+        if (this.jsonNode != null)
+            return this.jsonNode.asDouble();
+        return null;
     }
 
     /**
@@ -138,12 +147,10 @@ public class GraphData {
             if (this.jsonNode != null) {
                 return this.objectMapper.readValue(this.jsonNode.toString(), clas);
             }
-            // This should never happen with DefaultVertexDeserializer, because if the deserialisation of a result is not in a Vertex format (GraphJsonDeserializer.checkVertex()), an
-            // exception would have been thrown before anyway. Although it could still happen if people implementing their deserializer does NOT use checkVertex().
             return null;
 
         } catch (IOException e) {
-            throw new DriverException("Could not create a Edge object from the result due to deserialisation exception. If you provided a custom implementation of the Vertex class deserializer, "
+            throw new DriverException("Could not create a Edge object from the result due to a deserialisation exception. If you provided a custom implementation of the Vertex class deserializer, "
                 + "please check the validity of this. Nested parsing exception : " + e);
         }
     }
@@ -174,11 +181,9 @@ public class GraphData {
             if (this.jsonNode != null) {
                 return this.objectMapper.readValue(this.jsonNode.toString(), clas);
             }
-            // This should never happen with DefaultEdgeDeserializer, because if the deserialisation of a result is not in a Edge format (GraphJsonDeserializer.checkEdge()), an
-            // exception would have been thrown before anyway. Although it could still happen if people implementing their deserializer does NOT use checkEdge().
             return null;
         } catch (IOException e) {
-            throw new DriverException("Could not create a Edge object from the result due to deserialisation exception. If you provided a custom implementation of the Edge class deserializer, "
+            throw new DriverException("Could not create a Edge object from the result due to a deserialisation exception. If you provided a custom implementation of the Edge class deserializer, "
                 + "please check the validity of this. Nested parsing exception : " + e);
         }
     }
@@ -194,7 +199,10 @@ public class GraphData {
 
     @Override
     public String toString() {
-        return this.jsonNode.toString();
+
+        return this.jsonNode != null
+            ? this.jsonNode.toString()
+            : null;
     }
 }
 

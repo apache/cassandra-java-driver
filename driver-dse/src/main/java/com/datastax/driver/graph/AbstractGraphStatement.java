@@ -25,9 +25,9 @@ import com.datastax.driver.core.exceptions.InvalidQueryException;
 
 abstract class AbstractGraphStatement<T extends Statement> {
 
-    final Map<String, ByteBuffer> payload;
-    T wrappedStatement;
-    final GraphSession session;
+    protected final Map<String, ByteBuffer> payload;
+    protected T wrappedStatement;
+    protected final GraphSession session;
 
     AbstractGraphStatement(GraphSession session) {
         this.session = session;
@@ -45,7 +45,7 @@ abstract class AbstractGraphStatement<T extends Statement> {
     static boolean checkStatement(AbstractGraphStatement graphStatement) {
         return graphStatement.getGraphOptions().containsKey(GraphSession.GRAPH_SOURCE_KEY)
             && graphStatement.getGraphOptions().containsKey(GraphSession.GRAPH_LANGUAGE_KEY)
-            && graphStatement.getGraphOptions().containsKey(GraphSession.GRAPH_SOURCE_KEY);
+            && graphStatement.getGraphOptions().containsKey(GraphSession.GRAPH_KEYSPACE_KEY);
 
     }
 
