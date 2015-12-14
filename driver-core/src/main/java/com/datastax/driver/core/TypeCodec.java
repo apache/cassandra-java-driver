@@ -17,7 +17,6 @@ package com.datastax.driver.core;
 
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 import com.datastax.driver.core.utils.Bytes;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.reflect.TypeToken;
 
 import java.math.BigDecimal;
@@ -98,17 +97,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * @param <T> The codec's Java type
  */
 public abstract class TypeCodec<T> {
-
-    private static final Map<TypeToken<?>, TypeToken<?>> primitiveToWrapperMap = ImmutableMap.<TypeToken<?>, TypeToken<?>>builder()
-            .put(TypeToken.of(Boolean.TYPE), TypeToken.of(Boolean.class))
-            .put(TypeToken.of(Byte.TYPE), TypeToken.of(Byte.class))
-            .put(TypeToken.of(Character.TYPE), TypeToken.of(Character.class))
-            .put(TypeToken.of(Short.TYPE), TypeToken.of(Short.class))
-            .put(TypeToken.of(Integer.TYPE), TypeToken.of(Integer.class))
-            .put(TypeToken.of(Long.TYPE), TypeToken.of(Long.class))
-            .put(TypeToken.of(Double.TYPE), TypeToken.of(Double.class))
-            .put(TypeToken.of(Float.TYPE), TypeToken.of(Float.class))
-            .build();
 
     /**
      * Return the default codec for the CQL type {@code boolean}.
@@ -531,7 +519,7 @@ public abstract class TypeCodec<T> {
      * The implementation is <em>invariant</em> with respect to the passed
      * argument (through the usage of {@link TypeToken#equals(Object)}
      * and <em>it's strongly recommended not to modify this behavior</em>.
-     * This means that a codec will only ever accept the
+     * This means that a codec will only ever return {@code true} for the
      * <em>exact</em> Java type that it has been created for.
      * <p/>
      * If the argument represents a Java primitive type, its wrapper type
@@ -544,10 +532,7 @@ public abstract class TypeCodec<T> {
      */
     public boolean accepts(TypeToken javaType) {
         checkNotNull(javaType);
-        if (javaType.isPrimitive()) {
-            javaType = primitiveToWrapperMap.get(javaType);
-        }
-        return this.javaType.equals(javaType);
+        return this.javaType.equals(javaType.wrap());
     }
 
     /**

@@ -31,6 +31,7 @@ import java.util.*;
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.DataType.*;
 import static com.datastax.driver.core.ProtocolVersion.V3;
+import static com.datastax.driver.core.TypeTokens.listOf;
 import static com.google.common.collect.Lists.newArrayList;
 import static org.testng.Assert.fail;
 
@@ -252,13 +253,39 @@ public class TypeCodecTest {
                 .cannotFormat(type4UUID);
     }
 
+    /**
+     * Ensures that primitive types are correctly handled and wrapped when necessary.
+     */
+    @Test(groups = "unit")
+    public void should_unwrap_primitive_types() {
+        assertThat(TypeCodec.cboolean())
+                .accepts(Boolean.class)
+                .accepts(Boolean.TYPE)
+                .accepts(true);
+        assertThat(TypeCodec.cint())
+                .accepts(Integer.class)
+                .accepts(Integer.TYPE)
+                .accepts(42);
+        assertThat(TypeCodec.bigint())
+                .accepts(Long.class)
+                .accepts(Long.TYPE)
+                .accepts(42L);
+        assertThat(TypeCodec.cfloat())
+                .accepts(Float.class)
+                .accepts(Float.TYPE)
+                .accepts(42.0F);
+        assertThat(TypeCodec.cdouble())
+                .accepts(Double.class)
+                .accepts(Double.TYPE)
+                .accepts(42.0D);
+    }
 
     private class ListVarcharToListListInteger extends TypeCodec<List<List<Integer>>> {
 
         private final TypeCodec<List<String>> codec = TypeCodec.list(TypeCodec.varchar());
 
         protected ListVarcharToListListInteger() {
-            super(DataType.list(DataType.varchar()), TypeTokens.listOf(TypeTokens.listOf(Integer.class)));
+            super(DataType.list(DataType.varchar()), listOf(listOf(Integer.class)));
         }
 
         @Override
