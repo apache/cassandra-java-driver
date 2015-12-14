@@ -2,6 +2,7 @@
 
 ### 3.0.0-rc1 (in progress)
 
+- [new feature]: JAVA-1015: Support for codec lookups by Java type only in CodecRegistry.
 
 ### 3.0.0-beta1
 
