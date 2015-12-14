@@ -531,7 +531,7 @@ public abstract class TypeCodec<T> {
      * @throws NullPointerException if {@code javaType} is {@code null}.
      */
     public boolean accepts(TypeToken javaType) {
-        checkNotNull(javaType);
+        checkNotNull(javaType, "Parameter javaType cannot be null");
         return this.javaType.equals(javaType.wrap());
     }
 
@@ -547,7 +547,7 @@ public abstract class TypeCodec<T> {
      * @throws NullPointerException if {@code javaType} is {@code null}.
      */
     public boolean accepts(Class<?> javaType) {
-        checkNotNull(javaType);
+        checkNotNull(javaType, "Parameter javaType cannot be null");
         return accepts(TypeToken.of(javaType));
     }
 
@@ -561,7 +561,7 @@ public abstract class TypeCodec<T> {
      * @throws NullPointerException if {@code cqlType} is {@code null}.
      */
     public boolean accepts(DataType cqlType) {
-        checkNotNull(cqlType);
+        checkNotNull(cqlType, "Parameter cqlType cannot be null");
         return this.cqlType.equals(cqlType);
     }
 
@@ -597,7 +597,7 @@ public abstract class TypeCodec<T> {
      * @throws NullPointerException if {@code value} is {@code null}.
      */
     public boolean accepts(Object value) {
-        checkNotNull(value);
+        checkNotNull(value, "Parameter value cannot be null");
         return this.javaType.isAssignableFrom(TypeToken.of(value.getClass()));
     }
 

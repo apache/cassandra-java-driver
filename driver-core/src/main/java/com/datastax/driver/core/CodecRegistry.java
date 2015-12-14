@@ -407,8 +407,14 @@ public final class CodecRegistry {
     /**
      * Returns a {@link TypeCodec codec} that accepts the given {@link DataType CQL type}.
      * <p/>
-     * This method returns the first matching codec, regardless of its accepted Java type.
-     * It should be reserved for situations where the Java type is not available or unknown.
+     * This method returns the first matching codec, regardless of its accepted Java type;
+     * moreover, if one of the driver's built-in codecs matches the given CQL type, 
+     * no user-registered codec would ever be returned for it by this method.
+     * If you want to force the registry to prefer a user-registered codec over
+     * a built-in one for the same CQL type, consider using the non-ambiguous method
+     * {@link #codecFor(DataType, TypeToken)} instead.
+     * <p/>
+     * Usage of this method should be reserved for situations where the Java type is not available or unknown.
      * In the Java driver, this happens mainly when deserializing a value using the
      * {@link GettableByIndexData#getObject(int) getObject} method.
      * <p/>
@@ -427,8 +433,15 @@ public final class CodecRegistry {
     /**
      * Returns a {@link TypeCodec codec} that accepts the given Java class.
      * <p/>
-     * This method returns the first matching codec, regardless of its accepted CQL type.
-     * It should be reserved for situations where the CQL type is not available or unknown.
+     * This method returns the first matching codec, regardless of its accepted CQL type;
+     * moreover, if one of the driver's built-in codecs matches the given Java class, 
+     * no user-registered codec would ever be returned for it by this method.
+     * If you want to force the registry to prefer a user-registered codec over
+     * a built-in one for the same Java class, consider using the non-ambiguous method
+     * {@link #codecFor(DataType, Class)} instead.
+     * <p/>
+     * Usage of this method should be reserved for situations where the CQL type is not available or unknown.
+     * Such situations do not happen inside the Java driver, but could occur in client code.
      * <p/>
      * Codecs returned by this method are cached (see the {@link CodecRegistry top-level documentation}
      * of this class for more explanations about caching).
@@ -444,8 +457,15 @@ public final class CodecRegistry {
     /**
      * Returns a {@link TypeCodec codec} that accepts the given Java type.
      * <p/>
-     * This method returns the first matching codec, regardless of its accepted CQL type.
-     * It should be reserved for situations where the CQL type is not available or unknown.
+     * This method returns the first matching codec, regardless of its accepted CQL type;
+     * moreover, if one of the driver's built-in codecs matches the given Java type, 
+     * no user-registered codec would ever be returned for it by this method.
+     * If you want to force the registry to prefer a user-registered codec over
+     * a built-in one for the same Java type, consider using the non-ambiguous method
+     * {@link #codecFor(DataType, TypeToken)} instead.
+     * <p/>
+     * Usage of this method should be reserved for situations where the CQL type is not available or unknown.
+     * Such situations do not happen inside the Java driver, but could occur in client code.
      * <p/>
      * Codecs returned by this method are cached (see the {@link CodecRegistry top-level documentation}
      * of this class for more explanations about caching).
@@ -462,6 +482,14 @@ public final class CodecRegistry {
     /**
      * Returns a {@link TypeCodec codec} that accepts the given {@link DataType CQL type}
      * and the given Java class.
+     * <p/>
+     * Both parameters cannot be {@code null} at the same time;
+     * if {@code cqlType} is {@code null}, this method picks the first codec
+     * that matches {@code javaType}, regardless of its accepted CQL type
+     * (thus behaving like {@link #codecFor(Class)});
+     * if {@code javaType} is {@code null}, this method picks the first codec
+     * that matches {@code cqlType}, regardless of its accepted Java class
+     * (thus behaving like {@link #codecFor(DataType)}).
      * <p/>
      * This method can only handle raw (non-parameterized) Java types.
      * For parameterized types, use {@link #codecFor(DataType, TypeToken)} instead.
@@ -481,6 +509,14 @@ public final class CodecRegistry {
     /**
      * Returns a {@link TypeCodec codec} that accepts the given {@link DataType CQL type}
      * and the given Java type.
+     * <p/>
+     * Both parameters cannot be {@code null} at the same time;
+     * if {@code cqlType} is {@code null}, this method picks the first codec
+     * that matches {@code javaType}, regardless of its accepted CQL type
+     * (thus behaving like {@link #codecFor(TypeToken)});
+     * if {@code javaType} is {@code null}, this method picks the first codec
+     * that matches {@code cqlType}, regardless of its accepted Java type
+     * (thus behaving like {@link #codecFor(DataType)}).
      * <p/>
      * This method handles parameterized types thanks to Guava's {@link TypeToken} API.
      * <p/>
