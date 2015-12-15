@@ -55,7 +55,7 @@ We've also seized the opportunity to remove code that was deprecated in 2.1.
 
     <p>The driver runtime behavior changes in the following situations:</p>
     * By default, the driver now returns _mutable_, _non thread-safe_ instances for CQL collection types;
-      This affects methods `getList`, `getSet`, `getMap`, `getObject` and `get` for all instances of 
+      This affects methods `getList`, `getSet`, `getMap`, `getObject` and `get` for all instances of
       `GettableByIndexData` and `GettableByNameData` (`Row`, `BoundStatement`, `TupleValue` and `UDTValue`)
     * `RuntimeException`s thrown during serialization or deserialization might not be
       the same ones as before, due to the newly-introduced `CodecNotFoundException`
@@ -203,18 +203,18 @@ We've also seized the opportunity to remove code that was deprecated in 2.1.
 
 21. The mapper annotation `@Enumerated` has been removed, users should now
     use the newly-introduced `driver-extras` module to get automatic
-    enum-to-CQL mappings. Two new codecs provide the same functionality: 
+    enum-to-CQL mappings. Two new codecs provide the same functionality:
     `EnumOrdinalCodec` and `EnumNameCodec`:
-    
-    ```java    
+
+    ```java
     enum Foo {...}
     enum Bar {...}
-    
+
     // register the appropriate codecs
     CodecRegistry.DEFAULT_INSTANCE
         .register(new EnumOrdinalCodec<Foo>(Foo.class))
         .register(new EnumNameCodec<Bar>(Bar.class))
-        
+
     // the following mappings are handled out-of-the-box
     @Table
     public class MyPojo {
@@ -223,22 +223,27 @@ We've also seized the opportunity to remove code that was deprecated in 2.1.
         ...
     }
     ```
-    
+
 22. The interface `IdempotenceAwarePreparedStatement` has been removed
-    and now the `PreparedStatement` interface exposes 2 new methods, 
+    and now the `PreparedStatement` interface exposes 2 new methods,
     `setIdempotent(Boolean)` and `isIdempotent()`.
 
-22. `RetryPolicy` and `ExtendedRetryPolicy` (introduced in 2.1.10)
-    were merged together; as a consequence, `RetryPolicy` now has one 
+23. `RetryPolicy` and `ExtendedRetryPolicy` (introduced in 2.1.10)
+    were merged together; as a consequence, `RetryPolicy` now has one
     more method: `onRequestError`; see
     [JAVA-819](https://datastax-oss.atlassian.net/browse/JAVA-819) for
     more information. Furthermore, `FallthroughRetryPolicy` now returns
     `RetryDecision.rethrow()` when `onRequestError` is called.
-    
+
+24. 'DseAuthProvider' has been deprecated and is now replaced by
+    'DseGSSAPIAuthProvider' for kerberos authentication. 'DsePlainTextAuthProvider'
+    has been introduced to handle plain text authentication with the
+    'DseAuthenticator'.
+
 
 ### 2.1.8
 
-2.1.8 is binary-compatible with 2.1.7 but introduces a small change in the 
+2.1.8 is binary-compatible with 2.1.7 but introduces a small change in the
 driver's behavior:
 
 1. The list of contact points provided at startup is now shuffled before trying
