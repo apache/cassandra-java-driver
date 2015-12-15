@@ -80,7 +80,7 @@ public class Vertex {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("Graph Vertex [");
-        sb.append(String.format("id = %s, label = %s", this.id.toString(), this.label));
+        sb.append(String.format("id = %s, label = %s", this.id, this.label));
         sb.append(", properties = {");
         int i = 0;
         for (Map.Entry<String, GraphData> entry : this.properties.entrySet()) {

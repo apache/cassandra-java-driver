@@ -57,7 +57,7 @@ public class GraphTraversalResult {
      * @return A GraphData instance containing the value for the Json entity required.
      */
     public GraphData get(String key){
-        return getRoot().get(key);
+        return get().get(key);
     }
 
     /**
@@ -67,7 +67,7 @@ public class GraphTraversalResult {
      * @return A GraphData instance containing the value for the Json entity required.
      */
     public GraphData get(int index) {
-        return getRoot().get(index);
+        return get().get(index);
     }
 
     /**
@@ -75,7 +75,7 @@ public class GraphTraversalResult {
      *
      * @return A GraphData instance containing the root result.
      */
-    public GraphData getRoot() {
+    public GraphData get() {
         // The key for the first result is 'result', we put it hardcoded because the GraphData needs it to inform user if an Exception.
         return new GraphData("result", this.rootNode, this.objectMapper);
     }
