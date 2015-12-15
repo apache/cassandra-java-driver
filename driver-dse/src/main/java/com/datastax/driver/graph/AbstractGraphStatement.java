@@ -99,7 +99,7 @@ abstract class AbstractGraphStatement<T extends Statement> {
         if (graphKeyspace == null || graphKeyspace.isEmpty()) {
             throw new InvalidQueryException("You cannot set null value or empty string to the keyspace for the Graph, this field is mandatory.");
         }
-        this.payload.put(GraphSession.GRAPH_LANGUAGE_KEY, ByteBuffer.wrap(graphKeyspace.getBytes()));
+        this.payload.put(GraphSession.GRAPH_KEYSPACE_KEY, ByteBuffer.wrap(graphKeyspace.getBytes()));
         return this;
     }
 
