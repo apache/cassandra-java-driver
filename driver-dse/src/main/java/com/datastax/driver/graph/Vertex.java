@@ -81,7 +81,7 @@ public class Vertex {
         StringBuilder sb = new StringBuilder();
         sb.append("Graph Vertex [");
         sb.append(String.format("id = %s, label = %s", this.id.toString(), this.label));
-        sb.append(", properties = [");
+        sb.append(", properties = {");
         int i = 0;
         for (Map.Entry<String, GraphData> entry : this.properties.entrySet()) {
             if (i > 0)
@@ -89,7 +89,7 @@ public class Vertex {
             sb.append(String.format("%s : %s", entry.getKey(), entry.getValue().toString()));
             i++;
         }
-        sb.append("]");
+        sb.append("}");
         sb.append("]");
         return sb.toString();
     }

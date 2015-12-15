@@ -25,6 +25,7 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.Maps;
 
 import com.datastax.driver.core.exceptions.DriverException;
 
@@ -53,6 +54,9 @@ public abstract class GraphJsonDeserializer<T> extends JsonDeserializer<T>{
     }
 
     protected Map<String, GraphData> transformEdgeProperties(JsonNode jsonProps) {
+        if (jsonProps == null){
+            return Maps.newHashMap();
+        }
         ObjectMapper objectMapper = new ObjectMapper();
         Map<String, GraphData> properties = new HashMap<String, GraphData>();
         Iterator<Map.Entry<String, JsonNode>> jsonPropsIterator = jsonProps.fields();

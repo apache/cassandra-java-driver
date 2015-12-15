@@ -26,13 +26,13 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonDeserialize(using = DefaultEdgeDeserializer.class)
 public class Edge {
-    private int id;
+    private GraphData id;
     private String label;
     private String type;
 
-    private int inV;
+    private GraphData inV;
     private String inVLabel;
-    private int outV;
+    private GraphData outV;
     private String outVLabel;
 
     private Map<String, GraphData> properties;
@@ -41,7 +41,7 @@ public class Edge {
 
     }
 
-    public Edge(int id, String label, String type, Map<String, GraphData> properties, int inV, String inVLabel, int outV, String outVLabel) {
+    public Edge(GraphData id, String label, String type, Map<String, GraphData> properties, GraphData inV, String inVLabel, GraphData outV, String outVLabel) {
         this.id = id;
         this.label = label;
         this.type = type;
@@ -53,11 +53,11 @@ public class Edge {
         this.outVLabel = outVLabel;
     }
 
-    public void setId(int id) {
+    public void setId(GraphData id) {
         this.id = id;
     }
 
-    public Integer getId() {
+    public GraphData getId() {
         return this.id;
     }
 
@@ -85,11 +85,11 @@ public class Edge {
         return this.properties;
     }
 
-    public int getInV() {
+    public GraphData getInV() {
         return inV;
     }
 
-    public void setInV(int inV) {
+    public void setInV(GraphData inV) {
         this.inV = inV;
     }
 
@@ -101,11 +101,11 @@ public class Edge {
         this.inVLabel = inVLabel;
     }
 
-    public int getOutV() {
+    public GraphData getOutV() {
         return outV;
     }
 
-    public void setOutV(int outV) {
+    public void setOutV(GraphData outV) {
         this.outV = outV;
     }
 
@@ -121,8 +121,8 @@ public class Edge {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("Graph Edge [");
-        sb.append(String.format("id = %d, label = %s, inV = %d, inVLabel = %s, outV = %d, outVLabel = %s", this.id, this.label, this.inV, this.inVLabel, this.outV, this.outVLabel));
-        sb.append(", properties = [");
+        sb.append(String.format("id = %s, label = %s, inV = %s, inVLabel = %s, outV = %s, outVLabel = %s", this.id, this.label, this.inV, this.inVLabel, this.outV, this.outVLabel));
+        sb.append(", properties = {");
         int i = 0;
         for (Map.Entry<String, GraphData> entry : this.properties.entrySet()) {
             if (i > 0)
@@ -130,7 +130,7 @@ public class Edge {
             sb.append(String.format("%s : %s", entry.getKey(), entry.getValue().toString()));
             i++;
         }
-        sb.append("]");
+        sb.append("}");
         sb.append("]");
         return sb.toString();
     }
