@@ -61,13 +61,12 @@ public class GraphStatement extends AbstractGraphStatement<SimpleStatement> {
     The format is : {name":"parameterName", "value":parameterValue}
      */
     private void processValues() {
-        JsonNodeFactory factory = new JsonNodeFactory(false);
-        JsonFactory jsonFactory = new JsonFactory();
-        ObjectMapper objectMapper = new ObjectMapper();
         if (this.paramsHash == this.valuesMap.hashCode()) {
             // Avoids regenerating the Json params if the params haven't changed.
             return;
         }
+        JsonNodeFactory factory = new JsonNodeFactory(false);
+        JsonFactory jsonFactory = new JsonFactory();
         this.JsonParams.clear();
         try {
             for (Map.Entry<String, Object> param : this.valuesMap.entrySet()) {
@@ -97,7 +96,7 @@ public class GraphStatement extends AbstractGraphStatement<SimpleStatement> {
                 } else {
                     throw new DriverException("Parameter : " + value + ", is not in a valid format to be sent as Gremlin parameter.");
                 }
-                objectMapper.writeTree(generator, parameter);
+                GraphSession.objectMapper.writeTree(generator, parameter);
                 this.JsonParams.add(stringWriter.toString());
             }
             this.paramsHash = this.valuesMap.hashCode();

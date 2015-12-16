@@ -33,11 +33,9 @@ import com.datastax.driver.core.Row;
  */
 public class GraphResultSet implements Iterable<GraphTraversalResult> {
     private final ResultSet rs;
-    private final ObjectMapper objectMapper;
 
     GraphResultSet(ResultSet rs) {
         this.rs = rs;
-        this.objectMapper = new ObjectMapper();
     }
 
     /**
@@ -60,7 +58,7 @@ public class GraphResultSet implements Iterable<GraphTraversalResult> {
      * exhausted.
      */
     public GraphTraversalResult one() {
-        return GraphTraversalResult.fromRow(rs.one(), this.objectMapper);
+        return GraphTraversalResult.fromRow(rs.one());
     }
 
     /**
@@ -80,7 +78,7 @@ public class GraphResultSet implements Iterable<GraphTraversalResult> {
         return Lists.transform(rs.all(), new Function<Row, GraphTraversalResult>() {
             @Override
             public GraphTraversalResult apply(Row input) {
-                return GraphTraversalResult.fromRow(input, objectMapper);
+                return GraphTraversalResult.fromRow(input);
             }
         });
     }

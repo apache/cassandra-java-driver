@@ -27,23 +27,21 @@ public class GraphTraversalResult {
     private final String jsonString;
 
     private JsonNode rootNode;
-    private ObjectMapper objectMapper;
 
     private Row row;
 
-    GraphTraversalResult(Row row, ObjectMapper objectMapper) {
+    GraphTraversalResult(Row row) {
         this.jsonString = row.getString("gremlin");
         this.row = row;
-        this.objectMapper = objectMapper;
         try {
-            this.rootNode = this.objectMapper.readTree(this.jsonString).get("result");
+            this.rootNode = GraphSession.objectMapper.readTree(this.jsonString).get("result");
         } catch (IOException e) {
             throw new DriverException("Could not parse the result returned by the Graph server as a JSON string : " + this.jsonString);
         }
     }
 
-    static GraphTraversalResult fromRow(Row row, ObjectMapper objectMapper) {
-        return row == null ? null : new GraphTraversalResult(row, objectMapper);
+    static GraphTraversalResult fromRow(Row row) {
+        return row == null ? null : new GraphTraversalResult(row);
     }
 
     /**
@@ -77,7 +75,7 @@ public class GraphTraversalResult {
      */
     public GraphData get() {
         // The key for the first result is 'result', we put it hardcoded because the GraphData needs it to inform user if an Exception.
-        return new GraphData("result", this.rootNode, this.objectMapper);
+        return new GraphData("result", this.rootNode);
     }
 
     /**

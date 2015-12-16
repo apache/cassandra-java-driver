@@ -29,13 +29,10 @@ public class GraphData {
 
     private JsonNode jsonNode;
 
-    private ObjectMapper objectMapper;
-
     private Object key;
 
-    GraphData(Object key, JsonNode jsonNode, ObjectMapper objectMapper) {
+    GraphData(Object key, JsonNode jsonNode) {
         this.jsonNode = jsonNode;
-        this.objectMapper = objectMapper;
         this.key = key;
     }
 
@@ -54,7 +51,7 @@ public class GraphData {
             throw new DriverException("You must provide a valid key or index identifier in a get() call, 'null' is not valid.");
         }
         if (this.jsonNode == null) {
-            return new GraphData(keyOrIndex, null, this.objectMapper);
+            return new GraphData(keyOrIndex, null);
         }
         JsonNode jsN;
         if (keyOrIndex instanceof Integer) {
@@ -62,7 +59,7 @@ public class GraphData {
         } else {
             jsN = this.jsonNode.get((String)keyOrIndex);
         }
-        return new GraphData(keyOrIndex, jsN, this.objectMapper);
+        return new GraphData(keyOrIndex, jsN);
     }
 
     public GraphData get(String key){
@@ -152,7 +149,7 @@ public class GraphData {
     public <T extends Vertex> T asVertex(Class<T> clas) {
         try {
             if (this.jsonNode != null) {
-                return this.objectMapper.readValue(this.jsonNode.toString(), clas);
+                return GraphSession.objectMapper.readValue(this.jsonNode.toString(), clas);
             }
             return null;
 
@@ -186,7 +183,7 @@ public class GraphData {
     public <T extends Edge> T asEdge(Class<T> clas) {
         try {
             if (this.jsonNode != null) {
-                return this.objectMapper.readValue(this.jsonNode.toString(), clas);
+                return GraphSession.objectMapper.readValue(this.jsonNode.toString(), clas);
             }
             return null;
         } catch (IOException e) {

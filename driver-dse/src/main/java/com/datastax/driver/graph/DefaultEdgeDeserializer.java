@@ -20,7 +20,6 @@ import java.io.IOException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * A default deserializer for graph results, creating Edge instances.
@@ -30,14 +29,13 @@ public class DefaultEdgeDeserializer extends GraphJsonDeserializer<Edge> {
     public Edge deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException {
         JsonNode jsonNode = jsonParser.getCodec().readTree(jsonParser);
         checkEdge(jsonNode);
-        ObjectMapper objectMapper = new ObjectMapper();
-        return new Edge(new GraphData("id", jsonNode.get("id"), objectMapper),
+        return new Edge(new GraphData("id", jsonNode.get("id")),
             jsonNode.get("label").asText(),
             jsonNode.get("type").asText(),
             transformEdgeProperties(jsonNode.get("properties")),
-            new GraphData("inV", jsonNode.get("inV"), objectMapper),
+            new GraphData("inV", jsonNode.get("inV")),
             jsonNode.get("inVLabel").asText(),
-            new GraphData("outV", jsonNode.get("inV"), objectMapper),
+            new GraphData("outV", jsonNode.get("inV")),
             jsonNode.get("outVLabel").asText());
     }
 }

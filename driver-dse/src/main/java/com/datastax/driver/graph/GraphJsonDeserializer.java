@@ -42,13 +42,13 @@ public abstract class GraphJsonDeserializer<T> extends JsonDeserializer<T>{
 
     // The properties map is stored in a specific (weird) structure (Map<String, Array[Map<String, Object>]>)
     // This creates a map of the property's name as key and property's value as value as a Map<String, GraphData>.
-    protected Map<String, GraphData> transformVertexProperties(JsonNode jsonProps, ObjectMapper objectMapper) {
+    protected Map<String, GraphData> transformVertexProperties(JsonNode jsonProps) {
 //        ObjectMapper objectMapper = new ObjectMapper();
         Map<String, GraphData> properties = new HashMap<String, GraphData>();
         Iterator<Map.Entry<String, JsonNode>> jsonPropsIterator = jsonProps.fields();
         while (jsonPropsIterator.hasNext()) {
             Map.Entry<String, JsonNode> prop = jsonPropsIterator.next();
-            properties.put(prop.getKey(), new GraphData(prop.getKey(), prop.getValue().findValue("value"), objectMapper));
+            properties.put(prop.getKey(), new GraphData(prop.getKey(), prop.getValue().findValue("value")));
         }
         return properties;
     }
@@ -57,12 +57,11 @@ public abstract class GraphJsonDeserializer<T> extends JsonDeserializer<T>{
         if (jsonProps == null){
             return Maps.newHashMap();
         }
-        ObjectMapper objectMapper = new ObjectMapper();
         Map<String, GraphData> properties = new HashMap<String, GraphData>();
         Iterator<Map.Entry<String, JsonNode>> jsonPropsIterator = jsonProps.fields();
         while (jsonPropsIterator.hasNext()) {
             Map.Entry<String, JsonNode> prop = jsonPropsIterator.next();
-            properties.put(prop.getKey(), new GraphData(prop.getKey(), prop.getValue(), objectMapper));
+            properties.put(prop.getKey(), new GraphData(prop.getKey(), prop.getValue()));
         }
         return properties;
     }

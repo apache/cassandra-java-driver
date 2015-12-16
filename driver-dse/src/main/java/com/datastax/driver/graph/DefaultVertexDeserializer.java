@@ -30,10 +30,9 @@ public class DefaultVertexDeserializer extends GraphJsonDeserializer<Vertex> {
     public Vertex deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException{
         JsonNode jsonNode = jsonParser.getCodec().readTree(jsonParser);
         checkVertex(jsonNode);
-        ObjectMapper objectMapper = new ObjectMapper();
-        return new Vertex(new GraphData("id", jsonNode.get("id"), objectMapper),
+        return new Vertex(new GraphData("id", jsonNode.get("id")),
             jsonNode.get("label").asText(),
             jsonNode.get("type").asText(),
-            transformVertexProperties(jsonNode.get("properties"), objectMapper));
+            transformVertexProperties(jsonNode.get("properties")));
     }
 }

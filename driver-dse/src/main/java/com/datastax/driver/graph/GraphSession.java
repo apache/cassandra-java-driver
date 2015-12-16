@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 
 import com.datastax.driver.core.Session;
@@ -65,6 +66,8 @@ public class GraphSession {
             GRAPH_SOURCE_KEY, ByteBuffer.wrap(DEFAULT_GRAPH_SOURCE.getBytes())
         );
     }
+
+    final static ObjectMapper objectMapper = new ObjectMapper();
 
     /**
      * API

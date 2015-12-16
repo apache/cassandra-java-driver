@@ -56,11 +56,10 @@ public class BoundGraphStatement extends AbstractGraphStatement<BoundStatement> 
     // Bind variables in the PreparedStatement
     @Override
     BoundStatement configureAndGetWrappedStatement() {
-        JsonNodeFactory factory = new JsonNodeFactory(false);
         JsonFactory jsonFactory = new JsonFactory();
-        ObjectMapper objectMapper = new ObjectMapper();
+        JsonNodeFactory factory = new JsonNodeFactory(false);
+        int paramNumber = 0;
         try {
-            int paramNumber = 0;
             for (Map.Entry<String, Object> param : this.valuesMap.entrySet()) {
                 StringWriter stringWriter = new StringWriter();
                 JsonGenerator generator = jsonFactory.createGenerator(stringWriter);
@@ -88,7 +87,7 @@ public class BoundGraphStatement extends AbstractGraphStatement<BoundStatement> 
                 } else {
                     throw new DriverException("Parameter : " + value + ", is not in a valid format to be sent as Gremlin parameter.");
                 }
-                objectMapper.writeTree(generator, parameter);
+                GraphSession.objectMapper.writeTree(generator, parameter);
                 this.wrappedStatement.setString(paramNumber++, stringWriter.toString());
             }
         } catch (IOException e) {
