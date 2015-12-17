@@ -354,40 +354,6 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     }
 
     /**
-     * Set the {@code i}th value to the provided date.
-     *
-     * @param i the index of the variable to set.
-     * @param v the value to set.
-     * @return this BoundStatement.
-     * @throws IndexOutOfBoundsException if {@code i < 0 || i >= this.preparedStatement().variables().size()}.
-     * @throws InvalidTypeException      if column {@code i} is not of type TIMESTAMP.
-     * @deprecated deprecated in favor of {@link #setTimestamp(int, Date)}
-     */
-    @Deprecated
-    public BoundStatement setDate(int i, Date v) {
-        return wrapper.setTimestamp(i, v);
-    }
-
-    /**
-     * Sets the value for (all occurrences of) variable {@code name} to the
-     * provided date.
-     *
-     * @param name the name of the variable to set; if multiple variables
-     *             {@code name} are prepared, all of them are set.
-     * @param v    the value to set.
-     * @return this BoundStatement.
-     * @throws IllegalArgumentException if {@code name} is not a prepared
-     *                                  variable, that is, if {@code !this.preparedStatement().variables().names().contains(name)}.
-     * @throws InvalidTypeException     if (any occurrence of) {@code name} is
-     *                                  not of type TIMESTAMP.
-     * @deprecated deprecated in favor of {@link #setTimestamp(String, Date)}
-     */
-    @Deprecated
-    public BoundStatement setDate(String name, Date v) {
-        return wrapper.setTimestamp(name, v);
-    }
-
-    /**
      * {@inheritDoc}
      */
     @Override
