@@ -60,10 +60,28 @@ public class GraphData {
         return new GraphData(keyOrIndex, jsN);
     }
 
+    /**
+     * Get the enclosed property for the specified key. This works for any nested component inside a JSON element.
+     *
+     * @param key the key to seek.
+     * @return a {@link GraphData} object which contains the value for the specified key. This value can be any other kind of
+     * result and will be convertible with the asXXX() methods. Be aware that calling this method will always return
+     * a {@link GraphData} object, even if the key specified is incorrect, if it is the case, any asXXX() method will return
+     * null.
+     */
     public GraphData get(String key) {
         return get((Object) key);
     }
 
+    /**
+     * Get the enclosed property at the specified index if the current component is an array.
+     *
+     * @param index the index to seek.
+     * @return a {@link GraphData} object which contains the value for the specified index. This value can be any other kind of
+     * result and will be convertible with the asXXX() methods. Be aware that calling this method will always return
+     * a {@link GraphData} object, even if the index specified is incorrect, if it is the case, any asXXX() method will return
+     * null.
+     */
     public GraphData get(int index) {
         return get((Object) index);
     }
@@ -201,7 +219,6 @@ public class GraphData {
 
     @Override
     public String toString() {
-
         return this.jsonNode != null
                 ? this.jsonNode.toString()
                 : null;

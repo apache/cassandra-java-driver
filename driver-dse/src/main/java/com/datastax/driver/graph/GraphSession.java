@@ -19,7 +19,6 @@ import com.datastax.driver.core.Session;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 
-import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -34,36 +33,24 @@ import java.util.concurrent.ConcurrentMap;
  */
 public class GraphSession {
     private final Session session;
-    private final ConcurrentMap<String, ByteBuffer> defaultGraphPayload;
+    private final ConcurrentMap<String, String> defaultGraphPayload;
 
     // Static keys for the Custom Payload map
-    final static String GRAPH_SOURCE_KEY;
-    final static String GRAPH_LANGUAGE_KEY;
-    final static String GRAPH_KEYSPACE_KEY;
-    final static String GRAPH_REBINDING_KEY;
+    final static String GRAPH_SOURCE_KEY = "graph-source";
+    final static String GRAPH_LANGUAGE_KEY = "graph-language";
+    final static String GRAPH_KEYSPACE_KEY = "graph-keyspace";
+    final static String GRAPH_REBINDING_KEY = "graph-rebinding";
 
     // Add static DefaultPayload values for Graph
-    final static String DEFAULT_GRAPH_LANGUAGE;
-    final static String DEFAULT_GRAPH_SOURCE;
-    final static Map<String, ByteBuffer> DEFAULT_GRAPH_PAYLOAD;
+    final static String DEFAULT_GRAPH_LANGUAGE = "gremlin-groovy";
+    final static String DEFAULT_GRAPH_SOURCE = "default";
+    final static Map<String, String> DEFAULT_GRAPH_PAYLOAD = ImmutableMap.of(
+            // For the first versions of the driver Gremlin-Groovy is the default language
+            GRAPH_LANGUAGE_KEY, DEFAULT_GRAPH_LANGUAGE,
 
-    static {
-        GRAPH_SOURCE_KEY = "graph-source";
-        GRAPH_LANGUAGE_KEY = "graph-language";
-        GRAPH_KEYSPACE_KEY = "graph-keyspace";
-        GRAPH_REBINDING_KEY = "graph-rebinding";
-
-
-        DEFAULT_GRAPH_LANGUAGE = "gremlin-groovy";
-        DEFAULT_GRAPH_SOURCE = "default";
-        DEFAULT_GRAPH_PAYLOAD = ImmutableMap.of(
-                // For the first versions of the driver Gremlin-Groovy is the default language
-                GRAPH_LANGUAGE_KEY, ByteBuffer.wrap(DEFAULT_GRAPH_LANGUAGE.getBytes()),
-
-                //If not present, the default source configured for the Keyspace
-                GRAPH_SOURCE_KEY, ByteBuffer.wrap(DEFAULT_GRAPH_SOURCE.getBytes())
-        );
-    }
+            //If not present, the default source configured for the Keyspace
+            GRAPH_SOURCE_KEY, DEFAULT_GRAPH_SOURCE
+    );
 
     final static ObjectMapper objectMapper = new ObjectMapper();
 
@@ -79,7 +66,7 @@ public class GraphSession {
      */
     public GraphSession(Session session) {
         this.session = session;
-        this.defaultGraphPayload = new ConcurrentHashMap<String, ByteBuffer>(DEFAULT_GRAPH_PAYLOAD);
+        this.defaultGraphPayload = new ConcurrentHashMap<String, String>(DEFAULT_GRAPH_PAYLOAD);
     }
 
     /**
@@ -145,7 +132,7 @@ public class GraphSession {
      *
      * @return A Map of the options, encoded in bytes in a ByteBuffer.
      */
-    public Map<String, ByteBuffer> getDefaultGraphOptions() {
+    public Map<String, String> getDefaultGraphOptions() {
         return this.defaultGraphPayload;
     }
 
@@ -168,7 +155,7 @@ public class GraphSession {
      * @return This {@link com.datastax.driver.graph.GraphSession} instance to chain call.
      */
     public GraphSession setDefaultGraphSource(String input) {
-        this.defaultGraphPayload.put(GRAPH_SOURCE_KEY, ByteBuffer.wrap(input.getBytes()));
+        this.defaultGraphPayload.put(GRAPH_SOURCE_KEY, input);
         return this;
     }
 
@@ -181,7 +168,7 @@ public class GraphSession {
      * @return This {@link com.datastax.driver.graph.GraphSession} instance to chain call.
      */
     public GraphSession setDefaultGraphLanguage(String input) {
-        this.defaultGraphPayload.put(GRAPH_LANGUAGE_KEY, ByteBuffer.wrap(input.getBytes()));
+        this.defaultGraphPayload.put(GRAPH_LANGUAGE_KEY, input);
         return this;
     }
 
@@ -192,7 +179,7 @@ public class GraphSession {
      * @return This {@link com.datastax.driver.graph.GraphSession} instance to chain call.
      */
     public GraphSession setDefaultGraphKeyspace(String input) {
-        this.defaultGraphPayload.put(GRAPH_KEYSPACE_KEY, ByteBuffer.wrap(input.getBytes()));
+        this.defaultGraphPayload.put(GRAPH_KEYSPACE_KEY, input);
         return this;
     }
 
@@ -205,7 +192,7 @@ public class GraphSession {
      * @return This {@link com.datastax.driver.graph.GraphSession} instance to chain call.
      */
     public GraphSession setDefaultGraphRebinding(String input) {
-        this.defaultGraphPayload.put(GRAPH_REBINDING_KEY, ByteBuffer.wrap(input.getBytes()));
+        this.defaultGraphPayload.put(GRAPH_REBINDING_KEY, input);
         return this;
     }
 }

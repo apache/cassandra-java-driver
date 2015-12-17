@@ -24,11 +24,11 @@ import java.util.Map;
 
 abstract class AbstractGraphStatement<T extends Statement> {
 
-    protected final Map<String, ByteBuffer> payload;
+    protected final Map<String, String> graphOptions;
     protected T wrappedStatement;
 
     AbstractGraphStatement() {
-        this.payload = Maps.newHashMap();
+        this.graphOptions = Maps.newHashMap();
     }
 
     /* TODO: eventually make more advanced checks on the statement
@@ -39,21 +39,25 @@ abstract class AbstractGraphStatement<T extends Statement> {
      * - graph-language : default is "gremlin-groovy"
      *
      */
-    static boolean checkOptions(Map<String, ByteBuffer> options) {
+    static boolean checkOptions(Map<String, String> options) {
         return options.containsKey(GraphSession.GRAPH_SOURCE_KEY)
                 && options.containsKey(GraphSession.GRAPH_LANGUAGE_KEY)
                 && options.containsKey(GraphSession.GRAPH_KEYSPACE_KEY);
 
     }
 
-    protected abstract T configureAndGetWrappedStatement(Map<String, ByteBuffer> sessionOptions);
+    protected abstract T configureAndGetWrappedStatement(Map<String, String> sessionOptions);
 
-    void configure(Map<String, ByteBuffer> sessionOptions) {
+    void configure(Map<String, String> sessionOptions) {
         // Apply the graph specific operations here.
-        Map<String, ByteBuffer> mergedOptions = Maps.newHashMap(sessionOptions);
-        mergedOptions.putAll(this.payload);
+        Map<String, String> mergedOptions = Maps.newHashMap(sessionOptions);
+        mergedOptions.putAll(this.graphOptions);
         checkOptions(mergedOptions);
-        this.wrappedStatement.setOutgoingPayload(mergedOptions);
+        Map<String, ByteBuffer> payload = Maps.newHashMap();
+        for (Map.Entry<String, String> entry : mergedOptions.entrySet()) {
+            payload.put(entry.getKey(), ByteBuffer.wrap(entry.getValue().getBytes()));
+        }
+        this.wrappedStatement.setOutgoingPayload(payload);
     }
 
     /**
@@ -65,8 +69,8 @@ abstract class AbstractGraphStatement<T extends Statement> {
      *
      * @return A payload map containing the configured Graph options.
      */
-    public Map<String, ByteBuffer> getGraphOptions() {
-        return this.payload;
+    public Map<String, String> getGraphOptions() {
+        return this.graphOptions;
     }
 
     /**
@@ -76,7 +80,7 @@ abstract class AbstractGraphStatement<T extends Statement> {
      * @return This {@link com.datastax.driver.graph.AbstractGraphStatement} instance to allow chaining call.
      */
     public AbstractGraphStatement setGraphLanguage(String language) {
-        this.payload.put(GraphSession.GRAPH_LANGUAGE_KEY, ByteBuffer.wrap(language.getBytes()));
+        this.graphOptions.put(GraphSession.GRAPH_LANGUAGE_KEY, language);
         return this;
     }
 
@@ -90,7 +94,7 @@ abstract class AbstractGraphStatement<T extends Statement> {
         if (graphKeyspace == null || graphKeyspace.isEmpty()) {
             throw new InvalidQueryException("You cannot set null value or empty string to the keyspace for the Graph, this field is mandatory.");
         }
-        this.payload.put(GraphSession.GRAPH_KEYSPACE_KEY, ByteBuffer.wrap(graphKeyspace.getBytes()));
+        this.graphOptions.put(GraphSession.GRAPH_KEYSPACE_KEY, graphKeyspace);
         return this;
     }
 
@@ -101,7 +105,7 @@ abstract class AbstractGraphStatement<T extends Statement> {
      * @return This {@link com.datastax.driver.graph.AbstractGraphStatement} instance to allow chaining call.
      */
     public AbstractGraphStatement setGraphSource(String graphTraversalSource) {
-        this.payload.put(GraphSession.GRAPH_SOURCE_KEY, ByteBuffer.wrap(graphTraversalSource.getBytes()));
+        this.graphOptions.put(GraphSession.GRAPH_SOURCE_KEY, graphTraversalSource);
         return this;
     }
 
@@ -112,7 +116,7 @@ abstract class AbstractGraphStatement<T extends Statement> {
      * @return This {@link com.datastax.driver.graph.AbstractGraphStatement} instance to allow chaining call.
      */
     public AbstractGraphStatement setGraphRebinding(String graphRebinding) {
-        this.payload.put(GraphSession.GRAPH_REBINDING_KEY, ByteBuffer.wrap(graphRebinding.getBytes()));
+        this.graphOptions.put(GraphSession.GRAPH_REBINDING_KEY, graphRebinding);
         return this;
     }
 
@@ -121,11 +125,11 @@ abstract class AbstractGraphStatement<T extends Statement> {
      * Please see {@link com.datastax.driver.core.Statement#setOutgoingPayload(java.util.Map)} for more
      * information.
      *
-     * @param payload The payload to set. Note that this will override the default values set in the {@link com.datastax.driver.graph.GraphSession}.
+     * @param options The options to set. Note that this will override the default values set in the {@link com.datastax.driver.graph.GraphSession}.
      * @return This {@link com.datastax.driver.graph.AbstractGraphStatement} instance to allow chaining call.
      */
-    public AbstractGraphStatement setOutgoingPayload(Map<String, ByteBuffer> payload) {
-        this.wrappedStatement.setOutgoingPayload(payload);
+    public AbstractGraphStatement setGraphOptions(Map<String, String> options) {
+        this.graphOptions.putAll(options);
         return this;
     }
 }

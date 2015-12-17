@@ -25,7 +25,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.io.IOException;
 import java.io.StringWriter;
-import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -34,8 +33,8 @@ import java.util.Map;
  */
 public class BoundGraphStatement extends AbstractGraphStatement<BoundStatement> {
 
-    //  "name", "value"
-    Map<String, Object> valuesMap;
+    //                "name", "value"
+    private final Map<String, Object> valuesMap;
 
     private PreparedStatement ps;
 
@@ -50,12 +49,12 @@ public class BoundGraphStatement extends AbstractGraphStatement<BoundStatement> 
         Need to keep the configuration from the Prepared statement to
         the created BoundStatement, so users don't have to re configure the payload and such.
          */
-        this.payload.putAll(gst.getGraphOptions());
+        this.graphOptions.putAll(gst.getGraphOptions());
     }
 
     // Bind variables in the PreparedStatement
     @Override
-    protected BoundStatement configureAndGetWrappedStatement(Map<String, ByteBuffer> sessionOptions) {
+    protected BoundStatement configureAndGetWrappedStatement(Map<String, String> sessionOptions) {
         JsonFactory jsonFactory = new JsonFactory();
         JsonNodeFactory factory = new JsonNodeFactory(false);
         int paramNumber = 0;

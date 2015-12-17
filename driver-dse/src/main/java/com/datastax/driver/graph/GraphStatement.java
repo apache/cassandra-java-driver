@@ -37,7 +37,7 @@ public class GraphStatement extends AbstractGraphStatement<SimpleStatement> {
 
     private final String query;
     private final Map<String, Object> valuesMap;
-    private List<String> JsonParams;
+    private final List<String> jsonParams;
     private int paramsHash;
     private volatile ByteBuffer routingKey;
 
@@ -46,7 +46,7 @@ public class GraphStatement extends AbstractGraphStatement<SimpleStatement> {
 
         this.query = query;
         this.valuesMap = new HashMap<String, Object>();
-        this.JsonParams = new ArrayList<String>();
+        this.jsonParams = new ArrayList<String>();
         this.routingKey = null;
     }
 
@@ -65,7 +65,7 @@ public class GraphStatement extends AbstractGraphStatement<SimpleStatement> {
         }
         JsonNodeFactory factory = new JsonNodeFactory(false);
         JsonFactory jsonFactory = new JsonFactory();
-        this.JsonParams.clear();
+        this.jsonParams.clear();
         try {
             for (Map.Entry<String, Object> param : this.valuesMap.entrySet()) {
                 StringWriter stringWriter = new StringWriter();
@@ -95,7 +95,7 @@ public class GraphStatement extends AbstractGraphStatement<SimpleStatement> {
                     throw new DriverException("Parameter : " + value + ", is not in a valid format to be sent as Gremlin parameter.");
                 }
                 GraphSession.objectMapper.writeTree(generator, parameter);
-                this.JsonParams.add(stringWriter.toString());
+                this.jsonParams.add(stringWriter.toString());
             }
             this.paramsHash = this.valuesMap.hashCode();
         } catch (IOException e) {
@@ -104,11 +104,11 @@ public class GraphStatement extends AbstractGraphStatement<SimpleStatement> {
     }
 
     @Override
-    protected SimpleStatement configureAndGetWrappedStatement(Map<String, ByteBuffer> sessionOptions) {
+    protected SimpleStatement configureAndGetWrappedStatement(Map<String, String> sessionOptions) {
         if (hasValues()) {
             processValues();
         }
-        this.wrappedStatement = new SimpleStatement(this.query, this.JsonParams.toArray());
+        this.wrappedStatement = new SimpleStatement(this.query, this.jsonParams.toArray());
         configure(sessionOptions);
         return this.wrappedStatement;
     }
