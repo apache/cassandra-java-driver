@@ -20,8 +20,8 @@ import com.datastax.driver.core.exceptions.InvalidTypeException;
 /**
  * A CQL Row returned in a {@link ResultSet}.
  * <p/>
- * The values of a CQL Row can be retrieve by either index (index starts at 0)
- * or name. When setting them by name, names follow the case insensitivity
+ * The values of a CQL Row can be retrieved by either index (index starts at zero)
+ * or name. When getting them by name, names follow the case insensitivity
  * rules explained in {@link ColumnDefinitions}.
  */
 public interface Row extends GettableData {

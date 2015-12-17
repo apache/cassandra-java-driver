@@ -26,7 +26,7 @@ import java.nio.ByteBuffer;
 import java.util.*;
 
 /**
- * Collection of (typed) CQL values that can be retrieved by index (starting at 0).
+ * Collection of (typed) CQL values that can be retrieved by index (starting at zero).
  */
 public interface GettableByIndexData {
 

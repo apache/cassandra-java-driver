@@ -26,7 +26,7 @@ import java.nio.ByteBuffer;
 import java.util.*;
 
 /**
- * Collection of (typed) CQL values that can set by index (starting a 0).
+ * Collection of (typed) CQL values that can be set by index (starting at zero).
  */
 public interface SettableByIndexData<T extends SettableByIndexData<T>> {
 
