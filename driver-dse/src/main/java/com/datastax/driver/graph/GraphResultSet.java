@@ -15,18 +15,16 @@
  */
 package com.datastax.driver.graph;
 
-import java.util.Iterator;
-import java.util.List;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.datastax.driver.core.ExecutionInfo;
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.Row;
 import com.google.common.base.Function;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
-import com.datastax.driver.core.ExecutionInfo;
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.Row;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * The result set containing the Graph data returned from a query,

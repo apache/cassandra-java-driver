@@ -15,19 +15,18 @@
  */
 package com.datastax.driver.graph;
 
+import com.datastax.driver.core.Session;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.ImmutableMap;
+
 import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.ImmutableMap;
-
-import com.datastax.driver.core.Session;
-
 /**
  * The GraphSession object allows to execute and prepare graph specific statements.
- *
+ * <p/>
  * You should use this object whenever the statement to execute is a graph query.
  * The object will make verifications before executing queries to make sure the
  * statement sent is valid.
@@ -49,20 +48,20 @@ public class GraphSession {
     final static Map<String, ByteBuffer> DEFAULT_GRAPH_PAYLOAD;
 
     static {
-        GRAPH_SOURCE_KEY        = "graph-source";
-        GRAPH_LANGUAGE_KEY      = "graph-language";
-        GRAPH_KEYSPACE_KEY      = "graph-keyspace";
-        GRAPH_REBINDING_KEY     = "graph-rebinding";
+        GRAPH_SOURCE_KEY = "graph-source";
+        GRAPH_LANGUAGE_KEY = "graph-language";
+        GRAPH_KEYSPACE_KEY = "graph-keyspace";
+        GRAPH_REBINDING_KEY = "graph-rebinding";
 
 
-        DEFAULT_GRAPH_LANGUAGE  = "gremlin-groovy";
-        DEFAULT_GRAPH_SOURCE    = "default";
-        DEFAULT_GRAPH_PAYLOAD   = ImmutableMap.of(
-            // For the first versions of the driver Gremlin-Groovy is the default language
-            GRAPH_LANGUAGE_KEY, ByteBuffer.wrap(DEFAULT_GRAPH_LANGUAGE.getBytes()),
+        DEFAULT_GRAPH_LANGUAGE = "gremlin-groovy";
+        DEFAULT_GRAPH_SOURCE = "default";
+        DEFAULT_GRAPH_PAYLOAD = ImmutableMap.of(
+                // For the first versions of the driver Gremlin-Groovy is the default language
+                GRAPH_LANGUAGE_KEY, ByteBuffer.wrap(DEFAULT_GRAPH_LANGUAGE.getBytes()),
 
-            //If not present, the default source configured for the Keyspace
-            GRAPH_SOURCE_KEY, ByteBuffer.wrap(DEFAULT_GRAPH_SOURCE.getBytes())
+                //If not present, the default source configured for the Keyspace
+                GRAPH_SOURCE_KEY, ByteBuffer.wrap(DEFAULT_GRAPH_SOURCE.getBytes())
         );
     }
 
@@ -134,6 +133,7 @@ public class GraphSession {
 
     /**
      * Get the wrapped {@link com.datastax.driver.core.Session}.
+     *
      * @return the wrapped {@link com.datastax.driver.core.Session}.
      */
     public Session getSession() {
@@ -151,7 +151,6 @@ public class GraphSession {
 
     /**
      * Reset the default graph options for this {@link com.datastax.driver.graph.GraphSession}.
-     *
      */
     public boolean resetDefaultGraphOptions() {
         this.defaultGraphPayload.clear();
@@ -162,7 +161,7 @@ public class GraphSession {
 
     /**
      * Set the default Graph traversal source name on the graph side.
-     *
+     * <p/>
      * The default value for this property is "default".
      *
      * @param input The graph traversal source's name to use.

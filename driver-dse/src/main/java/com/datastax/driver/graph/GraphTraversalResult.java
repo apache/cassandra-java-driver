@@ -15,13 +15,11 @@
  */
 package com.datastax.driver.graph;
 
-import java.io.IOException;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.exceptions.DriverException;
+import com.fasterxml.jackson.databind.JsonNode;
+
+import java.io.IOException;
 
 public class GraphTraversalResult {
     private final String jsonString;
@@ -54,7 +52,7 @@ public class GraphTraversalResult {
      * @param key the key corresponding to the desired object in the result.
      * @return A GraphData instance containing the value for the Json entity required.
      */
-    public GraphData get(String key){
+    public GraphData get(String key) {
         return get().get(key);
     }
 

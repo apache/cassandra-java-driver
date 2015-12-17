@@ -15,10 +15,10 @@
  */
 package com.datastax.driver.graph;
 
-import java.util.Map;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+
+import java.util.Map;
 
 /**
  * A default representation of an Edge in DSE Graph.

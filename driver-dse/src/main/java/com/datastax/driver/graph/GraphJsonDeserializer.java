@@ -15,27 +15,26 @@
  */
 package com.datastax.driver.graph;
 
+import com.datastax.driver.core.exceptions.DriverException;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.collect.Maps;
+
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.Maps;
-
-import com.datastax.driver.core.exceptions.DriverException;
-
 /**
  * A template deserializer for a Graph Json deserializer class.
- *
+ * <p/>
  * This class is mainly here for extensibility and provide useful methods to the inherited classes.
+ *
  * @param <T> The aimed deserialized type.
  */
-public abstract class GraphJsonDeserializer<T> extends JsonDeserializer<T>{
+public abstract class GraphJsonDeserializer<T> extends JsonDeserializer<T> {
 
     @Override
     public abstract T deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) throws IOException;
@@ -54,7 +53,7 @@ public abstract class GraphJsonDeserializer<T> extends JsonDeserializer<T>{
     }
 
     protected Map<String, GraphData> transformEdgeProperties(JsonNode jsonProps) {
-        if (jsonProps == null){
+        if (jsonProps == null) {
             return Maps.newHashMap();
         }
         Map<String, GraphData> properties = new HashMap<String, GraphData>();
@@ -73,7 +72,7 @@ public abstract class GraphJsonDeserializer<T> extends JsonDeserializer<T>{
         }
     }
 
-    protected static void checkEdge(JsonNode jsonNode){
+    protected static void checkEdge(JsonNode jsonNode) {
         JsonNode type = jsonNode.findValue("type");
         if (type == null || !type.asText().equals("edge")) {
             throw new DriverException("The result of the query is not a edge, so it cannot be deserialised to a Edge Java object");

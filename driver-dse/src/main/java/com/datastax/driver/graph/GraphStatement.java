@@ -15,6 +15,13 @@
  */
 package com.datastax.driver.graph;
 
+import com.datastax.driver.core.SimpleStatement;
+import com.datastax.driver.core.exceptions.DriverException;
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
 import java.io.IOException;
 import java.io.StringWriter;
 import java.nio.ByteBuffer;
@@ -22,15 +29,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-
-import com.datastax.driver.core.SimpleStatement;
-import com.datastax.driver.core.exceptions.DriverException;
 
 /**
  * A simple graph statement implementation.
@@ -77,22 +75,22 @@ public class GraphStatement extends AbstractGraphStatement<SimpleStatement> {
                 Object value = param.getValue();
                 if (value instanceof Integer) {
                     parameter.put("name", name);
-                    parameter.put("value", (Integer)value);
+                    parameter.put("value", (Integer) value);
                 } else if (value instanceof String) {
                     parameter.put("name", name);
-                    parameter.put("value", (String)value);
+                    parameter.put("value", (String) value);
                 } else if (value instanceof Float) {
                     parameter.put("name", name);
-                    parameter.put("value", (Float)value);
+                    parameter.put("value", (Float) value);
                 } else if (value instanceof Double) {
                     parameter.put("name", name);
-                    parameter.put("value", (Double)value);
+                    parameter.put("value", (Double) value);
                 } else if (value instanceof Boolean) {
                     parameter.put("name", name);
-                    parameter.put("value", (Boolean)value);
+                    parameter.put("value", (Boolean) value);
                 } else if (value instanceof Long) {
                     parameter.put("name", name);
-                    parameter.put("value", (Long)value);
+                    parameter.put("value", (Long) value);
                 } else {
                     throw new DriverException("Parameter : " + value + ", is not in a valid format to be sent as Gremlin parameter.");
                 }
@@ -121,11 +119,12 @@ public class GraphStatement extends AbstractGraphStatement<SimpleStatement> {
 
     /**
      * Set a parameter value for the statement.
-     *
+     * <p/>
      * Values can be any type supported in JSON.
-     * @param name Name of the value, defined in the query. Parameters in Gremlin are named as variables, no
-     *             need for a CQL syntax like the bind marker "?" or the identifier ":" in front of a parameter.
-     *             Please refer to Gremlin's documentation for more information.
+     *
+     * @param name  Name of the value, defined in the query. Parameters in Gremlin are named as variables, no
+     *              need for a CQL syntax like the bind marker "?" or the identifier ":" in front of a parameter.
+     *              Please refer to Gremlin's documentation for more information.
      * @param value Any object serializable in JSON. The type will be detected automatically at statement's execution.
      */
     public void set(String name, Object value) {

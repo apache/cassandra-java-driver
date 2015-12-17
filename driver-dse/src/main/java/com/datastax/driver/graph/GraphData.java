@@ -15,12 +15,10 @@
  */
 package com.datastax.driver.graph;
 
-import java.io.IOException;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import com.datastax.driver.core.exceptions.DriverException;
+import com.fasterxml.jackson.databind.JsonNode;
+
+import java.io.IOException;
 
 /**
  * A result entity containing a graph query's result, wrapping a Json result.
@@ -55,19 +53,19 @@ public class GraphData {
         }
         JsonNode jsN;
         if (keyOrIndex instanceof Integer) {
-            jsN = this.jsonNode.get((Integer)keyOrIndex);
+            jsN = this.jsonNode.get((Integer) keyOrIndex);
         } else {
-            jsN = this.jsonNode.get((String)keyOrIndex);
+            jsN = this.jsonNode.get((String) keyOrIndex);
         }
         return new GraphData(keyOrIndex, jsN);
     }
 
-    public GraphData get(String key){
-        return get((Object)key);
+    public GraphData get(String key) {
+        return get((Object) key);
     }
 
-    public GraphData get(int index){
-        return get((Object)index);
+    public GraphData get(int index) {
+        return get((Object) index);
     }
 
     /**
@@ -136,15 +134,15 @@ public class GraphData {
 
     /**
      * Return the encapsulated result deserialized in a T object that extends Vertex.
-     *
+     * <p/>
      * The contained Json object will be parsed according to a class that must extend Vertex. Note that
      * a deserialiser must also be known for this class. It means that the deserialized class must have a
-     * @JsonDeserialize and provide the name of the class able to deserialize this T object.
      *
      * @return A T object parsed from the result contained in the GraphData object. This method
      * can throw an exception if the deserializer is incorrect, or if the method
      * {@link com.datastax.driver.graph.GraphJsonDeserializer#checkVertex(com.fasterxml.jackson.databind.JsonNode)}
      * does not validate the result as a Vertex result.
+     * @JsonDeserialize and provide the name of the class able to deserialize this T object.
      */
     public <T extends Vertex> T asVertex(Class<T> clas) {
         try {
@@ -155,7 +153,7 @@ public class GraphData {
 
         } catch (IOException e) {
             throw new DriverException("Could not create a Edge object from the result due to a deserialisation exception. If you provided a custom implementation of the Vertex class deserializer, "
-                + "please check the validity of this. Nested parsing exception : " + e);
+                    + "please check the validity of this. Nested parsing exception : " + e);
         }
     }
 
@@ -188,7 +186,7 @@ public class GraphData {
             return null;
         } catch (IOException e) {
             throw new DriverException("Could not create a Edge object from the result due to a deserialisation exception. If you provided a custom implementation of the Edge class deserializer, "
-                + "please check the validity of this. Nested parsing exception : " + e);
+                    + "please check the validity of this. Nested parsing exception : " + e);
         }
     }
 
@@ -205,8 +203,8 @@ public class GraphData {
     public String toString() {
 
         return this.jsonNode != null
-            ? this.jsonNode.toString()
-            : null;
+                ? this.jsonNode.toString()
+                : null;
     }
 }
 

@@ -15,11 +15,10 @@
  */
 package com.datastax.driver.graph;
 
-import java.util.Map;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+
+import java.util.Map;
 
 /**
  * A default representation of a Vertex in DSE Graph.

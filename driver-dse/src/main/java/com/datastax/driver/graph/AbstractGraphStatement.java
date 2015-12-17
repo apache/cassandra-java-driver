@@ -15,13 +15,12 @@
  */
 package com.datastax.driver.graph;
 
-import java.nio.ByteBuffer;
-import java.util.Map;
-
-import com.google.common.collect.Maps;
-
 import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
+import com.google.common.collect.Maps;
+
+import java.nio.ByteBuffer;
+import java.util.Map;
 
 abstract class AbstractGraphStatement<T extends Statement> {
 
@@ -42,8 +41,8 @@ abstract class AbstractGraphStatement<T extends Statement> {
      */
     static boolean checkOptions(Map<String, ByteBuffer> options) {
         return options.containsKey(GraphSession.GRAPH_SOURCE_KEY)
-            && options.containsKey(GraphSession.GRAPH_LANGUAGE_KEY)
-            && options.containsKey(GraphSession.GRAPH_KEYSPACE_KEY);
+                && options.containsKey(GraphSession.GRAPH_LANGUAGE_KEY)
+                && options.containsKey(GraphSession.GRAPH_KEYSPACE_KEY);
 
     }
 
