@@ -27,11 +27,9 @@ abstract class AbstractGraphStatement<T extends Statement> {
 
     protected final Map<String, ByteBuffer> payload;
     protected T wrappedStatement;
-    protected final GraphSession session;
 
-    AbstractGraphStatement(GraphSession session) {
-        this.session = session;
-        this.payload = Maps.newHashMap(session.getDefaultGraphOptions());
+    AbstractGraphStatement() {
+        this.payload = Maps.newHashMap();
     }
 
     /* TODO: eventually make more advanced checks on the statement
@@ -42,27 +40,21 @@ abstract class AbstractGraphStatement<T extends Statement> {
      * - graph-language : default is "gremlin-groovy"
      *
      */
-    static boolean checkStatement(AbstractGraphStatement graphStatement) {
-        return graphStatement.getGraphOptions().containsKey(GraphSession.GRAPH_SOURCE_KEY)
-            && graphStatement.getGraphOptions().containsKey(GraphSession.GRAPH_LANGUAGE_KEY)
-            && graphStatement.getGraphOptions().containsKey(GraphSession.GRAPH_KEYSPACE_KEY);
+    static boolean checkOptions(Map<String, ByteBuffer> options) {
+        return options.containsKey(GraphSession.GRAPH_SOURCE_KEY)
+            && options.containsKey(GraphSession.GRAPH_LANGUAGE_KEY)
+            && options.containsKey(GraphSession.GRAPH_KEYSPACE_KEY);
 
     }
 
-    static void copyConfiguration(AbstractGraphStatement from, AbstractGraphStatement to) {
-        to.wrappedStatement.setOutgoingPayload(from == null ? GraphSession.DEFAULT_GRAPH_PAYLOAD : from.getGraphOptions());
-        // Maybe later additional stuff will need to be done.
-    }
+    protected abstract T configureAndGetWrappedStatement(Map<String, ByteBuffer> sessionOptions);
 
-    abstract T configureAndGetWrappedStatement();
-
-    void configure() {
+    void configure(Map<String, ByteBuffer> sessionOptions) {
         // Apply the graph specific operations here.
-        this.wrappedStatement.setOutgoingPayload(this.payload);
-    }
-
-    GraphSession getSession() {
-        return this.session;
+        Map<String, ByteBuffer> mergedOptions = Maps.newHashMap(sessionOptions);
+        mergedOptions.putAll(this.payload);
+        checkOptions(mergedOptions);
+        this.wrappedStatement.setOutgoingPayload(mergedOptions);
     }
 
     /**

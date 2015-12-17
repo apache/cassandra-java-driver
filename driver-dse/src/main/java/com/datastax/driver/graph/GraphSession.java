@@ -24,7 +24,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 
 import com.datastax.driver.core.Session;
-import com.datastax.driver.core.exceptions.InvalidQueryException;
 
 /**
  * The GraphSession object allows to execute and prepare graph specific statements.
@@ -94,10 +93,7 @@ public class GraphSession {
      * in case the execution did non complete successfully.
      */
     public GraphResultSet execute(AbstractGraphStatement statement) {
-        if (!AbstractGraphStatement.checkStatement(statement)) {
-            throw new InvalidQueryException("Invalid Graph Statement, you need to specify at least the keyspace containing the Graph data.");
-        }
-        return new GraphResultSet(session.execute(statement.configureAndGetWrappedStatement()));
+        return new GraphResultSet(session.execute(statement.configureAndGetWrappedStatement(getDefaultGraphOptions())));
     }
 
     /**
@@ -109,7 +105,7 @@ public class GraphSession {
      * in case the execution did non complete successfully.
      */
     public GraphResultSet execute(String query) {
-        GraphStatement statement = newGraphStatement(query);
+        GraphStatement statement = new GraphStatement(query);
         return execute(statement);
     }
 
@@ -142,18 +138,6 @@ public class GraphSession {
      */
     public Session getSession() {
         return this.session;
-    }
-
-    /**
-     * Create a new {@link com.datastax.driver.graph.GraphStatement} with the default options
-     * set in the {@link com.datastax.driver.graph.GraphSession}.
-     *
-     * @param query The graph query.
-     *
-     * @return A {@link com.datastax.driver.graph.GraphStatement} object to be executed in the session.
-     */
-    public GraphStatement newGraphStatement(String query) {
-        return new GraphStatement(query, this);
     }
 
     /**

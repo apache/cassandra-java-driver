@@ -18,8 +18,8 @@ package com.datastax.driver.graph;
 import com.datastax.driver.core.PreparedStatement;
 
 public class PreparedGraphStatement {
-    final PreparedStatement ps;
-    final GraphStatement gst;
+    private final PreparedStatement ps;
+    private final GraphStatement gst;
 
     PreparedGraphStatement(PreparedStatement ps, GraphStatement gst) {
         this.ps = ps;
@@ -36,7 +36,7 @@ public class PreparedGraphStatement {
      * @return A {@link com.datastax.driver.graph.BoundGraphStatement} instance on which we can bind values and execute.
      */
     public BoundGraphStatement bind() {
-        return new BoundGraphStatement(ps.bind(), gst);
+        return new BoundGraphStatement(this.ps, this.gst);
     }
 
     /**

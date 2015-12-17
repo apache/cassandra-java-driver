@@ -43,8 +43,8 @@ public class GraphStatement extends AbstractGraphStatement<SimpleStatement> {
     private int paramsHash;
     private volatile ByteBuffer routingKey;
 
-    protected GraphStatement(String query, GraphSession session) {
-        super(session);
+    public GraphStatement(String query) {
+        super();
 
         this.query = query;
         this.valuesMap = new HashMap<String, Object>();
@@ -58,7 +58,7 @@ public class GraphStatement extends AbstractGraphStatement<SimpleStatement> {
 
     /*
     Parameter values are supposed to be sent as JSON string in a particular format.
-    The format is : {name":"parameterName", "value":parameterValue}
+    The format is : {"name":"parameterName", "value":parameterValue}
      */
     private void processValues() {
         if (this.paramsHash == this.valuesMap.hashCode()) {
@@ -106,12 +106,12 @@ public class GraphStatement extends AbstractGraphStatement<SimpleStatement> {
     }
 
     @Override
-    SimpleStatement configureAndGetWrappedStatement() {
+    protected SimpleStatement configureAndGetWrappedStatement(Map<String, ByteBuffer> sessionOptions) {
         if (hasValues()) {
             processValues();
         }
-        this.wrappedStatement = session.getSession().newSimpleStatement(this.query, this.JsonParams.toArray());
-        configure();
+        this.wrappedStatement = new SimpleStatement(this.query, this.JsonParams.toArray());
+        configure(sessionOptions);
         return this.wrappedStatement;
     }
 

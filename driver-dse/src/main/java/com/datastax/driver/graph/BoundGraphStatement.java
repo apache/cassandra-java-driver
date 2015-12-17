@@ -17,6 +17,7 @@ package com.datastax.driver.graph;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -27,6 +28,7 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import com.datastax.driver.core.BoundStatement;
+import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.exceptions.DriverException;
 
 /**
@@ -37,28 +39,29 @@ public class BoundGraphStatement extends AbstractGraphStatement<BoundStatement> 
     //  "name", "value"
     Map<String, Object> valuesMap;
 
-    BoundGraphStatement(BoundStatement bs, GraphStatement gst) {
-        super(gst.getSession());
-        this.wrappedStatement = bs;
+    private PreparedStatement ps;
+
+
+    BoundGraphStatement(PreparedStatement ps, GraphStatement gst) {
+        super();
+
+        this.ps = ps;
         this.valuesMap = new HashMap<String, Object>();
 
         /*
         Need to keep the configuration from the Prepared statement to
         the created BoundStatement, so users don't have to re configure the payload and such.
          */
-        copyConfigFromStatement(gst);
-    }
-
-    void copyConfigFromStatement(GraphStatement gst) {
-        this.wrappedStatement.setOutgoingPayload(gst.getGraphOptions() == null ? this.session.getDefaultGraphOptions() : gst.getGraphOptions());
+        this.payload.putAll(gst.getGraphOptions());
     }
 
     // Bind variables in the PreparedStatement
     @Override
-    BoundStatement configureAndGetWrappedStatement() {
+    protected BoundStatement configureAndGetWrappedStatement(Map<String, ByteBuffer> sessionOptions) {
         JsonFactory jsonFactory = new JsonFactory();
         JsonNodeFactory factory = new JsonNodeFactory(false);
         int paramNumber = 0;
+        this.wrappedStatement = this.ps.bind();
         try {
             for (Map.Entry<String, Object> param : this.valuesMap.entrySet()) {
                 StringWriter stringWriter = new StringWriter();
@@ -93,6 +96,8 @@ public class BoundGraphStatement extends AbstractGraphStatement<BoundStatement> 
         } catch (IOException e) {
             throw new DriverException("Some values are not in a compatible type to be serialized in a Gremlin Query.");
         }
+
+        configure(sessionOptions);
         return this.wrappedStatement;
     }
 
