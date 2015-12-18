@@ -41,16 +41,14 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * it will lookup in the registry for a suitable codec. The registry is initialized with default codecs that handle
  * basic conversions (e.g. CQL {@code text} to {@code java.lang.String}), and users can add their own. Complex
  * codecs can also be generated on-the-fly from simpler ones (more details below).
- * <p/>
- * <h3>Creating a registry</h3>
- * <p/>
- * <p/>
+ * <h3>
+ * Creating a registry
+ * </h3>
  * By default, the driver uses {@link CodecRegistry#DEFAULT_INSTANCE}, a shareable, JVM-wide instance initialized with
  * built-in codecs for all the base CQL types.
  * The only reason to create your own instances is if you have multiple {@code Cluster} objects that use different
  * sets of codecs. In that case, use {@link com.datastax.driver.core.Cluster.Builder#withCodecRegistry(CodecRegistry)}
  * to associate the registry with the cluster:
- * <p/>
  * <pre>
  * {@code
  * CodecRegistry myCodecRegistry = new CodecRegistry();
@@ -58,29 +56,25 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * Cluster cluster = Cluster.builder().withCodecRegistry(myCodecRegistry).build();
  *
  * // To retrieve the registry later:
- * CodecRegistry registry = cluster.getConfiguration().getCodecRegistry();
- * }</pre>
- *
+ * CodecRegistry registry = cluster.getConfiguration().getCodecRegistry();}
+ * </pre>
  * {@code CodecRegistry} instances are thread-safe.
- *
- *
+ * <p/>
  * It is possible to turn on log messages by setting the {@code com.datastax.driver.core.CodecRegistry} logger
  * level to {@code TRACE}. Beware that the registry can be very verbose at this log level.
- *
- * <h3>Registering and using custom codecs</h3>
- *
+ * <h3>
+ * Registering and using custom codecs
+ * </h3>
  * To create a custom codec, write a class that extends {@link TypeCodec}, create an instance, and pass it to one of
  * the {@link #register(TypeCodec) register} methods; for example, one could create a codec that maps CQL
  * timestamps to JDK8's {@code java.time.LocalDate}:
- *
  * <pre>
  * {@code
  * class LocalDateCodec extends TypeCodec<java.time.LocalDate> {
  *    ...
  * }
- * myCodecRegistry.register(new LocalDateCodec());
- * }</pre>
- *
+ * myCodecRegistry.register(new LocalDateCodec());}
+ * </pre>
  * The conversion will be available to:
  * <ul>
  * <li>all driver types that implement {@link GettableByIndexData}, {@link GettableByNameData},
@@ -89,21 +83,20 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * <li>{@link SimpleStatement(String, Object...) simple statements};</li>
  * <li>statements created with the {@link com.datastax.driver.core.querybuilder.QueryBuilder Query builder}.</li>
  * </ul>
- *
+ * <p/>
  * Example:
- * <pre>{@code
+ * <pre>
+ * {@code
  * Row row = session.executeQuery("select date from some_table where pk = 1").one();
- * java.time.LocalDate date = row.get(0, java.time.LocalDate.class); // uses LocalDateCodec registered above
- * }</pre>
- *
+ * java.time.LocalDate date = row.get(0, java.time.LocalDate.class); // uses LocalDateCodec registered above}
+ * </pre>
  * You can also bypass the codec registry by passing a standalone codec instance to methods such as
  * {@link GettableByIndexData#get(int, TypeCodec)}.
- *
- * <h3>Codec generation</h3>
- *
+ * <h3>
+ * Codec generation
+ * </h3>
  * When a {@code CodecRegistry} cannot find a suitable codec among existing ones, it will attempt to create it on-the-fly.
  * It can manage:
- *
  * <ul>
  * <li>collections (lists, sets and maps) of known types. For example,
  * if you registered a codec for JDK8's {@code java.time.LocalDate} like in the example above, you get
@@ -116,12 +109,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * <li>{@link TupleType tuple types}, mapped to {@link TupleValue} (with the same rules for nested fields);</li>
  * <li>{@link com.datastax.driver.core.DataType.CustomType custom types}, mapped to {@code ByteBuffer}.</li>
  * </ul>
- *
  * If the codec registry encounters a mapping that it can't handle automatically, a {@link CodecNotFoundException} is thrown;
  * you'll need to register a custom codec for it.
- *
- * <h3>Performance and caching</h3>
- *
+ * <h3>
+ * Performance and caching
+ * </h3>
  * Whenever possible, the registry will cache the result of a codec lookup for a specific type mapping, including any generated
  * codec. For example, if you registered {@code LocalDateCodec} and ask the registry for a codec to convert a CQL
  * {@code list<timestamp>} to a Java {@code List<LocalDate>}:
@@ -130,13 +122,11 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * the cache;</li>
  * <li>the second lookup will hit the cache directly, and reuse the previously generated instance.</li>
  * </ol>
- *
  * The javadoc for each {@link #codecFor(DataType) codecFor} variant specifies whether the result can be cached or not.
- *
- * <h3>Codec order</h3>
- *
+ * <h3>
+ * Codec order
+ * </h3>
  * When the registry looks up a codec, the rules of precedence are:
- *
  * <ul>
  * <li>if a result was previously cached for that mapping, it is returned;</li>
  * <li>otherwise, the registry checks the list of "basic" codecs: the default ones, and the ones that were explicitly
@@ -144,7 +134,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
  * it can handle the mapping, and if so returns it;</li>
  * <li>otherwise, the registry tries to generate a codec, according to the rules outlined above.</li>
  * </ul>
- *
  * It is currently impossible to override an existing codec. If you try to do so, {@link #register(TypeCodec)} will log a
  * warning and ignore it.
  */
