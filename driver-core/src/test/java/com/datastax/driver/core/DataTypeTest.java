@@ -26,6 +26,8 @@ import java.nio.ByteBuffer;
 import java.util.*;
 
 import static com.datastax.driver.core.Assertions.assertThat;
+import static com.datastax.driver.core.ParseUtils.formatDate;
+import static com.datastax.driver.core.ParseUtils.quote;
 import static com.google.common.collect.Lists.newArrayList;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
@@ -38,6 +40,11 @@ public class DataTypeTest {
     CodecRegistry codecRegistry = new CodecRegistry();
 
     ProtocolVersion protocolVersion = TestUtils.getDesiredProtocolVersion();
+
+    private static final String PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
+
+    private static final TimeZone UTC = TimeZone.getTimeZone("UTC");
+
 
     static boolean exclude(DataType t) {
         return t.getName() == DataType.Name.COUNTER;
@@ -85,10 +92,10 @@ public class DataTypeTest {
             case TIMESTAMP:
                 // input: single quotes are optional for long literals, mandatory for date patterns
                 return new TestValue[]{
-                        new TestValue(new Date(42L), "42", "42"),
-                        new TestValue(new Date(91294377723L), "91294377723", "91294377723"),
-                        new TestValue(new Date(-133L), "-133", "-133"),
-                        new TestValue(new Date(784041330999L), "'1994-11-05T14:15:30.999+0100'", "784041330999"),
+                        new TestValue(new Date(42L), "42", quote(formatDate(new Date(42L), UTC, PATTERN))),
+                        new TestValue(new Date(91294377723L), "91294377723", quote(formatDate(new Date(91294377723L), UTC, PATTERN))),
+                        new TestValue(new Date(-133L), "-133", quote(formatDate(new Date(-133L), UTC, PATTERN))),
+                        new TestValue(new Date(784041330999L), "'1994-11-05T14:15:30.999+0100'", quote(formatDate(new Date(784041330999L), UTC, PATTERN))),
                         new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL")};
             case DATE:
                 // input: single quotes are optional for long literals, mandatory for date patterns

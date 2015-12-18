@@ -3,6 +3,7 @@
 ### 3.0.0-rc1 (in progress)
 
 - [bug] JAVA-890: fix mapper for case-sensitive UDT.
+- [improvement] JAVA-1013: TimestampCodec should format dates in human-readable format.
 
 
 ### 3.0.0-beta1
