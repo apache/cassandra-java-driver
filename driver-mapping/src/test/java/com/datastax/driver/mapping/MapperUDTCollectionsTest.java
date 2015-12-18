@@ -33,11 +33,16 @@ import static org.testng.Assert.assertEquals;
 public class MapperUDTCollectionsTest extends CCMBridge.PerClassSingleNodeCluster {
 
     protected Collection<String> getTableDefinitions() {
-        return Arrays.asList("CREATE TYPE sub(i int)",
-                "CREATE TABLE collection_examples (id int PRIMARY KEY, l list<frozen<sub>>, s set<frozen<sub>>, m1 map<int,frozen<sub>>, m2 map<frozen<sub>,int>, m3 map<frozen<sub>,frozen<sub>>)");
+        return Arrays.asList("CREATE TYPE \"Sub\"(i int)",
+                "CREATE TABLE collection_examples (id int PRIMARY KEY, " +
+                        "l list<frozen<\"Sub\">>, " +
+                        "s set<frozen<\"Sub\">>, " +
+                        "m1 map<int,frozen<\"Sub\">>, " +
+                        "m2 map<frozen<\"Sub\">,int>, " +
+                        "m3 map<frozen<\"Sub\">,frozen<\"Sub\">>)");
     }
 
-    @UDT(name = "sub")
+    @UDT(name = "Sub", caseSensitiveType = true)
     public static class Sub {
         private int i;
 
