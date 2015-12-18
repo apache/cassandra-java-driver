@@ -34,7 +34,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 /**
