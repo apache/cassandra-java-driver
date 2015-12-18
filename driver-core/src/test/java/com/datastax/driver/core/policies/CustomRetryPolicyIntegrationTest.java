@@ -16,14 +16,19 @@
 package com.datastax.driver.core.policies;
 
 import com.datastax.driver.core.*;
-import com.datastax.driver.core.exceptions.*;
+import com.datastax.driver.core.exceptions.DriverException;
+import com.datastax.driver.core.exceptions.OperationTimedOutException;
+import com.datastax.driver.core.exceptions.TransportException;
+import com.datastax.driver.core.exceptions.UnavailableException;
+import org.scassandra.http.client.ClosedConnectionConfig;
+import org.scassandra.http.client.ClosedConnectionConfig.CloseType;
 import org.scassandra.http.client.PrimingRequest;
-import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 import static org.assertj.core.api.Fail.fail;
-import static org.scassandra.http.client.PrimingRequest.Result.*;
+import static org.scassandra.http.client.PrimingRequest.Result.read_request_timeout;
+import static org.scassandra.http.client.PrimingRequest.Result.unavailable;
 import static org.scassandra.http.client.PrimingRequest.then;
 
 /**
@@ -98,13 +103,6 @@ public class CustomRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegra
         }
     }
 
-    @DataProvider
-    public static Object[][] serverSideErrors() {
-        return new Object[][]{
-                {server_error, ServerError.class},
-                {overloaded, OverloadedException.class}
-        };
-    }
 
     @Test(groups = "short", dataProvider = "serverSideErrors")
     public void should_rethrow_on_server_side_error(PrimingRequest.Result error, Class<? extends DriverException> exception) {
@@ -119,6 +117,28 @@ public class CustomRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegra
         assertThat(errors.getOthers().getCount()).isEqualTo(1);
         assertThat(errors.getRetries().getCount()).isEqualTo(0);
         assertThat(errors.getRetriesOnOtherErrors().getCount()).isEqualTo(0);
+        assertQueried(1, 1);
+        assertQueried(2, 0);
+        assertQueried(3, 0);
+    }
+
+
+    @Test(groups = "short", dataProvider = "connectionErrors")
+    public void should_rethrow_on_connection_error(CloseType closeType) {
+        simulateError(1, PrimingRequest.Result.closed_connection, new ClosedConnectionConfig(closeType));
+        try {
+            query();
+            fail("expected a TransportException");
+        } catch (TransportException e) {
+            assertThat(e.getMessage()).isEqualTo(
+                    String.format("[%s] Connection has been closed", host1.getAddress())
+            );
+        }
+        assertOnRequestErrorWasCalled(1, TransportException.class);
+        assertThat(errors.getRetries().getCount()).isEqualTo(0);
+        assertThat(errors.getConnectionErrors().getCount()).isEqualTo(1);
+        assertThat(errors.getIgnoresOnConnectionError().getCount()).isEqualTo(0);
+        assertThat(errors.getRetriesOnConnectionError().getCount()).isEqualTo(0);
         assertQueried(1, 1);
         assertQueried(2, 0);
         assertQueried(3, 0);
