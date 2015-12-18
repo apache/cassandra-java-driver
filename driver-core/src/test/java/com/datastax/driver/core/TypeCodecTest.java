@@ -272,6 +272,33 @@ public class TypeCodecTest {
         assertThat(formatted).isEqualTo("'2015-12-08T00:53:46.999+0000'");
     }
 
+    /**
+     * Ensures that primitive types are correctly handled and wrapped when necessary.
+     */
+    @Test(groups = "unit")
+    public void should_wrap_primitive_types() {
+        assertThat(TypeCodec.cboolean())
+                .accepts(Boolean.class)
+                .accepts(Boolean.TYPE)
+                .accepts(true);
+        assertThat(TypeCodec.cint())
+                .accepts(Integer.class)
+                .accepts(Integer.TYPE)
+                .accepts(42);
+        assertThat(TypeCodec.bigint())
+                .accepts(Long.class)
+                .accepts(Long.TYPE)
+                .accepts(42L);
+        assertThat(TypeCodec.cfloat())
+                .accepts(Float.class)
+                .accepts(Float.TYPE)
+                .accepts(42.0F);
+        assertThat(TypeCodec.cdouble())
+                .accepts(Double.class)
+                .accepts(Double.TYPE)
+                .accepts(42.0D);
+    }
+
     private class ListVarcharToListListInteger extends TypeCodec<List<List<Integer>>> {
 
         private final TypeCodec<List<String>> codec = TypeCodec.list(TypeCodec.varchar());
