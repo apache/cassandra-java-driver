@@ -1406,10 +1406,6 @@ public abstract class TypeCodec<T> {
 
         private static final TimestampCodec instance = new TimestampCodec();
 
-        private static final String PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
-
-        private static final TimeZone UTC = TimeZone.getTimeZone("UTC");
-
         private TimestampCodec() {
             super(DataType.timestamp(), Date.class);
         }
@@ -1441,7 +1437,7 @@ public abstract class TypeCodec<T> {
         public String format(Date value) {
             if (value == null)
                 return "NULL";
-            return ParseUtils.quote(ParseUtils.formatDate(value, UTC, PATTERN));
+            return Long.toString(value.getTime());
         }
 
         @Override

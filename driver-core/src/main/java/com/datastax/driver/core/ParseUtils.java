@@ -325,20 +325,6 @@ public abstract class ParseUtils {
     }
 
     /**
-     * Formats the given date, using the given time zone and the given pattern.
-     *
-     * @param date     The date to format.
-     * @param timeZone The time zone to use.
-     * @param pattern  The date pattern to use.
-     * @return The formatted date.
-     */
-    public static String formatDate(Date date, TimeZone timeZone, String pattern) {
-        SimpleDateFormat formatter = new SimpleDateFormat(pattern);
-        formatter.setTimeZone(timeZone);
-        return formatter.format(date);
-    }
-
-    /**
      * Parse the given string as a time, using the following time pattern: {@code hh:mm:ss[.fffffffff]}.
      * <p/>
      * This method is loosely based on {@code java.sql.Timestamp}.

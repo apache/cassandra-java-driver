@@ -26,7 +26,6 @@ import com.google.common.reflect.TypeToken;
 import org.testng.annotations.Test;
 
 import java.nio.ByteBuffer;
-import java.text.ParseException;
 import java.util.*;
 
 import static com.datastax.driver.core.Assertions.assertThat;
@@ -253,24 +252,6 @@ public class TypeCodecTest {
                 .cannotFormat(type4UUID);
     }
 
-    @Test(groups = "unit")
-    public void should_format_timestamp_with_iso8601_pattern() throws ParseException {
-        // given
-        // 2015 Dec 7th, 17:53:46.999, at UTC-7
-        GregorianCalendar cal = new GregorianCalendar(TimeZone.getTimeZone("GMT-7:00"));
-        cal.set(Calendar.YEAR, 2015);
-        cal.set(Calendar.MONTH, 11);
-        cal.set(Calendar.DAY_OF_MONTH, 7);
-        cal.set(Calendar.HOUR_OF_DAY, 17);
-        cal.set(Calendar.MINUTE, 53);
-        cal.set(Calendar.SECOND, 46);
-        cal.set(Calendar.MILLISECOND, 999);
-        Date date = cal.getTime();
-        // when
-        String formatted = TypeCodec.timestamp().format(date);
-        // then
-        assertThat(formatted).isEqualTo("'2015-12-08T00:53:46.999+0000'");
-    }
 
     /**
      * Ensures that primitive types are correctly handled and wrapped when necessary.

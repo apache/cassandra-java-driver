@@ -121,7 +121,7 @@ public class QueryBuilderTest {
 
         Date date = new Date();
         date.setTime(1234325);
-        query = "SELECT * FROM foo WHERE d='1970-01-01T00:20:34.325+0000';";
+        query = "SELECT * FROM foo WHERE d=1234325;";
         select = select().all().from("foo").where(eq("d", date));
         assertEquals(select.toString(), query);
 
