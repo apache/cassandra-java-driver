@@ -232,12 +232,12 @@ public abstract class ParseUtils {
      * by single quotes, and {@code false} otherwise.
      */
     public static boolean isQuoted(String value) {
-        return value.charAt(0) == '\'' && value.charAt(value.length() - 1) == '\'';
+        return value != null && value.length() > 1 && value.charAt(0) == '\'' && value.charAt(value.length() - 1) == '\'';
     }
-
 
     /**
      * Quote the given string; single quotes are escaped.
+     * If the given string is null, this method returns a quoted empty string ({@code ''}).
      *
      * @param value The value to quote.
      * @return The quoted string.
@@ -247,12 +247,15 @@ public abstract class ParseUtils {
     }
 
     /**
-     * Unquote the given string; single quotes are unescaped.
+     * Unquote the given string if it is quoted; single quotes are unescaped.
+     * If the given string is not quoted, it is returned without any modification.
      *
      * @param value The string to unquote.
      * @return The unquoted string.
      */
     public static String unquote(String value) {
+        if (!isQuoted(value))
+            return value;
         return value.substring(1, value.length() - 1).replace("''", "'");
     }
 
@@ -445,7 +448,7 @@ public abstract class ParseUtils {
      */
     private static String replaceChar(String text, char search, String replacement) {
         if (text == null || text.isEmpty())
-            return text;
+            return "";
 
         int nbMatch = 0;
         int start = -1;
