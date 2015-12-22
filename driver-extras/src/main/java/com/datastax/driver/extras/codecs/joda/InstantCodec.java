@@ -31,7 +31,16 @@ import static com.datastax.driver.core.ParseUtils.*;
 import static java.lang.Long.parseLong;
 
 /**
- * {@link TypeCodec} that maps {@link Instant} to CQL {@code timestamp}.
+ * {@link TypeCodec} that maps {@link Instant} to CQL {@code timestamp}
+ * allowing the setting and retrieval of {@code timestamp}
+ * columns as {@link Instant} instances.
+ * <p/>
+ * Since C* <code>timestamp</code> columns do not preserve timezones
+ * any attached timezone information will be lost.
+ * <p/>
+ * <strong>IMPORTANT</strong>: this codec's {@link #format(Instant) format} method formats
+ * timestamps using an ISO-8601 format that includes milliseconds.
+ * <strong>This format is incompatible with Cassandra versions < 2.0.9.</strong>
  *
  * @see DateTimeCodec
  * @see <a href="https://cassandra.apache.org/doc/cql3/CQL-2.2.html#usingtimestamps">Working with timestamps</a>

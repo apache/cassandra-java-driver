@@ -40,13 +40,12 @@ import java.util.Map;
  * users should manually downcast to either {@link JsonObject} or {@link JsonArray},
  * as in the example below:
  * <pre>{@code
- * <p/>
  * // setting values
  * JsonObject myObject = ...
  * PreparedStatement ps = ...
  * // set values using JsonStructure as target Java type
  * BoundStatement bs = ps.bind().set(1, myObject, JsonStructure.class);
- * <p/>
+ *
  * // retrieving values
  * Row row = session.execute(bs).one();
  * // use JsonStructure as target Java type to retrieve values
@@ -56,13 +55,10 @@ import java.util.Map;
  *     ...
  * }
  * }</pre>
- * <p/>
- * <p/>
  * Note that at runtime, this codec requires the presence of both JSR-353 API
  * and a JSR-353-compatible runtime library, such as
  * <a href="https://jsonp.java.net/download.html">JSR-353's reference implementation</a>.
  * If you use Maven, this can be done by declaring the following dependencies in your project:
- * <p/>
  * <pre>{@code
  * <dependency>
  *   <groupId>javax.json</groupId>

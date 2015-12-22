@@ -33,11 +33,9 @@ import java.nio.ByteBuffer;
  * A JSON codec that uses the <a href="http://wiki.fasterxml.com/JacksonHome">Jackson</a>
  * library to perform serialization and deserialization of JSON objects.
  * <p/>
- * <p/>
  * This codec maps a single Java object to a single JSON structure at a time;
  * mapping of arrays or collections to root-level JSON arrays is not supported,
  * but such a codec can be easily crafted after this one.
- * <p/>
  * <p/>
  * Note that this codec requires the presence of Jackson library at runtime.
  * If you use Maven, this can be done by declaring the following dependency in your project:

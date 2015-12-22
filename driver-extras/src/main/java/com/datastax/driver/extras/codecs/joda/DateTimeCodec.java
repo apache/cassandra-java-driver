@@ -33,12 +33,10 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static org.joda.time.DateTimeZone.UTC;
 
 /**
- * <p/>
  * {@link TypeCodec} that maps
  * {@link DateTime} to CQL {@code tuple<timestamp,varchar>},
  * providing a pattern for maintaining timezone information in
  * Cassandra.
- * <p/>
  * <p/>
  * Since Cassandra's <code>timestamp</code> type preserves only
  * milliseconds since epoch, any timezone information
@@ -47,6 +45,10 @@ import static org.joda.time.DateTimeZone.UTC;
  * persisted in the <code>varchar</code> field such that when the
  * value is deserialized the timezone is
  * preserved.
+ * <p/>
+ * <strong>IMPORTANT</strong>: this codec's {@link #format(Object) format} method formats
+ * timestamps using an ISO-8601 format that includes nanoseconds.
+ * <strong>This format is incompatible with Cassandra versions < 2.0.9.</strong>
  *
  * @see <a href="https://cassandra.apache.org/doc/cql3/CQL-2.2.html#usingtimestamps">Working with timestamps</a>
  * section of CQL specification.

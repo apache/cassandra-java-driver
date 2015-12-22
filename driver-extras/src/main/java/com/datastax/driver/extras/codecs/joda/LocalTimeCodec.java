@@ -33,8 +33,7 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
 /**
  * {@link TypeCodec} that maps {@link LocalTime} to CQL {@code time} (long representing nanoseconds since midnight).
  * <p/>
- * <p/>
- * IMPORTANT: {@link LocalTime} has millisecond precision; nanoseconds below one millisecond will be lost
+ * <strong>IMPORTANT</strong>: {@link LocalTime} has millisecond precision; nanoseconds below one millisecond will be lost
  * during deserialization.
  */
 public class LocalTimeCodec extends TypeCodec<LocalTime> {
