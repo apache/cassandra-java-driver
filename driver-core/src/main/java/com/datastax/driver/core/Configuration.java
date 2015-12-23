@@ -72,6 +72,24 @@ public class Configuration {
         this.codecRegistry = codecRegistry;
     }
 
+    /**
+     * Copy constructor.
+     *
+     * @param toCopy the object to copy from.
+     */
+    protected Configuration(Configuration toCopy) {
+        this(
+                toCopy.getPolicies(),
+                toCopy.getProtocolOptions(),
+                toCopy.getPoolingOptions(),
+                toCopy.getSocketOptions(),
+                toCopy.getMetricsOptions(),
+                toCopy.getQueryOptions(),
+                toCopy.getNettyOptions(),
+                toCopy.getCodecRegistry()
+        );
+    }
+
     void register(Cluster.Manager manager) {
         protocolOptions.register(manager);
         poolingOptions.register(manager);
