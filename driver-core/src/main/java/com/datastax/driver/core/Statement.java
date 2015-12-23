@@ -492,7 +492,24 @@ public abstract class Statement {
             return queryOptions.getDefaultIdempotence();
     }
 
-    Map<String, ByteBuffer> getOutgoingPayload() {
+    /**
+     * Returns this statement's outgoing payload.
+     * Each time this statement is executed, this payload will be included in the query request.
+     * <p/>
+     * This method returns {@code null} if no payload has been set, otherwise
+     * it always returns immutable maps.
+     * <p/>
+     * This feature is only available with {@link ProtocolVersion#V4} or above.
+     * Trying to include custom payloads in requests sent by the driver
+     * under lower protocol versions will result in an
+     * {@link com.datastax.driver.core.exceptions.UnsupportedFeatureException}
+     * (wrapped in a {@link com.datastax.driver.core.exceptions.NoHostAvailableException}).
+     *
+     * @return the outgoing payload to include with this statement,
+     * or {@code null} if no payload has been set.
+     * @since 2.2
+     */
+    public Map<String, ByteBuffer> getOutgoingPayload() {
         return outgoingPayload;
     }
 
