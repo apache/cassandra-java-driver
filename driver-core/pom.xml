@@ -170,7 +170,7 @@
             <Bundle-SymbolicName>com.datastax.driver.core</Bundle-SymbolicName>
             <Bundle-Version>${project.version}</Bundle-Version>
             <_include>-osgi.bnd</_include>
-            <Import-Package><![CDATA[com.google.common*;version="[14.0,19)",*]]></Import-Package>
+            <Import-Package><![CDATA[com.google.common*;version="[16.0.1,19)",*]]></Import-Package>
           </instructions>
           <supportedProjectTypes>
             <supportedProjectType>jar</supportedProjectType>
@@ -189,7 +189,7 @@
             <configuration>
               <manifestLocation>${project.build.directory}/META-INF-shaded</manifestLocation>
               <instructions>
-                <Import-Package><![CDATA[com.google.common.*;version="[14.0,19)",!io.netty.*,*]]></Import-Package>
+                <Import-Package><![CDATA[com.google.common.*;version="[16.0.1,19)",!io.netty.*,*]]></Import-Package>
                 <Private-Package>com.datastax.shaded.*</Private-Package>
               </instructions>
             </configuration>
