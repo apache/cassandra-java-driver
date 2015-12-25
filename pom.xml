@@ -66,6 +66,8 @@
     <commons-exec.version>1.3</commons-exec.version>
     <scassandra.version>0.11.0</scassandra.version>
     <main.basedir>${project.basedir}</main.basedir>
+    <ipprefix>127.0.1.</ipprefix>
+    <currentYear>2015</currentYear>
     <!-- Set default javadoc.opts, overriden by profiles -->
     <javadoc.opts />
   </properties>
