@@ -79,6 +79,26 @@
               <!-- optional dependencies from other modules (must be explicitly declared here in order to be correctly resolved) -->
               <additionalDependencies>
                 <additionalDependency>
+                  <groupId>org.xerial.snappy</groupId>
+                  <artifactId>snappy-java</artifactId>
+                  <version>${snappy.version}</version>
+                </additionalDependency>
+                <additionalDependency>
+                  <groupId>net.jpountz.lz4</groupId>
+                  <artifactId>lz4</artifactId>
+                  <version>${lz4.version}</version>
+                </additionalDependency>
+                <additionalDependency>
+                  <groupId>org.hdrhistogram</groupId>
+                  <artifactId>HdrHistogram</artifactId>
+                  <version>${hdr.version}</version>
+                </additionalDependency>
+                <additionalDependency>
+                  <groupId>com.fasterxml.jackson.core</groupId>
+                  <artifactId>jackson-core</artifactId>
+                  <version>${jackson.version}</version>
+                </additionalDependency>
+                <additionalDependency>
                   <groupId>com.fasterxml.jackson.core</groupId>
                   <artifactId>jackson-databind</artifactId>
                   <version>${jackson.version}</version>
