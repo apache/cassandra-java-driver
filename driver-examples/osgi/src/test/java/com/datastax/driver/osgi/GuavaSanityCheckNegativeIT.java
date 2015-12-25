@@ -27,8 +27,12 @@ import static org.ops4j.pax.exam.CoreOptions.options;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
+/**
+ * This test is no longer valid since the driver bundle has the following new requirement
+ * for Guava: {@code [16.0.1,19)}.
+ */
 @Listeners({PaxExam.class})
-@Test(groups = "short")
+@Test(groups = "short", enabled = false)
 public class GuavaSanityCheckNegativeIT {
 
     @Configuration
