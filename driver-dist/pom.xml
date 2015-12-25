@@ -115,6 +115,7 @@
           <descriptors>
             <descriptor>src/assembly/binary-tarball.xml</descriptor>
           </descriptors>
+          <tarLongFileMode>posix</tarLongFileMode>
         </configuration>
       </plugin>
       <plugin>
