@@ -129,12 +129,15 @@
   
   <profiles>
     <profile>
-      <id>default</id>
+      <id>unit</id>
       <properties>
         <env>default</env>
       </properties>
+      <!-- do not use activeByDefault as other profiles might be active -->
       <activation>
-        <activeByDefault>true</activeByDefault>
+        <property>
+          <name>!activateUnitTests</name>
+        </property>
       </activation>
       <build>
         <plugins>
