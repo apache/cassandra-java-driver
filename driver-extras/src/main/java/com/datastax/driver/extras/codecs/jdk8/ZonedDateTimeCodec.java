@@ -51,8 +51,7 @@ import static java.time.temporal.ChronoField.*;
  * timestamps using an ISO-8601 format that includes milliseconds.
  * <strong>This format is incompatible with Cassandra versions < 2.0.9.</strong>
  *
- * @see <a href="https://cassandra.apache.org/doc/cql3/CQL-2.2.html#usingtimestamps">Working with timestamps</a>
- * section of CQL specification.
+ * @see <a href="https://cassandra.apache.org/doc/cql3/CQL-2.2.html#usingtimestamps">'Working with timestamps' section of CQL specification</a>
  */
 public class ZonedDateTimeCodec extends TypeCodec.AbstractTupleCodec<ZonedDateTime> {
 

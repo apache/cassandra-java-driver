@@ -806,7 +806,7 @@ public abstract class TableOptions<T extends TableOptions> extends SchemaStateme
          */
         public static class DateTieredCompactionStrategyOptions extends CompactionOptions<DateTieredCompactionStrategyOptions> {
 
-            enum TimeStampResolution {MICROSECONDS, MILLISECONDS}
+            public enum TimeStampResolution {MICROSECONDS, MILLISECONDS}
 
             private Optional<Integer> baseTimeSeconds = Optional.absent();
 

@@ -115,7 +115,7 @@ public interface Session extends Closeable {
      *
      * @param query  the CQL query to execute.
      * @param values values required for the execution of {@code query}. See
-     *               {@link SimpleStatement(String, Object...)} for more detail.
+     *               {@link SimpleStatement#SimpleStatement(String, Object...)} for more detail.
      * @return the result of the query. That result will never be null but can
      * be empty (and will be for any non SELECT query).
      * @throws NoHostAvailableException    if no host in the cluster can be
@@ -141,7 +141,7 @@ public interface Session extends Closeable {
      * guarantee that if the request is invalid, an exception will be thrown
      * by this method.
      *
-     * @param statement the CQL query to execute (that can be any {@code Statement}).
+     * @param statement the CQL query to execute (that can be any {@link Statement}).
      * @return the result of the query. That result will never be null but can
      * be empty (and will be for any non SELECT query).
      * @throws NoHostAvailableException    if no host in the cluster can be
@@ -175,7 +175,7 @@ public interface Session extends Closeable {
      *
      * @param query  the CQL query to execute.
      * @param values values required for the execution of {@code query}. See
-     *               {@link SimpleStatement(String, Object...)} for more detail.
+     *               {@link SimpleStatement#SimpleStatement(String, Object...)} for more detail.
      * @return a future on the result of the query.
      * @throws UnsupportedFeatureException if version 1 of the protocol
      *                                     is in use (i.e. if you've force version 1 through {@link Cluster.Builder#withProtocolVersion}

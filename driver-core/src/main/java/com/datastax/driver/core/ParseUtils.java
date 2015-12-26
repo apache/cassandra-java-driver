@@ -266,8 +266,7 @@ public abstract class ParseUtils {
      * to parse date strings)..
      *
      * @throws ParseException If the given string is not a valid ISO-8601 date.
-     * @see <a href="https://cassandra.apache.org/doc/cql3/CQL-2.2.html#usingtimestamps">Working with timestamps</a>
-     * section of CQL specification.
+     * @see <a href="https://cassandra.apache.org/doc/cql3/CQL-2.2.html#usingtimestamps">'Working with timestamps' section of CQL specification</a>
      */
     public static Date parseDate(String str) throws ParseException {
         SimpleDateFormat parser = new SimpleDateFormat();
@@ -301,8 +300,7 @@ public abstract class ParseUtils {
      * to parse date strings)..
      *
      * @throws ParseException If the given string cannot be parsed with the given pattern.
-     * @see <a href="https://cassandra.apache.org/doc/cql3/CQL-2.2.html#usingtimestamps">Working with timestamps</a>
-     * section of CQL specification.
+     * @see <a href="https://cassandra.apache.org/doc/cql3/CQL-2.2.html#usingtimestamps">'Working with timestamps' section of CQL specification</a>
      */
     public static Date parseDate(String str, String pattern) throws ParseException {
         SimpleDateFormat parser = new SimpleDateFormat();
@@ -335,8 +333,7 @@ public abstract class ParseUtils {
      * @param str The string to parse.
      * @return A long value representing the number of nanoseconds since midnight.
      * @throws ParseException if the string cannot be parsed.
-     * @see <a href="https://cassandra.apache.org/doc/cql3/CQL-2.2.html#usingtime">Working with time</a>
-     * section of CQL specification.
+     * @see <a href="https://cassandra.apache.org/doc/cql3/CQL-2.2.html#usingtime">'Working with time' section of CQL specification</a>
      */
     public static long parseTime(String str) throws ParseException {
         String nanos_s;
@@ -403,8 +400,7 @@ public abstract class ParseUtils {
      *
      * @param value A long value representing the number of nanoseconds since midnight.
      * @return The formatted value.
-     * @see <a href="https://cassandra.apache.org/doc/cql3/CQL-2.2.html#usingtime">Working with time</a>
-     * section of CQL specification.
+     * @see <a href="https://cassandra.apache.org/doc/cql3/CQL-2.2.html#usingtime">'Working with time' section of CQL specification</a>
      */
     public static String formatTime(long value) {
         int nano = (int) (value % 1000000000);
