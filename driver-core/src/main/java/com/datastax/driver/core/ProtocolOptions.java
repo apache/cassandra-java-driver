@@ -142,15 +142,6 @@ public class ProtocolOptions {
         this.authProvider = authProvider;
     }
 
-    /**
-     * @throws IllegalArgumentException if {@code protocolVersion} does not correspond to any known version.
-     * @deprecated This is provided for backward compatibility; use {@link #ProtocolOptions(int, ProtocolVersion, int, SSLOptions, AuthProvider))} instead.
-     */
-    @Deprecated
-    public ProtocolOptions(int port, int protocolVersion, SSLOptions sslOptions, AuthProvider authProvider) {
-        this(port, ProtocolVersion.fromInt(protocolVersion), DEFAULT_MAX_SCHEMA_AGREEMENT_WAIT_SECONDS, sslOptions, authProvider);
-    }
-
     void register(Cluster.Manager manager) {
         this.manager = manager;
     }
