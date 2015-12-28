@@ -32,9 +32,9 @@ class Responses {
     private Responses() {
     }
 
-    public static class Error extends Message.Response {
+    static class Error extends Message.Response {
 
-        public static final Message.Decoder<Error> decoder = new Message.Decoder<Error>() {
+        static final Message.Decoder<Error> decoder = new Message.Decoder<Error>() {
             @Override
             public Error decode(ByteBuf body, ProtocolVersion version, CodecRegistry codecRegistry) {
                 ExceptionCode code = ExceptionCode.fromValue(body.readInt());
@@ -89,10 +89,10 @@ class Responses {
             }
         };
 
-        public final ProtocolVersion serverProtocolVersion;
-        public final ExceptionCode code;
-        public final String message;
-        public final Object infos; // can be null
+        final ProtocolVersion serverProtocolVersion;
+        final ExceptionCode code;
+        final String message;
+        final Object infos; // can be null
 
         private Error(ProtocolVersion serverProtocolVersion, ExceptionCode code, String message, Object infos) {
             super(Message.Response.Type.ERROR);
@@ -102,7 +102,7 @@ class Responses {
             this.infos = infos;
         }
 
-        public DriverException asException(InetSocketAddress host) {
+        DriverException asException(InetSocketAddress host) {
             switch (code) {
                 case SERVER_ERROR:
                     return new ServerError(host, message);
@@ -151,9 +151,9 @@ class Responses {
         }
     }
 
-    public static class Ready extends Message.Response {
+    static class Ready extends Message.Response {
 
-        public static final Message.Decoder<Ready> decoder = new Message.Decoder<Ready>() {
+        static final Message.Decoder<Ready> decoder = new Message.Decoder<Ready>() {
             public Ready decode(ByteBuf body, ProtocolVersion version, CodecRegistry codecRegistry) {
                 // TODO: Would it be cool to return a singleton? Check we don't need to
                 // set the streamId or something
@@ -161,7 +161,7 @@ class Responses {
             }
         };
 
-        public Ready() {
+        Ready() {
             super(Message.Response.Type.READY);
         }
 
@@ -171,18 +171,18 @@ class Responses {
         }
     }
 
-    public static class Authenticate extends Message.Response {
+    static class Authenticate extends Message.Response {
 
-        public static final Message.Decoder<Authenticate> decoder = new Message.Decoder<Authenticate>() {
+        static final Message.Decoder<Authenticate> decoder = new Message.Decoder<Authenticate>() {
             public Authenticate decode(ByteBuf body, ProtocolVersion version, CodecRegistry codecRegistry) {
                 String authenticator = CBUtil.readString(body);
                 return new Authenticate(authenticator);
             }
         };
 
-        public final String authenticator;
+        final String authenticator;
 
-        public Authenticate(String authenticator) {
+        Authenticate(String authenticator) {
             super(Message.Response.Type.AUTHENTICATE);
             this.authenticator = authenticator;
         }
@@ -193,18 +193,18 @@ class Responses {
         }
     }
 
-    public static class Supported extends Message.Response {
+    static class Supported extends Message.Response {
 
-        public static final Message.Decoder<Supported> decoder = new Message.Decoder<Supported>() {
+        static final Message.Decoder<Supported> decoder = new Message.Decoder<Supported>() {
             public Supported decode(ByteBuf body, ProtocolVersion version, CodecRegistry codecRegistry) {
                 return new Supported(CBUtil.readStringToStringListMap(body));
             }
         };
 
-        public final Map<String, List<String>> supported;
-        public final Set<ProtocolOptions.Compression> supportedCompressions = EnumSet.noneOf(ProtocolOptions.Compression.class);
+        final Map<String, List<String>> supported;
+        final Set<ProtocolOptions.Compression> supportedCompressions = EnumSet.noneOf(ProtocolOptions.Compression.class);
 
-        public Supported(Map<String, List<String>> supported) {
+        Supported(Map<String, List<String>> supported) {
             super(Message.Response.Type.SUPPORTED);
             this.supported = supported;
 
@@ -229,16 +229,16 @@ class Responses {
         }
     }
 
-    public static abstract class Result extends Message.Response {
+    static abstract class Result extends Message.Response {
 
-        public static final Message.Decoder<Result> decoder = new Message.Decoder<Result>() {
+        static final Message.Decoder<Result> decoder = new Message.Decoder<Result>() {
             public Result decode(ByteBuf body, ProtocolVersion version, CodecRegistry codecRegistry) {
                 Kind kind = Kind.fromId(body.readInt());
                 return kind.subDecoder.decode(body, version, codecRegistry);
             }
         };
 
-        public enum Kind {
+        enum Kind {
             VOID(1, Void.subcodec),
             ROWS(2, Rows.subcodec),
             SET_KEYSPACE(3, SetKeyspace.subcodec),
@@ -262,12 +262,12 @@ class Responses {
                 }
             }
 
-            private Kind(int id, Message.Decoder<Result> subDecoder) {
+            Kind(int id, Message.Decoder<Result> subDecoder) {
                 this.id = id;
                 this.subDecoder = subDecoder;
             }
 
-            public static Kind fromId(int id) {
+            static Kind fromId(int id) {
                 Kind k = ids[id];
                 if (k == null)
                     throw new DriverInternalError(String.format("Unknown kind id %d in RESULT message", id));
@@ -275,21 +275,21 @@ class Responses {
             }
         }
 
-        public final Kind kind;
+        final Kind kind;
 
         protected Result(Kind kind) {
             super(Message.Response.Type.RESULT);
             this.kind = kind;
         }
 
-        public static class Void extends Result {
+        static class Void extends Result {
             // Even though we have no specific information here, don't make a
             // singleton since as each message it has in fact a streamid and connection.
-            public Void() {
+            Void() {
                 super(Kind.VOID);
             }
 
-            public static final Message.Decoder<Result> subcodec = new Message.Decoder<Result>() {
+            static final Message.Decoder<Result> subcodec = new Message.Decoder<Result>() {
                 public Result decode(ByteBuf body, ProtocolVersion version, CodecRegistry codecRegistry) {
                     return new Void();
                 }
@@ -301,15 +301,15 @@ class Responses {
             }
         }
 
-        public static class SetKeyspace extends Result {
-            public final String keyspace;
+        static class SetKeyspace extends Result {
+            final String keyspace;
 
             private SetKeyspace(String keyspace) {
                 super(Kind.SET_KEYSPACE);
                 this.keyspace = keyspace;
             }
 
-            public static final Message.Decoder<Result> subcodec = new Message.Decoder<Result>() {
+            static final Message.Decoder<Result> subcodec = new Message.Decoder<Result>() {
                 public Result decode(ByteBuf body, ProtocolVersion version, CodecRegistry codecRegistry) {
                     return new SetKeyspace(CBUtil.readString(body));
                 }
@@ -321,17 +321,17 @@ class Responses {
             }
         }
 
-        public static class Rows extends Result {
+        static class Rows extends Result {
 
-            public static class Metadata {
+            static class Metadata {
 
-                private static enum Flag {
+                private enum Flag {
                     // The order of that enum matters!!
                     GLOBAL_TABLES_SPEC,
                     HAS_MORE_PAGES,
                     NO_METADATA;
 
-                    public static EnumSet<Flag> deserialize(int flags) {
+                    static EnumSet<Flag> deserialize(int flags) {
                         EnumSet<Flag> set = EnumSet.noneOf(Flag.class);
                         Flag[] values = Flag.values();
                         for (int n = 0; n < values.length; n++) {
@@ -341,7 +341,7 @@ class Responses {
                         return set;
                     }
 
-                    public static int serialize(EnumSet<Flag> flags) {
+                    static int serialize(EnumSet<Flag> flags) {
                         int i = 0;
                         for (Flag flag : flags)
                             i |= 1 << flag.ordinal();
@@ -351,10 +351,10 @@ class Responses {
 
                 static final Metadata EMPTY = new Metadata(0, null, null, null);
 
-                public final int columnCount;
-                public final ColumnDefinitions columns; // Can be null if no metadata was asked by the query
-                public final ByteBuffer pagingState;
-                public final int[] pkIndices;
+                final int columnCount;
+                final ColumnDefinitions columns; // Can be null if no metadata was asked by the query
+                final ByteBuffer pagingState;
+                final int[] pkIndices;
 
                 private Metadata(int columnCount, ColumnDefinitions columns, ByteBuffer pagingState, int[] pkIndices) {
                     this.columnCount = columnCount;
@@ -363,11 +363,11 @@ class Responses {
                     this.pkIndices = pkIndices;
                 }
 
-                public static Metadata decode(ByteBuf body, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
+                static Metadata decode(ByteBuf body, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
                     return decode(body, false, protocolVersion, codecRegistry);
                 }
 
-                public static Metadata decode(ByteBuf body, boolean withPkIndices, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
+                static Metadata decode(ByteBuf body, boolean withPkIndices, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
 
                     // flags & column count
                     EnumSet<Flag> flags = Flag.deserialize(body.readInt());
@@ -428,7 +428,7 @@ class Responses {
                 }
             }
 
-            public static final Message.Decoder<Result> subcodec = new Message.Decoder<Result>() {
+            static final Message.Decoder<Result> subcodec = new Message.Decoder<Result>() {
                 public Result decode(ByteBuf body, ProtocolVersion version, CodecRegistry codecRegistry) {
 
                     Metadata metadata = Metadata.decode(body, version, codecRegistry);
@@ -448,8 +448,8 @@ class Responses {
                 }
             };
 
-            public final Metadata metadata;
-            public final Queue<List<ByteBuffer>> data;
+            final Metadata metadata;
+            final Queue<List<ByteBuffer>> data;
             private final ProtocolVersion version;
 
             private Rows(Metadata metadata, Queue<List<ByteBuffer>> data, ProtocolVersion version) {
@@ -492,9 +492,9 @@ class Responses {
             }
         }
 
-        public static class Prepared extends Result {
+        static class Prepared extends Result {
 
-            public static final Message.Decoder<Result> subcodec = new Message.Decoder<Result>() {
+            static final Message.Decoder<Result> subcodec = new Message.Decoder<Result>() {
                 public Result decode(ByteBuf body, ProtocolVersion version, CodecRegistry codecRegistry) {
                     MD5Digest id = MD5Digest.wrap(CBUtil.readBytes(body));
                     boolean withPkIndices = version.compareTo(V4) >= 0;
@@ -517,9 +517,9 @@ class Responses {
                 }
             };
 
-            public final MD5Digest statementId;
-            public final Rows.Metadata metadata;
-            public final Rows.Metadata resultMetadata;
+            final MD5Digest statementId;
+            final Rows.Metadata metadata;
+            final Rows.Metadata resultMetadata;
 
             private Prepared(MD5Digest statementId, Rows.Metadata metadata, Rows.Metadata resultMetadata) {
                 super(Kind.PREPARED);
@@ -534,17 +534,17 @@ class Responses {
             }
         }
 
-        public static class SchemaChange extends Result {
+        static class SchemaChange extends Result {
 
-            public enum Change {CREATED, UPDATED, DROPPED}
+            enum Change {CREATED, UPDATED, DROPPED}
 
-            public final Change change;
-            public final SchemaElement targetType;
-            public final String targetKeyspace;
-            public final String targetName;
-            public final List<String> targetSignature;
+            final Change change;
+            final SchemaElement targetType;
+            final String targetKeyspace;
+            final String targetName;
+            final List<String> targetSignature;
 
-            public static final Message.Decoder<Result> subcodec = new Message.Decoder<Result>() {
+            static final Message.Decoder<Result> subcodec = new Message.Decoder<Result>() {
                 public Result decode(ByteBuf body, ProtocolVersion version, CodecRegistry codecRegistry) {
                     // Note: the CREATE KEYSPACE/TABLE/TYPE SCHEMA_CHANGE response is different from the SCHEMA_CHANGE EVENT type
                     Change change;
@@ -592,17 +592,17 @@ class Responses {
         }
     }
 
-    public static class Event extends Message.Response {
+    static class Event extends Message.Response {
 
-        public static final Message.Decoder<Event> decoder = new Message.Decoder<Event>() {
+        static final Message.Decoder<Event> decoder = new Message.Decoder<Event>() {
             public Event decode(ByteBuf body, ProtocolVersion version, CodecRegistry codecRegistry) {
                 return new Event(ProtocolEvent.deserialize(body, version));
             }
         };
 
-        public final ProtocolEvent event;
+        final ProtocolEvent event;
 
-        public Event(ProtocolEvent event) {
+        Event(ProtocolEvent event) {
             super(Message.Response.Type.EVENT);
             this.event = event;
         }
@@ -613,9 +613,9 @@ class Responses {
         }
     }
 
-    public static class AuthChallenge extends Message.Response {
+    static class AuthChallenge extends Message.Response {
 
-        public static final Message.Decoder<AuthChallenge> decoder = new Message.Decoder<AuthChallenge>() {
+        static final Message.Decoder<AuthChallenge> decoder = new Message.Decoder<AuthChallenge>() {
             public AuthChallenge decode(ByteBuf body, ProtocolVersion version, CodecRegistry codecRegistry) {
                 ByteBuffer b = CBUtil.readValue(body);
                 if (b == null)
@@ -627,7 +627,7 @@ class Responses {
             }
         };
 
-        public final byte[] token;
+        final byte[] token;
 
         private AuthChallenge(byte[] token) {
             super(Message.Response.Type.AUTH_CHALLENGE);
@@ -635,9 +635,9 @@ class Responses {
         }
     }
 
-    public static class AuthSuccess extends Message.Response {
+    static class AuthSuccess extends Message.Response {
 
-        public static final Message.Decoder<AuthSuccess> decoder = new Message.Decoder<AuthSuccess>() {
+        static final Message.Decoder<AuthSuccess> decoder = new Message.Decoder<AuthSuccess>() {
             public AuthSuccess decode(ByteBuf body, ProtocolVersion version, CodecRegistry codecRegistry) {
                 ByteBuffer b = CBUtil.readValue(body);
                 if (b == null)
@@ -649,7 +649,7 @@ class Responses {
             }
         };
 
-        public final byte[] token;
+        final byte[] token;
 
         private AuthSuccess(byte[] token) {
             super(Message.Response.Type.AUTH_SUCCESS);

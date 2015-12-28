@@ -25,15 +25,15 @@ import static com.datastax.driver.core.SchemaElement.*;
 
 class ProtocolEvent {
 
-    public enum Type {TOPOLOGY_CHANGE, STATUS_CHANGE, SCHEMA_CHANGE}
+    enum Type {TOPOLOGY_CHANGE, STATUS_CHANGE, SCHEMA_CHANGE}
 
-    public final Type type;
+    final Type type;
 
     private ProtocolEvent(Type type) {
         this.type = type;
     }
 
-    public static ProtocolEvent deserialize(ByteBuf bb, ProtocolVersion version) {
+    static ProtocolEvent deserialize(ByteBuf bb, ProtocolVersion version) {
         switch (CBUtil.readEnumValue(Type.class, bb)) {
             case TOPOLOGY_CHANGE:
                 return TopologyChange.deserializeEvent(bb);
@@ -45,11 +45,11 @@ class ProtocolEvent {
         throw new AssertionError();
     }
 
-    public static class TopologyChange extends ProtocolEvent {
-        public enum Change {NEW_NODE, REMOVED_NODE, MOVED_NODE}
+    static class TopologyChange extends ProtocolEvent {
+        enum Change {NEW_NODE, REMOVED_NODE, MOVED_NODE}
 
-        public final Change change;
-        public final InetSocketAddress node;
+        final Change change;
+        final InetSocketAddress node;
 
         private TopologyChange(Change change, InetSocketAddress node) {
             super(Type.TOPOLOGY_CHANGE);
@@ -70,12 +70,12 @@ class ProtocolEvent {
         }
     }
 
-    public static class StatusChange extends ProtocolEvent {
+    static class StatusChange extends ProtocolEvent {
 
-        public enum Status {UP, DOWN}
+        enum Status {UP, DOWN}
 
-        public final Status status;
-        public final InetSocketAddress node;
+        final Status status;
+        final InetSocketAddress node;
 
         private StatusChange(Status status, InetSocketAddress node) {
             super(Type.STATUS_CHANGE);
@@ -96,17 +96,17 @@ class ProtocolEvent {
         }
     }
 
-    public static class SchemaChange extends ProtocolEvent {
+    static class SchemaChange extends ProtocolEvent {
 
-        public enum Change {CREATED, UPDATED, DROPPED}
+        enum Change {CREATED, UPDATED, DROPPED}
 
-        public final Change change;
-        public final SchemaElement targetType;
-        public final String targetKeyspace;
-        public final String targetName;
-        public final List<String> targetSignature;
+        final Change change;
+        final SchemaElement targetType;
+        final String targetKeyspace;
+        final String targetName;
+        final List<String> targetSignature;
 
-        public SchemaChange(Change change, SchemaElement targetType, String targetKeyspace, String targetName, List<String> targetSignature) {
+        SchemaChange(Change change, SchemaElement targetType, String targetKeyspace, String targetName, List<String> targetSignature) {
             super(Type.SCHEMA_CHANGE);
             this.change = change;
             this.targetType = targetType;
@@ -116,7 +116,7 @@ class ProtocolEvent {
         }
 
         // Assumes the type has already been deserialized
-        private static SchemaChange deserializeEvent(ByteBuf bb, ProtocolVersion version) {
+        static SchemaChange deserializeEvent(ByteBuf bb, ProtocolVersion version) {
             Change change;
             SchemaElement targetType;
             String targetKeyspace, targetName;
