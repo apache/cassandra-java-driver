@@ -42,7 +42,7 @@
             <div class="col-md-8">
               <form id="search" class="form-search dropdown visible-lg-block" ng-controller="search" ng-class="{open: hasResults}" role="search" ng-submit="submit()" data-spy="affix" data-offset-top="130">
                 <div class="form-group has-feedback">
-                  <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('3.0.0-beta1')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+                  <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('3.0.0-rc1')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
                 </div>
                 <ul class="dropdown-menu search-results" role="menu">
                   <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
@@ -63,12 +63,14 @@
               <li>
                 <div class="btn-group">
                   <button id="current-version" class="btn btn-default btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    3.0.0-beta1
+                    3.0.0-rc1
                     <span class="caret"></span>
                   </button>
                   <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
                   
-                    <li class="disabled"><a href="./">3.0.0-beta1</a></li>
+                    <li class="disabled"><a href="./">3.0.0-rc1</a></li>
+                  
+                    <li><a href="3.0.0-beta1/">3.0.0-beta1</a></li>
                   
                     <li><a href="3.0.0-alpha5/">3.0.0-alpha5</a></li>
                   
@@ -182,8 +184,8 @@ for the development version and that some features described here might
 not yet have been released. You can find the documentation for latest
 version through <a href="./">Java driver
 docs</a> or via the release tags,
-<a href="https://github.com/datastax/java-driver/tree/3.0.0-beta1">e.g.
-3.0.0-beta1</a>.</em></p>
+<a href="https://github.com/datastax/java-driver/tree/3.0.0-rc1">e.g.
+3.0.0-rc1</a>.</em></p>
 
 <p>A modern, <a href="features/">feature-rich</a> and highly tunable Java client
 library for Apache Cassandra (1.2+) and DataStax Enterprise (3.1+) using
@@ -251,28 +253,28 @@ it in your application using the following Maven dependency:</p>
 <pre class="highlight"><code><span class="nt">&lt;dependency&gt;</span>
   <span class="nt">&lt;groupId&gt;</span>com.datastax.cassandra<span class="nt">&lt;/groupId&gt;</span>
   <span class="nt">&lt;artifactId&gt;</span>cassandra-driver-core<span class="nt">&lt;/artifactId&gt;</span>
-  <span class="nt">&lt;version&gt;</span>3.0.0-beta1<span class="nt">&lt;/version&gt;</span>
+  <span class="nt">&lt;version&gt;</span>3.0.0-rc1<span class="nt">&lt;/version&gt;</span>
 <span class="nt">&lt;/dependency&gt;</span>
 </code></pre>
 <p>Note that the object mapper is published as a separate artifact:</p>
 <pre class="highlight"><code><span class="nt">&lt;dependency&gt;</span>
   <span class="nt">&lt;groupId&gt;</span>com.datastax.cassandra<span class="nt">&lt;/groupId&gt;</span>
   <span class="nt">&lt;artifactId&gt;</span>cassandra-driver-mapping<span class="nt">&lt;/artifactId&gt;</span>
-  <span class="nt">&lt;version&gt;</span>3.0.0-beta1<span class="nt">&lt;/version&gt;</span>
+  <span class="nt">&lt;version&gt;</span>3.0.0-rc1<span class="nt">&lt;/version&gt;</span>
 <span class="nt">&lt;/dependency&gt;</span>
 </code></pre>
 <p>The ‘extras’ module is also published as a separate artifact:</p>
 <pre class="highlight"><code><span class="nt">&lt;dependency&gt;</span>
   <span class="nt">&lt;groupId&gt;</span>com.datastax.cassandra<span class="nt">&lt;/groupId&gt;</span>
   <span class="nt">&lt;artifactId&gt;</span>cassandra-driver-extras<span class="nt">&lt;/artifactId&gt;</span>
-  <span class="nt">&lt;version&gt;</span>3.0.0-beta1<span class="nt">&lt;/version&gt;</span>
+  <span class="nt">&lt;version&gt;</span>3.0.0-rc1<span class="nt">&lt;/version&gt;</span>
 <span class="nt">&lt;/dependency&gt;</span>
 </code></pre>
 <p>We also provide a <a href="features/shaded_jar/">shaded JAR</a>
 to avoid the explicit dependency to Netty.</p>
 
 <p>If you can’t use a dependency management tool, a
-<a href="http://downloads.datastax.com/java-driver/cassandra-java-driver-3.0.0-beta1.tar.gz">binary tarball</a>
+<a href="http://downloads.datastax.com/java-driver/cassandra-java-driver-3.0.0-rc1.tar.gz">binary tarball</a>
 is available for download.</p>
 
 <h2 id="compatibility" class="target">Compatibility<a class="anchor" href="#compatibility" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>

@@ -42,7 +42,7 @@
             <div class="col-md-8">
               <form id="search" class="form-search dropdown visible-lg-block" ng-controller="search" ng-class="{open: hasResults}" role="search" ng-submit="submit()" data-spy="affix" data-offset-top="130">
                 <div class="form-group has-feedback">
-                  <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('3.0.0-beta1')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+                  <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('3.0.0-rc1')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
                 </div>
                 <ul class="dropdown-menu search-results" role="menu">
                   <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
@@ -63,12 +63,14 @@
               <li>
                 <div class="btn-group">
                   <button id="current-version" class="btn btn-default btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    3.0.0-beta1
+                    3.0.0-rc1
                     <span class="caret"></span>
                   </button>
                   <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
                   
-                    <li class="disabled"><a href="./">3.0.0-beta1</a></li>
+                    <li class="disabled"><a href="./">3.0.0-rc1</a></li>
+                  
+                    <li><a href="../3.0.0-beta1/upgrade_guide/">3.0.0-beta1</a></li>
                   
                     <li><a href="../3.0.0-alpha5/upgrade_guide/">3.0.0-alpha5</a></li>
                   
@@ -338,7 +340,7 @@ and use the default codec registry; refer to the Javadocs for guidance on which 
 
 <ul>
 <li>By default, the driver now returns <u>mutable</u>, <u>non thread-safe</u> instances for CQL collection types;
-This affects methods <code>getList</code>, <code>getSet</code>, <code>getMap</code>, <code>getObject</code> and <code>get</code> for all instances of 
+This affects methods <code>getList</code>, <code>getSet</code>, <code>getMap</code>, <code>getObject</code> and <code>get</code> for all instances of
 <code>GettableByIndexData</code> and <code>GettableByNameData</code> (<code>Row</code>, <code>BoundStatement</code>, <code>TupleValue</code> and <code>UDTValue</code>)</li>
 <li>
 <code>RuntimeException</code>s thrown during serialization or deserialization might not be
@@ -527,7 +529,7 @@ binary compatibility on the 2.1 branch).</p></li>
 <li>
 <p>The mapper annotation <code>@Enumerated</code> has been removed, users should now
 use the newly-introduced <code>driver-extras</code> module to get automatic
-enum-to-CQL mappings. Two new codecs provide the same functionality: 
+enum-to-CQL mappings. Two new codecs provide the same functionality:
 <code>EnumOrdinalCodec</code> and <code>EnumNameCodec</code>:</p>
 <pre class="highlight"><code><span class="kd">enum</span> <span class="n">Foo</span> <span class="o">{...}</span>
 <span class="kd">enum</span> <span class="n">Bar</span> <span class="o">{...}</span>
@@ -547,20 +549,24 @@ enum-to-CQL mappings. Two new codecs provide the same functionality:
 </code></pre>
 </li>
 <li><p>The interface <code>IdempotenceAwarePreparedStatement</code> has been removed
-and now the <code>PreparedStatement</code> interface exposes 2 new methods, 
+and now the <code>PreparedStatement</code> interface exposes 2 new methods,
 <code>setIdempotent(Boolean)</code> and <code>isIdempotent()</code>.</p></li>
 <li><p><code>RetryPolicy</code> and <code>ExtendedRetryPolicy</code> (introduced in 2.1.10)
-were merged together; as a consequence, <code>RetryPolicy</code> now has one 
+were merged together; as a consequence, <code>RetryPolicy</code> now has one
 more method: <code>onRequestError</code>; see
 <a href="https://datastax-oss.atlassian.net/browse/JAVA-819">JAVA-819</a> for
 more information. Furthermore, <code>FallthroughRetryPolicy</code> now returns
 <code>RetryDecision.rethrow()</code> when <code>onRequestError</code> is called.</p></li>
+<li><p><code>DseAuthProvider</code> has been deprecated and is now replaced by
+<code>DseGSSAPIAuthProvider</code> for Kerberos authentication. <code>DsePlainTextAuthProvider</code>
+has been introduced to handle plain text authentication with the
+<code>DseAuthenticator</code>.</p></li>
 </ol>
 
 <h3 id="2-1-8" class="target">2.1.8<a class="anchor" href="#2-1-8" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h3>
 
-<p>2.1.8 is binary-compatible with 2.1.7 but introduces a small change in the 
+<p>2.1.8 is binary-compatible with 2.1.7 but introduces a small change in the
 driver’s behavior:</p>
 
 <ol>

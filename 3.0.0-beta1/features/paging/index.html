@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="description" content="High performance Java client for Apache Cassandra">
+    <meta name="author" content="DataStax">
+
+    <title>Java Driver for Apache Cassandra - Paging</title>
+
+    <link rel="icon" href="../../../favicon.ico">
+    <link rel="apple-touch-icon" href="../../../favicon.png">
+    <link href="../../../css/style.css" rel="stylesheet">
+    <link href="../../../css/pygments.css" rel="stylesheet">
+    <link href="../../../css/hotkeys.css" rel="stylesheet">
+
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body ng-app="docs" data-spy="scroll" data-target="#table-of-contents" data-offset="69">
+    <header class="container-fluid navbar">
+      <div class="row">
+        <div class="col-sm-4">
+          <a class="navbar-brand" href="../../"><img alt="Brand" src="../../../img/logo.png">Java Driver for Apache Cassandra</a>
+        </div>
+        <div class="col-md-4 col-md-offset-4">
+          <div class="row">
+            <div class="col-md-12">
+              <ul class="list-inline" role="nav">
+                <li><a href="https://academy.datastax.com/" class="navbar-link">DataStax Academy</a></li>
+                <li><a href="http://www.datastax.com/dev/blog" class="navbar-link">Tech Blog</a></li>
+                <li><a href="http://www.datastax.com/what-we-offer/products-services/support" class="navbar-link">Support</a></li>
+              </ul>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-8">
+              <form id="search" class="form-search dropdown visible-lg-block" ng-controller="search" ng-class="{open: hasResults}" role="search" ng-submit="submit()" data-spy="affix" data-offset-top="130">
+                <div class="form-group has-feedback">
+                  <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('3.0.0-beta1')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+                </div>
+                <ul class="dropdown-menu search-results" role="menu">
+                  <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
+                </ul>
+              </form>
+            </div>
+            <div class="col-md-4">
+              <a href="http://www.datastax.com/download" class="btn btn-primary btn-sm">Download</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row crumbs-wrapper">
+        <div class="col-md-12">
+          <nav id="crumbs" data-spy="affix" data-offset-top="130">
+            <ol class="breadcrumb">
+              
+              <li>
+                <div class="btn-group">
+                  <button id="current-version" class="btn btn-default btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    3.0.0-beta1
+                    <span class="caret"></span>
+                  </button>
+                  <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
+                  
+                    <li><a href="../../../features/paging/">3.0.0-rc1</a></li>
+                  
+                    <li class="disabled"><a href="./">3.0.0-beta1</a></li>
+                  
+                    <li><a href="../../../3.0.0-alpha5/features/paging/">3.0.0-alpha5</a></li>
+                  
+                    <li><a href="../../../2.2.0-rc3/features/paging/">2.2.0-rc3</a></li>
+                  
+                    <li><a href="../../../2.1.9/features/paging/">2.1.9</a></li>
+                  
+                    <li><a href="../../../2.1.8/features/paging/">2.1.8</a></li>
+                  
+                    <li><a href="../../../2.1.7/features/paging/">2.1.7</a></li>
+                  
+                    <li><a href="../../../2.1.6/features/paging/">2.1.6</a></li>
+                  
+                    <li><a href="../../../2.1.5/">2.1.5</a></li>
+                  
+                    <li><a href="../../../2.0.12/features/paging/">2.0.12</a></li>
+                  
+                    <li><a href="../../../2.0.11/features/paging/">2.0.11</a></li>
+                  
+                    <li><a href="../../../2.0.10.1/features/paging/">2.0.10.1</a></li>
+                  
+                    <li><a href="../../../2.0.10/features/paging/">2.0.10</a></li>
+                  
+                  </ul>
+                </div>
+              </li>
+              
+              
+              
+              
+              <li><a href="../../">Home</a></li>
+              
+              
+              
+              
+              
+              <li><a href="../">Features</a></li>
+              
+              
+              
+              
+              
+              <li class="active">Paging</li>
+              <li class="dropdown" id="table-of-contents">
+                <div class="btn-group">
+                  <button id="current-section" type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
+                    Jump to&#8230; <span class="caret"></span><span class="sr-only">Table of Contents</span>
+                  </button>
+                  <ul class="dropdown-menu nav nav-pills nav-stacked">
+                    <li>
+<a href="#paging">Paging
+</a><ul class="nav nav-pills nav-stacked">
+<li><a href="#setting-the-fetch-size">Setting the fetch size
+</a></li>
+<li><a href="#result-set-iteration">Result set iteration
+</a></li>
+<li>
+<a href="#saving-and-reusing-the-paging-state">Saving and reusing the paging state
+</a><ul class="nav nav-pills nav-stacked"><li><a href="#unsafe-api">Unsafe API
+</a></li></ul>
+</li>
+<li><a href="#offset-queries">Offset queries
+</a></li>
+</ul>
+</li>
+                  </ul>
+                </div>
+              </li>
+              
+              
+              
+            </ol>
+          </nav>
+        </div>
+      </div>
+    </header>
+
+    <div class="container-fluid" id="content">
+      <div class="row">
+        <div class="col-md-3">
+          <div id="navigation" class="side-nav" role="tablist" aria-multiselectable="true">
+            <h3>Contents</h3>
+            <ul class="nav nav-pills nav-stacked">
+  
+  
+  
+  <li>
+    <a href="../../changelog/">Changelog <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li class="active">
+    <a href="../">Features <small>page</small></a>
+    <ul class="nav nav-pills nav-stacked">
+  
+  
+  
+  <li>
+    <a href="../address_resolution/">Address resolution <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../async/">Asynchronous programming <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../compression/">Compression <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../pooling/">Connection pooling <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../custom_codecs/">Custom Codecs <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../custom_payloads/">Custom Payloads <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../logging/">Logging <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../metadata/">Metadata <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../native_protocol/">Native protocol <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../object_mapper/">Object Mapper <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li class="active">
+    <a href="./" class="current">Paging <small>page</small></a>
+    
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../query_timestamps/">Query timestamps <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../ssl/">SSL <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../speculative_execution/">Speculative query execution <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../statements/">Statements <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../shaded_jar/">Using the shaded JAR <small>page</small></a>
+  </li>
+  
+  
+</ul>
+
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../../faq/">Frequently Asked Questions <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../../upgrade_guide/">Upgrade guide <small>page</small></a>
+  </li>
+  
+  
+</ul>
+
+          </div>
+        </div>
+        <div class="col-md-9 content">
+          
+
+<h2 id="paging" class="target">Paging<a class="anchor" href="#paging" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h2>
+
+<p>When a query returns many rows, it would be inefficient to return them
+as a single response message. Instead, the driver breaks the results
+into <em>pages</em> which get returned as they are needed.</p>
+
+<h3 id="setting-the-fetch-size" class="target">Setting the fetch size<a class="anchor" href="#setting-the-fetch-size" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<p>The <em>fetch size</em> specifies how many rows will be returned at once by
+Cassandra (in other words, it’s the size of each page).</p>
+
+<p>You can set a default fetch size globally for a <code>Cluster</code> instance:</p>
+<pre class="highlight"><code><span class="c1">// At initialization:</span>
+<span class="n">Cluster</span> <span class="n">cluster</span> <span class="o">=</span> <span class="n">Cluster</span><span class="o">.</span><span class="na">builder</span><span class="o">()</span>
+    <span class="o">.</span><span class="na">addContactPoint</span><span class="o">(</span><span class="s">"127.0.0.1"</span><span class="o">)</span>
+    <span class="o">.</span><span class="na">withQueryOptions</span><span class="o">(</span><span class="k">new</span> <span class="n">QueryOptions</span><span class="o">().</span><span class="na">setFetchSize</span><span class="o">(</span><span class="mi">2000</span><span class="o">))</span>
+    <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+
+<span class="c1">// Or at runtime:</span>
+<span class="n">cluster</span><span class="o">.</span><span class="na">getConfiguration</span><span class="o">().</span><span class="na">getQueryOptions</span><span class="o">().</span><span class="na">setFetchSize</span><span class="o">(</span><span class="mi">2000</span><span class="o">);</span>
+</code></pre>
+<p>The fetch size can also be set on a statement:</p>
+<pre class="highlight"><code><span class="n">Statement</span> <span class="n">statement</span> <span class="o">=</span> <span class="k">new</span> <span class="n">SimpleStatement</span><span class="o">(</span><span class="s">"your query"</span><span class="o">);</span>
+<span class="n">statement</span><span class="o">.</span><span class="na">setFetchSize</span><span class="o">(</span><span class="mi">2000</span><span class="o">);</span>
+</code></pre>
+<p>If the fetch size is set on a statement, it will take precedence;
+otherwise, the cluster-wide value (which defaults to 5000) will be used.</p>
+
+<p>Note that setting a fetch size doesn’t mean that Cassandra will always
+return the exact number of rows, it is possible that it returns slightly
+more or less results.</p>
+
+<h3 id="result-set-iteration" class="target">Result set iteration<a class="anchor" href="#result-set-iteration" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<p>The fetch size limits the number of results that are returned in one
+page; if you iterate past that, the driver will run background queries
+to fetch subsequent pages. Here’s an example with a fetch size of 20:</p>
+<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAooAAAGyCAIAAADs13KGAABEAElEQVR42u2d%0Ae3RN17745UESERJEaEOVJCJeiUclXpEm9JzROCr0qp6RHh0actBQMSTqEe7B%0AUUMTXKGq0vYaHISQyMDQIykipUW10lCHhlBRmoeIkJf7+97MX9fZdydZSUhl%0A4/P5a8255ppr7f1d3/lZc+21927yPwAAAGBiNOEtAAAAQM8AAABQZz0/AAAA%0AgEYFPQMAAKBnAAAAQM8AAADoGQAAANAzAAAAegYAAAD0DAAAgJ7RMwAAAHoG%0AAAAA9AwAAICeAQAAAD0DAACgZwAAAEDPAAAA6BkAAADQMwAAAHpGzwAAAOgZ%0AAAAA0DMAAAB6BgAAAPQMAACAngEAAAA9AwAAoGfeFAAAAPT8uMnKyvruu+9+%0A/fVXwg8AADVx4cIFkUVBQQF6fkyMHj26SZMm69evV8Xp06d7eHhs27aNc9F0%0AqKioSE9Pj4yM/NOf/vTuu+9GR0c3bP8EHaCx+P7775csWfLWW28FBgaGhoYu%0AW7bs8OHDpnmo/fr1E1ns2bMHPTeOnuUscXR0/PTTTx+lz9zc3BMnTpw/f57c%0AaxA3i5UlRi1bthw6dKi9vb2ZmVnD7qJBgg4A9U3t8PBwS0tLye6uXbsOHz68%0Abdu2svznP/8ZPaPnavTcIMg1oPS5cOFCMvDROXv2rLyZ1tbWOTk5UiwvLz9z%0A5gxvC8CTjoy66rI7KSlJq7x06dKpU6fQ8zOn5y1btvj6+nbo0MHV1TUwMLBa%0APUdERPj4+CQkJGjXd9HR0f3795et/P39tfNGa7Zx40ZZO2jQIG2TzZs3Ozk5%0ASZ/Ozs7SRs428vBRyMjIkDfT3Nz85MmTVa++q41OQUHB0qVLAwICJBCenp6r%0AV6/WrzcKurBp06bBgwdLMy8vr7lz5969e7fWuANA3SktLbW3t5fUlpSstoEM%0ApBMmTHB3d+/evfu7774rl+naqvomuE5X+hldVlY2b968bpUsX75c+jTUs7at%0A7FR6TklJ0d8Xeq6R+fPnyztrYWHxxhtvhIWFDRs2rFo9GxVnzJghxSFDhixY%0AsECu8uzs7PLz87VmEpsWLVr06NFDluVUu3//vqxKTU1VUZRIz5kzR8354FHo%0A3bu3vJ9WVlZLliy5d++eVl9TdN5++22pf+WVV2JjYyXW2mfVNdUbBT0yMlKK%0Abdq0kW49PDxUoGXWrh93AKg7P/74Y5NKLl68WG2D1ypZs2bNpEmTVNpqq+qb%0A4Dpd6We0dCI1skpMLNZXB6zpWW0rU2qZPLi4uBw6dEh/X+i5eq5evao+4di+%0AfbvRKh09X7582aKSW7duSTEkJERWbdiwQWvWtWvXGzduSLFdu3ZSVOF5wM3t%0AhubSpUu9evVSueHm5paenq4fHbkwkuUPPvjAqJ+a6g2Drp0qaWlpUiwpKZHk%0AlOLWrVtrjTsA1JHk5GTJHTMzM0kx/ZZyZdy6dWtpqZLuIRJcpyudjJaBRaYE%0AUty3b5+6V6cu1o30LCOSDBp12Rd61jsVrK2ti4qK6q7nxMREWZY52YRK1JxY%0AJsRaM7lGU1upzyS0T1DQc4MjOfz3v/+9efPm8sba2NhkZmbqROfjjz9WLvfy%0A8oqLiysrK1Od1FRvGPS9e/eqXWijxogRI6QmPDy81rgDQB2Ry1+VjL/88ku1%0ADQoLC9euXRscHCwJqDSpfVBY3wTX6Uono48cOaJuuN6+fdtwrZGe161bV8fD%0ARs/VEx8fL29Tq1atql6p6eh5165daqSOiIiI/A3pqupW6PnxcO7cufbt28t7%0Au2DBAp3oCIcPHx4wYIDK1aCgIK2HausNo6lOFbnslYtltXbs2LFSM23atFrj%0ADgB15Ndff1VpWG36iBHVDbPAwMCoqCj1KbWh5+qe4Ppd6WS0aFiWbW1tNc1X%0Aq2fDx4prPWz0XA0y2VIBO3DgQN31fOHCBbWVXEbpb2U0TKvPRGfOnEkSNjhj%0AxoyR9/bNN9/UiY7Gzp071Q207OxsnXrDaGqnSkZGhmrs7OysXV+jZ4CG4g9/%0A+IOkj/hMm55qqIvv4cOHq2KnTp2q9VxdEly/K52MPnXqlBoK1FdFfv75Z3Xr%0AW0fPdTxs9GyMXEnJOyVzryVLlsi7L1Nb9ZCR/qNhwcHBUuzSpcvixYsTEhLk%0Agkg9Dag/TO/fv1+KEhuJFo+GPSJiX7kUXbFiRWpqakxMTLNmzeS93bJli050%0AQkJCPvzww+PHj3/++efSoHnz5oWFhTr1RtFUp4q3t7fEUd0I6dixY7Ut0TPA%0AQ3Px4kU7OzvJoBdffFESU/Jo+fLlf/zjHyXLTp48KfUdOnTYvHnz66+/bm5u%0AbngLul4Jrt+VTkbLpNnNzU1ZQ2ZcLi4uDg4O+nrW3xd6rpH8/HwJnhrcBScn%0AJ/VtGX09FxUVhYeH29jYqK0cHR3VLWv9YVriOn78ePVI0e7du8nDR+HQoUMW%0AFhZNfkMyRFStH52AgABbW1v1sPfIkSMPHjyo2tdUbxRNOVUmTZrUtGlT9YUu%0APz+/c+fO1eWuCQDUiytXrkhOqYcxBUm6Pn36/O1vf5NV77zzjuSpJOCUKVNm%0Az56tGqhPJ+ub4Dpd6Wf0119/LZfm6nHuuLi4Wm9u6+8LPddCaWmpXLJVvZei%0AT0VFRVZWVm5ubr22ktn5tWvXyMAGiZq8/2lpaZmZmYZfrNKJjlRmZ2ffuXOn%0AauNq62s6VbRvPAPA74TYKyMj49tvvzX6jqJcKGtj9Y0bNwz/GaG+Ca7TVa2D%0Av1xDaB8/13Eq+HD7etb1DAAA8MSBngEAANAzAAAAoGcAAAD0DAAAAOgZAAAA%0APQMAAAB6BgAAQM9Psp7Vz5EDAAA0LuIj9NwwyLvJxRoRBAByn9kzAQYiCADk%0APnpmcCeCAEDuo2cCDEQQAMh99EyASVEAIPfRMwEGIggA5D56JsANS13+AvkJ%0AOgb0DMDojZ4J8BNPXFxccHBwox9GUlLSf/zHf2j/ZE4EAYDcR89PVYBzc3NP%0AnDhx/vz5ujTetm2bvN61a9c2+mH//PPPLVu2fPXVVysqKkhRACD30fPTFuDQ%0A0FB5CQsXLqy15bVr18SIAwYMKC8vN4UjX716tRz5mjVrSFEAIPfRcwMHWCZ/%0A0dHR/fv379Chg7+//6lTp6QyKytr8ODBPj4+p0+flmJhYeHIkSNnz56ts4li%0Ay5Ytvr6+Uu/q6hoYGKgqJ0+eLF2lpqaq4pgxY6SYkZEhy5s3b3ZycpKX4Ozs%0ALJWXLl3S6T8qKkpaHjhwQBXLysrmzZvXrZLly5fPnTtXejhy5EitO9XZRURE%0AhDRLSEhYunRp9+7dU1JSFi1aJDVS1F5jXFycvDm//PKLHIAc9osvvviIE2j0%0ADMDojZ4JsDEzZsyQHoYMGbJgwQKZm9rZ2eXn52v1vXv3vn///vTp05s1a/bD%0ADz/obzJ//nypt7CweOONN8LCwoYNG6bai96kfufOnarYqVMnKR4/flyWRZ+e%0Anp5SHDRo0Jw5c3JycnT679q1q9TfuHFD9SO7kGKLFi3EqQEBAerXYvfs2VPr%0ATnV2MXr0aKnv16+fubm5i4vLoUOHpEOpadu2bUlJiTSQiXuXLl1GjRql+vnD%0AH/4ga48ePUqKAgC5j54bLMCXL1+2qOTWrVtSDAkJkd42bNggy0VFRUqHYiwz%0AMzOZuepvcvXqVUtLS1nevn270V70TWl0c7um/sWOokztt9plrZWVlazat2+f%0Amg17eHjUUc86r1rp2c3NTV6O2lD26+joKJUypZbirl27ZPnLL79Ua2fOnCnF%0ATz75hBQFAHIfPTdYgBMTE2VzmTtOqERNZGUWq9ampKSImKVGzCdzaP1NkpOT%0AZcHa2lq8/ih6rqn/69evy0LPnj1VsyNHjqiZuvbstEx566hnnVet9Lxu3TrD%0A41fT9Ndee02Whw0bNmDAAG3VihUrZNWyZctIUQAg99FzgwVYzQVtbGwiIiIi%0AfyM+Pl6tzczMVDPUvn37lpaW6m8iSH2rVq3UTeCH1nNN/ZeVlcnsXJyqmql7%0Azra2tlJfXz3rvGql5/Xr1xse/8mTJ6WyadOmBw4cMLo9MH36dKn57LPPSFEA%0AIPfRc4MF+MKFC+ojW+2JKg3xsUwTnSuRBkuWLNHfRFyu6rVHtzSGDh0q9R9/%0A/PGDyg+bxXNVPwaeOXNmrYekbl9fu3ZNlk+dOqWanTlz5kHl15zatWtnqGed%0Anersolo9CzJrl/rWrVu/+OKL2gWBMGLECKk/ceIEKQoA5D56bsgABwcHSw9d%0AunRZvHhxQkJCVFTU6tWrpX7RokVmZmZffPHF/v37pYFMo7XHnmvaJCgoSOrb%0At28vLk9KSpIJ8b179x789siYq6vrlClTnn/++RYtWhjqWfUvs1uZ1KpHw2rq%0Af/ny5VKfmJj4oPKxbTc3N7U7EbyLi4uDg4OhnvV3WtMuatKzuoktqGaK+/fv%0AOzk5yUUDKQoA5D56buAAFxUVhYeH29jYKP04OjqKVk+ePCnTTdGeaiOGk1UD%0ABw5UE8dqN5H6/Pz8kJCQZs2aqXpR1927d9Vs9aWXXlLfnjp8+LDRzW3pc/z4%0A8Uqfu3fv1un/1q1bsiw6VPfPv/76644dO0oDe3v7uLg4o5vb+jutaRc16Vlm%0A5xYWFjJ7Nvwtz7/97W+PfmcbPQOgZ/RMgGukoqIiKysrNzf30TcpLS29ePFi%0A1V+7VDPjmpB5trprrd+/TLVlTi/TaK3NlStX1EWDkZ7rstO6v+r09HRzc/N5%0A8+ZpNbKh2P3NN98kRQGA3EfPDO4PZIYtc/Sq9dXquUGQyXrPnj2trKyuX7+u%0AVSYlJU2dOlXdvSeCAEDuo2cG9wdVHw5/UPlxcv/+/bVvJDcg8fHx0vP7779f%0A6zFoTJw4MS8vjwgCAHpGz2BaQencuXNKSgoRBAD0jJ7BhIKiiIyMLC4uJoIA%0AgJ4JMJiQngVPT8/MzEwiCADomQCDCelZ/dapzv9OEkEARm/0TIChEfSsCAgI%0AyM7OJoIAgJ4JMJiQntXfX+7YsYMIAgB6ftYDbG9v3wRMBtGz0d9hoWcA9Iye%0ACTA05uzZ29u72mfEiCAAozd6JsDQCHq2tLSMioqq6RtWRBCA0Rs9E2B43Hp2%0Ad3dPT08nggCAngkwmIqeQ0NDa/11TyIIwOiNngkwPKagtG3bNikpiQgCAHpG%0Az2AqBAYG3rx5kwgCAHpGz0AEAYDcR88EGIjgE05eXt6ePXvee++9s2fP/k67%0A+PHHHz/99NOwsLCxY8euXbs2KyvLqEFxcXF0dPTrr78+ffr0Ov7FGZD76JkA%0AAxF8avH29jY3N1dP8B05ckSnZW5u7okTJ86fP/8Qexk9erSlpaWvr++QIUMs%0ALCxkXytXrtTW5ufnDxo0SOqDgoI8PDzkeNavX09oyH30TICBCD67rFq16ptv%0AvuncuXOteg4NDZU2CxcufIi9yC7EwdoepZ9WrVpVVFSoGulT/euoLBcUFHTo%0A0MHKyuratWtEh9xHzwQYnpUIlpWVzZs3r1sly5cvnzt3ro+Pj6alyZMnSzE1%0ANVUVx4wZI8WMjAxVFJ1ER0f3799f/OHv73/q1ClVHxERIc0SEhKWLl3avXv3%0AlJSURYsWSY0Utf3GxcUNHjz4l19+MTqeqtuq+k2bNkl7JycnLy8vOci7d+9K%0A5b59+6SxNu+UPqWo/QlYTEzMqFGj1LJITjoMCAiQHjw9PVevXq3/tnTp0kVf%0Az5s3b5aupI2zs7Ps9NKlSzrHqY+8RunH1tb2/v37KiIODg5S891336kG77zz%0AjhTnz59PUpD76JkAw7MSwbCwMPWj3+JFsZe6qbtnzx61VsQjxZ07d6pip06d%0ApHj8+HFVnDFjhhSHDBmyYMGCli1b2tnZqRnh6NGjpb5fv37m5uYuLi6HDh2S%0ADtWXykpKSqRBeXm5+E9zpyFVt5VKmUdKZZs2bWRHHh4esiwHJp1kZWXJco8e%0APdS2vr6+Uhw4cKAq9uzZMzg4WC2//fbbsuqVV16JjY2VlyxXFY+oZ7lkEc1L%0Am0GDBs2ZMycnJ0fnOPX3pWbhcumjipcvX1ZRuHfvnqr54IMPpPjaa6+RFOQ+%0AeibA8ExE8NatW1ZWVrIjmYaq2bCSSl30LBaxqEQ6kWJISIis2rBhg6ZYNze3%0Aq1evqg3Fyo6OjlIp02Ip7tq1S5a//PLLmvRsuK0sWFpaSmVaWprqSi4mpLh1%0A61YpyqRflrOzs3Nzc6WZtbW1HFJeXp5MZ6V+27ZtqhORqBTFc3V8Z2rV84Mq%0AN7f1j7Mm5AjlQqR79+5K8ILsVLaSuGhtPvroI6np27cvSUHuo2cCDM9EBJUJ%0AxGe3b99WNTJtraOeExMTZVlmzBMqUVNJmUdqijX6Dy41TVdTwGHDhg0YMKDa%0AQ6q67d69e6XGxsZGzbyFESNGSE14eLjW7caNG7ds2dK0adNZs2ZJUfS/atUq%0AkaX2+e7HH3+spqReXl5xcXFlZWUNrmf946wWuSpq1qxZr169rl+/rlV+++23%0AspU4W/soevXq1VIzfPhwkoLcR88EGJ6JCKp7zra2tpqu6q5nNQMWG0VERET+%0ARnx8vKZYo4eNT548KZVi0AMHDsjC9u3bdfRsuK30KTWtW7fWdDV27FipmTZt%0AmiwnJyfL8rhx4+QSwd/f/+jRo1KcOnVqQECAn5+fYc+HDx+WawIl6aCgoAbX%0As/5xVkXeQLmAEOkWFhYa1sslhTpIdVviwW9Pik2cOJGkIPfRMwGGZyKCp06d%0AUiY4c+aMFH/++ed27doZ6nno0KFSlKnng8pPW0Wump4vXLhQ07ePqtXzg8oP%0Ag5XAXnzxxZrmr1W3zczMVDvSHklzdnaWYmxsrCwXFRVZWVnZ29s7ODhER0eX%0AlpbKhL5jx45yqIZfVdKQSw3Z1szMLDs7+xH1rD56nzlzZl2O04iUlBQ5bFdX%0A12qfHRNny4aJiYmq+PLLLxteJAG5j54JMDzlERRHurm5yY7at28vsnFxcVHP%0ADGt6nj9/vhTFIlOmTHn++efVh6nao2HBwcFSFJMtXrw4ISEhKipKPRFdk55X%0ArFihBKbz4HS128pkV/0x9v79+9WcVQSsTTq1J9rkiuFB5S+nqqLhN5JDQkI+%0A/PBDOfLPP/9cVjVv3txozqrx1VdfHTt27LnnnlP32GVZm8UaIQcjbTp16iTz%0AYPXJsf5xGqIug3r06DHeAO1ZsH/+85/m5uZeXl7nzp3btGmTXEz06dNHm5QD%0AuY+eCTA8/RH8+uuvRSGyL5mAxsXFGd3cFuG99NJL6utDhw8fNnpyW2au4eHh%0ANjY2SoeOjo7qTm9NepbZuYWFhcye79y5Uy895+fnT5o0Sc3dxVt+fn7iLSPr%0Au7u7q2JMTIy6pDDsQRRua2urHrkaOXLkwYMHazoAMbfR33LXdB9eLm7EqeqS%0AZffu3bUep/5eBHk/tQayUzs7O1U/bNiwqt9AA3IfPRNgeMojKNOyK1euqLvN%0ARnpWaA8V17R5VlZWbm5urTtKT08Xac2bN+/hjrO0tPTixYt1+SZxTceZnZ2t%0Ac2XwcMiU1+gHQx7xOA37OX36tP6bD+Q+eibA8ExEsFo9NwglJSU9e/aUyavh%0AU8oAgJ4JMBDB2gkODu7fv3+130h+ROLj46Xn999/n8jCM8jEiRPz8vLQM3pG%0Az0QQAEwrnTt37lzHPx9DzwzuQAQB4DGlsyIyMrK4uBg9o2cgggBgQnoWPD09%0AMzMz0TN6BiIIACakZ8Ha2lr7azX0zOAORBAATELPioCAgGp/vQ49M7gDEQSA%0ARtOz+i/XHTt2oGcGd3h6Imhvb98EAJ5wRM9G/+2GntEzEEEAaMzZs7e3d7XP%0AiKFnBncgggDQCHq2tLSMioqq6RtW6JnBHYggADxuPbu7u6enpz+DuY+eGdyJ%0AIACYqJ5DQ0Nr/XVP9MzgDkQQAB5TOrdt2zYpKelZzn30zOBOBAHAtAgMDLx5%0A8+YznvvomcGdCAIAuY+eCTAQQQAg99EzgzsRBAByHz0TYCCCAEDuo2cCDEQQ%0AgNxHzwQYiCAAkPvomQADEQQA9IyegQgCALmPngkwEEEAIPfRM4M7EQQAch89%0AE2AgggBA7qNnAkwEAYDcR88EGIggAJD76JkAAxEEAPRMgIEIAgC5j54JMBBB%0AAEDP6JnBnQg2HLm5uSdOnDh//jwRAWD0Rs8EGEwlgqGhoXIkCxcuJCIAjN7o%0AmQBDPSK4ZcsWX1/fDh06uLq6BgYGqsqIiAgfH5+EhISlS5d27949JSVFKisq%0AKqKjo/v37y+N/f39T506pRpv3rx5woQJ7u7u0vLdd989e/asVu/k5CRH4uzs%0ALL1dunRJpxMAYPRGz+iZCP5/5s+fLy0tLCzeeOONsLCwYcOGqfrRo0dLfb9+%0A/czNzV1cXA4dOiSVM2bMkMohQ4YsWLCgZcuWdnZ2+fn5Uv9aJWvWrJk0aZI0%0AeOWVV1Qnqampnp6eUjNo0KA5c+bk5OTodAIAjN7oGT0Twf/l6tWrlpaW0nL7%0A9u1Gq5Se3dzcpI2quXz5skUlt27dkmJISIg02LBhg+FW5eXlrVu3NjMzu3Hj%0Ahqoxurldl04AgNEbPaPnZzqCycnJ0sza2rqoqKhaPa9bt06rSUxMlBqZ7E6o%0ARE2LZU4sqwoLC9euXRscHDxixAgrKyupV/exq+pZpxMAYPRGz+iZCP4v8fHx%0A0qxVq1YlJSXV6nn9+vVaza5du6TGxsYmIiIi8jekh9u3b/fq1UtWBQYGRkVF%0A2dvb6+i5pk6IFwCjN3pGz0Tw/5OZmdmkkgMHDtSq5wsXLqjGR44cMWypjDt8%0A+HBV7NSpk6Ge1SfNM2fO1O8EABi90TN6JoL/JigoSFq2b99+yZIlSUlJMs29%0Ad+9etXoWgoODpbJLly6LFy9OSEiQufLq1atPnjwplR06dNi8efPrr79ubm4u%0AxdjYWLXJ/v37pSjOFourR8Oq7YR4ATB6o2f0TAT/TX5+fkhISLNmzdSk1snJ%0A6e7duzXpuaioKDw83MbGRjV2dHRUd63feecdKysrEfOUKVNmz56t1qob5mVl%0AZePHj2/RooXU7N69W6cTAGD0Rs/omQj+H0pLSy9evHj79u26NK6oqMjKysrN%0AzTXSvLb5jRs3fv31V8O1MiO/du1arZ0AAKM3ekbPRBAAyH30TICBCNaTiRMn%0A5uXlPSlHm5WV9d133xndNgAg99EzAYanLYLyEjp37qx+T/Th2LFjx5Lf+Oij%0Ajy5evPj7HW21n9YbUlFRkZ6eHhkZ+ac//endd9+Njo7mLAVyHz0TYCL4RL4E%0AhSituLj4oZXZrFkz9Ty58Mc//vHx6Nnor7rEzWJladCyZcuhQ4fa29ubmZnp%0Ad8iffQGjN3pGz0TQpPUseHp6ZmZmPpwy//u///v27dvbtm1TXX3//fePQc9G%0Av8dy9uxZ9QNt6ttl5eXlZ86c0e+QP/sCRm/0jJ6JoKnrWbltzZo1D6dnVXzh%0AhRekmJiYqM1oq/3vrIKCgqVLlwYEBDg5Ocllgfa17MmTJ/v4+KSmpqrimDFj%0ApJiRkVFVz1X/qkuaSVEm8SdPnjQ6yGoPo9o/+wJAz+gZPRNBk9OzQqyZnZ39%0AEHpOSkqSZVtbW+0Hxmv676y3335b/e9WbGxsWFiY9iGxaFLqd+7cqYrq99GO%0AHz9eVc/V/lVX7969pcbKymrJkiXqt190DqPaHgDQM3pGz0TQRPUstGjRYseO%0AHXXXc69evZ5//nn1oytpaWlqlc5/Z4kRZfmDDz4w6q3uen5Q3a1pmQGrHydX%0AfwWWnp6ufxjc3AZGb/SMnp9C7O3t9dc2eWIRPRv+lVatepZpa58+fWQhKChI%0AW6Xz31kff/yx2pGXl1dcXFxZWVmD6FkoKSn5+9//3rx5c/W/IJmZmTqHgZ6B%0A0Rs9o2d4YmbP3t7edX9GTLu5XVBQ0KFDB1n+7LPP1Cr9/846fPjwgAED1B41%0AqT+6nhXnzp1r3769rF2wYIHOYaBnYPRGz+gZngA9W1paRkVF1esbVoafPW/Z%0AskV9r+mnn356ULf/zhITSwMzMzP1affQoUOlKHPrB5WfLjdt2lRHz0Z/1WXE%0AmDFjZO2bb76pcxj6PQCgZ/QM0Ph6dnd3Vx/W1gujJ7f9/PykKJYtLy9/UPN/%0AZ4WEhHz44Yfi3c8//1waNG/evLCwUOrnz58vRVdX1ylTpjz//PPqfz5q0rPR%0AX3WJfQMDA1esWCFej4mJUf9BIlcMOodR9c++ANAzekbPYEJ6Dg0Nfbhf9zTS%0A8w8//KCmvMuWLXtQ839nBQQE2NraqqesR44cefDgQbW5zHRfeukl9WWnw4cP%0A69/cNvqrrkOHDllYWGivyMHBQVStWtZ0GFX/7AsAPaNn9AwmcRK2bds2KSnp%0Ad91Ltf+dJZXZ2dl37typ2r5eE1nDv+oqLS2VHaWlpWVmZhp+sUrnMB5U92df%0AAOgZPQM0JoGBgTdv3uR9AGD0Rs/oGaB+6H+BDYDRGz0TYAAyBQA9E2AAIFOA%0AcxI9E2AAMgUAPaNnBh0AMgU4J9EzAQYgUwA4J9Ezgw4AmQKck+iZAAOQKQCc%0Ak+iZAAOQKcA5iZ4JMACZAsA5iZ4JMACZAoCeCTAAkCnAOYmeCTAAmQLAOYme%0AGXQAyBTgnETPBBiATAHgnETPBBiATAHOSfRMgAHIFADOSfRMgAHIFOCcRM8E%0AGADIFOCcRM8EGIBMAUDP6BkAyBTgnHyK9dwEAKA6cAmg50bW8//Ak4xEsKCg%0A4M6dO8XFxSUlJeXl5QwB8OjZzXkF6Bk9w6Pq+cqVKzk5Obm5uTKYykjKEAAN%0AomfOK0DP6BkeSc9nz57917/+de3aNRlJZa7DEAANomfOK0DP6BkeSc9paWln%0AzpyRkVTmOjLRYQiABtEz5xWgZ/QMj6Tnffv2yUgqc50rV64UFBQwBECD6Jnz%0ACtAzeoZH0vM//vGPAwcOfP311zLRyc3NZQiABtEz5xWgZ/QM6BnQM6Bn9Pw7%0A6zk+Pn7p/2X16tWP3u306dM9PDy2b9/+EGvrQn5+fmJi4nvvvZeRkVGX9hcu%0AXPjss8/CwsLGjh0bGxt7+fJlowb37t2LiYl5/fXX5dhSU1PRM6Bn4JxEz42p%0A59GjR0u3TZs2bf4bXbp0efRu33rrLUdHRzHiQ6ytFW9vb3Nzc/VrDEePHq3j%0Ay7S0tPT19R0yZIiFhYVs+OGHH2prCwoKBg0aJPVBQUFy3SCdf/TRR+gZ0DOg%0AZ/TcyHr+z//8zyfoFrHM70+ePNm5c+e661nai4O1zWXDVq1aaXFauHCh1ERG%0ARsry7du3O3ToYGVl9fPPP6NnQM+AntGzyek5Li5u8ODBTk5OXl5ec+fOLS4u%0AVvURERE+Pj67d+9etmxZ9+7dq70VrLWpdqdGa7XiJ5980r9/f5nI1rShITLL%0Ar7ueDZEDlg1tbW1LSkqkWF5e7uDgIDXff/+9avDOO+9Icf78+egZ0DOgZ/Rs%0AWnqWqaTUt2nTZsGCBR4eHrIsBq2oqNA26devn7m5uYuLS0pKSk3d1nSL2Git%0AKkr/LVq06NGjhyzb29srd/4eeg4NDZUNx4wZo4pXrlxR98nv37+valasWCHF%0A1157DT0Degb0jJ4bU8+tW7d2/Y3r169fu3bN0tJS6o8dOyZtSktLRZxqCNA2%0AcXNzk2b63dZLz127dv3ll1+k2K5dOylWa/1H1/P27dvlqkIm/Tdu3FA10oP0%0AY2VlpbXZsGGD1PTt2xc9A3oG9IyeG1PPAwYM+Otv5OXlJScnS6WNjY2IWTUb%0AMWKE1ISHh2ubrF+/vtZu66XndevWqaLMy6W4d+/eBtfz/v37mzVr1qtXr5yc%0AHK3yzJkz0o84WwvbmjVrpGb48OHoGdAzoGf03Jh6Nrq5vXPnTjWl1l7J2LFj%0ApWbatGm1qveh9awVfyc9JyQkWFpainTv3LljWF9QUKBubv/666+GT4pNnDgR%0APQN6BvSMnk1Iz+fOnVPG+uGHH1SNs7OzNsE1WT3fuHHj4MGD6q644bJ6HMzK%0AysrV1VV7wM0QcbZ0lZSUpIovv/yyFHft2oWeAT0DekbPJqRnISgoSOq9vb0l%0A59WzVB07dlTzzkbX8/Hjx9PT05977jl1j12W1cR327ZtUuPg4GC0rH2e3aNH%0Aj/EGaM+CHTp0yNzc3MvL6/z583FxcWZmZn369DGMInoG9AzoGT2bhJ4LCgom%0ATZrUtGlT9bmsn5+fqKsu6n0Mem7evHmT/8uOHTv09Vx1E+Hu3btan9KDnZ2d%0Aqh82bNjNmzf5WRJAz4Ce0XOj6VmfsrKyS5cuVXtD+OlDXuy3336rPdGNngE9%0AA3pGzyaqZ0DPgJ4BPaNn9IyeAT1zXgF6Rs+AngE9A6Bn9IyeGUYBPQN6Rs+A%0AngE9A6Bn9AwMo4CeAT2jZ0DPgJ45rwA9o2dAz4CeAT2j5ypvFjzpMIwCegb0%0A/BTquaCg4MqVK2fPnk1LS9u3b98/4ElDoiaxkwhKHCWaDAGAngE9Pw16vnPn%0ATk5OjmTgmTNnZJQ/AE8aEjWJnURQ4ijRZAgA9Azo+WnQc3FxseTetWvXJAll%0ABvY1PGlI1CR2EkGJo0STIQDQM6Dnp0HPJSUlMuWS9JO515UrV/4FTxoSNYmd%0ARFDiKNFkCAD0DOj5adBzeXm5jOky65LBvaCgIBeeNCRqEjuJoMRRoskQAOgZ%0A0PPToGfOGAD0jJ4BPaNnAEDPgJ7RM3oGQM/oGdAzeoYnFxmFT5w4cf78+ad4%0Aj+gZPQN6Rs/whBEaGiqnxMKFC5/iPaJn9AzoGT1Do1FaWjp37lw3N7du3bot%0AX7589uzZPj4+R44cUWsrKiqio6P79+/foUMHf3//U6dOSeXmzZudnJzklHB2%0AdpbGly5dqtptRESErEpISNi4caNsPmjQIFnW1lbbbVZW1uDBg2Wr06dPS7Gw%0AsHDkyJFyPPXd49KlS7t3756SkqLqN23aJN3K5l5eXvJK7969K5X79u2TxitX%0ArlRt4uLipLhmzRpVjImJGTVqFHpGz4Ce0TM0Gn/9618luK1atVqwYMGrr76q%0Afp17z549au2MGTOkOGTIEFnbsmVLOzu7/Pz81NRUT09PqRfpzpkzJycnp2q3%0Ao0ePlgbivBYtWvTo0UOW7e3t79+/r9OtVt+7d29pOX369GbNmv3www9SX/c9%0A9uvXz9zc3MXF5dChQ1IZGRkplW3atJEdeXh4qEMqLy+XSwFZlgNT2/r6+kpx%0A4MCBqtizZ8/g4GD0jJ4BPaNnaBzEc5aWlhLcgwcPqhqlUqXny5cvW1Ry69Yt%0AKYaEhMiqDRs2PKjDrWYly65du964cUOK7dq1k6JSpk63RUVFsokUZXMzM7Oo%0AqCitwzru0c3N7erVq6pGFtSrS0tLk2JJSYlcK0hx69atUuzWrZssZ2dni1Gk%0AmbW1tRxSXl6eTM2lftu2begZPQN6Rs+/CzJd4yzXJyUlRSLbtGlT8aKqkdmn%0ApufExERZlqnthErU/FUmr3WXZWxsrGG3SUlJ+t2qQxIxS41MdrXZdt33uG7d%0AOq1m7969UmNjY6P9RNqIESOkJjw8XJbDwsJkeePGjVu2bJF3YNasWVLctWvX%0AqlWrxNZqNo+e0TOgZ/RMgBsBJTCZOGoCM9SzuErpLSIiIvI34uPj6y7L9evX%0AV9WzTrdCZmamlZWVNOjbt29paWl99aztUZA+paZ169YVFRWqZuzYsVIzbdo0%0AWU5OTpblcePGySWCv7//0aNHpTh16tSAgAA/P79nbShEz8DojZ4JsAkhLlQf%0ANqsHqY4dO9a8eXNNzxcuXFBrtSfFNNSHxDNnznwIPet0Kz4eMGCAcyXSYMmS%0AJQ+9R8NXl5GRoWpUt2pOX1RUJNcB9vb2Dg4O0dHRsmuZ0Hfs2FFm0tojY+gZ%0APQOjN3omwI3D0KFD5Y2ytLT08fFp3769EpjMLNXa4OBgKXbp0mXx4sUJCQlR%0AUVGrV6+W+v3790t9p06dZCqs86BWtXrW6XbRokVmZmZffPGF6l/0qZm1vntU%0ABAUFSaW3t7dsrubfIuDCwkK1VibKyt9yxSDFwMBAVXzWvl2NnoHRGz0TYJPj%0A+vXroqVWrVoNGjQoNTXVxcVFm0yrKWZ4eLiNjY3ylqOjo7q9XFZWNn78ePWk%0A1e7du+ur52q7PXnypMxcZZas2kyZMkU9TS37eog9KvLz8ydNmiTdyipzc3M/%0AP79z585pa1esWCH17u7uqhgTEyNFV1fXZ3AoRM/A6I2eCbBpYfj4lbobLPPX%0A7OxswzYVFRVZWVlVR9579+5du3btoXddU7c6PNweS0tLL168qL7xDOgZGL3R%0AMwF+AoiIiHjhhReCg4Nlbmpvby9v2uTJk3lb0DN6BkZv9EyAG5Pk5OS//OUv%0Affr0adOmjZeX1/Lly4uLi3lbnnQmTpyYl5eHngE9o2cCDGBaJ3/nzp21ZwjQ%0AMzB6o2cCDGASJ78iMjKy1tsh6BkYvdEzAQZ4rHoWPD09MzMz0TMweqNnAgxg%0A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%0Af//+HTp08Pf3P3XqlFRu3rzZyclJ3l5nZ2dpfOnSpardRkREyKqEhISNGzfK%0A5oMGDZJlbW213WZlZQ0ePFi2On36tBQLCwtHjhwpx1PfPS5durR79+4pKSmq%0AftOmTdKtbO7l5SWv9O7du1K5b98+abxy5UrVJi4uTopr1qxRxZiYmFGjRpEp%0AAJyT6JkANxp//etf5Y1q1arVggULXn311SaV7NmzR62dMWOGFIcMGSJrW7Zs%0AaWdnl5+fn5qa6unpKfUi3Tlz5uTk5FTtdvTo0dJAnNeiRYsePXrIsr29/f37%0A93W61ep79+4tLadPn96sWbMffvhB6uu+x379+pmbm7u4uBw6dEgqIyMjpbJN%0AmzayIw8PD3VI5eXlcikgy3JgaltfX18pDhw4UBV79uwZHBxMpgBwTqJnAtw4%0AiOcsLS3ljTp48KCqUSpVer58+bJFJbdu3ZJiSEiIrNqwYcODOtxqVrLs2rXr%0AjRs3pNiuXTspKmXqdFtUVCSbSFE2NzMzi4qK0jqs4x7d3NyuXr2qamRBvbq0%0AtDQplpSUyLWCFLdu3SrFbt26yXJ2dnZubq40s7a2lkPKy8uTqbnUb9u2jUwB%0A4JxEzwS4cUhJSZF3qWnTpuJFVSOzT03PiYmJsixT2wmVqPmrTF7rLsvY2FjD%0AbpOSkvS7VYckYpYamexqs+2673HdunVazd69e6XGxsZGxKxqRowYITXh4eGy%0AHBYWJssbN27csmWLvAOzZs2S4q5du1atWiW2VrN5MgWAcxI9E+BGQAlMJo6a%0AwAz1LK5SeouIiIj8jfj4+LrLcv369VX1rNOtkJmZaWVlJQ369u1bWlpaXz1r%0AexSkT6lp3bp1RUWFqhk7dqzUTJs2TZaTk5Nledy4cXKJ4O/vf/ToUSlOnTo1%0AICDAz8+PTAHgnETPBLjREBeqD5vVg1THjh1r3ry5pucLFy6otdqTYhrqQ+KZ%0AM2c+hJ51uhUfDxgwwLkSabBkyZKH3qPhq8vIyFA1qls1py8qKpLrAHt7ewcH%0Ah+joaNm1TOg7duwoM2ntkTEyBYBzEj0T4MZh6NCh8kZZWlr6+Pi0b99eCUxm%0AlmptcHCwFLt06bJ48eKEhISoqKjVq1dL/f79+6W+U6dOMhXWeVCrWj3rdLto%0A0SIzM7MvvvhC9S/61Mxa3z0qgoKCpNLb21s2V/NvEXBhYaFaKxNl5W+5YpBi%0AYGCgKj5r364mU4BzEj0TYJPj+vXroqVWrVoNGjQoNTXVxcVFm0yrKWZ4eLiN%0AjY3ylqOjo7q9XFZWNn78ePWk1e7du+ur52q7PXnypMxcZZas2kyZMkU9TS37%0Aeog9KvLz8ydNmiTdyipzc3M/P79z585pa1esWCH17u7uqhgTEyNFV1dXMgWA%0AcxI9E+BGxvDxK3U3WOav2dnZhm0qKiqysrJyc3ONtr137961a9ceetc1davD%0Aw+2xtLT04sWL6hvPQKYA5yR6JsBPABERES+88EJwcLDMTe3t7eVNmzx5Mm8L%0AmQLAOYmeCXBjkpyc/Je//KVPnz5t2rTx8vJavnx5cXExb8uTzsSJE/Py8sgU%0AYPRGzwQYwLRO/s6dO2vPEJApwOiNngkwgEmc/IrIyMhab4eQKcDojZ4JMMBj%0A1bPg6emZmZlJpgCjN3omwAAmpGf1w3Da/3GRKcDojZ4JMIBJ6FkREBBg9JU5%0AMgUYvdEzAQZoZD0LLVq02LFjB5kCjN7o2XQDrL7jC/BMIXo2/FMv9AzoGT0T%0AYIBGnj17e3tX+4wYmQKM3uiZAAM0gp4tLS2joqJq+oYVmQKM3uiZAAM8bj27%0Au7unp6eTKcDojZ4JMICp6Dk0NLTWX/ckU4DRGz0TYIDHdPK3bdtW+wdPMgUY%0AvdEzAQZofAIDA2/evEmmAKM3eibAAGQKAOckembQASBTnlh+/PHHTz/9NCws%0AbOzYsWvXrs3KyqraJi8vb8+ePe+9997Zs2cfwyFt3759yZIlp06dMqwsLi6O%0Ajo5+/fXXp0+fXsc/QOOcRM8MOgBkypPK6NGjLS0tfX19hwwZYmFhISFYuXKl%0AYQNvb29zc3P1fN+RI0d0usrNzT1x4sT58+cf5XiSk5PNzMxkX+vXr9cq8/Pz%0ABw0aJIcXFBTk4eEhx2O4lnMSPRNgADLlaeObb74R+anlVatWSQhatWpVUVGh%0ANZBKadO5c+da9RwaGiptFi5c+NAHc/HiRXt7+3bt2hnpWfpU/0kqywUFBR06%0AdLCysrp27RrnJHomwABPT6aUlZXNmzevWyXLly+fO3euj4+PJp7JkydLMTU1%0AVRXHjBkjxYyMDFUUb0VHR/fv318M4e/vr92AjYiIkGYJCQlLly7t3r17SkrK%0AokWLpEaK2n7j4uIGDx78yy+/GB1P1W1V/aZNm6S9k5OTl5eXHOTdu3elct++%0AfdJYm+BKn1LU/gQsJiZm1KhRalk0Jh0GBARID56enqtXr671nZFdSwhsbW3v%0A379vtKpLly76et68ebPsSNo4OzvLIV26dEnnVVRLUVFR7969pdl//dd/GepZ%0A4uXg4CA13333nap55513pDh//nxGb/RMgAGenkwJCwtTP/otXhR7qdu2e/bs%0AUWtFLVLcuXOnKnbq1EmKx48fV8UZM2ZIcciQIQsWLGjZsqWdnZ2aeo4ePVrq%0A+/XrZ25u7uLicujQIelQfamspKREGpSXl4vhNHcaUnVbqZSZolS2adNGduTh%0A4SHLcmDSSVZWliz36NFDbevr6yvFgQMHqmLPnj2Dg4PV8ttvvy2rXnnlldjY%0AWHnJclVR6zujpr9yRVJ1Va16lgsauQiQNoMGDZozZ05OTo7Oq6i2hz//+c/S%0AUl7gJ598Yqjny5cvqxjdu3dP1XzwwQdSfO211xi90TMBBnhKMuXWrVtWVlay%0AI5mGqtmw0kZd9CyesKhEOpFiSEiIrNqwYYOmWDc3t6tXr6oNxcqOjo5SKdNi%0AKe7atUuWv/zyy5r0bLitLFhaWkplWlqa6kouJqS4detWKcqkX5azs7Nzc3Ol%0AmbW1tRxSXl6eTFilftu2baoT0aQUxWR1fGdkQ7k+kOm7Mmt99fygys1t/Vdh%0AxKpVq+RVHDx4UJaN9Cw7laJETWv80UcfSU3fvn0ZvdEzAQZ4SjJFjfVigtu3%0Ab6sambbWUc+JiYmyLDPmCZWoyaLMFDXFGv0Hl5qmq0nesGHDBgwYUO0hVd12%0A7969UmNjY6Nm3sKIESOkJjw8XOt248aNW7Zsadq06axZs6Qo+hfDiQ61D5I/%0A/vhjNen08vKKi4srKyvTeVvkYqVZs2a9evW6fv16tQ0eQs/6r8KQM2fOyAvx%0A9fX9rJJJkyZJs4kTJx49elTWfvvtt1KUSwftE/HVq1dLzfDhwxm90TMBBnhK%0AMkXdc7a1tdV0VXc9qxmw+CYiIiLyN+Lj4zXFGj1OfPLkSakU8Rw4cEAWtm/f%0ArqNnw22lT6lp3bq1JqSxY8dKzbRp0x5UPtssy+PGjZNLBH9/f3GYFKdOnRoQ%0AEODn52fY8+HDh+WaQEk6KCiopvdEXpd4XWxXWFhYU5uH0LP+qzA6gGr/2eyt%0At956UPnYtiqqmxYPfntSTPzN6I2eCTDAU5Ipp06dUmO9zNik+PPPP6vnhDU9%0ADx06VIoy9XxQ+XmqyFXT84ULF2r6flG1en5Q+WGwUtSLL75Y0/y16raZmZlq%0AR9ojac7OzlKMjY19UPkIlZWVlb29vYODQ3R0dGlpqUzoO3bsKIdq9J0ohVxq%0AyLZmZmbZ2dlV16akpEhvrq6uOg9t1VHP6oP5mTNn1uVVGJKXl/e1AbNnz5Zm%0Ac+fO/emnn1QDuXSQmsTERFV8+eWXDS+hGL3RMwEGeOIzRRzp5uYmO2rfvr3o%0AxMXFRT0VrOl5/vz5UhRdTZky5fnnn1cfl2qPhgUHB0tRXLV48eKEhISoqCj1%0ARHRNel6xYoVSlM6D09VuK5Nd9cfY+/fvV7NSEbA2u9WeaJMrhgeVv5yqiobf%0AOQ4JCfnwww/lyD///HNZ1bx582onx+rqpEePHuMN0B7CEr766qtjx44999xz%0A6g68LGuzWCPkUKVNp06dZDasPsDWfxU1oe5dG74h//znP83Nzb28vM6dO7dp%0A0ya51OjTp4/ht78YvdEzAQZ44jNF5mciCdmXTEDj4uKMbm6L8F566SX1BaHD%0Ahw8bPbktM9fw8HAbGxulQ0dHR3UvtyY9y+zcwsJCZs937typl57z8/MnTZqk%0A5u5iJj8/PzGTkfXd3d1VMSYmRl1SGPYgCre1tVUPVY0cOVI9dVUV0XbVu8ry%0AMnUa1HSXXi59RO3qgmb37t21voq66/lB5U+J2dnZqQMYNmxY1e+nMXqjZwIM%0A8MRniky8rly5ou42G+lZUe3Ty4abZ2Vl5ebm1rqj9PR00dK8efMe7jhLS0sv%0AXryof9tZ/zizs7N1rgx+D2TmbfSDIY/4Kgz7OX36tH5oGL3RMwEGeEoypVo9%0ANwglJSU9e/aUyWtNj0MD5yR6JsAAZEr1BAcH9+/fv9pvJD8i8fHx0vP7779P%0AZE2KiRMn5uXloWf0jJ4ByBQwrdOsc+fOdfzbK/TMoAMAZAo8ptNMERkZWVxc%0AjJ7RMwCQKWBCehY8PT0zMzPRM3oGADIFTEjPgrW1tfaXX+iZQQcAyBQwCT0r%0AAgICqv1VNfTMoAMAZAo0mp7Vf4zu2LEDPTPoAED9MsXe3r4JwO+G6NnoP8fQ%0AM3oGADIFGnP27O3tXe0zYuiZQQcAyBRoBD1bWlpGRUXV9A0r9MygAwBkCjxu%0APbu7u6enpz+D5yR6ZtABIFPARPUcGhpa6697omcGHQAgU+AxnWZt27ZNSkp6%0Als9J9MygA0CmgGkRGBh48+bNZ/ycRM8MOgBkCnBOomcCDI/Mjz/++Omnn4aF%0AhY0dO3bt2rVZWVlV2+Tl5e3Zs+e99947e/Ys7xiZApyT6JkAw+/O6NGjLS0t%0AfX19hwwZYmFhIbFbuXKlYQNvb29zc3P1aMmRI0d4x8gU4JxEzwQYfne++eab%0A/Px8tbxq1SqJXatWrSoqKrQGUiltOnfujJ7JFOCcRM8EGB5ERET4+PgkJCQs%0AXbq0e/fu2r+pb9q0afDgwU5OTl5eXnPnzr17965U7tu3TxprE9+4uDgpav9L%0AExMTM2rUqFr3KLuQ2Nna2t6/f99oVZcuXdAzmQKck+iZAMP/3naWd7Jfv37m%0A5uYuLi6HDh2SysjISKls06bNggULPDw8ZFk0XF5enpWVJcs9evRQ2/r6+kpx%0A4MCBqtizZ8/g4OBa9xgaGipbjRkzpuoq9EymAOckeibA8G89u7m5Xb16VdXI%0AgqWlpVSmpaVJsaSkpEWLFlLcunWrFLt16ybL2dnZubm50sza2trCwiIvL+/S%0ApUtSv23bNv3dSQO5DpBpek5ODnomU4BzEj0TYNDTs+Ffyuzdu1dqbGxsRMyq%0AZsSIEVITHh4uy2FhYbK8cePGLVu2NG3adNasWVLctWvXqlWrxNbaB8zVsm/f%0AvmbNmvXq1ev69evVNkDPZApwTqJnAgz/1vP69eu1mvj4eKlp3bq19ujW2LFj%0ApWbatGmynJycLMvjxo2bMGGCv7//0aNHpTh16tSAgAA/Pz+dHYnCxd/Dhw8v%0ALCysqQ16JlOAcxI9E2CoXs+ZmZnqC04ZGRmqxtnZWYqxsbGyXFRUZGVlZW9v%0A7+DgEB0dXVpaamdn17FjR5lJG31XypCUlBTZytXVVT1ihp7JFOCcRM8EGOqn%0AZyEoKEj9V+v+/fvVk1wiYG3WKxNl5e8LFy48qPwxP1U8f/58TXtp166deqZs%0AvAH37t3TGnz11VfHjh177rnn1J12Wb516xbRIVOAcxI9E2D0/G/y8/MnTZok%0AE2JZZW5u7ufnd+7cOW3tihUr1H/GqWJMTIwUZWass5fmzZtX/at2mYjrNNi+%0AfTvRIVOAcxI9E2AwprS09OLFi/q3o4FMAeCcRM8MOgBkCnBOouenIsCFhYWh%0AoaHkAzAUAnBOomdTCXB6erq7uzvDEzAUAnBOomeTCHBpaWlUVJS1tbV6zoh8%0AAIZCAM5J9NzIAc7MzPT29jZ8DJh8AIZCAM5J9NyYAV63bp29vb3Rt3TIB2Ao%0ABOCcRM+NE+CbN29qP5GBngHQM3BOoufGD3BSUlLbtm2b1AD5AAyFAJyT6Plx%0AYG9vb1iMi4urek8b4OnA6Gx/lEwBMLXRGz0//fz000/Dhw9n9gwAAOjZ5Fi2%0AbJn2fSr0DAAA6NlUOH36tPo1EvQMAADo2YQoLi6ePn06egYAAPRschw8eNDZ%0A2Rk9AwAAejYtCgsLx40bx/sAAADoGQAAAD0DAAAAegYAAAD0DAAAgJ4BAAAA%0APQMAAKBnAAAAQM8AAADoGQAAANAzAAAAekbPAAAA6BkAAADQMwAAAHoGAAAA%0A9AwAAICeAQAAAD0DAACgZwAAAEDPAAAAgJ4BAADQMwAAAKBnAAAA9AwAAADo%0AGQAAAD0DAABAo+oZAAAATAT0DAAAgJ4BAACgNv4frXNCJv8sCoAAAAAASUVO%0ARK5CYII=%0A" alt="Text Diagram" class="img-rounded img-thumbnail center-block ditaa">
+<p>By default, the background fetch happens at the last moment, when there
+are no more “local” rows available. If you need finer control, the
+<a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/ResultSet.html">ResultSet</a> interface provides the following methods:</p>
+
+<ul>
+<li>
+<code>getAvailableWithoutFetching()</code> and <code>isFullyFetched()</code> to check the
+current state;</li>
+<li>
+<code>fetchMoreResults()</code> to force a page fetch.</li>
+</ul>
+
+<p>Here’s how you could use these methods to pre-fetch the next page in
+advance, in order to avoid the performance hit at the end of each page:</p>
+<pre class="highlight"><code><span class="n">ResultSet</span> <span class="n">rs</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="na">execute</span><span class="o">(</span><span class="s">"your query"</span><span class="o">);</span>
+<span class="k">for</span> <span class="o">(</span><span class="n">Row</span> <span class="n">row</span> <span class="o">:</span> <span class="n">rs</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">rs</span><span class="o">.</span><span class="na">getAvailableWithoutFetching</span><span class="o">()</span> <span class="o">==</span> <span class="mi">100</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="n">rs</span><span class="o">.</span><span class="na">isFullyFetched</span><span class="o">())</span>
+        <span class="n">rs</span><span class="o">.</span><span class="na">fetchMoreResults</span><span class="o">();</span> <span class="c1">// this is asynchronous</span>
+    <span class="c1">// Process the row ...</span>
+    <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">row</span><span class="o">);</span>
+<span class="o">}</span>
+</code></pre>
+<p>If you use paging with the async API, you’ll also want to use those
+methods to avoid triggering synchronous fetches unintentionally; see
+<a href="../async/#async-paging">async paging</a>.</p>
+
+<h3 id="saving-and-reusing-the-paging-state" class="target">Saving and reusing the paging state<a class="anchor" href="#saving-and-reusing-the-paging-state" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<p>Sometimes it is convenient to save the paging state in order to restore
+it later. For example, consider a stateless web service that displays a
+list of results with a link to the next page. When the user clicks that
+link, we want to run the exact same query, except that the iteration
+should start where we stopped on the previous page.</p>
+
+<p>To do so, the driver exposes a <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/PagingState.html">PagingState</a> object that represents
+where we were in the result set when the last page was fetched:</p>
+<pre class="highlight"><code><span class="n">ResultSet</span> <span class="n">resultSet</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="na">execute</span><span class="o">(</span><span class="s">"your query"</span><span class="o">);</span>
+<span class="c1">// iterate the result set...</span>
+<span class="n">PagingState</span> <span class="n">pagingState</span> <span class="o">=</span> <span class="n">resultSet</span><span class="o">.</span><span class="na">getExecutionInfo</span><span class="o">().</span><span class="na">getPagingState</span><span class="o">();</span>
+</code></pre>
+<p>This object can be serialized to a <code>String</code> or a byte array:</p>
+<pre class="highlight"><code><span class="n">String</span> <span class="n">string</span> <span class="o">=</span> <span class="n">pagingState</span><span class="o">.</span><span class="na">toString</span><span class="o">();</span>
+<span class="kt">byte</span><span class="o">[]</span> <span class="n">bytes</span> <span class="o">=</span> <span class="n">pagingState</span><span class="o">.</span><span class="na">toBytes</span><span class="o">();</span>
+</code></pre>
+<p>This serialized form can be saved in some form of persistent storage to
+be reused later. In our web service example, we would probably save the
+string version as a query parameter in the URL to the next page
+(<code>http://myservice.com/results?page=&lt;...&gt;</code>). When that value is
+retrieved later, we can deserialize it and reinject it in a statement:</p>
+<pre class="highlight"><code><span class="n">PagingState</span> <span class="n">pagingState</span> <span class="o">=</span> <span class="n">PagingState</span><span class="o">.</span><span class="na">fromString</span><span class="o">(</span><span class="n">string</span><span class="o">);</span>
+<span class="n">Statement</span> <span class="n">st</span> <span class="o">=</span> <span class="k">new</span> <span class="n">SimpleStatement</span><span class="o">(</span><span class="s">"your query"</span><span class="o">);</span>
+<span class="n">st</span><span class="o">.</span><span class="na">setPagingState</span><span class="o">(</span><span class="n">pagingState</span><span class="o">);</span>
+<span class="n">ResultSet</span> <span class="n">rs</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="na">execute</span><span class="o">(</span><span class="n">st</span><span class="o">);</span>
+</code></pre>
+<p>Note that the paging state can only be reused with the exact same
+statement (same query string, same parameters). Also, it is an opaque
+value that is only meant to be collected, stored an re-used. If you try
+to modify its contents or reuse it with a different statement, the
+driver will raise an error.</p>
+
+<p>Putting it all together, here’s a more comprehensive example
+implementation for our web service:</p>
+<pre class="highlight"><code><span class="kd">final</span> <span class="kt">int</span> <span class="n">RESULTS_PER_PAGE</span> <span class="o">=</span> <span class="mi">100</span><span class="o">;</span>
+
+<span class="n">Statement</span> <span class="n">st</span> <span class="o">=</span> <span class="k">new</span> <span class="n">SimpleStatement</span><span class="o">(</span><span class="s">"your query"</span><span class="o">);</span>
+<span class="n">st</span><span class="o">.</span><span class="na">setFetchSize</span><span class="o">(</span><span class="n">RESULTS_PER_PAGE</span><span class="o">);</span>
+
+<span class="n">String</span> <span class="n">requestedPage</span> <span class="o">=</span> <span class="n">extractPagingStateStringFromURL</span><span class="o">();</span>
+<span class="c1">// This will be absent for the first page</span>
+<span class="k">if</span> <span class="o">(</span><span class="n">requestedPage</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">st</span><span class="o">.</span><span class="na">setPagingState</span><span class="o">(</span>
+        <span class="n">PagingState</span><span class="o">.</span><span class="na">fromString</span><span class="o">(</span><span class="n">requestedPage</span><span class="o">));</span>
+<span class="o">}</span>
+
+<span class="n">ResultSet</span> <span class="n">rs</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="na">execute</span><span class="o">(</span><span class="n">st</span><span class="o">);</span>
+<span class="n">PagingState</span> <span class="n">nextPage</span> <span class="o">=</span> <span class="n">rs</span><span class="o">.</span><span class="na">getExecutionInfo</span><span class="o">().</span><span class="na">getPagingState</span><span class="o">();</span>
+
+<span class="c1">// Note that we don't rely on RESULTS_PER_PAGE, since Cassandra might</span>
+<span class="c1">// have not respected it, or we might be at the end of the result set</span>
+<span class="kt">int</span> <span class="n">remaining</span> <span class="o">=</span> <span class="n">rs</span><span class="o">.</span><span class="na">getAvailableWithoutFetching</span><span class="o">();</span>
+<span class="k">for</span> <span class="o">(</span><span class="n">Row</span> <span class="n">row</span> <span class="o">:</span> <span class="n">rs</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">renderInResponse</span><span class="o">(</span><span class="n">row</span><span class="o">);</span>
+    <span class="k">if</span> <span class="o">(--</span><span class="n">remaining</span> <span class="o">==</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">break</span><span class="o">;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+
+<span class="c1">// This will be null if there are no more pages</span>
+<span class="k">if</span> <span class="o">(</span><span class="n">nextPage</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="o">{</span>
+    <span class="n">renderNextPageLink</span><span class="o">(</span><span class="n">nextPage</span><span class="o">.</span><span class="na">toString</span><span class="o">());</span>
+<span class="o">}</span>
+</code></pre>
+<p>Due to internal implementation details, <code>PagingState</code> instances are not
+portable across <a href="../native_protocol/">native protocol</a> versions. This
+could become a problem in the following scenario:</p>
+
+<ul>
+<li>you’re using the driver 2.0.x and Cassandra 2.0.x, and therefore
+native protocol v2;</li>
+<li>a user bookmarks a link to your web service that contains a serialized
+paging state;</li>
+<li>you upgrade your server stack to use the driver 2.1.x and Cassandra
+2.1.x, so you’re now using protocol v3;</li>
+<li>the user tries to reload their bookmark, but the paging state was
+serialized with protocol v2, so trying to reuse it will fail.</li>
+</ul>
+
+<p>If this is not acceptable for you, you might want to consider the unsafe
+API described in the next section.</p>
+
+<h4 id="unsafe-api" class="target">Unsafe API<a class="anchor" href="#unsafe-api" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h4>
+
+<p>As an alternative to the standard API, there are two methods that
+manipulate a raw <code>byte[]</code> instead of a <code>PagingState</code> object:</p>
+
+<ul>
+<li><a href="http://www.datastax.com/drivers/java/3.0/com/datastax/driver/core/ExecutionInfo.html#getPagingStateUnsafe()">ExecutionInfo#getPagingStateUnsafe()</a></li>
+<li><a href="http://www.datastax.com/drivers/java/3.0/com/datastax/driver/core/Statement.html#setPagingStateUnsafe(byte%5B%5D)">Statement#setPagingStateUnsafe(byte[])</a></li>
+</ul>
+
+<p>These low-level methods perform no validation on their arguments;
+therefore nothing protects you from reusing a paging state that was
+generated from a different statement, or altered in any way. This could
+result in sending a corrupt paging state to Cassandra, with
+unpredictable consequences (ranging from wrong results to a query
+failure).</p>
+
+<p>There are two situations where you might want to use the unsafe API:</p>
+
+<ul>
+<li>you never expose the paging state to end users and you are confident
+that it won’t get altered;</li>
+<li>you want portability across protocol versions and/or you prefer
+implementing your own validation logic (for example, signing the raw
+state with a private key).</li>
+</ul>
+
+<h3 id="offset-queries" class="target">Offset queries<a class="anchor" href="#offset-queries" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<p>Saving the paging state works well when you only let the user move from
+one page to the next. But it doesn’t allow random jumps (like “go
+directly to page 10”), because you can’t fetch a page unless you have
+the paging state of the previous one. Such a feature would require
+<em>offset queries</em>, but they are not natively supported by Cassandra (see
+<a href="https://issues.apache.org/jira/browse/CASSANDRA-6511">CASSANDRA-6511</a>).
+The rationale is that offset queries are inherently inefficient (the
+performance will always be linear in the number of rows skipped), so the
+Cassandra team doesn’t want to encourage their use.</p>
+
+<p>If you really want offset queries, you can emulate them client-side.
+You’ll still get linear performance, but maybe that’s acceptable for
+your use case. For example, if each page holds 10 rows and you show at
+most 20 pages, this means you’ll fetch at most 190 extra rows, which
+doesn’t sound like a big deal.</p>
+
+<p>For example, if the page size is 10, the fetch size is 50, and the user
+asks for page 12 (rows 110 to 119):</p>
+
+<ul>
+<li>execute the statement a first time (the result set contains rows 0 to
+49, but you’re not going to use them, only the paging state);</li>
+<li>execute the statement a second time with the paging state from the
+first query;</li>
+<li>execute the statement a third time with the paging state from the
+second query. The result set now contains rows 100 to 149;</li>
+<li>skip the first 10 rows of the iterator. Read the next 10 rows and
+discard the remaining ones.</li>
+</ul>
+
+<p>You’ll want to experiment with the fetch size to find the best balance:
+too small means many background queries; too big means bigger messages
+and too many unneeded rows returned (we picked 50 above for the sake of
+example, but it’s probably too small – the default is 5000).</p>
+
+<p>Again, offset queries are inefficient by nature. Emulating them
+client-side is a compromise when you think you can get away with the
+performance hit. We recommend that you:</p>
+
+<ul>
+<li>test your code at scale with the expected query patterns, to make sure
+that your assumptions are correct;</li>
+<li>set a hard limit on the highest possible page number, to prevent
+malicious users from triggering queries that would skip a huge amount
+of rows.</li>
+</ul>
+
+
+        </div>
+      </div>
+    </div>
+
+    
+    <footer class="container text-muted">
+      <ul class="list-inline">
+      
+        
+        <li>
+          <a href="https://github.com/datastax/java-driver/">Code</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="http://datastax.github.io/java-driver/">Docs</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://datastax-oss.atlassian.net/browse/JAVA/">Issues</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://groups.google.com/a/lists.datastax.com/forum/#!forum/java-driver-user">Mailing List</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="irc://irc.freenode.net/datastax-drivers">IRC Channel</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://github.com/datastax/java-driver/releases">Releases</a>
+        </li>
+      
+      </ul>
+    </footer>
+    
+
+    <script src="../../../js/jquery.js"></script>
+    <script src="../../../js/bootstrap.js"></script>
+    <script src="../../../js/angular.js"></script>
+    <script src="../../../js/mousetrap.js"></script>
+    <script src="../../../js/hotkeys.js"></script>
+    <script src="../../../js/ZeroClipboard.js"></script>
+    <script src="../../../js/lunr.js"></script>
+    <script src="../../../js/app.js"></script>
+  </body>
+</html>
