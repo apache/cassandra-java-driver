@@ -26,15 +26,15 @@ import java.util.Collection;
  * <p/>
  * Each session maintains multiple connections to the cluster nodes,
  * provides policies to choose which node to use for each query (round-robin on
- * all nodes of the cluster by default), and handles retries for failed query (when
+ * all nodes of the cluster by default), and handles retries for failed queries (when
  * it makes sense), etc...
  * <p/>
  * Session instances are thread-safe and usually a single instance is enough
  * per application. As a given session can only be "logged" into one keyspace at
- * a time (where the "logged" keyspace is the one used by query if the query doesn't
- * explicitely use a fully qualified table name), it can make sense to create one
- * session per keyspace used. This is however not necessary to query multiple keyspaces
- * since it is always possible to use a single session with fully qualified table name
+ * a time (where the "logged" keyspace is the one used by queries that don't
+ * explicitly use a fully qualified table name), it can make sense to create one
+ * session per keyspace used. This is however not necessary when querying multiple keyspaces
+ * since it is always possible to use a single session with fully qualified table names
  * in queries.
  */
 public interface Session extends Closeable {
@@ -54,18 +54,18 @@ public interface Session extends Closeable {
      * Force the initialization of this Session instance if it hasn't been
      * initialized yet.
      * <p/>
-     * Please note first that most use won't need to call this method
-     * explicitly. If you use the {@link Cluster#connect} method {@code Cluster}
+     * Please note first that most users won't need to call this method
+     * explicitly. If you use the {@link Cluster#connect} method
      * to create your Session, the returned session will be already
      * initialized. Even if you create a non-initialized session through
      * {@link Cluster#newSession}, that session will get automatically
-     * initialized the first time that session is used for querying. This method
+     * initialized the first time it is used for querying. This method
      * is thus only useful if you use {@link Cluster#newSession} and want to
      * explicitly force initialization without querying.
      * <p/>
      * Session initialization consists in connecting the Session to the known
      * Cassandra hosts (at least those that should not be ignored due to
-     * the {@code LoadBalancingPolicy} in place).
+     * the {@link com.datastax.driver.core.policies.LoadBalancingPolicy LoadBalancingPolicy} in place).
      * <p/>
      * If the Cluster instance this Session depends on is not itself
      * initialized, it will be initialized by this method.
@@ -74,10 +74,10 @@ public interface Session extends Closeable {
      *
      * @return this {@code Session} object.
      * @throws NoHostAvailableException if this initialization triggers the
-     *                                  Cluster initialization and no host amongst the contact points can be
+     *                                  {@link Cluster} initialization and no host amongst the contact points can be
      *                                  reached.
      * @throws AuthenticationException  if this initialization triggers the
-     *                                  Cluster initialization and an authentication error occurs while contacting
+     *                                  {@link Cluster} initialization and an authentication error occurs while contacting
      *                                  the initial contact points.
      */
     Session init();
@@ -138,7 +138,7 @@ public interface Session extends Closeable {
      * database. However, for SELECT queries, it does not guarantee that the
      * result has been received in full. But it does guarantee that some
      * response has been received from the database, and in particular
-     * guarantee that if the request is invalid, an exception will be thrown
+     * guarantees that if the request is invalid, an exception will be thrown
      * by this method.
      *
      * @param statement the CQL query to execute (that can be any {@link Statement}).
@@ -192,11 +192,11 @@ public interface Session extends Closeable {
      * submitted to a live node. Any exception pertaining to the failure of the
      * query will be thrown when accessing the {@link ResultSetFuture}.
      * <p/>
-     * Note that for queries that doesn't return a result (INSERT, UPDATE and
-     * DELETE), you will need to access the ResultSetFuture (that is call one of
-     * its get method to make sure the query was successful.
+     * Note that for queries that don't return a result (INSERT, UPDATE and
+     * DELETE), you will need to access the ResultSetFuture (that is, call one of
+     * its {@code get} methods to make sure the query was successful.
      *
-     * @param statement the CQL query to execute (that can be either any {@code Statement}.
+     * @param statement the CQL query to execute (that can be any {@code Statement}).
      * @return a future on the result of the query.
      * @throws UnsupportedFeatureException if the protocol version 1 is in use and
      *                                     a feature not supported has been used. Features that are not supported by
@@ -287,7 +287,7 @@ public interface Session extends Closeable {
      * Initiates a shutdown of this session instance.
      * <p/>
      * This method is asynchronous and return a future on the completion
-     * of the shutdown process. As soon a the session is shutdown, no
+     * of the shutdown process. As soon as the session is shutdown, no
      * new request will be accepted, but already submitted queries are
      * allowed to complete. This method closes all connections of this
      * session and reclaims all resources used by it.
@@ -328,7 +328,7 @@ public interface Session extends Closeable {
     /**
      * Whether this Session instance has been closed.
      * <p/>
-     * Note that this method returns true as soon as one closing this Session
+     * Note that this method returns true as soon as the closing of this Session
      * has started but it does not guarantee that the closing is done. If you
      * want to guarantee that the closing is done, you can call {@code close()}
      * and wait until it returns (or call the get method on {@code closeAsync()}
@@ -362,7 +362,7 @@ public interface Session extends Closeable {
      * The state of a Session.
      * <p/>
      * This mostly exposes information on the connections maintained by a Session:
-     * which host it is connected to, how many connection is has for each host, etc...
+     * which host it is connected to, how many connections it has for each host, etc...
      */
     interface State {
         /**
@@ -377,9 +377,9 @@ public interface Session extends Closeable {
          * this State has been grabbed).
          * <p/>
          * Please note that this method really returns the hosts for which the session currently
-         * holds a connection pool. A such, it's unlikely but not impossible for a host to be listed
+         * holds a connection pool. As such, it's unlikely but not impossible for a host to be listed
          * in the output of this method but to have {@code getOpenConnections} return 0, if the
-         * pool itself is created but not connections have been successfully opened yet.
+         * pool itself is created but no connections have been successfully opened yet.
          *
          * @return an immutable collection of the hosts to which the session is connected.
          */
@@ -412,11 +412,11 @@ public interface Session extends Closeable {
         int getTrashedConnections(Host host);
 
         /**
-         * The number of queries that are currently being executed though a given host.
+         * The number of queries that are currently being executed through a given host.
          * <p/>
-         * This correspond to the number of queries that have been sent (by the session this
-         * is a State of) to the Cassandra Host on one of its connection but haven't yet returned.
-         * In that sense this provide a sort of measure of how busy the connections to that node
+         * This corresponds to the number of queries that have been sent (by the session this
+         * is a State of) to the Cassandra Host on one of its connections but haven't yet returned.
+         * In that sense this provides a sort of measure of how busy the connections to that node
          * are (at the time the {@code State} was grabbed at least).
          *
          * @param host the host to get in-flight queries for.
