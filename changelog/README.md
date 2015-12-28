@@ -1,6 +1,6 @@
 ## Changelog
 
-### 3.0.0-rc1 (in progress)
+### 3.0.0-rc1
 
 - [bug] JAVA-890: fix mapper for case-sensitive UDT.
 

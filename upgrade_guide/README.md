@@ -235,10 +235,10 @@ We've also seized the opportunity to remove code that was deprecated in 2.1.
     more information. Furthermore, `FallthroughRetryPolicy` now returns
     `RetryDecision.rethrow()` when `onRequestError` is called.
 
-24. 'DseAuthProvider' has been deprecated and is now replaced by
-    'DseGSSAPIAuthProvider' for kerberos authentication. 'DsePlainTextAuthProvider'
+24. `DseAuthProvider` has been deprecated and is now replaced by
+    `DseGSSAPIAuthProvider` for Kerberos authentication. `DsePlainTextAuthProvider`
     has been introduced to handle plain text authentication with the
-    'DseAuthenticator'.
+    `DseAuthenticator`.
 
 
 ### 2.1.8
