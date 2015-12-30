@@ -36,7 +36,7 @@ abstract class Message {
 
     protected static final Logger logger = LoggerFactory.getLogger(Message.class);
 
-    static AttributeKey<CodecRegistry> CODEC_REGISTRY_ATTRIBUTE_KEY = AttributeKey.newInstance("com.datastax.driver.core.CodecRegistry");
+    static AttributeKey<CodecRegistry> CODEC_REGISTRY_ATTRIBUTE_KEY = AttributeKey.valueOf("com.datastax.driver.core.CodecRegistry");
 
     interface Coder<R extends Request> {
         void encode(R request, ByteBuf dest, ProtocolVersion version);
