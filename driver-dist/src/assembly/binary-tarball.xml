@@ -56,7 +56,7 @@
             <binaries>
                 <unpack>false</unpack>
                 <attachmentClassifier>sources</attachmentClassifier>
-                <outputFileNameMapping>${module.artifactId}-${module.version}.zip</outputFileNameMapping>
+                <outputFileNameMapping>${module.artifactId}-${module.version}-src.zip</outputFileNameMapping>
                 <outputDirectory>src</outputDirectory>
                 <excludes>
                     <exclude>*</exclude>
