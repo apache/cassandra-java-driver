@@ -40,7 +40,7 @@ public abstract class SSLTestBase {
 
     @BeforeClass(groups = {"isolated", "short", "long"})
     public void beforeClass() {
-        ccm = CCMBridge.builder("test")
+        ccm = CCMBridge.builder()
                 .withSSL(requireClientAuth)
                 .build();
     }

@@ -49,7 +49,7 @@ public class LoadBalancingPolicyBootstrapTest {
         CCMBridge ccm = null;
         Cluster cluster = null;
         try {
-            ccm = CCMBridge.builder("test").withNodes(2).build();
+            ccm = CCMBridge.builder().withNodes(2).build();
             cluster = Cluster.builder()
                     .addContactPoints(CCMBridge.ipOfNode(1), CCMBridge.ipOfNode(2))
                     .withLoadBalancingPolicy(policy)
@@ -84,7 +84,7 @@ public class LoadBalancingPolicyBootstrapTest {
         CCMBridge ccm = null;
         Cluster cluster = null;
         try {
-            ccm = CCMBridge.builder("test").withNodes(2).build();
+            ccm = CCMBridge.builder().withNodes(2).build();
 
             // In order to validate this behavior, we need to stop the first node that would be attempted to be
             // established as the control connection.

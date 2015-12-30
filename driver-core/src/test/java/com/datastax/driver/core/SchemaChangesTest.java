@@ -23,8 +23,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import org.mockito.ArgumentCaptor;
 import org.testng.annotations.*;
 
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 import static com.datastax.driver.core.Assertions.assertThat;
@@ -33,7 +31,8 @@ import static com.datastax.driver.core.TestUtils.nonDebouncingQueryOptions;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
-public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
+@CCMConfig(createCluster = false)
+public class SchemaChangesTest extends CCMTestsSupport {
 
     private static final String CREATE_KEYSPACE = "CREATE KEYSPACE %s WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor': '1' }";
     private static final String ALTER_KEYSPACE = "ALTER KEYSPACE %s WITH durable_writes = false";
@@ -67,20 +66,15 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
 
     ControlConnection schemaDisabledControlConnection;
 
-    @Override
-    protected Collection<String> getTableDefinitions() {
-        return Lists.newArrayList();
-    }
-
     @BeforeClass(groups = "short")
     public void setup() throws InterruptedException {
-        Cluster.Builder builder = configure(Cluster.builder())
-                .addContactPointsWithPorts(Collections.singletonList(hostAddress))
+        Cluster.Builder builder = Cluster.builder()
+                .addContactPointsWithPorts(getContactPoints())
                 .withQueryOptions(nonDebouncingQueryOptions());
         cluster1 = builder.build();
         cluster2 = builder.build();
-        schemaDisabledCluster = spy(configure(Cluster.builder())
-                .addContactPointsWithPorts(Collections.singletonList(hostAddress))
+        schemaDisabledCluster = spy(Cluster.builder()
+                .addContactPointsWithPorts(getContactPoints())
                 .withClusterName("schema-disabled")
                 .withQueryOptions(nonDebouncingQueryOptions()
                                 .setMetadataEnabled(false)
@@ -215,7 +209,7 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
     @Test(groups = "short", dataProvider = "existingKeyspaceName")
     @CassandraVersion(major = 2.1)
     public void should_notify_of_udt_creation(String keyspace) {
-        session.execute(String.format("CREATE TYPE %s.type1(i int)", keyspace));
+        session1.execute(String.format("CREATE TYPE %s.type1(i int)", keyspace));
 
         for (SchemaChangeListener listener : listeners) {
             ArgumentCaptor<UserType> added = ArgumentCaptor.forClass(UserType.class);
@@ -232,8 +226,8 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
     @Test(groups = "short", dataProvider = "existingKeyspaceName")
     @CassandraVersion(major = 2.1)
     public void should_notify_of_udt_update(String keyspace) {
-        session.execute(String.format("CREATE TYPE %s.type1(i int)", keyspace));
-        session.execute(String.format("ALTER TYPE %s.type1 ADD j int", keyspace));
+        session1.execute(String.format("CREATE TYPE %s.type1(i int)", keyspace));
+        session1.execute(String.format("ALTER TYPE %s.type1 ADD j int", keyspace));
 
         for (SchemaChangeListener listener : listeners) {
             ArgumentCaptor<UserType> current = ArgumentCaptor.forClass(UserType.class);
@@ -251,8 +245,8 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
     @Test(groups = "short", dataProvider = "existingKeyspaceName")
     @CassandraVersion(major = 2.1)
     public void should_notify_of_udt_drop(String keyspace) {
-        session.execute(String.format("CREATE TYPE %s.type1(i int)", keyspace));
-        session.execute(String.format("DROP TYPE %s.type1", keyspace));
+        session1.execute(String.format("CREATE TYPE %s.type1(i int)", keyspace));
+        session1.execute(String.format("DROP TYPE %s.type1", keyspace));
 
         for (SchemaChangeListener listener : listeners) {
             ArgumentCaptor<UserType> removed = ArgumentCaptor.forClass(UserType.class);
@@ -339,8 +333,8 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
      */
     @Test(groups = "short", expectedExceptions = IllegalStateException.class)
     public void should_throw_illegal_state_exception_on_newToken_with_metadata_disabled() {
-        Cluster cluster = configure(Cluster.builder())
-                .addContactPointsWithPorts(Collections.singletonList(hostAddress))
+        Cluster cluster = Cluster.builder()
+                .addContactPointsWithPorts(getContactPoints())
                 .withQueryOptions(nonDebouncingQueryOptions()
                                 .setMetadataEnabled(false)
                 ).build();
@@ -363,8 +357,8 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
      */
     @Test(groups = "short", expectedExceptions = IllegalStateException.class)
     public void should_throw_illegal_state_exception_on_newTokenRange_with_metadata_disabled() {
-        Cluster cluster = configure(Cluster.builder())
-                .addContactPointsWithPorts(Collections.singletonList(hostAddress))
+        Cluster cluster = Cluster.builder()
+                .addContactPointsWithPorts(getContactPoints())
                 .withQueryOptions(nonDebouncingQueryOptions()
                                 .setMetadataEnabled(false)
                 ).build();
@@ -386,8 +380,8 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
      * @jira_ticket JAVA-858
      * @since 2.0.11
      */
-    @Test(groups = "short")
-    public void should_not_refresh_schema_on_schema_change_response() throws InterruptedException {
+    @Test(groups = "short", dataProvider = "existingKeyspaceName")
+    public void should_not_refresh_schema_on_schema_change_response(String keyspace) throws InterruptedException {
         ResultSet rs = schemaDisabledSession.execute(String.format(CREATE_TABLE, keyspace));
 
         // Should still wait on schema agreement.
@@ -405,8 +399,8 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
      * @jira_ticket JAVA-858
      * @since 2.0.11
      */
-    @Test(groups = "short")
-    public void should_refresh_schema_and_token_map_if_schema_metadata_reenabled() throws Exception {
+    @Test(groups = "short", dataProvider = "existingKeyspaceName")
+    public void should_refresh_schema_and_token_map_if_schema_metadata_reenabled(String keyspace) throws Exception {
         try {
             schemaDisabledCluster.getConfiguration().getQueryOptions().setMetadataEnabled(true);
 

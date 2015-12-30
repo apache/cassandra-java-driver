@@ -15,8 +15,6 @@
  */
 package com.datastax.driver.core;
 
-import com.datastax.driver.core.exceptions.AlreadyExistsException;
-import com.datastax.driver.core.exceptions.DriverException;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
@@ -27,24 +25,20 @@ import com.google.common.io.Files;
 import org.apache.commons.exec.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
 
 import java.io.*;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.datastax.driver.core.TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT;
-import static com.datastax.driver.core.TestUtils.SIMPLE_KEYSPACE;
 import static org.testng.Assert.fail;
 
+@SuppressWarnings("unused")
 public class CCMBridge {
 
     private static final Logger logger = LoggerFactory.getLogger(CCMBridge.class);
@@ -153,7 +147,7 @@ public class CCMBridge {
             installArgs.append("-v git:");
             installArgs.append(branch.trim().replaceAll("\"", ""));
         } else {
-            installArgs.append("-v");
+            installArgs.append("-v ");
             installArgs.append(CASSANDRA_VERSION);
         }
 
@@ -214,13 +208,19 @@ public class CCMBridge {
         return osName != null && osName.startsWith("Windows");
     }
 
+    private final String clusterName;
+
     private final File ccmDir;
 
     private final boolean isDSE;
 
-    private CCMBridge(boolean isDSE) {
+    private final String jvmArgs;
+
+    private CCMBridge(String clusterName, boolean isDSE, String... jvmArgs) {
+        this.clusterName = clusterName;
         this.ccmDir = Files.createTempDir();
         this.isDSE = isDSE;
+        this.jvmArgs = joinJvmArgs(jvmArgs);
     }
 
     /**
@@ -280,6 +280,22 @@ public class CCMBridge {
         return CASSANDRA_INSTALL_ARGS;
     }
 
+    public File getCcmDir() {
+        return ccmDir;
+    }
+
+    public File getClusterDir() {
+        return new File(ccmDir, clusterName);
+    }
+
+    public File getNodeDir(int n) {
+        return new File(getClusterDir(), "node" + n);
+    }
+
+    public File getNodeConfDir(int n) {
+        return new File(getNodeDir(n), "conf");
+    }
+
     /**
      * <p>
      * Extracts a keystore from the classpath into a temporary file.
@@ -316,8 +332,8 @@ public class CCMBridge {
         return f;
     }
 
-    public static Builder builder(String clusterName) {
-        return new Builder(clusterName);
+    public static Builder builder() {
+        return new Builder();
     }
 
     public static CCMBridge.CCMCluster buildCluster(int nbNodes, Cluster.Builder builder) {
@@ -329,59 +345,44 @@ public class CCMBridge {
     }
 
     public void start() {
-        execute(CCM_COMMAND + " start --wait-other-notice --wait-for-binary-proto");
+        logger.info("Starting: " + this);
+        execute(CCM_COMMAND + " start --wait-other-notice --wait-for-binary-proto" + jvmArgs);
     }
 
     public void stop() {
+        logger.info("Stopping: " + this);
         execute(CCM_COMMAND + " stop");
     }
 
     public void forceStop() {
+        logger.info("Force stopping: " + this);
         execute(CCM_COMMAND + " stop --not-gently");
     }
 
     public void start(int n) {
-        logger.info("Starting: " + IP_PREFIX + n);
-        execute(CCM_COMMAND + " node%d start --wait-other-notice --wait-for-binary-proto", n);
-    }
-
-    public void start(int n, String... jvmArg) {
-        StringBuilder jvmArgs = new StringBuilder("");
-        for (int i = 0; i < jvmArg.length; i++) {
-            jvmArgs.append(" --jvm_arg=");
-            jvmArgs.append(jvmArg[i]);
-        }
-        logger.info("Starting: " + IP_PREFIX + n + " with " + jvmArgs);
-        execute(CCM_COMMAND + " node%d start --wait-other-notice --wait-for-binary-proto %s", n, jvmArgs.toString());
+        logger.info(String.format("Starting: node %s (%s%s) in %s", n, IP_PREFIX, n, this) +
+                (jvmArgs.isEmpty() ? "" : " with JVM args:" + jvmArgs));
+        execute(CCM_COMMAND + " node%d start --wait-other-notice --wait-for-binary-proto" + jvmArgs, n);
     }
 
     public void stop(int n) {
-        logger.info("Stopping: " + IP_PREFIX + n);
+        logger.info(String.format("Stopping: node %s (%s%s) in %s", n, IP_PREFIX, n, this));
         execute(CCM_COMMAND + " node%d stop", n);
     }
 
-    public void stop(String clusterName) {
-        logger.info("Stopping Cluster : " + clusterName);
-        execute(CCM_COMMAND + " stop " + clusterName);
-    }
-
     public void forceStop(int n) {
-        logger.info("Force stopping: " + IP_PREFIX + n);
+        logger.info(String.format("Force stopping: node %s (%s.%s) in %s", n, IP_PREFIX, n, this));
         execute(CCM_COMMAND + " node%d stop --not-gently", n);
     }
 
     public void remove() {
         stop();
+        logger.info("Removing: " + this);
         execute(CCM_COMMAND + " remove");
     }
 
-    public void remove(String clusterName) {
-        stop(clusterName);
-        execute(CCM_COMMAND + " remove " + clusterName);
-    }
-
     public void remove(int n) {
-        logger.info("Removing: " + IP_PREFIX + n);
+        logger.info(String.format("Removing: node %s (%s%s) from %s", n, IP_PREFIX, n, this));
         execute(CCM_COMMAND + " node%d remove", n);
     }
 
@@ -397,34 +398,57 @@ public class CCMBridge {
         execute(CCM_COMMAND + " node%d start --wait-other-notice --wait-for-binary-proto", n);
     }
 
-    public void bootstrapNodeWithPorts(int n, int thriftPort, int storagePort, int binaryPort, int jmxPort, int remoteDebugPort) {
-        String thriftItf = IP_PREFIX + n + ":" + thriftPort;
+    public void addNode(int dc, int n, long initialToken, int storagePort, int binaryPort, int jmxPort, int remoteDebugPort) {
         String storageItf = IP_PREFIX + n + ":" + storagePort;
         String binaryItf = IP_PREFIX + n + ":" + binaryPort;
         String remoteLogItf = IP_PREFIX + n + ":" + remoteDebugPort;
-        execute(CCM_COMMAND + " add node%d -i %s%d -b -t %s -l %s --binary-itf %s -j %d -r %s -s" + (isDSE ? " --dse" : ""),
-                n, IP_PREFIX, n, thriftItf, storageItf, binaryItf, jmxPort, remoteLogItf);
-        execute(CCM_COMMAND + " node%d start --wait-other-notice --wait-for-binary-proto", n);
+        execute(CCM_COMMAND + " add node%d -d dc%s -i %s%d -n %s -l %s --binary-itf %s -j %d -r %s -s" + (isDSE ? " --dse" : ""),
+                n, dc, IP_PREFIX, n, initialToken, storageItf, binaryItf, jmxPort, remoteLogItf);
     }
 
     public void decommissionNode(int n) {
+        logger.info(String.format("Decommissioning: node %s (%s%s) from %s", n, IP_PREFIX, n, this));
         execute(CCM_COMMAND + " node%d decommission", n);
     }
 
-    public void updateConfig(Map<String, String> configs) {
+    public void updateConfig(Map<String, Object> configs) {
         StringBuilder confStr = new StringBuilder();
-        for (Map.Entry<String, String> entry : configs.entrySet()) {
-            confStr.append(entry.getKey() + ":" + entry.getValue() + " ");
+        for (Map.Entry<String, Object> entry : configs.entrySet()) {
+            confStr
+                    .append(entry.getKey())
+                    .append(":")
+                    .append(entry.getValue())
+                    .append(" ");
         }
         execute(CCM_COMMAND + " updateconf " + confStr);
     }
 
-    public void updateDSEConfig(Map<String, String> configs) {
+    public void updateDSEConfig(Map<String, Object> configs) {
         StringBuilder confStr = new StringBuilder();
-        for (Map.Entry<String, String> entry : configs.entrySet()) {
-            confStr.append(entry.getKey() + ":" + entry.getValue() + " ");
+        for (Map.Entry<String, Object> entry : configs.entrySet()) {
+            confStr
+                    .append(entry.getKey())
+                    .append(":")
+                    .append(entry.getValue())
+                    .append(" ");
         }
         execute(CCM_COMMAND + " updatedseconf " + confStr);
+    }
+
+    public void updateNodeConfig(int n, String key, Object value) {
+        updateNodeConfig(n, ImmutableMap.<String, Object>builder().put(key, value).build());
+    }
+
+    public void updateNodeConfig(int n, Map<String, Object> configs) {
+        StringBuilder confStr = new StringBuilder();
+        for (Map.Entry<String, Object> entry : configs.entrySet()) {
+            confStr
+                    .append(entry.getKey())
+                    .append(":")
+                    .append(entry.getValue())
+                    .append(" ");
+        }
+        execute(CCM_COMMAND + " node%s updateconf %s", n, confStr);
     }
 
     public void setWorkload(int node, String workload) {
@@ -531,160 +555,20 @@ public class CCMBridge {
         return IP_PREFIX + Integer.toString(nodeNumber);
     }
 
-    public static class terminationHook extends Thread {
-        @Override
-        public void run() {
-            logger.debug("shut down hook task..");
-
-            if (PerClassSingleNodeCluster.cluster != null) {
-                PerClassSingleNodeCluster.cluster.close();
+    private static String joinJvmArgs(String... jvmArgs) {
+        StringBuilder allJvmArgs = new StringBuilder("");
+        if (jvmArgs != null) {
+            for (String jvmArg : jvmArgs) {
+                allJvmArgs.append(" --jvm_arg=");
+                allJvmArgs.append(jvmArg);
             }
-            if (PerClassSingleNodeCluster.ccmBridge == null) {
-                logger.error("No cluster to discard");
-            } else if (PerClassSingleNodeCluster.erroredOut) {
-                PerClassSingleNodeCluster.ccmBridge.remove("test-class");
-                logger.info("Error during tests, kept C* logs in " + PerClassSingleNodeCluster.ccmBridge.ccmDir);
-            } else {
-                PerClassSingleNodeCluster.ccmBridge.remove("test-class");
-                PerClassSingleNodeCluster.ccmBridge.ccmDir.delete();
-            }
-
         }
+        return allJvmArgs.toString();
     }
 
-    // One cluster for the whole test class
-    public static abstract class PerClassSingleNodeCluster {
-
-        protected static CCMBridge ccmBridge;
-        private static boolean erroredOut;
-        private static boolean clusterInitialized = false;
-        private static AtomicLong ksNumber;
-        protected String keyspace;
-
-        protected static InetSocketAddress hostAddress;
-        protected static int[] ports;
-
-        protected static Cluster cluster;
-        protected static Session session;
-
-        protected final VersionNumber cassandraVersion = VersionNumber.parse(System.getProperty("cassandra.version"));
-
-        protected abstract Collection<String> getTableDefinitions();
-
-        // Give individual tests a chance to customize the cluster configuration
-        protected Cluster.Builder configure(Cluster.Builder builder) {
-            return builder;
-        }
-
-        public void errorOut() {
-            erroredOut = true;
-        }
-
-        @BeforeClass(groups = {"isolated", "short", "long"})
-        public void beforeClass() {
-            maybeInitCluster();
-            initKeyspace();
-        }
-
-        @AfterClass(groups = {"isolated", "short", "long"})
-        public void afterClass() {
-            try {
-                clearSimpleKeyspace();
-            } finally {
-                if (cluster != null) {
-                    cluster.close();
-                }
-            }
-        }
-
-        private void maybeInitCluster() {
-            if (!clusterInitialized) {
-                try {
-                    //launch ccm cluster
-                    ccmBridge = CCMBridge.builder("test-class").withoutNodes().notStarted().build();
-
-                    ports = new int[5];
-                    for (int i = 0; i < 5; i++) {
-                        ports[i] = TestUtils.findAvailablePort(11000 + i);
-                    }
-
-                    ccmBridge.bootstrapNodeWithPorts(1, ports[0], ports[1], ports[2], ports[3], ports[4]);
-                    ksNumber = new AtomicLong(0);
-                    erroredOut = false;
-                    hostAddress = new InetSocketAddress(InetAddress.getByName(IP_PREFIX + 1), ports[2]);
-
-                    Runtime r = Runtime.getRuntime();
-                    r.addShutdownHook(new terminationHook());
-                    clusterInitialized = true;
-
-                } catch (UnknownHostException e) {
-                    throw new RuntimeException(e);
-                }
-            }
-
-        }
-
-
-        private void initKeyspace() {
-            try {
-                Cluster.Builder builder = Cluster.builder();
-
-                builder = configure(builder);
-
-                cluster = builder.addContactPointsWithPorts(Collections.singletonList(hostAddress))
-                        .withNettyOptions(TestUtils.nonQuietClusterCloseOptions)
-                        .build();
-                session = cluster.connect();
-                keyspace = SIMPLE_KEYSPACE + "_" + ksNumber.incrementAndGet();
-                session.execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, keyspace, 1));
-
-                session.execute("USE " + keyspace);
-                for (String tableDef : getTableDefinitions()) {
-                    try {
-                        session.execute(tableDef);
-                    } catch (AlreadyExistsException e) {
-                        // It's ok, ignore
-                    }
-                }
-            } catch (AlreadyExistsException e) {
-                // It's ok, ignore (not supposed to go there)
-            } catch (NoHostAvailableException e) {
-                erroredOut = true;
-                for (Map.Entry<InetSocketAddress, Throwable> entry : e.getErrors().entrySet())
-                    logger.info("Error connecting to " + entry.getKey() + ": " + entry.getValue());
-                throw new RuntimeException(e);
-            } catch (DriverException e) {
-                erroredOut = true;
-                throw e;
-            }
-        }
-
-        private void clearSimpleKeyspace() {
-            if (keyspace != null) {
-                logger.debug("Removing keyspace {}.", keyspace);
-                // Temporarily extend read timeout to 1 minute to accommodate dropping keyspaces and
-                // tables being slow, particularly in a CI environment.
-                int currentTimeout = cluster.getConfiguration().getSocketOptions().getReadTimeoutMillis();
-                cluster.getConfiguration().getSocketOptions().setReadTimeoutMillis(60000);
-                try {
-                    KeyspaceMetadata ksm = cluster.getMetadata().getKeyspace(keyspace);
-                    if (ksm != null) {
-                        // drop each table individually as this seems to be more dependable than dropping
-                        // the entire keyspace at once if it has many tables.
-                        if (ksm.getTables().size() > 10) {
-                            for (TableMetadata table : ksm.getTables()) {
-                                logger.debug("Dropping table {}.{}.", keyspace, table.getName());
-                                session.execute("DROP TABLE " + keyspace + "." + table.getName());
-                            }
-                        }
-                    }
-                    logger.debug("Dropping keyspace {}.", keyspace);
-                    session.execute("DROP KEYSPACE " + keyspace);
-                } finally {
-                    cluster.getConfiguration().getSocketOptions().setReadTimeoutMillis(currentTimeout);
-                }
-            }
-        }
+    @Override
+    public String toString() {
+        return String.format("CCM cluster %s [%s]", clusterName, ccmDir);
     }
 
     public static class CCMCluster {
@@ -700,7 +584,7 @@ public class CCMBridge {
             if (nbNodes == 0)
                 throw new IllegalArgumentException();
 
-            CCMBridge ccm = CCMBridge.builder("test").withNodes(nbNodes).build();
+            CCMBridge ccm = CCMBridge.builder().withNodes(nbNodes).build();
             return new CCMCluster(ccm, builder, nbNodes);
         }
 
@@ -708,7 +592,7 @@ public class CCMBridge {
             if (nbNodesDC1 == 0)
                 throw new IllegalArgumentException();
 
-            CCMBridge ccm = CCMBridge.builder("test").withNodes(nbNodesDC1, nbNodesDC2).build();
+            CCMBridge ccm = CCMBridge.builder().withNodes(nbNodesDC1, nbNodesDC2).build();
             return new CCMCluster(ccm, builder, nbNodesDC1 + nbNodesDC2);
         }
 
@@ -753,35 +637,31 @@ public class CCMBridge {
                 logger.info("Error during tests, kept C* logs in " + cassandraCluster.ccmDir);
             } else {
                 cassandraCluster.remove();
-                cassandraCluster.ccmDir.delete();
+                if (!cassandraCluster.ccmDir.delete())
+                    logger.warn("Could not delete CCM data dir: " + cassandraCluster.ccmDir);
             }
         }
     }
 
     /**
-     * use {@link #builder(String)} to get an instance
+     * use {@link #builder()} to get an instance
      */
     public static class Builder {
-        private final String clusterName;
-        private Integer[] nodes = {1};
+        private static final AtomicInteger COUNTER = new AtomicInteger(0);
+        private final String clusterName = "test_" + COUNTER.incrementAndGet();
+        private int[] nodes = {1};
         private boolean start = true;
         private boolean isDSE = IS_DSE;
         private String cassandraInstallArgs = CASSANDRA_INSTALL_ARGS;
         private String[] startOptions = new String[0];
-
-        private Map<String, String> cassandraConfiguration = Maps.newHashMap();
-
-        private Map<String, String> dseConfiguration = Maps.newHashMap();
-
-
-        Builder(String clusterName) {
-            this.clusterName = clusterName;
-        }
+        private String[] jvmArgs;
+        private Map<String, Object> cassandraConfiguration = Maps.newHashMap();
+        private Map<String, Object> dseConfiguration = Maps.newHashMap();
 
         /**
          * Number of nodes for each DC. Defaults to [1] (1 DC with 1 node)
          */
-        public Builder withNodes(Integer... nodes) {
+        public Builder withNodes(int... nodes) {
             this.nodes = nodes;
             return this;
         }
@@ -837,18 +717,28 @@ public class CCMBridge {
         /**
          * Customizes entries in cassandra.yaml (can be called multiple times)
          */
-        public Builder withCassandraConfiguration(String key, String value) {
+        public Builder withCassandraConfiguration(String key, Object value) {
             this.cassandraConfiguration.put(key, value);
             return this;
         }
 
-        public Builder withDSEConfiguration(String key, String value) {
+        public Builder withDSEConfiguration(String key, Object value) {
             this.dseConfiguration.put(key, value);
             return this;
         }
 
+        /**
+         * JVM args to use when starting nodes.
+         * System properties should be provided in the form:
+         * {@code -Dname=value}.
+         */
+        public Builder withJvmArgs(String... jvmArgs) {
+            this.jvmArgs = jvmArgs;
+            return this;
+        }
+
         public CCMBridge build() {
-            CCMBridge ccm = new CCMBridge(isDSE);
+            CCMBridge ccm = new CCMBridge(clusterName, isDSE, jvmArgs);
             ccm.execute(buildCreateCommand());
             if (!cassandraConfiguration.isEmpty())
                 ccm.updateConfig(cassandraConfiguration);
@@ -861,14 +751,52 @@ public class CCMBridge {
 
         private String buildCreateCommand() {
             StringBuilder result = new StringBuilder(CCM_COMMAND + " create");
-            result.append(" " + clusterName);
-            result.append(" -i" + IP_PREFIX);
-            result.append(" " + cassandraInstallArgs);
-            if (nodes.length > 0)
-                result.append(" -n " + Joiner.on(":").join(nodes));
+            result.append(" ").append(clusterName);
+            result.append(" -i ").append(IP_PREFIX);
+            result.append(" ").append(cassandraInstallArgs);
+            if (nodes.length > 0) {
+                result.append(" -n ");
+                for (int i = 0; i < nodes.length; i++) {
+                    if (i > 0) result.append(":");
+                    result.append(nodes[i]);
+                }
+            }
             if (startOptions.length > 0)
-                result.append(" " + Joiner.on(" ").join(startOptions));
+                result.append(" ").append(Joiner.on(" ").join(startOptions));
             return result.toString();
         }
+
+        @Override
+        @SuppressWarnings("SimplifiableIfStatement")
+        public boolean equals(Object o) {
+            // do not include cluster name
+            if (this == o) return true;
+            if (!(o instanceof Builder)) return false;
+            Builder builder = (Builder) o;
+            if (start != builder.start) return false;
+            if (isDSE != builder.isDSE) return false;
+            if (!Arrays.equals(nodes, builder.nodes)) return false;
+            if (!cassandraInstallArgs.equals(builder.cassandraInstallArgs)) return false;
+            if (!Arrays.equals(startOptions, builder.startOptions)) return false;
+            if (!Arrays.equals(jvmArgs, builder.jvmArgs)) return false;
+            if (!cassandraConfiguration.equals(builder.cassandraConfiguration)) return false;
+            return dseConfiguration.equals(builder.dseConfiguration);
+        }
+
+        @Override
+        public int hashCode() {
+            // do not include cluster name
+            int result = Arrays.hashCode(nodes);
+            result = 31 * result + (start ? 1 : 0);
+            result = 31 * result + (isDSE ? 1 : 0);
+            result = 31 * result + cassandraInstallArgs.hashCode();
+            result = 31 * result + Arrays.hashCode(startOptions);
+            result = 31 * result + Arrays.hashCode(jvmArgs);
+            result = 31 * result + cassandraConfiguration.hashCode();
+            result = 31 * result + dseConfiguration.hashCode();
+            return result;
+        }
+
     }
+
 }

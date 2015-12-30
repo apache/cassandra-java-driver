@@ -26,7 +26,7 @@ import static com.datastax.driver.core.TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT;
 import static com.google.common.collect.Lists.newArrayList;
 import static org.mockito.Mockito.*;
 
-public class NodeListRefreshDebouncerTest extends CCMBridge.PerClassSingleNodeCluster {
+public class NodeListRefreshDebouncerTest extends CCMTestsSupport {
 
     private static final int DEBOUNCE_TIME = 2000;
 
@@ -42,11 +42,6 @@ public class NodeListRefreshDebouncerTest extends CCMBridge.PerClassSingleNodeCl
     // Keyspaces to drop after test completes.
     private Collection<String> keyspaces = newArrayList();
 
-    @Override
-    protected Collection<String> getTableDefinitions() {
-        return newArrayList();
-    }
-
     @BeforeClass(groups = "short")
     public void setup() {
         queryOptions = new QueryOptions();
@@ -54,8 +49,8 @@ public class NodeListRefreshDebouncerTest extends CCMBridge.PerClassSingleNodeCl
         queryOptions.setMaxPendingRefreshNodeListRequests(5);
         queryOptions.setRefreshSchemaIntervalMillis(0);
         // Create a separate cluster that will receive the schema events on its control connection.
-        cluster2 = this.configure(Cluster.builder())
-                .addContactPointsWithPorts(newArrayList(hostAddress))
+        cluster2 = Cluster.builder()
+                .addContactPointsWithPorts(getContactPoints())
                 .withQueryOptions(queryOptions)
                 .build();
         session2 = cluster2.connect();

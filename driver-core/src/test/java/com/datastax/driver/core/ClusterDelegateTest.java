@@ -15,18 +15,11 @@
  */
 package com.datastax.driver.core;
 
-import com.google.common.collect.Lists;
 import org.testng.annotations.Test;
-
-import java.util.Collection;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class ClusterDelegateTest extends CCMBridge.PerClassSingleNodeCluster {
-    @Override
-    protected Collection<String> getTableDefinitions() {
-        return Lists.newArrayList();
-    }
+public class ClusterDelegateTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void should_allow_subclass_to_delegate_to_other_instance() {

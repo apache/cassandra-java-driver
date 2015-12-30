@@ -15,7 +15,7 @@
  */
 package com.datastax.driver.mapping;
 
-import com.datastax.driver.core.CCMBridge;
+import com.datastax.driver.core.CCMTestsSupport;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.utils.CassandraVersion;
@@ -27,9 +27,9 @@ import java.util.Collection;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class MapperAccessorParamsTest extends CCMBridge.PerClassSingleNodeCluster {
+public class MapperAccessorParamsTest extends CCMTestsSupport {
     @Override
-    protected Collection<String> getTableDefinitions() {
+    public Collection<String> createTestFixtures() {
         return Lists.newArrayList(
                 "CREATE TABLE user ( key int primary key, gender int, home_phone text, work_phone text)",
                 "CREATE INDEX on user(gender)",

@@ -33,7 +33,7 @@ public class StateListenerTest {
         CCMBridge ccm = null;
         Cluster cluster = null;
         try {
-            ccm = CCMBridge.builder("test").build();
+            ccm = CCMBridge.builder().build();
             cluster = Cluster.builder()
                     .addContactPoint(CCMBridge.ipOfNode(1))
                     .build();

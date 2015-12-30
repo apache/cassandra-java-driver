@@ -33,7 +33,7 @@ public class SingleTokenIntegrationTest {
         Cluster cluster = null;
 
         try {
-            ccm = CCMBridge.builder("test")
+            ccm = CCMBridge.builder()
                     // force the initial token to a non-min value to validate that the single range will always be ]minToken, minToken]
                     .withCassandraConfiguration("initial_token", "1")
                     .build();

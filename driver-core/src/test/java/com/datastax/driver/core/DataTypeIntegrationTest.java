@@ -35,7 +35,7 @@ import static org.assertj.core.api.Assertions.fail;
  * (protocol > v2 only) and a prepared statement.
  * This is repeated with a large number of datatypes.
  */
-public class DataTypeIntegrationTest extends CCMBridge.PerClassSingleNodeCluster {
+public class DataTypeIntegrationTest extends CCMTestsSupport {
     private static final Logger logger = LoggerFactory.getLogger(DataTypeIntegrationTest.class);
 
     List<TestTable> tables = allTables();
@@ -44,7 +44,7 @@ public class DataTypeIntegrationTest extends CCMBridge.PerClassSingleNodeCluster
     enum StatementType {RAW_STRING, SIMPLE_WITH_PARAM, PREPARED}
 
     @Override
-    protected Collection<String> getTableDefinitions() {
+    public Collection<String> createTestFixtures() {
         Host host = cluster.getMetadata().getAllHosts().iterator().next();
         cassandraVersion = host.getCassandraVersion().nextStable();
 

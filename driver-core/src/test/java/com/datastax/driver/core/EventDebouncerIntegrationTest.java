@@ -40,7 +40,7 @@ public class EventDebouncerIntegrationTest {
     @Test(groups = "long")
     public void should_wait_until_load_balancing_policy_is_fully_initialized() throws InterruptedException {
         TestLoadBalancingPolicy policy = new TestLoadBalancingPolicy();
-        CCMBridge ccm = CCMBridge.builder("main").withNodes(3).build();
+        CCMBridge ccm = CCMBridge.builder().withNodes(3).build();
         final Cluster cluster = new Cluster.Builder()
                 .addContactPoints(ipOfNode(1))
                 .withLoadBalancingPolicy(policy)
@@ -72,7 +72,7 @@ public class EventDebouncerIntegrationTest {
         } finally {
             if (cluster != null)
                 cluster.close();
-            ccm.remove("main");
+            ccm.remove();
         }
     }
 

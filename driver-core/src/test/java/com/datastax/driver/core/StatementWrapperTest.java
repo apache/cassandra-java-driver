@@ -16,28 +16,22 @@
 package com.datastax.driver.core;
 
 import com.datastax.driver.core.policies.*;
-import com.google.common.collect.Lists;
 import org.testng.annotations.Test;
 
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class StatementWrapperTest extends CCMBridge.PerClassSingleNodeCluster {
-    @Override
-    protected Collection<String> getTableDefinitions() {
-        return Lists.newArrayList();
-    }
+public class StatementWrapperTest extends CCMTestsSupport {
 
     CustomLoadBalancingPolicy loadBalancingPolicy = new CustomLoadBalancingPolicy();
     CustomSpeculativeExecutionPolicy speculativeExecutionPolicy = new CustomSpeculativeExecutionPolicy();
     CustomRetryPolicy retryPolicy = new CustomRetryPolicy();
 
     @Override
-    protected Cluster.Builder configure(Cluster.Builder builder) {
-        return builder
+    public Cluster.Builder createClusterBuilder() {
+        return Cluster.builder()
                 .withLoadBalancingPolicy(loadBalancingPolicy)
                 .withSpeculativeExecutionPolicy(speculativeExecutionPolicy)
                 .withRetryPolicy(retryPolicy);

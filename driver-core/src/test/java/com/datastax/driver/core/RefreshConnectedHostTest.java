@@ -39,7 +39,7 @@ public class RefreshConnectedHostTest {
             LimitingLoadBalancingPolicy loadBalancingPolicy = new LimitingLoadBalancingPolicy(new RoundRobinPolicy(), 2, 1);
 
             // Setup a 3-host cluster, start only two hosts so that we know in advance which ones the policy will use
-            ccm = CCMBridge.builder("test").withNodes(3).notStarted().build();
+            ccm = CCMBridge.builder().withNodes(3).notStarted().build();
             ccm.start(1);
             ccm.start(2);
             ccm.waitForUp(1);

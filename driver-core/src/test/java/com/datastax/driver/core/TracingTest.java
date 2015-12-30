@@ -28,17 +28,17 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CassandraVersion(major = 2.0)
-public class TracingTest extends CCMBridge.PerClassSingleNodeCluster {
+public class TracingTest extends CCMTestsSupport {
+
+    private static final String KEY = "tracing_test";
 
     @Override
-    protected Cluster.Builder configure(Cluster.Builder builder) {
-        return builder.withRetryPolicy(DowngradingConsistencyRetryPolicy.INSTANCE);
+    public Cluster.Builder createClusterBuilder() {
+        return Cluster.builder().withRetryPolicy(DowngradingConsistencyRetryPolicy.INSTANCE);
     }
 
-    public static final String KEY = "tracing_test";
-
     @Override
-    protected Collection<String> getTableDefinitions() {
+    public Collection<String> createTestFixtures() {
         return Collections.singletonList("CREATE TABLE test (k text, v int, PRIMARY KEY (k, v))");
     }
 

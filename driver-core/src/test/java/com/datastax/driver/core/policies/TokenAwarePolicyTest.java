@@ -309,7 +309,7 @@ public class TokenAwarePolicyTest {
     @Test(groups = "long")
     public void should_properly_generate_and_use_routing_key_for_composite_partition_key() {
         // given: a 3 node cluster with a keyspace with RF 1.
-        CCMBridge ccm = CCMBridge.builder("TokenAwarePolicyTest").withNodes(3).notStarted().build();
+        CCMBridge ccm = CCMBridge.builder().withNodes(3).notStarted().build();
 
         Cluster cluster = Cluster.builder()
                 .withLoadBalancingPolicy(new TokenAwarePolicy(new RoundRobinPolicy()))

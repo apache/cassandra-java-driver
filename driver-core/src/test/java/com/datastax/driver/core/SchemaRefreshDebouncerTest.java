@@ -32,7 +32,7 @@ import static com.google.common.collect.Lists.newArrayList;
 import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.Mockito.*;
 
-public class SchemaRefreshDebouncerTest extends CCMBridge.PerClassSingleNodeCluster {
+public class SchemaRefreshDebouncerTest extends CCMTestsSupport {
 
     // This may need to be tweaked depending on the reliability of the test environment.
     private static final int DEBOUNCE_TIME = 5000;
@@ -50,19 +50,14 @@ public class SchemaRefreshDebouncerTest extends CCMBridge.PerClassSingleNodeClus
     // Keyspaces to drop after test completes.
     private Collection<String> keyspaces = newArrayList();
 
-    @Override
-    protected Collection<String> getTableDefinitions() {
-        return newArrayList();
-    }
-
     @BeforeClass(groups = "short")
     public void setup() {
         QueryOptions queryOptions = new QueryOptions();
         queryOptions.setRefreshSchemaIntervalMillis(DEBOUNCE_TIME);
         queryOptions.setMaxPendingRefreshSchemaRequests(5);
         // Create a separate cluster that will receive the schema events on its control connection.
-        cluster2 = this.configure(Cluster.builder())
-                .addContactPointsWithPorts(newArrayList(hostAddress))
+        cluster2 = Cluster.builder()
+                .addContactPointsWithPorts(getContactPoints())
                 .withQueryOptions(queryOptions)
                 .build();
         session2 = cluster2.connect();
@@ -88,10 +83,6 @@ public class SchemaRefreshDebouncerTest extends CCMBridge.PerClassSingleNodeClus
     @AfterClass(groups = "short")
     public void teardown() {
         cluster2.close();
-        // drop all keyspaces
-        for (String keyspace : keyspaces) {
-            session.execute("DROP KEYSPACE " + keyspace);
-        }
     }
 
     /**

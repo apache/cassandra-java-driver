@@ -16,11 +16,12 @@
 package com.datastax.driver.core;
 
 import com.datastax.driver.core.utils.CassandraVersion;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.testng.annotations.Test;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -32,9 +33,7 @@ import static org.testng.Assert.*;
 /**
  * Simple test of the Sessions methods against a one node cluster.
  */
-public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
-
-    private static final Logger logger = LoggerFactory.getLogger(SessionTest.class);
+public class SessionTest extends CCMTestsSupport {
 
     private static final String TABLE1 = "test1";
     private static final String TABLE2 = "test2";
@@ -42,7 +41,7 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
     private static final String COUNTER_TABLE = "counters";
 
     @Override
-    protected Collection<String> getTableDefinitions() {
+    public Collection<String> createTestFixtures() {
         return Arrays.asList(String.format(TestUtils.CREATE_TABLE_SIMPLE_FORMAT, TABLE1),
                 String.format(TestUtils.CREATE_TABLE_SIMPLE_FORMAT, TABLE2),
                 String.format(TestUtils.CREATE_TABLE_SIMPLE_FORMAT, TABLE3),
@@ -168,7 +167,7 @@ public class SessionTest extends CCMBridge.PerClassSingleNodeCluster {
             // Use our own cluster and session (not the ones provided by the parent class) because we want an uninitialized cluster
             // (note the use of newSession below)
             final Cluster cluster = Cluster.builder()
-                    .addContactPointsWithPorts(Collections.singletonList(hostAddress))
+                    .addContactPointsWithPorts(getContactPoints())
                     .withNettyOptions(nonQuietClusterCloseOptions)
                     .build();
             final Session session = cluster.newSession();

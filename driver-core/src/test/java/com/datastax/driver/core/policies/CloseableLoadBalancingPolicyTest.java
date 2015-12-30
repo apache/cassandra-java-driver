@@ -28,7 +28,7 @@ public class CloseableLoadBalancingPolicyTest {
         CCMBridge ccm = null;
         Cluster cluster = null;
         try {
-            ccm = CCMBridge.builder("test").withNodes(1).build();
+            ccm = CCMBridge.builder().withNodes(1).build();
             cluster = Cluster.builder()
                     .addContactPoint(CCMBridge.ipOfNode(1))
                     .withLoadBalancingPolicy(policy)

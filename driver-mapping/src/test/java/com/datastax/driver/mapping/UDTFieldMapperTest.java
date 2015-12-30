@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @CassandraVersion(major = 2.1)
+@SuppressWarnings("unused")
 public class UDTFieldMapperTest {
 
     @Test(groups = "short")
@@ -36,7 +37,7 @@ public class UDTFieldMapperTest {
 
         try {
             // Create type and table
-            ccm = CCMBridge.builder("test").build();
+            ccm = CCMBridge.builder().build();
             cluster = Cluster.builder().addContactPoint(CCMBridge.ipOfNode(1)).build();
             Session session1 = cluster.connect();
             session1.execute("create schema if not exists java_509 " +
@@ -83,7 +84,7 @@ public class UDTFieldMapperTest {
 
         try {
             // Create type and table
-            ccm = CCMBridge.builder("test").build();
+            ccm = CCMBridge.builder().build();
             cluster = Cluster.builder().addContactPoint(CCMBridge.ipOfNode(1)).build();
             Session session1 = cluster.connect();
             session1.execute("create schema if not exists java_509 " +

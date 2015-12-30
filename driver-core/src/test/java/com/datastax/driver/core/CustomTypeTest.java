@@ -28,10 +28,10 @@ import static org.testng.Assert.assertEquals;
 /**
  * Test we "support" custom types.
  */
-public class CustomTypeTest extends CCMBridge.PerClassSingleNodeCluster {
+public class CustomTypeTest extends CCMTestsSupport {
 
     @Override
-    protected Collection<String> getTableDefinitions() {
+    public Collection<String> createTestFixtures() {
         return Collections.singleton(
                 "CREATE TABLE test ("
                         + "    k int,"
@@ -43,7 +43,6 @@ public class CustomTypeTest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     private ByteBuffer serializeForDynamicType(Object... params) {
-
         List<ByteBuffer> l = new ArrayList<ByteBuffer>();
         int size = 0;
         for (Object p : params) {

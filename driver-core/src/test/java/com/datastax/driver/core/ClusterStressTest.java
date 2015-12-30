@@ -21,16 +21,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.Test;
 
-import java.net.InetSocketAddress;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.*;
 
 import static org.testng.Assert.assertEquals;
 
-public class ClusterStressTest extends CCMBridge.PerClassSingleNodeCluster {
+public class ClusterStressTest extends CCMTestsSupport {
+
     private static final Logger logger = LoggerFactory.getLogger(ClusterStressTest.class);
 
     private ExecutorService executorService;
@@ -38,11 +36,6 @@ public class ClusterStressTest extends CCMBridge.PerClassSingleNodeCluster {
     public ClusterStressTest() {
         // 8 threads should be enough so that we stress the driver and not the OS thread scheduler
         executorService = Executors.newFixedThreadPool(8);
-    }
-
-    @Override
-    protected Collection<String> getTableDefinitions() {
-        return new ArrayList<String>(0);
     }
 
     @Test(groups = "long")
@@ -148,15 +141,14 @@ public class ClusterStressTest extends CCMBridge.PerClassSingleNodeCluster {
             return result;
     }
 
-    private static class CreateClusterAndCheckConnections implements Callable<CreateClusterAndCheckConnections> {
+    private class CreateClusterAndCheckConnections implements Callable<CreateClusterAndCheckConnections> {
         private final CountDownLatch startSignal;
         private final Cluster cluster;
         private final SocketChannelMonitor channelMonitor = new SocketChannelMonitor();
-        private final List<InetSocketAddress> contactPoints = Collections.singletonList(hostAddress);
 
         CreateClusterAndCheckConnections(CountDownLatch startSignal) {
             this.startSignal = startSignal;
-            this.cluster = Cluster.builder().addContactPointsWithPorts(contactPoints)
+            this.cluster = Cluster.builder().addContactPointsWithPorts(getContactPoints())
                     .withPoolingOptions(new PoolingOptions().setCoreConnectionsPerHost(HostDistance.LOCAL, 1))
                     .withNettyOptions(channelMonitor.nettyOptions()).build();
         }
@@ -170,19 +162,19 @@ public class ClusterStressTest extends CCMBridge.PerClassSingleNodeCluster {
                 cluster.init();
                 assertEquals(cluster.manager.sessions.size(), 0);
                 assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1);
-                assertEquals(channelMonitor.openChannels(contactPoints).size(), 1);
+                assertEquals(channelMonitor.openChannels(getContactPoints()).size(), 1);
 
                 // The first session initializes the cluster and its control connection
                 Session session = cluster.connect();
                 assertEquals(cluster.manager.sessions.size(), 1);
                 assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1 + TestUtils.numberOfLocalCoreConnections(cluster));
-                assertEquals(channelMonitor.openChannels(contactPoints).size(), 1 + TestUtils.numberOfLocalCoreConnections(cluster));
+                assertEquals(channelMonitor.openChannels(getContactPoints()).size(), 1 + TestUtils.numberOfLocalCoreConnections(cluster));
 
                 // Closing the session keeps the control connection opened
                 session.close();
                 assertEquals(cluster.manager.sessions.size(), 0);
                 assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1);
-                assertEquals(channelMonitor.openChannels(contactPoints).size(), 1);
+                assertEquals(channelMonitor.openChannels(getContactPoints()).size(), 1);
 
                 return this;
             } catch (AssertionError e) {
@@ -196,7 +188,7 @@ public class ClusterStressTest extends CCMBridge.PerClassSingleNodeCluster {
         }
     }
 
-    private static class CloseCluster implements Callable<Void> {
+    private class CloseCluster implements Callable<Void> {
         private final Cluster cluster;
         private final SocketChannelMonitor channelMonitor;
         private final CountDownLatch startSignal;
@@ -213,7 +205,7 @@ public class ClusterStressTest extends CCMBridge.PerClassSingleNodeCluster {
 
             cluster.close();
             assertEquals(cluster.manager.sessions.size(), 0);
-            assertEquals(channelMonitor.openChannels(Collections.singletonList(hostAddress)).size(), 0);
+            assertEquals(channelMonitor.openChannels(getContactPoints()).size(), 0);
             channelMonitor.stop();
 
             return null;

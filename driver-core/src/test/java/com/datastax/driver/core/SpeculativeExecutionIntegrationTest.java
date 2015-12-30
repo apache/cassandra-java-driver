@@ -30,19 +30,19 @@ import static org.mockito.Mockito.times;
  * Test that needs a real CCM cluster (as opposed to SCassandra for other specex tests), because
  * it uses a protocol v3 feature.
  */
-public class SpeculativeExecutionIntegrationTest extends CCMBridge.PerClassSingleNodeCluster {
+public class SpeculativeExecutionIntegrationTest extends CCMTestsSupport {
 
     TimestampGenerator timestampGenerator;
 
     @Override
-    protected Collection<String> getTableDefinitions() {
+    public Collection<String> createTestFixtures() {
         return Lists.newArrayList("create table foo(k int primary key, v int)");
     }
 
     @Override
-    protected Cluster.Builder configure(Cluster.Builder builder) {
+    public Cluster.Builder createClusterBuilder() {
         timestampGenerator = Mockito.spy(ServerSideTimestampGenerator.INSTANCE);
-        return builder
+        return Cluster.builder()
                 .withTimestampGenerator(timestampGenerator)
                 .withQueryOptions(new QueryOptions().setDefaultIdempotence(true))
                         // Set an artificially low timeout to force speculative execution

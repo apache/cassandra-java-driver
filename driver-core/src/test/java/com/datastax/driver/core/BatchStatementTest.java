@@ -22,18 +22,20 @@ import org.testng.annotations.Test;
 import java.util.Collection;
 import java.util.Collections;
 
+import static com.datastax.driver.core.CCMTestMode.TestMode.PER_METHOD;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
-public class BatchStatementTest extends CCMBridge.PerClassSingleNodeCluster {
+@CCMTestMode(PER_METHOD)
+public class BatchStatementTest extends CCMTestsSupport {
 
     @Override
-    protected Collection<String> getTableDefinitions() {
+    public Collection<String> createTestFixtures() {
         return Collections.singletonList("CREATE TABLE test (k text, v int, PRIMARY KEY (k, v))");
     }
 
     @Test(groups = "short")
-    public void simpleBatchTest() throws Throwable {
+    public void simpleBatchTest() {
         try {
             PreparedStatement st = session.prepare("INSERT INTO test (k, v) VALUES (?, ?)");
 
@@ -65,52 +67,33 @@ public class BatchStatementTest extends CCMBridge.PerClassSingleNodeCluster {
 
             assertTrue(rs.isExhausted());
 
-            session.execute("DELETE FROM test WHERE k='key1'");
-            session.execute("DELETE FROM test WHERE k='key2'");
-
         } catch (UnsupportedFeatureException e) {
             // This is expected when testing the protocol v1
-            if (cluster.getConfiguration().getProtocolOptions().getProtocolVersionEnum() != ProtocolVersion.V1)
-                throw e;
-        } catch (Throwable t) {
-            errorOut();
-            throw t;
+            assertEquals(cluster.getConfiguration().getProtocolOptions().getProtocolVersionEnum(), ProtocolVersion.V1);
         }
     }
 
     @Test(groups = "short")
     @CassandraVersion(major = 2.0, minor = 9, description = "This will only work with C* 2.0.9 (CASSANDRA-7337)")
-    public void casBatchTest() throws Throwable {
-        try {
-            PreparedStatement st = session.prepare("INSERT INTO test (k, v) VALUES (?, ?) IF NOT EXISTS");
+    public void casBatchTest() {
+        PreparedStatement st = session.prepare("INSERT INTO test (k, v) VALUES (?, ?) IF NOT EXISTS");
 
-            BatchStatement batch = new BatchStatement();
+        BatchStatement batch = new BatchStatement();
 
-            batch.add(new SimpleStatement("INSERT INTO test (k, v) VALUES (?, ?)", "key1", 0));
-            batch.add(st.bind("key1", 1));
-            batch.add(st.bind("key1", 2));
+        batch.add(new SimpleStatement("INSERT INTO test (k, v) VALUES (?, ?)", "key1", 0));
+        batch.add(st.bind("key1", 1));
+        batch.add(st.bind("key1", 2));
 
-            assertEquals(3, batch.size());
+        assertEquals(3, batch.size());
 
-            ResultSet rs = session.execute(batch);
-            Row r = rs.one();
-            assertTrue(!r.isNull("[applied]"));
-            assertEquals(r.getBool("[applied]"), true);
+        ResultSet rs = session.execute(batch);
+        Row r = rs.one();
+        assertTrue(!r.isNull("[applied]"));
+        assertEquals(r.getBool("[applied]"), true);
 
-            rs = session.execute(batch);
-            r = rs.one();
-            assertTrue(!r.isNull("[applied]"));
-            assertEquals(r.getBool("[applied]"), false);
-
-        } catch (UnsupportedFeatureException e) {
-            // This is expected when testing the protocol v1
-            if (cluster.getConfiguration().getProtocolOptions().getProtocolVersionEnum() != ProtocolVersion.V1)
-                throw e;
-        } catch (Throwable t) {
-            errorOut();
-            throw t;
-        } finally {
-            session.execute("DELETE FROM test WHERE k='key1'");
-        }
+        rs = session.execute(batch);
+        r = rs.one();
+        assertTrue(!r.isNull("[applied]"));
+        assertEquals(r.getBool("[applied]"), false);
     }
 }
