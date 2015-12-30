@@ -32,10 +32,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.testng.Assert.assertEquals;
 
 @CassandraVersion(major = 2.1, minor = 3)
-public class QueryBuilderUDTExecutionTest extends CCMBridge.PerClassSingleNodeCluster {
+public class QueryBuilderUDTExecutionTest extends CCMTestsSupport {
 
     @Override
-    protected Collection<String> getTableDefinitions() {
+    public Collection<String> createTestFixtures() {
         return Arrays.asList("CREATE TYPE udt (i int, a inet)",
                 "CREATE TABLE udtTest(k int PRIMARY KEY, t frozen<udt>, l list<frozen<udt>>, m map<int, frozen<udt>>)");
     }

@@ -17,8 +17,10 @@ package com.datastax.driver.core;
 
 import com.datastax.driver.core.policies.RoundRobinPolicy;
 import com.datastax.driver.core.policies.WhiteListPolicy;
+import com.google.common.base.Predicate;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.Uninterruptibles;
+import com.sun.management.OperatingSystemMXBean;
 import io.netty.channel.EventLoopGroup;
 import org.scassandra.Scassandra;
 import org.scassandra.ScassandraFactory;
@@ -26,20 +28,35 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
+import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.util.*;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * A number of static fields/methods handy for tests.
  */
 public abstract class TestUtils {
+
+    public static final String IP_PREFIX;
+
+    static {
+        String ip_prefix = System.getProperty("ipprefix");
+        if (ip_prefix == null || ip_prefix.isEmpty()) {
+            ip_prefix = "127.0.1.";
+        }
+        IP_PREFIX = ip_prefix;
+    }
 
     private static final Logger logger = LoggerFactory.getLogger(TestUtils.class);
 
@@ -55,6 +72,8 @@ public abstract class TestUtils {
     public static final String SELECT_ALL_FORMAT = "SELECT * FROM %s";
 
     public static final int TEST_BASE_NODE_WAIT = SystemProperties.getInt("com.datastax.driver.TEST_BASE_NODE_WAIT", 60);
+
+    private static final AtomicInteger KS_COUNTER = new AtomicInteger(1);
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     public static BoundStatement setBoundValue(BoundStatement bs, String name, DataType type, Object value) {
@@ -286,114 +305,99 @@ public abstract class TestUtils {
     // This is used because there is some delay between when a node has been
     // added through ccm and when it's actually available for querying
     public static void waitFor(String node, Cluster cluster) {
-        waitFor(node, cluster, TEST_BASE_NODE_WAIT, false, false);
+        waitFor(node, cluster, TEST_BASE_NODE_WAIT, false);
     }
 
     public static void waitFor(String node, Cluster cluster, int maxTry) {
-        waitFor(node, cluster, maxTry, false, false);
+        waitFor(node, cluster, maxTry, false);
     }
 
     public static void waitForDown(String node, Cluster cluster) {
-        waitFor(node, cluster, TEST_BASE_NODE_WAIT * 3, true, false);
-    }
-
-    public static void waitForDownWithWait(String node, Cluster cluster, int waitTime) {
-        waitForDown(node, cluster);
-
-        // FIXME: Once stop() works, remove this line
-        try {
-            Thread.sleep(waitTime * 1000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        waitFor(node, cluster, TEST_BASE_NODE_WAIT * 3, true);
     }
 
     public static void waitForDown(String node, Cluster cluster, int maxTry) {
-        waitFor(node, cluster, maxTry, true, false);
-    }
-
-    public static void stopAndWait(CCMBridge.CCMCluster c, int node) {
-        c.cassandraCluster.stop(node);
-        waitForDownWithWait(CCMBridge.IP_PREFIX + node, c.cluster, 5);
+        waitFor(node, cluster, maxTry, true);
     }
 
     public static void waitForDecommission(String node, Cluster cluster) {
-        waitFor(node, cluster, TEST_BASE_NODE_WAIT / 2, true, true);
+        waitFor(node, cluster, TEST_BASE_NODE_WAIT / 2, true);
     }
 
     public static void waitForDecommission(String node, Cluster cluster, int maxTry) {
-        waitFor(node, cluster, maxTry, true, true);
+        waitFor(node, cluster, maxTry, true);
     }
 
-    private static void waitFor(String node, Cluster cluster, int maxTry, boolean waitForDead, boolean waitForOut) {
-        if (waitForDead || waitForOut)
-            if (waitForDead)
-                logger.info("Waiting for stopped node: " + node);
-            else if (waitForOut)
-                logger.info("Waiting for decommissioned node: " + node);
-            else
-                logger.info("Waiting for upcoming node: " + node);
-
+    private static void waitFor(String node, Cluster cluster, int timeoutSeconds, boolean waitForDown) {
+        if (waitForDown)
+            logger.debug("Waiting for node to leave: {}", node);
+        else
+            logger.debug("Waiting for upcoming node: {}", node);
         // In the case where the we've killed the last node in the cluster, if we haven't
         // tried doing an actual query, the driver won't realize that last node is dead until
         // keep alive kicks in, but that's a fairly long time. So we cheat and trigger a force
         // the detection by forcing a request.
-        if (waitForDead || waitForOut) {
+        if (waitForDown) {
             Futures.getUnchecked(cluster.manager.submitSchemaRefresh(null, null, null));
         }
-
-        InetAddress address;
-        try {
-            address = InetAddress.getByName(node);
-        } catch (Exception e) {
-            // That's a problem but that's not *our* problem
-            return;
-        }
-
-        Metadata metadata = cluster.getMetadata();
-        for (int i = 0; i < maxTry; ++i) {
-            for (Host host : metadata.getAllHosts()) {
-                if (host.getAddress().equals(address) && testHost(host, waitForDead)) {
-                    try {
-                        Thread.sleep(10000);
-                    } catch (Exception e) {
-                    }
-                    return;
-                }
-            }
-            try {
-                Thread.sleep(1000);
-            } catch (Exception e) {
-            }
-        }
-
-        for (Host host : metadata.getAllHosts()) {
-            if (host.getAddress().equals(address)) {
-                if (testHost(host, waitForDead)) {
-                    return;
-                } else {
-                    // logging it because this give use the timestamp of when this happens
-                    logger.info(node + " is not " + (waitForDead ? "DOWN" : "UP") + " after " + maxTry + 's');
-                    throw new IllegalStateException(node + " is not " + (waitForDead ? "DOWN" : "UP") + " after " + maxTry + 's');
-                }
-            }
-        }
-
-        if (waitForOut) {
-            return;
+        if (waitForDown) {
+            ConditionChecker.awaitUntil(new HostIsDownCondition(cluster, node), timeoutSeconds * 1000);
         } else {
-            logger.info(node + " is not part of the cluster after " + maxTry + 's');
-            throw new IllegalStateException(node + " is not part of the cluster after " + maxTry + 's');
+            ConditionChecker.awaitUntil(new HostIsUpCondition(cluster, node), timeoutSeconds * 1000);
         }
     }
 
-    private static boolean testHost(Host host, boolean testForDown) {
-        return testForDown ? !host.isUp() : host.isUp();
+    private static class HostIsDownCondition implements Callable<Boolean> {
+
+        private final Cluster cluster;
+
+        private final String ip;
+
+        public HostIsDownCondition(Cluster cluster, String ip) {
+            this.cluster = cluster;
+            this.ip = ip;
+        }
+
+        @Override
+        public Boolean call() throws Exception {
+            final Host host = findHost(cluster, ip);
+            return host == null || !host.isUp();
+        }
     }
 
+    private static class HostIsUpCondition implements Callable<Boolean> {
+
+        private final Cluster cluster;
+
+        private final String ip;
+
+        public HostIsUpCondition(Cluster cluster, String ip) {
+            this.cluster = cluster;
+            this.ip = ip;
+        }
+
+        @Override
+        public Boolean call() throws Exception {
+            final Host host = findHost(cluster, ip);
+            return host != null && host.isUp();
+        }
+    }
+
+    /**
+     * Returns the IP of the {@code nth} host in the CCM cluster (counting from 1, i.e.,
+     * {@code ipOfNode(1)} returns the IP of the first node.
+     * <p/>
+     * In multi-DC setups, nodes are numbered in ascending order of their datacenter number.
+     * E.g. with 2 DCs and 3 nodes in each DC, the first node in DC 2 is number 4.
+     *
+     * @return the IP of the {@code nth} host in the cluster.
+     */
+    public static String ipOfNode(int n) {
+        return IP_PREFIX + n;
+    }
 
     public static Host findOrWaitForHost(Cluster cluster, int node, long duration, TimeUnit unit) {
-        return findOrWaitForHost(cluster, CCMBridge.ipOfNode(node), duration, unit);
+        return findOrWaitForHost(cluster, ipOfNode(node), duration, unit);
     }
 
     public static Host findOrWaitForHost(final Cluster cluster, final String address, long duration, TimeUnit unit) {
@@ -425,7 +429,7 @@ public abstract class TestUtils {
     }
 
     public static Host findHost(Cluster cluster, int hostNumber) {
-        return findHost(cluster, CCMBridge.ipOfNode(hostNumber));
+        return findHost(cluster, ipOfNode(hostNumber));
     }
 
     public static Host findHost(Cluster cluster, String address) {
@@ -467,29 +471,95 @@ public abstract class TestUtils {
      * 8052-8152.
      */
     public static Scassandra createScassandraServer() {
-        int binaryPort = findAvailablePort(8042);
-        int adminPort = findAvailablePort(8052);
-        return ScassandraFactory.createServer(binaryPort, adminPort);
+        int binaryPort = findAvailablePort();
+        int adminPort = findAvailablePort();
+        return ScassandraFactory.createServer(ipOfNode(1), binaryPort, ipOfNode(1), adminPort);
     }
 
+    public static String getAvailableKeyspaceName() {
+        return SIMPLE_KEYSPACE + "_" + KS_COUNTER.getAndIncrement();
+    }
+
+    // use ports in the ephemeral range
+    private static int nextPort = 50000;
+
+    private static final ReentrantLock PORT_LOCK = new ReentrantLock();
+
     /**
-     * @param startingWith The first port to try, if unused will keep trying the next port until one is found up to
-     *                     100 subsequent ports.
+     * Find an available port in the ephemeral range.
+     *
      * @return A local port that is currently unused.
      */
-    public static int findAvailablePort(int startingWith) {
-        IOException last = null;
-        for (int port = startingWith; port < startingWith + 100; port++) {
-            try {
-                ServerSocket s = new ServerSocket(port);
-                s.close();
-                return port;
-            } catch (IOException e) {
-                last = e;
+    public static int findAvailablePort() {
+        PORT_LOCK.lock();
+        try {
+            for (int i = 0; i < 3; i++) {
+                int port = nextPort;
+                ServerSocket s = null;
+                for (int j = 0; j < 100; j++) {
+                    try {
+                        s = new ServerSocket(port);
+                        s.close();
+                        nextPort = port + 1;
+                        return port;
+                    } catch (IOException e) {
+                        // ok
+                    } finally {
+                        port++;
+                        if (s != null) {
+                            try {
+                                s.close();
+                            } catch (IOException e) {
+                                // ok
+                            }
+                        }
+                    }
+                }
+                logger.warn("Could not acquire an available port after 100 attempts, sleeping for 1 minute");
+                Uninterruptibles.sleepUninterruptibly(1, TimeUnit.MINUTES);
             }
+            throw new RuntimeException(String.format("Could not acquire an available port within range: %s-%s", nextPort, nextPort + 100));
+        } finally {
+            PORT_LOCK.unlock();
         }
-        // If for whatever reason a port could not be acquired throw the last encountered exception.
-        throw new RuntimeException("Could not acquire an available port", last);
+    }
+
+    private static final Predicate<InetSocketAddress> PORT_IS_UP = new Predicate<InetSocketAddress>() {
+
+        @Override
+        public boolean apply(InetSocketAddress address) {
+            return pingPort(address.getAddress(), address.getPort());
+        }
+
+    };
+
+    public static void waitUntilPortIsUp(InetSocketAddress address) {
+        ConditionChecker.awaitUntil(address, PORT_IS_UP, TimeUnit.SECONDS.toMillis(10));
+    }
+
+    public static void waitUntilPortIsDown(InetSocketAddress address) {
+        ConditionChecker.awaitWhile(address, PORT_IS_UP, TimeUnit.SECONDS.toMillis(10));
+    }
+
+    public static boolean pingPort(InetAddress address, int port) {
+        logger.debug("Trying {}:{}...", address, port);
+        boolean connectionSuccessful = false;
+        Socket socket = null;
+        try {
+            socket = new Socket(address, port);
+            connectionSuccessful = true;
+            logger.debug("Successfully connected");
+        } catch (IOException e) {
+            logger.debug("Connection failed");
+        } finally {
+            if (socket != null)
+                try {
+                    socket.close();
+                } catch (IOException e) {
+                    logger.warn("Error closing socket to " + address);
+                }
+        }
+        return connectionSuccessful;
     }
 
     /**
@@ -509,19 +579,20 @@ public abstract class TestUtils {
     }
 
     /**
-     * @return a {@Cluster} instance that connects only to the control host of the given cluster.
+     * @return a {@link Cluster} instance that connects only to the control host of the given cluster.
      */
-    public static Cluster buildControlCluster(Cluster cluster) {
+    public static Cluster buildControlCluster(Cluster cluster, CCMBridge ccm) {
         Host controlHost = cluster.manager.controlConnection.connectedHost();
         List<InetSocketAddress> singleAddress = Collections.singletonList(controlHost.getSocketAddress());
         return Cluster.builder()
                 .addContactPointsWithPorts(singleAddress)
+                .withAddressTranslater(ccm.addressTranslator())
                 .withLoadBalancingPolicy(new WhiteListPolicy(new RoundRobinPolicy(), singleAddress))
                 .build();
     }
 
     /**
-     * @return a {@QueryOptions} that disables debouncing by setting intervals to 0ms.
+     * @return a {@link QueryOptions} that disables debouncing by setting intervals to 0ms.
      */
     public static QueryOptions nonDebouncingQueryOptions() {
         return new QueryOptions().setRefreshNodeIntervalMillis(0)
@@ -540,4 +611,28 @@ public abstract class TestUtils {
             eventLoopGroup.shutdownGracefully(0, 15, TimeUnit.SECONDS).syncUninterruptibly();
         }
     };
+
+    public static void executeNoFail(Runnable task, boolean logException) {
+        try {
+            task.run();
+        } catch (Exception e) {
+            if (logException)
+                logger.error(e.getMessage(), e);
+        }
+    }
+
+    public static void executeNoFail(Callable<?> task, boolean logException) {
+        try {
+            task.call();
+        } catch (Exception e) {
+            if (logException)
+                logger.error(e.getMessage(), e);
+        }
+    }
+
+    public static long getFreeMemoryMB() {
+        OperatingSystemMXBean bean = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
+        return (bean.getFreePhysicalMemorySize() + bean.getFreeSwapSpaceSize()) / 1024 / 1024;
+    }
+
 }

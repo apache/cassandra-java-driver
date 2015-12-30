@@ -23,16 +23,19 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.Uninterruptibles;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
-import java.net.InetSocketAddress;
-import java.util.*;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Stack;
 import java.util.concurrent.*;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
 
-public class SessionStressTest extends CCMBridge.PerClassSingleNodeCluster {
+@CCMConfig(dirtiesContext = true)
+public class SessionStressTest extends CCMTestsSupport {
 
     private static final Logger logger = LoggerFactory.getLogger(SessionStressTest.class);
 
@@ -47,9 +50,16 @@ public class SessionStressTest extends CCMBridge.PerClassSingleNodeCluster {
         executorService = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(8));
     }
 
-    @Override
-    protected Collection<String> getTableDefinitions() {
-        return new ArrayList<String>(0);
+    @AfterMethod(groups = "long", alwaysRun = true)
+    public void shutdown() throws Exception {
+        executorService.shutdown();
+        try {
+            boolean shutdown = executorService.awaitTermination(30, TimeUnit.SECONDS);
+            if (!shutdown)
+                fail("executor ran for longer than expected");
+        } catch (InterruptedException e) {
+            fail("Interrupted while waiting for executor to shutdown");
+        }
     }
 
     /**
@@ -77,10 +87,9 @@ public class SessionStressTest extends CCMBridge.PerClassSingleNodeCluster {
      */
     @Test(groups = "long")
     public void sessions_should_not_leak_connections() {
-        List<InetSocketAddress> contactPoints = Collections.singletonList(hostAddress);
         // override inherited field with a new cluster object and ensure 0 sessions and connections
         channelMonitor.reportAtFixedInterval(1, TimeUnit.SECONDS);
-        stressCluster = Cluster.builder().addContactPointsWithPorts(contactPoints)
+        stressCluster = Cluster.builder().addContactPointsWithPorts(getInitialContactPoints())
                 .withPoolingOptions(new PoolingOptions().setCoreConnectionsPerHost(HostDistance.LOCAL, 1))
                 .withNettyOptions(channelMonitor.nettyOptions()).build();
 
@@ -97,13 +106,13 @@ public class SessionStressTest extends CCMBridge.PerClassSingleNodeCluster {
             assertEquals(stressCluster.manager.sessions.size(), 1);
             int coreConnections = TestUtils.numberOfLocalCoreConnections(stressCluster);
             assertEquals((int) stressCluster.getMetrics().getOpenConnections().getValue(), 1 + coreConnections);
-            assertEquals(channelMonitor.openChannels(contactPoints).size(), 1 + coreConnections);
+            assertEquals(channelMonitor.openChannels(getInitialContactPoints()).size(), 1 + coreConnections);
 
             // Closing the session keeps the control connection opened
             session.close();
             assertEquals(stressCluster.manager.sessions.size(), 0);
             assertEquals((int) stressCluster.getMetrics().getOpenConnections().getValue(), 1);
-            assertEquals(channelMonitor.openChannels(contactPoints).size(), 1);
+            assertEquals(channelMonitor.openChannels(getInitialContactPoints()).size(), 1);
 
             int nbOfSessions = 2000;
             int halfOfTheSessions = nbOfSessions / 2;
@@ -120,7 +129,7 @@ public class SessionStressTest extends CCMBridge.PerClassSingleNodeCluster {
                 assertEquals(stressCluster.manager.sessions.size(), nbOfSessions);
                 assertEquals((int) stressCluster.getMetrics().getOpenConnections().getValue(),
                         coreConnections * nbOfSessions + 1);
-                assertEquals(channelMonitor.openChannels(contactPoints).size(), coreConnections * nbOfSessions + 1);
+                assertEquals(channelMonitor.openChannels(getInitialContactPoints()).size(), coreConnections * nbOfSessions + 1);
 
                 // Close half of the sessions asynchronously
                 logger.info("Closing {}/{} sessions.", halfOfTheSessions, nbOfSessions);
@@ -130,7 +139,7 @@ public class SessionStressTest extends CCMBridge.PerClassSingleNodeCluster {
                 assertEquals(stressCluster.manager.sessions.size(), halfOfTheSessions);
                 assertEquals((int) stressCluster.getMetrics().getOpenConnections().getValue(),
                         coreConnections * (nbOfSessions / 2) + 1);
-                assertEquals(channelMonitor.openChannels(contactPoints).size(),
+                assertEquals(channelMonitor.openChannels(getInitialContactPoints()).size(),
                         coreConnections * (nbOfSessions / 2) + 1);
 
                 // Close and open the same number of sessions concurrently
@@ -148,7 +157,7 @@ public class SessionStressTest extends CCMBridge.PerClassSingleNodeCluster {
                 assertEquals(stressCluster.manager.sessions.size(), halfOfTheSessions);
                 assertEquals((int) stressCluster.getMetrics().getOpenConnections().getValue(),
                         coreConnections * (nbOfSessions / 2) + 1);
-                assertEquals(channelMonitor.openChannels(contactPoints).size(),
+                assertEquals(channelMonitor.openChannels(getInitialContactPoints()).size(),
                         coreConnections * (nbOfSessions / 2) + 1);
 
                 // Close the remaining sessions
@@ -158,7 +167,7 @@ public class SessionStressTest extends CCMBridge.PerClassSingleNodeCluster {
                 // Check that we have a clean state
                 assertEquals(stressCluster.manager.sessions.size(), 0);
                 assertEquals((int) stressCluster.getMetrics().getOpenConnections().getValue(), 1);
-                assertEquals(channelMonitor.openChannels(contactPoints).size(), 1);
+                assertEquals(channelMonitor.openChannels(getInitialContactPoints()).size(), 1);
 
                 // On OSX, the TCP connections are released after 15s by default (sysctl -a net.inet.tcp.msl)
                 logger.info("Sleeping {} seconds so that TCP connections are released by the OS", sleepTime);
@@ -168,10 +177,14 @@ public class SessionStressTest extends CCMBridge.PerClassSingleNodeCluster {
             stressCluster.close();
 
             // Ensure no channels remain open.
-            assertEquals(channelMonitor.openChannels(contactPoints).size(), 0);
+            assertEquals(channelMonitor.openChannels(getInitialContactPoints()).size(), 0);
 
             channelMonitor.stop();
             channelMonitor.report();
+
+            logger.info("Sleeping 60 extra seconds");
+            Uninterruptibles.sleepUninterruptibly(60, TimeUnit.SECONDS);
+
         }
     }
 

@@ -24,21 +24,24 @@ import org.testng.annotations.Test;
 import static com.datastax.driver.core.Assertions.assertThat;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
-public class HeartbeatTest {
+@CCMConfig(createCluster = false)
+public class HeartbeatTest extends CCMTestsSupport {
 
     Logger connectionLogger = Logger.getLogger(Connection.class);
     MemoryAppender logs;
+    Level originalLevel;
 
     @BeforeMethod(groups = "long")
     public void startCapturingLogs() {
+        originalLevel = connectionLogger.getLevel();
         connectionLogger.setLevel(Level.DEBUG);
         logs = new MemoryAppender();
         connectionLogger.addAppender(logs);
     }
 
-    @AfterMethod(groups = "long")
+    @AfterMethod(groups = "long", alwaysRun = true)
     public void stopCapturingLogs() {
-        connectionLogger.setLevel(null);
+        connectionLogger.setLevel(originalLevel);
         connectionLogger.removeAppender(logs);
     }
 
@@ -53,55 +56,47 @@ public class HeartbeatTest {
      */
     @Test(groups = "long")
     public void should_send_heartbeat_when_connection_is_inactive() throws InterruptedException {
-        CCMBridge ccm = null;
-        Cluster cluster = null;
-        try {
-            ccm = CCMBridge.builder("test").withNodes(1).build();
-            cluster = Cluster.builder().addContactPoint(CCMBridge.ipOfNode(1))
-                    .withPoolingOptions(new PoolingOptions()
-                            .setHeartbeatIntervalSeconds(3))
-                    .build();
+        Cluster cluster = register(Cluster.builder()
+                .addContactPointsWithPorts(getHostAddress(1))
+                .withAddressTranslater(getAddressTranslator())
+                .withPoolingOptions(new PoolingOptions()
+                        .setHeartbeatIntervalSeconds(3))
+                .build());
 
-            // Don't create any session, only the control connection will be established
-            cluster.init();
+        // Don't create any session, only the control connection will be established
+        cluster.init();
 
-            for (int i = 0; i < 5; i++) {
-                triggerRequestOnControlConnection(cluster);
-                SECONDS.sleep(1);
-            }
-            assertThat(logs.getNext()).doesNotContain("sending heartbeat");
-
-            // Ensure heartbeat is sent after no activity.
-            SECONDS.sleep(4);
-            assertThat(logs.getNext())
-                    .contains("sending heartbeat")
-                    .contains("heartbeat query succeeded");
-
-            // Ensure heartbeat is sent after continued inactivity.
-            SECONDS.sleep(4);
-            assertThat(logs.getNext())
-                    .contains("sending heartbeat")
-                    .contains("heartbeat query succeeded");
-
-            // Ensure heartbeat is not sent after activity.
-            logs.getNext();
-            for (int i = 0; i < 5; i++) {
-                triggerRequestOnControlConnection(cluster);
-                SECONDS.sleep(1);
-            }
-            assertThat(logs.getNext()).doesNotContain("sending heartbeat");
-
-            // Finally, ensure heartbeat is sent after inactivity.
-            SECONDS.sleep(4);
-            assertThat(logs.getNext())
-                    .contains("sending heartbeat")
-                    .contains("heartbeat query succeeded");
-        } finally {
-            if (cluster != null)
-                cluster.close();
-            if (ccm != null)
-                ccm.remove();
+        for (int i = 0; i < 5; i++) {
+            triggerRequestOnControlConnection(cluster);
+            SECONDS.sleep(1);
         }
+        assertThat(logs.getNext()).doesNotContain("sending heartbeat");
+
+        // Ensure heartbeat is sent after no activity.
+        SECONDS.sleep(4);
+        assertThat(logs.getNext())
+                .contains("sending heartbeat")
+                .contains("heartbeat query succeeded");
+
+        // Ensure heartbeat is sent after continued inactivity.
+        SECONDS.sleep(4);
+        assertThat(logs.getNext())
+                .contains("sending heartbeat")
+                .contains("heartbeat query succeeded");
+
+        // Ensure heartbeat is not sent after activity.
+        logs.getNext();
+        for (int i = 0; i < 5; i++) {
+            triggerRequestOnControlConnection(cluster);
+            SECONDS.sleep(1);
+        }
+        assertThat(logs.getNext()).doesNotContain("sending heartbeat");
+
+        // Finally, ensure heartbeat is sent after inactivity.
+        SECONDS.sleep(4);
+        assertThat(logs.getNext())
+                .contains("sending heartbeat")
+                .contains("heartbeat query succeeded");
     }
 
     /**
@@ -117,33 +112,25 @@ public class HeartbeatTest {
      */
     @Test(groups = "long")
     public void should_not_send_heartbeat_when_disabled() throws InterruptedException {
-        CCMBridge ccm = null;
-        Cluster cluster = null;
-        try {
-            ccm = CCMBridge.builder("test").withNodes(1).build();
-            cluster = Cluster.builder().addContactPoint(CCMBridge.ipOfNode(1))
-                    .withPoolingOptions(new PoolingOptions()
-                            .setHeartbeatIntervalSeconds(0))
-                    .build();
+        Cluster cluster = register(Cluster.builder()
+                .addContactPointsWithPorts(getHostAddress(1))
+                .withAddressTranslater(getAddressTranslator())
+                .withPoolingOptions(new PoolingOptions()
+                        .setHeartbeatIntervalSeconds(0))
+                .build());
 
-            // Don't create any session, only the control connection will be established
-            cluster.init();
+        // Don't create any session, only the control connection will be established
+        cluster.init();
 
-            for (int i = 0; i < 5; i++) {
-                triggerRequestOnControlConnection(cluster);
-                SECONDS.sleep(1);
-            }
-            assertThat(logs.get()).doesNotContain("sending heartbeat");
-
-            // Sleep for a while and ensure no heartbeat is sent.
-            SECONDS.sleep(32);
-            assertThat(logs.get()).doesNotContain("sending heartbeat");
-        } finally {
-            if (cluster != null)
-                cluster.close();
-            if (ccm != null)
-                ccm.remove();
+        for (int i = 0; i < 5; i++) {
+            triggerRequestOnControlConnection(cluster);
+            SECONDS.sleep(1);
         }
+        assertThat(logs.get()).doesNotContain("sending heartbeat");
+
+        // Sleep for a while and ensure no heartbeat is sent.
+        SECONDS.sleep(32);
+        assertThat(logs.get()).doesNotContain("sending heartbeat");
     }
 
     // Simulates activity on the control connection via the internal API

@@ -21,48 +21,38 @@ import org.testng.annotations.Test;
 
 import java.util.concurrent.CountDownLatch;
 
+import static com.datastax.driver.core.CreateCCM.TestMode.PER_METHOD;
 import static com.datastax.driver.core.StateListenerTest.TestListener.Event.*;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class StateListenerTest {
+@CreateCCM(PER_METHOD)
+@CCMConfig(dirtiesContext = true, createSession = false)
+public class StateListenerTest extends CCMTestsSupport {
+
     private static final Logger logger = LoggerFactory.getLogger(StateListenerTest.class);
 
     @Test(groups = "long")
     public void should_receive_events_when_node_states_change() throws InterruptedException {
-        CCMBridge ccm = null;
-        Cluster cluster = null;
-        try {
-            ccm = CCMBridge.builder("test").build();
-            cluster = Cluster.builder()
-                    .addContactPoint(CCMBridge.ipOfNode(1))
-                    .build();
-            cluster.init();
-            TestListener listener = new TestListener();
-            cluster.register(listener);
+        TestListener listener = new TestListener();
+        cluster.register(listener);
 
-            listener.setExpectedEvent(ADD);
-            ccm.bootstrapNode(2);
-            listener.waitForEvent();
+        listener.setExpectedEvent(ADD);
+        ccm.add(2);
+        ccm.start(2);
+        listener.waitForEvent();
 
-            listener.setExpectedEvent(DOWN);
-            ccm.forceStop(1);
-            listener.waitForEvent();
+        listener.setExpectedEvent(DOWN);
+        ccm.forceStop(1);
+        listener.waitForEvent();
 
-            listener.setExpectedEvent(UP);
-            ccm.start(1);
-            listener.waitForEvent();
+        listener.setExpectedEvent(UP);
+        ccm.start(1);
+        listener.waitForEvent();
 
-            listener.setExpectedEvent(REMOVE);
-            ccm.decommissionNode(2);
-            listener.waitForEvent();
-
-        } finally {
-            if (cluster != null)
-                cluster.close();
-            if (ccm != null)
-                ccm.remove();
-        }
+        listener.setExpectedEvent(REMOVE);
+        ccm.decommissionNode(2);
+        listener.waitForEvent();
     }
 
     static class TestListener implements Host.StateListener {

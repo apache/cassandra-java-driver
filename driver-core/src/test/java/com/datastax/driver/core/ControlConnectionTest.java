@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import org.testng.annotations.Test;
 
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
@@ -35,18 +36,21 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.datastax.driver.core.Assertions.assertThat;
+import static com.datastax.driver.core.CreateCCM.TestMode.PER_METHOD;
 import static com.datastax.driver.core.TestUtils.nonDebouncingQueryOptions;
 import static com.datastax.driver.core.TestUtils.nonQuietClusterCloseOptions;
 import static com.google.common.collect.Lists.newArrayList;
 
-public class ControlConnectionTest {
+@CreateCCM(PER_METHOD)
+@CCMConfig(dirtiesContext = true, createCluster = false)
+public class ControlConnectionTest extends CCMTestsSupport {
 
     static final Logger logger = LoggerFactory.getLogger(ControlConnectionTest.class);
 
     @Test(groups = "short")
+    @CCMConfig(numberOfNodes = 2)
     public void should_prevent_simultaneous_reconnection_attempts() throws InterruptedException {
-        CCMBridge ccm = null;
-        Cluster cluster = null;
+        Cluster cluster;
 
         // Custom load balancing policy that counts the number of calls to newQueryPlan().
         // Since we don't open any session from our Cluster, only the control connection reattempts are calling this
@@ -68,31 +72,23 @@ public class ControlConnectionTest {
             }
         };
 
-        try {
-            ccm = CCMBridge.builder("test").withNodes(2).build();
-            // We pass only the first host as contact point, so we know the control connection will be on this host
-            cluster = Cluster.builder()
-                    .addContactPoint(CCMBridge.ipOfNode(1))
-                    .withReconnectionPolicy(reconnectionPolicy)
-                    .withLoadBalancingPolicy(loadBalancingPolicy)
-                    .build();
-            cluster.init();
+        // We pass only the first host as contact point, so we know the control connection will be on this host
+        cluster = register(Cluster.builder()
+                .addContactPointsWithPorts(getHostAddress(1))
+                .withAddressTranslater(getAddressTranslator())
+                .withReconnectionPolicy(reconnectionPolicy)
+                .withLoadBalancingPolicy(loadBalancingPolicy)
+                .build());
+        cluster.init();
 
-            // Kill the control connection host, there should be exactly one reconnection attempt
-            ccm.stop(1);
-            TimeUnit.SECONDS.sleep(1); // Sleep for a while to make sure our final count is not the result of lucky timing
-            assertThat(reconnectionAttempts.get()).isEqualTo(1);
+        // Kill the control connection host, there should be exactly one reconnection attempt
+        ccm.stop(1);
+        TimeUnit.SECONDS.sleep(1); // Sleep for a while to make sure our final count is not the result of lucky timing
+        assertThat(reconnectionAttempts.get()).isEqualTo(1);
 
-            ccm.stop(2);
-            TimeUnit.SECONDS.sleep(1);
-            assertThat(reconnectionAttempts.get()).isEqualTo(2);
-
-        } finally {
-            if (cluster != null)
-                cluster.close();
-            if (ccm != null)
-                ccm.remove();
-        }
+        ccm.stop(2);
+        TimeUnit.SECONDS.sleep(1);
+        assertThat(reconnectionAttempts.get()).isEqualTo(2);
     }
 
     /**
@@ -104,30 +100,23 @@ public class ControlConnectionTest {
     @Test(groups = "short")
     @CassandraVersion(major = 2.1)
     public void should_parse_UDT_definitions_when_using_default_protocol_version() {
-        CCMBridge ccm = null;
-        Cluster cluster = null;
+        Cluster cluster;
+        InetSocketAddress firstHost = getHostAddress(1);
+        // First driver instance: create UDT
+        cluster = register(Cluster.builder()
+                .addContactPointsWithPorts(firstHost)
+                .withAddressTranslater(getAddressTranslator())
+                .build());
+        Session session = cluster.connect();
+        session.execute("create keyspace ks WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1}");
+        session.execute("create type ks.foo (i int)");
+        cluster.close();
 
-        try {
-            ccm = CCMBridge.builder("test").build();
+        // Second driver instance: read UDT definition
+        cluster = register(Cluster.builder().addContactPointsWithPorts(firstHost).build());
+        UserType fooType = cluster.getMetadata().getKeyspace("ks").getUserType("foo");
 
-            // First driver instance: create UDT
-            cluster = Cluster.builder().addContactPoint(CCMBridge.ipOfNode(1)).build();
-            Session session = cluster.connect();
-            session.execute("create keyspace ks WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1}");
-            session.execute("create type ks.foo (i int)");
-            cluster.close();
-
-            // Second driver instance: read UDT definition
-            cluster = Cluster.builder().addContactPoint(CCMBridge.ipOfNode(1)).build();
-            UserType fooType = cluster.getMetadata().getKeyspace("ks").getUserType("foo");
-
-            assertThat(fooType.getFieldNames()).containsExactly("i");
-        } finally {
-            if (cluster != null)
-                cluster.close();
-            if (ccm != null)
-                ccm.remove();
-        }
+        assertThat(fooType.getFieldNames()).containsExactly("i");
     }
 
     /**
@@ -140,36 +129,27 @@ public class ControlConnectionTest {
      * @since 2.0.9
      */
     @Test(groups = "long")
+    @CCMConfig(numberOfNodes = 3)
     public void should_reestablish_if_control_node_decommissioned() throws InterruptedException {
-        CCMBridge ccm = null;
-        Cluster cluster = null;
+        InetSocketAddress firstHost = getHostAddress(1);
+        Cluster cluster = register(Cluster.builder()
+                .addContactPointsWithPorts(firstHost)
+                .withAddressTranslater(getAddressTranslator())
+                .withQueryOptions(nonDebouncingQueryOptions())
+                .build());
+        cluster.init();
 
-        try {
-            ccm = CCMBridge.builder("test").withNodes(3).build();
+        // Ensure the control connection host is that of the first node.
+        InetAddress controlHost = cluster.manager.controlConnection.connectedHost().getAddress();
+        assertThat(controlHost).isEqualTo(firstHost.getAddress());
 
-            cluster = Cluster.builder()
-                    .addContactPoint(CCMBridge.ipOfNode(1))
-                    .withQueryOptions(nonDebouncingQueryOptions())
-                    .build();
-            cluster.init();
+        // Decommission the node.
+        ccm.decommissionNode(1);
 
-            // Ensure the control connection host is that of the first node.
-            String controlHost = cluster.manager.controlConnection.connectedHost().getAddress().getHostAddress();
-            assertThat(controlHost).isEqualTo(CCMBridge.ipOfNode(1));
-
-            // Decommission the node.
-            ccm.decommissionNode(1);
-
-            // Ensure that the new control connection is not null and it's host is not equal to the decommissioned node.
-            Host newHost = cluster.manager.controlConnection.connectedHost();
-            assertThat(newHost).isNotNull();
-            assertThat(newHost.getAddress().getHostAddress()).isNotEqualTo(controlHost);
-        } finally {
-            if (cluster != null)
-                cluster.close();
-            if (ccm != null)
-                ccm.remove();
-        }
+        // Ensure that the new control connection is not null and it's host is not equal to the decommissioned node.
+        Host newHost = cluster.manager.controlConnection.connectedHost();
+        assertThat(newHost).isNotNull();
+        assertThat(newHost.getAddress()).isNotEqualTo(controlHost);
     }
 
     /**
@@ -186,6 +166,7 @@ public class ControlConnectionTest {
      * @since 2.0.11, 2.1.8, 2.2.0
      */
     @Test(groups = "short")
+    @CCMConfig(createCcm = false)
     public void should_randomize_contact_points_when_determining_control_connection() {
         int hostCount = 5;
         int iterations = 100;
@@ -193,14 +174,15 @@ public class ControlConnectionTest {
         scassandras.init();
 
         try {
-            Collection<String> contactPoints = newArrayList();
+            Collection<InetSocketAddress> contactPoints = newArrayList();
             for (int i = 1; i <= hostCount; i++) {
                 contactPoints.add(scassandras.address(i));
             }
             final HashMultiset<InetAddress> occurrencesByHost = HashMultiset.create(hostCount);
             for (int i = 0; i < iterations; i++) {
                 Cluster cluster = Cluster.builder()
-                        .addContactPoints(contactPoints.toArray(new String[hostCount]))
+                        .addContactPointsWithPorts(contactPoints)
+                        .withAddressTranslater(scassandras.addressTranslator())
                         .withNettyOptions(nonQuietClusterCloseOptions)
                         .build();
 

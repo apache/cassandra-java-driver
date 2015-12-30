@@ -16,8 +16,6 @@
 package com.datastax.driver.core;
 
 import com.google.common.base.Optional;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -28,27 +26,8 @@ import java.security.SecureRandom;
 import static com.datastax.driver.core.CCMBridge.DEFAULT_CLIENT_KEYSTORE_PASSWORD;
 import static com.datastax.driver.core.CCMBridge.DEFAULT_CLIENT_TRUSTSTORE_PASSWORD;
 
-public abstract class SSLTestBase {
-
-    private final boolean requireClientAuth;
-
-    protected CCMBridge ccm;
-
-    public SSLTestBase(boolean requireClientAuth) {
-        this.requireClientAuth = requireClientAuth;
-    }
-
-    @BeforeClass(groups = {"isolated", "short", "long"})
-    public void beforeClass() {
-        ccm = CCMBridge.builder("test")
-                .withSSL(requireClientAuth)
-                .build();
-    }
-
-    @AfterClass(groups = {"isolated", "short", "long"})
-    public void afterClass() {
-        ccm.remove();
-    }
+@CCMConfig(ssl = true, createCluster = false)
+public abstract class SSLTestBase extends CCMTestsSupport {
 
     /**
      * <p>
@@ -61,18 +40,12 @@ public abstract class SSLTestBase {
      *                   raised here if connection cannot be established.
      */
     protected void connectWithSSLOptions(SSLOptions sslOptions) throws Exception {
-        Cluster cluster = null;
-        try {
-            cluster = Cluster.builder()
-                    .addContactPoint(CCMBridge.IP_PREFIX + '1')
-                    .withSSL(sslOptions)
-                    .build();
-
-            cluster.connect();
-        } finally {
-            if (cluster != null)
-                cluster.close();
-        }
+        Cluster cluster = register(Cluster.builder()
+                .addContactPointsWithPorts(this.getInitialContactPoints())
+                .withAddressTranslater(ccm.addressTranslator())
+                .withSSL(sslOptions)
+                .build());
+        cluster.connect();
     }
 
     /**
@@ -85,18 +58,12 @@ public abstract class SSLTestBase {
      *                   raised here if connection cannot be established.
      */
     protected void connectWithSSL() throws Exception {
-        Cluster cluster = null;
-        try {
-            cluster = Cluster.builder()
-                    .addContactPoint(CCMBridge.IP_PREFIX + '1')
-                    .withSSL()
-                    .build();
-
-            cluster.connect();
-        } finally {
-            if (cluster != null)
-                cluster.close();
-        }
+        Cluster cluster = register(Cluster.builder()
+                .addContactPointsWithPorts(this.getInitialContactPoints())
+                .withAddressTranslater(ccm.addressTranslator())
+                .withSSL()
+                .build());
+        cluster.connect();
     }
 
     /**

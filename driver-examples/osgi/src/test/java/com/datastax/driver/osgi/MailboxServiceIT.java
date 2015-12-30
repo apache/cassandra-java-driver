@@ -15,7 +15,7 @@
  */
 package com.datastax.driver.osgi;
 
-import com.datastax.driver.core.CCMBridge;
+import com.datastax.driver.core.TestUtils;
 import com.datastax.driver.osgi.api.MailboxException;
 import com.datastax.driver.osgi.api.MailboxMessage;
 import com.datastax.driver.osgi.api.MailboxService;
@@ -79,8 +79,9 @@ public class MailboxServiceIT {
             @Override
             public Option[] getOptions() {
                 return options(
-                        systemProperty("cassandra.contactpoints").value(CCMBridge.IP_PREFIX + 1),
+                        systemProperty("cassandra.contactpoints").value(TestUtils.IP_PREFIX + 1),
                         bundle("reference:file:target/classes"),
+                        bootDelegationPackages("javax.security.*"),
                         mavenBundle("com.codahale.metrics", "metrics-core", "3.0.2"),
                         mavenBundle("org.slf4j", "slf4j-api", "1.7.5"),
                         mavenBundle("org.slf4j", "slf4j-simple", "1.7.5").noStart(),

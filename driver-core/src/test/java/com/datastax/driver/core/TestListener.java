@@ -32,10 +32,9 @@ public class TestListener extends TestListenerAdapter implements IInvokedMethodL
     public void onTestFailure(ITestResult tr) {
         long elapsedTime = TimeUnit.NANOSECONDS.toSeconds((System.nanoTime() - start_time));
         long testTime = tr.getEndMillis() - tr.getStartMillis();
-
         tr.getThrowable().printStackTrace();
-        System.out.println("FAILED: " + tr.getName());
-        System.out.println("Test: " + formatIntoHHMMSS(testTime / 1000));
+        System.out.println("FAILED : " + tr.getName());
+        System.out.println("Test   : " + formatIntoHHMMSS(testTime / 1000));
         System.out.println("Elapsed: " + formatIntoHHMMSS(elapsedTime));
         System.out.println();
     }
@@ -44,9 +43,8 @@ public class TestListener extends TestListenerAdapter implements IInvokedMethodL
     public void onTestSkipped(ITestResult tr) {
         long elapsedTime = TimeUnit.NANOSECONDS.toSeconds((System.nanoTime() - start_time));
         long testTime = tr.getEndMillis() - tr.getStartMillis();
-
         System.out.println("SKIPPED: " + tr.getName());
-        System.out.println("Test: " + formatIntoHHMMSS(testTime / 1000));
+        System.out.println("Test   : " + formatIntoHHMMSS(testTime / 1000));
         System.out.println("Elapsed: " + formatIntoHHMMSS(elapsedTime));
         System.out.println();
     }
@@ -55,15 +53,16 @@ public class TestListener extends TestListenerAdapter implements IInvokedMethodL
     public void onTestSuccess(ITestResult tr) {
         long elapsedTime = TimeUnit.NANOSECONDS.toSeconds((System.nanoTime() - start_time));
         long testTime = tr.getEndMillis() - tr.getStartMillis();
-
         System.out.println("SUCCESS: " + tr.getName());
-        System.out.println("Test: " + formatIntoHHMMSS(testTime / 1000));
+        System.out.println("Test   : " + formatIntoHHMMSS(testTime / 1000));
         System.out.println("Elapsed: " + formatIntoHHMMSS(elapsedTime));
-        System.out.println("\n");
+        System.out.println();
     }
 
     @Override
     public void onTestStart(ITestResult tr) {
+        System.out.println();
+        System.out.println("-----------------------------------------------");
         System.out.println("Starting " + tr.getTestClass().getName() + '.' + tr.getName() + " [Test #" + ++test_index + "]...");
     }
 

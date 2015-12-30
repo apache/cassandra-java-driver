@@ -44,20 +44,26 @@ public class RecommissionedNodeTest {
 
     @Test(groups = "long")
     public void should_ignore_recommissioned_node_on_reconnection_attempt() throws Exception {
-        mainCcm = CCMBridge.builder("main").withNodes(3).build();
+        mainCcm = CCMBridge.builder().withNodes(3).build();
         // node1 will be our "recommissioned" node, for now we just stop it so that it stays in the peers table.
         mainCcm.stop(1);
         mainCcm.waitForDown(1);
 
         // Now start the driver that will connect to node2 and node3, and consider node1 down
-        mainCluster = Cluster.builder().addContactPoint(CCMBridge.IP_PREFIX + "2")
+        mainCluster = Cluster.builder()
+                .addContactPointsWithPorts(mainCcm.addressOfNode(2))
+                .withAddressTranslater(mainCcm.addressTranslator())
                 .withQueryOptions(nonDebouncingQueryOptions()).build();
         mainCluster.connect();
         waitForCountUpHosts(mainCluster, 2);
         // From that point, reconnections to node1 have been scheduled.
 
         // Start another ccm that will reuse node1's address
-        otherCcm = CCMBridge.builder("other").withNodes(1).build();
+        otherCcm = CCMBridge.builder()
+                .withStoragePort(mainCcm.getStoragePort())
+                .withThriftPort(mainCcm.getThriftPort())
+                .withBinaryPort(mainCcm.getBinaryPort())
+                .withNodes(1).build();
         otherCcm.waitForUp(1);
 
         // Give the driver the time to notice the node is back up and try to connect to it.
@@ -68,18 +74,24 @@ public class RecommissionedNodeTest {
 
     @Test(groups = "long")
     public void should_ignore_recommissioned_node_on_control_connection_reconnect() throws Exception {
-        mainCcm = CCMBridge.builder("main").withNodes(2).build();
+        mainCcm = CCMBridge.builder().withNodes(2).build();
         mainCcm.stop(1);
         mainCcm.waitForDown(1);
 
         // Start the driver, the control connection will be on node2
-        mainCluster = Cluster.builder().addContactPoint(CCMBridge.IP_PREFIX + "2")
+        mainCluster = Cluster.builder()
+                .addContactPointsWithPorts(mainCcm.addressOfNode(2))
+                .withAddressTranslater(mainCcm.addressTranslator())
                 .withQueryOptions(nonDebouncingQueryOptions()).build();
         mainCluster.connect();
         waitForCountUpHosts(mainCluster, 1);
 
         // Start another ccm that will reuse node1's address
-        otherCcm = CCMBridge.builder("other").withNodes(1).build();
+        otherCcm = CCMBridge.builder()
+                .withStoragePort(mainCcm.getStoragePort())
+                .withThriftPort(mainCcm.getThriftPort())
+                .withBinaryPort(mainCcm.getBinaryPort())
+                .withNodes(1).build();
         otherCcm.waitForUp(1);
 
         // Stop node2, the control connection gets defunct
@@ -93,15 +105,21 @@ public class RecommissionedNodeTest {
     @Test(groups = "long")
     public void should_ignore_recommissioned_node_on_session_init() throws Exception {
         // Simulate the bug before starting the cluster
-        mainCcm = CCMBridge.builder("main").withNodes(2).build();
+        mainCcm = CCMBridge.builder().withNodes(2).build();
         mainCcm.stop(1);
         mainCcm.waitForDown(1);
 
-        otherCcm = CCMBridge.builder("other").withNodes(1).build();
+        otherCcm = CCMBridge.builder()
+                .withStoragePort(mainCcm.getStoragePort())
+                .withThriftPort(mainCcm.getThriftPort())
+                .withBinaryPort(mainCcm.getBinaryPort())
+                .withNodes(1).build();
         otherCcm.waitForUp(1);
 
         // Start the driver, it should only connect to node 2
-        mainCluster = Cluster.builder().addContactPoint(CCMBridge.IP_PREFIX + "2")
+        mainCluster = Cluster.builder()
+                .addContactPointsWithPorts(mainCcm.addressOfNode(2))
+                .withAddressTranslater(mainCcm.addressTranslator())
                 .withQueryOptions(nonDebouncingQueryOptions()).build();
 
         // When we first initialize the Cluster, all hosts are marked UP
@@ -122,15 +140,22 @@ public class RecommissionedNodeTest {
     @CassandraVersion(major = 2.0)
     public void should_ignore_node_that_does_not_support_protocol_version_on_session_init() throws Exception {
         // Simulate the bug before starting the cluster
-        mainCcm = CCMBridge.builder("main").withNodes(2).build();
+        mainCcm = CCMBridge.builder().withNodes(2).build();
         mainCcm.stop(1);
         mainCcm.waitForDown(1);
 
-        otherCcm = CCMBridge.builder("main").withNodes(1).withCassandraVersion("1.2.19").build();
+        otherCcm = CCMBridge.builder().withNodes(1)
+                .withStoragePort(mainCcm.getStoragePort())
+                .withThriftPort(mainCcm.getThriftPort())
+                .withBinaryPort(mainCcm.getBinaryPort())
+                .withVersion("1.2.19")
+                .build();
         otherCcm.waitForUp(1);
 
         // Start the driver, it should only connect to node 2
-        mainCluster = Cluster.builder().addContactPoint(CCMBridge.IP_PREFIX + "2")
+        mainCluster = Cluster.builder()
+                .addContactPointsWithPorts(mainCcm.addressOfNode(2))
+                .withAddressTranslater(mainCcm.addressTranslator())
                 .withQueryOptions(nonDebouncingQueryOptions()).build();
 
         // Create a session. This will try to open a pool to node 1 and find that it doesn't support protocol version.
@@ -151,7 +176,7 @@ public class RecommissionedNodeTest {
         otherCcm = null;
     }
 
-    @AfterMethod(groups = "long")
+    @AfterMethod(groups = "long", alwaysRun = true)
     public void teardown() {
         if (mainCluster != null)
             mainCluster.close();

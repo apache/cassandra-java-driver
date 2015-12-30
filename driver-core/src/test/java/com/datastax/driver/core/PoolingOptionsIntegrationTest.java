@@ -15,10 +15,9 @@
  */
 package com.datastax.driver.core;
 
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.Test;
 
-import java.util.Collection;
-import java.util.Collections;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -27,10 +26,23 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
-public class PoolingOptionsIntegrationTest extends CCMBridge.PerClassSingleNodeCluster {
+@CCMConfig(createSession = false)
+public class PoolingOptionsIntegrationTest extends CCMTestsSupport {
+
+    private ThreadPoolExecutor executor;
+
     @Override
-    protected Collection<String> getTableDefinitions() {
-        return Collections.emptyList();
+    public Cluster.Builder createClusterBuilder() {
+        executor = spy(new ThreadPoolExecutor(1, 1, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>()));
+        PoolingOptions poolingOptions = new PoolingOptions();
+        poolingOptions.setInitializationExecutor(executor);
+        return Cluster.builder().withPoolingOptions(poolingOptions);
+    }
+
+    @AfterMethod(groups = "short")
+    public void shutdownExecutor() {
+        if (executor != null)
+            executor.shutdown();
     }
 
     /**
@@ -46,44 +58,30 @@ public class PoolingOptionsIntegrationTest extends CCMBridge.PerClassSingleNodeC
      */
     @Test(groups = "short")
     public void should_be_able_to_use_custom_initialization_executor() {
-        ThreadPoolExecutor executor = spy(new ThreadPoolExecutor(1, 1, 60, TimeUnit.SECONDS,
-                new LinkedBlockingQueue<Runnable>()));
+        cluster.init();
+        // Ensure executor used.
+        verify(executor, atLeastOnce()).execute(any(Runnable.class));
 
-        PoolingOptions poolingOptions = new PoolingOptions();
-        poolingOptions.setInitializationExecutor(executor);
+        // Reset invocation count.
+        reset();
 
-        Cluster cluster = Cluster.builder()
-                .addContactPointsWithPorts(Collections.singletonList(hostAddress))
-                .withPoolingOptions(poolingOptions).build();
-        try {
-            cluster.init();
-            // Ensure executor used.
-            verify(executor, atLeastOnce()).execute(any(Runnable.class));
+        Session session = cluster.connect();
 
-            // Reset invocation count.
-            reset();
+        // Ensure executor used again to establish core connections.
+        verify(executor, atLeastOnce()).execute(any(Runnable.class));
 
-            Session session = cluster.connect();
+        // Expect core connections + control connection.
+        assertThat(cluster.getMetrics().getOpenConnections().getValue()).isEqualTo(
+                TestUtils.numberOfLocalCoreConnections(cluster) + 1);
 
-            // Ensure executor used again to establish core connections.
-            verify(executor, atLeastOnce()).execute(any(Runnable.class));
+        reset();
 
-            // Expect core connections + control connection.
-            assertThat(cluster.getMetrics().getOpenConnections().getValue()).isEqualTo(
-                    TestUtils.numberOfLocalCoreConnections(cluster) + 1);
+        session.close();
 
-            reset();
+        // Executor should have been used to close connections associated with the session.
+        verify(executor, atLeastOnce()).execute(any(Runnable.class));
 
-            session.close();
-
-            // Executor should have been used to close connections associated with the session.
-            verify(executor, atLeastOnce()).execute(any(Runnable.class));
-
-            // Only the control connection should remain.
-            assertThat(cluster.getMetrics().getOpenConnections().getValue()).isEqualTo(1);
-        } finally {
-            cluster.close();
-            executor.shutdown();
-        }
+        // Only the control connection should remain.
+        assertThat(cluster.getMetrics().getOpenConnections().getValue()).isEqualTo(1);
     }
 }

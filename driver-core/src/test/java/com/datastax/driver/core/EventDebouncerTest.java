@@ -190,7 +190,7 @@ public class EventDebouncerTest {
         }
 
         void awaitEvents(int expected) throws InterruptedException {
-            long nanos = SECONDS.toNanos(10);
+            long nanos = SECONDS.toNanos(60);
             lock.lock();
             try {
                 while (events.size() < expected) {
@@ -204,7 +204,7 @@ public class EventDebouncerTest {
         }
 
         void awaitInvocations(int expected) throws InterruptedException {
-            long nanos = SECONDS.toNanos(10);
+            long nanos = SECONDS.toNanos(60);
             lock.lock();
             try {
                 while (invocations.get() < expected) {

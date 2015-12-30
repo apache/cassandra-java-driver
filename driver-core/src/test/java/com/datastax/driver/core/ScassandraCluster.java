@@ -17,6 +17,7 @@ package com.datastax.driver.core;
 
 import com.beust.jcommander.internal.Lists;
 import com.beust.jcommander.internal.Maps;
+import com.datastax.driver.core.policies.AddressTranslater;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -27,6 +28,8 @@ import org.scassandra.http.client.PrimingRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
@@ -45,18 +48,22 @@ public class ScassandraCluster {
 
     private final String ipPrefix;
 
+    private final int binaryPort;
+
     private final List<Scassandra> instances;
 
     private final Map<Integer, List<Scassandra>> dcNodeMap;
 
-    private final List<Map<String, ? extends Object>> keyspaceRows;
+    private final List<Map<String, ?>> keyspaceRows;
+
 
     private final Map<Integer, Map<Integer, Map<String, Object>>> forcedPeerInfos;
 
     ScassandraCluster(Integer[] nodes, String ipPrefix, int binaryPort, int adminPort,
-                      List<Map<String, ? extends Object>> keyspaceRows,
+                      List<Map<String, ?>> keyspaceRows,
                       Map<Integer, Map<Integer, Map<String, Object>>> forcedPeerInfos) {
         this.ipPrefix = ipPrefix;
+        this.binaryPort = binaryPort;
         this.forcedPeerInfos = forcedPeerInfos;
 
         int node = 1;
@@ -85,10 +92,6 @@ public class ScassandraCluster {
         return instances;
     }
 
-    public String address(int node) {
-        return ipPrefix + node;
-    }
-
     public Scassandra node(int dc, int node) {
         return dcNodeMap.get(dc).get(node - 1);
     }
@@ -112,16 +115,43 @@ public class ScassandraCluster {
         return -1;
     }
 
-    public String address(int dc, int node) {
-        // TODO: Scassandra should be updated to include address to avoid O(n) lookup.
-        int ipSuffix = ipSuffix(dc, node);
-        return ipSuffix == -1 ? null : ipPrefix + ipSuffix;
+    public InetSocketAddress address(int node) {
+        return new InetSocketAddress(ipPrefix + node, binaryPort);
     }
 
+    public InetSocketAddress address(int dc, int node) {
+        // TODO: Scassandra should be updated to include address to avoid O(n) lookup.
+        int ipSuffix = ipSuffix(dc, node);
+        if (ipSuffix == -1)
+            return null;
+        return new InetSocketAddress(ipPrefix + ipSuffix, binaryPort);
+    }
+
+    /**
+     * Returns an {@link AddressTranslater} to use when tests must manually create
+     * {@link Cluster} instances.
+     * <p/>
+     * This translator is necessary because hosts create with this class do not use standard ports.
+     * <p/>
+     * This method should not be called before the test has started, nor after the test is finished.
+     *
+     * @return an {@link AddressTranslater} to use when tests must manually create
+     * {@link Cluster} instances.
+     */
+    public AddressTranslater addressTranslator() {
+        return new AddressTranslater() {
+            @Override
+            public InetSocketAddress translate(InetSocketAddress address) {
+                return new InetSocketAddress(address.getAddress(), binaryPort);
+            }
+        };
+    }
+
+
     public Host host(Cluster cluster, int dc, int node) {
-        String address = address(dc, node);
+        InetAddress address = address(dc, node).getAddress();
         for (Host host : cluster.getMetadata().getAllHosts()) {
-            if (host.getAddress().getHostAddress().equals(address)) {
+            if (host.getAddress().equals(address)) {
                 return host;
             }
         }
@@ -441,8 +471,8 @@ public class ScassandraCluster {
     public static class ScassandraClusterBuilder {
 
         private Integer nodes[] = {1};
-        private String ipPrefix = CCMBridge.IP_PREFIX;
-        private final List<Map<String, ? extends Object>> keyspaceRows = Lists.newArrayList();
+        private String ipPrefix = TestUtils.IP_PREFIX;
+        private final List<Map<String, ?>> keyspaceRows = Lists.newArrayList();
         private final Map<Integer, Map<Integer, Map<String, Object>>> forcedPeerInfos = Maps.newHashMap();
 
         public ScassandraClusterBuilder withNodes(Integer... nodes) {
@@ -506,7 +536,7 @@ public class ScassandraCluster {
         }
 
         public ScassandraCluster build() {
-            return new ScassandraCluster(nodes, ipPrefix, 9042, 9052, keyspaceRows, forcedPeerInfos);
+            return new ScassandraCluster(nodes, ipPrefix, TestUtils.findAvailablePort(), TestUtils.findAvailablePort(), keyspaceRows, forcedPeerInfos);
         }
     }
 }

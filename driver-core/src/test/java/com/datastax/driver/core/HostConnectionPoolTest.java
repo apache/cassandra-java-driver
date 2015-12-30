@@ -17,7 +17,7 @@ package com.datastax.driver.core;
 
 import com.codahale.metrics.Gauge;
 import com.datastax.driver.core.policies.ConstantReconnectionPolicy;
-import com.google.common.util.concurrent.Uninterruptibles;
+import com.google.common.util.concurrent.*;
 import org.scassandra.cql.PrimitiveType;
 import org.scassandra.http.client.PrimingRequest;
 import org.testng.annotations.BeforeClass;
@@ -40,7 +40,6 @@ import static org.scassandra.http.client.PrimingRequest.then;
 import static org.testng.Assert.fail;
 
 public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
-
 
     @BeforeClass(groups = {"short", "long"})
     public void reinitializeCluster() {
@@ -574,6 +573,9 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
             Connection.Factory factory = spy(cluster.manager.connectionFactory);
             cluster.manager.connectionFactory = factory;
 
+            TestExecutorService blockingExecutor = new TestExecutorService(cluster.manager.blockingExecutor);
+            cluster.manager.blockingExecutor = blockingExecutor;
+
             HostConnectionPool pool = createPool(cluster, 3, 3);
             Connection core0 = pool.connections.get(0);
             Connection core1 = pool.connections.get(1);
@@ -602,12 +604,14 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
             Uninterruptibles.sleepUninterruptibly(reconnectInterval, TimeUnit.MILLISECONDS);
 
             // Attempt to borrow connection, this should trigger ensureCoreConnections thus spawning a new connection.
+            blockingExecutor.reset();
             request = MockRequest.send(pool);
             requests.add(request);
             assertThat(request.connection).isEqualTo(core1);
 
             // Should have tried to open up to core connections as result of borrowing a connection past reconnect time and not being at core.
-            verify(factory, timeout(reconnectInterval).times(1)).open(any(HostConnectionPool.class));
+            blockingExecutor.blockUntilNextTaskCompleted();
+            verify(factory).open(any(HostConnectionPool.class));
             reset(factory);
 
             // Sleep for reconnect interval to allow reconnection time to elapse.
@@ -619,13 +623,17 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
             Uninterruptibles.sleepUninterruptibly(reconnectInterval, TimeUnit.MILLISECONDS);
 
             // Try to borrow a connection, the pool should grow.
+            blockingExecutor.reset();
             requests.add(MockRequest.send(pool));
-            verify(factory, timeout((reconnectInterval + readTimeout) * 2).times(1)).open(any(HostConnectionPool.class));
+            blockingExecutor.blockUntilNextTaskCompleted();
+            verify(factory).open(any(HostConnectionPool.class));
             reset(factory);
 
             // Another core connection should be opened as result of another request to get us up to core connections.
+            blockingExecutor.reset();
             requests.add(MockRequest.send(pool));
-            verify(factory, timeout((reconnectInterval + readTimeout) * 2).times(1)).open(any(HostConnectionPool.class));
+            blockingExecutor.blockUntilNextTaskCompleted();
+            verify(factory).open(any(HostConnectionPool.class));
             reset(factory);
 
             // Sending another request should not grow the pool any more, since we are now at core connections.
@@ -1101,6 +1109,47 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
         @Override
         public int retryCount() {
             return 0; // value not important for this test class
+        }
+    }
+
+    static class TestExecutorService extends ForwardingListeningExecutorService {
+
+        private final ListeningExecutorService delegate;
+
+        private final Semaphore semaphore = new Semaphore(0);
+
+        TestExecutorService(ListeningExecutorService delegate) {
+            this.delegate = delegate;
+        }
+
+        @Override
+        protected ListeningExecutorService delegate() {
+            return delegate;
+        }
+
+        public void reset() {
+            semaphore.drainPermits();
+        }
+
+        public void blockUntilNextTaskCompleted() throws InterruptedException {
+            semaphore.tryAcquire(1, 1, TimeUnit.MINUTES);
+        }
+
+        @Override
+        public ListenableFuture<?> submit(Runnable task) {
+            ListenableFuture<?> future = super.submit(task);
+            Futures.addCallback(future, new FutureCallback<Object>() {
+                @Override
+                public void onSuccess(Object result) {
+                    semaphore.release(1);
+                }
+
+                @Override
+                public void onFailure(Throwable t) {
+                    semaphore.release(1);
+                }
+            });
+            return future;
         }
     }
 }

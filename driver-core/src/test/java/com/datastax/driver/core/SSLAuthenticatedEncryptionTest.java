@@ -21,11 +21,8 @@ import org.testng.annotations.Test;
 
 import static com.datastax.driver.core.CCMBridge.*;
 
+@CCMConfig(auth = true)
 public class SSLAuthenticatedEncryptionTest extends SSLTestBase {
-
-    public SSLAuthenticatedEncryptionTest() {
-        super(true);
-    }
 
     /**
      * <p>
@@ -72,7 +69,17 @@ public class SSLAuthenticatedEncryptionTest extends SSLTestBase {
         System.setProperty("javax.net.ssl.keyStorePassword", DEFAULT_CLIENT_KEYSTORE_PASSWORD);
         System.setProperty("javax.net.ssl.trustStore", DEFAULT_CLIENT_TRUSTSTORE_FILE.getAbsolutePath());
         System.setProperty("javax.net.ssl.trustStorePassword", DEFAULT_CLIENT_TRUSTSTORE_PASSWORD);
-
-        connectWithSSL();
+        try {
+            connectWithSSL();
+        } finally {
+            try {
+                System.clearProperty("javax.net.ssl.keyStore");
+                System.clearProperty("javax.net.ssl.keyStorePassword");
+                System.clearProperty("javax.net.ssl.trustStore");
+                System.clearProperty("javax.net.ssl.trustStorePassword");
+            } catch (SecurityException e) {
+                // ok
+            }
+        }
     }
 }

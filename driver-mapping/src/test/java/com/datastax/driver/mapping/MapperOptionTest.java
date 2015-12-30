@@ -35,13 +35,14 @@ import static com.datastax.driver.mapping.Mapper.Option;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
-public class MapperOptionTest extends CCMBridge.PerClassSingleNodeCluster {
+@SuppressWarnings("unused")
+public class MapperOptionTest extends CCMTestsSupport {
 
     ProtocolVersion protocolVersion;
     Mapper<User> mapper;
 
     @Override
-    protected Collection<String> getTableDefinitions() {
+    public Collection<String> createTestFixtures() {
         return Lists.newArrayList("CREATE TABLE user (key int primary key, v text)");
     }
 

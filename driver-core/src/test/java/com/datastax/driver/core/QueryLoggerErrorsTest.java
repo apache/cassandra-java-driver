@@ -16,6 +16,7 @@
 package com.datastax.driver.core;
 
 import com.datastax.driver.core.exceptions.*;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.scassandra.http.client.PrimingRequest;
 import org.testng.annotations.AfterMethod;
@@ -48,9 +49,13 @@ public class QueryLoggerErrorsTest extends ScassandraTestBase.PerClassCluster {
     private Cluster cluster = null;
     private Session session = null;
     private QueryLogger queryLogger = null;
+    private Level originalError;
+    private Level originalSlow;
 
     @BeforeMethod(groups = {"short", "unit"})
     public void setUp() {
+        originalSlow = slow.getLevel();
+        originalError = error.getLevel();
         slow.setLevel(INFO);
         error.setLevel(INFO);
         slow.addAppender(slowAppender = new MemoryAppender());
@@ -62,10 +67,10 @@ public class QueryLoggerErrorsTest extends ScassandraTestBase.PerClassCluster {
         session = cluster.connect();
     }
 
-    @AfterMethod(groups = {"short", "unit"})
+    @AfterMethod(groups = {"short", "unit"}, alwaysRun = true)
     public void tearDown() {
-        slow.setLevel(null);
-        error.setLevel(null);
+        slow.setLevel(originalSlow);
+        error.setLevel(originalError);
         slow.removeAppender(slowAppender);
         error.removeAppender(errorAppender);
 

@@ -24,11 +24,8 @@ import java.util.concurrent.TimeUnit;
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.CCMBridge.*;
 
+@CCMConfig(auth = false)
 public class SSLEncryptionTest extends SSLTestBase {
-
-    public SSLEncryptionTest() {
-        super(false);
-    }
 
     /**
      * <p>
@@ -74,17 +71,11 @@ public class SSLEncryptionTest extends SSLTestBase {
      */
     @Test(groups = "short", expectedExceptions = {NoHostAvailableException.class})
     public void should_not_connect_without_ssl_but_node_uses_ssl() throws Exception {
-        Cluster cluster = null;
-        try {
-            cluster = Cluster.builder()
-                    .addContactPoint(CCMBridge.IP_PREFIX + '1')
-                    .build();
-
-            cluster.connect();
-        } finally {
-            if (cluster != null)
-                cluster.close();
-        }
+        Cluster cluster = register(Cluster.builder()
+                .addContactPointsWithPorts(this.getInitialContactPoints())
+                .withAddressTranslater(ccm.addressTranslator())
+                .build());
+        cluster.connect();
     }
 
     /**
@@ -96,25 +87,21 @@ public class SSLEncryptionTest extends SSLTestBase {
      * @test_category connection:ssl
      * @expected_result Connection is re-established within a sufficient amount of time after a node comes back online.
      */
+    @CCMConfig(dirtiesContext = true)
     @Test(groups = "long")
     public void should_reconnect_with_ssl_on_node_up() throws Exception {
-        Cluster cluster = null;
-        try {
-            cluster = Cluster.builder()
-                    .addContactPoint(CCMBridge.IP_PREFIX + '1')
-                    .withSSL(getSSLOptions(Optional.of(DEFAULT_CLIENT_KEYSTORE_PATH), Optional.of(DEFAULT_CLIENT_TRUSTSTORE_PATH)))
-                    .build();
+        Cluster cluster = register(Cluster.builder()
+                .addContactPointsWithPorts(this.getInitialContactPoints())
+                .withAddressTranslater(ccm.addressTranslator())
+                .withSSL(getSSLOptions(Optional.of(DEFAULT_CLIENT_KEYSTORE_PATH), Optional.of(DEFAULT_CLIENT_TRUSTSTORE_PATH)))
+                .build());
 
-            cluster.connect();
+        cluster.connect();
 
-            ccm.stop(1);
-            ccm.start(1);
+        ccm.stop(1);
+        ccm.start(1);
 
-            assertThat(cluster).host(1).comesUpWithin(TestUtils.TEST_BASE_NODE_WAIT, TimeUnit.SECONDS);
-        } finally {
-            if (cluster != null)
-                cluster.close();
-        }
+        assertThat(cluster).host(1).comesUpWithin(TestUtils.TEST_BASE_NODE_WAIT, TimeUnit.SECONDS);
     }
 
     /**
@@ -129,7 +116,15 @@ public class SSLEncryptionTest extends SSLTestBase {
     public void should_use_system_properties_with_default_ssl_options() throws Exception {
         System.setProperty("javax.net.ssl.trustStore", DEFAULT_CLIENT_TRUSTSTORE_FILE.getAbsolutePath());
         System.setProperty("javax.net.ssl.trustStorePassword", DEFAULT_CLIENT_TRUSTSTORE_PASSWORD);
-
-        connectWithSSL();
+        try {
+            connectWithSSL();
+        } finally {
+            try {
+                System.clearProperty("javax.net.ssl.trustStore");
+                System.clearProperty("javax.net.ssl.trustStorePassword");
+            } catch (SecurityException e) {
+                // ok
+            }
+        }
     }
 }

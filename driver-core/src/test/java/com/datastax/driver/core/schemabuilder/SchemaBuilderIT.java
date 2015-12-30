@@ -15,7 +15,7 @@
  */
 package com.datastax.driver.core.schemabuilder;
 
-import com.datastax.driver.core.CCMBridge;
+import com.datastax.driver.core.CCMTestsSupport;
 import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
@@ -23,20 +23,13 @@ import com.datastax.driver.core.schemabuilder.TableOptions.CompactionOptions.Dat
 import com.datastax.driver.core.utils.CassandraVersion;
 import org.testng.annotations.Test;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Iterator;
 
 import static com.datastax.driver.core.schemabuilder.SchemaBuilder.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
-public class SchemaBuilderIT extends CCMBridge.PerClassSingleNodeCluster {
-
-    @Override
-    protected Collection<String> getTableDefinitions() {
-        return new ArrayList<String>();
-    }
+public class SchemaBuilderIT extends CCMTestsSupport {
 
     @Test(groups = "short")
     @CassandraVersion(major = 2.1, minor = 2)
@@ -297,16 +290,16 @@ public class SchemaBuilderIT extends CCMBridge.PerClassSingleNodeCluster {
         );
 
         // Verify that the PK index and the secondary indexes both exist
-        assertThat(numberOfIndexedColumns("ks", "dropindex")).isEqualTo(1);
+        assertThat(numberOfIndexedColumns()).isEqualTo(1);
 
         // Delete the index
         session.execute(SchemaBuilder.dropIndex("ks", "ks_index"));
 
         // Verify that only the PK index exists
-        assertThat(numberOfIndexedColumns("ks", "dropindex")).isEqualTo(0);
+        assertThat(numberOfIndexedColumns()).isEqualTo(0);
     }
 
-    private int numberOfIndexedColumns(String keyspace, String table) {
+    private int numberOfIndexedColumns() {
         ResultSet columns = session.execute(
                 "SELECT * "
                         + "FROM system.schema_columns "

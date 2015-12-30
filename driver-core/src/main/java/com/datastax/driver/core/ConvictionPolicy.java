@@ -126,8 +126,10 @@ abstract class ConvictionPolicy {
 
         @Override
         boolean canReconnectNow() {
-            return nextReconnectionTime == Long.MIN_VALUE ||
+            boolean canReconnectNow = nextReconnectionTime == Long.MIN_VALUE ||
                     System.nanoTime() >= nextReconnectionTime;
+            Host.statesLogger.trace("canReconnectNow={}", canReconnectNow);
+            return canReconnectNow;
         }
 
         static class Factory implements ConvictionPolicy.Factory {

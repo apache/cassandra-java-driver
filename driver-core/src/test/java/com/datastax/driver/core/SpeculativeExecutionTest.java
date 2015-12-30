@@ -50,7 +50,8 @@ public class SpeculativeExecutionTest {
 
         loadBalancingPolicy = new SortingLoadBalancingPolicy();
         cluster = Cluster.builder()
-                .addContactPoint(scassandras.address(2))
+                .addContactPointsWithPorts(scassandras.address(2))
+                .withAddressTranslater(scassandras.addressTranslator())
                 .withLoadBalancingPolicy(loadBalancingPolicy)
                 .withSpeculativeExecutionPolicy(new ConstantSpeculativeExecutionPolicy(speculativeExecutionDelay, 1))
                 .withQueryOptions(new QueryOptions().setDefaultIdempotence(true))
@@ -67,7 +68,7 @@ public class SpeculativeExecutionTest {
         errors = cluster.getMetrics().getErrorMetrics();
     }
 
-    @AfterMethod(groups = "short")
+    @AfterMethod(groups = "short", alwaysRun = true)
     public void afterMethod() {
         if (cluster != null)
             cluster.close();
@@ -200,7 +201,8 @@ public class SpeculativeExecutionTest {
         SpeculativeExecutionPolicy mockPolicy = mock(SpeculativeExecutionPolicy.class);
 
         Cluster cluster = Cluster.builder()
-                .addContactPoint(CCMBridge.ipOfNode(2))
+                .addContactPointsWithPorts(scassandras.address(2))
+                .withAddressTranslater(scassandras.addressTranslator())
                 .withSpeculativeExecutionPolicy(mockPolicy)
                 .build();
 

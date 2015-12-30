@@ -18,6 +18,7 @@ package com.datastax.driver.core;
 import com.google.common.collect.Iterators;
 import org.assertj.core.api.AbstractAssert;
 
+import java.net.InetAddress;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.TreeSet;
@@ -31,7 +32,7 @@ public class ClusterAssert extends AbstractAssert<ClusterAssert, Cluster> {
     }
 
     public ClusterAssert usesControlHost(int node) {
-        String expectedAddress = CCMBridge.ipOfNode(node);
+        String expectedAddress = TestUtils.ipOfNode(node);
         Host controlHost = actual.manager.controlConnection.connectedHost();
         assertThat(controlHost.getAddress().getHostAddress()).isEqualTo(expectedAddress);
         return this;
@@ -64,6 +65,10 @@ public class ClusterAssert extends AbstractAssert<ClusterAssert, Cluster> {
         Host host = TestUtils.findOrWaitForHost(actual, hostAddress,
                 60 + Cluster.NEW_NODE_DELAY_SECONDS, TimeUnit.SECONDS);
         return new HostAssert(host, actual);
+    }
+
+    public HostAssert host(InetAddress hostAddress) {
+        return host(hostAddress.getHostAddress());
     }
 
     /**
