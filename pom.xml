@@ -179,28 +179,9 @@
           </excludes>
         </configuration>
       </plugin>
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>build-helper-maven-plugin</artifactId>
-        <version>1.9.1</version>
-        <executions>
-          <execution>
-            <id>timestamp-property</id>
-            <phase>initialize</phase>
-            <goals>
-              <goal>timestamp-property</goal>
-            </goals>
-            <configuration>
-              <name>currentYear</name>
-              <pattern>yyyy</pattern>
-              <locale>en_US</locale>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
       <!--
       To update license headers run:
-      mvn license:format -DcurrentYear=XXXX
+      mvn license:format
       -->
       <plugin>
         <groupId>com.mycila</groupId>
@@ -230,11 +211,6 @@
             <goals>
               <goal>check</goal>
             </goals>
-            <configuration>
-              <properties>
-                <currentYear>${currentYear}</currentYear>
-              </properties>
-            </configuration>
           </execution>
         </executions>
       </plugin>
