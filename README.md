@@ -111,9 +111,10 @@ is available for download.
 ## Compatibility
 
 The Java client driver 3.0 ([branch 3.0](https://github.com/datastax/java-driver/tree/3.0)) is compatible with Apache
-Cassandra 1.2, 2.0, 2.1, 2.2 and 3.0.
+Cassandra 1.2, 2.0, 2.1, 2.2 and 3.0 (see [this page](http://datastax.github.io/java-driver/features/native_protocol) for
+the most up-to-date compatibility information).
 
-UDT and tuple support is available only when using Apache Cassandra 2.1 (see [CQL improvements in Cassandra 2.1](http://www.datastax.com/dev/blog/cql-in-2-1)).
+UDT and tuple support is available only when using Apache Cassandra 2.1 or higher (see [CQL improvements in Cassandra 2.1](http://www.datastax.com/dev/blog/cql-in-2-1)).
 
 Other features are available only when using Apache Cassandra 2.0 or higher (e.g. result set paging,
 [BatchStatement](https://github.com/datastax/java-driver/blob/3.0/driver-core/src/main/java/com/datastax/driver/core/BatchStatement.java), 
