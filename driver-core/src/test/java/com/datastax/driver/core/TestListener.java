@@ -16,6 +16,7 @@
 package com.datastax.driver.core;
 
 import com.datastax.driver.core.utils.CassandraVersion;
+import com.datastax.driver.core.utils.DseVersion;
 import org.testng.*;
 import org.testng.internal.ConstructorOrMethod;
 
@@ -26,10 +27,6 @@ public class TestListener extends TestListenerAdapter implements IInvokedMethodL
 
     private long start_time = System.nanoTime();
     private int test_index = 0;
-
-    static {
-        System.out.println("[CCMBridge] Using Cassandra version: " + CCMBridge.CASSANDRA_VERSION + " (install arguments: " + CCMBridge.CASSANDRA_INSTALL_ARGS + ")");
-    }
 
     @Override
     public void onTestFailure(ITestResult tr) {
@@ -90,20 +87,60 @@ public class TestListener extends TestListenerAdapter implements IInvokedMethodL
         ConstructorOrMethod constructorOrMethod = testNgMethod.getConstructorOrMethod();
 
         Class<?> clazz = testNgMethod.getInstance().getClass();
-        if (clazz != null && clazz.isAnnotationPresent(CassandraVersion.class)) {
-            CassandraVersion cassandraVersion = clazz.getAnnotation(CassandraVersion.class);
-            TestUtils.versionCheck(cassandraVersion.major(), cassandraVersion.minor(), cassandraVersion.description());
+        if (clazz != null) {
+            if (clazz.isAnnotationPresent(CassandraVersion.class)) {
+                CassandraVersion cassandraVersion = clazz.getAnnotation(CassandraVersion.class);
+                cassandraVersionCheck(cassandraVersion);
+            }
+            if (clazz.isAnnotationPresent(DseVersion.class)) {
+                DseVersion dseVersion = clazz.getAnnotation(DseVersion.class);
+                dseVersionCheck(dseVersion);
+            }
         }
 
         Method method = constructorOrMethod.getMethod();
-        if (method != null && method.isAnnotationPresent(CassandraVersion.class)) {
-            CassandraVersion cassandraVersion = method.getAnnotation(CassandraVersion.class);
-            TestUtils.versionCheck(cassandraVersion.major(), cassandraVersion.minor(), cassandraVersion.description());
+        if (method != null) {
+            if (method.isAnnotationPresent(CassandraVersion.class)) {
+                CassandraVersion cassandraVersion = method.getAnnotation(CassandraVersion.class);
+                cassandraVersionCheck(cassandraVersion);
+            }
+            if (method.isAnnotationPresent(DseVersion.class)) {
+                DseVersion dseVersion = method.getAnnotation(DseVersion.class);
+                dseVersionCheck(dseVersion);
+            }
         }
     }
 
     @Override
     public void afterInvocation(IInvokedMethod testMethod, ITestResult testResult) {
         // Do nothing
+    }
+
+    private static void cassandraVersionCheck(CassandraVersion version) {
+        versionCheck(CCMBridge.getCassandraVersion(), version.major(), version.minor(), version.description());
+    }
+
+    private static void dseVersionCheck(DseVersion version) {
+        if (CCMBridge.isDSE()) {
+            versionCheck(CCMBridge.getDSEVersion(), version.major(), version.minor(), version.description());
+        } else {
+            throw new SkipException("Skipping test because not configured for DataStax Enterprise cluster.");
+        }
+    }
+
+    private static void versionCheck(String version, double majorCheck, int minorCheck, String skipString) {
+        if (version == null) {
+            throw new SkipException("Skipping test because provided version is null");
+        } else {
+            String[] versionArray = version.split("\\.|-");
+            double major = Double.parseDouble(versionArray[0] + "." + versionArray[1]);
+            // If there is no minor version, assume latest version of whatever was provided.
+            int minor = versionArray.length >= 3 ? Integer.parseInt(versionArray[2]) : Integer.MAX_VALUE;
+
+            if (major < majorCheck || (major == majorCheck && minor < minorCheck)) {
+                throw new SkipException("Version >= " + majorCheck + "." + minorCheck + " required.  " +
+                        "Description: " + skipString);
+            }
+        }
     }
 }
