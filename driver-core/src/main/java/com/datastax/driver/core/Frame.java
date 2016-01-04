@@ -76,8 +76,8 @@ import java.util.List;
  */
 class Frame {
 
-    public final Header header;
-    public final ByteBuf body;
+    final Header header;
+    final ByteBuf body;
 
     private Frame(Header header, ByteBuf body) {
         this.header = header;
@@ -116,17 +116,17 @@ class Frame {
         }
     }
 
-    public static Frame create(ProtocolVersion version, int opcode, int streamId, EnumSet<Header.Flag> flags, ByteBuf body) {
+    static Frame create(ProtocolVersion version, int opcode, int streamId, EnumSet<Header.Flag> flags, ByteBuf body) {
         Header header = new Header(version, flags, streamId, opcode);
         return new Frame(header, body);
     }
 
-    public static class Header {
+    static class Header {
 
-        public final ProtocolVersion version;
-        public final EnumSet<Flag> flags;
-        public final int streamId;
-        public final int opcode;
+        final ProtocolVersion version;
+        final EnumSet<Flag> flags;
+        final int streamId;
+        final int opcode;
 
         private Header(ProtocolVersion version, int flags, int streamId, int opcode) {
             this(version, Flag.deserialize(flags), streamId, opcode);
@@ -145,7 +145,7 @@ class Frame {
          * @param version the protocol version in use
          * @return the expected frame header length in bytes
          */
-        public static int lengthFor(ProtocolVersion version) {
+        static int lengthFor(ProtocolVersion version) {
             switch (version) {
                 case V1:
                 case V2:
@@ -158,14 +158,14 @@ class Frame {
             }
         }
 
-        public static enum Flag {
+        enum Flag {
             // The order of that enum matters!!
             COMPRESSED,
             TRACING,
             CUSTOM_PAYLOAD,
             WARNING;
 
-            public static EnumSet<Flag> deserialize(int flags) {
+            static EnumSet<Flag> deserialize(int flags) {
                 EnumSet<Flag> set = EnumSet.noneOf(Flag.class);
                 Flag[] values = Flag.values();
                 for (int n = 0; n < 8; n++) {
@@ -175,7 +175,7 @@ class Frame {
                 return set;
             }
 
-            public static int serialize(EnumSet<Flag> flags) {
+            static int serialize(EnumSet<Flag> flags) {
                 int i = 0;
                 for (Flag flag : flags)
                     i |= 1 << flag.ordinal();
@@ -184,11 +184,11 @@ class Frame {
         }
     }
 
-    public Frame with(ByteBuf newBody) {
+    Frame with(ByteBuf newBody) {
         return new Frame(header, newBody);
     }
 
-    public static final class Decoder extends ByteToMessageDecoder {
+    static final class Decoder extends ByteToMessageDecoder {
         static final DecoderForStreamIdSize decoderV1 = new DecoderForStreamIdSize(1);
         static final DecoderForStreamIdSize decoderV3 = new DecoderForStreamIdSize(2);
 
@@ -243,7 +243,7 @@ class Frame {
     }
 
     @ChannelHandler.Sharable
-    public static class Encoder extends MessageToMessageEncoder<Frame> {
+    static class Encoder extends MessageToMessageEncoder<Frame> {
 
         @Override
         protected void encode(ChannelHandlerContext ctx, Frame frame, List<Object> out) throws Exception {
@@ -276,11 +276,11 @@ class Frame {
         }
     }
 
-    public static class Decompressor extends MessageToMessageDecoder<Frame> {
+    static class Decompressor extends MessageToMessageDecoder<Frame> {
 
         private final FrameCompressor compressor;
 
-        public Decompressor(FrameCompressor compressor) {
+        Decompressor(FrameCompressor compressor) {
             assert compressor != null;
             this.compressor = compressor;
         }
@@ -302,11 +302,11 @@ class Frame {
         }
     }
 
-    public static class Compressor extends MessageToMessageEncoder<Frame> {
+    static class Compressor extends MessageToMessageEncoder<Frame> {
 
         private final FrameCompressor compressor;
 
-        public Compressor(FrameCompressor compressor) {
+        Compressor(FrameCompressor compressor) {
             assert compressor != null;
             this.compressor = compressor;
         }

@@ -70,7 +70,7 @@ class Connection {
 
     volatile long maxIdleTime;
 
-    public final InetSocketAddress address;
+    final InetSocketAddress address;
     private final String name;
 
     @VisibleForTesting
@@ -81,7 +81,7 @@ class Connection {
     final Dispatcher dispatcher;
 
     // Used by connection pooling to count how many requests are "in flight" on that connection.
-    public final AtomicInteger inFlight = new AtomicInteger(0);
+    final AtomicInteger inFlight = new AtomicInteger(0);
 
     private final AtomicInteger writer = new AtomicInteger(0);
     private volatile String keyspace;
@@ -118,7 +118,7 @@ class Connection {
         this(name, address, factory, null);
     }
 
-    public ListenableFuture<Void> initAsync() {
+    ListenableFuture<Void> initAsync() {
         if (factory.isShutdown)
             return Futures.immediateFailedFuture(new ConnectionException(address, "Connection factory is shut down"));
 
@@ -386,11 +386,11 @@ class Connection {
         return new UnsupportedProtocolVersionException(address, triedVersion, serverProtocolVersion);
     }
 
-    public boolean isDefunct() {
+    boolean isDefunct() {
         return isDefunct.get();
     }
 
-    public int maxAvailableStreams() {
+    int maxAvailableStreams() {
         return dispatcher.streamIdHandler.maxAvailableStreams();
     }
 
@@ -420,11 +420,11 @@ class Connection {
             owner.onConnectionDefunct(this);
     }
 
-    public String keyspace() {
+    String keyspace() {
         return keyspace;
     }
 
-    public void setKeyspace(String keyspace) throws ConnectionException {
+    void setKeyspace(String keyspace) throws ConnectionException {
         if (keyspace == null)
             return;
 
@@ -482,17 +482,17 @@ class Connection {
      * @throws ConnectionException if the connection is closed
      * @throws TransportException  if an I/O error while sending the request
      */
-    public Future write(Message.Request request) throws ConnectionException, BusyConnectionException {
+    Future write(Message.Request request) throws ConnectionException, BusyConnectionException {
         Future future = new Future(request);
         write(future);
         return future;
     }
 
-    public ResponseHandler write(ResponseCallback callback) throws ConnectionException, BusyConnectionException {
+    ResponseHandler write(ResponseCallback callback) throws ConnectionException, BusyConnectionException {
         return write(callback, true);
     }
 
-    public ResponseHandler write(ResponseCallback callback, boolean startTimeout) throws ConnectionException, BusyConnectionException {
+    ResponseHandler write(ResponseCallback callback, boolean startTimeout) throws ConnectionException, BusyConnectionException {
 
         Message.Request request = callback.request();
 
@@ -591,7 +591,7 @@ class Connection {
             ((HostConnectionPool) owner).returnConnection(this);
     }
 
-    public boolean isClosed() {
+    boolean isClosed() {
         return closeFuture.get() != null;
     }
 
@@ -605,7 +605,7 @@ class Connection {
      * @return a future that will complete once the connection has terminated.
      * @see #tryTerminate(boolean)
      */
-    public CloseFuture closeAsync() {
+    CloseFuture closeAsync() {
 
         ConnectionCloseFuture future = new ConnectionCloseFuture();
         if (!closeFuture.compareAndSet(null, future)) {
@@ -674,9 +674,9 @@ class Connection {
         return String.format("Connection[%s, inFlight=%d, closed=%b]", name, inFlight.get(), isClosed());
     }
 
-    public static class Factory {
+    static class Factory {
 
-        public final Timer timer;
+        final Timer timer;
 
         private final EventLoopGroup eventLoopGroup;
         private final Class<? extends Channel> channelClass;
@@ -684,12 +684,12 @@ class Connection {
         private final ChannelGroup allChannels = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
 
         private final ConcurrentMap<Host, AtomicInteger> idGenerators = new ConcurrentHashMap<Host, AtomicInteger>();
-        public final DefaultResponseHandler defaultHandler;
+        final DefaultResponseHandler defaultHandler;
         final Cluster.Manager manager;
         final Cluster.ConnectionReaper reaper;
-        public final Configuration configuration;
+        final Configuration configuration;
 
-        public final AuthProvider authProvider;
+        final AuthProvider authProvider;
         private volatile boolean isShutdown;
 
         volatile ProtocolVersion protocolVersion;
@@ -708,7 +708,7 @@ class Connection {
             this.timer = nettyOptions.timer(manager.threadFactory("timeouter"));
         }
 
-        public int getPort() {
+        int getPort() {
             return configuration.getProtocolOptions().getPort();
         }
 
@@ -718,7 +718,7 @@ class Connection {
          * @return the newly created (and initialized) connection.
          * @throws ConnectionException if connection attempt fails.
          */
-        public Connection open(Host host) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
+        Connection open(Host host) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
             InetSocketAddress address = host.getSocketAddress();
 
             if (isShutdown)
@@ -738,7 +738,7 @@ class Connection {
         /**
          * Same as open, but associate the created connection to the provided connection pool.
          */
-        public Connection open(HostConnectionPool pool) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
+        Connection open(HostConnectionPool pool) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
             pool.host.convictionPolicy.signalConnectionsOpening(1);
             Connection connection = new Connection(buildConnectionName(pool.host), pool.host.getSocketAddress(), this, pool);
             try {
@@ -752,7 +752,7 @@ class Connection {
         /**
          * Creates new connections and associate them to the provided connection pool, but does not start them.
          */
-        public List<Connection> newConnections(HostConnectionPool pool, int count) {
+        List<Connection> newConnections(HostConnectionPool pool, int count) {
             pool.host.convictionPolicy.signalConnectionsOpening(count);
             List<Connection> connections = Lists.newArrayListWithCapacity(count);
             for (int i = 0; i < count; i++)
@@ -791,7 +791,7 @@ class Connection {
             return g;
         }
 
-        public long getReadTimeoutMillis() {
+        long getReadTimeoutMillis() {
             return configuration.getSocketOptions().getReadTimeoutMillis();
         }
 
@@ -826,7 +826,7 @@ class Connection {
             return b;
         }
 
-        public void shutdown() {
+        void shutdown() {
             // Make sure we skip creating connection from now on.
             isShutdown = true;
 
@@ -927,7 +927,7 @@ class Connection {
 
     class Dispatcher extends SimpleChannelInboundHandler<Message.Response> {
 
-        public final StreamIdGenerator streamIdHandler;
+        final StreamIdGenerator streamIdHandler;
         private final ConcurrentMap<Integer, ResponseHandler> pending = new ConcurrentHashMap<Integer, ResponseHandler>();
 
         Dispatcher() {
@@ -940,12 +940,12 @@ class Connection {
             streamIdHandler = StreamIdGenerator.newInstance(protocolVersion);
         }
 
-        public void add(ResponseHandler handler) {
+        void add(ResponseHandler handler) {
             ResponseHandler old = pending.put(handler.streamId, handler);
             assert old == null;
         }
 
-        public void removeHandler(ResponseHandler handler, boolean releaseStreamId) {
+        void removeHandler(ResponseHandler handler, boolean releaseStreamId) {
 
             // If we don't release the ID, mark first so that we can rely later on the fact that if
             // we receive a response for an ID with no handler, it's that this ID has been marked.
@@ -1042,7 +1042,7 @@ class Connection {
             defunct(new TransportException(address, String.format("Unexpected exception triggered (%s)", cause), cause));
         }
 
-        public void errorOutAllHandler(ConnectionException ce) {
+        void errorOutAllHandler(ConnectionException ce) {
             Iterator<ResponseHandler> iter = pending.values().iterator();
             while (iter.hasNext()) {
                 ResponseHandler handler = iter.next();
@@ -1143,7 +1143,7 @@ class Connection {
         private final Message.Request request;
         private volatile InetSocketAddress address;
 
-        public Future(Message.Request request) {
+        Future(Message.Request request) {
             this.request = request;
         }
 
@@ -1190,36 +1190,36 @@ class Connection {
             return super.setException(new OperationTimedOutException(connection.address));
         }
 
-        public InetSocketAddress getAddress() {
+        InetSocketAddress getAddress() {
             return address;
         }
     }
 
     interface ResponseCallback {
-        public Message.Request request();
+        Message.Request request();
 
-        public int retryCount();
+        int retryCount();
 
-        public void onSet(Connection connection, Message.Response response, long latency, int retryCount);
+        void onSet(Connection connection, Message.Response response, long latency, int retryCount);
 
-        public void onException(Connection connection, Exception exception, long latency, int retryCount);
+        void onException(Connection connection, Exception exception, long latency, int retryCount);
 
-        public boolean onTimeout(Connection connection, long latency, int retryCount);
+        boolean onTimeout(Connection connection, long latency, int retryCount);
     }
 
     static class ResponseHandler {
 
-        public final Connection connection;
-        public final int streamId;
-        public final ResponseCallback callback;
-        public final int retryCount;
+        final Connection connection;
+        final int streamId;
+        final ResponseCallback callback;
+        final int retryCount;
 
         private final long startTime;
         private volatile Timeout timeout;
 
         private final AtomicBoolean isCancelled = new AtomicBoolean();
 
-        public ResponseHandler(Connection connection, ResponseCallback callback) throws BusyConnectionException {
+        ResponseHandler(Connection connection, ResponseCallback callback) throws BusyConnectionException {
             this.connection = connection;
             this.streamId = connection.dispatcher.streamIdHandler.next();
             if (streamId == -1)
@@ -1240,7 +1240,7 @@ class Connection {
                 timeout.cancel();
         }
 
-        public boolean cancelHandler() {
+        boolean cancelHandler() {
             if (!isCancelled.compareAndSet(false, true))
                 return false;
 
@@ -1263,8 +1263,8 @@ class Connection {
         }
     }
 
-    public interface DefaultResponseHandler {
-        public void handle(Message.Response response);
+    interface DefaultResponseHandler {
+        void handle(Message.Response response);
     }
 
     private static class Initializer extends ChannelInitializer<SocketChannel> {
@@ -1284,7 +1284,7 @@ class Connection {
         private final ChannelHandler idleStateHandler;
         private final CodecRegistry codecRegistry;
 
-        public Initializer(Connection connection, ProtocolVersion protocolVersion, FrameCompressor compressor, SSLOptions sslOptions, int heartBeatIntervalSeconds, NettyOptions nettyOptions, CodecRegistry codecRegistry) {
+        Initializer(Connection connection, ProtocolVersion protocolVersion, FrameCompressor compressor, SSLOptions sslOptions, int heartBeatIntervalSeconds, NettyOptions nettyOptions, CodecRegistry codecRegistry) {
             this.connection = connection;
             this.protocolVersion = protocolVersion;
             this.compressor = compressor;

@@ -36,16 +36,16 @@ abstract class Message {
 
     protected static final Logger logger = LoggerFactory.getLogger(Message.class);
 
-    static AttributeKey<CodecRegistry> CODEC_REGISTRY_ATTRIBUTE_KEY = AttributeKey.newInstance("com.datastax.driver.core.CodecRegistry");
+    static AttributeKey<CodecRegistry> CODEC_REGISTRY_ATTRIBUTE_KEY = AttributeKey.valueOf("com.datastax.driver.core.CodecRegistry");
 
-    public interface Coder<R extends Request> {
-        public void encode(R request, ByteBuf dest, ProtocolVersion version);
+    interface Coder<R extends Request> {
+        void encode(R request, ByteBuf dest, ProtocolVersion version);
 
-        public int encodedSize(R request, ProtocolVersion version);
+        int encodedSize(R request, ProtocolVersion version);
     }
 
-    public interface Decoder<R extends Response> {
-        public R decode(ByteBuf body, ProtocolVersion version, CodecRegistry codecRegistry);
+    interface Decoder<R extends Response> {
+        R decode(ByteBuf body, ProtocolVersion version, CodecRegistry codecRegistry);
     }
 
     private volatile int streamId;
@@ -61,27 +61,27 @@ abstract class Message {
     protected Message() {
     }
 
-    public Message setStreamId(int streamId) {
+    Message setStreamId(int streamId) {
         this.streamId = streamId;
         return this;
     }
 
-    public int getStreamId() {
+    int getStreamId() {
         return streamId;
     }
 
-    public Map<String, ByteBuffer> getCustomPayload() {
+    Map<String, ByteBuffer> getCustomPayload() {
         return customPayload;
     }
 
-    public Message setCustomPayload(Map<String, ByteBuffer> customPayload) {
+    Message setCustomPayload(Map<String, ByteBuffer> customPayload) {
         this.customPayload = customPayload;
         return this;
     }
 
-    public static abstract class Request extends Message {
+    static abstract class Request extends Message {
 
-        public enum Type {
+        enum Type {
             STARTUP(1, Requests.Startup.coder),
             CREDENTIALS(4, Requests.Credentials.coder),
             OPTIONS(5, Requests.Options.coder),
@@ -92,16 +92,16 @@ abstract class Message {
             BATCH(13, Requests.Batch.coder),
             AUTH_RESPONSE(15, Requests.AuthResponse.coder);
 
-            public final int opcode;
-            public final Coder<?> coder;
+            final int opcode;
+            final Coder<?> coder;
 
-            private Type(int opcode, Coder<?> coder) {
+            Type(int opcode, Coder<?> coder) {
                 this.opcode = opcode;
                 this.coder = coder;
             }
         }
 
-        public final Type type;
+        final Type type;
         private final boolean tracingRequested;
 
         protected Request(Type type) {
@@ -113,7 +113,7 @@ abstract class Message {
             this.tracingRequested = tracingRequested;
         }
 
-        public boolean isTracingRequested() {
+        boolean isTracingRequested() {
             return tracingRequested;
         }
 
@@ -176,9 +176,9 @@ abstract class Message {
         }
     }
 
-    public static abstract class Response extends Message {
+    static abstract class Response extends Message {
 
-        public enum Type {
+        enum Type {
             ERROR(0, Responses.Error.decoder),
             READY(2, Responses.Ready.decoder),
             AUTHENTICATE(3, Responses.Authenticate.decoder),
@@ -188,8 +188,8 @@ abstract class Message {
             AUTH_CHALLENGE(14, Responses.AuthChallenge.decoder),
             AUTH_SUCCESS(16, Responses.AuthSuccess.decoder);
 
-            public final int opcode;
-            public final Decoder<?> decoder;
+            final int opcode;
+            final Decoder<?> decoder;
 
             private static final Type[] opcodeIdx;
 
@@ -205,12 +205,12 @@ abstract class Message {
                 }
             }
 
-            private Type(int opcode, Decoder<?> decoder) {
+            Type(int opcode, Decoder<?> decoder) {
                 this.opcode = opcode;
                 this.decoder = decoder;
             }
 
-            public static Type fromOpcode(int opcode) {
+            static Type fromOpcode(int opcode) {
                 if (opcode < 0 || opcode >= opcodeIdx.length)
                     throw new DriverInternalError(String.format("Unknown response opcode %d", opcode));
                 Type t = opcodeIdx[opcode];
@@ -220,7 +220,7 @@ abstract class Message {
             }
         }
 
-        public final Type type;
+        final Type type;
         protected volatile UUID tracingId;
         protected volatile List<String> warnings;
 
@@ -228,23 +228,23 @@ abstract class Message {
             this.type = type;
         }
 
-        public Response setTracingId(UUID tracingId) {
+        Response setTracingId(UUID tracingId) {
             this.tracingId = tracingId;
             return this;
         }
 
-        public UUID getTracingId() {
+        UUID getTracingId() {
             return tracingId;
         }
 
-        public Response setWarnings(List<String> warnings) {
+        Response setWarnings(List<String> warnings) {
             this.warnings = warnings;
             return this;
         }
     }
 
     @ChannelHandler.Sharable
-    public static class ProtocolDecoder extends MessageToMessageDecoder<Frame> {
+    static class ProtocolDecoder extends MessageToMessageDecoder<Frame> {
 
         @Override
         protected void decode(ChannelHandlerContext ctx, Frame frame, List<Object> out) throws Exception {
@@ -278,11 +278,11 @@ abstract class Message {
     }
 
     @ChannelHandler.Sharable
-    public static class ProtocolEncoder extends MessageToMessageEncoder<Request> {
+    static class ProtocolEncoder extends MessageToMessageEncoder<Request> {
 
         private final ProtocolVersion protocolVersion;
 
-        public ProtocolEncoder(ProtocolVersion version) {
+        ProtocolEncoder(ProtocolVersion version) {
             this.protocolVersion = version;
         }
 
@@ -350,7 +350,6 @@ abstract class Message {
     // this method doesn't modify the given ByteBuffer
     static void bytesToHex(ByteBuffer bytes, StringBuilder sb) {
         int length = Math.min(bytes.remaining(), 50);
-        char[] hexChars = new char[length * 2];
         sb.append("0x");
         for (int i = 0; i < length; i++) {
             int v = bytes.get(i) & 0xFF;

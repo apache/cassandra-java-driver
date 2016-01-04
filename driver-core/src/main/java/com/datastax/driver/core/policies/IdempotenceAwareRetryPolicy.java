@@ -21,7 +21,7 @@ import com.datastax.driver.core.exceptions.DriverException;
 /**
  * A retry policy that avoids retrying non-idempotent statements.
  * <p/>
- * In case of write timeouts or unexpected errors, this policy will always return {@link RetryDecision#rethrow()}
+ * In case of write timeouts or unexpected errors, this policy will always return {@link com.datastax.driver.core.policies.RetryPolicy.RetryDecision#rethrow()}
  * if the statement is deemed non-idempotent (see {@link #isIdempotent(Statement)}).
  * <p/>
  * For all other cases, this policy delegates the decision to the child policy.

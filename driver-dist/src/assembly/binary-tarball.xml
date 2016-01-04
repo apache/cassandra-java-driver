@@ -42,15 +42,25 @@
                             <exclude>io.netty:netty-transport-native-epoll:*</exclude>
                         </excludes>
                     </dependencySet>
-                    <dependencySet>
-                        <outputDirectory>src</outputDirectory>
-                        <includes>
-                            <include>com.datastax.cassandra:*:*:sources:*</include>
-                        </includes>
-                        <useProjectAttachments>true</useProjectAttachments>
-                        <useTransitiveDependencies>true</useTransitiveDependencies>
-                    </dependencySet>
                 </dependencySets>
+            </binaries>
+        </moduleSet>
+        <moduleSet>
+            <useAllReactorProjects>true</useAllReactorProjects>
+            <includes>
+                <include>com.datastax.cassandra:cassandra-driver-core</include>
+                <include>com.datastax.cassandra:cassandra-driver-dse</include>
+                <include>com.datastax.cassandra:cassandra-driver-mapping</include>
+                <include>com.datastax.cassandra:cassandra-driver-extras</include>
+            </includes>
+            <binaries>
+                <unpack>false</unpack>
+                <attachmentClassifier>sources</attachmentClassifier>
+                <outputFileNameMapping>${module.artifactId}-${module.version}-src.zip</outputFileNameMapping>
+                <outputDirectory>src</outputDirectory>
+                <excludes>
+                    <exclude>*</exclude>
+                </excludes>
             </binaries>
         </moduleSet>
     </moduleSets>
