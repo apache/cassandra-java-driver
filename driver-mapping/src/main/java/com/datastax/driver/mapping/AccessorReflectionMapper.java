@@ -47,6 +47,7 @@ class AccessorReflectionMapper<T> extends AccessorMapper<T> {
     }
 
     private static class AccessorReflectionFactory implements Factory {
+        @Override
         public <T> AccessorMapper<T> create(Class<T> daoClass, List<MethodMapper> methods) {
             return new AccessorReflectionMapper<T>(daoClass, methods);
         }

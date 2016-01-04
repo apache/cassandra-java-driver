@@ -100,10 +100,12 @@ abstract class ArrayBackedResultSet implements ResultSet {
         return new SinglePage(ColumnDefinitions.EMPTY, null, null, EMPTY_QUEUE, info);
     }
 
+    @Override
     public ColumnDefinitions getColumnDefinitions() {
         return metadata;
     }
 
+    @Override
     public List<Row> all() {
         if (isExhausted())
             return Collections.emptyList();
@@ -165,30 +167,37 @@ abstract class ArrayBackedResultSet implements ResultSet {
             this.rows = rows;
         }
 
+        @Override
         public boolean isExhausted() {
             return rows.isEmpty();
         }
 
+        @Override
         public Row one() {
             return ArrayBackedRow.fromData(metadata, tokenFactory, protocolVersion, rows.poll());
         }
 
+        @Override
         public int getAvailableWithoutFetching() {
             return rows.size();
         }
 
+        @Override
         public boolean isFullyFetched() {
             return true;
         }
 
+        @Override
         public ListenableFuture<Void> fetchMoreResults() {
             return MoreFutures.VOID_SUCCESS;
         }
 
+        @Override
         public ExecutionInfo getExecutionInfo() {
             return info;
         }
 
+        @Override
         public List<ExecutionInfo> getAllExecutionInfo() {
             return Collections.singletonList(info);
         }
@@ -240,16 +249,19 @@ abstract class ArrayBackedResultSet implements ResultSet {
             this.statement = statement;
         }
 
+        @Override
         public boolean isExhausted() {
             prepareNextRow();
             return currentPage.isEmpty();
         }
 
+        @Override
         public Row one() {
             prepareNextRow();
             return ArrayBackedRow.fromData(metadata, tokenFactory, protocolVersion, currentPage.poll());
         }
 
+        @Override
         public int getAvailableWithoutFetching() {
             int available = currentPage.size();
             for (Queue<List<ByteBuffer>> page : nextPages)
@@ -257,6 +269,7 @@ abstract class ArrayBackedResultSet implements ResultSet {
             return available;
         }
 
+        @Override
         public boolean isFullyFetched() {
             return fetchState == null;
         }
@@ -286,6 +299,7 @@ abstract class ArrayBackedResultSet implements ResultSet {
             }
         }
 
+        @Override
         public ListenableFuture<Void> fetchMoreResults() {
             return fetchMoreResults(this.fetchState);
         }
@@ -390,10 +404,12 @@ abstract class ArrayBackedResultSet implements ResultSet {
             return future;
         }
 
+        @Override
         public ExecutionInfo getExecutionInfo() {
             return infos.getLast();
         }
 
+        @Override
         public List<ExecutionInfo> getAllExecutionInfo() {
             return new ArrayList<ExecutionInfo>(infos);
         }

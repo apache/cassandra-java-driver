@@ -171,6 +171,7 @@ public class VersionNumber implements Comparable<VersionNumber> {
         return new VersionNumber(major, minor, patch, dsePatch, null, null);
     }
 
+    @Override
     public int compareTo(VersionNumber other) {
         if (major < other.major)
             return -1;
