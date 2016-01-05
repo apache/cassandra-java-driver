@@ -56,6 +56,7 @@ abstract class FrameCompressor {
             Snappy.getNativeLibraryVersion();
         }
 
+        @Override
         public Frame compress(Frame frame) throws IOException {
             byte[] input = CBUtil.readRawBytes(frame.body);
             byte[] output = new byte[Snappy.maxCompressedLength(input.length)];
@@ -64,6 +65,7 @@ abstract class FrameCompressor {
             return frame.with(Unpooled.wrappedBuffer(output, 0, written));
         }
 
+        @Override
         public Frame decompress(Frame frame) throws IOException {
             byte[] input = CBUtil.readRawBytes(frame.body);
 
@@ -105,6 +107,7 @@ abstract class FrameCompressor {
             decompressor = lz4Factory.fastDecompressor();
         }
 
+        @Override
         public Frame compress(Frame frame) throws IOException {
             byte[] input = CBUtil.readRawBytes(frame.body);
 
@@ -124,6 +127,7 @@ abstract class FrameCompressor {
             }
         }
 
+        @Override
         public Frame decompress(Frame frame) throws IOException {
             byte[] input = CBUtil.readRawBytes(frame.body);
 

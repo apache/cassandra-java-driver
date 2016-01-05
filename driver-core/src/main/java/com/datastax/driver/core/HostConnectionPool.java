@@ -639,6 +639,7 @@ class HostConnectionPool implements Connection.Owner {
         for (final Connection connection : connections) {
             CloseFuture future = connection.closeAsync();
             future.addListener(new Runnable() {
+                @Override
                 public void run() {
                     if (connection.state.compareAndSet(OPEN, GONE))
                         open.decrementAndGet();

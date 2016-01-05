@@ -107,6 +107,7 @@ public class EC2MultiRegionAddressTranslator implements AddressTranslator {
         return null;
     }
 
+    @Override
     public void close() {
         try {
             ctx.close();

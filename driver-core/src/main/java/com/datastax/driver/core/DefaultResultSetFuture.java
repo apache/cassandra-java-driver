@@ -237,6 +237,7 @@ class DefaultResultSetFuture extends AbstractFuture<ResultSet> implements Result
      * @throws QueryValidationException if the query is invalid (syntax error,
      *                                  unauthorized or any other validation problem).
      */
+    @Override
     public ResultSet getUninterruptibly() {
         try {
             return Uninterruptibles.getUninterruptibly(this);
@@ -269,6 +270,7 @@ class DefaultResultSetFuture extends AbstractFuture<ResultSet> implements Result
      *                                  different from a Cassandra timeout, which is a {@code
      *                                  QueryExecutionException}).
      */
+    @Override
     public ResultSet getUninterruptibly(long timeout, TimeUnit unit) throws TimeoutException {
         try {
             return Uninterruptibles.getUninterruptibly(this, timeout, unit);

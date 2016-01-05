@@ -449,7 +449,8 @@ The following might also be of interest:
 
 4. The internal initialization sequence of the Cluster object has been slightly changed:
    some fields that were previously initialized in the constructor are now set when
-   the `init()` method is called. This is unlikely to affect regular driver users.
+   the `init()` method is called. In particular, `Cluster#getMetrics()` will return
+   `null` until the cluster is initialized.
 
 ### 1.0 to 2.0
 

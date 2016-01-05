@@ -63,6 +63,7 @@ class SessionManager extends AbstractSession {
         this.poolsState = new HostConnectionPool.PoolState();
     }
 
+    @Override
     public Session init() {
         try {
             return Uninterruptibles.getUninterruptibly(initAsync());
@@ -71,6 +72,7 @@ class SessionManager extends AbstractSession {
         }
     }
 
+    @Override
     public ListenableFuture<Session> initAsync() {
         // If we haven't initialized the cluster, do it now
         cluster.init();
@@ -118,6 +120,7 @@ class SessionManager extends AbstractSession {
         return Futures.allAsList(futures);
     }
 
+    @Override
     public String getLoggedKeyspace() {
         return poolsState.keyspace;
     }
@@ -154,6 +157,7 @@ class SessionManager extends AbstractSession {
         return toPreparedStatement(query, future);
     }
 
+    @Override
     public CloseFuture closeAsync() {
         CloseFuture future = closeFuture.get();
         if (future != null)
@@ -173,20 +177,24 @@ class SessionManager extends AbstractSession {
                 : closeFuture.get(); // We raced, it's ok, return the future that was actually set
     }
 
+    @Override
     public boolean isClosed() {
         return closeFuture.get() != null;
     }
 
+    @Override
     public Cluster getCluster() {
         return cluster;
     }
 
+    @Override
     public Session.State getState() {
         return new State(this);
     }
 
     private ListenableFuture<PreparedStatement> toPreparedStatement(final String query, final Connection.Future future) {
         return Futures.transform(future, new AsyncFunction<Response, PreparedStatement>() {
+            @Override
             public ListenableFuture<PreparedStatement> apply(Response response) {
                 switch (response.type) {
                     case RESULT:
@@ -694,24 +702,29 @@ class SessionManager extends AbstractSession {
             return -1;
         }
 
+        @Override
         public Session getSession() {
             return session;
         }
 
+        @Override
         public Collection<Host> getConnectedHosts() {
             return connectedHosts;
         }
 
+        @Override
         public int getOpenConnections(Host host) {
             int i = getIdx(host);
             return i < 0 ? 0 : openConnections[i];
         }
 
+        @Override
         public int getTrashedConnections(Host host) {
             int i = getIdx(host);
             return i < 0 ? 0 : trashedConnections[i];
         }
 
+        @Override
         public int getInFlightQueries(Host host) {
             int i = getIdx(host);
             return i < 0 ? 0 : inFlightQueries[i];

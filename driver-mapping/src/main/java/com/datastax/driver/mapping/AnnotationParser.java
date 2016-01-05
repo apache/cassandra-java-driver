@@ -37,6 +37,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 class AnnotationParser {
 
     private static final Comparator<Field> fieldComparator = new Comparator<Field>() {
+        @Override
         public int compare(Field f1, Field f2) {
             return position(f1) - position(f2);
         }

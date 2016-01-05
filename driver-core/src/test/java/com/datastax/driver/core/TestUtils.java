@@ -24,7 +24,6 @@ import org.scassandra.Scassandra;
 import org.scassandra.ScassandraFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.testng.SkipException;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -560,16 +559,6 @@ public abstract class TestUtils {
         return testForDown ? !host.isUp() : host.isUp();
     }
 
-    public static void versionCheck(double majorCheck, int minorCheck, String skipString) {
-        String version = System.getProperty("cassandra.version");
-        String[] versionArray = version.split("\\.|-");
-        double major = Double.parseDouble(versionArray[0] + "." + versionArray[1]);
-        int minor = Integer.parseInt(versionArray[2]);
-
-        if (major < majorCheck || (major == majorCheck && minor < minorCheck)) {
-            throw new SkipException("Version >= " + majorCheck + "." + minorCheck + " required.  Description: " + skipString);
-        }
-    }
 
     public static Host findOrWaitForHost(Cluster cluster, int node, long duration, TimeUnit unit) {
         return findOrWaitForHost(cluster, CCMBridge.ipOfNode(node), duration, unit);

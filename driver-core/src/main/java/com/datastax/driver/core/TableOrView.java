@@ -27,12 +27,14 @@ import java.util.*;
 abstract class TableOrView {
 
     static final Comparator<ColumnMetadata> columnMetadataComparator = new Comparator<ColumnMetadata>() {
+        @Override
         public int compare(ColumnMetadata c1, ColumnMetadata c2) {
             return c1.getName().compareTo(c2.getName());
         }
     };
 
     static final Predicate<ClusteringOrder> isAscending = new Predicate<ClusteringOrder>() {
+        @Override
         public boolean apply(ClusteringOrder o) {
             return o == ClusteringOrder.ASC;
         }
