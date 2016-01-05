@@ -18,15 +18,18 @@ package com.datastax.driver.core;
 import org.testng.annotations.Test;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;
 
 import static com.datastax.driver.core.CCMBridge.ipOfNode;
+import static com.datastax.driver.core.CCMTestMode.TestMode.PER_METHOD;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Fail.fail;
 
-public class EventDebouncerIntegrationTest {
+@CCMTestMode(PER_METHOD)
+public class EventDebouncerIntegrationTest extends CCMTestsSupport {
 
     /**
      * Tests that DOWN, UP, REMOVE or ADD events will not be delivered to
@@ -37,18 +40,13 @@ public class EventDebouncerIntegrationTest {
      * @jira_ticket JAVA-784
      * @since 2.0.11
      */
+    @CCMConfig(numberOfNodes = 3, createCluster = false, dirtiesContext = true)
     @Test(groups = "long")
     public void should_wait_until_load_balancing_policy_is_fully_initialized() throws InterruptedException {
         TestLoadBalancingPolicy policy = new TestLoadBalancingPolicy();
-        CCMBridge ccm = CCMBridge.builder().withNodes(3).build();
-        final Cluster cluster = new Cluster.Builder()
-                .addContactPoints(ipOfNode(1))
-                .withLoadBalancingPolicy(policy)
-                .withQueryOptions(new QueryOptions()
-                                .setRefreshNodeIntervalMillis(0)
-                                .setRefreshNodeListIntervalMillis(0)
-                                .setRefreshSchemaIntervalMillis(0)
-                ).build();
+        final Cluster cluster = createClusterBuilderNoDebouncing()
+                .addContactPointsWithPorts(Collections.singleton(getContactPoints().get(0)))
+                .withLoadBalancingPolicy(policy).build();
         try {
             new Thread() {
                 @Override
@@ -62,17 +60,15 @@ public class EventDebouncerIntegrationTest {
             // because the debouncers are not started
             // note: a graceful stop notify other nodes which send a topology change event to the driver right away
             // while forceStop kills the node so other nodes take much more time to detect node failure
-            ccm.stop(3);
-            ccm.waitForDown(3);
+            ccmBridge().stop(3);
+            ccmBridge().waitForDown(3);
             // finish cluster initialization and deliver the DOWN event
             policy.proceed();
             assertThat(policy.onDownCalledBeforeInit).isFalse();
             assertThat(policy.onDownCalled()).isTrue();
             assertThat(policy.hosts).doesNotContain(TestUtils.findHost(cluster, 3));
         } finally {
-            if (cluster != null)
-                cluster.close();
-            ccm.remove();
+            cluster.close();
         }
     }
 

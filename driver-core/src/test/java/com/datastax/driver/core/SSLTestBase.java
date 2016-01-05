@@ -16,8 +16,6 @@
 package com.datastax.driver.core;
 
 import com.google.common.base.Optional;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -28,26 +26,19 @@ import java.security.SecureRandom;
 import static com.datastax.driver.core.CCMBridge.DEFAULT_CLIENT_KEYSTORE_PASSWORD;
 import static com.datastax.driver.core.CCMBridge.DEFAULT_CLIENT_TRUSTSTORE_PASSWORD;
 
-public abstract class SSLTestBase {
+@CCMConfig(createCluster = false)
+public abstract class SSLTestBase extends CCMTestsSupport {
 
     private final boolean requireClientAuth;
-
-    protected CCMBridge ccm;
 
     public SSLTestBase(boolean requireClientAuth) {
         this.requireClientAuth = requireClientAuth;
     }
 
-    @BeforeClass(groups = {"isolated", "short", "long"})
-    public void beforeClass() {
-        ccm = CCMBridge.builder()
-                .withSSL(requireClientAuth)
-                .build();
-    }
-
-    @AfterClass(groups = {"isolated", "short", "long"})
-    public void afterClass() {
-        ccm.remove();
+    @Override
+    public CCMBridge.Builder createCCMBridgeBuilder() {
+        return CCMBridge.builder()
+                .withSSL(requireClientAuth);
     }
 
     /**
@@ -64,7 +55,7 @@ public abstract class SSLTestBase {
         Cluster cluster = null;
         try {
             cluster = Cluster.builder()
-                    .addContactPoint(CCMBridge.IP_PREFIX + '1')
+                    .addContactPointsWithPorts(this.getContactPoints())
                     .withSSL(sslOptions)
                     .build();
 
@@ -88,7 +79,7 @@ public abstract class SSLTestBase {
         Cluster cluster = null;
         try {
             cluster = Cluster.builder()
-                    .addContactPoint(CCMBridge.IP_PREFIX + '1')
+                    .addContactPointsWithPorts(this.getContactPoints())
                     .withSSL()
                     .build();
 
