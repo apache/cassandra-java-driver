@@ -52,7 +52,7 @@
       Check with the spark-cassandra-connector team before upgrading this.
     -->
     <guava.version>14.0.1</guava.version>
-    <netty.version>4.0.27.Final</netty.version>
+    <netty.version>4.0.33.Final</netty.version>
     <metrics.version>3.0.2</metrics.version>
     <snappy.version>1.0.5</snappy.version>
     <lz4.version>1.2.0</lz4.version>
