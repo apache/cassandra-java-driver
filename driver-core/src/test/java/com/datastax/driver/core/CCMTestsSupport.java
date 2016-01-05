@@ -445,7 +445,7 @@ public class CCMTestsSupport {
         }
         assert ccmTestConfig != null;
         assert ccmTestContext != null;
-        LOGGER.debug(String.format("Test %s using %s", testMethod, ccmTestContext));
+        LOGGER.debug("Using " + ccmTestContext);
     }
 
     /**
