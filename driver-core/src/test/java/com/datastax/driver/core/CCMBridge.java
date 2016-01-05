@@ -15,7 +15,6 @@
  */
 package com.datastax.driver.core;
 
-import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -28,7 +27,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.Arrays;
@@ -336,14 +334,6 @@ public class CCMBridge {
         return new Builder();
     }
 
-    public static CCMBridge.CCMCluster buildCluster(int nbNodes, Cluster.Builder builder) {
-        return CCMCluster.create(nbNodes, builder);
-    }
-
-    public static CCMBridge.CCMCluster buildCluster(int nbNodesDC1, int nbNodesDC2, Cluster.Builder builder) {
-        return CCMCluster.create(nbNodesDC1, nbNodesDC2, builder);
-    }
-
     public void start() {
         logger.info("Starting: " + this);
         execute(CCM_COMMAND + " start --wait-other-notice --wait-for-binary-proto" + jvmArgs);
@@ -398,12 +388,13 @@ public class CCMBridge {
         execute(CCM_COMMAND + " node%d start --wait-other-notice --wait-for-binary-proto", n);
     }
 
-    public void addNode(int dc, int n, long initialToken, int storagePort, int binaryPort, int jmxPort, int remoteDebugPort) {
+    public void addNode(int dc, int n, long initialToken, int thriftPort, int storagePort, int binaryPort, int jmxPort, int remoteDebugPort) {
+        String thriftItf = IP_PREFIX + n + ":" + thriftPort;
         String storageItf = IP_PREFIX + n + ":" + storagePort;
         String binaryItf = IP_PREFIX + n + ":" + binaryPort;
         String remoteLogItf = IP_PREFIX + n + ":" + remoteDebugPort;
-        execute(CCM_COMMAND + " add node%d -d dc%s -i %s%d -n %s -l %s --binary-itf %s -j %d -r %s -s" + (isDSE ? " --dse" : ""),
-                n, dc, IP_PREFIX, n, initialToken, storageItf, binaryItf, jmxPort, remoteLogItf);
+        execute(CCM_COMMAND + " add node%d -d dc%s -i %s%d -n %s -t %s -l %s --binary-itf %s -j %d -r %s -s" + (isDSE ? " --dse" : ""),
+                n, dc, IP_PREFIX, n, initialToken, thriftItf, storageItf, binaryItf, jmxPort, remoteLogItf);
     }
 
     public void decommissionNode(int n) {
@@ -569,78 +560,6 @@ public class CCMBridge {
     @Override
     public String toString() {
         return String.format("CCM cluster %s [%s]", clusterName, ccmDir);
-    }
-
-    public static class CCMCluster {
-
-        public final Cluster cluster;
-        public final Session session;
-
-        public final CCMBridge cassandraCluster;
-
-        private boolean erroredOut;
-
-        public static CCMCluster create(int nbNodes, Cluster.Builder builder) {
-            if (nbNodes == 0)
-                throw new IllegalArgumentException();
-
-            CCMBridge ccm = CCMBridge.builder().withNodes(nbNodes).build();
-            return new CCMCluster(ccm, builder, nbNodes);
-        }
-
-        public static CCMCluster create(int nbNodesDC1, int nbNodesDC2, Cluster.Builder builder) {
-            if (nbNodesDC1 == 0)
-                throw new IllegalArgumentException();
-
-            CCMBridge ccm = CCMBridge.builder().withNodes(nbNodesDC1, nbNodesDC2).build();
-            return new CCMCluster(ccm, builder, nbNodesDC1 + nbNodesDC2);
-        }
-
-        public static CCMCluster create(CCMBridge cassandraCluster, Cluster.Builder builder, int totalNodes) {
-            return new CCMCluster(cassandraCluster, builder, totalNodes);
-        }
-
-        private CCMCluster(CCMBridge cassandraCluster, Cluster.Builder builder, int totalNodes) {
-            this.cassandraCluster = cassandraCluster;
-            try {
-                String[] contactPoints = new String[totalNodes];
-                for (int i = 0; i < totalNodes; i++)
-                    contactPoints[i] = IP_PREFIX + (i + 1);
-
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    fail("Unexpected interruption");
-                }
-                this.cluster = builder.addContactPoints(contactPoints).build();
-                this.session = cluster.connect();
-            } catch (NoHostAvailableException e) {
-                for (Map.Entry<InetSocketAddress, Throwable> entry : e.getErrors().entrySet())
-                    logger.info("Error connecting to " + entry.getKey() + ": " + entry.getValue());
-                discard();
-                throw new RuntimeException(e);
-            }
-        }
-
-        public void errorOut() {
-            erroredOut = true;
-        }
-
-        public void discard() {
-            if (cluster != null)
-                cluster.close();
-
-            if (cassandraCluster == null) {
-                logger.error("No cluster to discard");
-            } else if (erroredOut) {
-                cassandraCluster.stop();
-                logger.info("Error during tests, kept C* logs in " + cassandraCluster.ccmDir);
-            } else {
-                cassandraCluster.remove();
-                if (!cassandraCluster.ccmDir.delete())
-                    logger.warn("Could not delete CCM data dir: " + cassandraCluster.ccmDir);
-            }
-        }
     }
 
     /**

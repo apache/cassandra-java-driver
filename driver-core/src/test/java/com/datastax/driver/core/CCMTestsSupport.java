@@ -65,7 +65,7 @@ public class CCMTestsSupport {
     // use ports in the ephemeral range
     private static final AtomicInteger NEXT_PORT = new AtomicInteger(50000);
 
-    private static final ArrayList<String> TEST_GROUPS = Lists.newArrayList("isolated", "short", "long");
+    private static final List<String> TEST_GROUPS = Lists.newArrayList("isolated", "short", "long", "stress", "duration");
 
     private static final ReentrantLock PORT_LOCK = new ReentrantLock();
 
@@ -227,6 +227,7 @@ public class CCMTestsSupport {
                             node.dc,
                             node.n,
                             node.initialToken,
+                            node.thriftPort,
                             node.storagePort,
                             node.binaryPort,
                             node.jmxPort,
@@ -239,7 +240,6 @@ public class CCMTestsSupport {
                         writeTopologyFile(node, topology);
                     }
                 }
-                ccmBridge.updateConfig(new HashMap<String, Object>());
                 ccmBridge.start();
                 LOGGER.debug("Started " + this);
             } catch (RuntimeException e) {
@@ -395,7 +395,7 @@ public class CCMTestsSupport {
      *
      * @throws Exception
      */
-    @BeforeClass(groups = {"isolated", "short", "long"})
+    @BeforeClass(groups = {"isolated", "short", "long", "stress", "duration"})
     public void beforeTestClass() throws Exception {
         beforeTestClass(this);
     }
@@ -423,7 +423,7 @@ public class CCMTestsSupport {
      *
      * @throws Exception
      */
-    @BeforeMethod(groups = {"isolated", "short", "long"})
+    @BeforeMethod(groups = {"isolated", "short", "long", "stress", "duration"})
     public void beforeTestMethod(Method testMethod) throws Exception {
         beforeTestMethod(this, testMethod);
     }
@@ -451,7 +451,7 @@ public class CCMTestsSupport {
     /**
      * Hook executed after each test method.
      */
-    @AfterMethod(groups = {"isolated", "short", "long"}, alwaysRun = true)
+    @AfterMethod(groups = {"isolated", "short", "long", "stress", "duration"}, alwaysRun = true)
     public void afterTestMethod(ITestResult tr) {
         // there seems to be a confusion about the meaning of alwaysRun = true:
         // it makes this method be called on test failures (which is what we want) AND for any test group,
@@ -470,7 +470,7 @@ public class CCMTestsSupport {
     /**
      * Hook executed after each test class.
      */
-    @AfterClass(groups = {"isolated", "short", "long"}, alwaysRun = true)
+    @AfterClass(groups = {"isolated", "short", "long", "stress", "duration"}, alwaysRun = true)
     public void afterTestClass() {
         if (testMode == PER_CLASS) {
             closeTestCluster();

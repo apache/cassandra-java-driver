@@ -22,6 +22,7 @@ import org.testng.annotations.Test;
 
 import java.nio.ByteBuffer;
 
+import static com.datastax.driver.core.CCMTestMode.TestMode.PER_METHOD;
 import static com.datastax.driver.core.TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 import static org.testng.Assert.assertEquals;
@@ -30,7 +31,8 @@ import static org.testng.Assert.assertTrue;
 /**
  * Test limitations when using large amounts of data with the driver
  */
-public class LargeDataTest {
+@CCMTestMode(PER_METHOD)
+public class LargeDataTest extends CCMTestsSupport {
 
     /*
      * Test a wide row of size 1,000,000
@@ -38,14 +40,14 @@ public class LargeDataTest {
      * @param key The key value that will receive the data
      * @throws Throwable
      */
-    private void testWideRows(CCMBridge.CCMCluster c, int key) throws Throwable {
+    private void testWideRows(int key) throws Throwable {
         // Write data
         for (int i = 0; i < 1000000; ++i) {
-            c.session.execute(insertInto("wide_rows").value("k", key).value("i", i).setConsistencyLevel(ConsistencyLevel.QUORUM));
+            session.execute(insertInto("wide_rows").value("k", key).value("i", i).setConsistencyLevel(ConsistencyLevel.QUORUM));
         }
 
         // Read data
-        ResultSet rs = c.session.execute(select("i").from("wide_rows").where(eq("k", key)));
+        ResultSet rs = session.execute(select("i").from("wide_rows").where(eq("k", key)));
 
         // Verify data
         int i = 0;
@@ -60,16 +62,16 @@ public class LargeDataTest {
      * @param key The key value that will receive the data
      * @throws Throwable
      */
-    private void testWideBatchRows(CCMBridge.CCMCluster c, int key) throws Throwable {
+    private void testWideBatchRows(int key) throws Throwable {
         // Write data
         Batch q = batch();
         for (int i = 0; i < 10000; ++i) {
             q = q.add(insertInto("wide_batch_rows").value("k", key).value("i", i));
         }
-        c.session.execute(q.setConsistencyLevel(ConsistencyLevel.QUORUM));
+        session.execute(q.setConsistencyLevel(ConsistencyLevel.QUORUM));
 
         // Read data
-        ResultSet rs = c.session.execute(select("i").from("wide_batch_rows").where(eq("k", key)));
+        ResultSet rs = session.execute(select("i").from("wide_batch_rows").where(eq("k", key)));
 
         // Verify data
         int i = 0;
@@ -84,7 +86,7 @@ public class LargeDataTest {
      * @param key The key value that will receive the data
      * @throws Throwable
      */
-    private void testByteRows(CCMBridge.CCMCluster c, int key) throws Throwable {
+    private void testByteRows(int key) throws Throwable {
         // Build small ByteBuffer sample
         ByteBuffer bb = ByteBuffer.allocate(58);
         bb.putShort((short) 0xCAFE);
@@ -92,11 +94,11 @@ public class LargeDataTest {
 
         // Write data
         for (int i = 0; i < 1000000; ++i) {
-            c.session.execute(insertInto("wide_byte_rows").value("k", key).value("i", bb).setConsistencyLevel(ConsistencyLevel.QUORUM));
+            session.execute(insertInto("wide_byte_rows").value("k", key).value("i", bb).setConsistencyLevel(ConsistencyLevel.QUORUM));
         }
 
         // Read data
-        ResultSet rs = c.session.execute(select("i").from("wide_byte_rows").where(eq("k", key)));
+        ResultSet rs = session.execute(select("i").from("wide_byte_rows").where(eq("k", key)));
 
         // Verify data
         for (Row row : rs) {
@@ -110,17 +112,17 @@ public class LargeDataTest {
      * @param key The key value that will receive the data
      * @throws Throwable
      */
-    private void testLargeText(CCMBridge.CCMCluster c, int key) throws Throwable {
+    private void testLargeText(int key) throws Throwable {
         // Write data
         StringBuilder b = new StringBuilder();
         for (int i = 0; i < 1000000; ++i) {
             // Create ultra-long text
             b.append(i);
         }
-        c.session.execute(insertInto("large_text").value("k", key).value("txt", b.toString()).setConsistencyLevel(ConsistencyLevel.QUORUM));
+        session.execute(insertInto("large_text").value("k", key).value("txt", b.toString()).setConsistencyLevel(ConsistencyLevel.QUORUM));
 
         // Read data
-        Row row = c.session.execute(select().all().from("large_text").where(eq("k", key))).one();
+        Row row = session.execute(select().all().from("large_text").where(eq("k", key))).one();
 
         // Verify data
         assertTrue(b.toString().equals(row.getString("txt")));
@@ -158,16 +160,16 @@ public class LargeDataTest {
      * @param key The key value that will receive the data
      * @throws Throwable
      */
-    private void testWideTable(CCMBridge.CCMCluster c, int key) throws Throwable {
+    private void testWideTable(int key) throws Throwable {
         // Write data
         Insert insertStatement = insertInto("wide_table").value("k", key);
         for (int i = 0; i < 330; ++i) {
             insertStatement = insertStatement.value(createColumnName(i), i);
         }
-        c.session.execute(insertStatement.setConsistencyLevel(ConsistencyLevel.QUORUM));
+        session.execute(insertStatement.setConsistencyLevel(ConsistencyLevel.QUORUM));
 
         // Read data
-        Row row = c.session.execute(select().all().from("wide_table").where(eq("k", key))).one();
+        Row row = session.execute(select().all().from("wide_table").where(eq("k", key))).one();
 
         // Verify data
         for (int i = 0; i < 330; ++i) {
@@ -184,21 +186,10 @@ public class LargeDataTest {
     @Test(groups = "stress")
     @CassandraVersion(major = 2.0, minor = 0, description = "< 2.0 is skipped as 1.2 does not handle reading wide rows well.")
     public void wideRows() throws Throwable {
-        Cluster.Builder builder = Cluster.builder();
-        CCMBridge.CCMCluster c = CCMBridge.buildCluster(1, builder);
-
-        c.session.execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, "large_data", 1));
-        c.session.execute("USE large_data");
-        c.session.execute(String.format("CREATE TABLE %s (k INT, i INT, PRIMARY KEY(k, i))", "wide_rows"));
-
-        try {
-            testWideRows(c, 0);
-        } catch (Throwable e) {
-            c.errorOut();
-            throw e;
-        } finally {
-            c.discard();
-        }
+        session.execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, "large_data", 1));
+        session.execute("USE large_data");
+        session.execute(String.format("CREATE TABLE %s (k INT, i INT, PRIMARY KEY(k, i))", "wide_rows"));
+        testWideRows(0);
     }
 
     /**
@@ -209,21 +200,10 @@ public class LargeDataTest {
     @Test(groups = "stress")
     @CassandraVersion(major = 2.0, minor = 0, description = "< 2.0 is skipped as 1.2 does not handle large batches well.")
     public void wideBatchRows() throws Throwable {
-        Cluster.Builder builder = Cluster.builder();
-        CCMBridge.CCMCluster c = CCMBridge.buildCluster(1, builder);
-
-        c.session.execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, "large_data", 1));
-        c.session.execute("USE large_data");
-        c.session.execute(String.format("CREATE TABLE %s (k INT, i INT, PRIMARY KEY(k, i))", "wide_batch_rows"));
-
-        try {
-            testWideBatchRows(c, 0);
-        } catch (Throwable e) {
-            c.errorOut();
-            throw e;
-        } finally {
-            c.discard();
-        }
+        session.execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, "large_data", 1));
+        session.execute("USE large_data");
+        session.execute(String.format("CREATE TABLE %s (k INT, i INT, PRIMARY KEY(k, i))", "wide_batch_rows"));
+        testWideBatchRows(0);
     }
 
     /**
@@ -233,21 +213,10 @@ public class LargeDataTest {
      */
     @Test(groups = "stress")
     public void wideByteRows() throws Throwable {
-        Cluster.Builder builder = Cluster.builder();
-        CCMBridge.CCMCluster c = CCMBridge.buildCluster(1, builder);
-
-        c.session.execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, "large_data", 1));
-        c.session.execute("USE large_data");
-        c.session.execute(String.format("CREATE TABLE %s (k INT, i BLOB, PRIMARY KEY(k, i))", "wide_byte_rows"));
-
-        try {
-            testByteRows(c, 0);
-        } catch (Throwable e) {
-            c.errorOut();
-            throw e;
-        } finally {
-            c.discard();
-        }
+        session.execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, "large_data", 1));
+        session.execute("USE large_data");
+        session.execute(String.format("CREATE TABLE %s (k INT, i BLOB, PRIMARY KEY(k, i))", "wide_byte_rows"));
+        testByteRows(0);
     }
 
     /**
@@ -257,21 +226,10 @@ public class LargeDataTest {
      */
     @Test(groups = "stress")
     public void largeText() throws Throwable {
-        Cluster.Builder builder = Cluster.builder();
-        CCMBridge.CCMCluster c = CCMBridge.buildCluster(1, builder);
-
-        c.session.execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, "large_data", 1));
-        c.session.execute("USE large_data");
-        c.session.execute(String.format("CREATE TABLE %s (k int PRIMARY KEY, txt text)", "large_text"));
-
-        try {
-            testLargeText(c, 0);
-        } catch (Throwable e) {
-            c.errorOut();
-            throw e;
-        } finally {
-            c.discard();
-        }
+        session.execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, "large_data", 1));
+        session.execute("USE large_data");
+        session.execute(String.format("CREATE TABLE %s (k int PRIMARY KEY, txt text)", "large_text"));
+        testLargeText(0);
     }
 
     /**
@@ -281,12 +239,8 @@ public class LargeDataTest {
      */
     @Test(groups = "stress")
     public void wideTable() throws Throwable {
-        Cluster.Builder builder = Cluster.builder();
-        CCMBridge.CCMCluster c = CCMBridge.buildCluster(1, builder);
-
-        c.session.execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, "large_data", 1));
-        c.session.execute("USE large_data");
-
+        session.execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, "large_data", 1));
+        session.execute("USE large_data");
         // Create the extra wide table definition
         StringBuilder tableDeclaration = new StringBuilder();
         tableDeclaration.append("CREATE TABLE wide_table (");
@@ -295,16 +249,8 @@ public class LargeDataTest {
             tableDeclaration.append(String.format(", %s INT", createColumnName(i)));
         }
         tableDeclaration.append(')');
-        c.session.execute(tableDeclaration.toString());
-
-        try {
-            testWideTable(c, 0);
-        } catch (Throwable e) {
-            c.errorOut();
-            throw e;
-        } finally {
-            c.discard();
-        }
+        session.execute(tableDeclaration.toString());
+        testWideTable(0);
     }
 
     /**
@@ -313,17 +259,14 @@ public class LargeDataTest {
      * @throws Throwable
      */
     @Test(groups = "duration")
+    @CCMConfig(numberOfNodes = 3)
     public void mixedDurationTest() throws Throwable {
-        Cluster.Builder builder = Cluster.builder();
-        CCMBridge.CCMCluster c = CCMBridge.buildCluster(3, builder);
-
-        c.session.execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, "large_data", 3));
-        c.session.execute("USE large_data");
-        c.session.execute(String.format("CREATE TABLE %s (k INT, i INT, PRIMARY KEY(k, i))", "wide_rows"));
-        c.session.execute(String.format("CREATE TABLE %s (k INT, i INT, PRIMARY KEY(k, i))", "wide_batch_rows"));
-        c.session.execute(String.format("CREATE TABLE %s (k INT, i BLOB, PRIMARY KEY(k, i))", "wide_byte_rows"));
-        c.session.execute(String.format("CREATE TABLE %s (k int PRIMARY KEY, txt text)", "large_text"));
-
+        session.execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, "large_data", 3));
+        session.execute("USE large_data");
+        session.execute(String.format("CREATE TABLE %s (k INT, i INT, PRIMARY KEY(k, i))", "wide_rows"));
+        session.execute(String.format("CREATE TABLE %s (k INT, i INT, PRIMARY KEY(k, i))", "wide_batch_rows"));
+        session.execute(String.format("CREATE TABLE %s (k INT, i BLOB, PRIMARY KEY(k, i))", "wide_byte_rows"));
+        session.execute(String.format("CREATE TABLE %s (k int PRIMARY KEY, txt text)", "large_text"));
         // Create the extra wide table definition
         StringBuilder tableDeclaration = new StringBuilder();
         tableDeclaration.append("CREATE TABLE wide_table (");
@@ -332,35 +275,27 @@ public class LargeDataTest {
             tableDeclaration.append(String.format(", %s INT", createColumnName(i)));
         }
         tableDeclaration.append(')');
-        c.session.execute(tableDeclaration.toString());
-
-        try {
-            for (int i = 0; i < 10; ++i) {
-                switch ((int) (Math.random() * 5)) {
-                    case 0:
-                        testWideRows(c, 0);
-                        break;
-                    case 1:
-                        testWideBatchRows(c, 0);
-                        break;
-                    case 2:
-                        testByteRows(c, 0);
-                        break;
-                    case 3:
-                        testLargeText(c, 0);
-                        break;
-                    case 4:
-                        testWideTable(c, 0);
-                        break;
-                    default:
-                        break;
-                }
+        session.execute(tableDeclaration.toString());
+        for (int i = 0; i < 10; ++i) {
+            switch ((int) (Math.random() * 5)) {
+                case 0:
+                    testWideRows(0);
+                    break;
+                case 1:
+                    testWideBatchRows(0);
+                    break;
+                case 2:
+                    testByteRows(0);
+                    break;
+                case 3:
+                    testLargeText(0);
+                    break;
+                case 4:
+                    testWideTable(0);
+                    break;
+                default:
+                    break;
             }
-        } catch (Throwable e) {
-            c.errorOut();
-            throw e;
-        } finally {
-            c.discard();
         }
     }
 }

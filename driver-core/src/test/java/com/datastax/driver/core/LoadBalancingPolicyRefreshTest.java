@@ -23,12 +23,16 @@ import java.net.InetAddress;
 import java.util.Collection;
 import java.util.Iterator;
 
+import static com.datastax.driver.core.CCMTestMode.TestMode.PER_METHOD;
 import static org.testng.Assert.assertTrue;
 
 // Test that PoolingOpions.refreshConnectedHosts works as expected (JAVA-309)
-public class LoadBalancingPolicyRefreshTest {
+@CCMTestMode(PER_METHOD)
+public class LoadBalancingPolicyRefreshTest extends CCMTestsSupport {
 
-    private static class UpdatablePolicy implements LoadBalancingPolicy {
+    UpdatablePolicy policy;
+
+    private class UpdatablePolicy implements LoadBalancingPolicy {
 
         private Cluster cluster;
         private Host theHost;
@@ -74,37 +78,29 @@ public class LoadBalancingPolicyRefreshTest {
     }
 
     @Test(groups = "short")
+    @CCMConfig(numberOfNodes = 2, clusterProvider = "updatablePolicy")
     public void refreshTest() throws Throwable {
-
-        UpdatablePolicy policy = new UpdatablePolicy();
-        Cluster.Builder builder = Cluster.builder().withLoadBalancingPolicy(policy);
-        CCMBridge.CCMCluster c = CCMBridge.buildCluster(2, builder);
-        try {
-
-            Session s = c.session;
-
-            // Ugly
-            Host[] hosts = new Host[2];
-            for (Host h : c.cluster.getMetadata().getAllHosts()) {
-                if (h.getAddress().equals(InetAddress.getByName(CCMBridge.IP_PREFIX + '1')))
-                    hosts[0] = h;
-                else
-                    hosts[1] = h;
-            }
-
-            assertTrue(s.getState().getConnectedHosts().contains(hosts[0]), "Connected hosts: " + s.getState().getConnectedHosts());
-            assertTrue(!s.getState().getConnectedHosts().contains(hosts[1]), "Connected hosts: " + s.getState().getConnectedHosts());
-
-            policy.changeTheHost(hosts[1]);
-
-            assertTrue(!s.getState().getConnectedHosts().contains(hosts[0]), "Connected hosts: " + s.getState().getConnectedHosts());
-            assertTrue(s.getState().getConnectedHosts().contains(hosts[1]), "Connected hosts: " + s.getState().getConnectedHosts());
-
-        } catch (Throwable e) {
-            c.errorOut();
-            throw e;
-        } finally {
-            c.discard();
+        // Ugly
+        Host[] hosts = new Host[2];
+        for (Host h : cluster.getMetadata().getAllHosts()) {
+            if (h.getAddress().equals(InetAddress.getByName(CCMBridge.IP_PREFIX + '1')))
+                hosts[0] = h;
+            else
+                hosts[1] = h;
         }
+
+        assertTrue(session.getState().getConnectedHosts().contains(hosts[0]), "Connected hosts: " + session.getState().getConnectedHosts());
+        assertTrue(!session.getState().getConnectedHosts().contains(hosts[1]), "Connected hosts: " + session.getState().getConnectedHosts());
+
+        policy.changeTheHost(hosts[1]);
+
+        assertTrue(!session.getState().getConnectedHosts().contains(hosts[0]), "Connected hosts: " + session.getState().getConnectedHosts());
+        assertTrue(session.getState().getConnectedHosts().contains(hosts[1]), "Connected hosts: " + session.getState().getConnectedHosts());
+    }
+
+    @SuppressWarnings("unused")
+    private Cluster.Builder updatablePolicy() {
+        policy = new UpdatablePolicy();
+        return Cluster.builder().withLoadBalancingPolicy(policy);
     }
 }
