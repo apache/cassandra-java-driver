@@ -59,10 +59,12 @@ public abstract class QueryGenerator implements Iterator<QueryGenerator.Request>
                 this.statement = statement;
             }
 
+            @Override
             public ResultSet execute(Session session) {
                 return session.execute(statement);
             }
 
+            @Override
             public ResultSetFuture executeAsync(Session session) {
                 return session.executeAsync(statement);
             }
@@ -76,10 +78,12 @@ public abstract class QueryGenerator implements Iterator<QueryGenerator.Request>
                 this.query = query;
             }
 
+            @Override
             public ResultSet execute(Session session) {
                 return session.execute(query);
             }
 
+            @Override
             public ResultSetFuture executeAsync(Session session) {
                 return session.executeAsync(query);
             }

@@ -28,9 +28,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.ServerSocket;
+import java.net.*;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
@@ -312,11 +310,6 @@ public abstract class TestUtils {
         waitFor(node, cluster, maxTry, true, false);
     }
 
-    public static void stopAndWait(CCMBridge.CCMCluster c, int node) {
-        c.cassandraCluster.stop(node);
-        waitForDownWithWait(CCMBridge.IP_PREFIX + node, c.cluster, 5);
-    }
-
     public static void waitForDecommission(String node, Cluster cluster) {
         waitFor(node, cluster, TEST_BASE_NODE_WAIT / 2, true, true);
     }
@@ -492,6 +485,28 @@ public abstract class TestUtils {
         throw new RuntimeException("Could not acquire an available port", last);
     }
 
+    public static int findAvailablePort(String ip, int startingWith) {
+        for (int port = startingWith; port < startingWith + 100; port++) {
+            Socket s = null;
+            try {
+                s = new Socket(ip, port);
+            } catch (ConnectException e) {
+                return port;
+            } catch (IOException e) {
+                // ok
+            } finally {
+                if (s != null) {
+                    try {
+                        s.close();
+                    } catch (IOException e) {
+                        // ok
+                    }
+                }
+            }
+        }
+        throw new RuntimeException("Could not acquire an available port");
+    }
+
     /**
      * @return The desired target protocol version based on the 'cassandra.version' System property.
      */
@@ -509,7 +524,7 @@ public abstract class TestUtils {
     }
 
     /**
-     * @return a {@Cluster} instance that connects only to the control host of the given cluster.
+     * @return a {@link Cluster} instance that connects only to the control host of the given cluster.
      */
     public static Cluster buildControlCluster(Cluster cluster) {
         Host controlHost = cluster.manager.controlConnection.connectedHost();
@@ -521,7 +536,7 @@ public abstract class TestUtils {
     }
 
     /**
-     * @return a {@QueryOptions} that disables debouncing by setting intervals to 0ms.
+     * @return a {@link QueryOptions} that disables debouncing by setting intervals to 0ms.
      */
     public static QueryOptions nonDebouncingQueryOptions() {
         return new QueryOptions().setRefreshNodeIntervalMillis(0)
@@ -540,4 +555,12 @@ public abstract class TestUtils {
             eventLoopGroup.shutdownGracefully(0, 15, TimeUnit.SECONDS).syncUninterruptibly();
         }
     };
+
+    public static void executeNoFail(Runnable task) {
+        try {
+            task.run();
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+        }
+    }
 }

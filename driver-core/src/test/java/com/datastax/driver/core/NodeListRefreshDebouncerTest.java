@@ -15,18 +15,20 @@
  */
 package com.datastax.driver.core;
 
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.Collection;
 
+import static com.datastax.driver.core.CCMTestMode.TestMode.PER_METHOD;
 import static com.datastax.driver.core.TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT;
 import static com.google.common.collect.Lists.newArrayList;
 import static org.mockito.Mockito.*;
 
-public class NodeListRefreshDebouncerTest extends CCMBridge.PerClassSingleNodeCluster {
+@CCMTestMode(PER_METHOD)
+@CCMConfig(dirtiesContext = true, createKeyspace = false)
+public class NodeListRefreshDebouncerTest extends CCMTestsSupport {
 
     private static final int DEBOUNCE_TIME = 2000;
 
@@ -42,20 +44,15 @@ public class NodeListRefreshDebouncerTest extends CCMBridge.PerClassSingleNodeCl
     // Keyspaces to drop after test completes.
     private Collection<String> keyspaces = newArrayList();
 
-    @Override
-    protected Collection<String> getTableDefinitions() {
-        return newArrayList();
-    }
-
-    @BeforeClass(groups = "short")
+    @BeforeMethod(groups = "short")
     public void setup() {
         queryOptions = new QueryOptions();
         queryOptions.setRefreshNodeListIntervalMillis(DEBOUNCE_TIME);
         queryOptions.setMaxPendingRefreshNodeListRequests(5);
         queryOptions.setRefreshSchemaIntervalMillis(0);
         // Create a separate cluster that will receive the schema events on its control connection.
-        cluster2 = this.configure(Cluster.builder())
-                .addContactPointsWithPorts(newArrayList(hostAddress))
+        cluster2 = Cluster.builder()
+                .addContactPointsWithPorts(getContactPoints())
                 .withQueryOptions(queryOptions)
                 .build();
         session2 = cluster2.connect();
@@ -67,17 +64,8 @@ public class NodeListRefreshDebouncerTest extends CCMBridge.PerClassSingleNodeCl
     }
 
     @AfterMethod(groups = "short")
-    public void beforeMethod() {
-        reset(controlConnection);
-    }
-
-    @AfterClass(groups = "short")
     public void teardown() {
         cluster2.close();
-        // drop all keyspaces
-        for (String keyspace : keyspaces) {
-            session.execute("DROP KEYSPACE " + keyspace);
-        }
     }
 
     /**

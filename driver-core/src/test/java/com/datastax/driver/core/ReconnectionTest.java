@@ -34,7 +34,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 /**
@@ -47,7 +46,7 @@ public class ReconnectionTest {
         CCMBridge ccm = null;
         Cluster cluster = null;
         try {
-            ccm = CCMBridge.builder("test").withNodes(2).build();
+            ccm = CCMBridge.builder().withNodes(2).build();
             int reconnectionDelay = 1000;
             cluster = Cluster.builder()
                     .addContactPoint(CCMBridge.ipOfNode(1))
@@ -84,11 +83,12 @@ public class ReconnectionTest {
         CCMBridge ccm = null;
         Cluster cluster = null;
         try {
-            ccm = CCMBridge.builder("test")
+            ccm = CCMBridge.builder()
                     .withCassandraConfiguration("authenticator", "PasswordAuthenticator") // default credentials: cassandra / cassandra
+                    .withJvmArgs("-Dcassandra.superuser_setup_delay_ms=0")
                     .notStarted()
                     .build();
-            ccm.start(1, "-Dcassandra.superuser_setup_delay_ms=0");
+            ccm.start(1);
 
             CountingAuthProvider authProvider = new CountingAuthProvider("cassandra", "cassandra");
             int reconnectionDelayMs = 1000;
@@ -143,7 +143,7 @@ public class ReconnectionTest {
         CountingReconnectionPolicy reconnectionPolicy = new CountingReconnectionPolicy(new ConstantReconnectionPolicy(reconnectionDelayMillis));
 
         try {
-            ccm = CCMBridge.builder("test").withNodes(2).build();
+            ccm = CCMBridge.builder().withNodes(2).build();
             cluster = Cluster.builder()
                     .addContactPoint(CCMBridge.ipOfNode(1))
                     .withReconnectionPolicy(reconnectionPolicy)
@@ -184,7 +184,7 @@ public class ReconnectionTest {
         TogglabePolicy loadBalancingPolicy = new TogglabePolicy(new RoundRobinPolicy());
 
         try {
-            ccm = CCMBridge.builder("test").withNodes(1).build();
+            ccm = CCMBridge.builder().withNodes(1).build();
             cluster = Cluster.builder()
                     .addContactPoint(CCMBridge.ipOfNode(1))
                     .withLoadBalancingPolicy(loadBalancingPolicy)
@@ -250,7 +250,7 @@ public class ReconnectionTest {
         SocketOptions socketOptions = spy(new SocketOptions());
 
         try {
-            ccm = CCMBridge.builder("test").withNodes(1).build();
+            ccm = CCMBridge.builder().withNodes(1).build();
             cluster = Cluster.builder()
                     .addContactPoint(CCMBridge.ipOfNode(1))
                     .withReconnectionPolicy(new ConstantReconnectionPolicy(5000))

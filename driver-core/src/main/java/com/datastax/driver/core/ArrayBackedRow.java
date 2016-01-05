@@ -87,6 +87,7 @@ class ArrayBackedRow extends AbstractGettableData implements Row {
         return getToken(metadata.getFirstIdx(name));
     }
 
+    @Override
     public Token getPartitionKeyToken() {
         int i = 0;
         for (ColumnDefinitions.Definition column : metadata) {

@@ -310,6 +310,7 @@ public class Select extends BuiltStatement {
          *
          * @return this in-build SELECT statement.
          */
+        @Override
         public Selection distinct() {
             this.isDistinct = true;
             return this;
@@ -426,6 +427,7 @@ public class Select extends BuiltStatement {
          * @return an in-build SELECT statement.
          * @throws IllegalStateException if some columns had already been selected for this builder.
          */
+        @Override
         public Builder all() {
             if (columnNames != null)
                 throw new IllegalStateException(String.format("Some columns (%s) have already been selected.", columnNames));
@@ -441,6 +443,7 @@ public class Select extends BuiltStatement {
          * @return an in-build SELECT statement.
          * @throws IllegalStateException if some columns had already been selected for this builder.
          */
+        @Override
         public Builder countAll() {
             if (columnNames != null)
                 throw new IllegalStateException(String.format("Some columns (%s) have already been selected.", columnNames));
@@ -457,6 +460,7 @@ public class Select extends BuiltStatement {
          * @param name the new column name to add.
          * @return this in-build SELECT statement
          */
+        @Override
         public SelectionOrAlias column(String name) {
             return queueName(name);
         }
@@ -484,6 +488,7 @@ public class Select extends BuiltStatement {
          * @param name the name of the column to select the write time of.
          * @return this in-build SELECT statement
          */
+        @Override
         public SelectionOrAlias writeTime(String name) {
             return queueName(new Utils.FCall("writetime", new Utils.CName(name)));
         }
@@ -496,6 +501,7 @@ public class Select extends BuiltStatement {
          * @param name the name of the column to select the ttl of.
          * @return this in-build SELECT statement
          */
+        @Override
         public SelectionOrAlias ttl(String name) {
             return queueName(new Utils.FCall("ttl", new Utils.CName(name)));
         }
@@ -511,6 +517,7 @@ public class Select extends BuiltStatement {
          * {@link QueryBuilder#column} method, and so
          * {@code fcall("textToBlob", QueryBuilder.column(foo)}.
          */
+        @Override
         public SelectionOrAlias fcall(String name, Object... parameters) {
             return queueName(new Utils.FCall(name, parameters));
         }

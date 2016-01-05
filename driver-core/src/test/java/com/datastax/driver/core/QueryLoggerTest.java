@@ -46,7 +46,7 @@ import static org.mockito.Mockito.mock;
  * More tests, specifically targeting slow and unsuccessful queries, can be found in
  * {@link QueryLoggerErrorsTest}.
  */
-public class QueryLoggerTest extends CCMBridge.PerClassSingleNodeCluster {
+public class QueryLoggerTest extends CCMTestsSupport {
 
     private static final List<DataType> dataTypes = new ArrayList<DataType>(Sets.filter(DataType.allPrimitiveTypes(), new Predicate<DataType>() {
         @Override
@@ -714,7 +714,7 @@ public class QueryLoggerTest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     @Override
-    protected List<String> getTableDefinitions() {
+    public List<String> createTestFixtures() {
         return Lists.newArrayList("CREATE TABLE test (pk int PRIMARY KEY, " + definitions + ")");
     }
 

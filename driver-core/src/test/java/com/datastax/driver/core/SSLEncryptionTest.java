@@ -96,19 +96,20 @@ public class SSLEncryptionTest extends SSLTestBase {
      * @test_category connection:ssl
      * @expected_result Connection is re-established within a sufficient amount of time after a node comes back online.
      */
+    @CCMConfig(dirtiesContext = true)
     @Test(groups = "long")
     public void should_reconnect_with_ssl_on_node_up() throws Exception {
         Cluster cluster = null;
         try {
             cluster = Cluster.builder()
-                    .addContactPoint(CCMBridge.IP_PREFIX + '1')
+                    .addContactPointsWithPorts(this.getContactPoints())
                     .withSSL(getSSLOptions(Optional.of(DEFAULT_CLIENT_KEYSTORE_PATH), Optional.of(DEFAULT_CLIENT_TRUSTSTORE_PATH)))
                     .build();
 
             cluster.connect();
 
-            ccm.stop(1);
-            ccm.start(1);
+            ccmBridge().stop(1);
+            ccmBridge().start(1);
 
             assertThat(cluster).host(1).comesUpWithin(TestUtils.TEST_BASE_NODE_WAIT, TimeUnit.SECONDS);
         } finally {

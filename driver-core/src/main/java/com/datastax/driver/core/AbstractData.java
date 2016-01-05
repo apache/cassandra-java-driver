@@ -55,19 +55,23 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
         return wrapped;
     }
 
+    @Override
     protected ByteBuffer getValue(int i) {
         return values[i];
     }
 
+    @Override
     protected int getIndexOf(String name) {
         return getAllIndexesOf(name)[0];
     }
 
+    @Override
     public T setBool(int i, boolean v) {
         checkType(i, DataType.Name.BOOLEAN);
         return setValue(i, TypeCodec.booleanCodec.serializeNoBoxing(v));
     }
 
+    @Override
     public T setBool(String name, boolean v) {
         int[] indexes = getAllIndexesOf(name);
         ByteBuffer value = TypeCodec.booleanCodec.serializeNoBoxing(v);
@@ -78,11 +82,13 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
         return wrapped;
     }
 
+    @Override
     public T setInt(int i, int v) {
         checkType(i, DataType.Name.INT);
         return setValue(i, TypeCodec.intCodec.serializeNoBoxing(v));
     }
 
+    @Override
     public T setInt(String name, int v) {
         int[] indexes = getAllIndexesOf(name);
         ByteBuffer value = TypeCodec.intCodec.serializeNoBoxing(v);
@@ -93,11 +99,13 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
         return wrapped;
     }
 
+    @Override
     public T setLong(int i, long v) {
         checkType(i, DataType.Name.BIGINT, DataType.Name.COUNTER);
         return setValue(i, TypeCodec.longCodec.serializeNoBoxing(v));
     }
 
+    @Override
     public T setLong(String name, long v) {
         int[] indexes = getAllIndexesOf(name);
         ByteBuffer value = TypeCodec.longCodec.serializeNoBoxing(v);
@@ -108,11 +116,13 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
         return wrapped;
     }
 
+    @Override
     public T setDate(int i, Date v) {
         checkType(i, DataType.Name.TIMESTAMP);
         return setValue(i, v == null ? null : TypeCodec.dateCodec.serialize(v));
     }
 
+    @Override
     public T setDate(String name, Date v) {
         int[] indexes = getAllIndexesOf(name);
         ByteBuffer value = v == null ? null : TypeCodec.dateCodec.serialize(v);
@@ -123,11 +133,13 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
         return wrapped;
     }
 
+    @Override
     public T setFloat(int i, float v) {
         checkType(i, DataType.Name.FLOAT);
         return setValue(i, TypeCodec.floatCodec.serializeNoBoxing(v));
     }
 
+    @Override
     public T setFloat(String name, float v) {
         int[] indexes = getAllIndexesOf(name);
         ByteBuffer value = TypeCodec.floatCodec.serializeNoBoxing(v);
@@ -138,11 +150,13 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
         return wrapped;
     }
 
+    @Override
     public T setDouble(int i, double v) {
         checkType(i, DataType.Name.DOUBLE);
         return setValue(i, TypeCodec.doubleCodec.serializeNoBoxing(v));
     }
 
+    @Override
     public T setDouble(String name, double v) {
         int[] indexes = getAllIndexesOf(name);
         ByteBuffer value = TypeCodec.doubleCodec.serializeNoBoxing(v);
@@ -153,6 +167,7 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
         return wrapped;
     }
 
+    @Override
     public T setString(int i, String v) {
         DataType.Name type = checkType(i, DataType.Name.VARCHAR, DataType.Name.TEXT, DataType.Name.ASCII);
         switch (type) {
@@ -166,6 +181,7 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
         }
     }
 
+    @Override
     public T setString(String name, String v) {
         int[] indexes = getAllIndexesOf(name);
         for (int i = 0; i < indexes.length; i++)
@@ -173,11 +189,13 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
         return wrapped;
     }
 
+    @Override
     public T setBytes(int i, ByteBuffer v) {
         checkType(i, DataType.Name.BLOB);
         return setBytesUnsafe(i, v);
     }
 
+    @Override
     public T setBytes(String name, ByteBuffer v) {
         int[] indexes = getAllIndexesOf(name);
         ByteBuffer value = v == null ? null : v.duplicate();
@@ -188,10 +206,12 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
         return wrapped;
     }
 
+    @Override
     public T setBytesUnsafe(int i, ByteBuffer v) {
         return setValue(i, v == null ? null : v.duplicate());
     }
 
+    @Override
     public T setBytesUnsafe(String name, ByteBuffer v) {
         int[] indexes = getAllIndexesOf(name);
         ByteBuffer value = v == null ? null : v.duplicate();
@@ -200,11 +220,13 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
         return wrapped;
     }
 
+    @Override
     public T setVarint(int i, BigInteger v) {
         checkType(i, DataType.Name.VARINT);
         return setValue(i, v == null ? null : TypeCodec.bigIntegerCodec.serialize(v));
     }
 
+    @Override
     public T setVarint(String name, BigInteger v) {
         int[] indexes = getAllIndexesOf(name);
         ByteBuffer value = v == null ? null : TypeCodec.bigIntegerCodec.serialize(v);
@@ -215,11 +237,13 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
         return wrapped;
     }
 
+    @Override
     public T setDecimal(int i, BigDecimal v) {
         checkType(i, DataType.Name.DECIMAL);
         return setValue(i, v == null ? null : TypeCodec.decimalCodec.serialize(v));
     }
 
+    @Override
     public T setDecimal(String name, BigDecimal v) {
         int[] indexes = getAllIndexesOf(name);
         ByteBuffer value = v == null ? null : TypeCodec.decimalCodec.serialize(v);
@@ -230,6 +254,7 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
         return wrapped;
     }
 
+    @Override
     public T setUUID(int i, UUID v) {
         DataType.Name type = checkType(i, DataType.Name.UUID, DataType.Name.TIMEUUID);
 
@@ -244,6 +269,7 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
                 : setValue(i, TypeCodec.timeUuidCodec.serialize(v));
     }
 
+    @Override
     public T setUUID(String name, UUID v) {
         int[] indexes = getAllIndexesOf(name);
         ByteBuffer value = v == null ? null : TypeCodec.uuidCodec.serialize(v);
@@ -256,11 +282,13 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
         return wrapped;
     }
 
+    @Override
     public T setInet(int i, InetAddress v) {
         checkType(i, DataType.Name.INET);
         return setValue(i, v == null ? null : TypeCodec.inetCodec.serialize(v));
     }
 
+    @Override
     public T setInet(String name, InetAddress v) {
         int[] indexes = getAllIndexesOf(name);
         ByteBuffer value = v == null ? null : TypeCodec.inetCodec.serialize(v);
@@ -286,6 +314,7 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
         return wrapped;
     }
 
+    @Override
     public <E> T setList(int i, List<E> v) {
         DataType type = getType(i);
         if (type.getName() != DataType.Name.LIST)
@@ -306,6 +335,7 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
         return setValue(i, type.codec(protocolVersion).serialize(v));
     }
 
+    @Override
     public <E> T setList(String name, List<E> v) {
         int[] indexes = getAllIndexesOf(name);
         for (int i = 0; i < indexes.length; i++)
@@ -313,6 +343,7 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
         return wrapped;
     }
 
+    @Override
     public <K, V> T setMap(int i, Map<K, V> v) {
         DataType type = getType(i);
         if (type.getName() != DataType.Name.MAP)
@@ -335,6 +366,7 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
         return setValue(i, type.codec(protocolVersion).serialize(v));
     }
 
+    @Override
     public <K, V> T setMap(String name, Map<K, V> v) {
         int[] indexes = getAllIndexesOf(name);
         for (int i = 0; i < indexes.length; i++)
@@ -342,6 +374,7 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
         return wrapped;
     }
 
+    @Override
     public <E> T setSet(int i, Set<E> v) {
         DataType type = getType(i);
         if (type.getName() != DataType.Name.SET)
@@ -361,6 +394,7 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
         return setValue(i, type.codec(protocolVersion).serialize(v));
     }
 
+    @Override
     public <E> T setSet(String name, Set<E> v) {
         int[] indexes = getAllIndexesOf(name);
         for (int i = 0; i < indexes.length; i++)
@@ -368,6 +402,7 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
         return wrapped;
     }
 
+    @Override
     public T setUDTValue(int i, UDTValue v) {
         DataType type = getType(i);
         if (type.getName() != DataType.Name.UDT)
@@ -381,6 +416,7 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
         return wrapped;
     }
 
+    @Override
     public T setUDTValue(String name, UDTValue v) {
         int[] indexes = getAllIndexesOf(name);
         for (int i = 0; i < indexes.length; i++)
@@ -388,6 +424,7 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
         return wrapped;
     }
 
+    @Override
     public T setTupleValue(int i, TupleValue v) {
         DataType type = getType(i);
         if (type.getName() != DataType.Name.TUPLE)
@@ -401,6 +438,7 @@ abstract class AbstractData<T extends SettableData<T>> extends AbstractGettableD
         return wrapped;
     }
 
+    @Override
     public T setTupleValue(String name, TupleValue v) {
         int[] indexes = getAllIndexesOf(name);
         for (int i = 0; i < indexes.length; i++)

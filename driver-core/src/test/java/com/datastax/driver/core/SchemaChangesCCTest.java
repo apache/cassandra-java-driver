@@ -53,7 +53,7 @@ public class SchemaChangesCCTest {
     public void should_receive_changes_made_while_control_connection_is_down_on_reconnect() throws Exception {
         ToggleablePolicy lbPolicy = new ToggleablePolicy(Policies.defaultLoadBalancingPolicy());
 
-        CCMBridge ccm = CCMBridge.builder("SchemaChangesCCTest").withNodes(2).build();
+        CCMBridge ccm = CCMBridge.builder().withNodes(2).build();
         Cluster.Builder builder = Cluster.builder()
                 .withLoadBalancingPolicy(lbPolicy);
         Cluster cluster = builder.addContactPoint(CCMBridge.ipOfNode(1)).build();

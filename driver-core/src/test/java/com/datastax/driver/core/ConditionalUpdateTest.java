@@ -28,10 +28,10 @@ import static org.testng.Assert.assertTrue;
  * Test {@link ResultSet#wasApplied()} for conditional updates.
  */
 @CassandraVersion(major = 2.0, description = "Conditional Updates requires 2.0+.")
-public class ConditionalUpdateTest extends CCMBridge.PerClassSingleNodeCluster {
+public class ConditionalUpdateTest extends CCMTestsSupport {
 
     @Override
-    protected Collection<String> getTableDefinitions() {
+    public Collection<String> createTestFixtures() {
         return Collections.singletonList("CREATE TABLE test(k1 int, k2 int, v int, PRIMARY KEY (k1, k2))");
     }
 

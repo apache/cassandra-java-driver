@@ -46,7 +46,7 @@ public class NettyOptionsTest {
     @Test(groups = "long", dataProvider = "NettyOptionsTest")
     public void should_invoke_netty_options_hooks(int hosts, int coreConnections) throws Exception {
         //given
-        CCMBridge ccm = CCMBridge.builder("test").withNodes(hosts).build();
+        CCMBridge ccm = CCMBridge.builder().withNodes(hosts).build();
         Cluster cluster = null;
         try {
             NettyOptions nettyOptions = mock(NettyOptions.class, CALLS_REAL_METHODS.get());

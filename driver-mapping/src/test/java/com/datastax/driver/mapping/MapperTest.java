@@ -33,9 +33,11 @@ import static org.testng.Assert.assertTrue;
 /**
  * Basic tests for the mapping module.
  */
-public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
+@SuppressWarnings("unused")
+public class MapperTest extends CCMTestsSupport {
 
-    protected Collection<String> getTableDefinitions() {
+    @Override
+    public Collection<String> createTestFixtures() {
         // We'll allow to generate those create statement from the annotated entities later, but it's currently
         // a TODO
         return Arrays.asList("CREATE TABLE users (user_id uuid PRIMARY KEY, name text, email text, year int, gender text)",
@@ -267,24 +269,24 @@ public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
         // harcoded arg0, arg1, .... A big annoying, and apparently Java 8 will fix that
         // somehow, but well, not a huge deal.
         @Query("SELECT * FROM posts WHERE user_id=:userId AND post_id=:postId")
-        public Post getOne(@Param("userId") UUID userId,
-                           @Param("postId") UUID postId);
+        Post getOne(@Param("userId") UUID userId,
+                    @Param("postId") UUID postId);
 
         // Note that the following method will be asynchronous (it will use executeAsync
         // underneath) because it's return type is a ListenableFuture. Similarly, we know
         // that we need to map the result to the Post entity thanks to the return type.
         @Query("SELECT * FROM posts WHERE user_id=?")
         @QueryParameters(consistency = "QUORUM")
-        public ListenableFuture<Result<Post>> getAllAsync(UUID userId);
+        ListenableFuture<Result<Post>> getAllAsync(UUID userId);
 
         // The method above actually query stuff, but if a method is declared to return
         // a Statement, it will not execute anything, but just return you the BoundStatement
         // ready for execution. That way, you can batch stuff for instance (see usage below).
         @Query("UPDATE posts SET content=? WHERE user_id=? AND post_id=?")
-        public Statement updateContentQuery(String newContent, UUID userId, UUID postId);
+        Statement updateContentQuery(String newContent, UUID userId, UUID postId);
 
         @Query("SELECT * FROM posts")
-        public Result<Post> getAll();
+        Result<Post> getAll();
     }
 
     @Accessor

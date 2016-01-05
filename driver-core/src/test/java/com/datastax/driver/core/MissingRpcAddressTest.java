@@ -35,7 +35,7 @@ public class MissingRpcAddressTest {
 
     @Test(groups = "short")
     public void testMissingRpcAddressAtStartup() throws Exception {
-        CCMBridge ccm = CCMBridge.builder("ccm").withNodes(2).build();
+        CCMBridge ccm = CCMBridge.builder().withNodes(2).build();
 
         Cluster cluster = null;
         try {

@@ -15,24 +15,26 @@
  */
 package com.datastax.driver.mapping;
 
-import com.datastax.driver.core.CCMBridge;
+import com.datastax.driver.core.CCMTestsSupport;
 import com.datastax.driver.mapping.annotations.ClusteringColumn;
 import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
 import org.testng.annotations.Test;
 
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 
 /**
  * Tests for the mapper with composite partition keys and multiple clustering columns.
  */
-public class MapperCompositeKeyTest extends CCMBridge.PerClassSingleNodeCluster {
+public class MapperCompositeKeyTest extends CCMTestsSupport {
 
-    protected Collection<String> getTableDefinitions() {
-        return Arrays.asList("CREATE TABLE test_table (pk1 int, pk2 int, cc1 int, cc2 int, PRIMARY KEY ((pk1, pk2), cc1, cc2))");
+    @Override
+    public Collection<String> createTestFixtures() {
+        return Collections.singletonList("CREATE TABLE test_table (pk1 int, pk2 int, cc1 int, cc2 int, PRIMARY KEY ((pk1, pk2), cc1, cc2))");
     }
 
+    @SuppressWarnings("unused")
     @Table(keyspace = "ks", name = "test_table")
     public static class TestTable {
         @PartitionKey(0)

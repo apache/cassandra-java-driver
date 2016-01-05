@@ -26,18 +26,16 @@ import static org.testng.Assert.*;
 /**
  * Test ResultSet paging correct behavior.
  */
-public class FetchingTest extends CCMBridge.PerClassSingleNodeCluster {
+public class FetchingTest extends CCMTestsSupport {
 
     @Override
-    protected Collection<String> getTableDefinitions() {
+    public Collection<String> createTestFixtures() {
         return Collections.singletonList("CREATE TABLE test (k text, v int, PRIMARY KEY (k, v))");
     }
 
     @Test(groups = "short")
-    public void simplePagingTest() throws Throwable {
-
+    public void simplePagingTest() {
         try {
-
             // Insert data
             String key = "paging_test";
             for (int i = 0; i < 100; i++)
@@ -61,11 +59,7 @@ public class FetchingTest extends CCMBridge.PerClassSingleNodeCluster {
 
         } catch (UnsupportedFeatureException e) {
             // This is expected when testing the protocol v1
-            if (cluster.getConfiguration().getProtocolOptions().getProtocolVersionEnum() != ProtocolVersion.V1)
-                throw e;
-        } catch (Throwable e) {
-            errorOut();
-            throw e;
+            assertEquals(cluster.getConfiguration().getProtocolOptions().getProtocolVersionEnum(), ProtocolVersion.V1);
         }
     }
 }

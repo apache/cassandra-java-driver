@@ -15,32 +15,35 @@
  */
 package com.datastax.driver.core.policies;
 
-import com.datastax.driver.core.CCMBridge;
+import com.datastax.driver.core.CCMConfig;
+import com.datastax.driver.core.CCMTestsSupport;
 import com.datastax.driver.core.Cluster;
 import org.testng.annotations.Test;
 
+import static java.util.Collections.singleton;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class CloseableLoadBalancingPolicyTest {
+@CCMConfig(createSession = false)
+public class CloseableLoadBalancingPolicyTest extends CCMTestsSupport {
+
+    private CloseMonitoringPolicy policy;
+
     @Test(groups = "short")
     public void should_be_invoked_at_shutdown() {
-        CloseMonitoringPolicy policy = new CloseMonitoringPolicy(Policies.defaultLoadBalancingPolicy());
-        CCMBridge ccm = null;
-        Cluster cluster = null;
         try {
-            ccm = CCMBridge.builder("test").withNodes(1).build();
-            cluster = Cluster.builder()
-                    .addContactPoint(CCMBridge.ipOfNode(1))
-                    .withLoadBalancingPolicy(policy)
-                    .build();
             cluster.connect();
+            cluster.close();
         } finally {
-            if (cluster != null)
-                cluster.close();
-            if (ccm != null)
-                ccm.remove();
+            assertThat(policy.wasClosed).isTrue();
         }
-        assertThat(policy.wasClosed).isTrue();
+    }
+
+    @Override
+    public Cluster.Builder createClusterBuilder() {
+        policy = new CloseMonitoringPolicy(Policies.defaultLoadBalancingPolicy());
+        return Cluster.builder()
+                .addContactPointsWithPorts(singleton(getContactPoints().get(0)))
+                .withLoadBalancingPolicy(policy);
     }
 
     static class CloseMonitoringPolicy extends DelegatingLoadBalancingPolicy {

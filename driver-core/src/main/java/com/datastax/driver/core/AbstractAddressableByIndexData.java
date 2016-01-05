@@ -38,40 +38,48 @@ abstract class AbstractAddressableByIndexData<T extends SettableByIndexData<T>> 
         return (T) this;
     }
 
+    @Override
     protected ByteBuffer getValue(int i) {
         return values[i];
     }
 
+    @Override
     public T setBool(int i, boolean v) {
         checkType(i, DataType.Name.BOOLEAN);
         return setValue(i, TypeCodec.booleanCodec.serializeNoBoxing(v));
     }
 
+    @Override
     public T setInt(int i, int v) {
         checkType(i, DataType.Name.INT);
         return setValue(i, TypeCodec.intCodec.serializeNoBoxing(v));
     }
 
+    @Override
     public T setLong(int i, long v) {
         checkType(i, DataType.Name.BIGINT, DataType.Name.COUNTER);
         return setValue(i, TypeCodec.longCodec.serializeNoBoxing(v));
     }
 
+    @Override
     public T setDate(int i, Date v) {
         checkType(i, DataType.Name.TIMESTAMP);
         return setValue(i, v == null ? null : TypeCodec.dateCodec.serialize(v));
     }
 
+    @Override
     public T setFloat(int i, float v) {
         checkType(i, DataType.Name.FLOAT);
         return setValue(i, TypeCodec.floatCodec.serializeNoBoxing(v));
     }
 
+    @Override
     public T setDouble(int i, double v) {
         checkType(i, DataType.Name.DOUBLE);
         return setValue(i, TypeCodec.doubleCodec.serializeNoBoxing(v));
     }
 
+    @Override
     public T setString(int i, String v) {
         DataType.Name type = checkType(i, DataType.Name.VARCHAR, DataType.Name.TEXT, DataType.Name.ASCII);
         switch (type) {
@@ -85,25 +93,30 @@ abstract class AbstractAddressableByIndexData<T extends SettableByIndexData<T>> 
         }
     }
 
+    @Override
     public T setBytes(int i, ByteBuffer v) {
         checkType(i, DataType.Name.BLOB);
         return setBytesUnsafe(i, v);
     }
 
+    @Override
     public T setBytesUnsafe(int i, ByteBuffer v) {
         return setValue(i, v == null ? null : v.duplicate());
     }
 
+    @Override
     public T setVarint(int i, BigInteger v) {
         checkType(i, DataType.Name.VARINT);
         return setValue(i, v == null ? null : TypeCodec.bigIntegerCodec.serialize(v));
     }
 
+    @Override
     public T setDecimal(int i, BigDecimal v) {
         checkType(i, DataType.Name.DECIMAL);
         return setValue(i, v == null ? null : TypeCodec.decimalCodec.serialize(v));
     }
 
+    @Override
     public T setUUID(int i, UUID v) {
         DataType.Name type = checkType(i, DataType.Name.UUID, DataType.Name.TIMEUUID);
 
@@ -118,11 +131,13 @@ abstract class AbstractAddressableByIndexData<T extends SettableByIndexData<T>> 
                 : setValue(i, TypeCodec.timeUuidCodec.serialize(v));
     }
 
+    @Override
     public T setInet(int i, InetAddress v) {
         checkType(i, DataType.Name.INET);
         return setValue(i, v == null ? null : TypeCodec.inetCodec.serialize(v));
     }
 
+    @Override
     public <E> T setList(int i, List<E> v) {
         DataType type = getType(i);
         if (type.getName() != DataType.Name.LIST)
@@ -143,6 +158,7 @@ abstract class AbstractAddressableByIndexData<T extends SettableByIndexData<T>> 
         return setValue(i, type.codec(protocolVersion).serialize(v));
     }
 
+    @Override
     public <K, V> T setMap(int i, Map<K, V> v) {
         DataType type = getType(i);
         if (type.getName() != DataType.Name.MAP)
@@ -165,6 +181,7 @@ abstract class AbstractAddressableByIndexData<T extends SettableByIndexData<T>> 
         return setValue(i, type.codec(protocolVersion).serialize(v));
     }
 
+    @Override
     public <E> T setSet(int i, Set<E> v) {
         DataType type = getType(i);
         if (type.getName() != DataType.Name.SET)
@@ -184,6 +201,7 @@ abstract class AbstractAddressableByIndexData<T extends SettableByIndexData<T>> 
         return setValue(i, type.codec(protocolVersion).serialize(v));
     }
 
+    @Override
     public T setUDTValue(int i, UDTValue v) {
         DataType type = getType(i);
         if (type.getName() != DataType.Name.UDT)
@@ -196,6 +214,7 @@ abstract class AbstractAddressableByIndexData<T extends SettableByIndexData<T>> 
         return setValue(i, type.codec(ProtocolVersion.V3).serialize(v));
     }
 
+    @Override
     public T setTupleValue(int i, TupleValue v) {
         DataType type = getType(i);
         if (type.getName() != DataType.Name.TUPLE)
@@ -208,6 +227,7 @@ abstract class AbstractAddressableByIndexData<T extends SettableByIndexData<T>> 
         return setValue(i, type.codec(ProtocolVersion.V3).serialize(v));
     }
 
+    @Override
     public T setToNull(int i) {
         return setValue(i, null);
     }

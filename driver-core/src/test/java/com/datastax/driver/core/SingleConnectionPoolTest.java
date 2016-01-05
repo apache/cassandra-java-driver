@@ -17,10 +17,8 @@ package com.datastax.driver.core;
 
 import com.datastax.driver.core.utils.CassandraVersion;
 import org.testng.annotations.Test;
-import org.testng.collections.Lists;
 
 import java.net.InetSocketAddress;
-import java.util.Collection;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -29,11 +27,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static org.testng.Assert.fail;
 
 @CassandraVersion(major = 2.1)
-public class SingleConnectionPoolTest extends CCMBridge.PerClassSingleNodeCluster {
-    @Override
-    protected Collection<String> getTableDefinitions() {
-        return Lists.newArrayList();
-    }
+public class SingleConnectionPoolTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void should_throttle_requests() {

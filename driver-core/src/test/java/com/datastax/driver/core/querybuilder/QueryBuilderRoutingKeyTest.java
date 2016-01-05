@@ -26,24 +26,16 @@ import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 
-public class QueryBuilderRoutingKeyTest extends CCMBridge.PerClassSingleNodeCluster {
+@CCMConfig(clusterProvider = "createClusterBuilderNoDebouncing")
+public class QueryBuilderRoutingKeyTest extends CCMTestsSupport {
 
     private static final String TABLE_TEXT = "test_text";
     private static final String TABLE_INT = "test_int";
 
     @Override
-    protected Collection<String> getTableDefinitions() {
+    public Collection<String> createTestFixtures() {
         return Arrays.asList(String.format("CREATE TABLE %s (k text PRIMARY KEY, a int, b int)", TABLE_TEXT),
                 String.format("CREATE TABLE %s (k int PRIMARY KEY, a int, b int)", TABLE_INT));
-    }
-
-    @Override
-    protected Cluster.Builder configure(Cluster.Builder builder) {
-        return builder.withQueryOptions(new QueryOptions()
-                        .setRefreshNodeIntervalMillis(0)
-                        .setRefreshNodeListIntervalMillis(0)
-                        .setRefreshSchemaIntervalMillis(0)
-        );
     }
 
     @Test(groups = "short")
@@ -99,7 +91,6 @@ public class QueryBuilderRoutingKeyTest extends CCMBridge.PerClassSingleNodeClus
 
         String batch_query;
         Statement batch;
-        ResultSet rs;
 
         query = select().from(table).where(eq("k", 42));
 

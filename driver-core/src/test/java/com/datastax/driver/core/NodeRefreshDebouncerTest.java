@@ -18,20 +18,13 @@ package com.datastax.driver.core;
 import org.mockito.ArgumentCaptor;
 import org.testng.annotations.Test;
 
-import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
 import static com.datastax.driver.core.Assertions.assertThat;
-import static com.google.common.collect.Lists.newArrayList;
 import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.Mockito.*;
 
-public class NodeRefreshDebouncerTest extends CCMBridge.PerClassSingleNodeCluster {
-
-    @Override
-    protected Collection<String> getTableDefinitions() {
-        return newArrayList();
-    }
+public class NodeRefreshDebouncerTest extends CCMTestsSupport {
 
     /**
      * Ensures that when a new node is bootstrapped into the cluster, stopped, and then subsequently
@@ -48,7 +41,7 @@ public class NodeRefreshDebouncerTest extends CCMBridge.PerClassSingleNodeCluste
     public void should_call_onAdd_with_bootstrap_stop_start() {
         int refreshNodeInterval = 10000;
         QueryOptions queryOptions = new QueryOptions().setRefreshNodeIntervalMillis(refreshNodeInterval);
-        CCMBridge ccm = CCMBridge.builder("test").withNodes(1).build();
+        CCMBridge ccm = CCMBridge.builder().withNodes(1).build();
         Cluster cluster = Cluster.builder()
                 .addContactPoint(CCMBridge.ipOfNode(1))
                 .withQueryOptions(queryOptions)

@@ -72,10 +72,12 @@ public abstract class CloseFuture extends AbstractFuture<Void> {
             this.futures = futures;
 
             Futures.addCallback(Futures.allAsList(futures), new FutureCallback<List<Void>>() {
+                @Override
                 public void onFailure(Throwable t) {
                     Forwarding.this.setException(t);
                 }
 
+                @Override
                 public void onSuccess(List<Void> v) {
                     Forwarding.this.onFuturesDone();
                 }

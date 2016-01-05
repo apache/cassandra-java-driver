@@ -15,7 +15,7 @@
  */
 package com.datastax.driver.mapping;
 
-import com.datastax.driver.core.CCMBridge;
+import com.datastax.driver.core.CCMTestsSupport;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.utils.CassandraVersion;
 import com.datastax.driver.core.utils.UUIDs;
@@ -34,12 +34,15 @@ import static org.testng.Assert.assertNull;
  * Tests usage of mapping annotations without specifying a keyspace.
  */
 @CassandraVersion(major = 2.1)
-public class MapperDefaultKeyspaceTest extends CCMBridge.PerClassSingleNodeCluster {
+@SuppressWarnings("unused")
+public class MapperDefaultKeyspaceTest extends CCMTestsSupport {
 
     private static final String KEYSPACE = "mapper_default_keyspace_test_ks";
 
-    protected Collection<String> getTableDefinitions() {
-        return Arrays.asList("CREATE TABLE groups (group_id uuid PRIMARY KEY, name text)",
+    @Override
+    public Collection<String> createTestFixtures() {
+        return Arrays.asList(
+                "CREATE TABLE groups (group_id uuid PRIMARY KEY, name text)",
                 "CREATE TYPE IF NOT EXISTS group_name (name text)");
     }
 
@@ -157,7 +160,7 @@ public class MapperDefaultKeyspaceTest extends CCMBridge.PerClassSingleNodeClust
             if (other == null || other.getClass() != this.getClass())
                 return false;
 
-            Group that = (Group) other;
+            Group2 that = (Group2) other;
             return Objects.equal(groupId, that.groupId)
                     && Objects.equal(name, that.name);
         }
@@ -195,7 +198,7 @@ public class MapperDefaultKeyspaceTest extends CCMBridge.PerClassSingleNodeClust
         public boolean equals(Object other) {
             if (other instanceof GroupName) {
                 GroupName that = (GroupName) other;
-                return this.name == that.name;
+                return this.name.equals(that.name);
             }
             return false;
         }

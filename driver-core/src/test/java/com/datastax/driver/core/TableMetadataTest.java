@@ -22,22 +22,14 @@ import java.util.Collection;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class TableMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
+@CCMConfig(clusterProvider = "createClusterBuilderNoDebouncing")
+public class TableMetadataTest extends CCMTestsSupport {
     @Override
-    protected Collection<String> getTableDefinitions() {
+    public Collection<String> createTestFixtures() {
         return Lists.newArrayList(
                 "CREATE TABLE single_quote (\n"
                         + "    c1 int PRIMARY KEY\n"
                         + ") WITH  comment = 'comment with single quote '' should work'"
-        );
-    }
-
-    @Override
-    protected Cluster.Builder configure(Cluster.Builder builder) {
-        return builder.withQueryOptions(new QueryOptions()
-                        .setRefreshNodeIntervalMillis(0)
-                        .setRefreshNodeListIntervalMillis(0)
-                        .setRefreshSchemaIntervalMillis(0)
         );
     }
 

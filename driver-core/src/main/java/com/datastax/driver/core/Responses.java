@@ -132,6 +132,7 @@ class Responses {
     public static class Ready extends Message.Response {
 
         public static final Message.Decoder<Ready> decoder = new Message.Decoder<Ready>() {
+            @Override
             public Ready decode(ByteBuf body, ProtocolVersion version) {
                 // TODO: Would it be cool to return a singleton? Check we don't need to
                 // set the streamId or something
@@ -152,6 +153,7 @@ class Responses {
     public static class Authenticate extends Message.Response {
 
         public static final Message.Decoder<Authenticate> decoder = new Message.Decoder<Authenticate>() {
+            @Override
             public Authenticate decode(ByteBuf body, ProtocolVersion version) {
                 String authenticator = CBUtil.readString(body);
                 return new Authenticate(authenticator);
@@ -174,6 +176,7 @@ class Responses {
     public static class Supported extends Message.Response {
 
         public static final Message.Decoder<Supported> decoder = new Message.Decoder<Supported>() {
+            @Override
             public Supported decode(ByteBuf body, ProtocolVersion version) {
                 return new Supported(CBUtil.readStringToStringListMap(body));
             }
@@ -210,6 +213,7 @@ class Responses {
     public static abstract class Result extends Message.Response {
 
         public static final Message.Decoder<Result> decoder = new Message.Decoder<Result>() {
+            @Override
             public Result decode(ByteBuf body, ProtocolVersion version) {
                 Kind kind = Kind.fromId(body.readInt());
                 return kind.subDecoder.decode(body, version);
@@ -268,6 +272,7 @@ class Responses {
             }
 
             public static final Message.Decoder<Result> subcodec = new Message.Decoder<Result>() {
+                @Override
                 public Result decode(ByteBuf body, ProtocolVersion version) {
                     return new Void();
                 }
@@ -288,6 +293,7 @@ class Responses {
             }
 
             public static final Message.Decoder<Result> subcodec = new Message.Decoder<Result>() {
+                @Override
                 public Result decode(ByteBuf body, ProtocolVersion version) {
                     return new SetKeyspace(CBUtil.readString(body));
                 }
@@ -393,6 +399,7 @@ class Responses {
             }
 
             public static final Message.Decoder<Result> subcodec = new Message.Decoder<Result>() {
+                @Override
                 public Result decode(ByteBuf body, ProtocolVersion version) {
 
                     Metadata metadata = Metadata.decode(body);
@@ -451,6 +458,7 @@ class Responses {
         public static class Prepared extends Result {
 
             public static final Message.Decoder<Result> subcodec = new Message.Decoder<Result>() {
+                @Override
                 public Result decode(ByteBuf body, ProtocolVersion version) {
                     MD5Digest id = MD5Digest.wrap(CBUtil.readBytes(body));
                     Rows.Metadata metadata = Rows.Metadata.decode(body);
@@ -498,6 +506,7 @@ class Responses {
             public final String targetName;
 
             public static final Message.Decoder<Result> subcodec = new Message.Decoder<Result>() {
+                @Override
                 public Result decode(ByteBuf body, ProtocolVersion version) {
                     // Note: the CREATE KEYSPACE/TABLE/TYPE SCHEMA_CHANGE response is different from the SCHEMA_CHANGE EVENT type
                     Change change;
@@ -541,6 +550,7 @@ class Responses {
     public static class Event extends Message.Response {
 
         public static final Message.Decoder<Event> decoder = new Message.Decoder<Event>() {
+            @Override
             public Event decode(ByteBuf body, ProtocolVersion version) {
                 return new Event(ProtocolEvent.deserialize(body, version));
             }
@@ -562,6 +572,7 @@ class Responses {
     public static class AuthChallenge extends Message.Response {
 
         public static final Message.Decoder<AuthChallenge> decoder = new Message.Decoder<AuthChallenge>() {
+            @Override
             public AuthChallenge decode(ByteBuf body, ProtocolVersion version) {
                 ByteBuffer b = CBUtil.readValue(body);
                 if (b == null)
@@ -584,6 +595,7 @@ class Responses {
     public static class AuthSuccess extends Message.Response {
 
         public static final Message.Decoder<AuthSuccess> decoder = new Message.Decoder<AuthSuccess>() {
+            @Override
             public AuthSuccess decode(ByteBuf body, ProtocolVersion version) {
                 ByteBuffer b = CBUtil.readValue(body);
                 if (b == null)

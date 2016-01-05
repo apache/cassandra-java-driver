@@ -20,69 +20,38 @@ import org.testng.annotations.Test;
 import static com.datastax.driver.core.TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT;
 import static org.testng.Assert.*;
 
-public class CaseSensitivityTest {
-
-    private void assertExists(CCMBridge.CCMCluster c, String fetchName, String realName) {
-        KeyspaceMetadata km = c.cluster.getMetadata().getKeyspace(fetchName);
-        assertNotNull(km);
-        assertEquals(realName, km.getName());
-    }
-
-    private void assertNotExists(CCMBridge.CCMCluster c, String name) {
-        assertNull(c.cluster.getMetadata().getKeyspace(name));
-    }
+@CCMConfig(clusterProvider = "createClusterBuilderNoDebouncing")
+public class CaseSensitivityTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void testCaseInsensitiveKeyspace() throws Throwable {
-        CCMBridge.CCMCluster c = CCMBridge.buildCluster(1, Cluster.builder()
-                        .withQueryOptions(new QueryOptions()
-                                        .setRefreshNodeIntervalMillis(0)
-                                        .setRefreshNodeListIntervalMillis(0)
-                                        .setRefreshSchemaIntervalMillis(0)
-                        )
-        );
-        Session s = c.session;
-        try {
-            String ksName = "MyKeyspace";
-            s.execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, ksName, 1));
-
-            assertExists(c, ksName, "mykeyspace");
-            assertExists(c, "mykeyspace", "mykeyspace");
-            assertExists(c, "MYKEYSPACE", "mykeyspace");
-
-        } catch (Throwable e) {
-            c.errorOut();
-            throw e;
-        } finally {
-            c.discard();
-        }
+        String ksName = "MyKeyspace1";
+        session.execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, ksName, 1));
+        assertExists(ksName, "mykeyspace1");
+        assertExists("mykeyspace1", "mykeyspace1");
+        assertExists("MYKEYSPACE1", "mykeyspace1");
     }
 
     @Test(groups = "short")
     public void testCaseSensitiveKeyspace() throws Throwable {
-        CCMBridge.CCMCluster c = CCMBridge.buildCluster(1, Cluster.builder()
-                        .withQueryOptions(new QueryOptions()
-                                        .setRefreshNodeIntervalMillis(0)
-                                        .setRefreshNodeListIntervalMillis(0)
-                                        .setRefreshSchemaIntervalMillis(0)
-                        )
-        );
-        Session s = c.session;
-        try {
-            String ksName = "\"MyKeyspace\"";
-            s.execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, ksName, 1));
-
-            assertExists(c, ksName, "MyKeyspace");
-            assertExists(c, Metadata.quote("MyKeyspace"), "MyKeyspace");
-            assertNotExists(c, "mykeyspace");
-            assertNotExists(c, "MyKeyspace");
-            assertNotExists(c, "MYKEYSPACE");
-
-        } catch (Throwable e) {
-            c.errorOut();
-            throw e;
-        } finally {
-            c.discard();
-        }
+        String ksName = "\"MyKeyspace2\"";
+        session.execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, ksName, 1));
+        assertExists(ksName, "MyKeyspace2");
+        assertExists(Metadata.quote("MyKeyspace2"), "MyKeyspace2");
+        assertNotExists("mykeyspace2");
+        assertNotExists("MyKeyspace2");
+        assertNotExists("MYKEYSPACE2");
     }
+
+    private void assertExists(String fetchName, String realName) {
+        KeyspaceMetadata km = cluster.getMetadata().getKeyspace(fetchName);
+        assertNotNull(km);
+        assertEquals(realName, km.getName());
+    }
+
+    private void assertNotExists(String name) {
+        assertNull(cluster.getMetadata().getKeyspace(name));
+    }
+
+
 }

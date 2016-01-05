@@ -21,25 +21,40 @@ import com.datastax.driver.core.policies.ExponentialReconnectionPolicy;
 import com.datastax.driver.core.policies.ReconnectionPolicy;
 import org.testng.annotations.Test;
 
+import static com.datastax.driver.core.CCMTestMode.TestMode.PER_METHOD;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
+@CCMTestMode(PER_METHOD)
+@CCMConfig(
+        dirtiesContext = true,
+        createKeyspace = false
+)
+@SuppressWarnings("unused")
 public class ReconnectionPolicyTest extends AbstractPoliciesTest {
+
+    private Cluster.Builder exponential() {
+        return Cluster.builder().withReconnectionPolicy(new ExponentialReconnectionPolicy(2 * 1000, 5 * 60 * 1000));
+    }
+
+    private Cluster.Builder constant() {
+        return Cluster.builder().withReconnectionPolicy(new ConstantReconnectionPolicy(10 * 1000));
+    }
 
     /*
      * Test the ExponentialReconnectionPolicy.
      */
     @Test(groups = "long")
+    @CCMConfig(clusterProvider = "exponential")
     public void exponentialReconnectionPolicyTest() throws Throwable {
-        Cluster.Builder builder = Cluster.builder().withReconnectionPolicy(new ExponentialReconnectionPolicy(2 * 1000, 5 * 60 * 1000));
 
         // Ensure that ExponentialReconnectionPolicy is what we should be testing
-        if (!(builder.getConfiguration().getPolicies().getReconnectionPolicy() instanceof ExponentialReconnectionPolicy)) {
+        if (!(cluster.getConfiguration().getPolicies().getReconnectionPolicy() instanceof ExponentialReconnectionPolicy)) {
             fail("Set policy does not match retrieved policy.");
         }
 
         // Test basic getters
-        ExponentialReconnectionPolicy reconnectionPolicy = (ExponentialReconnectionPolicy) builder.getConfiguration().getPolicies().getReconnectionPolicy();
+        ExponentialReconnectionPolicy reconnectionPolicy = (ExponentialReconnectionPolicy) cluster.getConfiguration().getPolicies().getReconnectionPolicy();
         assertTrue(reconnectionPolicy.getBaseDelayMs() == 2 * 1000);
         assertTrue(reconnectionPolicy.getMaxDelayMs() == 5 * 60 * 1000);
 
@@ -48,24 +63,28 @@ public class ReconnectionPolicyTest extends AbstractPoliciesTest {
             new ExponentialReconnectionPolicy(-1, 1);
             fail();
         } catch (IllegalArgumentException e) {
+            //ok
         }
 
         try {
             new ExponentialReconnectionPolicy(1, -1);
             fail();
         } catch (IllegalArgumentException e) {
+            //ok
         }
 
         try {
             new ExponentialReconnectionPolicy(-1, -1);
             fail();
         } catch (IllegalArgumentException e) {
+            //ok
         }
 
         try {
             new ExponentialReconnectionPolicy(2, 1);
             fail();
         } catch (IllegalArgumentException e) {
+            //ok
         }
 
         // Test nextDelays()
@@ -85,23 +104,23 @@ public class ReconnectionPolicyTest extends AbstractPoliciesTest {
         long breakTime = 62;                // time until next reconnection attempt
 
         // TODO: Try to sort out variance
-        //reconnectionPolicyTest(builder, restartTime, retryTime, breakTime);
+        //reconnectionPolicyTest(restartTime, retryTime, breakTime);
     }
 
     /*
      * Test the ConstantReconnectionPolicy.
      */
     @Test(groups = "long")
+    @CCMConfig(clusterProvider = "constant")
     public void constantReconnectionPolicyTest() throws Throwable {
-        Cluster.Builder builder = Cluster.builder().withReconnectionPolicy(new ConstantReconnectionPolicy(10 * 1000));
 
         // Ensure that ConstantReconnectionPolicy is what we should be testing
-        if (!(builder.getConfiguration().getPolicies().getReconnectionPolicy() instanceof ConstantReconnectionPolicy)) {
+        if (!(cluster.getConfiguration().getPolicies().getReconnectionPolicy() instanceof ConstantReconnectionPolicy)) {
             fail("Set policy does not match retrieved policy.");
         }
 
         // Test basic getters
-        ConstantReconnectionPolicy reconnectionPolicy = (ConstantReconnectionPolicy) builder.getConfiguration().getPolicies().getReconnectionPolicy();
+        ConstantReconnectionPolicy reconnectionPolicy = (ConstantReconnectionPolicy) cluster.getConfiguration().getPolicies().getReconnectionPolicy();
         assertTrue(reconnectionPolicy.getConstantDelayMs() == 10 * 1000);
 
         // Test erroneous instantiations
@@ -109,6 +128,7 @@ public class ReconnectionPolicyTest extends AbstractPoliciesTest {
             new ConstantReconnectionPolicy(-1);
             fail();
         } catch (IllegalArgumentException e) {
+            //ok
         }
 
         // Test nextDelays()
@@ -125,45 +145,86 @@ public class ReconnectionPolicyTest extends AbstractPoliciesTest {
         long breakTime = 10;        // time until next reconnection attempt
 
         // TODO: Try to sort out variance
-        //reconnectionPolicyTest(builder, restartTime, retryTime, breakTime);
+        //reconnectionPolicyTest(restartTime, retryTime, breakTime);
     }
 
-    public void reconnectionPolicyTest(Cluster.Builder builder, long restartTime, long retryTime, long breakTime) throws Throwable {
-        CCMBridge.CCMCluster c = CCMBridge.buildCluster(1, builder);
+    public void reconnectionPolicyTest(long restartTime, long retryTime, long breakTime) throws Throwable {
+        createSchema(1);
+        init(12);
+        query(12);
 
+        // Ensure a basic test works
+        assertQueried(CCMBridge.IP_PREFIX + '1', 12);
+        resetCoordinators();
+        ccmBridge().forceStop(1);
+
+        // Start timing and ensure that the node is down
+        long startTime = 0;
         try {
-            createSchema(c.session, 1);
-            init(c, 12);
-            query(c, 12);
+            startTime = System.nanoTime() / 1000000000;
+            query(12);
+            fail("Test race condition where node has not shut off quickly enough.");
+        } catch (NoHostAvailableException e) {
+            //ok
+        }
 
-            // Ensure a basic test works
-            assertQueried(CCMBridge.IP_PREFIX + '1', 12);
-            resetCoordinators();
-            c.cassandraCluster.forceStop(1);
+        long thisTime;
+        boolean restarted = false;
+        while (true) {
+            thisTime = System.nanoTime() / 1000000000;
 
-            // Start timing and ensure that the node is down
-            long startTime = 0;
-            try {
-                startTime = System.nanoTime() / 1000000000;
-                query(c, 12);
-                fail("Test race condition where node has not shut off quickly enough.");
-            } catch (NoHostAvailableException e) {
+            // Restart node at restartTime
+            if (!restarted && thisTime - startTime > restartTime) {
+                ccmBridge().start(1);
+                restarted = true;
             }
 
-            long thisTime;
-            boolean restarted = false;
+            // Continue testing queries each second
+            try {
+                query(12);
+                assertQueried(CCMBridge.IP_PREFIX + '1', 12);
+                resetCoordinators();
+
+                // Ensure the time when the query completes successfully is what was expected
+                assertTrue(retryTime - 2 < thisTime - startTime && thisTime - startTime < retryTime + 2, String.format("Waited %s seconds instead an expected %s seconds wait", thisTime - startTime, retryTime));
+            } catch (NoHostAvailableException e) {
+                Thread.sleep(1000);
+                continue;
+            }
+
+            Thread.sleep(breakTime);
+
+            // The the same query once more, just to be sure
+            query(12);
+            assertQueried(CCMBridge.IP_PREFIX + '1', 12);
+            resetCoordinators();
+
+            // Ensure the reconnection times reset
+            ccmBridge().forceStop(1);
+
+            // Start timing and ensure that the node is down
+            startTime = 0;
+            try {
+                startTime = System.nanoTime() / 1000000000;
+                query(12);
+                fail("Test race condition where node has not shut off quickly enough.");
+            } catch (NoHostAvailableException e) {
+                //ok
+            }
+
+            restarted = false;
             while (true) {
                 thisTime = System.nanoTime() / 1000000000;
 
                 // Restart node at restartTime
                 if (!restarted && thisTime - startTime > restartTime) {
-                    c.cassandraCluster.start(1);
+                    ccmBridge().start(1);
                     restarted = true;
                 }
 
                 // Continue testing queries each second
                 try {
-                    query(c, 12);
+                    query(12);
                     assertQueried(CCMBridge.IP_PREFIX + '1', 12);
                     resetCoordinators();
 
@@ -173,59 +234,9 @@ public class ReconnectionPolicyTest extends AbstractPoliciesTest {
                     Thread.sleep(1000);
                     continue;
                 }
-
-                Thread.sleep(breakTime);
-
-                // The the same query once more, just to be sure
-                query(c, 12);
-                assertQueried(CCMBridge.IP_PREFIX + '1', 12);
-                resetCoordinators();
-
-                // Ensure the reconnection times reset
-                c.cassandraCluster.forceStop(1);
-
-                // Start timing and ensure that the node is down
-                startTime = 0;
-                try {
-                    startTime = System.nanoTime() / 1000000000;
-                    query(c, 12);
-                    fail("Test race condition where node has not shut off quickly enough.");
-                } catch (NoHostAvailableException e) {
-                }
-
-                restarted = false;
-                while (true) {
-                    thisTime = System.nanoTime() / 1000000000;
-
-                    // Restart node at restartTime
-                    if (!restarted && thisTime - startTime > restartTime) {
-                        c.cassandraCluster.start(1);
-                        restarted = true;
-                    }
-
-                    // Continue testing queries each second
-                    try {
-                        query(c, 12);
-                        assertQueried(CCMBridge.IP_PREFIX + '1', 12);
-                        resetCoordinators();
-
-                        // Ensure the time when the query completes successfully is what was expected
-                        assertTrue(retryTime - 2 < thisTime - startTime && thisTime - startTime < retryTime + 2, String.format("Waited %s seconds instead an expected %s seconds wait", thisTime - startTime, retryTime));
-                    } catch (NoHostAvailableException e) {
-                        Thread.sleep(1000);
-                        continue;
-                    }
-                    break;
-                }
                 break;
             }
-
-        } catch (Throwable e) {
-            c.errorOut();
-            throw e;
-        } finally {
-            resetCoordinators();
-            c.discard();
+            break;
         }
     }
 }

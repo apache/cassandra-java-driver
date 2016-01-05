@@ -16,7 +16,7 @@
 package com.datastax.driver.mapping;
 
 import com.datastax.driver.core.BoundStatement;
-import com.datastax.driver.core.CCMBridge;
+import com.datastax.driver.core.CCMTestsSupport;
 import com.datastax.driver.mapping.Mapper.Option;
 import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
@@ -28,12 +28,13 @@ import java.util.Collection;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class MapperSaveNullFieldsTest extends CCMBridge.PerClassSingleNodeCluster {
+@SuppressWarnings("unused")
+public class MapperSaveNullFieldsTest extends CCMTestsSupport {
 
     Mapper<User> mapper;
 
     @Override
-    protected Collection<String> getTableDefinitions() {
+    public Collection<String> createTestFixtures() {
         return Lists.newArrayList("CREATE TABLE user (login text primary key, name text, phone text)");
     }
 

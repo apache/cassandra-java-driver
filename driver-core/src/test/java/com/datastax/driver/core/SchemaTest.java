@@ -26,7 +26,8 @@ import static org.testng.Assert.assertEquals;
 /**
  * Test we correctly process and print schema.
  */
-public class SchemaTest extends CCMBridge.PerClassSingleNodeCluster {
+@CCMConfig(clusterProvider = "createClusterBuilderNoDebouncing")
+public class SchemaTest extends CCMTestsSupport {
     static final Logger logger = LoggerFactory.getLogger(SchemaTest.class);
 
     private static final Map<String, String> cql3 = new HashMap<String, String>();
@@ -35,16 +36,7 @@ public class SchemaTest extends CCMBridge.PerClassSingleNodeCluster {
     private static String withOptions;
 
     @Override
-    protected Cluster.Builder configure(Cluster.Builder builder) {
-        return builder.withQueryOptions(new QueryOptions()
-                        .setRefreshNodeIntervalMillis(0)
-                        .setRefreshNodeListIntervalMillis(0)
-                        .setRefreshSchemaIntervalMillis(0)
-        );
-    }
-
-    @Override
-    protected Collection<String> getTableDefinitions() {
+    public Collection<String> createTestFixtures() {
 
         String sparse = String.format("CREATE TABLE %s.sparse (\n"
                 + "    k text,\n"

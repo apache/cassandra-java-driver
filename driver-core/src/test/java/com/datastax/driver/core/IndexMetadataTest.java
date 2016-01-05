@@ -33,7 +33,7 @@ import static com.datastax.driver.core.DataType.text;
 
 @CassandraVersion(
         major = 1.2)
-public class IndexMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
+public class IndexMetadataTest extends CCMTestsSupport {
 
     /**
      * Column definitions for schema_columns table.
@@ -49,7 +49,7 @@ public class IndexMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
     });
 
     @Override
-    protected Collection<String> getTableDefinitions() {
+    public Collection<String> createTestFixtures() {
         String createTable = "CREATE TABLE indexing ("
                 + "id int primary key,"
                 + "map_values map<text, int>,"
@@ -58,7 +58,7 @@ public class IndexMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
                 + "text_column text"
                 +
                 // Frozen collections was introduced only in C* 2.1.3
-                (cassandraVersion.compareTo(VersionNumber.parse("2.1.3")) >= 0
+                (getCassandraVersion().compareTo(VersionNumber.parse("2.1.3")) >= 0
                         ?
                         ", map_full frozen<map<text, int>>,"
                                 + "set_full frozen<set<text>>,"

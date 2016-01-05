@@ -41,7 +41,7 @@ public class DowngradingConsistencyRetryPolicyIntegrationTest {
         Cluster cluster = null;
         try {
             // 3-node cluster, keyspace with RF = 3
-            ccm = CCMBridge.builder(this.getClass().getName()).withNodes(3).build();
+            ccm = CCMBridge.builder().withNodes(3).build();
             cluster = Cluster.builder()
                     .addContactPoint(CCMBridge.ipOfNode(1))
                     .withRetryPolicy(Mockito.spy(DowngradingConsistencyRetryPolicy.INSTANCE))
