@@ -816,7 +816,7 @@ public class CCMTestsSupport {
         if (methodName == null)
             methodName = "createCCMBridgeBuilder";
         if (clazz == null)
-            clazz = CCMTestsSupport.class;
+            clazz = testInstance.getClass();
         Method method = locateMethod(methodName, clazz);
         assert CCMBridge.Builder.class.isAssignableFrom(method.getReturnType());
         if (Modifier.isStatic(method.getModifiers())) {

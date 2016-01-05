@@ -72,6 +72,11 @@ public class ControlConnectionTest {
         ccmSupport.afterTestClass();
     }
 
+    @SuppressWarnings("unused")
+    public CCMBridge.Builder createCCMBridgeBuilder() {
+        return ccmSupport.createCCMBridgeBuilder();
+    }
+
     @Test(groups = "short")
     @CCMConfig(numberOfNodes = 2)
     public void should_prevent_simultaneous_reconnection_attempts() throws InterruptedException {
