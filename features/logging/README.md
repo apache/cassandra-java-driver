@@ -122,7 +122,7 @@ To turn on this feature, you first need to instantiate and register a `QueryLogg
 
 ```java
 Cluster cluster = ...
-QueryLogger queryLogger = QueryLogger.builder(cluster)
+QueryLogger queryLogger = QueryLogger.builder()
     .withConstantThreshold(...)
     .withMaxQueryStringLength(...)
 .build();

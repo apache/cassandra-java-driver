@@ -33,7 +33,7 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
  * <p/>
  * <pre>
  * Cluster cluster = ...
- * QueryLogger queryLogger = QueryLogger.builder(cluster)
+ * QueryLogger queryLogger = QueryLogger.builder()
  *     .withConstantThreshold(...)
  *     .withMaxQueryStringLength(...)
  *     .build();
@@ -94,7 +94,7 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
  * PerHostPercentileTracker tracker = ...;
  * cluster.register(tracker);
  * // create an instance of QueryLogger and register it
- * QueryLogger queryLogger = QueryLogger.builder(cluster)
+ * QueryLogger queryLogger = QueryLogger.builder()
  *     .withDynamicThreshold(tracker, ...)
  *     .withMaxQueryStringLength(...)
  *     .build();
