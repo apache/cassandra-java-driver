@@ -994,6 +994,23 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     /**
      * {@inheritDoc}
      */
+    @Override
+    public long getTime(int i) {
+        return wrapper.getTime(i);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public long getTime(String name) {
+        return wrapper.getTime(name);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public float getFloat(int i) {
         return wrapper.getFloat(i);
     }
