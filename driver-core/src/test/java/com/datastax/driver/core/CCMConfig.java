@@ -41,12 +41,28 @@ public @interface CCMConfig {
     int[] numberOfNodes() default {};
 
     /**
-     * Returns {@code true} if a {@link Cluster} instance should be automatically created, {@code false} otherwise.
+     * Returns {@code true} if a {@link CCMBridge} instance should be automatically created, {@code false} otherwise.
      * <p/>
      * If {@code true}, a cluster builder will be obtained by invoking the method
      * specified by {@link #clusterProvider()} and {@link #clusterProviderClass()}.
      * <p/>
+     * If {@code false}, no CCM cluster will be created for this test; this can be useful
+     * when some tests in a test class do not require CCM, while others do.
+     * <p/>
      * The cluster will be created once for the whole class if CCM test mode is {@link com.datastax.driver.core.CCMTestMode.TestMode#PER_CLASS},
+     * or once per test method, if the CCM test mode is {@link com.datastax.driver.core.CCMTestMode.TestMode#PER_METHOD},
+     *
+     * @return {@code true} if a {@link Cluster} instance should be automatically created, {@code false} otherwise.
+     */
+    boolean[] createCcm() default {};
+
+    /**
+     * Returns {@code true} if a {@link Cluster} instance should be automatically created, {@code false} otherwise.
+     * <p/>
+     * If {@code true}, a CCM cluster builder will be obtained by invoking the method
+     * specified by {@link #ccmProvider()} and {@link #ccmProviderClass()}.
+     * <p/>
+     * The CCM cluster will be created once for the whole class if CCM test mode is {@link com.datastax.driver.core.CCMTestMode.TestMode#PER_CLASS},
      * or once per test method, if the CCM test mode is {@link com.datastax.driver.core.CCMTestMode.TestMode#PER_METHOD},
      *
      * @return {@code true} if a {@link Cluster} instance should be automatically created, {@code false} otherwise.

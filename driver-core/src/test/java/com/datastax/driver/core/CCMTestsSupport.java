@@ -120,6 +120,7 @@ public class CCMTestsSupport {
         private final CCMTestContextKey key;
         private final CCMConfig methodAnnotation;
         private final CCMConfig classAnnotation;
+        private final boolean createCcm;
         private final boolean createCluster;
         private final boolean createSession;
         private final boolean createKeyspace;
@@ -130,6 +131,7 @@ public class CCMTestsSupport {
                 CCMConfig classAnnotation,
                 CCMBridge.Builder ccmBridgeBuilder,
                 int[] numberOfNodes,
+                boolean createCcm,
                 boolean createCluster,
                 boolean createSession,
                 boolean createKeyspace,
@@ -147,6 +149,7 @@ public class CCMTestsSupport {
             key = new CCMTestContextKey(ccmBridgeBuilder, numberOfNodes);
             this.methodAnnotation = methodAnnotation;
             this.classAnnotation = classAnnotation;
+            this.createCcm = createCcm;
             this.createCluster = createCluster;
             this.createSession = createSession;
             this.createKeyspace = createKeyspace;
@@ -196,6 +199,8 @@ public class CCMTestsSupport {
 
         private final int[] numberOfNodes;
 
+        private final boolean multiNode;
+
         private CCMBridge ccmBridge;
 
         private List<CCMNode> nodes;
@@ -208,6 +213,7 @@ public class CCMTestsSupport {
             this.id = CCM_COUNTER.getAndIncrement();
             this.ccmBridgeBuilder = ccmBridgeBuilder;
             this.numberOfNodes = numberOfNodes;
+            this.multiNode = numberOfNodes.length > 1 || numberOfNodes[0] > 1;
             this.keepLogs = false;
         }
 
@@ -233,7 +239,6 @@ public class CCMTestsSupport {
                             node.jmxPort,
                             node.remoteDebugPort);
                 }
-                boolean multiNode = numberOfNodes.length > 1 || numberOfNodes[0] > 1;
                 if (multiNode) {
                     Properties topology = createTopology();
                     for (CCMNode node : nodes) {
@@ -444,7 +449,7 @@ public class CCMTestsSupport {
             populateTestKeyspace(testInstance);
         }
         assert ccmTestConfig != null;
-        assert ccmTestContext != null;
+        assert !ccmTestConfig.createCcm || ccmTestContext != null;
         LOGGER.debug("Using " + ccmTestContext);
     }
 
@@ -608,46 +613,64 @@ public class CCMTestsSupport {
         return VersionNumber.parse(CCMBridge.getCassandraVersion());
     }
 
+    /**
+     * Returns an {@link AddressTranslater} to use when tests must manually create
+     * {@link Cluster} instances.
+     * <p/>
+     * This translator is necessary because hosts in the cluster do not use standard ports.
+     *
+     * @return an {@link AddressTranslater} to use when tests must manually create
+     * {@link Cluster} instances.
+     */
+    public AddressTranslater getAddressTranslator() {
+        return new AddressTranslater() {
+            @Override
+            public InetSocketAddress translate(InetSocketAddress address) {
+                for (CCMNode node : ccmTestContext.nodes) {
+                    if (node.hostAddress.getAddress().equals(address.getAddress()))
+                        return node.hostAddress;
+                }
+                throw new IllegalArgumentException("Unknown host: " + address);
+            }
+        };
+    }
+
+
     private void initTestContext(Object testInstance, Method testMethod) throws Exception {
         erroredOut = false;
         ccmTestConfig = createCCMTestConfig(testInstance, testMethod);
         assert ccmTestConfig != null;
-        try {
-            ccmTestContext = CACHE.get(ccmTestConfig.key);
-        } catch (ExecutionException e) {
-            Throwables.propagate(e);
+        if (ccmTestConfig.createCcm) {
+            try {
+                ccmTestContext = CACHE.get(ccmTestConfig.key);
+            } catch (ExecutionException e) {
+                Throwables.propagate(e);
+            }
+            assert ccmTestContext != null;
         }
-        assert ccmTestContext != null;
     }
 
     private void initTestCluster(Object testInstance) throws Exception {
-        if (ccmTestConfig.createCluster) {
+        if (ccmTestConfig.createCcm && ccmTestConfig.createCluster) {
             Cluster.Builder builder = createClusterBuilder(ccmTestConfig.methodAnnotation, ccmTestConfig.classAnnotation, testInstance);
-            cluster = builder
-                    .addContactPointsWithPorts(getContactPoints())
-                    // we need an address translator because
-                    // the native ports used are not the standard ones
-                    .withAddressTranslater(new AddressTranslater() {
-                        @Override
-                        public InetSocketAddress translate(InetSocketAddress address) {
-                            for (CCMNode node : ccmTestContext.nodes) {
-                                if (node.hostAddress.getAddress().equals(address.getAddress()))
-                                    return node.hostAddress;
-                            }
-                            throw new IllegalArgumentException("Unknown host: " + address);
-                        }
-                    })
-                    .build();
+            // add contact points only if the provided builder didn't do so
+            if (builder.getContactPoints().isEmpty())
+                builder.addContactPointsWithPorts(getContactPoints());
+            // for multi node setups, we need an address translator because
+            // the native ports used are not the standard ones
+            if (ccmTestContext.multiNode)
+                builder.withAddressTranslater(getAddressTranslator());
+            cluster = builder.build();
         }
     }
 
     private void initTestSession() throws Exception {
-        if (ccmTestConfig.createCluster && ccmTestConfig.createSession)
+        if (ccmTestConfig.createCcm && ccmTestConfig.createCluster && ccmTestConfig.createSession)
             session = cluster.connect();
     }
 
     private void initTestKeyspace() {
-        if (ccmTestConfig.createCluster && ccmTestConfig.createSession && ccmTestConfig.createKeyspace) {
+        if (ccmTestConfig.createCcm && ccmTestConfig.createCluster && ccmTestConfig.createSession && ccmTestConfig.createKeyspace) {
             try {
                 keyspace = SIMPLE_KEYSPACE + "_" + KS_COUNTER.getAndIncrement();
                 LOGGER.debug("Using keyspace " + keyspace);
@@ -662,7 +685,7 @@ public class CCMTestsSupport {
     }
 
     private void populateTestKeyspace(Object testInstance) throws Exception {
-        if (ccmTestConfig.createCluster && ccmTestConfig.createSession && ccmTestConfig.createKeyspace) {
+        if (ccmTestConfig.createCcm && ccmTestConfig.createCluster && ccmTestConfig.createSession && ccmTestConfig.createKeyspace) {
             for (String stmt : createFixtures(ccmTestConfig.methodAnnotation, ccmTestConfig.classAnnotation, testInstance)) {
                 try {
                     session.execute(stmt);
@@ -676,7 +699,7 @@ public class CCMTestsSupport {
     }
 
     private void cleanUpAfterTest() {
-        if (ccmTestConfig != null && ccmTestConfig.dirtiesContext) {
+        if (ccmTestConfig != null && ccmTestConfig.dirtiesContext && ccmTestConfig.createCcm) {
             CACHE.invalidate(ccmTestConfig.key);
             assert ccmTestContext.stopped;
         }
@@ -703,6 +726,7 @@ public class CCMTestsSupport {
         return new CCMTestConfig(methodAnnotation, classAnnotation,
                 createCCMBridgeBuilder(methodAnnotation, classAnnotation, testInstance),
                 determineNumberOfNodes(methodAnnotation, classAnnotation),
+                determineCreateCcm(methodAnnotation, classAnnotation),
                 determineCreateCluster(methodAnnotation, classAnnotation),
                 determineCreateSession(methodAnnotation, classAnnotation),
                 determineCreateKeyspace(methodAnnotation, classAnnotation),
@@ -723,6 +747,15 @@ public class CCMTestsSupport {
         if (classAnnotation != null && classAnnotation.numberOfNodes().length > 0)
             return classAnnotation.numberOfNodes();
         return new int[]{1};
+    }
+
+    @SuppressWarnings("SimplifiableIfStatement")
+    private static boolean determineCreateCcm(CCMConfig methodAnnotation, CCMConfig classAnnotation) {
+        if (methodAnnotation != null && methodAnnotation.createCcm().length == 1)
+            return methodAnnotation.createCcm()[0];
+        if (classAnnotation != null && classAnnotation.createCcm().length == 1)
+            return classAnnotation.createCcm()[0];
+        return true;
     }
 
     @SuppressWarnings("SimplifiableIfStatement")
@@ -783,7 +816,7 @@ public class CCMTestsSupport {
         if (methodName == null)
             methodName = "createCCMBridgeBuilder";
         if (clazz == null)
-            clazz = testInstance.getClass();
+            clazz = CCMTestsSupport.class;
         Method method = locateMethod(methodName, clazz);
         assert CCMBridge.Builder.class.isAssignableFrom(method.getReturnType());
         if (Modifier.isStatic(method.getModifiers())) {
@@ -888,7 +921,7 @@ public class CCMTestsSupport {
         } catch (NoSuchMethodException e) {
             clazz = clazz.getSuperclass();
             if (clazz == null)
-                throw e;
+                return CCMTestsSupport.class.getDeclaredMethod("createCCMBridgeBuilder");
             return locateMethod(methodName, clazz);
         }
     }
