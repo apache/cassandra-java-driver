@@ -15,17 +15,19 @@
  */
 package com.datastax.driver.core;
 
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.Collection;
 
+import static com.datastax.driver.core.CCMTestMode.TestMode.PER_METHOD;
 import static com.datastax.driver.core.TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT;
 import static com.google.common.collect.Lists.newArrayList;
 import static org.mockito.Mockito.*;
 
+@CCMTestMode(PER_METHOD)
+@CCMConfig(dirtiesContext = true, createKeyspace = false)
 public class NodeListRefreshDebouncerTest extends CCMTestsSupport {
 
     private static final int DEBOUNCE_TIME = 2000;
@@ -42,7 +44,7 @@ public class NodeListRefreshDebouncerTest extends CCMTestsSupport {
     // Keyspaces to drop after test completes.
     private Collection<String> keyspaces = newArrayList();
 
-    @BeforeClass(groups = "short")
+    @BeforeMethod(groups = "short")
     public void setup() {
         queryOptions = new QueryOptions();
         queryOptions.setRefreshNodeListIntervalMillis(DEBOUNCE_TIME);
@@ -62,17 +64,8 @@ public class NodeListRefreshDebouncerTest extends CCMTestsSupport {
     }
 
     @AfterMethod(groups = "short")
-    public void beforeMethod() {
-        reset(controlConnection);
-    }
-
-    @AfterClass(groups = "short")
     public void teardown() {
         cluster2.close();
-        // drop all keyspaces
-        for (String keyspace : keyspaces) {
-            session.execute("DROP KEYSPACE " + keyspace);
-        }
     }
 
     /**

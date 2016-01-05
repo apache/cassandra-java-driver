@@ -413,7 +413,10 @@ public class CCMTestsSupport {
      * @throws Exception
      */
     public void beforeTestClass(Object testInstance) throws Exception {
-        this.testMode = determineTestMode(testInstance.getClass());
+        // If dirtiestContext is used, override test mode with 'PER_METHOD' since dirtiestContext is meant
+        // to use a new context for each test so PER_CLASS does not make sense to use here.
+        CCMTestConfig ccmTestConfig = createCCMTestConfig(testInstance, null);
+        this.testMode = ccmTestConfig.dirtiesContext ? PER_METHOD : determineTestMode(testInstance.getClass());
         if (testMode == PER_CLASS) {
             initTestContext(testInstance, null);
             initTestCluster(testInstance);
