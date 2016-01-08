@@ -38,7 +38,7 @@ binary compatibility.
     ones.
 
     Also, note that the connection pool for protocol v3 can now be configured to
-    use multiple connections. See [this page](../features/pooling) for more
+    use multiple connections. See [this page](../manual/pooling) for more
     information.
 
 3. `MappingManager(Session)` will now force the initialization of the `Session`
@@ -207,7 +207,7 @@ The following might also be of interest:
    default like in previous versions.
 
 3. Netty is not shaded anymore in the default Maven artifact. However we publish a
-   [shaded artifact](../features/shaded_jar/) under a different classifier.
+   [shaded artifact](../manual/shaded_jar/) under a different classifier.
 
 4. The internal initialization sequence of the Cluster object has been slightly changed:
    some fields that were previously initialized in the constructor are now set when

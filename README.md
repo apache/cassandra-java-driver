@@ -10,7 +10,7 @@ docs](http://datastax.github.io/java-driver/) or via the release tags,
 [e.g.
 2.1.9](https://github.com/datastax/java-driver/tree/2.1.9).*
 
-A modern, [feature-rich](features/) and highly tunable Java client
+A modern, [feature-rich](manual/) and highly tunable Java client
 library for Apache Cassandra (1.2+) and DataStax Enterprise (3.1+) using
 exclusively Cassandra's binary protocol and Cassandra Query Language v3.
 
@@ -33,7 +33,7 @@ exclusively Cassandra's binary protocol and Cassandra Query Language v3.
 [simple_st]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/SimpleStatement.html
 [prepared_st]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/Session.html#prepare(com.datastax.driver.core.RegularStatement)
 [batch_st]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/BatchStatement.html
-[pool]: features/pooling/
+[pool]: manual/pooling/
 [lbp]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/policies/LoadBalancingPolicy.html
 [retry_policy]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/policies/RetryPolicy.html
 [query_builder]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/querybuilder/QueryBuilder.html
@@ -62,7 +62,7 @@ The driver contains the following modules:
   other drivers, Cassandra, and DSE.
 - DOCS: the [user guide](http://docs.datastax.com/en/developer/java-driver/2.1/java-driver/whatsNew2.html)
   has introductory material. We are progressively migrating the doc
-  [here](features/) with more technical details.
+  [here](manual/) with more technical details.
 - API: http://www.datastax.com/drivers/java/2.1
 
 **Feeback requested:** help us focus our efforts, provide your input on the [Platform and Runtime Survey](http://goo.gl/forms/qwUE6qnL7U) (we kept it short).  
@@ -91,7 +91,7 @@ Note that the object mapper is published as a separate artifact:
 </dependency>
 ```
 
-We also provide a [shaded JAR](features/shaded_jar/)
+We also provide a [shaded JAR](manual/shaded_jar/)
 to avoid the explicit dependency to Netty.
 
 If you can't use a dependency management tool, a
@@ -101,7 +101,7 @@ is available for download.
 ## Compatibility
 
 The Java client driver 2.1 ([branch 2.1](https://github.com/datastax/java-driver/tree/2.1)) is compatible with Apache
-Cassandra 1.2, 2.0, 2.1 and 2.2 (see [this page](http://datastax.github.io/java-driver/features/native_protocol) for
+Cassandra 1.2, 2.0, 2.1 and 2.2 (see [this page](http://datastax.github.io/java-driver/manual/native_protocol) for
 the most up-to-date compatibility information).
 
 UDT and tuple support is available only when using Apache Cassandra 2.1 or higher (see [CQL improvements in Cassandra 2.1](http://www.datastax.com/dev/blog/cql-in-2-1)).

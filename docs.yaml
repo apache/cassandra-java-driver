@@ -5,6 +5,14 @@ summary:  High performance Java client for Apache Cassandra
 homepage: http://datastax.github.io/java-driver/
 theme: datastax
 sections:
+  - title:     Manual
+    prefix:    /manual
+    sources:
+      - type:  markdown
+        files: 'manual/**/*.md'
+  # The 'manual' section was called 'features' in older releases. Leave both
+  # definitions and Documentor will pick up whichever exists and ignore the
+  # other.
   - title:     Features
     prefix:    /features
     sources:
