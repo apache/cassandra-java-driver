@@ -155,6 +155,123 @@ cause unexpected query failures.
 Generally, the recommended approach is to use a single session with no keyspace, and prefix all your queries.
 
 
+### Running queries
+
+You run queries with the session's `execute` method:
+
+```java
+ResultSet rs = session.execute("select release_version from system.local");
+```
+
+As shown here, the simplest form is to pass a query string directly. You can also pass an instance of
+[Statement](statements/).
+
+#### Processing rows
+
+Executing a query produces a [ResultSet], which is an iterable of [Row]. The basic way to process all rows is to use
+Java's for-each loop:
+
+```java
+for (Row row : rs) {
+    // process the row
+}
+```
+
+Note that this will return **all results** without limit (even though the driver might use multiple queries in the
+background). To handle large result sets, you might want to use a `LIMIT` clause in your CQL query, or use one of the
+techniques described in the [paging](paging/) documentation.
+
+When you know that there is only one row (or are only interested in the first one), the driver provides a convenience
+method:
+
+```java
+Row row = rs.one();
+```
+
+#### Reading columns
+
+[Row] provides getters to extract column values; they can be either positional or named:
+
+```java
+Row row = session.execute("select first_name, last_name from users where id = 1").one();
+
+// The two are equivalent:
+String firstName = row.getString(0);
+String firstName = row.getString("first_name");
+```
+
+##### CQL to Java type mapping
+
+<table border="1" style="text-align:center; width:100%;margin-bottom:1em;">
+    <tr> <td><b>CQL3 data type</b></td> <td><b>Getter name</b></td> <td><b>Java type</b></td> </tr>
+    <tr> <td>ascii</td> <td>getString</td> <td>java.lang.String</td> </tr>
+    <tr> <td>bigint</td> <td>getLong</td> <td>long</td> </tr>
+    <tr> <td>blob</td> <td>getBytes</td> <td>java.nio.ByteBuffer</td> </tr>
+    <tr> <td>boolean</td> <td>getBool</td> <td>boolean</td> </tr>
+    <tr> <td>counter</td> <td>getLong</td> <td>long</td> </tr>
+    <tr> <td>decimal</td> <td>getDecimal</td> <td>java.math.BigDecimal</td> </tr>
+    <tr> <td>double</td> <td>getDouble</td> <td>double</td> </tr>
+    <tr> <td>float</td> <td>getFloat</td> <td>float</td> </tr>
+    <tr> <td>inet</td> <td>getInet</td> <td>java.net.InetAddress</td> </tr>
+    <tr> <td>int</td> <td>getInt</td> <td>int</td> </tr>
+    <tr> <td>list</td> <td>getList</td> <td>java.util.List<T></td> </tr>
+    <tr> <td>map</td> <td>getMap</td> <td>java.util.Map<K, V></td> </tr>
+    <tr> <td>set</td> <td>getSet</td> <td>java.util.Set<T></td> </tr>
+    <tr> <td>text</td> <td>getString</td> <td>java.lang.String</td> </tr>
+    <tr> <td>timestamp</td> <td>getDate</td> <td>java.util.Date</td> </tr>
+    <tr> <td>timeuuid</td> <td>getUUID</td> <td>java.util.UUID</td> </tr>
+    <tr> <td>tuple</td> <td>getTupleValue</td> <td><a href="tuples/">TupleValue</a></td> </tr>
+    <tr> <td>user-defined types</td> <td>getUDTValue</td> <td><a href="udts/">UDTValue</a></td> </tr>
+    <tr> <td>uuid</td> <td>getUUID</td> <td>java.util.UUID</td> </tr>
+    <tr> <td>varchar</td> <td>getString</td> <td>java.lang.String</td> </tr>
+    <tr> <td>varint</td> <td>getVarint</td> <td>java.math.BigInteger</td> </tr>
+</table>
+
+##### Primitive types
+
+For performance reasons, the driver uses primitive Java types wherever possible (`boolean`, `int`...); the CQL value
+`NULL` is encoded as the type's default value (`false`, `0`...), which can be ambiguous. To distinguish `NULL` from
+actual values, use `isNull`:
+
+```java
+Integer age = row.isNull("age") ? null : row.getInt("age");
+```
+
+##### Collection types
+
+To ensure type safety, collection getters are generic. You need to provide type parameters matching your CQL type when
+calling the methods:
+
+```java
+// Assuming given_names is a list<text>:
+List<String> givenNames = row.getList("given_names", String.class);
+```
+
+For nested collections, element types are generic and cannot be expressed as Java `Class` instances. We use Guava's
+[TypeToken](https://github.com/google/guava/wiki/ReflectionExplained) instead:
+
+```java
+// Assuming teams is a set<list<text>>:
+TypeToken<List<String>> listOfStrings = new TypeToken<List<String>>() {};
+Set<List<String>> teams = row.getSet("teams", listOfStrings);
+```
+
+Since type tokens are anonymous inner classes, it's recommended to store them as constants in a utility class instead of
+re-creating them each time.
+
+##### Row metadata
+
+`Row` exposes an API to explore the column metadata at runtime:
+
+```java
+for (ColumnDefinitions.Definition definition : row.getColumnDefinitions()) {
+    System.out.printf("Column %s has type %s%n",
+            definition.getName(),
+            definition.getType());
+}
+```
+
+
 ### More information
 
 If you're reading this from the [generated HTML documentation on
