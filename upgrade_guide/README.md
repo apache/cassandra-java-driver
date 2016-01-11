@@ -12,7 +12,7 @@ The main changes were introduced by the custom codecs feature (see below).
 We've also seized the opportunity to remove code that was deprecated in 2.1.
 
 1.  The default consistency level in `QueryOptions` is now `LOCAL_ONE`.
-2.  [Custom codecs](../features/custom_codecs/)
+2.  [Custom codecs](../manual/custom_codecs/)
     ([JAVA-721](https://datastax-oss.atlassian.net/browse/JAVA-721))
     introduce several breaking changes and also modify a few runtime behaviors.
 
@@ -72,7 +72,7 @@ We've also seized the opportunity to remove code that was deprecated in 2.1.
     corresponding method `MappingManager#udtMapper`.
 
     The mapper now uses custom codecs to convert UDTs. See more
-    explanations [here](../features/object_mapper/custom_codecs/#implicit-udt-codecs).
+    explanations [here](../manual/object_mapper/custom_codecs/#implicit-udt-codecs).
 
 5.  All methods that took the protocol version as an `int` or assumed a
     default version have been removed (they were already deprecated in
@@ -131,9 +131,9 @@ We've also seized the opportunity to remove code that was deprecated in 2.1.
     callback methods (`onUp`, `onDown`, etc.) have been duplicated. This
     is unlikely to affect clients.
 
-12. [Client-side timestamp generation](../features/query_timestamps/) is
+12. [Client-side timestamp generation](../manual/query_timestamps/) is
     now the default (provided that [native
-    protocol](../features/native_protocol) v3 or higher is in use). The
+    protocol](../manual/native_protocol) v3 or higher is in use). The
     generator used is `AtomicMonotonicTimestampGenerator`.
 
 13. If a DNS name resolves to multiple A-records,
@@ -142,7 +142,7 @@ We've also seized the opportunity to remove code that was deprecated in 2.1.
     maintaining contact points in DNS configuration, and having a single,
     static contact point in your Java code.
 
-14. The following methods were added for [Custom payloads](../features/custom_payloads):
+14. The following methods were added for [Custom payloads](../manual/custom_payloads):
     * in `PreparedStatement`: `getIncomingPayload()`,
       `getOutgoingPayload()` and
       `setOutgoingPayload(Map<String,ByteBuffer>)`
@@ -276,7 +276,7 @@ binary compatibility.
     ones.
 
     Also, note that the connection pool for protocol v3 can now be configured to
-    use multiple connections. See [this page](../features/pooling) for more
+    use multiple connections. See [this page](../manual/pooling) for more
     information.
 
 3. `MappingManager(Session)` will now force the initialization of the `Session`
@@ -445,7 +445,7 @@ The following might also be of interest:
    default like in previous versions.
 
 3. Netty is not shaded anymore in the default Maven artifact. However we publish a
-   [shaded artifact](../features/shaded_jar/) under a different classifier.
+   [shaded artifact](../manual/shaded_jar/) under a different classifier.
 
 4. The internal initialization sequence of the Cluster object has been slightly changed:
    some fields that were previously initialized in the constructor are now set when
