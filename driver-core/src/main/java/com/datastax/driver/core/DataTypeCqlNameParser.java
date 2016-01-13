@@ -200,8 +200,7 @@ class DataTypeCqlNameParser {
         // left idx positioned on the character stopping the read
         private String readNextIdentifier() {
             int startIdx = idx;
-            // if first character is a quote, this is a quoted identifier.
-            if (str.charAt(startIdx) == '"') {
+            if (str.charAt(startIdx) == '"') { // case-sensitive name included in double quotes
                 ++idx;
                 // read until closing quote.
                 while (!isEOS()) {
@@ -216,6 +215,10 @@ class DataTypeCqlNameParser {
                             break;
                     }
                 }
+            } else if (str.charAt(startIdx) == '\'') { // custom type name included in single quotes
+                ++idx;
+                // read until closing quote.
+                while (!isEOS() && str.charAt(idx++) != '\'') { /* loop */ }
             } else {
                 while (!isEOS() && (isIdentifierChar(str.charAt(idx)) || str.charAt(idx) == '"'))
                     ++idx;
