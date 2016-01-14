@@ -15,7 +15,7 @@
  */
 package com.datastax.driver.mapping;
 
-import com.datastax.driver.core.CCMBridge;
+import com.datastax.driver.core.CCMTestsSupport;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.utils.CassandraVersion;
 import com.datastax.driver.mapping.annotations.*;
@@ -29,10 +29,11 @@ import java.util.*;
 import static com.datastax.driver.core.Assertions.assertThat;
 
 @CassandraVersion(major = 2.1, minor = 3)
-public class MapperNestedCollectionsTest extends CCMBridge.PerClassSingleNodeCluster {
+@SuppressWarnings("unused")
+public class MapperNestedCollectionsTest extends CCMTestsSupport {
 
     @Override
-    protected Collection<String> getTableDefinitions() {
+    public Collection<String> createTestFixtures() {
         return Lists.newArrayList(
                 "CREATE TYPE testType(i int, ls list<frozen<set<int>>>)",
                 "CREATE TABLE testTable (k int primary key, "
@@ -130,12 +131,8 @@ public class MapperNestedCollectionsTest extends CCMBridge.PerClassSingleNodeClu
 
             TestType testType = (TestType) o;
 
-            if (i != testType.i)
-                return false;
-            if (!ls.equals(testType.ls))
-                return false;
+            return i == testType.i && ls.equals(testType.ls);
 
-            return true;
         }
 
         @Override
@@ -183,7 +180,7 @@ public class MapperNestedCollectionsTest extends CCMBridge.PerClassSingleNodeClu
     }
 
     @Accessor
-    public static interface TestAccessor {
+    public interface TestAccessor {
         @Query("UPDATE testTable SET m1 = :m1 WHERE k = :k")
         ResultSet setM1(@Param("k") int k, @Param("m1") Map<String, Map<Integer, Integer>> m1);
 

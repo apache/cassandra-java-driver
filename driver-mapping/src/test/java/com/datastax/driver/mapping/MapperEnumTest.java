@@ -15,7 +15,7 @@
  */
 package com.datastax.driver.mapping;
 
-import com.datastax.driver.core.CCMBridge;
+import com.datastax.driver.core.CCMTestsSupport;
 import com.datastax.driver.mapping.annotations.Enumerated;
 import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
@@ -29,10 +29,11 @@ import static org.junit.Assert.assertNull;
 /**
  * Covers handling of enum fields by the mapper.
  */
-public class MapperEnumTest extends CCMBridge.PerClassSingleNodeCluster {
+@SuppressWarnings("unused")
+public class MapperEnumTest extends CCMTestsSupport {
 
     @Override
-    protected Collection<String> getTableDefinitions() {
+    public Collection<String> createTestFixtures() {
         return Lists.newArrayList("CREATE TABLE asOrdinal (k int primary key, v int)",
                 "CREATE TABLE asString (k int primary key, v text)");
     }

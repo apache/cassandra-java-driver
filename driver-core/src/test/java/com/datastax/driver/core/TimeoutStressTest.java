@@ -26,20 +26,20 @@ import com.google.common.util.concurrent.Uninterruptibles;
 import io.netty.channel.socket.SocketChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import java.net.InetSocketAddress;
 import java.util.Collection;
-import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 
-public class TimeoutStressTest {
+@CCMConfig(numberOfNodes = 3)
+public class TimeoutStressTest extends CCMTestsSupport {
 
     static final Logger logger = LoggerFactory.getLogger(TimeoutStressTest.class);
 
@@ -56,50 +56,31 @@ public class TimeoutStressTest {
     // Configured connection timeout - this may need to be tuned to the host system running the test.
     static final int CONNECTION_TIMEOUT_IN_MS = 20;
 
-    // Keyspace to use.
-    static final String KEYSPACE = "testks";
+    private static AtomicInteger executedQueries = new AtomicInteger(0);
 
-    static Cluster cluster;
+    private SocketChannelMonitor channelMonitor;
 
-    static CCMBridge ccmBridge;
-
-    static SocketChannelMonitor channelMonitor;
-
-    static AtomicInteger executedQueries = new AtomicInteger(0);
-
-    static List<InetSocketAddress> nodes;
-
-    @BeforeClass(groups = "stress")
-    public void beforeClass() throws Exception {
-        ccmBridge = CCMBridge.builder("test").withNodes(3).build();
-        channelMonitor = new SocketChannelMonitor();
-        nodes = Lists.newArrayList(
-                new InetSocketAddress(CCMBridge.IP_PREFIX + '1', 9042),
-                new InetSocketAddress(CCMBridge.IP_PREFIX + '2', 9042),
-                new InetSocketAddress(CCMBridge.IP_PREFIX + '3', 9042)
-        );
-
+    @Override
+    public Cluster.Builder createClusterBuilder() {
+        channelMonitor = register(new SocketChannelMonitor());
         PoolingOptions poolingOptions = new PoolingOptions().setConnectionsPerHost(HostDistance.LOCAL, 8, 8);
-
-        cluster = Cluster.builder()
-                .addContactPointsWithPorts(nodes)
+        return Cluster.builder()
                 .withPoolingOptions(poolingOptions)
                 .withNettyOptions(channelMonitor.nettyOptions())
-                .withReconnectionPolicy(new ConstantReconnectionPolicy(1000))
-                .build();
+                .withReconnectionPolicy(new ConstantReconnectionPolicy(1000));
     }
 
-    @AfterClass(groups = "stress")
-    public void afterClass() {
-        if (ccmBridge != null) {
-            ccmBridge.stop();
-        }
-        if (channelMonitor != null) {
-            channelMonitor.stop();
-        }
-        if (cluster != null) {
-            cluster.close();
-        }
+    @Override
+    public Collection<String> createTestFixtures() {
+        return Lists.newArrayList(
+                "create table record (\n"
+                        + "  name text,\n"
+                        + "  phone text,\n"
+                        + "  value text,\n"
+                        + "  PRIMARY KEY (name, phone)\n"
+                        + ")"
+
+        );
     }
 
     /**
@@ -127,16 +108,14 @@ public class TimeoutStressTest {
      */
     @Test(groups = "stress")
     public void host_state_should_be_maintained_with_timeouts() throws Exception {
-        // Setup schema and insert records.
-        Session session = cluster.connect();
-        setupSchema(session);
+        insertRecords();
         session.close();
 
         // Set very low timeouts.
         cluster.getConfiguration().getSocketOptions().setConnectTimeoutMillis(CONNECTION_TIMEOUT_IN_MS);
         cluster.getConfiguration().getSocketOptions().setReadTimeoutMillis(READ_TIMEOUT_IN_MS);
-        session = cluster.connect();
-        PreparedStatement statement = session.prepare("select * from " + KEYSPACE + ".record where name=? limit 1000;");
+        session = cluster.connect(keyspace);
+        PreparedStatement statement = session.prepare("select * from record where name=? limit 1000;");
 
         int workers = Runtime.getRuntime().availableProcessors();
         ExecutorService workerPool = Executors.newFixedThreadPool(workers,
@@ -145,7 +124,7 @@ public class TimeoutStressTest {
         AtomicBoolean stopped = new AtomicBoolean(false);
 
         // Ensure that we never exceed MaxConnectionsPerHost * nodes + 1 control connection.
-        int maxConnections = TestUtils.numberOfLocalCoreConnections(cluster) * nodes.size() + 1;
+        int maxConnections = TestUtils.numberOfLocalCoreConnections(cluster) * getInitialContactPoints().size() + 1;
 
         try {
             Semaphore concurrentQueries = new Semaphore(CONCURRENT_QUERIES);
@@ -159,7 +138,7 @@ public class TimeoutStressTest {
                 channelMonitor.report();
                 // Some connections that are being closed may have had active requests which are delegated to the
                 // reaper for cleanup later.
-                Collection<SocketChannel> openChannels = channelMonitor.openChannels(nodes);
+                Collection<SocketChannel> openChannels = channelMonitor.openChannels(getInitialContactPoints());
 
                 // Ensure that we don't exceed maximum connections.  Log as warning as there will be a bit of a timing
                 // factor between retrieving open connections and checking the reaper.
@@ -182,7 +161,7 @@ public class TimeoutStressTest {
                     "and for the pools to recover.");
             Uninterruptibles.sleepUninterruptibly(20, TimeUnit.SECONDS);
 
-            Collection<SocketChannel> openChannels = channelMonitor.openChannels(nodes);
+            Collection<SocketChannel> openChannels = channelMonitor.openChannels(getInitialContactPoints());
             assertThat(openChannels.size())
                     .as("Number of open connections does not meet expected: %s", openChannels)
                     .isLessThanOrEqualTo(maxConnections);
@@ -194,7 +173,7 @@ public class TimeoutStressTest {
 
             session.close();
 
-            openChannels = channelMonitor.openChannels(nodes);
+            openChannels = channelMonitor.openChannels(getInitialContactPoints());
             assertThat(openChannels.size())
                     .as("Number of open connections does not meet expected: %s", openChannels)
                     .isEqualTo(1);
@@ -203,23 +182,7 @@ public class TimeoutStressTest {
         }
     }
 
-    /**
-     * Creates the testks schema with a 'record' table and preloads 30k records.
-     */
-    private static void setupSchema(Session session) throws InterruptedException, ExecutionException, TimeoutException {
-        logger.debug("Creating keyspace");
-        session.execute("create KEYSPACE " + KEYSPACE +
-                " WITH replication = {'class': 'SimpleStrategy', 'replication_factor' : 3}");
-        session.execute("use " + KEYSPACE);
-
-        logger.debug("Creating table");
-        session.execute("create table record (\n"
-                + "  name text,\n"
-                + "  phone text,\n"
-                + "  value text,\n"
-                + "  PRIMARY KEY (name, phone)\n"
-                + ");");
-
+    private void insertRecords() {
         int records = 30000;
         PreparedStatement insertStmt = session.prepare("insert into record (name, phone, value) values (?, ?, ?)");
 

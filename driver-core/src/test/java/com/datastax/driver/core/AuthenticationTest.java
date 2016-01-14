@@ -16,84 +16,58 @@
 package com.datastax.driver.core;
 
 import com.datastax.driver.core.exceptions.AuthenticationException;
-import com.datastax.driver.core.exceptions.NoHostAvailableException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
+import com.google.common.util.concurrent.Uninterruptibles;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.concurrent.TimeUnit;
 
+import static com.datastax.driver.core.CreateCCM.TestMode.PER_METHOD;
+
 /**
  * Tests for authenticated cluster access
  */
-public class AuthenticationTest {
+@CreateCCM(PER_METHOD)
+@CCMConfig(
+        config = "authenticator:PasswordAuthenticator",
+        jvmArgs = "-Dcassandra.superuser_setup_delay_ms=0",
+        createCluster = false)
+public class AuthenticationTest extends CCMTestsSupport {
 
-    private static final Logger logger = LoggerFactory.getLogger(AuthenticationTest.class);
 
-    private CCMBridge ccm;
-
-    /**
-     * creates a cluster and turns on password authentication before starting it.
-     */
-    @BeforeClass(groups = "short")
-    public void setupClusterWithAuthentication() throws InterruptedException {
-        ccm = CCMBridge.builder("test")
-                .withCassandraConfiguration("authenticator", "PasswordAuthenticator")
-                .notStarted()
-                .build();
-        ccm.start(1, "-Dcassandra.superuser_setup_delay_ms=0");
-
-        // Even though we've override the default user setup delay, still wait
-        // one second to make sure we don't race
-        TimeUnit.SECONDS.sleep(1);
-    }
-
-    @AfterClass(groups = "short")
-    public void shutdownCluster() {
-        if (ccm != null)
-            ccm.stop();
+    @BeforeMethod(groups = "short")
+    public void sleepIf12() {
+        // For C* 1.2, sleep before attempting to connect as there is a small delay between
+        // user being created.
+        if (ccm.getVersion().getMajor() < 2) {
+            Uninterruptibles.sleepUninterruptibly(1, TimeUnit.SECONDS);
+        }
     }
 
     @Test(groups = "short")
     public void should_connect_with_credentials() throws InterruptedException {
-        Cluster cluster = Cluster.builder().addContactPoint(CCMBridge.IP_PREFIX + '1')
+        Cluster cluster = register(Cluster.builder()
+                .addContactPointsWithPorts(getInitialContactPoints())
                 .withCredentials("cassandra", "cassandra")
-                .build();
-        try {
-            cluster.connect();
-        } catch (NoHostAvailableException e) {
-            logger.error(e.getCustomMessage(1, true, true));
-        } finally {
-            cluster.close();
-        }
+                .build());
+        cluster.connect();
     }
 
     @Test(groups = "short", expectedExceptions = AuthenticationException.class)
     public void should_fail_to_connect_with_wrong_credentials() throws InterruptedException {
-        Cluster cluster = Cluster.builder().addContactPoint(CCMBridge.IP_PREFIX + '1')
+        Cluster cluster = register(Cluster.builder()
+                .addContactPointsWithPorts(getInitialContactPoints())
                 .withCredentials("bogus", "bogus")
-                .build();
-        try {
-            cluster.connect();
-        } catch (NoHostAvailableException e) {
-            logger.error(e.getCustomMessage(1, true, true));
-        } finally {
-            cluster.close();
-        }
+                .build());
+        cluster.connect();
     }
 
     @Test(groups = "short", expectedExceptions = AuthenticationException.class)
     public void should_fail_to_connect_without_credentials() throws InterruptedException {
-        Cluster cluster = Cluster.builder().addContactPoint(CCMBridge.IP_PREFIX + '1')
-                .build();
-        try {
-            cluster.connect();
-        } catch (NoHostAvailableException e) {
-            logger.error(e.getCustomMessage(1, true, true));
-        } finally {
-            cluster.close();
-        }
+        Cluster cluster = register(Cluster.builder()
+                .addContactPointsWithPorts(getInitialContactPoints())
+                .build());
+        cluster.connect();
     }
+
 }

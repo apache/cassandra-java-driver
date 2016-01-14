@@ -937,10 +937,36 @@ public class Cluster implements Closeable {
          * points. Contrarily to other {@code addContactPoints} methods, this method
          * allow to provide a different port for each contact points. Since Cassandra
          * nodes must always all listen on the same port, this is rarelly what you
-         * want and most use should prefer other {@code addContactPoints} methods to
+         * want and most users should prefer other {@code addContactPoints} methods to
          * this one. However, this can be useful if the Cassandra nodes are behind
          * a router and are not accessed directly. Note that if you are in this
-         * situtation (Cassandra nodes are behind a router, not directly accessible),
+         * situation (Cassandra nodes are behind a router, not directly accessible),
+         * you almost surely want to provide a specific {@code AddressTranslater}
+         * (through {@link #withAddressTranslater}) to translate actual Cassandra node
+         * addresses to the addresses the driver should use, otherwise the driver
+         * will not be able to auto-detect new nodes (and will generally not function
+         * optimally).
+         *
+         * @param addresses addresses of the nodes to add as contact point
+         * @return this Builder
+         * @see Builder#addContactPoint
+         */
+        public Builder addContactPointsWithPorts(InetSocketAddress... addresses) {
+            Collections.addAll(this.addresses, addresses);
+            return this;
+        }
+
+        /**
+         * Adds contact points.
+         * <p/>
+         * See {@link Builder#addContactPoint} for more details on contact
+         * points. Contrarily to other {@code addContactPoints} methods, this method
+         * allow to provide a different port for each contact points. Since Cassandra
+         * nodes must always all listen on the same port, this is rarelly what you
+         * want and most users should prefer other {@code addContactPoints} methods to
+         * this one. However, this can be useful if the Cassandra nodes are behind
+         * a router and are not accessed directly. Note that if you are in this
+         * situation (Cassandra nodes are behind a router, not directly accessible),
          * you almost surely want to provide a specific {@code AddressTranslater}
          * (through {@link #withAddressTranslater}) to translate actual Cassandra node
          * addresses to the addresses the driver should use, otherwise the driver

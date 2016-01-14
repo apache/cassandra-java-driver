@@ -641,36 +641,39 @@ public class NetworkTopologyStrategyTest extends AbstractReplicationStrategyTest
     public void should_warn_if_replication_factor_cannot_be_met() {
         Logger logger = Logger.getLogger(ReplicationStrategy.NetworkTopologyStrategy.class);
         MemoryAppender logs = new MemoryAppender();
-        logger.setLevel(Level.WARN);
-        logger.addAppender(logs);
+        Level originalLevel = logger.getLevel();
+        try {
+            logger.setLevel(Level.WARN);
+            logger.addAppender(logs);
 
-        List<Token> ring = ImmutableList.<Token>builder()
-                .add(TOKEN01)
-                .add(TOKEN02)
-                .add(TOKEN03)
-                .add(TOKEN04)
-                .build();
+            List<Token> ring = ImmutableList.<Token>builder()
+                    .add(TOKEN01)
+                    .add(TOKEN02)
+                    .add(TOKEN03)
+                    .add(TOKEN04)
+                    .build();
 
-        Map<Token, Host> tokenToPrimary = ImmutableMap.<Token, Host>builder()
-                .put(TOKEN01, host(IP1, DC1, RACK11))
-                .put(TOKEN02, host(IP2, DC1, RACK12))
-                .put(TOKEN03, host(IP3, DC2, RACK21))
-                .put(TOKEN04, host(IP4, DC2, RACK22))
-                .build();
+            Map<Token, Host> tokenToPrimary = ImmutableMap.<Token, Host>builder()
+                    .put(TOKEN01, host(IP1, DC1, RACK11))
+                    .put(TOKEN02, host(IP2, DC1, RACK12))
+                    .put(TOKEN03, host(IP3, DC2, RACK21))
+                    .put(TOKEN04, host(IP4, DC2, RACK22))
+                    .build();
 
-        // Wrong configuration: impossible replication factor for DC2
-        networkTopologyStrategy(rf(DC1, 2), rf(DC2, 3))
-                .computeTokenToReplicaMap(keyspace, tokenToPrimary, ring);
-        assertThat(logs.getNext())
-                .contains(String.format("Error while computing token map for keyspace %s with datacenter %s", keyspace, DC2));
+            // Wrong configuration: impossible replication factor for DC2
+            networkTopologyStrategy(rf(DC1, 2), rf(DC2, 3))
+                    .computeTokenToReplicaMap(keyspace, tokenToPrimary, ring);
+            assertThat(logs.getNext())
+                    .contains(String.format("Error while computing token map for keyspace %s with datacenter %s", keyspace, DC2));
 
-        // Wrong configuration: non-existing datacenter
-        networkTopologyStrategy(rf(DC1, 2), rf("does_not_exist", 2))
-                .computeTokenToReplicaMap(keyspace, tokenToPrimary, ring);
-        assertThat(logs.getNext())
-                .contains(String.format("Error while computing token map for keyspace %s with datacenter %s", keyspace, "does_not_exist"));
-
-        logger.setLevel(null);
-        logger.removeAppender(logs);
+            // Wrong configuration: non-existing datacenter
+            networkTopologyStrategy(rf(DC1, 2), rf("does_not_exist", 2))
+                    .computeTokenToReplicaMap(keyspace, tokenToPrimary, ring);
+            assertThat(logs.getNext())
+                    .contains(String.format("Error while computing token map for keyspace %s with datacenter %s", keyspace, "does_not_exist"));
+        } finally {
+            logger.setLevel(originalLevel);
+            logger.removeAppender(logs);
+        }
     }
 }

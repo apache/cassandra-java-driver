@@ -15,7 +15,7 @@
  */
 package com.datastax.driver.mapping;
 
-import com.datastax.driver.core.CCMBridge;
+import com.datastax.driver.core.CCMTestsSupport;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.utils.UUIDs;
 import com.datastax.driver.mapping.annotations.*;
@@ -29,9 +29,11 @@ import java.util.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.testng.Assert.*;
 
-public class MapperUDTTest extends CCMBridge.PerClassSingleNodeCluster {
+@SuppressWarnings("unused")
+public class MapperUDTTest extends CCMTestsSupport {
 
-    protected Collection<String> getTableDefinitions() {
+    @Override
+    public Collection<String> createTestFixtures() {
         return Arrays.asList("CREATE TYPE address (street text, city text, zip_code int, phones set<text>)",
                 "CREATE TABLE users (user_id uuid PRIMARY KEY, name text, mainaddress frozen<address>, other_addresses map<text,frozen<address>>)");
     }
@@ -141,9 +143,7 @@ public class MapperUDTTest extends CCMBridge.PerClassSingleNodeCluster {
             this.city = city;
             this.zipCode = zipCode;
             this.phones = new HashSet<String>();
-            for (String phone : phones) {
-                this.phones.add(phone);
-            }
+            Collections.addAll(this.phones, phones);
         }
 
         public String getStreet() {
@@ -203,7 +203,7 @@ public class MapperUDTTest extends CCMBridge.PerClassSingleNodeCluster {
         ResultSet setOtherAddresses(@Param("id") UUID id, @Param("addresses") Map<String, Address> addresses);
 
         @Query("SELECT * FROM users")
-        public Result<User> getAll();
+        Result<User> getAll();
     }
 
     @Test(groups = "short")

@@ -15,7 +15,6 @@
  */
 package com.datastax.driver.core.policies;
 
-import com.datastax.driver.core.CCMBridge;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Metrics;
 import com.datastax.driver.core.Session;
@@ -107,7 +106,8 @@ public class DefaultRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegr
                         Collections.singletonList(host1.getSocketAddress()));
 
         Cluster whiteListedCluster = Cluster.builder()
-                .addContactPoint(CCMBridge.ipOfNode(1))
+                .addContactPointsWithPorts(scassandras.address(1))
+                .withAddressTranslater(scassandras.addressTranslator())
                 .withRetryPolicy(retryPolicy)
                 .withLoadBalancingPolicy(firstHostOnlyPolicy)
                 .build();

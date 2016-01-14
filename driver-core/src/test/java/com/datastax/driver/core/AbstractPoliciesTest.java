@@ -15,46 +15,54 @@
  */
 package com.datastax.driver.core;
 
+import org.testng.annotations.BeforeMethod;
+
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Callable;
 
 import static com.datastax.driver.core.TestUtils.*;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.batch;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.insertInto;
 import static org.testng.Assert.*;
 
-public abstract class AbstractPoliciesTest {
+public abstract class AbstractPoliciesTest extends CCMTestsSupport {
+
     private static final boolean DEBUG = false;
 
     protected Map<InetAddress, Integer> coordinators = new HashMap<InetAddress, Integer>();
+
     protected PreparedStatement prepared;
 
-
-    /**
-     * Create schemas for the policy tests, depending on replication factors/strategies.
-     */
-    public static void createSchema(Session session) {
-        createSchema(session, 1);
-    }
-
-    public static void createSchema(Session session, int replicationFactor) {
-        session.execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, SIMPLE_KEYSPACE, replicationFactor));
-        session.execute("USE " + SIMPLE_KEYSPACE);
+    protected void createSchema(int replicationFactor) {
+        final String ks = TestUtils.getAvailableKeyspaceName();
+        session.execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, ks, replicationFactor));
+        // tests fail randomly here with InvalidQueryException: Keyspace 'xxx' does not exist
+        ConditionChecker.awaitUntil(new Callable<Boolean>() {
+            @Override
+            public Boolean call() {
+                return cluster.getMetadata().getKeyspace(ks) != null;
+            }
+        }, 60000);
+        session.execute("USE " + ks);
         session.execute(String.format("CREATE TABLE %s (k int PRIMARY KEY, i int)", SIMPLE_TABLE));
     }
 
-    public static void createMultiDCSchema(Session session) {
-        createMultiDCSchema(session, 1, 1);
-    }
-
-    public static void createMultiDCSchema(Session session, int dc1RF, int dc2RF) {
-        session.execute(String.format(CREATE_KEYSPACE_GENERIC_FORMAT, SIMPLE_KEYSPACE, "NetworkTopologyStrategy", String.format("'dc1' : %d, 'dc2' : %d", dc1RF, dc2RF)));
-        session.execute("USE " + SIMPLE_KEYSPACE);
+    protected void createMultiDCSchema(int dc1RF, int dc2RF) {
+        final String ks = TestUtils.getAvailableKeyspaceName();
+        session.execute(String.format(CREATE_KEYSPACE_GENERIC_FORMAT, ks, "NetworkTopologyStrategy", String.format("'dc1' : %d, 'dc2' : %d", dc1RF, dc2RF)));
+        // tests fail randomly here with InvalidQueryException: Keyspace 'xxx' does not exist
+        ConditionChecker.awaitUntil(new Callable<Boolean>() {
+            @Override
+            public Boolean call() {
+                return cluster.getMetadata().getKeyspace(ks) != null;
+            }
+        }, 60000);
+        session.execute("USE " + ks);
         session.execute(String.format("CREATE TABLE %s (k int PRIMARY KEY, i int)", SIMPLE_TABLE));
     }
-
 
     /**
      * Coordinator management/count
@@ -65,6 +73,7 @@ public abstract class AbstractPoliciesTest {
         coordinators.put(coordinator, n == null ? 1 : n + 1);
     }
 
+    @BeforeMethod(groups = "long")
     protected void resetCoordinators() {
         coordinators = new HashMap<InetAddress, Integer>();
     }
@@ -120,12 +129,12 @@ public abstract class AbstractPoliciesTest {
                 else {
 
                     if (n == queried) {
-                        if (found == true)
-                            throw new AssertionError(String.format("Found 2 nodes with " + n + " queries in " + queriedMapString()));
+                        if (found)
+                            throw new AssertionError(String.format("Found 2 nodes with %s queries in %s", n, queriedMapString()));
                         found = true;
                     } else {
                         if (queried != 0)
-                            throw new AssertionError(String.format("Host " + addr + " should have be queried: " + queriedMapString()));
+                            throw new AssertionError(String.format("Host %s should have be queried: %s", addr, queriedMapString()));
                     }
                 }
             }
@@ -147,72 +156,74 @@ public abstract class AbstractPoliciesTest {
     /**
      * Init methods that handle writes using batch and consistency options.
      */
-    protected void init(CCMBridge.CCMCluster c, int n) {
-        write(c, n, false, ConsistencyLevel.ONE);
-        prepared = c.session.prepare("SELECT * FROM " + SIMPLE_TABLE + " WHERE k = ?").setConsistencyLevel(ConsistencyLevel.ONE);
+    protected void init(int n) {
+        init(n, false, ConsistencyLevel.ONE);
     }
 
-    protected void init(CCMBridge.CCMCluster c, int n, boolean batch) {
-        write(c, n, batch, ConsistencyLevel.ONE);
-        prepared = c.session.prepare("SELECT * FROM " + SIMPLE_TABLE + " WHERE k = ?").setConsistencyLevel(ConsistencyLevel.ONE);
+    protected void init(int n, boolean batch) {
+        init(n, batch, ConsistencyLevel.ONE);
     }
 
-    protected void init(CCMBridge.CCMCluster c, int n, ConsistencyLevel cl) {
-        write(c, n, false, cl);
-        prepared = c.session.prepare("SELECT * FROM " + SIMPLE_TABLE + " WHERE k = ?").setConsistencyLevel(cl);
+    protected void init(int n, ConsistencyLevel cl) {
+        write(n, false, cl);
     }
 
-    protected void write(CCMBridge.CCMCluster c, int n) {
-        write(c, n, false, ConsistencyLevel.ONE);
+    protected void init(int n, boolean batch, ConsistencyLevel cl) {
+        write(n, batch, cl);
+        prepared = session.prepare("SELECT * FROM " + SIMPLE_TABLE + " WHERE k = ?").setConsistencyLevel(cl);
     }
 
-    protected void write(CCMBridge.CCMCluster c, int n, boolean batch) {
-        write(c, n, batch, ConsistencyLevel.ONE);
+    protected void write(int n) {
+        write(n, false, ConsistencyLevel.ONE);
     }
 
-    protected void write(CCMBridge.CCMCluster c, int n, ConsistencyLevel cl) {
-        write(c, n, false, cl);
+    protected void write(int n, boolean batch) {
+        write(n, batch, ConsistencyLevel.ONE);
     }
 
-    protected void write(CCMBridge.CCMCluster c, int n, boolean batch, ConsistencyLevel cl) {
+    protected void write(int n, ConsistencyLevel cl) {
+        write(n, false, cl);
+    }
+
+    protected void write(int n, boolean batch, ConsistencyLevel cl) {
         // We don't use insert for our test because the resultSet don't ship the queriedHost
         // Also note that we don't use tracing because this would trigger requests that screw up the test
         for (int i = 0; i < n; ++i)
             if (batch)
                 // BUG: WriteType == SIMPLE
-                c.session.execute(batch()
+                session.execute(batch()
                         .add(insertInto(SIMPLE_TABLE).values(new String[]{"k", "i"}, new Object[]{0, 0}))
                         .setConsistencyLevel(cl));
             else
-                c.session.execute(new SimpleStatement(String.format("INSERT INTO %s(k, i) VALUES (0, 0)", SIMPLE_TABLE)).setConsistencyLevel(cl));
+                session.execute(new SimpleStatement(String.format("INSERT INTO %s(k, i) VALUES (0, 0)", SIMPLE_TABLE)).setConsistencyLevel(cl));
     }
 
 
     /**
      * Query methods that handle reads based on PreparedStatements and/or ConsistencyLevels.
      */
-    protected void query(CCMBridge.CCMCluster c, int n) {
-        query(c, n, false, ConsistencyLevel.ONE);
+    protected void query(int n) {
+        query(n, false, ConsistencyLevel.ONE);
     }
 
-    protected void query(CCMBridge.CCMCluster c, int n, boolean usePrepared) {
-        query(c, n, usePrepared, ConsistencyLevel.ONE);
+    protected void query(int n, boolean usePrepared) {
+        query(n, usePrepared, ConsistencyLevel.ONE);
     }
 
-    protected void query(CCMBridge.CCMCluster c, int n, ConsistencyLevel cl) {
-        query(c, n, false, cl);
+    protected void query(int n, ConsistencyLevel cl) {
+        query(n, false, cl);
     }
 
-    protected void query(CCMBridge.CCMCluster c, int n, boolean usePrepared, ConsistencyLevel cl) {
+    protected void query(int n, boolean usePrepared, ConsistencyLevel cl) {
         if (usePrepared) {
             BoundStatement bs = prepared.bind(0);
             for (int i = 0; i < n; ++i)
-                addCoordinator(c.session.execute(bs));
+                addCoordinator(session.execute(bs));
         } else {
             ByteBuffer routingKey = ByteBuffer.allocate(4);
             routingKey.putInt(0, 0);
             for (int i = 0; i < n; ++i)
-                addCoordinator(c.session.execute(new SimpleStatement(String.format("SELECT * FROM %s WHERE k = 0", SIMPLE_TABLE)).setRoutingKey(routingKey).setConsistencyLevel(cl)));
+                addCoordinator(session.execute(new SimpleStatement(String.format("SELECT * FROM %s WHERE k = 0", SIMPLE_TABLE)).setRoutingKey(routingKey).setConsistencyLevel(cl)));
         }
     }
 }

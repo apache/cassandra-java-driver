@@ -23,59 +23,37 @@ import java.util.Set;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 
-public class SingleTokenIntegrationTest {
+@CCMConfig(
+        // force the initial token to a non-min value to validate that the single range will always be ]minToken, minToken]
+        config = "initial_token:1",
+        clusterProvider = "createClusterBuilderNoDebouncing"
+)
+public class SingleTokenIntegrationTest extends CCMTestsSupport {
+
     /**
      * JAVA-684: Empty TokenRange returned in a one token cluster
      */
     @Test(groups = "short")
     public void should_return_single_non_empty_range_when_cluster_has_one_single_token() {
-        CCMBridge ccm = null;
-        Cluster cluster = null;
+        Metadata metadata = cluster.getMetadata();
+        Set<TokenRange> tokenRanges = metadata.getTokenRanges();
+        assertThat(tokenRanges).hasSize(1);
+        TokenRange tokenRange = tokenRanges.iterator().next();
+        assertThat(tokenRange)
+                .startsWith(Token.M3PToken.FACTORY.minToken())
+                .endsWith(Token.M3PToken.FACTORY.minToken())
+                .isNotEmpty()
+                .isNotWrappedAround();
 
-        try {
-            ccm = CCMBridge.builder("test")
-                    // force the initial token to a non-min value to validate that the single range will always be ]minToken, minToken]
-                    .withCassandraConfiguration("initial_token", "1")
-                    .build();
+        Set<Host> hostsForRange = metadata.getReplicas(keyspace, tokenRange);
+        Host host1 = TestUtils.findHost(cluster, 1);
+        assertThat(hostsForRange).containsOnly(host1);
 
-            cluster = Cluster.builder()
-                    .addContactPoint(CCMBridge.ipOfNode(1))
-                    .withQueryOptions(new QueryOptions()
-                                    .setRefreshNodeIntervalMillis(0)
-                                    .setRefreshNodeListIntervalMillis(0)
-                                    .setRefreshSchemaIntervalMillis(0)
-                    )
-                    .build();
+        ByteBuffer randomPartitionKey = Bytes.fromHexString("0xCAFEBABE");
+        Set<Host> hostsForKey = metadata.getReplicas(keyspace, randomPartitionKey);
+        assertThat(hostsForKey).containsOnly(host1);
 
-            Session session = cluster.connect();
-            session.execute("create keyspace test with replication = {'class': 'SimpleStrategy', 'replication_factor': 1}");
-
-            Metadata metadata = cluster.getMetadata();
-
-            Set<TokenRange> tokenRanges = metadata.getTokenRanges();
-            assertThat(tokenRanges).hasSize(1);
-            TokenRange tokenRange = tokenRanges.iterator().next();
-            assertThat(tokenRange)
-                    .startsWith(Token.M3PToken.FACTORY.minToken())
-                    .endsWith(Token.M3PToken.FACTORY.minToken())
-                    .isNotEmpty()
-                    .isNotWrappedAround();
-
-            Set<Host> hostsForRange = metadata.getReplicas("test", tokenRange);
-            Host host1 = TestUtils.findHost(cluster, 1);
-            assertThat(hostsForRange).containsOnly(host1);
-
-            ByteBuffer randomPartitionKey = Bytes.fromHexString("0xCAFEBABE");
-            Set<Host> hostsForKey = metadata.getReplicas("test", randomPartitionKey);
-            assertThat(hostsForKey).containsOnly(host1);
-
-            Set<TokenRange> rangesForHost = metadata.getTokenRanges("test", host1);
-            assertThat(rangesForHost).containsOnly(tokenRange);
-        } finally {
-            if (cluster != null)
-                cluster.close();
-            if (ccm != null)
-                ccm.remove();
-        }
+        Set<TokenRange> rangesForHost = metadata.getTokenRanges(keyspace, host1);
+        assertThat(rangesForHost).containsOnly(tokenRange);
     }
 }

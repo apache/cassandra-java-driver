@@ -15,15 +15,18 @@
  */
 package com.datastax.driver.mapping;
 
-import com.datastax.driver.core.CCMBridge;
+import com.datastax.driver.core.CCMTestsSupport;
 import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
 import org.testng.annotations.Test;
 
 import java.util.*;
 
-public class MapperInvalidCollectionTypesTest extends CCMBridge.PerClassSingleNodeCluster {
-    protected Collection<String> getTableDefinitions() {
+@SuppressWarnings("unused")
+public class MapperInvalidCollectionTypesTest extends CCMTestsSupport {
+
+    @Override
+    public Collection<String> createTestFixtures() {
         return Arrays.asList(
                 "CREATE TABLE table_list (id int PRIMARY KEY, l list<int>)",
                 "CREATE TABLE table_set (id int PRIMARY KEY, s set<int>)",

@@ -15,7 +15,7 @@
  */
 package com.datastax.driver.core.querybuilder;
 
-import com.datastax.driver.core.CCMBridge;
+import com.datastax.driver.core.CCMTestsSupport;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
@@ -29,10 +29,10 @@ import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 
 @CassandraVersion(major = 2.1)
-public class QueryBuilder21ExecutionTest extends CCMBridge.PerClassSingleNodeCluster {
+public class QueryBuilder21ExecutionTest extends CCMTestsSupport {
 
     @Override
-    protected Collection<String> getTableDefinitions() {
+    public Collection<String> createTestFixtures() {
         // Taken from http://www.datastax.com/dev/blog/cql-in-2-1
         return Arrays.asList(
                 "CREATE TABLE products (id int PRIMARY KEY, description text, price int, categories set<text>, buyers list<int>, features_keys map<text, text>, features_values map<text, text>)",

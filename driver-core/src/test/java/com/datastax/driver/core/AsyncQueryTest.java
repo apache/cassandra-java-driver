@@ -30,7 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
-public class AsyncQueryTest extends CCMBridge.PerClassSingleNodeCluster {
+public class AsyncQueryTest extends CCMTestsSupport {
 
     @DataProvider(name = "keyspace")
     public static Object[][] keyspace() {
@@ -38,7 +38,7 @@ public class AsyncQueryTest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     @Override
-    protected Collection<String> getTableDefinitions() {
+    public Collection<String> createTestFixtures() {
         List<String> definitions = Lists.newArrayList();
 
         for (Object[] objects : keyspace()) {

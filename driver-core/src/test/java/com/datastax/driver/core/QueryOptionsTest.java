@@ -22,12 +22,14 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.TestUtils.nonQuietClusterCloseOptions;
 
 public class QueryOptionsTest {
+
     ScassandraCluster scassandra;
 
     QueryOptions queryOptions;
@@ -47,7 +49,8 @@ public class QueryOptionsTest {
         queryOptions = new QueryOptions();
         loadBalancingPolicy = new SortingLoadBalancingPolicy();
         cluster = Cluster.builder()
-                .addContactPoint(CCMBridge.ipOfNode(2))
+                .addContactPointsWithPorts(scassandra.address(2))
+                .withAddressTranslater(scassandra.addressTranslator())
                 .withLoadBalancingPolicy(loadBalancingPolicy)
                 .withQueryOptions(queryOptions)
                 .withNettyOptions(nonQuietClusterCloseOptions)
@@ -62,6 +65,7 @@ public class QueryOptionsTest {
         // Make sure there are no prepares
         for (int host : Lists.newArrayList(1, 2, 3)) {
             assertThat(scassandra.node(host).activityClient().retrievePreparedStatementPreparations()).hasSize(0);
+            scassandra.node(host).activityClient().clearAllRecordedActivity();
         }
     }
 
@@ -158,6 +162,15 @@ public class QueryOptionsTest {
 
         preparationOne = scassandra.node(1).activityClient().retrievePreparedStatementPreparations();
         if (expectReprepare) {
+            // tests fail randomly at this point, probably due to
+            // https://github.com/scassandra/scassandra-server/issues/116
+            ConditionChecker.awaitWhile(new Callable<Boolean>() {
+                @Override
+                public Boolean call() {
+                    return session.getState().getConnectedHosts().size() < 3
+                            || scassandra.node(1).activityClient().retrievePreparedStatementPreparations().isEmpty();
+                }
+            }, TimeUnit.MINUTES.toMillis(1));
             assertThat(preparationOne).hasSize(1);
             assertThat(preparationOne.get(0).getPreparedStatementText()).isEqualTo(query);
         } else {
@@ -215,7 +228,7 @@ public class QueryOptionsTest {
         valideReprepareOnUp(false);
     }
 
-    @AfterMethod(groups = "short")
+    @AfterMethod(groups = "short", alwaysRun = true)
     public void afterMethod() {
         if (cluster != null)
             cluster.close();

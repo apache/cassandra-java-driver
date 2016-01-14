@@ -16,23 +16,22 @@
 package com.datastax.driver.core;
 
 import org.mockito.ArgumentCaptor;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.util.Collection;
-
 import static com.datastax.driver.core.Assertions.assertThat;
+import static com.datastax.driver.core.CreateCCM.TestMode.PER_METHOD;
 import static com.datastax.driver.core.SchemaElement.KEYSPACE;
 import static com.datastax.driver.core.SchemaElement.TABLE;
 import static com.datastax.driver.core.TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT;
 import static com.datastax.driver.core.TestUtils.CREATE_TABLE_SIMPLE_FORMAT;
-import static com.google.common.collect.Lists.newArrayList;
 import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.Mockito.*;
 
-public class SchemaRefreshDebouncerTest extends CCMBridge.PerClassSingleNodeCluster {
+@CreateCCM(PER_METHOD)
+@CCMConfig(dirtiesContext = true, createKeyspace = false)
+public class SchemaRefreshDebouncerTest extends CCMTestsSupport {
 
     // This may need to be tweaked depending on the reliability of the test environment.
     private static final int DEBOUNCE_TIME = 5000;
@@ -47,22 +46,14 @@ public class SchemaRefreshDebouncerTest extends CCMBridge.PerClassSingleNodeClus
     private Session session2;
     private Cluster cluster2;
 
-    // Keyspaces to drop after test completes.
-    private Collection<String> keyspaces = newArrayList();
-
-    @Override
-    protected Collection<String> getTableDefinitions() {
-        return newArrayList();
-    }
-
-    @BeforeClass(groups = "short")
+    @BeforeMethod(groups = "short")
     public void setup() {
         QueryOptions queryOptions = new QueryOptions();
         queryOptions.setRefreshSchemaIntervalMillis(DEBOUNCE_TIME);
         queryOptions.setMaxPendingRefreshSchemaRequests(5);
         // Create a separate cluster that will receive the schema events on its control connection.
-        cluster2 = this.configure(Cluster.builder())
-                .addContactPointsWithPorts(newArrayList(hostAddress))
+        cluster2 = Cluster.builder()
+                .addContactPointsWithPorts(getInitialContactPoints())
                 .withQueryOptions(queryOptions)
                 .build();
         session2 = cluster2.connect();
@@ -81,17 +72,7 @@ public class SchemaRefreshDebouncerTest extends CCMBridge.PerClassSingleNodeClus
 
     @AfterMethod(groups = "short")
     public void beforeMethod() {
-        reset(listener);
-        reset(controlConnection);
-    }
-
-    @AfterClass(groups = "short")
-    public void teardown() {
         cluster2.close();
-        // drop all keyspaces
-        for (String keyspace : keyspaces) {
-            session.execute("DROP KEYSPACE " + keyspace);
-        }
     }
 
     /**
@@ -107,7 +88,6 @@ public class SchemaRefreshDebouncerTest extends CCMBridge.PerClassSingleNodeClus
     public void should_debounce_and_coalesce_create_and_alter_keyspace_into_refresh_keyspace() throws Exception {
         String keyspace = "sdaccaak";
         session.execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, keyspace, 1));
-        keyspaces.add(keyspace);
         session.execute(String.format("ALTER KEYSPACE %s WITH DURABLE_WRITES=false", keyspace));
 
         ArgumentCaptor<KeyspaceMetadata> captor = forClass(KeyspaceMetadata.class);
@@ -140,7 +120,6 @@ public class SchemaRefreshDebouncerTest extends CCMBridge.PerClassSingleNodeClus
         String keyspace = "sdacckt";
         String table = "tbl1";
         session.execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, keyspace, 1));
-        keyspaces.add(keyspace);
         session.execute(String.format(CREATE_TABLE_SIMPLE_FORMAT, keyspace + "." + table));
 
         ArgumentCaptor<KeyspaceMetadata> keyspaceCaptor = forClass(KeyspaceMetadata.class);
@@ -175,7 +154,6 @@ public class SchemaRefreshDebouncerTest extends CCMBridge.PerClassSingleNodeClus
     public void should_debounce_and_coalesce_tables_in_same_keyspace_into_refresh_keyspace() throws Exception {
         String keyspace = "sdactisk";
         session2.execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, keyspace, 1));
-        keyspaces.add(keyspace);
         // Reset invocations as creating keyspace causes a keyspace refresh.
         reset(controlConnection);
         reset(listener);
@@ -220,7 +198,6 @@ public class SchemaRefreshDebouncerTest extends CCMBridge.PerClassSingleNodeClus
         String columnName = "added_column";
         // Execute on session 2 which refreshes schema as part of processing responses.
         session2.execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, keyspace, 1));
-        keyspaces.add(keyspace);
         session2.execute(String.format(CREATE_TABLE_SIMPLE_FORMAT, keyspace + "." + table));
         reset(controlConnection);
         reset(listener);
@@ -271,7 +248,6 @@ public class SchemaRefreshDebouncerTest extends CCMBridge.PerClassSingleNodeClus
         String prefix = "sdacmkc";
         for (int i = 0; i < 3; i++) {
             session.execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, prefix + i, 1));
-            keyspaces.add(prefix + i);
         }
 
         verify(listener, timeout(DEBOUNCE_TIME * 3).times(3)).onKeyspaceAdded(any(KeyspaceMetadata.class));
@@ -298,7 +274,6 @@ public class SchemaRefreshDebouncerTest extends CCMBridge.PerClassSingleNodeClus
         String prefix = "srwmprr";
         for (int i = 0; i < 5; i++) {
             session.execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, prefix + i, 1));
-            keyspaces.add(prefix + i);
         }
 
         // Event should be processed immediately as we hit our threshold.

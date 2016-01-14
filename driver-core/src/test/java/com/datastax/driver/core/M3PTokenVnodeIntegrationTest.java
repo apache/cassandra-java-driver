@@ -15,9 +15,11 @@
  */
 package com.datastax.driver.core;
 
+@CCMConfig(options = "--vnodes")
 public class M3PTokenVnodeIntegrationTest extends TokenIntegrationTest {
+
     public M3PTokenVnodeIntegrationTest() {
-        super("", DataType.bigint(), true);
+        super(DataType.bigint(), true);
     }
 
     @Override

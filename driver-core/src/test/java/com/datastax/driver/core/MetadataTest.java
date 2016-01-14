@@ -21,10 +21,12 @@ import org.testng.annotations.Test;
 import java.util.Map;
 
 import static com.datastax.driver.core.Assertions.assertThat;
+import static com.datastax.driver.core.CreateCCM.TestMode.PER_METHOD;
 import static com.datastax.driver.core.TestUtils.nonDebouncingQueryOptions;
 import static com.datastax.driver.core.TestUtils.waitFor;
 
-public class MetadataTest {
+@CreateCCM(PER_METHOD)
+public class MetadataTest extends CCMTestsSupport {
 
     /**
      * <p>
@@ -50,71 +52,62 @@ public class MetadataTest {
      * @since 2.0.10, 2.1.5
      */
     @Test(groups = "long")
+    @CCMConfig(numberOfNodes = 3, dirtiesContext = true, createCluster = false)
     public void should_update_metadata_on_topology_change() {
-        CCMBridge ccm = null;
-        Cluster cluster = null;
+        Cluster cluster = register(Cluster.builder()
+                .addContactPointsWithPorts(getHostAddress(1))
+                .withAddressTranslater(getAddressTranslator())
+                .withQueryOptions(nonDebouncingQueryOptions())
+                .build());
+        Session session = cluster.connect();
 
-        try {
-            ccm = CCMBridge.builder("test").withNodes(3).build();
+        String keyspace = "test";
+        session.execute("CREATE KEYSPACE " + keyspace + " WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1}");
+        Metadata metadata = cluster.getMetadata();
 
-            cluster = Cluster.builder()
-                    .addContactPoint(CCMBridge.ipOfNode(1))
-                    .withQueryOptions(nonDebouncingQueryOptions())
-                    .build();
-            Session session = cluster.connect();
+        // Capture all Token data.
+        assertThat(metadata.getTokenRanges()).hasSize(3);
+        Map<Host, Token> tokensForHost = getTokenForHosts(metadata);
 
-            String keyspace = "test";
-            session.execute("CREATE KEYSPACE " + keyspace + " WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1}");
-            Metadata metadata = cluster.getMetadata();
+        // Capture host3s token and range before we take it down.
+        Host host3 = TestUtils.findHost(cluster, 3);
+        Token host3Token = tokensForHost.get(host3);
 
-            // Capture all Token data.
-            assertThat(metadata.getTokenRanges()).hasSize(3);
-            Map<Host, Token> tokensForHost = getTokenForHosts(metadata);
+        ccm.decommissionNode(3);
+        ccm.remove(3);
 
-            // Capture host3s token and range before we take it down.
-            Host host3 = TestUtils.findHost(cluster, 3);
-            Token host3Token = tokensForHost.get(host3);
+        // Ensure that the token ranges were updated, there should only be 2 ranges now.
+        assertThat(metadata.getTokenRanges()).hasSize(2);
 
-            ccm.decommissionNode(3);
-            ccm.remove(3);
+        // The token should not be present for any Host.
+        assertThat(getTokenForHosts(metadata)).doesNotContainValue(host3Token);
 
-            // Ensure that the token ranges were updated, there should only be 2 ranges now.
-            assertThat(metadata.getTokenRanges()).hasSize(2);
+        // The ring should be fully accounted for.
+        assertThat(cluster).hasValidTokenRanges("test");
+        assertThat(cluster).hasValidTokenRanges();
 
-            // The token should not be present for any Host.
-            assertThat(getTokenForHosts(metadata)).doesNotContainValue(host3Token);
+        // Add an additional node.
+        ccm.add(4);
+        ccm.start(4);
+        waitFor(TestUtils.IP_PREFIX + '4', cluster);
 
-            // The ring should be fully accounted for.
-            assertThat(cluster).hasValidTokenRanges("test");
-            assertThat(cluster).hasValidTokenRanges();
+        // Ensure that the token ranges were updated, there should only be 3 ranges now.
+        assertThat(metadata.getTokenRanges()).hasSize(3);
 
-            // Add an additional node.
-            ccm.bootstrapNode(4);
-            waitFor(CCMBridge.IP_PREFIX + '4', cluster);
+        Host host4 = TestUtils.findHost(cluster, 4);
+        TokenRange host4Range = metadata.getTokenRanges(keyspace, host4).iterator().next();
 
-            // Ensure that the token ranges were updated, there should only be 3 ranges now.
-            assertThat(metadata.getTokenRanges()).hasSize(3);
-
-            Host host4 = TestUtils.findHost(cluster, 4);
-            TokenRange host4Range = metadata.getTokenRanges(keyspace, host4).iterator().next();
-
-            // Ensure no host token range intersects with node 4.
-            for (Host host : metadata.getAllHosts()) {
-                if (!host.equals(host4)) {
-                    TokenRange hostRange = metadata.getTokenRanges(keyspace, host).iterator().next();
-                    assertThat(host4Range).doesNotIntersect(hostRange);
-                }
+        // Ensure no host token range intersects with node 4.
+        for (Host host : metadata.getAllHosts()) {
+            if (!host.equals(host4)) {
+                TokenRange hostRange = metadata.getTokenRanges(keyspace, host).iterator().next();
+                assertThat(host4Range).doesNotIntersect(hostRange);
             }
-
-            // The ring should be fully accounted for.
-            assertThat(cluster).hasValidTokenRanges("test");
-            assertThat(cluster).hasValidTokenRanges();
-        } finally {
-            if (cluster != null)
-                cluster.close();
-            if (ccm != null)
-                ccm.remove();
         }
+
+        // The ring should be fully accounted for.
+        assertThat(cluster).hasValidTokenRanges("test");
+        assertThat(cluster).hasValidTokenRanges();
     }
 
     /**

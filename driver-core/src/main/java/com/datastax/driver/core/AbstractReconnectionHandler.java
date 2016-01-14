@@ -48,7 +48,8 @@ abstract class AbstractReconnectionHandler implements Runnable {
      */
     private final AtomicReference<ListenableFuture<?>> currentAttempt;
 
-    private final HandlerFuture handlerFuture = new HandlerFuture();
+    @VisibleForTesting
+    final HandlerFuture handlerFuture = new HandlerFuture();
 
     private final long initialDelayMs;
 
@@ -131,7 +132,6 @@ abstract class AbstractReconnectionHandler implements Runnable {
 
         if (handlerFuture.isCancelled()) {
             logger.debug("Got cancelled, stopping");
-            currentAttempt.compareAndSet(handlerFuture, null);
             return;
         }
 

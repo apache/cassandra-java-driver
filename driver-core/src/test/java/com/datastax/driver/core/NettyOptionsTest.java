@@ -30,7 +30,6 @@ import org.testng.annotations.Test;
 
 import java.util.concurrent.ThreadFactory;
 
-import static com.datastax.driver.core.CCMBridge.ipOfNode;
 import static org.mockito.Answers.CALLS_REAL_METHODS;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
@@ -46,7 +45,7 @@ public class NettyOptionsTest {
     @Test(groups = "long", dataProvider = "NettyOptionsTest")
     public void should_invoke_netty_options_hooks(int hosts, int coreConnections) throws Exception {
         //given
-        CCMBridge ccm = CCMBridge.builder("test").withNodes(hosts).build();
+        CCMBridge ccm = CCMBridge.builder().withNodes(hosts).build();
         Cluster cluster = null;
         try {
             NettyOptions nettyOptions = mock(NettyOptions.class, CALLS_REAL_METHODS.get());
@@ -64,7 +63,8 @@ public class NettyOptionsTest {
                 }
             }).when(nettyOptions).afterChannelInitialized(any(SocketChannel.class));
             cluster = Cluster.builder()
-                    .addContactPoint(ipOfNode(1))
+                    .addContactPointsWithPorts(ccm.addressOfNode(1))
+                    .withAddressTranslater(ccm.addressTranslator())
                     .withPoolingOptions(new PoolingOptions()
                                     .setConnectionsPerHost(HostDistance.LOCAL, coreConnections, coreConnections)
                     )

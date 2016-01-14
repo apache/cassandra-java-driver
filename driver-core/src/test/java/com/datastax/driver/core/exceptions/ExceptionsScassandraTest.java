@@ -48,7 +48,8 @@ public class ExceptionsScassandraTest {
     @BeforeMethod(groups = "short")
     public void beforeMethod() {
         cluster = Cluster.builder()
-                .addContactPoint(CCMBridge.ipOfNode(1))
+                .addContactPointsWithPorts(scassandras.address(1))
+                .withAddressTranslater(scassandras.addressTranslator())
                 .withRetryPolicy(FallthroughRetryPolicy.INSTANCE)
                 .build();
         session = cluster.connect();
@@ -129,7 +130,7 @@ public class ExceptionsScassandraTest {
         return session.execute("mock query");
     }
 
-    @AfterMethod(groups = "short")
+    @AfterMethod(groups = "short", alwaysRun = true)
     public void afterMethod() {
         for (Scassandra node : scassandras.nodes()) {
             node.primingClient().clearAllPrimes();
@@ -138,7 +139,7 @@ public class ExceptionsScassandraTest {
             cluster.close();
     }
 
-    @AfterClass(groups = "short")
+    @AfterClass(groups = "short", alwaysRun = true)
     public void afterClass() {
         if (scassandras != null)
             scassandras.stop();

@@ -739,6 +739,7 @@ class Connection {
          * Same as open, but associate the created connection to the provided connection pool.
          */
         public Connection open(HostConnectionPool pool) throws ConnectionException, InterruptedException, UnsupportedProtocolVersionException, ClusterNameMismatchException {
+
             pool.host.convictionPolicy.signalConnectionsOpening(1);
             Connection connection = new Connection(buildConnectionName(pool.host), pool.host.getSocketAddress(), this, pool);
             try {

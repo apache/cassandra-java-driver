@@ -33,7 +33,7 @@ public class CCMBridgeListener implements ITestListener {
 
     @Override
     public void onStart(ITestContext context) {
-        ccm = CCMBridge.builder("test").withNodes(1).build();
+        ccm = CCMBridge.builder().withNodes(1).withBinaryPort(9042).build();
     }
 
     @Override

@@ -23,14 +23,9 @@ import com.datastax.driver.core.utils.CassandraVersion;
 import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import java.net.InetSocketAddress;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 
@@ -40,67 +35,45 @@ import static com.datastax.driver.core.Assertions.assertThat;
  * There's normally a way to parametrize a TestNG class with @Factory and @DataProvider,
  * but it doesn't seem to work with multiple methods.
  */
-public abstract class TokenIntegrationTest {
+@CCMConfig(numberOfNodes = 3, createKeyspace = false)
+public abstract class TokenIntegrationTest extends CCMTestsSupport {
 
-    List<String> schema = Lists.newArrayList(
-            "CREATE KEYSPACE test WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1}",
-            "CREATE KEYSPACE test2 WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 2}",
-            "USE test",
-            "CREATE TABLE foo(i int primary key)",
-            "INSERT INTO foo (i) VALUES (1)",
-            "INSERT INTO foo (i) VALUES (2)",
-            "INSERT INTO foo (i) VALUES (3)"
-    );
-
-    private final String ccmOptions;
     private final DataType expectedTokenType;
     private final int numTokens;
     private final boolean useVnodes;
-    CCMBridge ccm;
-    Cluster cluster;
-    Session session;
+    private String ks1;
+    private String ks2;
 
-    public TokenIntegrationTest(String ccmOptions, DataType expectedTokenType) {
-        this(ccmOptions, expectedTokenType, false);
-    }
-
-    public TokenIntegrationTest(String ccmOptions, DataType expectedTokenType, boolean useVnodes) {
+    public TokenIntegrationTest(DataType expectedTokenType, boolean useVnodes) {
         this.expectedTokenType = expectedTokenType;
         this.numTokens = useVnodes ? 256 : 1;
-        this.ccmOptions = useVnodes ? ccmOptions + " --vnodes" : ccmOptions;
         this.useVnodes = useVnodes;
     }
 
-    @BeforeClass(groups = "short")
-    public void setup() {
-        ccm = CCMBridge.builder("test").withNodes(3).withStartOptions(ccmOptions).build();
-
+    @Override
+    public Cluster.Builder createClusterBuilder() {
         // Only connect to node 1, which makes it easier to query system tables in should_expose_tokens_per_host()
         LoadBalancingPolicy lbp = new WhiteListPolicy(new RoundRobinPolicy(),
-                Lists.newArrayList(new InetSocketAddress(CCMBridge.ipOfNode(1), 9042)));
-
-        cluster = Cluster.builder()
-                .addContactPoints(CCMBridge.ipOfNode(1))
+                Collections.singleton(ccm.addressOfNode(1)));
+        return Cluster.builder()
+                .addContactPointsWithPorts(ccm.addressOfNode(1))
                 .withLoadBalancingPolicy(lbp)
-                .withQueryOptions(new QueryOptions()
-                                .setRefreshNodeIntervalMillis(0)
-                                .setRefreshNodeListIntervalMillis(0)
-                                .setRefreshSchemaIntervalMillis(0)
-                )
-                .build();
-        cluster.init();
-        session = cluster.connect();
-
-        for (String statement : schema)
-            session.execute(statement);
+                .withQueryOptions(TestUtils.nonDebouncingQueryOptions());
     }
 
-    @AfterClass(groups = "short", alwaysRun = true)
-    public void teardown() {
-        if (cluster != null)
-            cluster.close();
-        if (ccm != null)
-            ccm.remove();
+    @Override
+    public Collection<String> createTestFixtures() {
+        ks1 = TestUtils.getAvailableKeyspaceName();
+        ks2 = TestUtils.getAvailableKeyspaceName();
+        return Lists.newArrayList(
+                String.format("CREATE KEYSPACE %s WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1}", ks1),
+                String.format("CREATE KEYSPACE %s WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 2}", ks2),
+                String.format("USE %s", ks1),
+                "CREATE TABLE foo(i int primary key)",
+                "INSERT INTO foo (i) VALUES (1)",
+                "INSERT INTO foo (i) VALUES (2)",
+                "INSERT INTO foo (i) VALUES (3)"
+        );
     }
 
     /**
@@ -120,7 +93,7 @@ public abstract class TokenIntegrationTest {
 
         // Find the replica for a given partition key
         int testKey = 1;
-        Set<Host> replicas = metadata.getReplicas("test", DataType.cint().serialize(testKey, cluster.getConfiguration().getProtocolOptions().getProtocolVersionEnum()));
+        Set<Host> replicas = metadata.getReplicas(ks1, DataType.cint().serialize(testKey, cluster.getConfiguration().getProtocolOptions().getProtocolVersionEnum()));
         assertThat(replicas).hasSize(1);
         Host replica = replicas.iterator().next();
 
@@ -140,7 +113,7 @@ public abstract class TokenIntegrationTest {
                             .isNull();
                     foundRange = range;
                     // That range should be managed by the replica
-                    assertThat(metadata.getReplicas("test", range)).contains(replica);
+                    assertThat(metadata.getReplicas(ks1, range)).contains(replica);
                 }
             }
         }
@@ -181,7 +154,7 @@ public abstract class TokenIntegrationTest {
     @Test(groups = "short")
     public void should_get_token_from_row_and_set_token_in_query() {
         // get by index:
-        Row row = session.execute("SELECT token(i) FROM test.foo WHERE i = 1").one();
+        Row row = session.execute("SELECT token(i) FROM foo WHERE i = 1").one();
         Token token = row.getToken(0);
         assertThat(token.getType()).isEqualTo(expectedTokenType);
 
@@ -189,7 +162,7 @@ public abstract class TokenIntegrationTest {
                 row.getPartitionKeyToken()
         ).isEqualTo(token);
 
-        PreparedStatement pst = session.prepare("SELECT * FROM test.foo WHERE token(i) = ?");
+        PreparedStatement pst = session.prepare("SELECT * FROM foo WHERE token(i) = ?");
         row = session.execute(pst.bind(token)).one();
         assertThat(row.getInt(0)).isEqualTo(1);
 
@@ -217,15 +190,15 @@ public abstract class TokenIntegrationTest {
     @Test(groups = "short")
     @CassandraVersion(major = 2)
     public void should_get_token_from_row_and_set_token_in_query_with_binding_and_aliasing() {
-        Row row = session.execute("SELECT token(i) AS t FROM test.foo WHERE i = 1").one();
+        Row row = session.execute("SELECT token(i) AS t FROM foo WHERE i = 1").one();
         Token token = row.getToken("t");
         assertThat(token.getType()).isEqualTo(expectedTokenType);
 
-        PreparedStatement pst = session.prepare("SELECT * FROM test.foo WHERE token(i) = :myToken");
+        PreparedStatement pst = session.prepare("SELECT * FROM foo WHERE token(i) = :myToken");
         row = session.execute(pst.bind().setToken("myToken", token)).one();
         assertThat(row.getInt(0)).isEqualTo(1);
 
-        row = session.execute("SELECT * FROM test.foo WHERE token(i) = ?", token).one();
+        row = session.execute("SELECT * FROM foo WHERE token(i) = ?", token).one();
         assertThat(row.getInt(0)).isEqualTo(1);
     }
 
@@ -241,7 +214,7 @@ public abstract class TokenIntegrationTest {
      */
     @Test(groups = "short", expectedExceptions = InvalidTypeException.class)
     public void should_raise_exception_when_get_token_on_non_token() {
-        Row row = session.execute("SELECT i FROM test.foo WHERE i = 1").one();
+        Row row = session.execute("SELECT i FROM foo WHERE i = 1").one();
         row.getToken(0);
     }
 
@@ -263,8 +236,8 @@ public abstract class TokenIntegrationTest {
      */
     @Test(groups = "short")
     public void should_expose_token_ranges_per_host() {
-        checkRangesPerHost("test", 1);
-        checkRangesPerHost("test2", 2);
+        checkRangesPerHost(ks1, 1);
+        checkRangesPerHost(ks2, 2);
         assertThat(cluster).hasValidTokenRanges();
     }
 

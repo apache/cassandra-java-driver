@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.Uninterruptibles;
 import org.assertj.core.util.Maps;
 
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -88,8 +89,8 @@ public class QueryTracker {
 
     public int queryCount(ScassandraCluster sCluster, int dc, int node) {
         try {
-            String host = sCluster.address(dc, node);
-            Integer queried = coordinators.get(InetAddress.getByName(host));
+            InetSocketAddress host = sCluster.address(dc, node);
+            Integer queried = coordinators.get(host.getAddress());
             return queried != null ? queried : 0;
         } catch (Exception e) {
             throw new RuntimeException(e);

@@ -29,12 +29,14 @@ import java.util.Iterator;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CassandraVersion(major = 2.0)
-public class PagingStateTest extends CCMBridge.PerClassSingleNodeCluster {
+public class PagingStateTest extends CCMTestsSupport {
+
     private static final Logger logger = LoggerFactory.getLogger(PagingStateTest.class);
+
     public static final String KEY = "paging_test";
 
     @Override
-    protected Collection<String> getTableDefinitions() {
+    public Collection<String> createTestFixtures() {
         return Collections.singletonList("CREATE TABLE test (k text, v int, PRIMARY KEY (k, v))");
     }
 

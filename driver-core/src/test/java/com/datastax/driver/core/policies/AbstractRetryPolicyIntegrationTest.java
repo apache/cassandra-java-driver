@@ -61,7 +61,8 @@ public class AbstractRetryPolicyIntegrationTest {
         scassandras.init();
 
         cluster = Cluster.builder()
-                .addContactPoint(CCMBridge.ipOfNode(1))
+                .addContactPointsWithPorts(scassandras.address(1))
+                .withAddressTranslater(scassandras.addressTranslator())
                 .withRetryPolicy(retryPolicy)
                 .withLoadBalancingPolicy(new SortingLoadBalancingPolicy())
                 .withNettyOptions(nonQuietClusterCloseOptions)
@@ -128,7 +129,7 @@ public class AbstractRetryPolicyIntegrationTest {
         assertThat(scassandras.node(hostNumber).activityClient().retrieveQueries()).hasSize(times);
     }
 
-    @AfterMethod(groups = "short")
+    @AfterMethod(groups = "short", alwaysRun = true)
     public void afterMethod() {
         if (cluster != null)
             cluster.close();

@@ -25,12 +25,12 @@ import java.util.Collection;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
-public class BoundStatementTest extends CCMBridge.PerClassSingleNodeCluster {
+public class BoundStatementTest extends CCMTestsSupport {
 
     PreparedStatement prepared;
 
     @Override
-    protected Collection<String> getTableDefinitions() {
+    public Collection<String> createTestFixtures() {
         return Lists.newArrayList("CREATE TABLE foo (k int primary key, v1 text, v2 list<int>)");
     }
 

@@ -25,12 +25,12 @@ import java.util.Collection;
 
 import static org.testng.Assert.assertEquals;
 
-public class MetricsTest extends CCMBridge.PerClassSingleNodeCluster {
+public class MetricsTest extends CCMTestsSupport {
     private volatile RetryDecision retryDecision;
 
     @Override
-    protected Cluster.Builder configure(Cluster.Builder builder) {
-        return builder.withRetryPolicy(new RetryPolicy() {
+    public Cluster.Builder createClusterBuilder() {
+        return Cluster.builder().withRetryPolicy(new RetryPolicy() {
             @Override
             public RetryDecision onReadTimeout(Statement statement, ConsistencyLevel cl, int requiredResponses, int receivedResponses, boolean dataRetrieved, int nbRetry) {
                 return retryDecision;
@@ -49,7 +49,7 @@ public class MetricsTest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     @Override
-    protected Collection<String> getTableDefinitions() {
+    public Collection<String> createTestFixtures() {
         return Lists.newArrayList("CREATE TABLE test (k int primary key, v int)",
                 "INSERT INTO test (k, v) VALUES (1, 1)");
     }
