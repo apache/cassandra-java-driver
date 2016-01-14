@@ -27,11 +27,10 @@ import io.netty.channel.socket.SocketChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -41,7 +40,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * Utility that observes {@link SocketChannel}s.  Helpful for ensuring that Sockets are actually closed
  * when they should be.  Utilizes {@link NettyOptions} to monitor created {@link SocketChannel}s.
  */
-public class SocketChannelMonitor implements Runnable {
+public class SocketChannelMonitor implements Runnable, Closeable {
 
     private static final Logger logger = LoggerFactory.getLogger(SocketChannelMonitor.class);
 
@@ -76,11 +75,17 @@ public class SocketChannelMonitor implements Runnable {
         }
     }
 
+    @Override
+    public void close() throws IOException {
+        stop();
+    }
+
     public void stop() {
         executor.shutdown();
         try {
             executor.awaitTermination(1, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
+            // ok
         }
     }
 
@@ -152,10 +157,13 @@ public class SocketChannelMonitor implements Runnable {
             // Should not be null as these are filtered previously in matchingChannels.
             assert t0 != null && t0.remoteAddress() != null;
             assert t1 != null && t1.remoteAddress() != null;
-            ;
             return t0.remoteAddress().toString().compareTo(t1.remoteAddress().toString());
         }
     };
+
+    public Collection<SocketChannel> openChannels(InetSocketAddress... addresses) {
+        return openChannels(Arrays.asList(addresses));
+    }
 
     /**
      * @param addresses The addresses to include.
@@ -168,9 +176,7 @@ public class SocketChannelMonitor implements Runnable {
                 return input.isOpen() && input.remoteAddress() != null && addresses.contains(input.remoteAddress());
             }
         }));
-
         Collections.sort(channels, BY_REMOTE_ADDRESS);
-
         return channels;
     }
 
@@ -181,4 +187,5 @@ public class SocketChannelMonitor implements Runnable {
     public Iterable<SocketChannel> matchingChannels(final Predicate<SocketChannel> channelFilter) {
         return Iterables.filter(Lists.newArrayList(channels), Predicates.and(Predicates.notNull(), channelFilter));
     }
+
 }

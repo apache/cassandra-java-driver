@@ -28,13 +28,13 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
 
 @CassandraVersion(major = 2.1)
-public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
+public class TupleTest extends CCMTestsSupport {
 
     ProtocolVersion protocolVersion = TestUtils.getDesiredProtocolVersion();
 
     @Override
-    protected Collection<String> getTableDefinitions() {
-        return Arrays.asList("CREATE TABLE t (k int PRIMARY KEY, v frozen<tuple<int, text, float>>)");
+    public Collection<String> createTestFixtures() {
+        return Collections.singleton("CREATE TABLE t (k int PRIMARY KEY, v frozen<tuple<int, text, float>>)");
     }
 
     @Test(groups = "short")
@@ -49,7 +49,6 @@ public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
         assertEquals(v.getType().getComponentTypes().get(0), DataType.cint());
         assertEquals(v.getType().getComponentTypes().get(1), DataType.text());
         assertEquals(v.getType().getComponentTypes().get(2), DataType.cfloat());
-
         assertEquals(v.getInt(0), 1);
         assertEquals(v.getString(1), "a");
         assertEquals(v.getFloat(2), 1.0f);
@@ -59,33 +58,28 @@ public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
 
     @Test(groups = "short")
     public void simpleWriteReadTest() throws Exception {
-        try {
-            session.execute("USE " + keyspace);
-            PreparedStatement ins = session.prepare("INSERT INTO t(k, v) VALUES (?, ?)");
-            PreparedStatement sel = session.prepare("SELECT * FROM t WHERE k=?");
+        session.execute("USE " + keyspace);
+        PreparedStatement ins = session.prepare("INSERT INTO t(k, v) VALUES (?, ?)");
+        PreparedStatement sel = session.prepare("SELECT * FROM t WHERE k=?");
 
-            TupleType t = cluster.getMetadata().newTupleType(DataType.cint(), DataType.text(), DataType.cfloat());
+        TupleType t = cluster.getMetadata().newTupleType(DataType.cint(), DataType.text(), DataType.cfloat());
 
-            int k = 1;
-            TupleValue v = t.newValue(1, "a", 1.0f);
+        int k = 1;
+        TupleValue v = t.newValue(1, "a", 1.0f);
 
-            session.execute(ins.bind(k, v));
-            TupleValue v2 = session.execute(sel.bind(k)).one().getTupleValue("v");
+        session.execute(ins.bind(k, v));
+        TupleValue v2 = session.execute(sel.bind(k)).one().getTupleValue("v");
 
-            assertEquals(v2, v);
+        assertEquals(v2, v);
 
-            // Test simple statement interpolation
-            k = 2;
-            v = t.newValue(2, "b", 2.0f);
+        // Test simple statement interpolation
+        k = 2;
+        v = t.newValue(2, "b", 2.0f);
 
-            session.execute("INSERT INTO t(k, v) VALUES (?, ?)", k, v);
-            v2 = session.execute(sel.bind(k)).one().getTupleValue("v");
+        session.execute("INSERT INTO t(k, v) VALUES (?, ?)", k, v);
+        v2 = session.execute(sel.bind(k)).one().getTupleValue("v");
 
-            assertEquals(v2, v);
-        } catch (Exception e) {
-            errorOut();
-            throw e;
-        }
+        assertEquals(v2, v);
     }
 
     /**
@@ -96,65 +90,61 @@ public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
      */
     @Test(groups = "short")
     public void tupleTypeTest() throws Exception {
+        session.execute("CREATE KEYSPACE test_tuple_type " +
+                "WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor': '1'}");
+        session.execute("USE test_tuple_type");
+        session.execute("CREATE TABLE mytable (a int PRIMARY KEY, b frozen<tuple<ascii, int, boolean>>)");
+
+        TupleType t = cluster.getMetadata().newTupleType(DataType.ascii(), DataType.cint(), DataType.cboolean());
+
+        // test non-prepared statement
+        TupleValue complete = t.newValue("foo", 123, true);
+        session.execute("INSERT INTO mytable (a, b) VALUES (0, ?)", complete);
+        TupleValue r = session.execute("SELECT b FROM mytable WHERE a=0").one().getTupleValue("b");
+        assertEquals(r, complete);
+
+        // test incomplete tuples
         try {
-            session.execute("CREATE KEYSPACE test_tuple_type " +
-                    "WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor': '1'}");
-            session.execute("USE test_tuple_type");
-            session.execute("CREATE TABLE mytable (a int PRIMARY KEY, b frozen<tuple<ascii, int, boolean>>)");
-
-            TupleType t = cluster.getMetadata().newTupleType(DataType.ascii(), DataType.cint(), DataType.cboolean());
-
-            // test non-prepared statement
-            TupleValue complete = t.newValue("foo", 123, true);
-            session.execute("INSERT INTO mytable (a, b) VALUES (0, ?)", complete);
-            TupleValue r = session.execute("SELECT b FROM mytable WHERE a=0").one().getTupleValue("b");
-            assertEquals(r, complete);
-
-            // test incomplete tuples
-            try {
-                TupleValue partial = t.newValue("bar", 456);
-                fail();
-            } catch (IllegalArgumentException e) {
-            }
-
-            // test incomplete tuples with new TupleType
-            TupleType t1 = cluster.getMetadata().newTupleType(DataType.ascii(), DataType.cint());
-            TupleValue partial = t1.newValue("bar", 456);
-            TupleValue partionResult = t.newValue("bar", 456, null);
-            session.execute("INSERT INTO mytable (a, b) VALUES (0, ?)", partial);
-            r = session.execute("SELECT b FROM mytable WHERE a=0").one().getTupleValue("b");
-            assertEquals(r, partionResult);
-
-            // test single value tuples
-            try {
-                TupleValue subpartial = t.newValue("zoo");
-                fail();
-            } catch (IllegalArgumentException e) {
-            }
-
-            // test single value tuples with new TupleType
-            TupleType t2 = cluster.getMetadata().newTupleType(DataType.ascii());
-            TupleValue subpartial = t2.newValue("zoo");
-            TupleValue subpartialResult = t.newValue("zoo", null, null);
-            session.execute("INSERT INTO mytable (a, b) VALUES (0, ?)", subpartial);
-            r = session.execute("SELECT b FROM mytable WHERE a=0").one().getTupleValue("b");
-            assertEquals(r, subpartialResult);
-
-            // test prepared statements
-            PreparedStatement prepared = session.prepare("INSERT INTO mytable (a, b) VALUES (?, ?)");
-            session.execute(prepared.bind(3, complete));
-            session.execute(prepared.bind(4, partial));
-            session.execute(prepared.bind(5, subpartial));
-
-            prepared = session.prepare("SELECT b FROM mytable WHERE a=?");
-            assertEquals(session.execute(prepared.bind(3)).one().getTupleValue("b"), complete);
-            assertEquals(session.execute(prepared.bind(4)).one().getTupleValue("b"), partionResult);
-            assertEquals(session.execute(prepared.bind(5)).one().getTupleValue("b"), subpartialResult);
-
-        } catch (Exception e) {
-            errorOut();
-            throw e;
+            t.newValue("bar", 456);
+            fail();
+        } catch (IllegalArgumentException e) {
+            //ok
         }
+
+        // test incomplete tuples with new TupleType
+        TupleType t1 = cluster.getMetadata().newTupleType(DataType.ascii(), DataType.cint());
+        TupleValue partial = t1.newValue("bar", 456);
+        TupleValue partionResult = t.newValue("bar", 456, null);
+        session.execute("INSERT INTO mytable (a, b) VALUES (0, ?)", partial);
+        r = session.execute("SELECT b FROM mytable WHERE a=0").one().getTupleValue("b");
+        assertEquals(r, partionResult);
+
+        // test single value tuples
+        try {
+            t.newValue("zoo");
+            fail();
+        } catch (IllegalArgumentException e) {
+            //ok
+        }
+
+        // test single value tuples with new TupleType
+        TupleType t2 = cluster.getMetadata().newTupleType(DataType.ascii());
+        TupleValue subpartial = t2.newValue("zoo");
+        TupleValue subpartialResult = t.newValue("zoo", null, null);
+        session.execute("INSERT INTO mytable (a, b) VALUES (0, ?)", subpartial);
+        r = session.execute("SELECT b FROM mytable WHERE a=0").one().getTupleValue("b");
+        assertEquals(r, subpartialResult);
+
+        // test prepared statements
+        PreparedStatement prepared = session.prepare("INSERT INTO mytable (a, b) VALUES (?, ?)");
+        session.execute(prepared.bind(3, complete));
+        session.execute(prepared.bind(4, partial));
+        session.execute(prepared.bind(5, subpartial));
+
+        prepared = session.prepare("SELECT b FROM mytable WHERE a=?");
+        assertEquals(session.execute(prepared.bind(3)).one().getTupleValue("b"), complete);
+        assertEquals(session.execute(prepared.bind(4)).one().getTupleValue("b"), partionResult);
+        assertEquals(session.execute(prepared.bind(5)).one().getTupleValue("b"), subpartialResult);
     }
 
     /**
@@ -166,47 +156,41 @@ public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
      */
     @Test(groups = "short")
     public void tupleTestTypeVaryingLengths() throws Exception {
-        try {
-            session.execute("CREATE KEYSPACE test_tuple_type_varying_lengths " +
-                    "WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor': '1'}");
-            session.execute("USE test_tuple_type_varying_lengths");
+        session.execute("CREATE KEYSPACE test_tuple_type_varying_lengths " +
+                "WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor': '1'}");
+        session.execute("USE test_tuple_type_varying_lengths");
 
-            // programmatically create the table with tuples of said sizes
-            int[] lengths = {1, 2, 3, 384};
-            ArrayList<String> valueSchema = new ArrayList<String>();
-            for (int i : lengths) {
-                ArrayList<String> ints = new ArrayList<String>();
-                for (int j = 0; j < i; ++j) {
-                    ints.add("int");
-                }
-                valueSchema.add(String.format(" v_%d frozen<tuple<%s>>", i, Joiner.on(',').join(ints)));
+        // programmatically create the table with tuples of said sizes
+        int[] lengths = {1, 2, 3, 384};
+        ArrayList<String> valueSchema = new ArrayList<String>();
+        for (int i : lengths) {
+            ArrayList<String> ints = new ArrayList<String>();
+            for (int j = 0; j < i; ++j) {
+                ints.add("int");
             }
-            session.execute(String.format("CREATE TABLE mytable (k int PRIMARY KEY, %s)", Joiner.on(',').join(valueSchema)));
+            valueSchema.add(String.format(" v_%d frozen<tuple<%s>>", i, Joiner.on(',').join(ints)));
+        }
+        session.execute(String.format("CREATE TABLE mytable (k int PRIMARY KEY, %s)", Joiner.on(',').join(valueSchema)));
 
-            // insert tuples into same key using different columns
-            // and verify the results
-            for (int i : lengths) {
-                // create tuple
-                ArrayList<DataType> dataTypes = new ArrayList<DataType>();
-                ArrayList<Integer> values = new ArrayList<Integer>();
-                for (int j = 0; j < i; ++j) {
-                    dataTypes.add(DataType.cint());
-                    values.add(j);
-                }
-                TupleType t = new TupleType(dataTypes, protocolVersion, cluster.getConfiguration().getCodecRegistry());
-                TupleValue createdTuple = t.newValue(values.toArray());
-
-                // write tuple
-                session.execute(String.format("INSERT INTO mytable (k, v_%s) VALUES (0, ?)", i), createdTuple);
-
-                // read tuple
-                TupleValue r = session.execute(String.format("SELECT v_%s FROM mytable WHERE k=0", i)).one().getTupleValue(String.format("v_%s", i));
-                assertEquals(r, createdTuple);
+        // insert tuples into same key using different columns
+        // and verify the results
+        for (int i : lengths) {
+            // create tuple
+            ArrayList<DataType> dataTypes = new ArrayList<DataType>();
+            ArrayList<Integer> values = new ArrayList<Integer>();
+            for (int j = 0; j < i; ++j) {
+                dataTypes.add(DataType.cint());
+                values.add(j);
             }
+            TupleType t = new TupleType(dataTypes, protocolVersion, cluster.getConfiguration().getCodecRegistry());
+            TupleValue createdTuple = t.newValue(values.toArray());
 
-        } catch (Exception e) {
-            errorOut();
-            throw e;
+            // write tuple
+            session.execute(String.format("INSERT INTO mytable (k, v_%s) VALUES (0, ?)", i), createdTuple);
+
+            // read tuple
+            TupleValue r = session.execute(String.format("SELECT v_%s FROM mytable WHERE k=0", i)).one().getTupleValue(String.format("v_%s", i));
+            assertEquals(r, createdTuple);
         }
     }
 
@@ -220,59 +204,52 @@ public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
     public void tupleSubtypesTest() throws Exception {
 
         List<DataType> DATA_TYPE_PRIMITIVES = Lists.newArrayList(PrimitiveTypeSamples.ALL.keySet());
+        session.execute("CREATE KEYSPACE test_tuple_subtypes " +
+                "WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor': '1'}");
+        session.execute("USE test_tuple_subtypes");
 
-        try {
-            session.execute("CREATE KEYSPACE test_tuple_subtypes " +
-                    "WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor': '1'}");
-            session.execute("USE test_tuple_subtypes");
+        // programmatically create the table with a tuple of all datatypes
+        session.execute(String.format("CREATE TABLE mytable (k int PRIMARY KEY, v frozen<tuple<%s>>)", Joiner.on(',').join(DATA_TYPE_PRIMITIVES)));
 
-            // programmatically create the table with a tuple of all datatypes
-            session.execute(String.format("CREATE TABLE mytable (k int PRIMARY KEY, v frozen<tuple<%s>>)", Joiner.on(',').join(DATA_TYPE_PRIMITIVES)));
+        // insert tuples into same key using different columns
+        // and verify the results
+        int i = 1;
+        for (DataType ignored : DATA_TYPE_PRIMITIVES) {
+            // create tuples to be written and ensure they match with the expected response
+            // responses have trailing None values for every element that has not been written
+            ArrayList<DataType> dataTypes = new ArrayList<DataType>();
+            ArrayList<DataType> completeDataTypes = new ArrayList<DataType>();
+            ArrayList<Object> createdValues = new ArrayList<Object>();
+            ArrayList<Object> completeValues = new ArrayList<Object>();
 
-            // insert tuples into same key using different columns
-            // and verify the results
-            int i = 1;
-            for (DataType datatype : DATA_TYPE_PRIMITIVES) {
-                // create tuples to be written and ensure they match with the expected response
-                // responses have trailing None values for every element that has not been written
-                ArrayList<DataType> dataTypes = new ArrayList<DataType>();
-                ArrayList<DataType> completeDataTypes = new ArrayList<DataType>();
-                ArrayList<Object> createdValues = new ArrayList<Object>();
-                ArrayList<Object> completeValues = new ArrayList<Object>();
-
-                // create written portion of the arrays
-                for (int j = 0; j < i; ++j) {
-                    dataTypes.add(DATA_TYPE_PRIMITIVES.get(j));
-                    completeDataTypes.add(DATA_TYPE_PRIMITIVES.get(j));
-                    createdValues.add(PrimitiveTypeSamples.ALL.get(DATA_TYPE_PRIMITIVES.get(j)));
-                    completeValues.add(PrimitiveTypeSamples.ALL.get(DATA_TYPE_PRIMITIVES.get(j)));
-                }
-
-                // complete portion of the arrays needed for trailing nulls
-                for (int j = 0; j < DATA_TYPE_PRIMITIVES.size() - i; ++j) {
-                    completeDataTypes.add(DATA_TYPE_PRIMITIVES.get(i + j));
-                    completeValues.add(null);
-                }
-
-                // actually create the tuples
-                TupleType t = new TupleType(dataTypes, protocolVersion, cluster.getConfiguration().getCodecRegistry());
-                TupleType t2 = new TupleType(completeDataTypes, protocolVersion, cluster.getConfiguration().getCodecRegistry());
-                TupleValue createdTuple = t.newValue(createdValues.toArray());
-                TupleValue completeTuple = t2.newValue(completeValues.toArray());
-
-                // write tuple
-                session.execute(String.format("INSERT INTO mytable (k, v) VALUES (%s, ?)", i), createdTuple);
-
-                // read tuple
-                TupleValue r = session.execute("SELECT v FROM mytable WHERE k=?", i).one().getTupleValue("v");
-
-                assertEquals(r, completeTuple);
-                ++i;
+            // create written portion of the arrays
+            for (int j = 0; j < i; ++j) {
+                dataTypes.add(DATA_TYPE_PRIMITIVES.get(j));
+                completeDataTypes.add(DATA_TYPE_PRIMITIVES.get(j));
+                createdValues.add(PrimitiveTypeSamples.ALL.get(DATA_TYPE_PRIMITIVES.get(j)));
+                completeValues.add(PrimitiveTypeSamples.ALL.get(DATA_TYPE_PRIMITIVES.get(j)));
             }
 
-        } catch (Exception e) {
-            errorOut();
-            throw e;
+            // complete portion of the arrays needed for trailing nulls
+            for (int j = 0; j < DATA_TYPE_PRIMITIVES.size() - i; ++j) {
+                completeDataTypes.add(DATA_TYPE_PRIMITIVES.get(i + j));
+                completeValues.add(null);
+            }
+
+            // actually create the tuples
+            TupleType t = new TupleType(dataTypes, protocolVersion, cluster.getConfiguration().getCodecRegistry());
+            TupleType t2 = new TupleType(completeDataTypes, protocolVersion, cluster.getConfiguration().getCodecRegistry());
+            TupleValue createdTuple = t.newValue(createdValues.toArray());
+            TupleValue completeTuple = t2.newValue(completeValues.toArray());
+
+            // write tuple
+            session.execute(String.format("INSERT INTO mytable (k, v) VALUES (%s, ?)", i), createdTuple);
+
+            // read tuple
+            TupleValue r = session.execute("SELECT v FROM mytable WHERE k=?", i).one().getTupleValue("v");
+
+            assertEquals(r, completeTuple);
+            ++i;
         }
     }
 
@@ -286,108 +263,102 @@ public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
     public void tupleNonPrimitiveSubTypesTest() throws Exception {
 
         List<DataType> DATA_TYPE_PRIMITIVES = Lists.newArrayList(PrimitiveTypeSamples.ALL.keySet());
+        session.execute("CREATE KEYSPACE test_tuple_non_primitive_subtypes " +
+                "WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor': '1'}");
+        session.execute("USE test_tuple_non_primitive_subtypes");
 
-        try {
-            session.execute("CREATE KEYSPACE test_tuple_non_primitive_subtypes " +
-                    "WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor': '1'}");
-            session.execute("USE test_tuple_non_primitive_subtypes");
+        ArrayList<String> values = new ArrayList<String>();
 
-            ArrayList<String> values = new ArrayList<String>();
+        //create list values
+        for (DataType datatype : DATA_TYPE_PRIMITIVES) {
+            values.add(String.format("v_%s frozen<tuple<list<%s>>>", values.size(), datatype));
+        }
 
-            //create list values
-            for (DataType datatype : DATA_TYPE_PRIMITIVES) {
-                values.add(String.format("v_%s frozen<tuple<list<%s>>>", values.size(), datatype));
-            }
+        // create set values
+        for (DataType datatype : DATA_TYPE_PRIMITIVES) {
+            values.add(String.format("v_%s frozen<tuple<set<%s>>>", values.size(), datatype));
+        }
 
-            // create set values
-            for (DataType datatype : DATA_TYPE_PRIMITIVES) {
-                values.add(String.format("v_%s frozen<tuple<set<%s>>>", values.size(), datatype));
-            }
+        // create map values
+        for (DataType datatype : DATA_TYPE_PRIMITIVES) {
+            values.add(String.format("v_%s frozen<tuple<map<%s, %s>>>", values.size(), datatype, datatype));
+        }
 
-            // create map values
-            for (DataType datatype : DATA_TYPE_PRIMITIVES) {
-                values.add(String.format("v_%s frozen<tuple<map<%s, %s>>>", values.size(), datatype, datatype));
-            }
-
-            // create table
-            session.execute(String.format("CREATE TABLE mytable (k int PRIMARY KEY, %s)", Joiner.on(',').join(values)));
+        // create table
+        session.execute(String.format("CREATE TABLE mytable (k int PRIMARY KEY, %s)", Joiner.on(',').join(values)));
 
 
-            int i = 0;
-            // test tuple<list<datatype>>
-            for (DataType datatype : DATA_TYPE_PRIMITIVES) {
-                // create tuple
-                ArrayList<DataType> dataTypes = new ArrayList<DataType>();
-                ArrayList<Object> createdValues = new ArrayList<Object>();
+        int i = 0;
+        // test tuple<list<datatype>>
+        for (DataType datatype : DATA_TYPE_PRIMITIVES) {
+            // create tuple
+            ArrayList<DataType> dataTypes = new ArrayList<DataType>();
+            ArrayList<Object> createdValues = new ArrayList<Object>();
 
-                dataTypes.add(DataType.list(datatype));
-                createdValues.add(Arrays.asList(PrimitiveTypeSamples.ALL.get(datatype)));
+            dataTypes.add(DataType.list(datatype));
+            createdValues.add(Collections.singletonList(PrimitiveTypeSamples.ALL.get(datatype)));
 
-                TupleType t = new TupleType(dataTypes, protocolVersion, cluster.getConfiguration().getCodecRegistry());
-                TupleValue createdTuple = t.newValue(createdValues.toArray());
+            TupleType t = new TupleType(dataTypes, protocolVersion, cluster.getConfiguration().getCodecRegistry());
+            TupleValue createdTuple = t.newValue(createdValues.toArray());
 
-                // write tuple
-                session.execute(String.format("INSERT INTO mytable (k, v_%s) VALUES (0, ?)", i), createdTuple);
+            // write tuple
+            session.execute(String.format("INSERT INTO mytable (k, v_%s) VALUES (0, ?)", i), createdTuple);
 
-                // read tuple
-                TupleValue r = session.execute(String.format("SELECT v_%s FROM mytable WHERE k=0", i))
-                        .one().getTupleValue(String.format("v_%s", i));
+            // read tuple
+            TupleValue r = session.execute(String.format("SELECT v_%s FROM mytable WHERE k=0", i))
+                    .one().getTupleValue(String.format("v_%s", i));
 
-                assertEquals(r, createdTuple);
-                ++i;
-            }
+            assertEquals(r, createdTuple);
+            ++i;
+        }
 
-            // test tuple<set<datatype>>
-            for (DataType datatype : DATA_TYPE_PRIMITIVES) {
-                // create tuple
-                ArrayList<DataType> dataTypes = new ArrayList<DataType>();
-                ArrayList<Object> createdValues = new ArrayList<Object>();
+        // test tuple<set<datatype>>
+        for (DataType datatype : DATA_TYPE_PRIMITIVES) {
+            // create tuple
+            ArrayList<DataType> dataTypes = new ArrayList<DataType>();
+            ArrayList<Object> createdValues = new ArrayList<Object>();
 
-                dataTypes.add(DataType.set(datatype));
-                createdValues.add(new HashSet<Object>(Arrays.asList(PrimitiveTypeSamples.ALL.get(datatype))));
+            dataTypes.add(DataType.set(datatype));
+            createdValues.add(new HashSet<Object>(Collections.singletonList(PrimitiveTypeSamples.ALL.get(datatype))));
 
-                TupleType t = new TupleType(dataTypes, protocolVersion, cluster.getConfiguration().getCodecRegistry());
-                TupleValue createdTuple = t.newValue(createdValues.toArray());
+            TupleType t = new TupleType(dataTypes, protocolVersion, cluster.getConfiguration().getCodecRegistry());
+            TupleValue createdTuple = t.newValue(createdValues.toArray());
 
-                // write tuple
-                session.execute(String.format("INSERT INTO mytable (k, v_%s) VALUES (0, ?)", i), createdTuple);
+            // write tuple
+            session.execute(String.format("INSERT INTO mytable (k, v_%s) VALUES (0, ?)", i), createdTuple);
 
-                // read tuple
-                TupleValue r = session.execute(String.format("SELECT v_%s FROM mytable WHERE k=0", i))
-                        .one().getTupleValue(String.format("v_%s", i));
+            // read tuple
+            TupleValue r = session.execute(String.format("SELECT v_%s FROM mytable WHERE k=0", i))
+                    .one().getTupleValue(String.format("v_%s", i));
 
-                assertEquals(r, createdTuple);
-                ++i;
-            }
+            assertEquals(r, createdTuple);
+            ++i;
+        }
 
-            // test tuple<map<datatype, datatype>>
-            for (DataType datatype : DATA_TYPE_PRIMITIVES) {
-                // create tuple
-                ArrayList<DataType> dataTypes = new ArrayList<DataType>();
-                ArrayList<Object> createdValues = new ArrayList<Object>();
+        // test tuple<map<datatype, datatype>>
+        for (DataType datatype : DATA_TYPE_PRIMITIVES) {
+            // create tuple
+            ArrayList<DataType> dataTypes = new ArrayList<DataType>();
+            ArrayList<Object> createdValues = new ArrayList<Object>();
 
-                HashMap<Object, Object> hm = new HashMap<Object, Object>();
-                hm.put(PrimitiveTypeSamples.ALL.get(datatype), PrimitiveTypeSamples.ALL.get(datatype));
+            HashMap<Object, Object> hm = new HashMap<Object, Object>();
+            hm.put(PrimitiveTypeSamples.ALL.get(datatype), PrimitiveTypeSamples.ALL.get(datatype));
 
-                dataTypes.add(DataType.map(datatype, datatype));
-                createdValues.add(hm);
+            dataTypes.add(DataType.map(datatype, datatype));
+            createdValues.add(hm);
 
-                TupleType t = new TupleType(dataTypes, protocolVersion, cluster.getConfiguration().getCodecRegistry());
-                TupleValue createdTuple = t.newValue(createdValues.toArray());
+            TupleType t = new TupleType(dataTypes, protocolVersion, cluster.getConfiguration().getCodecRegistry());
+            TupleValue createdTuple = t.newValue(createdValues.toArray());
 
-                // write tuple
-                session.execute(String.format("INSERT INTO mytable (k, v_%s) VALUES (0, ?)", i), createdTuple);
+            // write tuple
+            session.execute(String.format("INSERT INTO mytable (k, v_%s) VALUES (0, ?)", i), createdTuple);
 
-                // read tuple
-                TupleValue r = session.execute(String.format("SELECT v_%s FROM mytable WHERE k=0", i))
-                        .one().getTupleValue(String.format("v_%s", i));
+            // read tuple
+            TupleValue r = session.execute(String.format("SELECT v_%s FROM mytable WHERE k=0", i))
+                    .one().getTupleValue(String.format("v_%s", i));
 
-                assertEquals(r, createdTuple);
-                ++i;
-            }
-        } catch (Exception e) {
-            errorOut();
-            throw e;
+            assertEquals(r, createdTuple);
+            ++i;
         }
     }
 
@@ -411,9 +382,6 @@ public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
 
     /**
      * Helper method for creating nested tuple schema
-     *
-     * @param depth
-     * @return
      */
     private String nestedTuplesSchemaHelper(int depth) {
         if (depth == 0)
@@ -424,9 +392,6 @@ public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
 
     /**
      * Helper method for creating nested tuples
-     *
-     * @param depth
-     * @return
      */
     private TupleValue nestedTuplesCreatorHelper(int depth) {
         if (depth == 1) {
@@ -447,39 +412,33 @@ public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
      */
     @Test(groups = "short")
     public void nestedTuplesTest() throws Exception {
+        session.execute("CREATE KEYSPACE test_nested_tuples " +
+                "WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor': '1'}");
+        session.execute("USE test_nested_tuples");
 
-        try {
-            session.execute("CREATE KEYSPACE test_nested_tuples " +
-                    "WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor': '1'}");
-            session.execute("USE test_nested_tuples");
+        // create a table with multiple sizes of nested tuples
+        session.execute(String.format("CREATE TABLE mytable (" +
+                        "k int PRIMARY KEY, " +
+                        "v_1 %s, " +
+                        "v_2 %s, " +
+                        "v_3 %s, " +
+                        "v_32 %s)", nestedTuplesSchemaHelper(1),
+                nestedTuplesSchemaHelper(2),
+                nestedTuplesSchemaHelper(3),
+                nestedTuplesSchemaHelper(32)));
 
-            // create a table with multiple sizes of nested tuples
-            session.execute(String.format("CREATE TABLE mytable (" +
-                            "k int PRIMARY KEY, " +
-                            "v_1 %s, " +
-                            "v_2 %s, " +
-                            "v_3 %s, " +
-                            "v_64 %s)", nestedTuplesSchemaHelper(1),
-                    nestedTuplesSchemaHelper(2),
-                    nestedTuplesSchemaHelper(3),
-                    nestedTuplesSchemaHelper(64)));
+        for (int i : Arrays.asList(1, 2, 3, 32)) {
+            // create tuple
+            TupleValue createdTuple = nestedTuplesCreatorHelper(i);
 
-            for (int i : Arrays.asList(1, 2, 3, 64)) {
-                // create tuple
-                TupleValue createdTuple = nestedTuplesCreatorHelper(i);
+            // write tuple
+            session.execute(String.format("INSERT INTO mytable (k, v_%s) VALUES (?, ?)", i), i, createdTuple);
 
-                // write tuple
-                session.execute(String.format("INSERT INTO mytable (k, v_%s) VALUES (?, ?)", i), i, createdTuple);
+            // verify tuple was written and read correctly
+            TupleValue r = session.execute(String.format("SELECT v_%s FROM mytable WHERE k=?", i), i)
+                    .one().getTupleValue(String.format("v_%s", i));
 
-                // verify tuple was written and read correctly
-                TupleValue r = session.execute(String.format("SELECT v_%s FROM mytable WHERE k=?", i), i)
-                        .one().getTupleValue(String.format("v_%s", i));
-
-                assertEquals(r, createdTuple);
-            }
-        } catch (Exception e) {
-            errorOut();
-            throw e;
+            assertEquals(r, createdTuple);
         }
     }
 
@@ -491,55 +450,49 @@ public class TupleTest extends CCMBridge.PerClassSingleNodeCluster {
      */
     @Test(groups = "short")
     public void testTuplesWithNulls() throws Exception {
-        try {
-            // create keyspace
-            session.execute("CREATE KEYSPACE testTuplesWithNulls " +
-                    "WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor': '1'}");
-            session.execute("USE testTuplesWithNulls");
+        // create keyspace
+        session.execute("CREATE KEYSPACE testTuplesWithNulls " +
+                "WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor': '1'}");
+        session.execute("USE testTuplesWithNulls");
 
-            // create UDT
-            session.execute("CREATE TYPE user (a text, b frozen<tuple<text, int, uuid, blob>>)");
-            session.execute("CREATE TABLE mytable (a int PRIMARY KEY, b frozen<user>)");
+        // create UDT
+        session.execute("CREATE TYPE user (a text, b frozen<tuple<text, int, uuid, blob>>)");
+        session.execute("CREATE TABLE mytable (a int PRIMARY KEY, b frozen<user>)");
 
-            // insert UDT data
-            UserType userTypeDef = cluster.getMetadata().getKeyspace("testTuplesWithNulls").getUserType("user");
-            UDTValue userType = userTypeDef.newValue();
+        // insert UDT data
+        UserType userTypeDef = cluster.getMetadata().getKeyspace("testTuplesWithNulls").getUserType("user");
+        UDTValue userType = userTypeDef.newValue();
 
-            TupleType t = cluster.getMetadata().newTupleType(DataType.text(), DataType.cint(), DataType.uuid(), DataType.blob());
-            TupleValue v = t.newValue(null, null, null, null);
-            userType.setTupleValue("b", v);
+        TupleType t = cluster.getMetadata().newTupleType(DataType.text(), DataType.cint(), DataType.uuid(), DataType.blob());
+        TupleValue v = t.newValue(null, null, null, null);
+        userType.setTupleValue("b", v);
 
-            PreparedStatement ins = session.prepare("INSERT INTO mytable (a, b) VALUES (?, ?)");
-            session.execute(ins.bind(0, userType));
+        PreparedStatement ins = session.prepare("INSERT INTO mytable (a, b) VALUES (?, ?)");
+        session.execute(ins.bind(0, userType));
 
-            // retrieve and verify data
-            ResultSet rs = session.execute("SELECT * FROM mytable");
-            List<Row> rows = rs.all();
-            assertEquals(1, rows.size());
+        // retrieve and verify data
+        ResultSet rs = session.execute("SELECT * FROM mytable");
+        List<Row> rows = rs.all();
+        assertEquals(1, rows.size());
 
-            Row row = rows.get(0);
+        Row row = rows.get(0);
 
-            assertEquals(row.getInt("a"), 0);
-            assertEquals(row.getUDTValue("b"), userType);
+        assertEquals(row.getInt("a"), 0);
+        assertEquals(row.getUDTValue("b"), userType);
 
-            // test empty strings
-            v = t.newValue("", null, null, ByteBuffer.allocate(0));
-            userType.setTupleValue("b", v);
-            session.execute(ins.bind(0, userType));
+        // test empty strings
+        v = t.newValue("", null, null, ByteBuffer.allocate(0));
+        userType.setTupleValue("b", v);
+        session.execute(ins.bind(0, userType));
 
-            // retrieve and verify data
-            rs = session.execute("SELECT * FROM mytable");
-            rows = rs.all();
-            assertEquals(1, rows.size());
+        // retrieve and verify data
+        rs = session.execute("SELECT * FROM mytable");
+        rows = rs.all();
+        assertEquals(1, rows.size());
 
-            row = rows.get(0);
+        row = rows.get(0);
 
-            assertEquals(row.getInt("a"), 0);
-            assertEquals(row.getUDTValue("b"), userType);
-
-        } catch (Exception e) {
-            errorOut();
-            throw e;
-        }
+        assertEquals(row.getInt("a"), 0);
+        assertEquals(row.getUDTValue("b"), userType);
     }
 }

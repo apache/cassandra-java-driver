@@ -21,7 +21,6 @@ import com.datastax.driver.core.utils.CassandraVersion;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.primitives.Ints;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.nio.ByteBuffer;
@@ -35,7 +34,7 @@ import static com.datastax.driver.core.DataType.*;
 import static com.datastax.driver.core.IndexMetadata.Kind.*;
 
 @CassandraVersion(major = 1.2)
-public class IndexMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
+public class IndexMetadataTest extends CCMTestsSupport {
 
     /**
      * Column definitions for schema_columns table (legacy pre-3.0 layout).
@@ -64,34 +63,28 @@ public class IndexMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
     private ProtocolVersion protocolVersion;
 
     @Override
-    @BeforeClass(groups = {"short", "long"})
-    public void beforeClass() {
-        super.beforeClass();
+    public Collection<String> createTestFixtures() {
         protocolVersion = cluster.getConfiguration().getProtocolOptions().getProtocolVersion();
-    }
-
-    @Override
-    protected Collection<String> getTableDefinitions() {
         ImmutableList.Builder<String> builder = ImmutableList.builder();
         builder.add("CREATE TABLE indexing ("
-                        + "id int,"
-                        + "id2 int,"
-                        + "map_values map<text, int>,"
-                        + "map_keys map<text, int>,"
-                        + "map_entries map<text, int>,"
-                        + "map_all map<text, int>,"
-                        + "text_column text, "
-                        + "\"MixedCaseColumn\" list<text>,"
-                        +
-                        // Frozen collections was introduced only in C* 2.1.3
-                        (cassandraVersion.compareTo(VersionNumber.parse("2.1.3")) >= 0
-                                ?
-                                ", map_full frozen<map<text, int>>,"
-                                        + "set_full frozen<set<text>>,"
-                                        + "list_full frozen<list<text>>,"
-                                :
-                                "")
-                        + "PRIMARY KEY (id, id2));"
+                + "id int,"
+                + "id2 int,"
+                + "map_values map<text, int>,"
+                + "map_keys map<text, int>,"
+                + "map_entries map<text, int>,"
+                + "map_all map<text, int>,"
+                + "text_column text, "
+                + "\"MixedCaseColumn\" list<text>,"
+                +
+                // Frozen collections was introduced only in C* 2.1.3
+                (ccm.getVersion().compareTo(VersionNumber.parse("2.1.3")) >= 0
+                        ?
+                        ", map_full frozen<map<text, int>>,"
+                                + "set_full frozen<set<text>>,"
+                                + "list_full frozen<list<text>>,"
+                        :
+                        "")
+                + "PRIMARY KEY (id, id2));"
         );
 
         return builder.build();
@@ -117,7 +110,7 @@ public class IndexMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
     @CassandraVersion(major = 2.1, description = "index names with quoted identifiers and collection indexes not supported until 2.1")
     public void should_create_metadata_for_values_index_on_mixed_case_column() {
         // 3.0 assumes the 'values' keyword if index on a collection
-        String createValuesIndex = cassandraVersion.getMajor() > 2 ?
+        String createValuesIndex = ccm.getVersion().getMajor() > 2 ?
                 String.format("CREATE INDEX \"MixedCaseIndex\" ON %s.indexing (values(\"MixedCaseColumn\"));", keyspace) :
                 String.format("CREATE INDEX \"MixedCaseIndex\" ON %s.indexing (\"MixedCaseColumn\");", keyspace);
         session.execute(createValuesIndex);
@@ -127,7 +120,7 @@ public class IndexMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
                 .hasName("MixedCaseIndex")
                 .hasParent((TableMetadata) column.getParent())
                 .isNotCustomIndex()
-                .hasTarget(cassandraVersion.getMajor() > 2 ? "values(\"MixedCaseColumn\")" : "\"MixedCaseColumn\"")
+                .hasTarget(ccm.getVersion().getMajor() > 2 ? "values(\"MixedCaseColumn\")" : "\"MixedCaseColumn\"")
                 .hasKind(COMPOSITES)
                 .asCqlQuery(createValuesIndex);
         assertThat((TableMetadata) column.getParent()).hasIndex(index);
@@ -137,7 +130,7 @@ public class IndexMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
     @CassandraVersion(major = 2.1)
     public void should_create_metadata_for_index_on_map_values() {
         // 3.0 assumes the 'values' keyword if index on a collection
-        String createValuesIndex = cassandraVersion.getMajor() > 2 ?
+        String createValuesIndex = ccm.getVersion().getMajor() > 2 ?
                 String.format("CREATE INDEX map_values_index ON %s.indexing (values(map_values));", keyspace) :
                 String.format("CREATE INDEX map_values_index ON %s.indexing (map_values);", keyspace);
         session.execute(createValuesIndex);
@@ -147,7 +140,7 @@ public class IndexMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
                 .hasName("map_values_index")
                 .hasParent((TableMetadata) column.getParent())
                 .isNotCustomIndex()
-                .hasTarget(cassandraVersion.getMajor() > 2 ? "values(map_values)" : "map_values")
+                .hasTarget(ccm.getVersion().getMajor() > 2 ? "values(map_values)" : "map_values")
                 .hasKind(COMPOSITES)
                 .asCqlQuery(createValuesIndex);
         assertThat((TableMetadata) column.getParent()).hasIndex(index);

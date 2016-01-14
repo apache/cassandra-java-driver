@@ -34,10 +34,9 @@ import static com.datastax.driver.core.TestUtils.setValue;
 import static com.google.common.collect.Lists.newArrayList;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class GettableDataIntegrationTest extends CCMBridge.PerClassSingleNodeCluster {
+public class GettableDataIntegrationTest extends CCMTestsSupport {
 
-    boolean is21 = cassandraVersion.compareTo(VersionNumber.parse("2.1.3")) > 0;
-    boolean is20 = cassandraVersion.compareTo(VersionNumber.parse("2.0")) > 0;
+    boolean is21;
 
     CodecRegistry registry = new CodecRegistry();
 
@@ -45,7 +44,8 @@ public class GettableDataIntegrationTest extends CCMBridge.PerClassSingleNodeClu
     AtomicInteger keyCounter = new AtomicInteger(0);
 
     @Override
-    protected Collection<String> getTableDefinitions() {
+    public Collection<String> createTestFixtures() {
+        is21 = ccm.getVersion().compareTo(VersionNumber.parse("2.1.3")) > 0;
         // only add tuples / nested collections at > 2.1.3.
         return newArrayList("CREATE TABLE codec_mapping (k int PRIMARY KEY, "
                 + "v int, l list<int>, m map<int,int>" +
@@ -53,8 +53,8 @@ public class GettableDataIntegrationTest extends CCMBridge.PerClassSingleNodeClu
     }
 
     @Override
-    protected Cluster.Builder configure(Cluster.Builder builder) {
-        return super.configure(builder).withCodecRegistry(registry);
+    public Cluster.Builder createClusterBuilder() {
+        return Cluster.builder().withCodecRegistry(registry);
     }
 
     @BeforeClass(groups = "short")

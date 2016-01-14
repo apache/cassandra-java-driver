@@ -15,7 +15,7 @@
  */
 package com.datastax.driver.mapping;
 
-import com.datastax.driver.core.CCMBridge;
+import com.datastax.driver.core.CCMTestsSupport;
 import com.datastax.driver.mapping.annotations.*;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
@@ -30,9 +30,11 @@ import static org.testng.Assert.assertEquals;
 /**
  * Tests mapping of collections of UDTs.
  */
-public class MapperUDTCollectionsTest extends CCMBridge.PerClassSingleNodeCluster {
+@SuppressWarnings("unused")
+public class MapperUDTCollectionsTest extends CCMTestsSupport {
 
-    protected Collection<String> getTableDefinitions() {
+    @Override
+    public Collection<String> createTestFixtures() {
         return Arrays.asList("CREATE TYPE \"Sub\"(i int)",
                 "CREATE TABLE collection_examples (id int PRIMARY KEY, " +
                         "l list<frozen<\"Sub\">>, " +

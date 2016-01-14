@@ -77,10 +77,11 @@ public class AbstractRetryPolicyIntegrationTest {
         scassandras.init();
 
         cluster = Cluster.builder()
-                .addContactPoint(CCMBridge.ipOfNode(1))
+                .addContactPointsWithPorts(scassandras.address(1))
+                .withAddressTranslator(scassandras.addressTranslator())
                 .withRetryPolicy(retryPolicy)
                 .withLoadBalancingPolicy(new SortingLoadBalancingPolicy())
-                        // Scassandra does not support V3 nor V4 yet, and V4 may cause the server to crash
+                // Scassandra does not support V3 nor V4 yet, and V4 may cause the server to crash
                 .withProtocolVersion(ProtocolVersion.V2)
                 .withPoolingOptions(new PoolingOptions()
                         .setCoreConnectionsPerHost(HostDistance.LOCAL, 1)
@@ -163,7 +164,7 @@ public class AbstractRetryPolicyIntegrationTest {
         assertThat(scassandras.node(hostNumber).activityClient().retrieveQueries()).hasSize(times);
     }
 
-    @AfterMethod(groups = "short")
+    @AfterMethod(groups = "short", alwaysRun = true)
     public void afterMethod() {
         if (cluster != null)
             cluster.close();

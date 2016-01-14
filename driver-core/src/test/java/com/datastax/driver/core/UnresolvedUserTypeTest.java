@@ -20,17 +20,16 @@ import com.google.common.collect.Lists;
 import org.testng.annotations.Test;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.DataType.*;
 
 @CassandraVersion(major = 3.0)
-public class UnresolvedUserTypeTest extends CCMBridge.PerClassSingleNodeCluster {
+public class UnresolvedUserTypeTest extends CCMTestsSupport {
 
     @Override
-    protected Collection<String> getTableDefinitions() {
+    public Collection<String> createTestFixtures() {
         return Lists.newArrayList(
             /*
             Creates the following acyclic graph (edges directed upwards
@@ -68,14 +67,11 @@ public class UnresolvedUserTypeTest extends CCMBridge.PerClassSingleNodeCluster 
 
         // Create a different Cluster instance to force a full refresh where all UDTs are loaded at once.
         // The parsing logic should sort them to make sure they are loaded in the right order.
-        Cluster newCluster = null;
-        try {
-            newCluster = Cluster.builder().addContactPointsWithPorts(Collections.singletonList(hostAddress)).build();
-            checkUserTypes(newCluster.getMetadata());
-        } finally {
-            if (newCluster != null)
-                newCluster.close();
-        }
+        Cluster newCluster = register(Cluster.builder()
+                .addContactPointsWithPorts(getInitialContactPoints())
+                .withAddressTranslator(getAddressTranslator())
+                .build());
+        checkUserTypes(newCluster.getMetadata());
     }
 
     private void checkUserTypes(Metadata metadata) {

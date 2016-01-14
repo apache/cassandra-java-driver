@@ -18,11 +18,10 @@ package com.datastax.driver.core;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import org.testng.annotations.Test;
 
-public class SSLAuthenticatedEncryptionTest extends SSLTestBase {
+import static com.datastax.driver.core.CCMBridge.*;
 
-    public SSLAuthenticatedEncryptionTest() {
-        super(true);
-    }
+@CCMConfig(auth = true)
+public class SSLAuthenticatedEncryptionTest extends SSLTestBase {
 
     /**
      * <p>
@@ -64,11 +63,21 @@ public class SSLAuthenticatedEncryptionTest extends SSLTestBase {
      */
     @Test(groups = "isolated")
     public void should_use_system_properties_with_default_ssl_options() throws Exception {
-        System.setProperty("javax.net.ssl.keyStore", CCMBridge.DEFAULT_CLIENT_KEYSTORE_FILE.getAbsolutePath());
-        System.setProperty("javax.net.ssl.keyStorePassword", CCMBridge.DEFAULT_CLIENT_KEYSTORE_PASSWORD);
-        System.setProperty("javax.net.ssl.trustStore", CCMBridge.DEFAULT_CLIENT_TRUSTSTORE_FILE.getAbsolutePath());
-        System.setProperty("javax.net.ssl.trustStorePassword", CCMBridge.DEFAULT_CLIENT_TRUSTSTORE_PASSWORD);
-
-        connectWithSSL();
+        System.setProperty("javax.net.ssl.keyStore", DEFAULT_CLIENT_KEYSTORE_FILE.getAbsolutePath());
+        System.setProperty("javax.net.ssl.keyStorePassword", DEFAULT_CLIENT_KEYSTORE_PASSWORD);
+        System.setProperty("javax.net.ssl.trustStore", DEFAULT_CLIENT_TRUSTSTORE_FILE.getAbsolutePath());
+        System.setProperty("javax.net.ssl.trustStorePassword", DEFAULT_CLIENT_TRUSTSTORE_PASSWORD);
+        try {
+            connectWithSSL();
+        } finally {
+            try {
+                System.clearProperty("javax.net.ssl.keyStore");
+                System.clearProperty("javax.net.ssl.keyStorePassword");
+                System.clearProperty("javax.net.ssl.trustStore");
+                System.clearProperty("javax.net.ssl.trustStorePassword");
+            } catch (SecurityException e) {
+                // ok
+            }
+        }
     }
 }

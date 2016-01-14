@@ -25,12 +25,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.data.MapEntry.entry;
 import static org.testng.Assert.*;
 
-public class QueryBuilderExecutionTest extends CCMBridge.PerClassSingleNodeCluster {
+public class QueryBuilderExecutionTest extends CCMTestsSupport {
 
     private static final String TABLE1 = "test1";
 
     @Override
-    protected Collection<String> getTableDefinitions() {
+    public Collection<String> createTestFixtures() {
         return Arrays.asList(
                 String.format("CREATE TABLE %s (k text PRIMARY KEY, t text, i int, f float)", TABLE1),
                 "CREATE TABLE dateTest (t timestamp PRIMARY KEY)",

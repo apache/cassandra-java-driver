@@ -15,7 +15,7 @@
  */
 package com.datastax.driver.osgi;
 
-import com.datastax.driver.core.CCMBridge;
+import com.datastax.driver.core.TestUtils;
 import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.options.CompositeOption;
 import org.ops4j.pax.exam.options.MavenArtifactProvisionOption;
@@ -70,7 +70,7 @@ public class BundleOptions {
                         // Delegate javax.security.cert to the parent classloader.  javax.security.cert.X509Certificate is used in
                         // io.netty.util.internal.EmptyArrays, but not directly by the driver.
                         bootDelegationPackage("javax.security.cert"),
-                        systemProperty("cassandra.contactpoints").value(CCMBridge.IP_PREFIX + 1),
+                        systemProperty("cassandra.contactpoints").value(TestUtils.IP_PREFIX + 1),
                         systemProperty("logback.configurationFile").value("file:" + PathUtils.getBaseDir() + "/src/test/resources/logback.xml"),
                         mavenBundle("org.slf4j", "slf4j-api", "1.7.5"),
                         mavenBundle("ch.qos.logback", "logback-classic", "1.1.3"),

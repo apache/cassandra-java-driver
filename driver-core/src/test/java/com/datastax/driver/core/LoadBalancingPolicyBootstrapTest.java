@@ -31,7 +31,8 @@ import static com.datastax.driver.core.LoadBalancingPolicyBootstrapTest.HistoryP
 import static com.datastax.driver.core.LoadBalancingPolicyBootstrapTest.HistoryPolicy.entry;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class LoadBalancingPolicyBootstrapTest {
+@CCMConfig(numberOfNodes = 2, dirtiesContext = true, createCluster = false)
+public class LoadBalancingPolicyBootstrapTest extends CCMTestsSupport {
 
     private static final Logger logger = LoggerFactory.getLogger(LoadBalancingPolicyBootstrapTest.class);
 
@@ -46,27 +47,18 @@ public class LoadBalancingPolicyBootstrapTest {
     public void should_init_policy_with_up_contact_points() throws Exception {
         HistoryPolicy policy = new HistoryPolicy(new RoundRobinPolicy());
 
-        CCMBridge ccm = null;
-        Cluster cluster = null;
-        try {
-            ccm = CCMBridge.builder("test").withNodes(2).build();
-            cluster = Cluster.builder()
-                    .addContactPoints(CCMBridge.ipOfNode(1), CCMBridge.ipOfNode(2))
-                    .withLoadBalancingPolicy(policy)
-                    .build();
+        Cluster cluster = register(Cluster.builder()
+                .addContactPointsWithPorts(getInitialContactPoints())
+                .withAddressTranslator(ccm.addressTranslator())
+                .withLoadBalancingPolicy(policy)
+                .build());
 
-            cluster.init();
+        cluster.init();
 
-            assertThat(policy.history).containsOnly(
-                    entry(INIT, TestUtils.findHost(cluster, 1)),
-                    entry(INIT, TestUtils.findHost(cluster, 2))
-            );
-        } finally {
-            if (cluster != null)
-                cluster.close();
-            if (ccm != null)
-                ccm.remove();
-        }
+        assertThat(policy.history).containsOnly(
+                entry(INIT, TestUtils.findHost(cluster, 1)),
+                entry(INIT, TestUtils.findHost(cluster, 2))
+        );
     }
 
     /**
@@ -79,66 +71,56 @@ public class LoadBalancingPolicyBootstrapTest {
      * @jira_ticket JAVA-613
      * @since 2.0.10, 2.1.5
      */
-    @Test(groups = "short")
+    @Test(groups = "short", dependsOnMethods = "should_init_policy_with_up_contact_points")
     public void should_send_down_notifications_after_init_when_contact_points_are_down() throws Exception {
-        CCMBridge ccm = null;
-        Cluster cluster = null;
-        try {
-            ccm = CCMBridge.builder("test").withNodes(2).build();
 
-            // In order to validate this behavior, we need to stop the first node that would be attempted to be
-            // established as the control connection.
-            // This depends on the internal behavior and will even be made totally random by JAVA-618, therefore
-            // we retry the scenario until we get the desired preconditions.
+        // In order to validate this behavior, we need to stop the first node that would be attempted to be
+        // established as the control connection.
+        // This depends on the internal behavior and will even be made totally random by JAVA-618, therefore
+        // we retry the scenario until we get the desired preconditions.
 
-            int nodeToStop = 1;
-            int tries = 1, maxTries = 10;
-            for (; tries <= maxTries; tries++) {
-                nodeToStop = (nodeToStop == 1) ? 2 : 1; // switch nodes at each try
-                int activeNode = nodeToStop == 2 ? 1 : 2;
+        int nodeToStop = 1;
+        int tries = 1, maxTries = 10;
+        for (; tries <= maxTries; tries++) {
+            nodeToStop = (nodeToStop == 1) ? 2 : 1; // switch nodes at each try
+            int activeNode = nodeToStop == 2 ? 1 : 2;
 
-                ccm.stop(nodeToStop);
-                ccm.waitForDown(nodeToStop);
+            ccm.stop(nodeToStop);
+            ccm.waitForDown(nodeToStop);
 
-                HistoryPolicy policy = new HistoryPolicy(new RoundRobinPolicy());
-                cluster = Cluster.builder()
-                        .addContactPoints(CCMBridge.ipOfNode(1), CCMBridge.ipOfNode(2))
-                        .withLoadBalancingPolicy(policy)
-                        .build();
+            HistoryPolicy policy = new HistoryPolicy(new RoundRobinPolicy());
+            Cluster cluster = register(Cluster.builder()
+                    .addContactPointsWithPorts(getInitialContactPoints())
+                    .withAddressTranslator(ccm.addressTranslator())
+                    .withLoadBalancingPolicy(policy)
+                    .build());
 
-                cluster.init();
+            cluster.init();
 
-                if (policy.history.contains(entry(DOWN, TestUtils.findHost(cluster, nodeToStop)))) {
-                    // This is the situation we're testing, the control connection tried the stopped node first.
-                    assertThat(policy.history).containsExactly(
-                            entry(INIT, TestUtils.findHost(cluster, activeNode)),
-                            entry(DOWN, TestUtils.findHost(cluster, nodeToStop))
-                    );
-                    break;
-                } else {
-                    assertThat(policy.history).containsOnly(
-                            entry(INIT, TestUtils.findHost(cluster, 1)),
-                            entry(INIT, TestUtils.findHost(cluster, 2))
-                    );
+            if (policy.history.contains(entry(DOWN, TestUtils.findHost(cluster, nodeToStop)))) {
+                // This is the situation we're testing, the control connection tried the stopped node first.
+                assertThat(policy.history).containsExactly(
+                        entry(INIT, TestUtils.findHost(cluster, activeNode)),
+                        entry(DOWN, TestUtils.findHost(cluster, nodeToStop))
+                );
+                break;
+            } else {
+                assertThat(policy.history).containsOnly(
+                        entry(INIT, TestUtils.findHost(cluster, 1)),
+                        entry(INIT, TestUtils.findHost(cluster, 2))
+                );
 
-                    logger.info("Could not get first contact point to fail, retrying");
+                logger.info("Could not get first contact point to fail, retrying");
 
-                    cluster.close();
-
-                    ccm.start(nodeToStop);
-                    ccm.waitForUp(nodeToStop);
-                }
-            }
-
-            if (tries == maxTries + 1)
-                logger.warn("Could not get first contact point to fail after {} tries", maxTries);
-
-        } finally {
-            if (cluster != null)
                 cluster.close();
-            if (ccm != null)
-                ccm.remove();
+
+                ccm.start(nodeToStop);
+                ccm.waitForUp(nodeToStop);
+            }
         }
+
+        if (tries == maxTries + 1)
+            logger.warn("Could not get first contact point to fail after {} tries", maxTries);
     }
 
     static class HistoryPolicy extends DelegatingLoadBalancingPolicy {

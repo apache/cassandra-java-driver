@@ -26,7 +26,7 @@ import static com.datastax.driver.core.ClusteringOrder.DESC;
 import static com.datastax.driver.core.DataType.cint;
 
 @CassandraVersion(major = 3)
-public class MaterializedViewMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
+public class MaterializedViewMetadataTest extends CCMTestsSupport {
 
     /**
      * Validates that a materialized view is properly retrieved and parsed.
@@ -124,7 +124,7 @@ public class MaterializedViewMetadataTest extends CCMBridge.PerClassSingleNodeCl
     }
 
     @Override
-    protected Collection<String> getTableDefinitions() {
+    public Collection<String> createTestFixtures() {
         return Collections.emptyList();
     }
 }

@@ -16,7 +16,6 @@
 package com.datastax.driver.core;
 
 import org.scassandra.Scassandra;
-import org.scassandra.ScassandraFactory;
 import org.scassandra.http.client.ActivityClient;
 import org.scassandra.http.client.CurrentClient;
 import org.scassandra.http.client.PrimingClient;
@@ -41,8 +40,6 @@ import static org.assertj.core.api.Assertions.fail;
  * consider using {@link com.datastax.driver.core.ScassandraTestBase.PerClassCluster} instead.
  */
 public abstract class ScassandraTestBase {
-    private static final int BINARY_PORT = 9042;
-    private static final int ADMIN_PORT = 9052;
 
     private static final Logger logger = LoggerFactory.getLogger(ScassandraTestBase.class);
 
@@ -56,11 +53,11 @@ public abstract class ScassandraTestBase {
 
     protected CurrentClient currentClient;
 
-    protected static String ip = CCMBridge.IP_PREFIX + "1";
+    protected static String ip = TestUtils.ipOfNode(1);
 
     @BeforeClass(groups = {"short", "long"})
     public void startScassandra() {
-        scassandra = ScassandraFactory.createServer(ip, BINARY_PORT, ip, ADMIN_PORT);
+        scassandra = TestUtils.createScassandraServer();
         scassandra.start();
         primingClient = scassandra.primingClient();
         activityClient = scassandra.activityClient();
@@ -84,8 +81,9 @@ public abstract class ScassandraTestBase {
 
     protected Cluster.Builder createClusterBuilder() {
         Cluster.Builder builder = Cluster.builder()
-                .addContactPointsWithPorts(Collections.singletonList(hostAddress))
-                        // Scassandra does not support V3 yet, and V4 may cause the server to crash
+                .withPort(scassandra.getBinaryPort())
+                .addContactPoints(Collections.singletonList(hostAddress.getAddress()))
+                // Scassandra does not support V3 yet, and V4 may cause the server to crash
                 .withProtocolVersion(ProtocolVersion.V2)
                 .withPoolingOptions(new PoolingOptions()
                         .setCoreConnectionsPerHost(HostDistance.LOCAL, 1)
@@ -134,13 +132,13 @@ public abstract class ScassandraTestBase {
             session = cluster.connect();
         }
 
-        @AfterClass(groups = {"short", "long"})
+        @AfterClass(groups = {"short", "long"}, alwaysRun = true)
         public void closeCluster() {
             if (cluster != null)
                 cluster.close();
         }
 
-        @AfterClass(groups = {"short", "long"}, dependsOnMethods = "closeCluster")
+        @AfterClass(groups = {"short", "long"}, dependsOnMethods = "closeCluster", alwaysRun = true)
         @Override
         public void stopScassandra() {
             super.stopScassandra();

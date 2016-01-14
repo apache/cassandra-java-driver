@@ -18,7 +18,6 @@ package com.datastax.driver.core;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
 import com.datastax.driver.core.utils.CassandraVersion;
-import com.google.common.collect.ImmutableList;
 import org.testng.annotations.Test;
 
 import java.net.InetAddress;
@@ -33,7 +32,8 @@ import static org.testng.Assert.*;
  * <p/>
  * Note: this class also happens to test all the get methods from Row.
  */
-public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
+@CCMConfig(clusterProvider = "createClusterBuilderNoDebouncing")
+public class PreparedStatementTest extends CCMTestsSupport {
 
     private static final String ALL_NATIVE_TABLE = "all_native";
     private static final String ALL_LIST_TABLE = "all_list";
@@ -49,7 +49,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     @Override
-    protected Collection<String> getTableDefinitions() {
+    public Collection<String> createTestFixtures() {
 
         List<String> defs = new ArrayList<String>(4);
 
@@ -105,11 +105,6 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
         defs.add(String.format("CREATE TABLE %s (k text PRIMARY KEY, v text)", SIMPLE_TABLE2));
 
         return defs;
-    }
-
-    @Override
-    protected Cluster.Builder configure(Cluster.Builder builder) {
-        return builder.withQueryOptions(TestUtils.nonDebouncingQueryOptions());
     }
 
     @Test(groups = "short")
@@ -350,7 +345,7 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
      */
     @Test(groups = {"docs"})
     public void printTableDefinitions() {
-        for (String definition : getTableDefinitions()) {
+        for (String definition : createTestFixtures()) {
             System.out.println(definition);
         }
     }
@@ -411,7 +406,8 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
     @Test(groups = "short", expectedExceptions = InvalidQueryException.class)
     public void should_fail_when_prepared_on_another_cluster() throws Exception {
         Cluster otherCluster = Cluster.builder()
-                .addContactPointsWithPorts(ImmutableList.of(hostAddress))
+                .addContactPointsWithPorts(getInitialContactPoints())
+                .withAddressTranslator(getAddressTranslator())
                 .build();
         try {
             PreparedStatement pst = otherCluster.connect().prepare("select * from system.peers where inet = ?");
@@ -437,7 +433,8 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
     @Test(groups = "short")
     public void should_not_allow_unbound_value_on_bound_statement_when_protocol_lesser_than_v4() {
         Cluster cluster = Cluster.builder()
-                .addContactPointsWithPorts(Collections.singleton(hostAddress))
+                .addContactPointsWithPorts(getInitialContactPoints())
+                .withAddressTranslator(getAddressTranslator())
                 .withProtocolVersion(TestUtils.getDesiredProtocolVersion(ProtocolVersion.V3))
                 .build();
         Session session = cluster.connect();
@@ -469,7 +466,8 @@ public class PreparedStatementTest extends CCMBridge.PerClassSingleNodeCluster {
     @CassandraVersion(major = 2.0)
     public void should_not_allow_unbound_value_on_batch_statement_when_protocol_lesser_than_v4() {
         Cluster cluster = Cluster.builder()
-                .addContactPointsWithPorts(Collections.singleton(hostAddress))
+                .addContactPointsWithPorts(getInitialContactPoints())
+                .withAddressTranslator(getAddressTranslator())
                 .withProtocolVersion(TestUtils.getDesiredProtocolVersion(ProtocolVersion.V3))
                 .build();
         Session session = cluster.connect();

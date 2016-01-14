@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @CassandraVersion(major = 2.1)
+@SuppressWarnings("unused")
 public class UDTFieldMapperTest {
 
     @Test(groups = "short")
@@ -36,8 +37,11 @@ public class UDTFieldMapperTest {
 
         try {
             // Create type and table
-            ccm = CCMBridge.builder("test").build();
-            cluster = Cluster.builder().addContactPoint(CCMBridge.ipOfNode(1)).build();
+            ccm = CCMBridge.builder().build();
+            cluster = Cluster.builder()
+                    .addContactPointsWithPorts(ccm.addressOfNode(1))
+                    .withAddressTranslator(ccm.addressTranslator())
+                    .build();
             Session session1 = cluster.connect();
             session1.execute("create schema if not exists java_509 " +
                     "with replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };");
@@ -50,7 +54,10 @@ public class UDTFieldMapperTest {
             cluster.close();
 
             // Create entities with another connection
-            cluster = Cluster.builder().addContactPoint(CCMBridge.ipOfNode(1)).build();
+            cluster = Cluster.builder()
+                    .addContactPointsWithPorts(ccm.addressOfNode(1))
+                    .withAddressTranslator(ccm.addressTranslator())
+                    .build();
             Session session2 = cluster.newSession();
             Mapper<MyHashWithKeyspace> hashMapper = new MappingManager(session2).mapper(MyHashWithKeyspace.class);
             hashMapper.save(new MyHashWithKeyspace(
@@ -83,8 +90,11 @@ public class UDTFieldMapperTest {
 
         try {
             // Create type and table
-            ccm = CCMBridge.builder("test").build();
-            cluster = Cluster.builder().addContactPoint(CCMBridge.ipOfNode(1)).build();
+            ccm = CCMBridge.builder().build();
+            cluster = Cluster.builder()
+                    .addContactPointsWithPorts(ccm.addressOfNode(1))
+                    .withAddressTranslator(ccm.addressTranslator())
+                    .build();
             Session session1 = cluster.connect();
             session1.execute("create schema if not exists java_509 " +
                     "with replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };");
@@ -98,7 +108,10 @@ public class UDTFieldMapperTest {
             cluster.close();
 
             // Create entities with another connection
-            cluster = Cluster.builder().addContactPoint(CCMBridge.ipOfNode(1)).build();
+            cluster = Cluster.builder()
+                    .addContactPointsWithPorts(ccm.addressOfNode(1))
+                    .withAddressTranslator(ccm.addressTranslator())
+                    .build();
             Session session2 = cluster.newSession();
 
             session2.execute("use java_509");

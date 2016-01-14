@@ -15,15 +15,13 @@
  */
 package com.datastax.driver.core.querybuilder;
 
-import com.datastax.driver.core.CCMBridge;
+import com.datastax.driver.core.CCMTestsSupport;
 import com.datastax.driver.core.TupleType;
 import com.datastax.driver.core.TupleValue;
 import com.datastax.driver.core.utils.CassandraVersion;
 import com.google.common.collect.ImmutableList;
 import org.testng.annotations.Test;
 
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 import static com.datastax.driver.core.DataType.cint;
@@ -32,12 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.testng.Assert.assertEquals;
 
 @CassandraVersion(major = 2.1, minor = 3)
-public class QueryBuilderTupleExecutionTest extends CCMBridge.PerClassSingleNodeCluster {
-
-    @Override
-    protected Collection<String> getTableDefinitions() {
-        return Collections.emptyList();
-    }
+public class QueryBuilderTupleExecutionTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void should_handle_tuple() throws Exception {

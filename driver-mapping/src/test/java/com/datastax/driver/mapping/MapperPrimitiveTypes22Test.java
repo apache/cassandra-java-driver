@@ -15,7 +15,7 @@
  */
 package com.datastax.driver.mapping;
 
-import com.datastax.driver.core.CCMBridge;
+import com.datastax.driver.core.CCMTestsSupport;
 import com.datastax.driver.core.LocalDate;
 import com.datastax.driver.core.utils.Bytes;
 import com.datastax.driver.core.utils.CassandraVersion;
@@ -24,16 +24,16 @@ import com.datastax.driver.mapping.annotations.Table;
 import org.testng.annotations.Test;
 
 import java.nio.ByteBuffer;
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 
 import static org.testng.Assert.assertEquals;
 
 @CassandraVersion(major = 2.2)
-public class MapperPrimitiveTypes22Test extends CCMBridge.PerClassSingleNodeCluster {
+public class MapperPrimitiveTypes22Test extends CCMTestsSupport {
 
-    protected Collection<String> getTableDefinitions() {
-        return Arrays.asList("CREATE TABLE primitiveTypes22 ("
+    public Collection<String> createTestFixtures() {
+        return Collections.singletonList("CREATE TABLE primitiveTypes22 ("
                 + "byteBufferCol blob primary key,"
                 + "localDateCol date,"
                 + "timeCol time, timeWrapperCol time,"

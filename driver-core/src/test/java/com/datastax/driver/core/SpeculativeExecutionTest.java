@@ -51,7 +51,8 @@ public class SpeculativeExecutionTest {
 
         loadBalancingPolicy = new SortingLoadBalancingPolicy();
         cluster = Cluster.builder()
-                .addContactPoint(scassandras.address(2))
+                .addContactPointsWithPorts(scassandras.address(2))
+                .withAddressTranslator(scassandras.addressTranslator())
                 .withProtocolVersion(ProtocolVersion.V2) // Scassandra does not support V3 nor V4 yet
                 .withLoadBalancingPolicy(loadBalancingPolicy)
                 .withSpeculativeExecutionPolicy(new ConstantSpeculativeExecutionPolicy(speculativeExecutionDelay, 1))
@@ -69,7 +70,7 @@ public class SpeculativeExecutionTest {
         errors = cluster.getMetrics().getErrorMetrics();
     }
 
-    @AfterMethod(groups = "short")
+    @AfterMethod(groups = "short", alwaysRun = true)
     public void afterMethod() {
         if (cluster != null)
             cluster.close();
@@ -80,9 +81,9 @@ public class SpeculativeExecutionTest {
     @Test(groups = "short")
     public void should_not_start_speculative_execution_if_first_execution_completes_successfully() {
         scassandras.node(1).primingClient().prime(PrimingRequest.queryBuilder()
-                        .withQuery("mock query")
-                        .withRows(row("result", "result1"))
-                        .build()
+                .withQuery("mock query")
+                .withRows(row("result", "result1"))
+                .build()
         );
 
         long execStartCount = errors.getSpeculativeExecutions().getCount();
@@ -99,17 +100,17 @@ public class SpeculativeExecutionTest {
     public void should_not_start_speculative_execution_if_first_execution_retries_but_is_still_fast_enough() {
         // will retry once on this node:
         scassandras.node(1).primingClient().prime(PrimingRequest.queryBuilder()
-                        .withQuery("mock query")
-                        .withConsistency(PrimingRequest.Consistency.TWO)
-                        .withResult(PrimingRequest.Result.read_request_timeout)
-                        .build()
+                .withQuery("mock query")
+                .withConsistency(PrimingRequest.Consistency.TWO)
+                .withResult(PrimingRequest.Result.read_request_timeout)
+                .build()
         );
 
         scassandras.node(1).primingClient().prime(PrimingRequest.queryBuilder()
-                        .withQuery("mock query")
-                        .withConsistency(PrimingRequest.Consistency.ONE)
-                        .withRows(row("result", "result1"))
-                        .build()
+                .withQuery("mock query")
+                .withConsistency(PrimingRequest.Consistency.ONE)
+                .withRows(row("result", "result1"))
+                .build()
         );
 
         long execStartCount = errors.getSpeculativeExecutions().getCount();
@@ -129,16 +130,16 @@ public class SpeculativeExecutionTest {
     @Test(groups = "short")
     public void should_start_speculative_execution_if_first_execution_takes_too_long() {
         scassandras.node(1).primingClient().prime(PrimingRequest.queryBuilder()
-                        .withQuery("mock query")
-                        .withFixedDelay(400)
-                        .withRows(row("result", "result1"))
-                        .build()
+                .withQuery("mock query")
+                .withFixedDelay(400)
+                .withRows(row("result", "result1"))
+                .build()
         );
 
         scassandras.node(2).primingClient().prime(PrimingRequest.queryBuilder()
-                        .withQuery("mock query")
-                        .withRows(row("result", "result2"))
-                        .build()
+                .withQuery("mock query")
+                .withRows(row("result", "result2"))
+                .build()
         );
         long execStartCount = errors.getSpeculativeExecutions().getCount();
 
@@ -202,8 +203,9 @@ public class SpeculativeExecutionTest {
         SpeculativeExecutionPolicy mockPolicy = mock(SpeculativeExecutionPolicy.class);
 
         Cluster cluster = Cluster.builder()
-                .addContactPoint(CCMBridge.ipOfNode(2))
-                        // Scassandra does not support V3 nor V4 yet, and V4 may cause the server to crash
+                .addContactPointsWithPorts(scassandras.address(2))
+                .withAddressTranslator(scassandras.addressTranslator())
+                // Scassandra does not support V3 nor V4 yet, and V4 may cause the server to crash
                 .withProtocolVersion(ProtocolVersion.V2)
                 .withSpeculativeExecutionPolicy(mockPolicy)
                 .build();

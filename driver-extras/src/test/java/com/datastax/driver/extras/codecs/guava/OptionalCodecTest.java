@@ -16,7 +16,6 @@
 package com.datastax.driver.extras.codecs.guava;
 
 import com.datastax.driver.core.*;
-import com.datastax.driver.core.CCMBridge.PerClassSingleNodeCluster;
 import com.datastax.driver.core.querybuilder.BuiltStatement;
 import com.datastax.driver.core.utils.CassandraVersion;
 import com.google.common.base.Optional;
@@ -33,7 +32,7 @@ import static com.datastax.driver.core.TypeCodec.*;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class OptionalCodecTest extends PerClassSingleNodeCluster {
+public class OptionalCodecTest extends CCMTestsSupport {
 
     private final OptionalCodec<List<String>> optionalCodec = new OptionalCodec<List<String>>(list(varchar()));
 
@@ -44,13 +43,13 @@ public class OptionalCodecTest extends PerClassSingleNodeCluster {
     private BuiltStatement selectStmt;
 
     @Override
-    protected Collection<String> getTableDefinitions() {
+    public Collection<String> createTestFixtures() {
         return Collections.singletonList("CREATE TABLE foo (c1 text, c2 text, c3 list<text>, c4 bigint, c5 decimal, PRIMARY KEY (c1, c2))");
     }
 
     @Override
-    protected Cluster.Builder configure(Cluster.Builder builder) {
-        return builder.withCodecRegistry(registry);
+    public Cluster.Builder createClusterBuilder() {
+        return Cluster.builder().withCodecRegistry(registry);
     }
 
     @BeforeMethod(groups = "short")

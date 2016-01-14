@@ -26,7 +26,8 @@ import static com.datastax.driver.core.DataType.text;
 import static com.google.common.collect.Lists.newArrayList;
 
 @CassandraVersion(major = 2.2)
-public class AggregateMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
+@CCMConfig(config = "enable_user_defined_functions:true")
+public class AggregateMetadataTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void should_parse_and_format_aggregate_with_initcond_and_no_finalfunc() {
@@ -174,7 +175,7 @@ public class AggregateMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     @Override
-    protected Collection<String> getTableDefinitions() {
+    public Collection<String> createTestFixtures() {
         return newArrayList(
                 String.format("CREATE TYPE IF NOT EXISTS %s.phone (number text)", keyspace),
                 String.format("CREATE TYPE IF NOT EXISTS %s.\"Address\" ("

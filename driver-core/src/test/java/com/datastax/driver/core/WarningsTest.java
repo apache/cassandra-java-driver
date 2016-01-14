@@ -25,7 +25,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class WarningsTest extends CCMBridge.PerClassSingleNodeCluster {
+public class WarningsTest extends CCMTestsSupport {
 
     /**
      * This is Cassandra's default value, found in o.a.c.config.Config
@@ -33,7 +33,7 @@ public class WarningsTest extends CCMBridge.PerClassSingleNodeCluster {
     private static final int BATCH_SIZE_WARN_THRESHOLD_IN_BYTES = 5 * 1024;
 
     @Override
-    protected Collection<String> getTableDefinitions() {
+    public Collection<String> createTestFixtures() {
         return Lists.newArrayList(
                 "CREATE TABLE foo(k int primary key, v text)"
         );

@@ -22,11 +22,13 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;
 
-import static com.datastax.driver.core.CCMBridge.ipOfNode;
+import static com.datastax.driver.core.CreateCCM.TestMode.PER_METHOD;
+import static com.datastax.driver.core.TestUtils.ipOfNode;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Fail.fail;
 
-public class EventDebouncerIntegrationTest {
+@CreateCCM(PER_METHOD)
+public class EventDebouncerIntegrationTest extends CCMTestsSupport {
 
     /**
      * Tests that DOWN, UP, REMOVE or ADD events will not be delivered to
@@ -37,43 +39,33 @@ public class EventDebouncerIntegrationTest {
      * @jira_ticket JAVA-784
      * @since 2.0.11
      */
+    @CCMConfig(numberOfNodes = 3, createCluster = false, dirtiesContext = true)
     @Test(groups = "long")
     public void should_wait_until_load_balancing_policy_is_fully_initialized() throws InterruptedException {
         TestLoadBalancingPolicy policy = new TestLoadBalancingPolicy();
-        CCMBridge ccm = CCMBridge.builder("main").withNodes(3).build();
-        final Cluster cluster = new Cluster.Builder()
-                .addContactPoints(ipOfNode(1))
-                .withLoadBalancingPolicy(policy)
-                .withQueryOptions(new QueryOptions()
-                                .setRefreshNodeIntervalMillis(0)
-                                .setRefreshNodeListIntervalMillis(0)
-                                .setRefreshSchemaIntervalMillis(0)
-                ).build();
-        try {
-            new Thread() {
-                @Override
-                public void run() {
-                    cluster.init();
-                }
-            }.start();
-            // stop cluster initialization in the middle of LBP initialization
-            policy.stop();
-            // generate a DOWN event - will not be delivered immediately
-            // because the debouncers are not started
-            // note: a graceful stop notify other nodes which send a topology change event to the driver right away
-            // while forceStop kills the node so other nodes take much more time to detect node failure
-            ccm.stop(3);
-            ccm.waitForDown(3);
-            // finish cluster initialization and deliver the DOWN event
-            policy.proceed();
-            assertThat(policy.onDownCalledBeforeInit).isFalse();
-            assertThat(policy.onDownCalled()).isTrue();
-            assertThat(policy.hosts).doesNotContain(TestUtils.findHost(cluster, 3));
-        } finally {
-            if (cluster != null)
-                cluster.close();
-            ccm.remove("main");
-        }
+        final Cluster cluster = register(createClusterBuilderNoDebouncing()
+                .addContactPointsWithPorts(getHostAddress(1))
+                .withAddressTranslator(getAddressTranslator())
+                .withLoadBalancingPolicy(policy).build());
+        new Thread() {
+            @Override
+            public void run() {
+                cluster.init();
+            }
+        }.start();
+        // stop cluster initialization in the middle of LBP initialization
+        policy.stop();
+        // generate a DOWN event - will not be delivered immediately
+        // because the debouncers are not started
+        // note: a graceful stop notify other nodes which send a topology change event to the driver right away
+        // while forceStop kills the node so other nodes take much more time to detect node failure
+        ccm.stop(3);
+        ccm.waitForDown(3);
+        // finish cluster initialization and deliver the DOWN event
+        policy.proceed();
+        assertThat(policy.onDownCalledBeforeInit).isFalse();
+        assertThat(policy.onDownCalled()).isTrue();
+        assertThat(policy.hosts).doesNotContain(TestUtils.findHost(cluster, 3));
     }
 
     private class TestLoadBalancingPolicy extends SortingLoadBalancingPolicy {

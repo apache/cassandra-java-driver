@@ -19,7 +19,6 @@ import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
 import com.datastax.driver.core.utils.CassandraVersion;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.apache.log4j.Logger;
 import org.assertj.core.api.iterable.Extractor;
@@ -40,7 +39,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Fail.fail;
 
 @CassandraVersion(major = 2.2)
-public class CustomPayloadTest extends CCMBridge.PerClassSingleNodeCluster {
+@CCMConfig(jvmArgs = "-Dcassandra.custom_query_handler_class=org.apache.cassandra.cql3.CustomPayloadMirroringQueryHandler")
+public class CustomPayloadTest extends CCMTestsSupport {
 
     private Map<String, ByteBuffer> payload1;
 
@@ -240,7 +240,8 @@ public class CustomPayloadTest extends CCMBridge.PerClassSingleNodeCluster {
         Session v3session = null;
         try {
             v3cluster = Cluster.builder()
-                    .addContactPointsWithPorts(ImmutableList.of(hostAddress))
+                    .addContactPointsWithPorts(getInitialContactPoints())
+                    .withAddressTranslator(getAddressTranslator())
                     .withProtocolVersion(V3)
                     .build()
                     .init();
@@ -296,7 +297,7 @@ public class CustomPayloadTest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     @Override
-    protected Collection<String> getTableDefinitions() {
+    public Collection<String> createTestFixtures() {
         return Collections.singletonList("CREATE TABLE t1 (c1 int, c2 text,  PRIMARY KEY (c1, c2))");
     }
 

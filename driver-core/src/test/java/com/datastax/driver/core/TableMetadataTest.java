@@ -29,11 +29,8 @@ import static com.datastax.driver.core.ClusteringOrder.DESC;
 import static com.datastax.driver.core.DataType.*;
 import static org.assertj.core.api.Assertions.entry;
 
-public class TableMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
-    @Override
-    protected Collection<String> getTableDefinitions() {
-        return Collections.emptyList();
-    }
+@CCMConfig(clusterProvider = "createClusterBuilderNoDebouncing")
+public class TableMetadataTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void should_parse_table_without_clustering_columns() {
@@ -54,15 +51,6 @@ public class TableMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
         assertThat(table.getColumns().get(1)).isNotNull().hasName("i").isRegularColumn().hasType(cint());
         assertThat(table.getColumns().get(2)).isNotNull().hasName("m").isRegularColumn().hasType(map(text(), timeuuid()));
         assertThat(table.getColumns().get(3)).isNotNull().hasName("v").isRegularColumn().hasType(cint());
-    }
-
-    @Override
-    protected Cluster.Builder configure(Cluster.Builder builder) {
-        return builder.withQueryOptions(new QueryOptions()
-                        .setRefreshNodeIntervalMillis(0)
-                        .setRefreshNodeListIntervalMillis(0)
-                        .setRefreshSchemaIntervalMillis(0)
-        );
     }
 
     @Test(groups = "short")

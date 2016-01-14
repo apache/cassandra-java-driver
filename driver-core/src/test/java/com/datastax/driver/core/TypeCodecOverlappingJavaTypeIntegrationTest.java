@@ -29,14 +29,14 @@ import static org.assertj.core.api.Assertions.assertThat;
  * SimpleStatements become almost unusable in these cases, but we are adding tests
  * to check that at least it is possible to use prepared statements in these situations.
  */
-public class TypeCodecOverlappingJavaTypeIntegrationTest extends CCMBridge.PerClassSingleNodeCluster {
+public class TypeCodecOverlappingJavaTypeIntegrationTest extends CCMTestsSupport {
 
     private static final String insertQuery = "INSERT INTO \"myTable\" (c_int, l_int, c_text) VALUES (?, ?, ?)";
 
     private static final String selectQuery = "SELECT c_int, l_int, c_text FROM \"myTable\" WHERE c_int = ?";
 
     @Override
-    protected Collection<String> getTableDefinitions() {
+    public Collection<String> createTestFixtures() {
         return newArrayList(
                 "CREATE TABLE \"myTable\" ("
                         + "c_int int PRIMARY KEY, "
@@ -46,9 +46,8 @@ public class TypeCodecOverlappingJavaTypeIntegrationTest extends CCMBridge.PerCl
         );
     }
 
-    @Override
-    protected Cluster.Builder configure(Cluster.Builder builder) {
-        return builder.withCodecRegistry(
+    public Cluster.Builder createClusterBuilder() {
+        return Cluster.builder().withCodecRegistry(
                 new CodecRegistry().register(new IntToStringCodec())
         );
     }

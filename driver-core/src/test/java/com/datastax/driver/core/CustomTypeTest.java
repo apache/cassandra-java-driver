@@ -31,7 +31,7 @@ import static com.datastax.driver.core.DataType.custom;
 /**
  * Test we "support" custom types.
  */
-public class CustomTypeTest extends CCMBridge.PerClassSingleNodeCluster {
+public class CustomTypeTest extends CCMTestsSupport {
 
     public static final DataType CUSTOM_DYNAMIC_COMPOSITE = custom(
             "org.apache.cassandra.db.marshal.DynamicCompositeType("
@@ -44,7 +44,7 @@ public class CustomTypeTest extends CCMBridge.PerClassSingleNodeCluster {
                     + "org.apache.cassandra.db.marshal.Int32Type)");
 
     @Override
-    protected Collection<String> getTableDefinitions() {
+    public Collection<String> createTestFixtures() {
         return Collections.singleton(
                 "CREATE TABLE test ("
                         + "    k int,"
@@ -157,7 +157,6 @@ public class CustomTypeTest extends CCMBridge.PerClassSingleNodeCluster {
 
 
     private ByteBuffer serializeForDynamicCompositeType(Object... params) {
-
         List<ByteBuffer> l = new ArrayList<ByteBuffer>();
         int size = 0;
         for (Object p : params) {

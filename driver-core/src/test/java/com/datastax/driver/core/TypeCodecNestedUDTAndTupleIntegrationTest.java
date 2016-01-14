@@ -32,10 +32,10 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @jira_ticket JAVA-847
  */
 @CassandraVersion(major = 2.1)
-public class TypeCodecNestedUDTAndTupleIntegrationTest extends CCMBridge.PerClassSingleNodeCluster {
+public class TypeCodecNestedUDTAndTupleIntegrationTest extends CCMTestsSupport {
 
     @Override
-    protected Collection<String> getTableDefinitions() {
+    public Collection<String> createTestFixtures() {
         return Lists.newArrayList(
                 "CREATE TYPE IF NOT EXISTS \"udt3\" (f3 text)",
                 "CREATE TYPE IF NOT EXISTS \"udt2\" (f2 frozen<udt3>)",

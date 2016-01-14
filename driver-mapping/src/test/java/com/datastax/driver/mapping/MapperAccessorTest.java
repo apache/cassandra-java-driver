@@ -15,7 +15,7 @@
  */
 package com.datastax.driver.mapping;
 
-import com.datastax.driver.core.CCMBridge;
+import com.datastax.driver.core.CCMTestsSupport;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.utils.CassandraVersion;
@@ -29,10 +29,10 @@ import java.util.Collection;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class MapperAccessorTest extends CCMBridge.PerClassSingleNodeCluster {
+public class MapperAccessorTest extends CCMTestsSupport {
 
     @Override
-    protected Collection<String> getTableDefinitions() {
+    public Collection<String> createTestFixtures() {
         return Lists.newArrayList("CREATE TABLE foo (k int primary key, v text)");
     }
 
@@ -87,6 +87,7 @@ public class MapperAccessorTest extends CCMBridge.PerClassSingleNodeCluster {
         assertThat(row.getString("v")).isEqualTo("bar");
     }
 
+    @SuppressWarnings("unused")
     @Accessor
     public interface SystemAccessor {
         @Query("select release_version from system.local")

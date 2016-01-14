@@ -35,10 +35,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 @CassandraVersion(major = 2.1)
-public class MapperCustomCodecTest extends CCMBridge.PerClassSingleNodeCluster {
+@SuppressWarnings("unused")
+public class MapperCustomCodecTest extends CCMTestsSupport {
 
     @Override
-    protected Collection<String> getTableDefinitions() {
+    public Collection<String> createTestFixtures() {
         return Lists.newArrayList(
                 // Columns mapped to custom types
                 "CREATE TABLE data1 (i int PRIMARY KEY, l bigint)",
@@ -57,8 +58,8 @@ public class MapperCustomCodecTest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     @Override
-    protected Cluster.Builder configure(Cluster.Builder builder) {
-        return builder.withCodecRegistry(new CodecRegistry()
+    public Cluster.Builder createClusterBuilder() {
+        return Cluster.builder().withCodecRegistry(new CodecRegistry()
                 .register(new CustomInt.Codec()));
     }
 
@@ -160,7 +161,7 @@ public class MapperCustomCodecTest extends CCMBridge.PerClassSingleNodeCluster {
 
         // Get should return an InvalidTypeException.
         try {
-            Data1InvalidCodecTypeMapping data1 = mapper.get(1);
+            mapper.get(1);
             fail("Should not have been able to retrieve.");
         } catch (InvalidTypeException e) {
             // expected.
@@ -184,7 +185,7 @@ public class MapperCustomCodecTest extends CCMBridge.PerClassSingleNodeCluster {
 
         // Get should return an InvalidTypeException.
         try {
-            Data1InvalidCodecTypeMapping data1 = accessor.get(1);
+            accessor.get(1);
             fail("Should not have been able to retrieve.");
         } catch (InvalidTypeException e) {
             // expected.

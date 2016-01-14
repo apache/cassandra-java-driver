@@ -41,10 +41,10 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CassandraVersion(major = 2.2)
-public class JodaTimeCodecsTest extends CCMBridge.PerClassSingleNodeCluster {
+public class JodaTimeCodecsTest extends CCMTestsSupport {
 
     @Override
-    protected Collection<String> getTableDefinitions() {
+    public Collection<String> createTestFixtures() {
         return Collections.singletonList(
                 "CREATE TABLE IF NOT EXISTS foo ("
                         + "c1 text PRIMARY KEY, "

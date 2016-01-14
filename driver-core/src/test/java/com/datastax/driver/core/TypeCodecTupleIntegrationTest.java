@@ -20,14 +20,13 @@ import com.google.common.collect.Lists;
 import org.testng.annotations.Test;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.UUID;
 
 import static com.datastax.driver.core.DataType.cfloat;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CassandraVersion(major = 2.1)
-public class TypeCodecTupleIntegrationTest extends CCMBridge.PerClassSingleNodeCluster {
+public class TypeCodecTupleIntegrationTest extends CCMTestsSupport {
 
     private final String insertQuery = "INSERT INTO users (id, name, location) VALUES (?, ?, ?)";
     private final String selectQuery = "SELECT id, name, location FROM users WHERE id = ?";
@@ -42,7 +41,7 @@ public class TypeCodecTupleIntegrationTest extends CCMBridge.PerClassSingleNodeC
     private TupleValue partialLocationValueRetrieved;
 
     @Override
-    protected Collection<String> getTableDefinitions() {
+    public Collection<String> createTestFixtures() {
         return Lists.newArrayList(
                 "CREATE TABLE IF NOT EXISTS \"users\" (id uuid PRIMARY KEY, name text, location frozen<tuple<float,float>>)"
         );
@@ -93,73 +92,61 @@ public class TypeCodecTupleIntegrationTest extends CCMBridge.PerClassSingleNodeC
     @Test(groups = "short")
     public void should_handle_tuples_with_custom_codecs() {
         CodecRegistry codecRegistry = new CodecRegistry();
-        Cluster cluster = Cluster.builder()
-                .addContactPointsWithPorts(Collections.singleton(hostAddress))
+        Cluster cluster = register(Cluster.builder()
+                .addContactPointsWithPorts(getInitialContactPoints())
+                .withAddressTranslator(getAddressTranslator())
                 .withCodecRegistry(codecRegistry)
-                .build();
-
-        try {
-            Session session = cluster.connect(keyspace);
-            setUpTupleTypes(cluster);
-            codecRegistry
-                    .register(new LocationCodec(TypeCodec.tuple(locationType)))
-            ;
-            session.execute(insertQuery, uuid, "John Doe", locationValue);
-            ResultSet rows = session.execute(selectQuery, uuid);
-            Row row = rows.one();
-            assertThat(row.getUUID(0)).isEqualTo(uuid);
-            assertThat(row.getObject(0)).isEqualTo(uuid);
-            assertThat(row.get(0, UUID.class)).isEqualTo(uuid);
-            assertThat(row.getString(1)).isEqualTo("John Doe");
-            assertThat(row.getObject(1)).isEqualTo("John Doe");
-            assertThat(row.get(1, String.class)).isEqualTo("John Doe");
-            assertThat(row.getTupleValue(2)).isEqualTo(locationValue);
-            // edge case: getObject should use default codecs;
-            // but tuple and udt codecs are registered on the fly;
-            // so if we have another manually-registered codec
-            // that one will be picked up
-            assertThat(row.getObject(2)).isEqualTo(location);
-            assertThat(row.get(2, TupleValue.class)).isEqualTo(locationValue);
-            assertThat(row.get(2, Location.class)).isEqualTo(location);
-        } finally {
-            cluster.close();
-        }
+                .build());
+        Session session = cluster.connect(keyspace);
+        setUpTupleTypes(cluster);
+        codecRegistry.register(new LocationCodec(TypeCodec.tuple(locationType)));
+        session.execute(insertQuery, uuid, "John Doe", locationValue);
+        ResultSet rows = session.execute(selectQuery, uuid);
+        Row row = rows.one();
+        assertThat(row.getUUID(0)).isEqualTo(uuid);
+        assertThat(row.getObject(0)).isEqualTo(uuid);
+        assertThat(row.get(0, UUID.class)).isEqualTo(uuid);
+        assertThat(row.getString(1)).isEqualTo("John Doe");
+        assertThat(row.getObject(1)).isEqualTo("John Doe");
+        assertThat(row.get(1, String.class)).isEqualTo("John Doe");
+        assertThat(row.getTupleValue(2)).isEqualTo(locationValue);
+        // edge case: getObject should use default codecs;
+        // but tuple and udt codecs are registered on the fly;
+        // so if we have another manually-registered codec
+        // that one will be picked up
+        assertThat(row.getObject(2)).isEqualTo(location);
+        assertThat(row.get(2, TupleValue.class)).isEqualTo(locationValue);
+        assertThat(row.get(2, Location.class)).isEqualTo(location);
     }
 
     @Test(groups = "short")
     public void should_handle_partial_tuples_with_custom_codecs() {
         CodecRegistry codecRegistry = new CodecRegistry();
-        Cluster cluster = Cluster.builder()
-                .addContactPointsWithPorts(Collections.singleton(hostAddress))
+        Cluster cluster = register(Cluster.builder()
+                .addContactPointsWithPorts(getInitialContactPoints())
+                .withAddressTranslator(getAddressTranslator())
                 .withCodecRegistry(codecRegistry)
-                .build();
-
-        try {
-            Session session = cluster.connect(keyspace);
-            setUpTupleTypes(cluster);
-            codecRegistry
-                    .register(new LocationCodec(TypeCodec.tuple(locationType)))
-            ;
-            session.execute(insertQuery, uuid, "John Doe", partialLocationValueInserted);
-            ResultSet rows = session.execute(selectQuery, uuid);
-            Row row = rows.one();
-            assertThat(row.getUUID(0)).isEqualTo(uuid);
-            assertThat(row.getObject(0)).isEqualTo(uuid);
-            assertThat(row.get(0, UUID.class)).isEqualTo(uuid);
-            assertThat(row.getString(1)).isEqualTo("John Doe");
-            assertThat(row.getObject(1)).isEqualTo("John Doe");
-            assertThat(row.get(1, String.class)).isEqualTo("John Doe");
-            assertThat(row.getTupleValue(2)).isEqualTo(locationType.newValue(37.387224f, null));
-            // corner case: getObject should use default codecs;
-            // but tuple and udt codecs are registered on the fly;
-            // so if we have another manually-registered codec
-            // that one will be picked up :(
-            assertThat(row.getObject(2)).isEqualTo(partialLocation);
-            assertThat(row.get(2, TupleValue.class)).isEqualTo(locationType.newValue(37.387224f, null));
-            assertThat(row.get(2, Location.class)).isEqualTo(partialLocation);
-        } finally {
-            cluster.close();
-        }
+                .build());
+        Session session = cluster.connect(keyspace);
+        setUpTupleTypes(cluster);
+        codecRegistry.register(new LocationCodec(TypeCodec.tuple(locationType)));
+        session.execute(insertQuery, uuid, "John Doe", partialLocationValueInserted);
+        ResultSet rows = session.execute(selectQuery, uuid);
+        Row row = rows.one();
+        assertThat(row.getUUID(0)).isEqualTo(uuid);
+        assertThat(row.getObject(0)).isEqualTo(uuid);
+        assertThat(row.get(0, UUID.class)).isEqualTo(uuid);
+        assertThat(row.getString(1)).isEqualTo("John Doe");
+        assertThat(row.getObject(1)).isEqualTo("John Doe");
+        assertThat(row.get(1, String.class)).isEqualTo("John Doe");
+        assertThat(row.getTupleValue(2)).isEqualTo(locationType.newValue(37.387224f, null));
+        // corner case: getObject should use default codecs;
+        // but tuple and udt codecs are registered on the fly;
+        // so if we have another manually-registered codec
+        // that one will be picked up :(
+        assertThat(row.getObject(2)).isEqualTo(partialLocation);
+        assertThat(row.get(2, TupleValue.class)).isEqualTo(locationType.newValue(37.387224f, null));
+        assertThat(row.get(2, Location.class)).isEqualTo(partialLocation);
     }
 
     private void assertRow(Row row) {

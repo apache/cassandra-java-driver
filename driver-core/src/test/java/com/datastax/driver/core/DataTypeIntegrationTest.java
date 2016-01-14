@@ -19,7 +19,6 @@ import com.datastax.driver.core.utils.CassandraVersion;
 import com.google.common.collect.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.Test;
 
 import java.nio.ByteBuffer;
@@ -37,7 +36,8 @@ import static org.assertj.core.api.Assertions.fail;
  * (protocol > v2 only) and a prepared statement.
  * This is repeated with a large number of datatypes.
  */
-public class DataTypeIntegrationTest extends CCMBridge.PerClassSingleNodeCluster {
+@CCMConfig(clusterProvider = "createClusterBuilderNoDebouncing")
+public class DataTypeIntegrationTest extends CCMTestsSupport {
     private static final Logger logger = LoggerFactory.getLogger(DataTypeIntegrationTest.class);
 
     List<TestTable> tables = allTables();
@@ -46,7 +46,7 @@ public class DataTypeIntegrationTest extends CCMBridge.PerClassSingleNodeCluster
     enum StatementType {RAW_STRING, SIMPLE_WITH_PARAM, PREPARED}
 
     @Override
-    protected Collection<String> getTableDefinitions() {
+    public Collection<String> createTestFixtures() {
         Host host = cluster.getMetadata().getAllHosts().iterator().next();
         cassandraVersion = host.getCassandraVersion().nextStable();
 
@@ -60,16 +60,6 @@ public class DataTypeIntegrationTest extends CCMBridge.PerClassSingleNodeCluster
         }
 
         return statements;
-    }
-
-    @AfterClass
-    @Override
-    public void afterClass() {
-        // drop tables one by one to avoid a timeout when issuing the DROP KEYSPACE statement
-        for (TestTable table : tables) {
-            session.execute("DROP TABLE " + table.tableName);
-        }
-        super.afterClass();
     }
 
     @Test(groups = "long")
@@ -227,7 +217,6 @@ public class DataTypeIntegrationTest extends CCMBridge.PerClassSingleNodeCluster
         // type maps to a java primitive type it's value will by the default value instead of null.
         for (DataType dataType : DataType.allPrimitiveTypes(TestUtils.getDesiredProtocolVersion())) {
             Object expectedPrimitiveValue = null;
-            Object expectedValue = null;
             switch (dataType.getName()) {
                 case BIGINT:
                 case TIME:
@@ -254,7 +243,7 @@ public class DataTypeIntegrationTest extends CCMBridge.PerClassSingleNodeCluster
             }
 
             if (!dataType.getName().equals(DataType.Name.COUNTER)) {
-                tables.add(new TestTable(dataType, null, expectedValue, expectedPrimitiveValue, "1.2.0"));
+                tables.add(new TestTable(dataType, null, null, expectedPrimitiveValue, "1.2.0"));
             }
         }
         return tables;

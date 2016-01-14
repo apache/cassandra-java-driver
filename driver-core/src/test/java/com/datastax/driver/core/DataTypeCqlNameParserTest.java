@@ -27,7 +27,7 @@ import static com.datastax.driver.core.DataTypeCqlNameParser.parse;
 import static com.datastax.driver.core.Metadata.quote;
 
 @CassandraVersion(major = 3.0)
-public class DataTypeCqlNameParserTest extends CCMBridge.PerClassSingleNodeCluster {
+public class DataTypeCqlNameParserTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void should_parse_native_types() {
@@ -119,7 +119,7 @@ public class DataTypeCqlNameParserTest extends CCMBridge.PerClassSingleNodeClust
     }
 
     @Override
-    protected Collection<String> getTableDefinitions() {
+    public Collection<String> createTestFixtures() {
         return Lists.newArrayList(
                 String.format("CREATE TYPE %s.\"A\" (f1 int)", keyspace),
                 String.format("CREATE TYPE %s.\"Incr,edibly\"\" EvilTy<>><<><p\"\"e\" (a frozen<\"A\">)", keyspace)

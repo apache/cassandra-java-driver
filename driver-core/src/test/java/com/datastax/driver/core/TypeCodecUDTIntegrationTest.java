@@ -20,12 +20,15 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.testng.annotations.Test;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CassandraVersion(major = 2.1)
-public class TypeCodecUDTIntegrationTest extends CCMBridge.PerClassSingleNodeCluster {
+public class TypeCodecUDTIntegrationTest extends CCMTestsSupport {
 
     private final String insertQuery = "INSERT INTO users (id, name, address) VALUES (?, ?, ?)";
     private final String selectQuery = "SELECT id, name, address FROM users WHERE id = ?";
@@ -42,7 +45,7 @@ public class TypeCodecUDTIntegrationTest extends CCMBridge.PerClassSingleNodeClu
     private UDTValue addressValue;
 
     @Override
-    protected Collection<String> getTableDefinitions() {
+    public Collection<String> createTestFixtures() {
         return Lists.newArrayList(
                 "CREATE TYPE IF NOT EXISTS \"phone\" (number text, tags set<text>)",
                 "CREATE TYPE IF NOT EXISTS \"address\" (street text, zipcode int, phones list<frozen<phone>>)",
@@ -74,40 +77,36 @@ public class TypeCodecUDTIntegrationTest extends CCMBridge.PerClassSingleNodeClu
     @Test(groups = "short")
     public void should_handle_udts_with_custom_codecs() {
         CodecRegistry codecRegistry = new CodecRegistry();
-        Cluster cluster = Cluster.builder()
-                .addContactPointsWithPorts(Collections.singleton(hostAddress))
+        Cluster cluster = register(Cluster.builder()
+                .addContactPointsWithPorts(getInitialContactPoints())
+                .withAddressTranslator(getAddressTranslator())
                 .withCodecRegistry(codecRegistry)
-                .build();
-
-        try {
-            Session session = cluster.connect(keyspace);
-            setUpUserTypes(cluster);
-            TypeCodec<UDTValue> addressTypeCodec = TypeCodec.userType(addressType);
-            TypeCodec<UDTValue> phoneTypeCodec = TypeCodec.userType(phoneType);
-            codecRegistry
-                    .register(new AddressCodec(addressTypeCodec, Address.class))
-                    .register(new PhoneCodec(phoneTypeCodec, Phone.class))
-            ;
-            session.execute(insertQuery, uuid, "John Doe", address);
-            ResultSet rows = session.execute(selectQuery, uuid);
-            Row row = rows.one();
-            assertThat(row.getUUID(0)).isEqualTo(uuid);
-            assertThat(row.getObject(0)).isEqualTo(uuid);
-            assertThat(row.get(0, UUID.class)).isEqualTo(uuid);
-            assertThat(row.getString(1)).isEqualTo("John Doe");
-            assertThat(row.getObject(1)).isEqualTo("John Doe");
-            assertThat(row.get(1, String.class)).isEqualTo("John Doe");
-            assertThat(row.getUDTValue(2)).isEqualTo(addressValue);
-            // corner case: getObject should use default codecs;
-            // but tuple and udt codecs are registered on the fly;
-            // so if we have another manually-registered codec
-            // that one will be picked up :(
-            assertThat(row.getObject(2)).isEqualTo(address);
-            assertThat(row.get(2, UDTValue.class)).isEqualTo(addressValue);
-            assertThat(row.get(2, Address.class)).isEqualTo(address);
-        } finally {
-            cluster.close();
-        }
+                .build());
+        Session session = cluster.connect(keyspace);
+        setUpUserTypes(cluster);
+        TypeCodec<UDTValue> addressTypeCodec = TypeCodec.userType(addressType);
+        TypeCodec<UDTValue> phoneTypeCodec = TypeCodec.userType(phoneType);
+        codecRegistry
+                .register(new AddressCodec(addressTypeCodec, Address.class))
+                .register(new PhoneCodec(phoneTypeCodec, Phone.class))
+        ;
+        session.execute(insertQuery, uuid, "John Doe", address);
+        ResultSet rows = session.execute(selectQuery, uuid);
+        Row row = rows.one();
+        assertThat(row.getUUID(0)).isEqualTo(uuid);
+        assertThat(row.getObject(0)).isEqualTo(uuid);
+        assertThat(row.get(0, UUID.class)).isEqualTo(uuid);
+        assertThat(row.getString(1)).isEqualTo("John Doe");
+        assertThat(row.getObject(1)).isEqualTo("John Doe");
+        assertThat(row.get(1, String.class)).isEqualTo("John Doe");
+        assertThat(row.getUDTValue(2)).isEqualTo(addressValue);
+        // corner case: getObject should use default codecs;
+        // but tuple and udt codecs are registered on the fly;
+        // so if we have another manually-registered codec
+        // that one will be picked up :(
+        assertThat(row.getObject(2)).isEqualTo(address);
+        assertThat(row.get(2, UDTValue.class)).isEqualTo(addressValue);
+        assertThat(row.get(2, Address.class)).isEqualTo(address);
     }
 
     private void assertRow(Row row) {

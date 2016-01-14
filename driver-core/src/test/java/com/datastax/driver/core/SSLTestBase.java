@@ -16,8 +16,6 @@
 package com.datastax.driver.core;
 
 import io.netty.handler.ssl.SslContextBuilder;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 
 import javax.net.ssl.KeyManagerFactory;
@@ -31,15 +29,8 @@ import static com.datastax.driver.core.SSLTestBase.SslImplementation.NETTY_OPENS
 import static io.netty.handler.ssl.SslProvider.OPENSSL;
 import static org.assertj.core.api.Assertions.fail;
 
-public abstract class SSLTestBase {
-
-    private final boolean requireClientAuth;
-
-    protected CCMBridge ccm;
-
-    public SSLTestBase(boolean requireClientAuth) {
-        this.requireClientAuth = requireClientAuth;
-    }
+@CCMConfig(ssl = true, createCluster = false)
+public abstract class SSLTestBase extends CCMTestsSupport {
 
     @DataProvider(name = "sslImplementation")
     public static Object[][] sslImplementation() {
@@ -50,18 +41,6 @@ public abstract class SSLTestBase {
         } else {
             return new Object[][]{{JDK}, {NETTY_OPENSSL}};
         }
-    }
-
-    @BeforeClass(groups = {"isolated", "short", "long"})
-    public void beforeClass() {
-        ccm = CCMBridge.builder("test")
-                .withSSL(requireClientAuth)
-                .build();
-    }
-
-    @AfterClass(groups = {"isolated", "short", "long"})
-    public void afterClass() {
-        ccm.remove();
     }
 
     /**
@@ -75,18 +54,12 @@ public abstract class SSLTestBase {
      *                   raised here if connection cannot be established.
      */
     protected void connectWithSSLOptions(SSLOptions sslOptions) throws Exception {
-        Cluster cluster = null;
-        try {
-            cluster = Cluster.builder()
-                    .addContactPoint(CCMBridge.IP_PREFIX + '1')
-                    .withSSL(sslOptions)
-                    .build();
-
-            cluster.connect();
-        } finally {
-            if (cluster != null)
-                cluster.close();
-        }
+        Cluster cluster = register(Cluster.builder()
+                .addContactPointsWithPorts(this.getInitialContactPoints())
+                .withAddressTranslator(ccm.addressTranslator())
+                .withSSL(sslOptions)
+                .build());
+        cluster.connect();
     }
 
     /**
@@ -99,18 +72,12 @@ public abstract class SSLTestBase {
      *                   raised here if connection cannot be established.
      */
     protected void connectWithSSL() throws Exception {
-        Cluster cluster = null;
-        try {
-            cluster = Cluster.builder()
-                    .addContactPoint(CCMBridge.IP_PREFIX + '1')
-                    .withSSL()
-                    .build();
-
-            cluster.connect();
-        } finally {
-            if (cluster != null)
-                cluster.close();
-        }
+        Cluster cluster = register(Cluster.builder()
+                .addContactPointsWithPorts(this.getInitialContactPoints())
+                .withAddressTranslator(ccm.addressTranslator())
+                .withSSL()
+                .build());
+        cluster.connect();
     }
 
     enum SslImplementation {JDK, NETTY_OPENSSL}

@@ -23,6 +23,7 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.google.common.primitives.Bytes;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -34,9 +35,9 @@ import java.util.List;
 
 import static com.datastax.driver.core.BatchStatement.Type.COUNTER;
 import static com.datastax.driver.core.BatchStatement.Type.UNLOGGED;
-import static com.datastax.driver.core.CCMBridge.ipOfNode;
 import static com.datastax.driver.core.QueryLogger.*;
 import static com.datastax.driver.core.TestUtils.getFixedValue;
+import static com.datastax.driver.core.TestUtils.ipOfNode;
 import static org.apache.log4j.Level.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -46,7 +47,7 @@ import static org.mockito.Mockito.mock;
  * More tests, specifically targeting slow and unsuccessful queries, can be found in
  * {@link QueryLoggerErrorsTest}.
  */
-public class QueryLoggerTest extends CCMBridge.PerClassSingleNodeCluster {
+public class QueryLoggerTest extends CCMTestsSupport {
 
     private static final List<DataType> dataTypes = new ArrayList<DataType>(
             Sets.filter(DataType.allPrimitiveTypes(TestUtils.getDesiredProtocolVersion()), new Predicate<DataType>() {
@@ -93,32 +94,34 @@ public class QueryLoggerTest extends CCMBridge.PerClassSingleNodeCluster {
     private MemoryAppender errorAppender;
 
     private QueryLogger queryLogger;
+    private Level originalNormal;
+    private Level originalSlow;
+    private Level originalError;
 
     @BeforeMethod(groups = {"short", "unit"})
     public void startCapturingLogs() {
+        originalNormal = normal.getLevel();
+        originalSlow = slow.getLevel();
+        originalError = error.getLevel();
+        normal.setLevel(INFO);
+        slow.setLevel(INFO);
+        error.setLevel(INFO);
         normal.addAppender(normalAppender = new MemoryAppender());
         slow.addAppender(slowAppender = new MemoryAppender());
         error.addAppender(errorAppender = new MemoryAppender());
     }
 
-    @AfterMethod(groups = {"short", "unit"})
+    @AfterMethod(groups = {"short", "unit"}, alwaysRun = true)
     public void stopCapturingLogs() {
-        normal.setLevel(null);
-        slow.setLevel(null);
-        error.setLevel(null);
+        normal.setLevel(originalNormal);
+        slow.setLevel(originalSlow);
+        error.setLevel(originalError);
         normal.removeAppender(normalAppender);
         slow.removeAppender(slowAppender);
         error.removeAppender(errorAppender);
     }
 
-    @BeforeMethod(groups = {"short", "unit"})
-    public void resetLogLevels() {
-        normal.setLevel(INFO);
-        slow.setLevel(INFO);
-        error.setLevel(INFO);
-    }
-
-    @AfterMethod(groups = {"short", "unit"})
+    @AfterMethod(groups = {"short", "unit"}, alwaysRun = true)
     public void unregisterQueryLogger() {
         if (cluster != null && queryLogger != null) {
             cluster.unregister(queryLogger);
@@ -744,7 +747,7 @@ public class QueryLoggerTest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     @Override
-    protected List<String> getTableDefinitions() {
+    public List<String> createTestFixtures() {
         return Lists.newArrayList("CREATE TABLE test (pk int PRIMARY KEY, " + definitions + ")");
     }
 

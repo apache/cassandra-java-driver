@@ -1,5 +1,12 @@
 ## Changelog
 
+### 3.0.0 (in progress)
+
+Merged from 2.1 branch:
+
+- [improvement] JAVA-1030: Log token to replica map computation times.
+
+
 ### 3.0.0-rc1
 
 - [bug] JAVA-890: fix mapper for case-sensitive UDT.
@@ -252,6 +259,7 @@ Merged from 2.1 branch:
 ### 2.1.10 (in progress)
 
 - [bug] JAVA-988: Metadata.handleId should handle escaped double quotes.
+- [improvement] JAVA-1030: Log token to replica map computation times.
 
 Merged from 2.0 branch:
 

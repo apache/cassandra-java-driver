@@ -30,18 +30,20 @@ public class RoundRobinPolicyTest {
     Logger policyLogger = Logger.getLogger(RoundRobinPolicy.class);
     MemoryAppender logs;
     QueryTracker queryTracker;
+    Level originalLevel;
 
     @BeforeMethod(groups = "short")
     public void setUp() {
         queryTracker = new QueryTracker();
+        originalLevel = policyLogger.getLevel();
         policyLogger.setLevel(Level.WARN);
         logs = new MemoryAppender();
         policyLogger.addAppender(logs);
     }
 
-    @AfterMethod(groups = "short")
+    @AfterMethod(groups = "short", alwaysRun = true)
     public void tearDown() {
-        policyLogger.setLevel(null);
+        policyLogger.setLevel(originalLevel);
         policyLogger.removeAppender(logs);
     }
 
@@ -57,7 +59,8 @@ public class RoundRobinPolicyTest {
         ScassandraCluster sCluster = ScassandraCluster.builder().withNodes(5).build();
 
         Cluster cluster = Cluster.builder()
-                .addContactPoint(sCluster.address(1))
+                .addContactPointsWithPorts(sCluster.address(1))
+                .withAddressTranslator(sCluster.addressTranslator())
                 .withLoadBalancingPolicy(new RoundRobinPolicy())
                 .withNettyOptions(nonQuietClusterCloseOptions)
                 .build();
@@ -92,7 +95,8 @@ public class RoundRobinPolicyTest {
         ScassandraCluster sCluster = ScassandraCluster.builder().withNodes(2, 2, 2, 2, 2).build();
 
         Cluster cluster = Cluster.builder()
-                .addContactPoint(sCluster.address(1))
+                .addContactPointsWithPorts(sCluster.address(1))
+                .withAddressTranslator(sCluster.addressTranslator())
                 .withLoadBalancingPolicy(new RoundRobinPolicy())
                 .withNettyOptions(nonQuietClusterCloseOptions)
                 .build();
@@ -130,7 +134,8 @@ public class RoundRobinPolicyTest {
         ScassandraCluster sCluster = ScassandraCluster.builder().withNodes(1, 1).build();
 
         Cluster cluster = Cluster.builder()
-                .addContactPoint(sCluster.address(1))
+                .addContactPointsWithPorts(sCluster.address(1))
+                .withAddressTranslator(sCluster.addressTranslator())
                 .withLoadBalancingPolicy(new RoundRobinPolicy())
                 .withNettyOptions(nonQuietClusterCloseOptions)
                 .build();

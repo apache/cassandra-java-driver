@@ -33,10 +33,11 @@ import static org.testng.Assert.assertTrue;
 /**
  * Basic tests for the mapping module.
  */
-public class MapperTest extends CCMBridge.PerClassSingleNodeCluster {
+@SuppressWarnings("unused")
+public class MapperTest extends CCMTestsSupport {
 
     @Override
-    protected Collection<String> getTableDefinitions() {
+    public Collection<String> createTestFixtures() {
         // We'll allow to generate those create statement from the annotated entities later, but it's currently
         // a TODO
         return Arrays.asList("CREATE TABLE users (user_id uuid PRIMARY KEY, name text, email text, year int, gender text)",

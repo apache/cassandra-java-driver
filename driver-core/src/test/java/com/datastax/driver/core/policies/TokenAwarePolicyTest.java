@@ -69,7 +69,9 @@ public class TokenAwarePolicyTest {
             loadBalancingPolicy = new TokenAwarePolicy(new RoundRobinPolicy(), shuffleReplicas);
         }
 
-        Cluster cluster = Cluster.builder().addContactPoints(sCluster.address(1))
+        Cluster cluster = Cluster.builder()
+                .addContactPointsWithPorts(sCluster.address(1))
+                .withAddressTranslator(sCluster.addressTranslator())
                 .withNettyOptions(nonQuietClusterCloseOptions)
                 .withLoadBalancingPolicy(loadBalancingPolicy)
                 .build();
@@ -137,7 +139,9 @@ public class TokenAwarePolicyTest {
                 .withNodes(3)
                 .withSimpleKeyspace("keyspace", 1)
                 .build();
-        Cluster cluster = Cluster.builder().addContactPoints(sCluster.address(1))
+        Cluster cluster = Cluster.builder()
+                .addContactPointsWithPorts(sCluster.address(1))
+                .withAddressTranslator(sCluster.addressTranslator())
                 .withNettyOptions(nonQuietClusterCloseOptions)
                 .withLoadBalancingPolicy(new TokenAwarePolicy(new RoundRobinPolicy()))
                 .build();
@@ -180,7 +184,9 @@ public class TokenAwarePolicyTest {
                 .withNodes(3, 3)
                 .withNetworkTopologyKeyspace("keyspace", ImmutableMap.of(1, 1, 2, 1))
                 .build();
-        Cluster cluster = Cluster.builder().addContactPoints(sCluster.address(2, 1))
+        Cluster cluster = Cluster.builder()
+                .addContactPointsWithPorts(sCluster.address(1))
+                .withAddressTranslator(sCluster.addressTranslator())
                 .withNettyOptions(nonQuietClusterCloseOptions)
                 .withLoadBalancingPolicy(new TokenAwarePolicy(DCAwareRoundRobinPolicy.builder()
                         .withLocalDc(ScassandraCluster.datacenter(2))
@@ -225,7 +231,9 @@ public class TokenAwarePolicyTest {
                 .withNodes(4)
                 .withSimpleKeyspace("keyspace", 2)
                 .build();
-        Cluster cluster = Cluster.builder().addContactPoints(sCluster.address(2))
+        Cluster cluster = Cluster.builder()
+                .addContactPointsWithPorts(sCluster.address(2))
+                .withAddressTranslator(sCluster.addressTranslator())
                 .withNettyOptions(nonQuietClusterCloseOptions)
                         // Don't shuffle replicas just to keep test deterministic.
                 .withLoadBalancingPolicy(new TokenAwarePolicy(new RoundRobinPolicy(), false))
@@ -311,11 +319,12 @@ public class TokenAwarePolicyTest {
     @Test(groups = "long")
     public void should_properly_generate_and_use_routing_key_for_composite_partition_key() {
         // given: a 3 node cluster with a keyspace with RF 1.
-        CCMBridge ccm = CCMBridge.builder("TokenAwarePolicyTest").withNodes(3).notStarted().build();
+        CCMBridge ccm = CCMBridge.builder().withNodes(3).notStarted().build();
 
         Cluster cluster = Cluster.builder()
                 .withLoadBalancingPolicy(new TokenAwarePolicy(new RoundRobinPolicy()))
-                .addContactPoint(CCMBridge.ipOfNode(1))
+                .addContactPointsWithPorts(ccm.addressOfNode(1))
+                .withAddressTranslator(ccm.addressTranslator())
                 .build();
 
         try {

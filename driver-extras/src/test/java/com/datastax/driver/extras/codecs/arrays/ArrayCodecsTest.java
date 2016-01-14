@@ -31,7 +31,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class ArrayCodecsTest extends CCMBridge.PerClassSingleNodeCluster {
+public class ArrayCodecsTest extends CCMTestsSupport {
 
     private static final ObjectArrayCodec<String> stringArrayCodec = new ObjectArrayCodec<String>(
             DataType.list(DataType.varchar()),
@@ -39,7 +39,7 @@ public class ArrayCodecsTest extends CCMBridge.PerClassSingleNodeCluster {
             TypeCodec.varchar());
 
     @Override
-    protected Collection<String> getTableDefinitions() {
+    public Collection<String> createTestFixtures() {
         return Lists.newArrayList(
                 "CREATE TABLE lists ("
                         + "pk int PRIMARY KEY, "
@@ -60,8 +60,8 @@ public class ArrayCodecsTest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     @Override
-    protected Cluster.Builder configure(Cluster.Builder builder) {
-        return builder.withCodecRegistry(
+    public Cluster.Builder createClusterBuilder() {
+        return Cluster.builder().withCodecRegistry(
                 new CodecRegistry()
                         .register(IntArrayCodec.instance)
                         .register(LongArrayCodec.instance)

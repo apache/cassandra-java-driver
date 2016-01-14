@@ -15,9 +15,11 @@
  */
 package com.datastax.driver.core;
 
+@CCMConfig(options = {"-p ByteOrderedPartitioner", "--vnodes"})
 public class OPPTokenVnodeIntegrationTest extends TokenIntegrationTest {
+
     public OPPTokenVnodeIntegrationTest() {
-        super("-p ByteOrderedPartitioner", DataType.blob(), true);
+        super(DataType.blob(), true);
     }
 
     @Override

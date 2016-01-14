@@ -35,7 +35,7 @@ import static com.google.common.collect.Sets.newHashSet;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CassandraVersion(major = 2.0)
-public class TypeCodecCollectionsIntegrationTest extends CCMBridge.PerClassSingleNodeCluster {
+public class TypeCodecCollectionsIntegrationTest extends CCMTestsSupport {
 
     private final String insertQuery = "INSERT INTO \"myTable2\" (c_int, l_int, l_bigint, s_float, s_double, m_varint, m_decimal) VALUES (?, ?, ?, ?, ?, ?, ?)";
 
@@ -53,7 +53,7 @@ public class TypeCodecCollectionsIntegrationTest extends CCMBridge.PerClassSingl
     private Map<Integer, BigDecimal> m_decimal = ImmutableMap.of(42, new BigDecimal("424242.42"), 43, new BigDecimal("434343.43"));
 
     @Override
-    protected Collection<String> getTableDefinitions() {
+    public Collection<String> createTestFixtures() {
         return newArrayList(
                 "CREATE TABLE IF NOT EXISTS \"myTable2\" ("
                         + "c_int int PRIMARY KEY, "

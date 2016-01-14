@@ -17,9 +17,11 @@ package com.datastax.driver.core;
 
 import com.datastax.driver.core.Token.OPPToken;
 
+@CCMConfig(options = "-p ByteOrderedPartitioner")
 public class OPPTokenIntegrationTest extends TokenIntegrationTest {
+
     public OPPTokenIntegrationTest() {
-        super("-p ByteOrderedPartitioner", DataType.blob());
+        super(DataType.blob(), false);
     }
 
     @Override

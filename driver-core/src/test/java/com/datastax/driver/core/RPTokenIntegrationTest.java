@@ -17,9 +17,11 @@ package com.datastax.driver.core;
 
 import com.datastax.driver.core.Token.RPToken;
 
+@CCMConfig(options = "-p RandomPartitioner")
 public class RPTokenIntegrationTest extends TokenIntegrationTest {
+
     public RPTokenIntegrationTest() {
-        super("-p RandomPartitioner", DataType.varint());
+        super(DataType.varint(), false);
     }
 
     @Override

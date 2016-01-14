@@ -37,7 +37,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * even if some inner type requires a custom codec.
  */
 @CassandraVersion(major = 2.1)
-public class TypeCodecNestedCollectionsIntegrationTest extends CCMBridge.PerClassSingleNodeCluster {
+public class TypeCodecNestedCollectionsIntegrationTest extends CCMTestsSupport {
 
     private final String insertQuery = "INSERT INTO \"myTable\" (pk, v) VALUES (?, ?)";
 
@@ -55,7 +55,7 @@ public class TypeCodecNestedCollectionsIntegrationTest extends CCMBridge.PerClas
     // @formatter:on
 
     @Override
-    protected Collection<String> getTableDefinitions() {
+    public Collection<String> createTestFixtures() {
         return newArrayList(
                 "CREATE TABLE IF NOT EXISTS \"myTable\" ("
                         + "pk int PRIMARY KEY, "
@@ -64,9 +64,8 @@ public class TypeCodecNestedCollectionsIntegrationTest extends CCMBridge.PerClas
         );
     }
 
-    @Override
-    protected Cluster.Builder configure(Cluster.Builder builder) {
-        return builder.withCodecRegistry(
+    public Cluster.Builder createClusterBuilder() {
+        return Cluster.builder().withCodecRegistry(
                 new CodecRegistry().register(new MyIntCodec()) // global User <-> varchar codec
         );
     }

@@ -33,7 +33,7 @@ import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 import static com.google.common.collect.Lists.newArrayList;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class TypeCodecEncapsulationIntegrationTest extends CCMBridge.PerClassSingleNodeCluster {
+public class TypeCodecEncapsulationIntegrationTest extends CCMTestsSupport {
 
     // @formatter:off
     private static final TypeToken<NumberBox<Integer>> NUMBERBOX_OF_INTEGER_TOKEN = new TypeToken<NumberBox<Integer>>() {};
@@ -59,7 +59,7 @@ public class TypeCodecEncapsulationIntegrationTest extends CCMBridge.PerClassSin
     private BigDecimal n_decimal = new BigDecimal("424242.42");
 
     @Override
-    protected Collection<String> getTableDefinitions() {
+    public Collection<String> createTestFixtures() {
         return newArrayList(
                 "CREATE TABLE \"myTable\" ("
                         + "c_int int, "
@@ -74,8 +74,8 @@ public class TypeCodecEncapsulationIntegrationTest extends CCMBridge.PerClassSin
     }
 
     @Override
-    protected Cluster.Builder configure(Cluster.Builder builder) {
-        return builder.withCodecRegistry(
+    public Cluster.Builder createClusterBuilder() {
+        return Cluster.builder().withCodecRegistry(
                 new CodecRegistry()
                         .register(
                                 new NumberBoxCodec<Integer>(TypeCodec.cint()),

@@ -23,8 +23,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import org.mockito.ArgumentCaptor;
 import org.testng.annotations.*;
 
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 import static com.datastax.driver.core.Assertions.assertThat;
@@ -33,7 +31,8 @@ import static com.datastax.driver.core.TestUtils.nonDebouncingQueryOptions;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
-public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
+@CCMConfig(createCluster = false, config = "enable_user_defined_functions:true")
+public class SchemaChangesTest extends CCMTestsSupport {
 
     private static final String CREATE_KEYSPACE = "CREATE KEYSPACE %s WITH REPLICATION = { 'class' : 'SimpleStrategy', 'replication_factor': '1' }";
     private static final String ALTER_KEYSPACE = "ALTER KEYSPACE %s WITH durable_writes = false";
@@ -46,14 +45,11 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
     /**
      * The maximum time that the test will wait to check that listeners have been notified
      */
-    private static final int NOTIF_TIMEOUT_MS = 5000;
+    private static final int NOTIF_TIMEOUT_MS = 120000;
 
     Cluster cluster1;
     Cluster cluster2; // a second cluster to check that other clients also get notified
     Cluster schemaDisabledCluster; // a cluster with schema metadata disabled.
-
-    // The metadatas of the two clusters (we'll test that they're kept in sync)
-    List<Metadata> metadatas;
 
     Session session1;
 
@@ -67,20 +63,15 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
 
     ControlConnection schemaDisabledControlConnection;
 
-    @Override
-    protected Collection<String> getTableDefinitions() {
-        return Lists.newArrayList();
-    }
-
     @BeforeClass(groups = "short")
     public void setup() throws InterruptedException {
-        Cluster.Builder builder = configure(Cluster.builder())
-                .addContactPointsWithPorts(Collections.singletonList(hostAddress))
+        Cluster.Builder builder = Cluster.builder()
+                .addContactPointsWithPorts(getInitialContactPoints())
                 .withQueryOptions(nonDebouncingQueryOptions());
         cluster1 = builder.build();
         cluster2 = builder.build();
-        schemaDisabledCluster = spy(configure(Cluster.builder())
-                .addContactPointsWithPorts(Collections.singletonList(hostAddress))
+        schemaDisabledCluster = spy(Cluster.builder()
+                .addContactPointsWithPorts(getInitialContactPoints())
                 .withClusterName("schema-disabled")
                 .withQueryOptions(nonDebouncingQueryOptions()
                                 .setMetadataEnabled(false)
@@ -90,8 +81,6 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
 
         schemaDisabledControlConnection = spy(schemaDisabledCluster.manager.controlConnection);
         schemaDisabledCluster.manager.controlConnection = schemaDisabledControlConnection;
-
-        metadatas = Lists.newArrayList(cluster1.getMetadata(), cluster2.getMetadata());
 
         session1 = cluster1.connect();
 
@@ -106,7 +95,7 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
         execute(CREATE_KEYSPACE, "\"CaseSensitive\"");
     }
 
-    @AfterClass(groups = "short")
+    @AfterClass(groups = "short", alwaysRun = true)
     public void teardown() {
         if (cluster1 != null)
             cluster1.close();
@@ -157,16 +146,13 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
                     .isInKeyspace(handleId(keyspace))
                     .hasName("table1");
         }
-
-        for (Metadata m : metadatas)
+        for (Metadata m : metadatas())
             assertThat(m.getKeyspace(keyspace).getTable("table1")).isNotNull();
     }
 
     @Test(groups = "short", dataProvider = "existingKeyspaceName")
     public void should_notify_of_table_update(String keyspace) throws InterruptedException {
         execute(CREATE_TABLE, keyspace);
-        for (Metadata m : metadatas)
-            assertThat(m.getKeyspace(keyspace).getTable("table1")).hasNoColumn("j");
         ArgumentCaptor<TableMetadata> added = null;
         for (SchemaChangeListener listener : listeners) {
             added = ArgumentCaptor.forClass(TableMetadata.class);
@@ -175,6 +161,9 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
                     .isInKeyspace(handleId(keyspace))
                     .hasName("table1");
         }
+        for (Metadata m : metadatas())
+            assertThat(m.getKeyspace(keyspace).getTable("table1")).hasNoColumn("j");
+        assert added != null;
         execute(ALTER_TABLE, keyspace);
         for (SchemaChangeListener listener : listeners) {
             ArgumentCaptor<TableMetadata> current = ArgumentCaptor.forClass(TableMetadata.class);
@@ -188,7 +177,7 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
                     .hasName("table1")
                     .hasColumn("j");
         }
-        for (Metadata m : metadatas)
+        for (Metadata m : metadatas())
             assertThat(m.getKeyspace(keyspace).getTable("table1")).hasColumn("j");
     }
 
@@ -203,38 +192,35 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
                     .isInKeyspace(handleId(keyspace));
         }
         execute(DROP_TABLE, keyspace);
-        for (Metadata m : metadatas)
-            assertThat(m.getKeyspace(keyspace).getTable("table1")).isNull();
         for (SchemaChangeListener listener : listeners) {
             ArgumentCaptor<TableMetadata> removed = ArgumentCaptor.forClass(TableMetadata.class);
             verify(listener, timeout(NOTIF_TIMEOUT_MS).times(1)).onTableRemoved(removed.capture());
             assertThat(removed.getValue()).hasName("table1");
         }
+        for (Metadata m : metadatas())
+            assertThat(m.getKeyspace(keyspace).getTable("table1")).isNull();
     }
 
+    @SuppressWarnings("RedundantCast")
     @Test(groups = "short", dataProvider = "existingKeyspaceName")
     @CassandraVersion(major = 2.1)
     public void should_notify_of_udt_creation(String keyspace) {
-        session.execute(String.format("CREATE TYPE %s.type1(i int)", keyspace));
-
+        session1.execute(String.format("CREATE TYPE %s.type1(i int)", keyspace));
         for (SchemaChangeListener listener : listeners) {
             ArgumentCaptor<UserType> added = ArgumentCaptor.forClass(UserType.class);
             verify(listener, timeout(NOTIF_TIMEOUT_MS).times(1)).onUserTypeAdded(added.capture());
             assertThat((DataType) added.getValue())
                     .isUserType(handleId(keyspace), "type1");
         }
-
-        for (Metadata m : metadatas)
-            assertThat((DataType) m.getKeyspace(keyspace).getUserType("type1"))
-                    .isNotNull();
+        for (Metadata m : metadatas())
+            assertThat((DataType) m.getKeyspace(keyspace).getUserType("type1")).isNotNull();
     }
 
     @Test(groups = "short", dataProvider = "existingKeyspaceName")
     @CassandraVersion(major = 2.1)
     public void should_notify_of_udt_update(String keyspace) {
-        session.execute(String.format("CREATE TYPE %s.type1(i int)", keyspace));
-        session.execute(String.format("ALTER TYPE %s.type1 ADD j int", keyspace));
-
+        session1.execute(String.format("CREATE TYPE %s.type1(i int)", keyspace));
+        session1.execute(String.format("ALTER TYPE %s.type1 ADD j int", keyspace));
         for (SchemaChangeListener listener : listeners) {
             ArgumentCaptor<UserType> current = ArgumentCaptor.forClass(UserType.class);
             ArgumentCaptor<UserType> previous = ArgumentCaptor.forClass(UserType.class);
@@ -242,33 +228,29 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
             assertThat(previous.getValue().getFieldNames()).doesNotContain("j");
             assertThat(current.getValue().getFieldNames()).contains("j");
         }
-
-        for (Metadata m : metadatas)
-            assertThat(m.getKeyspace(keyspace).getUserType("type1").getFieldType("j"))
-                    .isNotNull();
+        for (Metadata m : metadatas())
+            assertThat(m.getKeyspace(keyspace).getUserType("type1").getFieldType("j")).isNotNull();
     }
 
+    @SuppressWarnings("RedundantCast")
     @Test(groups = "short", dataProvider = "existingKeyspaceName")
     @CassandraVersion(major = 2.1)
     public void should_notify_of_udt_drop(String keyspace) {
-        session.execute(String.format("CREATE TYPE %s.type1(i int)", keyspace));
-        session.execute(String.format("DROP TYPE %s.type1", keyspace));
-
+        session1.execute(String.format("CREATE TYPE %s.type1(i int)", keyspace));
+        session1.execute(String.format("DROP TYPE %s.type1", keyspace));
         for (SchemaChangeListener listener : listeners) {
             ArgumentCaptor<UserType> removed = ArgumentCaptor.forClass(UserType.class);
             verify(listener, timeout(NOTIF_TIMEOUT_MS).times(1)).onUserTypeRemoved(removed.capture());
             assertThat((DataType) removed.getValue()).isUserType(handleId(keyspace), "type1");
         }
-
-        for (Metadata m : metadatas)
-            assertThat((DataType) m.getKeyspace(keyspace).getUserType("type1"))
-                    .isNull();
+        for (Metadata m : metadatas())
+            assertThat((DataType) m.getKeyspace(keyspace).getUserType("type1")).isNull();
     }
 
     @Test(groups = "short", dataProvider = "existingKeyspaceName")
     @CassandraVersion(major = 2.2)
     public void should_notify_of_function_creation(String keyspace) {
-        session.execute(String.format("CREATE FUNCTION %s.\"ID\"(i int) RETURNS NULL ON NULL INPUT RETURNS int LANGUAGE java AS 'return i;'", keyspace));
+        session1.execute(String.format("CREATE FUNCTION %s.\"ID\"(i int) RETURNS NULL ON NULL INPUT RETURNS int LANGUAGE java AS 'return i;'", keyspace));
 
         for (SchemaChangeListener listener : listeners) {
             ArgumentCaptor<FunctionMetadata> added = ArgumentCaptor.forClass(FunctionMetadata.class);
@@ -278,7 +260,7 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
                     .hasSignature("\"ID\"(int)");
         }
 
-        for (Metadata m : metadatas)
+        for (Metadata m : metadatas())
             assertThat(m.getKeyspace(keyspace).getFunction("\"ID\"", DataType.cint()))
                     .isNotNull();
     }
@@ -286,14 +268,14 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
     @Test(groups = "short", dataProvider = "existingKeyspaceName")
     @CassandraVersion(major = 2.2)
     public void should_notify_of_function_update(String keyspace) {
-        session.execute(String.format("CREATE TYPE IF NOT EXISTS %s.user (\"ID\" int, name text)", keyspace));
-        session.execute(String.format("CREATE FUNCTION %s.\"ID\"(user user) RETURNS NULL ON NULL INPUT RETURNS int LANGUAGE java AS 'return user.getInt(\"ID\");'", keyspace));
+        session1.execute(String.format("CREATE TYPE IF NOT EXISTS %s.user (\"ID\" int, name text)", keyspace));
+        session1.execute(String.format("CREATE FUNCTION %s.\"ID\"(user user) RETURNS NULL ON NULL INPUT RETURNS int LANGUAGE java AS 'return user.getInt(\"ID\");'", keyspace));
 
-        for (Metadata m : metadatas)
+        for (Metadata m : metadatas())
             assertThat(m.getKeyspace(keyspace).getFunction("\"ID\"", m.getKeyspace(keyspace).getUserType("user")).getBody())
                     .isEqualTo("return user.getInt(\"ID\");");
 
-        session.execute(String.format("CREATE OR REPLACE FUNCTION %s.\"ID\"(user user) RETURNS NULL ON NULL INPUT RETURNS int LANGUAGE java "
+        session1.execute(String.format("CREATE OR REPLACE FUNCTION %s.\"ID\"(user user) RETURNS NULL ON NULL INPUT RETURNS int LANGUAGE java "
                 + "AS 'return 1 + user.getInt(\"ID\");'", keyspace));
 
         for (SchemaChangeListener listener : listeners) {
@@ -304,7 +286,7 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
             assertThat(current.getValue()).hasBody("return 1 + user.getInt(\"ID\");");
         }
 
-        for (Metadata m : metadatas)
+        for (Metadata m : metadatas())
             assertThat(m.getKeyspace(keyspace).getFunction("\"ID\"", m.getKeyspace(keyspace).getUserType("user")).getBody())
                     .isEqualTo("return 1 + user.getInt(\"ID\");");
     }
@@ -312,9 +294,9 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
     @Test(groups = "short", dataProvider = "existingKeyspaceName")
     @CassandraVersion(major = 2.2)
     public void should_notify_of_function_drop(String keyspace) {
-        session.execute(String.format("CREATE TYPE IF NOT EXISTS %s.user (\"ID\" int, name text)", keyspace));
-        session.execute(String.format("CREATE FUNCTION %s.\"ID\"(user user) RETURNS NULL ON NULL INPUT RETURNS int LANGUAGE java AS 'return user.getInt(\"ID\");'", keyspace));
-        session.execute(String.format("DROP FUNCTION %s.\"ID\"", keyspace));
+        session1.execute(String.format("CREATE TYPE IF NOT EXISTS %s.user (\"ID\" int, name text)", keyspace));
+        session1.execute(String.format("CREATE FUNCTION %s.\"ID\"(user user) RETURNS NULL ON NULL INPUT RETURNS int LANGUAGE java AS 'return user.getInt(\"ID\");'", keyspace));
+        session1.execute(String.format("DROP FUNCTION %s.\"ID\"", keyspace));
 
         for (SchemaChangeListener listener : listeners) {
             ArgumentCaptor<FunctionMetadata> removed = ArgumentCaptor.forClass(FunctionMetadata.class);
@@ -324,7 +306,7 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
                     .hasSignature("\"ID\"(user)");
         }
 
-        for (Metadata m : metadatas)
+        for (Metadata m : metadatas())
             assertThat(m.getKeyspace(keyspace).getFunction("\"ID\"", m.getKeyspace(keyspace).getUserType("user")))
                     .isNull();
     }
@@ -332,9 +314,9 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
     @Test(groups = "short", dataProvider = "existingKeyspaceName")
     @CassandraVersion(major = 2.2)
     public void should_notify_of_aggregate_creation(String keyspace) {
-        session.execute(String.format("CREATE FUNCTION %s.\"PLUS\"(s int, v int) RETURNS NULL ON NULL INPUT RETURNS int LANGUAGE java"
+        session1.execute(String.format("CREATE FUNCTION %s.\"PLUS\"(s int, v int) RETURNS NULL ON NULL INPUT RETURNS int LANGUAGE java"
                 + " AS 'return s+v;'", keyspace));
-        session.execute(String.format("CREATE AGGREGATE %s.\"SUM\"(int) SFUNC \"PLUS\" STYPE int INITCOND 0;", keyspace));
+        session1.execute(String.format("CREATE AGGREGATE %s.\"SUM\"(int) SFUNC \"PLUS\" STYPE int INITCOND 0;", keyspace));
 
         for (SchemaChangeListener listener : listeners) {
             ArgumentCaptor<AggregateMetadata> added = ArgumentCaptor.forClass(AggregateMetadata.class);
@@ -344,7 +326,7 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
                     .hasSignature("\"SUM\"(int)");
         }
 
-        for (Metadata m : metadatas)
+        for (Metadata m : metadatas())
             assertThat(m.getKeyspace(keyspace).getAggregate("\"SUM\"", DataType.cint()))
                     .isNotNull();
     }
@@ -352,15 +334,15 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
     @Test(groups = "short", dataProvider = "existingKeyspaceName")
     @CassandraVersion(major = 2.2)
     public void should_notify_of_aggregate_update(String keyspace) {
-        session.execute(String.format("CREATE FUNCTION %s.\"PLUS\"(s int, v int) RETURNS NULL ON NULL INPUT RETURNS int LANGUAGE java"
+        session1.execute(String.format("CREATE FUNCTION %s.\"PLUS\"(s int, v int) RETURNS NULL ON NULL INPUT RETURNS int LANGUAGE java"
                 + " AS 'return s+v;'", keyspace));
-        session.execute(String.format("CREATE AGGREGATE %s.\"SUM\"(int) SFUNC \"PLUS\" STYPE int INITCOND 0", keyspace));
+        session1.execute(String.format("CREATE AGGREGATE %s.\"SUM\"(int) SFUNC \"PLUS\" STYPE int INITCOND 0", keyspace));
 
-        for (Metadata m : metadatas)
+        for (Metadata m : metadatas())
             assertThat(m.getKeyspace(keyspace).getAggregate("\"SUM\"", DataType.cint()).getInitCond())
                     .isEqualTo(0);
 
-        session.execute(String.format("CREATE OR REPLACE AGGREGATE %s.\"SUM\"(int) SFUNC \"PLUS\" STYPE int INITCOND 1", keyspace));
+        session1.execute(String.format("CREATE OR REPLACE AGGREGATE %s.\"SUM\"(int) SFUNC \"PLUS\" STYPE int INITCOND 1", keyspace));
 
         for (SchemaChangeListener listener : listeners) {
             ArgumentCaptor<AggregateMetadata> current = ArgumentCaptor.forClass(AggregateMetadata.class);
@@ -370,7 +352,7 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
             assertThat(current.getValue()).hasInitCond(1);
         }
 
-        for (Metadata m : metadatas)
+        for (Metadata m : metadatas())
             assertThat(m.getKeyspace(keyspace).getAggregate("\"SUM\"", DataType.cint()).getInitCond())
                     .isEqualTo(1);
     }
@@ -378,10 +360,10 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
     @Test(groups = "short", dataProvider = "existingKeyspaceName")
     @CassandraVersion(major = 2.2)
     public void should_notify_of_aggregate_drop(String keyspace) {
-        session.execute(String.format("CREATE FUNCTION %s.\"PLUS\"(s int, v int) RETURNS NULL ON NULL INPUT RETURNS int LANGUAGE java"
+        session1.execute(String.format("CREATE FUNCTION %s.\"PLUS\"(s int, v int) RETURNS NULL ON NULL INPUT RETURNS int LANGUAGE java"
                 + " AS 'return s+v;'", keyspace));
-        session.execute(String.format("CREATE AGGREGATE %s.\"SUM\"(int) SFUNC \"PLUS\" STYPE int INITCOND 0", keyspace));
-        session.execute(String.format("DROP AGGREGATE %s.\"SUM\"", keyspace));
+        session1.execute(String.format("CREATE AGGREGATE %s.\"SUM\"(int) SFUNC \"PLUS\" STYPE int INITCOND 0", keyspace));
+        session1.execute(String.format("DROP AGGREGATE %s.\"SUM\"", keyspace));
 
         for (SchemaChangeListener listener : listeners) {
             ArgumentCaptor<AggregateMetadata> removed = ArgumentCaptor.forClass(AggregateMetadata.class);
@@ -391,7 +373,7 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
                     .hasSignature("\"SUM\"(int)");
         }
 
-        for (Metadata m : metadatas)
+        for (Metadata m : metadatas())
             assertThat(m.getKeyspace(keyspace).getAggregate("\"SUM\"", DataType.cint()))
                     .isNull();
     }
@@ -399,49 +381,49 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
     @Test(groups = "short", dataProvider = "existingKeyspaceName")
     @CassandraVersion(major = 3.0)
     public void should_notify_of_view_creation(String keyspace) {
-        session.execute(String.format("CREATE TABLE %s.table1 (pk int PRIMARY KEY, c int)", keyspace));
-        session.execute(String.format("CREATE MATERIALIZED VIEW %s.mv1 AS SELECT c FROM %s.table1 WHERE c IS NOT NULL PRIMARY KEY (pk, c)", keyspace, keyspace));
+        session1.execute(String.format("CREATE TABLE %s.table1 (pk int PRIMARY KEY, c int)", keyspace));
+        session1.execute(String.format("CREATE MATERIALIZED VIEW %s.mv1 AS SELECT c FROM %s.table1 WHERE c IS NOT NULL PRIMARY KEY (pk, c)", keyspace, keyspace));
 
-        for (Metadata m : metadatas)
+        for (Metadata m : metadatas())
             assertThat(m.getKeyspace(keyspace).getMaterializedView("mv1")).isNotNull();
     }
 
     @Test(groups = "short", dataProvider = "existingKeyspaceName")
     @CassandraVersion(major = 3.0)
     public void should_notify_of_view_update(String keyspace) {
-        session.execute(String.format("CREATE TABLE %s.table1 (pk int PRIMARY KEY, c int)", keyspace));
-        session.execute(String.format("CREATE MATERIALIZED VIEW %s.mv1 AS SELECT c FROM %s.table1 WHERE c IS NOT NULL PRIMARY KEY (pk, c) WITH compaction = { 'class' : 'SizeTieredCompactionStrategy' }", keyspace, keyspace));
+        session1.execute(String.format("CREATE TABLE %s.table1 (pk int PRIMARY KEY, c int)", keyspace));
+        session1.execute(String.format("CREATE MATERIALIZED VIEW %s.mv1 AS SELECT c FROM %s.table1 WHERE c IS NOT NULL PRIMARY KEY (pk, c) WITH compaction = { 'class' : 'SizeTieredCompactionStrategy' }", keyspace, keyspace));
 
-        for (Metadata m : metadatas)
+        for (Metadata m : metadatas())
             assertThat(m.getKeyspace(keyspace).getMaterializedView("mv1").getOptions().getCompaction().get("class")).contains("SizeTieredCompactionStrategy");
 
-        session.execute(String.format("ALTER MATERIALIZED VIEW %s.mv1 WITH compaction = { 'class' : 'LeveledCompactionStrategy' }", keyspace));
+        session1.execute(String.format("ALTER MATERIALIZED VIEW %s.mv1 WITH compaction = { 'class' : 'LeveledCompactionStrategy' }", keyspace));
 
-        for (Metadata m : metadatas)
+        for (Metadata m : metadatas())
             assertThat(m.getKeyspace(keyspace).getMaterializedView("mv1").getOptions().getCompaction().get("class")).contains("LeveledCompactionStrategy");
     }
 
     @Test(groups = "short", dataProvider = "existingKeyspaceName")
     @CassandraVersion(major = 3.0)
     public void should_notify_of_view_drop(String keyspace) {
-        session.execute(String.format("CREATE TABLE %s.table1 (pk int PRIMARY KEY, c int)", keyspace));
-        session.execute(String.format("CREATE MATERIALIZED VIEW %s.mv1 AS SELECT c FROM %s.table1 WHERE c IS NOT NULL PRIMARY KEY (pk, c)", keyspace, keyspace));
-        session.execute(String.format("DROP MATERIALIZED VIEW %s.mv1", keyspace));
+        session1.execute(String.format("CREATE TABLE %s.table1 (pk int PRIMARY KEY, c int)", keyspace));
+        session1.execute(String.format("CREATE MATERIALIZED VIEW %s.mv1 AS SELECT c FROM %s.table1 WHERE c IS NOT NULL PRIMARY KEY (pk, c)", keyspace, keyspace));
+        session1.execute(String.format("DROP MATERIALIZED VIEW %s.mv1", keyspace));
 
-        for (Metadata m : metadatas)
+        for (Metadata m : metadatas())
             assertThat(m.getKeyspace(keyspace).getMaterializedView("mv1")).isNull();
     }
 
     @Test(groups = "short", dataProvider = "newKeyspaceName")
     public void should_notify_of_keyspace_creation(String keyspace) throws InterruptedException {
         execute(CREATE_KEYSPACE, keyspace);
-        for (Metadata m : metadatas)
-            assertThat(m.getKeyspace(keyspace)).isNotNull();
         for (SchemaChangeListener listener : listeners) {
             ArgumentCaptor<KeyspaceMetadata> added = ArgumentCaptor.forClass(KeyspaceMetadata.class);
             verify(listener, timeout(NOTIF_TIMEOUT_MS).times(1)).onKeyspaceAdded(added.capture());
             assertThat(added.getValue()).hasName(handleId(keyspace));
         }
+        for (Metadata m : metadatas())
+            assertThat(m.getKeyspace(keyspace)).isNotNull();
     }
 
     @Test(groups = "short", dataProvider = "newKeyspaceName")
@@ -453,7 +435,8 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
             verify(listener, timeout(NOTIF_TIMEOUT_MS).times(1)).onKeyspaceAdded(added.capture());
             assertThat(added.getValue()).hasName(handleId(keyspace));
         }
-        for (Metadata m : metadatas)
+        assert added != null;
+        for (Metadata m : metadatas())
             assertThat(m.getKeyspace(keyspace).isDurableWrites()).isTrue();
         execute(ALTER_KEYSPACE, keyspace);
         for (SchemaChangeListener listener : listeners) {
@@ -467,14 +450,21 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
                     .hasName(handleId(keyspace))
                     .isNotDurableWrites();
         }
-        for (Metadata m : metadatas)
+        for (Metadata m : metadatas())
             assertThat(m.getKeyspace(keyspace)).isNotDurableWrites();
     }
 
     @Test(groups = "short", dataProvider = "newKeyspaceName")
     public void should_notify_of_keyspace_drop(String keyspace) throws InterruptedException {
         execute(CREATE_KEYSPACE, keyspace);
-        for (Metadata m : metadatas)
+        ArgumentCaptor<KeyspaceMetadata> added = null;
+        for (SchemaChangeListener listener : listeners) {
+            added = ArgumentCaptor.forClass(KeyspaceMetadata.class);
+            verify(listener, timeout(NOTIF_TIMEOUT_MS).times(1)).onKeyspaceAdded(added.capture());
+            assertThat(added.getValue()).hasName(handleId(keyspace));
+        }
+        assert added != null;
+        for (Metadata m : metadatas())
             assertThat(m.getReplicas(keyspace, Bytes.fromHexString("0xCAFEBABE"))).isNotEmpty();
         execute(CREATE_TABLE, keyspace); // to test table drop notifications
         execute(DROP_KEYSPACE, keyspace);
@@ -484,13 +474,12 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
             assertThat(table.getValue())
                     .hasName("table1")
                     .isInKeyspace(handleId(keyspace));
-
             ArgumentCaptor<KeyspaceMetadata> ks = ArgumentCaptor.forClass(KeyspaceMetadata.class);
             verify(listener, timeout(NOTIF_TIMEOUT_MS).times(1)).onKeyspaceRemoved(ks.capture());
             assertThat(ks.getValue())
                     .hasName(handleId(keyspace));
         }
-        for (Metadata m : metadatas) {
+        for (Metadata m : metadatas()) {
             assertThat(m.getKeyspace(keyspace)).isNull();
             assertThat(m.getReplicas(keyspace, Bytes.fromHexString("0xCAFEBABE"))).isEmpty();
         }
@@ -506,8 +495,8 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
      */
     @Test(groups = "short", expectedExceptions = IllegalStateException.class)
     public void should_throw_illegal_state_exception_on_newToken_with_metadata_disabled() {
-        Cluster cluster = configure(Cluster.builder())
-                .addContactPointsWithPorts(Collections.singletonList(hostAddress))
+        Cluster cluster = Cluster.builder()
+                .addContactPointsWithPorts(getInitialContactPoints())
                 .withQueryOptions(nonDebouncingQueryOptions()
                                 .setMetadataEnabled(false)
                 ).build();
@@ -530,8 +519,8 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
      */
     @Test(groups = "short", expectedExceptions = IllegalStateException.class)
     public void should_throw_illegal_state_exception_on_newTokenRange_with_metadata_disabled() {
-        Cluster cluster = configure(Cluster.builder())
-                .addContactPointsWithPorts(Collections.singletonList(hostAddress))
+        Cluster cluster = Cluster.builder()
+                .addContactPointsWithPorts(getInitialContactPoints())
                 .withQueryOptions(nonDebouncingQueryOptions()
                                 .setMetadataEnabled(false)
                 ).build();
@@ -553,8 +542,8 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
      * @jira_ticket JAVA-858
      * @since 2.0.11
      */
-    @Test(groups = "short")
-    public void should_not_refresh_schema_on_schema_change_response() throws InterruptedException {
+    @Test(groups = "short", dataProvider = "existingKeyspaceName")
+    public void should_not_refresh_schema_on_schema_change_response(String keyspace) throws InterruptedException {
         ResultSet rs = schemaDisabledSession.execute(String.format(CREATE_TABLE, keyspace));
 
         // Should still wait on schema agreement.
@@ -572,8 +561,8 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
      * @jira_ticket JAVA-858
      * @since 2.0.11
      */
-    @Test(groups = "short")
-    public void should_refresh_schema_and_token_map_if_schema_metadata_reenabled() throws Exception {
+    @Test(groups = "short", dataProvider = "existingKeyspaceName")
+    public void should_refresh_schema_and_token_map_if_schema_metadata_reenabled(String keyspace) throws Exception {
         try {
             schemaDisabledCluster.getConfiguration().getQueryOptions().setMetadataEnabled(true);
 
@@ -602,28 +591,35 @@ public class SchemaChangesTest extends CCMBridge.PerClassSingleNodeCluster {
         }
     }
 
-    @AfterMethod(groups = "short")
+    @AfterMethod(groups = "short", alwaysRun = true)
     public void cleanup() throws InterruptedException {
-        ListenableFuture<List<ResultSet>> f = Futures.successfulAsList(Lists.newArrayList(
-                session1.executeAsync("DROP TABLE lowercase.table1"),
-                session1.executeAsync("DROP TABLE \"CaseSensitive\".table1"),
-                session1.executeAsync("DROP TYPE lowercase.type1"),
-                session1.executeAsync("DROP TYPE \"CaseSensitive\".type1"),
-                session1.executeAsync("DROP FUNCTION lowercase.\"ID\""),
-                session1.executeAsync("DROP FUNCTION \"CaseSensitive\".\"ID\""),
-                session1.executeAsync("DROP FUNCTION lowercase.\"PLUS\""),
-                session1.executeAsync("DROP FUNCTION \"CaseSensitive\".\"PLUS\""),
-                session1.executeAsync("DROP AGGREGATE lowercase.\"SUM\""),
-                session1.executeAsync("DROP AGGREGATE \"CaseSensitive\".\"SUM\""),
-                session1.executeAsync("DROP MATERIALIZED VIEW lowercase.mv1"),
-                session1.executeAsync("DROP MATERIALIZED VIEW \"CaseSensitive\".mv1"),
-                session1.executeAsync("DROP KEYSPACE lowercase2"),
-                session1.executeAsync("DROP KEYSPACE \"CaseSensitive2\"")
-        ));
-        Futures.getUnchecked(f);
+        if (session1 != null) {
+            ListenableFuture<List<ResultSet>> f = Futures.successfulAsList(Lists.newArrayList(
+                    session1.executeAsync("DROP TABLE lowercase.table1"),
+                    session1.executeAsync("DROP TABLE \"CaseSensitive\".table1"),
+                    session1.executeAsync("DROP TYPE lowercase.type1"),
+                    session1.executeAsync("DROP TYPE \"CaseSensitive\".type1"),
+                    session1.executeAsync("DROP FUNCTION lowercase.\"ID\""),
+                    session1.executeAsync("DROP FUNCTION \"CaseSensitive\".\"ID\""),
+                    session1.executeAsync("DROP FUNCTION lowercase.\"PLUS\""),
+                    session1.executeAsync("DROP FUNCTION \"CaseSensitive\".\"PLUS\""),
+                    session1.executeAsync("DROP AGGREGATE lowercase.\"SUM\""),
+                    session1.executeAsync("DROP AGGREGATE \"CaseSensitive\".\"SUM\""),
+                    session1.executeAsync("DROP MATERIALIZED VIEW lowercase.mv1"),
+                    session1.executeAsync("DROP MATERIALIZED VIEW \"CaseSensitive\".mv1"),
+                    session1.executeAsync("DROP KEYSPACE lowercase2"),
+                    session1.executeAsync("DROP KEYSPACE \"CaseSensitive2\"")
+            ));
+            Futures.getUnchecked(f);
+        }
     }
 
     private void execute(String cql, String keyspace) throws InterruptedException {
         session1.execute(String.format(cql, keyspace));
     }
+
+    private List<Metadata> metadatas() {
+        return Lists.newArrayList(cluster1.getMetadata(), cluster2.getMetadata());
+    }
+
 }

@@ -45,7 +45,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * It also validates that both codecs may coexist in the same CodecRegistry.
  */
 @CassandraVersion(major = 2.1)
-public class EnumCodecsTest extends CCMBridge.PerClassSingleNodeCluster {
+public class EnumCodecsTest extends CCMTestsSupport {
 
     private final String insertQuery = "INSERT INTO t1 (pk, foo, foos, bar, bars, foobars, tup, udt) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
     private final String selectQuery = "SELECT pk, foo, foos, bar, bars, foobars, tup, udt FROM t1 WHERE pk = ?";
@@ -60,7 +60,7 @@ public class EnumCodecsTest extends CCMBridge.PerClassSingleNodeCluster {
     private UDTValue udtValue;
 
     @Override
-    protected Collection<String> getTableDefinitions() {
+    public Collection<String> createTestFixtures() {
         return newArrayList(
                 "CREATE TYPE IF NOT EXISTS udt1 ("
                         + "foo int,"
@@ -79,8 +79,8 @@ public class EnumCodecsTest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     @Override
-    protected Cluster.Builder configure(Cluster.Builder builder) {
-        return builder.withCodecRegistry(
+    public Cluster.Builder createClusterBuilder() {
+        return Cluster.builder().withCodecRegistry(
                 new CodecRegistry()
                         .register(new EnumOrdinalCodec<Foo>(Foo.class))
                         .register(new EnumNameCodec<Bar>(Bar.class))

@@ -41,7 +41,7 @@ public class HostConnectionPoolMultiTest {
         scassandra.init();
     }
 
-    @AfterMethod(groups = {"short", "long"})
+    @AfterMethod(groups = {"short", "long"}, alwaysRun = true)
     private void tearDown() {
         if (cluster != null) {
             cluster.close();
@@ -53,7 +53,8 @@ public class HostConnectionPoolMultiTest {
         PoolingOptions poolingOptions = new PoolingOptions().setConnectionsPerHost(LOCAL, core, max);
         SocketOptions socketOptions = new SocketOptions().setReadTimeoutMillis(1000);
         cluster = Cluster.builder()
-                .addContactPoint(CCMBridge.ipOfNode(1))
+                .addContactPointsWithPorts(scassandra.address(1))
+                .withAddressTranslator(scassandra.addressTranslator())
                 .withQueryOptions(nonDebouncingQueryOptions())
                 .withPoolingOptions(poolingOptions)
                 .withSocketOptions(socketOptions)

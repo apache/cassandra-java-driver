@@ -18,20 +18,14 @@ package com.datastax.driver.core;
 import org.mockito.ArgumentCaptor;
 import org.testng.annotations.Test;
 
-import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
 import static com.datastax.driver.core.Assertions.assertThat;
-import static com.google.common.collect.Lists.newArrayList;
 import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.Mockito.*;
 
-public class NodeRefreshDebouncerTest extends CCMBridge.PerClassSingleNodeCluster {
-
-    @Override
-    protected Collection<String> getTableDefinitions() {
-        return newArrayList();
-    }
+@CCMConfig(dirtiesContext = true, createCluster = false)
+public class NodeRefreshDebouncerTest extends CCMTestsSupport {
 
     /**
      * Ensures that when a new node is bootstrapped into the cluster, stopped, and then subsequently
@@ -46,36 +40,31 @@ public class NodeRefreshDebouncerTest extends CCMBridge.PerClassSingleNodeCluste
      */
     @Test(groups = "long")
     public void should_call_onAdd_with_bootstrap_stop_start() {
-        int refreshNodeInterval = 10000;
+        int refreshNodeInterval = 30000;
         QueryOptions queryOptions = new QueryOptions().setRefreshNodeIntervalMillis(refreshNodeInterval);
-        CCMBridge ccm = CCMBridge.builder("test").withNodes(1).build();
-        Cluster cluster = Cluster.builder()
-                .addContactPoint(CCMBridge.ipOfNode(1))
+        Cluster cluster = register(Cluster.builder()
+                .addContactPointsWithPorts(getHostAddress(1))
+                .withAddressTranslator(getAddressTranslator())
                 .withQueryOptions(queryOptions)
-                .build();
+                .build());
+        cluster.connect();
+        Host.StateListener listener = mock(Host.StateListener.class);
+        cluster.register(listener);
+        ccm.add(2);
+        ccm.start(2);
+        ccm.stop(2);
+        ccm.start(2);
 
-        try {
-            cluster.connect();
-            Host.StateListener listener = mock(Host.StateListener.class);
-            cluster.register(listener);
-            ccm.bootstrapNode(2);
-            ccm.stop(2);
-            ccm.start(2);
+        ArgumentCaptor<Host> captor = forClass(Host.class);
 
-            ArgumentCaptor<Host> captor = forClass(Host.class);
+        // Only register and onAdd should be called, since stop and start should be discarded.
+        verify(listener).onRegister(cluster);
+        long addDelay = refreshNodeInterval + TimeUnit.MILLISECONDS.convert(Cluster.NEW_NODE_DELAY_SECONDS, TimeUnit.SECONDS);
+        verify(listener, timeout(addDelay)).onAdd(captor.capture());
+        verifyNoMoreInteractions(listener);
 
-            // Only register and onAdd should be called, since stop and start should be discarded.
-            verify(listener).onRegister(cluster);
-            long addDelay = refreshNodeInterval + TimeUnit.MILLISECONDS.convert(Cluster.NEW_NODE_DELAY_SECONDS, TimeUnit.SECONDS);
-            verify(listener, timeout(addDelay)).onAdd(captor.capture());
-            verifyNoMoreInteractions(listener);
-
-            // The hosts state should be UP.
-            assertThat(captor.getValue().getState()).isEqualTo("UP");
-            assertThat(cluster).host(2).hasState(Host.State.UP);
-        } finally {
-            cluster.close();
-            ccm.remove();
-        }
+        // The hosts state should be UP.
+        assertThat(captor.getValue().getState()).isEqualTo("UP");
+        assertThat(cluster).host(2).hasState(Host.State.UP);
     }
 }

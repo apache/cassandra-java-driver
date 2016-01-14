@@ -15,7 +15,7 @@
  */
 package com.datastax.driver.mapping;
 
-import com.datastax.driver.core.CCMBridge;
+import com.datastax.driver.core.CCMTestsSupport;
 import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
 import com.google.common.io.Closeables;
@@ -25,15 +25,17 @@ import org.testng.annotations.Test;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
-import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 
 import static org.testng.Assert.assertEquals;
 
-public class SyntheticFieldsMapperTest extends CCMBridge.PerClassSingleNodeCluster {
+@SuppressWarnings("unused")
+public class SyntheticFieldsMapperTest extends CCMTestsSupport {
 
-    protected Collection<String> getTableDefinitions() {
-        return Arrays.asList("CREATE TABLE synthetic_fields (id int PRIMARY KEY)");
+    @Override
+    public Collection<String> createTestFixtures() {
+        return Collections.singletonList("CREATE TABLE synthetic_fields (id int PRIMARY KEY)");
     }
 
     /**
@@ -141,9 +143,8 @@ public class SyntheticFieldsMapperTest extends CCMBridge.PerClassSingleNodeClust
 
             ClassWithSyntheticField that = (ClassWithSyntheticField) o;
 
-            if (id != that.id) return false;
+            return id == that.id;
 
-            return true;
         }
 
         @Override

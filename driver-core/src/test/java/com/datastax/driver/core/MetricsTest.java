@@ -28,19 +28,18 @@ import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import java.lang.management.ManagementFactory;
 import java.util.Collection;
-import java.util.Collections;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 import static org.testng.Assert.assertEquals;
 
-public class MetricsTest extends CCMBridge.PerClassSingleNodeCluster {
+public class MetricsTest extends CCMTestsSupport {
     private volatile RetryDecision retryDecision;
 
     MBeanServer server = ManagementFactory.getPlatformMBeanServer();
 
     @Override
-    protected Cluster.Builder configure(Cluster.Builder builder) {
-        return builder.withRetryPolicy(new RetryPolicy() {
+    public Cluster.Builder createClusterBuilder() {
+        return Cluster.builder().withRetryPolicy(new RetryPolicy() {
             @Override
             public RetryDecision onReadTimeout(Statement statement, ConsistencyLevel cl, int requiredResponses, int receivedResponses, boolean dataRetrieved, int nbRetry) {
                 return retryDecision;
@@ -72,7 +71,7 @@ public class MetricsTest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     @Override
-    protected Collection<String> getTableDefinitions() {
+    public Collection<String> createTestFixtures() {
         return Lists.newArrayList("CREATE TABLE test (k int primary key, v int)",
                 "INSERT INTO test (k, v) VALUES (1, 1)");
     }
@@ -125,10 +124,11 @@ public class MetricsTest extends CCMBridge.PerClassSingleNodeCluster {
      */
     @Test(groups = "short", expectedExceptions = InstanceNotFoundException.class)
     public void metrics_should_be_null_when_metrics_disabled() throws Exception {
-        Cluster cluster = super.configure(Cluster.builder())
-                .addContactPointsWithPorts(Collections.singletonList(hostAddress))
+        Cluster cluster = register(Cluster.builder()
+                .addContactPointsWithPorts(getInitialContactPoints())
+                .withAddressTranslator(getAddressTranslator())
                 .withoutMetrics()
-                .build();
+                .build());
         try {
             cluster.init();
             assertThat(cluster.getMetrics()).isNull();
@@ -149,10 +149,11 @@ public class MetricsTest extends CCMBridge.PerClassSingleNodeCluster {
      */
     @Test(groups = "short", expectedExceptions = InstanceNotFoundException.class)
     public void should_be_no_jmx_mbean_when_jmx_is_disabled() throws Exception {
-        Cluster cluster = super.configure(Cluster.builder())
-                .addContactPointsWithPorts(Collections.singletonList(hostAddress))
+        Cluster cluster = register(Cluster.builder()
+                .addContactPointsWithPorts(getInitialContactPoints())
+                .withAddressTranslator(getAddressTranslator())
                 .withoutJMXReporting()
-                .build();
+                .build());
         try {
             cluster.init();
             assertThat(cluster.getMetrics()).isNotNull();

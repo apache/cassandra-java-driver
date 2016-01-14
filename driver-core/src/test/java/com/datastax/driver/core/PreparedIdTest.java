@@ -22,10 +22,10 @@ import java.util.Collection;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 
-public class PreparedIdTest extends CCMBridge.PerClassSingleNodeCluster {
+public class PreparedIdTest extends CCMTestsSupport {
 
     @Override
-    protected Collection<String> getTableDefinitions() {
+    public Collection<String> createTestFixtures() {
         return Lists.newArrayList(
                 "CREATE TABLE foo(k1 int, k2 int, k3 int, v int, PRIMARY KEY ((k1, k2, k3)))"
         );

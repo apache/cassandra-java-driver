@@ -39,10 +39,10 @@ import static com.google.common.collect.Sets.newHashSet;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CassandraVersion(major = 2.2)
-public class Jdk8TimeCodecsTest extends CCMBridge.PerClassSingleNodeCluster {
+public class Jdk8TimeCodecsTest extends CCMTestsSupport {
 
     @Override
-    protected Collection<String> getTableDefinitions() {
+    public Collection<String> createTestFixtures() {
         return Collections.singletonList(
                 "CREATE TABLE IF NOT EXISTS foo ("
                         + "c1 text PRIMARY KEY, "

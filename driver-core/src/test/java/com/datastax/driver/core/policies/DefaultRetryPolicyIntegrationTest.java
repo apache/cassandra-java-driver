@@ -113,8 +113,9 @@ public class DefaultRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegr
                         Collections.singletonList(host1.getSocketAddress()));
 
         Cluster whiteListedCluster = Cluster.builder()
-                .addContactPoint(CCMBridge.ipOfNode(1))
-                        // Scassandra does not support V3 nor V4 yet, and V4 may cause the server to crash
+                .addContactPointsWithPorts(scassandras.address(1))
+                .withAddressTranslator(scassandras.addressTranslator())
+                // Scassandra does not support V3 nor V4 yet, and V4 may cause the server to crash
                 .withProtocolVersion(ProtocolVersion.V2)
                 .withRetryPolicy(retryPolicy)
                 .withLoadBalancingPolicy(firstHostOnlyPolicy)

@@ -42,8 +42,7 @@ import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.Assertions.fail;
 import static com.datastax.driver.core.FakeHost.Behavior.THROWING_CONNECT_TIMEOUTS;
 import static com.datastax.driver.core.HostDistance.LOCAL;
-import static com.datastax.driver.core.TestUtils.nonDebouncingQueryOptions;
-import static com.datastax.driver.core.TestUtils.nonQuietClusterCloseOptions;
+import static com.datastax.driver.core.TestUtils.*;
 import static org.mockito.Mockito.*;
 
 public class ClusterInitTest {
@@ -67,19 +66,18 @@ public class ClusterInitTest {
             // - 1 is an actual Scassandra instance that will accept connections:
             scassandra = TestUtils.createScassandraServer();
             scassandra.start();
-            String realHostAddress = "127.0.0.1";
             int port = scassandra.getBinaryPort();
 
             // - the remaining 4 are fake servers that will throw connect timeouts:
             for (int i = 2; i <= 5; i++) {
-                FakeHost failingHost = new FakeHost(CCMBridge.ipOfNode(i), port, THROWING_CONNECT_TIMEOUTS);
+                FakeHost failingHost = new FakeHost(TestUtils.ipOfNode(i), port, THROWING_CONNECT_TIMEOUTS);
                 failingHosts.add(failingHost);
                 failingHost.start();
             }
 
             // - we also have a "missing" contact point, i.e. there's no server listening at this address,
             //   and the address is not listed in the live host's system.peers
-            String missingHostAddress = CCMBridge.ipOfNode(6);
+            String missingHostAddress = TestUtils.ipOfNode(6);
 
             primePeerRows(scassandra, failingHosts);
 
@@ -100,7 +98,7 @@ public class ClusterInitTest {
             cluster = Cluster.builder()
                     .withPort(scassandra.getBinaryPort())
                     .addContactPoints(
-                            realHostAddress,
+                            ipOfNode(1),
                             failingHosts.get(0).address, failingHosts.get(1).address,
                             failingHosts.get(2).address, failingHosts.get(3).address,
                             missingHostAddress
@@ -126,7 +124,7 @@ public class ClusterInitTest {
             verify(socketOptions, atLeast(6)).getKeepAlive();
             verify(socketOptions, atMost(7)).getKeepAlive();
 
-            assertThat(cluster).host(realHostAddress).isNotNull().isUp();
+            assertThat(cluster).host(1).isNotNull().isUp();
             // It is likely but not guaranteed that a host is marked down at this point.
             // It should eventually be marked down as Cluster.Manager.triggerOnDown should be
             // called and submit a task that marks the host down.
@@ -166,8 +164,8 @@ public class ClusterInitTest {
     public void should_not_schedule_reconnections_before_init_complete() {
         // Both contact points time out so we're sure we'll try both of them and init will never complete.
         List<FakeHost> hosts = Lists.newArrayList(
-                new FakeHost(CCMBridge.ipOfNode(0), 9042, THROWING_CONNECT_TIMEOUTS),
-                new FakeHost(CCMBridge.ipOfNode(1), 9042, THROWING_CONNECT_TIMEOUTS));
+                new FakeHost(TestUtils.ipOfNode(0), 9042, THROWING_CONNECT_TIMEOUTS),
+                new FakeHost(TestUtils.ipOfNode(1), 9042, THROWING_CONNECT_TIMEOUTS));
         // Use a low reconnection interval and keep the default connect timeout (5 seconds). So if a reconnection was scheduled,
         // we would see a call to the reconnection policy.
         CountingReconnectionPolicy reconnectionPolicy = new CountingReconnectionPolicy(new ConstantReconnectionPolicy(100));
@@ -184,6 +182,7 @@ public class ClusterInitTest {
             for (FakeHost fakeHost : hosts) {
                 fakeHost.stop();
             }
+            cluster.close();
         }
         // We don't test that reconnections are scheduled if init succeeds, but that's covered in
         // should_handle_failing_or_missing_contact_points
@@ -206,12 +205,13 @@ public class ClusterInitTest {
             cluster.connect();
             fail("Should not have been able to connect.");
         } catch (NoHostAvailableException e) {
-        } // Expected.
-        CloseFuture closeFuture = cluster.closeAsync();
-        try {
-            closeFuture.get(1, TimeUnit.SECONDS);
-        } catch (TimeoutException e) {
-            fail("Close Future did not complete quickly.");
+            // Expected.
+            CloseFuture closeFuture = cluster.closeAsync();
+            try {
+                closeFuture.get(1, TimeUnit.SECONDS);
+            } catch (TimeoutException e1) {
+                fail("Close Future did not complete quickly.");
+            }
         }
     }
 
@@ -225,13 +225,14 @@ public class ClusterInitTest {
     @Test(groups = "short")
     public void should_not_abort_init_if_host_does_not_support_protocol_version() {
         ScassandraCluster scassandraCluster = ScassandraCluster.builder()
-                .withIpPrefix(CCMBridge.IP_PREFIX)
+                .withIpPrefix(TestUtils.IP_PREFIX)
                 .withNodes(5)
                         // For node 2, report an older version which uses protocol v1.
                 .forcePeerInfo(1, 2, "release_version", "1.2.19")
                 .build();
         Cluster cluster = Cluster.builder()
-                .addContactPoints(scassandraCluster.address(1))
+                .addContactPointsWithPorts(scassandraCluster.address(1))
+                .withAddressTranslator(scassandraCluster.addressTranslator())
                 .withNettyOptions(nonQuietClusterCloseOptions)
                 .build();
 
@@ -239,7 +240,7 @@ public class ClusterInitTest {
             scassandraCluster.init();
             cluster.init();
             for (int i = 1; i <= 5; i++) {
-                String hostAddress = scassandraCluster.address(i);
+                InetAddress hostAddress = scassandraCluster.address(i).getAddress();
                 if (i == 2) {
                     // As this host is at an older protocol version, it should be ignored and not marked up.
                     assertThat(cluster).host(hostAddress).hasState(Host.State.ADDED);
@@ -256,8 +257,10 @@ public class ClusterInitTest {
     }
 
     private void primePeerRows(Scassandra scassandra, List<FakeHost> otherHosts) throws UnknownHostException {
-        PrimingClient primingClient = PrimingClient.builder()
-                .withHost("localhost").withPort(scassandra.getAdminPort())
+        PrimingClient primingClient =
+                PrimingClient.builder()
+                        .withHost(ipOfNode(1))
+                        .withPort(scassandra.getAdminPort())
                 .build();
 
         List<Map<String, ?>> rows = Lists.newArrayListWithCapacity(5);

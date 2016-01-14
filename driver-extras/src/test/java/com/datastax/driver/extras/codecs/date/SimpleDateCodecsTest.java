@@ -32,10 +32,10 @@ import static com.google.common.collect.Lists.newArrayList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CassandraVersion(major = 2.2)
-public class SimpleDateCodecsTest extends CCMBridge.PerClassSingleNodeCluster {
+public class SimpleDateCodecsTest extends CCMTestsSupport {
 
     @Override
-    protected Collection<String> getTableDefinitions() {
+    public Collection<String> createTestFixtures() {
         return Collections.singletonList(
                 "CREATE TABLE IF NOT EXISTS foo ("
                         + "c1 text PRIMARY KEY, "

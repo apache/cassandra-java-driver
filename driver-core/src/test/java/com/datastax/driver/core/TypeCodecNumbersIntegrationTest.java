@@ -25,7 +25,7 @@ import java.util.Collection;
 import static com.google.common.collect.Lists.newArrayList;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class TypeCodecNumbersIntegrationTest extends CCMBridge.PerClassSingleNodeCluster {
+public class TypeCodecNumbersIntegrationTest extends CCMTestsSupport {
 
     private final String insertQuery = "INSERT INTO \"myTable\" (c_int, c_bigint, c_float, c_double, c_varint, c_decimal) VALUES (?, ?, ?, ?, ?, ?)";
 
@@ -40,7 +40,7 @@ public class TypeCodecNumbersIntegrationTest extends CCMBridge.PerClassSingleNod
 
 
     @Override
-    protected Collection<String> getTableDefinitions() {
+    public Collection<String> createTestFixtures() {
         return newArrayList(
                 "CREATE TABLE \"myTable\" ("
                         + "c_int int, "

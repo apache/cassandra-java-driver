@@ -30,7 +30,7 @@ import java.util.Collection;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class Jsr353JsonCodecTest extends CCMBridge.PerClassSingleNodeCluster {
+public class Jsr353JsonCodecTest extends CCMTestsSupport {
 
     private static final Jsr353JsonCodec jsonCodec = new Jsr353JsonCodec();
 
@@ -46,15 +46,15 @@ public class Jsr353JsonCodecTest extends CCMBridge.PerClassSingleNodeCluster {
     private static final String notAJsonString = "this text is not json";
 
     @Override
-    protected Collection<String> getTableDefinitions() {
+    public Collection<String> createTestFixtures() {
         return Lists.newArrayList(
                 "CREATE TABLE t1 (c1 text, c2 text, PRIMARY KEY (c1, c2))"
         );
     }
 
     @Override
-    protected Cluster.Builder configure(Cluster.Builder builder) {
-        return builder.withCodecRegistry(
+    public Cluster.Builder createClusterBuilder() {
+        return Cluster.builder().withCodecRegistry(
                 new CodecRegistry().register(jsonCodec) // global User <-> varchar codec
         );
     }

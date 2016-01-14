@@ -15,16 +15,14 @@
  */
 package com.datastax.driver.core.exceptions;
 
-import com.datastax.driver.core.CCMBridge;
+import com.datastax.driver.core.CCMTestsSupport;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.TestUtils;
 import com.datastax.driver.core.WriteType;
 import org.testng.annotations.Test;
 
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
-import static com.datastax.driver.core.CCMBridge.ipOfNode;
 import static com.datastax.driver.core.ConsistencyLevel.LOCAL_QUORUM;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.testng.Assert.assertEquals;
@@ -33,7 +31,7 @@ import static org.testng.Assert.assertTrue;
 /**
  * Tests Exception classes with separate clusters per test, when applicable
  */
-public class ExceptionsTest {
+public class ExceptionsTest extends CCMTestsSupport {
 
     private InetSocketAddress address1 = new InetSocketAddress("127.0.0.1", 9042);
     private InetSocketAddress address2 = new InetSocketAddress("127.0.0.2", 9042);
@@ -45,53 +43,45 @@ public class ExceptionsTest {
      */
     @Test(groups = "short")
     public void alreadyExistsException() throws Throwable {
-        Cluster.Builder builder = Cluster.builder();
-        CCMBridge.CCMCluster c = CCMBridge.buildCluster(1, builder);
+        String keyspace = "TestKeyspace";
+        String table = "TestTable";
+
+        String[] cqlCommands = new String[]{
+                String.format(TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT, keyspace, 1),
+                "USE " + keyspace,
+                String.format("CREATE TABLE %s (k text PRIMARY KEY, t text, i int, f float)", table)
+        };
+
+        // Create the schema once
+        session.execute(cqlCommands[0]);
+        session.execute(cqlCommands[1]);
+        session.execute(cqlCommands[2]);
+
+        // Try creating the keyspace again
         try {
-            String keyspace = "TestKeyspace";
-            String table = "TestTable";
+            session.execute(cqlCommands[0]);
+        } catch (AlreadyExistsException e) {
+            String expected = String.format("Keyspace %s already exists", keyspace.toLowerCase());
+            assertEquals(e.getMessage(), expected);
+            assertEquals(e.getKeyspace(), keyspace.toLowerCase());
+            assertEquals(e.getTable(), null);
+            assertEquals(e.wasTableCreation(), false);
+            assertEquals(e.getHost(), getHostAddress(1).getAddress());
+            assertEquals(e.getAddress(), getHostAddress(1));
+        }
 
-            String[] cqlCommands = new String[]{
-                    String.format(TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT, keyspace, 1),
-                    "USE " + keyspace,
-                    String.format("CREATE TABLE %s (k text PRIMARY KEY, t text, i int, f float)", table)
-            };
+        session.execute(cqlCommands[1]);
 
-            // Create the schema once
-            c.session.execute(cqlCommands[0]);
-            c.session.execute(cqlCommands[1]);
-            c.session.execute(cqlCommands[2]);
-
-            // Try creating the keyspace again
-            try {
-                c.session.execute(cqlCommands[0]);
-            } catch (AlreadyExistsException e) {
-                String expected = String.format("Keyspace %s already exists", keyspace.toLowerCase());
-                assertEquals(e.getMessage(), expected);
-                assertEquals(e.getKeyspace(), keyspace.toLowerCase());
-                assertEquals(e.getTable(), null);
-                assertEquals(e.wasTableCreation(), false);
-                assertEquals(e.getHost(), InetAddress.getByName(ipOfNode(1)));
-                assertEquals(e.getAddress(), new InetSocketAddress(ipOfNode(1), 9042));
-            }
-
-            c.session.execute(cqlCommands[1]);
-
-            // Try creating the table again
-            try {
-                c.session.execute(cqlCommands[2]);
-            } catch (AlreadyExistsException e) {
-                // is released
-                assertEquals(e.getKeyspace(), keyspace.toLowerCase());
-                assertEquals(e.getTable(), table.toLowerCase());
-                assertEquals(e.wasTableCreation(), true);
-                assertEquals(e.getHost(), InetAddress.getByName(ipOfNode(1)));
-                assertEquals(e.getAddress(), new InetSocketAddress(ipOfNode(1), 9042));
-            }
-        } catch (Throwable e) {
-            throw e;
-        } finally {
-            c.discard();
+        // Try creating the table again
+        try {
+            session.execute(cqlCommands[2]);
+        } catch (AlreadyExistsException e) {
+            // is released
+            assertEquals(e.getKeyspace(), keyspace.toLowerCase());
+            assertEquals(e.getTable(), table.toLowerCase());
+            assertEquals(e.wasTableCreation(), true);
+            assertEquals(e.getHost(), getHostAddress(1).getAddress());
+            assertEquals(e.getAddress(), getHostAddress(1));
         }
     }
 

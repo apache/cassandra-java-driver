@@ -36,10 +36,10 @@ import static org.assertj.core.api.Assertions.fail;
  * annotation to map computed fields.
  */
 @SuppressWarnings("unused")
-public class MapperComputedFieldsTest extends CCMBridge.PerClassSingleNodeCluster {
+public class MapperComputedFieldsTest extends CCMTestsSupport {
 
     @Override
-    protected Collection<String> getTableDefinitions() {
+    public Collection<String> createTestFixtures() {
         return Lists.newArrayList(
                 "CREATE TABLE user (login text primary key, name text)",
                 "INSERT INTO user (login, name) VALUES ('testlogin', 'test name')");

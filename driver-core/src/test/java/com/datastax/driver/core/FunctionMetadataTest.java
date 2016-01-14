@@ -26,7 +26,8 @@ import static com.google.common.collect.Lists.newArrayList;
 import static org.assertj.core.api.Assertions.entry;
 
 @CassandraVersion(major = 2.2)
-public class FunctionMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
+@CCMConfig(config = "enable_user_defined_functions:true")
+public class FunctionMetadataTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void should_parse_and_format_simple_function() {
@@ -126,7 +127,7 @@ public class FunctionMetadataTest extends CCMBridge.PerClassSingleNodeCluster {
     }
 
     @Override
-    protected Collection<String> getTableDefinitions() {
+    public Collection<String> createTestFixtures() {
         return newArrayList(
                 String.format("CREATE TYPE IF NOT EXISTS %s.\"Phone\" (number text)", keyspace),
                 String.format("CREATE TYPE IF NOT EXISTS %s.\"Address\" ("

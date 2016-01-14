@@ -22,6 +22,7 @@ build:
       ccm.path=$CCM_JAVA_HOME/bin
       failIfNoTests=false
       maven.test.failure.ignore=true
+      maven.javadoc.skip=true
   - type: maven
     version: 3.2.5
     goals: verify --fail-never -Pisolated
@@ -33,6 +34,7 @@ build:
       ccm.path=$CCM_JAVA_HOME/bin
       failIfNoTests=false
       maven.test.failure.ignore=true
+      maven.javadoc.skip=true
   - xunit:
     - "**/target/surefire-reports/TEST-*.xml"
     - "**/target/failsafe-reports/TEST-*.xml" 

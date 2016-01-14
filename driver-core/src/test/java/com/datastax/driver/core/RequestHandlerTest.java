@@ -29,7 +29,7 @@ public class RequestHandlerTest {
 
     @Test(groups = "long")
     public void should_handle_race_between_response_and_cancellation() {
-        Scassandra scassandra = TestUtils.createScassandraServer();
+        final Scassandra scassandra = TestUtils.createScassandraServer();
         Cluster cluster = null;
 
         try {
@@ -44,9 +44,9 @@ public class RequestHandlerTest {
             );
 
             cluster = Cluster.builder()
-                    .addContactPoint("127.0.0.1")
+                    .addContactPoint(TestUtils.ipOfNode(1))
                     .withPort(scassandra.getBinaryPort())
-                            // Scassandra does not support V3 nor V4 yet, and V4 may cause the server to crash
+                    // Scassandra does not support V3 nor V4 yet, and V4 may cause the server to crash
                     .withProtocolVersion(ProtocolVersion.V2)
                     .withPoolingOptions(new PoolingOptions()
                             .setCoreConnectionsPerHost(HostDistance.LOCAL, 1)

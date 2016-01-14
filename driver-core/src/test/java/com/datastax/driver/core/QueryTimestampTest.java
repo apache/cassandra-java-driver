@@ -15,7 +15,6 @@
  */
 package com.datastax.driver.core;
 
-import com.datastax.driver.core.Cluster.Builder;
 import com.datastax.driver.core.Metrics.Errors;
 import com.datastax.driver.core.policies.DowngradingConsistencyRetryPolicy;
 import com.datastax.driver.core.utils.CassandraVersion;
@@ -32,18 +31,18 @@ import static org.testng.Assert.assertTrue;
  * Tests the behavior of client-provided timestamps with protocol v3.
  */
 @CassandraVersion(major = 2.1)
-public class QueryTimestampTest extends CCMBridge.PerClassSingleNodeCluster {
+public class QueryTimestampTest extends CCMTestsSupport {
 
     @Override
-    protected Collection<String> getTableDefinitions() {
+    public Collection<String> createTestFixtures() {
         return Lists.newArrayList("CREATE TABLE foo (k int PRIMARY KEY, v int)");
     }
 
     private volatile long timestampFromGenerator;
 
     @Override
-    protected Builder configure(Builder builder) {
-        return builder
+    public Cluster.Builder createClusterBuilder() {
+        return Cluster.builder()
                 .withTimestampGenerator(new TimestampGenerator() {
                     @Override
                     public long next() {
