@@ -118,7 +118,12 @@ abstract class ReplicationStrategy {
         }
 
         @Override
-        Map<Token, Set<Host>> computeTokenToReplicaMap(String keyspaceName, Map<Token, Host> tokenToPrimary, List<Token> ring) {        
+        Map<Token, Set<Host>> computeTokenToReplicaMap(String keyspaceName, Map<Token, Host> tokenToPrimary, List<Token> ring) {
+
+            logger.debug("Computing token to replica map for keyspace: {}.", keyspaceName);
+
+            // Track how long it takes to compute the token to replica map
+            long startTime = System.currentTimeMillis();
 
             // This is essentially a copy of org.apache.cassandra.locator.NetworkTopologyStrategy
             Map<String, Set<String>> racks = getRacksInDcs(tokenToPrimary.values());
@@ -201,6 +206,11 @@ abstract class ReplicationStrategy {
 
                 replicaMap.put(ring.get(i), ImmutableSet.copyOf(replicas));
             }
+
+            long duration = System.currentTimeMillis() - startTime;
+            logger.debug("Token to replica map computation for keyspace {} completed in {} milliseconds",
+                    keyspaceName, duration);
+
             return replicaMap;
         }
 
