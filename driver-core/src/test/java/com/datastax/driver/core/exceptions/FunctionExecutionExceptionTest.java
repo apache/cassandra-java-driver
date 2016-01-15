@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core.exceptions;
 
+import com.datastax.driver.core.CCMConfig;
 import com.datastax.driver.core.CCMTestsSupport;
 import com.datastax.driver.core.utils.CassandraVersion;
 import com.google.common.collect.Lists;
@@ -23,6 +24,7 @@ import org.testng.annotations.Test;
 import java.util.Collection;
 
 @CassandraVersion(major = 2.2)
+@CCMConfig(config = "enable_user_defined_functions:true")
 public class FunctionExecutionExceptionTest extends CCMTestsSupport {
 
     @Override
