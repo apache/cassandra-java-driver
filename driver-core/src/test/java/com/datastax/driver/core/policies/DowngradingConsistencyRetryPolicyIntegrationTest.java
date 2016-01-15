@@ -43,8 +43,8 @@ public class DowngradingConsistencyRetryPolicyIntegrationTest extends CCMTestsSu
     @Test(groups = "long")
     public void should_downgrade_if_not_enough_replicas_for_requested_CL() {
         Cluster cluster = register(Cluster.builder()
-                .addContactPointsWithPorts(getHostAddress(1))
-                .withAddressTranslater(getAddressTranslator())
+                .addContactPoints(ccm.addressOfNode(1).getAddress())
+                .withPort(ccm.getBinaryPort())
                 .withRetryPolicy(Mockito.spy(DowngradingConsistencyRetryPolicy.INSTANCE))
                 .build());
         Session session = cluster.connect();

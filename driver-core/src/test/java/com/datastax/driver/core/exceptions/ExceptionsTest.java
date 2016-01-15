@@ -66,8 +66,8 @@ public class ExceptionsTest extends CCMTestsSupport {
             assertEquals(e.getKeyspace(), keyspace.toLowerCase());
             assertEquals(e.getTable(), null);
             assertEquals(e.wasTableCreation(), false);
-            assertEquals(e.getHost(), getHostAddress(1).getAddress());
-            assertEquals(e.getAddress(), getHostAddress(1));
+            assertEquals(e.getHost(), ccm.addressOfNode(1).getAddress());
+            assertEquals(e.getAddress(), ccm.addressOfNode(1));
         }
 
         session.execute(cqlCommands[1]);
@@ -80,8 +80,8 @@ public class ExceptionsTest extends CCMTestsSupport {
             assertEquals(e.getKeyspace(), keyspace.toLowerCase());
             assertEquals(e.getTable(), table.toLowerCase());
             assertEquals(e.wasTableCreation(), true);
-            assertEquals(e.getHost(), getHostAddress(1).getAddress());
-            assertEquals(e.getAddress(), getHostAddress(1));
+            assertEquals(e.getHost(), ccm.addressOfNode(1).getAddress());
+            assertEquals(e.getAddress(), ccm.addressOfNode(1));
         }
     }
 

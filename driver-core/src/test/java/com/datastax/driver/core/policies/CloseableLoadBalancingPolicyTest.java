@@ -41,7 +41,7 @@ public class CloseableLoadBalancingPolicyTest extends CCMTestsSupport {
     public Cluster.Builder createClusterBuilder() {
         policy = new CloseMonitoringPolicy(Policies.defaultLoadBalancingPolicy());
         return Cluster.builder()
-                .addContactPointsWithPorts(getHostAddress(1))
+                .addContactPoints(ccm.addressOfNode(1).getAddress())
                 .withLoadBalancingPolicy(policy);
     }
 
