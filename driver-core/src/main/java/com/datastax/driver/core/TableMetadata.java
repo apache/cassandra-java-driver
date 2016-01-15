@@ -24,7 +24,7 @@ import java.util.*;
 /**
  * Describes a Table.
  */
-public class TableMetadata extends TableOrView {
+public class TableMetadata extends AbstractTableMetadata {
 
     private static final Logger logger = LoggerFactory.getLogger(TableMetadata.class);
 

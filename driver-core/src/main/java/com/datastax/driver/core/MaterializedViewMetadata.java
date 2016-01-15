@@ -26,7 +26,7 @@ import java.util.*;
  * An immutable representation of a materialized view.
  * Materialized views are available starting from Cassandra 3.0.
  */
-public class MaterializedViewMetadata extends TableOrView {
+public class MaterializedViewMetadata extends AbstractTableMetadata {
 
     private static final Logger logger = LoggerFactory.getLogger(MaterializedViewMetadata.class);
 

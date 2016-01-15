@@ -44,19 +44,19 @@ public class ColumnMetadata {
     static final String INDEX_OPTIONS = "index_options";
     static final String INDEX_NAME = "index_name";
 
-    private final TableOrView parent;
+    private final AbstractTableMetadata parent;
     private final String name;
     private final DataType type;
     private final boolean isStatic;
 
-    private ColumnMetadata(TableOrView parent, String name, DataType type, boolean isStatic) {
+    private ColumnMetadata(AbstractTableMetadata parent, String name, DataType type, boolean isStatic) {
         this.parent = parent;
         this.name = name;
         this.type = type;
         this.isStatic = isStatic;
     }
 
-    static ColumnMetadata fromRaw(TableOrView tm, Raw raw, DataType dataType) {
+    static ColumnMetadata fromRaw(AbstractTableMetadata tm, Raw raw, DataType dataType) {
         return new ColumnMetadata(tm, raw.name, dataType, raw.kind == Raw.Kind.STATIC);
     }
 
@@ -79,7 +79,7 @@ public class ColumnMetadata {
      *
      * @return the parent object of this column.
      */
-    public TableOrView getParent() {
+    public AbstractTableMetadata getParent() {
         return parent;
     }
 

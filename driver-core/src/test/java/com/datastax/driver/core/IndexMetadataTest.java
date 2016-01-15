@@ -366,7 +366,7 @@ public class IndexMetadataTest extends CCMTestsSupport {
     }
 
     private ColumnMetadata getColumn(String name, boolean fromTable) {
-        TableOrView target = fromTable ? getTable("indexing") : getMaterializedView("mv1");
+        AbstractTableMetadata target = fromTable ? getTable("indexing") : getMaterializedView("mv1");
         return target.getColumn(name);
     }
 

@@ -22,9 +22,9 @@ import com.google.common.collect.Iterables;
 import java.util.*;
 
 /**
- * Base class for Tables and Materialized Views.
+ * Base class for Tables and Materialized Views metadata.
  */
-abstract class TableOrView {
+public abstract class AbstractTableMetadata {
 
     static final Comparator<ColumnMetadata> columnMetadataComparator = new Comparator<ColumnMetadata>() {
         @Override
@@ -50,15 +50,15 @@ abstract class TableOrView {
     protected final List<ClusteringOrder> clusteringOrder;
     protected final VersionNumber cassandraVersion;
 
-    TableOrView(KeyspaceMetadata keyspace,
-                String name,
-                UUID id,
-                List<ColumnMetadata> partitionKey,
-                List<ColumnMetadata> clusteringColumns,
-                Map<String, ColumnMetadata> columns,
-                TableOptionsMetadata options,
-                List<ClusteringOrder> clusteringOrder,
-                VersionNumber cassandraVersion) {
+    protected AbstractTableMetadata(KeyspaceMetadata keyspace,
+                                    String name,
+                                    UUID id,
+                                    List<ColumnMetadata> partitionKey,
+                                    List<ColumnMetadata> clusteringColumns,
+                                    Map<String, ColumnMetadata> columns,
+                                    TableOptionsMetadata options,
+                                    List<ClusteringOrder> clusteringOrder,
+                                    VersionNumber cassandraVersion) {
         this.keyspace = keyspace;
         this.name = name;
         this.id = id;
