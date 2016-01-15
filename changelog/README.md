@@ -2,6 +2,8 @@
 
 ### 3.0.0 (in progress)
 
+- [bug] JAVA-1034: fix metadata parser for collections of custom types.
+
 Merged from 2.1 branch:
 
 - [improvement] JAVA-1030: Log token to replica map computation times.

@@ -16,13 +16,14 @@
 package com.datastax.driver.core;
 
 import com.datastax.driver.core.utils.CassandraVersion;
+import com.google.common.collect.Lists;
 import org.testng.annotations.Test;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.DataType.cint;
@@ -45,14 +46,19 @@ public class CustomTypeTest extends CCMTestsSupport {
 
     @Override
     public Collection<String> createTestFixtures() {
-        return Collections.singleton(
+        return Lists.newArrayList(
                 "CREATE TABLE test ("
                         + "    k int,"
                         + "    c1 'DynamicCompositeType(s => UTF8Type, i => Int32Type)',"
                         + "    c2 'ReversedType(CompositeType(UTF8Type, Int32Type))'," // reversed translates to CLUSTERING ORDER BY DESC
                         + "    c3 'Int32Type'," // translates to int
                         + "    PRIMARY KEY (k, c1, c2)"
-                        + ") WITH COMPACT STORAGE"
+                        + ") WITH COMPACT STORAGE",
+                "CREATE TABLE test_collection("
+                        + "    k int PRIMARY KEY,"
+                        + "    c1 list<'DynamicCompositeType(s => UTF8Type, i => Int32Type)'>,"
+                        + "    c2 map<'DynamicCompositeType(s => UTF8Type, i => Int32Type)', 'DynamicCompositeType(s => UTF8Type, i => Int32Type)'>"
+                        + ")"
         );
     }
 
@@ -105,6 +111,33 @@ public class CustomTypeTest extends CCMTestsSupport {
         assertThat(r.getBytesUnsafe("c1")).isEqualTo(serializeForDynamicCompositeType("foo", 32));
         assertThat(r.getBytesUnsafe("c2")).isEqualTo(serializeForCompositeType("foo", 32));
         assertThat(r.getInt("c3")).isEqualTo(1);
+    }
+
+    /**
+     * Validates that columns using collections of custom types are properly handled by the driver.
+     *
+     * @jira_ticket JAVA-1034
+     * @test_category metadata
+     */
+    @Test(groups = "short")
+    public void should_serialize_and_deserialize_collections_of_custom_types() {
+        TableMetadata table = cluster.getMetadata().getKeyspace(keyspace).getTable("test_collection");
+        assertThat(table.getColumn("c1")).hasType(DataType.list(CUSTOM_DYNAMIC_COMPOSITE));
+        assertThat(table.getColumn("c2")).hasType(DataType.map(CUSTOM_DYNAMIC_COMPOSITE, CUSTOM_DYNAMIC_COMPOSITE));
+
+        session.execute("INSERT INTO test_collection(k, c1, c2) VALUES (0, [ 's@foo:i@32' ], { 's@foo:i@32': 's@bar:i@42' })");
+
+        Row r = session.execute("SELECT * FROM test_collection").one();
+
+        assertThat(r.getColumnDefinitions().getType("c1")).isEqualTo(DataType.list(CUSTOM_DYNAMIC_COMPOSITE));
+        List<ByteBuffer> c1 = r.getList("c1", ByteBuffer.class);
+        assertThat(c1.get(0)).isEqualTo(serializeForDynamicCompositeType("foo", 32));
+
+        assertThat(r.getColumnDefinitions().getType("c2")).isEqualTo(DataType.map(CUSTOM_DYNAMIC_COMPOSITE, CUSTOM_DYNAMIC_COMPOSITE));
+        Map<ByteBuffer, ByteBuffer> c2 = r.getMap("c2", ByteBuffer.class, ByteBuffer.class);
+        Map.Entry<ByteBuffer, ByteBuffer> entry = c2.entrySet().iterator().next();
+        assertThat(entry.getKey()).isEqualTo(serializeForDynamicCompositeType("foo", 32));
+        assertThat(entry.getValue()).isEqualTo(serializeForDynamicCompositeType("bar", 42));
     }
 
     /**
