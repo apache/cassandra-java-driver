@@ -18,7 +18,8 @@ We've also seized the opportunity to remove code that was deprecated in 2.1.
 
     Here is a detailed list of breaking API changes:
     * `TypeCodec` was package-private before and is now public.
-    * `DataType` has no more references to `TypeCodec`, so most methods that dealt with serialization and deserialization of data types have been removed:
+    * `DataType` has no more references to `TypeCodec`, so methods that dealt with serialization and deserialization of
+        data types have been removed:
         * `ByteBuffer serialize(Object value, ProtocolVersion protocolVersion)`
         * `ByteBuffer serializeValue(Object value, ProtocolVersion protocolVersion)`
         * `Object deserialize(ByteBuffer bytes, ProtocolVersion protocolVersion)`
@@ -26,6 +27,9 @@ We've also seized the opportunity to remove code that was deprecated in 2.1.
         * `Object parse(String value)`
         * `String format(Object value)`
         * `Class<?> asJavaClass()`
+
+        These methods must now be invoked on `TypeCodec` directly. To resolve the `TypeCodec` instance for a particular
+        data type, use `CodecRegistry#codecFor`.
     * `GettableByIndexData` (affects `Row`, `BoundStatement`, `TupleValue` and `UDTValue`). The following public methods were added:
         * `<T> T get(int i, Class<T> targetClass)`
         * `<T> T get(int i, TypeToken<T> targetType)`
@@ -148,7 +152,7 @@ We've also seized the opportunity to remove code that was deprecated in 2.1.
       `setOutgoingPayload(Map<String,ByteBuffer>)`
     * `AbstractSession#prepareAsync(String, Map<String,ByteBuffer>)`
 
-    Also, not that `AbstractSession#prepareAsync(Statement)` does not
+    Also, note that `AbstractSession#prepareAsync(Statement)` does not
     call `AbstractSession#prepareAsync(String)` anymore, they now both
     delegate to a private method.
 
@@ -239,6 +243,9 @@ We've also seized the opportunity to remove code that was deprecated in 2.1.
     `DseGSSAPIAuthProvider` for Kerberos authentication. `DsePlainTextAuthProvider`
     has been introduced to handle plain text authentication with the
     `DseAuthenticator`.
+
+25. The constructor of `DCAwareRoundRobinPolicy` is not accessible anymore. You
+    should use `DCAwareRoundRobinPolicy#builder()` to create new instances.
 
 
 ### 2.1.8
