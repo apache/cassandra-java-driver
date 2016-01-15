@@ -18,10 +18,12 @@ package com.datastax.driver.core;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
 import com.datastax.driver.core.utils.CassandraVersion;
+import com.google.common.util.concurrent.Uninterruptibles;
 import org.testng.annotations.Test;
 
 import java.net.InetAddress;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 import static com.datastax.driver.core.TestUtils.*;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -609,7 +611,7 @@ public class PreparedStatementTest extends CCMTestsSupport {
      * @jira_ticket JAVA-777
      * @since 2.2.0
      */
-    @Test(groups = "short")
+    @Test(groups = "long")
     public void should_create_tombstone_when_null_value_on_bound_statement() {
         PreparedStatement prepared = session.prepare("INSERT INTO " + SIMPLE_TABLE + " (k, i) VALUES (?, ?)");
         BoundStatement st1 = prepared.bind();
@@ -620,6 +622,8 @@ public class PreparedStatementTest extends CCMTestsSupport {
         st2.enableTracing();
         ResultSet rows = session.execute(st2);
         assertThat(rows.one().isNull(0)).isTrue();
+        // sleep 1 minute to make sure the trace will be complete
+        Uninterruptibles.sleepUninterruptibly(1, TimeUnit.MINUTES);
         QueryTrace queryTrace = rows.getExecutionInfo().getQueryTrace();
         assertEventsContain(queryTrace, "1 tombstone");
     }
