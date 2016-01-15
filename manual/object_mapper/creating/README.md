@@ -181,7 +181,7 @@ public static class Company {
 (this also works with UDTs inside collections or other UDTs, with
 arbitrary level of nesting)
 
-[User Defined Types]:http://docs.datastax.com/en/developer/java-driver/2.1/java-driver/reference/userDefinedTypes.html
+[User Defined Types]: ../../udts/
 [udt]:http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/annotations/UDT.html
 [field]:http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/annotations/Field.html
 
