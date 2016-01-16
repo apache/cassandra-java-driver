@@ -211,6 +211,8 @@ public class CCMBridge implements CCMAccess {
 
     private boolean keepLogs = false;
 
+    private boolean started = false;
+
     private boolean closed = false;
 
     private CCMBridge(String clusterName, boolean isDSE, VersionNumber version, int storagePort, int thriftPort, int binaryPort, String jvmArgs) {
@@ -344,7 +346,7 @@ public class CCMBridge implements CCMAccess {
     public synchronized void close() {
         if (closed)
             return;
-        logger.debug("Closing: " + this);
+        logger.debug("Closing: {}", this);
         if (keepLogs) {
             executeNoFail(new Runnable() {
                 @Override
@@ -368,21 +370,31 @@ public class CCMBridge implements CCMAccess {
             }, false);
         }
         closed = true;
-        logger.debug("Closed: " + this);
+        logger.debug("Closed: {}", this);
     }
 
     @Override
-    public void start() {
-        logger.debug("Starting: " + this);
+    public synchronized void start() {
+        if (started)
+            return;
+        if (logger.isDebugEnabled())
+            logger.debug("Starting: {} - free memory: {}", this, TestUtils.getFreeMemoryMB());
         execute(CCM_COMMAND + " start --wait-other-notice --wait-for-binary-proto" + jvmArgs);
+        if (logger.isDebugEnabled())
+            logger.debug("Started: {} - Free memory: {}", this, TestUtils.getFreeMemoryMB());
+        started = true;
     }
 
     @Override
     public synchronized void stop() {
         if (closed)
             return;
-        logger.debug("Stopping: " + this);
+        if (logger.isDebugEnabled())
+            logger.debug("Stopping: {} - free memory: {}", this, TestUtils.getFreeMemoryMB());
         execute(CCM_COMMAND + " stop");
+        System.gc();
+        if (logger.isDebugEnabled())
+            logger.debug("Stopped: {} - free memory: {}", this, TestUtils.getFreeMemoryMB());
         closed = true;
     }
 
@@ -390,7 +402,7 @@ public class CCMBridge implements CCMAccess {
     public synchronized void forceStop() {
         if (closed)
             return;
-        logger.debug("Force stopping: " + this);
+        logger.debug("Force stopping: {}", this);
         execute(CCM_COMMAND + " stop --not-gently");
         closed = true;
     }
@@ -416,7 +428,7 @@ public class CCMBridge implements CCMAccess {
     @Override
     public synchronized void remove() {
         stop();
-        logger.debug("Removing: " + this);
+        logger.debug("Removing: {}", this);
         execute(CCM_COMMAND + " remove");
     }
 
@@ -601,6 +613,7 @@ public class CCMBridge implements CCMAccess {
 
     @Override
     protected void finalize() throws Throwable {
+        logger.debug("GC'ing {}", this);
         close();
         super.finalize();
     }
@@ -679,9 +692,7 @@ public class CCMBridge implements CCMAccess {
         }
 
         /**
-         * The Cassandra or DSE version to use.
-         *
-         * Defaults to {@link #getCassandraVersion()}.
+         * The Cassandra or DSE version to use (defaults to {@link #getCassandraVersion()} if this is never called).
          */
         public Builder withVersion(String version) {
             Iterator<String> it = createOptions.iterator();
@@ -698,7 +709,8 @@ public class CCMBridge implements CCMAccess {
         }
 
         /**
-         * Free-form options that will be added at the end of the {@code ccm create} command.
+         * Free-form options that will be added at the end of the {@code ccm create} command
+         *  (defaults to {@link #getInstallArguments()} if this is never called).
          */
         public Builder withCreateOptions(String... createOptions) {
             Collections.addAll(this.createOptions, createOptions);
@@ -762,6 +774,7 @@ public class CCMBridge implements CCMAccess {
             ccm.execute(buildCreateCommand());
             updateNodeConf(ccm);
             HashMap<String, Object> config = new HashMap<String, Object>(cassandraConfiguration);
+            config.put("start_rpc", false);
             config.put("storage_port", storagePort);
             config.put("rpc_port", thriftPort);
             config.put("native_transport_port", binaryPort);
@@ -771,6 +784,15 @@ public class CCMBridge implements CCMAccess {
             if (start)
                 ccm.start();
             return ccm;
+        }
+
+        public int weight() {
+            // the weight is simply function of the number of nodes
+            int totalNodes = 0;
+            for (int nodesPerDc : this.nodes) {
+                totalNodes += nodesPerDc;
+            }
+            return totalNodes;
         }
 
         private String joinJvmArgs() {
@@ -884,6 +906,11 @@ public class CCMBridge implements CCMAccess {
             result = 31 * result + storagePort;
             result = 31 * result + version.hashCode();
             return result;
+        }
+
+        @Override
+        public String toString() {
+            return String.format("%s (weight %s)", clusterName, weight());
         }
     }
 

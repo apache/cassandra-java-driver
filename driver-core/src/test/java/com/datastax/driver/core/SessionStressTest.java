@@ -59,6 +59,9 @@ public class SessionStressTest extends CCMTestsSupport {
                 fail("executor ran for longer than expected");
         } catch (InterruptedException e) {
             fail("Interrupted while waiting for executor to shutdown");
+        } finally {
+            executorService = null;
+            System.gc();
         }
     }
 
@@ -175,6 +178,7 @@ public class SessionStressTest extends CCMTestsSupport {
             }
         } finally {
             stressCluster.close();
+            stressCluster = null;
 
             // Ensure no channels remain open.
             assertEquals(channelMonitor.openChannels(getInitialContactPoints()).size(), 0);
@@ -263,7 +267,7 @@ public class SessionStressTest extends CCMTestsSupport {
     }
 
     private static class CloseSession implements Callable<CloseFuture> {
-        private final Session session;
+        private Session session;
         private final CountDownLatch startSignal;
 
         CloseSession(Session session, CountDownLatch startSignal) {
@@ -274,7 +278,11 @@ public class SessionStressTest extends CCMTestsSupport {
         @Override
         public CloseFuture call() throws Exception {
             startSignal.await();
-            return session.closeAsync();
+            try {
+                return session.closeAsync();
+            } finally {
+                session = null;
+            }
         }
     }
 }

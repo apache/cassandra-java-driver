@@ -17,11 +17,9 @@ package com.datastax.driver.core;
 
 import com.datastax.driver.core.CreateCCM.TestMode;
 import com.google.common.base.Throwables;
-import com.google.common.cache.*;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.io.Closer;
-import com.google.common.util.concurrent.MoreExecutors;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.ITestResult;
@@ -37,12 +35,13 @@ import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.net.InetSocketAddress;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.datastax.driver.core.CreateCCM.TestMode.PER_CLASS;
 import static com.datastax.driver.core.CreateCCM.TestMode.PER_METHOD;
 import static com.datastax.driver.core.TestUtils.*;
+import static org.assertj.core.api.Assertions.fail;
 
 @SuppressWarnings("unused")
 public class CCMTestsSupport {
@@ -52,6 +51,13 @@ public class CCMTestsSupport {
     private static final AtomicInteger CCM_COUNTER = new AtomicInteger(1);
 
     private static final List<String> TEST_GROUPS = Lists.newArrayList("isolated", "short", "long", "stress", "duration");
+
+    // A mapping of cassandra.yaml config options to their version requirements.
+    // If a config is passed containing one of these options and the version requirement cannot be met
+    // the option is simply filtered.
+    private static final Map<String, VersionNumber> configVersionRequirements = ImmutableMap.<String, VersionNumber>builder()
+            .put("enable_user_defined_functions", VersionNumber.parse("2.2.0"))
+            .build();
 
 
     private static class ReadOnlyCCMBridge implements CCMAccess {
@@ -211,6 +217,11 @@ public class CCMTestsSupport {
         public void waitForDown(int node) {
             throw new UnsupportedOperationException("This CCM cluster is read-only");
         }
+
+        @Override
+        public String toString() {
+            return delegate.toString();
+        }
     }
 
     private static class CCMTestConfig {
@@ -270,7 +281,6 @@ public class CCMTestsSupport {
         @SuppressWarnings("SimplifiableIfStatement")
         private Map<String, Object> config() {
             Map<String, Object> config = new HashMap<String, Object>();
-            config.put("start_rpc", false);
             for (int i = annotations.size() - 1; i == 0; i--) {
                 CCMConfig ann = annotations.get(i);
                 addConfigOptions(ann.config(), config);
@@ -289,10 +299,25 @@ public class CCMTestsSupport {
         }
 
         private void addConfigOptions(String[] conf, Map<String, Object> config) {
+            String versionStr = version();
+            VersionNumber version = VersionNumber.parse(versionStr != null ?
+                    versionStr : CCMBridge.getCassandraVersion());
             for (String aConf : conf) {
                 String[] tokens = aConf.split(":");
+                if (tokens.length != 2)
+                    fail("Wrong configuration option: " + aConf);
                 String key = tokens[0];
                 String value = tokens[1];
+                // If we've detected a property with a version requirement, skip it if the version requirement
+                // cannot be met.
+                if (configVersionRequirements.containsKey(key)) {
+                    VersionNumber requirement = configVersionRequirements.get(key);
+                    if (version.compareTo(requirement) < 0) {
+                        LOGGER.debug("Skipping inclusion of '{}' in cassandra.yaml since it requires >= C* {} and {} " +
+                                "was detected.", aConf, requirement, version);
+                        continue;
+                    }
+                }
                 config.put(key, value);
             }
         }
@@ -364,7 +389,7 @@ public class CCMTestsSupport {
 
         private CCMBridge.Builder ccmBuilder() {
             if (ccmBuilder == null) {
-                ccmBuilder = CCMBridge.builder().withNodes(numberOfNodes());
+                ccmBuilder = CCMBridge.builder().withNodes(numberOfNodes()).notStarted();
                 if (version() != null)
                     ccmBuilder.withVersion(version());
                 if (dse())
@@ -444,158 +469,11 @@ public class CCMTestsSupport {
             }
         }
 
-        private int weight() {
-            int weight = 0;
-            weight += totalNodes() - 1;
-            weight += config().size() - 1;
-            weight += dseConfig().size();
-            weight += dse() ? 1 : 0;
-            weight += jvmArgs().size();
-            weight += startOptions().size();
-            weight += ssl() ? 1 : 0;
-            weight += auth() ? 1 : 0;
-            weight += version() != null ? 1 : 0;
-            return weight;
-        }
-
-        private int totalNodes() {
-            int nodes = 0;
-            for (int nodesPerDc : numberOfNodes()) {
-                nodes += nodesPerDc;
-            }
-            return nodes;
-        }
-    }
-
-    private static class CCMTestContextKey {
-
-        private final CCMBridge.Builder builder;
-
-        private final int weight;
-
-        private CCMTestContextKey(CCMBridge.Builder builder, int weight) {
-            this.builder = builder;
-            this.weight = weight;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            CCMTestContextKey that = (CCMTestContextKey) o;
-            return builder.equals(that.builder);
-        }
-
-        @Override
-        public int hashCode() {
-            return builder.hashCode();
-        }
-    }
-
-    private static class CCMTestContext implements Runnable {
-
-        private CCMAccess ccm;
-
-        private final AtomicInteger refCount = new AtomicInteger(1);
-
-        private volatile boolean evicted = false;
-
-        private CCMTestContext(CCMAccess ccm) {
-            this(ccm, false);
-        }
-
-        public CCMTestContext(CCMAccess ccm, boolean evicted) {
-            this.ccm = ccm;
-            this.evicted = evicted;
-        }
-
-        @Override
-        public void run() {
-            if (ccm != null)
-                ccm.close();
-            ccm = null;
-        }
-
-        private void markEvicted() {
-            evicted = true;
-        }
-
-        private void maybeClose() {
-            if (refCount.get() <= 0 && evicted)
-                POOL.execute(this);
-        }
-    }
-
-    private static class CCMTestContextLoader extends CacheLoader<CCMTestContextKey, CCMTestContext> {
-
-        @Override
-        public CCMTestContext load(CCMTestContextKey key) {
-            return new CCMTestContext(key.builder.build());
-        }
-
-    }
-
-    private static class CCMTestContextWeigher implements Weigher<CCMTestContextKey, CCMTestContext> {
-
-        @Override
-        public int weigh(CCMTestContextKey key, CCMTestContext value) {
-            return key.weight;
-        }
-
-    }
-
-    private static class CCMTestContextRemovalListener implements RemovalListener<CCMTestContextKey, CCMTestContext> {
-
-        @Override
-        public void onRemoval(RemovalNotification<CCMTestContextKey, CCMTestContext> notification) {
-            CCMTestContext context = notification.getValue();
-            if (context != null && context.ccm != null) {
-                LOGGER.debug("Evicting: {} because of {}", context.ccm, notification.getCause());
-                context.markEvicted();
-                context.maybeClose();
-            }
-        }
-
-    }
-
-    /**
-     * A LoadingCache that stores running CCM clusters.
-     */
-    private static final LoadingCache<CCMTestContextKey, CCMTestContext> CACHE;
-
-    private static final ExecutorService POOL = MoreExecutors.getExitingExecutorService(
-            (ThreadPoolExecutor) Executors.newFixedThreadPool(2,
-                    new ThreadFactoryBuilder().setNameFormat("ccm-removal-%d").build()));
-
-    static {
-        long maximumWeight;
-        String numberOfNodes = System.getProperty("ccm.maxNumberOfNodes");
-        if (numberOfNodes == null) {
-            long freeMemoryMB = TestUtils.getFreeMemoryMB();
-            if (freeMemoryMB < 1000)
-                LOGGER.warn("Available memory below 1GB: {}MB, CCM clusters might fail to start", freeMemoryMB);
-            // CCM nodes are started with -Xms500M -Xmx500M
-            // so 1 "slot" is roughly 500MB
-            // leave at least 2 slots out, with a minimum of 1 slot and a maximum of 6 slots
-            long slotsAvailable = (freeMemoryMB / 500) - 2;
-            maximumWeight = Math.min(6, Math.max(1, slotsAvailable));
-        } else {
-            maximumWeight = Integer.parseInt(numberOfNodes);
-        }
-        LOGGER.info("Maximum number of running CCM nodes: {}", maximumWeight);
-        CACHE = CacheBuilder.newBuilder()
-                .initialCapacity(3)
-                .maximumWeight(maximumWeight)
-                .weigher(new CCMTestContextWeigher())
-                .removalListener(new CCMTestContextRemovalListener())
-                .build(new CCMTestContextLoader());
     }
 
     private TestMode testMode;
 
     private CCMTestConfig ccmTestConfig;
-
-    private CCMTestContext ccmTestContext;
 
     protected CCMAccess ccm;
 
@@ -688,6 +566,7 @@ public class CCMTestsSupport {
                 closeTestContext();
         }
     }
+
     /**
      * Hook executed after each test class.
      */
@@ -805,34 +684,15 @@ public class CCMTestsSupport {
         ccmTestConfig = createCCMTestConfig(testInstance, testMethod);
         assert ccmTestConfig != null;
         if (ccmTestConfig.createCcm()) {
+            CCMAccess ccm = CCMCache.get(ccmTestConfig.ccmBuilder());
+            assert ccm != null;
             if (ccmTestConfig.dirtiesContext()) {
-                ccm = ccmTestConfig.ccmBuilder().build();
-                ccmTestContext = new CCMTestContext(ccm, true);
-                LOGGER.debug("Using dedicated {}", ccm);
+                this.ccm = ccm;
             } else {
-                CCMBridge.Builder builder = ccmTestConfig.ccmBuilder();
-                int weight = ccmTestConfig.weight();
-                CCMTestContextKey key = new CCMTestContextKey(builder, weight);
-                CCMAccess ccm;
-                ccmTestContext = CACHE.getIfPresent(key);
-                if (ccmTestContext != null) {
-                    ccmTestContext.refCount.incrementAndGet();
-                    ccm = ccmTestContext.ccm;
-                    LOGGER.debug("Reusing {}", ccm);
-                } else {
-                    try {
-                        ccmTestContext = CACHE.get(key);
-                        ccm = ccmTestContext.ccm;
-                        LOGGER.debug("Using newly-created {}", ccm);
-                    } catch (ExecutionException e) {
-                        throw Throwables.propagate(e);
-                    }
-                }
                 this.ccm = new ReadOnlyCCMBridge(ccm);
             }
-            assert ccmTestContext != null;
-            assert ccm != null;
-
+            ccm.start();
+            LOGGER.debug("Using {}", ccm);
         }
     }
 
@@ -883,12 +743,16 @@ public class CCMTestsSupport {
     }
 
     private void closeTestContext() {
-        if (ccmTestContext != null) {
-            ccmTestContext.refCount.decrementAndGet();
-            ccmTestContext.maybeClose();
+        if (ccmTestConfig != null && ccm != null) {
+            CCMBridge.Builder key = ccmTestConfig.ccmBuilder();
+            if (ccmTestConfig.dirtiesContext()) {
+                CCMCache.remove(key);
+                ccm.close();
+            } else {
+                ((ReadOnlyCCMBridge) ccm).delegate.close();
+            }
         }
         ccmTestConfig = null;
-        ccmTestContext = null;
         ccm = null;
     }
 

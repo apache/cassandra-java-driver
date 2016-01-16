@@ -70,6 +70,9 @@ public class ClusterStressTest extends CCMTestsSupport {
                 fail("executor ran for longer than expected");
         } catch (InterruptedException e) {
             fail("Interrupted while waiting for executor to shutdown");
+        } finally {
+            executorService = null;
+            System.gc();
         }
     }
 
@@ -164,7 +167,7 @@ public class ClusterStressTest extends CCMTestsSupport {
 
     private class CreateClusterAndCheckConnections implements Callable<CreateClusterAndCheckConnections> {
         private final CountDownLatch startSignal;
-        private final Cluster cluster;
+        private Cluster cluster;
         private final SocketChannelMonitor channelMonitor = new SocketChannelMonitor();
 
         CreateClusterAndCheckConnections(CountDownLatch startSignal) {
@@ -202,6 +205,7 @@ public class ClusterStressTest extends CCMTestsSupport {
                 // If an assertion fails, close the cluster now, because it's the last time we
                 // have a reference to it.
                 cluster.close();
+                cluster = null;
                 throw e;
             } finally {
                 channelMonitor.stop();
@@ -210,8 +214,8 @@ public class ClusterStressTest extends CCMTestsSupport {
     }
 
     private class CloseCluster implements Callable<Void> {
-        private final Cluster cluster;
-        private final SocketChannelMonitor channelMonitor;
+        private Cluster cluster;
+        private SocketChannelMonitor channelMonitor;
         private final CountDownLatch startSignal;
 
         CloseCluster(Cluster cluster, SocketChannelMonitor channelMonitor, CountDownLatch startSignal) {
@@ -223,12 +227,15 @@ public class ClusterStressTest extends CCMTestsSupport {
         @Override
         public Void call() throws Exception {
             startSignal.await();
-
-            cluster.close();
-            assertEquals(cluster.manager.sessions.size(), 0);
-            assertEquals(channelMonitor.openChannels(getInitialContactPoints()).size(), 0);
-            channelMonitor.stop();
-
+            try {
+                cluster.close();
+                assertEquals(cluster.manager.sessions.size(), 0);
+                assertEquals(channelMonitor.openChannels(getInitialContactPoints()).size(), 0);
+            } finally {
+                channelMonitor.stop();
+                cluster = null;
+                channelMonitor = null;
+            }
             return null;
         }
     }

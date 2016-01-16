@@ -15,7 +15,8 @@
  */
 package com.datastax.driver.mapping;
 
-import com.datastax.driver.core.CCMBridge;
+import com.datastax.driver.core.CCMConfig;
+import com.datastax.driver.core.CCMTestsSupport;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.utils.CassandraVersion;
@@ -27,116 +28,94 @@ import java.util.HashMap;
 import java.util.Map;
 
 @CassandraVersion(major = 2.1)
+@CCMConfig(createCluster = false)
 @SuppressWarnings("unused")
-public class UDTFieldMapperTest {
+public class UDTFieldMapperTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void udt_and_tables_with_ks_created_in_another_session_should_be_mapped() {
-        CCMBridge ccm = null;
-        Cluster cluster = null;
+        Cluster cluster = register(Cluster.builder()
+                .addContactPointsWithPorts(ccm.addressOfNode(1))
+                .withPort(ccm.getBinaryPort())
+                .build());
+        Session session1 = cluster.connect();
+        // Create type and table
+        session1.execute("create schema if not exists java_509 " +
+                "with replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };");
+        session1.execute("create type java_509.my_tuple (" +
+                "type text, " +
+                "value text);");
+        session1.execute("create table java_509.my_hash (" +
+                "key int primary key, " +
+                "properties map<text, frozen<java_509.my_tuple>>);");
+        cluster.close();
 
-        try {
-            // Create type and table
-            ccm = CCMBridge.builder().build();
-            cluster = Cluster.builder()
-                    .addContactPointsWithPorts(ccm.addressOfNode(1))
-                    .withPort(ccm.getBinaryPort())
-                    .build();
-            Session session1 = cluster.connect();
-            session1.execute("create schema if not exists java_509 " +
-                    "with replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };");
-            session1.execute("create type java_509.my_tuple (" +
-                    "type text, " +
-                    "value text);");
-            session1.execute("create table java_509.my_hash (" +
-                    "key int primary key, " +
-                    "properties map<text, frozen<java_509.my_tuple>>);");
-            cluster.close();
-
-            // Create entities with another connection
-            cluster = Cluster.builder()
-                    .addContactPointsWithPorts(ccm.addressOfNode(1))
-                    .withPort(ccm.getBinaryPort())
-                    .build();
-            Session session2 = cluster.newSession();
-            Mapper<MyHashWithKeyspace> hashMapper = new MappingManager(session2).mapper(MyHashWithKeyspace.class);
-            hashMapper.save(new MyHashWithKeyspace(
-                    1,
-                    ImmutableMap.of("key-1", new MyTupleWithKeyspace("first-half-1", "second-half-1"))));
-            hashMapper.save(new MyHashWithKeyspace(
-                    2,
-                    ImmutableMap.of("key-2", new MyTupleWithKeyspace("first-half-2", null))));
-            hashMapper.save(new MyHashWithKeyspace(
-                    3,
-                    ImmutableMap.of("key-3", new MyTupleWithKeyspace(null, "second-half-3"))));
-            hashMapper.save(new MyHashWithKeyspace(
-                    4,
-                    new HashMap<String, MyTupleWithKeyspace>()));
-            hashMapper.save(new MyHashWithKeyspace(
-                    5,
-                    null));
-        } finally {
-            if (cluster != null)
-                cluster.close();
-            if (ccm != null)
-                ccm.remove();
-        }
+        // Create entities with another connection
+        cluster = register(Cluster.builder()
+                .addContactPointsWithPorts(ccm.addressOfNode(1))
+                .withPort(ccm.getBinaryPort())
+                .build());
+        Session session2 = cluster.newSession();
+        Mapper<MyHashWithKeyspace> hashMapper = new MappingManager(session2).mapper(MyHashWithKeyspace.class);
+        hashMapper.save(new MyHashWithKeyspace(
+                1,
+                ImmutableMap.of("key-1", new MyTupleWithKeyspace("first-half-1", "second-half-1"))));
+        hashMapper.save(new MyHashWithKeyspace(
+                2,
+                ImmutableMap.of("key-2", new MyTupleWithKeyspace("first-half-2", null))));
+        hashMapper.save(new MyHashWithKeyspace(
+                3,
+                ImmutableMap.of("key-3", new MyTupleWithKeyspace(null, "second-half-3"))));
+        hashMapper.save(new MyHashWithKeyspace(
+                4,
+                new HashMap<String, MyTupleWithKeyspace>()));
+        hashMapper.save(new MyHashWithKeyspace(
+                5,
+                null));
     }
 
     @Test(groups = "short")
     public void udt_and_tables_without_ks_created_in_another_session_should_be_mapped() {
-        CCMBridge ccm = null;
-        Cluster cluster = null;
+        Cluster cluster = register(Cluster.builder()
+                .addContactPointsWithPorts(ccm.addressOfNode(1))
+                .withPort(ccm.getBinaryPort())
+                .build());
+        Session session1 = cluster.connect();
+        session1.execute("create schema if not exists java_509b " +
+                "with replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };");
+        session1.execute("use java_509b");
+        session1.execute("create type my_tuple (" +
+                "type text, " +
+                "value text);");
+        session1.execute("create table my_hash (" +
+                "key int primary key, " +
+                "properties map<text, frozen<my_tuple>>);");
+        cluster.close();
 
-        try {
-            // Create type and table
-            ccm = CCMBridge.builder().build();
-            cluster = Cluster.builder()
-                    .addContactPointsWithPorts(ccm.addressOfNode(1))
-                    .withPort(ccm.getBinaryPort())
-                    .build();
-            Session session1 = cluster.connect();
-            session1.execute("create schema if not exists java_509 " +
-                    "with replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };");
-            session1.execute("use java_509");
-            session1.execute("create type my_tuple (" +
-                    "type text, " +
-                    "value text);");
-            session1.execute("create table my_hash (" +
-                    "key int primary key, " +
-                    "properties map<text, frozen<my_tuple>>);");
-            cluster.close();
+        // Create entities with another connection
+        cluster = Cluster.builder()
+                .addContactPointsWithPorts(ccm.addressOfNode(1))
+                .withPort(ccm.getBinaryPort())
+                .build();
+        Session session2 = cluster.newSession();
 
-            // Create entities with another connection
-            cluster = Cluster.builder()
-                    .addContactPointsWithPorts(ccm.addressOfNode(1))
-                    .withPort(ccm.getBinaryPort())
-                    .build();
-            Session session2 = cluster.newSession();
-
-            session2.execute("use java_509");
-            Mapper<MyHash> hashMapper = new MappingManager(session2).mapper(MyHash.class);
-            hashMapper.save(new MyHash(
-                    1,
-                    ImmutableMap.of("key-1", new MyTuple("first-half-1", "second-half-1"))));
-            hashMapper.save(new MyHash(
-                    2,
-                    ImmutableMap.of("key-2", new MyTuple("first-half-2", null))));
-            hashMapper.save(new MyHash(
-                    3,
-                    ImmutableMap.of("key-3", new MyTuple(null, "second-half-3"))));
-            hashMapper.save(new MyHash(
-                    4,
-                    new HashMap<String, MyTuple>()));
-            hashMapper.save(new MyHash(
-                    5,
-                    null));
-        } finally {
-            if (cluster != null)
-                cluster.close();
-            if (ccm != null)
-                ccm.remove();
-        }
+        session2.execute("use java_509b");
+        Mapper<MyHash> hashMapper = new MappingManager(session2).mapper(MyHash.class);
+        hashMapper.save(new MyHash(
+                1,
+                ImmutableMap.of("key-1", new MyTuple("first-half-1", "second-half-1"))));
+        hashMapper.save(new MyHash(
+                2,
+                ImmutableMap.of("key-2", new MyTuple("first-half-2", null))));
+        hashMapper.save(new MyHash(
+                3,
+                ImmutableMap.of("key-3", new MyTuple(null, "second-half-3"))));
+        hashMapper.save(new MyHash(
+                4,
+                new HashMap<String, MyTuple>()));
+        hashMapper.save(new MyHash(
+                5,
+                null));
     }
 
     @UDT(name = "my_tuple")
