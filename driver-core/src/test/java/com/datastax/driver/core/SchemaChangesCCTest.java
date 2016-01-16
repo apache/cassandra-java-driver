@@ -57,14 +57,14 @@ public class SchemaChangesCCTest extends CCMTestsSupport {
                 Cluster.builder()
                         .withLoadBalancingPolicy(lbPolicy)
                         .addContactPointsWithPorts(ccm.addressOfNode(1))
-                        .withAddressTranslater(ccm.addressTranslator())
+                        .withPort(ccm.getBinaryPort())
                         .build());
         // Put cluster2 control connection on node 2 so it doesn't go down (to prevent noise for debugging).
         Cluster cluster2 = register(
                 Cluster.builder()
                         .withLoadBalancingPolicy(lbPolicy)
                         .addContactPointsWithPorts(ccm.addressOfNode(2))
-                        .withAddressTranslater(ccm.addressTranslator())
+                        .withPort(ccm.getBinaryPort())
                         .build());
         SchemaChangeListener listener = mock(SchemaChangeListener.class);
 

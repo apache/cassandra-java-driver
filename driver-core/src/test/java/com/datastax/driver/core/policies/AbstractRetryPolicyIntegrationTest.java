@@ -61,8 +61,8 @@ public class AbstractRetryPolicyIntegrationTest {
         scassandras.init();
 
         cluster = Cluster.builder()
-                .addContactPointsWithPorts(scassandras.address(1))
-                .withAddressTranslater(scassandras.addressTranslator())
+                .addContactPoints(scassandras.address(1).getAddress())
+                .withPort(scassandras.getBinaryPort())
                 .withRetryPolicy(retryPolicy)
                 .withLoadBalancingPolicy(new SortingLoadBalancingPolicy())
                 .withNettyOptions(nonQuietClusterCloseOptions)

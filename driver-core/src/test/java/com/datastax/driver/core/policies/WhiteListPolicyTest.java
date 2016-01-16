@@ -53,8 +53,8 @@ public class WhiteListPolicyTest {
         List<InetSocketAddress> whiteList = Lists.newArrayList(sCluster.address(3), sCluster.address(5));
 
         Cluster cluster = Cluster.builder()
-                .addContactPointsWithPorts(sCluster.address(5))
-                .withAddressTranslater(sCluster.addressTranslator())
+                .addContactPoints(sCluster.address(5).getAddress())
+                .withPort(sCluster.getBinaryPort())
                 .withLoadBalancingPolicy(new WhiteListPolicy(new RoundRobinPolicy(), whiteList))
                 .withNettyOptions(nonQuietClusterCloseOptions)
                 .build();

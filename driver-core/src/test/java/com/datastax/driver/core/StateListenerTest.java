@@ -51,7 +51,7 @@ public class StateListenerTest extends CCMTestsSupport {
         listener.waitForEvent();
 
         listener.setExpectedEvent(REMOVE);
-        ccm.decommissionNode(2);
+        ccm.decommision(2);
         listener.waitForEvent();
     }
 

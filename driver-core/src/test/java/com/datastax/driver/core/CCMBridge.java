@@ -15,10 +15,10 @@
  */
 package com.datastax.driver.core;
 
-import com.datastax.driver.core.policies.AddressTranslater;
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Closer;
@@ -35,13 +35,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static com.datastax.driver.core.TestUtils.executeNoFail;
 import static com.datastax.driver.core.TestUtils.findAvailablePort;
 
-public class CCMBridge implements Closeable {
+public class CCMBridge implements CCMAccess {
 
     private static final Logger logger = LoggerFactory.getLogger(CCMBridge.class);
 
     private static final String CASSANDRA_VERSION;
 
-    private static final String CASSANDRA_INSTALL_ARGS;
+    private static final Set<String> CASSANDRA_INSTALL_ARGS;
 
     private static final boolean IS_DSE;
 
@@ -133,23 +133,20 @@ public class CCMBridge implements Closeable {
         // otherwise if there is a value, parse as boolean.
         IS_DSE = dseProperty != null && (dseProperty.isEmpty() || Boolean.parseBoolean(dseProperty));
 
-        StringBuilder installArgs = new StringBuilder();
+        ImmutableSet.Builder<String> installArgs = ImmutableSet.builder();
         if (installDirectory != null && !installDirectory.trim().isEmpty()) {
-            installArgs.append("--install-dir=");
-            installArgs.append(new File(installDirectory).getAbsolutePath());
+            installArgs.add("--install-dir=" + new File(installDirectory).getAbsolutePath());
         } else if (branch != null && !branch.trim().isEmpty()) {
-            installArgs.append("-v git:");
-            installArgs.append(branch.trim().replaceAll("\"", ""));
+            installArgs.add("-v git:" + branch.trim().replaceAll("\"", ""));
         } else {
-            installArgs.append("-v ");
-            installArgs.append(CASSANDRA_VERSION);
+            installArgs.add("-v " + CASSANDRA_VERSION);
         }
 
         if (IS_DSE) {
-            installArgs.append(" --dse");
+            installArgs.add("--dse");
         }
 
-        CASSANDRA_INSTALL_ARGS = installArgs.toString();
+        CASSANDRA_INSTALL_ARGS = installArgs.build();
 
         // Inherit the current environment.
         Map<String, String> envMap = Maps.newHashMap(new ProcessBuilder().environment());
@@ -177,10 +174,10 @@ public class CCMBridge implements Closeable {
         ENVIRONMENT_MAP = ImmutableMap.copyOf(envMap);
 
         if (CCMBridge.isDSE()) {
-            logger.info("Tests requiring CCM will use DSE version {} (C* {}, install arguments: {})",
+            logger.info("Tests requiring CCM will by default use DSE version {} (C* {}, install arguments: {})",
                     CCMBridge.getDSEVersion(), CCMBridge.getCassandraVersion(), CCMBridge.getInstallArguments());
         } else {
-            logger.info("Tests requiring CCM will use Cassandra version {} (install arguments: {})",
+            logger.info("Tests requiring CCM will by default use Cassandra version {} (install arguments: {})",
                     CCMBridge.getCassandraVersion(), CCMBridge.getInstallArguments());
         }
     }
@@ -212,13 +209,11 @@ public class CCMBridge implements Closeable {
 
     private final String jvmArgs;
 
-    private final int initialNumberOfNodes;
-
     private boolean keepLogs = false;
 
     private boolean closed = false;
 
-    private CCMBridge(String clusterName, boolean isDSE, VersionNumber version, int storagePort, int thriftPort, int binaryPort, String jvmArgs, int initialNumberOfNodes) {
+    private CCMBridge(String clusterName, boolean isDSE, VersionNumber version, int storagePort, int thriftPort, int binaryPort, String jvmArgs) {
         this.clusterName = clusterName;
         this.version = version;
         this.storagePort = storagePort;
@@ -226,7 +221,6 @@ public class CCMBridge implements Closeable {
         this.binaryPort = binaryPort;
         this.isDSE = isDSE;
         this.jvmArgs = jvmArgs;
-        this.initialNumberOfNodes = initialNumberOfNodes;
         this.ccmDir = Files.createTempDir();
     }
 
@@ -283,7 +277,7 @@ public class CCMBridge implements Closeable {
     /**
      * @return The install arguments to pass to CCM when creating the cluster.
      */
-    public static String getInstallArguments() {
+    public static Set<String> getInstallArguments() {
         return CASSANDRA_INSTALL_ARGS;
     }
 
@@ -291,87 +285,57 @@ public class CCMBridge implements Closeable {
         return new Builder();
     }
 
-    /**
-     * Returns the address of the {@code nth} host in the CCM cluster (counting from 1, i.e.,
-     * {@code getHostAddress(1)} returns the address of the first node.
-     * <p/>
-     * In multi-DC setups, nodes are numbered in ascending order of their datacenter number.
-     * E.g. with 2 DCs and 3 nodes in each DC, the first node in DC 2 is number 4.
-     *
-     * @return the address of the {@code nth} host in the cluster.
-     */
+    @Override
+    public String getClusterName() {
+        return clusterName;
+    }
+
+    @Override
     public InetSocketAddress addressOfNode(int n) {
         return new InetSocketAddress(TestUtils.ipOfNode(n), binaryPort);
     }
 
-    /**
-     * Returns an {@link AddressTranslater} to use when tests must manually create
-     * {@link Cluster} instances.
-     * <p/>
-     * This translator is necessary because hosts in this cluster do not necessarily use standard ports.
-     *
-     * @return an {@link AddressTranslater} to use when tests must manually create
-     * {@link Cluster} instances.
-     */
-    public AddressTranslater addressTranslator() {
-        return new AddressTranslater() {
-            @Override
-            public InetSocketAddress translate(InetSocketAddress address) {
-                return new InetSocketAddress(address.getAddress(), getBinaryPort());
-            }
-        };
-    }
-
-    /**
-     * Returns the Cassandra version of this CCM cluster.
-     * <p/>
-     * By default the version is equal to {@link #getCassandraVersion()}.
-     *
-     * @return The version of this CCM cluster.
-     */
+    @Override
     public VersionNumber getVersion() {
         return version;
     }
 
-    /**
-     * The number of nodes that were initially created with this CCM instance.
-     * <p/>
-     * This does not account for nodes created or removed during the cluster's lifecycle.
-     *
-     * @return The number of nodes that were initially created with this CCM instance.
-     */
-    public int getInitialNumberOfNodes() {
-        return initialNumberOfNodes;
-    }
-
+    @Override
     public File getCcmDir() {
         return ccmDir;
     }
 
+    @Override
     public File getClusterDir() {
         return new File(ccmDir, clusterName);
     }
 
+    @Override
     public File getNodeDir(int n) {
         return new File(getClusterDir(), "node" + n);
     }
 
+    @Override
     public File getNodeConfDir(int n) {
         return new File(getNodeDir(n), "conf");
     }
 
+    @Override
     public int getStoragePort() {
         return storagePort;
     }
 
+    @Override
     public int getThriftPort() {
         return thriftPort;
     }
 
+    @Override
     public int getBinaryPort() {
         return binaryPort;
     }
 
+    @Override
     public void setKeepLogs(boolean keepLogs) {
         this.keepLogs = keepLogs;
     }
@@ -407,11 +371,13 @@ public class CCMBridge implements Closeable {
         logger.debug("Closed: " + this);
     }
 
+    @Override
     public void start() {
         logger.debug("Starting: " + this);
         execute(CCM_COMMAND + " start --wait-other-notice --wait-for-binary-proto" + jvmArgs);
     }
 
+    @Override
     public synchronized void stop() {
         if (closed)
             return;
@@ -420,6 +386,7 @@ public class CCMBridge implements Closeable {
         closed = true;
     }
 
+    @Override
     public synchronized void forceStop() {
         if (closed)
             return;
@@ -428,36 +395,43 @@ public class CCMBridge implements Closeable {
         closed = true;
     }
 
+    @Override
     public void start(int n) {
         logger.debug(String.format("Starting: node %s (%s%s:%s) in %s", n, TestUtils.IP_PREFIX, n, binaryPort, this));
         execute(CCM_COMMAND + " node%d start --wait-other-notice --wait-for-binary-proto" + jvmArgs, n);
     }
 
+    @Override
     public void stop(int n) {
         logger.debug(String.format("Stopping: node %s (%s%s:%s) in %s", n, TestUtils.IP_PREFIX, n, binaryPort, this));
         execute(CCM_COMMAND + " node%d stop", n);
     }
 
+    @Override
     public void forceStop(int n) {
         logger.debug(String.format("Force stopping: node %s (%s%s:%s) in %s", n, TestUtils.IP_PREFIX, n, binaryPort, this));
         execute(CCM_COMMAND + " node%d stop --not-gently", n);
     }
 
+    @Override
     public synchronized void remove() {
         stop();
         logger.debug("Removing: " + this);
         execute(CCM_COMMAND + " remove");
     }
 
+    @Override
     public void remove(int n) {
         logger.debug(String.format("Removing: node %s (%s%s:%s) from %s", n, TestUtils.IP_PREFIX, n, binaryPort, this));
         execute(CCM_COMMAND + " node%d remove", n);
     }
 
+    @Override
     public void add(int n) {
         add(1, n);
     }
 
+    @Override
     public void add(int dc, int n) {
         logger.debug(String.format("Adding: node %s (%s%s:%s) to %s", n, TestUtils.IP_PREFIX, n, binaryPort, this));
         String thriftItf = TestUtils.ipOfNode(n) + ":" + thriftPort;
@@ -468,11 +442,13 @@ public class CCMBridge implements Closeable {
                 n, dc, TestUtils.IP_PREFIX, n, thriftItf, storageItf, binaryItf, TestUtils.findAvailablePort(), remoteLogItf);
     }
 
-    public void decommissionNode(int n) {
+    @Override
+    public void decommision(int n) {
         logger.debug(String.format("Decommissioning: node %s (%s%s:%s) from %s", n, TestUtils.IP_PREFIX, n, binaryPort, this));
         execute(CCM_COMMAND + " node%d decommission", n);
     }
 
+    @Override
     public void updateConfig(Map<String, Object> configs) {
         StringBuilder confStr = new StringBuilder();
         for (Map.Entry<String, Object> entry : configs.entrySet()) {
@@ -485,6 +461,7 @@ public class CCMBridge implements Closeable {
         execute(CCM_COMMAND + " updateconf " + confStr);
     }
 
+    @Override
     public void updateDSEConfig(Map<String, Object> configs) {
         StringBuilder confStr = new StringBuilder();
         for (Map.Entry<String, Object> entry : configs.entrySet()) {
@@ -497,10 +474,12 @@ public class CCMBridge implements Closeable {
         execute(CCM_COMMAND + " updatedseconf " + confStr);
     }
 
+    @Override
     public void updateNodeConfig(int n, String key, Object value) {
         updateNodeConfig(n, ImmutableMap.<String, Object>builder().put(key, value).build());
     }
 
+    @Override
     public void updateNodeConfig(int n, Map<String, Object> configs) {
         StringBuilder confStr = new StringBuilder();
         for (Map.Entry<String, Object> entry : configs.entrySet()) {
@@ -513,6 +492,7 @@ public class CCMBridge implements Closeable {
         execute(CCM_COMMAND + " node%s updateconf %s", n, confStr);
     }
 
+    @Override
     public void setWorkload(int node, String workload) {
         execute(CCM_COMMAND + " node%d setworkload %s", node, workload);
     }
@@ -619,6 +599,12 @@ public class CCMBridge implements Closeable {
         return "CCM cluster " + clusterName;
     }
 
+    @Override
+    protected void finalize() throws Throwable {
+        close();
+        super.finalize();
+    }
+
     /**
      * use {@link #builder()} to get an instance
      */
@@ -628,8 +614,8 @@ public class CCMBridge implements Closeable {
         int[] nodes = {1};
         private boolean start = true;
         private boolean isDSE = isDSE();
-        private String cassandraVersion = getCassandraVersion();
-        private Set<String> createOptions = new LinkedHashSet<String>();
+        private String version = getCassandraVersion();
+        private Set<String> createOptions = new HashSet<String>(getInstallArguments());
         private Set<String> jvmArgs = new LinkedHashSet<String>();
         private final Map<String, Object> cassandraConfiguration = Maps.newHashMap();
         private final Map<String, Object> dseConfiguration = Maps.newHashMap();
@@ -687,6 +673,7 @@ public class CCMBridge implements Closeable {
          * Sets this cluster to be a DSE cluster (defaults to {@link #isDSE()} if this is never called).
          */
         public Builder withDSE() {
+            this.createOptions.add("--dse");
             this.isDSE = true;
             return this;
         }
@@ -696,8 +683,17 @@ public class CCMBridge implements Closeable {
          *
          * Defaults to {@link #getCassandraVersion()}.
          */
-        public Builder withVersion(String cassandraVersion) {
-            this.cassandraVersion = cassandraVersion;
+        public Builder withVersion(String version) {
+            Iterator<String> it = createOptions.iterator();
+            while (it.hasNext()) {
+                String option = it.next();
+                // remove any version previously set and
+                // install-dir, which is incompatible
+                if (option.startsWith("-v ") || option.startsWith("--install-dir"))
+                    it.remove();
+            }
+            this.createOptions.add("-v " + version);
+            this.version = version;
             return this;
         }
 
@@ -752,15 +748,11 @@ public class CCMBridge implements Closeable {
 
         public CCMBridge build() {
             // be careful NOT to alter internal state (hashCode/equals) during build!
-            int initialNumberOfNodes = 0;
-            for (int nodesPerDc : nodes) {
-                initialNumberOfNodes += nodesPerDc;
-            }
             int storagePort = this.storagePort == -1 ? findAvailablePort() : this.storagePort;
             int thriftPort = this.thriftPort == -1 ? findAvailablePort() : this.thriftPort;
             int binaryPort = this.binaryPort == -1 ? findAvailablePort() : this.binaryPort;
-            VersionNumber version = VersionNumber.parse(cassandraVersion);
-            final CCMBridge ccm = new CCMBridge(clusterName, isDSE, version, storagePort, thriftPort, binaryPort, joinJvmArgs(), initialNumberOfNodes);
+            VersionNumber version = VersionNumber.parse(this.version);
+            final CCMBridge ccm = new CCMBridge(clusterName, isDSE, version, storagePort, thriftPort, binaryPort, joinJvmArgs());
             Runtime.getRuntime().addShutdownHook(new Thread() {
                 @Override
                 public void run() {
@@ -795,10 +787,6 @@ public class CCMBridge implements Closeable {
             result.append(" ").append(clusterName);
             result.append(" -i ").append(TestUtils.IP_PREFIX);
             result.append(" ");
-            if (cassandraVersion != null)
-                result.append("-v ").append(cassandraVersion);
-            else
-                result.append(CASSANDRA_INSTALL_ARGS);
             if (nodes.length > 0) {
                 result.append(" -n ");
                 for (int i = 0; i < nodes.length; i++) {
@@ -808,8 +796,7 @@ public class CCMBridge implements Closeable {
                     result.append(node);
                 }
             }
-            if (!createOptions.isEmpty())
-                result.append(" ").append(Joiner.on(" ").join(createOptions));
+            result.append(" ").append(Joiner.on(" ").join(createOptions));
             return result.toString();
         }
 
@@ -879,7 +866,7 @@ public class CCMBridge implements Closeable {
             if (!jvmArgs.equals(builder.jvmArgs)) return false;
             if (!dseConfiguration.equals(builder.dseConfiguration)) return false;
             if (!cassandraConfiguration.equals(builder.cassandraConfiguration)) return false;
-            return cassandraVersion.equals(builder.cassandraVersion);
+            return version.equals(builder.version);
         }
 
         @Override
@@ -895,7 +882,7 @@ public class CCMBridge implements Closeable {
             result = 31 * result + thriftPort;
             result = 31 * result + binaryPort;
             result = 31 * result + storagePort;
-            result = 31 * result + cassandraVersion.hashCode();
+            result = 31 * result + version.hashCode();
             return result;
         }
     }

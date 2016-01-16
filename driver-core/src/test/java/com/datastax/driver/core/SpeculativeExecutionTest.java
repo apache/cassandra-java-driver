@@ -50,8 +50,8 @@ public class SpeculativeExecutionTest {
 
         loadBalancingPolicy = new SortingLoadBalancingPolicy();
         cluster = Cluster.builder()
-                .addContactPointsWithPorts(scassandras.address(2))
-                .withAddressTranslater(scassandras.addressTranslator())
+                .addContactPoints(scassandras.address(2).getAddress())
+                .withPort(scassandras.getBinaryPort())
                 .withLoadBalancingPolicy(loadBalancingPolicy)
                 .withSpeculativeExecutionPolicy(new ConstantSpeculativeExecutionPolicy(speculativeExecutionDelay, 1))
                 .withQueryOptions(new QueryOptions().setDefaultIdempotence(true))
@@ -201,8 +201,8 @@ public class SpeculativeExecutionTest {
         SpeculativeExecutionPolicy mockPolicy = mock(SpeculativeExecutionPolicy.class);
 
         Cluster cluster = Cluster.builder()
-                .addContactPointsWithPorts(scassandras.address(2))
-                .withAddressTranslater(scassandras.addressTranslator())
+                .addContactPoints(scassandras.address(2).getAddress())
+                .withPort(scassandras.getBinaryPort())
                 .withSpeculativeExecutionPolicy(mockPolicy)
                 .build();
 

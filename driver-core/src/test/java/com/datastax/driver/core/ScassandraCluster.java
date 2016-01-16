@@ -17,7 +17,6 @@ package com.datastax.driver.core;
 
 import com.beust.jcommander.internal.Lists;
 import com.beust.jcommander.internal.Maps;
-import com.datastax.driver.core.policies.AddressTranslater;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -115,6 +114,10 @@ public class ScassandraCluster {
         return -1;
     }
 
+    public int getBinaryPort() {
+        return binaryPort;
+    }
+
     public InetSocketAddress address(int node) {
         return new InetSocketAddress(ipPrefix + node, binaryPort);
     }
@@ -126,27 +129,6 @@ public class ScassandraCluster {
             return null;
         return new InetSocketAddress(ipPrefix + ipSuffix, binaryPort);
     }
-
-    /**
-     * Returns an {@link AddressTranslater} to use when tests must manually create
-     * {@link Cluster} instances.
-     * <p/>
-     * This translator is necessary because hosts create with this class do not use standard ports.
-     * <p/>
-     * This method should not be called before the test has started, nor after the test is finished.
-     *
-     * @return an {@link AddressTranslater} to use when tests must manually create
-     * {@link Cluster} instances.
-     */
-    public AddressTranslater addressTranslator() {
-        return new AddressTranslater() {
-            @Override
-            public InetSocketAddress translate(InetSocketAddress address) {
-                return new InetSocketAddress(address.getAddress(), binaryPort);
-            }
-        };
-    }
-
 
     public Host host(Cluster cluster, int dc, int node) {
         InetAddress address = address(dc, node).getAddress();

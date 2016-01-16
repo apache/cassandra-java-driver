@@ -74,8 +74,8 @@ public class ControlConnectionTest extends CCMTestsSupport {
 
         // We pass only the first host as contact point, so we know the control connection will be on this host
         cluster = register(Cluster.builder()
-                .addContactPointsWithPorts(getHostAddress(1))
-                .withAddressTranslater(getAddressTranslator())
+                .addContactPoints(ccm.addressOfNode(1).getAddress())
+                .withPort(ccm.getBinaryPort())
                 .withReconnectionPolicy(reconnectionPolicy)
                 .withLoadBalancingPolicy(loadBalancingPolicy)
                 .build());
@@ -101,11 +101,11 @@ public class ControlConnectionTest extends CCMTestsSupport {
     @CassandraVersion(major = 2.1)
     public void should_parse_UDT_definitions_when_using_default_protocol_version() {
         Cluster cluster;
-        InetSocketAddress firstHost = getHostAddress(1);
+        InetSocketAddress firstHost = ccm.addressOfNode(1);
         // First driver instance: create UDT
         cluster = register(Cluster.builder()
                 .addContactPointsWithPorts(firstHost)
-                .withAddressTranslater(getAddressTranslator())
+                .withPort(ccm.getBinaryPort())
                 .build());
         Session session = cluster.connect();
         session.execute("create keyspace ks WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1}");
@@ -131,10 +131,10 @@ public class ControlConnectionTest extends CCMTestsSupport {
     @Test(groups = "long")
     @CCMConfig(numberOfNodes = 3)
     public void should_reestablish_if_control_node_decommissioned() throws InterruptedException {
-        InetSocketAddress firstHost = getHostAddress(1);
+        InetSocketAddress firstHost = ccm.addressOfNode(1);
         Cluster cluster = register(Cluster.builder()
                 .addContactPointsWithPorts(firstHost)
-                .withAddressTranslater(getAddressTranslator())
+                .withPort(ccm.getBinaryPort())
                 .withQueryOptions(nonDebouncingQueryOptions())
                 .build());
         cluster.init();
@@ -144,7 +144,7 @@ public class ControlConnectionTest extends CCMTestsSupport {
         assertThat(controlHost).isEqualTo(firstHost.getAddress());
 
         // Decommission the node.
-        ccm.decommissionNode(1);
+        ccm.decommision(1);
 
         // Ensure that the new control connection is not null and it's host is not equal to the decommissioned node.
         Host newHost = cluster.manager.controlConnection.connectedHost();
@@ -174,15 +174,15 @@ public class ControlConnectionTest extends CCMTestsSupport {
         scassandras.init();
 
         try {
-            Collection<InetSocketAddress> contactPoints = newArrayList();
+            Collection<InetAddress> contactPoints = newArrayList();
             for (int i = 1; i <= hostCount; i++) {
-                contactPoints.add(scassandras.address(i));
+                contactPoints.add(scassandras.address(i).getAddress());
             }
             final HashMultiset<InetAddress> occurrencesByHost = HashMultiset.create(hostCount);
             for (int i = 0; i < iterations; i++) {
                 Cluster cluster = Cluster.builder()
-                        .addContactPointsWithPorts(contactPoints)
-                        .withAddressTranslater(scassandras.addressTranslator())
+                        .addContactPoints(contactPoints)
+                        .withPort(scassandras.getBinaryPort())
                         .withNettyOptions(nonQuietClusterCloseOptions)
                         .build();
 

@@ -49,7 +49,7 @@ public class LoadBalancingPolicyBootstrapTest extends CCMTestsSupport {
 
         Cluster cluster = register(Cluster.builder()
                 .addContactPointsWithPorts(getInitialContactPoints())
-                .withAddressTranslater(ccm.addressTranslator())
+                .withPort(ccm.getBinaryPort())
                 .withLoadBalancingPolicy(policy)
                 .build());
 
@@ -91,7 +91,7 @@ public class LoadBalancingPolicyBootstrapTest extends CCMTestsSupport {
             HistoryPolicy policy = new HistoryPolicy(new RoundRobinPolicy());
             Cluster cluster = register(Cluster.builder()
                     .addContactPointsWithPorts(getInitialContactPoints())
-                    .withAddressTranslater(ccm.addressTranslator())
+                    .withPort(ccm.getBinaryPort())
                     .withLoadBalancingPolicy(policy)
                     .build());
 

@@ -40,8 +40,8 @@ public class SessionLeakTest extends CCMTestsSupport {
         channelMonitor = new SocketChannelMonitor();
         channelMonitor.reportAtFixedInterval(1, TimeUnit.SECONDS);
         cluster = register(Cluster.builder()
-                .addContactPointsWithPorts(getHostAddress(1))
-                .withAddressTranslater(getAddressTranslator())
+                .addContactPoints(ccm.addressOfNode(1).getAddress())
+                .withPort(ccm.getBinaryPort())
                 .withNettyOptions(channelMonitor.nettyOptions())
                 .withQueryOptions(nonDebouncingQueryOptions())
                 .build());
@@ -96,8 +96,8 @@ public class SessionLeakTest extends CCMTestsSupport {
         channelMonitor = new SocketChannelMonitor();
         channelMonitor.reportAtFixedInterval(1, TimeUnit.SECONDS);
         cluster = register(Cluster.builder()
-                .addContactPointsWithPorts(getHostAddress(1))
-                .withAddressTranslater(getAddressTranslator())
+                .addContactPoints(ccm.addressOfNode(1).getAddress())
+                .withPort(ccm.getBinaryPort())
                 .withNettyOptions(channelMonitor.nettyOptions())
                 .build());
         cluster.init();

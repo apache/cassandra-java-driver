@@ -581,12 +581,12 @@ public abstract class TestUtils {
     /**
      * @return a {@link Cluster} instance that connects only to the control host of the given cluster.
      */
-    public static Cluster buildControlCluster(Cluster cluster, CCMBridge ccm) {
+    public static Cluster buildControlCluster(Cluster cluster, CCMAccess ccm) {
         Host controlHost = cluster.manager.controlConnection.connectedHost();
         List<InetSocketAddress> singleAddress = Collections.singletonList(controlHost.getSocketAddress());
         return Cluster.builder()
                 .addContactPointsWithPorts(singleAddress)
-                .withAddressTranslater(ccm.addressTranslator())
+                .withPort(ccm.getBinaryPort())
                 .withLoadBalancingPolicy(new WhiteListPolicy(new RoundRobinPolicy(), singleAddress))
                 .build();
     }

@@ -59,8 +59,8 @@ public class RoundRobinPolicyTest {
         ScassandraCluster sCluster = ScassandraCluster.builder().withNodes(5).build();
 
         Cluster cluster = Cluster.builder()
-                .addContactPointsWithPorts(sCluster.address(1))
-                .withAddressTranslater(sCluster.addressTranslator())
+                .addContactPoints(sCluster.address(1).getAddress())
+                .withPort(sCluster.getBinaryPort())
                 .withLoadBalancingPolicy(new RoundRobinPolicy())
                 .withNettyOptions(nonQuietClusterCloseOptions)
                 .build();
@@ -95,8 +95,8 @@ public class RoundRobinPolicyTest {
         ScassandraCluster sCluster = ScassandraCluster.builder().withNodes(2, 2, 2, 2, 2).build();
 
         Cluster cluster = Cluster.builder()
-                .addContactPointsWithPorts(sCluster.address(1))
-                .withAddressTranslater(sCluster.addressTranslator())
+                .addContactPoints(sCluster.address(1).getAddress())
+                .withPort(sCluster.getBinaryPort())
                 .withLoadBalancingPolicy(new RoundRobinPolicy())
                 .withNettyOptions(nonQuietClusterCloseOptions)
                 .build();
@@ -134,8 +134,8 @@ public class RoundRobinPolicyTest {
         ScassandraCluster sCluster = ScassandraCluster.builder().withNodes(1, 1).build();
 
         Cluster cluster = Cluster.builder()
-                .addContactPointsWithPorts(sCluster.address(1))
-                .withAddressTranslater(sCluster.addressTranslator())
+                .addContactPoints(sCluster.address(1).getAddress())
+                .withPort(sCluster.getBinaryPort())
                 .withLoadBalancingPolicy(new RoundRobinPolicy())
                 .withNettyOptions(nonQuietClusterCloseOptions)
                 .build();
