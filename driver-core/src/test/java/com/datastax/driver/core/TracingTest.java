@@ -17,6 +17,7 @@ package com.datastax.driver.core;
 
 import com.datastax.driver.core.policies.DowngradingConsistencyRetryPolicy;
 import com.datastax.driver.core.utils.CassandraVersion;
+import com.google.common.util.concurrent.Uninterruptibles;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -24,6 +25,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -61,7 +63,8 @@ public class TracingTest extends CCMTestsSupport {
         SimpleStatement st = new SimpleStatement(String.format("SELECT v FROM test WHERE k='%s'", KEY));
         ResultSet result = session.execute(st.setFetchSize(40).enableTracing());
         result.all();
-
+        // sleep 10 seconds to make sure the trace will be complete
+        Uninterruptibles.sleepUninterruptibly(10, TimeUnit.SECONDS);
         List<ExecutionInfo> executions = result.getAllExecutionInfo();
 
         UUID previousTraceId = null;
@@ -91,6 +94,8 @@ public class TracingTest extends CCMTestsSupport {
         st.setConsistencyLevel(ConsistencyLevel.THREE).enableTracing();
 
         ResultSet result = session.execute(st);
+        // sleep 10 seconds to make sure the trace will be complete
+        Uninterruptibles.sleepUninterruptibly(10, TimeUnit.SECONDS);
 
         assertThat(result.getExecutionInfo().getQueryTrace()).isNotNull();
     }

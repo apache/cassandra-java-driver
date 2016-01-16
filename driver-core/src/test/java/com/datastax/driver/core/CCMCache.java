@@ -229,7 +229,7 @@ public class CCMCache {
         public void onRemoval(RemovalNotification<CCMBridge.Builder, CachedCCMAccess> notification) {
             CachedCCMAccess cached = notification.getValue();
             if (cached != null && cached.ccm != null) {
-                LOGGER.debug("Evicting: {} because of {}", cached.ccm, notification.getCause());
+                LOGGER.debug("Evicting: {}, reason: {}", cached.ccm, notification.getCause());
                 cached.evicted = true;
                 cached.maybeClose();
             }

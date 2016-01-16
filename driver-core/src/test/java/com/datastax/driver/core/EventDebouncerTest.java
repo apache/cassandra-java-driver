@@ -34,7 +34,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static java.util.concurrent.TimeUnit.SECONDS;
+import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class EventDebouncerTest {
@@ -190,24 +190,10 @@ public class EventDebouncerTest {
         }
 
         void awaitEvents(int expected) throws InterruptedException {
-            long nanos = SECONDS.toNanos(60);
+            long nanos = MINUTES.toNanos(5);
             lock.lock();
             try {
                 while (events.size() < expected) {
-                    if (nanos <= 0L)
-                        break; // timeout
-                    nanos = cond.awaitNanos(nanos);
-                }
-            } finally {
-                lock.unlock();
-            }
-        }
-
-        void awaitInvocations(int expected) throws InterruptedException {
-            long nanos = SECONDS.toNanos(60);
-            lock.lock();
-            try {
-                while (invocations.get() < expected) {
                     if (nanos <= 0L)
                         break; // timeout
                     nanos = cond.awaitNanos(nanos);

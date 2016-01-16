@@ -83,6 +83,7 @@ public class SchemaChangesTest extends CCMTestsSupport {
         schemaDisabledCluster.manager.controlConnection = schemaDisabledControlConnection;
 
         session1 = cluster1.connect();
+        cluster2.init();
 
         cluster1.register(listener1 = mock(SchemaChangeListener.class));
         cluster1.register(listener2 = mock(SchemaChangeListener.class));
@@ -146,6 +147,7 @@ public class SchemaChangesTest extends CCMTestsSupport {
                     .isInKeyspace(handleId(keyspace))
                     .hasName("table1");
         }
+        refreshSchema();
         for (Metadata m : metadatas())
             assertThat(m.getKeyspace(keyspace).getTable("table1")).isNotNull();
     }
@@ -161,6 +163,7 @@ public class SchemaChangesTest extends CCMTestsSupport {
                     .isInKeyspace(handleId(keyspace))
                     .hasName("table1");
         }
+        refreshSchema();
         for (Metadata m : metadatas())
             assertThat(m.getKeyspace(keyspace).getTable("table1")).hasNoColumn("j");
         assert added != null;
@@ -177,6 +180,7 @@ public class SchemaChangesTest extends CCMTestsSupport {
                     .hasName("table1")
                     .hasColumn("j");
         }
+        refreshSchema();
         for (Metadata m : metadatas())
             assertThat(m.getKeyspace(keyspace).getTable("table1")).hasColumn("j");
     }
@@ -191,12 +195,14 @@ public class SchemaChangesTest extends CCMTestsSupport {
                     .hasName("table1")
                     .isInKeyspace(handleId(keyspace));
         }
+        refreshSchema();
         execute(DROP_TABLE, keyspace);
         for (SchemaChangeListener listener : listeners) {
             ArgumentCaptor<TableMetadata> removed = ArgumentCaptor.forClass(TableMetadata.class);
             verify(listener, timeout(NOTIF_TIMEOUT_MS).times(1)).onTableRemoved(removed.capture());
             assertThat(removed.getValue()).hasName("table1");
         }
+        refreshSchema();
         for (Metadata m : metadatas())
             assertThat(m.getKeyspace(keyspace).getTable("table1")).isNull();
     }
@@ -212,6 +218,7 @@ public class SchemaChangesTest extends CCMTestsSupport {
             assertThat((DataType) added.getValue())
                     .isUserType(handleId(keyspace), "type1");
         }
+        refreshSchema();
         for (Metadata m : metadatas())
             assertThat((DataType) m.getKeyspace(keyspace).getUserType("type1")).isNotNull();
     }
@@ -228,6 +235,7 @@ public class SchemaChangesTest extends CCMTestsSupport {
             assertThat(previous.getValue().getFieldNames()).doesNotContain("j");
             assertThat(current.getValue().getFieldNames()).contains("j");
         }
+        refreshSchema();
         for (Metadata m : metadatas())
             assertThat(m.getKeyspace(keyspace).getUserType("type1").getFieldType("j")).isNotNull();
     }
@@ -243,6 +251,7 @@ public class SchemaChangesTest extends CCMTestsSupport {
             verify(listener, timeout(NOTIF_TIMEOUT_MS).times(1)).onUserTypeRemoved(removed.capture());
             assertThat((DataType) removed.getValue()).isUserType(handleId(keyspace), "type1");
         }
+        refreshSchema();
         for (Metadata m : metadatas())
             assertThat((DataType) m.getKeyspace(keyspace).getUserType("type1")).isNull();
     }
@@ -255,6 +264,7 @@ public class SchemaChangesTest extends CCMTestsSupport {
             verify(listener, timeout(NOTIF_TIMEOUT_MS).times(1)).onKeyspaceAdded(added.capture());
             assertThat(added.getValue()).hasName(handleId(keyspace));
         }
+        refreshSchema();
         for (Metadata m : metadatas())
             assertThat(m.getKeyspace(keyspace)).isNotNull();
     }
@@ -269,6 +279,7 @@ public class SchemaChangesTest extends CCMTestsSupport {
             assertThat(added.getValue()).hasName(handleId(keyspace));
         }
         assert added != null;
+        refreshSchema();
         for (Metadata m : metadatas())
             assertThat(m.getKeyspace(keyspace).isDurableWrites()).isTrue();
         execute(ALTER_KEYSPACE, keyspace);
@@ -283,6 +294,7 @@ public class SchemaChangesTest extends CCMTestsSupport {
                     .hasName(handleId(keyspace))
                     .isNotDurableWrites();
         }
+        refreshSchema();
         for (Metadata m : metadatas())
             assertThat(m.getKeyspace(keyspace)).isNotDurableWrites();
     }
@@ -297,6 +309,7 @@ public class SchemaChangesTest extends CCMTestsSupport {
             assertThat(added.getValue()).hasName(handleId(keyspace));
         }
         assert added != null;
+        refreshSchema();
         for (Metadata m : metadatas())
             assertThat(m.getReplicas(keyspace, Bytes.fromHexString("0xCAFEBABE"))).isNotEmpty();
         execute(CREATE_TABLE, keyspace); // to test table drop notifications
@@ -312,6 +325,7 @@ public class SchemaChangesTest extends CCMTestsSupport {
             assertThat(ks.getValue())
                     .hasName(handleId(keyspace));
         }
+        refreshSchema();
         for (Metadata m : metadatas()) {
             assertThat(m.getKeyspace(keyspace)).isNull();
             assertThat(m.getReplicas(keyspace, Bytes.fromHexString("0xCAFEBABE"))).isEmpty();
@@ -444,5 +458,14 @@ public class SchemaChangesTest extends CCMTestsSupport {
     private List<Metadata> metadatas() {
         return Lists.newArrayList(cluster1.getMetadata(), cluster2.getMetadata());
     }
+
+    @SuppressWarnings("unchecked")
+    private void refreshSchema() {
+        Futures.getUnchecked(
+                Futures.successfulAsList(
+                        cluster1.manager.submitSchemaRefresh(null, null, null),
+                        cluster2.manager.submitSchemaRefresh(null, null, null)));
+    }
+
 
 }
