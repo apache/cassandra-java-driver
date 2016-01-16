@@ -23,7 +23,9 @@ import java.util.concurrent.TimeUnit;
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.CCMBridge.DEFAULT_CLIENT_TRUSTSTORE_FILE;
 import static com.datastax.driver.core.CCMBridge.DEFAULT_CLIENT_TRUSTSTORE_PASSWORD;
+import static com.datastax.driver.core.CreateCCM.TestMode.PER_METHOD;
 
+@CreateCCM(PER_METHOD)
 @CCMConfig(auth = false)
 public class SSLEncryptionTest extends SSLTestBase {
 
@@ -73,7 +75,7 @@ public class SSLEncryptionTest extends SSLTestBase {
     public void should_not_connect_without_ssl_but_node_uses_ssl() throws Exception {
         Cluster cluster = register(Cluster.builder()
                 .addContactPointsWithPorts(this.getInitialContactPoints())
-                .withAddressTranslator(ccm.addressTranslator())
+                .withPort(ccm.getBinaryPort())
                 .build());
         cluster.connect();
     }
@@ -92,7 +94,7 @@ public class SSLEncryptionTest extends SSLTestBase {
     public void should_reconnect_with_ssl_on_node_up(SslImplementation sslImplementation) throws Exception {
         Cluster cluster = register(Cluster.builder()
                 .addContactPointsWithPorts(this.getInitialContactPoints())
-                .withAddressTranslator(ccm.addressTranslator())
+                .withPort(ccm.getBinaryPort())
                 .withSSL(getSSLOptions(sslImplementation, true, true))
                 .build());
 

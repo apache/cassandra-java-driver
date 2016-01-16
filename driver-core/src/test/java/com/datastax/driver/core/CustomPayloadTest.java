@@ -241,7 +241,7 @@ public class CustomPayloadTest extends CCMTestsSupport {
         try {
             v3cluster = Cluster.builder()
                     .addContactPointsWithPorts(getInitialContactPoints())
-                    .withAddressTranslator(getAddressTranslator())
+                    .withPort(ccm.getBinaryPort())
                     .withProtocolVersion(V3)
                     .build()
                     .init();

@@ -55,8 +55,8 @@ public class MetadataTest extends CCMTestsSupport {
     @CCMConfig(numberOfNodes = 3, dirtiesContext = true, createCluster = false)
     public void should_update_metadata_on_topology_change() {
         Cluster cluster = register(Cluster.builder()
-                .addContactPointsWithPorts(getHostAddress(1))
-                .withAddressTranslator(getAddressTranslator())
+                .addContactPoints(ccm.addressOfNode(1).getAddress())
+                .withPort(ccm.getBinaryPort())
                 .withQueryOptions(nonDebouncingQueryOptions())
                 .build());
         Session session = cluster.connect();
@@ -73,7 +73,7 @@ public class MetadataTest extends CCMTestsSupport {
         Host host3 = TestUtils.findHost(cluster, 3);
         Token host3Token = tokensForHost.get(host3);
 
-        ccm.decommissionNode(3);
+        ccm.decommision(3);
         ccm.remove(3);
 
         // Ensure that the token ranges were updated, there should only be 2 ranges now.

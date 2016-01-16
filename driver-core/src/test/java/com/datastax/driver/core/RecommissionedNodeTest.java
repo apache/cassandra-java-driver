@@ -51,8 +51,8 @@ public class RecommissionedNodeTest {
 
         // Now start the driver that will connect to node2 and node3, and consider node1 down
         mainCluster = Cluster.builder()
-                .addContactPointsWithPorts(mainCcm.addressOfNode(2))
-                .withAddressTranslator(mainCcm.addressTranslator())
+                .addContactPoints(mainCcm.addressOfNode(2).getAddress())
+                .withPort(mainCcm.getBinaryPort())
                 .withQueryOptions(nonDebouncingQueryOptions()).build();
         mainCluster.connect();
         waitForCountUpHosts(mainCluster, 2);
@@ -80,8 +80,8 @@ public class RecommissionedNodeTest {
 
         // Start the driver, the control connection will be on node2
         mainCluster = Cluster.builder()
-                .addContactPointsWithPorts(mainCcm.addressOfNode(2))
-                .withAddressTranslator(mainCcm.addressTranslator())
+                .addContactPoints(mainCcm.addressOfNode(2).getAddress())
+                .withPort(mainCcm.getBinaryPort())
                 .withQueryOptions(nonDebouncingQueryOptions()).build();
         mainCluster.connect();
         waitForCountUpHosts(mainCluster, 1);
@@ -118,8 +118,8 @@ public class RecommissionedNodeTest {
 
         // Start the driver, it should only connect to node 2
         mainCluster = Cluster.builder()
-                .addContactPointsWithPorts(mainCcm.addressOfNode(2))
-                .withAddressTranslator(mainCcm.addressTranslator())
+                .addContactPoints(mainCcm.addressOfNode(2).getAddress())
+                .withPort(mainCcm.getBinaryPort())
                 .withQueryOptions(nonDebouncingQueryOptions()).build();
 
         // When we first initialize the Cluster, all hosts are marked UP
@@ -154,8 +154,8 @@ public class RecommissionedNodeTest {
 
         // Start the driver, it should only connect to node 2
         mainCluster = Cluster.builder()
-                .addContactPointsWithPorts(mainCcm.addressOfNode(2))
-                .withAddressTranslator(mainCcm.addressTranslator())
+                .addContactPoints(mainCcm.addressOfNode(2).getAddress())
+                .withPort(mainCcm.getBinaryPort())
                 .withQueryOptions(nonDebouncingQueryOptions()).build();
 
         // Create a session. This will try to open a pool to node 1 and find that it doesn't support protocol version.

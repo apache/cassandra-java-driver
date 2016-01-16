@@ -50,7 +50,7 @@ public class AuthenticationTest extends CCMTestsSupport {
         PlainTextAuthProvider authProvider = spy(new PlainTextAuthProvider("cassandra", "cassandra"));
         Cluster cluster = Cluster.builder()
                 .addContactPointsWithPorts(getInitialContactPoints())
-                .withAddressTranslator(getAddressTranslator())
+                .withPort(ccm.getBinaryPort())
                 .withAuthProvider(authProvider)
                 .build();
         cluster.connect();
@@ -61,7 +61,7 @@ public class AuthenticationTest extends CCMTestsSupport {
     public void should_fail_to_connect_with_wrong_credentials() throws InterruptedException {
         Cluster cluster = register(Cluster.builder()
                 .addContactPointsWithPorts(getInitialContactPoints())
-                .withAddressTranslator(getAddressTranslator())
+                .withPort(ccm.getBinaryPort())
                 .withCredentials("bogus", "bogus")
                 .build());
         cluster.connect();
@@ -71,7 +71,7 @@ public class AuthenticationTest extends CCMTestsSupport {
     public void should_fail_to_connect_without_credentials() throws InterruptedException {
         Cluster cluster = register(Cluster.builder()
                 .addContactPointsWithPorts(getInitialContactPoints())
-                .withAddressTranslator(getAddressTranslator())
+                .withPort(ccm.getBinaryPort())
                 .build());
         cluster.connect();
     }

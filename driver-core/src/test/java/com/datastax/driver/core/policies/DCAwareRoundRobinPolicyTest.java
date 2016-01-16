@@ -81,8 +81,8 @@ public class DCAwareRoundRobinPolicyTest {
         // given: a 10 node 2 DC cluster.
         ScassandraCluster sCluster = ScassandraCluster.builder().withNodes(5, 5).build();
         Cluster cluster = builder()
-                .addContactPointsWithPorts(sCluster.address(1, 1))
-                .withAddressTranslator(sCluster.addressTranslator())
+                .addContactPoints(sCluster.address(1, 1).getAddress())
+                .withPort(sCluster.getBinaryPort())
                 .withLoadBalancingPolicy(DCAwareRoundRobinPolicy.builder().withLocalDc(datacenter(1)).build())
                 .build();
         try {
@@ -114,8 +114,8 @@ public class DCAwareRoundRobinPolicyTest {
         // given: a 10 node 2 DC cluster with DC policy with 2 remote hosts.
         ScassandraCluster sCluster = ScassandraCluster.builder().withNodes(5, 5).build();
         Cluster cluster = builder()
-                .addContactPointsWithPorts(sCluster.address(1, 1))
-                .withAddressTranslator(sCluster.addressTranslator())
+                .addContactPoints(sCluster.address(1, 1).getAddress())
+                .withPort(sCluster.getBinaryPort())
                 .withLoadBalancingPolicy(DCAwareRoundRobinPolicy.builder().withLocalDc(datacenter(1)).withUsedHostsPerRemoteDc(2).build())
                 .build();
 
@@ -157,8 +157,8 @@ public class DCAwareRoundRobinPolicyTest {
         // given: a 10 node 2 DC cluster with DC policy with 2 remote hosts.
         ScassandraCluster sCluster = ScassandraCluster.builder().withNodes(5, 5).build();
         Cluster cluster = builder()
-                .addContactPointsWithPorts(sCluster.address(1, 1))
-                .withAddressTranslator(sCluster.addressTranslator())
+                .addContactPoints(sCluster.address(1, 1).getAddress())
+                .withPort(sCluster.getBinaryPort())
                 .withLoadBalancingPolicy(DCAwareRoundRobinPolicy.builder().withUsedHostsPerRemoteDc(2).build())
                 .build();
 
@@ -201,8 +201,8 @@ public class DCAwareRoundRobinPolicyTest {
         // a local consistency level.
         ScassandraCluster sCluster = ScassandraCluster.builder().withNodes(2, 2).build();
         Cluster cluster = builder()
-                .addContactPointsWithPorts(sCluster.address(1, 1))
-                .withAddressTranslator(sCluster.addressTranslator())
+                .addContactPoints(sCluster.address(1, 1).getAddress())
+                .withPort(sCluster.getBinaryPort())
                 .withLoadBalancingPolicy(DCAwareRoundRobinPolicy.builder().withUsedHostsPerRemoteDc(2).build())
                 .build();
 
@@ -247,8 +247,8 @@ public class DCAwareRoundRobinPolicyTest {
         // a local consistency level.
         ScassandraCluster sCluster = ScassandraCluster.builder().withNodes(2, 2).build();
         Cluster cluster = builder()
-                .addContactPointsWithPorts(sCluster.address(1, 1))
-                .withAddressTranslator(sCluster.addressTranslator())
+                .addContactPoints(sCluster.address(1, 1).getAddress())
+                .withPort(sCluster.getBinaryPort())
                 .withLoadBalancingPolicy(DCAwareRoundRobinPolicy.builder()
                         .allowRemoteDCsForLocalConsistencyLevel()
                         .withUsedHostsPerRemoteDc(2).build())
@@ -293,8 +293,8 @@ public class DCAwareRoundRobinPolicyTest {
                 DCAwareRoundRobinPolicy.builder().withUsedHostsPerRemoteDc(2).build(),
                 Lists.newArrayList(datacenter(2)));
         Cluster cluster = builder()
-                .addContactPointsWithPorts(sCluster.address(1, 1))
-                .withAddressTranslator(sCluster.addressTranslator())
+                .addContactPoints(sCluster.address(1, 1).getAddress())
+                .withPort(sCluster.getBinaryPort())
                 .withLoadBalancingPolicy(loadBalancingPolicy)
                 .build();
 
@@ -347,8 +347,8 @@ public class DCAwareRoundRobinPolicyTest {
                 DCAwareRoundRobinPolicy.builder().withUsedHostsPerRemoteDc(2).build(),
                 Lists.newArrayList(datacenter(1), datacenter(2)));
         Cluster cluster = builder()
-                .addContactPointsWithPorts(sCluster.address(1, 1))
-                .withAddressTranslator(sCluster.addressTranslator())
+                .addContactPoints(sCluster.address(1, 1).getAddress())
+                .withPort(sCluster.getBinaryPort())
                 .withLoadBalancingPolicy(loadBalancingPolicy)
                 .build();
 
@@ -399,8 +399,8 @@ public class DCAwareRoundRobinPolicyTest {
         DCAwareRoundRobinPolicy policy = spy(DCAwareRoundRobinPolicy.builder().build());
         ScassandraCluster sCluster = ScassandraCluster.builder().withNodes(2, 2).build();
         Cluster cluster = builder()
-                .addContactPointsWithPorts(sCluster.address(1, 1))
-                .withAddressTranslator(sCluster.addressTranslator())
+                .addContactPoints(sCluster.address(1, 1).getAddress())
+                .withPort(sCluster.getBinaryPort())
                 .withLoadBalancingPolicy(policy)
                 .build();
 
@@ -439,8 +439,8 @@ public class DCAwareRoundRobinPolicyTest {
         DCAwareRoundRobinPolicy policy = spy(DCAwareRoundRobinPolicy.builder().build());
         ScassandraCluster sCluster = ScassandraCluster.builder().withNodes(2, 2).build();
         Cluster cluster = builder()
-                .addContactPointsWithPorts(sCluster.address(1, 1), sCluster.address(2, 1))
-                .withAddressTranslator(sCluster.addressTranslator())
+                .addContactPoints(sCluster.address(1, 1).getAddress(), sCluster.address(2, 1).getAddress())
+                .withPort(sCluster.getBinaryPort())
                 .withLoadBalancingPolicy(policy)
                 .build();
 
@@ -478,8 +478,8 @@ public class DCAwareRoundRobinPolicyTest {
         ScassandraCluster sCluster = ScassandraCluster.builder().withNodes(2, 2).build();
         DCAwareRoundRobinPolicy policy = spy(DCAwareRoundRobinPolicy.builder().withLocalDc(datacenter(1)).build());
         Cluster cluster = builder()
-                .addContactPointsWithPorts(sCluster.address(1, 1))
-                .withAddressTranslator(sCluster.addressTranslator())
+                .addContactPoints(sCluster.address(1, 1).getAddress())
+                .withPort(sCluster.getBinaryPort())
                 .withLoadBalancingPolicy(policy)
                 .build();
 
@@ -518,8 +518,8 @@ public class DCAwareRoundRobinPolicyTest {
         ScassandraCluster sCluster = ScassandraCluster.builder().withNodes(2, 2).build();
         DCAwareRoundRobinPolicy policy = spy(DCAwareRoundRobinPolicy.builder().withLocalDc(datacenter(3)).build());
         Cluster cluster = builder()
-                .addContactPointsWithPorts(sCluster.address(1, 1), sCluster.address(2, 1))
-                .withAddressTranslator(sCluster.addressTranslator())
+                .addContactPoints(sCluster.address(1, 1).getAddress(), sCluster.address(2, 1).getAddress())
+                .withPort(sCluster.getBinaryPort())
                 .withLoadBalancingPolicy(policy)
                 .build();
 

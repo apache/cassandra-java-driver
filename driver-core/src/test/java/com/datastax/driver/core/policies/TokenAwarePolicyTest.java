@@ -70,8 +70,8 @@ public class TokenAwarePolicyTest {
         }
 
         Cluster cluster = Cluster.builder()
-                .addContactPointsWithPorts(sCluster.address(1))
-                .withAddressTranslator(sCluster.addressTranslator())
+                .addContactPoints(sCluster.address(1).getAddress())
+                .withPort(sCluster.getBinaryPort())
                 .withNettyOptions(nonQuietClusterCloseOptions)
                 .withLoadBalancingPolicy(loadBalancingPolicy)
                 .build();
@@ -140,8 +140,8 @@ public class TokenAwarePolicyTest {
                 .withSimpleKeyspace("keyspace", 1)
                 .build();
         Cluster cluster = Cluster.builder()
-                .addContactPointsWithPorts(sCluster.address(1))
-                .withAddressTranslator(sCluster.addressTranslator())
+                .addContactPoints(sCluster.address(1).getAddress())
+                .withPort(sCluster.getBinaryPort())
                 .withNettyOptions(nonQuietClusterCloseOptions)
                 .withLoadBalancingPolicy(new TokenAwarePolicy(new RoundRobinPolicy()))
                 .build();
@@ -185,8 +185,8 @@ public class TokenAwarePolicyTest {
                 .withNetworkTopologyKeyspace("keyspace", ImmutableMap.of(1, 1, 2, 1))
                 .build();
         Cluster cluster = Cluster.builder()
-                .addContactPointsWithPorts(sCluster.address(1))
-                .withAddressTranslator(sCluster.addressTranslator())
+                .addContactPoints(sCluster.address(1).getAddress())
+                .withPort(sCluster.getBinaryPort())
                 .withNettyOptions(nonQuietClusterCloseOptions)
                 .withLoadBalancingPolicy(new TokenAwarePolicy(DCAwareRoundRobinPolicy.builder()
                         .withLocalDc(ScassandraCluster.datacenter(2))
@@ -232,10 +232,10 @@ public class TokenAwarePolicyTest {
                 .withSimpleKeyspace("keyspace", 2)
                 .build();
         Cluster cluster = Cluster.builder()
-                .addContactPointsWithPorts(sCluster.address(2))
-                .withAddressTranslator(sCluster.addressTranslator())
+                .addContactPoints(sCluster.address(2).getAddress())
+                .withPort(sCluster.getBinaryPort())
                 .withNettyOptions(nonQuietClusterCloseOptions)
-                        // Don't shuffle replicas just to keep test deterministic.
+                // Don't shuffle replicas just to keep test deterministic.
                 .withLoadBalancingPolicy(new TokenAwarePolicy(new RoundRobinPolicy(), false))
                 .build();
 
@@ -324,7 +324,7 @@ public class TokenAwarePolicyTest {
         Cluster cluster = Cluster.builder()
                 .withLoadBalancingPolicy(new TokenAwarePolicy(new RoundRobinPolicy()))
                 .addContactPointsWithPorts(ccm.addressOfNode(1))
-                .withAddressTranslator(ccm.addressTranslator())
+                .withPort(ccm.getBinaryPort())
                 .build();
 
         try {

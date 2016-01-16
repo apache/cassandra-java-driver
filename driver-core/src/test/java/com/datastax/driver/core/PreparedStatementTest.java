@@ -407,7 +407,7 @@ public class PreparedStatementTest extends CCMTestsSupport {
     public void should_fail_when_prepared_on_another_cluster() throws Exception {
         Cluster otherCluster = Cluster.builder()
                 .addContactPointsWithPorts(getInitialContactPoints())
-                .withAddressTranslator(getAddressTranslator())
+                .withPort(ccm.getBinaryPort())
                 .build();
         try {
             PreparedStatement pst = otherCluster.connect().prepare("select * from system.peers where inet = ?");
@@ -434,7 +434,7 @@ public class PreparedStatementTest extends CCMTestsSupport {
     public void should_not_allow_unbound_value_on_bound_statement_when_protocol_lesser_than_v4() {
         Cluster cluster = Cluster.builder()
                 .addContactPointsWithPorts(getInitialContactPoints())
-                .withAddressTranslator(getAddressTranslator())
+                .withPort(ccm.getBinaryPort())
                 .withProtocolVersion(TestUtils.getDesiredProtocolVersion(ProtocolVersion.V3))
                 .build();
         Session session = cluster.connect();
@@ -467,7 +467,7 @@ public class PreparedStatementTest extends CCMTestsSupport {
     public void should_not_allow_unbound_value_on_batch_statement_when_protocol_lesser_than_v4() {
         Cluster cluster = Cluster.builder()
                 .addContactPointsWithPorts(getInitialContactPoints())
-                .withAddressTranslator(getAddressTranslator())
+                .withPort(ccm.getBinaryPort())
                 .withProtocolVersion(TestUtils.getDesiredProtocolVersion(ProtocolVersion.V3))
                 .build();
         Session session = cluster.connect();

@@ -64,7 +64,7 @@ public class NettyOptionsTest {
             }).when(nettyOptions).afterChannelInitialized(any(SocketChannel.class));
             cluster = Cluster.builder()
                     .addContactPointsWithPorts(ccm.addressOfNode(1))
-                    .withAddressTranslator(ccm.addressTranslator())
+                    .withPort(ccm.getBinaryPort())
                     .withPoolingOptions(new PoolingOptions()
                                     .setConnectionsPerHost(HostDistance.LOCAL, coreConnections, coreConnections)
                     )

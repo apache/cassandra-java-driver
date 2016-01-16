@@ -43,7 +43,7 @@ public class RefreshConnectedHostTest extends CCMTestsSupport {
         PoolingOptions poolingOptions = Mockito.spy(new PoolingOptions());
         cluster = register(Cluster.builder()
                 .addContactPointsWithPorts(ccm.addressOfNode(1))
-                .withAddressTranslator(ccm.addressTranslator())
+                .withPort(ccm.getBinaryPort())
                 .withPoolingOptions(poolingOptions)
                 .withLoadBalancingPolicy(loadBalancingPolicy)
                 .withReconnectionPolicy(new ConstantReconnectionPolicy(1000))

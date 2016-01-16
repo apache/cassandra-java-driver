@@ -126,7 +126,7 @@ public class MetricsTest extends CCMTestsSupport {
     public void metrics_should_be_null_when_metrics_disabled() throws Exception {
         Cluster cluster = register(Cluster.builder()
                 .addContactPointsWithPorts(getInitialContactPoints())
-                .withAddressTranslator(getAddressTranslator())
+                .withPort(ccm.getBinaryPort())
                 .withoutMetrics()
                 .build());
         try {
@@ -151,7 +151,7 @@ public class MetricsTest extends CCMTestsSupport {
     public void should_be_no_jmx_mbean_when_jmx_is_disabled() throws Exception {
         Cluster cluster = register(Cluster.builder()
                 .addContactPointsWithPorts(getInitialContactPoints())
-                .withAddressTranslator(getAddressTranslator())
+                .withPort(ccm.getBinaryPort())
                 .withoutJMXReporting()
                 .build());
         try {

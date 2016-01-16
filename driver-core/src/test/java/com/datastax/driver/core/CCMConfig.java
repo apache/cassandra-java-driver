@@ -43,6 +43,10 @@ public @interface CCMConfig {
     /**
      * The C* or DSE version to use; defaults to the version defined by
      * the System property {@code cassandra.version}.
+     * <p/>
+     * Note that setting this property completely
+     * overrides the System properties {@code cassandra.version}
+     * and {@code cassandra.directory}.
      *
      * @return The C* or DSE version to use
      * @see CCMBridge#getCassandraVersion()
@@ -51,6 +55,9 @@ public @interface CCMConfig {
 
     /**
      * Whether to launch a DSE instance rather than an OSS C*.
+     * <p/>
+     * Note that setting this property completely
+     * overrides the System property {@code dse}.
      *
      * @return {@code true} to launch a DSE instance, {@code false} to launch an OSS C* instance (default).
      */

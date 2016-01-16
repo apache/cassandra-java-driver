@@ -77,8 +77,8 @@ public class AbstractRetryPolicyIntegrationTest {
         scassandras.init();
 
         cluster = Cluster.builder()
-                .addContactPointsWithPorts(scassandras.address(1))
-                .withAddressTranslator(scassandras.addressTranslator())
+                .addContactPoints(scassandras.address(1).getAddress())
+                .withPort(scassandras.getBinaryPort())
                 .withRetryPolicy(retryPolicy)
                 .withLoadBalancingPolicy(new SortingLoadBalancingPolicy())
                 // Scassandra does not support V3 nor V4 yet, and V4 may cause the server to crash

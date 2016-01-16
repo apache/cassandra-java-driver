@@ -53,8 +53,8 @@ public class HostConnectionPoolMultiTest {
         PoolingOptions poolingOptions = new PoolingOptions().setConnectionsPerHost(LOCAL, core, max);
         SocketOptions socketOptions = new SocketOptions().setReadTimeoutMillis(1000);
         cluster = Cluster.builder()
-                .addContactPointsWithPorts(scassandra.address(1))
-                .withAddressTranslator(scassandra.addressTranslator())
+                .addContactPoints(scassandra.address(1).getAddress())
+                .withPort(scassandra.getBinaryPort())
                 .withQueryOptions(nonDebouncingQueryOptions())
                 .withPoolingOptions(poolingOptions)
                 .withSocketOptions(socketOptions)

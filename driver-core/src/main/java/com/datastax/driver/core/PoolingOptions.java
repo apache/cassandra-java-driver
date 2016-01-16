@@ -50,7 +50,21 @@ import static com.datastax.driver.core.HostDistance.REMOTE;
  */
 public class PoolingOptions {
 
-    static final int UNSET = Integer.MIN_VALUE;
+    /**
+     * The value returned for connection options when they have not been set by the client, and the protocol version
+     * is not known yet.
+     * <p/>
+     * Once a {@code PoolingOptions} object is associated to a {@link Cluster} and that cluster initializes, the
+     * protocol version will be detected, and connection options will take their default values for that protocol
+     * version.
+     * <p/>
+     * The methods that may return this value are:
+     * {@link #getCoreConnectionsPerHost(HostDistance)},
+     * {@link #getMaxConnectionsPerHost(HostDistance)},
+     * {@link #getNewConnectionThreshold(HostDistance)},
+     * {@link #getMaxRequestsPerConnection(HostDistance)}.
+     */
+    public static final int UNSET = Integer.MIN_VALUE;
 
     private static final Map<ProtocolVersion, Map<String, Integer>> DEFAULTS = ImmutableMap.<ProtocolVersion, Map<String, Integer>>of(
             ProtocolVersion.V2, ImmutableMap.<String, Integer>builder()
@@ -139,6 +153,7 @@ public class PoolingOptions {
     public synchronized PoolingOptions setCoreConnectionsPerHost(HostDistance distance, int newCoreConnections) {
         if (distance == HostDistance.IGNORED)
             throw new IllegalArgumentException("Cannot set core connections per host for " + distance + " hosts");
+        Preconditions.checkArgument(newCoreConnections >= 0, "core number of connections must be positive");
 
         if (maxConnections[distance.ordinal()] != UNSET)
             checkConnectionsPerHostOrder(newCoreConnections, maxConnections[distance.ordinal()], distance);
@@ -182,6 +197,7 @@ public class PoolingOptions {
     public synchronized PoolingOptions setMaxConnectionsPerHost(HostDistance distance, int newMaxConnections) {
         if (distance == HostDistance.IGNORED)
             throw new IllegalArgumentException("Cannot set max connections per host for " + distance + " hosts");
+        Preconditions.checkArgument(newMaxConnections >= 0, "max number of connections must be positive");
 
         if (coreConnections[distance.ordinal()] != UNSET)
             checkConnectionsPerHostOrder(coreConnections[distance.ordinal()], newMaxConnections, distance);
@@ -206,6 +222,8 @@ public class PoolingOptions {
     public synchronized PoolingOptions setConnectionsPerHost(HostDistance distance, int core, int max) {
         if (distance == HostDistance.IGNORED)
             throw new IllegalArgumentException("Cannot set connections per host for " + distance + " hosts");
+        Preconditions.checkArgument(core >= 0, "core number of connections must be positive");
+        Preconditions.checkArgument(max >= 0, "max number of connections must be positive");
 
         checkConnectionsPerHostOrder(core, max, distance);
         coreConnections[distance.ordinal()] = core;

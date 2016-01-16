@@ -69,7 +69,7 @@ public class UnresolvedUserTypeTest extends CCMTestsSupport {
         // The parsing logic should sort them to make sure they are loaded in the right order.
         Cluster newCluster = register(Cluster.builder()
                 .addContactPointsWithPorts(getInitialContactPoints())
-                .withAddressTranslator(getAddressTranslator())
+                .withPort(ccm.getBinaryPort())
                 .build());
         checkUserTypes(newCluster.getMetadata());
     }

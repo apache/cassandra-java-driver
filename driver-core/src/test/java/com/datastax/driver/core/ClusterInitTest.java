@@ -231,8 +231,8 @@ public class ClusterInitTest {
                 .forcePeerInfo(1, 2, "release_version", "1.2.19")
                 .build();
         Cluster cluster = Cluster.builder()
-                .addContactPointsWithPorts(scassandraCluster.address(1))
-                .withAddressTranslator(scassandraCluster.addressTranslator())
+                .addContactPoints(scassandraCluster.address(1).getAddress())
+                .withPort(scassandraCluster.getBinaryPort())
                 .withNettyOptions(nonQuietClusterCloseOptions)
                 .build();
 

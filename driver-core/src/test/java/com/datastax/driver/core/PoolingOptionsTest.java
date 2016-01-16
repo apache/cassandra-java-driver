@@ -93,5 +93,49 @@ public class PoolingOptionsTest {
         assertThat(options.getCoreConnectionsPerHost(LOCAL)).isEqualTo(10);
         assertThat(options.getMaxConnectionsPerHost(LOCAL)).isEqualTo(15);
     }
+
+    @Test(groups = "unit")
+    public void should_leave_connection_options_unset_until_protocol_version_known() {
+        PoolingOptions options = new PoolingOptions();
+
+        assertThat(options.getCoreConnectionsPerHost(LOCAL)).isEqualTo(PoolingOptions.UNSET);
+        assertThat(options.getCoreConnectionsPerHost(REMOTE)).isEqualTo(PoolingOptions.UNSET);
+        assertThat(options.getMaxConnectionsPerHost(LOCAL)).isEqualTo(PoolingOptions.UNSET);
+        assertThat(options.getMaxConnectionsPerHost(REMOTE)).isEqualTo(PoolingOptions.UNSET);
+        assertThat(options.getNewConnectionThreshold(LOCAL)).isEqualTo(PoolingOptions.UNSET);
+        assertThat(options.getNewConnectionThreshold(REMOTE)).isEqualTo(PoolingOptions.UNSET);
+        assertThat(options.getMaxRequestsPerConnection(LOCAL)).isEqualTo(PoolingOptions.UNSET);
+        assertThat(options.getMaxRequestsPerConnection(REMOTE)).isEqualTo(PoolingOptions.UNSET);
+    }
+
+    @Test(groups = "unit")
+    public void should_reject_negative_connection_options_even_when_protocol_version_unknown() {
+        PoolingOptions options = new PoolingOptions();
+
+        try {
+            options.setCoreConnectionsPerHost(LOCAL, -1);
+            fail("expected an IllegalArgumentException");
+        } catch (IllegalArgumentException e) { /*expected*/ }
+        try {
+            options.setMaxConnectionsPerHost(LOCAL, -1);
+            fail("expected an IllegalArgumentException");
+        } catch (IllegalArgumentException e) { /*expected*/ }
+        try {
+            options.setConnectionsPerHost(LOCAL, -1, 1);
+            fail("expected an IllegalArgumentException");
+        } catch (IllegalArgumentException e) { /*expected*/ }
+        try {
+            options.setConnectionsPerHost(LOCAL, -2, -1);
+            fail("expected an IllegalArgumentException");
+        } catch (IllegalArgumentException e) { /*expected*/ }
+        try {
+            options.setNewConnectionThreshold(LOCAL, -1);
+            fail("expected an IllegalArgumentException");
+        } catch (IllegalArgumentException e) { /*expected*/ }
+        try {
+            options.setMaxRequestsPerConnection(LOCAL, -1);
+            fail("expected an IllegalArgumentException");
+        } catch (IllegalArgumentException e) { /*expected*/ }
+    }
 }
 

@@ -310,7 +310,7 @@ public class MapperUDTTest extends CCMTestsSupport {
         // Create a separate Cluster/Session to start with a CodecRegistry from scratch (so not already registered).
         Cluster cluster = register(Cluster.builder()
                 .addContactPointsWithPorts(getInitialContactPoints())
-                .withAddressTranslator(getAddressTranslator())
+                .withPort(ccm.getBinaryPort())
                 .build());
         CodecRegistry registry = cluster.getConfiguration().getCodecRegistry();
         Session session = cluster.connect(keyspace);

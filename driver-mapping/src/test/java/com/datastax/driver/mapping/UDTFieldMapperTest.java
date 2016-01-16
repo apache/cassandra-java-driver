@@ -40,7 +40,7 @@ public class UDTFieldMapperTest {
             ccm = CCMBridge.builder().build();
             cluster = Cluster.builder()
                     .addContactPointsWithPorts(ccm.addressOfNode(1))
-                    .withAddressTranslator(ccm.addressTranslator())
+                    .withPort(ccm.getBinaryPort())
                     .build();
             Session session1 = cluster.connect();
             session1.execute("create schema if not exists java_509 " +
@@ -56,7 +56,7 @@ public class UDTFieldMapperTest {
             // Create entities with another connection
             cluster = Cluster.builder()
                     .addContactPointsWithPorts(ccm.addressOfNode(1))
-                    .withAddressTranslator(ccm.addressTranslator())
+                    .withPort(ccm.getBinaryPort())
                     .build();
             Session session2 = cluster.newSession();
             Mapper<MyHashWithKeyspace> hashMapper = new MappingManager(session2).mapper(MyHashWithKeyspace.class);
@@ -93,7 +93,7 @@ public class UDTFieldMapperTest {
             ccm = CCMBridge.builder().build();
             cluster = Cluster.builder()
                     .addContactPointsWithPorts(ccm.addressOfNode(1))
-                    .withAddressTranslator(ccm.addressTranslator())
+                    .withPort(ccm.getBinaryPort())
                     .build();
             Session session1 = cluster.connect();
             session1.execute("create schema if not exists java_509 " +
@@ -110,7 +110,7 @@ public class UDTFieldMapperTest {
             // Create entities with another connection
             cluster = Cluster.builder()
                     .addContactPointsWithPorts(ccm.addressOfNode(1))
-                    .withAddressTranslator(ccm.addressTranslator())
+                    .withPort(ccm.getBinaryPort())
                     .build();
             Session session2 = cluster.newSession();
 

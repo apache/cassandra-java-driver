@@ -44,8 +44,8 @@ public class EventDebouncerIntegrationTest extends CCMTestsSupport {
     public void should_wait_until_load_balancing_policy_is_fully_initialized() throws InterruptedException {
         TestLoadBalancingPolicy policy = new TestLoadBalancingPolicy();
         final Cluster cluster = register(createClusterBuilderNoDebouncing()
-                .addContactPointsWithPorts(getHostAddress(1))
-                .withAddressTranslator(getAddressTranslator())
+                .addContactPoints(ccm.addressOfNode(1).getAddress())
+                .withPort(ccm.getBinaryPort())
                 .withLoadBalancingPolicy(policy).build());
         new Thread() {
             @Override

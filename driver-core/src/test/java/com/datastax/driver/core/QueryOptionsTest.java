@@ -49,8 +49,8 @@ public class QueryOptionsTest {
         queryOptions = new QueryOptions();
         loadBalancingPolicy = new SortingLoadBalancingPolicy();
         cluster = Cluster.builder()
-                .addContactPointsWithPorts(scassandra.address(2))
-                .withAddressTranslator(scassandra.addressTranslator())
+                .addContactPoints(scassandra.address(2).getAddress())
+                .withPort(scassandra.getBinaryPort())
                 .withLoadBalancingPolicy(loadBalancingPolicy)
                 .withQueryOptions(queryOptions)
                 .withNettyOptions(nonQuietClusterCloseOptions)

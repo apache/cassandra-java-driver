@@ -16,17 +16,19 @@
 package com.datastax.driver.core;
 
 import com.datastax.driver.core.CreateCCM.TestMode;
-import com.datastax.driver.core.policies.AddressTranslator;
 import com.google.common.base.Throwables;
 import com.google.common.cache.*;
 import com.google.common.collect.Lists;
 import com.google.common.io.Closer;
+import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.ITestResult;
 import org.testng.annotations.*;
 
 import java.io.Closeable;
+import java.io.File;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
@@ -35,8 +37,7 @@ import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.net.InetSocketAddress;
 import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.datastax.driver.core.CreateCCM.TestMode.PER_CLASS;
@@ -52,6 +53,166 @@ public class CCMTestsSupport {
     private static final AtomicInteger CCM_COUNTER = new AtomicInteger(1);
 
     private static final List<String> TEST_GROUPS = Lists.newArrayList("isolated", "short", "long", "stress", "duration");
+
+
+    private static class ReadOnlyCCMBridge implements CCMAccess {
+
+        private final CCMAccess delegate;
+
+        private ReadOnlyCCMBridge(CCMAccess delegate) {
+            this.delegate = delegate;
+        }
+
+        @Override
+        public String getClusterName() {
+            return delegate.getClusterName();
+        }
+
+        @Override
+        public InetSocketAddress addressOfNode(int n) {
+            return delegate.addressOfNode(n);
+        }
+
+        @Override
+        public VersionNumber getVersion() {
+            return delegate.getVersion();
+        }
+
+        @Override
+        public File getCcmDir() {
+            return delegate.getCcmDir();
+        }
+
+        @Override
+        public File getClusterDir() {
+            return delegate.getClusterDir();
+        }
+
+        @Override
+        public File getNodeDir(int n) {
+            return delegate.getNodeDir(n);
+        }
+
+        @Override
+        public File getNodeConfDir(int n) {
+            return delegate.getNodeConfDir(n);
+        }
+
+        @Override
+        public int getStoragePort() {
+            return delegate.getStoragePort();
+        }
+
+        @Override
+        public int getThriftPort() {
+            return delegate.getThriftPort();
+        }
+
+        @Override
+        public int getBinaryPort() {
+            return delegate.getBinaryPort();
+        }
+
+        @Override
+        public void setKeepLogs(boolean keepLogs) {
+            delegate.setKeepLogs(keepLogs);
+        }
+
+        @Override
+        public void close() {
+            throw new UnsupportedOperationException("This CCM cluster is read-only");
+        }
+
+        @Override
+        public void start() {
+            throw new UnsupportedOperationException("This CCM cluster is read-only");
+        }
+
+        @Override
+        public void stop() {
+            throw new UnsupportedOperationException("This CCM cluster is read-only");
+        }
+
+        @Override
+        public void forceStop() {
+            throw new UnsupportedOperationException("This CCM cluster is read-only");
+        }
+
+        @Override
+        public void remove() {
+            throw new UnsupportedOperationException("This CCM cluster is read-only");
+        }
+
+        @Override
+        public void start(int n) {
+            throw new UnsupportedOperationException("This CCM cluster is read-only");
+        }
+
+        @Override
+        public void stop(int n) {
+            throw new UnsupportedOperationException("This CCM cluster is read-only");
+        }
+
+        @Override
+        public void forceStop(int n) {
+            throw new UnsupportedOperationException("This CCM cluster is read-only");
+        }
+
+        @Override
+        public void remove(int n) {
+            throw new UnsupportedOperationException("This CCM cluster is read-only");
+        }
+
+        @Override
+        public void add(int n) {
+            throw new UnsupportedOperationException("This CCM cluster is read-only");
+        }
+
+        @Override
+        public void add(int dc, int n) {
+            throw new UnsupportedOperationException("This CCM cluster is read-only");
+        }
+
+        @Override
+        public void decommision(int n) {
+            throw new UnsupportedOperationException("This CCM cluster is read-only");
+        }
+
+        @Override
+        public void updateConfig(Map<String, Object> configs) {
+            throw new UnsupportedOperationException("This CCM cluster is read-only");
+        }
+
+        @Override
+        public void updateDSEConfig(Map<String, Object> configs) {
+            throw new UnsupportedOperationException("This CCM cluster is read-only");
+        }
+
+        @Override
+        public void updateNodeConfig(int n, String key, Object value) {
+            throw new UnsupportedOperationException("This CCM cluster is read-only");
+        }
+
+        @Override
+        public void updateNodeConfig(int n, Map<String, Object> configs) {
+            throw new UnsupportedOperationException("This CCM cluster is read-only");
+        }
+
+        @Override
+        public void setWorkload(int node, String workload) {
+            throw new UnsupportedOperationException("This CCM cluster is read-only");
+        }
+
+        @Override
+        public void waitForUp(int node) {
+            throw new UnsupportedOperationException("This CCM cluster is read-only");
+        }
+
+        @Override
+        public void waitForDown(int node) {
+            throw new UnsupportedOperationException("This CCM cluster is read-only");
+        }
+    }
 
     private static class CCMTestConfig {
 
@@ -110,6 +271,7 @@ public class CCMTestsSupport {
         @SuppressWarnings("SimplifiableIfStatement")
         private Map<String, Object> config() {
             Map<String, Object> config = new HashMap<String, Object>();
+            config.put("start_rpc", false);
             for (int i = annotations.size() - 1; i == 0; i--) {
                 CCMConfig ann = annotations.get(i);
                 addConfigOptions(ann.config(), config);
@@ -205,8 +367,7 @@ public class CCMTestsSupport {
 
         private CCMBridge.Builder ccmBuilder() {
             if (ccmBuilder == null) {
-                ccmBuilder = CCMBridge.builder()
-                        .withNodes(numberOfNodes());
+                ccmBuilder = CCMBridge.builder().withNodes(numberOfNodes());
                 if (version() != null)
                     ccmBuilder.withVersion(version());
                 if (dse())
@@ -286,31 +447,115 @@ public class CCMTestsSupport {
             }
         }
 
+        private int weight() {
+            int weight = 0;
+            weight += totalNodes() - 1;
+            weight += config().size() - 1;
+            weight += dseConfig().size();
+            weight += dse() ? 1 : 0;
+            weight += jvmArgs().size();
+            weight += startOptions().size();
+            weight += ssl() ? 1 : 0;
+            weight += auth() ? 1 : 0;
+            weight += version() != null ? 1 : 0;
+            return weight;
+        }
+
+        private int totalNodes() {
+            int nodes = 0;
+            for (int nodesPerDc : numberOfNodes()) {
+                nodes += nodesPerDc;
+            }
+            return nodes;
+        }
     }
 
-    private static class CCMTestContextLoader extends CacheLoader<CCMBridge.Builder, CCMBridge> {
+    private static class CCMTestContextKey {
+
+        private final CCMBridge.Builder builder;
+
+        private final int weight;
+
+        private CCMTestContextKey(CCMBridge.Builder builder, int weight) {
+            this.builder = builder;
+            this.weight = weight;
+        }
 
         @Override
-        public CCMBridge load(CCMBridge.Builder builder) {
-            return builder.build();
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            CCMTestContextKey that = (CCMTestContextKey) o;
+            return builder.equals(that.builder);
+        }
+
+        @Override
+        public int hashCode() {
+            return builder.hashCode();
+        }
+    }
+
+    private static class CCMTestContext implements Runnable {
+
+        private CCMAccess ccm;
+
+        private final AtomicInteger refCount = new AtomicInteger(1);
+
+        private volatile boolean evicted = false;
+
+        private CCMTestContext(CCMAccess ccm) {
+            this(ccm, false);
+        }
+
+        public CCMTestContext(CCMAccess ccm, boolean evicted) {
+            this.ccm = ccm;
+            this.evicted = evicted;
+        }
+
+        @Override
+        public void run() {
+            if (ccm != null)
+                ccm.close();
+            ccm = null;
+        }
+
+        private void markEvicted() {
+            evicted = true;
+        }
+
+        private void maybeClose() {
+            if (refCount.get() <= 0 && evicted)
+                POOL.execute(this);
+        }
+    }
+
+    private static class CCMTestContextLoader extends CacheLoader<CCMTestContextKey, CCMTestContext> {
+
+        @Override
+        public CCMTestContext load(CCMTestContextKey key) {
+            return new CCMTestContext(key.builder.build());
         }
 
     }
 
-    private static class CCMTestContextWeigher implements Weigher<CCMBridge.Builder, CCMBridge> {
+    private static class CCMTestContextWeigher implements Weigher<CCMTestContextKey, CCMTestContext> {
+
         @Override
-        public int weigh(CCMBridge.Builder key, CCMBridge value) {
-            return value.getInitialNumberOfNodes();
+        public int weigh(CCMTestContextKey key, CCMTestContext value) {
+            return key.weight;
         }
+
     }
 
-    private static class CCMTestContextRemovalListener implements RemovalListener<CCMBridge.Builder, CCMBridge> {
+    private static class CCMTestContextRemovalListener implements RemovalListener<CCMTestContextKey, CCMTestContext> {
 
         @Override
-        public void onRemoval(RemovalNotification<CCMBridge.Builder, CCMBridge> notification) {
-            if (notification.getValue() != null) {
-                LOGGER.debug("Evicting: " + notification.getValue());
-                notification.getValue().close();
+        public void onRemoval(RemovalNotification<CCMTestContextKey, CCMTestContext> notification) {
+            CCMTestContext context = notification.getValue();
+            if (context != null && context.ccm != null) {
+                LOGGER.debug("Evicting: {} because of {}", context.ccm, notification.getCause());
+                context.markEvicted();
+                context.maybeClose();
             }
         }
 
@@ -319,7 +564,11 @@ public class CCMTestsSupport {
     /**
      * A LoadingCache that stores running CCM clusters.
      */
-    private static final LoadingCache<CCMBridge.Builder, CCMBridge> CACHE;
+    private static final LoadingCache<CCMTestContextKey, CCMTestContext> CACHE;
+
+    private static final ExecutorService POOL = MoreExecutors.getExitingExecutorService(
+            (ThreadPoolExecutor) Executors.newFixedThreadPool(2,
+                    new ThreadFactoryBuilder().setNameFormat("ccm-removal-%d").build()));
 
     static {
         long maximumWeight;
@@ -329,14 +578,16 @@ public class CCMTestsSupport {
             if (freeMemoryMB < 1000)
                 LOGGER.warn("Available memory below 1GB: {}MB, CCM clusters might fail to start", freeMemoryMB);
             // CCM nodes are started with -Xms500M -Xmx500M
-            // leave at least 500 MB out, with a minimum of 1 node and a maximum of 10 nodes
-            maximumWeight = Math.min(10, Math.max(1, (freeMemoryMB / 500) - 1));
+            // so 1 "slot" is roughly 500MB
+            // leave at least 2 slots out, with a minimum of 1 slot and a maximum of 6 slots
+            long slotsAvailable = (freeMemoryMB / 500) - 2;
+            maximumWeight = Math.min(6, Math.max(1, slotsAvailable));
         } else {
             maximumWeight = Integer.parseInt(numberOfNodes);
         }
         LOGGER.info("Maximum number of running CCM nodes: {}", maximumWeight);
         CACHE = CacheBuilder.newBuilder()
-                .initialCapacity(1)
+                .initialCapacity(3)
                 .maximumWeight(maximumWeight)
                 .weigher(new CCMTestContextWeigher())
                 .removalListener(new CCMTestContextRemovalListener())
@@ -347,7 +598,9 @@ public class CCMTestsSupport {
 
     private CCMTestConfig ccmTestConfig;
 
-    protected CCMBridge ccm;
+    private CCMTestContext ccmTestContext;
+
+    protected CCMAccess ccm;
 
     protected Cluster cluster;
 
@@ -541,36 +794,6 @@ public class CCMTestsSupport {
     }
 
     /**
-     * Returns the address of the {@code nth} host in the CCM cluster (counting from 1, i.e.,
-     * {@code getHostAddress(1)} returns the address of the first node.
-     * <p/>
-     * In multi-DC setups, nodes are numbered in ascending order of their datacenter number.
-     * E.g. with 2 DCs and 3 nodes in each DC, the first node in DC 2 is number 4.
-     * <p/>
-     * This method should not be called before the test has started, nor after the test is finished.
-     *
-     * @return the address of the {@code nth} host in the cluster.
-     */
-    public InetSocketAddress getHostAddress(int n) {
-        return ccm.addressOfNode(n);
-    }
-
-    /**
-     * Returns an {@link AddressTranslator} to use when tests must manually create
-     * {@link Cluster} instances.
-     * <p/>
-     * This translator is necessary because hosts create with this class do not use standard ports.
-     * <p/>
-     * This method should not be called before the test has started, nor after the test is finished.
-     *
-     * @return an {@link AddressTranslator} to use when tests must manually create
-     * {@link Cluster} instances.
-     */
-    public AddressTranslator getAddressTranslator() {
-        return ccm.addressTranslator();
-    }
-
-    /**
      * Registers the given {@link Closeable} to be closed at the end of the current test method.
      * <p/>
      * This method should not be called before the test has started, nor after the test is finished.
@@ -590,22 +813,32 @@ public class CCMTestsSupport {
         if (ccmTestConfig.createCcm()) {
             if (ccmTestConfig.dirtiesContext()) {
                 ccm = ccmTestConfig.ccmBuilder().build();
+                ccmTestContext = new CCMTestContext(ccm, true);
                 LOGGER.debug("Using dedicated {}", ccm);
             } else {
-                CCMBridge.Builder key = ccmTestConfig.ccmBuilder();
-                ccm = CACHE.getIfPresent(key);
-                if (ccm != null) {
+                CCMBridge.Builder builder = ccmTestConfig.ccmBuilder();
+                int weight = ccmTestConfig.weight();
+                CCMTestContextKey key = new CCMTestContextKey(builder, weight);
+                CCMAccess ccm;
+                ccmTestContext = CACHE.getIfPresent(key);
+                if (ccmTestContext != null) {
+                    ccmTestContext.refCount.incrementAndGet();
+                    ccm = ccmTestContext.ccm;
                     LOGGER.debug("Reusing {}", ccm);
                 } else {
                     try {
-                        ccm = CACHE.get(ccmTestConfig.ccmBuilder());
+                        ccmTestContext = CACHE.get(key);
+                        ccm = ccmTestContext.ccm;
                         LOGGER.debug("Using newly-created {}", ccm);
                     } catch (ExecutionException e) {
-                        Throwables.propagate(e);
+                        throw Throwables.propagate(e);
                     }
                 }
+                this.ccm = new ReadOnlyCCMBridge(ccm);
             }
+            assert ccmTestContext != null;
             assert ccm != null;
+
         }
     }
 
@@ -615,7 +848,7 @@ public class CCMTestsSupport {
             // add contact points only if the provided builder didn't do so
             if (builder.getContactPoints().isEmpty())
                 builder.addContactPointsWithPorts(getInitialContactPoints());
-            builder.withAddressTranslator(ccm.addressTranslator());
+            builder.withPort(ccm.getBinaryPort());
             cluster = register(builder.build());
             cluster.init();
         }
@@ -656,10 +889,12 @@ public class CCMTestsSupport {
     }
 
     private void closeTestContext() {
-        if (ccmTestConfig != null && ccm != null && ccmTestConfig.dirtiesContext()) {
-            ccm.close();
+        if (ccmTestContext != null) {
+            ccmTestContext.refCount.decrementAndGet();
+            ccmTestContext.maybeClose();
         }
         ccmTestConfig = null;
+        ccmTestContext = null;
         ccm = null;
     }
 

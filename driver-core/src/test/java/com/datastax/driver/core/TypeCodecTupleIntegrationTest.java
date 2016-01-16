@@ -94,7 +94,7 @@ public class TypeCodecTupleIntegrationTest extends CCMTestsSupport {
         CodecRegistry codecRegistry = new CodecRegistry();
         Cluster cluster = register(Cluster.builder()
                 .addContactPointsWithPorts(getInitialContactPoints())
-                .withAddressTranslator(getAddressTranslator())
+                .withPort(ccm.getBinaryPort())
                 .withCodecRegistry(codecRegistry)
                 .build());
         Session session = cluster.connect(keyspace);
@@ -124,7 +124,7 @@ public class TypeCodecTupleIntegrationTest extends CCMTestsSupport {
         CodecRegistry codecRegistry = new CodecRegistry();
         Cluster cluster = register(Cluster.builder()
                 .addContactPointsWithPorts(getInitialContactPoints())
-                .withAddressTranslator(getAddressTranslator())
+                .withPort(ccm.getBinaryPort())
                 .withCodecRegistry(codecRegistry)
                 .build());
         Session session = cluster.connect(keyspace);
