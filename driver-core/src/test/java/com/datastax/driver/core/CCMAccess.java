@@ -180,7 +180,7 @@ public interface CCMAccess extends Closeable {
      *
      * @param n the node number (starting from 1).
      */
-    void decommision(int n);
+    void decommission(int n);
 
     /**
      * Updates the {@code nth} host's config file in the CCM cluster.

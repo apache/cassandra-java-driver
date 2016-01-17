@@ -26,9 +26,12 @@ import java.nio.ByteBuffer;
 import java.util.List;
 
 import static com.datastax.driver.core.Assertions.assertThat;
+import static com.datastax.driver.core.CreateCCM.TestMode.PER_METHOD;
 import static com.datastax.driver.core.TestUtils.*;
 
-public class TokenAwarePolicyTest {
+@CreateCCM(PER_METHOD)
+@CCMConfig(createCcm = false)
+public class TokenAwarePolicyTest extends CCMTestsSupport {
 
     QueryTracker queryTracker;
 
@@ -316,51 +319,43 @@ public class TokenAwarePolicyTest {
      * @test_category load_balancing:token_aware
      * @jira_ticket JAVA-123 (to ensure routing key buffers are not destroyed).
      */
+    @CCMConfig(createCcm = true, numberOfNodes = 3, createCluster = false)
     @Test(groups = "long")
     public void should_properly_generate_and_use_routing_key_for_composite_partition_key() {
         // given: a 3 node cluster with a keyspace with RF 1.
-        CCMBridge ccm = CCMBridge.builder().withNodes(3).notStarted().build();
-
-        Cluster cluster = Cluster.builder()
+        Cluster cluster = register(Cluster.builder()
                 .withLoadBalancingPolicy(new TokenAwarePolicy(new RoundRobinPolicy()))
                 .addContactPointsWithPorts(ccm.addressOfNode(1))
                 .withPort(ccm.getBinaryPort())
-                .build();
+                .build());
+        Session session = cluster.connect();
 
-        try {
-            ccm.start();
-            Session session = cluster.connect();
+        String table = "composite";
+        String ks = TestUtils.getAvailableKeyspaceName();
+        session.execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, ks, 1));
+        session.execute("USE " + ks);
+        session.execute(String.format("CREATE TABLE %s (k1 int, k2 int, i int, PRIMARY KEY ((k1, k2)))", table));
 
-            String table = "composite";
-            session.execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, SIMPLE_KEYSPACE, 1));
-            session.execute("USE " + SIMPLE_KEYSPACE);
-            session.execute(String.format("CREATE TABLE %s (k1 int, k2 int, i int, PRIMARY KEY ((k1, k2)))", table));
+        // (1,2) resolves to token '4881097376275569167' which belongs to node 1 so all queries should go to that node.
+        PreparedStatement insertPs = session.prepare("INSERT INTO " + table + "(k1, k2, i) VALUES (?, ?, ?)");
+        BoundStatement insertBs = insertPs.bind(1, 2, 3);
 
-            // (1,2) resolves to token '4881097376275569167' which belongs to node 1 so all queries should go to that node.
-            PreparedStatement insertPs = session.prepare("INSERT INTO " + table + "(k1, k2, i) VALUES (?, ?, ?)");
-            BoundStatement insertBs = insertPs.bind(1, 2, 3);
+        PreparedStatement selectPs = session.prepare("SELECT * FROM " + table + " WHERE k1=? and k2=?");
+        BoundStatement selectBs = selectPs.bind(1, 2);
 
-            PreparedStatement selectPs = session.prepare("SELECT * FROM " + table + " WHERE k1=? and k2=?");
-            BoundStatement selectBs = selectPs.bind(1, 2);
+        // when: executing a prepared statement with a composite partition key.
+        // then: should query the correct node (1) in for both insert and select queries.
+        for (int i = 0; i < 10; i++) {
+            ResultSet rs = session.execute(insertBs);
+            assertThat(rs.getExecutionInfo().getQueriedHost()).isEqualTo(TestUtils.findHost(cluster, 1));
 
-            // when: executing a prepared statement with a composite partition key.
-            // then: should query the correct node (1) in for both insert and select queries.
-            for (int i = 0; i < 10; i++) {
-                ResultSet rs = session.execute(insertBs);
-                assertThat(rs.getExecutionInfo().getQueriedHost()).isEqualTo(TestUtils.findHost(cluster, 1));
+            rs = session.execute(selectBs);
+            assertThat(rs.getExecutionInfo().getQueriedHost()).isEqualTo(TestUtils.findHost(cluster, 1));
+            assertThat(rs.isExhausted()).isFalse();
+            Row r = rs.one();
+            assertThat(rs.isExhausted()).isTrue();
 
-                rs = session.execute(selectBs);
-                assertThat(rs.getExecutionInfo().getQueriedHost()).isEqualTo(TestUtils.findHost(cluster, 1));
-                assertThat(rs.isExhausted()).isFalse();
-                Row r = rs.one();
-                assertThat(rs.isExhausted()).isTrue();
-
-                assertThat(r.getInt("i")).isEqualTo(3);
-            }
-
-        } finally {
-            cluster.close();
-            ccm.remove();
+            assertThat(r.getInt("i")).isEqualTo(3);
         }
     }
 }
