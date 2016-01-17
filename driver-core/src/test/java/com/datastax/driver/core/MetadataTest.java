@@ -73,7 +73,7 @@ public class MetadataTest extends CCMTestsSupport {
         Host host3 = TestUtils.findHost(cluster, 3);
         Token host3Token = tokensForHost.get(host3);
 
-        ccm.decommision(3);
+        ccm.decommission(3);
         ccm.remove(3);
 
         // Ensure that the token ranges were updated, there should only be 2 ranges now.

@@ -179,7 +179,7 @@ public class CCMTestsSupport {
         }
 
         @Override
-        public void decommision(int n) {
+        public void decommission(int n) {
             throw new UnsupportedOperationException("This CCM cluster is read-only");
         }
 

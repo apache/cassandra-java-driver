@@ -170,8 +170,8 @@ public class CCMCache {
         }
 
         @Override
-        public void decommision(int n) {
-            ccm.decommision(n);
+        public void decommission(int n) {
+            ccm.decommission(n);
         }
 
         @Override

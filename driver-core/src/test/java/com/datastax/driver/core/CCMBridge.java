@@ -455,7 +455,7 @@ public class CCMBridge implements CCMAccess {
     }
 
     @Override
-    public void decommision(int n) {
+    public void decommission(int n) {
         logger.debug(String.format("Decommissioning: node %s (%s%s:%s) from %s", n, TestUtils.IP_PREFIX, n, binaryPort, this));
         execute(CCM_COMMAND + " node%d decommission", n);
     }
