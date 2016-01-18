@@ -34,7 +34,9 @@ public @interface CCMConfig {
 
     /**
      * The number of nodes to create, per data center.
-     * If not set, this defaults to {1}, i.e., one data center with one node.
+     * If not set, this defaults to {@code {1}}, i.e., one data center with one node.
+     * <p/>
+     * This attribute is ignored if {@link #ccmProvider()} is defined.
      *
      * @return The number of nodes to create, per data center.
      */
@@ -44,9 +46,11 @@ public @interface CCMConfig {
      * The C* or DSE version to use; defaults to the version defined by
      * the System property {@code cassandra.version}.
      * <p/>
-     * Note that setting this property completely
+     * Note that setting this attribute completely
      * overrides the System properties {@code cassandra.version}
      * and {@code cassandra.directory}.
+     * <p/>
+     * This attribute is ignored if {@link #ccmProvider()} is defined.
      *
      * @return The C* or DSE version to use
      * @see CCMBridge#getCassandraVersion()
@@ -56,8 +60,10 @@ public @interface CCMConfig {
     /**
      * Whether to launch a DSE instance rather than an OSS C*.
      * <p/>
-     * Note that setting this property completely
+     * Note that setting this attribute completely
      * overrides the System property {@code dse}.
+     * <p/>
+     * This attribute is ignored if {@link #ccmProvider()} is defined.
      *
      * @return {@code true} to launch a DSE instance, {@code false} to launch an OSS C* instance (default).
      */
@@ -66,6 +72,8 @@ public @interface CCMConfig {
     /**
      * Configuration items to add to cassandra.yaml configuration file.
      * Each configuration item must be in the form {@code key:value}.
+     * <p/>
+     * This attribute is ignored if {@link #ccmProvider()} is defined.
      *
      * @return Configuration items to add to cassandra.yaml configuration file.
      */
@@ -74,6 +82,8 @@ public @interface CCMConfig {
     /**
      * Configuration items to add to dse.yaml configuration file.
      * Each configuration item must be in the form {@code key:value}.
+     * <p/>
+     * This attribute is ignored if {@link #ccmProvider()} is defined.
      *
      * @return Configuration items to add to dse.yaml configuration file.
      */
@@ -83,6 +93,8 @@ public @interface CCMConfig {
      * JVM args to use when starting hosts.
      * System properties should be provided one by one, in the form
      * {@code -Dname=value}.
+     * <p/>
+     * This attribute is ignored if {@link #ccmProvider()} is defined.
      *
      * @return JVM args to use when starting hosts.
      */
@@ -90,6 +102,8 @@ public @interface CCMConfig {
 
     /**
      * Free-form options that will be added at the end of the {@code ccm create} command.
+     * <p/>
+     * This attribute is ignored if {@link #ccmProvider()} is defined.
      *
      * @return Free-form options that will be added at the end of the {@code ccm create} command.
      */
@@ -97,6 +111,8 @@ public @interface CCMConfig {
 
     /**
      * Whether to use SSL encryption.
+     * <p/>
+     * This attribute is ignored if {@link #ccmProvider()} is defined.
      *
      * @return {@code true} to use encryption, {@code false} to use unencrypted communication (default).
      */
@@ -104,10 +120,22 @@ public @interface CCMConfig {
 
     /**
      * Whether to use authentication. Implies the use of SSL encryption.
+     * <p/>
+     * This attribute is ignored if {@link #ccmProvider()} is defined.
      *
      * @return {@code true} to use authentication, {@code false} to use unauthenticated communication (default).
      */
     boolean[] auth() default {};
+
+    /**
+     * The workloads to assign to each node. If this attribute is defined,
+     * the number of its elements must be lesser than or equal to the number of nodes in the cluster.
+     * <p/>
+     * This attribute is ignored if {@link #ccmProvider()} is defined.
+     *
+     * @return The workloads to assign to each node.
+     */
+    CCMAccess.Workload[] workloads() default {};
 
     /**
      * Returns {@code true} if a {@link CCMBridge} instance should be automatically created, {@code false} otherwise.
@@ -160,10 +188,10 @@ public @interface CCMConfig {
      * and this session will be used to create the test keyspace.
      * <p/>
      * The keyspace will be created once for the whole class if CCM test mode is {@link CreateCCM.TestMode#PER_CLASS},
-     * or once per test method, if the CCM test mode is {@link CreateCCM.TestMode#PER_METHOD},
+     * or once per test method, if the CCM test mode is {@link CreateCCM.TestMode#PER_METHOD}.
      * <p/>
      * The test keyspace will be automatically populated upon creation with fixtures provided by
-     * {@link #fixturesProvider()} and {@link #fixturesProviderClass()}.
+     * {@link #testInitializer()} and {@link #testInitializerClass()}.
      *
      * @return {@code true} if a test keyspace should be automatically created, {@code false} otherwise.
      */
@@ -185,10 +213,42 @@ public @interface CCMConfig {
 
     /**
      * Returns the name of the method that should be invoked to obtain
+     * a {@link com.datastax.driver.core.CCMBridge.Builder} instance.
+     * <p/>
+     * This method should be declared in {@link #ccmProviderClass()},
+     * or if that attribute is not set,
+     * it will be looked up on the test class itself.
+     * <p/>
+     * The method should not have parameters. It can be static or not,
+     * and have any visibility.
+     * <p/>
+     * By default, a {@link com.datastax.driver.core.CCMBridge.Builder} instance
+     * is obtained by parsing other attributes of this annotation.
+     *
+     * @return The name of the method that should be invoked to obtain a
+     * {@link com.datastax.driver.core.CCMBridge.Builder} instance.
+     */
+    String ccmProvider() default "";
+
+    /**
+     * Returns the name of the class that should be invoked to obtain
+     * a {@link com.datastax.driver.core.CCMBridge.Builder} instance.
+     * <p/>
+     * This class should contain a method named after {@link #ccmProvider()};
+     * if this attribute is not set,
+     * it will default to the test class itself.
+     *
+     * @return The name of the class that should be invoked to obtain a
+     * {@link com.datastax.driver.core.CCMBridge.Builder} instance.
+     */
+    Class<?> ccmProviderClass() default Undefined.class;
+
+    /**
+     * Returns the name of the method that should be invoked to obtain
      * a {@link com.datastax.driver.core.Cluster.Builder} instance.
      * <p/>
      * This method should be declared in {@link #clusterProviderClass()},
-     * or if that property is not set,
+     * or if that attribute is not set,
      * it will be looked up on the test class itself.
      * <p/>
      * The method should not have parameters. It can be static or not,
@@ -206,7 +266,7 @@ public @interface CCMConfig {
      * a {@link com.datastax.driver.core.Cluster.Builder} instance.
      * <p/>
      * This class should contain a method named after {@link #clusterProvider()};
-     * if this property is not set,
+     * if this attribute is not set,
      * it will default to the test class itself.
      *
      * @return The name of the class that should be invoked to obtain a
@@ -215,33 +275,35 @@ public @interface CCMConfig {
     Class<?> clusterProviderClass() default Undefined.class;
 
     /**
-     * Returns the name of the method that should be invoked to obtain
-     * the test fixtures to use.
+     * Returns the name of the method that should be invoked once the test context
+     * is initialized.
      * <p/>
-     * This method should return {@code Collection<String>}.
-     * <p/>
-     * This method should be declared in {@link #fixturesProviderClass()},
-     * or if that property is not set,
+     * This method should be declared in {@link #testInitializerClass()},
+     * or if that attribute is not set,
      * it will be looked up on the test class itself.
      * <p/>
      * The method should not have parameters. It can be static or not,
      * and have any visibility.
+     * <p/>
+     * By default, the framework will look for a method named
+     * {@code onTestContextInitialized}.
      *
-     * @return The name of the method that should be invoked to obtain the test fixtures to use.
+     * @return The name of the method that should be invoked once the test context
+     * is initialized.
      */
-    String fixturesProvider() default "";
+    String testInitializer() default "";
 
     /**
-     * Returns the name of the class that should be invoked to obtain
-     * the test fixtures to use.
+     * Returns the name of the class that should be invoked once the test context
+     * is initialized.
      * <p/>
-     * This class should contain a method named after {@link #fixturesProvider()};
-     * if this property is not set,
+     * This class should contain a method named after {@link #testInitializer()};
+     * if this attribute is not set,
      * it will default to the test class itself.
      *
-     * @return The name of the class that should be invoked to obtain a
-     * {@link com.datastax.driver.core.Cluster.Builder} instance.
+     * @return The name of the class that should be invoked once the test context
+     * is initialized.
      */
-    Class<?> fixturesProviderClass() default Undefined.class;
+    Class<?> testInitializerClass() default Undefined.class;
 
 }

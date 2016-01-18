@@ -23,7 +23,6 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.concurrent.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -38,18 +37,15 @@ public class AsyncQueryTest extends CCMTestsSupport {
     }
 
     @Override
-    public Collection<String> createTestFixtures() {
-        List<String> definitions = Lists.newArrayList();
-
+    public void onTestContextInitialized() {
         for (Object[] objects : keyspace()) {
             String keyspace = (String) objects[0];
-
-            definitions.add(String.format("create keyspace %s WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1}", keyspace));
-            definitions.add(String.format("create table %s.foo(k int primary key, v int)", keyspace));
-            definitions.add(String.format("insert into %s.foo (k, v) values (1, 1)", keyspace));
+            execute(
+                    String.format("create keyspace %s WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1}", keyspace),
+                    String.format("create table %s.foo(k int primary key, v int)", keyspace),
+                    String.format("insert into %s.foo (k, v) values (1, 1)", keyspace)
+            );
         }
-
-        return definitions;
     }
 
     /**
@@ -57,13 +53,13 @@ public class AsyncQueryTest extends CCMTestsSupport {
      */
     @Test(groups = "short")
     public void cancelled_query_should_release_the_connection() throws InterruptedException {
-        ResultSetFuture future = session.executeAsync("select release_version from system.local");
+        ResultSetFuture future = session().executeAsync("select release_version from system.local");
         future.cancel(true);
         assertTrue(future.isCancelled());
 
         TimeUnit.MILLISECONDS.sleep(100);
 
-        HostConnectionPool pool = getPool(session);
+        HostConnectionPool pool = getPool(session());
         for (Connection connection : pool.connections) {
             assertEquals(connection.inFlight.get(), 0);
         }
@@ -73,7 +69,7 @@ public class AsyncQueryTest extends CCMTestsSupport {
     public void should_init_cluster_and_session_if_needed() throws Exception {
         // For this test we need an uninitialized cluster, so we can't reuse the one provided by the
         // parent class. Rebuild a new one with the same (unique) host.
-        Host host = cluster.getMetadata().allHosts().iterator().next();
+        Host host = cluster().getMetadata().allHosts().iterator().next();
 
         Cluster cluster2 = null;
         try {
@@ -130,7 +126,7 @@ public class AsyncQueryTest extends CCMTestsSupport {
     }
 
     private ListenableFuture<Integer> connectAndQuery(String keyspace, Executor executor) {
-        ListenableFuture<Session> sessionFuture = cluster.connectAsync(keyspace);
+        ListenableFuture<Session> sessionFuture = cluster().connectAsync(keyspace);
         ListenableFuture<ResultSet> queryFuture = Futures.transform(sessionFuture, new AsyncFunction<Session, ResultSet>() {
             @Override
             public ListenableFuture<ResultSet> apply(Session session) throws Exception {

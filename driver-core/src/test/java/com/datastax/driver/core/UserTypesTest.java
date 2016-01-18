@@ -41,11 +41,11 @@ public class UserTypesTest extends CCMTestsSupport {
             new ArrayList<DataType.Name>(EnumSet.of(DataType.Name.LIST, DataType.Name.SET, DataType.Name.MAP, DataType.Name.TUPLE));
 
     @Override
-    public Collection<String> createTestFixtures() {
+    public void onTestContextInitialized() {
         String type1 = "CREATE TYPE phone (alias text, number text)";
         String type2 = "CREATE TYPE address (street text, \"ZIP\" int, phones set<frozen<phone>>)";
         String table = "CREATE TABLE user (id int PRIMARY KEY, addr frozen<address>)";
-        return Arrays.asList(type1, type2, table);
+        execute(type1, type2, table);
     }
 
     /**
@@ -56,20 +56,20 @@ public class UserTypesTest extends CCMTestsSupport {
     @Test(groups = "short")
     public void simpleWriteReadTest() throws Exception {
         int userId = 0;
-        PreparedStatement ins = session.prepare("INSERT INTO user(id, addr) VALUES (?, ?)");
-        PreparedStatement sel = session.prepare("SELECT * FROM user WHERE id=?");
+        PreparedStatement ins = session().prepare("INSERT INTO user(id, addr) VALUES (?, ?)");
+        PreparedStatement sel = session().prepare("SELECT * FROM user WHERE id=?");
 
-        UserType addrDef = cluster.getMetadata().getKeyspace(keyspace).getUserType("address");
-        UserType phoneDef = cluster.getMetadata().getKeyspace(keyspace).getUserType("phone");
+        UserType addrDef = cluster().getMetadata().getKeyspace(keyspace).getUserType("address");
+        UserType phoneDef = cluster().getMetadata().getKeyspace(keyspace).getUserType("phone");
 
         UDTValue phone1 = phoneDef.newValue().setString("alias", "home").setString("number", "0123548790");
         UDTValue phone2 = phoneDef.newValue().setString("alias", "work").setString("number", "0698265251");
 
         UDTValue addr = addrDef.newValue().setString("street", "1600 Pennsylvania Ave NW").setInt(quote("ZIP"), 20500).setSet("phones", ImmutableSet.of(phone1, phone2));
 
-        session.execute(ins.bind(userId, addr));
+        session().execute(ins.bind(userId, addr));
 
-        Row r = session.execute(sel.bind(userId)).one();
+        Row r = session().execute(sel.bind(userId)).one();
 
         assertEquals(r.getInt("id"), 0);
         assertEquals(r.getUDTValue("addr"), addr);
@@ -83,17 +83,17 @@ public class UserTypesTest extends CCMTestsSupport {
     @Test(groups = "short")
     public void simpleUnpreparedWriteReadTest() throws Exception {
         int userId = 1;
-        UserType addrDef = cluster.getMetadata().getKeyspace(keyspace).getUserType("address");
-        UserType phoneDef = cluster.getMetadata().getKeyspace(keyspace).getUserType("phone");
+        UserType addrDef = cluster().getMetadata().getKeyspace(keyspace).getUserType("address");
+        UserType phoneDef = cluster().getMetadata().getKeyspace(keyspace).getUserType("phone");
 
         UDTValue phone1 = phoneDef.newValue().setString("alias", "home").setString("number", "0123548790");
         UDTValue phone2 = phoneDef.newValue().setString("alias", "work").setString("number", "0698265251");
 
         UDTValue addr = addrDef.newValue().setString("street", "1600 Pennsylvania Ave NW").setInt(quote("ZIP"), 20500).setSet("phones", ImmutableSet.of(phone1, phone2));
 
-        session.execute("INSERT INTO user(id, addr) VALUES (?, ?)", userId, addr);
+        session().execute("INSERT INTO user(id, addr) VALUES (?, ?)", userId, addr);
 
-        Row r = session.execute("SELECT * FROM user WHERE id=?", userId).one();
+        Row r = session().execute("SELECT * FROM user WHERE id=?", userId).one();
 
         assertEquals(r.getInt("id"), 1);
         assertEquals(r.getUDTValue("addr"), addr);
@@ -106,31 +106,31 @@ public class UserTypesTest extends CCMTestsSupport {
      */
     @Test(groups = "short")
     public void nonExistingTypesTest() throws Exception {
-        UserType addrDef = cluster.getMetadata().getKeyspace(keyspace).getUserType("address1");
-        UserType phoneDef = cluster.getMetadata().getKeyspace(keyspace).getUserType("phone1");
+        UserType addrDef = cluster().getMetadata().getKeyspace(keyspace).getUserType("address1");
+        UserType phoneDef = cluster().getMetadata().getKeyspace(keyspace).getUserType("phone1");
         assertEquals(addrDef, null);
         assertEquals(phoneDef, null);
 
-        addrDef = cluster.getMetadata().getKeyspace(keyspace).getUserType("address");
-        phoneDef = cluster.getMetadata().getKeyspace(keyspace).getUserType("phone");
+        addrDef = cluster().getMetadata().getKeyspace(keyspace).getUserType("address");
+        phoneDef = cluster().getMetadata().getKeyspace(keyspace).getUserType("phone");
         assertNotEquals(addrDef, null);
         assertNotEquals(phoneDef, null);
 
         // create keyspace
         String nonExistingKeyspace = keyspace + "_nonEx";
-        session.execute("CREATE KEYSPACE " + nonExistingKeyspace + " " +
+        session().execute("CREATE KEYSPACE " + nonExistingKeyspace + " " +
                 "WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor': '1'}");
-        session.execute("USE " + nonExistingKeyspace);
+        session().execute("USE " + nonExistingKeyspace);
 
-        addrDef = cluster.getMetadata().getKeyspace(nonExistingKeyspace).getUserType("address");
-        phoneDef = cluster.getMetadata().getKeyspace(nonExistingKeyspace).getUserType("phone");
+        addrDef = cluster().getMetadata().getKeyspace(nonExistingKeyspace).getUserType("address");
+        phoneDef = cluster().getMetadata().getKeyspace(nonExistingKeyspace).getUserType("phone");
         assertEquals(addrDef, null);
         assertEquals(phoneDef, null);
 
-        session.execute("USE " + keyspace);
+        session().execute("USE " + keyspace);
 
-        addrDef = cluster.getMetadata().getKeyspace(keyspace).getUserType("address");
-        phoneDef = cluster.getMetadata().getKeyspace(keyspace).getUserType("phone");
+        addrDef = cluster().getMetadata().getKeyspace(keyspace).getUserType("address");
+        phoneDef = cluster().getMetadata().getKeyspace(keyspace).getUserType("phone");
         assertNotEquals(addrDef, null);
         assertNotEquals(phoneDef, null);
     }
@@ -145,9 +145,9 @@ public class UserTypesTest extends CCMTestsSupport {
     public void udtSizesTest() throws Exception {
         int MAX_TEST_LENGTH = 1024;
         // create keyspace
-        session.execute("CREATE KEYSPACE test_udt_sizes " +
+        session().execute("CREATE KEYSPACE test_udt_sizes " +
                 "WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor': '1'}");
-        session.execute("USE test_udt_sizes");
+        session().execute("USE test_udt_sizes");
 
         // create the seed udt
         StringBuilder sb = new StringBuilder();
@@ -157,13 +157,13 @@ public class UserTypesTest extends CCMTestsSupport {
             if (i + 1 < MAX_TEST_LENGTH)
                 sb.append(",");
         }
-        session.execute(String.format("CREATE TYPE lengthy_udt (%s)", sb.toString()));
+        session().execute(String.format("CREATE TYPE lengthy_udt (%s)", sb.toString()));
 
         // create a table with multiple sizes of udts
-        session.execute("CREATE TABLE mytable (k int PRIMARY KEY, v frozen<lengthy_udt>)");
+        session().execute("CREATE TABLE mytable (k int PRIMARY KEY, v frozen<lengthy_udt>)");
 
         // hold onto the UserType for future use
-        UserType udtDef = cluster.getMetadata().getKeyspace("test_udt_sizes").getUserType("lengthy_udt");
+        UserType udtDef = cluster().getMetadata().getKeyspace("test_udt_sizes").getUserType("lengthy_udt");
 
         // verify inserts and reads
         for (int i : Arrays.asList(0, 1, 2, 3, MAX_TEST_LENGTH)) {
@@ -174,10 +174,10 @@ public class UserTypesTest extends CCMTestsSupport {
             }
 
             // write udt
-            session.execute("INSERT INTO mytable (k, v) VALUES (0, ?)", createdUDT);
+            session().execute("INSERT INTO mytable (k, v) VALUES (0, ?)", createdUDT);
 
             // verify udt was written and read correctly
-            UDTValue r = session.execute("SELECT v FROM mytable WHERE k=0")
+            UDTValue r = session().execute("SELECT v FROM mytable WHERE k=0")
                     .one().getUDTValue("v");
             assertEquals(r.toString(), createdUDT.toString());
         }
@@ -192,9 +192,9 @@ public class UserTypesTest extends CCMTestsSupport {
     @Test(groups = "short")
     public void testPrimitiveDatatypes() throws Exception {
         // create keyspace
-        session.execute("CREATE KEYSPACE testPrimitiveDatatypes " +
+        session().execute("CREATE KEYSPACE testPrimitiveDatatypes " +
                 "WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor': '1'}");
-        session.execute("USE testPrimitiveDatatypes");
+        session().execute("USE testPrimitiveDatatypes");
 
         // create UDT
         List<String> alpha_type_list = new ArrayList<String>();
@@ -204,11 +204,11 @@ public class UserTypesTest extends CCMTestsSupport {
                     DATA_TYPE_PRIMITIVES.get(i).getName()));
         }
 
-        session.execute(String.format("CREATE TYPE alldatatypes (%s)", Joiner.on(',').join(alpha_type_list)));
-        session.execute("CREATE TABLE mytable (a int PRIMARY KEY, b frozen<alldatatypes>)");
+        session().execute(String.format("CREATE TYPE alldatatypes (%s)", Joiner.on(',').join(alpha_type_list)));
+        session().execute("CREATE TABLE mytable (a int PRIMARY KEY, b frozen<alldatatypes>)");
 
         // insert UDT data
-        UserType alldatatypesDef = cluster.getMetadata().getKeyspace("testPrimitiveDatatypes").getUserType("alldatatypes");
+        UserType alldatatypesDef = cluster().getMetadata().getKeyspace("testPrimitiveDatatypes").getUserType("alldatatypes");
         UDTValue alldatatypes = alldatatypesDef.newValue();
 
         for (int i = 0; i < DATA_TYPE_PRIMITIVES.size(); i++) {
@@ -265,11 +265,11 @@ public class UserTypesTest extends CCMTestsSupport {
             }
         }
 
-        PreparedStatement ins = session.prepare("INSERT INTO mytable (a, b) VALUES (?, ?)");
-        session.execute(ins.bind(0, alldatatypes));
+        PreparedStatement ins = session().prepare("INSERT INTO mytable (a, b) VALUES (?, ?)");
+        session().execute(ins.bind(0, alldatatypes));
 
         // retrieve and verify data
-        ResultSet rs = session.execute("SELECT * FROM mytable");
+        ResultSet rs = session().execute("SELECT * FROM mytable");
         List<Row> rows = rs.all();
         assertEquals(1, rows.size());
 
@@ -288,9 +288,9 @@ public class UserTypesTest extends CCMTestsSupport {
     @Test(groups = "short")
     public void testNonPrimitiveDatatypes() throws Exception {
         // create keyspace
-        session.execute("CREATE KEYSPACE test_nonprimitive_datatypes " +
+        session().execute("CREATE KEYSPACE test_nonprimitive_datatypes " +
                 "WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor': '1'}");
-        session.execute("USE test_nonprimitive_datatypes");
+        session().execute("USE test_nonprimitive_datatypes");
 
         // counters are not allowed inside collections
         DATA_TYPE_PRIMITIVES.remove(DataType.counter());
@@ -317,11 +317,11 @@ public class UserTypesTest extends CCMTestsSupport {
                 alpha_type_list.add(typeString);
             }
 
-        session.execute(String.format("CREATE TYPE alldatatypes (%s)", Joiner.on(',').join(alpha_type_list)));
-        session.execute("CREATE TABLE mytable (a int PRIMARY KEY, b frozen<alldatatypes>)");
+        session().execute(String.format("CREATE TYPE alldatatypes (%s)", Joiner.on(',').join(alpha_type_list)));
+        session().execute("CREATE TABLE mytable (a int PRIMARY KEY, b frozen<alldatatypes>)");
 
         // insert UDT data
-        UserType alldatatypesDef = cluster.getMetadata().getKeyspace("test_nonprimitive_datatypes").getUserType("alldatatypes");
+        UserType alldatatypesDef = cluster().getMetadata().getKeyspace("test_nonprimitive_datatypes").getUserType("alldatatypes");
         UDTValue alldatatypes = alldatatypesDef.newValue();
 
         for (int i = 0; i < DATA_TYPE_NON_PRIMITIVE_NAMES.size(); i++)
@@ -346,11 +346,11 @@ public class UserTypesTest extends CCMTestsSupport {
                 }
             }
 
-        PreparedStatement ins = session.prepare("INSERT INTO mytable (a, b) VALUES (?, ?)");
-        session.execute(ins.bind(0, alldatatypes));
+        PreparedStatement ins = session().prepare("INSERT INTO mytable (a, b) VALUES (?, ?)");
+        session().execute(ins.bind(0, alldatatypes));
 
         // retrieve and verify data
-        ResultSet rs = session.execute("SELECT * FROM mytable");
+        ResultSet rs = session().execute("SELECT * FROM mytable");
         List<Row> rows = rs.all();
         assertEquals(1, rows.size());
 
@@ -370,41 +370,41 @@ public class UserTypesTest extends CCMTestsSupport {
     public void udtNestedTest() throws Exception {
         final int MAX_NESTING_DEPTH = 4;
         // create keyspace
-        session.execute("CREATE KEYSPACE udtNestedTest " +
+        session().execute("CREATE KEYSPACE udtNestedTest " +
                 "WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor': '1'}");
-        session.execute("USE udtNestedTest");
+        session().execute("USE udtNestedTest");
 
         // create UDT
-        session.execute("CREATE TYPE depth_0 (age int, name text)");
+        session().execute("CREATE TYPE depth_0 (age int, name text)");
 
         for (int i = 1; i <= MAX_NESTING_DEPTH; i++) {
-            session.execute(String.format("CREATE TYPE depth_%s (value frozen<depth_%s>)", String.valueOf(i), String.valueOf(i - 1)));
+            session().execute(String.format("CREATE TYPE depth_%s (value frozen<depth_%s>)", String.valueOf(i), String.valueOf(i - 1)));
         }
 
-        session.execute(String.format("CREATE TABLE mytable (a int PRIMARY KEY, b frozen<depth_0>, c frozen<depth_1>, d frozen<depth_2>, e frozen<depth_3>," +
+        session().execute(String.format("CREATE TABLE mytable (a int PRIMARY KEY, b frozen<depth_0>, c frozen<depth_1>, d frozen<depth_2>, e frozen<depth_3>," +
                 "f frozen<depth_%s>)", MAX_NESTING_DEPTH));
 
         // insert UDT data
-        UserType depthZeroDef = cluster.getMetadata().getKeyspace("udtNestedTest").getUserType("depth_0");
+        UserType depthZeroDef = cluster().getMetadata().getKeyspace("udtNestedTest").getUserType("depth_0");
         UDTValue depthZero = depthZeroDef.newValue().setInt("age", 42).setString("name", "Bob");
 
-        UserType depthOneDef = cluster.getMetadata().getKeyspace("udtNestedTest").getUserType("depth_1");
+        UserType depthOneDef = cluster().getMetadata().getKeyspace("udtNestedTest").getUserType("depth_1");
         UDTValue depthOne = depthOneDef.newValue().setUDTValue("value", depthZero);
 
-        UserType depthTwoDef = cluster.getMetadata().getKeyspace("udtNestedTest").getUserType("depth_2");
+        UserType depthTwoDef = cluster().getMetadata().getKeyspace("udtNestedTest").getUserType("depth_2");
         UDTValue depthTwo = depthTwoDef.newValue().setUDTValue("value", depthOne);
 
-        UserType depthThreeDef = cluster.getMetadata().getKeyspace("udtNestedTest").getUserType("depth_3");
+        UserType depthThreeDef = cluster().getMetadata().getKeyspace("udtNestedTest").getUserType("depth_3");
         UDTValue depthThree = depthThreeDef.newValue().setUDTValue("value", depthTwo);
 
-        UserType depthFourDef = cluster.getMetadata().getKeyspace("udtNestedTest").getUserType("depth_4");
+        UserType depthFourDef = cluster().getMetadata().getKeyspace("udtNestedTest").getUserType("depth_4");
         UDTValue depthFour = depthFourDef.newValue().setUDTValue("value", depthThree);
 
-        PreparedStatement ins = session.prepare("INSERT INTO mytable (a, b, c, d, e, f) VALUES (?, ?, ?, ?, ?, ?)");
-        session.execute(ins.bind(0, depthZero, depthOne, depthTwo, depthThree, depthFour));
+        PreparedStatement ins = session().prepare("INSERT INTO mytable (a, b, c, d, e, f) VALUES (?, ?, ?, ?, ?, ?)");
+        session().execute(ins.bind(0, depthZero, depthOne, depthTwo, depthThree, depthFour));
 
         // retrieve and verify data
-        ResultSet rs = session.execute("SELECT * FROM mytable");
+        ResultSet rs = session().execute("SELECT * FROM mytable");
         List<Row> rows = rs.all();
         assertEquals(1, rows.size());
 
@@ -427,23 +427,23 @@ public class UserTypesTest extends CCMTestsSupport {
     @Test(groups = "short")
     public void testUdtsWithNulls() throws Exception {
         // create keyspace
-        session.execute("CREATE KEYSPACE testUdtsWithNulls " +
+        session().execute("CREATE KEYSPACE testUdtsWithNulls " +
                 "WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor': '1'}");
-        session.execute("USE testUdtsWithNulls");
+        session().execute("USE testUdtsWithNulls");
 
         // create UDT
-        session.execute("CREATE TYPE user (a text, b int, c uuid, d blob)");
-        session.execute("CREATE TABLE mytable (a int PRIMARY KEY, b frozen<user>)");
+        session().execute("CREATE TYPE user (a text, b int, c uuid, d blob)");
+        session().execute("CREATE TABLE mytable (a int PRIMARY KEY, b frozen<user>)");
 
         // insert UDT data
-        UserType userTypeDef = cluster.getMetadata().getKeyspace("testUdtsWithNulls").getUserType("user");
+        UserType userTypeDef = cluster().getMetadata().getKeyspace("testUdtsWithNulls").getUserType("user");
         UDTValue userType = userTypeDef.newValue().setString("a", null).setInt("b", 0).setUUID("c", null).setBytes("d", null);
 
-        PreparedStatement ins = session.prepare("INSERT INTO mytable (a, b) VALUES (?, ?)");
-        session.execute(ins.bind(0, userType));
+        PreparedStatement ins = session().prepare("INSERT INTO mytable (a, b) VALUES (?, ?)");
+        session().execute(ins.bind(0, userType));
 
         // retrieve and verify data
-        ResultSet rs = session.execute("SELECT * FROM mytable");
+        ResultSet rs = session().execute("SELECT * FROM mytable");
         List<Row> rows = rs.all();
         assertEquals(1, rows.size());
 
@@ -454,10 +454,10 @@ public class UserTypesTest extends CCMTestsSupport {
 
         // test empty strings
         userType = userTypeDef.newValue().setString("a", "").setInt("b", 0).setUUID("c", null).setBytes("d", ByteBuffer.allocate(0));
-        session.execute(ins.bind(0, userType));
+        session().execute(ins.bind(0, userType));
 
         // retrieve and verify data
-        rs = session.execute("SELECT * FROM mytable");
+        rs = session().execute("SELECT * FROM mytable");
         rows = rs.all();
         assertEquals(1, rows.size());
 
@@ -475,38 +475,38 @@ public class UserTypesTest extends CCMTestsSupport {
     @Test(groups = "short")
     public void testUdtsWithCollectionNulls() throws Exception {
         // create keyspace
-        session.execute("CREATE KEYSPACE testUdtsWithCollectionNulls " +
+        session().execute("CREATE KEYSPACE testUdtsWithCollectionNulls " +
                 "WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor': '1'}");
-        session.execute("USE testUdtsWithCollectionNulls");
+        session().execute("USE testUdtsWithCollectionNulls");
 
         // create UDT
-        session.execute("CREATE TYPE user (a List<text>, b Set<text>, c Map<text, text>, d frozen<Tuple<text>>)");
-        session.execute("CREATE TABLE mytable (a int PRIMARY KEY, b frozen<user>)");
+        session().execute("CREATE TYPE user (a List<text>, b Set<text>, c Map<text, text>, d frozen<Tuple<text>>)");
+        session().execute("CREATE TABLE mytable (a int PRIMARY KEY, b frozen<user>)");
 
         // insert null UDT data
-        PreparedStatement ins = session.prepare("INSERT INTO mytable (a, b) " +
+        PreparedStatement ins = session().prepare("INSERT INTO mytable (a, b) " +
                 "VALUES (0, { a: ?, b: ?, c: ?, d: ? })");
-        session.execute(ins.bind().setList(0, null).setSet(1, null).setMap(2, null).setTupleValue(3, null));
+        session().execute(ins.bind().setList(0, null).setSet(1, null).setMap(2, null).setTupleValue(3, null));
 
         // retrieve and verify data
-        ResultSet rs = session.execute("SELECT * FROM mytable");
+        ResultSet rs = session().execute("SELECT * FROM mytable");
         List<Row> rows = rs.all();
         assertEquals(1, rows.size());
 
         Row row = rows.get(0);
         assertEquals(row.getInt("a"), 0);
 
-        UserType userTypeDef = cluster.getMetadata().getKeyspace("testUdtsWithCollectionNulls").getUserType("user");
+        UserType userTypeDef = cluster().getMetadata().getKeyspace("testUdtsWithCollectionNulls").getUserType("user");
         UDTValue userType = userTypeDef.newValue().setList("a", null).setSet("b", null).setMap("c", null).setTupleValue("d", null);
         assertEquals(row.getUDTValue("b"), userType);
 
         // test missing UDT args
-        ins = session.prepare("INSERT INTO mytable (a, b) " +
+        ins = session().prepare("INSERT INTO mytable (a, b) " +
                 "VALUES (1, { a: ? })");
-        session.execute(ins.bind().setList(0, new ArrayList<Object>()));
+        session().execute(ins.bind().setList(0, new ArrayList<Object>()));
 
         // retrieve and verify data
-        rs = session.execute("SELECT * FROM mytable");
+        rs = session().execute("SELECT * FROM mytable");
         rows = rs.all();
         assertEquals(2, rows.size());
 

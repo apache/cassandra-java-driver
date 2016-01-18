@@ -22,9 +22,6 @@ import com.datastax.driver.core.Row;
 import com.datastax.driver.core.utils.CassandraVersion;
 import org.testng.annotations.Test;
 
-import java.util.Arrays;
-import java.util.Collection;
-
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 
@@ -32,9 +29,9 @@ import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 public class QueryBuilder21ExecutionTest extends CCMTestsSupport {
 
     @Override
-    public Collection<String> createTestFixtures() {
+    public void onTestContextInitialized() {
         // Taken from http://www.datastax.com/dev/blog/cql-in-2-1
-        return Arrays.asList(
+        execute(
                 "CREATE TABLE products (id int PRIMARY KEY, description text, price int, categories set<text>, buyers list<int>, features_keys map<text, text>, features_values map<text, text>)",
                 "CREATE INDEX cat_index ON products(categories)",
                 "CREATE INDEX buyers_index ON products(buyers)",
@@ -51,11 +48,11 @@ public class QueryBuilder21ExecutionTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void should_handle_contains_on_set_with_index() {
-        PreparedStatement byCategory = session.prepare(select("id", "description", "categories")
+        PreparedStatement byCategory = session().prepare(select("id", "description", "categories")
                 .from("products")
                 .where(contains("categories", bindMarker("category"))));
 
-        ResultSet results = session.execute(byCategory.bind().setString("category", "hdtv"));
+        ResultSet results = session().execute(byCategory.bind().setString("category", "hdtv"));
 
         assertThat(results.getAvailableWithoutFetching()).isEqualTo(2);
         for (Row row : results) {
@@ -65,11 +62,11 @@ public class QueryBuilder21ExecutionTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void should_handle_contains_on_list_with_index() {
-        PreparedStatement byBuyer = session.prepare(select("id", "description", "buyers")
+        PreparedStatement byBuyer = session().prepare(select("id", "description", "buyers")
                 .from("products")
                 .where(contains("buyers", bindMarker("buyer"))));
 
-        ResultSet results = session.execute(byBuyer.bind().setInt("buyer", 4));
+        ResultSet results = session().execute(byBuyer.bind().setInt("buyer", 4));
 
         Row row = results.one();
         assertThat(row).isNotNull();
@@ -79,11 +76,11 @@ public class QueryBuilder21ExecutionTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void should_handle_contains_on_map_with_index() {
-        PreparedStatement byFeatures = session.prepare(select("id", "description", "features_values")
+        PreparedStatement byFeatures = session().prepare(select("id", "description", "features_values")
                 .from("products")
                 .where(contains("features_values", bindMarker("feature"))));
 
-        ResultSet results = session.execute(byFeatures.bind().setString("feature", "LED"));
+        ResultSet results = session().execute(byFeatures.bind().setString("feature", "LED"));
 
         Row row = results.one();
         assertThat(row).isNotNull();
@@ -94,11 +91,11 @@ public class QueryBuilder21ExecutionTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void should_handle_contains_key_on_map_with_index() {
-        PreparedStatement byFeatures = session.prepare(select("id", "description", "features_keys")
+        PreparedStatement byFeatures = session().prepare(select("id", "description", "features_keys")
                 .from("products")
                 .where(containsKey("features_keys", bindMarker("feature"))));
 
-        ResultSet results = session.execute(byFeatures.bind().setString("feature", "refresh-rate"));
+        ResultSet results = session().execute(byFeatures.bind().setString("feature", "refresh-rate"));
 
         Row row = results.one();
         assertThat(row).isNotNull();

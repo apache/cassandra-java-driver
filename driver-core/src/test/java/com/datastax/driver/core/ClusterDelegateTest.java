@@ -23,7 +23,7 @@ public class ClusterDelegateTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void should_allow_subclass_to_delegate_to_other_instance() {
-        SimpleDelegatingCluster delegatingCluster = new SimpleDelegatingCluster(cluster);
+        SimpleDelegatingCluster delegatingCluster = new SimpleDelegatingCluster(cluster());
 
         ResultSet rs = delegatingCluster.connect().execute("select * from system.local");
 

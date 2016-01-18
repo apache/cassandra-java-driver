@@ -34,32 +34,32 @@ public class SchemaAgreementTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void should_set_flag_on_successful_agreement() {
-        ProtocolOptions protocolOptions = cluster.getConfiguration().getProtocolOptions();
+        ProtocolOptions protocolOptions = cluster().getConfiguration().getProtocolOptions();
         protocolOptions.maxSchemaAgreementWaitSeconds = 10;
-        ResultSet rs = session.execute(String.format(CREATE_TABLE, COUNTER.getAndIncrement()));
+        ResultSet rs = session().execute(String.format(CREATE_TABLE, COUNTER.getAndIncrement()));
         assertThat(rs.getExecutionInfo().isSchemaInAgreement()).isTrue();
     }
 
     @Test(groups = "short")
     public void should_set_flag_on_non_schema_altering_statement() {
-        ProtocolOptions protocolOptions = cluster.getConfiguration().getProtocolOptions();
+        ProtocolOptions protocolOptions = cluster().getConfiguration().getProtocolOptions();
         protocolOptions.maxSchemaAgreementWaitSeconds = 10;
-        ResultSet rs = session.execute("select release_version from system.local");
+        ResultSet rs = session().execute("select release_version from system.local");
         assertThat(rs.getExecutionInfo().isSchemaInAgreement()).isTrue();
     }
 
     @Test(groups = "short")
     public void should_unset_flag_on_failed_agreement() {
         // Setting to 0 results in no query being set, so agreement fails
-        ProtocolOptions protocolOptions = cluster.getConfiguration().getProtocolOptions();
+        ProtocolOptions protocolOptions = cluster().getConfiguration().getProtocolOptions();
         protocolOptions.maxSchemaAgreementWaitSeconds = 0;
-        ResultSet rs = session.execute(String.format(CREATE_TABLE, COUNTER.getAndIncrement()));
+        ResultSet rs = session().execute(String.format(CREATE_TABLE, COUNTER.getAndIncrement()));
         assertThat(rs.getExecutionInfo().isSchemaInAgreement()).isFalse();
     }
 
     @Test(groups = "short")
     public void should_check_agreement_through_cluster_metadata() {
-        Cluster controlCluster = register(TestUtils.buildControlCluster(cluster, ccm));
+        Cluster controlCluster = register(TestUtils.buildControlCluster(cluster(), ccm()));
         Session controlSession = controlCluster.connect();
 
         Row localRow = controlSession.execute("SELECT schema_version FROM system.local").one();
@@ -71,11 +71,11 @@ public class SchemaAgreementTest extends CCMTestsSupport {
         assertThat(localVersion).isEqualTo(peerVersion);
 
         // Now check the method under test:
-        assertThat(cluster.getMetadata().checkSchemaAgreement()).isTrue();
+        assertThat(cluster().getMetadata().checkSchemaAgreement()).isTrue();
 
         // Insert a fake version to simulate a disagreement:
         forceSchemaVersion(controlSession, peerAddress, UUIDs.random());
-        assertThat(cluster.getMetadata().checkSchemaAgreement()).isFalse();
+        assertThat(cluster().getMetadata().checkSchemaAgreement()).isFalse();
 
         forceSchemaVersion(controlSession, peerAddress, peerVersion);
     }

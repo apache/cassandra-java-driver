@@ -323,13 +323,13 @@ public class TokenAwarePolicyTest extends CCMTestsSupport {
         // given: a 3 node cluster with a keyspace with RF 1.
         Cluster cluster = register(Cluster.builder()
                 .withLoadBalancingPolicy(new TokenAwarePolicy(new RoundRobinPolicy()))
-                .addContactPointsWithPorts(ccm.addressOfNode(1))
-                .withPort(ccm.getBinaryPort())
+                .addContactPoints(getContactPoints().get(0))
+                .withPort(ccm().getBinaryPort())
                 .build());
         Session session = cluster.connect();
 
         String table = "composite";
-        String ks = TestUtils.getAvailableKeyspaceName();
+        String ks = TestUtils.generateIdentifier("ks_");
         session.execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, ks, 1));
         session.execute("USE " + ks);
         session.execute(String.format("CREATE TABLE %s (k1 int, k2 int, i int, PRIMARY KEY ((k1, k2)))", table));

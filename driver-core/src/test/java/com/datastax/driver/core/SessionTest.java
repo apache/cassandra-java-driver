@@ -18,8 +18,6 @@ package com.datastax.driver.core;
 import com.datastax.driver.core.utils.CassandraVersion;
 import org.testng.annotations.Test;
 
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.CountDownLatch;
@@ -41,8 +39,8 @@ public class SessionTest extends CCMTestsSupport {
     private static final String COUNTER_TABLE = "counters";
 
     @Override
-    public Collection<String> createTestFixtures() {
-        return Arrays.asList(String.format(TestUtils.CREATE_TABLE_SIMPLE_FORMAT, TABLE1),
+    public void onTestContextInitialized() {
+        execute(String.format(TestUtils.CREATE_TABLE_SIMPLE_FORMAT, TABLE1),
                 String.format(TestUtils.CREATE_TABLE_SIMPLE_FORMAT, TABLE2),
                 String.format(TestUtils.CREATE_TABLE_SIMPLE_FORMAT, TABLE3),
                 String.format("CREATE TABLE %s (k text PRIMARY KEY, c counter)", COUNTER_TABLE));
@@ -52,16 +50,16 @@ public class SessionTest extends CCMTestsSupport {
     public void executeTest() throws Exception {
         // Simple calls to all versions of the execute/executeAsync methods
         String key = "execute_test";
-        ResultSet rs = session.execute(String.format(Locale.US, TestUtils.INSERT_FORMAT, TABLE1, key, "foo", 42, 24.03f));
+        ResultSet rs = session().execute(String.format(Locale.US, TestUtils.INSERT_FORMAT, TABLE1, key, "foo", 42, 24.03f));
         assertTrue(rs.isExhausted());
 
         // execute
-        checkExecuteResultSet(session.execute(String.format(TestUtils.SELECT_ALL_FORMAT, TABLE1)), key);
-        checkExecuteResultSet(session.execute(new SimpleStatement(String.format(TestUtils.SELECT_ALL_FORMAT, TABLE1)).setConsistencyLevel(ConsistencyLevel.ONE)), key);
+        checkExecuteResultSet(session().execute(String.format(TestUtils.SELECT_ALL_FORMAT, TABLE1)), key);
+        checkExecuteResultSet(session().execute(new SimpleStatement(String.format(TestUtils.SELECT_ALL_FORMAT, TABLE1)).setConsistencyLevel(ConsistencyLevel.ONE)), key);
 
         // executeAsync
-        checkExecuteResultSet(session.executeAsync(String.format(TestUtils.SELECT_ALL_FORMAT, TABLE1)).getUninterruptibly(), key);
-        checkExecuteResultSet(session.executeAsync(new SimpleStatement(String.format(TestUtils.SELECT_ALL_FORMAT, TABLE1)).setConsistencyLevel(ConsistencyLevel.ONE)).getUninterruptibly(), key);
+        checkExecuteResultSet(session().executeAsync(String.format(TestUtils.SELECT_ALL_FORMAT, TABLE1)).getUninterruptibly(), key);
+        checkExecuteResultSet(session().executeAsync(new SimpleStatement(String.format(TestUtils.SELECT_ALL_FORMAT, TABLE1)).setConsistencyLevel(ConsistencyLevel.ONE)).getUninterruptibly(), key);
     }
 
     @Test(groups = "short")
@@ -69,19 +67,19 @@ public class SessionTest extends CCMTestsSupport {
         // Simple calls to all versions of the execute/executeAsync methods for prepared statements
         // Note: the goal is only to exercice the Session methods, PreparedStatementTest have better prepared statement tests.
         String key = "execute_prepared_test";
-        ResultSet rs = session.execute(String.format(Locale.US, TestUtils.INSERT_FORMAT, TABLE2, key, "foo", 42, 24.03f));
+        ResultSet rs = session().execute(String.format(Locale.US, TestUtils.INSERT_FORMAT, TABLE2, key, "foo", 42, 24.03f));
         assertTrue(rs.isExhausted());
 
-        PreparedStatement p = session.prepare(String.format(TestUtils.SELECT_ALL_FORMAT + " WHERE k = ?", TABLE2));
+        PreparedStatement p = session().prepare(String.format(TestUtils.SELECT_ALL_FORMAT + " WHERE k = ?", TABLE2));
         BoundStatement bs = p.bind(key);
 
         // executePrepared
-        checkExecuteResultSet(session.execute(bs), key);
-        checkExecuteResultSet(session.execute(bs.setConsistencyLevel(ConsistencyLevel.ONE)), key);
+        checkExecuteResultSet(session().execute(bs), key);
+        checkExecuteResultSet(session().execute(bs.setConsistencyLevel(ConsistencyLevel.ONE)), key);
 
         // executePreparedAsync
-        checkExecuteResultSet(session.executeAsync(bs).getUninterruptibly(), key);
-        checkExecuteResultSet(session.executeAsync(bs.setConsistencyLevel(ConsistencyLevel.ONE)).getUninterruptibly(), key);
+        checkExecuteResultSet(session().executeAsync(bs).getUninterruptibly(), key);
+        checkExecuteResultSet(session().executeAsync(bs.setConsistencyLevel(ConsistencyLevel.ONE)).getUninterruptibly(), key);
     }
 
     private static void checkExecuteResultSet(ResultSet rs, String key) {
@@ -96,12 +94,12 @@ public class SessionTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void executePreparedCounterTest() throws Exception {
-        PreparedStatement p = session.prepare("UPDATE " + COUNTER_TABLE + " SET c = c + ? WHERE k = ?");
+        PreparedStatement p = session().prepare("UPDATE " + COUNTER_TABLE + " SET c = c + ? WHERE k = ?");
 
-        session.execute(p.bind(1L, "row"));
-        session.execute(p.bind(1L, "row"));
+        session().execute(p.bind(1L, "row"));
+        session().execute(p.bind(1L, "row"));
 
-        ResultSet rs = session.execute("SELECT * FROM " + COUNTER_TABLE);
+        ResultSet rs = session().execute("SELECT * FROM " + COUNTER_TABLE);
         List<Row> rows = rs.all();
         assertEquals(rows.size(), 1);
         assertEquals(rows.get(0).getLong("c"), 2L);
@@ -109,7 +107,7 @@ public class SessionTest extends CCMTestsSupport {
 
     /**
      * Validates that a session can be established using snappy compression and executes some queries that inserts and
-     * retrieves data using that session.
+     * retrieves data using that session().
      *
      * @test_category connection:compression
      * @expected_result session established and queries made successfully using it.
@@ -121,7 +119,7 @@ public class SessionTest extends CCMTestsSupport {
 
     /**
      * Validates that a session can be established using lz4 compression and executes some queries that inserts and
-     * retrieves data using that session.
+     * retrieves data using that session().
      *
      * @test_category connection:compression
      * @expected_result session established and queries made successfully using it.
@@ -133,9 +131,9 @@ public class SessionTest extends CCMTestsSupport {
     }
 
     public void compressionTest(ProtocolOptions.Compression compression) {
-        cluster.getConfiguration().getProtocolOptions().setCompression(compression);
+        cluster().getConfiguration().getProtocolOptions().setCompression(compression);
         try {
-            Session compressedSession = cluster.connect(keyspace);
+            Session compressedSession = cluster().connect(keyspace);
 
             // Simple calls to all versions of the execute/executeAsync methods
             String key = "execute_compressed_test_" + compression;
@@ -153,7 +151,7 @@ public class SessionTest extends CCMTestsSupport {
             checkExecuteResultSet(compressedSession.executeAsync(new SimpleStatement(SELECT_ALL).setConsistencyLevel(ConsistencyLevel.ONE)).getUninterruptibly(), key);
 
         } finally {
-            cluster.getConfiguration().getProtocolOptions().setCompression(ProtocolOptions.Compression.NONE);
+            cluster().getConfiguration().getProtocolOptions().setCompression(ProtocolOptions.Compression.NONE);
         }
     }
 
@@ -167,7 +165,8 @@ public class SessionTest extends CCMTestsSupport {
             // Use our own cluster and session (not the ones provided by the parent class) because we want an uninitialized cluster
             // (note the use of newSession below)
             final Cluster cluster = Cluster.builder()
-                    .addContactPointsWithPorts(getInitialContactPoints())
+                    .addContactPoints(getContactPoints())
+                    .withPort(ccm().getBinaryPort())
                     .withNettyOptions(nonQuietClusterCloseOptions)
                     .build();
             try {

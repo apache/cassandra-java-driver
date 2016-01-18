@@ -20,14 +20,16 @@ import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
 import org.testng.annotations.Test;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.TreeMap;
 
 @SuppressWarnings("unused")
 public class MapperInvalidCollectionTypesTest extends CCMTestsSupport {
 
     @Override
-    public Collection<String> createTestFixtures() {
-        return Arrays.asList(
+    public void onTestContextInitialized() {
+        execute(
                 "CREATE TABLE table_list (id int PRIMARY KEY, l list<int>)",
                 "CREATE TABLE table_set (id int PRIMARY KEY, s set<int>)",
                 "CREATE TABLE table_map (id int PRIMARY KEY, m map<int, int>)");
@@ -107,16 +109,16 @@ public class MapperInvalidCollectionTypesTest extends CCMTestsSupport {
 
     @Test(groups = "short", expectedExceptions = IllegalArgumentException.class)
     public void list_type_is_enforced() {
-        new MappingManager(session).mapper(InvalidList.class);
+        new MappingManager(session()).mapper(InvalidList.class);
     }
 
     @Test(groups = "short", expectedExceptions = IllegalArgumentException.class)
     public void map_type_is_enforced() {
-        new MappingManager(session).mapper(InvalidMap.class);
+        new MappingManager(session()).mapper(InvalidMap.class);
     }
 
     @Test(groups = "short", expectedExceptions = IllegalArgumentException.class)
     public void set_type_is_enforced() {
-        new MappingManager(session).mapper(InvalidSet.class);
+        new MappingManager(session()).mapper(InvalidSet.class);
     }
 }

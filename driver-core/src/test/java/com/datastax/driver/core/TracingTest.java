@@ -18,11 +18,8 @@ package com.datastax.driver.core;
 import com.datastax.driver.core.policies.DowngradingConsistencyRetryPolicy;
 import com.datastax.driver.core.utils.CassandraVersion;
 import com.google.common.util.concurrent.Uninterruptibles;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -40,14 +37,10 @@ public class TracingTest extends CCMTestsSupport {
     }
 
     @Override
-    public Collection<String> createTestFixtures() {
-        return Collections.singletonList("CREATE TABLE test (k text, v int, PRIMARY KEY (k, v))");
-    }
-
-    @BeforeClass(groups = "short")
-    public void initData() {
+    public void onTestContextInitialized() {
+        execute("CREATE TABLE test (k text, v int, PRIMARY KEY (k, v))");
         for (int i = 0; i < 100; i++) {
-            session.execute(String.format("INSERT INTO test (k, v) VALUES ('%s', %d)", KEY, i));
+            execute(String.format("INSERT INTO test (k, v) VALUES ('%s', %d)", KEY, i));
         }
     }
 
@@ -61,7 +54,7 @@ public class TracingTest extends CCMTestsSupport {
     @Test(groups = "short")
     public void should_have_a_different_tracingId_for_each_page() {
         SimpleStatement st = new SimpleStatement(String.format("SELECT v FROM test WHERE k='%s'", KEY));
-        ResultSet result = session.execute(st.setFetchSize(40).enableTracing());
+        ResultSet result = session().execute(st.setFetchSize(40).enableTracing());
         result.all();
         // sleep 10 seconds to make sure the trace will be complete
         Uninterruptibles.sleepUninterruptibly(10, TimeUnit.SECONDS);
@@ -93,7 +86,7 @@ public class TracingTest extends CCMTestsSupport {
         SimpleStatement st = new SimpleStatement(String.format("SELECT v FROM test WHERE k='%s'", KEY));
         st.setConsistencyLevel(ConsistencyLevel.THREE).enableTracing();
 
-        ResultSet result = session.execute(st);
+        ResultSet result = session().execute(st);
         // sleep 10 seconds to make sure the trace will be complete
         Uninterruptibles.sleepUninterruptibly(10, TimeUnit.SECONDS);
 

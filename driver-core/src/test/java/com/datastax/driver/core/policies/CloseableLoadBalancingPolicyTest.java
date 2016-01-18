@@ -30,8 +30,8 @@ public class CloseableLoadBalancingPolicyTest extends CCMTestsSupport {
     @Test(groups = "short")
     public void should_be_invoked_at_shutdown() {
         try {
-            cluster.connect();
-            cluster.close();
+            cluster().connect();
+            cluster().close();
         } finally {
             assertThat(policy.wasClosed).isTrue();
         }
@@ -41,7 +41,7 @@ public class CloseableLoadBalancingPolicyTest extends CCMTestsSupport {
     public Cluster.Builder createClusterBuilder() {
         policy = new CloseMonitoringPolicy(Policies.defaultLoadBalancingPolicy());
         return Cluster.builder()
-                .addContactPoints(ccm.addressOfNode(1).getAddress())
+                .addContactPoints(getContactPoints().get(0))
                 .withLoadBalancingPolicy(policy);
     }
 

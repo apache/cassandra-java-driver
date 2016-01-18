@@ -18,11 +18,8 @@ package com.datastax.driver.core;
 import com.datastax.driver.core.Metrics.Errors;
 import com.datastax.driver.core.policies.DowngradingConsistencyRetryPolicy;
 import com.datastax.driver.core.utils.CassandraVersion;
-import com.google.common.collect.Lists;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import java.util.Collection;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
@@ -33,12 +30,12 @@ import static org.testng.Assert.assertTrue;
 @CassandraVersion(major = 2.1)
 public class QueryTimestampTest extends CCMTestsSupport {
 
-    @Override
-    public Collection<String> createTestFixtures() {
-        return Lists.newArrayList("CREATE TABLE foo (k int PRIMARY KEY, v int)");
-    }
-
     private volatile long timestampFromGenerator;
+
+    @Override
+    public void onTestContextInitialized() {
+        execute("CREATE TABLE foo (k int PRIMARY KEY, v int)");
+    }
 
     @Override
     public Cluster.Builder createClusterBuilder() {
@@ -54,16 +51,16 @@ public class QueryTimestampTest extends CCMTestsSupport {
 
     @BeforeMethod(groups = "short")
     public void cleanData() {
-        session.execute("TRUNCATE foo");
+        session().execute("TRUNCATE foo");
     }
 
     @Test(groups = "short")
     public void should_use_CQL_timestamp_over_anything_else() {
         timestampFromGenerator = 10;
         String query = "INSERT INTO foo (k, v) VALUES (1, 1) USING TIMESTAMP 20";
-        session.execute(new SimpleStatement(query).setDefaultTimestamp(30));
+        session().execute(new SimpleStatement(query).setDefaultTimestamp(30));
 
-        long writeTime = session.execute("SELECT writeTime(v) FROM foo WHERE k = 1").one().getLong(0);
+        long writeTime = session().execute("SELECT writeTime(v) FROM foo WHERE k = 1").one().getLong(0);
         assertEquals(writeTime, 20);
     }
 
@@ -71,9 +68,9 @@ public class QueryTimestampTest extends CCMTestsSupport {
     public void should_use_statement_timestamp_over_generator() {
         timestampFromGenerator = 10;
         String query = "INSERT INTO foo (k, v) VALUES (1, 1)";
-        session.execute(new SimpleStatement(query).setDefaultTimestamp(30));
+        session().execute(new SimpleStatement(query).setDefaultTimestamp(30));
 
-        long writeTime = session.execute("SELECT writeTime(v) FROM foo WHERE k = 1").one().getLong(0);
+        long writeTime = session().execute("SELECT writeTime(v) FROM foo WHERE k = 1").one().getLong(0);
         assertEquals(writeTime, 30);
     }
 
@@ -81,9 +78,9 @@ public class QueryTimestampTest extends CCMTestsSupport {
     public void should_use_generator_timestamp_if_none_other_specified() {
         timestampFromGenerator = 10;
         String query = "INSERT INTO foo (k, v) VALUES (1, 1)";
-        session.execute(query);
+        session().execute(query);
 
-        long writeTime = session.execute("SELECT writeTime(v) FROM foo WHERE k = 1").one().getLong(0);
+        long writeTime = session().execute("SELECT writeTime(v) FROM foo WHERE k = 1").one().getLong(0);
         assertEquals(writeTime, 10);
     }
 
@@ -92,9 +89,9 @@ public class QueryTimestampTest extends CCMTestsSupport {
         timestampFromGenerator = Long.MIN_VALUE;
         long clientTime = System.currentTimeMillis() * 1000;
         String query = "INSERT INTO foo (k, v) VALUES (1, 1)";
-        session.execute(query);
+        session().execute(query);
 
-        long writeTime = session.execute("SELECT writeTime(v) FROM foo WHERE k = 1").one().getLong(0);
+        long writeTime = session().execute("SELECT writeTime(v) FROM foo WHERE k = 1").one().getLong(0);
         assertTrue(writeTime >= clientTime);
     }
 
@@ -104,10 +101,10 @@ public class QueryTimestampTest extends CCMTestsSupport {
         batch.add(new SimpleStatement("INSERT INTO foo (k, v) VALUES (1, 1)"));
         batch.add(new SimpleStatement("INSERT INTO foo (k, v) VALUES (2, 1) USING TIMESTAMP 20"));
         batch.setDefaultTimestamp(10);
-        session.execute(batch);
+        session().execute(batch);
 
-        long writeTime1 = session.execute("SELECT writeTime(v) FROM foo WHERE k = 1").one().getLong(0);
-        long writeTime2 = session.execute("SELECT writeTime(v) FROM foo WHERE k = 2").one().getLong(0);
+        long writeTime1 = session().execute("SELECT writeTime(v) FROM foo WHERE k = 1").one().getLong(0);
+        long writeTime2 = session().execute("SELECT writeTime(v) FROM foo WHERE k = 2").one().getLong(0);
         assertEquals(writeTime1, 10);
         assertEquals(writeTime2, 20);
     }
@@ -118,10 +115,10 @@ public class QueryTimestampTest extends CCMTestsSupport {
         BatchStatement batch = new BatchStatement();
         batch.add(new SimpleStatement("INSERT INTO foo (k, v) VALUES (1, 1)"));
         batch.add(new SimpleStatement("INSERT INTO foo (k, v) VALUES (2, 1) USING TIMESTAMP 20"));
-        session.execute(batch);
+        session().execute(batch);
 
-        long writeTime1 = session.execute("SELECT writeTime(v) FROM foo WHERE k = 1").one().getLong(0);
-        long writeTime2 = session.execute("SELECT writeTime(v) FROM foo WHERE k = 2").one().getLong(0);
+        long writeTime1 = session().execute("SELECT writeTime(v) FROM foo WHERE k = 1").one().getLong(0);
+        long writeTime2 = session().execute("SELECT writeTime(v) FROM foo WHERE k = 2").one().getLong(0);
         assertEquals(writeTime1, 10);
         assertEquals(writeTime2, 20);
     }
@@ -133,10 +130,10 @@ public class QueryTimestampTest extends CCMTestsSupport {
         BatchStatement batch = new BatchStatement();
         batch.add(new SimpleStatement("INSERT INTO foo (k, v) VALUES (1, 1)"));
         batch.add(new SimpleStatement("INSERT INTO foo (k, v) VALUES (2, 1) USING TIMESTAMP 20"));
-        session.execute(batch);
+        session().execute(batch);
 
-        long writeTime1 = session.execute("SELECT writeTime(v) FROM foo WHERE k = 1").one().getLong(0);
-        long writeTime2 = session.execute("SELECT writeTime(v) FROM foo WHERE k = 2").one().getLong(0);
+        long writeTime1 = session().execute("SELECT writeTime(v) FROM foo WHERE k = 1").one().getLong(0);
+        long writeTime2 = session().execute("SELECT writeTime(v) FROM foo WHERE k = 2").one().getLong(0);
         assertTrue(writeTime1 >= clientTime);
         assertEquals(writeTime2, 20);
     }
@@ -149,12 +146,12 @@ public class QueryTimestampTest extends CCMTestsSupport {
         // will retry it at ONE.
         statement.setConsistencyLevel(ConsistencyLevel.TWO);
 
-        session.execute(statement);
+        session().execute(statement);
 
-        Errors metrics = session.getCluster().getMetrics().getErrorMetrics();
+        Errors metrics = session().getCluster().getMetrics().getErrorMetrics();
         assertEquals(metrics.getRetriesOnUnavailable().getCount(), 1);
 
-        long writeTime = session.execute("SELECT writeTime(v) FROM foo WHERE k = 1").one().getLong(0);
+        long writeTime = session().execute("SELECT writeTime(v) FROM foo WHERE k = 1").one().getLong(0);
         assertEquals(writeTime, 10);
     }
 }

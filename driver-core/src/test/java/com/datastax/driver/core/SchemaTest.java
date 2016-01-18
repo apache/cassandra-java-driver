@@ -36,7 +36,7 @@ public class SchemaTest extends CCMTestsSupport {
     private static String withOptions;
 
     @Override
-    public Collection<String> createTestFixtures() {
+    public void onTestContextInitialized() {
 
         String sparse = String.format("CREATE TABLE %s.sparse (\n"
                 + "    k text,\n"
@@ -131,7 +131,7 @@ public class SchemaTest extends CCMTestsSupport {
         allDefs.addAll(cql3.values());
         allDefs.addAll(compact.values());
         allDefs.add(withOptions);
-        return allDefs;
+        execute(allDefs);
     }
 
     private static String stripOptions(String def, boolean keepFirst) {
@@ -149,7 +149,7 @@ public class SchemaTest extends CCMTestsSupport {
     @Test(groups = "short")
     public void schemaExportTest() {
 
-        KeyspaceMetadata metadata = cluster.getMetadata().getKeyspace(keyspace);
+        KeyspaceMetadata metadata = cluster().getMetadata().getKeyspace(keyspace);
 
         for (Map.Entry<String, String> tableEntry : cql3.entrySet()) {
             String table = tableEntry.getKey();
@@ -167,10 +167,10 @@ public class SchemaTest extends CCMTestsSupport {
     // Same remark as the preceding test
     @Test(groups = "short")
     public void schemaExportOptionsTest() {
-        TableMetadata metadata = cluster.getMetadata().getKeyspace(keyspace).getTable("with_options");
+        TableMetadata metadata = cluster().getMetadata().getKeyspace(keyspace).getTable("with_options");
 
         String withOpts = withOptions;
-        VersionNumber version = TestUtils.findHost(cluster, 1).getCassandraVersion();
+        VersionNumber version = TestUtils.findHost(cluster(), 1).getCassandraVersion();
 
         if (version.getMajor() == 2) {
             // Strip the last ';'

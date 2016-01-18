@@ -21,17 +21,14 @@ import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
 import org.testng.annotations.Test;
 
-import java.util.Collection;
-import java.util.Collections;
-
 /**
  * Tests for the mapper with composite partition keys and multiple clustering columns.
  */
 public class MapperCompositeKeyTest extends CCMTestsSupport {
 
     @Override
-    public Collection<String> createTestFixtures() {
-        return Collections.singletonList("CREATE TABLE test_table (pk1 int, pk2 int, cc1 int, cc2 int, PRIMARY KEY ((pk1, pk2), cc1, cc2))");
+    public void onTestContextInitialized() {
+        execute("CREATE TABLE test_table (pk1 int, pk2 int, cc1 int, cc2 int, PRIMARY KEY ((pk1, pk2), cc1, cc2))");
     }
 
     @SuppressWarnings("unused")
@@ -84,6 +81,6 @@ public class MapperCompositeKeyTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void testCreateMapper() throws Exception {
-        new MappingManager(session).mapper(TestTable.class);
+        new MappingManager(session()).mapper(TestTable.class);
     }
 }

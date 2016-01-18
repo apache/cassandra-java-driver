@@ -56,15 +56,15 @@ public class SchemaChangesCCTest extends CCMTestsSupport {
         Cluster cluster = register(
                 Cluster.builder()
                         .withLoadBalancingPolicy(lbPolicy)
-                        .addContactPointsWithPorts(ccm.addressOfNode(1))
-                        .withPort(ccm.getBinaryPort())
+                        .addContactPointsWithPorts(ccm().addressOfNode(1))
+                        .withPort(ccm().getBinaryPort())
                         .build());
         // Put cluster2 control connection on node 2 so it doesn't go down (to prevent noise for debugging).
         Cluster cluster2 = register(
                 Cluster.builder()
                         .withLoadBalancingPolicy(lbPolicy)
-                        .addContactPointsWithPorts(ccm.addressOfNode(2))
-                        .withPort(ccm.getBinaryPort())
+                        .addContactPointsWithPorts(ccm().addressOfNode(2))
+                        .withPort(ccm().getBinaryPort())
                         .build());
         SchemaChangeListener listener = mock(SchemaChangeListener.class);
 
@@ -93,7 +93,7 @@ public class SchemaChangesCCTest extends CCMTestsSupport {
         lbPolicy.returnEmptyQueryPlan = true;
 
         // Stop node 1, which hosts the control connection.
-        ccm.stop(1);
+        ccm().stop(1);
         assertThat(cluster).host(1).goesDownWithin(20, TimeUnit.SECONDS);
 
         // Ensure control connection is down.

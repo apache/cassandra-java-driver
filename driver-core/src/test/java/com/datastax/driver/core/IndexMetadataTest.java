@@ -23,7 +23,6 @@ import com.google.common.primitives.Ints;
 import org.testng.annotations.Test;
 
 import java.nio.ByteBuffer;
-import java.util.Collection;
 import java.util.List;
 
 import static com.datastax.driver.core.Assertions.assertThat;
@@ -49,7 +48,7 @@ public class IndexMetadataTest extends CCMTestsSupport {
     });
 
     @Override
-    public Collection<String> createTestFixtures() {
+    public void onTestContextInitialized() {
         String createTable = "CREATE TABLE indexing ("
                 + "id int primary key,"
                 + "map_values map<text, int>,"
@@ -58,21 +57,21 @@ public class IndexMetadataTest extends CCMTestsSupport {
                 + "text_column text"
                 +
                 // Frozen collections was introduced only in C* 2.1.3
-                (ccm.getVersion().compareTo(VersionNumber.parse("2.1.3")) >= 0
+                (ccm().getVersion().compareTo(VersionNumber.parse("2.1.3")) >= 0
                         ?
                         ", map_full frozen<map<text, int>>,"
                                 + "set_full frozen<set<text>>,"
                                 + "list_full frozen<list<text>>);"
                         :
                         ")");
-        return ImmutableList.of(createTable);
+        execute(createTable);
     }
 
     @Test(
             groups = "short")
     public void should_not_flag_text_column_index_type() {
         String createValuesIndex = String.format("CREATE INDEX text_column_index ON %s.indexing (text_column);", keyspace);
-        session.execute(createValuesIndex);
+        session().execute(createValuesIndex);
         IndexMetadata index = getIndexForColumn("text_column");
         assertThat(index).hasName("text_column_index")
                 .isNotKeys()
@@ -88,7 +87,7 @@ public class IndexMetadataTest extends CCMTestsSupport {
             major = 2.1)
     public void should_not_flag_map_index_type() {
         String createValuesIndex = String.format("CREATE INDEX map_values_index ON %s.indexing (map_values);", keyspace);
-        session.execute(createValuesIndex);
+        session().execute(createValuesIndex);
         IndexMetadata index = getIndexForColumn("map_values");
         assertThat(index).hasName("map_values_index")
                 .isNotKeys()
@@ -104,7 +103,7 @@ public class IndexMetadataTest extends CCMTestsSupport {
             major = 2.1)
     public void should_flag_map_index_type_as_keys() {
         String createKeysIndex = String.format("CREATE INDEX map_keys_index ON %s.indexing (KEYS(map_keys));", keyspace);
-        session.execute(createKeysIndex);
+        session().execute(createKeysIndex);
         IndexMetadata index = getIndexForColumn("map_keys");
         assertThat(index).hasName("map_keys_index")
                 .isKeys()
@@ -121,7 +120,7 @@ public class IndexMetadataTest extends CCMTestsSupport {
             minor = 3)
     public void should_flag_map_index_type_as_full() {
         String createFullIndex = String.format("CREATE INDEX map_full_index ON %s.indexing (FULL(map_full));", keyspace);
-        session.execute(createFullIndex);
+        session().execute(createFullIndex);
         IndexMetadata index = getIndexForColumn("map_full");
         assertThat(index).hasName("map_full_index")
                 .isNotKeys()
@@ -138,7 +137,7 @@ public class IndexMetadataTest extends CCMTestsSupport {
             minor = 3)
     public void should_flag_set_index_type_as_full() {
         String createFullIndex = String.format("CREATE INDEX set_full_index ON %s.indexing (FULL(set_full));", keyspace);
-        session.execute(createFullIndex);
+        session().execute(createFullIndex);
         IndexMetadata index = getIndexForColumn("set_full");
         assertThat(index).hasName("set_full_index")
                 .isNotKeys()
@@ -155,7 +154,7 @@ public class IndexMetadataTest extends CCMTestsSupport {
             minor = 3)
     public void should_flag_list_index_type_as_full() {
         String createFullIndex = String.format("CREATE INDEX list_full_index ON %s.indexing (FULL(list_full));", keyspace);
-        session.execute(createFullIndex);
+        session().execute(createFullIndex);
         IndexMetadata index = getIndexForColumn("list_full");
         assertThat(index).hasName("list_full_index")
                 .isNotKeys()
@@ -171,7 +170,7 @@ public class IndexMetadataTest extends CCMTestsSupport {
             major = 3.0)
     public void should_flag_map_index_type_as_entries() {
         String createEntriesIndex = String.format("CREATE INDEX map_entries_index ON %s.indexing (ENTRIES(map_entries));", keyspace);
-        session.execute(createEntriesIndex);
+        session().execute(createEntriesIndex);
         IndexMetadata index = getIndexForColumn("map_entries");
         assertThat(index).hasName("map_entries_index")
                 .isNotKeys()
@@ -265,7 +264,7 @@ public class IndexMetadataTest extends CCMTestsSupport {
     }
 
     private TableMetadata getTable(String name) {
-        return cluster.getMetadata().getKeyspace(keyspace).getTable(name);
+        return cluster().getMetadata().getKeyspace(keyspace).getTable(name);
     }
 
 }

@@ -21,12 +21,10 @@ import com.datastax.driver.core.exceptions.UnavailableException;
 import com.datastax.driver.core.utils.CassandraVersion;
 import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
-import com.google.common.collect.Lists;
 import org.testng.SkipException;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.util.Collection;
 import java.util.concurrent.ExecutionException;
 
 import static com.datastax.driver.core.ConsistencyLevel.*;
@@ -42,14 +40,14 @@ public class MapperOptionTest extends CCMTestsSupport {
     Mapper<User> mapper;
 
     @Override
-    public Collection<String> createTestFixtures() {
-        return Lists.newArrayList("CREATE TABLE user (key int primary key, v text)");
+    public void onTestContextInitialized() {
+        execute("CREATE TABLE user (key int primary key, v text)");
     }
 
     @BeforeMethod(groups = "short")
     public void setup() {
-        mapper = new MappingManager(session).mapper(User.class);
-        protocolVersion = cluster.getConfiguration().getProtocolOptions().getProtocolVersionEnum();
+        mapper = new MappingManager(session()).mapper(User.class);
+        protocolVersion = cluster().getConfiguration().getProtocolOptions().getProtocolVersionEnum();
     }
 
     @Test(groups = "short")
@@ -58,7 +56,7 @@ public class MapperOptionTest extends CCMTestsSupport {
         Long tsValue = futureTimestamp();
         mapper.save(new User(42, "helloworld"), Option.timestamp(tsValue), Option.tracing(true));
         assertThat(mapper.get(42).getV()).isEqualTo("helloworld");
-        Long tsReturned = session.execute("SELECT writetime(v) FROM user WHERE key=" + 42).one().getLong(0);
+        Long tsReturned = session().execute("SELECT writetime(v) FROM user WHERE key=" + 42).one().getLong(0);
         assertThat(tsReturned).isEqualTo(tsValue);
     }
 
@@ -83,7 +81,7 @@ public class MapperOptionTest extends CCMTestsSupport {
         assertThat(bs.isTracing()).isTrue();
         assertThat(bs.getConsistencyLevel()).isEqualTo(ALL);
 
-        ResultSet rs = session.execute(bs);
+        ResultSet rs = session().execute(bs);
         assertThat(rs.getExecutionInfo().getQueryTrace()).isNotNull();
         User us = mapper.mapAliased(rs).one();
         assertThat(us.getV()).isEqualTo("toget");
@@ -97,7 +95,7 @@ public class MapperOptionTest extends CCMTestsSupport {
         Long tsValue = futureTimestamp();
         mapper.save(new User(43, "helloworld"), Option.timestamp(tsValue));
         mapper.save(new User(44, "test"));
-        Long tsReturned = session.execute("SELECT writetime(v) FROM user WHERE key=" + 44).one().getLong(0);
+        Long tsReturned = session().execute("SELECT writetime(v) FROM user WHERE key=" + 44).one().getLong(0);
         // Assuming we cannot go back in time (yet) and execute the write at ts=1
         assertThat(tsReturned).isNotEqualTo(tsValue);
     }
@@ -165,7 +163,7 @@ public class MapperOptionTest extends CCMTestsSupport {
         mapper.setDefaultSaveOptions(Option.timestamp(defaultTimestamp));
 
         mapper.save(new User(42, "helloworld"), Option.timestamp(explicitTimestamp));
-        Long savedTimestamp = session.execute("SELECT writetime(v) FROM user WHERE key=" + 42).one().getLong(0);
+        Long savedTimestamp = session().execute("SELECT writetime(v) FROM user WHERE key=" + 42).one().getLong(0);
         assertThat(savedTimestamp).isEqualTo(explicitTimestamp);
     }
 
@@ -186,7 +184,7 @@ public class MapperOptionTest extends CCMTestsSupport {
         assertThat(getWriteTime(user.getKey())).isEqualTo(timestamp);
         mapper.delete(user.getKey());
 
-        session.execute(mapper.saveQuery(user, Option.timestamp(timestamp)));
+        session().execute(mapper.saveQuery(user, Option.timestamp(timestamp)));
         assertThat(getWriteTime(user.getKey())).isEqualTo(timestamp);
         mapper.delete(user.getKey());
 
@@ -201,13 +199,13 @@ public class MapperOptionTest extends CCMTestsSupport {
         assertThat(getWriteTime(user.getKey())).isEqualTo(timestamp);
         mapper.delete(user.getKey());
 
-        session.execute(mapper.saveQuery(user));
+        session().execute(mapper.saveQuery(user));
         assertThat(getWriteTime(user.getKey())).isEqualTo(timestamp);
         mapper.delete(user.getKey());
     }
 
     private Long getWriteTime(int key) {
-        Row row = session.execute("SELECT writetime(v) FROM user WHERE key=" + key).one();
+        Row row = session().execute("SELECT writetime(v) FROM user WHERE key=" + key).one();
         return row.getLong(0);
     }
 

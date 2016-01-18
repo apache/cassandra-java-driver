@@ -41,8 +41,8 @@ public abstract class SSLTestBase extends CCMTestsSupport {
      */
     protected void connectWithSSLOptions(SSLOptions sslOptions) throws Exception {
         Cluster cluster = register(Cluster.builder()
-                .addContactPointsWithPorts(this.getInitialContactPoints())
-                .withPort(ccm.getBinaryPort())
+                .addContactPoints(getContactPoints())
+                .withPort(ccm().getBinaryPort())
                 .withSSL(sslOptions)
                 .build());
         cluster.connect();
@@ -59,8 +59,8 @@ public abstract class SSLTestBase extends CCMTestsSupport {
      */
     protected void connectWithSSL() throws Exception {
         Cluster cluster = register(Cluster.builder()
-                .addContactPointsWithPorts(this.getInitialContactPoints())
-                .withPort(ccm.getBinaryPort())
+                .addContactPoints(getContactPoints())
+                .withPort(ccm().getBinaryPort())
                 .withSSL()
                 .build());
         cluster.connect();

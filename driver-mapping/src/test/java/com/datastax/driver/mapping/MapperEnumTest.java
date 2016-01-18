@@ -19,10 +19,7 @@ import com.datastax.driver.core.CCMTestsSupport;
 import com.datastax.driver.mapping.annotations.Enumerated;
 import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
-import com.google.common.collect.Lists;
 import org.testng.annotations.Test;
-
-import java.util.Collection;
 
 import static org.junit.Assert.assertNull;
 
@@ -33,8 +30,8 @@ import static org.junit.Assert.assertNull;
 public class MapperEnumTest extends CCMTestsSupport {
 
     @Override
-    public Collection<String> createTestFixtures() {
-        return Lists.newArrayList("CREATE TABLE asOrdinal (k int primary key, v int)",
+    public void onTestContextInitialized() {
+        execute("CREATE TABLE asOrdinal (k int primary key, v int)",
                 "CREATE TABLE asString (k int primary key, v text)");
     }
 
@@ -44,7 +41,7 @@ public class MapperEnumTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void should_handle_null_enum_as_ordinal() {
-        Mapper<AsOrdinal> mapper = new MappingManager(session).mapper(AsOrdinal.class);
+        Mapper<AsOrdinal> mapper = new MappingManager(session()).mapper(AsOrdinal.class);
 
         mapper.save(new AsOrdinal(1, null));
         AsOrdinal o = mapper.get(1);
@@ -54,7 +51,7 @@ public class MapperEnumTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void should_handle_null_enum_as_string() {
-        Mapper<AsString> mapper = new MappingManager(session).mapper(AsString.class);
+        Mapper<AsString> mapper = new MappingManager(session()).mapper(AsString.class);
 
         mapper.save(new AsString(1, null));
         AsString o = mapper.get(1);

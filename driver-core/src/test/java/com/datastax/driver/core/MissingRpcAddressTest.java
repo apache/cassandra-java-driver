@@ -42,22 +42,22 @@ public class MissingRpcAddressTest extends CCMTestsSupport {
         deleteNode2RpcAddressFromNode1();
         // Use only one contact point to make sure that the control connection is on node1
         Cluster cluster = register(Cluster.builder()
-                .addContactPoints(ccm.addressOfNode(1).getAddress())
-                .withPort(ccm.getBinaryPort())
+                .addContactPoints(getContactPoints().get(0))
+                .withPort(ccm().getBinaryPort())
                 .build());
         cluster.connect();
 
         // Since node2's RPC address is unknown on our control host, it should have been ignored
         assertEquals(cluster.getMetrics().getConnectedToHosts().getValue().intValue(), 1);
-        assertNull(cluster.getMetadata().getHost(getInitialContactPoints().get(1)));
+        assertNull(cluster.getMetadata().getHost(getContactPointsWithPorts().get(1)));
     }
 
     // Artificially modify the system tables to simulate the missing rpc_address.
     private void deleteNode2RpcAddressFromNode1() throws Exception {
-        InetSocketAddress firstHost = ccm.addressOfNode(1);
+        InetSocketAddress firstHost = ccm().addressOfNode(1);
         Cluster cluster = register(Cluster.builder()
                 .addContactPointsWithPorts(singleton(firstHost))
-                .withPort(ccm.getBinaryPort())
+                .withPort(ccm().getBinaryPort())
                 // ensure we will only connect to node1
                 .withLoadBalancingPolicy(new WhiteListPolicy(Policies.defaultLoadBalancingPolicy(),
                         Lists.newArrayList(firstHost)))

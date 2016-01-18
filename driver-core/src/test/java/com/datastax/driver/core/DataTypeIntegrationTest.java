@@ -45,10 +45,9 @@ public class DataTypeIntegrationTest extends CCMTestsSupport {
     enum StatementType {RAW_STRING, SIMPLE_WITH_PARAM, PREPARED}
 
     @Override
-    public Collection<String> createTestFixtures() {
-        Host host = cluster.getMetadata().getAllHosts().iterator().next();
+    public void onTestContextInitialized() {
+        Host host = cluster().getMetadata().getAllHosts().iterator().next();
         cassandraVersion = host.getCassandraVersion().nextStable();
-
         List<String> statements = Lists.newArrayList();
         for (TestTable table : tables) {
             if (cassandraVersion.compareTo(table.minCassandraVersion) < 0)
@@ -57,8 +56,7 @@ public class DataTypeIntegrationTest extends CCMTestsSupport {
             else
                 statements.add(table.createStatement);
         }
-
-        return statements;
+        execute(statements);
     }
 
     @Test(groups = "long")
@@ -78,7 +76,7 @@ public class DataTypeIntegrationTest extends CCMTestsSupport {
     }
 
     protected void should_insert_and_retrieve_data(StatementType statementType) {
-        ProtocolVersion protocolVersion = cluster.getConfiguration().getProtocolOptions().getProtocolVersionEnum();
+        ProtocolVersion protocolVersion = cluster().getConfiguration().getProtocolOptions().getProtocolVersionEnum();
 
         for (TestTable table : tables) {
             if (cassandraVersion.compareTo(table.minCassandraVersion) < 0)
@@ -86,20 +84,20 @@ public class DataTypeIntegrationTest extends CCMTestsSupport {
 
             switch (statementType) {
                 case RAW_STRING:
-                    session.execute(table.insertStatement.replace("?", table.testColumnType.format(table.sampleValue)));
+                    session().execute(table.insertStatement.replace("?", table.testColumnType.format(table.sampleValue)));
                     break;
                 case SIMPLE_WITH_PARAM:
-                    session.execute(table.insertStatement, table.sampleValue);
+                    session().execute(table.insertStatement, table.sampleValue);
                     break;
                 case PREPARED:
-                    PreparedStatement ps = session.prepare(table.insertStatement);
+                    PreparedStatement ps = session().prepare(table.insertStatement);
                     BoundStatement bs = ps.bind(table.sampleValue);
                     checkGetterReturnsBoundValue(bs, table);
-                    session.execute(bs);
+                    session().execute(bs);
                     break;
             }
 
-            Row row = session.execute(table.selectStatement).one();
+            Row row = session().execute(table.selectStatement).one();
             Object queriedValue = table.testColumnType.deserialize(row.getBytesUnsafe("v"), protocolVersion);
 
             assertThat(queriedValue)
@@ -110,7 +108,7 @@ public class DataTypeIntegrationTest extends CCMTestsSupport {
                             table.insertStatement)
                     .isEqualTo(table.sampleValue);
 
-            session.execute(table.truncateStatement);
+            session().execute(table.truncateStatement);
         }
     }
 

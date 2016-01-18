@@ -19,9 +19,6 @@ import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
 import com.datastax.driver.core.utils.CassandraVersion;
 import org.testng.annotations.Test;
 
-import java.util.Collection;
-import java.util.Collections;
-
 import static com.datastax.driver.core.CreateCCM.TestMode.PER_METHOD;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
@@ -30,14 +27,14 @@ import static org.testng.Assert.assertTrue;
 public class BatchStatementTest extends CCMTestsSupport {
 
     @Override
-    public Collection<String> createTestFixtures() {
-        return Collections.singletonList("CREATE TABLE test (k text, v int, PRIMARY KEY (k, v))");
+    public void onTestContextInitialized() {
+        execute("CREATE TABLE test (k text, v int, PRIMARY KEY (k, v))");
     }
 
     @Test(groups = "short")
     public void simpleBatchTest() {
         try {
-            PreparedStatement st = session.prepare("INSERT INTO test (k, v) VALUES (?, ?)");
+            PreparedStatement st = session().prepare("INSERT INTO test (k, v) VALUES (?, ?)");
 
             BatchStatement batch = new BatchStatement();
 
@@ -47,9 +44,9 @@ public class BatchStatementTest extends CCMTestsSupport {
 
             assertEquals(3, batch.size());
 
-            session.execute(batch);
+            session().execute(batch);
 
-            ResultSet rs = session.execute("SELECT * FROM test");
+            ResultSet rs = session().execute("SELECT * FROM test");
 
             Row r;
 
@@ -69,14 +66,14 @@ public class BatchStatementTest extends CCMTestsSupport {
 
         } catch (UnsupportedFeatureException e) {
             // This is expected when testing the protocol v1
-            assertEquals(cluster.getConfiguration().getProtocolOptions().getProtocolVersionEnum(), ProtocolVersion.V1);
+            assertEquals(cluster().getConfiguration().getProtocolOptions().getProtocolVersionEnum(), ProtocolVersion.V1);
         }
     }
 
     @Test(groups = "short")
     @CassandraVersion(major = 2.0, minor = 9, description = "This will only work with C* 2.0.9 (CASSANDRA-7337)")
     public void casBatchTest() {
-        PreparedStatement st = session.prepare("INSERT INTO test (k, v) VALUES (?, ?) IF NOT EXISTS");
+        PreparedStatement st = session().prepare("INSERT INTO test (k, v) VALUES (?, ?) IF NOT EXISTS");
 
         BatchStatement batch = new BatchStatement();
 
@@ -86,12 +83,12 @@ public class BatchStatementTest extends CCMTestsSupport {
 
         assertEquals(3, batch.size());
 
-        ResultSet rs = session.execute(batch);
+        ResultSet rs = session().execute(batch);
         Row r = rs.one();
         assertTrue(!r.isNull("[applied]"));
         assertEquals(r.getBool("[applied]"), true);
 
-        rs = session.execute(batch);
+        rs = session().execute(batch);
         r = rs.one();
         assertTrue(!r.isNull("[applied]"));
         assertEquals(r.getBool("[applied]"), false);

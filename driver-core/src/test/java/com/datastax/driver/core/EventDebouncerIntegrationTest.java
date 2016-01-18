@@ -44,8 +44,8 @@ public class EventDebouncerIntegrationTest extends CCMTestsSupport {
     public void should_wait_until_load_balancing_policy_is_fully_initialized() throws InterruptedException {
         TestLoadBalancingPolicy policy = new TestLoadBalancingPolicy();
         final Cluster cluster = register(createClusterBuilderNoDebouncing()
-                .addContactPoints(ccm.addressOfNode(1).getAddress())
-                .withPort(ccm.getBinaryPort())
+                .addContactPoints(getContactPoints().get(0))
+                .withPort(ccm().getBinaryPort())
                 .withLoadBalancingPolicy(policy).build());
         new Thread() {
             @Override
@@ -59,8 +59,8 @@ public class EventDebouncerIntegrationTest extends CCMTestsSupport {
         // because the debouncers are not started
         // note: a graceful stop notify other nodes which send a topology change event to the driver right away
         // while forceStop kills the node so other nodes take much more time to detect node failure
-        ccm.stop(3);
-        ccm.waitForDown(3);
+        ccm().stop(3);
+        ccm().waitForDown(3);
         // finish cluster initialization and deliver the DOWN event
         policy.proceed();
         assertThat(policy.onDownCalledBeforeInit).isFalse();
