@@ -30,6 +30,7 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.net.InetSocketAddress;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.datastax.driver.core.TestUtils.executeNoFail;
@@ -382,10 +383,10 @@ public class CCMBridge implements CCMAccess {
         if (started)
             return;
         if (logger.isDebugEnabled())
-            logger.debug("Starting: {} - free memory: {}", this, TestUtils.getFreeMemoryMB());
+            logger.debug("Starting: {} - free memory: {} MB", this, TestUtils.getFreeMemoryMB());
         execute(CCM_COMMAND + " start --wait-other-notice --wait-for-binary-proto" + jvmArgs);
         if (logger.isDebugEnabled())
-            logger.debug("Started: {} - Free memory: {}", this, TestUtils.getFreeMemoryMB());
+            logger.debug("Started: {} - Free memory: {} MB", this, TestUtils.getFreeMemoryMB());
         started = true;
     }
 
@@ -394,11 +395,10 @@ public class CCMBridge implements CCMAccess {
         if (closed)
             return;
         if (logger.isDebugEnabled())
-            logger.debug("Stopping: {} - free memory: {}", this, TestUtils.getFreeMemoryMB());
+            logger.debug("Stopping: {} - free memory: {} MB", this, TestUtils.getFreeMemoryMB());
         execute(CCM_COMMAND + " stop");
-        System.gc();
         if (logger.isDebugEnabled())
-            logger.debug("Stopped: {} - free memory: {}", this, TestUtils.getFreeMemoryMB());
+            logger.debug("Stopped: {} - free memory: {} MB", this, TestUtils.getFreeMemoryMB());
         closed = true;
     }
 
@@ -517,10 +517,10 @@ public class CCMBridge implements CCMAccess {
 
         String fullCommand = String.format(command, args) + " --config-dir=" + ccmDir;
         Closer closer = Closer.create();
-        // 5 minutes timeout
-        ExecuteWatchdog watchDog = new ExecuteWatchdog(5 * 60 * 1000);
+        // 10 minutes timeout
+        ExecuteWatchdog watchDog = new ExecuteWatchdog(TimeUnit.MINUTES.toMillis(10));
         try {
-            logger.debug("Executing: " + fullCommand);
+            logger.trace("Executing: " + fullCommand);
             CommandLine cli = CommandLine.parse(fullCommand);
             Executor executor = new DefaultExecutor();
 
@@ -840,7 +840,7 @@ public class CCMBridge implements CCMAccess {
                     for (int i = 0; i < nodesInDc; i++) {
                         int jmxPort = findAvailablePort();
                         int debugPort = findAvailablePort();
-                        logger.debug("Node {} in cluster {} using JMX port {} and debug port {}", n, clusterName, jmxPort, debugPort);
+                        logger.trace("Node {} in cluster {} using JMX port {} and debug port {}", n, clusterName, jmxPort, debugPort);
                         File nodeConf = new File(ccm.getNodeDir(n), "node.conf");
                         File nodeConf2 = new File(ccm.getNodeDir(n), "node.conf.tmp");
                         BufferedReader br = closer.register(new BufferedReader(new FileReader(nodeConf)));
@@ -914,7 +914,7 @@ public class CCMBridge implements CCMAccess {
 
         @Override
         public String toString() {
-            return String.format("%s (weight %s)", clusterName, weight());
+            return String.format("%s (%s nodes)", clusterName, weight());
         }
     }
 

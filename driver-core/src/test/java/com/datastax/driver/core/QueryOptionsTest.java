@@ -22,7 +22,6 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
 import static com.datastax.driver.core.Assertions.assertThat;
@@ -146,35 +145,40 @@ public class QueryOptionsTest {
 
     private void valideReprepareOnUp(boolean expectReprepare) {
         String query = "select sansa_stark from the_known_world";
-        session.prepare(query);
+        int maxTries = 3;
+        for (int i = 1; i <= maxTries; i++) {
+            session.prepare(query);
 
-        List<PreparedStatementPreparation> preparationOne = scassandra.node(1).activityClient().retrievePreparedStatementPreparations();
+            List<PreparedStatementPreparation> preparationOne = scassandra.node(1).activityClient().retrievePreparedStatementPreparations();
 
-        assertThat(preparationOne).hasSize(1);
-        assertThat(preparationOne.get(0).getPreparedStatementText()).isEqualTo(query);
-
-        scassandra.node(1).activityClient().clearAllRecordedActivity();
-        scassandra.node(1).stop();
-        assertThat(cluster).host(1).goesDownWithin(10, TimeUnit.SECONDS);
-
-        scassandra.node(1).start();
-        assertThat(cluster).host(1).comesUpWithin(60, TimeUnit.SECONDS);
-
-        preparationOne = scassandra.node(1).activityClient().retrievePreparedStatementPreparations();
-        if (expectReprepare) {
-            // tests fail randomly at this point, probably due to
-            // https://github.com/scassandra/scassandra-server/issues/116
-            ConditionChecker.awaitWhile(new Callable<Boolean>() {
-                @Override
-                public Boolean call() {
-                    return session.getState().getConnectedHosts().size() < 3
-                            || scassandra.node(1).activityClient().retrievePreparedStatementPreparations().isEmpty();
-                }
-            }, TimeUnit.MINUTES.toMillis(1));
             assertThat(preparationOne).hasSize(1);
             assertThat(preparationOne.get(0).getPreparedStatementText()).isEqualTo(query);
-        } else {
-            assertThat(preparationOne).isEmpty();
+
+            scassandra.node(1).activityClient().clearAllRecordedActivity();
+            scassandra.node(1).stop();
+            assertThat(cluster).host(1).goesDownWithin(10, TimeUnit.SECONDS);
+
+            scassandra.node(1).start();
+            assertThat(cluster).host(1).comesUpWithin(60, TimeUnit.SECONDS);
+
+            preparationOne = scassandra.node(1).activityClient().retrievePreparedStatementPreparations();
+            if (expectReprepare) {
+                // tests fail randomly at this point, probably due to
+                // https://github.com/scassandra/scassandra-server/issues/116
+                try {
+                    assertThat(preparationOne).hasSize(1);
+                    assertThat(preparationOne.get(0).getPreparedStatementText()).isEqualTo(query);
+                    break;
+                } catch (AssertionError e) {
+                    if (i == maxTries)
+                        throw e;
+                    // retry
+                    scassandra.node(1).activityClient().clearAllRecordedActivity();
+                }
+            } else {
+                assertThat(preparationOne).isEmpty();
+                break;
+            }
         }
     }
 

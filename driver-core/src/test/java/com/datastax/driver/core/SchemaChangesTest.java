@@ -83,6 +83,7 @@ public class SchemaChangesTest extends CCMTestsSupport {
         schemaDisabledCluster.manager.controlConnection = schemaDisabledControlConnection;
 
         session1 = cluster1.connect();
+        cluster2.init();
 
         cluster1.register(listener1 = mock(SchemaChangeListener.class));
         cluster1.register(listener2 = mock(SchemaChangeListener.class));
@@ -146,6 +147,7 @@ public class SchemaChangesTest extends CCMTestsSupport {
                     .isInKeyspace(handleId(keyspace))
                     .hasName("table1");
         }
+        refreshSchema();
         for (Metadata m : metadatas())
             assertThat(m.getKeyspace(keyspace).getTable("table1")).isNotNull();
     }
@@ -161,6 +163,7 @@ public class SchemaChangesTest extends CCMTestsSupport {
                     .isInKeyspace(handleId(keyspace))
                     .hasName("table1");
         }
+        refreshSchema();
         for (Metadata m : metadatas())
             assertThat(m.getKeyspace(keyspace).getTable("table1")).hasNoColumn("j");
         assert added != null;
@@ -177,6 +180,7 @@ public class SchemaChangesTest extends CCMTestsSupport {
                     .hasName("table1")
                     .hasColumn("j");
         }
+        refreshSchema();
         for (Metadata m : metadatas())
             assertThat(m.getKeyspace(keyspace).getTable("table1")).hasColumn("j");
     }
@@ -191,12 +195,14 @@ public class SchemaChangesTest extends CCMTestsSupport {
                     .hasName("table1")
                     .isInKeyspace(handleId(keyspace));
         }
+        refreshSchema();
         execute(DROP_TABLE, keyspace);
         for (SchemaChangeListener listener : listeners) {
             ArgumentCaptor<TableMetadata> removed = ArgumentCaptor.forClass(TableMetadata.class);
             verify(listener, timeout(NOTIF_TIMEOUT_MS).times(1)).onTableRemoved(removed.capture());
             assertThat(removed.getValue()).hasName("table1");
         }
+        refreshSchema();
         for (Metadata m : metadatas())
             assertThat(m.getKeyspace(keyspace).getTable("table1")).isNull();
     }
@@ -212,6 +218,7 @@ public class SchemaChangesTest extends CCMTestsSupport {
             assertThat((DataType) added.getValue())
                     .isUserType(handleId(keyspace), "type1");
         }
+        refreshSchema();
         for (Metadata m : metadatas())
             assertThat((DataType) m.getKeyspace(keyspace).getUserType("type1")).isNotNull();
     }
@@ -228,6 +235,7 @@ public class SchemaChangesTest extends CCMTestsSupport {
             assertThat(previous.getValue().getFieldNames()).doesNotContain("j");
             assertThat(current.getValue().getFieldNames()).contains("j");
         }
+        refreshSchema();
         for (Metadata m : metadatas())
             assertThat(m.getKeyspace(keyspace).getUserType("type1").getFieldType("j")).isNotNull();
     }
@@ -243,6 +251,7 @@ public class SchemaChangesTest extends CCMTestsSupport {
             verify(listener, timeout(NOTIF_TIMEOUT_MS).times(1)).onUserTypeRemoved(removed.capture());
             assertThat((DataType) removed.getValue()).isUserType(handleId(keyspace), "type1");
         }
+        refreshSchema();
         for (Metadata m : metadatas())
             assertThat((DataType) m.getKeyspace(keyspace).getUserType("type1")).isNull();
     }
@@ -259,7 +268,7 @@ public class SchemaChangesTest extends CCMTestsSupport {
                     .isInKeyspace(handleId(keyspace))
                     .hasSignature("\"ID\"(int)");
         }
-
+        refreshSchema();
         for (Metadata m : metadatas())
             assertThat(m.getKeyspace(keyspace).getFunction("\"ID\"", DataType.cint()))
                     .isNotNull();
@@ -270,6 +279,7 @@ public class SchemaChangesTest extends CCMTestsSupport {
     public void should_notify_of_function_update(String keyspace) {
         session1.execute(String.format("CREATE TYPE IF NOT EXISTS %s.user (\"ID\" int, name text)", keyspace));
         session1.execute(String.format("CREATE FUNCTION %s.\"ID\"(user user) RETURNS NULL ON NULL INPUT RETURNS int LANGUAGE java AS 'return user.getInt(\"ID\");'", keyspace));
+        refreshSchema();
 
         for (Metadata m : metadatas())
             assertThat(m.getKeyspace(keyspace).getFunction("\"ID\"", m.getKeyspace(keyspace).getUserType("user")).getBody())
@@ -285,7 +295,7 @@ public class SchemaChangesTest extends CCMTestsSupport {
             assertThat(previous.getValue()).hasBody("return user.getInt(\"ID\");");
             assertThat(current.getValue()).hasBody("return 1 + user.getInt(\"ID\");");
         }
-
+        refreshSchema();
         for (Metadata m : metadatas())
             assertThat(m.getKeyspace(keyspace).getFunction("\"ID\"", m.getKeyspace(keyspace).getUserType("user")).getBody())
                     .isEqualTo("return 1 + user.getInt(\"ID\");");
@@ -305,7 +315,7 @@ public class SchemaChangesTest extends CCMTestsSupport {
                     .isInKeyspace(handleId(keyspace))
                     .hasSignature("\"ID\"(user)");
         }
-
+        refreshSchema();
         for (Metadata m : metadatas())
             assertThat(m.getKeyspace(keyspace).getFunction("\"ID\"", m.getKeyspace(keyspace).getUserType("user")))
                     .isNull();
@@ -325,7 +335,7 @@ public class SchemaChangesTest extends CCMTestsSupport {
                     .isInKeyspace(handleId(keyspace))
                     .hasSignature("\"SUM\"(int)");
         }
-
+        refreshSchema();
         for (Metadata m : metadatas())
             assertThat(m.getKeyspace(keyspace).getAggregate("\"SUM\"", DataType.cint()))
                     .isNotNull();
@@ -337,7 +347,7 @@ public class SchemaChangesTest extends CCMTestsSupport {
         session1.execute(String.format("CREATE FUNCTION %s.\"PLUS\"(s int, v int) RETURNS NULL ON NULL INPUT RETURNS int LANGUAGE java"
                 + " AS 'return s+v;'", keyspace));
         session1.execute(String.format("CREATE AGGREGATE %s.\"SUM\"(int) SFUNC \"PLUS\" STYPE int INITCOND 0", keyspace));
-
+        refreshSchema();
         for (Metadata m : metadatas())
             assertThat(m.getKeyspace(keyspace).getAggregate("\"SUM\"", DataType.cint()).getInitCond())
                     .isEqualTo(0);
@@ -351,7 +361,7 @@ public class SchemaChangesTest extends CCMTestsSupport {
             assertThat(previous.getValue()).hasInitCond(0);
             assertThat(current.getValue()).hasInitCond(1);
         }
-
+        refreshSchema();
         for (Metadata m : metadatas())
             assertThat(m.getKeyspace(keyspace).getAggregate("\"SUM\"", DataType.cint()).getInitCond())
                     .isEqualTo(1);
@@ -373,6 +383,7 @@ public class SchemaChangesTest extends CCMTestsSupport {
                     .hasSignature("\"SUM\"(int)");
         }
 
+        refreshSchema();
         for (Metadata m : metadatas())
             assertThat(m.getKeyspace(keyspace).getAggregate("\"SUM\"", DataType.cint()))
                     .isNull();
@@ -383,7 +394,7 @@ public class SchemaChangesTest extends CCMTestsSupport {
     public void should_notify_of_view_creation(String keyspace) {
         session1.execute(String.format("CREATE TABLE %s.table1 (pk int PRIMARY KEY, c int)", keyspace));
         session1.execute(String.format("CREATE MATERIALIZED VIEW %s.mv1 AS SELECT c FROM %s.table1 WHERE c IS NOT NULL PRIMARY KEY (pk, c)", keyspace, keyspace));
-
+        refreshSchema();
         for (Metadata m : metadatas())
             assertThat(m.getKeyspace(keyspace).getMaterializedView("mv1")).isNotNull();
     }
@@ -393,12 +404,12 @@ public class SchemaChangesTest extends CCMTestsSupport {
     public void should_notify_of_view_update(String keyspace) {
         session1.execute(String.format("CREATE TABLE %s.table1 (pk int PRIMARY KEY, c int)", keyspace));
         session1.execute(String.format("CREATE MATERIALIZED VIEW %s.mv1 AS SELECT c FROM %s.table1 WHERE c IS NOT NULL PRIMARY KEY (pk, c) WITH compaction = { 'class' : 'SizeTieredCompactionStrategy' }", keyspace, keyspace));
-
+        refreshSchema();
         for (Metadata m : metadatas())
             assertThat(m.getKeyspace(keyspace).getMaterializedView("mv1").getOptions().getCompaction().get("class")).contains("SizeTieredCompactionStrategy");
 
         session1.execute(String.format("ALTER MATERIALIZED VIEW %s.mv1 WITH compaction = { 'class' : 'LeveledCompactionStrategy' }", keyspace));
-
+        refreshSchema();
         for (Metadata m : metadatas())
             assertThat(m.getKeyspace(keyspace).getMaterializedView("mv1").getOptions().getCompaction().get("class")).contains("LeveledCompactionStrategy");
     }
@@ -409,7 +420,7 @@ public class SchemaChangesTest extends CCMTestsSupport {
         session1.execute(String.format("CREATE TABLE %s.table1 (pk int PRIMARY KEY, c int)", keyspace));
         session1.execute(String.format("CREATE MATERIALIZED VIEW %s.mv1 AS SELECT c FROM %s.table1 WHERE c IS NOT NULL PRIMARY KEY (pk, c)", keyspace, keyspace));
         session1.execute(String.format("DROP MATERIALIZED VIEW %s.mv1", keyspace));
-
+        refreshSchema();
         for (Metadata m : metadatas())
             assertThat(m.getKeyspace(keyspace).getMaterializedView("mv1")).isNull();
     }
@@ -422,6 +433,7 @@ public class SchemaChangesTest extends CCMTestsSupport {
             verify(listener, timeout(NOTIF_TIMEOUT_MS).times(1)).onKeyspaceAdded(added.capture());
             assertThat(added.getValue()).hasName(handleId(keyspace));
         }
+        refreshSchema();
         for (Metadata m : metadatas())
             assertThat(m.getKeyspace(keyspace)).isNotNull();
     }
@@ -436,6 +448,7 @@ public class SchemaChangesTest extends CCMTestsSupport {
             assertThat(added.getValue()).hasName(handleId(keyspace));
         }
         assert added != null;
+        refreshSchema();
         for (Metadata m : metadatas())
             assertThat(m.getKeyspace(keyspace).isDurableWrites()).isTrue();
         execute(ALTER_KEYSPACE, keyspace);
@@ -450,6 +463,7 @@ public class SchemaChangesTest extends CCMTestsSupport {
                     .hasName(handleId(keyspace))
                     .isNotDurableWrites();
         }
+        refreshSchema();
         for (Metadata m : metadatas())
             assertThat(m.getKeyspace(keyspace)).isNotDurableWrites();
     }
@@ -464,6 +478,7 @@ public class SchemaChangesTest extends CCMTestsSupport {
             assertThat(added.getValue()).hasName(handleId(keyspace));
         }
         assert added != null;
+        refreshSchema();
         for (Metadata m : metadatas())
             assertThat(m.getReplicas(keyspace, Bytes.fromHexString("0xCAFEBABE"))).isNotEmpty();
         execute(CREATE_TABLE, keyspace); // to test table drop notifications
@@ -479,6 +494,7 @@ public class SchemaChangesTest extends CCMTestsSupport {
             assertThat(ks.getValue())
                     .hasName(handleId(keyspace));
         }
+        refreshSchema();
         for (Metadata m : metadatas()) {
             assertThat(m.getKeyspace(keyspace)).isNull();
             assertThat(m.getReplicas(keyspace, Bytes.fromHexString("0xCAFEBABE"))).isEmpty();
@@ -621,5 +637,14 @@ public class SchemaChangesTest extends CCMTestsSupport {
     private List<Metadata> metadatas() {
         return Lists.newArrayList(cluster1.getMetadata(), cluster2.getMetadata());
     }
+
+    @SuppressWarnings("unchecked")
+    private void refreshSchema() {
+        Futures.getUnchecked(
+                Futures.successfulAsList(
+                        cluster1.manager.submitSchemaRefresh(null, null, null, null),
+                        cluster2.manager.submitSchemaRefresh(null, null, null, null)));
+    }
+
 
 }

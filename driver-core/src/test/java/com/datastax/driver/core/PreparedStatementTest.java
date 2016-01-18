@@ -513,6 +513,8 @@ public class PreparedStatementTest extends CCMTestsSupport {
         st3.enableTracing();
         ResultSet rows = session.execute(st3);
         assertThat(rows.one().getInt("i")).isEqualTo(1234);
+        // sleep 10 seconds to make sure the trace will be complete
+        Uninterruptibles.sleepUninterruptibly(10, TimeUnit.SECONDS);
         QueryTrace queryTrace = rows.getExecutionInfo().getQueryTrace();
         assertEventsContain(queryTrace, "0 tombstone");
     }
@@ -542,6 +544,8 @@ public class PreparedStatementTest extends CCMTestsSupport {
                         .enableTracing());
 
         assertThat(rows.one().isNull("i"));
+        // sleep 10 seconds to make sure the trace will be complete
+        Uninterruptibles.sleepUninterruptibly(10, TimeUnit.SECONDS);
         QueryTrace queryTrace = rows.getExecutionInfo().getQueryTrace();
         assertEventsContain(queryTrace, "0 tombstone");
     }
@@ -571,6 +575,8 @@ public class PreparedStatementTest extends CCMTestsSupport {
                         .enableTracing());
 
         assertThat(rows.one().isNull("i"));
+        // sleep 10 seconds to make sure the trace will be complete
+        Uninterruptibles.sleepUninterruptibly(10, TimeUnit.SECONDS);
         QueryTrace queryTrace = rows.getExecutionInfo().getQueryTrace();
         assertEventsContain(queryTrace, "0 tombstone");
     }
@@ -600,6 +606,8 @@ public class PreparedStatementTest extends CCMTestsSupport {
         st3.enableTracing();
         ResultSet rows = session.execute(st3);
         assertThat(rows.one().getInt("i")).isEqualTo(1234);
+        // sleep 10 seconds to make sure the trace will be complete
+        Uninterruptibles.sleepUninterruptibly(10, TimeUnit.SECONDS);
         QueryTrace queryTrace = rows.getExecutionInfo().getQueryTrace();
         assertEventsContain(queryTrace, "0 tombstone");
     }
@@ -622,8 +630,8 @@ public class PreparedStatementTest extends CCMTestsSupport {
         st2.enableTracing();
         ResultSet rows = session.execute(st2);
         assertThat(rows.one().isNull(0)).isTrue();
-        // sleep 1 minute to make sure the trace will be complete
-        Uninterruptibles.sleepUninterruptibly(1, TimeUnit.MINUTES);
+        // sleep 10 seconds to make sure the trace will be complete
+        Uninterruptibles.sleepUninterruptibly(10, TimeUnit.SECONDS);
         QueryTrace queryTrace = rows.getExecutionInfo().getQueryTrace();
         assertEventsContain(queryTrace, "1 tombstone");
     }
@@ -647,6 +655,8 @@ public class PreparedStatementTest extends CCMTestsSupport {
         st2.enableTracing();
         ResultSet rows = session.execute(st2);
         assertThat(rows.one().isNull(0)).isTrue();
+        // sleep 10 seconds to make sure the trace will be complete
+        Uninterruptibles.sleepUninterruptibly(10, TimeUnit.SECONDS);
         QueryTrace queryTrace = rows.getExecutionInfo().getQueryTrace();
         assertEventsContain(queryTrace, "1 tombstone");
     }

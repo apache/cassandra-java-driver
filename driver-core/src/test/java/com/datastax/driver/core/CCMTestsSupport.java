@@ -693,7 +693,12 @@ public class CCMTestsSupport {
             } else {
                 this.ccm = new ReadOnlyCCMBridge(ccm);
             }
-            ccm.start();
+            try {
+                ccm.start();
+            } catch (RuntimeException e) {
+                LOGGER.error("Could not start " + ccm, e);
+                fail(e.getMessage());
+            }
             LOGGER.debug("Using {}", ccm);
         }
     }
