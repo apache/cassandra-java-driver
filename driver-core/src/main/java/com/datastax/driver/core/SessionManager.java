@@ -545,16 +545,21 @@ class SessionManager extends AbstractSession {
             if (protocolVersion == ProtocolVersion.V1 && rs instanceof com.datastax.driver.core.querybuilder.BuiltStatement)
                 ((com.datastax.driver.core.querybuilder.BuiltStatement) rs).setForceNoValues(true);
 
-            ByteBuffer[] rawValues = rs.getValues(protocolVersion, codecRegistry);
+            ByteBuffer[] rawPositionalValues = rs.getValues(protocolVersion, codecRegistry);
+            Map<String, ByteBuffer> rawNamedValues = rs.getNamedValues(protocolVersion, codecRegistry);
 
-            if (protocolVersion == ProtocolVersion.V1 && rawValues != null)
+            if (protocolVersion == ProtocolVersion.V1 && (rawPositionalValues != null || rawNamedValues != null))
                 throw new UnsupportedFeatureException(protocolVersion, "Binary values are not supported");
 
-            List<ByteBuffer> values = rawValues == null ? Collections.<ByteBuffer>emptyList() : Arrays.asList(rawValues);
+            if (protocolVersion == ProtocolVersion.V2 && rawNamedValues != null)
+                throw new UnsupportedFeatureException(protocolVersion, "Named values are not supported");
+
+            List<ByteBuffer> positionalValues = rawPositionalValues == null ? Collections.<ByteBuffer>emptyList() : Arrays.asList(rawPositionalValues);
+            Map<String, ByteBuffer> namedValues = rawNamedValues == null ? Collections.<String, ByteBuffer>emptyMap() : rawNamedValues;
 
             String qString = rs.getQueryString();
 
-            Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(consistency, values, false,
+            Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(consistency, positionalValues, namedValues, false,
                     fetchSize, usedPagingState, serialConsistency, defaultTimestamp);
             request = new Requests.Query(qString, options, statement.isTracing());
         } else if (statement instanceof BoundStatement) {
@@ -566,7 +571,7 @@ class SessionManager extends AbstractSession {
             if (protocolVersion.compareTo(ProtocolVersion.V4) < 0)
                 bs.ensureAllSet();
             boolean skipMetadata = protocolVersion != ProtocolVersion.V1 && bs.statement.getPreparedId().resultSetMetadata != null;
-            Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(consistency, Arrays.asList(bs.wrapper.values), skipMetadata,
+            Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(consistency, Arrays.asList(bs.wrapper.values), Collections.<String, ByteBuffer>emptyMap(), skipMetadata,
                     fetchSize, usedPagingState, serialConsistency, defaultTimestamp);
             request = new Requests.Execute(bs.statement.getPreparedId().id, options, statement.isTracing());
         } else {

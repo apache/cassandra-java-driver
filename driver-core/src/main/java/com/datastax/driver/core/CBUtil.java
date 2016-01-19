@@ -351,6 +351,23 @@ abstract class CBUtil { // TODO rename
         return size;
     }
 
+    public static void writeNamedValueList(Map<String, ByteBuffer> namedValues, ByteBuf cb) {
+        cb.writeShort(namedValues.size());
+        for (Map.Entry<String, ByteBuffer> entry : namedValues.entrySet()) {
+            CBUtil.writeString(entry.getKey(), cb);
+            CBUtil.writeValue(entry.getValue(), cb);
+        }
+    }
+
+    public static int sizeOfNamedValueList(Map<String, ByteBuffer> namedValues) {
+        int size = 2;
+        for (Map.Entry<String, ByteBuffer> entry : namedValues.entrySet()) {
+            size += CBUtil.sizeOfString(entry.getKey());
+            size += CBUtil.sizeOfValue(entry.getValue());
+        }
+        return size;
+    }
+
     public static InetSocketAddress readInet(ByteBuf cb) {
         int addrSize = cb.readByte();
         byte[] address = new byte[addrSize];

@@ -20,6 +20,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 
 import java.io.Closeable;
 import java.util.Collection;
+import java.util.Map;
 
 /**
  * A session holds connections to a Cassandra cluster, allowing it to be queried.
@@ -109,13 +110,13 @@ public interface Session extends Closeable {
     ResultSet execute(String query);
 
     /**
-     * Executes the provided query using the provided value.
+     * Executes the provided query using the provided values.
      * <p/>
      * This is a convenience method for {@code execute(new SimpleStatement(query, values))}.
      *
      * @param query  the CQL query to execute.
      * @param values values required for the execution of {@code query}. See
-     *               {@link SimpleStatement#SimpleStatement(String, Object...)} for more detail.
+     *               {@link SimpleStatement#SimpleStatement(String, Object...)} for more details.
      * @return the result of the query. That result will never be null but can
      * be empty (and will be for any non SELECT query).
      * @throws NoHostAvailableException    if no host in the cluster can be
@@ -126,10 +127,33 @@ public interface Session extends Closeable {
      * @throws QueryValidationException    if the query if invalid (syntax error,
      *                                     unauthorized or any other validation problem).
      * @throws UnsupportedFeatureException if version 1 of the protocol
-     *                                     is in use (i.e. if you've force version 1 through {@link Cluster.Builder#withProtocolVersion}
+     *                                     is in use (i.e. if you've forced version 1 through {@link Cluster.Builder#withProtocolVersion}
      *                                     or you use Cassandra 1.2).
      */
     ResultSet execute(String query, Object... values);
+
+    /**
+     * Executes the provided query using the provided named values.
+     * <p/>
+     * This is a convenience method for {@code execute(new SimpleStatement(query, values))}.
+     *
+     * @param query  the CQL query to execute.
+     * @param values values required for the execution of {@code query}. See
+     *               {@link SimpleStatement#SimpleStatement(String, Map)} for more details.
+     * @return the result of the query. That result will never be null but can
+     * be empty (and will be for any non SELECT query).
+     * @throws NoHostAvailableException    if no host in the cluster can be
+     *                                     contacted successfully to execute this query.
+     * @throws QueryExecutionException     if the query triggered an execution
+     *                                     exception, i.e. an exception thrown by Cassandra when it cannot execute
+     *                                     the query with the requested consistency level successfully.
+     * @throws QueryValidationException    if the query if invalid (syntax error,
+     *                                     unauthorized or any other validation problem).
+     * @throws UnsupportedFeatureException if version 1 or 2 of the protocol
+     *                                     is in use (i.e. if you've forced it through {@link Cluster.Builder#withProtocolVersion}
+     *                                     or you use Cassandra 1.2 or 2.0).
+     */
+    ResultSet execute(String query, Map<String, Object> values);
 
     /**
      * Executes the provided query.
@@ -175,13 +199,28 @@ public interface Session extends Closeable {
      *
      * @param query  the CQL query to execute.
      * @param values values required for the execution of {@code query}. See
-     *               {@link SimpleStatement#SimpleStatement(String, Object...)} for more detail.
+     *               {@link SimpleStatement#SimpleStatement(String, Object...)} for more details.
      * @return a future on the result of the query.
      * @throws UnsupportedFeatureException if version 1 of the protocol
-     *                                     is in use (i.e. if you've force version 1 through {@link Cluster.Builder#withProtocolVersion}
+     *                                     is in use (i.e. if you've forced version 1 through {@link Cluster.Builder#withProtocolVersion}
      *                                     or you use Cassandra 1.2).
      */
     ResultSetFuture executeAsync(String query, Object... values);
+
+    /**
+     * Executes the provided query asynchronously using the provided values.
+     * <p/>
+     * This is a convenience method for {@code executeAsync(new SimpleStatement(query, values))}.
+     *
+     * @param query  the CQL query to execute.
+     * @param values values required for the execution of {@code query}. See
+     *               {@link SimpleStatement#SimpleStatement(String, Map)} for more details.
+     * @return a future on the result of the query.
+     * @throws UnsupportedFeatureException if version 1 or 2 of the protocol
+     *                                     is in use (i.e. if you've forced it through {@link Cluster.Builder#withProtocolVersion}
+     *                                     or you use Cassandra 1.2 or 2.0).
+     */
+    ResultSetFuture executeAsync(String query, Map<String, Object> values);
 
     /**
      * Executes the provided query asynchronously.

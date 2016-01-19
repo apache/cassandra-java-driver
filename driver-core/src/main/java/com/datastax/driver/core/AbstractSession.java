@@ -51,6 +51,14 @@ public abstract class AbstractSession implements Session {
      * {@inheritDoc}
      */
     @Override
+    public ResultSet execute(String query, Map<String, Object> values) {
+        return execute(new SimpleStatement(query, values));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public ResultSet execute(Statement statement) {
         return executeAsync(statement).getUninterruptibly();
     }
@@ -61,6 +69,14 @@ public abstract class AbstractSession implements Session {
     @Override
     public ResultSetFuture executeAsync(String query) {
         return executeAsync(new SimpleStatement(query));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ResultSetFuture executeAsync(String query, Map<String, Object> values) {
+        return executeAsync(new SimpleStatement(query, values));
     }
 
     /**

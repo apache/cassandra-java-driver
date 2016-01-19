@@ -4,6 +4,7 @@
 
 - [bug] JAVA-1034: fix metadata parser for collections of custom types.
 - [improvement] JAVA-1035: Expose host broadcast_address and listen_address if available.
+- [new feature] JAVA-1037: Allow named parameters in simple statements.
 
 Merged from 2.1 branch:
 

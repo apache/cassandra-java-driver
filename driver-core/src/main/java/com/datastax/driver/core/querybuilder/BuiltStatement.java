@@ -23,6 +23,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 /**
@@ -272,6 +273,17 @@ public abstract class BuiltStatement extends RegularStatement {
     public boolean hasValues(CodecRegistry codecRegistry) {
         maybeRebuildCache(codecRegistry);
         return values != null;
+    }
+
+    @Override
+    public Map<String, ByteBuffer> getNamedValues(ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
+        // Built statements never return named values
+        return null;
+    }
+
+    @Override
+    public boolean usesNamedValues() {
+        return false;
     }
 
     @Override
