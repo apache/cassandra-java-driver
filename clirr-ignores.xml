@@ -11,6 +11,41 @@
 <differences>
 
   <difference>
+    <differenceType>7014</differenceType> <!-- method now final -->    
+    <className>com/datastax/driver/core/QueryLogger$DynamicThresholdQueryLogger</className>
+    <method>*setPerHostPercentileLatencyTracker(com.datastax.driver.core.PerHostPercentileTracker)</method>    
+    <justification>It is being called in constructor, so it should be final</justification>
+  </difference>
+  
+  <difference>
+    <differenceType>7014</differenceType> <!-- method now final -->    
+    <className>com/datastax/driver/core/QueryLogger$DynamicThresholdQueryLogger</className>
+    <method>*setSlowQueryLatencyThresholdPercentile(double)</method>    
+    <justification>It is being called in constructor, so it should be final</justification>
+  </difference>
+
+   <difference>
+    <differenceType>7014</differenceType> <!-- method now final -->    
+    <className>com/datastax/driver/core/QueryLogger$ConstantThresholdQueryLogger</className>
+    <method>*setSlowQueryLatencyThresholdMillis(long)</method>    
+    <justification>It is being called in constructor, so it should be final</justification>
+  </difference>
+  
+  <difference>
+    <differenceType>7014</differenceType> <!-- method now final -->    
+    <className>com/datastax/driver/core/querybuilder/Batch</className>
+    <method>*add(com.datastax.driver.core.RegularStatement)</method>    
+    <justification>It is being called in constructor, so it should be final</justification>
+  </difference>
+
+  <difference>
+    <differenceType>7014</differenceType> <!-- method now final -->    
+    <className>com/datastax/driver/core/querybuilder/BuiltStatement</className>
+    <method>*escapeId(java.lang.String)</method>    
+    <justification>It is being called in constructor, so it should be final</justification>
+  </difference>
+  
+  <difference>
     <differenceType>6006</differenceType> <!-- field now final -->
     <className>com/datastax/driver/core/ProtocolVersion</className>
     <field>NEWEST_SUPPORTED</field>

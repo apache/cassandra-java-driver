@@ -59,7 +59,7 @@ public abstract class BuiltStatement extends RegularStatement {
     }
 
     // Same as Metadata.escapeId, but we don't have access to it here.
-    protected String escapeId(String ident) {
+    protected final String escapeId(String ident) {
         // we don't need to escape if it's lowercase and match non-quoted CQL3 ids.
         return lowercaseId.matcher(ident).matches() ? ident : Metadata.quote(ident);
     }

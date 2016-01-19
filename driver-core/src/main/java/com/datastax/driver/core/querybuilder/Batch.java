@@ -91,7 +91,7 @@ public class Batch extends BuiltStatement {
      * @throws IllegalArgumentException if counter and non-counter operations
      *                                  are mixed.
      */
-    public Batch add(RegularStatement statement) {
+    public final Batch add(RegularStatement statement) {
         boolean isCounterOp = statement instanceof BuiltStatement && ((BuiltStatement) statement).isCounterOp();
 
         if (this.isCounterOp == null)

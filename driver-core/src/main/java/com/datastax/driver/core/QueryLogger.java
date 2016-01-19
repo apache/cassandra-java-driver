@@ -264,7 +264,7 @@ public abstract class QueryLogger implements LatencyTracker {
          *                                        It must be strictly positive.
          * @throws IllegalArgumentException if {@code slowQueryLatencyThresholdMillis <= 0}.
          */
-        public void setSlowQueryLatencyThresholdMillis(long slowQueryLatencyThresholdMillis) {
+        public final void setSlowQueryLatencyThresholdMillis(long slowQueryLatencyThresholdMillis) {
             if (slowQueryLatencyThresholdMillis <= 0)
                 throw new IllegalArgumentException("Invalid slowQueryLatencyThresholdMillis, should be > 0, got " + slowQueryLatencyThresholdMillis);
             this.slowQueryLatencyThresholdMillis = slowQueryLatencyThresholdMillis;
@@ -327,7 +327,7 @@ public abstract class QueryLogger implements LatencyTracker {
          * @param perHostPercentileLatencyTracker the {@link PerHostPercentileTracker} instance to use.
          * @throws IllegalArgumentException if {@code perHostPercentileLatencyTracker == null}.
          */
-        public void setPerHostPercentileLatencyTracker(PerHostPercentileTracker perHostPercentileLatencyTracker) {
+        public final void setPerHostPercentileLatencyTracker(PerHostPercentileTracker perHostPercentileLatencyTracker) {
             if (perHostPercentileLatencyTracker == null)
                 throw new IllegalArgumentException("perHostPercentileLatencyTracker cannot be null");
             this.perHostPercentileLatencyTracker = perHostPercentileLatencyTracker;
@@ -353,7 +353,7 @@ public abstract class QueryLogger implements LatencyTracker {
          *                                            It must be comprised between 0 inclusive and 100 exclusive.
          * @throws IllegalArgumentException if {@code slowQueryLatencyThresholdPercentile < 0 || slowQueryLatencyThresholdPercentile >= 100}.
          */
-        public void setSlowQueryLatencyThresholdPercentile(double slowQueryLatencyThresholdPercentile) {
+        public final void setSlowQueryLatencyThresholdPercentile(double slowQueryLatencyThresholdPercentile) {
             if (slowQueryLatencyThresholdPercentile < 0.0 || slowQueryLatencyThresholdPercentile >= 100.0)
                 throw new IllegalArgumentException("Invalid slowQueryLatencyThresholdPercentile, should be >= 0 and < 100, got " + slowQueryLatencyThresholdPercentile);
             this.slowQueryLatencyThresholdPercentile = slowQueryLatencyThresholdPercentile;
