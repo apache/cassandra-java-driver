@@ -12,7 +12,7 @@ Use [getKeyspace(String)][getKeyspace] or [getKeyspaces()][getKeyspaces]
 to get keyspace-level metadata. From there you can access the keyspace's
 objects (tables, and UDTs and UDFs if relevant).
 
-[getKeyspace]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/Metadata.html#getKeyspace(java.lang.String)
+[getKeyspace]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/Metadata.html#getKeyspace-java.lang.String-
 [getKeyspaces]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/Metadata.html#getKeyspaces--
 
 #### Refreshes
@@ -48,7 +48,7 @@ otherwise the listener could be notified with a great deal of "Added" events as
 the driver builds the schema metadata from scratch for the first time.
 
 [SchemaChangeListener]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/SchemaChangeListener.html
-[registerListener]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/Cluster.html#register(com.datastax.driver.core.SchemaChangeListener)
+[registerListener]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/Cluster.html#register-com.datastax.driver.core.SchemaChangeListener-
 
 #### Schema agreement
 
@@ -135,7 +135,7 @@ custom executor).
 
 Check out the API docs for the features in this section:
 
-* [withMaxSchemaAgreementWaitSeconds(int)](http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/Cluster.Builder.html#withMaxSchemaAgreementWaitSeconds(int))
+* [withMaxSchemaAgreementWaitSeconds(int)](http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/Cluster.Builder.html#withMaxSchemaAgreementWaitSeconds-int-)
 * [isSchemaInAgreement()](http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/ExecutionInfo.html#isSchemaInAgreement--)
 * [checkSchemaAgreement()](http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/Metadata.html#checkSchemaAgreement--)
 
@@ -183,12 +183,12 @@ table (see
 
 [metadata]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/Metadata.html
 [getTokenRanges]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/Metadata.html#getTokenRanges--
-[getTokenRanges2]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/Metadata.html#getTokenRanges(java.lang.String,%20com.datastax.driver.core.Host)
-[getReplicas]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/Metadata.html#getReplicas(java.lang.String,%20com.datastax.driver.core.TokenRange)
-[newToken]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/Metadata.html#newToken(java.lang.String)
-[newTokenRange]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/Metadata.html#newTokenRange(com.datastax.driver.core.Token,%20com.datastax.driver.core.Token)
+[getTokenRanges2]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/Metadata.html#getTokenRanges-java.lang.String-com.datastax.driver.core.Host-
+[getReplicas]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/Metadata.html#getReplicas-java.lang.String-com.datastax.driver.core.TokenRange-
+[newToken]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/Metadata.html#newToken-java.lang.String-
+[newTokenRange]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/Metadata.html#newTokenRange-com.datastax.driver.core.Token-com.datastax.driver.core.Token-
 [TokenRange]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/TokenRange.html
 [getTokens]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/Host.html#getTokens--
-[setToken]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/BoundStatement.html#setToken(int,%20com.datastax.driver.core.Token)
-[getToken]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/Row.html#getToken(int)
+[setToken]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/BoundStatement.html#setToken-int-com.datastax.driver.core.Token-
+[getToken]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/Row.html#getToken-int-
 [getPKToken]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/Row.html#getPartitionKeyToken--

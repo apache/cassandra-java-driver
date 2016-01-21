@@ -158,5 +158,5 @@ There are still a few places where the driver will block internally
 
 [ListenableFuture]: https://code.google.com/p/guava-libraries/wiki/ListenableFutureExplained
 [init]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/Cluster.html#init--
-[setPoolTimeoutMillis]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/PoolingOptions.html#setPoolTimeoutMillis(int)
+[setPoolTimeoutMillis]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/PoolingOptions.html#setPoolTimeoutMillis-int-
 [query trace]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/QueryTrace.html

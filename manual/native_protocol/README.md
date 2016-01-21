@@ -89,7 +89,7 @@ To avoid this issue, you can use one the following workarounds:
 #### v1 to v2
 
 * bound variables in simple statements
-  ([Session#execute(String, Object...)](http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/Session.html#execute(java.lang.String,%20java.lang.Object...)))
+  ([Session#execute(String, Object...)](http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/Session.html#execute-java.lang.String-java.lang.Object...-))
 * [batch statements](http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/BatchStatement.html)
 * [query paging](../paging/)
 
@@ -97,5 +97,5 @@ To avoid this issue, you can use one the following workarounds:
 
 * the number of stream ids per connection goes from 128 to 32768 (see
   [Connection pooling](../pooling/))
-* [serial consistency on batch statements](http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/BatchStatement.html#setSerialConsistencyLevel(com.datastax.driver.core.ConsistencyLevel))
+* [serial consistency on batch statements](http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/BatchStatement.html#setSerialConsistencyLevel-com.datastax.driver.core.ConsistencyLevel-)
 * [client-side timestamps](../query_timestamps/)

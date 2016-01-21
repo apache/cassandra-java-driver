@@ -220,7 +220,7 @@ There are two situations where you might want to use the unsafe API:
   state with a private key).
 
 [gpsu]: http://www.datastax.com/drivers/java/2.1/com/datastax/driver/core/ExecutionInfo.html#getPagingStateUnsafe--
-[spsu]: http://www.datastax.com/drivers/java/2.1/com/datastax/driver/core/Statement.html#setPagingStateUnsafe(byte[])
+[spsu]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/Statement.html#setPagingStateUnsafe-byte:A-
 
 
 ### Offset queries
