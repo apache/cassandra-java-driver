@@ -58,7 +58,7 @@ All host(s) tried for query failed
   [/127.0.0.1:9042] Host /127.0.0.1:9042 does not support protocol version V3 but V2))
 ```
 
-[gpve]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/ProtocolOptions.html#getProtocolVersionEnum()
+[gpve]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/ProtocolOptions.html#getProtocolVersionEnum--
 
 #### Protocol version with mixed clusters
 
