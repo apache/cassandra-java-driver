@@ -45,7 +45,7 @@ abstract class AccessorMapper<T> {
             for (int i = 0; i < methods.size(); i++)
                 methods.get(i).prepare(manager, preparedStatements.get(i));
         } catch (Exception e) {
-            throw new RuntimeException("Error preparing queries for accessor " + daoClass.getSimpleName(), e);
+            throw new RuntimeException("Error preparing queries for accessor " + daoClass.getSimpleName() + " : " + e.toString(), e);
         }
     }
 
