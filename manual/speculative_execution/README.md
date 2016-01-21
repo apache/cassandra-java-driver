@@ -108,7 +108,7 @@ default cluster-wide:
 cluster.getConfiguration().getQueryOptions().setDefaultIdempotence(true);
 ```
 
-[isIdempotent]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Statement.html#isIdempotent()
+[isIdempotent]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Statement.html#isIdempotent--
 [QueryBuilder]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/querybuilder/QueryBuilder.html
 
 ### Enabling speculative executions
@@ -278,8 +278,8 @@ You can monitor how many speculative executions were triggered with the
 It should only be a few percents of the total number of requests
 ([cluster.getMetrics().getRequestsTimer().getCount()][request_metric]).
 
-[se_metric]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Metrics.Errors.html#getSpeculativeExecutions()
-[request_metric]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Metrics.html#getRequestsTimer()
+[se_metric]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Metrics.Errors.html#getSpeculativeExecutions--
+[request_metric]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Metrics.html#getRequestsTimer--
 
 #### Stream id exhaustion
 
@@ -309,7 +309,7 @@ using, you can check with
 [cluster.getConfiguration().getProtocolOptions().getProtocolVersion()][protocol_version].
 
 [session_state]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Session.State.html
-[protocol_version]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/ProtocolOptions.html#getProtocolVersion()
+[protocol_version]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/ProtocolOptions.html#getProtocolVersion--
 
 #### Request ordering and client timestamps
 

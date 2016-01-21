@@ -120,7 +120,7 @@ Note that you can also extend the class and override
 [newSSLEngine(SocketChannel)][newSSLEngine] if you need specific
 configuration on the `SSLEngine` (for example hostname verification).
 
-[newSSLEngine]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/JdkSSLOptions.html#newSSLEngine(io.netty.channel.socket.SocketChannel)
+[newSSLEngine]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/JdkSSLOptions.html#newSSLEngine-io.netty.channel.socket.SocketChannel-
 
 #### Netty
 

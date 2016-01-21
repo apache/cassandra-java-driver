@@ -28,10 +28,10 @@ exclusively Cassandra's binary protocol and Cassandra Query Language v3.
 * [Object mapper][mapper]
 
 
-[sync]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Session.html#execute(com.datastax.driver.core.Statement)
-[async]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Session.html#executeAsync(com.datastax.driver.core.Statement)
+[sync]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Session.html#execute-com.datastax.driver.core.Statement-
+[async]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Session.html#executeAsync-com.datastax.driver.core.Statement-
 [simple_st]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/SimpleStatement.html
-[prepared_st]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Session.html#prepare(com.datastax.driver.core.RegularStatement)
+[prepared_st]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Session.html#prepare-com.datastax.driver.core.RegularStatement-
 [batch_st]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/BatchStatement.html
 [pool]: manual/pooling/
 [lbp]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/policies/LoadBalancingPolicy.html

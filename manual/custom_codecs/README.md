@@ -445,10 +445,10 @@ consider using prepared statements all the time.
 [TypeCodec]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/TypeCodec.html
 [LocalDate]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/LocalDate.html
 [ByteBuffer]: http://docs.oracle.com/javase/8/docs/api/java/nio/ByteBuffer.html
-[serialize]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/TypeCodec.html#serialize(T,%20com.datastax.driver.core.ProtocolVersion)
-[deserialize]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/TypeCodec.html#deserialize(java.nio.ByteBuffer,%20com.datastax.driver.core.ProtocolVersion)
-[TypeCodec.format]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/TypeCodec.html#format(T)
-[TypeCodec.parse]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/TypeCodec.html#parse(java.lang.String)
+[serialize]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/TypeCodec.html#serialize-T-com.datastax.driver.core.ProtocolVersion-
+[deserialize]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/TypeCodec.html#deserialize-java.nio.ByteBuffer-com.datastax.driver.core.ProtocolVersion-
+[TypeCodec.format]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/TypeCodec.html#format-T-
+[TypeCodec.parse]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/TypeCodec.html#parse-java.lang.String-
 [accepts]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/TypeCodec.html#accepts-com.datastax.driver.core.DataType-
 [CodecRegistry]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/CodecRegistry.html
 [CodecNotFoundException]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/exceptions/CodecNotFoundException.html
@@ -462,7 +462,6 @@ consider using prepared statements all the time.
 [TypeToken]: http://docs.guava-libraries.googlecode.com/git/javadoc/com/google/common/reflect/TypeToken.html
 [SimpleStatement]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/SimpleStatement.html
 [BuiltStatement]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/querybuilder/BuiltStatement.html
-[setList]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/SettableByIndexData.html#setList(int,%20java.util.List)
-[setSet]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/SettableByIndexData.html#setSet(int,%20java.util.Set)
-[setMap]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/SettableByIndexData.html#setMap(int,%20java.util.Map)
-[setObject]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/SettableByIndexData.html#setObject(int,%20V)
+[setList]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/SettableByIndexData.html#setList-int-java.util.List-
+[setSet]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/SettableByIndexData.html#setSet-int-java.util.Set-
+[setMap]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/SettableByIndexData.html#setMap-int-java.util.Map-
