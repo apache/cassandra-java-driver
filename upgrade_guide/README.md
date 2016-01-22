@@ -246,6 +246,28 @@ We've also seized the opportunity to remove code that was deprecated in 2.1.
 
 25. The constructor of `DCAwareRoundRobinPolicy` is not accessible anymore. You
     should use `DCAwareRoundRobinPolicy#builder()` to create new instances.
+    
+26. `ColumnMetadata.getTable()` has been renamed to `ColumnMetadata.getParent()`.
+    Also, its return type is now `AbstractTableMetadata` which can be either
+    a `TableMetadata` object or a `MaterializedViewMetadata` object.
+    This change is motivated by the fact that a column can now belong to a 
+    table or a materialized view.
+    
+27. `ColumnMetadata.getIndex()` has been removed. 
+    This is due to the fact that secondary indexes have been completely redesigned 
+    in Cassandra 3.0, and the former one-to-one relationship between a column and its index
+    has been replaced with a one-to-many relationship between a table and its indexes.
+    This is reflected in the driver's API by the new methods
+    `TableMetadata.getIndexes()` and `TableMetadata.getIndex(String name)`.
+    See [CASSANDRA-9459](https://issues.apache.org/jira/browse/CASSANDRA-9459) and
+    and [JAVA-1008](https://datastax-oss.atlassian.net/browse/JAVA-1008) for
+    more details.
+    Unfortunately, there is no easy way to recover the functionality provided
+    by the deleted method, _even for Cassandra versions <= 3.0_.
+
+28. `IndexMetadata` is now a top-level class and its structure has been deeply modified. 
+    Again, this is due to the fact that secondary indexes have been completely redesigned 
+    in Cassandra 3.0.
 
 
 ### 2.1.8
