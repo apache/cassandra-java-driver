@@ -29,7 +29,7 @@ import java.net.InetSocketAddress;
  * {@code rpc_address} in the node yaml file. In most case, this is the correct
  * address to use by the driver and that is what is used by default. However,
  * sometimes the addresses received through this mechanism will either not be
- * reachable directly by the driver or should not be the prefered address to use
+ * reachable directly by the driver or should not be the preferred address to use
  * to reach the node (for instance, the {@code rpc_address} set on Cassandra nodes
  * might be a private IP, but some clients  may have to use a public IP, or
  * pass by a router to reach that node). This interface allows to deal with
@@ -37,7 +37,7 @@ import java.net.InetSocketAddress;
  * to another address to be used by the driver for connection.
  * <p/>
  * Please note that the contact points addresses provided while creating the
- * {@link Cluster} instance are not "tanslated", only IP address retrieve from or sent
+ * {@link Cluster} instance are not "translated", only IP address retrieved from or sent
  * by Cassandra nodes to the driver are.
  */
 public interface AddressTranslator {
