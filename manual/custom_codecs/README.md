@@ -89,7 +89,7 @@ public class JsonCodec<T> extends TypeCodec<T> {
             byte[] b = new byte[bytes.remaining()];
             // always duplicate the ByteBuffer instance before consuming it!
             bytes.duplicate().get(b);
-            return (T)objectMapper.readValue(b, toJacksonJavaType());
+            return (T) objectMapper.readValue(b, toJacksonJavaType());
         } catch (IOException e) {
             throw new InvalidTypeException(e.getMessage(), e);
         }
@@ -98,7 +98,7 @@ public class JsonCodec<T> extends TypeCodec<T> {
     @Override
     public String format(T value) throws InvalidTypeException {
         if (value == null)
-            return NULL;
+            return "NULL";
         String json;
         try {
             json = objectMapper.writeValueAsString(value);
@@ -111,13 +111,13 @@ public class JsonCodec<T> extends TypeCodec<T> {
     @Override
     @SuppressWarnings("unchecked")
     public T parse(String value) throws InvalidTypeException {
-        if (value == null || value.isEmpty() || value.equals(NULL))
+        if (value == null || value.isEmpty() || value.equalsIgnoreCase("NULL"))
             return null;
         if (value.charAt(0) != '\'' || value.charAt(value.length() - 1) != '\'')
             throw new InvalidTypeException("JSON strings must be enclosed by single quotes");
         String json = value.substring(1, value.length() - 1).replace("''", "'");
         try {
-            return (T)objectMapper.readValue(json, toJacksonJavaType());
+            return (T) objectMapper.readValue(json, toJacksonJavaType());
         } catch (IOException e) {
             throw new InvalidTypeException(e.getMessage(), e);
         }
@@ -126,7 +126,7 @@ public class JsonCodec<T> extends TypeCodec<T> {
     protected JavaType toJacksonJavaType() {
         return TypeFactory.defaultInstance().constructType(getJavaType().getType());
     }
-    
+
 }
 ```
 
