@@ -2,6 +2,7 @@
 
 ### 3.0.0 (in progress)
 
+- [improvement] JAVA-1043: Use protected fields in RoundRobinPolicy to enable subclassing.
 - [bug] JAVA-1034: fix metadata parser for collections of custom types.
 - [improvement] JAVA-1035: Expose host broadcast_address and listen_address if available.
 

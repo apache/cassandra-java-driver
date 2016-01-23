@@ -43,11 +43,11 @@ public class RoundRobinPolicy implements LoadBalancingPolicy {
 
     private static final Logger logger = LoggerFactory.getLogger(RoundRobinPolicy.class);
 
-    private final CopyOnWriteArrayList<Host> liveHosts = new CopyOnWriteArrayList<Host>();
-    private final AtomicInteger index = new AtomicInteger();
+    protected final CopyOnWriteArrayList<Host> liveHosts = new CopyOnWriteArrayList<Host>();
+    protected final AtomicInteger index = new AtomicInteger();
 
-    private volatile Configuration configuration;
-    private volatile boolean hasLoggedLocalCLUse;
+    protected volatile Configuration configuration;
+    protected volatile boolean hasLoggedLocalCLUse;
 
     /**
      * Creates a load balancing policy that picks host to query in a round robin
