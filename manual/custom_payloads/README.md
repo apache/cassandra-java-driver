@@ -134,7 +134,7 @@ greater than 4:
 ```java
 ProtocolVersion myCurrentVersion = cluster.getConfiguration()
     .getProtocolOptions()
-    .getProtocolVersionEnum();
+    .getProtocolVersion();
 if (myCurrentVersion.compareTo(ProtocolVersion.V4) >= 0) {
     // only send custom payloads if current protocol version supports it
     statement.setOutgoingPayload(myCustomPayload);
