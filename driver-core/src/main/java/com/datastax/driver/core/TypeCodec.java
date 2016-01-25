@@ -486,11 +486,16 @@ public abstract class TypeCodec<T> {
     /**
      * Parse the given CQL literal into an instance of the Java type
      * handled by this codec.
+     * <p/>
      * Implementors should take care of unquoting and unescaping the given CQL string
      * where applicable.
-     * Null values and empty Strings should be accepted, as weel as the string {@code "NULL"};
+     * Null values and empty Strings should be accepted, as well as the string {@code "NULL"};
      * in most cases, implementations should interpret these inputs has equivalent to a {@code null}
      * reference.
+     * <p/>
+     * Implementing this method is not strictly mandatory: internally, the driver only uses it to
+     * parse the INITCOND when building the metadata of an aggregate function (and in most cases it
+     * will use a built-in codec, unless the INITCOND has a custom type).
      *
      * @param value The CQL string to parse, may be {@code null} or empty.
      * @return An instance of T; may be {@code null} on a {@code null input}.
@@ -501,10 +506,25 @@ public abstract class TypeCodec<T> {
     /**
      * Format the given value as a valid CQL literal according
      * to the CQL type handled by this codec.
+     * <p/>
      * Implementors should take care of quoting and escaping the resulting CQL literal
      * where applicable.
      * Null values should be accepted; in most cases, implementations should
      * return the CQL keyword {@code "NULL"} for {@code null} inputs.
+     * <p/>
+     * Implementing this method is not strictly mandatory. It is used:
+     * <ol>
+     * <li>in the query builder, when values are inlined in the query string (see
+     * {@link com.datastax.driver.core.querybuilder.BuiltStatement} for a detailed
+     * explanation of when this happens);</li>
+     * <li>in the {@link QueryLogger}, if parameter logging is enabled;</li>
+     * <li>to format the INITCOND in {@link AggregateMetadata#asCQLQuery(boolean)};</li>
+     * <li>in the {@code toString()} implementation of some objects ({@link UDTValue},
+     * {@link TupleValue}, and the internal representation of a {@code ROWS} response),
+     * which may appear in driver logs.</li>
+     * </ol>
+     * If choose not to implement this method, you can return a constant string (for example
+     * "XxxCodec.format not implemented").
      *
      * @param value An instance of T; may be {@code null}.
      * @return CQL string

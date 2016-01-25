@@ -140,7 +140,7 @@ The second step is to register your codec with a `CodecRegistry` instance:
 
 ```java
 ObjectMapper objectMapper = ...
-JsonCodec<MyPojo> myJsonCodec = new JsonCodec<MyPojo>(MyPojo.class, objectMapper);
+JsonCodec<MyPojo> myJsonCodec = new JsonCodec<MyPojo>(MyPojo.class);
 CodecRegistry myCodecRegistry = cluster.getConfiguration().getCodecRegistry();
 myCodecRegistry.register(myJsonCodec);
 ```
