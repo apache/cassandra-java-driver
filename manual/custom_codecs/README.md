@@ -139,7 +139,6 @@ A few implementation guidelines:
 The second step is to register your codec with a `CodecRegistry` instance:
 
 ```java
-ObjectMapper objectMapper = ...
 JsonCodec<MyPojo> myJsonCodec = new JsonCodec<MyPojo>(MyPojo.class);
 CodecRegistry myCodecRegistry = cluster.getConfiguration().getCodecRegistry();
 myCodecRegistry.register(myJsonCodec);
@@ -201,6 +200,8 @@ make sure that you use preferably the `get()` and `set()` methods: they
 avoid any ambiguity by requiring the user to explicitly specify the desired Java type,
 thus forcing the driver to pick the right codec for the right task.
 
+Custom codecs also work with the driver's [object mapper](../object_mapper/custom_codecs/).
+
 ### On-the-fly codec generation
 
 `CodecRegistry` instances not only store default codecs and user-defined codecs;
@@ -224,7 +225,7 @@ example to retrieve lists of `MyPojo` objects stored in a CQL column of type `li
 the need to explicitly declare a codec for this specific CQL type:
 
 ```java
-JsonCodec<MyPojo> myJsonCodec = new JsonCodec<MyPojo>(MyPojo.class, objectMapper);
+JsonCodec<MyPojo> myJsonCodec = new JsonCodec<MyPojo>(MyPojo.class);
 myCodecRegistry.register(myJsonCodec);
 Row row = ...
 List<MyPojo> myPojos = row.getList("jsonList", MyPojo.class); // works out of the box!
