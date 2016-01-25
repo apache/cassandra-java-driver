@@ -51,7 +51,7 @@ The driver contains the following modules:
 - driver-examples: example applications using the other modules which are
   only meant for demonstration purposes.
 
-**Community:**
+**Useful links:**
 
 - JIRA: https://datastax-oss.atlassian.net/browse/JAVA
 - MAILING LIST: https://groups.google.com/a/lists.datastax.com/forum/#!forum/java-driver-user
@@ -64,6 +64,8 @@ The driver contains the following modules:
   has introductory material. We are progressively migrating the doc
   [here](manual/) with more technical details.
 - API: http://www.datastax.com/drivers/java/3.0
+- [changelog](changelog/)
+- [binary tarball](http://downloads.datastax.com/java-driver/cassandra-java-driver-3.0.0-rc1.tar.gz)
 
 **Feeback requested:** help us focus our efforts, provide your input on the [Platform and Runtime Survey](http://goo.gl/forms/qwUE6qnL7U) (we kept it short).  
 
