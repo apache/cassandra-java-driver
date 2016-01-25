@@ -21,6 +21,7 @@ import com.datastax.driver.core.querybuilder.BuiltStatement;
 import com.datastax.driver.core.schemabuilder.SchemaStatement;
 
 import java.nio.ByteBuffer;
+import java.util.Map;
 
 /**
  * A regular (non-prepared and non batched) CQL statement.
@@ -75,12 +76,15 @@ public abstract class RegularStatement extends Statement {
     }
 
     /**
-     * The values to use for this statement.
+     * The positional values to use for this statement.
      * <p/>
-     * Note: Values for a RegularStatement (i.e. if this method does not return
+     * A statement can use either positional or named values, but not both. So if this method returns a non-null result,
+     * {@link #getNamedValues(ProtocolVersion, CodecRegistry)} will return {@code null}.
+     * <p/>
+     * Values for a RegularStatement (i.e. if either method does not return
      * {@code null}) are not supported with the native protocol version 1: you
      * will get an {@link UnsupportedProtocolVersionException} when submitting
-     * one if version 1 of the protocol is in use (i.e. if you've force version
+     * one if version 1 of the protocol is in use (i.e. if you've forced version
      * 1 through {@link Cluster.Builder#withProtocolVersion} or you use
      * Cassandra 1.2).
      *
@@ -95,6 +99,30 @@ public abstract class RegularStatement extends Statement {
     public abstract ByteBuffer[] getValues(ProtocolVersion protocolVersion, CodecRegistry codecRegistry);
 
     /**
+     * The named values to use for this statement.
+     * <p/>
+     * A statement can use either positional or named values, but not both. So if this method returns a non-null result,
+     * {@link #getValues(ProtocolVersion, CodecRegistry)} will return {@code null}.
+     * <p/>
+     * Values for a RegularStatement (i.e. if either method does not return
+     * {@code null}) are not supported with the native protocol version 1: you
+     * will get an {@link UnsupportedProtocolVersionException} when submitting
+     * one if version 1 of the protocol is in use (i.e. if you've forced version
+     * 1 through {@link Cluster.Builder#withProtocolVersion} or you use
+     * Cassandra 1.2).
+     *
+     * @param protocolVersion the protocol version that will be used to serialize
+     *                        the values.
+     * @param codecRegistry   the codec registry that will be used to serialize the
+     *                        values.
+     * @return the named values.
+     * @throws InvalidTypeException if one of the values is not of a type
+     *                              that can be serialized to a CQL3 type
+     * @see SimpleStatement#SimpleStatement(String, Map)
+     */
+    public abstract Map<String, ByteBuffer> getNamedValues(ProtocolVersion protocolVersion, CodecRegistry codecRegistry);
+
+    /**
      * Whether or not this statement has values, that is if {@code getValues}
      * will return {@code null} or not.
      *
@@ -104,11 +132,20 @@ public abstract class RegularStatement extends Statement {
      *                      Note that it might be possible to use the no-arg
      *                      {@link #hasValues()} depending on the type of
      *                      statement this is called on.
-     * @return {@code false} if {@link #getValues} returns {@code null}, {@code true}
+     * @return {@code false} if both {@link #getValues(ProtocolVersion, CodecRegistry)}
+     * and {@link #getNamedValues(ProtocolVersion, CodecRegistry)} return {@code null}, {@code true}
      * otherwise.
      * @see #hasValues()
      */
     public abstract boolean hasValues(CodecRegistry codecRegistry);
+
+    /**
+     * Whether this statement uses named values.
+     *
+     * @return {@code false} if {@link #getNamedValues(ProtocolVersion, CodecRegistry)} returns {@code null},
+     * {@code true} otherwise.
+     */
+    public abstract boolean usesNamedValues();
 
     /**
      * Whether or not this statement has values, that is if {@code getValues}

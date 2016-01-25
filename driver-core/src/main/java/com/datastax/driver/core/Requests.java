@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import io.netty.buffer.ByteBuf;
 
@@ -232,6 +233,7 @@ class Requests {
 
         static final QueryProtocolOptions DEFAULT = new QueryProtocolOptions(ConsistencyLevel.ONE,
                 Collections.<ByteBuffer>emptyList(),
+                Collections.<String, ByteBuffer>emptyMap(),
                 false,
                 -1,
                 null,
@@ -240,7 +242,8 @@ class Requests {
 
         private final EnumSet<QueryFlag> flags = EnumSet.noneOf(QueryFlag.class);
         final ConsistencyLevel consistency;
-        final List<ByteBuffer> values;
+        final List<ByteBuffer> positionalValues;
+        final Map<String, ByteBuffer> namedValues;
         final boolean skipMetadata;
         final int pageSize;
         final ByteBuffer pagingState;
@@ -248,15 +251,19 @@ class Requests {
         final long defaultTimestamp;
 
         QueryProtocolOptions(ConsistencyLevel consistency,
-                             List<ByteBuffer> values,
+                             List<ByteBuffer> positionalValues,
+                             Map<String, ByteBuffer> namedValues,
                              boolean skipMetadata,
                              int pageSize,
                              ByteBuffer pagingState,
                              ConsistencyLevel serialConsistency,
                              long defaultTimestamp) {
 
+            Preconditions.checkArgument(positionalValues.isEmpty() || namedValues.isEmpty());
+
             this.consistency = consistency;
-            this.values = values;
+            this.positionalValues = positionalValues;
+            this.namedValues = namedValues;
             this.skipMetadata = skipMetadata;
             this.pageSize = pageSize;
             this.pagingState = pagingState;
@@ -264,8 +271,12 @@ class Requests {
             this.defaultTimestamp = defaultTimestamp;
 
             // Populate flags
-            if (!values.isEmpty())
+            if (!positionalValues.isEmpty())
                 flags.add(QueryFlag.VALUES);
+            if (!namedValues.isEmpty()) {
+                flags.add(QueryFlag.VALUES);
+                flags.add(QueryFlag.VALUE_NAMES);
+            }
             if (skipMetadata)
                 flags.add(QueryFlag.SKIP_METADATA);
             if (pageSize >= 0)
@@ -279,14 +290,15 @@ class Requests {
         }
 
         QueryProtocolOptions copy(ConsistencyLevel newConsistencyLevel) {
-            return new QueryProtocolOptions(newConsistencyLevel, values, skipMetadata, pageSize, pagingState, serialConsistency, defaultTimestamp);
+            return new QueryProtocolOptions(newConsistencyLevel, positionalValues, namedValues, skipMetadata, pageSize, pagingState, serialConsistency, defaultTimestamp);
         }
 
         void encode(ByteBuf dest, ProtocolVersion version) {
             switch (version) {
                 case V1:
+                    // Values in protocol v1 are only for bound statements, and these are never named
                     if (flags.contains(QueryFlag.VALUES))
-                        CBUtil.writeValueList(values, dest);
+                        CBUtil.writeValueList(positionalValues, dest);
                     CBUtil.writeConsistencyLevel(consistency, dest);
                     break;
                 case V2:
@@ -294,8 +306,14 @@ class Requests {
                 case V4:
                     CBUtil.writeConsistencyLevel(consistency, dest);
                     dest.writeByte((byte) QueryFlag.serialize(flags));
-                    if (flags.contains(QueryFlag.VALUES))
-                        CBUtil.writeValueList(values, dest);
+                    if (flags.contains(QueryFlag.VALUES)) {
+                        if (flags.contains(QueryFlag.VALUE_NAMES)) {
+                            assert version.compareTo(ProtocolVersion.V3) >= 0;
+                            CBUtil.writeNamedValueList(namedValues, dest);
+                        } else {
+                            CBUtil.writeValueList(positionalValues, dest);
+                        }
+                    }
                     if (flags.contains(QueryFlag.PAGE_SIZE))
                         dest.writeInt(pageSize);
                     if (flags.contains(QueryFlag.PAGING_STATE))
@@ -313,7 +331,7 @@ class Requests {
         int encodedSize(ProtocolVersion version) {
             switch (version) {
                 case V1:
-                    return CBUtil.sizeOfValueList(values)
+                    return CBUtil.sizeOfValueList(positionalValues)
                             + CBUtil.sizeOfConsistencyLevel(consistency);
                 case V2:
                 case V3:
@@ -321,8 +339,14 @@ class Requests {
                     int size = 0;
                     size += CBUtil.sizeOfConsistencyLevel(consistency);
                     size += 1; // flags
-                    if (flags.contains(QueryFlag.VALUES))
-                        size += CBUtil.sizeOfValueList(values);
+                    if (flags.contains(QueryFlag.VALUES)) {
+                        if (flags.contains(QueryFlag.VALUE_NAMES)) {
+                            assert version.compareTo(ProtocolVersion.V3) >= 0;
+                            size += CBUtil.sizeOfNamedValueList(namedValues);
+                        } else {
+                            size += CBUtil.sizeOfValueList(positionalValues);
+                        }
+                    }
                     if (flags.contains(QueryFlag.PAGE_SIZE))
                         size += 4;
                     if (flags.contains(QueryFlag.PAGING_STATE))
@@ -339,7 +363,8 @@ class Requests {
 
         @Override
         public String toString() {
-            return String.format("[cl=%s, vals=%s, skip=%b, psize=%d, state=%s, serialCl=%s]", consistency, values, skipMetadata, pageSize, pagingState, serialConsistency);
+            return String.format("[cl=%s, positionalVals=%s, namedVals=%s, skip=%b, psize=%d, state=%s, serialCl=%s]",
+                    consistency, positionalValues, namedValues, skipMetadata, pageSize, pagingState, serialConsistency);
         }
     }
 
