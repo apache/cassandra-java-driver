@@ -154,7 +154,7 @@ We've also seized the opportunity to remove code that was deprecated in 2.1.
 
     Also, note that `AbstractSession#prepareAsync(Statement)` does not
     call `AbstractSession#prepareAsync(String)` anymore, they now both
-    delegate to a private method.
+    delegate to a protected method.
 
     This breaks binary compatibility for these two classes; if you have
     custom implementations, you will have to adapt them accordingly.
