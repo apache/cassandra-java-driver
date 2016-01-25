@@ -11,6 +11,9 @@ Practical use cases that justify such a feature are numerous:
 * Ability to map CQL collections directly to Scala collections;
 * etc.
 
+This page explains the implementation and how to write your own custom codecs. Note that the driver also provides a set
+of [optional codecs](extras/) that might fit your needs.
+
 ### Overview of the serialization mechanism
 
 The central piece in the serialization mechanism is [TypeCodec].
