@@ -187,8 +187,8 @@ BoundStatement bs2 = ps.bind()
 And here is how to retrieve a `MyPojo` object converted from a JSON document:
 
 ```java
-ResultSet rows = session.execute(...);
-Row row = one();
+ResultSet rs = session.execute(...);
+Row row = rs.one();
 // Let the driver convert the string for you...
 MyPojo myPojo = row.get(1, MyPojo.class);
 // ... or retrieve the raw string if you need it
