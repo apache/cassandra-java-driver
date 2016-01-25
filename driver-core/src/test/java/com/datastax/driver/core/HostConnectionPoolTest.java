@@ -1057,7 +1057,7 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
         static MockRequest send(HostConnectionPool pool) throws ConnectionException, BusyConnectionException, TimeoutException {
             // Create a MockRequest and spy on it.  Create a response handler and add it to the connection's dispatcher.
             MockRequest request = spy(new MockRequest(pool));
-            request.responseHandler = new Connection.ResponseHandler(request.connection, request);
+            request.responseHandler = new Connection.ResponseHandler(request.connection, -1, request);
             request.connection.dispatcher.add(request.responseHandler);
             return request;
         }

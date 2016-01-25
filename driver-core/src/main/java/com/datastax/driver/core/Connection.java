@@ -489,14 +489,14 @@ class Connection {
     }
 
     ResponseHandler write(ResponseCallback callback) throws ConnectionException, BusyConnectionException {
-        return write(callback, true);
+        return write(callback, -1, true);
     }
 
-    ResponseHandler write(ResponseCallback callback, boolean startTimeout) throws ConnectionException, BusyConnectionException {
+    ResponseHandler write(ResponseCallback callback, long readTimeoutMillis, boolean startTimeout) throws ConnectionException, BusyConnectionException {
 
         Message.Request request = callback.request();
 
-        ResponseHandler handler = new ResponseHandler(this, callback);
+        ResponseHandler handler = new ResponseHandler(this, readTimeoutMillis, callback);
         dispatcher.add(handler);
         request.setStreamId(handler.streamId);
 
@@ -1213,14 +1213,16 @@ class Connection {
         final int streamId;
         final ResponseCallback callback;
         final int retryCount;
+        private final long readTimeoutMillis;
 
         private final long startTime;
         private volatile Timeout timeout;
 
         private final AtomicBoolean isCancelled = new AtomicBoolean();
 
-        ResponseHandler(Connection connection, ResponseCallback callback) throws BusyConnectionException {
+        ResponseHandler(Connection connection, long readTimeoutMillis, ResponseCallback callback) throws BusyConnectionException {
             this.connection = connection;
+            this.readTimeoutMillis = (readTimeoutMillis > 0) ? readTimeoutMillis : connection.factory.getReadTimeoutMillis();
             this.streamId = connection.dispatcher.streamIdHandler.next();
             if (streamId == -1)
                 throw new BusyConnectionException(connection.address);
@@ -1231,8 +1233,7 @@ class Connection {
         }
 
         void startTimeout() {
-            long timeoutMs = connection.factory.getReadTimeoutMillis();
-            this.timeout = timeoutMs <= 0 ? null : connection.factory.timer.newTimeout(onTimeoutTask(), timeoutMs, TimeUnit.MILLISECONDS);
+            this.timeout = this.readTimeoutMillis <= 0 ? null : connection.factory.timer.newTimeout(onTimeoutTask(), this.readTimeoutMillis, TimeUnit.MILLISECONDS);
         }
 
         void cancelTimeout() {

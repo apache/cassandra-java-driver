@@ -349,7 +349,7 @@ class RequestHandler {
                     break;
             }
 
-            connectionHandler = connection.write(responseCallback, false);
+            connectionHandler = connection.write(responseCallback, statement.getReadTimeoutMillis(), false);
             // Only start the timeout when we're sure connectionHandler is set. This avoids an edge case where onTimeout() was triggered
             // *before* the call to connection.write had returned.
             connectionHandler.startTimeout();

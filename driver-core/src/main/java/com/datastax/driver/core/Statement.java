@@ -63,6 +63,7 @@ public abstract class Statement {
     private volatile boolean traceQuery;
     private volatile int fetchSize;
     private volatile long defaultTimestamp = Long.MIN_VALUE;
+    private volatile long readTimeoutMillis = Long.MIN_VALUE;
     private volatile RetryPolicy retryPolicy;
     private volatile ByteBuffer pagingState;
     protected volatile Boolean idempotent;
@@ -319,6 +320,31 @@ public abstract class Statement {
      */
     public long getDefaultTimestamp() {
         return defaultTimestamp;
+    }
+
+    /**
+     * Overrides the default per-host read timeout ({@link SocketOptions#getReadTimeoutMillis()})
+     * for this statement.
+     * <p/>
+     * You should only override this only for statements for which the coordinator may allow a longer server-side
+     * timeout (for example aggregation queries).
+     *
+     * @param readTimeoutMillis the timeout to set. Must be greater than 0 (or the default will be used).
+     * @return this {@code Statement} object.
+     */
+    public Statement setReadTimeoutMillis(long readTimeoutMillis) {
+        this.readTimeoutMillis = readTimeoutMillis;
+        return this;
+    }
+
+    /**
+     * Return the per-host read timeout that was set for this statement.
+     *
+     * @return the timeout. Note that a negative value means that the default
+     * {@link SocketOptions#getReadTimeoutMillis()} will be used.
+     */
+    public long getReadTimeoutMillis() {
+        return readTimeoutMillis;
     }
 
     /**

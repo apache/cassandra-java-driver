@@ -20,6 +20,7 @@ import com.datastax.driver.core.policies.RetryPolicy;
 import com.datastax.driver.core.policies.SpeculativeExecutionPolicy;
 
 import java.nio.ByteBuffer;
+import java.util.Map;
 
 /**
  * Base class for custom {@link Statement} implementations that wrap another statement.
@@ -81,8 +82,8 @@ public abstract class StatementWrapper extends Statement {
     }
 
     @Override
-    public Statement disableTracing() {
-        return wrapped.disableTracing();
+    public ConsistencyLevel getConsistencyLevel() {
+        return wrapped.getConsistencyLevel();
     }
 
     @Override
@@ -91,13 +92,18 @@ public abstract class StatementWrapper extends Statement {
     }
 
     @Override
+    public ConsistencyLevel getSerialConsistencyLevel() {
+        return wrapped.getSerialConsistencyLevel();
+    }
+
+    @Override
     public Statement enableTracing() {
         return wrapped.enableTracing();
     }
 
     @Override
-    public ByteBuffer getPagingState() {
-        return wrapped.getPagingState();
+    public Statement disableTracing() {
+        return wrapped.disableTracing();
     }
 
     @Override
@@ -106,33 +112,8 @@ public abstract class StatementWrapper extends Statement {
     }
 
     @Override
-    public RetryPolicy getRetryPolicy() {
-        return wrapped.getRetryPolicy();
-    }
-
-    @Override
     public ByteBuffer getRoutingKey(ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
         return wrapped.getRoutingKey(protocolVersion, codecRegistry);
-    }
-
-    @Override
-    public Statement setRetryPolicy(RetryPolicy policy) {
-        return wrapped.setRetryPolicy(policy);
-    }
-
-    @Override
-    public ConsistencyLevel getConsistencyLevel() {
-        return wrapped.getConsistencyLevel();
-    }
-
-    @Override
-    public Statement setPagingState(PagingState pagingState, CodecRegistry codecRegistry) {
-        return wrapped.setPagingState(pagingState, codecRegistry);
-    }
-
-    @Override
-    public ConsistencyLevel getSerialConsistencyLevel() {
-        return wrapped.getSerialConsistencyLevel();
     }
 
     @Override
@@ -141,12 +122,87 @@ public abstract class StatementWrapper extends Statement {
     }
 
     @Override
-    public int getFetchSize() {
-        return wrapped.getFetchSize();
+    public Statement setRetryPolicy(RetryPolicy policy) {
+        return wrapped.setRetryPolicy(policy);
+    }
+
+    @Override
+    public RetryPolicy getRetryPolicy() {
+        return wrapped.getRetryPolicy();
     }
 
     @Override
     public Statement setFetchSize(int fetchSize) {
         return wrapped.setFetchSize(fetchSize);
+    }
+
+    @Override
+    public int getFetchSize() {
+        return wrapped.getFetchSize();
+    }
+
+    @Override
+    public Statement setDefaultTimestamp(long defaultTimestamp) {
+        return wrapped.setDefaultTimestamp(defaultTimestamp);
+    }
+
+    @Override
+    public long getDefaultTimestamp() {
+        return wrapped.getDefaultTimestamp();
+    }
+
+    @Override
+    public Statement setReadTimeoutMillis(long readTimeoutMillis) {
+        return wrapped.setReadTimeoutMillis(readTimeoutMillis);
+    }
+
+    @Override
+    public long getReadTimeoutMillis() {
+        return wrapped.getReadTimeoutMillis();
+    }
+
+    @Override
+    public Statement setPagingState(PagingState pagingState, CodecRegistry codecRegistry) {
+        return wrapped.setPagingState(pagingState, codecRegistry);
+    }
+
+    @Override
+    public Statement setPagingState(PagingState pagingState) {
+        return wrapped.setPagingState(pagingState);
+    }
+
+    @Override
+    public Statement setPagingStateUnsafe(byte[] pagingState) {
+        return wrapped.setPagingStateUnsafe(pagingState);
+    }
+
+    @Override
+    public ByteBuffer getPagingState() {
+        return wrapped.getPagingState();
+    }
+
+    @Override
+    public Statement setIdempotent(boolean idempotent) {
+        return wrapped.setIdempotent(idempotent);
+    }
+
+    @Override
+    public Boolean isIdempotent() {
+        return wrapped.isIdempotent();
+    }
+
+    @Override
+    public boolean isIdempotentWithDefault(QueryOptions queryOptions) {
+        return wrapped.isIdempotentWithDefault(queryOptions);
+    }
+
+    @Override
+    public Map<String, ByteBuffer> getOutgoingPayload() {
+        return wrapped.getOutgoingPayload();
+    }
+
+    @Override
+    public Statement setOutgoingPayload(Map<String, ByteBuffer> payload) {
+        return wrapped.setOutgoingPayload(payload);
     }
 }
