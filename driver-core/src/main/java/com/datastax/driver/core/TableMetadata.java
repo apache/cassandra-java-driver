@@ -330,12 +330,12 @@ public class TableMetadata extends AbstractTableMetadata {
     }
 
     /**
-     * Returns a list containing all the indexes of this table.
+     * Returns all indexes based on this table.
      *
-     * @return a list containing the metadata for the indexes of this table.
+     * @return all indexes based on this table.
      */
-    public List<IndexMetadata> getIndexes() {
-        return new ArrayList<IndexMetadata>(indexes.values());
+    public Collection<IndexMetadata> getIndexes() {
+        return Collections.unmodifiableCollection(indexes.values());
     }
 
     /**
@@ -352,12 +352,12 @@ public class TableMetadata extends AbstractTableMetadata {
     }
 
     /**
-     * Returns a list containing all the viewes of this table.
+     * Returns all views based on this table.
      *
-     * @return a list containing the metadata for the viewes of this table.
+     * @return all views based on this table.
      */
-    public List<MaterializedViewMetadata> getViews() {
-        return new ArrayList<MaterializedViewMetadata>(views.values());
+    public Collection<MaterializedViewMetadata> getViews() {
+        return Collections.unmodifiableCollection(views.values());
     }
 
     void add(MaterializedViewMetadata view) {

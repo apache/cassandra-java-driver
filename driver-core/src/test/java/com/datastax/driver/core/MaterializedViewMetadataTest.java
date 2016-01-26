@@ -113,6 +113,7 @@ public class MaterializedViewMetadataTest extends CCMTestsSupport {
         TableMetadata table = cluster.getMetadata().getKeyspace(keyspace).getTable("\"T1\"");
         MaterializedViewMetadata mv = cluster.getMetadata().getKeyspace(keyspace).getMaterializedView("\"Mv1\"");
         assertThat(table).isNotNull().hasName("T1").hasMaterializedView(mv).hasNumberOfColumns(3);
+        assertThat(table.getViews()).hasSize(1).containsOnly(mv);
         assertThat(table.getColumns().get(0)).isNotNull().hasName("theKey").isPartitionKey().hasType(cint());
         assertThat(table.getColumns().get(1)).isNotNull().hasName("the;Clustering").isClusteringColumn().hasType(cint());
         assertThat(table.getColumns().get(2)).isNotNull().hasName("the Value").isRegularColumn().hasType(cint());

@@ -20,8 +20,6 @@ import com.google.common.collect.ImmutableMap;
 import org.testng.annotations.Test;
 
 import java.nio.ByteBuffer;
-import java.util.Collection;
-import java.util.Collections;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.ClusteringOrder.ASC;
@@ -462,9 +460,9 @@ public class TableMetadataTest extends CCMTestsSupport {
         TableMetadata table_cd = cluster.getMetadata().getKeyspace(keyspace).getTable("test_cd");
 
         assertThat(table_ab.getIndexes().size()).isEqualTo(1);
-        assertThat(table_ab.getIndexes().get(0).getName()).isEqualTo("test_b");
+        assertThat(table_ab.getIndexes()).extracting("name").containsOnly("test_b");
         assertThat(table_cd.getIndexes().size()).isEqualTo(1);
-        assertThat(table_cd.getIndexes().get(0).getName()).isEqualTo("test_d");
+        assertThat(table_cd.getIndexes()).extracting("name").containsOnly("test_d");
     }
 
     /**
