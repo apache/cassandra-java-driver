@@ -43,12 +43,6 @@
 
     <dependency>
       <groupId>com.datastax.cassandra</groupId>
-      <artifactId>cassandra-driver-dse</artifactId>
-      <version>${project.parent.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>com.datastax.cassandra</groupId>
       <artifactId>cassandra-driver-mapping</artifactId>
       <version>${project.parent.version}</version>
     </dependency>
