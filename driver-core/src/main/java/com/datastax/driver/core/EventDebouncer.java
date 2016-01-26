@@ -48,7 +48,7 @@ class EventDebouncer<T> {
 
     private static final Logger logger = LoggerFactory.getLogger(EventDebouncer.class);
 
-    private static final int MAX_QUEUED_EVENTS = 10000;
+    static final int DEFAULT_MAX_QUEUED_EVENTS = 10000;
 
     private final String name;
 
@@ -61,6 +61,7 @@ class EventDebouncer<T> {
 
     private final long delayMs;
     private final int maxPendingEvents;
+    private final int maxQueuedEvents;
 
     private final Queue<Entry<T>> events;
     private final AtomicInteger eventCount;
@@ -72,12 +73,13 @@ class EventDebouncer<T> {
     private static final long OVERFLOW_WARNING_INTERVAL = NANOSECONDS.convert(5, SECONDS);
     private volatile long lastOverflowWarning = Long.MIN_VALUE;
 
-    EventDebouncer(String name, ScheduledExecutorService executor, DeliveryCallback<T> callback, long delayMs, int maxPendingEvents) {
+    EventDebouncer(String name, ScheduledExecutorService executor, DeliveryCallback<T> callback, long delayMs, int maxPendingEvents, int maxQueuedEvents) {
         this.name = name;
         this.executor = executor;
         this.callback = callback;
         this.delayMs = delayMs;
         this.maxPendingEvents = maxPendingEvents;
+        this.maxQueuedEvents = maxQueuedEvents;
         this.events = new ConcurrentLinkedQueue<Entry<T>>();
         this.eventCount = new AtomicInteger();
         this.state = State.NEW;
@@ -126,15 +128,16 @@ class EventDebouncer<T> {
         checkNotNull(event);
         logger.trace("{} debouncer: event received {}", name, event);
 
-        int count = eventCount.incrementAndGet();
-
         // Safeguard against the queue filling up faster than we can process it
-        long now;
-        if (count > MAX_QUEUED_EVENTS && (now = System.nanoTime()) > lastOverflowWarning + OVERFLOW_WARNING_INTERVAL) {
-            lastOverflowWarning = now;
-            logger.warn("{} debouncer enqueued more than {} events, rejecting new events. "
+        if (eventCount.incrementAndGet() > maxQueuedEvents) {
+            long now = System.nanoTime();
+            if (now > lastOverflowWarning + OVERFLOW_WARNING_INTERVAL) {
+                lastOverflowWarning = now;
+                logger.warn("{} debouncer enqueued more than {} events, rejecting new events. "
                             + "This should not happen and is likely a sign that something is wrong.",
-                    name, MAX_QUEUED_EVENTS);
+                        name, maxQueuedEvents);
+            }
+            eventCount.decrementAndGet();
             return MoreFutures.VOID_SUCCESS;
         }
 
@@ -147,6 +150,7 @@ class EventDebouncer<T> {
         }
 
         if (state == State.RUNNING) {
+            int count = eventCount.get();
             if (count < maxPendingEvents) {
                 scheduleDelayedDelivery();
             } else if (count == maxPendingEvents) {
@@ -165,8 +169,8 @@ class EventDebouncer<T> {
 
         while (state == State.RUNNING) {
             DeliveryAttempt previous = immediateDelivery.get();
-            if (previous != null && !previous.isDone())
-                return;
+            if (previous != null)
+                previous.cancel();
 
             DeliveryAttempt current = new DeliveryAttempt();
             if (immediateDelivery.compareAndSet(previous, current)) {
@@ -206,7 +210,7 @@ class EventDebouncer<T> {
         Entry<T> entry;
         // Limit the number of events we dequeue, to avoid an infinite loop if the queue starts filling faster than we can consume it.
         int count = 0;
-        while (++count <= MAX_QUEUED_EVENTS && (entry = this.events.poll()) != null) {
+        while (++count <= maxQueuedEvents && (entry = this.events.poll()) != null) {
             toDeliver.add(entry.event);
             futures.add(entry.future);
         }
@@ -234,7 +238,7 @@ class EventDebouncer<T> {
 
         // If we didn't dequeue all events (or new ones arrived since we did), make sure we eventually
         // process the remaining events, because eventReceived might have skipped the delivery
-        if (!events.isEmpty())
+        if (eventCount.get() > 0)
             scheduleDelayedDelivery();
     }
 

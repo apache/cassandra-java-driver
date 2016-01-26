@@ -10,6 +10,7 @@
 Merged from 2.1 branch:
 
 - [improvement] JAVA-1030: Log token to replica map computation times.
+- [bug] JAVA-1039: Minor bugs in Event Debouncer.
 
 
 ### 3.0.0-rc1
@@ -265,6 +266,7 @@ Merged from 2.1 branch:
 
 - [bug] JAVA-988: Metadata.handleId should handle escaped double quotes.
 - [improvement] JAVA-1030: Log token to replica map computation times.
+- [bug] JAVA-1039: Minor bugs in Event Debouncer.
 
 Merged from 2.0 branch:
 

@@ -1374,19 +1374,25 @@ public class Cluster implements Closeable {
                     scheduledTasksExecutor,
                     new NodeListRefreshRequestDeliveryCallback(),
                     queryOptions.getRefreshNodeListIntervalMillis(),
-                    queryOptions.getMaxPendingRefreshNodeListRequests());
+                    queryOptions.getMaxPendingRefreshNodeListRequests(),
+                    EventDebouncer.DEFAULT_MAX_QUEUED_EVENTS
+            );
             this.nodeRefreshRequestDebouncer = new EventDebouncer<NodeRefreshRequest>(
                     "Node refresh",
                     scheduledTasksExecutor,
                     new NodeRefreshRequestDeliveryCallback(),
                     queryOptions.getRefreshNodeIntervalMillis(),
-                    queryOptions.getMaxPendingRefreshNodeRequests());
+                    queryOptions.getMaxPendingRefreshNodeRequests(),
+                    EventDebouncer.DEFAULT_MAX_QUEUED_EVENTS
+            );
             this.schemaRefreshRequestDebouncer = new EventDebouncer<SchemaRefreshRequest>(
                     "Schema refresh",
                     scheduledTasksExecutor,
                     new SchemaRefreshRequestDeliveryCallback(),
                     queryOptions.getRefreshSchemaIntervalMillis(),
-                    queryOptions.getMaxPendingRefreshSchemaRequests());
+                    queryOptions.getMaxPendingRefreshSchemaRequests(),
+                    EventDebouncer.DEFAULT_MAX_QUEUED_EVENTS
+            );
 
             this.scheduledTasksExecutor.scheduleWithFixedDelay(new CleanupIdleConnectionsTask(), 10, 10, TimeUnit.SECONDS);
 

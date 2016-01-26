@@ -18,6 +18,8 @@ package com.datastax.driver.core;
 import com.datastax.driver.core.EventDebouncer.DeliveryCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -28,14 +30,15 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import static com.datastax.driver.core.EventDebouncer.DEFAULT_MAX_QUEUED_EVENTS;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 
 public class EventDebouncerTest {
 
@@ -56,7 +59,7 @@ public class EventDebouncerTest {
 
     @Test(groups = "unit")
     public void should_deliver_single_event() throws InterruptedException {
-        EventDebouncer<MockEvent> debouncer = new EventDebouncer<MockEvent>("test", executor, callback, 10, 50);
+        EventDebouncer<MockEvent> debouncer = new EventDebouncer<MockEvent>("test", executor, callback, 10, 50, DEFAULT_MAX_QUEUED_EVENTS);
         debouncer.start();
         MockEvent event = new MockEvent(0);
         debouncer.eventReceived(event);
@@ -65,8 +68,35 @@ public class EventDebouncerTest {
     }
 
     @Test(groups = "unit")
+    public void should_log_and_drop_events_on_overflow() throws InterruptedException {
+        MemoryAppender logs = new MemoryAppender();
+        Logger logger = Logger.getLogger(EventDebouncer.class);
+        Level originalLoggerLevel = logger.getLevel();
+        logger.setLevel(Level.WARN);
+        logger.addAppender(logs);
+        try {
+            EventDebouncer<MockEvent> debouncer = new EventDebouncer<MockEvent>("test", executor, callback, 100, 15, 10);
+            debouncer.start();
+            List<MockEvent> events = new ArrayList<MockEvent>();
+            for (int i = 0; i < 14; i++) {
+                MockEvent event = new MockEvent(i);
+                events.add(event);
+                debouncer.eventReceived(event);
+            }
+            // Only 10 events should have been handled.
+            callback.awaitEvents(10);
+            assertThat(callback.getEvents()).isEqualTo(events.subList(0, 10));
+            // Debouncer warning should have been logged, but only once.
+            assertThat(logs.get()).containsOnlyOnce("test debouncer enqueued more than 10 events, rejecting new events.");
+        } finally {
+            logger.removeAppender(logs);
+            logger.setLevel(originalLoggerLevel);
+        }
+    }
+
+    @Test(groups = "unit")
     public void should_deliver_n_events_in_order() throws InterruptedException {
-        EventDebouncer<MockEvent> debouncer = new EventDebouncer<MockEvent>("test", executor, callback, 10, 50);
+        EventDebouncer<MockEvent> debouncer = new EventDebouncer<MockEvent>("test", executor, callback, 10, 50, DEFAULT_MAX_QUEUED_EVENTS);
         debouncer.start();
         List<MockEvent> events = new ArrayList<MockEvent>();
         for (int i = 0; i < 50; i++) {
@@ -76,12 +106,11 @@ public class EventDebouncerTest {
         }
         callback.awaitEvents(50);
         assertThat(callback.getEvents()).isEqualTo(events);
-        assertThat(callback.getInvocations()).isEqualTo(1);
     }
 
     @Test(groups = "unit")
     public void should_deliver_n_events_in_order_even_if_queue_full() throws InterruptedException {
-        EventDebouncer<MockEvent> debouncer = new EventDebouncer<MockEvent>("test", executor, callback, 10, 1);
+        EventDebouncer<MockEvent> debouncer = new EventDebouncer<MockEvent>("test", executor, callback, 10, 1, DEFAULT_MAX_QUEUED_EVENTS);
         debouncer.start();
         List<MockEvent> events = new ArrayList<MockEvent>();
         for (int i = 0; i < 50; i++) {
@@ -95,7 +124,7 @@ public class EventDebouncerTest {
 
     @Test(groups = "unit")
     public void should_accumulate_events_if_not_ready() throws InterruptedException {
-        EventDebouncer<MockEvent> debouncer = new EventDebouncer<MockEvent>("test", executor, callback, 10, 50);
+        EventDebouncer<MockEvent> debouncer = new EventDebouncer<MockEvent>("test", executor, callback, 10, 50, DEFAULT_MAX_QUEUED_EVENTS);
         List<MockEvent> events = new ArrayList<MockEvent>();
         for (int i = 0; i < 50; i++) {
             MockEvent event = new MockEvent(i);
@@ -111,7 +140,7 @@ public class EventDebouncerTest {
 
     @Test(groups = "unit")
     public void should_accumulate_all_events_until_start() throws InterruptedException {
-        final EventDebouncer<MockEvent> debouncer = new EventDebouncer<MockEvent>("test", executor, callback, 10, 25);
+        final EventDebouncer<MockEvent> debouncer = new EventDebouncer<MockEvent>("test", executor, callback, 10, 25, DEFAULT_MAX_QUEUED_EVENTS);
         final List<MockEvent> events = new ArrayList<MockEvent>();
 
         for (int i = 0; i < 50; i++) {
@@ -124,12 +153,11 @@ public class EventDebouncerTest {
 
         callback.awaitEvents(50);
         assertThat(callback.getEvents()).isEqualTo(events);
-        assertThat(callback.getInvocations()).isEqualTo(1);
     }
 
     @Test(groups = "unit")
     public void should_reset_timer_if_n_events_received_within_same_window() throws InterruptedException {
-        final EventDebouncer<MockEvent> debouncer = new EventDebouncer<MockEvent>("test", executor, callback, 50, 50);
+        final EventDebouncer<MockEvent> debouncer = new EventDebouncer<MockEvent>("test", executor, callback, 50, 50, DEFAULT_MAX_QUEUED_EVENTS);
         debouncer.start();
         final CountDownLatch latch = new CountDownLatch(50);
         ScheduledExecutorService pool = Executors.newScheduledThreadPool(1);
@@ -147,12 +175,11 @@ public class EventDebouncerTest {
         pool.shutdownNow();
         callback.awaitEvents(50);
         assertThat(callback.getEvents()).hasSize(50);
-        assertThat(callback.getInvocations()).isEqualTo(1);
     }
 
     @Test(groups = "unit")
     public void should_stop_receiving_events() throws InterruptedException {
-        final EventDebouncer<MockEvent> debouncer = new EventDebouncer<MockEvent>("test", executor, callback, 10, 50);
+        final EventDebouncer<MockEvent> debouncer = new EventDebouncer<MockEvent>("test", executor, callback, 10, 50, DEFAULT_MAX_QUEUED_EVENTS);
         debouncer.start();
         for (int i = 0; i < 50; i++) {
             MockEvent event = new MockEvent(i);
@@ -163,7 +190,6 @@ public class EventDebouncerTest {
         MockEvent event = new MockEvent(0);
         debouncer.eventReceived(event);
         assertThat(callback.getEvents()).hasSize(50);
-        assertThat(callback.getInvocations()).isEqualTo(1);
     }
 
     private static class MockDeliveryCallback implements DeliveryCallback<MockEvent> {
@@ -174,14 +200,11 @@ public class EventDebouncerTest {
 
         final Condition cond = lock.newCondition();
 
-        final AtomicInteger invocations = new AtomicInteger(0);
-
         @Override
         public ListenableFuture<?> deliver(List<MockEvent> events) {
             lock.lock();
             try {
                 this.events.addAll(events);
-                invocations.incrementAndGet();
                 cond.signal();
             } finally {
                 lock.unlock();
@@ -195,7 +218,7 @@ public class EventDebouncerTest {
             try {
                 while (events.size() < expected) {
                     if (nanos <= 0L)
-                        break; // timeout
+                        fail("Timed out waiting for events");
                     nanos = cond.awaitNanos(nanos);
                 }
             } finally {
@@ -207,9 +230,6 @@ public class EventDebouncerTest {
             return events;
         }
 
-        public int getInvocations() {
-            return invocations.get();
-        }
     }
 
     private class MockEvent {
