@@ -26,7 +26,6 @@
       <useAllReactorProjects>true</useAllReactorProjects>
       <includes>
         <include>com.datastax.cassandra:cassandra-driver-core</include>
-        <include>com.datastax.cassandra:cassandra-driver-dse</include>
         <include>com.datastax.cassandra:cassandra-driver-mapping</include>
       </includes>
       <binaries>
