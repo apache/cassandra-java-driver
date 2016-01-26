@@ -6,6 +6,7 @@
 - [improvement] JAVA-1035: Expose host broadcast_address and listen_address if available.
 - [new feature] JAVA-1037: Allow named parameters in simple statements.
 - [improvement] JAVA-1033: Allow per-statement read timeout.
+- [improvement] JAVA-1042: Include DSE version and workload in Host data.
 
 Merged from 2.1 branch:
 
