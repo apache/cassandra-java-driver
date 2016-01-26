@@ -1,30 +1,68 @@
 ## Prepared statements
 
-When Cassandra executes a query, the first thing it does is parse the
-query string to an internal representation. If the same query is used
-often, you can use a prepared statement, which allows Cassandra to cache
-that representation, and save time and resources for subsequent
-executions. Prepared statements are typically parameterized, using
-different values for each execution:
+Use [PreparedStatement] for queries that are executed multiple times in your application:
 
 ```java
 PreparedStatement prepared = session.prepare(
   "insert into product (sku, description) values (?, ?)");
 
-BoundStatement bound;
-
-bound = prepared.bind("234827", "Mouse");
+BoundStatement bound = prepared.bind("234827", "Mouse");
 session.execute(bound);
 
-bound = prepared.bind("987274", "Keyboard");
-session.execute(bound);
+session.execute(prepared.bind("987274", "Keyboard"));
 ```
 
-Statements should be be prepared only once. If you call `prepare`
-multiple times with the same query string, the driver will log a
-warning. So your application should cache the `PreparedStatement` object
-once it's been created (this can be as simple as storing it as a field
-in a DAO).
+When you prepare the statement, Cassandra will parse the query string, cache the result and return a unique identifier
+(the `PreparedStatement` object keeps an internal reference to that identifier):
+
+```ditaa
+client                   driver           Cassandra
+--+------------------------+----------------+------
+  |                        |                |
+  | session.prepare(query) |                |
+  |----------------------->|                |
+  |                        | PREPARE(query) |
+  |                        |--------------->|
+  |                        |                |
+  |                        |                |
+  |                        |                | - compute id
+  |                        |                | - parse query string
+  |                        |                | - cache (id, parsed)
+  |                        |                |
+  |                        | PREPARED(id)   |
+  |                        |<---------------|
+  |  PreparedStatement(id) |                |
+  |<-----------------------|                |
+```
+
+When you bind and execute a prepared statement, the driver will only send the identifier, which allows Cassandra to
+skip the parsing phase:
+
+```ditaa
+client                            driver                Cassandra
+--+---------------------------------+---------------------+------
+  |                                 |                     |
+  | session.execute(BoundStatement) |                     |
+  |-------------------------------->|                     |
+  |                                 | EXECUTE(id, values) |
+  |                                 |-------------------->|
+  |                                 |                     |
+  |                                 |                     |
+  |                                 |                     | - get cache(id)
+  |                                 |                     | - execute query
+  |                                 |                     |
+  |                                 |          ROWS       |
+  |                                 |<--------------------|
+  |                                 |                     |
+  |<--------------------------------|                     |
+```
+
+
+You should prepare only once, and cache the `PreparedStatement` in your application (it is thread-safe). If you call
+`prepare` multiple times with the same query string, the driver will log a warning.
+
+If you execute a query only once, a prepared statement is inefficient because it requires two roundtrips. Consider a
+[simple statement](../simple/) instead.
 
 ### Parameters and binding
 
@@ -36,9 +74,8 @@ ps1 = session.prepare("insert into product (sku, description) values (?, ?)");
 ps2 = session.prepare("insert into product (sku, description) values (:s, :d)");
 ```
 
-To turn the statement into its executable form, you need to *bind* it
-and provide values for the parameters. As shown previously, there is a
-shorthand form to do it all in one call:
+To turn the statement into its executable form, you need to *bind* it to create a [BoundStatement]. As shown previously,
+there is a shorthand to provide the parameters in the same call:
 
 ```java
 BoundStatement bound = ps1.bind("324378", "LCD screen");
@@ -59,8 +96,9 @@ BoundStatement bound = ps2.bind()
   .setString("d", "LCD screen");
 ```
 
-If you don't set a parameter, it is sent as `null` (note that this
-behavior changes in the 2.1 branch of the driver).
+You must set all parameters. If you fail to do so, the driver will throw an error when executing the statement. If you
+want to send a `NULL` value, set it explicitly to `null` (use `setToNull` for Java primitives). Note that this is a new
+behavior in 2.1, branch 2.0 of the driver assumed unset values were null.
 
 You can use named setters even if the query uses anonymous parameters;
 Cassandra will name the parameters after the column they apply to:
@@ -79,21 +117,19 @@ A bound statement also has getters to retrieve the values. Note that
 this has a small performance overhead since values are stored in their
 serialized form.
 
-### How the driver handles prepared statements
+`BoundStatement` is **not thread-safe**. You can reuse an instance multiple times with different parameters, but only
+from a single thread, and only if you use the synchronous API ([Session#execute][execute] is fine,
+[Session#executeAsync][executeAsync] is not).
+Also, make sure you don't accidentally reuse parameters from previous executions.
 
-When the driver prepares a statement, it sends the query string to
-Cassandra, which caches the statement and returns an identifier. Later,
-when the driver needs to execute the statement, it just sends the
-identifier and parameter values. Note that the identifier is
-deterministic, so it will always be the same for all nodes (it's a
-actually a hash of the query string).
+### Preparing on multiple nodes
 
-Prepared statements are not replicated across the cluster. It is the
+Cassandra does not replicate prepared statements across the cluster. It is the
 driver's responsibility to ensure that each node's cache is up to
 date. It uses a number of strategies to achieve this:
 
 1.  When a statement is initially prepared, it is first sent to a single
-    node in the cluster (this prevents from hitting all nodes in case
+    node in the cluster (this avoids hitting all nodes in case
     the query string is wrong). Once that node replies successfully, the
     driver re-prepares on all remaining nodes:
 
@@ -118,6 +154,9 @@ date. It uses a number of strategies to achieve this:
       |                        |                |              |      |
       |<-----------------------|                |              |      |
     ```
+
+    The prepared statement identifier is deterministic (it's a hash of the query string), so it is the same
+    for all nodes.
 
 2.  if a node crashes, it loses all of its prepared statements. So the
     driver keeps a client-side cache; anytime a node is marked back up,
@@ -168,5 +207,9 @@ Changing the driver's defaults should be done with care and only in
 specific situations; read each method's Javadoc for detailed
 explanations.
 
+[PreparedStatement]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/PreparedStatement.html
+[BoundStatement]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/BoundStatement.html
 [setPrepareOnAllHosts]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/QueryOptions.html#setPrepareOnAllHosts-boolean-
 [setReprepareOnUp]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/QueryOptions.html#setReprepareOnUp-boolean-
+[execute]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Session.html#execute-com.datastax.driver.core.Statement-
+[executeAsync]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Session.html#executeAsync-com.datastax.driver.core.Statement-
