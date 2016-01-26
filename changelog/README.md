@@ -9,6 +9,7 @@
 - [improvement] JAVA-989: Include keyspace name when invalid replication found when generating token map.
 - [improvement] JAVA-664: Reduce heap consumption for TokenMap.
 - [improvement] JAVA-1030: Log token to replica map computation times.
+- [bug] JAVA-1039: Minor bugs in Event Debouncer.
 
 Merged from 2.0 branch:
 
