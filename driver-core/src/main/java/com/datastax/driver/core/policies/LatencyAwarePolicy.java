@@ -537,18 +537,18 @@ public class LatencyAwarePolicy implements ChainableLoadBalancingPolicy {
      */
     public static class Builder {
 
-        private static final double DEFAULT_EXCLUSION_THRESHOLD = 2.0;
-        private static final long DEFAULT_SCALE = TimeUnit.MILLISECONDS.toNanos(100);
-        private static final long DEFAULT_RETRY_PERIOD = TimeUnit.SECONDS.toNanos(10);
-        private static final long DEFAULT_UPDATE_RATE = TimeUnit.MILLISECONDS.toNanos(100);
-        private static final int DEFAULT_MIN_MEASURE = 50;
+        public static final double DEFAULT_EXCLUSION_THRESHOLD = 2.0;
+        public static final long DEFAULT_SCALE_NANOS = TimeUnit.MILLISECONDS.toNanos(100);
+        public static final long DEFAULT_RETRY_PERIOD_NANOS = TimeUnit.SECONDS.toNanos(10);
+        public static final long DEFAULT_UPDATE_RATE_NANOS = TimeUnit.MILLISECONDS.toNanos(100);
+        public static final int DEFAULT_MIN_MEASURE = 50;
 
         private final LoadBalancingPolicy childPolicy;
 
         private double exclusionThreshold = DEFAULT_EXCLUSION_THRESHOLD;
-        private long scale = DEFAULT_SCALE;
-        private long retryPeriod = DEFAULT_RETRY_PERIOD;
-        private long updateRate = DEFAULT_UPDATE_RATE;
+        private long scale = DEFAULT_SCALE_NANOS;
+        private long retryPeriod = DEFAULT_RETRY_PERIOD_NANOS;
+        private long updateRate = DEFAULT_UPDATE_RATE_NANOS;
         private int minMeasure = DEFAULT_MIN_MEASURE;
 
         /**

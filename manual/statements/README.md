@@ -1,7 +1,7 @@
 ## Statements
 
-To execute a query, you create a [Statement] instance and pass it to
-`Session#execute()`. The driver provides various implementations:
+To execute a query, you  create a [Statement] instance and pass it to [Session#execute()][execute] or
+[Session#executeAsync][executeAsync]. The driver provides various implementations:
 
 * [SimpleStatement](simple/): a simple implementation built directly from a
   character string. Typically used for queries that are executed only
@@ -14,16 +14,6 @@ To execute a query, you create a [Statement] instance and pass it to
 * [BatchStatement](batch/): a statement that groups multiple statements to be
   executed as a batch.
 
-`Session` also has a shortcut to build and execute a simple statement in
-a single call:
-
-```java
-session.execute("select release_version from system.local");
-
-// Is equivalent to:
-Statement s = new SimpleStatement("select release_version from system.local");
-session.execute(s);
-```
 
 ### Customizing execution
 
@@ -42,9 +32,11 @@ If you use custom policies ([RetryPolicy], [LoadBalancingPolicy],
 properties that influence statement execution. To achieve this, you can
 wrap your statements in a custom [StatementWrapper] implementation.
 
-[Statement]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Statement.html
-[QueryBuilder]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/querybuilder/QueryBuilder.html
-[StatementWrapper]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/StatementWrapper.html
-[RetryPolicy]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/policies/RetryPolicy.html
-[LoadBalancingPolicy]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/policies/LoadBalancingPolicy.html
+[Statement]:                  http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Statement.html
+[QueryBuilder]:               http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/querybuilder/QueryBuilder.html
+[StatementWrapper]:           http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/StatementWrapper.html
+[RetryPolicy]:                http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/policies/RetryPolicy.html
+[LoadBalancingPolicy]:        http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/policies/LoadBalancingPolicy.html
 [SpeculativeExecutionPolicy]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/policies/SpeculativeExecutionPolicy.html
+[execute]:                    http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Session.html#execute-com.datastax.driver.core.Statement-
+[executeAsync]:               http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Session.html#executeAsync-com.datastax.driver.core.Statement-
