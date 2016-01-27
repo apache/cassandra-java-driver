@@ -152,12 +152,12 @@ public abstract class StatementWrapper extends Statement {
     }
 
     @Override
-    public Statement setReadTimeoutMillis(long readTimeoutMillis) {
+    public Statement setReadTimeoutMillis(int readTimeoutMillis) {
         return wrapped.setReadTimeoutMillis(readTimeoutMillis);
     }
 
     @Override
-    public long getReadTimeoutMillis() {
+    public int getReadTimeoutMillis() {
         return wrapped.getReadTimeoutMillis();
     }
 

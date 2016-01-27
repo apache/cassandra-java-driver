@@ -63,7 +63,7 @@ public abstract class Statement {
     private volatile boolean traceQuery;
     private volatile int fetchSize;
     private volatile long defaultTimestamp = Long.MIN_VALUE;
-    private volatile long readTimeoutMillis = Long.MIN_VALUE;
+    private volatile int readTimeoutMillis = Integer.MIN_VALUE;
     private volatile RetryPolicy retryPolicy;
     private volatile ByteBuffer pagingState;
     protected volatile Boolean idempotent;
@@ -332,7 +332,7 @@ public abstract class Statement {
      * @param readTimeoutMillis the timeout to set. Must be greater than 0 (or the default will be used).
      * @return this {@code Statement} object.
      */
-    public Statement setReadTimeoutMillis(long readTimeoutMillis) {
+    public Statement setReadTimeoutMillis(int readTimeoutMillis) {
         this.readTimeoutMillis = readTimeoutMillis;
         return this;
     }
@@ -343,7 +343,7 @@ public abstract class Statement {
      * @return the timeout. Note that a negative value means that the default
      * {@link SocketOptions#getReadTimeoutMillis()} will be used.
      */
-    public long getReadTimeoutMillis() {
+    public int getReadTimeoutMillis() {
         return readTimeoutMillis;
     }
 
