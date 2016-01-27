@@ -74,7 +74,7 @@ The other aspects that you can configure on the `Cluster` are:
 * [query options][QueryOptions];
 * [reconnections](reconnection/);
 * [retries](retries/);
-* [socket options][SocketOptions];
+* [socket options](socket_options/);
 * [SSL](ssl/);
 * [speculative executions](speculative_execution/);
 * [query timestamps](query_timestamps/).
