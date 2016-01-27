@@ -19,8 +19,6 @@ import org.testng.annotations.Test;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 import static org.testng.Assert.assertEquals;
@@ -31,8 +29,8 @@ import static org.testng.Assert.assertEquals;
 public class CustomTypeTest extends CCMTestsSupport {
 
     @Override
-    public Collection<String> createTestFixtures() {
-        return Collections.singleton(
+    public void onTestContextInitialized() {
+        execute(
                 "CREATE TABLE test ("
                         + "    k int,"
                         + "    c 'DynamicCompositeType(s => UTF8Type, i => Int32Type)',"
@@ -79,11 +77,11 @@ public class CustomTypeTest extends CCMTestsSupport {
     @Test(groups = "short")
     public void DynamicCompositeTypeTest() {
 
-        session.execute("INSERT INTO test(k, c, v) VALUES (0, 's@foo:i@32', 1)");
-        session.execute("INSERT INTO test(k, c, v) VALUES (0, 'i@42', 2)");
-        session.execute("INSERT INTO test(k, c, v) VALUES (0, 'i@12:i@3', 3)");
+        session().execute("INSERT INTO test(k, c, v) VALUES (0, 's@foo:i@32', 1)");
+        session().execute("INSERT INTO test(k, c, v) VALUES (0, 'i@42', 2)");
+        session().execute("INSERT INTO test(k, c, v) VALUES (0, 'i@12:i@3', 3)");
 
-        ResultSet rs = session.execute("SELECT * FROM test");
+        ResultSet rs = session().execute("SELECT * FROM test");
 
         Row r = rs.one();
         assertEquals(r.getInt("k"), 0);

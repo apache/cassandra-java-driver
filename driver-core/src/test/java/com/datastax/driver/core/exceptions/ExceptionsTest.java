@@ -53,35 +53,35 @@ public class ExceptionsTest extends CCMTestsSupport {
         };
 
         // Create the schema once
-        session.execute(cqlCommands[0]);
-        session.execute(cqlCommands[1]);
-        session.execute(cqlCommands[2]);
+        session().execute(cqlCommands[0]);
+        session().execute(cqlCommands[1]);
+        session().execute(cqlCommands[2]);
 
         // Try creating the keyspace again
         try {
-            session.execute(cqlCommands[0]);
+            session().execute(cqlCommands[0]);
         } catch (AlreadyExistsException e) {
             String expected = String.format("Keyspace %s already exists", keyspace.toLowerCase());
             assertEquals(e.getMessage(), expected);
             assertEquals(e.getKeyspace(), keyspace.toLowerCase());
             assertEquals(e.getTable(), null);
             assertEquals(e.wasTableCreation(), false);
-            assertEquals(e.getHost(), ccm.addressOfNode(1).getAddress());
-            assertEquals(e.getAddress(), ccm.addressOfNode(1));
+            assertEquals(e.getHost(), ccm().addressOfNode(1).getAddress());
+            assertEquals(e.getAddress(), ccm().addressOfNode(1));
         }
 
-        session.execute(cqlCommands[1]);
+        session().execute(cqlCommands[1]);
 
         // Try creating the table again
         try {
-            session.execute(cqlCommands[2]);
+            session().execute(cqlCommands[2]);
         } catch (AlreadyExistsException e) {
             // is released
             assertEquals(e.getKeyspace(), keyspace.toLowerCase());
             assertEquals(e.getTable(), table.toLowerCase());
             assertEquals(e.wasTableCreation(), true);
-            assertEquals(e.getHost(), ccm.addressOfNode(1).getAddress());
-            assertEquals(e.getAddress(), ccm.addressOfNode(1));
+            assertEquals(e.getHost(), ccm().addressOfNode(1).getAddress());
+            assertEquals(e.getAddress(), ccm().addressOfNode(1));
         }
     }
 

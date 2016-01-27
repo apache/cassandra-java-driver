@@ -25,8 +25,6 @@ import org.testng.annotations.Test;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
-import java.util.Collection;
-import java.util.Collections;
 
 import static org.testng.Assert.assertEquals;
 
@@ -34,8 +32,8 @@ import static org.testng.Assert.assertEquals;
 public class SyntheticFieldsMapperTest extends CCMTestsSupport {
 
     @Override
-    public Collection<String> createTestFixtures() {
-        return Collections.singletonList("CREATE TABLE synthetic_fields (id int PRIMARY KEY)");
+    public void onTestContextInitialized() {
+        execute("CREATE TABLE synthetic_fields (id int PRIMARY KEY)");
     }
 
     /**
@@ -61,7 +59,7 @@ public class SyntheticFieldsMapperTest extends CCMTestsSupport {
         // Instead, it is a different Class (identity + ClassLoader), a modified version of ClassWithSyntheticField
         // Nice ClassCastException will be thrown if we try to cast it to ClassWithSyntheticField
         @SuppressWarnings("unchecked")
-        Mapper<Object> m = (Mapper<Object>) new MappingManager(session).mapper(classWithSyntheticFields);
+        Mapper<Object> m = (Mapper<Object>) new MappingManager(session()).mapper(classWithSyntheticFields);
         m.save(instance);
 
         assertEquals(m.get(42), instance);

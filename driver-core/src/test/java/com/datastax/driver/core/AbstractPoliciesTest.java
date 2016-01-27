@@ -15,6 +15,10 @@
  */
 package com.datastax.driver.core;
 
+import com.google.common.util.concurrent.Uninterruptibles;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 
 import java.net.InetAddress;
@@ -23,45 +27,53 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
-import static com.datastax.driver.core.TestUtils.*;
+import static com.datastax.driver.core.ConditionChecker.check;
+import static com.datastax.driver.core.TestUtils.CREATE_KEYSPACE_GENERIC_FORMAT;
+import static com.datastax.driver.core.TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.batch;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.insertInto;
-import static org.testng.Assert.*;
+import static java.util.concurrent.TimeUnit.MINUTES;
+import static org.testng.Assert.assertEquals;
 
 public abstract class AbstractPoliciesTest extends CCMTestsSupport {
 
-    private static final boolean DEBUG = false;
+    private static final Logger logger = LoggerFactory.getLogger(AbstractPoliciesTest.class);
+    private String tableName;
+
+    private static class SchemaInAgreement implements Callable<Boolean> {
+
+        private final Cluster cluster;
+
+        private SchemaInAgreement(Cluster cluster) {
+            this.cluster = cluster;
+        }
+
+        @Override
+        public Boolean call() throws Exception {
+            return cluster.getMetadata().checkSchemaAgreement();
+        }
+    }
 
     protected Map<InetAddress, Integer> coordinators = new HashMap<InetAddress, Integer>();
 
     protected PreparedStatement prepared;
 
     protected void createSchema(int replicationFactor) {
-        final String ks = TestUtils.getAvailableKeyspaceName();
-        session.execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, ks, replicationFactor));
-        // tests fail randomly here with InvalidQueryException: Keyspace 'xxx' does not exist
-        ConditionChecker.awaitUntil(new Callable<Boolean>() {
-            @Override
-            public Boolean call() {
-                return cluster.getMetadata().getKeyspace(ks) != null;
-            }
-        }, 60000);
-        session.execute("USE " + ks);
-        session.execute(String.format("CREATE TABLE %s (k int PRIMARY KEY, i int)", SIMPLE_TABLE));
+        final String ks = TestUtils.generateIdentifier("ks_");
+        tableName = TestUtils.generateIdentifier("table_");
+        session().execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, ks, replicationFactor));
+        useKeyspace(ks);
+        session().execute(String.format("CREATE TABLE %s (k int PRIMARY KEY, i int)", tableName));
+        check().before(5, MINUTES).that(new SchemaInAgreement(cluster())).becomesTrue();
     }
 
     protected void createMultiDCSchema(int dc1RF, int dc2RF) {
-        final String ks = TestUtils.getAvailableKeyspaceName();
-        session.execute(String.format(CREATE_KEYSPACE_GENERIC_FORMAT, ks, "NetworkTopologyStrategy", String.format("'dc1' : %d, 'dc2' : %d", dc1RF, dc2RF)));
-        // tests fail randomly here with InvalidQueryException: Keyspace 'xxx' does not exist
-        ConditionChecker.awaitUntil(new Callable<Boolean>() {
-            @Override
-            public Boolean call() {
-                return cluster.getMetadata().getKeyspace(ks) != null;
-            }
-        }, 60000);
-        session.execute("USE " + ks);
-        session.execute(String.format("CREATE TABLE %s (k int PRIMARY KEY, i int)", SIMPLE_TABLE));
+        final String ks = TestUtils.generateIdentifier("ks_");
+        tableName = TestUtils.generateIdentifier("table_");
+        session().execute(String.format(CREATE_KEYSPACE_GENERIC_FORMAT, ks, "NetworkTopologyStrategy", String.format("'dc1' : %d, 'dc2' : %d", dc1RF, dc2RF)));
+        useKeyspace(ks);
+        session().execute(String.format("CREATE TABLE %s (k int PRIMARY KEY, i int)", tableName));
+        check().before(5, MINUTES).that(new SchemaInAgreement(cluster())).becomesTrue();
     }
 
     /**
@@ -78,6 +90,12 @@ public abstract class AbstractPoliciesTest extends CCMTestsSupport {
         coordinators = new HashMap<InetAddress, Integer>();
     }
 
+    @AfterMethod(groups = "long")
+    protected void pause() {
+        // pause before engaging in another expensive CCM cluster creation
+        Uninterruptibles.sleepUninterruptibly(1, MINUTES);
+    }
+
     private String queriedMapString() {
         StringBuilder sb = new StringBuilder();
         sb.append("{");
@@ -92,66 +110,14 @@ public abstract class AbstractPoliciesTest extends CCMTestsSupport {
     protected void assertQueried(String host, int n) {
         try {
             Integer queried = coordinators.get(InetAddress.getByName(host));
-            if (DEBUG)
-                System.out.println(String.format("Expected: %s\tReceived: %s", n, queried));
-            else {
-                assertEquals(queried == null ? 0 : queried, n, queriedMapString());
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    protected void assertQueriedAtLeast(String host, int n) {
-        try {
-            Integer queried = coordinators.get(InetAddress.getByName(host));
-            queried = queried == null ? 0 : queried;
-            if (DEBUG)
-                System.out.println(String.format("Expected > %s\tReceived: %s", n, queried));
+            if (logger.isDebugEnabled())
+                logger.debug(String.format("Expected: %s\tReceived: %s", n, queried));
             else
-                assertTrue(queried >= n, "For " + host);
+                assertEquals(queried == null ? 0 : queried, n, queriedMapString());
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
-
-    /**
-     * Assert that one of the nodes in the list was queried with n, no matter which one
-     */
-    protected void assertOneNodeQueried(int n, String... hosts) {
-        try {
-            boolean found = false;
-            for (String host : hosts) {
-                InetAddress addr = InetAddress.getByName(host);
-                int queried = coordinators.containsKey(addr) ? coordinators.get(addr) : 0;
-                if (DEBUG)
-                    System.out.println(String.format("Expected: %s\tReceived: %s", n, queried));
-                else {
-
-                    if (n == queried) {
-                        if (found)
-                            throw new AssertionError(String.format("Found 2 nodes with %s queries in %s", n, queriedMapString()));
-                        found = true;
-                    } else {
-                        if (queried != 0)
-                            throw new AssertionError(String.format("Host %s should have be queried: %s", addr, queriedMapString()));
-                    }
-                }
-            }
-            if (!found)
-                throw new AssertionError("Found no host queried exactly " + n + " times in " + queriedMapString());
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    protected void failDebug(String message) {
-        if (DEBUG)
-            System.out.println(message);
-        else
-            fail(message);
-    }
-
 
     /**
      * Init methods that handle writes using batch and consistency options.
@@ -170,7 +136,7 @@ public abstract class AbstractPoliciesTest extends CCMTestsSupport {
 
     protected void init(int n, boolean batch, ConsistencyLevel cl) {
         write(n, batch, cl);
-        prepared = session.prepare("SELECT * FROM " + SIMPLE_TABLE + " WHERE k = ?").setConsistencyLevel(cl);
+        prepared = session().prepare("SELECT * FROM " + tableName + " WHERE k = ?").setConsistencyLevel(cl);
     }
 
     protected void write(int n) {
@@ -191,11 +157,11 @@ public abstract class AbstractPoliciesTest extends CCMTestsSupport {
         for (int i = 0; i < n; ++i)
             if (batch)
                 // BUG: WriteType == SIMPLE
-                session.execute(batch()
-                        .add(insertInto(SIMPLE_TABLE).values(new String[]{"k", "i"}, new Object[]{0, 0}))
+                session().execute(batch()
+                        .add(insertInto(tableName).values(new String[]{"k", "i"}, new Object[]{0, 0}))
                         .setConsistencyLevel(cl));
             else
-                session.execute(new SimpleStatement(String.format("INSERT INTO %s(k, i) VALUES (0, 0)", SIMPLE_TABLE)).setConsistencyLevel(cl));
+                session().execute(new SimpleStatement(String.format("INSERT INTO %s(k, i) VALUES (0, 0)", tableName)).setConsistencyLevel(cl));
     }
 
 
@@ -218,12 +184,13 @@ public abstract class AbstractPoliciesTest extends CCMTestsSupport {
         if (usePrepared) {
             BoundStatement bs = prepared.bind(0);
             for (int i = 0; i < n; ++i)
-                addCoordinator(session.execute(bs));
+                addCoordinator(session().execute(bs));
         } else {
             ByteBuffer routingKey = ByteBuffer.allocate(4);
             routingKey.putInt(0, 0);
             for (int i = 0; i < n; ++i)
-                addCoordinator(session.execute(new SimpleStatement(String.format("SELECT * FROM %s WHERE k = 0", SIMPLE_TABLE)).setRoutingKey(routingKey).setConsistencyLevel(cl)));
+                addCoordinator(session().execute(new SimpleStatement(String.format("SELECT * FROM %s WHERE k = 0", tableName)).setRoutingKey(routingKey).setConsistencyLevel(cl)));
         }
     }
+
 }

@@ -46,12 +46,12 @@ public class ReconnectionPolicyTest extends AbstractPoliciesTest {
     public void exponentialReconnectionPolicyTest() throws Throwable {
 
         // Ensure that ExponentialReconnectionPolicy is what we should be testing
-        if (!(cluster.getConfiguration().getPolicies().getReconnectionPolicy() instanceof ExponentialReconnectionPolicy)) {
+        if (!(cluster().getConfiguration().getPolicies().getReconnectionPolicy() instanceof ExponentialReconnectionPolicy)) {
             fail("Set policy does not match retrieved policy.");
         }
 
         // Test basic getters
-        ExponentialReconnectionPolicy reconnectionPolicy = (ExponentialReconnectionPolicy) cluster.getConfiguration().getPolicies().getReconnectionPolicy();
+        ExponentialReconnectionPolicy reconnectionPolicy = (ExponentialReconnectionPolicy) cluster().getConfiguration().getPolicies().getReconnectionPolicy();
         assertTrue(reconnectionPolicy.getBaseDelayMs() == 2 * 1000);
         assertTrue(reconnectionPolicy.getMaxDelayMs() == 5 * 60 * 1000);
 
@@ -112,12 +112,12 @@ public class ReconnectionPolicyTest extends AbstractPoliciesTest {
     public void constantReconnectionPolicyTest() throws Throwable {
 
         // Ensure that ConstantReconnectionPolicy is what we should be testing
-        if (!(cluster.getConfiguration().getPolicies().getReconnectionPolicy() instanceof ConstantReconnectionPolicy)) {
+        if (!(cluster().getConfiguration().getPolicies().getReconnectionPolicy() instanceof ConstantReconnectionPolicy)) {
             fail("Set policy does not match retrieved policy.");
         }
 
         // Test basic getters
-        ConstantReconnectionPolicy reconnectionPolicy = (ConstantReconnectionPolicy) cluster.getConfiguration().getPolicies().getReconnectionPolicy();
+        ConstantReconnectionPolicy reconnectionPolicy = (ConstantReconnectionPolicy) cluster().getConfiguration().getPolicies().getReconnectionPolicy();
         assertTrue(reconnectionPolicy.getConstantDelayMs() == 10 * 1000);
 
         // Test erroneous instantiations
@@ -153,7 +153,7 @@ public class ReconnectionPolicyTest extends AbstractPoliciesTest {
         // Ensure a basic test works
         assertQueried(TestUtils.IP_PREFIX + '1', 12);
         resetCoordinators();
-        ccm.forceStop(1);
+        ccm().forceStop(1);
 
         // Start timing and ensure that the node is down
         long startTime = 0;
@@ -172,7 +172,7 @@ public class ReconnectionPolicyTest extends AbstractPoliciesTest {
 
             // Restart node at restartTime
             if (!restarted && thisTime - startTime > restartTime) {
-                ccm.start(1);
+                ccm().start(1);
                 restarted = true;
             }
 
@@ -197,7 +197,7 @@ public class ReconnectionPolicyTest extends AbstractPoliciesTest {
             resetCoordinators();
 
             // Ensure the reconnection times reset
-            ccm.forceStop(1);
+            ccm().forceStop(1);
 
             // Start timing and ensure that the node is down
             startTime = 0;
@@ -215,7 +215,7 @@ public class ReconnectionPolicyTest extends AbstractPoliciesTest {
 
                 // Restart node at restartTime
                 if (!restarted && thisTime - startTime > restartTime) {
-                    ccm.start(1);
+                    ccm().start(1);
                     restarted = true;
                 }
 

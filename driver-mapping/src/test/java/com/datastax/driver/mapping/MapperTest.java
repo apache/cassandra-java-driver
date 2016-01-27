@@ -24,7 +24,10 @@ import com.google.common.util.concurrent.ListenableFuture;
 import org.testng.annotations.Test;
 
 import java.net.InetAddress;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.testng.Assert.assertEquals;
@@ -37,10 +40,10 @@ import static org.testng.Assert.assertTrue;
 public class MapperTest extends CCMTestsSupport {
 
     @Override
-    public Collection<String> createTestFixtures() {
+    public void onTestContextInitialized() {
         // We'll allow to generate those create statement from the annotated entities later, but it's currently
         // a TODO
-        return Arrays.asList("CREATE TABLE users (user_id uuid PRIMARY KEY, name text, email text, year int, gender text)",
+        execute("CREATE TABLE users (user_id uuid PRIMARY KEY, name text, email text, year int, gender text)",
                 "CREATE TABLE posts (user_id uuid, post_id timeuuid, title text, content text, device inet, tags set<text>, PRIMARY KEY(user_id, post_id))");
     }
 
@@ -301,7 +304,7 @@ public class MapperTest extends CCMTestsSupport {
         // Very simple mapping a User, saving and getting it. Note that here we
         // don't use the Accessor stuff since the queries we use are directly
         // supported by the Mapper object.
-        Mapper<User> m = new MappingManager(session).mapper(User.class);
+        Mapper<User> m = new MappingManager(session()).mapper(User.class);
 
         User u1 = new User("Paul", "paul@yahoo.com", User.Gender.MALE);
         u1.setYear(2014);
@@ -317,7 +320,7 @@ public class MapperTest extends CCMTestsSupport {
     @Test(groups = "short")
     @CassandraVersion(major = 2.0)
     public void testDynamicEntity() throws Exception {
-        MappingManager manager = new MappingManager(session);
+        MappingManager manager = new MappingManager(session());
 
         Mapper<Post> m = manager.mapper(Post.class);
 
@@ -386,7 +389,7 @@ public class MapperTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void should_map_objects_from_partial_queries() throws Exception {
-        MappingManager manager = new MappingManager(session);
+        MappingManager manager = new MappingManager(session());
 
         Mapper<Post> m = manager.mapper(Post.class);
 
@@ -404,7 +407,7 @@ public class MapperTest extends CCMTestsSupport {
         m.save(p3);
 
         // Retrieve posts with a projection query that only retrieves some of the fields
-        ResultSet rs = session.execute("select user_id, post_id, title from posts where user_id = " + u1.getUserId());
+        ResultSet rs = session().execute("select user_id, post_id, title from posts where user_id = " + u1.getUserId());
 
         Result<Post> result = m.map(rs);
         for (Post post : result) {
@@ -417,13 +420,13 @@ public class MapperTest extends CCMTestsSupport {
         }
 
         // cleanup
-        session.execute("delete from posts where user_id = " + u1.getUserId());
+        session().execute("delete from posts where user_id = " + u1.getUserId());
     }
 
 
     @Test(groups = "short")
     public void should_return_table_metadata() throws Exception {
-        MappingManager manager = new MappingManager(session);
+        MappingManager manager = new MappingManager(session());
 
         Mapper<Post> m = manager.mapper(Post.class);
 
@@ -434,7 +437,7 @@ public class MapperTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void should_not_initialize_session_when_protocol_version_provided() {
-        Session newSession = cluster.newSession();
+        Session newSession = cluster().newSession();
 
         // Ensures that a Session is not initialized when a protocol version is provided.
         MappingManager manager = new MappingManager(newSession, ProtocolVersion.V1);

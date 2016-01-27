@@ -34,11 +34,11 @@ public class UDTFieldMapperTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void udt_and_tables_with_ks_created_in_another_session_should_be_mapped() {
-        Cluster cluster = register(Cluster.builder()
-                .addContactPointsWithPorts(ccm.addressOfNode(1))
-                .withPort(ccm.getBinaryPort())
+        Cluster cluster1 = register(Cluster.builder()
+                .addContactPoints(getContactPoints().get(0))
+                .withPort(ccm().getBinaryPort())
                 .build());
-        Session session1 = cluster.connect();
+        Session session1 = cluster1.connect();
         // Create type and table
         session1.execute("create schema if not exists java_509 " +
                 "with replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };");
@@ -48,14 +48,14 @@ public class UDTFieldMapperTest extends CCMTestsSupport {
         session1.execute("create table java_509.my_hash (" +
                 "key int primary key, " +
                 "properties map<text, frozen<java_509.my_tuple>>);");
-        cluster.close();
+        cluster1.close();
 
         // Create entities with another connection
-        cluster = register(Cluster.builder()
-                .addContactPointsWithPorts(ccm.addressOfNode(1))
-                .withPort(ccm.getBinaryPort())
+        Cluster cluster2 = register(Cluster.builder()
+                .addContactPoints(getContactPoints().get(0))
+                .withPort(ccm().getBinaryPort())
                 .build());
-        Session session2 = cluster.newSession();
+        Session session2 = cluster2.newSession();
         Mapper<MyHashWithKeyspace> hashMapper = new MappingManager(session2).mapper(MyHashWithKeyspace.class);
         hashMapper.save(new MyHashWithKeyspace(
                 1,
@@ -76,11 +76,11 @@ public class UDTFieldMapperTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void udt_and_tables_without_ks_created_in_another_session_should_be_mapped() {
-        Cluster cluster = register(Cluster.builder()
-                .addContactPointsWithPorts(ccm.addressOfNode(1))
-                .withPort(ccm.getBinaryPort())
+        Cluster cluster1 = register(Cluster.builder()
+                .addContactPoints(getContactPoints().get(0))
+                .withPort(ccm().getBinaryPort())
                 .build());
-        Session session1 = cluster.connect();
+        Session session1 = cluster1.connect();
         session1.execute("create schema if not exists java_509b " +
                 "with replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 };");
         session1.execute("use java_509b");
@@ -90,14 +90,14 @@ public class UDTFieldMapperTest extends CCMTestsSupport {
         session1.execute("create table my_hash (" +
                 "key int primary key, " +
                 "properties map<text, frozen<my_tuple>>);");
-        cluster.close();
+        cluster1.close();
 
         // Create entities with another connection
-        cluster = Cluster.builder()
-                .addContactPointsWithPorts(ccm.addressOfNode(1))
-                .withPort(ccm.getBinaryPort())
-                .build();
-        Session session2 = cluster.newSession();
+        Cluster cluster2 = register(Cluster.builder()
+                .addContactPoints(getContactPoints().get(0))
+                .withPort(ccm().getBinaryPort())
+                .build());
+        Session session2 = cluster2.newSession();
 
         session2.execute("use java_509b");
         Mapper<MyHash> hashMapper = new MappingManager(session2).mapper(MyHash.class);

@@ -140,6 +140,11 @@ public class CCMCache {
         }
 
         @Override
+        public String checkForErrors() {
+            return ccm.checkForErrors();
+        }
+
+        @Override
         public void start(int n) {
             ccm.start(n);
         }
@@ -185,7 +190,7 @@ public class CCMCache {
         }
 
         @Override
-        public void setWorkload(int n, String workload) {
+        public void setWorkload(int n, Workload workload) {
             ccm.setWorkload(n, workload);
         }
 

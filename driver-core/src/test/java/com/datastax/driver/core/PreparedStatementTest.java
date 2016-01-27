@@ -21,7 +21,10 @@ import com.datastax.driver.core.utils.CassandraVersion;
 import org.testng.annotations.Test;
 
 import java.net.InetAddress;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static com.datastax.driver.core.TestUtils.*;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -47,8 +50,11 @@ public class PreparedStatementTest extends CCMTestsSupport {
     }
 
     @Override
-    public Collection<String> createTestFixtures() {
+    public void onTestContextInitialized() {
+        execute(createTestFixtures());
+    }
 
+    private List<String> createTestFixtures() {
         List<String> defs = new ArrayList<String>(4);
 
         StringBuilder sb = new StringBuilder();
@@ -101,7 +107,6 @@ public class PreparedStatementTest extends CCMTestsSupport {
 
         defs.add(String.format("CREATE TABLE %s (k text PRIMARY KEY, i int)", SIMPLE_TABLE));
         defs.add(String.format("CREATE TABLE %s (k text PRIMARY KEY, v text)", SIMPLE_TABLE2));
-
         return defs;
     }
 
@@ -114,11 +119,11 @@ public class PreparedStatementTest extends CCMTestsSupport {
                 continue;
 
             String name = "c_" + type;
-            PreparedStatement ps = session.prepare(String.format("INSERT INTO %s(k, %s) VALUES ('prepared_native', ?)", ALL_NATIVE_TABLE, name));
+            PreparedStatement ps = session().prepare(String.format("INSERT INTO %s(k, %s) VALUES ('prepared_native', ?)", ALL_NATIVE_TABLE, name));
             BoundStatement bs = ps.bind();
-            session.execute(setBoundValue(bs, name, type, getFixedValue(type)));
+            session().execute(setBoundValue(bs, name, type, getFixedValue(type)));
 
-            Row row = session.execute(String.format("SELECT %s FROM %s WHERE k='prepared_native'", name, ALL_NATIVE_TABLE)).one();
+            Row row = session().execute(String.format("SELECT %s FROM %s WHERE k='prepared_native'", name, ALL_NATIVE_TABLE)).one();
             assertEquals(getValue(row, name, type), getFixedValue(type), "For type " + type);
         }
     }
@@ -135,11 +140,11 @@ public class PreparedStatementTest extends CCMTestsSupport {
                 continue;
 
             String name = "c_" + type;
-            PreparedStatement ps = session.prepare(String.format("INSERT INTO %s(k, %s) VALUES ('prepared_native', ?)", ALL_NATIVE_TABLE, name));
+            PreparedStatement ps = session().prepare(String.format("INSERT INTO %s(k, %s) VALUES ('prepared_native', ?)", ALL_NATIVE_TABLE, name));
             BoundStatement bs = ps.bind();
-            session.execute(setBoundValue(bs, name, type, getFixedValue2(type)));
+            session().execute(setBoundValue(bs, name, type, getFixedValue2(type)));
 
-            Row row = session.execute(String.format("SELECT %s FROM %s WHERE k='prepared_native'", name, ALL_NATIVE_TABLE)).one();
+            Row row = session().execute(String.format("SELECT %s FROM %s WHERE k='prepared_native'", name, ALL_NATIVE_TABLE)).one();
             assertEquals(getValue(row, name, type), getFixedValue2(type), "For type " + type);
         }
     }
@@ -156,12 +161,12 @@ public class PreparedStatementTest extends CCMTestsSupport {
             String name = "c_list_" + rawType;
             DataType type = DataType.list(rawType);
             List<Object> value = (List<Object>) getFixedValue(type);
-            ;
-            PreparedStatement ps = session.prepare(String.format("INSERT INTO %s(k, %s) VALUES ('prepared_list', ?)", ALL_LIST_TABLE, name));
-            BoundStatement bs = ps.bind();
-            session.execute(setBoundValue(bs, name, type, value));
 
-            Row row = session.execute(String.format("SELECT %s FROM %s WHERE k='prepared_list'", name, ALL_LIST_TABLE)).one();
+            PreparedStatement ps = session().prepare(String.format("INSERT INTO %s(k, %s) VALUES ('prepared_list', ?)", ALL_LIST_TABLE, name));
+            BoundStatement bs = ps.bind();
+            session().execute(setBoundValue(bs, name, type, value));
+
+            Row row = session().execute(String.format("SELECT %s FROM %s WHERE k='prepared_list'", name, ALL_LIST_TABLE)).one();
             assertEquals(getValue(row, name, type), value, "For type " + type);
         }
     }
@@ -181,12 +186,12 @@ public class PreparedStatementTest extends CCMTestsSupport {
             String name = "c_list_" + rawType;
             DataType type = DataType.list(rawType);
             List<Object> value = (List<Object>) getFixedValue2(type);
-            ;
-            PreparedStatement ps = session.prepare(String.format("INSERT INTO %s(k, %s) VALUES ('prepared_list', ?)", ALL_LIST_TABLE, name));
-            BoundStatement bs = ps.bind();
-            session.execute(setBoundValue(bs, name, type, value));
 
-            Row row = session.execute(String.format("SELECT %s FROM %s WHERE k='prepared_list'", name, ALL_LIST_TABLE)).one();
+            PreparedStatement ps = session().prepare(String.format("INSERT INTO %s(k, %s) VALUES ('prepared_list', ?)", ALL_LIST_TABLE, name));
+            BoundStatement bs = ps.bind();
+            session().execute(setBoundValue(bs, name, type, value));
+
+            Row row = session().execute(String.format("SELECT %s FROM %s WHERE k='prepared_list'", name, ALL_LIST_TABLE)).one();
             assertEquals(getValue(row, name, type), value, "For type " + type);
         }
     }
@@ -203,12 +208,12 @@ public class PreparedStatementTest extends CCMTestsSupport {
             String name = "c_set_" + rawType;
             DataType type = DataType.set(rawType);
             Set<Object> value = (Set<Object>) getFixedValue(type);
-            ;
-            PreparedStatement ps = session.prepare(String.format("INSERT INTO %s(k, %s) VALUES ('prepared_set', ?)", ALL_SET_TABLE, name));
-            BoundStatement bs = ps.bind();
-            session.execute(setBoundValue(bs, name, type, value));
 
-            Row row = session.execute(String.format("SELECT %s FROM %s WHERE k='prepared_set'", name, ALL_SET_TABLE)).one();
+            PreparedStatement ps = session().prepare(String.format("INSERT INTO %s(k, %s) VALUES ('prepared_set', ?)", ALL_SET_TABLE, name));
+            BoundStatement bs = ps.bind();
+            session().execute(setBoundValue(bs, name, type, value));
+
+            Row row = session().execute(String.format("SELECT %s FROM %s WHERE k='prepared_set'", name, ALL_SET_TABLE)).one();
             assertEquals(getValue(row, name, type), value, "For type " + type);
         }
     }
@@ -228,12 +233,12 @@ public class PreparedStatementTest extends CCMTestsSupport {
             String name = "c_set_" + rawType;
             DataType type = DataType.set(rawType);
             Set<Object> value = (Set<Object>) getFixedValue2(type);
-            ;
-            PreparedStatement ps = session.prepare(String.format("INSERT INTO %s(k, %s) VALUES ('prepared_set', ?)", ALL_SET_TABLE, name));
-            BoundStatement bs = ps.bind();
-            session.execute(setBoundValue(bs, name, type, value));
 
-            Row row = session.execute(String.format("SELECT %s FROM %s WHERE k='prepared_set'", name, ALL_SET_TABLE)).one();
+            PreparedStatement ps = session().prepare(String.format("INSERT INTO %s(k, %s) VALUES ('prepared_set', ?)", ALL_SET_TABLE, name));
+            BoundStatement bs = ps.bind();
+            session().execute(setBoundValue(bs, name, type, value));
+
+            Row row = session().execute(String.format("SELECT %s FROM %s WHERE k='prepared_set'", name, ALL_SET_TABLE)).one();
             assertEquals(getValue(row, name, type), value, "For type " + type);
         }
     }
@@ -255,12 +260,12 @@ public class PreparedStatementTest extends CCMTestsSupport {
                 String name = "c_map_" + rawKeyType + '_' + rawValueType;
                 DataType type = DataType.map(rawKeyType, rawValueType);
                 Map<Object, Object> value = (Map<Object, Object>) getFixedValue(type);
-                ;
-                PreparedStatement ps = session.prepare(String.format("INSERT INTO %s(k, %s) VALUES ('prepared_map', ?)", ALL_MAP_TABLE, name));
-                BoundStatement bs = ps.bind();
-                session.execute(setBoundValue(bs, name, type, value));
 
-                Row row = session.execute(String.format("SELECT %s FROM %s WHERE k='prepared_map'", name, ALL_MAP_TABLE)).one();
+                PreparedStatement ps = session().prepare(String.format("INSERT INTO %s(k, %s) VALUES ('prepared_map', ?)", ALL_MAP_TABLE, name));
+                BoundStatement bs = ps.bind();
+                session().execute(setBoundValue(bs, name, type, value));
+
+                Row row = session().execute(String.format("SELECT %s FROM %s WHERE k='prepared_map'", name, ALL_MAP_TABLE)).one();
                 assertEquals(getValue(row, name, type), value, "For type " + type);
             }
         }
@@ -286,12 +291,12 @@ public class PreparedStatementTest extends CCMTestsSupport {
                 String name = "c_map_" + rawKeyType + '_' + rawValueType;
                 DataType type = DataType.map(rawKeyType, rawValueType);
                 Map<Object, Object> value = (Map<Object, Object>) getFixedValue2(type);
-                ;
-                PreparedStatement ps = session.prepare(String.format("INSERT INTO %s(k, %s) VALUES ('prepared_map', ?)", ALL_MAP_TABLE, name));
-                BoundStatement bs = ps.bind();
-                session.execute(setBoundValue(bs, name, type, value));
 
-                Row row = session.execute(String.format("SELECT %s FROM %s WHERE k='prepared_map'", name, ALL_MAP_TABLE)).one();
+                PreparedStatement ps = session().prepare(String.format("INSERT INTO %s(k, %s) VALUES ('prepared_map', ?)", ALL_MAP_TABLE, name));
+                BoundStatement bs = ps.bind();
+                session().execute(setBoundValue(bs, name, type, value));
+
+                Row row = session().execute(String.format("SELECT %s FROM %s WHERE k='prepared_map'", name, ALL_MAP_TABLE)).one();
                 assertEquals(getValue(row, name, type), value, "For type " + type);
             }
         }
@@ -300,16 +305,16 @@ public class PreparedStatementTest extends CCMTestsSupport {
     @Test(groups = "short")
     public void prepareWithNullValuesTest() throws Exception {
 
-        PreparedStatement ps = session.prepare("INSERT INTO " + SIMPLE_TABLE2 + "(k, v) VALUES (?, ?)");
+        PreparedStatement ps = session().prepare("INSERT INTO " + SIMPLE_TABLE2 + "(k, v) VALUES (?, ?)");
 
-        session.execute(ps.bind("prepWithNull1", null));
+        session().execute(ps.bind("prepWithNull1", null));
 
         BoundStatement bs = ps.bind();
         bs.setString("k", "prepWithNull2");
         bs.setString("v", null);
-        session.execute(bs);
+        session().execute(bs);
 
-        ResultSet rs = session.execute("SELECT * FROM " + SIMPLE_TABLE2 + " WHERE k IN ('prepWithNull1', 'prepWithNull2')");
+        ResultSet rs = session().execute("SELECT * FROM " + SIMPLE_TABLE2 + " WHERE k IN ('prepWithNull1', 'prepWithNull2')");
         Row r1 = rs.one();
         Row r2 = rs.one();
         assertTrue(rs.isExhausted());
@@ -328,7 +333,7 @@ public class PreparedStatementTest extends CCMTestsSupport {
         toPrepare.setConsistencyLevel(ConsistencyLevel.QUORUM);
         toPrepare.enableTracing();
 
-        PreparedStatement prepared = session.prepare(toPrepare);
+        PreparedStatement prepared = session().prepare(toPrepare);
         BoundStatement bs = prepared.bind("someValue");
 
         assertEquals(ConsistencyLevel.QUORUM, bs.getConsistencyLevel());
@@ -350,17 +355,17 @@ public class PreparedStatementTest extends CCMTestsSupport {
     public void batchTest() throws Exception {
 
         try {
-            PreparedStatement ps1 = session.prepare("INSERT INTO " + SIMPLE_TABLE2 + "(k, v) VALUES (?, ?)");
-            PreparedStatement ps2 = session.prepare("INSERT INTO " + SIMPLE_TABLE2 + "(k, v) VALUES (?, 'bar')");
+            PreparedStatement ps1 = session().prepare("INSERT INTO " + SIMPLE_TABLE2 + "(k, v) VALUES (?, ?)");
+            PreparedStatement ps2 = session().prepare("INSERT INTO " + SIMPLE_TABLE2 + "(k, v) VALUES (?, 'bar')");
 
             BatchStatement bs = new BatchStatement();
             bs.add(ps1.bind("one", "foo"));
             bs.add(ps2.bind("two"));
             bs.add(new SimpleStatement("INSERT INTO " + SIMPLE_TABLE2 + " (k, v) VALUES ('three', 'foobar')"));
 
-            session.execute(bs);
+            session().execute(bs);
 
-            List<Row> all = session.execute("SELECT * FROM " + SIMPLE_TABLE2).all();
+            List<Row> all = session().execute("SELECT * FROM " + SIMPLE_TABLE2).all();
 
             assertEquals("three", all.get(0).getString("k"));
             assertEquals("foobar", all.get(0).getString("v"));
@@ -372,46 +377,46 @@ public class PreparedStatementTest extends CCMTestsSupport {
             assertEquals("bar", all.get(2).getString("v"));
         } catch (UnsupportedFeatureException e) {
             // This is expected when testing the protocol v1
-            if (cluster.getConfiguration().getProtocolOptions().getProtocolVersionEnum() != ProtocolVersion.V1)
+            if (cluster().getConfiguration().getProtocolOptions().getProtocolVersionEnum() != ProtocolVersion.V1)
                 throw e;
         }
     }
 
     @Test(groups = "short", expectedExceptions = {IllegalStateException.class})
     public void unboundVariableInBoundStatementTest() {
-        PreparedStatement ps = session.prepare("INSERT INTO " + SIMPLE_TABLE + " (k, i) VALUES (?, ?)");
+        PreparedStatement ps = session().prepare("INSERT INTO " + SIMPLE_TABLE + " (k, i) VALUES (?, ?)");
         BoundStatement bs = ps.bind("k");
         assertFalse(bs.isSet("i"));
-        session.execute(bs);
+        session().execute(bs);
     }
 
     @Test(groups = "short", expectedExceptions = {IllegalStateException.class})
     @CassandraVersion(major = 2.0)
     public void unboundVariableInBatchStatementTest() {
-        PreparedStatement ps = session.prepare("INSERT INTO " + SIMPLE_TABLE + " (k, i) VALUES (?, ?)");
+        PreparedStatement ps = session().prepare("INSERT INTO " + SIMPLE_TABLE + " (k, i) VALUES (?, ?)");
         BatchStatement batch = new BatchStatement();
         batch.add(ps.bind("k"));
-        session.execute(batch);
+        session().execute(batch);
     }
 
     @Test(groups = "short")
     public void should_set_routing_key_on_case_insensitive_keyspace_and_table() {
-        session.execute(String.format("CREATE TABLE %s.foo (i int PRIMARY KEY)", keyspace));
+        session().execute(String.format("CREATE TABLE %s.foo (i int PRIMARY KEY)", keyspace));
 
-        PreparedStatement ps = session.prepare(String.format("INSERT INTO %s.foo (i) VALUES (?)", keyspace));
+        PreparedStatement ps = session().prepare(String.format("INSERT INTO %s.foo (i) VALUES (?)", keyspace));
         BoundStatement bs = ps.bind(1);
         assertThat(bs.getRoutingKey()).isNotNull();
     }
 
     @Test(groups = "short")
     public void should_set_routing_key_on_case_sensitive_keyspace_and_table() {
-        session.execute("CREATE KEYSPACE \"Test\" WITH replication = { "
+        session().execute("CREATE KEYSPACE \"Test\" WITH replication = { "
                 + "  'class': 'SimpleStrategy',"
                 + "  'replication_factor': '1'"
                 + "}");
-        session.execute("CREATE TABLE \"Test\".\"Foo\" (i int PRIMARY KEY)");
+        session().execute("CREATE TABLE \"Test\".\"Foo\" (i int PRIMARY KEY)");
 
-        PreparedStatement ps = session.prepare("INSERT INTO \"Test\".\"Foo\" (i) VALUES (?)");
+        PreparedStatement ps = session().prepare("INSERT INTO \"Test\".\"Foo\" (i) VALUES (?)");
         BoundStatement bs = ps.bind(1);
         assertThat(bs.getRoutingKey()).isNotNull();
     }
@@ -419,14 +424,15 @@ public class PreparedStatementTest extends CCMTestsSupport {
     @Test(groups = "short", expectedExceptions = InvalidQueryException.class)
     public void should_fail_when_prepared_on_another_cluster() throws Exception {
         Cluster otherCluster = Cluster.builder()
-                .addContactPointsWithPorts(getInitialContactPoints())
+                .addContactPoints(getContactPoints())
+                .withPort(ccm().getBinaryPort())
                 .build();
         try {
             PreparedStatement pst = otherCluster.connect().prepare("select * from system.peers where inet = ?");
             BoundStatement bs = pst.bind().setInet(0, InetAddress.getByName("localhost"));
 
             // We expect that the error gets detected without a roundtrip to the server, so use executeAsync
-            session.executeAsync(bs);
+            session().executeAsync(bs);
         } finally {
             otherCluster.close();
         }
@@ -434,7 +440,7 @@ public class PreparedStatementTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void should_propagate_idempotence_in_statements() {
-        session.execute(String.format("CREATE TABLE %s.idempotencetest (i int PRIMARY KEY)", keyspace));
+        session().execute(String.format("CREATE TABLE %s.idempotencetest (i int PRIMARY KEY)", keyspace));
 
         SimpleStatement statement;
         IdempotenceAwarePreparedStatement prepared;
@@ -442,21 +448,21 @@ public class PreparedStatementTest extends CCMTestsSupport {
 
         statement = new SimpleStatement(String.format("SELECT * FROM %s.idempotencetest WHERE i = ?", keyspace));
 
-        prepared = (IdempotenceAwarePreparedStatement) session.prepare(statement);
+        prepared = (IdempotenceAwarePreparedStatement) session().prepare(statement);
         bound = prepared.bind(1);
 
         assertThat(prepared.isIdempotent()).isNull();
         assertThat(bound.isIdempotent()).isNull();
 
         statement.setIdempotent(true);
-        prepared = (IdempotenceAwarePreparedStatement) session.prepare(statement);
+        prepared = (IdempotenceAwarePreparedStatement) session().prepare(statement);
         bound = prepared.bind(1);
 
         assertThat(prepared.isIdempotent()).isTrue();
         assertThat(bound.isIdempotent()).isTrue();
 
         statement.setIdempotent(false);
-        prepared = (IdempotenceAwarePreparedStatement) session.prepare(statement);
+        prepared = (IdempotenceAwarePreparedStatement) session().prepare(statement);
         bound = prepared.bind(1);
 
         assertThat(prepared.isIdempotent()).isFalse();

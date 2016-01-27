@@ -16,7 +16,6 @@
 package com.datastax.driver.core;
 
 import org.mockito.ArgumentCaptor;
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -52,10 +51,11 @@ public class SchemaRefreshDebouncerTest extends CCMTestsSupport {
         queryOptions.setRefreshSchemaIntervalMillis(DEBOUNCE_TIME);
         queryOptions.setMaxPendingRefreshSchemaRequests(5);
         // Create a separate cluster that will receive the schema events on its control connection.
-        cluster2 = Cluster.builder()
-                .addContactPointsWithPorts(getInitialContactPoints())
+        cluster2 = register(Cluster.builder()
+                .addContactPoints(getContactPoints())
+                .withPort(ccm().getBinaryPort())
                 .withQueryOptions(queryOptions)
-                .build();
+                .build());
         session2 = cluster2.connect();
 
         // Create a spy of the Cluster's control connection and replace it with the spy.
@@ -70,11 +70,6 @@ public class SchemaRefreshDebouncerTest extends CCMTestsSupport {
         reset(controlConnection);
     }
 
-    @AfterMethod(groups = "short")
-    public void beforeMethod() {
-        cluster2.close();
-    }
-
     /**
      * Ensures that when a CREATED and UPDATED schema_change events are received on a control
      * connection for the same keyspace within {@link QueryOptions#getRefreshSchemaIntervalMillis()}
@@ -86,9 +81,9 @@ public class SchemaRefreshDebouncerTest extends CCMTestsSupport {
      */
     @Test(groups = "short")
     public void should_debounce_and_coalesce_create_and_alter_keyspace_into_refresh_keyspace() throws Exception {
-        String keyspace = "sdaccaak";
-        session.execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, keyspace, 1));
-        session.execute(String.format("ALTER KEYSPACE %s WITH DURABLE_WRITES=false", keyspace));
+        String keyspace = TestUtils.generateIdentifier("ks_");
+        session().execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, keyspace, 1));
+        session().execute(String.format("ALTER KEYSPACE %s WITH DURABLE_WRITES=false", keyspace));
 
         ArgumentCaptor<KeyspaceMetadata> captor = forClass(KeyspaceMetadata.class);
         verify(listener, timeout(DEBOUNCE_TIME * 2).only()).onKeyspaceAdded(captor.capture());
@@ -117,17 +112,17 @@ public class SchemaRefreshDebouncerTest extends CCMTestsSupport {
      */
     @Test(groups = "short")
     public void should_debounce_and_coalesce_create_keyspace_and_table_into_refresh_keyspace() throws Exception {
-        String keyspace = "sdacckt";
+        String keyspace = TestUtils.generateIdentifier("ks_");
         String table = "tbl1";
-        session.execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, keyspace, 1));
-        session.execute(String.format(CREATE_TABLE_SIMPLE_FORMAT, keyspace + "." + table));
+        session().execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, keyspace, 1));
+        session().execute(String.format(CREATE_TABLE_SIMPLE_FORMAT, keyspace + "." + table));
 
         ArgumentCaptor<KeyspaceMetadata> keyspaceCaptor = forClass(KeyspaceMetadata.class);
         verify(listener, timeout(DEBOUNCE_TIME * 2).times(1)).onKeyspaceAdded(keyspaceCaptor.capture());
         assertThat(keyspaceCaptor.getValue()).hasName(keyspace);
 
         ArgumentCaptor<TableMetadata> tableCaptor = forClass(TableMetadata.class);
-        verify(listener, times(1)).onTableAdded(tableCaptor.capture());
+        verify(listener, timeout(DEBOUNCE_TIME * 2).times(1)).onTableAdded(tableCaptor.capture());
         assertThat(tableCaptor.getValue()).hasName(table);
 
         // Verify the schema refresh was debounced and coalesced when a keyspace event and table event
@@ -152,7 +147,7 @@ public class SchemaRefreshDebouncerTest extends CCMTestsSupport {
      */
     @Test(groups = "short")
     public void should_debounce_and_coalesce_tables_in_same_keyspace_into_refresh_keyspace() throws Exception {
-        String keyspace = "sdactisk";
+        String keyspace = TestUtils.generateIdentifier("ks_");
         session2.execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, keyspace, 1));
         // Reset invocations as creating keyspace causes a keyspace refresh.
         reset(controlConnection);
@@ -160,7 +155,7 @@ public class SchemaRefreshDebouncerTest extends CCMTestsSupport {
 
         int tableCount = 3;
         for (int i = 0; i < tableCount; i++) {
-            session.execute(String.format(CREATE_TABLE_SIMPLE_FORMAT, keyspace + "." + "tbl" + i));
+            session().execute(String.format(CREATE_TABLE_SIMPLE_FORMAT, keyspace + "." + "tbl" + i));
         }
 
         verify(listener, timeout(DEBOUNCE_TIME * 3).times(3)).onTableAdded(any(TableMetadata.class));
@@ -192,7 +187,7 @@ public class SchemaRefreshDebouncerTest extends CCMTestsSupport {
      */
     @Test(groups = "short")
     public void should_debounce_and_coalesce_multiple_alter_events_on_same_table_into_refresh_table() throws Exception {
-        String keyspace = "sdacmaeost";
+        String keyspace = TestUtils.generateIdentifier("ks_");
         String table = "tbl1";
         String comment = "I am changing this table.";
         String columnName = "added_column";
@@ -202,8 +197,8 @@ public class SchemaRefreshDebouncerTest extends CCMTestsSupport {
         reset(controlConnection);
         reset(listener);
 
-        session.execute(String.format("ALTER TABLE %s.%s WITH comment = '%s'", keyspace, table, comment));
-        session.execute(String.format("ALTER TABLE %s.%s ADD %s int", keyspace, table, columnName));
+        session().execute(String.format("ALTER TABLE %s.%s WITH comment = '%s'", keyspace, table, comment));
+        session().execute(String.format("ALTER TABLE %s.%s ADD %s int", keyspace, table, columnName));
 
         ArgumentCaptor<TableMetadata> original = forClass(TableMetadata.class);
         ArgumentCaptor<TableMetadata> captor = forClass(TableMetadata.class);
@@ -245,9 +240,9 @@ public class SchemaRefreshDebouncerTest extends CCMTestsSupport {
      */
     @Test(groups = "short")
     public void should_debounce_and_coalesce_multiple_keyspace_creates_into_refresh_entire_schema() throws Exception {
-        String prefix = "sdacmkc";
+        String prefix = TestUtils.generateIdentifier("ks_");
         for (int i = 0; i < 3; i++) {
-            session.execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, prefix + i, 1));
+            session().execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, prefix + i, 1));
         }
 
         verify(listener, timeout(DEBOUNCE_TIME * 3).times(3)).onKeyspaceAdded(any(KeyspaceMetadata.class));
@@ -271,9 +266,9 @@ public class SchemaRefreshDebouncerTest extends CCMTestsSupport {
      */
     @Test(groups = "short")
     public void should_refresh_when_max_pending_requests_reached() throws Exception {
-        String prefix = "srwmprr";
+        String prefix = TestUtils.generateIdentifier("ks_");
         for (int i = 0; i < 5; i++) {
-            session.execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, prefix + i, 1));
+            session().execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, prefix + i, 1));
         }
 
         // Event should be processed immediately as we hit our threshold.

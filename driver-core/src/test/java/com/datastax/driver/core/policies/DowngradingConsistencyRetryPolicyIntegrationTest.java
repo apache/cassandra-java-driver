@@ -37,19 +37,30 @@ import static org.mockito.Mockito.times;
  * receivedResponses in primed responses.
  * If that becomes possible in the future, we could refactor this test.
  */
-@CCMConfig(dirtiesContext = true, createCluster = false, numberOfNodes = 3)
+@CCMConfig(
+        dirtiesContext = true,
+        createCluster = false,
+        numberOfNodes = 3,
+        config = {
+                // tests fail often with write or read timeouts
+                "hinted_handoff_enabled:true",
+                "phi_convict_threshold:5",
+                "read_request_timeout_in_ms:100000",
+                "write_request_timeout_in_ms:100000"
+        }
+)
 public class DowngradingConsistencyRetryPolicyIntegrationTest extends CCMTestsSupport {
 
     @Test(groups = "long")
     public void should_downgrade_if_not_enough_replicas_for_requested_CL() {
         Cluster cluster = register(Cluster.builder()
-                .addContactPoints(ccm.addressOfNode(1).getAddress())
-                .withPort(ccm.getBinaryPort())
+                .addContactPoints(getContactPoints().get(0))
+                .withPort(ccm().getBinaryPort())
                 .withRetryPolicy(Mockito.spy(DowngradingConsistencyRetryPolicy.INSTANCE))
                 .build());
         Session session = cluster.connect();
 
-        String ks = TestUtils.getAvailableKeyspaceName();
+        String ks = TestUtils.generateIdentifier("ks_");
         session.execute(String.format("CREATE KEYSPACE %s WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 3}", ks));
         // tests fail randomly here with InvalidQueryException: Keyspace 'xxx' does not exist
         Uninterruptibles.sleepUninterruptibly(5, TimeUnit.SECONDS);
@@ -79,9 +90,9 @@ public class DowngradingConsistencyRetryPolicyIntegrationTest extends CCMTestsSu
     }
 
     private void stopAndWait(int node, Cluster cluster) {
-        ccm.stop(node);
-        ccm.waitForDown(node);// this uses port ping
-        TestUtils.waitForDown(ipOfNode(node), cluster, 10); // this uses UP/DOWN events
+        ccm().stop(node);
+        ccm().waitForDown(node);// this uses port ping
+        TestUtils.waitForDown(ipOfNode(node), cluster); // this uses UP/DOWN events
     }
 
     private void checkAchievedConsistency(ConsistencyLevel requested, ConsistencyLevel expected, Session session) {

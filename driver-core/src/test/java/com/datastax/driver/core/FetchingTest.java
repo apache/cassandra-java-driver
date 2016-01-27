@@ -18,9 +18,6 @@ package com.datastax.driver.core;
 import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
 import org.testng.annotations.Test;
 
-import java.util.Collection;
-import java.util.Collections;
-
 import static org.testng.Assert.*;
 
 /**
@@ -29,8 +26,8 @@ import static org.testng.Assert.*;
 public class FetchingTest extends CCMTestsSupport {
 
     @Override
-    public Collection<String> createTestFixtures() {
-        return Collections.singletonList("CREATE TABLE test (k text, v int, PRIMARY KEY (k, v))");
+    public void onTestContextInitialized() {
+        execute("CREATE TABLE test (k text, v int, PRIMARY KEY (k, v))");
     }
 
     @Test(groups = "short")
@@ -39,11 +36,11 @@ public class FetchingTest extends CCMTestsSupport {
             // Insert data
             String key = "paging_test";
             for (int i = 0; i < 100; i++)
-                session.execute(String.format("INSERT INTO test (k, v) VALUES ('%s', %d)", key, i));
+                session().execute(String.format("INSERT INTO test (k, v) VALUES ('%s', %d)", key, i));
 
             SimpleStatement st = new SimpleStatement(String.format("SELECT v FROM test WHERE k='%s'", key));
             st.setFetchSize(5); // Ridiculously small fetch size for testing purpose. Don't do at home.
-            ResultSet rs = session.execute(st);
+            ResultSet rs = session().execute(st);
 
             assertFalse(rs.isFullyFetched());
 
@@ -59,7 +56,7 @@ public class FetchingTest extends CCMTestsSupport {
 
         } catch (UnsupportedFeatureException e) {
             // This is expected when testing the protocol v1
-            assertEquals(cluster.getConfiguration().getProtocolOptions().getProtocolVersionEnum(), ProtocolVersion.V1);
+            assertEquals(cluster().getConfiguration().getProtocolOptions().getProtocolVersionEnum(), ProtocolVersion.V1);
         }
     }
 }

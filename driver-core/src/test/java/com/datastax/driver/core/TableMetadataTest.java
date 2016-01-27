@@ -15,18 +15,15 @@
  */
 package com.datastax.driver.core;
 
-import com.google.common.collect.Lists;
 import org.testng.annotations.Test;
-
-import java.util.Collection;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CCMConfig(clusterProvider = "createClusterBuilderNoDebouncing")
 public class TableMetadataTest extends CCMTestsSupport {
     @Override
-    public Collection<String> createTestFixtures() {
-        return Lists.newArrayList(
+    public void onTestContextInitialized() {
+        execute(
                 "CREATE TABLE single_quote (\n"
                         + "    c1 int PRIMARY KEY\n"
                         + ") WITH  comment = 'comment with single quote '' should work'"
@@ -35,7 +32,7 @@ public class TableMetadataTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void should_escape_single_quote_table_comment() {
-        TableMetadata table = cluster.getMetadata().getKeyspace(keyspace).getTable("single_quote");
+        TableMetadata table = cluster().getMetadata().getKeyspace(keyspace).getTable("single_quote");
         assertThat(table.asCQLQuery()).contains("comment with single quote '' should work");
     }
 }

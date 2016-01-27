@@ -23,7 +23,7 @@ import java.util.Map;
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.CreateCCM.TestMode.PER_METHOD;
 import static com.datastax.driver.core.TestUtils.nonDebouncingQueryOptions;
-import static com.datastax.driver.core.TestUtils.waitFor;
+import static com.datastax.driver.core.TestUtils.waitForUp;
 
 @CreateCCM(PER_METHOD)
 public class MetadataTest extends CCMTestsSupport {
@@ -55,8 +55,8 @@ public class MetadataTest extends CCMTestsSupport {
     @CCMConfig(numberOfNodes = 3, dirtiesContext = true, createCluster = false)
     public void should_update_metadata_on_topology_change() {
         Cluster cluster = register(Cluster.builder()
-                .addContactPoints(ccm.addressOfNode(1).getAddress())
-                .withPort(ccm.getBinaryPort())
+                .addContactPoints(getContactPoints().get(0))
+                .withPort(ccm().getBinaryPort())
                 .withQueryOptions(nonDebouncingQueryOptions())
                 .build());
         Session session = cluster.connect();
@@ -73,8 +73,8 @@ public class MetadataTest extends CCMTestsSupport {
         Host host3 = TestUtils.findHost(cluster, 3);
         Token host3Token = tokensForHost.get(host3);
 
-        ccm.decommission(3);
-        ccm.remove(3);
+        ccm().decommission(3);
+        ccm().remove(3);
 
         // Ensure that the token ranges were updated, there should only be 2 ranges now.
         assertThat(metadata.getTokenRanges()).hasSize(2);
@@ -87,9 +87,9 @@ public class MetadataTest extends CCMTestsSupport {
         assertThat(cluster).hasValidTokenRanges();
 
         // Add an additional node.
-        ccm.add(4);
-        ccm.start(4);
-        waitFor(TestUtils.IP_PREFIX + '4', cluster);
+        ccm().add(4);
+        ccm().start(4);
+        waitForUp(TestUtils.IP_PREFIX + '4', cluster);
 
         // Ensure that the token ranges were updated, there should only be 3 ranges now.
         assertThat(metadata.getTokenRanges()).hasSize(3);

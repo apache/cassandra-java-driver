@@ -31,6 +31,7 @@ import java.net.InetSocketAddress;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.datastax.driver.core.ConditionChecker.check;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 import static org.testng.Assert.fail;
@@ -41,8 +42,14 @@ public class AbstractReconnectionHandlerTest {
     ScheduledExecutorService executor;
     MockReconnectionSchedule schedule;
     MockReconnectionWork work;
-    final AtomicReference<ListenableFuture<?>> future = new AtomicReference<ListenableFuture<?>>();
+    AtomicReference<ListenableFuture<?>> future = new AtomicReference<ListenableFuture<?>>();
     AbstractReconnectionHandler handler;
+    Callable<Boolean> nextTryAssigned = new Callable<Boolean>() {
+        @Override
+        public Boolean call() throws Exception {
+            return handler.handlerFuture.nextTry != null;
+        }
+    };
 
     @BeforeMethod(groups = {"unit", "short"})
     public void setup() {
@@ -58,7 +65,7 @@ public class AbstractReconnectionHandlerTest {
 
             @Override
             protected void onReconnection(Connection connection) {
-                work.onReconnection(connection);
+                work.onReconnection();
             }
         };
     }
@@ -149,12 +156,7 @@ public class AbstractReconnectionHandlerTest {
         verify(executor, timeout(10000)).schedule(handler, schedule.delay, TimeUnit.MILLISECONDS);
 
         // Wait until nextTry is assigned after schedule completes.
-        ConditionChecker.awaitUntil(new Callable<Boolean>() {
-            @Override
-            public Boolean call() throws Exception {
-                return handler.handlerFuture.nextTry != null;
-            }
-        }, 10000);
+        check().before(10000).that(nextTryAssigned).becomesTrue();
 
         future.get().cancel(false);
 
@@ -341,7 +343,7 @@ public class AbstractReconnectionHandlerTest {
             tries += 1;
             logger.debug("in reconnection work, wait for tick from main thread");
             try {
-                barrier.await(10, TimeUnit.SECONDS);
+                barrier.await(60, TimeUnit.SECONDS);
                 logger.debug("in reconnection work, got tick from main thread, proceeding");
             } catch (Exception e) {
                 fail("Error while waiting for tick", e);
@@ -362,14 +364,14 @@ public class AbstractReconnectionHandlerTest {
         public void tick() {
             logger.debug("send tick to reconnection work");
             try {
-                barrier.await(10, TimeUnit.SECONDS);
+                barrier.await(60, TimeUnit.SECONDS);
             } catch (Exception e) {
                 fail("Error while sending tick, no thread was waiting", e);
             }
             barrier.reset();
         }
 
-        protected void onReconnection(Connection connection) {
+        protected void onReconnection() {
             success = true;
         }
     }

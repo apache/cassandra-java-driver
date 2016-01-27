@@ -45,9 +45,8 @@ public class RecommissionedNodeTest {
 
     @Test(groups = "long")
     public void should_ignore_recommissioned_node_on_reconnection_attempt() throws Exception {
-        mainCcmBuilder = CCMBridge.builder().withNodes(3).notStarted();
+        mainCcmBuilder = CCMBridge.builder().withNodes(3);
         mainCcm = CCMCache.get(mainCcmBuilder);
-        mainCcm.start();
 
         // node1 will be our "recommissioned" node, for now we just stop it so that it stays in the peers table.
         mainCcm.stop(1);
@@ -67,9 +66,8 @@ public class RecommissionedNodeTest {
                 .withStoragePort(mainCcm.getStoragePort())
                 .withThriftPort(mainCcm.getThriftPort())
                 .withBinaryPort(mainCcm.getBinaryPort())
-                .withNodes(1).notStarted();
+                .withNodes(1);
         otherCcm = CCMCache.get(otherCcmBuilder);
-        otherCcm.start();
         otherCcm.waitForUp(1);
 
         // Give the driver the time to notice the node is back up and try to connect to it.
@@ -80,9 +78,8 @@ public class RecommissionedNodeTest {
 
     @Test(groups = "long")
     public void should_ignore_recommissioned_node_on_control_connection_reconnect() throws Exception {
-        mainCcmBuilder = CCMBridge.builder().withNodes(2).notStarted();
+        mainCcmBuilder = CCMBridge.builder().withNodes(2);
         mainCcm = CCMCache.get(mainCcmBuilder);
-        mainCcm.start();
         mainCcm.stop(1);
         mainCcm.waitForDown(1);
 
@@ -99,9 +96,8 @@ public class RecommissionedNodeTest {
                 .withStoragePort(mainCcm.getStoragePort())
                 .withThriftPort(mainCcm.getThriftPort())
                 .withBinaryPort(mainCcm.getBinaryPort())
-                .withNodes(1).notStarted();
+                .withNodes(1);
         otherCcm = CCMCache.get(otherCcmBuilder);
-        otherCcm.start();
         otherCcm.waitForUp(1);
 
         // Stop node2, the control connection gets defunct
@@ -115,9 +111,8 @@ public class RecommissionedNodeTest {
     @Test(groups = "long")
     public void should_ignore_recommissioned_node_on_session_init() throws Exception {
         // Simulate the bug before starting the cluster
-        mainCcmBuilder = CCMBridge.builder().withNodes(2).notStarted();
+        mainCcmBuilder = CCMBridge.builder().withNodes(2);
         mainCcm = CCMCache.get(mainCcmBuilder);
-        mainCcm.start();
         mainCcm.stop(1);
         mainCcm.waitForDown(1);
 
@@ -125,9 +120,8 @@ public class RecommissionedNodeTest {
                 .withStoragePort(mainCcm.getStoragePort())
                 .withThriftPort(mainCcm.getThriftPort())
                 .withBinaryPort(mainCcm.getBinaryPort())
-                .withNodes(1).notStarted();
+                .withNodes(1);
         otherCcm = CCMCache.get(otherCcmBuilder);
-        otherCcm.start();
         otherCcm.waitForUp(1);
 
         // Start the driver, it should only connect to node 2
@@ -154,9 +148,8 @@ public class RecommissionedNodeTest {
     @CassandraVersion(major = 2.0)
     public void should_ignore_node_that_does_not_support_protocol_version_on_session_init() throws Exception {
         // Simulate the bug before starting the cluster
-        mainCcmBuilder = CCMBridge.builder().withNodes(2).notStarted();
+        mainCcmBuilder = CCMBridge.builder().withNodes(2);
         mainCcm = CCMCache.get(mainCcmBuilder);
-        mainCcm.start();
         mainCcm.stop(1);
         mainCcm.waitForDown(1);
 
@@ -164,9 +157,8 @@ public class RecommissionedNodeTest {
                 .withStoragePort(mainCcm.getStoragePort())
                 .withThriftPort(mainCcm.getThriftPort())
                 .withBinaryPort(mainCcm.getBinaryPort())
-                .withVersion("1.2.19").notStarted();
+                .withVersion("1.2.19");
         otherCcm = CCMCache.get(otherCcmBuilder);
-        otherCcm.start();
         otherCcm.waitForUp(1);
 
         // Start the driver, it should only connect to node 2

@@ -122,8 +122,8 @@ public class QueryLoggerTest extends CCMTestsSupport {
 
     @AfterMethod(groups = {"short", "unit"}, alwaysRun = true)
     public void unregisterQueryLogger() {
-        if (cluster != null && queryLogger != null) {
-            cluster.unregister(queryLogger);
+        if (cluster() != null && queryLogger != null) {
+            cluster().unregister(queryLogger);
         }
     }
 
@@ -133,12 +133,12 @@ public class QueryLoggerTest extends CCMTestsSupport {
     public void should_log_regular_statements() throws Exception {
         // given
         normal.setLevel(DEBUG);
-        queryLogger = QueryLogger.builder(cluster)
+        queryLogger = QueryLogger.builder(cluster())
                 .withConstantThreshold(Long.MAX_VALUE)
                 .build();
-        cluster.register(queryLogger);
+        cluster().register(queryLogger);
         String query = "SELECT c_text FROM test WHERE pk = 42";
-        session.execute(query);
+        session().execute(query);
         // then
         String line = normalAppender.waitAndGet(10000);
         assertThat(line)
@@ -152,14 +152,14 @@ public class QueryLoggerTest extends CCMTestsSupport {
     public void should_log_bound_statements() throws Exception {
         // given
         normal.setLevel(DEBUG);
-        queryLogger = QueryLogger.builder(cluster)
+        queryLogger = QueryLogger.builder(cluster())
                 .withConstantThreshold(Long.MAX_VALUE)
                 .build();
-        cluster.register(queryLogger);
+        cluster().register(queryLogger);
         String query = "SELECT * FROM test where pk = ?";
-        PreparedStatement ps = session.prepare(query);
+        PreparedStatement ps = session().prepare(query);
         BoundStatement bs = ps.bind(42);
-        session.execute(bs);
+        session().execute(bs);
         // then
         String line = normalAppender.waitAndGet(10000);
         assertThat(line)
@@ -174,20 +174,20 @@ public class QueryLoggerTest extends CCMTestsSupport {
     public void should_log_batch_statements() throws Exception {
         // given
         normal.setLevel(DEBUG);
-        queryLogger = QueryLogger.builder(cluster)
+        queryLogger = QueryLogger.builder(cluster())
                 .withConstantThreshold(Long.MAX_VALUE)
                 .withMaxQueryStringLength(Integer.MAX_VALUE)
                 .build();
-        cluster.register(queryLogger);
+        cluster().register(queryLogger);
         // when
         String query1 = "INSERT INTO test (pk) VALUES (?)";
         String query2 = "UPDATE test SET c_int = ? WHERE pk = 42";
-        PreparedStatement ps1 = session.prepare(query1);
-        PreparedStatement ps2 = session.prepare(query2);
+        PreparedStatement ps1 = session().prepare(query1);
+        PreparedStatement ps2 = session().prepare(query2);
         BatchStatement batch = new BatchStatement();
         batch.add(ps1.bind(42));
         batch.add(ps2.bind(1234));
-        session.execute(batch);
+        session().execute(batch);
         // then
         String line = normalAppender.waitAndGet(10000);
         assertThat(line)
@@ -205,20 +205,20 @@ public class QueryLoggerTest extends CCMTestsSupport {
     public void should_log_unlogged_batch_statements() throws Exception {
         // given
         normal.setLevel(DEBUG);
-        queryLogger = QueryLogger.builder(cluster)
+        queryLogger = QueryLogger.builder(cluster())
                 .withConstantThreshold(Long.MAX_VALUE)
                 .withMaxQueryStringLength(Integer.MAX_VALUE)
                 .build();
-        cluster.register(queryLogger);
+        cluster().register(queryLogger);
         // when
         String query1 = "INSERT INTO test (pk) VALUES (?)";
         String query2 = "UPDATE test SET c_int = ? WHERE pk = 42";
-        PreparedStatement ps1 = session.prepare(query1);
-        PreparedStatement ps2 = session.prepare(query2);
+        PreparedStatement ps1 = session().prepare(query1);
+        PreparedStatement ps2 = session().prepare(query2);
         BatchStatement batch = new BatchStatement(UNLOGGED);
         batch.add(ps1.bind(42));
         batch.add(ps2.bind(1234));
-        session.execute(batch);
+        session().execute(batch);
         // then
         String line = normalAppender.waitAndGet(10000);
         assertThat(line)
@@ -235,25 +235,25 @@ public class QueryLoggerTest extends CCMTestsSupport {
     @CassandraVersion(major = 2.0)
     public void should_log_counter_batch_statements() throws Exception {
         // Create a special table for testing with counters.
-        session.execute(
+        session().execute(
                 "CREATE TABLE IF NOT EXISTS counter_test (pk int PRIMARY KEY, c_count COUNTER, c_count2 COUNTER)");
 
         // given
         normal.setLevel(DEBUG);
-        queryLogger = QueryLogger.builder(cluster)
+        queryLogger = QueryLogger.builder(cluster())
                 .withConstantThreshold(Long.MAX_VALUE)
                 .withMaxQueryStringLength(Integer.MAX_VALUE)
                 .build();
-        cluster.register(queryLogger);
+        cluster().register(queryLogger);
         // when
         String query1 = "UPDATE counter_test SET c_count = c_count + ? WHERE pk = 42";
         String query2 = "UPDATE counter_test SET c_count2 = c_count2 + ? WHERE pk = 42";
-        PreparedStatement ps1 = session.prepare(query1);
-        PreparedStatement ps2 = session.prepare(query2);
+        PreparedStatement ps1 = session().prepare(query1);
+        PreparedStatement ps2 = session().prepare(query2);
         BatchStatement batch = new BatchStatement(COUNTER);
         batch.add(ps1.bind(1234L));
         batch.add(ps2.bind(5678L));
-        session.execute(batch);
+        session().execute(batch);
         // then
         String line = normalAppender.waitAndGet(10000);
         assertThat(line)
@@ -347,16 +347,16 @@ public class QueryLoggerTest extends CCMTestsSupport {
     public void should_log_normal_queries() throws Exception {
         // given
         normal.setLevel(DEBUG);
-        queryLogger = QueryLogger.builder(cluster)
+        queryLogger = QueryLogger.builder(cluster())
                 .withConstantThreshold(Long.MAX_VALUE)
                 .withMaxQueryStringLength(Integer.MAX_VALUE)
                 .build();
-        cluster.register(queryLogger);
+        cluster().register(queryLogger);
         // when
         String query = "SELECT * FROM test where pk = ?";
-        PreparedStatement ps = session.prepare(query);
+        PreparedStatement ps = session().prepare(query);
         BoundStatement bs = ps.bind(42);
-        session.execute(bs);
+        session().execute(bs);
         // then
         String line = normalAppender.waitAndGet(10000);
         assertThat(line)
@@ -375,18 +375,18 @@ public class QueryLoggerTest extends CCMTestsSupport {
     public void should_log_non_null_named_parameter() throws Exception {
         // given
         normal.setLevel(TRACE);
-        queryLogger = QueryLogger.builder(cluster)
+        queryLogger = QueryLogger.builder(cluster())
                 .withConstantThreshold(Long.MAX_VALUE)
                 .withMaxQueryStringLength(Integer.MAX_VALUE)
                 .build();
-        cluster.register(queryLogger);
+        cluster().register(queryLogger);
         // when
         String query = "UPDATE test SET c_text = :param1 WHERE pk = :param2";
-        PreparedStatement ps = session.prepare(query);
+        PreparedStatement ps = session().prepare(query);
         BoundStatement bs = ps.bind();
         bs.setString("param1", "foo");
         bs.setInt("param2", 42);
-        session.execute(bs);
+        session().execute(bs);
         // then
         String line = normalAppender.waitAndGet(10000);
         assertThat(line)
@@ -401,15 +401,15 @@ public class QueryLoggerTest extends CCMTestsSupport {
     public void should_log_non_null_positional_parameter() throws Exception {
         // given
         normal.setLevel(TRACE);
-        queryLogger = QueryLogger.builder(cluster).build();
-        cluster.register(queryLogger);
+        queryLogger = QueryLogger.builder(cluster()).build();
+        cluster().register(queryLogger);
         // when
         String query = "UPDATE test SET c_text = ? WHERE pk = ?";
-        PreparedStatement ps = session.prepare(query);
+        PreparedStatement ps = session().prepare(query);
         BoundStatement bs = ps.bind();
         bs.setString("c_text", "foo");
         bs.setInt("pk", 42);
-        session.execute(bs);
+        session().execute(bs);
         // then
         String line = normalAppender.waitAndGet(10000);
         assertThat(line)
@@ -424,15 +424,15 @@ public class QueryLoggerTest extends CCMTestsSupport {
     public void should_log_null_parameter() throws Exception {
         // given
         normal.setLevel(TRACE);
-        queryLogger = QueryLogger.builder(cluster).build();
-        cluster.register(queryLogger);
+        queryLogger = QueryLogger.builder(cluster()).build();
+        cluster().register(queryLogger);
         // when
         String query = "UPDATE test SET c_text = ? WHERE pk = ?";
-        PreparedStatement ps = session.prepare(query);
+        PreparedStatement ps = session().prepare(query);
         BoundStatement bs = ps.bind();
         bs.setString("c_text", null);
         bs.setInt("pk", 42);
-        session.execute(bs);
+        session().execute(bs);
         // then
         String line = normalAppender.waitAndGet(10000);
         assertThat(line)
@@ -448,15 +448,15 @@ public class QueryLoggerTest extends CCMTestsSupport {
     public void should_log_bound_statement_parameters_inside_batch_statement() throws Exception {
         // given
         normal.setLevel(TRACE);
-        queryLogger = QueryLogger.builder(cluster).build();
-        cluster.register(queryLogger);
+        queryLogger = QueryLogger.builder(cluster()).build();
+        cluster().register(queryLogger);
         // when
         String query1 = "UPDATE test SET c_text = ? WHERE pk = ?";
         String query2 = "UPDATE test SET c_int = ? WHERE pk = ?";
         BatchStatement batch = new BatchStatement();
-        batch.add(session.prepare(query1).bind("foo", 42));
-        batch.add(session.prepare(query2).bind(12345, 43));
-        session.execute(batch);
+        batch.add(session().prepare(query1).bind("foo", 42));
+        batch.add(session().prepare(query2).bind(12345, 43));
+        session().execute(batch);
         // then
         String line = normalAppender.waitAndGet(10000);
         assertThat(line)
@@ -475,15 +475,15 @@ public class QueryLoggerTest extends CCMTestsSupport {
     public void should_log_all_parameter_types() throws Exception {
         // given
         normal.setLevel(TRACE);
-        queryLogger = QueryLogger.builder(cluster)
+        queryLogger = QueryLogger.builder(cluster())
                 .withMaxParameterValueLength(Integer.MAX_VALUE)
                 .build();
-        cluster.register(queryLogger);
+        cluster().register(queryLogger);
         // when
         String query = "UPDATE test SET " + assignments + " WHERE pk = 42";
-        PreparedStatement ps = session.prepare(query);
+        PreparedStatement ps = session().prepare(query);
         BoundStatement bs = ps.bind(values.toArray());
-        session.execute(bs);
+        session().execute(bs);
         // then
         String line = normalAppender.waitAndGet(10000);
         assertThat(line)
@@ -501,13 +501,13 @@ public class QueryLoggerTest extends CCMTestsSupport {
     public void should_truncate_query_when_max_length_exceeded() throws Exception {
         // given
         normal.setLevel(DEBUG);
-        queryLogger = QueryLogger.builder(cluster)
+        queryLogger = QueryLogger.builder(cluster())
                 .withMaxQueryStringLength(5)
                 .build();
-        cluster.register(queryLogger);
+        cluster().register(queryLogger);
         // when
         String query = "SELECT * FROM test WHERE pk = 42";
-        session.execute(query);
+        session().execute(query);
         // then
         String line = normalAppender.waitAndGet(10000);
         assertThat(line)
@@ -522,17 +522,17 @@ public class QueryLoggerTest extends CCMTestsSupport {
     public void should_show_total_statements_for_batches_even_if_query_truncated() throws Exception {
         // given
         normal.setLevel(DEBUG);
-        queryLogger = QueryLogger.builder(cluster)
+        queryLogger = QueryLogger.builder(cluster())
                 .withMaxQueryStringLength(5)
                 .build();
-        cluster.register(queryLogger);
+        cluster().register(queryLogger);
         // when
         String query1 = "UPDATE test SET c_text = ? WHERE pk = ?";
         String query2 = "UPDATE test SET c_int = ? WHERE pk = ?";
         BatchStatement batch = new BatchStatement();
-        batch.add(session.prepare(query1).bind("foo", 42));
-        batch.add(session.prepare(query2).bind(12345, 43));
-        session.execute(batch);
+        batch.add(session().prepare(query1).bind("foo", 42));
+        batch.add(session().prepare(query2).bind(12345, 43));
+        session().execute(batch);
         // then
         String line = normalAppender.waitAndGet(10000);
         assertThat(line)
@@ -548,13 +548,13 @@ public class QueryLoggerTest extends CCMTestsSupport {
     public void should_not_truncate_query_when_max_length_unlimited() throws Exception {
         // given
         normal.setLevel(DEBUG);
-        queryLogger = QueryLogger.builder(cluster)
+        queryLogger = QueryLogger.builder(cluster())
                 .withMaxQueryStringLength(-1)
                 .build();
-        cluster.register(queryLogger);
+        cluster().register(queryLogger);
         // when
         String query = "SELECT * FROM test WHERE pk = 42";
-        session.execute(query);
+        session().execute(query);
         // then
         String line = normalAppender.waitAndGet(10000);
         assertThat(line)
@@ -569,17 +569,17 @@ public class QueryLoggerTest extends CCMTestsSupport {
     public void should_truncate_parameter_when_max_length_exceeded() throws Exception {
         // given
         normal.setLevel(TRACE);
-        queryLogger = QueryLogger.builder(cluster)
+        queryLogger = QueryLogger.builder(cluster())
                 .withMaxParameterValueLength(5)
                 .build();
-        cluster.register(queryLogger);
+        cluster().register(queryLogger);
         // when
         String query = "UPDATE test SET c_int = ? WHERE pk = ?";
-        PreparedStatement ps = session.prepare(query);
+        PreparedStatement ps = session().prepare(query);
         BoundStatement bs = ps.bind();
         bs.setInt("c_int", 123456);
         bs.setInt("pk", 42);
-        session.execute(bs);
+        session().execute(bs);
         // then
         String line = normalAppender.waitAndGet(10000);
         assertThat(line)
@@ -593,17 +593,17 @@ public class QueryLoggerTest extends CCMTestsSupport {
     public void should_truncate_blob_parameter_when_max_length_exceeded() throws Exception {
         // given
         normal.setLevel(TRACE);
-        queryLogger = QueryLogger.builder(cluster)
+        queryLogger = QueryLogger.builder(cluster())
                 .withMaxParameterValueLength(6)
                 .build();
-        cluster.register(queryLogger);
+        cluster().register(queryLogger);
         // when
         String query = "UPDATE test SET c_blob = ? WHERE pk = ?";
-        PreparedStatement ps = session.prepare(query);
+        PreparedStatement ps = session().prepare(query);
         BoundStatement bs = ps.bind();
         bs.setBytes("c_blob", ByteBuffer.wrap(Bytes.toArray(Lists.newArrayList(1, 2, 3))));
         bs.setInt("pk", 42);
-        session.execute(bs);
+        session().execute(bs);
         // then
         String line = normalAppender.waitAndGet(10000);
         assertThat(line)
@@ -617,17 +617,17 @@ public class QueryLoggerTest extends CCMTestsSupport {
     public void should_not_truncate_parameter_when_max_length_unlimited() throws Exception {
         // given
         normal.setLevel(TRACE);
-        queryLogger = QueryLogger.builder(cluster)
+        queryLogger = QueryLogger.builder(cluster())
                 .withMaxParameterValueLength(-1)
                 .build();
-        cluster.register(queryLogger);
+        cluster().register(queryLogger);
         // when
         String query = "UPDATE test SET c_int = ? WHERE pk = ?";
-        PreparedStatement ps = session.prepare(query);
+        PreparedStatement ps = session().prepare(query);
         BoundStatement bs = ps.bind();
         bs.setInt("c_int", 123456);
         bs.setInt("pk", 42);
-        session.execute(bs);
+        session().execute(bs);
         // then
         String line = normalAppender.waitAndGet(10000);
         assertThat(line)
@@ -641,17 +641,17 @@ public class QueryLoggerTest extends CCMTestsSupport {
     public void should_not_log_exceeding_number_of_parameters() throws Exception {
         // given
         normal.setLevel(TRACE);
-        queryLogger = QueryLogger.builder(cluster)
+        queryLogger = QueryLogger.builder(cluster())
                 .withMaxLoggedParameters(1)
                 .build();
-        cluster.register(queryLogger);
+        cluster().register(queryLogger);
         // when
         String query = "UPDATE test SET c_int = ? WHERE pk = ?";
-        PreparedStatement ps = session.prepare(query);
+        PreparedStatement ps = session().prepare(query);
         BoundStatement bs = ps.bind();
         bs.setInt("c_int", 123456);
         bs.setInt("pk", 42);
-        session.execute(bs);
+        session().execute(bs);
         // then
         String line = normalAppender.waitAndGet(10000);
         assertThat(line)
@@ -667,17 +667,17 @@ public class QueryLoggerTest extends CCMTestsSupport {
     public void should_not_log_exceeding_number_of_parameters_in_batch_statement() throws Exception {
         // given
         normal.setLevel(TRACE);
-        queryLogger = QueryLogger.builder(cluster)
+        queryLogger = QueryLogger.builder(cluster())
                 .withMaxLoggedParameters(1)
                 .build();
-        cluster.register(queryLogger);
+        cluster().register(queryLogger);
         // when
         String query1 = "UPDATE test SET c_text = ? WHERE pk = ?";
         String query2 = "UPDATE test SET c_int = ? WHERE pk = ?";
         BatchStatement batch = new BatchStatement();
-        batch.add(session.prepare(query1).bind("foo", 42));
-        batch.add(session.prepare(query2).bind(12345, 43));
-        session.execute(batch);
+        batch.add(session().prepare(query1).bind("foo", 42));
+        batch.add(session().prepare(query2).bind(12345, 43));
+        session().execute(batch);
         // then
         String line = normalAppender.waitAndGet(10000);
         assertThat(line)
@@ -696,17 +696,17 @@ public class QueryLoggerTest extends CCMTestsSupport {
     public void should_log_all_parameters_when_max_unlimited() throws Exception {
         // given
         normal.setLevel(TRACE);
-        queryLogger = QueryLogger.builder(cluster)
+        queryLogger = QueryLogger.builder(cluster())
                 .withMaxLoggedParameters(-1)
                 .build();
-        cluster.register(queryLogger);
+        cluster().register(queryLogger);
         // when
         String query = "UPDATE test SET c_int = ? WHERE pk = ?";
-        PreparedStatement ps = session.prepare(query);
+        PreparedStatement ps = session().prepare(query);
         BoundStatement bs = ps.bind();
         bs.setInt("c_int", 123456);
         bs.setInt("pk", 42);
-        session.execute(bs);
+        session().execute(bs);
         // then
         String line = normalAppender.waitAndGet(10000);
         assertThat(line)
@@ -717,8 +717,8 @@ public class QueryLoggerTest extends CCMTestsSupport {
     }
 
     @Override
-    public List<String> createTestFixtures() {
-        return Lists.newArrayList("CREATE TABLE test (pk int PRIMARY KEY, " + definitions + ")");
+    public void onTestContextInitialized() {
+        execute("CREATE TABLE test (pk int PRIMARY KEY, " + definitions + ")");
     }
 
 }

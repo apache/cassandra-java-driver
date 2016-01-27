@@ -25,7 +25,10 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import org.testng.annotations.Test;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 
@@ -54,18 +57,18 @@ public abstract class TokenIntegrationTest extends CCMTestsSupport {
     public Cluster.Builder createClusterBuilder() {
         // Only connect to node 1, which makes it easier to query system tables in should_expose_tokens_per_host()
         LoadBalancingPolicy lbp = new WhiteListPolicy(new RoundRobinPolicy(),
-                Collections.singleton(ccm.addressOfNode(1)));
+                Collections.singleton(ccm().addressOfNode(1)));
         return Cluster.builder()
-                .addContactPointsWithPorts(ccm.addressOfNode(1))
+                .addContactPointsWithPorts(ccm().addressOfNode(1))
                 .withLoadBalancingPolicy(lbp)
                 .withQueryOptions(TestUtils.nonDebouncingQueryOptions());
     }
 
     @Override
-    public Collection<String> createTestFixtures() {
-        ks1 = TestUtils.getAvailableKeyspaceName();
-        ks2 = TestUtils.getAvailableKeyspaceName();
-        return Lists.newArrayList(
+    public void onTestContextInitialized() {
+        ks1 = TestUtils.generateIdentifier("ks_");
+        ks2 = TestUtils.generateIdentifier("ks_");
+        execute(
                 String.format("CREATE KEYSPACE %s WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1}", ks1),
                 String.format("CREATE KEYSPACE %s WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 2}", ks2),
                 String.format("USE %s", ks1),
@@ -89,18 +92,18 @@ public abstract class TokenIntegrationTest extends CCMTestsSupport {
      */
     @Test(groups = "short")
     public void should_expose_token_ranges() throws Exception {
-        Metadata metadata = cluster.getMetadata();
+        Metadata metadata = cluster().getMetadata();
 
         // Find the replica for a given partition key
         int testKey = 1;
-        Set<Host> replicas = metadata.getReplicas(ks1, DataType.cint().serialize(testKey, cluster.getConfiguration().getProtocolOptions().getProtocolVersionEnum()));
+        Set<Host> replicas = metadata.getReplicas(ks1, DataType.cint().serialize(testKey, cluster().getConfiguration().getProtocolOptions().getProtocolVersionEnum()));
         assertThat(replicas).hasSize(1);
         Host replica = replicas.iterator().next();
 
         // Iterate the cluster's token ranges. For each one, use a range query to ask Cassandra which partition keys
         // are in this range.
 
-        PreparedStatement rangeStmt = session.prepare("SELECT i FROM foo WHERE token(i) > ? and token(i) <= ?");
+        PreparedStatement rangeStmt = session().prepare("SELECT i FROM foo WHERE token(i) > ? and token(i) <= ?");
 
         TokenRange foundRange = null;
         for (TokenRange range : metadata.getTokenRanges()) {
@@ -124,7 +127,7 @@ public abstract class TokenIntegrationTest extends CCMTestsSupport {
         List<Row> rows = Lists.newArrayList();
         for (TokenRange subRange : range.unwrap()) {
             Statement statement = rangeStmt.bind(subRange.getStart(), subRange.getEnd());
-            rows.addAll(session.execute(statement).all());
+            rows.addAll(session().execute(statement).all());
         }
         return rows;
     }
@@ -154,7 +157,7 @@ public abstract class TokenIntegrationTest extends CCMTestsSupport {
     @Test(groups = "short")
     public void should_get_token_from_row_and_set_token_in_query() {
         // get by index:
-        Row row = session.execute("SELECT token(i) FROM foo WHERE i = 1").one();
+        Row row = session().execute("SELECT token(i) FROM foo WHERE i = 1").one();
         Token token = row.getToken(0);
         assertThat(token.getType()).isEqualTo(expectedTokenType);
 
@@ -162,14 +165,14 @@ public abstract class TokenIntegrationTest extends CCMTestsSupport {
                 row.getPartitionKeyToken()
         ).isEqualTo(token);
 
-        PreparedStatement pst = session.prepare("SELECT * FROM foo WHERE token(i) = ?");
-        row = session.execute(pst.bind(token)).one();
+        PreparedStatement pst = session().prepare("SELECT * FROM foo WHERE token(i) = ?");
+        row = session().execute(pst.bind(token)).one();
         assertThat(row.getInt(0)).isEqualTo(1);
 
-        row = session.execute(pst.bind().setToken(0, token)).one();
+        row = session().execute(pst.bind().setToken(0, token)).one();
         assertThat(row.getInt(0)).isEqualTo(1);
 
-        row = session.execute(pst.bind().setPartitionKeyToken(token)).one();
+        row = session().execute(pst.bind().setPartitionKeyToken(token)).one();
         assertThat(row.getInt(0)).isEqualTo(1);
     }
 
@@ -190,15 +193,15 @@ public abstract class TokenIntegrationTest extends CCMTestsSupport {
     @Test(groups = "short")
     @CassandraVersion(major = 2)
     public void should_get_token_from_row_and_set_token_in_query_with_binding_and_aliasing() {
-        Row row = session.execute("SELECT token(i) AS t FROM foo WHERE i = 1").one();
+        Row row = session().execute("SELECT token(i) AS t FROM foo WHERE i = 1").one();
         Token token = row.getToken("t");
         assertThat(token.getType()).isEqualTo(expectedTokenType);
 
-        PreparedStatement pst = session.prepare("SELECT * FROM foo WHERE token(i) = :myToken");
-        row = session.execute(pst.bind().setToken("myToken", token)).one();
+        PreparedStatement pst = session().prepare("SELECT * FROM foo WHERE token(i) = :myToken");
+        row = session().execute(pst.bind().setToken("myToken", token)).one();
         assertThat(row.getInt(0)).isEqualTo(1);
 
-        row = session.execute("SELECT * FROM foo WHERE token(i) = ?", token).one();
+        row = session().execute("SELECT * FROM foo WHERE token(i) = ?", token).one();
         assertThat(row.getInt(0)).isEqualTo(1);
     }
 
@@ -214,7 +217,7 @@ public abstract class TokenIntegrationTest extends CCMTestsSupport {
      */
     @Test(groups = "short", expectedExceptions = InvalidTypeException.class)
     public void should_raise_exception_when_get_token_on_non_token() {
-        Row row = session.execute("SELECT i FROM foo WHERE i = 1").one();
+        Row row = session().execute("SELECT i FROM foo WHERE i = 1").one();
         row.getToken(0);
     }
 
@@ -238,7 +241,7 @@ public abstract class TokenIntegrationTest extends CCMTestsSupport {
     public void should_expose_token_ranges_per_host() {
         checkRangesPerHost(ks1, 1);
         checkRangesPerHost(ks2, 2);
-        assertThat(cluster).hasValidTokenRanges();
+        assertThat(cluster()).hasValidTokenRanges();
     }
 
     private void checkRangesPerHost(String keyspace, int replicationFactor) {
@@ -246,8 +249,8 @@ public abstract class TokenIntegrationTest extends CCMTestsSupport {
 
         // Get each host's ranges, the count should match the replication factor
         for (int i = 1; i <= 3; i++) {
-            Host host = TestUtils.findHost(cluster, i);
-            Set<TokenRange> hostRanges = cluster.getMetadata().getTokenRanges(keyspace, host);
+            Host host = TestUtils.findHost(cluster(), i);
+            Set<TokenRange> hostRanges = cluster().getMetadata().getTokenRanges(keyspace, host);
             // Special case: When using vnodes the tokens are not evenly assigned to each replica.
             if (!useVnodes) {
                 assertThat(hostRanges).hasSize(replicationFactor * numTokens);
@@ -263,7 +266,7 @@ public abstract class TokenIntegrationTest extends CCMTestsSupport {
         assertThat(allRanges).hasSize(3 * numTokens);
 
         // And the ranges should cover the whole ring and no ranges intersect.
-        assertThat(cluster).hasValidTokenRanges(keyspace);
+        assertThat(cluster()).hasValidTokenRanges(keyspace);
     }
 
     /**
@@ -282,15 +285,15 @@ public abstract class TokenIntegrationTest extends CCMTestsSupport {
      */
     @Test(groups = "short")
     public void should_expose_tokens_per_host() {
-        for (Host host : cluster.getMetadata().allHosts()) {
+        for (Host host : cluster().getMetadata().allHosts()) {
             assertThat(host.getTokens()).hasSize(numTokens);
 
             // Check against the info in the system tables, which is a bit weak since it's exactly how the metadata is
             // constructed in the first place, but there's not much else we can do.
             // Note that this relies on all queries going to node 1, which is why we use a WhiteList LBP in setup().
             Row row = (host.listenAddress == null)
-                    ? session.execute("select tokens from system.local").one()
-                    : session.execute("select tokens from system.peers where peer = '" + host.listenAddress.getHostAddress() + "'").one();
+                    ? session().execute("select tokens from system.local").one()
+                    : session().execute("select tokens from system.peers where peer = '" + host.listenAddress.getHostAddress() + "'").one();
             Set<String> tokenStrings = row.getSet("tokens", String.class);
             assertThat(tokenStrings).hasSize(numTokens);
             Iterable<Token> tokensFromSystemTable = Iterables.transform(tokenStrings, new Function<String, Token>() {
@@ -318,7 +321,7 @@ public abstract class TokenIntegrationTest extends CCMTestsSupport {
      */
     @Test(groups = "short")
     public void should_only_unwrap_one_range_for_all_ranges() {
-        Set<TokenRange> ranges = cluster.getMetadata().getTokenRanges();
+        Set<TokenRange> ranges = cluster().getMetadata().getTokenRanges();
 
         assertOnlyOneWrapped(ranges);
 
@@ -358,7 +361,7 @@ public abstract class TokenIntegrationTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void should_expose_token_and_range_creation_methods() {
-        Metadata metadata = cluster.getMetadata();
+        Metadata metadata = cluster().getMetadata();
 
         // Pick a random range
         TokenRange range = metadata.getTokenRanges().iterator().next();

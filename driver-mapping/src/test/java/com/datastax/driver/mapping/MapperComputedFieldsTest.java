@@ -19,12 +19,9 @@ import com.datastax.driver.core.*;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.utils.CassandraVersion;
 import com.datastax.driver.mapping.annotations.*;
-import com.google.common.collect.Lists;
 import org.testng.SkipException;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import java.util.Collection;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.ProtocolVersion.V1;
@@ -38,8 +35,8 @@ import static org.assertj.core.api.Assertions.fail;
 public class MapperComputedFieldsTest extends CCMTestsSupport {
 
     @Override
-    public Collection<String> createTestFixtures() {
-        return Lists.newArrayList(
+    public void onTestContextInitialized() {
+        execute(
                 "CREATE TABLE user (login text primary key, name text)",
                 "INSERT INTO user (login, name) VALUES ('testlogin', 'test name')");
     }
@@ -50,8 +47,8 @@ public class MapperComputedFieldsTest extends CCMTestsSupport {
 
     @BeforeMethod(groups = "short")
     void setup() {
-        mappingManager = new MappingManager(session);
-        protocolVersion = cluster.getConfiguration().getProtocolOptions().getProtocolVersionEnum();
+        mappingManager = new MappingManager(session());
+        protocolVersion = cluster().getConfiguration().getProtocolOptions().getProtocolVersionEnum();
         if (protocolVersion.compareTo(V1) > 0)
             userMapper = mappingManager.mapper(User.class);
     }
@@ -81,7 +78,7 @@ public class MapperComputedFieldsTest extends CCMTestsSupport {
         assertThat(fetched.getTtl()).isNull(); // TTL should be null since it was not set.
 
         // Overwrite with TTL
-        session.execute("insert into user (login, name) values ('testlogin2', 'blah') using TTL 600");
+        session().execute("insert into user (login, name) values ('testlogin2', 'blah') using TTL 600");
         fetched = userMapper.get("testlogin2");
         assertThat(fetched.getWriteTime()).isGreaterThanOrEqualTo(writeTime).isLessThan(writeTime + 30000000L);
         assertThat(fetched.getTtl()).isBetween(570, 600); // TTL should be within 30 secs.
@@ -103,7 +100,7 @@ public class MapperComputedFieldsTest extends CCMTestsSupport {
     public void should_map_aliased_resultset_to_objects() {
         Statement getQuery = userMapper.getQuery("testlogin");
         getQuery.setConsistencyLevel(ConsistencyLevel.QUORUM);
-        ResultSet rs = session.execute(getQuery);
+        ResultSet rs = session().execute(getQuery);
 
         Result<User> result = userMapper.mapAliased(rs);
         User user = result.one();

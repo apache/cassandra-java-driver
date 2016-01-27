@@ -50,8 +50,8 @@ public class ReconnectionTest extends CCMTestsSupport {
     @Test(groups = "long")
     public void should_reconnect_after_full_connectivity_loss() throws InterruptedException {
         Cluster cluster = register(Cluster.builder()
-                .addContactPointsWithPorts(ccm.addressOfNode(1))
-                .withPort(ccm.getBinaryPort())
+                .addContactPoints(getContactPoints().get(0))
+                .withPort(ccm().getBinaryPort())
                 .withReconnectionPolicy(new ConstantReconnectionPolicy(reconnectionDelayMillis))
                 .build());
         cluster.connect();
@@ -60,12 +60,12 @@ public class ReconnectionTest extends CCMTestsSupport {
 
         // Stop all nodes. We won't get notifications anymore, so the only mechanism to
         // reconnect is the background reconnection attempts.
-        ccm.stop(2);
-        ccm.stop(1);
+        ccm().stop(2);
+        ccm().stop(1);
 
-        ccm.waitForDown(2);
-        ccm.start(2);
-        ccm.waitForUp(2);
+        ccm().waitForDown(2);
+        ccm().start(2);
+        ccm().waitForUp(2);
 
         assertThat(cluster).host(2).comesUpWithin(Cluster.NEW_NODE_DELAY_SECONDS * 2, SECONDS);
 
@@ -83,14 +83,14 @@ public class ReconnectionTest extends CCMTestsSupport {
     public void should_keep_reconnecting_on_authentication_error() throws InterruptedException {
         // For C* 1.2, sleep before attempting to connect as there is a small delay between
         // user being created.
-        if (ccm.getVersion().getMajor() < 2) {
+        if (ccm().getVersion().getMajor() < 2) {
             Uninterruptibles.sleepUninterruptibly(1, TimeUnit.SECONDS);
         }
         CountingReconnectionPolicy reconnectionPolicy = new CountingReconnectionPolicy(new ConstantReconnectionPolicy(reconnectionDelayMillis));
         CountingAuthProvider authProvider = new CountingAuthProvider("cassandra", "cassandra");
         Cluster cluster = register(Cluster.builder()
-                .addContactPointsWithPorts(ccm.addressOfNode(1))
-                .withPort(ccm.getBinaryPort())
+                .addContactPointsWithPorts(ccm().addressOfNode(1))
+                .withPort(ccm().getBinaryPort())
                 // Start with the correct auth so that we can initialize the server
                 .withAuthProvider(authProvider)
                 .withReconnectionPolicy(reconnectionPolicy)
@@ -100,11 +100,11 @@ public class ReconnectionTest extends CCMTestsSupport {
         assertThat(cluster).usesControlHost(1);
 
         // Stop the server, set wrong credentials and restart
-        ccm.stop(1);
-        ccm.waitForDown(1);
+        ccm().stop(1);
+        ccm().waitForDown(1);
         authProvider.setPassword("wrongPassword");
-        ccm.start(1);
-        ccm.waitForUp(1);
+        ccm().start(1);
+        ccm().waitForUp(1);
 
         // Wait a few iterations to ensure that our authProvider has returned the wrong credentials at least once
         // NB: authentication errors show up in the logs
@@ -130,13 +130,13 @@ public class ReconnectionTest extends CCMTestsSupport {
         CountingReconnectionPolicy reconnectionPolicy = new CountingReconnectionPolicy(new ConstantReconnectionPolicy(reconnectionDelayMillis));
 
         Cluster cluster = register(Cluster.builder()
-                .addContactPointsWithPorts(ccm.addressOfNode(1))
-                .withPort(ccm.getBinaryPort())
+                .addContactPointsWithPorts(ccm().addressOfNode(1))
+                .withPort(ccm().getBinaryPort())
                 .withReconnectionPolicy(reconnectionPolicy).build());
         cluster.connect();
 
         // Stop a node and cancel the reconnection attempts to it
-        ccm.stop(2);
+        ccm().stop(2);
         Host host2 = TestUtils.findHost(cluster, 2);
         host2.getReconnectionAttemptFuture().cancel(false);
 
@@ -146,8 +146,8 @@ public class ReconnectionTest extends CCMTestsSupport {
         assertThat(reconnectionPolicy.count.get()).isEqualTo(initialCount);
 
         // Restart the node, which will trigger an UP notification
-        ccm.start(2);
-        ccm.waitForUp(2);
+        ccm().start(2);
+        ccm().waitForUp(2);
 
         // The driver should now see the node as UP again
         assertThat(cluster).host(2).comesUpWithin(Cluster.NEW_NODE_DELAY_SECONDS * 2, SECONDS);
@@ -158,8 +158,8 @@ public class ReconnectionTest extends CCMTestsSupport {
     public void should_trigger_one_time_reconnect() throws InterruptedException, IOException {
         TogglabePolicy loadBalancingPolicy = new TogglabePolicy(new RoundRobinPolicy());
         Cluster cluster = register(Cluster.builder()
-                .addContactPointsWithPorts(ccm.addressOfNode(1))
-                .withPort(ccm.getBinaryPort())
+                .addContactPointsWithPorts(ccm().addressOfNode(1))
+                .withPort(ccm().getBinaryPort())
                 .withLoadBalancingPolicy(loadBalancingPolicy)
                 .withReconnectionPolicy(new ConstantReconnectionPolicy(reconnectionDelayMillis))
                 .build());
@@ -170,8 +170,8 @@ public class ReconnectionTest extends CCMTestsSupport {
         loadBalancingPolicy.returnEmptyQueryPlan = true;
 
         // Stop the node, ignore it and cancel reconnection attempts to it
-        ccm.stop(1);
-        ccm.waitForDown(1);
+        ccm().stop(1);
+        ccm().waitForDown(1);
         assertThat(cluster).host(1).goesDownWithin(20, SECONDS);
         Host host1 = TestUtils.findHost(cluster, 1);
         loadBalancingPolicy.setDistance(TestUtils.findHost(cluster, 1), HostDistance.IGNORED);
@@ -189,8 +189,8 @@ public class ReconnectionTest extends CCMTestsSupport {
         // Restart the node (this will not trigger an UP notification thanks to our
         // hack to disable the control connection reconnects). The host should stay
         // down for the driver.
-        ccm.start(1);
-        ccm.waitForUp(1);
+        ccm().start(1);
+        ccm().waitForUp(1);
         assertThat(cluster).host(1).hasState(State.DOWN);
 
         TimeUnit.SECONDS.sleep(Cluster.NEW_NODE_DELAY_SECONDS);
@@ -214,8 +214,8 @@ public class ReconnectionTest extends CCMTestsSupport {
         // Spy SocketOptions.getKeepAlive to count how many connections were instantiated.
         SocketOptions socketOptions = spy(new SocketOptions());
         Cluster cluster = register(Cluster.builder()
-                .addContactPointsWithPorts(ccm.addressOfNode(1))
-                .withPort(ccm.getBinaryPort())
+                .addContactPointsWithPorts(ccm().addressOfNode(1))
+                .withPort(ccm().getBinaryPort())
                 .withReconnectionPolicy(new ConstantReconnectionPolicy(5000))
                 .withLoadBalancingPolicy(loadBalancingPolicy)
                 .withSocketOptions(socketOptions)
@@ -235,14 +235,14 @@ public class ReconnectionTest extends CCMTestsSupport {
         loadBalancingPolicy.returnEmptyQueryPlan = true;
 
         // Stop the node and cancel the reconnection attempts to it
-        ccm.stop(1);
-        ccm.waitForDown(1);
+        ccm().stop(1);
+        ccm().waitForDown(1);
         assertThat(cluster).host(1).goesDownWithin(20, SECONDS);
         Host host1 = TestUtils.findHost(cluster, 1);
         host1.getReconnectionAttemptFuture().cancel(false);
 
-        ccm.start(1);
-        ccm.waitForUp(1);
+        ccm().start(1);
+        ccm().waitForUp(1);
 
         // Reset the spy and count the number of connections attempts for 1 reconnect
         reset(socketOptions);

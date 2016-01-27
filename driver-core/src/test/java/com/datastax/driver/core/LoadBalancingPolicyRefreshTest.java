@@ -82,20 +82,20 @@ public class LoadBalancingPolicyRefreshTest extends CCMTestsSupport {
     public void refreshTest() throws Throwable {
         // Ugly
         Host[] hosts = new Host[2];
-        for (Host h : cluster.getMetadata().getAllHosts()) {
+        for (Host h : cluster().getMetadata().getAllHosts()) {
             if (h.getAddress().equals(InetAddress.getByName(TestUtils.IP_PREFIX + '1')))
                 hosts[0] = h;
             else
                 hosts[1] = h;
         }
 
-        assertTrue(session.getState().getConnectedHosts().contains(hosts[0]), "Connected hosts: " + session.getState().getConnectedHosts());
-        assertTrue(!session.getState().getConnectedHosts().contains(hosts[1]), "Connected hosts: " + session.getState().getConnectedHosts());
+        assertTrue(session().getState().getConnectedHosts().contains(hosts[0]), "Connected hosts: " + session().getState().getConnectedHosts());
+        assertTrue(!session().getState().getConnectedHosts().contains(hosts[1]), "Connected hosts: " + session().getState().getConnectedHosts());
 
         policy.changeTheHost(hosts[1]);
 
-        assertTrue(!session.getState().getConnectedHosts().contains(hosts[0]), "Connected hosts: " + session.getState().getConnectedHosts());
-        assertTrue(session.getState().getConnectedHosts().contains(hosts[1]), "Connected hosts: " + session.getState().getConnectedHosts());
+        assertTrue(!session().getState().getConnectedHosts().contains(hosts[0]), "Connected hosts: " + session().getState().getConnectedHosts());
+        assertTrue(session().getState().getConnectedHosts().contains(hosts[1]), "Connected hosts: " + session().getState().getConnectedHosts());
     }
 
     @SuppressWarnings("unused")

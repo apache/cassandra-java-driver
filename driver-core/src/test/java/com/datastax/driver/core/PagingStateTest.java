@@ -19,11 +19,8 @@ import com.datastax.driver.core.exceptions.PagingStateException;
 import com.datastax.driver.core.utils.CassandraVersion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -36,14 +33,10 @@ public class PagingStateTest extends CCMTestsSupport {
     public static final String KEY = "paging_test";
 
     @Override
-    public Collection<String> createTestFixtures() {
-        return Collections.singletonList("CREATE TABLE test (k text, v int, PRIMARY KEY (k, v))");
-    }
-
-    @BeforeClass(groups = "short")
-    public void initData() {
+    public void onTestContextInitialized() {
+        execute("CREATE TABLE test (k text, v int, PRIMARY KEY (k, v))");
         for (int i = 0; i < 100; i++) {
-            session.execute(String.format("INSERT INTO test (k, v) VALUES ('%s', %d)", KEY, i));
+            execute(String.format("INSERT INTO test (k, v) VALUES ('%s', %d)", KEY, i));
         }
     }
 
@@ -57,12 +50,12 @@ public class PagingStateTest extends CCMTestsSupport {
     @Test(groups = "short")
     public void should_complete_when_using_paging_state() {
         SimpleStatement st = new SimpleStatement(String.format("SELECT v FROM test WHERE k='%s'", KEY));
-        ResultSet result = session.execute(st.setFetchSize(20));
+        ResultSet result = session().execute(st.setFetchSize(20));
         int pageSize = result.getAvailableWithoutFetching();
         String savedPagingStateString = result.getExecutionInfo().getPagingState().toString();
 
         st = new SimpleStatement(String.format("SELECT v FROM test WHERE k='%s'", KEY));
-        result = session.execute(st.setFetchSize(20).setPagingState(PagingState.fromString(savedPagingStateString)));
+        result = session().execute(st.setFetchSize(20).setPagingState(PagingState.fromString(savedPagingStateString)));
 
         //We have the result starting from the next page we stopped
         assertThat(result.one().getInt("v")).isEqualTo(pageSize);
@@ -87,7 +80,7 @@ public class PagingStateTest extends CCMTestsSupport {
         boolean setWithWrongStatement = false;
 
         SimpleStatement st = new SimpleStatement(String.format("SELECT v FROM test WHERE k='%s'", KEY));
-        ResultSet result = session.execute(st.setFetchSize(20));
+        ResultSet result = session().execute(st.setFetchSize(20));
 
         PagingState savedPagingState = result.getExecutionInfo().getPagingState();
         byte[] savedPagingStateBuffer = savedPagingState.toBytes();
@@ -129,14 +122,14 @@ public class PagingStateTest extends CCMTestsSupport {
     @Test(groups = "short")
     @CassandraVersion(major = 2.0)
     public void should_be_able_to_use_state_with_bound_statement() {
-        PreparedStatement prepared = session.prepare("SELECT v from test where k=?");
+        PreparedStatement prepared = session().prepare("SELECT v from test where k=?");
         BoundStatement bs = prepared.bind(KEY);
 
-        ResultSet result = session.execute(bs.setFetchSize(20));
+        ResultSet result = session().execute(bs.setFetchSize(20));
         int pageSize = result.getAvailableWithoutFetching();
         PagingState pagingState = result.getExecutionInfo().getPagingState();
 
-        result = session.execute(bs.setFetchSize(20).setPagingState(pagingState));
+        result = session().execute(bs.setFetchSize(20).setPagingState(pagingState));
 
         //We have the result starting from the next page we stopped
         assertThat(result.one().getInt("v")).isEqualTo(pageSize);
@@ -152,14 +145,14 @@ public class PagingStateTest extends CCMTestsSupport {
     @Test(groups = "short", expectedExceptions = {PagingStateException.class})
     @CassandraVersion(major = 2.0)
     public void should_not_be_able_to_use_state_with_different_bound_statement() {
-        PreparedStatement prepared = session.prepare("SELECT v from test where k=?");
+        PreparedStatement prepared = session().prepare("SELECT v from test where k=?");
         BoundStatement bs0 = prepared.bind(KEY);
 
-        ResultSet result = session.execute(bs0.setFetchSize(20));
+        ResultSet result = session().execute(bs0.setFetchSize(20));
         PagingState pagingState = result.getExecutionInfo().getPagingState();
 
         BoundStatement bs1 = prepared.bind("different_key");
-        session.execute(bs1.setFetchSize(20).setPagingState(pagingState));
+        session().execute(bs1.setFetchSize(20).setPagingState(pagingState));
     }
 
     /**
@@ -172,7 +165,7 @@ public class PagingStateTest extends CCMTestsSupport {
     @Test(groups = "short")
     public void should_return_no_rows_when_paged_to_end() {
         SimpleStatement st = new SimpleStatement(String.format("SELECT v FROM test WHERE k='%s'", KEY));
-        ResultSet result = session.execute(st.setFetchSize(20));
+        ResultSet result = session().execute(st.setFetchSize(20));
 
         // Consume enough of the iterator to cause all the results to be paged in.
         Iterator<Row> rowIt = result.iterator();
@@ -183,7 +176,7 @@ public class PagingStateTest extends CCMTestsSupport {
         String savedPagingStateString = result.getExecutionInfo().getPagingState().toString();
 
         st = new SimpleStatement(String.format("SELECT v FROM test WHERE k='%s'", KEY));
-        result = session.execute(st.setFetchSize(20).setPagingState(PagingState.fromString(savedPagingStateString)));
+        result = session().execute(st.setFetchSize(20).setPagingState(PagingState.fromString(savedPagingStateString)));
 
         assertThat(result.one()).isNull();
     }
@@ -220,12 +213,12 @@ public class PagingStateTest extends CCMTestsSupport {
     @Test(groups = "short")
     public void should_complete_when_using_unsafe_paging_state() {
         SimpleStatement st = new SimpleStatement(String.format("SELECT v FROM test WHERE k='%s'", KEY));
-        ResultSet result = session.execute(st.setFetchSize(20));
+        ResultSet result = session().execute(st.setFetchSize(20));
         int pageSize = result.getAvailableWithoutFetching();
         byte[] savedPagingState = result.getExecutionInfo().getPagingStateUnsafe();
 
         st = new SimpleStatement(String.format("SELECT v FROM test WHERE k='%s'", KEY));
-        result = session.execute(st.setFetchSize(20).setPagingStateUnsafe(savedPagingState));
+        result = session().execute(st.setFetchSize(20).setPagingStateUnsafe(savedPagingState));
 
         //We have the result starting from the next page we stopped
         assertThat(result.one().getInt("v")).isEqualTo(pageSize);

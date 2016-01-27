@@ -57,8 +57,8 @@ public class HeartbeatTest extends CCMTestsSupport {
     @Test(groups = "long")
     public void should_send_heartbeat_when_connection_is_inactive() throws InterruptedException {
         Cluster cluster = register(Cluster.builder()
-                .addContactPoints(ccm.addressOfNode(1).getAddress())
-                .withPort(ccm.getBinaryPort())
+                .addContactPoints(getContactPoints().get(0))
+                .withPort(ccm().getBinaryPort())
                 .withPoolingOptions(new PoolingOptions()
                         .setHeartbeatIntervalSeconds(3))
                 .build());
@@ -113,8 +113,8 @@ public class HeartbeatTest extends CCMTestsSupport {
     @Test(groups = "long")
     public void should_not_send_heartbeat_when_disabled() throws InterruptedException {
         Cluster cluster = register(Cluster.builder()
-                .addContactPoints(ccm.addressOfNode(1).getAddress())
-                .withPort(ccm.getBinaryPort())
+                .addContactPoints(getContactPoints().get(0))
+                .withPort(ccm().getBinaryPort())
                 .withPoolingOptions(new PoolingOptions()
                         .setHeartbeatIntervalSeconds(0))
                 .build());

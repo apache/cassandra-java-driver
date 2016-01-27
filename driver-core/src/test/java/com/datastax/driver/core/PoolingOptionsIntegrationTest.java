@@ -58,21 +58,21 @@ public class PoolingOptionsIntegrationTest extends CCMTestsSupport {
      */
     @Test(groups = "short")
     public void should_be_able_to_use_custom_initialization_executor() {
-        cluster.init();
+        cluster().init();
         // Ensure executor used.
         verify(executor, atLeastOnce()).execute(any(Runnable.class));
 
         // Reset invocation count.
         reset();
 
-        Session session = cluster.connect();
+        Session session = cluster().connect();
 
         // Ensure executor used again to establish core connections.
         verify(executor, atLeastOnce()).execute(any(Runnable.class));
 
         // Expect core connections + control connection.
-        assertThat(cluster.getMetrics().getOpenConnections().getValue()).isEqualTo(
-                TestUtils.numberOfLocalCoreConnections(cluster) + 1);
+        assertThat(cluster().getMetrics().getOpenConnections().getValue()).isEqualTo(
+                TestUtils.numberOfLocalCoreConnections(cluster()) + 1);
 
         reset();
 
@@ -82,6 +82,6 @@ public class PoolingOptionsIntegrationTest extends CCMTestsSupport {
         verify(executor, atLeastOnce()).execute(any(Runnable.class));
 
         // Only the control connection should remain.
-        assertThat(cluster.getMetrics().getOpenConnections().getValue()).isEqualTo(1);
+        assertThat(cluster().getMetrics().getOpenConnections().getValue()).isEqualTo(1);
     }
 }

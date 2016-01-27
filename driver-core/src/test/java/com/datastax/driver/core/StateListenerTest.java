@@ -35,23 +35,23 @@ public class StateListenerTest extends CCMTestsSupport {
     @Test(groups = "long")
     public void should_receive_events_when_node_states_change() throws InterruptedException {
         TestListener listener = new TestListener();
-        cluster.register(listener);
+        cluster().register(listener);
 
         listener.setExpectedEvent(ADD);
-        ccm.add(2);
-        ccm.start(2);
+        ccm().add(2);
+        ccm().start(2);
         listener.waitForEvent();
 
         listener.setExpectedEvent(DOWN);
-        ccm.forceStop(1);
+        ccm().forceStop(1);
         listener.waitForEvent();
 
         listener.setExpectedEvent(UP);
-        ccm.start(1);
+        ccm().start(1);
         listener.waitForEvent();
 
         listener.setExpectedEvent(REMOVE);
-        ccm.decommission(2);
+        ccm().decommission(2);
         listener.waitForEvent();
     }
 

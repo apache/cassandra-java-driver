@@ -18,10 +18,7 @@ package com.datastax.driver.core;
 import com.datastax.driver.core.Metrics.Errors;
 import com.datastax.driver.core.policies.RetryPolicy;
 import com.datastax.driver.core.policies.RetryPolicy.RetryDecision;
-import com.google.common.collect.Lists;
 import org.testng.annotations.Test;
-
-import java.util.Collection;
 
 import static org.testng.Assert.assertEquals;
 
@@ -49,8 +46,8 @@ public class MetricsTest extends CCMTestsSupport {
     }
 
     @Override
-    public Collection<String> createTestFixtures() {
-        return Lists.newArrayList("CREATE TABLE test (k int primary key, v int)",
+    public void onTestContextInitialized() {
+        execute("CREATE TABLE test (k int primary key, v int)",
                 "INSERT INTO test (k, v) VALUES (1, 1)");
     }
 
@@ -60,15 +57,15 @@ public class MetricsTest extends CCMTestsSupport {
 
         // We only have one node, this will throw an unavailable exception
         Statement statement = new SimpleStatement("SELECT v FROM test WHERE k = 1").setConsistencyLevel(ConsistencyLevel.TWO);
-        session.execute(statement);
+        session().execute(statement);
 
-        Errors errors = cluster.getMetrics().getErrorMetrics();
+        Errors errors = cluster().getMetrics().getErrorMetrics();
         assertEquals(errors.getUnavailables().getCount(), 1);
         assertEquals(errors.getRetries().getCount(), 1);
         assertEquals(errors.getRetriesOnUnavailable().getCount(), 1);
 
         retryDecision = RetryDecision.ignore();
-        session.execute(statement);
+        session().execute(statement);
 
         assertEquals(errors.getUnavailables().getCount(), 2);
         assertEquals(errors.getIgnores().getCount(), 1);

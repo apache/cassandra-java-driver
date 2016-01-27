@@ -41,9 +41,9 @@ public class RefreshConnectedHostTest extends CCMTestsSupport {
         LimitingLoadBalancingPolicy loadBalancingPolicy = new LimitingLoadBalancingPolicy(new RoundRobinPolicy(), 2, 1);
 
         PoolingOptions poolingOptions = Mockito.spy(new PoolingOptions());
-        cluster = register(Cluster.builder()
-                .addContactPointsWithPorts(ccm.addressOfNode(1))
-                .withPort(ccm.getBinaryPort())
+        Cluster cluster = register(Cluster.builder()
+                .addContactPoints(getContactPoints().get(0))
+                .withPort(ccm().getBinaryPort())
                 .withPoolingOptions(poolingOptions)
                 .withLoadBalancingPolicy(loadBalancingPolicy)
                 .withReconnectionPolicy(new ConstantReconnectionPolicy(1000))
@@ -63,9 +63,9 @@ public class RefreshConnectedHostTest extends CCMTestsSupport {
                 .isAtDistance(HostDistance.LOCAL);
 
         // Add and bring host 3 up, its presence should be acknowledged but it should be ignored
-        ccm.add(3);
-        ccm.start(3);
-        ccm.waitForUp(3);
+        ccm().add(3);
+        ccm().start(3);
+        ccm().waitForUp(3);
 
         assertThat(cluster).host(1)
                 .hasState(State.UP)
@@ -81,8 +81,8 @@ public class RefreshConnectedHostTest extends CCMTestsSupport {
         assertThat(session).hasNoPoolFor(3);
 
         // Kill host 2, host 3 should take its place
-        ccm.stop(2);
-        TestUtils.waitFor(TestUtils.ipOfNode(3), cluster);
+        ccm().stop(2);
+        TestUtils.waitForUp(TestUtils.ipOfNode(3), cluster);
 
         assertThat(cluster).host(1)
                 .hasState(State.UP)
