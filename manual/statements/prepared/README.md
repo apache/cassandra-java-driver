@@ -207,9 +207,9 @@ Changing the driver's defaults should be done with care and only in
 specific situations; read each method's Javadoc for detailed
 explanations.
 
-[PreparedStatement]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/PreparedStatement.html
-[BoundStatement]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/BoundStatement.html
+[PreparedStatement]:    http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/PreparedStatement.html
+[BoundStatement]:       http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/BoundStatement.html
 [setPrepareOnAllHosts]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/QueryOptions.html#setPrepareOnAllHosts-boolean-
-[setReprepareOnUp]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/QueryOptions.html#setReprepareOnUp-boolean-
-[execute]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Session.html#execute-com.datastax.driver.core.Statement-
-[executeAsync]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Session.html#executeAsync-com.datastax.driver.core.Statement-
+[setReprepareOnUp]:     http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/QueryOptions.html#setReprepareOnUp-boolean-
+[execute]:              http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/Session.html#execute-com.datastax.driver.core.Statement-
+[executeAsync]:         http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/Session.html#executeAsync-com.datastax.driver.core.Statement-
