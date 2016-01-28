@@ -230,6 +230,7 @@
                     </execution>
                 </executions>
                 <configuration>
+                    <skip>true</skip>
                     <comparisonVersion>3.0.0</comparisonVersion>
                     <ignoredDifferencesFile>../clirr-ignores.xml</ignoredDifferencesFile>
                 </configuration>
