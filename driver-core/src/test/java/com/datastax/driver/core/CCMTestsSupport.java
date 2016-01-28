@@ -854,9 +854,20 @@ public class CCMTestsSupport {
      * Tests fail randomly with InvalidQueryException: Keyspace 'xxx' does not exist;
      * this method tries at most 3 times to issue a successful USE statement.
      *
-     * @param ks The keyspace to use
+     * @param ks The keyspace to USE
      */
     public void useKeyspace(String ks) {
+        useKeyspace(session(), ks);
+    }
+
+    /**
+     * Tests fail randomly with InvalidQueryException: Keyspace 'xxx' does not exist;
+     * this method tries at most 3 times to issue a successful USE statement.
+     *
+     * @param session The session to use
+     * @param ks      The keyspace to USE
+     */
+    public void useKeyspace(Session session, String ks) {
         final int maxTries = 3;
         for (int i = 1; i <= maxTries; i++) {
             try {
