@@ -1,6 +1,6 @@
 ## Changelog
 
-### 3.0.0 (in progress)
+### 3.0.0
 
 - [bug] JAVA-1034: fix metadata parser for collections of custom types.
 - [improvement] JAVA-1035: Expose host broadcast_address and listen_address if available.
