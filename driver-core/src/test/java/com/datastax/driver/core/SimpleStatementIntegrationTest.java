@@ -80,6 +80,7 @@ public class SimpleStatementIntegrationTest extends CCMTestsSupport {
     public void useNamedValuesWithProtocol(ProtocolVersion version) {
         Cluster vCluster = createClusterBuilder()
                 .addContactPoints(getContactPoints())
+                .withPort(ccm().getBinaryPort())
                 .withProtocolVersion(version).build();
         try {
             Session vSession = vCluster.connect(this.keyspace);
