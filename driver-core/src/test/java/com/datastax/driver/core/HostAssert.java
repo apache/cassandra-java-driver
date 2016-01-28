@@ -20,6 +20,7 @@ import com.datastax.driver.core.Host.StateListener;
 import com.datastax.driver.core.policies.LoadBalancingPolicy;
 import org.assertj.core.api.AbstractAssert;
 
+import java.net.InetAddress;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -126,6 +127,46 @@ public class HostAssert extends AbstractAssert<HostAssert, Host> {
             cluster.unregister(upListener);
         }
         fail(actual + " did not go down within " + duration + " " + unit);
+        return this;
+    }
+
+    public HostAssert hasWorkload(String workload) {
+        assertThat(actual.getDseWorkload()).isNotNull().isEqualTo(workload);
+        return this;
+    }
+
+    public HostAssert hasNoWorkload() {
+        assertThat(actual.getDseWorkload()).isNull();
+        return this;
+    }
+
+    public HostAssert hasDseVersion(VersionNumber versionNumber) {
+        assertThat(actual.getDseVersion()).isNotNull().isEqualTo(versionNumber);
+        return this;
+    }
+
+    public HostAssert hasNoDseVersion() {
+        assertThat(actual.getDseVersion()).isNull();
+        return this;
+    }
+
+    public HostAssert hasListenAddress(InetAddress address) {
+        assertThat(actual.getListenAddress()).isNotNull().isEqualTo(address);
+        return this;
+    }
+
+    public HostAssert hasNoListenAddress() {
+        assertThat(actual.getListenAddress()).isNull();
+        return this;
+    }
+
+    public HostAssert hasBroadcastAddress(InetAddress address) {
+        assertThat(actual.getBroadcastAddress()).isNotNull().isEqualTo(address);
+        return this;
+    }
+
+    public HostAssert hasNoBroadcastAddress() {
+        assertThat(actual.getBroadcastAddress()).isNull();
         return this;
     }
 }

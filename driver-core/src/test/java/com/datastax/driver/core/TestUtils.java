@@ -569,7 +569,7 @@ public abstract class TestUtils {
      */
     public static InetAddress addressOfNode(int i) {
         try {
-            return InetAddress.getByName(IP_PREFIX + 1);
+            return InetAddress.getByName(IP_PREFIX + i);
         } catch (UnknownHostException e) {
             // should never happen
             throw Throwables.propagate(e);

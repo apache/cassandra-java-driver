@@ -74,6 +74,9 @@ public class Host {
 
     private volatile Set<Token> tokens;
 
+    private volatile String dseWorkload;
+    private volatile VersionNumber dseVersion;
+
     // ClusterMetadata keeps one Host object per inet address and we rely on this (more precisely,
     // we rely on the fact that we can use Object equality as a valid equality), so don't use
     // that constructor but ClusterMetadata.getHost instead.
@@ -113,6 +116,22 @@ public class Host {
         this.listenAddress = listenAddress;
     }
 
+    void setDseVersion(String dseVersion) {
+        VersionNumber versionNumber = null;
+        try {
+            if (dseVersion != null) {
+                versionNumber = VersionNumber.parse(dseVersion);
+            }
+        } catch (IllegalArgumentException e) {
+            logger.warn("Error parsing DSE version {}. This shouldn't have happened", dseVersion);
+        }
+        this.dseVersion = versionNumber;
+    }
+
+    void setDseWorkload(String dseWorkload) {
+        this.dseWorkload = dseWorkload;
+    }
+
     /**
      * Returns the address that the driver will use to connect to the node.
      * <p/>
@@ -138,14 +157,14 @@ public class Host {
      * </ol>
      *
      * @return the address and port.
-     * @see <a href="https://docs.datastax.com/en/cassandra/2.1/cassandra/configuration/configCassandra_yaml_r.html>The cassandra.yaml configuration file</a>
+     * @see <a href="https://docs.datastax.com/en/cassandra/2.1/cassandra/configuration/configCassandra_yaml_r.html">The cassandra.yaml configuration file</a>
      */
     public InetSocketAddress getSocketAddress() {
         return address;
     }
 
     /**
-     * Returns the node broadcast address, i.e. the IP by which it should be contacted by other peers in the cluster.
+     * Returns the node broadcast address, that is, the IP by which it should be contacted by other peers in the cluster.
      * <p/>
      * This corresponds to the {@code broadcast_address} cassandra.yaml file setting and
      * is by default the same as {@link #getListenAddress()}, unless specified
@@ -157,14 +176,14 @@ public class Host {
      * case this method will return {@code null}.
      *
      * @return the node broadcast address.
-     * @see <a href="https://docs.datastax.com/en/cassandra/2.1/cassandra/configuration/configCassandra_yaml_r.html>The cassandra.yaml configuration file</a>
+     * @see <a href="https://docs.datastax.com/en/cassandra/2.1/cassandra/configuration/configCassandra_yaml_r.html">The cassandra.yaml configuration file</a>
      */
     public InetAddress getBroadcastAddress() {
         return broadcastAddress;
     }
 
     /**
-     * Returns the node listen address, i.e. the IP the node uses to contact other peers in the cluster.
+     * Returns the node listen address, that is, the IP the node uses to contact other peers in the cluster.
      * <p/>
      * This corresponds to the {@code listen_address} cassandra.yaml file setting.
      * <em>This is NOT the address clients should use to contact this node</em>.
@@ -174,7 +193,7 @@ public class Host {
      * case this method will return {@code null}.
      *
      * @return the node listen address.
-     * @see <a href="https://docs.datastax.com/en/cassandra/2.1/cassandra/configuration/configCassandra_yaml_r.html>The cassandra.yaml configuration file</a>
+     * @see <a href="https://docs.datastax.com/en/cassandra/2.1/cassandra/configuration/configCassandra_yaml_r.html">The cassandra.yaml configuration file</a>
      */
     public InetAddress getListenAddress() {
         return listenAddress;
@@ -199,7 +218,7 @@ public class Host {
      * <p/>
      * The returned rack name is the one as known by Cassandra.
      * It is also possible for this information to be unavailable. In that case
-     * this method returns {@code null}, and the caller should always aware of this
+     * this method returns {@code null}, and the caller should always be aware of this
      * possibility.
      *
      * @return the Cassandra rack name or null if the rack is unavailable
@@ -211,13 +230,40 @@ public class Host {
     /**
      * The Cassandra version the host is running.
      * <p/>
-     * As for other host information fetch from Cassandra above, the returned
-     * version can theoretically be null if the information is unavailable.
+     * It is also possible for this information to be unavailable. In that case
+     * this method returns {@code null}, and the caller should always be aware of this
+     * possibility.
      *
      * @return the Cassandra version the host is running.
      */
     public VersionNumber getCassandraVersion() {
         return cassandraVersion;
+    }
+
+    /**
+     * The DSE version the host is running.
+     * <p/>
+     * It is also possible for this information to be unavailable. In that case
+     * this method returns {@code null}, and the caller should always be aware of this
+     * possibility.
+     *
+     * @return the DSE version the host is running.
+     */
+    public VersionNumber getDseVersion() {
+        return dseVersion;
+    }
+
+    /**
+     * The DSE Workload the host is running.
+     * <p/>
+     * It is also possible for this information to be unavailable. In that case
+     * this method returns {@code null}, and the caller should always be aware of this
+     * possibility.
+     *
+     * @return the DSE workload the host is running.
+     */
+    public String getDseWorkload() {
+        return dseWorkload;
     }
 
     /**

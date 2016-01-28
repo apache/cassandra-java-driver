@@ -503,6 +503,14 @@ class ControlConnection implements Connection.Owner {
                 : null;
         host.setListenAddress(listenAddress);
 
+        if (row.getColumnDefinitions().contains("workload")) {
+            String dseWorkload = row.getString("workload");
+            host.setDseWorkload(dseWorkload);
+        }
+        if (row.getColumnDefinitions().contains("dse_version")) {
+            String dseVersion = row.getString("dse_version");
+            host.setDseVersion(dseVersion);
+        }
     }
 
     private static void updateLocationInfo(Host host, String datacenter, String rack, boolean isInitialConnection, Cluster.Manager cluster) {
@@ -565,7 +573,10 @@ class ControlConnection implements Connection.Owner {
         List<String> racks = new ArrayList<String>();
         List<String> cassandraVersions = new ArrayList<String>();
         List<InetAddress> broadcastAddresses = new ArrayList<InetAddress>();
+        List<InetAddress> listenAddresses = new ArrayList<InetAddress>();
         List<Set<String>> allTokens = new ArrayList<Set<String>>();
+        List<String> dseVersions = new ArrayList<String>();
+        List<String> dseWorkloads = new ArrayList<String>();
 
         for (Row row : peersFuture.get()) {
             InetSocketAddress rpcAddress = rpcAddressForPeerHost(row, connection.address, cluster, logMissingRpcAddresses);
@@ -579,6 +590,12 @@ class ControlConnection implements Connection.Owner {
             broadcastAddresses.add(row.getInet("peer"));
             if (metadataEnabled)
                 allTokens.add(row.getSet("tokens", String.class));
+            InetAddress listenAddress = row.getColumnDefinitions().contains("listen_address") ? row.getInet("listen_address") : null;
+            listenAddresses.add(listenAddress);
+            String dseWorkload = row.getColumnDefinitions().contains("workload") ? row.getString("workload") : null;
+            dseWorkloads.add(dseWorkload);
+            String dseVersion = row.getColumnDefinitions().contains("dse_version") ? row.getString("dse_version") : null;
+            dseVersions.add(dseVersion);
         }
 
         for (int i = 0; i < foundHosts.size(); i++) {
@@ -603,6 +620,13 @@ class ControlConnection implements Connection.Owner {
                 host.setVersion(cassandraVersions.get(i));
             if (broadcastAddresses.get(i) != null)
                 host.setBroadcastAddress(broadcastAddresses.get(i));
+            if (listenAddresses.get(i) != null)
+                host.setListenAddress(listenAddresses.get(i));
+
+            if (dseVersions.get(i) != null)
+                host.setDseVersion(dseVersions.get(i));
+            if (dseWorkloads.get(i) != null)
+                host.setDseWorkload(dseWorkloads.get(i));
 
             if (metadataEnabled && partitioner != null && !allTokens.get(i).isEmpty())
                 tokenMap.put(host, allTokens.get(i));
