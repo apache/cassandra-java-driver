@@ -42,7 +42,7 @@
             <div class="col-md-8">
               <form id="search" class="form-search dropdown visible-lg-block" ng-controller="search" ng-class="{open: hasResults}" role="search" ng-submit="submit()" data-spy="affix" data-offset-top="130">
                 <div class="form-group has-feedback">
-                  <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('3.0.0-rc1')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+                  <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('3.0.0')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
                 </div>
                 <ul class="dropdown-menu search-results" role="menu">
                   <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
@@ -63,18 +63,12 @@
               <li>
                 <div class="btn-group">
                   <button id="current-version" class="btn btn-default btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    3.0.0-rc1
+                    3.0.0
                     <span class="caret"></span>
                   </button>
                   <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
                   
-                    <li class="disabled"><a href="./">3.0.0-rc1</a></li>
-                  
-                    <li><a href="../3.0.0-beta1/upgrade_guide/">3.0.0-beta1</a></li>
-                  
-                    <li><a href="../3.0.0-alpha5/upgrade_guide/">3.0.0-alpha5</a></li>
-                  
-                    <li><a href="../2.2.0-rc3/upgrade_guide/">2.2.0-rc3</a></li>
+                    <li class="disabled"><a href="./">3.0.0</a></li>
                   
                     <li><a href="../2.1.9/upgrade_guide/">2.1.9</a></li>
                   
@@ -82,17 +76,11 @@
                   
                     <li><a href="../2.1.7/upgrade_guide/">2.1.7</a></li>
                   
-                    <li><a href="../2.1.6/">2.1.6</a></li>
-                  
-                    <li><a href="../2.1.5/">2.1.5</a></li>
-                  
                     <li><a href="../2.0.12/upgrade_guide/">2.0.12</a></li>
                   
                     <li><a href="../2.0.11/upgrade_guide/">2.0.11</a></li>
                   
                     <li><a href="../2.0.10.1/">2.0.10.1</a></li>
-                  
-                    <li><a href="../2.0.10/">2.0.10</a></li>
                   
                   </ul>
                 </div>
@@ -197,14 +185,14 @@
   
   
   <li>
-    <a href="../features/">Features <small>page</small></a>
+    <a href="../faq/">Frequently Asked Questions <small>page</small></a>
   </li>
   
   
   
   
   <li>
-    <a href="../faq/">Frequently Asked Questions <small>page</small></a>
+    <a href="../manual/">Manual <small>page</small></a>
   </li>
   
   
@@ -241,7 +229,7 @@ We’ve also seized the opportunity to remove code that was deprecated in 2.1.</
 <ol>
 <li> The default consistency level in <code>QueryOptions</code> is now <code>LOCAL_ONE</code>.</li>
 <li>
-<p><a href="../features/custom_codecs/">Custom codecs</a>
+<p><a href="../manual/custom_codecs/">Custom codecs</a>
 (<a href="https://datastax-oss.atlassian.net/browse/JAVA-721">JAVA-721</a>)
 introduce several breaking changes and also modify a few runtime behaviors.</p>
 
@@ -251,7 +239,8 @@ introduce several breaking changes and also modify a few runtime behaviors.</p>
 <li>
 <code>TypeCodec</code> was package-private before and is now public.</li>
 <li>
-<code>DataType</code> has no more references to <code>TypeCodec</code>, so most methods that dealt with serialization and deserialization of data types have been removed:
+<p><code>DataType</code> has no more references to <code>TypeCodec</code>, so methods that dealt with serialization and deserialization of
+data types have been removed:</p>
 
 <ul>
 <li><code>ByteBuffer serialize(Object value, ProtocolVersion protocolVersion)</code></li>
@@ -262,9 +251,12 @@ introduce several breaking changes and also modify a few runtime behaviors.</p>
 <li><code>String format(Object value)</code></li>
 <li><code>Class&lt;?&gt; asJavaClass()</code></li>
 </ul>
+
+<p>These methods must now be invoked on <code>TypeCodec</code> directly. To resolve the <code>TypeCodec</code> instance for a particular
+data type, use <code>CodecRegistry#codecFor</code>.</p>
 </li>
 <li>
-<code>GettableByIndexData</code> (affects <code>Row</code>, <code>BoundStatement</code>, <code>TupleValue</code> and <code>UDTValue</code>). The following public methods were added:
+<p><code>GettableByIndexData</code> (affects <code>Row</code>, <code>BoundStatement</code>, <code>TupleValue</code> and <code>UDTValue</code>). The following public methods were added:</p>
 
 <ul>
 <li><code>&lt;T&gt; T get(int i, Class&lt;T&gt; targetClass)</code></li>
@@ -273,7 +265,7 @@ introduce several breaking changes and also modify a few runtime behaviors.</p>
 </ul>
 </li>
 <li>
-<code>GettableByNameData</code> (affects <code>Row</code>, <code>BoundStatement</code> and <code>UDTValue</code>). The following public methods were added:
+<p><code>GettableByNameData</code> (affects <code>Row</code>, <code>BoundStatement</code> and <code>UDTValue</code>). The following public methods were added:</p>
 
 <ul>
 <li><code>&lt;T&gt; T get(String name, Class&lt;T&gt; targetClass)</code></li>
@@ -282,7 +274,7 @@ introduce several breaking changes and also modify a few runtime behaviors.</p>
 </ul>
 </li>
 <li>
-<code>SettableByIndexData</code> (affects <code>Row</code>, <code>BoundStatement</code>, <code>TupleValue</code> and <code>UDTValue</code>). The following public methods were added:
+<p><code>SettableByIndexData</code> (affects <code>Row</code>, <code>BoundStatement</code>, <code>TupleValue</code> and <code>UDTValue</code>). The following public methods were added:</p>
 
 <ul>
 <li><code>&lt;V&gt; T set(int i, V v, Class&lt;V&gt; targetClass)</code></li>
@@ -291,7 +283,7 @@ introduce several breaking changes and also modify a few runtime behaviors.</p>
 </ul>
 </li>
 <li>
-<code>SettableByNameData</code> (affects <code>Row</code>, <code>BoundStatement</code> and <code>UDTValue</code>). The following public methods were added:
+<p><code>SettableByNameData</code> (affects <code>Row</code>, <code>BoundStatement</code> and <code>UDTValue</code>). The following public methods were added:</p>
 
 <ul>
 <li><code>&lt;V&gt; T set(String name, V v, Class&lt;V&gt; targetClass)</code></li>
@@ -300,7 +292,7 @@ introduce several breaking changes and also modify a few runtime behaviors.</p>
 </ul>
 </li>
 <li>
-<code>Statement</code>. The following public methods were modified:
+<p><code>Statement</code>. The following public methods were modified:</p>
 
 <ul>
 <li>
@@ -308,7 +300,7 @@ introduce several breaking changes and also modify a few runtime behaviors.</p>
 </ul>
 </li>
 <li>
-<code>RegularStatement</code>. The following public methods were modified:
+<p><code>RegularStatement</code>. The following public methods were modified:</p>
 
 <ul>
 <li>
@@ -319,7 +311,7 @@ and use the default codec registry; refer to the Javadocs for guidance on which 
 </ul>
 </li>
 <li>
-<code>PreparedStatement</code>. The following public method was added:
+<p><code>PreparedStatement</code>. The following public method was added:</p>
 
 <ul>
 <li>
@@ -327,7 +319,7 @@ and use the default codec registry; refer to the Javadocs for guidance on which 
 </ul>
 </li>
 <li>
-<code>TupleType</code>. The following public method was deleted:
+<p><code>TupleType</code>. The following public method was deleted:</p>
 
 <ul>
 <li>
@@ -360,7 +352,7 @@ classes to their CQL counterpart) was removed, as well as the
 corresponding method <code>MappingManager#udtMapper</code>.</p>
 
 <p>The mapper now uses custom codecs to convert UDTs. See more
-explanations <a href="../features/object_mapper/custom_codecs/#implicit-udt-codecs">here</a>.</p>
+explanations <a href="../manual/object_mapper/custom_codecs/#implicit-udt-codecs">here</a>.</p>
 </li>
 <li>
 <p>All methods that took the protocol version as an <code>int</code> or assumed a
@@ -445,8 +437,8 @@ only need to add empty methods.</p>
 <li><p><code>LoadBalancingPolicy</code> does not extend <code>Host.StateListener</code> anymore:
 callback methods (<code>onUp</code>, <code>onDown</code>, etc.) have been duplicated. This
 is unlikely to affect clients.</p></li>
-<li><p><a href="../features/query_timestamps/">Client-side timestamp generation</a> is
-now the default (provided that <a href="../features/native_protocol">native
+<li><p><a href="../manual/query_timestamps/">Client-side timestamp generation</a> is
+now the default (provided that <a href="../manual/native_protocol">native
 protocol</a> v3 or higher is in use). The
 generator used is <code>AtomicMonotonicTimestampGenerator</code>.</p></li>
 <li><p>If a DNS name resolves to multiple A-records,
@@ -455,7 +447,7 @@ addresses as contact points. This gives you the possibility of
 maintaining contact points in DNS configuration, and having a single,
 static contact point in your Java code.</p></li>
 <li>
-<p>The following methods were added for <a href="../features/custom_payloads">Custom payloads</a>:</p>
+<p>The following methods were added for <a href="../manual/custom_payloads">Custom payloads</a>:</p>
 
 <ul>
 <li>in <code>PreparedStatement</code>: <code>getIncomingPayload()</code>,
@@ -465,9 +457,9 @@ static contact point in your Java code.</p></li>
 <li><code>AbstractSession#prepareAsync(String, Map&lt;String,ByteBuffer&gt;)</code></li>
 </ul>
 
-<p>Also, not that <code>AbstractSession#prepareAsync(Statement)</code> does not
+<p>Also, note that <code>AbstractSession#prepareAsync(Statement)</code> does not
 call <code>AbstractSession#prepareAsync(String)</code> anymore, they now both
-delegate to a private method.</p>
+delegate to a protected method.</p>
 
 <p>This breaks binary compatibility for these two classes; if you have
 custom implementations, you will have to adapt them accordingly.</p>
@@ -561,6 +553,27 @@ more information. Furthermore, <code>FallthroughRetryPolicy</code> now returns
 <code>DseGSSAPIAuthProvider</code> for Kerberos authentication. <code>DsePlainTextAuthProvider</code>
 has been introduced to handle plain text authentication with the
 <code>DseAuthenticator</code>.</p></li>
+<li><p>The constructor of <code>DCAwareRoundRobinPolicy</code> is not accessible anymore. You
+should use <code>DCAwareRoundRobinPolicy#builder()</code> to create new instances.</p></li>
+<li><p><code>ColumnMetadata.getTable()</code> has been renamed to <code>ColumnMetadata.getParent()</code>.
+Also, its return type is now <code>AbstractTableMetadata</code> which can be either
+a <code>TableMetadata</code> object or a <code>MaterializedViewMetadata</code> object.
+This change is motivated by the fact that a column can now belong to a 
+table or a materialized view.</p></li>
+<li><p><code>ColumnMetadata.getIndex()</code> has been removed. 
+This is due to the fact that secondary indexes have been completely redesigned 
+in Cassandra 3.0, and the former one-to-one relationship between a column and its index
+has been replaced with a one-to-many relationship between a table and its indexes.
+This is reflected in the driver’s API by the new methods
+<code>TableMetadata.getIndexes()</code> and <code>TableMetadata.getIndex(String name)</code>.
+See <a href="https://issues.apache.org/jira/browse/CASSANDRA-9459">CASSANDRA-9459</a> and
+and <a href="https://datastax-oss.atlassian.net/browse/JAVA-1008">JAVA-1008</a> for
+more details.
+Unfortunately, there is no easy way to recover the functionality provided
+by the deleted method, <u>even for Cassandra versions &lt;= 3.0</u>.</p></li>
+<li><p><code>IndexMetadata</code> is now a top-level class and its structure has been deeply modified. 
+Again, this is due to the fact that secondary indexes have been completely redesigned 
+in Cassandra 3.0.</p></li>
 </ol>
 
 <h3 id="2-1-8" class="target">2.1.8<a class="anchor" href="#2-1-8" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
@@ -609,7 +622,7 @@ The previous behaviour was to always throw an exception.</p></li>
 ones.</p>
 
 <p>Also, note that the connection pool for protocol v3 can now be configured to
-use multiple connections. See <a href="../features/pooling">this page</a> for more
+use multiple connections. See <a href="../manual/pooling">this page</a> for more
 information.</p>
 </li>
 <li>
@@ -795,10 +808,11 @@ This reflects the new behavior of Netty (which was upgraded from version 3.9.0 t
 4.0.27): <code>TCP_NODELAY</code> is now turned on by default, instead of depending on the OS
 default like in previous versions.</p></li>
 <li><p>Netty is not shaded anymore in the default Maven artifact. However we publish a
-<a href="../features/shaded_jar/">shaded artifact</a> under a different classifier.</p></li>
+<a href="../manual/shaded_jar/">shaded artifact</a> under a different classifier.</p></li>
 <li><p>The internal initialization sequence of the Cluster object has been slightly changed:
 some fields that were previously initialized in the constructor are now set when
-the <code>init()</code> method is called. This is unlikely to affect regular driver users.</p></li>
+the <code>init()</code> method is called. In particular, <code>Cluster#getMetrics()</code> will return
+<code>null</code> until the cluster is initialized.</p></li>
 </ol>
 
 <h3 id="1-0-to-2-0" class="target">1.0 to 2.0<a class="anchor" href="#1-0-to-2-0" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>

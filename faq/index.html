@@ -42,7 +42,7 @@
             <div class="col-md-8">
               <form id="search" class="form-search dropdown visible-lg-block" ng-controller="search" ng-class="{open: hasResults}" role="search" ng-submit="submit()" data-spy="affix" data-offset-top="130">
                 <div class="form-group has-feedback">
-                  <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('3.0.0-rc1')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+                  <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('3.0.0')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
                 </div>
                 <ul class="dropdown-menu search-results" role="menu">
                   <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
@@ -63,18 +63,12 @@
               <li>
                 <div class="btn-group">
                   <button id="current-version" class="btn btn-default btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    3.0.0-rc1
+                    3.0.0
                     <span class="caret"></span>
                   </button>
                   <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
                   
-                    <li class="disabled"><a href="./">3.0.0-rc1</a></li>
-                  
-                    <li><a href="../3.0.0-beta1/faq/">3.0.0-beta1</a></li>
-                  
-                    <li><a href="../3.0.0-alpha5/faq/">3.0.0-alpha5</a></li>
-                  
-                    <li><a href="../2.2.0-rc3/faq/">2.2.0-rc3</a></li>
+                    <li class="disabled"><a href="./">3.0.0</a></li>
                   
                     <li><a href="../2.1.9/faq/">2.1.9</a></li>
                   
@@ -82,17 +76,11 @@
                   
                     <li><a href="../2.1.7/faq/">2.1.7</a></li>
                   
-                    <li><a href="../2.1.6/">2.1.6</a></li>
-                  
-                    <li><a href="../2.1.5/">2.1.5</a></li>
-                  
                     <li><a href="../2.0.12/faq/">2.0.12</a></li>
                   
                     <li><a href="../2.0.11/faq/">2.0.11</a></li>
                   
                     <li><a href="../2.0.10.1/">2.0.10.1</a></li>
-                  
-                    <li><a href="../2.0.10/">2.0.10</a></li>
                   
                   </ul>
                 </div>
@@ -147,16 +135,16 @@
   
   
   
-  <li>
-    <a href="../features/">Features <small>page</small></a>
+  <li class="active">
+    <a href="./" class="current">Frequently Asked Questions <small>page</small></a>
+    
   </li>
   
   
   
   
-  <li class="active">
-    <a href="./" class="current">Frequently Asked Questions <small>page</small></a>
-    
+  <li>
+    <a href="../manual/">Manual <small>page</small></a>
   </li>
   
   
@@ -180,9 +168,9 @@
 <h3 id="how-do-i-implement-paging" class="target">How do I implement paging?<a class="anchor" href="#how-do-i-implement-paging" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h3>
 
-<p>When using <a href="../features/native_protocol/">native protocol</a> version 2 or
+<p>When using <a href="../manual/native_protocol/">native protocol</a> version 2 or
 higher, the driver automatically pages large result sets under the hood.
-You can also save the paging state to resume iteration later. See <a href="../features/paging/">this
+You can also save the paging state to resume iteration later. See <a href="../manual/paging/">this
 page</a> for more information.</p>
 
 <p>Native protocol v1 does not support paging, but you can emulate it in
