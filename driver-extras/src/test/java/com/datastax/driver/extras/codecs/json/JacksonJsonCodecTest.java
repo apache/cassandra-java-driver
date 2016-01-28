@@ -25,7 +25,6 @@ import com.google.common.collect.Lists;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
-import java.util.Collection;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -50,8 +49,8 @@ public class JacksonJsonCodecTest extends CCMTestsSupport {
     private static final String notAJsonString = "this text is not json";
 
     @Override
-    public Collection<String> createTestFixtures() {
-        return Lists.newArrayList(
+    public void onTestContextInitialized() {
+        execute(
                 "CREATE TABLE t1 (c1 text, c2 text, c3 list<text>, PRIMARY KEY (c1, c2))"
         );
     }
@@ -84,8 +83,8 @@ public class JacksonJsonCodecTest extends CCMTestsSupport {
     @Test(groups = "short")
     @CassandraVersion(major = 2.0)
     public void should_use_custom_codec_with_simple_statements() {
-        session.execute(insertQuery, notAJsonString, alice, bobAndCharlie);
-        ResultSet rows = session.execute(selectQuery, notAJsonString, alice);
+        session().execute(insertQuery, notAJsonString, alice, bobAndCharlie);
+        ResultSet rows = session().execute(selectQuery, notAJsonString, alice);
         Row row = rows.one();
         assertRow(row);
     }
@@ -100,8 +99,8 @@ public class JacksonJsonCodecTest extends CCMTestsSupport {
                 .from("t1")
                 .where(eq("c1", bindMarker()))
                 .and(eq("c2", bindMarker()));
-        session.execute(session.prepare(insertStmt).bind(notAJsonString, alice, bobAndCharlie));
-        ResultSet rows = session.execute(session.prepare(selectStmt).bind(notAJsonString, alice));
+        session().execute(session().prepare(insertStmt).bind(notAJsonString, alice, bobAndCharlie));
+        ResultSet rows = session().execute(session().prepare(selectStmt).bind(notAJsonString, alice));
         Row row = rows.one();
         assertRow(row);
     }
@@ -117,33 +116,33 @@ public class JacksonJsonCodecTest extends CCMTestsSupport {
                         .from("t1")
                         .where(eq("c1", notAJsonString))
                         .and(eq("c2", alice));
-        session.execute(insertStmt);
-        ResultSet rows = session.execute(selectStmt);
+        session().execute(insertStmt);
+        ResultSet rows = session().execute(selectStmt);
         Row row = rows.one();
         assertRow(row);
     }
 
     @Test(groups = "short")
     public void should_use_custom_codec_with_prepared_statements_1() {
-        session.execute(session.prepare(insertQuery).bind(notAJsonString, alice, bobAndCharlie));
-        PreparedStatement ps = session.prepare(selectQuery);
+        session().execute(session().prepare(insertQuery).bind(notAJsonString, alice, bobAndCharlie));
+        PreparedStatement ps = session().prepare(selectQuery);
         // this bind() method does not convey information about the java type of alice
         // so the registry will look for a codec accepting varchar <-> ANY
         // and will find jsonCodec because it is the first registered
-        ResultSet rows = session.execute(ps.bind(notAJsonString, alice));
+        ResultSet rows = session().execute(ps.bind(notAJsonString, alice));
         Row row = rows.one();
         assertRow(row);
     }
 
     @Test(groups = "short")
     public void should_use_custom_codec_with_prepared_statements_2() {
-        session.execute(session.prepare(insertQuery).bind()
+        session().execute(session().prepare(insertQuery).bind()
                         .setString(0, notAJsonString)
                         .set(1, alice, User.class)
                         .setList(2, bobAndCharlie, User.class)
         );
-        PreparedStatement ps = session.prepare(selectQuery);
-        ResultSet rows = session.execute(ps.bind()
+        PreparedStatement ps = session().prepare(selectQuery);
+        ResultSet rows = session().execute(ps.bind()
                         .setString(0, notAJsonString)
                                 // this set() method conveys information about the java type of alice
                                 // so the registry will look for a codec accepting varchar <-> User

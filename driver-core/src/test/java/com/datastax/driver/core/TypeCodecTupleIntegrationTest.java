@@ -16,10 +16,8 @@
 package com.datastax.driver.core;
 
 import com.datastax.driver.core.utils.CassandraVersion;
-import com.google.common.collect.Lists;
 import org.testng.annotations.Test;
 
-import java.util.Collection;
 import java.util.UUID;
 
 import static com.datastax.driver.core.DataType.cfloat;
@@ -41,50 +39,50 @@ public class TypeCodecTupleIntegrationTest extends CCMTestsSupport {
     private TupleValue partialLocationValueRetrieved;
 
     @Override
-    public Collection<String> createTestFixtures() {
-        return Lists.newArrayList(
+    public void onTestContextInitialized() {
+        execute(
                 "CREATE TABLE IF NOT EXISTS \"users\" (id uuid PRIMARY KEY, name text, location frozen<tuple<float,float>>)"
         );
     }
 
     @Test(groups = "short")
     public void should_handle_tuples_with_default_codecs() {
-        setUpTupleTypes(cluster);
+        setUpTupleTypes(cluster());
         // simple statement
-        session.execute(insertQuery, uuid, "John Doe", locationValue);
-        ResultSet rows = session.execute(selectQuery, uuid);
+        session().execute(insertQuery, uuid, "John Doe", locationValue);
+        ResultSet rows = session().execute(selectQuery, uuid);
         Row row = rows.one();
         assertRow(row);
         // prepared + values
-        PreparedStatement ps = session.prepare(insertQuery);
-        session.execute(ps.bind(uuid, "John Doe", locationValue));
-        rows = session.execute(selectQuery, uuid);
+        PreparedStatement ps = session().prepare(insertQuery);
+        session().execute(ps.bind(uuid, "John Doe", locationValue));
+        rows = session().execute(selectQuery, uuid);
         row = rows.one();
         assertRow(row);
         // bound with setTupleValue
-        session.execute(ps.bind().setUUID(0, uuid).setString(1, "John Doe").setTupleValue("location", locationValue));
-        rows = session.execute(selectQuery, uuid);
+        session().execute(ps.bind().setUUID(0, uuid).setString(1, "John Doe").setTupleValue("location", locationValue));
+        rows = session().execute(selectQuery, uuid);
         row = rows.one();
         assertRow(row);
     }
 
     @Test(groups = "short")
     public void should_handle_partial_tuples_with_default_codecs() {
-        setUpTupleTypes(cluster);
+        setUpTupleTypes(cluster());
         // simple statement
-        session.execute(insertQuery, uuid, "John Doe", partialLocationValueInserted);
-        ResultSet rows = session.execute(selectQuery, uuid);
+        session().execute(insertQuery, uuid, "John Doe", partialLocationValueInserted);
+        ResultSet rows = session().execute(selectQuery, uuid);
         Row row = rows.one();
         assertPartialRow(row);
         // prepared + values
-        PreparedStatement ps = session.prepare(insertQuery);
-        session.execute(ps.bind(uuid, "John Doe", partialLocationValueInserted));
-        rows = session.execute(selectQuery, uuid);
+        PreparedStatement ps = session().prepare(insertQuery);
+        session().execute(ps.bind(uuid, "John Doe", partialLocationValueInserted));
+        rows = session().execute(selectQuery, uuid);
         row = rows.one();
         assertPartialRow(row);
         // bound with setTupleValue
-        session.execute(ps.bind().setUUID(0, uuid).setString(1, "John Doe").setTupleValue("location", partialLocationValueInserted));
-        rows = session.execute(selectQuery, uuid);
+        session().execute(ps.bind().setUUID(0, uuid).setString(1, "John Doe").setTupleValue("location", partialLocationValueInserted));
+        rows = session().execute(selectQuery, uuid);
         row = rows.one();
         assertPartialRow(row);
     }
@@ -93,8 +91,8 @@ public class TypeCodecTupleIntegrationTest extends CCMTestsSupport {
     public void should_handle_tuples_with_custom_codecs() {
         CodecRegistry codecRegistry = new CodecRegistry();
         Cluster cluster = register(Cluster.builder()
-                .addContactPointsWithPorts(getInitialContactPoints())
-                .withPort(ccm.getBinaryPort())
+                .addContactPoints(getContactPoints())
+                .withPort(ccm().getBinaryPort())
                 .withCodecRegistry(codecRegistry)
                 .build());
         Session session = cluster.connect(keyspace);
@@ -123,8 +121,8 @@ public class TypeCodecTupleIntegrationTest extends CCMTestsSupport {
     public void should_handle_partial_tuples_with_custom_codecs() {
         CodecRegistry codecRegistry = new CodecRegistry();
         Cluster cluster = register(Cluster.builder()
-                .addContactPointsWithPorts(getInitialContactPoints())
-                .withPort(ccm.getBinaryPort())
+                .addContactPoints(getContactPoints())
+                .withPort(ccm().getBinaryPort())
                 .withCodecRegistry(codecRegistry)
                 .build());
         Session session = cluster.connect(keyspace);

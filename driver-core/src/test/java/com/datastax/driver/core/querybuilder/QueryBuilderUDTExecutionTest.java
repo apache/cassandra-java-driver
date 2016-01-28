@@ -22,8 +22,6 @@ import com.google.common.collect.Maps;
 import org.testng.annotations.Test;
 
 import java.net.InetAddress;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -35,22 +33,22 @@ import static org.testng.Assert.assertEquals;
 public class QueryBuilderUDTExecutionTest extends CCMTestsSupport {
 
     @Override
-    public Collection<String> createTestFixtures() {
-        return Arrays.asList("CREATE TYPE udt (i int, a inet)",
+    public void onTestContextInitialized() {
+        execute("CREATE TYPE udt (i int, a inet)",
                 "CREATE TABLE udtTest(k int PRIMARY KEY, t frozen<udt>, l list<frozen<udt>>, m map<int, frozen<udt>>)");
     }
 
     @Test(groups = "short")
     public void insertUdtTest() throws Exception {
-        UserType udtType = cluster.getMetadata().getKeyspace(keyspace).getUserType("udt");
+        UserType udtType = cluster().getMetadata().getKeyspace(keyspace).getUserType("udt");
         UDTValue udtValue = udtType.newValue().setInt("i", 2).setInet("a", InetAddress.getByName("localhost"));
 
         Statement insert = insertInto("udtTest").value("k", 1).value("t", udtValue);
         assertEquals(insert.toString(), "INSERT INTO udtTest (k,t) VALUES (1,{i:2,a:'127.0.0.1'});");
 
-        session.execute(insert);
+        session().execute(insert);
 
-        List<Row> rows = session.execute(select().from("udtTest").where(eq("k", 1))).all();
+        List<Row> rows = session().execute(select().from("udtTest").where(eq("k", 1))).all();
 
         assertEquals(rows.size(), 1);
 
@@ -60,16 +58,16 @@ public class QueryBuilderUDTExecutionTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void should_handle_collections_of_UDT() throws Exception {
-        UserType udtType = cluster.getMetadata().getKeyspace(keyspace).getUserType("udt");
+        UserType udtType = cluster().getMetadata().getKeyspace(keyspace).getUserType("udt");
         UDTValue udtValue = udtType.newValue().setInt("i", 2).setInet("a", InetAddress.getByName("localhost"));
         UDTValue udtValue2 = udtType.newValue().setInt("i", 3).setInet("a", InetAddress.getByName("localhost"));
 
         Statement insert = insertInto("udtTest").value("k", 1).value("l", ImmutableList.of(udtValue));
         assertThat(insert.toString()).isEqualTo("INSERT INTO udtTest (k,l) VALUES (1,[{i:2,a:'127.0.0.1'}]);");
 
-        session.execute(insert);
+        session().execute(insert);
 
-        List<Row> rows = session.execute(select().from("udtTest").where(eq("k", 1))).all();
+        List<Row> rows = session().execute(select().from("udtTest").where(eq("k", 1))).all();
 
         assertThat(rows.size()).isEqualTo(1);
 
@@ -83,9 +81,9 @@ public class QueryBuilderUDTExecutionTest extends CCMTestsSupport {
         assertThat(updateMap.toString())
                 .isEqualTo("UPDATE udtTest SET m=m+{0:{i:2,a:'127.0.0.1'},2:{i:3,a:'127.0.0.1'}} WHERE k=1;");
 
-        session.execute(updateMap);
+        session().execute(updateMap);
 
-        rows = session.execute(select().from("udtTest").where(eq("k", 1))).all();
+        rows = session().execute(select().from("udtTest").where(eq("k", 1))).all();
         r1 = rows.get(0);
         assertThat(r1.getMap("m", Integer.class, UDTValue.class)).isEqualTo(map);
     }

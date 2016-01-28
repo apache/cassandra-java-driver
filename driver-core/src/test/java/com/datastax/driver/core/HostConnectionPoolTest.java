@@ -79,13 +79,6 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
         return requests;
     }
 
-    @Override
-    protected Cluster.Builder configure(Cluster.Builder builder) {
-        // Use version 2 at highest.
-        ProtocolVersion versionToUse = TestUtils.getDesiredProtocolVersion(ProtocolVersion.V2);
-        return builder.withProtocolVersion(versionToUse);
-    }
-
     /**
      * Completes count requests by simulating a successful response.
      */
@@ -433,7 +426,6 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
             // On returning of the connection, should detect that there are no available streams and trash it.
             assertThat(pool.trash).hasSize(0);
             pool.returnConnection(extra1);
-            assertThat(pool.connections).hasSize(1);
             assertThat(pool.trash).hasSize(1);
         } finally {
             completeRequests(requests);

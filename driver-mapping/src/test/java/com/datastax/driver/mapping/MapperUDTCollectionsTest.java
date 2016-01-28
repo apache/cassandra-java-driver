@@ -23,7 +23,9 @@ import com.google.common.collect.Sets;
 import org.testng.annotations.Test;
 import org.testng.collections.Lists;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static org.testng.Assert.assertEquals;
 
@@ -34,8 +36,8 @@ import static org.testng.Assert.assertEquals;
 public class MapperUDTCollectionsTest extends CCMTestsSupport {
 
     @Override
-    public Collection<String> createTestFixtures() {
-        return Arrays.asList("CREATE TYPE \"Sub\"(i int)",
+    public void onTestContextInitialized() {
+        execute("CREATE TYPE \"Sub\"(i int)",
                 "CREATE TABLE collection_examples (id int PRIMARY KEY, " +
                         "l list<frozen<\"Sub\">>, " +
                         "s set<frozen<\"Sub\">>, " +
@@ -179,7 +181,7 @@ public class MapperUDTCollectionsTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void testCollections() throws Exception {
-        Mapper<CollectionExamples> m = new MappingManager(session).mapper(CollectionExamples.class);
+        Mapper<CollectionExamples> m = new MappingManager(session()).mapper(CollectionExamples.class);
 
         CollectionExamples c = new CollectionExamples(1, 1);
         m.save(c);
@@ -189,7 +191,7 @@ public class MapperUDTCollectionsTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void testNullCollection() {
-        Mapper<CollectionExamples> m = new MappingManager(session).mapper(CollectionExamples.class);
+        Mapper<CollectionExamples> m = new MappingManager(session()).mapper(CollectionExamples.class);
 
         CollectionExamples c = new CollectionExamples(1, 1);
         c.setL(null);

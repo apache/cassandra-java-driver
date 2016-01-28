@@ -24,7 +24,6 @@ import com.google.common.collect.ImmutableMap;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -60,8 +59,8 @@ public class EnumCodecsTest extends CCMTestsSupport {
     private UDTValue udtValue;
 
     @Override
-    public Collection<String> createTestFixtures() {
-        return newArrayList(
+    public void onTestContextInitialized() {
+        execute(
                 "CREATE TYPE IF NOT EXISTS udt1 ("
                         + "foo int,"
                         + "bar text)",
@@ -89,11 +88,11 @@ public class EnumCodecsTest extends CCMTestsSupport {
 
     @BeforeMethod(groups = "short")
     public void before() {
-        TupleType tup = cluster.getMetadata().newTupleType(cint(), text());
+        TupleType tup = cluster().getMetadata().newTupleType(cint(), text());
         tupleValue = tup.newValue()
                 .set(0, FOO_1, Foo.class)
                 .set(1, BAR_1, Bar.class);
-        UserType udt = cluster.getMetadata().getKeyspace(keyspace).getUserType("udt1");
+        UserType udt = cluster().getMetadata().getKeyspace(keyspace).getUserType("udt1");
         udtValue = udt.newValue()
                 .set("foo", FOO_1, Foo.class)
                 .set("bar", BAR_1, Bar.class);
@@ -101,24 +100,24 @@ public class EnumCodecsTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void should_use_enum_codecs_with_simple_statements() {
-        session.execute(insertQuery, pk, FOO_1, foos, BAR_1, bars, foobars, tupleValue, udtValue);
-        ResultSet rows = session.execute(selectQuery, pk);
+        session().execute(insertQuery, pk, FOO_1, foos, BAR_1, bars, foobars, tupleValue, udtValue);
+        ResultSet rows = session().execute(selectQuery, pk);
         Row row = rows.one();
         assertRow(row);
     }
 
     @Test(groups = "short")
     public void should_use_enum_codecs_with_prepared_statements_1() {
-        session.execute(session.prepare(insertQuery).bind(pk, FOO_1, foos, BAR_1, bars, foobars, tupleValue, udtValue));
-        PreparedStatement ps = session.prepare(selectQuery);
-        ResultSet rows = session.execute(ps.bind(pk));
+        session().execute(session().prepare(insertQuery).bind(pk, FOO_1, foos, BAR_1, bars, foobars, tupleValue, udtValue));
+        PreparedStatement ps = session().prepare(selectQuery);
+        ResultSet rows = session().execute(ps.bind(pk));
         Row row = rows.one();
         assertRow(row);
     }
 
     @Test(groups = "short")
     public void should_use_enum_codecs_with_prepared_statements_2() {
-        session.execute(session.prepare(insertQuery).bind()
+        session().execute(session().prepare(insertQuery).bind()
                         .setInt(0, pk)
                         .set(1, FOO_1, Foo.class)
                         .setList(2, foos, Foo.class)
@@ -128,8 +127,8 @@ public class EnumCodecsTest extends CCMTestsSupport {
                         .setTupleValue(6, tupleValue)
                         .setUDTValue(7, udtValue)
         );
-        PreparedStatement ps = session.prepare(selectQuery);
-        ResultSet rows = session.execute(ps.bind()
+        PreparedStatement ps = session().prepare(selectQuery);
+        ResultSet rows = session().execute(ps.bind()
                         .setInt(0, pk)
         );
         Row row = rows.one();
@@ -139,7 +138,7 @@ public class EnumCodecsTest extends CCMTestsSupport {
     @Test(groups = "short")
     public void should_use_mapper_to_store_and_retrieve_nulls_with_enum_codecs() {
         // given
-        MappingManager manager = new MappingManager(session);
+        MappingManager manager = new MappingManager(session());
         Mapper<Mapped> mapper = manager.mapper(Mapped.class);
         Mapped pojo = new Mapped();
         pojo.pk = 42;
@@ -154,7 +153,7 @@ public class EnumCodecsTest extends CCMTestsSupport {
     @Test(groups = "short")
     public void should_use_mapper_to_store_and_retrieve_values_with_enum_codecs() {
         // given
-        MappingManager manager = new MappingManager(session);
+        MappingManager manager = new MappingManager(session());
         Mapper<Mapped> mapper = manager.mapper(Mapped.class);
         Mapped pojo = new Mapped();
         pojo.pk = 42;
@@ -173,7 +172,7 @@ public class EnumCodecsTest extends CCMTestsSupport {
     @Test(groups = "short")
     public void should_use_accessor_to_store_and_retrieve_values_with_enum_codecs() {
         // given
-        MappedAccessor accessor = new MappingManager(session).createAccessor(MappedAccessor.class);
+        MappedAccessor accessor = new MappingManager(session()).createAccessor(MappedAccessor.class);
         Mapped expected = new Mapped();
         expected.pk = 42;
         expected.foo = FOO_1;

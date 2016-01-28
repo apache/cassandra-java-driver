@@ -26,7 +26,7 @@ public class CaseSensitivityTest extends CCMTestsSupport {
     @Test(groups = "short")
     public void testCaseInsensitiveKeyspace() throws Throwable {
         String ksName = "MyKeyspace1";
-        session.execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, ksName, 1));
+        session().execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, ksName, 1));
         assertExists(ksName, "mykeyspace1");
         assertExists("mykeyspace1", "mykeyspace1");
         assertExists("MYKEYSPACE1", "mykeyspace1");
@@ -35,7 +35,7 @@ public class CaseSensitivityTest extends CCMTestsSupport {
     @Test(groups = "short")
     public void testCaseSensitiveKeyspace() throws Throwable {
         String ksName = "\"MyKeyspace2\"";
-        session.execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, ksName, 1));
+        session().execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, ksName, 1));
         assertExists(ksName, "MyKeyspace2");
         assertExists(Metadata.quote("MyKeyspace2"), "MyKeyspace2");
         assertNotExists("mykeyspace2");
@@ -44,13 +44,13 @@ public class CaseSensitivityTest extends CCMTestsSupport {
     }
 
     private void assertExists(String fetchName, String realName) {
-        KeyspaceMetadata km = cluster.getMetadata().getKeyspace(fetchName);
+        KeyspaceMetadata km = cluster().getMetadata().getKeyspace(fetchName);
         assertNotNull(km);
         assertEquals(realName, km.getName());
     }
 
     private void assertNotExists(String name) {
-        assertNull(cluster.getMetadata().getKeyspace(name));
+        assertNull(cluster().getMetadata().getKeyspace(name));
     }
 
 

@@ -41,8 +41,8 @@ public class TableMetadataTest extends CCMTestsSupport {
                 + "    PRIMARY KEY (k)\n"
                 + ");", keyspace);
         // when
-        session.execute(cql);
-        TableMetadata table = cluster.getMetadata().getKeyspace(keyspace).getTable("static");
+        session().execute(cql);
+        TableMetadata table = cluster().getMetadata().getKeyspace(keyspace).getTable("static");
         // then
         assertThat(table).isNotNull().hasName("static").hasNumberOfColumns(4).isNotCompactStorage();
         assertThat(table.getColumns().get(0)).isNotNull().hasName("k").isPartitionKey().hasType(text());
@@ -63,8 +63,8 @@ public class TableMetadataTest extends CCMTestsSupport {
                 + "    PRIMARY KEY (k, c1, c2)\n"
                 + ") WITH CLUSTERING ORDER BY (c1 ASC, c2 DESC);", keyspace);
         // when
-        session.execute(cql);
-        TableMetadata table = cluster.getMetadata().getKeyspace(keyspace).getTable("sparse");
+        session().execute(cql);
+        TableMetadata table = cluster().getMetadata().getKeyspace(keyspace).getTable("sparse");
         // then
         assertThat(table).isNotNull().hasName("sparse").hasNumberOfColumns(5).isNotCompactStorage();
         assertThat(table.getColumns().get(0)).isNotNull().hasName("k").isPartitionKey().hasType(text());
@@ -83,8 +83,8 @@ public class TableMetadataTest extends CCMTestsSupport {
                 + "    PRIMARY KEY (k)\n"
                 + ");", keyspace);
         // when
-        session.execute(cql);
-        TableMetadata table = cluster.getMetadata().getKeyspace(keyspace).getTable("counters");
+        session().execute(cql);
+        TableMetadata table = cluster().getMetadata().getKeyspace(keyspace).getTable("counters");
         // then
         assertThat(table).isNotNull().hasName("counters").hasNumberOfColumns(2).isNotCompactStorage();
         assertThat(table.getColumns().get(0)).isNotNull().hasName("k").isPartitionKey().hasType(text());
@@ -102,8 +102,8 @@ public class TableMetadataTest extends CCMTestsSupport {
                 + "    PRIMARY KEY (k)\n"
                 + ") WITH COMPACT STORAGE;", keyspace);
         // when
-        session.execute(cql);
-        TableMetadata table = cluster.getMetadata().getKeyspace(keyspace).getTable("compact_static");
+        session().execute(cql);
+        TableMetadata table = cluster().getMetadata().getKeyspace(keyspace).getTable("compact_static");
         // then
         assertThat(table).isNotNull().hasName("compact_static").hasNumberOfColumns(4).isCompactStorage();
         assertThat(table.getColumns().get(0)).isNotNull().hasName("k").isPartitionKey().hasType(text());
@@ -121,8 +121,8 @@ public class TableMetadataTest extends CCMTestsSupport {
                 + "        PRIMARY KEY (k, c)\n"
                 + "    ) WITH COMPACT STORAGE;", keyspace);
         // when
-        session.execute(cql);
-        TableMetadata table = cluster.getMetadata().getKeyspace(keyspace).getTable("dense");
+        session().execute(cql);
+        TableMetadata table = cluster().getMetadata().getKeyspace(keyspace).getTable("dense");
         // then
         assertThat(table).isNotNull().hasName("dense").hasNumberOfColumns(2).isCompactStorage();
         assertThat(table.getColumns().get(0)).isNotNull().hasName("k").isPartitionKey().hasType(cint());
@@ -139,8 +139,8 @@ public class TableMetadataTest extends CCMTestsSupport {
                 + "    PRIMARY KEY (k, c)\n"
                 + ") WITH COMPACT STORAGE;", keyspace);
         // when
-        session.execute(cql);
-        TableMetadata table = cluster.getMetadata().getKeyspace(keyspace).getTable("compact_dynamic");
+        session().execute(cql);
+        TableMetadata table = cluster().getMetadata().getKeyspace(keyspace).getTable("compact_dynamic");
         // then
         assertThat(table).isNotNull().hasName("compact_dynamic").hasNumberOfColumns(3).isCompactStorage();
         assertThat(table.getColumns().get(0)).isNotNull().hasName("k").isPartitionKey().hasType(text());
@@ -160,8 +160,8 @@ public class TableMetadataTest extends CCMTestsSupport {
                 + "    PRIMARY KEY (k, c1, c2, c3)\n"
                 + ") WITH COMPACT STORAGE;", keyspace);
         // when
-        session.execute(cql);
-        TableMetadata table = cluster.getMetadata().getKeyspace(keyspace).getTable("compact_composite");
+        session().execute(cql);
+        TableMetadata table = cluster().getMetadata().getKeyspace(keyspace).getTable("compact_composite");
         // then
         assertThat(table).isNotNull().hasName("compact_composite").hasNumberOfColumns(5).isCompactStorage();
         assertThat(table.getColumns().get(0)).isNotNull().hasName("k").isPartitionKey().hasType(text());
@@ -173,7 +173,7 @@ public class TableMetadataTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void should_parse_table_options() {
-        VersionNumber version = TestUtils.findHost(cluster, 1).getCassandraVersion();
+        VersionNumber version = TestUtils.findHost(cluster(), 1).getCassandraVersion();
 
         // given
         String cql;
@@ -223,8 +223,8 @@ public class TableMetadataTest extends CCMTestsSupport {
         }
 
         // when
-        session.execute(cql);
-        TableMetadata table = cluster.getMetadata().getKeyspace(keyspace).getTable("with_options");
+        session().execute(cql);
+        TableMetadata table = cluster().getMetadata().getKeyspace(keyspace).getTable("with_options");
 
         // then
         assertThat(table).isNotNull().hasName("with_options").hasNumberOfColumns(4).isNotCompactStorage();
@@ -421,8 +421,8 @@ public class TableMetadataTest extends CCMTestsSupport {
                 keyspace);
 
         // when
-        session.execute(cql);
-        TableMetadata table = cluster.getMetadata().getKeyspace(keyspace).getTable("new_compression_options");
+        session().execute(cql);
+        TableMetadata table = cluster().getMetadata().getKeyspace(keyspace).getTable("new_compression_options");
 
         // then
         assertThat(table.getOptions().getCompression())
@@ -438,8 +438,8 @@ public class TableMetadataTest extends CCMTestsSupport {
                         + ") WITH  comment = 'comment with single quote '' should work'",
                 keyspace);
         // when
-        session.execute(cql);
-        TableMetadata table = cluster.getMetadata().getKeyspace(keyspace).getTable("single_quote");
+        session().execute(cql);
+        TableMetadata table = cluster().getMetadata().getKeyspace(keyspace).getTable("single_quote");
         // then
         assertThat(table.getOptions().getComment()).isEqualTo("comment with single quote ' should work");
         assertThat(table.asCQLQuery()).contains("comment = 'comment with single quote '' should work'");
@@ -454,10 +454,10 @@ public class TableMetadataTest extends CCMTestsSupport {
                 "CREATE INDEX test_d on test_cd (d);",
         };
         for (String statement : statements)
-            session.execute(statement);
+            session().execute(statement);
 
-        TableMetadata table_ab = cluster.getMetadata().getKeyspace(keyspace).getTable("test_ab");
-        TableMetadata table_cd = cluster.getMetadata().getKeyspace(keyspace).getTable("test_cd");
+        TableMetadata table_ab = cluster().getMetadata().getKeyspace(keyspace).getTable("test_ab");
+        TableMetadata table_cd = cluster().getMetadata().getKeyspace(keyspace).getTable("test_cd");
 
         assertThat(table_ab.getIndexes().size()).isEqualTo(1);
         assertThat(table_ab.getIndexes()).extracting("name").containsOnly("test_b");
@@ -485,15 +485,15 @@ public class TableMetadataTest extends CCMTestsSupport {
                 + "    v timeuuid,\n"
                 + "    PRIMARY KEY (k, c)\n"
                 + ");", keyspace);
-        session.execute(cql);
+        session().execute(cql);
 
         // Manually change column value in system_schema.tables and force a schema refresh on that table.
         ImmutableMap<String, ByteBuffer> extensions = ImmutableMap.of("Hello", ByteBuffer.wrap("World".getBytes("UTF-8")));
-        session.execute("update system_schema.tables set extensions=? where keyspace_name=? and table_name=?", extensions, keyspace, "table_with_extensions");
-        cluster.manager.controlConnection.refreshSchema(SchemaElement.TABLE, keyspace, "table_with_extensions", null);
+        session().execute("update system_schema.tables set extensions=? where keyspace_name=? and table_name=?", extensions, keyspace, "table_with_extensions");
+        cluster().manager.controlConnection.refreshSchema(SchemaElement.TABLE, keyspace, "table_with_extensions", null);
 
         // when retrieving the table's metadata.
-        TableMetadata table = cluster.getMetadata().getKeyspace(keyspace).getTable("table_with_extensions");
+        TableMetadata table = cluster().getMetadata().getKeyspace(keyspace).getTable("table_with_extensions");
         // then the table's options should contain populated extensions.
         assertThat(table.getOptions().getExtensions()).isEqualTo(extensions);
     }

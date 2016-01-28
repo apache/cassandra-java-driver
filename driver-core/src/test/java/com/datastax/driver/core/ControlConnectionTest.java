@@ -47,7 +47,6 @@ public class ControlConnectionTest extends CCMTestsSupport {
     @Test(groups = "short")
     @CCMConfig(numberOfNodes = 2)
     public void should_prevent_simultaneous_reconnection_attempts() throws InterruptedException {
-        Cluster cluster;
 
         // Custom load balancing policy that counts the number of calls to newQueryPlan().
         // Since we don't open any session from our Cluster, only the control connection reattempts are calling this
@@ -60,20 +59,20 @@ public class ControlConnectionTest extends CCMTestsSupport {
         ReconnectionPolicy reconnectionPolicy = new ConstantReconnectionPolicy(60 * 1000);
 
         // We pass only the first host as contact point, so we know the control connection will be on this host
-        cluster = register(Cluster.builder()
-                .addContactPoints(ccm.addressOfNode(1).getAddress())
-                .withPort(ccm.getBinaryPort())
+        Cluster cluster = register(Cluster.builder()
+                .addContactPoints(getContactPoints().get(0))
+                .withPort(ccm().getBinaryPort())
                 .withReconnectionPolicy(reconnectionPolicy)
                 .withLoadBalancingPolicy(loadBalancingPolicy)
                 .build());
         cluster.init();
 
         // Kill the control connection host, there should be exactly one reconnection attempt
-        ccm.stop(1);
+        ccm().stop(1);
         TimeUnit.SECONDS.sleep(1); // Sleep for a while to make sure our final count is not the result of lucky timing
         assertThat(reconnectionAttempts.get()).isEqualTo(1);
 
-        ccm.stop(2);
+        ccm().stop(2);
         TimeUnit.SECONDS.sleep(1);
         assertThat(reconnectionAttempts.get()).isEqualTo(2);
     }
@@ -87,12 +86,10 @@ public class ControlConnectionTest extends CCMTestsSupport {
     @Test(groups = "short")
     @CassandraVersion(major = 2.1)
     public void should_parse_UDT_definitions_when_using_default_protocol_version() {
-        Cluster cluster;
-        InetSocketAddress firstHost = ccm.addressOfNode(1);
         // First driver instance: create UDT
-        cluster = register(Cluster.builder()
-                .addContactPointsWithPorts(firstHost)
-                .withPort(ccm.getBinaryPort())
+        Cluster cluster = register(Cluster.builder()
+                .addContactPoints(getContactPoints().get(0))
+                .withPort(ccm().getBinaryPort())
                 .build());
         Session session = cluster.connect();
         session.execute("create keyspace ks WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1}");
@@ -100,8 +97,11 @@ public class ControlConnectionTest extends CCMTestsSupport {
         cluster.close();
 
         // Second driver instance: read UDT definition
-        cluster = register(Cluster.builder().addContactPointsWithPorts(firstHost).build());
-        UserType fooType = cluster.getMetadata().getKeyspace("ks").getUserType("foo");
+        Cluster cluster2 = register(Cluster.builder()
+                .addContactPoints(getContactPoints().get(0))
+                .withPort(ccm().getBinaryPort())
+                .build());
+        UserType fooType = cluster2.getMetadata().getKeyspace("ks").getUserType("foo");
 
         assertThat(fooType.getFieldNames()).containsExactly("i");
     }
@@ -118,10 +118,10 @@ public class ControlConnectionTest extends CCMTestsSupport {
     @Test(groups = "long")
     @CCMConfig(numberOfNodes = 3)
     public void should_reestablish_if_control_node_decommissioned() throws InterruptedException {
-        InetSocketAddress firstHost = ccm.addressOfNode(1);
+        InetSocketAddress firstHost = ccm().addressOfNode(1);
         Cluster cluster = register(Cluster.builder()
-                .addContactPointsWithPorts(firstHost)
-                .withPort(ccm.getBinaryPort())
+                .addContactPoints(firstHost.getAddress())
+                .withPort(ccm().getBinaryPort())
                 .withQueryOptions(nonDebouncingQueryOptions())
                 .build());
         cluster.init();
@@ -131,7 +131,7 @@ public class ControlConnectionTest extends CCMTestsSupport {
         assertThat(controlHost).isEqualTo(firstHost.getAddress());
 
         // Decommission the node.
-        ccm.decommission(1);
+        ccm().decommission(1);
 
         // Ensure that the new control connection is not null and it's host is not equal to the decommissioned node.
         Host newHost = cluster.manager.controlConnection.connectedHost();

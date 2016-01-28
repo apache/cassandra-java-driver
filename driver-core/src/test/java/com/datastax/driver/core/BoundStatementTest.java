@@ -20,8 +20,6 @@ import com.google.common.collect.Lists;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import java.util.Collection;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
@@ -30,13 +28,13 @@ public class BoundStatementTest extends CCMTestsSupport {
     PreparedStatement prepared;
 
     @Override
-    public Collection<String> createTestFixtures() {
-        return Lists.newArrayList("CREATE TABLE foo (k int primary key, v1 text, v2 list<int>)");
+    public void onTestContextInitialized() {
+        execute("CREATE TABLE foo (k int primary key, v1 text, v2 list<int>)");
     }
 
     @BeforeClass(groups = "short")
     public void setup() {
-        prepared = session.prepare("INSERT INTO foo (k, v1, v2) VALUES (?, ?, ?)");
+        prepared = session().prepare("INSERT INTO foo (k, v1, v2) VALUES (?, ?, ?)");
     }
 
     @Test(groups = "short")

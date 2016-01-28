@@ -35,11 +35,13 @@ import java.math.BigInteger;
 import java.net.*;
 import java.nio.ByteBuffer;
 import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
+
+import static com.datastax.driver.core.ConditionChecker.check;
+import static java.util.concurrent.TimeUnit.MINUTES;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 /**
  * A number of static fields/methods handy for tests.
@@ -61,14 +63,9 @@ public abstract class TestUtils {
     public static final String CREATE_KEYSPACE_SIMPLE_FORMAT = "CREATE KEYSPACE %s WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor' : %d }";
     public static final String CREATE_KEYSPACE_GENERIC_FORMAT = "CREATE KEYSPACE %s WITH replication = { 'class' : '%s', %s }";
 
-    public static final String SIMPLE_KEYSPACE = "ks";
-    public static final String SIMPLE_TABLE = "test";
-
     public static final String SELECT_ALL_FORMAT = "SELECT * FROM %s";
 
     public static final int TEST_BASE_NODE_WAIT = SystemProperties.getInt("com.datastax.driver.TEST_BASE_NODE_WAIT", 60);
-
-    private static final AtomicInteger KS_COUNTER = new AtomicInteger(1);
 
     public static void setValue(SettableByIndexData<?> data, int i, DataType type, Object value) {
         switch (type.getName()) {
@@ -470,28 +467,20 @@ public abstract class TestUtils {
     // Wait for a node to be up and running
     // This is used because there is some delay between when a node has been
     // added through ccm and when it's actually available for querying
-    public static void waitFor(String node, Cluster cluster) {
+    public static void waitForUp(String node, Cluster cluster) {
         waitFor(node, cluster, TEST_BASE_NODE_WAIT, false);
     }
 
-    public static void waitFor(String node, Cluster cluster, int maxTry) {
-        waitFor(node, cluster, maxTry, false);
+    public static void waitForUp(String node, Cluster cluster, int timeoutSeconds) {
+        waitFor(node, cluster, timeoutSeconds, false);
     }
 
     public static void waitForDown(String node, Cluster cluster) {
         waitFor(node, cluster, TEST_BASE_NODE_WAIT * 3, true);
     }
 
-    public static void waitForDown(String node, Cluster cluster, int maxTry) {
-        waitFor(node, cluster, maxTry, true);
-    }
-
-    public static void waitForDecommission(String node, Cluster cluster) {
-        waitFor(node, cluster, TEST_BASE_NODE_WAIT / 2, true);
-    }
-
-    public static void waitForDecommission(String node, Cluster cluster, int maxTry) {
-        waitFor(node, cluster, maxTry, true);
+    public static void waitForDown(String node, Cluster cluster, int timeoutSeconds) {
+        waitFor(node, cluster, timeoutSeconds, true);
     }
 
     private static void waitFor(String node, Cluster cluster, int timeoutSeconds, boolean waitForDown) {
@@ -503,23 +492,30 @@ public abstract class TestUtils {
         // tried doing an actual query, the driver won't realize that last node is dead until
         // keep alive kicks in, but that's a fairly long time. So we cheat and trigger a force
         // the detection by forcing a request.
-        if (waitForDown) {
+        if (waitForDown)
             Futures.getUnchecked(cluster.manager.submitSchemaRefresh(null, null, null, null));
-        }
         if (waitForDown) {
-            ConditionChecker.awaitUntil(new HostIsDownCondition(cluster, node), timeoutSeconds * 1000);
+            check()
+                    .every(1, SECONDS)
+                    .before(timeoutSeconds, SECONDS)
+                    .that(new HostIsDown(cluster, node))
+                    .becomesTrue();
         } else {
-            ConditionChecker.awaitUntil(new HostIsUpCondition(cluster, node), timeoutSeconds * 1000);
+            check()
+                    .every(1, SECONDS)
+                    .before(timeoutSeconds, SECONDS)
+                    .that(new HostIsUp(cluster, node))
+                    .becomesTrue();
         }
     }
 
-    private static class HostIsDownCondition implements Callable<Boolean> {
+    private static class HostIsDown implements Callable<Boolean> {
 
         private final Cluster cluster;
 
         private final String ip;
 
-        public HostIsDownCondition(Cluster cluster, String ip) {
+        public HostIsDown(Cluster cluster, String ip) {
             this.cluster = cluster;
             this.ip = ip;
         }
@@ -531,13 +527,13 @@ public abstract class TestUtils {
         }
     }
 
-    private static class HostIsUpCondition implements Callable<Boolean> {
+    private static class HostIsUp implements Callable<Boolean> {
 
         private final Cluster cluster;
 
         private final String ip;
 
-        public HostIsUpCondition(Cluster cluster, String ip) {
+        public HostIsUp(Cluster cluster, String ip) {
             this.cluster = cluster;
             this.ip = ip;
         }
@@ -660,8 +656,20 @@ public abstract class TestUtils {
         return ScassandraFactory.createServer(ipOfNode(1), binaryPort, ipOfNode(1), adminPort);
     }
 
-    public static String getAvailableKeyspaceName() {
-        return SIMPLE_KEYSPACE + "_" + KS_COUNTER.getAndIncrement();
+    private static final ConcurrentMap<String, AtomicInteger> IDENTIFIERS = new ConcurrentHashMap<String, AtomicInteger>();
+
+    /**
+     * Generates a unique CQL identifier with the given prefix.
+     *
+     * @param prefix The prefix for the identifier
+     * @return a unique CQL identifier.
+     */
+    public static String generateIdentifier(String prefix) {
+        AtomicInteger seq = new AtomicInteger(0);
+        AtomicInteger previous = IDENTIFIERS.putIfAbsent(prefix, seq);
+        if (previous != null)
+            seq = previous;
+        return prefix + seq.incrementAndGet();
     }
 
     // use ports in the ephemeral range
@@ -718,11 +726,11 @@ public abstract class TestUtils {
     };
 
     public static void waitUntilPortIsUp(InetSocketAddress address) {
-        ConditionChecker.awaitUntil(address, PORT_IS_UP, TimeUnit.SECONDS.toMillis(10));
+        check().before(5, MINUTES).that(address, PORT_IS_UP).becomesTrue();
     }
 
     public static void waitUntilPortIsDown(InetSocketAddress address) {
-        ConditionChecker.awaitWhile(address, PORT_IS_UP, TimeUnit.SECONDS.toMillis(10));
+        check().before(5, MINUTES).that(address, PORT_IS_UP).becomesFalse();
     }
 
     public static boolean pingPort(InetAddress address, int port) {
@@ -780,7 +788,7 @@ public abstract class TestUtils {
         Host controlHost = cluster.manager.controlConnection.connectedHost();
         List<InetSocketAddress> singleAddress = Collections.singletonList(controlHost.getSocketAddress());
         return Cluster.builder()
-                .addContactPointsWithPorts(singleAddress)
+                .addContactPoints(controlHost.getSocketAddress().getAddress())
                 .withPort(ccm.getBinaryPort())
                 .withLoadBalancingPolicy(new WhiteListPolicy(new RoundRobinPolicy(), singleAddress))
                 .build();
@@ -803,10 +811,16 @@ public abstract class TestUtils {
     public static NettyOptions nonQuietClusterCloseOptions = new NettyOptions() {
         @Override
         public void onClusterClose(EventLoopGroup eventLoopGroup) {
-            eventLoopGroup.shutdownGracefully(0, 15, TimeUnit.SECONDS).syncUninterruptibly();
+            eventLoopGroup.shutdownGracefully(0, 15, SECONDS).syncUninterruptibly();
         }
     };
 
+    /**
+     * Executes a task and catches any exception.
+     *
+     * @param task         The task to execute.
+     * @param logException Whether to log the exception, if any.
+     */
     public static void executeNoFail(Runnable task, boolean logException) {
         try {
             task.run();
@@ -816,6 +830,12 @@ public abstract class TestUtils {
         }
     }
 
+    /**
+     * Executes a task and catches any exception.
+     *
+     * @param task         The task to execute.
+     * @param logException Whether to log the exception, if any.
+     */
     public static void executeNoFail(Callable<?> task, boolean logException) {
         try {
             task.call();
@@ -825,6 +845,11 @@ public abstract class TestUtils {
         }
     }
 
+    /**
+     * Returns the system's free memory in megabytes.
+     * <p/>
+     * This includes the free physical memory + the free swap memory.
+     */
     public static long getFreeMemoryMB() {
         OperatingSystemMXBean bean = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
         return (bean.getFreePhysicalMemorySize() + bean.getFreeSwapSpaceSize()) / 1024 / 1024;

@@ -19,15 +19,12 @@ import org.scassandra.Scassandra;
 import org.scassandra.http.client.ActivityClient;
 import org.scassandra.http.client.CurrentClient;
 import org.scassandra.http.client.PrimingClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 
 import java.net.InetSocketAddress;
-import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.fail;
 
@@ -40,8 +37,6 @@ import static org.assertj.core.api.Assertions.fail;
  * consider using {@link com.datastax.driver.core.ScassandraTestBase.PerClassCluster} instead.
  */
 public abstract class ScassandraTestBase {
-
-    private static final Logger logger = LoggerFactory.getLogger(ScassandraTestBase.class);
 
     protected Scassandra scassandra;
 
@@ -80,28 +75,16 @@ public abstract class ScassandraTestBase {
     }
 
     protected Cluster.Builder createClusterBuilder() {
-        Cluster.Builder builder = Cluster.builder()
+        return Cluster.builder()
                 .withPort(scassandra.getBinaryPort())
-                .addContactPoints(Collections.singletonList(hostAddress.getAddress()))
+                .addContactPoints(hostAddress.getAddress())
+                .withPort(scassandra.getBinaryPort())
                 // Scassandra does not support V3 yet, and V4 may cause the server to crash
-                .withProtocolVersion(ProtocolVersion.V2)
+                .withProtocolVersion(TestUtils.getDesiredProtocolVersion(ProtocolVersion.V2))
                 .withPoolingOptions(new PoolingOptions()
                         .setCoreConnectionsPerHost(HostDistance.LOCAL, 1)
                         .setMaxConnectionsPerHost(HostDistance.LOCAL, 1)
-                        .setHeartbeatIntervalSeconds(0))
-                .withPort(scassandra.getBinaryPort());
-        return builder;
-    }
-
-    /**
-     * An overrideable method for building on to the Cluster.Builder used for this
-     * class.
-     *
-     * @param builder
-     * @return
-     */
-    protected Cluster.Builder configure(Cluster.Builder builder) {
-        return builder;
+                        .setHeartbeatIntervalSeconds(0));
     }
 
     protected Host retrieveSingleHost(Cluster cluster) {

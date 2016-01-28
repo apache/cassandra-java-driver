@@ -29,7 +29,6 @@ import java.nio.ByteBuffer;
 import java.util.*;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
-import static com.google.common.collect.Lists.newArrayList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -54,9 +53,10 @@ public class TypeCodecNestedCollectionsIntegrationTest extends CCMTestsSupport {
     private TypeToken<Set<Map<MyInt, String>>> elementsType = new TypeToken<Set<Map<MyInt, String>>>() {};
     // @formatter:on
 
+
     @Override
-    public Collection<String> createTestFixtures() {
-        return newArrayList(
+    public void onTestContextInitialized() {
+        execute(
                 "CREATE TABLE IF NOT EXISTS \"myTable\" ("
                         + "pk int PRIMARY KEY, "
                         + "v frozen<list<frozen<set<frozen<map<int,text>>>>>>"
@@ -91,29 +91,29 @@ public class TypeCodecNestedCollectionsIntegrationTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void should_work_with_simple_statements() {
-        session.execute(insertQuery, pk, v);
-        ResultSet rows = session.execute(selectQuery, pk);
+        session().execute(insertQuery, pk, v);
+        ResultSet rows = session().execute(selectQuery, pk);
         Row row = rows.one();
         assertRow(row);
     }
 
     @Test(groups = "short")
     public void should_work_with_prepared_statements_1() {
-        session.execute(session.prepare(insertQuery).bind(pk, v));
-        PreparedStatement ps = session.prepare(selectQuery);
-        ResultSet rows = session.execute(ps.bind(pk));
+        session().execute(session().prepare(insertQuery).bind(pk, v));
+        PreparedStatement ps = session().prepare(selectQuery);
+        ResultSet rows = session().execute(ps.bind(pk));
         Row row = rows.one();
         assertRow(row);
     }
 
     @Test(groups = "short")
     public void should_work_with_prepared_statements_2() {
-        session.execute(session.prepare(insertQuery).bind()
+        session().execute(session().prepare(insertQuery).bind()
                 .setInt(0, pk)
                 .setList(1, v, elementsType) // variant with element type explicitly set
         );
-        PreparedStatement ps = session.prepare(selectQuery);
-        ResultSet rows = session.execute(ps.bind()
+        PreparedStatement ps = session().prepare(selectQuery);
+        ResultSet rows = session().execute(ps.bind()
                         .setInt(0, pk)
         );
         Row row = rows.one();
@@ -122,12 +122,12 @@ public class TypeCodecNestedCollectionsIntegrationTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void should_work_with_prepared_statements_3() {
-        session.execute(session.prepare(insertQuery).bind()
+        session().execute(session().prepare(insertQuery).bind()
                         .setInt(0, pk)
                         .set(1, v, listType)
         );
-        PreparedStatement ps = session.prepare(selectQuery);
-        ResultSet rows = session.execute(ps.bind()
+        PreparedStatement ps = session().prepare(selectQuery);
+        ResultSet rows = session().execute(ps.bind()
                         .setInt(0, pk)
         );
         Row row = rows.one();
@@ -136,12 +136,12 @@ public class TypeCodecNestedCollectionsIntegrationTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void should_work_with_built_statements() {
-        session.execute(session.prepare(insertStmt).bind()
+        session().execute(session().prepare(insertStmt).bind()
                         .setInt(0, pk)
                         .set(1, v, listType)
         );
-        PreparedStatement ps = session.prepare(selectStmt);
-        ResultSet rows = session.execute(ps.bind()
+        PreparedStatement ps = session().prepare(selectStmt);
+        ResultSet rows = session().execute(ps.bind()
                         .setInt(0, pk)
         );
         Row row = rows.one();

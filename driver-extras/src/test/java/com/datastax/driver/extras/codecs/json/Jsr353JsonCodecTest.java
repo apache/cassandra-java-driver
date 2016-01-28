@@ -18,14 +18,12 @@ package com.datastax.driver.extras.codecs.json;
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.querybuilder.BuiltStatement;
 import com.datastax.driver.core.utils.CassandraVersion;
-import com.google.common.collect.Lists;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import javax.json.*;
 import java.io.IOException;
 import java.io.StringWriter;
-import java.util.Collection;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -46,8 +44,8 @@ public class Jsr353JsonCodecTest extends CCMTestsSupport {
     private static final String notAJsonString = "this text is not json";
 
     @Override
-    public Collection<String> createTestFixtures() {
-        return Lists.newArrayList(
+    public void onTestContextInitialized() {
+        execute(
                 "CREATE TABLE t1 (c1 text, c2 text, PRIMARY KEY (c1, c2))"
         );
     }
@@ -86,8 +84,8 @@ public class Jsr353JsonCodecTest extends CCMTestsSupport {
     @Test(groups = "short", dataProvider = "Jsr353JsonCodecTest")
     @CassandraVersion(major = 2.0)
     public void should_use_custom_codec_with_simple_statements(JsonStructure object) throws IOException {
-        session.execute(insertQuery, notAJsonString, object);
-        ResultSet rows = session.execute(selectQuery, notAJsonString, object);
+        session().execute(insertQuery, notAJsonString, object);
+        ResultSet rows = session().execute(selectQuery, notAJsonString, object);
         Row row = rows.one();
         assertRow(row, object);
     }
@@ -101,8 +99,8 @@ public class Jsr353JsonCodecTest extends CCMTestsSupport {
                 .from("t1")
                 .where(eq("c1", bindMarker()))
                 .and(eq("c2", bindMarker()));
-        session.execute(session.prepare(insertStmt).bind(notAJsonString, object));
-        ResultSet rows = session.execute(session.prepare(selectStmt).bind(notAJsonString, object));
+        session().execute(session().prepare(insertStmt).bind(notAJsonString, object));
+        ResultSet rows = session().execute(session().prepare(selectStmt).bind(notAJsonString, object));
         Row row = rows.one();
         assertRow(row, object);
     }
@@ -117,29 +115,29 @@ public class Jsr353JsonCodecTest extends CCMTestsSupport {
                         .from("t1")
                         .where(eq("c1", notAJsonString))
                         .and(eq("c2", object));
-        session.execute(insertStmt);
-        ResultSet rows = session.execute(selectStmt);
+        session().execute(insertStmt);
+        ResultSet rows = session().execute(selectStmt);
         Row row = rows.one();
         assertRow(row, object);
     }
 
     @Test(groups = "short", dataProvider = "Jsr353JsonCodecTest")
     public void should_use_custom_codec_with_prepared_statements_1(JsonStructure object) throws IOException {
-        session.execute(session.prepare(insertQuery).bind(notAJsonString, object));
-        PreparedStatement ps = session.prepare(selectQuery);
-        ResultSet rows = session.execute(ps.bind(notAJsonString, object));
+        session().execute(session().prepare(insertQuery).bind(notAJsonString, object));
+        PreparedStatement ps = session().prepare(selectQuery);
+        ResultSet rows = session().execute(ps.bind(notAJsonString, object));
         Row row = rows.one();
         assertRow(row, object);
     }
 
     @Test(groups = "short", dataProvider = "Jsr353JsonCodecTest")
     public void should_use_custom_codec_with_prepared_statements_2(JsonStructure object) throws IOException {
-        session.execute(session.prepare(insertQuery).bind()
+        session().execute(session().prepare(insertQuery).bind()
                         .setString(0, notAJsonString)
                         .set(1, object, JsonStructure.class)
         );
-        PreparedStatement ps = session.prepare(selectQuery);
-        ResultSet rows = session.execute(ps.bind()
+        PreparedStatement ps = session().prepare(selectQuery);
+        ResultSet rows = session().execute(ps.bind()
                         .setString(0, notAJsonString)
                         .set(1, object, JsonStructure.class)
         );

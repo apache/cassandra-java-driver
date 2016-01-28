@@ -20,7 +20,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.testng.annotations.Test;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -45,8 +44,8 @@ public class TypeCodecUDTIntegrationTest extends CCMTestsSupport {
     private UDTValue addressValue;
 
     @Override
-    public Collection<String> createTestFixtures() {
-        return Lists.newArrayList(
+    public void onTestContextInitialized() {
+        execute(
                 "CREATE TYPE IF NOT EXISTS \"phone\" (number text, tags set<text>)",
                 "CREATE TYPE IF NOT EXISTS \"address\" (street text, zipcode int, phones list<frozen<phone>>)",
                 "CREATE TABLE IF NOT EXISTS \"users\" (id uuid PRIMARY KEY, name text, address frozen<address>)"
@@ -55,21 +54,21 @@ public class TypeCodecUDTIntegrationTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void should_handle_udts_with_default_codecs() {
-        setUpUserTypes(cluster);
+        setUpUserTypes(cluster());
         // simple statement
-        session.execute(insertQuery, uuid, "John Doe", addressValue);
-        ResultSet rows = session.execute(selectQuery, uuid);
+        session().execute(insertQuery, uuid, "John Doe", addressValue);
+        ResultSet rows = session().execute(selectQuery, uuid);
         Row row = rows.one();
         assertRow(row);
         // prepared + values
-        PreparedStatement ps = session.prepare(insertQuery);
-        session.execute(ps.bind(uuid, "John Doe", addressValue));
-        rows = session.execute(selectQuery, uuid);
+        PreparedStatement ps = session().prepare(insertQuery);
+        session().execute(ps.bind(uuid, "John Doe", addressValue));
+        rows = session().execute(selectQuery, uuid);
         row = rows.one();
         assertRow(row);
         // bound with setUDTValue
-        session.execute(ps.bind().setUUID(0, uuid).setString(1, "John Doe").setUDTValue(2, addressValue));
-        rows = session.execute(selectQuery, uuid);
+        session().execute(ps.bind().setUUID(0, uuid).setString(1, "John Doe").setUDTValue(2, addressValue));
+        rows = session().execute(selectQuery, uuid);
         row = rows.one();
         assertRow(row);
     }
@@ -78,8 +77,8 @@ public class TypeCodecUDTIntegrationTest extends CCMTestsSupport {
     public void should_handle_udts_with_custom_codecs() {
         CodecRegistry codecRegistry = new CodecRegistry();
         Cluster cluster = register(Cluster.builder()
-                .addContactPointsWithPorts(getInitialContactPoints())
-                .withPort(ccm.getBinaryPort())
+                .addContactPoints(getContactPoints())
+                .withPort(ccm().getBinaryPort())
                 .withCodecRegistry(codecRegistry)
                 .build());
         Session session = cluster.connect(keyspace);

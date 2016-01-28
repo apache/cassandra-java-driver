@@ -15,11 +15,14 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.CCMAccess.Workload;
 import com.datastax.driver.core.CreateCCM.TestMode;
+import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.io.Closer;
+import com.google.common.util.concurrent.Uninterruptibles;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.ITestResult;
@@ -32,10 +35,12 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.lang.reflect.ParameterizedType;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.util.*;
 import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.datastax.driver.core.CreateCCM.TestMode.PER_CLASS;
@@ -59,12 +64,11 @@ public class CCMTestsSupport {
             .put("enable_user_defined_functions", VersionNumber.parse("2.2.0"))
             .build();
 
-
-    private static class ReadOnlyCCMBridge implements CCMAccess {
+    private static class ReadOnlyCCMAccess implements CCMAccess {
 
         private final CCMAccess delegate;
 
-        private ReadOnlyCCMBridge(CCMAccess delegate) {
+        private ReadOnlyCCMAccess(CCMAccess delegate) {
             this.delegate = delegate;
         }
 
@@ -121,6 +125,11 @@ public class CCMTestsSupport {
         @Override
         public void setKeepLogs(boolean keepLogs) {
             delegate.setKeepLogs(keepLogs);
+        }
+
+        @Override
+        public String checkForErrors() {
+            return delegate.checkForErrors();
         }
 
         @Override
@@ -204,7 +213,7 @@ public class CCMTestsSupport {
         }
 
         @Override
-        public void setWorkload(int node, String workload) {
+        public void setWorkload(int node, Workload workload) {
             throw new UnsupportedOperationException("This CCM cluster is read-only");
         }
 
@@ -281,7 +290,7 @@ public class CCMTestsSupport {
         @SuppressWarnings("SimplifiableIfStatement")
         private Map<String, Object> config() {
             Map<String, Object> config = new HashMap<String, Object>();
-            for (int i = annotations.size() - 1; i == 0; i--) {
+            for (int i = annotations.size() - 1; i >= 0; i--) {
                 CCMConfig ann = annotations.get(i);
                 addConfigOptions(ann.config(), config);
             }
@@ -342,6 +351,22 @@ public class CCMTestsSupport {
             return args;
         }
 
+        private List<Workload> workloads() {
+            int total = 0;
+            for (int perDc : numberOfNodes())
+                total += perDc;
+            List<Workload> workloads = new ArrayList<Workload>(Collections.<Workload>nCopies(total, null));
+            for (int i = annotations.size() - 1; i >= 0; i--) {
+                CCMConfig ann = annotations.get(i);
+                Workload[] annWorkloads = ann.workloads();
+                for (int j = 0; j < annWorkloads.length; j++) {
+                    Workload workload = annWorkloads[j];
+                    workloads.set(j, workload);
+                }
+            }
+            return workloads;
+        }
+
         @SuppressWarnings("SimplifiableIfStatement")
         private boolean createCcm() {
             for (CCMConfig ann : annotations) {
@@ -387,34 +412,69 @@ public class CCMTestsSupport {
             return false;
         }
 
-        private CCMBridge.Builder ccmBuilder() {
+        private CCMBridge.Builder ccmBuilder(Object testInstance) throws Exception {
             if (ccmBuilder == null) {
-                ccmBuilder = CCMBridge.builder().withNodes(numberOfNodes()).notStarted();
-                if (version() != null)
-                    ccmBuilder.withVersion(version());
-                if (dse())
-                    ccmBuilder.withDSE();
-                if (ssl())
-                    ccmBuilder.withSSL();
-                if (auth())
-                    ccmBuilder.withAuth();
-                for (Map.Entry<String, Object> entry : config().entrySet()) {
-                    ccmBuilder.withCassandraConfiguration(entry.getKey(), entry.getValue());
-                }
-                for (Map.Entry<String, Object> entry : dseConfig().entrySet()) {
-                    ccmBuilder.withDSEConfiguration(entry.getKey(), entry.getValue());
-                }
-                for (String option : startOptions()) {
-                    ccmBuilder.withCreateOptions(option);
-                }
-                for (String arg : jvmArgs()) {
-                    ccmBuilder.withJvmArgs(arg);
+                ccmBuilder = ccmProvider(testInstance);
+                if (ccmBuilder == null) {
+                    ccmBuilder = CCMBridge.builder().withNodes(numberOfNodes()).notStarted();
+                    if (version() != null)
+                        ccmBuilder.withVersion(version());
+                    if (dse())
+                        ccmBuilder.withDSE();
+                    if (ssl())
+                        ccmBuilder.withSSL();
+                    if (auth())
+                        ccmBuilder.withAuth();
+                    for (Map.Entry<String, Object> entry : config().entrySet()) {
+                        ccmBuilder.withCassandraConfiguration(entry.getKey(), entry.getValue());
+                    }
+                    for (Map.Entry<String, Object> entry : dseConfig().entrySet()) {
+                        ccmBuilder.withDSEConfiguration(entry.getKey(), entry.getValue());
+                    }
+                    for (String option : startOptions()) {
+                        ccmBuilder.withCreateOptions(option);
+                    }
+                    for (String arg : jvmArgs()) {
+                        ccmBuilder.withJvmArgs(arg);
+                    }
+                    List<Workload> workloads = workloads();
+                    for (int i = 0; i < workloads.size(); i++) {
+                        Workload workload = workloads.get(i);
+                        if (workload != null)
+                            ccmBuilder.withWorkload(i + 1, workload);
+                    }
                 }
             }
             return ccmBuilder;
         }
 
-        private Cluster.Builder clusterBuilder(Object testInstance) throws Exception {
+        private CCMBridge.Builder ccmProvider(Object testInstance) throws Exception {
+            String methodName = null;
+            Class<?> clazz = null;
+            for (int i = annotations.size() - 1; i >= 0; i--) {
+                CCMConfig ann = annotations.get(i);
+                if (!ann.ccmProvider().isEmpty()) {
+                    methodName = ann.ccmProvider();
+                }
+                if (!ann.ccmProviderClass().equals(CCMConfig.Undefined.class)) {
+                    clazz = ann.ccmProviderClass();
+                }
+            }
+            if (methodName == null)
+                return null;
+            if (clazz == null)
+                clazz = testInstance.getClass();
+            Method method = locateMethod(methodName, clazz);
+            assert CCMBridge.Builder.class.isAssignableFrom(method.getReturnType());
+            if (Modifier.isStatic(method.getModifiers())) {
+                return (CCMBridge.Builder) method.invoke(null);
+            } else {
+                Object receiver = testInstance.getClass().equals(clazz) ? testInstance : instantiate(clazz);
+                return (CCMBridge.Builder) method.invoke(receiver);
+            }
+        }
+
+        private Cluster.Builder clusterProvider(Object testInstance) throws Exception {
             String methodName = null;
             Class<?> clazz = null;
             for (int i = annotations.size() - 1; i >= 0; i--) {
@@ -441,31 +501,28 @@ public class CCMTestsSupport {
         }
 
         @SuppressWarnings("unchecked")
-        private Collection<String> fixtures(Object testInstance) throws Exception {
+        private void invokeInitTest(Object testInstance) throws Exception {
             String methodName = null;
             Class<?> clazz = null;
             for (int i = annotations.size() - 1; i >= 0; i--) {
                 CCMConfig ann = annotations.get(i);
-                if (!ann.fixturesProvider().isEmpty()) {
-                    methodName = ann.fixturesProvider();
+                if (!ann.testInitializer().isEmpty()) {
+                    methodName = ann.testInitializer();
                 }
-                if (!ann.fixturesProviderClass().equals(CCMConfig.Undefined.class)) {
-                    clazz = ann.fixturesProviderClass();
+                if (!ann.testInitializerClass().equals(CCMConfig.Undefined.class)) {
+                    clazz = ann.testInitializerClass();
                 }
             }
             if (methodName == null)
-                methodName = "createTestFixtures";
+                methodName = "onTestContextInitialized";
             if (clazz == null)
                 clazz = testInstance.getClass();
             Method method = locateMethod(methodName, clazz);
-            assert Collection.class.isAssignableFrom(method.getReturnType());
-            assert method.getGenericReturnType() instanceof ParameterizedType;
-            assert String.class.equals(((ParameterizedType) method.getGenericReturnType()).getActualTypeArguments()[0]);
             if (Modifier.isStatic(method.getModifiers())) {
-                return (Collection<String>) method.invoke(null);
+                method.invoke(null);
             } else {
                 Object receiver = testInstance.getClass().equals(clazz) ? testInstance : instantiate(clazz);
-                return (Collection<String>) method.invoke(receiver);
+                method.invoke(receiver);
             }
         }
 
@@ -473,13 +530,15 @@ public class CCMTestsSupport {
 
     private TestMode testMode;
 
-    private CCMTestConfig ccmTestConfig;
+    protected CCMTestConfig ccmTestConfig;
 
-    protected CCMAccess ccm;
+    private CCMAccess ccm;
 
-    protected Cluster cluster;
+    private CCMBridge.Builder ccmBuilder;
 
-    protected Session session;
+    private Cluster cluster;
+
+    private Session session;
 
     protected String keyspace;
 
@@ -508,11 +567,18 @@ public class CCMTestsSupport {
         testMode = determineTestMode(testInstance.getClass());
         if (testMode == PER_CLASS) {
             closer = Closer.create();
-            initTestContext(testInstance, null);
-            initTestCluster(testInstance);
-            initTestSession();
-            initTestKeyspace();
-            initTestFixtures(testInstance);
+            try {
+                initTestContext(testInstance, null);
+                initTestCluster(testInstance);
+                initTestSession();
+                initTestKeyspace();
+                initTest(testInstance);
+            } catch (Exception e) {
+                LOGGER.error(e.getMessage(), e);
+                errorOut();
+                fail(e.getMessage());
+
+            }
         }
     }
 
@@ -538,11 +604,17 @@ public class CCMTestsSupport {
             if (closer == null)
                 closer = Closer.create();
             if (testMode == PER_METHOD || erroredOut) {
-                initTestContext(testInstance, testMethod);
-                initTestCluster(testInstance);
-                initTestSession();
-                initTestKeyspace();
-                initTestFixtures(testInstance);
+                try {
+                    initTestContext(testInstance, testMethod);
+                    initTestCluster(testInstance);
+                    initTestSession();
+                    initTestKeyspace();
+                    initTest(testInstance);
+                } catch (Exception e) {
+                    LOGGER.error(e.getMessage(), e);
+                    errorOut();
+                    fail(e.getMessage());
+                }
             }
             assert ccmTestConfig != null;
             assert !ccmTestConfig.createCcm() || ccm != null;
@@ -553,7 +625,7 @@ public class CCMTestsSupport {
      * Hook executed after each test method.
      */
     @AfterMethod(groups = {"isolated", "short", "long", "stress", "duration"}, alwaysRun = true)
-    public void afterTestMethod(ITestResult tr) {
+    public void afterTestMethod(ITestResult tr) throws Exception {
         if (isCcmEnabled(tr.getMethod().getConstructorOrMethod().getMethod())) {
             if (tr.getStatus() == ITestResult.FAILURE) {
                 errorOut();
@@ -571,7 +643,7 @@ public class CCMTestsSupport {
      * Hook executed after each test class.
      */
     @AfterClass(groups = {"isolated", "short", "long", "stress", "duration"}, alwaysRun = true)
-    public void afterTestClass() {
+    public void afterTestClass() throws Exception {
         if (testMode == PER_CLASS) {
             closeCloseables();
             closeTestCluster();
@@ -609,20 +681,85 @@ public class CCMTestsSupport {
     }
 
     /**
-     * The CQL statements to execute before the tests in this class.
-     * Useful to create tables or other objects inside the test keyspace,
-     * or to insert test data.
+     * Hook invoked when the test context is ready, but before the test itself.
+     * Useful to create fixtures or to insert test data.
      * <p/>
-     * Statements do not need to be qualified with keyspace name.
+     * This method is invoked once per class is the {@link TestMode} is {@link TestMode#PER_CLASS}
+     * or before each test method, if the  {@link TestMode} is {@link TestMode#PER_METHOD}.
      * <p/>
-     * The default implementation returns an empty list (no fixtures required).
-     *
-     * @return The DDL statements to execute before the tests.
+     * When this method is called, the cluster and the session are ready
+     * to be used (unless the configuration specifies that such objects
+     * should not be created).
+     * <p/>
+     * Statements executed inside this method do not need to be qualified with a keyspace name,
+     * in which case they are executed with the default keyspace for the test
+     * (unless the configuration specifies that no keyspace should be creaed for the test).
+     * <p/>
+     * The default implementation does nothing (no fixtures required).
      */
-    public Collection<String> createTestFixtures() {
-        return Collections.emptyList();
+    public void onTestContextInitialized() {
+        // nothing to do by default
     }
 
+    /**
+     * @return The {@link CCMAccess} instance to use with this test.
+     */
+    public CCMAccess ccm() {
+        return ccm;
+    }
+
+    /**
+     * @return The {@link Cluster} instance to use with this test.
+     * Can be null if CCM configuration specifies {@code createCluster = false}.
+     */
+    public Cluster cluster() {
+        return cluster;
+    }
+
+    /**
+     * @return The {@link Session} instance to use with this test.
+     * Can be null if CCM configuration specifies {@code createSession = false}.
+     */
+    public Session session() {
+        return session;
+    }
+
+    /**
+     * Executes the given statements with the test's session object.
+     * <p/>
+     * Useful to create test fixtures and/or load data before tests.
+     * <p/>
+     * This method should not be called if a session object hasn't been created
+     * (if CCM configuration specifies {@code createSession = false})
+     *
+     * @param statements The statements to execute.
+     */
+    public void execute(String... statements) {
+        execute(Arrays.asList(statements));
+    }
+
+    /**
+     * Executes the given statements with the test's session object.
+     * <p/>
+     * Useful to create test fixtures and/or load data before tests.
+     * <p/>
+     * This method should not be called if a session object hasn't been created
+     * (if CCM configuration specifies {@code createSession = false})
+     *
+     * @param statements The statements to execute.
+     */
+    public void execute(Collection<String> statements) {
+        assert session != null;
+        for (String stmt : statements) {
+            try {
+                session.execute(stmt);
+            } catch (Exception e) {
+                errorOut();
+                LOGGER.error("Could not execute statement: " + stmt, e);
+                Throwables.propagate(e);
+            }
+        }
+    }
     /**
      * Signals that the test has encountered an unexpected error.
      * <p/>
@@ -637,8 +774,9 @@ public class CCMTestsSupport {
      */
     public void errorOut() {
         erroredOut = true;
-        if (ccm != null)
+        if (ccm != null) {
             ccm.setKeepLogs(true);
+        }
     }
 
     /**
@@ -653,7 +791,38 @@ public class CCMTestsSupport {
      *
      * @return the contact points to use to contact the CCM cluster.
      */
-    public List<InetSocketAddress> getInitialContactPoints() {
+    public List<InetAddress> getContactPoints() {
+        assert ccmTestConfig != null;
+        List<InetAddress> contactPoints = new ArrayList<InetAddress>();
+        int n = 1;
+        int[] numberOfNodes = ccmTestConfig.numberOfNodes();
+        for (int dc = 1; dc <= numberOfNodes.length; dc++) {
+            int nodesInDc = numberOfNodes[dc - 1];
+            for (int i = 0; i < nodesInDc; i++) {
+                try {
+                    contactPoints.add(InetAddress.getByName(ipOfNode(n)));
+                } catch (UnknownHostException e) {
+                    Throwables.propagate(e);
+                }
+                n++;
+            }
+        }
+        return contactPoints;
+    }
+
+    /**
+     * Returns the contact points to use to contact the CCM cluster.
+     * <p/>
+     * This method returns as many contact points as the number of nodes initially present in the CCM cluster,
+     * according to {@link CCMConfig} annotations.
+     * <p/>
+     * On a multi-DC setup, this will include nodes in all data centers.
+     * <p/>
+     * This method should not be called before the test has started, nor after the test is finished.
+     *
+     * @return the contact points to use to contact the CCM cluster.
+     */
+    public List<InetSocketAddress> getContactPointsWithPorts() {
         assert ccmTestConfig != null;
         List<InetSocketAddress> contactPoints = new ArrayList<InetSocketAddress>();
         int n = 1;
@@ -681,52 +850,73 @@ public class CCMTestsSupport {
         return closeable;
     }
 
-    private void initTestContext(Object testInstance, Method testMethod) throws Exception {
+    /**
+     * Tests fail randomly with InvalidQueryException: Keyspace 'xxx' does not exist;
+     * this method tries at most 3 times to issue a successful USE statement.
+     *
+     * @param ks The keyspace to use
+     */
+    public void useKeyspace(String ks) {
+        final int maxTries = 3;
+        for (int i = 1; i <= maxTries; i++) {
+            try {
+                session.execute("USE " + ks);
+            } catch (InvalidQueryException e) {
+                if (i == maxTries)
+                    throw e;
+                LOGGER.error("Could not USE keyspace, retrying");
+                Uninterruptibles.sleepUninterruptibly(1, TimeUnit.MINUTES);
+            }
+        }
+    }
+
+    protected void initTestContext(Object testInstance, Method testMethod) throws Exception {
         erroredOut = false;
         ccmTestConfig = createCCMTestConfig(testInstance, testMethod);
         assert ccmTestConfig != null;
         if (ccmTestConfig.createCcm()) {
-            CCMAccess ccm = CCMCache.get(ccmTestConfig.ccmBuilder());
+            ccmBuilder = ccmTestConfig.ccmBuilder(testInstance);
+            CCMAccess ccm = CCMCache.get(ccmBuilder);
             assert ccm != null;
             if (ccmTestConfig.dirtiesContext()) {
                 this.ccm = ccm;
             } else {
-                this.ccm = new ReadOnlyCCMBridge(ccm);
+                this.ccm = new ReadOnlyCCMAccess(ccm);
             }
             try {
                 ccm.start();
-            } catch (RuntimeException e) {
-                LOGGER.error("Could not start " + ccm, e);
+            } catch (CCMException e) {
+                errorOut();
                 fail(e.getMessage());
             }
             LOGGER.debug("Using {}", ccm);
         }
     }
 
-    private void initTestCluster(Object testInstance) throws Exception {
+    protected void initTestCluster(Object testInstance) throws Exception {
         if (ccmTestConfig.createCcm() && ccmTestConfig.createCluster()) {
-            Cluster.Builder builder = ccmTestConfig.clusterBuilder(testInstance);
+            Cluster.Builder builder = ccmTestConfig.clusterProvider(testInstance);
             // add contact points only if the provided builder didn't do so
             if (builder.getContactPoints().isEmpty())
-                builder.addContactPointsWithPorts(getInitialContactPoints());
+                builder.addContactPoints(getContactPoints());
             builder.withPort(ccm.getBinaryPort());
             cluster = register(builder.build());
             cluster.init();
         }
     }
 
-    private void initTestSession() throws Exception {
+    protected void initTestSession() throws Exception {
         if (ccmTestConfig.createCcm() && ccmTestConfig.createCluster() && ccmTestConfig.createSession())
             session = register(cluster.connect());
     }
 
-    private void initTestKeyspace() {
+    protected void initTestKeyspace() {
         if (ccmTestConfig.createCcm() && ccmTestConfig.createCluster() && ccmTestConfig.createSession() && ccmTestConfig.createKeyspace()) {
             try {
-                keyspace = TestUtils.getAvailableKeyspaceName();
+                keyspace = TestUtils.generateIdentifier("ks_");
                 LOGGER.debug("Using keyspace " + keyspace);
                 session.execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, keyspace, 1));
-                session.execute("USE " + keyspace);
+                useKeyspace(keyspace);
             } catch (Exception e) {
                 errorOut();
                 LOGGER.error("Could not create test keyspace", e);
@@ -735,35 +925,25 @@ public class CCMTestsSupport {
         }
     }
 
-    private void initTestFixtures(Object testInstance) throws Exception {
-        if (ccmTestConfig.createCcm() && ccmTestConfig.createCluster() && ccmTestConfig.createSession()) {
-            for (String stmt : ccmTestConfig.fixtures(testInstance)) {
-                try {
-                    session.execute(stmt);
-                } catch (Exception e) {
-                    errorOut();
-                    LOGGER.error("Could not execute statement: " + stmt, e);
-                    Throwables.propagate(e);
-                }
-            }
-        }
+    protected void initTest(Object testInstance) throws Exception {
+        ccmTestConfig.invokeInitTest(testInstance);
     }
 
-    private void closeTestContext() {
-        if (ccmTestConfig != null && ccm != null) {
-            CCMBridge.Builder key = ccmTestConfig.ccmBuilder();
+    protected void closeTestContext() throws Exception {
+        if (ccmTestConfig != null && ccmBuilder != null && ccm != null) {
             if (ccmTestConfig.dirtiesContext()) {
-                CCMCache.remove(key);
+                CCMCache.remove(ccmBuilder);
                 ccm.close();
             } else {
-                ((ReadOnlyCCMBridge) ccm).delegate.close();
+                ((ReadOnlyCCMAccess) ccm).delegate.close();
             }
         }
         ccmTestConfig = null;
+        ccmBuilder = null;
         ccm = null;
     }
 
-    private void closeTestCluster() {
+    protected void closeTestCluster() {
         if (cluster != null && !cluster.isClosed())
             executeNoFail(new Runnable() {
                 @Override
@@ -776,7 +956,7 @@ public class CCMTestsSupport {
         keyspace = null;
     }
 
-    private void closeCloseables() {
+    protected void closeCloseables() {
         if (closer != null)
             executeNoFail(new Callable<Void>() {
                 @Override

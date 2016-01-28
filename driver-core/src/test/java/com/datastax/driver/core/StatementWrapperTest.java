@@ -43,10 +43,10 @@ public class StatementWrapperTest extends CCMTestsSupport {
         loadBalancingPolicy.customStatementsHandled.set(0);
 
         SimpleStatement s = new SimpleStatement("select * from system.local");
-        session.execute(s);
+        session().execute(s);
         assertThat(loadBalancingPolicy.customStatementsHandled.get()).isEqualTo(0);
 
-        session.execute(new CustomStatement(s));
+        session().execute(new CustomStatement(s));
         assertThat(loadBalancingPolicy.customStatementsHandled.get()).isEqualTo(1);
     }
 
@@ -55,10 +55,10 @@ public class StatementWrapperTest extends CCMTestsSupport {
         speculativeExecutionPolicy.customStatementsHandled.set(0);
 
         SimpleStatement s = new SimpleStatement("select * from system.local");
-        session.execute(s);
+        session().execute(s);
         assertThat(speculativeExecutionPolicy.customStatementsHandled.get()).isEqualTo(0);
 
-        session.execute(new CustomStatement(s));
+        session().execute(new CustomStatement(s));
         assertThat(speculativeExecutionPolicy.customStatementsHandled.get()).isEqualTo(1);
     }
 
@@ -71,10 +71,10 @@ public class StatementWrapperTest extends CCMTestsSupport {
         Statement s = new SimpleStatement("select * from system.local")
                 .setConsistencyLevel(ConsistencyLevel.TWO);
 
-        session.execute(s);
+        session().execute(s);
         assertThat(retryPolicy.customStatementsHandled.get()).isEqualTo(0);
 
-        session.execute(new CustomStatement(s));
+        session().execute(new CustomStatement(s));
         assertThat(retryPolicy.customStatementsHandled.get()).isEqualTo(1);
     }
 

@@ -35,7 +35,8 @@ public class SingleTokenIntegrationTest extends CCMTestsSupport {
      */
     @Test(groups = "short")
     public void should_return_single_non_empty_range_when_cluster_has_one_single_token() {
-        Metadata metadata = cluster.getMetadata();
+        cluster().manager.controlConnection.refreshNodeListAndTokenMap();
+        Metadata metadata = cluster().getMetadata();
         Set<TokenRange> tokenRanges = metadata.getTokenRanges();
         assertThat(tokenRanges).hasSize(1);
         TokenRange tokenRange = tokenRanges.iterator().next();
@@ -46,7 +47,7 @@ public class SingleTokenIntegrationTest extends CCMTestsSupport {
                 .isNotWrappedAround();
 
         Set<Host> hostsForRange = metadata.getReplicas(keyspace, tokenRange);
-        Host host1 = TestUtils.findHost(cluster, 1);
+        Host host1 = TestUtils.findHost(cluster(), 1);
         assertThat(hostsForRange).containsOnly(host1);
 
         ByteBuffer randomPartitionKey = Bytes.fromHexString("0xCAFEBABE");

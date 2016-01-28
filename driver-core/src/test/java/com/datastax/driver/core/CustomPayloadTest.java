@@ -26,8 +26,6 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.nio.ByteBuffer;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -64,7 +62,7 @@ public class CustomPayloadTest extends CCMTestsSupport {
     public void should_echo_custom_payload_when_executing_statement() throws Exception {
         Statement statement = new SimpleStatement("SELECT c2 FROM t1 where c1 = ?", 1);
         statement.setOutgoingPayload(payload1);
-        ResultSet rows = session.execute(statement);
+        ResultSet rows = session().execute(statement);
         Map<String, ByteBuffer> actual = rows.getExecutionInfo().getIncomingPayload();
         assertThat(actual).isEqualTo(payload1);
     }
@@ -73,7 +71,7 @@ public class CustomPayloadTest extends CCMTestsSupport {
     public void should_echo_custom_payload_when_executing_batch_statement() throws Exception {
         Statement statement = new BatchStatement().add(new SimpleStatement("INSERT INTO t1 (c1, c2) values (1, 'foo')"));
         statement.setOutgoingPayload(payload1);
-        ResultSet rows = session.execute(statement);
+        ResultSet rows = session().execute(statement);
         Map<String, ByteBuffer> actual = rows.getExecutionInfo().getIncomingPayload();
         assertThat(actual).isEqualTo(payload1);
     }
@@ -81,7 +79,7 @@ public class CustomPayloadTest extends CCMTestsSupport {
     @Test(groups = "short")
     public void should_echo_custom_payload_when_building_statement() throws Exception {
         Statement statement = select("c2").from("t1").where(eq("c1", 1)).setOutgoingPayload(payload1);
-        ResultSet rows = session.execute(statement);
+        ResultSet rows = session().execute(statement);
         Map<String, ByteBuffer> actual = rows.getExecutionInfo().getIncomingPayload();
         assertThat(actual).isEqualTo(payload1);
     }
@@ -97,7 +95,7 @@ public class CustomPayloadTest extends CCMTestsSupport {
     public void should_propagate_incoming_payload_to_bound_statement() throws Exception {
         RegularStatement statement = new SimpleStatement("SELECT c2 as col1 FROM t1 where c1 = ?");
         statement.setOutgoingPayload(payload1);
-        PreparedStatement ps = session.prepare(statement);
+        PreparedStatement ps = session().prepare(statement);
         // Prepared statement should inherit outgoing payload
         assertThat(ps.getOutgoingPayload()).isEqualTo(payload1);
         // Prepared statement should receive incoming payload
@@ -105,12 +103,12 @@ public class CustomPayloadTest extends CCMTestsSupport {
         ps.setOutgoingPayload(null); // unset outgoing payload
         // bound statement should inherit from prepared statement's incoming payload
         BoundStatement bs = ps.bind(1);
-        ResultSet rows = session.execute(bs);
+        ResultSet rows = session().execute(bs);
         Map<String, ByteBuffer> actual = rows.getExecutionInfo().getIncomingPayload();
         assertThat(actual).isEqualTo(payload1);
         bs = ps.bind();
         bs.setInt(0, 1);
-        rows = session.execute(bs);
+        rows = session().execute(bs);
         actual = rows.getExecutionInfo().getIncomingPayload();
         assertThat(actual).isEqualTo(payload1);
     }
@@ -125,7 +123,7 @@ public class CustomPayloadTest extends CCMTestsSupport {
     public void should_override_incoming_payload_when_outgoing_payload_explicitly_set_on_preparing_statement() throws Exception {
         RegularStatement statement = new SimpleStatement("SELECT c2 as col2 FROM t1 where c1 = ?");
         statement.setOutgoingPayload(payload1);
-        PreparedStatement ps = session.prepare(statement);
+        PreparedStatement ps = session().prepare(statement);
         // Prepared statement should inherit outgoing payload
         assertThat(ps.getOutgoingPayload()).isEqualTo(payload1);
         // Prepared statement should receive incoming payload
@@ -133,12 +131,12 @@ public class CustomPayloadTest extends CCMTestsSupport {
         ps.setOutgoingPayload(payload2); // override outgoing payload
         // bound statement should inherit from prepared statement's outgoing payload
         BoundStatement bs = ps.bind(1);
-        ResultSet rows = session.execute(bs);
+        ResultSet rows = session().execute(bs);
         Map<String, ByteBuffer> actual = rows.getExecutionInfo().getIncomingPayload();
         assertThat(actual).isEqualTo(payload2);
         bs = ps.bind();
         bs.setInt(0, 1);
-        rows = session.execute(bs);
+        rows = session().execute(bs);
         actual = rows.getExecutionInfo().getIncomingPayload();
         assertThat(actual).isEqualTo(payload2);
     }
@@ -152,7 +150,7 @@ public class CustomPayloadTest extends CCMTestsSupport {
     @Test(groups = "short")
     public void should_not_set_any_payload_on_bound_statement() throws Exception {
         RegularStatement statement = new SimpleStatement("SELECT c2 as col3 FROM t1 where c1 = ?");
-        PreparedStatement ps = session.prepare(statement);
+        PreparedStatement ps = session().prepare(statement);
         assertThat(ps.getOutgoingPayload()).isNull();
         assertThat(ps.getIncomingPayload()).isNull();
         // bound statement should not have outgoing payload
@@ -160,14 +158,14 @@ public class CustomPayloadTest extends CCMTestsSupport {
         assertThat(bs.getOutgoingPayload()).isNull();
         // explicitly set a payload for this boudn statement only
         bs.setOutgoingPayload(payload1);
-        ResultSet rows = session.execute(bs);
+        ResultSet rows = session().execute(bs);
         Map<String, ByteBuffer> actual = rows.getExecutionInfo().getIncomingPayload();
         assertThat(actual).isEqualTo(payload1);
         // a second bound statement should not have any payload
         bs = ps.bind();
         assertThat(bs.getOutgoingPayload()).isNull();
         bs.setInt(0, 1);
-        rows = session.execute(bs);
+        rows = session().execute(bs);
         actual = rows.getExecutionInfo().getIncomingPayload();
         assertThat(actual).isNull();
     }
@@ -181,12 +179,12 @@ public class CustomPayloadTest extends CCMTestsSupport {
      */
     @Test(groups = "short")
     public void should_echo_custom_payload_when_paginating() throws Exception {
-        session.execute("INSERT INTO t1 (c1, c2) VALUES (1, 'a')");
-        session.execute("INSERT INTO t1 (c1, c2) VALUES (1, 'b')");
+        session().execute("INSERT INTO t1 (c1, c2) VALUES (1, 'a')");
+        session().execute("INSERT INTO t1 (c1, c2) VALUES (1, 'b')");
         Statement statement = new SimpleStatement("SELECT c2 FROM t1 where c1 = 1");
         statement.setFetchSize(1);
         statement.setOutgoingPayload(payload1);
-        ResultSet rows = session.execute(statement);
+        ResultSet rows = session().execute(statement);
         rows.all();
         assertThat(rows.getAllExecutionInfo()).extracting("incomingPayload").containsOnly(payload1);
     }
@@ -201,7 +199,7 @@ public class CustomPayloadTest extends CCMTestsSupport {
         payload.put("k1", Statement.NULL_PAYLOAD_VALUE);
         Statement statement = new SimpleStatement("SELECT c2 FROM t1 where c1 = ?", 1);
         statement.setOutgoingPayload(payload);
-        ResultSet rows = session.execute(statement);
+        ResultSet rows = session().execute(statement);
         Map<String, ByteBuffer> actual = rows.getExecutionInfo().getIncomingPayload();
         assertThat(actual).isEqualTo(payload);
     }
@@ -224,28 +222,26 @@ public class CustomPayloadTest extends CCMTestsSupport {
     public void should_throw_npe_when_null_key_on_prepared_statement() throws Exception {
         Map<String, ByteBuffer> payload = new HashMap<String, ByteBuffer>();
         payload.put(null, ByteBuffer.wrap(new byte[]{1}));
-        session.prepare(new SimpleStatement("SELECT c2 FROM t1 where c1 = 1")).setOutgoingPayload(payload);
+        session().prepare(new SimpleStatement("SELECT c2 FROM t1 where c1 = 1")).setOutgoingPayload(payload);
     }
 
     @Test(groups = "short", expectedExceptions = NullPointerException.class)
     public void should_throw_npe_when_null_value_on_prepared_statement() throws Exception {
         Map<String, ByteBuffer> payload = new HashMap<String, ByteBuffer>();
         payload.put("k1", null);
-        session.prepare(new SimpleStatement("SELECT c2 FROM t1 where c1 = 2")).setOutgoingPayload(payload);
+        session().prepare(new SimpleStatement("SELECT c2 FROM t1 where c1 = 2")).setOutgoingPayload(payload);
     }
 
     @Test(groups = "short")
     public void should_throw_ufe_when_protocol_version_lesser_than_4() throws Exception {
-        Cluster v3cluster = null;
-        Session v3session = null;
         try {
-            v3cluster = Cluster.builder()
-                    .addContactPointsWithPorts(getInitialContactPoints())
-                    .withPort(ccm.getBinaryPort())
+            Cluster v3cluster = register(Cluster.builder()
+                    .addContactPoints(getContactPoints())
+                    .withPort(ccm().getBinaryPort())
                     .withProtocolVersion(V3)
-                    .build()
+                    .build())
                     .init();
-            v3session = v3cluster.connect();
+            Session v3session = v3cluster.connect();
             Statement statement = new SimpleStatement("SELECT c2 FROM t1 where c1 = ?", 1);
             statement.setOutgoingPayload(payload1);
             v3session.execute(statement);
@@ -261,11 +257,6 @@ public class CustomPayloadTest extends CCMTestsSupport {
                     .hasOnlyElementsOfType(UnsupportedFeatureException.class)
                     .extracting("message")
                     .containsOnly("Unsupported feature with the native protocol V3 (which is currently in use): Custom payloads are only supported since native protocol V4");
-        } finally {
-            if (v3session != null)
-                v3session.close();
-            if (v3cluster != null)
-                v3cluster.close();
         }
     }
 
@@ -285,7 +276,7 @@ public class CustomPayloadTest extends CCMTestsSupport {
             logger.addAppender(appender);
             Statement statement = new SimpleStatement("SELECT c2 FROM t1 where c1 = ?", 1);
             statement.setOutgoingPayload(payload1);
-            session.execute(statement);
+            session().execute(statement);
             String logs = appender.waitAndGet(10000);
             assertThat(logs)
                     .contains("Sending payload: {k1:0x010203, k2:0x040506} (20 bytes total)")
@@ -297,8 +288,8 @@ public class CustomPayloadTest extends CCMTestsSupport {
     }
 
     @Override
-    public Collection<String> createTestFixtures() {
-        return Collections.singletonList("CREATE TABLE t1 (c1 int, c2 text,  PRIMARY KEY (c1, c2))");
+    public void onTestContextInitialized() {
+        execute("CREATE TABLE t1 (c1 int, c2 text,  PRIMARY KEY (c1, c2))");
     }
 
 }

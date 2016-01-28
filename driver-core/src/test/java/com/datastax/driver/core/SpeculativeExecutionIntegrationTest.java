@@ -17,11 +17,8 @@ package com.datastax.driver.core;
 
 import com.datastax.driver.core.policies.ConstantSpeculativeExecutionPolicy;
 import com.datastax.driver.core.utils.CassandraVersion;
-import com.google.common.collect.Lists;
 import org.mockito.Mockito;
 import org.testng.annotations.Test;
-
-import java.util.Collection;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.times;
@@ -35,8 +32,8 @@ public class SpeculativeExecutionIntegrationTest extends CCMTestsSupport {
     TimestampGenerator timestampGenerator;
 
     @Override
-    public Collection<String> createTestFixtures() {
-        return Lists.newArrayList("create table foo(k int primary key, v int)");
+    public void onTestContextInitialized() {
+        execute("create table foo(k int primary key, v int)");
     }
 
     @Override
@@ -59,7 +56,7 @@ public class SpeculativeExecutionIntegrationTest extends CCMTestsSupport {
     @Test(groups = "short")
     @CassandraVersion(major = 2.1)
     public void should_use_same_default_timestamp_for_all_executions() {
-        Metrics.Errors errors = cluster.getMetrics().getErrorMetrics();
+        Metrics.Errors errors = cluster().getMetrics().getErrorMetrics();
 
         Mockito.reset(timestampGenerator);
         long execStartCount = errors.getSpeculativeExecutions().getCount();
@@ -68,7 +65,7 @@ public class SpeculativeExecutionIntegrationTest extends CCMTestsSupport {
         for (int k = 0; k < 1000; k++) {
             batch.add(new SimpleStatement("insert into foo(k,v) values (?,1)", k));
         }
-        session.execute(batch);
+        session().execute(batch);
 
         assertThat(errors.getSpeculativeExecutions().getCount()).isEqualTo(execStartCount + 1);
         Mockito.verify(timestampGenerator, times(1)).next();

@@ -24,8 +24,6 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.math.BigDecimal;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 import static com.datastax.driver.core.TypeCodec.*;
@@ -43,8 +41,8 @@ public class OptionalCodecTest extends CCMTestsSupport {
     private BuiltStatement selectStmt;
 
     @Override
-    public Collection<String> createTestFixtures() {
-        return Collections.singletonList("CREATE TABLE foo (c1 text, c2 text, c3 list<text>, c4 bigint, c5 decimal, PRIMARY KEY (c1, c2))");
+    public void onTestContextInitialized() {
+        execute("CREATE TABLE foo (c1 text, c2 text, c3 list<text>, c4 bigint, c5 decimal, PRIMARY KEY (c1, c2))");
     }
 
     @Override
@@ -73,15 +71,15 @@ public class OptionalCodecTest extends CCMTestsSupport {
     @Test(groups = "short")
     @CassandraVersion(major = 2.2)
     public void should_map_unset_value_to_absent() {
-        PreparedStatement insertPrep = session.prepare(this.insertStmt);
-        PreparedStatement selectPrep = session.prepare(this.selectStmt);
+        PreparedStatement insertPrep = session().prepare(this.insertStmt);
+        PreparedStatement selectPrep = session().prepare(this.selectStmt);
 
         BoundStatement bs = insertPrep.bind();
         bs.setString(0, "should_map_unset_value_to_absent");
         bs.setString(1, "1");
-        session.execute(bs);
+        session().execute(bs);
 
-        ResultSet results = session.execute(selectPrep.bind("should_map_unset_value_to_absent"));
+        ResultSet results = session().execute(selectPrep.bind("should_map_unset_value_to_absent"));
         assertThat(results.getAvailableWithoutFetching()).isEqualTo(1);
 
         Row row = results.one();
@@ -102,16 +100,16 @@ public class OptionalCodecTest extends CCMTestsSupport {
      */
     @Test(groups = "short")
     public void should_map_absent_null_value_to_absent() {
-        PreparedStatement insertPrep = session.prepare(this.insertStmt);
-        PreparedStatement selectPrep = session.prepare(this.selectStmt);
+        PreparedStatement insertPrep = session().prepare(this.insertStmt);
+        PreparedStatement selectPrep = session().prepare(this.selectStmt);
 
         BoundStatement bs = insertPrep.bind();
         bs.setString(0, "should_map_absent_null_value_to_absent");
         bs.setString(1, "1");
         bs.set(2, Optional.<List<String>>absent(), optionalCodec.getJavaType());
-        session.execute(bs);
+        session().execute(bs);
 
-        ResultSet results = session.execute(selectPrep.bind("should_map_absent_null_value_to_absent"));
+        ResultSet results = session().execute(selectPrep.bind("should_map_absent_null_value_to_absent"));
         assertThat(results.getAvailableWithoutFetching()).isEqualTo(1);
 
         Row row = results.one();
@@ -134,8 +132,8 @@ public class OptionalCodecTest extends CCMTestsSupport {
      */
     @Test(groups = "short")
     public void should_map_some_back_to_itself() {
-        PreparedStatement insertPrep = session.prepare(this.insertStmt);
-        PreparedStatement selectPrep = session.prepare(this.selectStmt);
+        PreparedStatement insertPrep = session().prepare(this.insertStmt);
+        PreparedStatement selectPrep = session().prepare(this.selectStmt);
 
         List<String> data = Lists.newArrayList("1", "2", "3");
 
@@ -143,9 +141,9 @@ public class OptionalCodecTest extends CCMTestsSupport {
         bs.setString(0, "should_map_some_back_to_itself");
         bs.setString(1, "1");
         bs.set(2, Optional.of(data), optionalCodec.getJavaType());
-        session.execute(bs);
+        session().execute(bs);
 
-        ResultSet results = session.execute(selectPrep.bind("should_map_some_back_to_itself"));
+        ResultSet results = session().execute(selectPrep.bind("should_map_some_back_to_itself"));
         assertThat(results.getAvailableWithoutFetching()).isEqualTo(1);
 
         Row row = results.one();
@@ -163,18 +161,18 @@ public class OptionalCodecTest extends CCMTestsSupport {
     @Test(groups = "short")
     public void should_map_a_primitive_type_to_absent() {
         OptionalCodec<Long> optionalLongCodec = new OptionalCodec<Long>(bigint());
-        cluster.getConfiguration().getCodecRegistry().register(optionalLongCodec);
+        cluster().getConfiguration().getCodecRegistry().register(optionalLongCodec);
 
-        PreparedStatement stmt = session.prepare("insert into foo (c1, c2, c4) values (?,?,?)");
+        PreparedStatement stmt = session().prepare("insert into foo (c1, c2, c4) values (?,?,?)");
 
         BoundStatement bs = stmt.bind();
         bs.setString(0, "should_map_a_primitive_type_to_absent");
         bs.setString(1, "1");
         bs.set(2, Optional.<Long>absent(), optionalLongCodec.getJavaType());
-        session.execute(bs);
+        session().execute(bs);
 
-        PreparedStatement selectBigint = session.prepare("select c1, c4 from foo where c1=?");
-        ResultSet results = session.execute(selectBigint.bind("should_map_a_primitive_type_to_absent"));
+        PreparedStatement selectBigint = session().prepare("select c1, c4 from foo where c1=?");
+        ResultSet results = session().execute(selectBigint.bind("should_map_a_primitive_type_to_absent"));
 
         assertThat(results.getAvailableWithoutFetching()).isEqualTo(1);
 
@@ -187,18 +185,18 @@ public class OptionalCodecTest extends CCMTestsSupport {
     @Test(groups = "short")
     public void should_map_a_nullable_type_to_absent() {
         OptionalCodec<BigDecimal> optionalDecimalCodec = new OptionalCodec<BigDecimal>(decimal());
-        cluster.getConfiguration().getCodecRegistry().register(optionalDecimalCodec);
+        cluster().getConfiguration().getCodecRegistry().register(optionalDecimalCodec);
 
-        PreparedStatement stmt = session.prepare("insert into foo (c1, c2, c5) values (?,?,?)");
+        PreparedStatement stmt = session().prepare("insert into foo (c1, c2, c5) values (?,?,?)");
 
         BoundStatement bs = stmt.bind();
         bs.setString(0, "should_map_a_nullable_type_to_absent");
         bs.setString(1, "1");
         bs.set(2, Optional.<BigDecimal>absent(), optionalDecimalCodec.getJavaType());
-        session.execute(bs);
+        session().execute(bs);
 
-        PreparedStatement selectDecimal = session.prepare("select c1, c5 from foo where c1=?");
-        ResultSet results = session.execute(selectDecimal.bind("should_map_a_nullable_type_to_absent"));
+        PreparedStatement selectDecimal = session().prepare("select c1, c5 from foo where c1=?");
+        ResultSet results = session().execute(selectDecimal.bind("should_map_a_nullable_type_to_absent"));
 
         assertThat(results.getAvailableWithoutFetching()).isEqualTo(1);
 

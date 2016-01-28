@@ -18,9 +18,6 @@ package com.datastax.driver.core;
 import com.datastax.driver.core.utils.CassandraVersion;
 import org.testng.annotations.Test;
 
-import java.util.Collection;
-import java.util.Collections;
-
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.ClusteringOrder.DESC;
 import static com.datastax.driver.core.DataType.cint;
@@ -58,12 +55,12 @@ public class MaterializedViewMetadataTest extends CCMTestsSupport {
                 keyspace, keyspace);
 
         // when
-        session.execute(createTable);
-        session.execute(createMV);
+        session().execute(createTable);
+        session().execute(createMV);
 
         // then
-        TableMetadata table = cluster.getMetadata().getKeyspace(keyspace).getTable("scores");
-        MaterializedViewMetadata mv = cluster.getMetadata().getKeyspace(keyspace).getMaterializedView("monthlyhigh");
+        TableMetadata table = cluster().getMetadata().getKeyspace(keyspace).getTable("scores");
+        MaterializedViewMetadata mv = cluster().getMetadata().getKeyspace(keyspace).getMaterializedView("monthlyhigh");
 
         assertThat(table).isNotNull().hasName("scores").hasMaterializedView(mv).hasNumberOfColumns(6);
         assertThat(table.getColumns().get(0)).isNotNull().hasName("user").isPartitionKey();
@@ -107,11 +104,11 @@ public class MaterializedViewMetadataTest extends CCMTestsSupport {
                         + "PRIMARY KEY (\"theKey\", \"the;Clustering\")",
                 keyspace, keyspace);
         // when
-        session.execute(createTable);
-        session.execute(createMV);
+        session().execute(createTable);
+        session().execute(createMV);
         // then
-        TableMetadata table = cluster.getMetadata().getKeyspace(keyspace).getTable("\"T1\"");
-        MaterializedViewMetadata mv = cluster.getMetadata().getKeyspace(keyspace).getMaterializedView("\"Mv1\"");
+        TableMetadata table = cluster().getMetadata().getKeyspace(keyspace).getTable("\"T1\"");
+        MaterializedViewMetadata mv = cluster().getMetadata().getKeyspace(keyspace).getMaterializedView("\"Mv1\"");
         assertThat(table).isNotNull().hasName("T1").hasMaterializedView(mv).hasNumberOfColumns(3);
         assertThat(table.getViews()).hasSize(1).containsOnly(mv);
         assertThat(table.getColumns().get(0)).isNotNull().hasName("theKey").isPartitionKey().hasType(cint());
@@ -124,8 +121,4 @@ public class MaterializedViewMetadataTest extends CCMTestsSupport {
         assertThat(mv.asCQLQuery(false)).contains(createMV);
     }
 
-    @Override
-    public Collection<String> createTestFixtures() {
-        return Collections.emptyList();
-    }
 }

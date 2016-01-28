@@ -22,6 +22,8 @@ import java.util.Map;
 
 public interface CCMAccess extends Closeable {
 
+    enum Workload {cassandra, solr, hadoop, spark, cfs, graph}
+
     // Inspection methods
 
     /**
@@ -130,6 +132,10 @@ public interface CCMAccess extends Closeable {
      */
     void updateDSEConfig(Map<String, Object> configs);
 
+    /**
+     * Checks for errors in the logs of all nodes in the cluster.
+     */
+    String checkForErrors();
 
     // Methods altering nodes
 
@@ -201,7 +207,7 @@ public interface CCMAccess extends Closeable {
      *
      * @param n the node number (starting from 1).
      */
-    void setWorkload(int n, String workload);
+    void setWorkload(int n, Workload workload);
 
 
     // Methods blocking until nodes are up or down

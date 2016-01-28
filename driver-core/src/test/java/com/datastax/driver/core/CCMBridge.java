@@ -31,7 +31,6 @@ import java.io.*;
 import java.net.InetSocketAddress;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.datastax.driver.core.TestUtils.executeNoFail;
 import static com.datastax.driver.core.TestUtils.findAvailablePort;
@@ -384,7 +383,17 @@ public class CCMBridge implements CCMAccess {
             return;
         if (logger.isDebugEnabled())
             logger.debug("Starting: {} - free memory: {} MB", this, TestUtils.getFreeMemoryMB());
-        execute(CCM_COMMAND + " start --wait-other-notice --wait-for-binary-proto" + jvmArgs);
+        try {
+            execute(CCM_COMMAND + " start --wait-other-notice --wait-for-binary-proto" + jvmArgs);
+        } catch (CCMException e) {
+            logger.error("Could not start " + this, e);
+            logger.error("CCM output:\n{}", e.getOut());
+            setKeepLogs(true);
+            String errors = checkForErrors();
+            if (errors != null)
+                logger.error("CCM check errors:\n{}", errors);
+            throw e;
+        }
         if (logger.isDebugEnabled())
             logger.debug("Started: {} - Free memory: {} MB", this, TestUtils.getFreeMemoryMB());
         started = true;
@@ -396,7 +405,6 @@ public class CCMBridge implements CCMAccess {
             return;
         if (logger.isDebugEnabled())
             logger.debug("Stopping: {} - free memory: {} MB", this, TestUtils.getFreeMemoryMB());
-        execute(CCM_COMMAND + " stop");
         if (logger.isDebugEnabled())
             logger.debug("Stopped: {} - free memory: {} MB", this, TestUtils.getFreeMemoryMB());
         closed = true;
@@ -412,9 +420,37 @@ public class CCMBridge implements CCMAccess {
     }
 
     @Override
+    public synchronized void remove() {
+        stop();
+        logger.debug("Removing: {}", this);
+        execute(CCM_COMMAND + " remove");
+    }
+
+    @Override
+    public String checkForErrors() {
+        logger.debug("Checking for errors in: {}", this);
+        try {
+            return execute(CCM_COMMAND + " checklogerror");
+        } catch (CCMException e) {
+            logger.warn("Check for errors failed");
+            return null;
+        }
+    }
+
+    @Override
     public void start(int n) {
         logger.debug(String.format("Starting: node %s (%s%s:%s) in %s", n, TestUtils.IP_PREFIX, n, binaryPort, this));
-        execute(CCM_COMMAND + " node%d start --wait-other-notice --wait-for-binary-proto" + jvmArgs, n);
+        try {
+            execute(CCM_COMMAND + " node%d start --wait-other-notice --wait-for-binary-proto" + jvmArgs, n);
+        } catch (CCMException e) {
+            logger.error(String.format("Could not start node %s in %s", n, this), e);
+            logger.error("CCM output:\n{}", e.getOut());
+            setKeepLogs(true);
+            String errors = checkForErrors();
+            if (errors != null)
+                logger.error("CCM check errors:\n{}", errors);
+            throw e;
+        }
     }
 
     @Override
@@ -427,13 +463,6 @@ public class CCMBridge implements CCMAccess {
     public void forceStop(int n) {
         logger.debug(String.format("Force stopping: node %s (%s%s:%s) in %s", n, TestUtils.IP_PREFIX, n, binaryPort, this));
         execute(CCM_COMMAND + " node%d stop --not-gently", n);
-    }
-
-    @Override
-    public synchronized void remove() {
-        stop();
-        logger.debug("Removing: {}", this);
-        execute(CCM_COMMAND + " remove");
     }
 
     @Override
@@ -509,31 +538,36 @@ public class CCMBridge implements CCMAccess {
     }
 
     @Override
-    public void setWorkload(int node, String workload) {
+    public void setWorkload(int node, Workload workload) {
         execute(CCM_COMMAND + " node%d setworkload %s", node, workload);
     }
 
-    private void execute(String command, Object... args) {
-
+    private String execute(String command, Object... args) {
         String fullCommand = String.format(command, args) + " --config-dir=" + ccmDir;
         Closer closer = Closer.create();
         // 10 minutes timeout
         ExecuteWatchdog watchDog = new ExecuteWatchdog(TimeUnit.MINUTES.toMillis(10));
+        StringWriter sw = new StringWriter();
+        final PrintWriter pw = new PrintWriter(sw);
+        closer.register(pw);
         try {
             logger.trace("Executing: " + fullCommand);
             CommandLine cli = CommandLine.parse(fullCommand);
             Executor executor = new DefaultExecutor();
-
             LogOutputStream outStream = new LogOutputStream() {
                 @Override
                 protected void processLine(String line, int logLevel) {
-                    logger.debug("ccmout> " + line);
+                    String out = "ccmout> " + line;
+                    logger.debug(out);
+                    pw.println(out);
                 }
             };
             LogOutputStream errStream = new LogOutputStream() {
                 @Override
                 protected void processLine(String line, int logLevel) {
-                    logger.error("ccmerr> " + line);
+                    String err = "ccmerr> " + line;
+                    logger.error(err);
+                    pw.println(err);
                 }
             };
             closer.register(outStream);
@@ -541,16 +575,17 @@ public class CCMBridge implements CCMAccess {
             ExecuteStreamHandler streamHandler = new PumpStreamHandler(outStream, errStream);
             executor.setStreamHandler(streamHandler);
             executor.setWatchdog(watchDog);
-
             int retValue = executor.execute(cli, ENVIRONMENT_MAP);
             if (retValue != 0) {
                 logger.error("Non-zero exit code ({}) returned from executing ccm command: {}", retValue, fullCommand);
-                throw new RuntimeException();
+                pw.flush();
+                throw new CCMException(String.format("Non-zero exit code (%s) returned from executing ccm command: %s", retValue, fullCommand), sw.toString());
             }
         } catch (IOException e) {
             if (watchDog.killedProcess())
-                logger.error("The command {} was killed after 5 minutes", fullCommand);
-            throw new RuntimeException(String.format("The command %s failed to execute", fullCommand), e);
+                logger.error("The command {} was killed after 10 minutes", fullCommand);
+            pw.flush();
+            throw new CCMException(String.format("The command %s failed to execute", fullCommand), sw.toString(), e);
         } finally {
             try {
                 closer.close();
@@ -558,6 +593,7 @@ public class CCMBridge implements CCMAccess {
                 Throwables.propagate(e);
             }
         }
+        return sw.toString();
     }
 
     /**
@@ -626,8 +662,7 @@ public class CCMBridge implements CCMAccess {
      * use {@link #builder()} to get an instance
      */
     public static class Builder {
-        private static final AtomicInteger COUNTER = new AtomicInteger(0);
-        private final String clusterName = "test_" + COUNTER.incrementAndGet();
+        private final String clusterName = TestUtils.generateIdentifier("cluster_");
         int[] nodes = {1};
         private boolean start = true;
         private boolean isDSE = isDSE();
@@ -640,6 +675,7 @@ public class CCMBridge implements CCMAccess {
         private int thriftPort = -1;
         private int binaryPort = -1;
         private int storagePort = -1;
+        private Map<Integer, Workload> workloads = new HashMap<Integer, Workload>();
 
         private Builder() {
         }
@@ -714,7 +750,7 @@ public class CCMBridge implements CCMAccess {
 
         /**
          * Free-form options that will be added at the end of the {@code ccm create} command
-         *  (defaults to {@link #getInstallArguments()} if this is never called).
+         * (defaults to {@link #getInstallArguments()} if this is never called).
          */
         public Builder withCreateOptions(String... createOptions) {
             Collections.addAll(this.createOptions, createOptions);
@@ -762,6 +798,18 @@ public class CCMBridge implements CCMAccess {
             return this;
         }
 
+        /**
+         * Sets the DSE workload for a given node.
+         *
+         * @param node     The node to set the workload for (starting with 1).
+         * @param workload The workload (e.g. solr, spark, hadoop)
+         * @return This builder
+         */
+        public Builder withWorkload(int node, Workload workload) {
+            this.workloads.put(node, workload);
+            return this;
+        }
+
         public CCMBridge build() {
             // be careful NOT to alter internal state (hashCode/equals) during build!
             int storagePort = this.storagePort == -1 ? findAvailablePort() : this.storagePort;
@@ -785,6 +833,9 @@ public class CCMBridge implements CCMAccess {
             ccm.updateConfig(config);
             if (!dseConfiguration.isEmpty())
                 ccm.updateDSEConfig(dseConfiguration);
+            for (Map.Entry<Integer, Workload> entry : workloads.entrySet()) {
+                ccm.setWorkload(entry.getKey(), entry.getValue());
+            }
             if (start)
                 ccm.start();
             return ccm;
@@ -890,8 +941,9 @@ public class CCMBridge implements CCMAccess {
             if (!Arrays.equals(nodes, builder.nodes)) return false;
             if (!createOptions.equals(builder.createOptions)) return false;
             if (!jvmArgs.equals(builder.jvmArgs)) return false;
-            if (!dseConfiguration.equals(builder.dseConfiguration)) return false;
             if (!cassandraConfiguration.equals(builder.cassandraConfiguration)) return false;
+            if (!dseConfiguration.equals(builder.dseConfiguration)) return false;
+            if (!workloads.equals(builder.workloads)) return false;
             return version.equals(builder.version);
         }
 
@@ -905,6 +957,7 @@ public class CCMBridge implements CCMAccess {
             result = 31 * result + jvmArgs.hashCode();
             result = 31 * result + cassandraConfiguration.hashCode();
             result = 31 * result + dseConfiguration.hashCode();
+            result = 31 * result + workloads.hashCode();
             result = 31 * result + thriftPort;
             result = 31 * result + binaryPort;
             result = 31 * result + storagePort;

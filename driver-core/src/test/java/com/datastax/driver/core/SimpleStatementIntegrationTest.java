@@ -19,18 +19,16 @@ import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
 import com.datastax.driver.core.utils.CassandraVersion;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import org.testng.SkipException;
 import org.testng.annotations.Test;
-
-import java.util.Collection;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class SimpleStatementIntegrationTest extends CCMTestsSupport {
+
     @Override
-    public Collection<String> createTestFixtures() {
-        return Lists.newArrayList(
+    public void onTestContextInitialized() {
+        execute(
                 "CREATE TABLE users(id int, id2 int, name text, primary key (id, id2))",
                 "INSERT INTO users(id, id2, name) VALUES (1, 2, 'test')"
         );
@@ -44,7 +42,7 @@ public class SimpleStatementIntegrationTest extends CCMTestsSupport {
                 ImmutableMap.<String, Object>of("id", 1, "id2", 2));
 
         // When
-        Row row = session.execute(statement).one();
+        Row row = session().execute(statement).one();
 
         // Then
         assertThat(row).isNotNull();
@@ -59,7 +57,7 @@ public class SimpleStatementIntegrationTest extends CCMTestsSupport {
                 ImmutableMap.<String, Object>of("id2", 2));
 
         // When
-        session.execute(statement).one();
+        session().execute(statement).one();
 
         // Then - The driver does allow this because it doesn't know what parameters are required, but C* should
         //        throw an InvalidQueryException.
@@ -73,7 +71,7 @@ public class SimpleStatementIntegrationTest extends CCMTestsSupport {
                 ImmutableMap.<String, Object>of("id", 2.7, "id2", 2));
 
         // When
-        session.execute(statement).one();
+        session().execute(statement).one();
 
         // Then - The driver does allow this because it doesn't know the type information, but C* should throw an
         //        InvalidQueryException.
@@ -81,7 +79,7 @@ public class SimpleStatementIntegrationTest extends CCMTestsSupport {
 
     public void useNamedValuesWithProtocol(ProtocolVersion version) {
         Cluster vCluster = createClusterBuilder()
-                .addContactPointsWithPorts(getInitialContactPoints())
+                .addContactPoints(getContactPoints())
                 .withProtocolVersion(version).build();
         try {
             Session vSession = vCluster.connect(this.keyspace);
@@ -101,7 +99,7 @@ public class SimpleStatementIntegrationTest extends CCMTestsSupport {
     @Test(groups = "short", expectedExceptions = UnsupportedFeatureException.class)
     @CassandraVersion(major = 2.0)
     public void should_fail_if_query_with_named_values_if_protocol_is_V2() {
-        if (ccm.getVersion().getMajor() >= 3) {
+        if (ccm().getVersion().getMajor() >= 3) {
             throw new SkipException("Skipping since Cassandra 3.0+ does not support protocol v2");
         }
         useNamedValuesWithProtocol(ProtocolVersion.V2);
@@ -109,7 +107,7 @@ public class SimpleStatementIntegrationTest extends CCMTestsSupport {
 
     @Test(groups = "short", expectedExceptions = UnsupportedFeatureException.class)
     public void should_fail_if_query_with_named_values_if_protocol_is_V1() {
-        if (ccm.getVersion().getMajor() >= 3) {
+        if (ccm().getVersion().getMajor() >= 3) {
             throw new SkipException("Skipping since Cassandra 3.0+ does not support protocol v1");
         }
         useNamedValuesWithProtocol(ProtocolVersion.V1);

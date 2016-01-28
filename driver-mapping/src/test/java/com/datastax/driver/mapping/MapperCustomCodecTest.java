@@ -22,7 +22,6 @@ import com.datastax.driver.mapping.annotations.*;
 import com.google.common.base.Optional;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeParameter;
 import com.google.common.reflect.TypeToken;
 import org.testng.annotations.Test;
@@ -39,8 +38,8 @@ import static org.assertj.core.api.Assertions.fail;
 public class MapperCustomCodecTest extends CCMTestsSupport {
 
     @Override
-    public Collection<String> createTestFixtures() {
-        return Lists.newArrayList(
+    public void onTestContextInitialized() {
+        execute(
                 // Columns mapped to custom types
                 "CREATE TABLE data1 (i int PRIMARY KEY, l bigint)",
                 "INSERT INTO data1 (i, l) VALUES (1, 11)",
@@ -65,7 +64,7 @@ public class MapperCustomCodecTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void should_use_custom_codecs_with_basic_operations() {
-        Mapper<Data1> mapper = new MappingManager(session).mapper(Data1.class);
+        Mapper<Data1> mapper = new MappingManager(session()).mapper(Data1.class);
 
         // Get
         Data1 data11 = mapper.get(new CustomInt(1));
@@ -78,25 +77,25 @@ public class MapperCustomCodecTest extends CCMTestsSupport {
         data12.setL(new CustomLong(12));
         mapper.save(data12);
 
-        Row row = session.execute("select * from data1 where i = 2").one();
+        Row row = session().execute("select * from data1 where i = 2").one();
         assertThat(row.getInt(0)).isEqualTo(2);
         assertThat(row.getLong(1)).isEqualTo(12);
 
         // Delete
         mapper.delete(new CustomInt(2));
-        row = session.execute("select * from data1 where i = 2").one();
+        row = session().execute("select * from data1 where i = 2").one();
         assertThat(row).isNull();
     }
 
     @Test(groups = "short")
     public void should_use_custom_codecs_with_accessors() {
-        Data1Accessor accessor = new MappingManager(session).createAccessor(Data1Accessor.class);
+        Data1Accessor accessor = new MappingManager(session()).createAccessor(Data1Accessor.class);
         Data1 data1 = accessor.get(new CustomInt(1));
         assertThat(data1.getI()).isEqualTo(new CustomInt(1));
         assertThat(data1.getL()).isEqualTo(new CustomLong(11));
 
         accessor.setL(1, new CustomLong(12));
-        Row row = session.execute("select l from data1 where i = 1").one();
+        Row row = session().execute("select l from data1 where i = 1").one();
         assertThat(row.getLong(0)).isEqualTo(12);
 
         accessor.setL(1, new CustomLong(11));
@@ -104,7 +103,7 @@ public class MapperCustomCodecTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void should_use_custom_codecs_in_UDTs() {
-        Mapper<Data2> mapper = new MappingManager(session).mapper(Data2.class);
+        Mapper<Data2> mapper = new MappingManager(session()).mapper(Data2.class);
 
         // Get
         Data2 data21 = mapper.get(1);
@@ -117,7 +116,7 @@ public class MapperCustomCodecTest extends CCMTestsSupport {
         data22.setData(new Holder(2, 22));
         mapper.save(data22);
 
-        Row row = session.execute("select * from data2 where i = 2").one();
+        Row row = session().execute("select * from data2 where i = 2").one();
         assertThat(row.getUDTValue(1).getInt("i")).isEqualTo(2);
         assertThat(row.getUDTValue(1).getLong("l")).isEqualTo(22);
 
@@ -127,7 +126,7 @@ public class MapperCustomCodecTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void should_use_custom_codecs_in_nested_structures() {
-        Mapper<Data3> mapper = new MappingManager(session).mapper(Data3.class);
+        Mapper<Data3> mapper = new MappingManager(session()).mapper(Data3.class);
 
         // Get
         Data3 data31 = mapper.get(1);
@@ -140,7 +139,7 @@ public class MapperCustomCodecTest extends CCMTestsSupport {
         data32.setData(ImmutableMap.of(new CustomInt(2), new Holder(2, 22)));
         mapper.save(data32);
 
-        Row row = session.execute("select * from data3 where i = 2").one();
+        Row row = session().execute("select * from data3 where i = 2").one();
         Map<Integer, UDTValue> data = row.getMap(1, Integer.class, UDTValue.class);
         assertThat(data.containsKey(2));
         assertThat(data.get(2).getInt("i")).isEqualTo(2);
@@ -152,12 +151,12 @@ public class MapperCustomCodecTest extends CCMTestsSupport {
 
     @Test(groups = "short", expectedExceptions = IllegalArgumentException.class)
     public void should_fail_when_invalid_codec_with_no_default_ctor_provided() {
-        new MappingManager(session).mapper(Data1InvalidCodecNoDefaultConstructor.class);
+        new MappingManager(session()).mapper(Data1InvalidCodecNoDefaultConstructor.class);
     }
 
     @Test(groups = "short", expectedExceptions = InvalidTypeException.class)
     public void should_fail_when_invalid_codec_type_mapping() {
-        Mapper<Data1InvalidCodecTypeMapping> mapper = new MappingManager(session).mapper(Data1InvalidCodecTypeMapping.class);
+        Mapper<Data1InvalidCodecTypeMapping> mapper = new MappingManager(session()).mapper(Data1InvalidCodecTypeMapping.class);
 
         // Get should return an InvalidTypeException.
         try {
@@ -176,12 +175,12 @@ public class MapperCustomCodecTest extends CCMTestsSupport {
 
     @Test(groups = "short", expectedExceptions = IllegalArgumentException.class)
     public void should_fail_when_invalid_codec_with_no_default_ctor_provided_in_accessor() {
-        new MappingManager(session).createAccessor(Data1AccessorNoDefaultConstructor.class);
+        new MappingManager(session()).createAccessor(Data1AccessorNoDefaultConstructor.class);
     }
 
     @Test(groups = "short", expectedExceptions = InvalidTypeException.class)
     public void should_fail_when_invalid_codec_type_mapping_in_accessor() {
-        Data1AccessorInvalidCodecTypeMapping accessor = new MappingManager(session).createAccessor(Data1AccessorInvalidCodecTypeMapping.class);
+        Data1AccessorInvalidCodecTypeMapping accessor = new MappingManager(session()).createAccessor(Data1AccessorInvalidCodecTypeMapping.class);
 
         // Get should return an InvalidTypeException.
         try {
@@ -196,7 +195,7 @@ public class MapperCustomCodecTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void should_be_able_to_use_parameterized_type() {
-        Mapper<Data1ParameterizedType> mapper = new MappingManager(session).mapper(Data1ParameterizedType.class);
+        Mapper<Data1ParameterizedType> mapper = new MappingManager(session()).mapper(Data1ParameterizedType.class);
 
         Data1ParameterizedType data1 = mapper.get(1);
         assertThat(data1.getL()).isEqualTo(Optional.of(11L));
@@ -212,7 +211,7 @@ public class MapperCustomCodecTest extends CCMTestsSupport {
         assertThat(empty1r.getL()).isEqualTo(Optional.<Long>absent());
 
         // Value should come back absent with codec, otherwise null with getObject, 0 with getLong.
-        Row row = session.execute("select l from data1 where i=1000").one();
+        Row row = session().execute("select l from data1 where i=1000").one();
         assertThat(row.getObject(0)).isEqualTo(null); // should map to long codec and return null.
         assertThat(row.getLong(0)).isEqualTo(0L); // default boxed primitive value.
         assertThat(row.get(0, new OptionalOfLong())).isEqualTo(Optional.<Long>absent());
@@ -224,7 +223,7 @@ public class MapperCustomCodecTest extends CCMTestsSupport {
         mapper.save(present1);
 
         // Value should come back present with codec, otherwise 20L.
-        row = session.execute("select l from data1 where i=1001").one();
+        row = session().execute("select l from data1 where i=1001").one();
         assertThat(row.getObject(0)).isEqualTo(20L); // should map to long codec.
         assertThat(row.getLong(0)).isEqualTo(20L);
         assertThat(row.get(0, new OptionalOfLong())).isEqualTo(Optional.of(20L));

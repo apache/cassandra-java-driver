@@ -48,8 +48,8 @@ public class LoadBalancingPolicyBootstrapTest extends CCMTestsSupport {
         HistoryPolicy policy = new HistoryPolicy(new RoundRobinPolicy());
 
         Cluster cluster = register(Cluster.builder()
-                .addContactPointsWithPorts(getInitialContactPoints())
-                .withPort(ccm.getBinaryPort())
+                .addContactPoints(getContactPoints())
+                .withPort(ccm().getBinaryPort())
                 .withLoadBalancingPolicy(policy)
                 .build());
 
@@ -85,13 +85,13 @@ public class LoadBalancingPolicyBootstrapTest extends CCMTestsSupport {
             nodeToStop = (nodeToStop == 1) ? 2 : 1; // switch nodes at each try
             int activeNode = nodeToStop == 2 ? 1 : 2;
 
-            ccm.stop(nodeToStop);
-            ccm.waitForDown(nodeToStop);
+            ccm().stop(nodeToStop);
+            ccm().waitForDown(nodeToStop);
 
             HistoryPolicy policy = new HistoryPolicy(new RoundRobinPolicy());
             Cluster cluster = register(Cluster.builder()
-                    .addContactPointsWithPorts(getInitialContactPoints())
-                    .withPort(ccm.getBinaryPort())
+                    .addContactPoints(getContactPoints())
+                    .withPort(ccm().getBinaryPort())
                     .withLoadBalancingPolicy(policy)
                     .build());
 
@@ -114,8 +114,8 @@ public class LoadBalancingPolicyBootstrapTest extends CCMTestsSupport {
 
                 cluster.close();
 
-                ccm.start(nodeToStop);
-                ccm.waitForUp(nodeToStop);
+                ccm().start(nodeToStop);
+                ccm().waitForUp(nodeToStop);
             }
         }
 

@@ -59,6 +59,13 @@ import org.testng.annotations.Test;
  * dse_username = myusername
  * dse_password = mypassword
  * </pre>
+ * <p/>
+ * <h3>Other requirements</h3>
+ * <p/>
+ * DSE requires your {@code PATH} variable to provide access
+ * to super-user executables in {@code /usr/sbin}.
+ * <p/>
+ * A correct example is as follows: {@code /usr/bin:/usr/local/bin:/bin:/usr/sbin:$JAVA_HOME/bin:$PATH}.
  */
 @Test(enabled = false)
 @CCMConfig(dse = true, version = "4.8.3")

@@ -44,10 +44,10 @@ public class GettableDataIntegrationTest extends CCMTestsSupport {
     AtomicInteger keyCounter = new AtomicInteger(0);
 
     @Override
-    public Collection<String> createTestFixtures() {
-        is21 = ccm.getVersion().compareTo(VersionNumber.parse("2.1.3")) > 0;
+    public void onTestContextInitialized() {
+        is21 = ccm().getVersion().compareTo(VersionNumber.parse("2.1.3")) > 0;
         // only add tuples / nested collections at > 2.1.3.
-        return newArrayList("CREATE TABLE codec_mapping (k int PRIMARY KEY, "
+        execute("CREATE TABLE codec_mapping (k int PRIMARY KEY, "
                 + "v int, l list<int>, m map<int,int>" +
                 (is21 ? ", t tuple<int,int>, s set<frozen<list<int>>>)" : ")"));
     }
@@ -140,11 +140,11 @@ public class GettableDataIntegrationTest extends CCMTestsSupport {
     @Test(groups = "short")
     public void should_allow_getting_and_setting_by_type_if_codec_registered() {
         String insertStmt = "INSERT INTO codec_mapping (k,v,l,m" + (is21 ? ",t,s" : "") + ") values (?,?,?,?" + (is21 ? ",?,?)" : ")");
-        PreparedStatement insert = session.prepare(insertStmt);
-        PreparedStatement select = session.prepare("SELECT v,l,m" + (is21 ? ",t,s" : "") + " from codec_mapping where k=?");
+        PreparedStatement insert = session().prepare(insertStmt);
+        PreparedStatement select = session().prepare("SELECT v,l,m" + (is21 ? ",t,s" : "") + " from codec_mapping where k=?");
 
         TupleType tupleType = new TupleType(newArrayList(DataType.cint(), DataType.cint()),
-                cluster.getConfiguration().getProtocolOptions().getProtocolVersion(), registry);
+                cluster().getConfiguration().getProtocolOptions().getProtocolVersion(), registry);
 
         for (TypeMapping<?> mapping : mappings) {
             // Keys used to insert data in this iteration.
@@ -170,7 +170,7 @@ public class GettableDataIntegrationTest extends CCMTestsSupport {
                 byName.setTupleValue("t", tupleValue);
                 byName.setSet("s", set, TypeTokens.listOf(mapping.javaType));
             }
-            session.execute(byName);
+            session().execute(byName);
 
             // Insert by index.
             BoundStatement byIndex = insert.bind();
@@ -184,7 +184,7 @@ public class GettableDataIntegrationTest extends CCMTestsSupport {
                 byIndex.setTupleValue(4, tupleValue);
                 byIndex.setSet(5, set, TypeTokens.listOf(mapping.javaType));
             }
-            session.execute(byIndex);
+            session().execute(byIndex);
 
             // Insert by binding all at once.
             BoundStatement fullBind;
@@ -195,11 +195,11 @@ public class GettableDataIntegrationTest extends CCMTestsSupport {
             } else {
                 fullBind = insert.bind(fullBindKey, mapping.value, list, map);
             }
-            session.execute(fullBind);
+            session().execute(fullBind);
 
             for (int key : keys) {
                 // Retrieve by name.
-                Row row = session.execute(select.bind(key)).one();
+                Row row = session().execute(select.bind(key)).one();
                 assertThat(getValue(row, "v", mapping.outerType, registry)).isEqualTo(mapping.value);
                 assertThat(row.getList("l", mapping.codec.getJavaType())).isEqualTo(list);
                 assertThat(row.getMap("m", mapping.codec.getJavaType(), mapping.codec.getJavaType())).isEqualTo(map);

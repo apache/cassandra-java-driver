@@ -32,17 +32,17 @@ public class SingleConnectionPoolTest extends CCMTestsSupport {
     public void should_throttle_requests() {
         // Throttle to a very low value. Even a single thread can generate a higher throughput.
         final int maxRequests = 10;
-        cluster.getConfiguration().getPoolingOptions()
+        cluster().getConfiguration().getPoolingOptions()
                 .setMaxRequestsPerConnection(HostDistance.LOCAL, maxRequests);
 
         // Track in flight requests in a dedicated thread every second
         final AtomicBoolean excessInflightQueriesSpotted = new AtomicBoolean(false);
-        final Host host = cluster.getMetadata().getHost(ccm.addressOfNode(1));
+        final Host host = cluster().getMetadata().getHost(ccm().addressOfNode(1));
         ScheduledExecutorService openConnectionsWatcherExecutor = Executors.newScheduledThreadPool(1);
         final Runnable openConnectionsWatcher = new Runnable() {
             @Override
             public void run() {
-                int inFlight = session.getState().getInFlightQueries(host);
+                int inFlight = session().getState().getInFlightQueries(host);
                 if (inFlight > maxRequests)
                     excessInflightQueriesSpotted.set(true);
             }
@@ -51,7 +51,7 @@ public class SingleConnectionPoolTest extends CCMTestsSupport {
 
         // Generate the load
         for (int i = 0; i < 10000; i++)
-            session.executeAsync("SELECT release_version FROM system.local");
+            session().executeAsync("SELECT release_version FROM system.local");
 
         openConnectionsWatcherExecutor.shutdownNow();
         if (excessInflightQueriesSpotted.get()) {

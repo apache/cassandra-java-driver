@@ -35,7 +35,7 @@ public class QueryBuilderTupleExecutionTest extends CCMTestsSupport {
     @Test(groups = "short")
     public void should_handle_tuple() throws Exception {
         String query = "INSERT INTO foo (k,x) VALUES (0,(1));";
-        TupleType tupleType = cluster.getMetadata().newTupleType(cint());
+        TupleType tupleType = cluster().getMetadata().newTupleType(cint());
         BuiltStatement insert = insertInto("foo").value("k", 0).value("x", tupleType.newValue(1));
         assertEquals(insert.toString(), query);
     }
@@ -46,7 +46,7 @@ public class QueryBuilderTupleExecutionTest extends CCMTestsSupport {
         String query;
         BuiltStatement statement;
         query = "UPDATE foo SET l=[(1,2)] WHERE k=1;";
-        TupleType tupleType = cluster.getMetadata().newTupleType(cint(), cint());
+        TupleType tupleType = cluster().getMetadata().newTupleType(cint(), cint());
         List<TupleValue> list = ImmutableList.of(tupleType.newValue(1, 2));
         statement = update("foo").with(set("l", list)).where(eq("k", 1));
         assertThat(statement.toString()).isEqualTo(query);

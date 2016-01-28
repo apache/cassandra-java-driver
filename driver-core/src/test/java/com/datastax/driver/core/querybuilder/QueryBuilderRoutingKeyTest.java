@@ -19,8 +19,6 @@ import com.datastax.driver.core.*;
 import org.testng.annotations.Test;
 
 import java.nio.ByteBuffer;
-import java.util.Arrays;
-import java.util.Collection;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 import static org.testng.Assert.assertEquals;
@@ -33,8 +31,8 @@ public class QueryBuilderRoutingKeyTest extends CCMTestsSupport {
     private static final String TABLE_INT = "test_int";
 
     @Override
-    public Collection<String> createTestFixtures() {
-        return Arrays.asList(String.format("CREATE TABLE %s (k text PRIMARY KEY, a int, b int)", TABLE_TEXT),
+    public void onTestContextInitialized() {
+        execute(String.format("CREATE TABLE %s (k text PRIMARY KEY, a int, b int)", TABLE_TEXT),
                 String.format("CREATE TABLE %s (k int PRIMARY KEY, a int, b int)", TABLE_INT));
     }
 
@@ -42,19 +40,19 @@ public class QueryBuilderRoutingKeyTest extends CCMTestsSupport {
     public void textRoutingKeyTest() throws Exception {
 
         BuiltStatement query;
-        TableMetadata table = cluster.getMetadata().getKeyspace(keyspace).getTable(TABLE_TEXT);
+        TableMetadata table = cluster().getMetadata().getKeyspace(keyspace).getTable(TABLE_TEXT);
         assertNotNull(table);
-        ProtocolVersion protocolVersion = cluster.getConfiguration().getProtocolOptions().getProtocolVersion();
+        ProtocolVersion protocolVersion = cluster().getConfiguration().getProtocolOptions().getProtocolVersion();
         CodecRegistry codecRegistry = CodecRegistry.DEFAULT_INSTANCE;
 
         String txt = "If she weighs the same as a duck... she's made of wood.";
         query = insertInto(table).values(new String[]{"k", "a", "b"}, new Object[]{txt, 1, 2});
         assertEquals(query.getRoutingKey(protocolVersion, codecRegistry), ByteBuffer.wrap(txt.getBytes()));
-        session.execute(query);
+        session().execute(query);
 
         query = select().from(table).where(eq("k", txt));
         assertEquals(query.getRoutingKey(protocolVersion, codecRegistry), ByteBuffer.wrap(txt.getBytes()));
-        Row row = session.execute(query).one();
+        Row row = session().execute(query).one();
         assertEquals(row.getString("k"), txt);
         assertEquals(row.getInt("a"), 1);
         assertEquals(row.getInt("b"), 2);
@@ -64,20 +62,20 @@ public class QueryBuilderRoutingKeyTest extends CCMTestsSupport {
     public void intRoutingKeyTest() throws Exception {
 
         BuiltStatement query;
-        TableMetadata table = cluster.getMetadata().getKeyspace(keyspace).getTable(TABLE_INT);
+        TableMetadata table = cluster().getMetadata().getKeyspace(keyspace).getTable(TABLE_INT);
         assertNotNull(table);
-        ProtocolVersion protocolVersion = cluster.getConfiguration().getProtocolOptions().getProtocolVersion();
+        ProtocolVersion protocolVersion = cluster().getConfiguration().getProtocolOptions().getProtocolVersion();
         CodecRegistry codecRegistry = CodecRegistry.DEFAULT_INSTANCE;
 
         query = insertInto(table).values(new String[]{"k", "a", "b"}, new Object[]{42, 1, 2});
         ByteBuffer bb = ByteBuffer.allocate(4);
         bb.putInt(0, 42);
         assertEquals(query.getRoutingKey(protocolVersion, codecRegistry), bb);
-        session.execute(query);
+        session().execute(query);
 
         query = select().from(table).where(eq("k", 42));
         assertEquals(query.getRoutingKey(protocolVersion, codecRegistry), bb);
-        Row row = session.execute(query).one();
+        Row row = session().execute(query).one();
         assertEquals(row.getInt("k"), 42);
         assertEquals(row.getInt("a"), 1);
         assertEquals(row.getInt("b"), 2);
@@ -87,9 +85,9 @@ public class QueryBuilderRoutingKeyTest extends CCMTestsSupport {
     public void intRoutingBatchKeyTest() throws Exception {
 
         BuiltStatement query;
-        TableMetadata table = cluster.getMetadata().getKeyspace(keyspace).getTable(TABLE_INT);
+        TableMetadata table = cluster().getMetadata().getKeyspace(keyspace).getTable(TABLE_INT);
         assertNotNull(table);
-        ProtocolVersion protocolVersion = cluster.getConfiguration().getProtocolOptions().getProtocolVersion();
+        ProtocolVersion protocolVersion = cluster().getConfiguration().getProtocolOptions().getProtocolVersion();
         CodecRegistry codecRegistry = CodecRegistry.DEFAULT_INSTANCE;
 
         ByteBuffer bb = ByteBuffer.allocate(4);
@@ -109,7 +107,7 @@ public class QueryBuilderRoutingKeyTest extends CCMTestsSupport {
                 .add(update(table).using(ttl(400)));
         assertEquals(batch.getRoutingKey(protocolVersion, codecRegistry), bb);
         assertEquals(batch.toString(), batch_query);
-        // TODO: rs = session.execute(batch); // Not guaranteed to be valid CQL
+        // TODO: rs = session().execute(batch); // Not guaranteed to be valid CQL
 
         batch_query = "BEGIN BATCH ";
         batch_query += String.format("SELECT * FROM %s.test_int WHERE k=42;", keyspace);
@@ -117,7 +115,7 @@ public class QueryBuilderRoutingKeyTest extends CCMTestsSupport {
         batch = batch(query);
         assertEquals(batch.getRoutingKey(protocolVersion, codecRegistry), bb);
         assertEquals(batch.toString(), batch_query);
-        // TODO: rs = session.execute(batch); // Not guaranteed to be valid CQL
+        // TODO: rs = session().execute(batch); // Not guaranteed to be valid CQL
 
         batch_query = "BEGIN BATCH ";
         batch_query += "SELECT * FROM foo WHERE k=42;";
@@ -125,7 +123,7 @@ public class QueryBuilderRoutingKeyTest extends CCMTestsSupport {
         batch = batch().add(select().from("foo").where(eq("k", 42)));
         assertEquals(batch.getRoutingKey(protocolVersion, codecRegistry), null);
         assertEquals(batch.toString(), batch_query);
-        // TODO: rs = session.execute(batch); // Not guaranteed to be valid CQL
+        // TODO: rs = session().execute(batch); // Not guaranteed to be valid CQL
 
         batch_query = "BEGIN BATCH USING TIMESTAMP 42 ";
         batch_query += "INSERT INTO foo.bar (a) VALUES (123);";
@@ -133,6 +131,6 @@ public class QueryBuilderRoutingKeyTest extends CCMTestsSupport {
         batch = batch().using(timestamp(42)).add(insertInto("foo", "bar").value("a", 123));
         assertEquals(batch.getRoutingKey(protocolVersion, codecRegistry), null);
         assertEquals(batch.toString(), batch_query);
-        // TODO: rs = session.execute(batch); // Not guaranteed to be valid CQL
+        // TODO: rs = session().execute(batch); // Not guaranteed to be valid CQL
     }
 }

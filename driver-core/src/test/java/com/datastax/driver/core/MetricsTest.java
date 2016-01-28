@@ -19,7 +19,6 @@ import com.datastax.driver.core.Metrics.Errors;
 import com.datastax.driver.core.exceptions.DriverException;
 import com.datastax.driver.core.policies.RetryPolicy;
 import com.datastax.driver.core.policies.RetryPolicy.RetryDecision;
-import com.google.common.collect.Lists;
 import org.testng.annotations.Test;
 
 import javax.management.InstanceNotFoundException;
@@ -27,7 +26,6 @@ import javax.management.MBeanInfo;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import java.lang.management.ManagementFactory;
-import java.util.Collection;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 import static org.testng.Assert.assertEquals;
@@ -71,8 +69,8 @@ public class MetricsTest extends CCMTestsSupport {
     }
 
     @Override
-    public Collection<String> createTestFixtures() {
-        return Lists.newArrayList("CREATE TABLE test (k int primary key, v int)",
+    public void onTestContextInitialized() {
+        execute("CREATE TABLE test (k int primary key, v int)",
                 "INSERT INTO test (k, v) VALUES (1, 1)");
     }
 
@@ -82,15 +80,15 @@ public class MetricsTest extends CCMTestsSupport {
 
         // We only have one node, this will throw an unavailable exception
         Statement statement = new SimpleStatement("SELECT v FROM test WHERE k = 1").setConsistencyLevel(ConsistencyLevel.TWO);
-        session.execute(statement);
+        session().execute(statement);
 
-        Errors errors = cluster.getMetrics().getErrorMetrics();
+        Errors errors = cluster().getMetrics().getErrorMetrics();
         assertEquals(errors.getUnavailables().getCount(), 1);
         assertEquals(errors.getRetries().getCount(), 1);
         assertEquals(errors.getRetriesOnUnavailable().getCount(), 1);
 
         retryDecision = RetryDecision.ignore();
-        session.execute(statement);
+        session().execute(statement);
 
         assertEquals(errors.getUnavailables().getCount(), 2);
         assertEquals(errors.getIgnores().getCount(), 1);
@@ -106,13 +104,13 @@ public class MetricsTest extends CCMTestsSupport {
      */
     @Test(groups = "short")
     public void should_enable_metrics_and_jmx_by_default() throws Exception {
-        assertThat(cluster.getMetrics()).isNotNull();
-        ObjectName clusterMetricsON = ObjectName.getInstance(cluster.getClusterName() + "-metrics:name=connected-to");
+        assertThat(cluster().getMetrics()).isNotNull();
+        ObjectName clusterMetricsON = ObjectName.getInstance(cluster().getClusterName() + "-metrics:name=connected-to");
         MBeanInfo mBean = server.getMBeanInfo(clusterMetricsON);
         assertThat(mBean).isNotNull();
 
-        assertThat(cluster.getConfiguration().getMetricsOptions().isEnabled()).isTrue();
-        assertThat(cluster.getConfiguration().getMetricsOptions().isJMXReportingEnabled()).isTrue();
+        assertThat(cluster().getConfiguration().getMetricsOptions().isEnabled()).isTrue();
+        assertThat(cluster().getConfiguration().getMetricsOptions().isJMXReportingEnabled()).isTrue();
     }
 
     /**
@@ -125,8 +123,8 @@ public class MetricsTest extends CCMTestsSupport {
     @Test(groups = "short", expectedExceptions = InstanceNotFoundException.class)
     public void metrics_should_be_null_when_metrics_disabled() throws Exception {
         Cluster cluster = register(Cluster.builder()
-                .addContactPointsWithPorts(getInitialContactPoints())
-                .withPort(ccm.getBinaryPort())
+                .addContactPoints(getContactPoints())
+                .withPort(ccm().getBinaryPort())
                 .withoutMetrics()
                 .build());
         try {
@@ -150,8 +148,8 @@ public class MetricsTest extends CCMTestsSupport {
     @Test(groups = "short", expectedExceptions = InstanceNotFoundException.class)
     public void should_be_no_jmx_mbean_when_jmx_is_disabled() throws Exception {
         Cluster cluster = register(Cluster.builder()
-                .addContactPointsWithPorts(getInitialContactPoints())
-                .withPort(ccm.getBinaryPort())
+                .addContactPoints(getContactPoints())
+                .withPort(ccm().getBinaryPort())
                 .withoutJMXReporting()
                 .build());
         try {

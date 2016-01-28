@@ -20,9 +20,7 @@ import org.testng.annotations.Test;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.Collection;
 
-import static com.google.common.collect.Lists.newArrayList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class TypeCodecNumbersIntegrationTest extends CCMTestsSupport {
@@ -38,10 +36,9 @@ public class TypeCodecNumbersIntegrationTest extends CCMTestsSupport {
     private BigInteger n_varint = new BigInteger("424242");
     private BigDecimal n_decimal = new BigDecimal("424242.42");
 
-
     @Override
-    public Collection<String> createTestFixtures() {
-        return newArrayList(
+    public void onTestContextInitialized() {
+        execute(
                 "CREATE TABLE \"myTable\" ("
                         + "c_int int, "
                         + "c_bigint bigint, "
@@ -57,24 +54,24 @@ public class TypeCodecNumbersIntegrationTest extends CCMTestsSupport {
     @Test(groups = "short")
     @CassandraVersion(major = 2.0)
     public void should_use_defaut_codecs_with_simple_statements() {
-        session.execute(insertQuery, n_int, n_bigint, n_float, n_double, n_varint, n_decimal);
-        ResultSet rows = session.execute(selectQuery, n_int, n_bigint);
+        session().execute(insertQuery, n_int, n_bigint, n_float, n_double, n_varint, n_decimal);
+        ResultSet rows = session().execute(selectQuery, n_int, n_bigint);
         Row row = rows.one();
         assertRow(row);
     }
 
     @Test(groups = "short")
     public void should_use_defaut_codecs_with_prepared_statements_1() {
-        session.execute(session.prepare(insertQuery).bind(n_int, n_bigint, n_float, n_double, n_varint, n_decimal));
-        PreparedStatement ps = session.prepare(selectQuery);
-        ResultSet rows = session.execute(ps.bind(n_int, n_bigint));
+        session().execute(session().prepare(insertQuery).bind(n_int, n_bigint, n_float, n_double, n_varint, n_decimal));
+        PreparedStatement ps = session().prepare(selectQuery);
+        ResultSet rows = session().execute(ps.bind(n_int, n_bigint));
         Row row = rows.one();
         assertRow(row);
     }
 
     @Test(groups = "short")
     public void should_use_default_codecs_with_prepared_statements_2() {
-        session.execute(session.prepare(insertQuery).bind()
+        session().execute(session().prepare(insertQuery).bind()
                         .setInt(0, n_int)
                         .setLong(1, n_bigint)
                         .setFloat(2, n_float)
@@ -82,8 +79,8 @@ public class TypeCodecNumbersIntegrationTest extends CCMTestsSupport {
                         .setVarint(4, n_varint)
                         .setDecimal(5, n_decimal)
         );
-        PreparedStatement ps = session.prepare(selectQuery);
-        ResultSet rows = session.execute(ps.bind()
+        PreparedStatement ps = session().prepare(selectQuery);
+        ResultSet rows = session().execute(ps.bind()
                         .setInt(0, n_int)
                         .setLong(1, n_bigint)
         );
@@ -93,7 +90,7 @@ public class TypeCodecNumbersIntegrationTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void should_use_default_codecs_with_prepared_statements_3() {
-        session.execute(session.prepare(insertQuery).bind()
+        session().execute(session().prepare(insertQuery).bind()
                         .set(0, n_int, Integer.class)
                         .set(1, n_bigint, Long.class)
                         .set(2, n_float, Float.class)
@@ -101,8 +98,8 @@ public class TypeCodecNumbersIntegrationTest extends CCMTestsSupport {
                         .set(4, n_varint, BigInteger.class)
                         .set(5, n_decimal, BigDecimal.class)
         );
-        PreparedStatement ps = session.prepare(selectQuery);
-        ResultSet rows = session.execute(ps.bind()
+        PreparedStatement ps = session().prepare(selectQuery);
+        ResultSet rows = session().execute(ps.bind()
                         .setInt(0, n_int)
                         .setLong(1, n_bigint)
         );

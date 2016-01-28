@@ -48,10 +48,12 @@ import static org.testng.Assert.fail;
         dirtiesContext = true,
         createKeyspace = false,
         config = {
+                // tests fail often with write or read timeouts
                 "hinted_handoff_enabled:true",
-                "phi_convict_threshold:1",
+                "phi_convict_threshold:5",
                 "read_request_timeout_in_ms:100000",
-                "write_request_timeout_in_ms:100000"}
+                "write_request_timeout_in_ms:100000"
+        }
 )
 public class ConsistencyTest extends AbstractPoliciesTest {
 
@@ -719,9 +721,9 @@ public class ConsistencyTest extends AbstractPoliciesTest {
 
     private void stopAndWait(int node) {
         logger.debug("Stopping node " + node);
-        ccm.stop(node);
-        ccm.waitForDown(node);// this uses port ping
-        TestUtils.waitForDown(ipOfNode(node), cluster, 10); // this uses UP/DOWN events
+        ccm().stop(node);
+        ccm().waitForDown(node);// this uses port ping
+        TestUtils.waitForDown(ipOfNode(node), cluster()); // this uses UP/DOWN events
         logger.debug("Node " + node + " stopped, sleeping one extra minute to allow nodes to gossip");
         Uninterruptibles.sleepUninterruptibly(1, TimeUnit.MINUTES);
     }

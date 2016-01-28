@@ -35,7 +35,7 @@ public class SchemaBuilderIT extends CCMTestsSupport {
     @CassandraVersion(major = 2.1, minor = 2)
     public void should_modify_table_metadata() {
         // Create a table
-        session.execute(SchemaBuilder.createTable("ks", "TableMetadata")
+        session().execute(SchemaBuilder.createTable("ks", "TableMetadata")
                         .addPartitionKey("a", DataType.cint())
                         .addPartitionKey("b", DataType.cint())
                         .addClusteringColumn("c", DataType.cint())
@@ -45,7 +45,7 @@ public class SchemaBuilderIT extends CCMTestsSupport {
         );
 
         // Modify the table metadata
-        session.execute(SchemaBuilder.alterTable("TableMetadata")
+        session().execute(SchemaBuilder.alterTable("TableMetadata")
                 .withOptions()
                 .defaultTimeToLive(1337)
                 .bloomFilterFPChance(0.42)
@@ -68,7 +68,7 @@ public class SchemaBuilderIT extends CCMTestsSupport {
                 .compressionOptions(snappy()));
 
         // Retrieve the metadata from Cassandra
-        ResultSet rows = session.execute("SELECT "
+        ResultSet rows = session().execute("SELECT "
                 + "bloom_filter_fp_chance, "
                 + "caching, "
                 + "cf_id, "
@@ -131,12 +131,12 @@ public class SchemaBuilderIT extends CCMTestsSupport {
     @CassandraVersion(major = 2.1)
     public void should_create_a_table_and_a_udt() {
         // Create a UDT and a table
-        session.execute(SchemaBuilder.createType("MyUDT")
+        session().execute(SchemaBuilder.createType("MyUDT")
                         .ifNotExists()
                         .addColumn("x", DataType.cint())
         );
         UDTType myUDT = UDTType.frozen("MyUDT");
-        session.execute(SchemaBuilder.createTable("ks", "CreateTable")
+        session().execute(SchemaBuilder.createTable("ks", "CreateTable")
                         .ifNotExists()
                         .addPartitionKey("a", DataType.cint())
                         .addUDTPartitionKey("b", myUDT)
@@ -152,7 +152,7 @@ public class SchemaBuilderIT extends CCMTestsSupport {
         );
 
         // Check columns a to k
-        ResultSet rows = session.execute(
+        ResultSet rows = session().execute(
                 "SELECT column_name, type, validator "
                         + "FROM system.schema_columns "
                         + "WHERE keyspace_name='ks' AND columnfamily_name='createtable'");
@@ -177,22 +177,22 @@ public class SchemaBuilderIT extends CCMTestsSupport {
     @Test(groups = "short")
     public void should_add_and_drop_a_column() {
         // Create a table, add a column to it with an alter table statement and delete that column
-        session.execute(SchemaBuilder.createTable("ks", "DropColumn")
+        session().execute(SchemaBuilder.createTable("ks", "DropColumn")
                         .ifNotExists()
                         .addPartitionKey("a", DataType.cint())
         );
 
         // Add and then drop a column
-        session.execute(SchemaBuilder.alterTable("ks", "DropColumn")
+        session().execute(SchemaBuilder.alterTable("ks", "DropColumn")
                         .addColumn("b")
                         .type(DataType.cint())
         );
-        session.execute(SchemaBuilder.alterTable("ks", "DropColumn")
+        session().execute(SchemaBuilder.alterTable("ks", "DropColumn")
                         .dropColumn("b")
         );
 
         // Check that only column a exist
-        ResultSet rows = session.execute(
+        ResultSet rows = session().execute(
                 "SELECT column_name, type, validator "
                         + "FROM system.schema_columns "
                         + "WHERE keyspace_name='ks' AND columnfamily_name='dropcolumn'");
@@ -214,15 +214,15 @@ public class SchemaBuilderIT extends CCMTestsSupport {
     @Test(groups = "short")
     public void should_drop_a_table() {
         // Create a table
-        session.execute(SchemaBuilder.createTable("ks", "DropTable")
+        session().execute(SchemaBuilder.createTable("ks", "DropTable")
                         .addPartitionKey("a", DataType.cint())
         );
 
         // Drop the table
-        session.execute(SchemaBuilder.dropTable("ks", "DropTable"));
-        session.execute(SchemaBuilder.dropTable("DropTable").ifExists());
+        session().execute(SchemaBuilder.dropTable("ks", "DropTable"));
+        session().execute(SchemaBuilder.dropTable("DropTable").ifExists());
 
-        ResultSet rows = session.execute(
+        ResultSet rows = session().execute(
                 "SELECT columnfamily_name "
                         + "FROM system.schema_columnfamilies "
                         + "WHERE keyspace_name='ks' AND columnfamily_name='droptable'");
@@ -234,24 +234,24 @@ public class SchemaBuilderIT extends CCMTestsSupport {
     @Test(groups = "short")
     public void should_create_an_index() {
         // Create a table
-        session.execute(SchemaBuilder.createTable("ks", "CreateIndex")
+        session().execute(SchemaBuilder.createTable("ks", "CreateIndex")
                         .addPartitionKey("a", DataType.cint())
                         .addClusteringColumn("b", DataType.cint())
                         .addColumn("c", DataType.map(DataType.cint(), DataType.cint()))
         );
 
         // Create an index on a regular column of the table
-        session.execute(SchemaBuilder.createIndex("ks_Index")
+        session().execute(SchemaBuilder.createIndex("ks_Index")
                         .onTable("ks", "CreateIndex")
                         .andColumn("b")
         );
-        session.execute(SchemaBuilder.createIndex("ks_IndexOnMap")
+        session().execute(SchemaBuilder.createIndex("ks_IndexOnMap")
                         .onTable("ks", "CreateIndex")
                         .andKeysOfColumn("c")
         );
 
         // Verify that the indexes exist on the right columns
-        ResultSet rows = session.execute(
+        ResultSet rows = session().execute(
                 "SELECT column_name, index_name, index_options, index_type, component_index "
                         + "FROM system.schema_columns "
                         + "WHERE keyspace_name='ks' "
@@ -275,7 +275,7 @@ public class SchemaBuilderIT extends CCMTestsSupport {
     @Test(groups = "short")
     public void should_drop_an_index() {
         // Create a table
-        session.execute(SchemaBuilder.createTable("ks", "DropIndex")
+        session().execute(SchemaBuilder.createTable("ks", "DropIndex")
                         .addPartitionKey("a", DataType.cint())
                         .addClusteringColumn("b", DataType.cint())
         );
@@ -284,7 +284,7 @@ public class SchemaBuilderIT extends CCMTestsSupport {
         // Note: we have to pick a lower-case name because Cassandra uses the CamelCase index name at creation
         // but a lowercase index name at deletion
         // See : https://issues.apache.org/jira/browse/CASSANDRA-8365
-        session.execute(SchemaBuilder.createIndex("ks_index")
+        session().execute(SchemaBuilder.createIndex("ks_index")
                         .onTable("ks", "DropIndex")
                         .andColumn("b")
         );
@@ -293,14 +293,14 @@ public class SchemaBuilderIT extends CCMTestsSupport {
         assertThat(numberOfIndexedColumns()).isEqualTo(1);
 
         // Delete the index
-        session.execute(SchemaBuilder.dropIndex("ks", "ks_index"));
+        session().execute(SchemaBuilder.dropIndex("ks", "ks_index"));
 
         // Verify that only the PK index exists
         assertThat(numberOfIndexedColumns()).isEqualTo(0);
     }
 
     private int numberOfIndexedColumns() {
-        ResultSet columns = session.execute(
+        ResultSet columns = session().execute(
                 "SELECT * "
                         + "FROM system.schema_columns "
                         + "WHERE keyspace_name='ks' "

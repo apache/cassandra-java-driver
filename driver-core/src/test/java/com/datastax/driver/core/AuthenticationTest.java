@@ -40,7 +40,7 @@ public class AuthenticationTest extends CCMTestsSupport {
     public void sleepIf12() {
         // For C* 1.2, sleep before attempting to connect as there is a small delay between
         // user being created.
-        if (ccm.getVersion().getMajor() < 2) {
+        if (ccm().getVersion().getMajor() < 2) {
             Uninterruptibles.sleepUninterruptibly(1, TimeUnit.SECONDS);
         }
     }
@@ -49,8 +49,8 @@ public class AuthenticationTest extends CCMTestsSupport {
     public void should_connect_with_credentials() throws InterruptedException {
         PlainTextAuthProvider authProvider = spy(new PlainTextAuthProvider("cassandra", "cassandra"));
         Cluster cluster = Cluster.builder()
-                .addContactPointsWithPorts(getInitialContactPoints())
-                .withPort(ccm.getBinaryPort())
+                .addContactPoints(getContactPoints())
+                .withPort(ccm().getBinaryPort())
                 .withAuthProvider(authProvider)
                 .build();
         cluster.connect();
@@ -60,8 +60,8 @@ public class AuthenticationTest extends CCMTestsSupport {
     @Test(groups = "short", expectedExceptions = AuthenticationException.class)
     public void should_fail_to_connect_with_wrong_credentials() throws InterruptedException {
         Cluster cluster = register(Cluster.builder()
-                .addContactPointsWithPorts(getInitialContactPoints())
-                .withPort(ccm.getBinaryPort())
+                .addContactPoints(getContactPoints())
+                .withPort(ccm().getBinaryPort())
                 .withCredentials("bogus", "bogus")
                 .build());
         cluster.connect();
@@ -70,8 +70,8 @@ public class AuthenticationTest extends CCMTestsSupport {
     @Test(groups = "short", expectedExceptions = AuthenticationException.class)
     public void should_fail_to_connect_without_credentials() throws InterruptedException {
         Cluster cluster = register(Cluster.builder()
-                .addContactPointsWithPorts(getInitialContactPoints())
-                .withPort(ccm.getBinaryPort())
+                .addContactPoints(getContactPoints())
+                .withPort(ccm().getBinaryPort())
                 .build());
         cluster.connect();
     }

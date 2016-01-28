@@ -27,10 +27,8 @@ import org.testng.annotations.Test;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
-import java.util.Collection;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
-import static com.google.common.collect.Lists.newArrayList;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class TypeCodecEncapsulationIntegrationTest extends CCMTestsSupport {
@@ -59,8 +57,8 @@ public class TypeCodecEncapsulationIntegrationTest extends CCMTestsSupport {
     private BigDecimal n_decimal = new BigDecimal("424242.42");
 
     @Override
-    public Collection<String> createTestFixtures() {
-        return newArrayList(
+    public void onTestContextInitialized() {
+        execute(
                 "CREATE TABLE \"myTable\" ("
                         + "c_int int, "
                         + "c_bigint bigint, "
@@ -106,36 +104,36 @@ public class TypeCodecEncapsulationIntegrationTest extends CCMTestsSupport {
     @Test(groups = "short")
     @CassandraVersion(major = 2.0)
     public void should_use_custom_codecs_with_simple_statements() {
-        session.execute(insertQuery,
+        session().execute(insertQuery,
                 n_int,
                 new NumberBox<Long>(n_bigint),
                 new NumberBox<Float>(n_float),
                 new NumberBox<Double>(n_double),
                 new NumberBox<BigInteger>(n_varint),
                 new NumberBox<BigDecimal>(n_decimal));
-        ResultSet rows = session.execute(selectQuery, n_int, new NumberBox<Long>(n_bigint));
+        ResultSet rows = session().execute(selectQuery, n_int, new NumberBox<Long>(n_bigint));
         Row row = rows.one();
         assertRow(row);
     }
 
     @Test(groups = "short")
     public void should_use_custom_codecs_with_prepared_statements_1() {
-        session.execute(session.prepare(insertQuery).bind(
+        session().execute(session().prepare(insertQuery).bind(
                 n_int,
                 new NumberBox<Long>(n_bigint),
                 new NumberBox<Float>(n_float),
                 new NumberBox<Double>(n_double),
                 new NumberBox<BigInteger>(n_varint),
                 new NumberBox<BigDecimal>(n_decimal)));
-        PreparedStatement ps = session.prepare(selectQuery);
-        ResultSet rows = session.execute(ps.bind(n_int, new NumberBox<Long>(n_bigint)));
+        PreparedStatement ps = session().prepare(selectQuery);
+        ResultSet rows = session().execute(ps.bind(n_int, new NumberBox<Long>(n_bigint)));
         Row row = rows.one();
         assertRow(row);
     }
 
     @Test(groups = "short")
     public void should_use_custom_codecs_with_prepared_statements_2() {
-        session.execute(session.prepare(insertQuery).bind()
+        session().execute(session().prepare(insertQuery).bind()
                         .set(0, new NumberBox<Integer>(n_int), NUMBERBOX_OF_INTEGER_TOKEN)
                         .set(1, new NumberBox<Long>(n_bigint), NUMBERBOX_OF_LONG_TOKEN)
                         .set(2, new NumberBox<Float>(n_float), NUMBERBOX_OF_FLOAT_TOKEN)
@@ -143,8 +141,8 @@ public class TypeCodecEncapsulationIntegrationTest extends CCMTestsSupport {
                         .set(4, new NumberBox<BigInteger>(n_varint), NUMBERBOX_OF_BIGINTEGER_TOKEN)
                         .set(5, new NumberBox<BigDecimal>(n_decimal), NUMBERBOX_OF_BIGDECIMAL_TOKEN)
         );
-        PreparedStatement ps = session.prepare(selectQuery);
-        ResultSet rows = session.execute(ps.bind()
+        PreparedStatement ps = session().prepare(selectQuery);
+        ResultSet rows = session().execute(ps.bind()
                         .set(0, new NumberBox<Integer>(n_int), NUMBERBOX_OF_INTEGER_TOKEN)
                         .set(1, new NumberBox<Long>(n_bigint), NUMBERBOX_OF_LONG_TOKEN)
         );
@@ -154,30 +152,30 @@ public class TypeCodecEncapsulationIntegrationTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void should_use_custom_codecs_with_built_statements_1() {
-        session.execute(session.prepare(insertStmt).bind(
+        session().execute(session().prepare(insertStmt).bind(
                 n_int,
                 new NumberBox<Long>(n_bigint),
                 new NumberBox<Float>(n_float),
                 new NumberBox<Double>(n_double),
                 new NumberBox<BigInteger>(n_varint),
                 new NumberBox<BigDecimal>(n_decimal)));
-        PreparedStatement ps = session.prepare(selectStmt);
-        ResultSet rows = session.execute(ps.bind(n_int, new NumberBox<Long>(n_bigint)));
+        PreparedStatement ps = session().prepare(selectStmt);
+        ResultSet rows = session().execute(ps.bind(n_int, new NumberBox<Long>(n_bigint)));
         Row row = rows.one();
         assertRow(row);
     }
 
     @Test(groups = "short")
     public void should_use_custom_codecs_with_built_statements_2() {
-        session.execute(session.prepare(insertStmt).bind()
+        session().execute(session().prepare(insertStmt).bind()
                 .set(0, new NumberBox<Integer>(n_int), NUMBERBOX_OF_INTEGER_TOKEN)
                 .set(1, new NumberBox<Long>(n_bigint), NUMBERBOX_OF_LONG_TOKEN)
                 .set(2, new NumberBox<Float>(n_float), NUMBERBOX_OF_FLOAT_TOKEN)
                 .set(3, new NumberBox<Double>(n_double), NUMBERBOX_OF_DOUBLE_TOKEN)
                 .set(4, new NumberBox<BigInteger>(n_varint), NUMBERBOX_OF_BIGINTEGER_TOKEN)
                 .set(5, new NumberBox<BigDecimal>(n_decimal), NUMBERBOX_OF_BIGDECIMAL_TOKEN));
-        PreparedStatement ps = session.prepare(selectStmt);
-        ResultSet rows = session.execute(ps.bind()
+        PreparedStatement ps = session().prepare(selectStmt);
+        ResultSet rows = session().execute(ps.bind()
                 .set(0, new NumberBox<Integer>(n_int), NUMBERBOX_OF_INTEGER_TOKEN)
                 .set(1, new NumberBox<Long>(n_bigint), NUMBERBOX_OF_LONG_TOKEN));
 

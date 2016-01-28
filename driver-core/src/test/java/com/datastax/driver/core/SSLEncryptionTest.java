@@ -74,8 +74,8 @@ public class SSLEncryptionTest extends SSLTestBase {
     @Test(groups = "short", expectedExceptions = {NoHostAvailableException.class})
     public void should_not_connect_without_ssl_but_node_uses_ssl() throws Exception {
         Cluster cluster = register(Cluster.builder()
-                .addContactPointsWithPorts(this.getInitialContactPoints())
-                .withPort(ccm.getBinaryPort())
+                .addContactPoints(getContactPoints())
+                .withPort(ccm().getBinaryPort())
                 .build());
         cluster.connect();
     }
@@ -93,15 +93,15 @@ public class SSLEncryptionTest extends SSLTestBase {
     @Test(groups = "long", dataProvider = "sslImplementation", dataProviderClass = SSLTestBase.class)
     public void should_reconnect_with_ssl_on_node_up(SslImplementation sslImplementation) throws Exception {
         Cluster cluster = register(Cluster.builder()
-                .addContactPointsWithPorts(this.getInitialContactPoints())
-                .withPort(ccm.getBinaryPort())
+                .addContactPoints(this.getContactPoints())
+                .withPort(ccm().getBinaryPort())
                 .withSSL(getSSLOptions(sslImplementation, true, true))
                 .build());
 
         cluster.connect();
 
-        ccm.stop(1);
-        ccm.start(1);
+        ccm().stop(1);
+        ccm().start(1);
 
         assertThat(cluster).host(1).comesUpWithin(TestUtils.TEST_BASE_NODE_WAIT, TimeUnit.SECONDS);
     }

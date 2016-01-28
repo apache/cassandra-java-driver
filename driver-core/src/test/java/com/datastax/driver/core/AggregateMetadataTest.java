@@ -18,12 +18,9 @@ package com.datastax.driver.core;
 import com.datastax.driver.core.utils.CassandraVersion;
 import org.testng.annotations.Test;
 
-import java.util.Collection;
-
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.DataType.cint;
 import static com.datastax.driver.core.DataType.text;
-import static com.google.common.collect.Lists.newArrayList;
 
 @CassandraVersion(major = 2.2)
 @CCMConfig(config = "enable_user_defined_functions:true")
@@ -35,10 +32,10 @@ public class AggregateMetadataTest extends CCMTestsSupport {
         String cqlFunction = String.format("CREATE FUNCTION %s.cat(s text,v int) RETURNS NULL ON NULL INPUT RETURNS text LANGUAGE java AS 'return s+v;';", keyspace);
         String cqlAggregate = String.format("CREATE AGGREGATE %s.cat_tos(int) SFUNC cat STYPE text INITCOND '0';", keyspace);
         // when
-        session.execute(cqlFunction);
-        session.execute(cqlAggregate);
+        session().execute(cqlFunction);
+        session().execute(cqlAggregate);
         // then
-        KeyspaceMetadata keyspace = cluster.getMetadata().getKeyspace(this.keyspace);
+        KeyspaceMetadata keyspace = cluster().getMetadata().getKeyspace(this.keyspace);
         FunctionMetadata stateFunc = keyspace.getFunction("cat", text(), cint());
         AggregateMetadata aggregate = keyspace.getAggregate("cat_tos", cint());
         assertThat(aggregate).isNotNull();
@@ -62,10 +59,10 @@ public class AggregateMetadataTest extends CCMTestsSupport {
         String cqlFunction = String.format("CREATE FUNCTION %s.inc(i int) RETURNS NULL ON NULL INPUT RETURNS int LANGUAGE java AS 'return i+1;';", keyspace);
         String cqlAggregate = String.format("CREATE AGGREGATE %s.mycount() SFUNC inc STYPE int INITCOND 0;", keyspace);
         // when
-        session.execute(cqlFunction);
-        session.execute(cqlAggregate);
+        session().execute(cqlFunction);
+        session().execute(cqlAggregate);
         // then
-        KeyspaceMetadata keyspace = cluster.getMetadata().getKeyspace(this.keyspace);
+        KeyspaceMetadata keyspace = cluster().getMetadata().getKeyspace(this.keyspace);
         FunctionMetadata stateFunc = keyspace.getFunction("inc", cint());
         AggregateMetadata aggregate = keyspace.getAggregate("mycount");
         assertThat(aggregate).isNotNull();
@@ -90,11 +87,11 @@ public class AggregateMetadataTest extends CCMTestsSupport {
         String cqlFunction2 = String.format("CREATE FUNCTION %s.announce(i int) RETURNS NULL ON NULL INPUT RETURNS int LANGUAGE java AS 'return i;';", keyspace);
         String cqlAggregate = String.format("CREATE AGGREGATE %s.prettysum(int) SFUNC plus STYPE int FINALFUNC announce INITCOND 0;", keyspace);
         // when
-        session.execute(cqlFunction1);
-        session.execute(cqlFunction2);
-        session.execute(cqlAggregate);
+        session().execute(cqlFunction1);
+        session().execute(cqlFunction2);
+        session().execute(cqlAggregate);
         // then
-        KeyspaceMetadata keyspace = cluster.getMetadata().getKeyspace(this.keyspace);
+        KeyspaceMetadata keyspace = cluster().getMetadata().getKeyspace(this.keyspace);
         FunctionMetadata stateFunc = keyspace.getFunction("plus", cint(), cint());
         FunctionMetadata finalFunc = keyspace.getFunction("announce", cint());
         AggregateMetadata aggregate = keyspace.getAggregate("prettysum", cint());
@@ -120,10 +117,10 @@ public class AggregateMetadataTest extends CCMTestsSupport {
         String cqlFunction = String.format("CREATE FUNCTION %s.plus2(i int, j int) CALLED ON NULL INPUT RETURNS int LANGUAGE java AS 'return i+j;';", keyspace);
         String cqlAggregate = String.format("CREATE AGGREGATE %s.sum(int) SFUNC plus2 STYPE int;", keyspace);
         // when
-        session.execute(cqlFunction);
-        session.execute(cqlAggregate);
+        session().execute(cqlFunction);
+        session().execute(cqlAggregate);
         // then
-        KeyspaceMetadata keyspace = cluster.getMetadata().getKeyspace(this.keyspace);
+        KeyspaceMetadata keyspace = cluster().getMetadata().getKeyspace(this.keyspace);
         FunctionMetadata stateFunc = keyspace.getFunction("plus2", cint(), cint());
         AggregateMetadata aggregate = keyspace.getAggregate("sum", cint());
         assertThat(aggregate).isNotNull();
@@ -155,10 +152,10 @@ public class AggregateMetadataTest extends CCMTestsSupport {
                         + "STYPE \"Address\";",
                 keyspace);
         // when
-        session.execute(cqlFunction);
-        session.execute(cqlAggregate);
+        session().execute(cqlFunction);
+        session().execute(cqlAggregate);
         // then
-        KeyspaceMetadata keyspace = cluster.getMetadata().getKeyspace(this.keyspace);
+        KeyspaceMetadata keyspace = cluster().getMetadata().getKeyspace(this.keyspace);
         UserType addressType = keyspace.getUserType("\"Address\"");
         FunctionMetadata stateFunc = keyspace.getFunction("\"MY_FUNC\"", addressType, addressType);
         AggregateMetadata aggregate = keyspace.getAggregate("\"MY_AGGREGATE\"", addressType);
@@ -175,8 +172,8 @@ public class AggregateMetadataTest extends CCMTestsSupport {
     }
 
     @Override
-    public Collection<String> createTestFixtures() {
-        return newArrayList(
+    public void onTestContextInitialized() {
+        execute(
                 String.format("CREATE TYPE IF NOT EXISTS %s.phone (number text)", keyspace),
                 String.format("CREATE TYPE IF NOT EXISTS %s.\"Address\" ("
                         + "    street text,"

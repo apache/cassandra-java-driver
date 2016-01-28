@@ -33,13 +33,13 @@ public class TupleTest extends CCMTestsSupport {
     ProtocolVersion protocolVersion = TestUtils.getDesiredProtocolVersion();
 
     @Override
-    public Collection<String> createTestFixtures() {
-        return Collections.singleton("CREATE TABLE t (k int PRIMARY KEY, v frozen<tuple<int, text, float>>)");
+    public void onTestContextInitialized() {
+        execute("CREATE TABLE t (k int PRIMARY KEY, v frozen<tuple<int, text, float>>)");
     }
 
     @Test(groups = "short")
     public void simpleValueTest() throws Exception {
-        TupleType t = cluster.getMetadata().newTupleType(DataType.cint(), DataType.text(), DataType.cfloat());
+        TupleType t = cluster().getMetadata().newTupleType(DataType.cint(), DataType.text(), DataType.cfloat());
         TupleValue v = t.newValue();
         v.setInt(0, 1);
         v.setString(1, "a");
@@ -58,17 +58,17 @@ public class TupleTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void simpleWriteReadTest() throws Exception {
-        session.execute("USE " + keyspace);
-        PreparedStatement ins = session.prepare("INSERT INTO t(k, v) VALUES (?, ?)");
-        PreparedStatement sel = session.prepare("SELECT * FROM t WHERE k=?");
+        session().execute("USE " + keyspace);
+        PreparedStatement ins = session().prepare("INSERT INTO t(k, v) VALUES (?, ?)");
+        PreparedStatement sel = session().prepare("SELECT * FROM t WHERE k=?");
 
-        TupleType t = cluster.getMetadata().newTupleType(DataType.cint(), DataType.text(), DataType.cfloat());
+        TupleType t = cluster().getMetadata().newTupleType(DataType.cint(), DataType.text(), DataType.cfloat());
 
         int k = 1;
         TupleValue v = t.newValue(1, "a", 1.0f);
 
-        session.execute(ins.bind(k, v));
-        TupleValue v2 = session.execute(sel.bind(k)).one().getTupleValue("v");
+        session().execute(ins.bind(k, v));
+        TupleValue v2 = session().execute(sel.bind(k)).one().getTupleValue("v");
 
         assertEquals(v2, v);
 
@@ -76,8 +76,8 @@ public class TupleTest extends CCMTestsSupport {
         k = 2;
         v = t.newValue(2, "b", 2.0f);
 
-        session.execute("INSERT INTO t(k, v) VALUES (?, ?)", k, v);
-        v2 = session.execute(sel.bind(k)).one().getTupleValue("v");
+        session().execute("INSERT INTO t(k, v) VALUES (?, ?)", k, v);
+        v2 = session().execute(sel.bind(k)).one().getTupleValue("v");
 
         assertEquals(v2, v);
     }
@@ -90,17 +90,17 @@ public class TupleTest extends CCMTestsSupport {
      */
     @Test(groups = "short")
     public void tupleTypeTest() throws Exception {
-        session.execute("CREATE KEYSPACE test_tuple_type " +
+        session().execute("CREATE KEYSPACE test_tuple_type " +
                 "WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor': '1'}");
-        session.execute("USE test_tuple_type");
-        session.execute("CREATE TABLE mytable (a int PRIMARY KEY, b frozen<tuple<ascii, int, boolean>>)");
+        session().execute("USE test_tuple_type");
+        session().execute("CREATE TABLE mytable (a int PRIMARY KEY, b frozen<tuple<ascii, int, boolean>>)");
 
-        TupleType t = cluster.getMetadata().newTupleType(DataType.ascii(), DataType.cint(), DataType.cboolean());
+        TupleType t = cluster().getMetadata().newTupleType(DataType.ascii(), DataType.cint(), DataType.cboolean());
 
         // test non-prepared statement
         TupleValue complete = t.newValue("foo", 123, true);
-        session.execute("INSERT INTO mytable (a, b) VALUES (0, ?)", complete);
-        TupleValue r = session.execute("SELECT b FROM mytable WHERE a=0").one().getTupleValue("b");
+        session().execute("INSERT INTO mytable (a, b) VALUES (0, ?)", complete);
+        TupleValue r = session().execute("SELECT b FROM mytable WHERE a=0").one().getTupleValue("b");
         assertEquals(r, complete);
 
         // test incomplete tuples
@@ -112,11 +112,11 @@ public class TupleTest extends CCMTestsSupport {
         }
 
         // test incomplete tuples with new TupleType
-        TupleType t1 = cluster.getMetadata().newTupleType(DataType.ascii(), DataType.cint());
+        TupleType t1 = cluster().getMetadata().newTupleType(DataType.ascii(), DataType.cint());
         TupleValue partial = t1.newValue("bar", 456);
         TupleValue partionResult = t.newValue("bar", 456, null);
-        session.execute("INSERT INTO mytable (a, b) VALUES (0, ?)", partial);
-        r = session.execute("SELECT b FROM mytable WHERE a=0").one().getTupleValue("b");
+        session().execute("INSERT INTO mytable (a, b) VALUES (0, ?)", partial);
+        r = session().execute("SELECT b FROM mytable WHERE a=0").one().getTupleValue("b");
         assertEquals(r, partionResult);
 
         // test single value tuples
@@ -128,23 +128,23 @@ public class TupleTest extends CCMTestsSupport {
         }
 
         // test single value tuples with new TupleType
-        TupleType t2 = cluster.getMetadata().newTupleType(DataType.ascii());
+        TupleType t2 = cluster().getMetadata().newTupleType(DataType.ascii());
         TupleValue subpartial = t2.newValue("zoo");
         TupleValue subpartialResult = t.newValue("zoo", null, null);
-        session.execute("INSERT INTO mytable (a, b) VALUES (0, ?)", subpartial);
-        r = session.execute("SELECT b FROM mytable WHERE a=0").one().getTupleValue("b");
+        session().execute("INSERT INTO mytable (a, b) VALUES (0, ?)", subpartial);
+        r = session().execute("SELECT b FROM mytable WHERE a=0").one().getTupleValue("b");
         assertEquals(r, subpartialResult);
 
         // test prepared statements
-        PreparedStatement prepared = session.prepare("INSERT INTO mytable (a, b) VALUES (?, ?)");
-        session.execute(prepared.bind(3, complete));
-        session.execute(prepared.bind(4, partial));
-        session.execute(prepared.bind(5, subpartial));
+        PreparedStatement prepared = session().prepare("INSERT INTO mytable (a, b) VALUES (?, ?)");
+        session().execute(prepared.bind(3, complete));
+        session().execute(prepared.bind(4, partial));
+        session().execute(prepared.bind(5, subpartial));
 
-        prepared = session.prepare("SELECT b FROM mytable WHERE a=?");
-        assertEquals(session.execute(prepared.bind(3)).one().getTupleValue("b"), complete);
-        assertEquals(session.execute(prepared.bind(4)).one().getTupleValue("b"), partionResult);
-        assertEquals(session.execute(prepared.bind(5)).one().getTupleValue("b"), subpartialResult);
+        prepared = session().prepare("SELECT b FROM mytable WHERE a=?");
+        assertEquals(session().execute(prepared.bind(3)).one().getTupleValue("b"), complete);
+        assertEquals(session().execute(prepared.bind(4)).one().getTupleValue("b"), partionResult);
+        assertEquals(session().execute(prepared.bind(5)).one().getTupleValue("b"), subpartialResult);
     }
 
     /**
@@ -156,9 +156,9 @@ public class TupleTest extends CCMTestsSupport {
      */
     @Test(groups = "short")
     public void tupleTestTypeVaryingLengths() throws Exception {
-        session.execute("CREATE KEYSPACE test_tuple_type_varying_lengths " +
+        session().execute("CREATE KEYSPACE test_tuple_type_varying_lengths " +
                 "WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor': '1'}");
-        session.execute("USE test_tuple_type_varying_lengths");
+        session().execute("USE test_tuple_type_varying_lengths");
 
         // programmatically create the table with tuples of said sizes
         int[] lengths = {1, 2, 3, 384};
@@ -170,7 +170,7 @@ public class TupleTest extends CCMTestsSupport {
             }
             valueSchema.add(String.format(" v_%d frozen<tuple<%s>>", i, Joiner.on(',').join(ints)));
         }
-        session.execute(String.format("CREATE TABLE mytable (k int PRIMARY KEY, %s)", Joiner.on(',').join(valueSchema)));
+        session().execute(String.format("CREATE TABLE mytable (k int PRIMARY KEY, %s)", Joiner.on(',').join(valueSchema)));
 
         // insert tuples into same key using different columns
         // and verify the results
@@ -182,14 +182,14 @@ public class TupleTest extends CCMTestsSupport {
                 dataTypes.add(DataType.cint());
                 values.add(j);
             }
-            TupleType t = new TupleType(dataTypes, protocolVersion, cluster.getConfiguration().getCodecRegistry());
+            TupleType t = new TupleType(dataTypes, protocolVersion, cluster().getConfiguration().getCodecRegistry());
             TupleValue createdTuple = t.newValue(values.toArray());
 
             // write tuple
-            session.execute(String.format("INSERT INTO mytable (k, v_%s) VALUES (0, ?)", i), createdTuple);
+            session().execute(String.format("INSERT INTO mytable (k, v_%s) VALUES (0, ?)", i), createdTuple);
 
             // read tuple
-            TupleValue r = session.execute(String.format("SELECT v_%s FROM mytable WHERE k=0", i)).one().getTupleValue(String.format("v_%s", i));
+            TupleValue r = session().execute(String.format("SELECT v_%s FROM mytable WHERE k=0", i)).one().getTupleValue(String.format("v_%s", i));
             assertEquals(r, createdTuple);
         }
     }
@@ -204,12 +204,12 @@ public class TupleTest extends CCMTestsSupport {
     public void tupleSubtypesTest() throws Exception {
 
         List<DataType> DATA_TYPE_PRIMITIVES = Lists.newArrayList(PrimitiveTypeSamples.ALL.keySet());
-        session.execute("CREATE KEYSPACE test_tuple_subtypes " +
+        session().execute("CREATE KEYSPACE test_tuple_subtypes " +
                 "WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor': '1'}");
-        session.execute("USE test_tuple_subtypes");
+        session().execute("USE test_tuple_subtypes");
 
         // programmatically create the table with a tuple of all datatypes
-        session.execute(String.format("CREATE TABLE mytable (k int PRIMARY KEY, v frozen<tuple<%s>>)", Joiner.on(',').join(DATA_TYPE_PRIMITIVES)));
+        session().execute(String.format("CREATE TABLE mytable (k int PRIMARY KEY, v frozen<tuple<%s>>)", Joiner.on(',').join(DATA_TYPE_PRIMITIVES)));
 
         // insert tuples into same key using different columns
         // and verify the results
@@ -237,16 +237,16 @@ public class TupleTest extends CCMTestsSupport {
             }
 
             // actually create the tuples
-            TupleType t = new TupleType(dataTypes, protocolVersion, cluster.getConfiguration().getCodecRegistry());
-            TupleType t2 = new TupleType(completeDataTypes, protocolVersion, cluster.getConfiguration().getCodecRegistry());
+            TupleType t = new TupleType(dataTypes, protocolVersion, cluster().getConfiguration().getCodecRegistry());
+            TupleType t2 = new TupleType(completeDataTypes, protocolVersion, cluster().getConfiguration().getCodecRegistry());
             TupleValue createdTuple = t.newValue(createdValues.toArray());
             TupleValue completeTuple = t2.newValue(completeValues.toArray());
 
             // write tuple
-            session.execute(String.format("INSERT INTO mytable (k, v) VALUES (%s, ?)", i), createdTuple);
+            session().execute(String.format("INSERT INTO mytable (k, v) VALUES (%s, ?)", i), createdTuple);
 
             // read tuple
-            TupleValue r = session.execute("SELECT v FROM mytable WHERE k=?", i).one().getTupleValue("v");
+            TupleValue r = session().execute("SELECT v FROM mytable WHERE k=?", i).one().getTupleValue("v");
 
             assertEquals(r, completeTuple);
             ++i;
@@ -263,9 +263,9 @@ public class TupleTest extends CCMTestsSupport {
     public void tupleNonPrimitiveSubTypesTest() throws Exception {
 
         List<DataType> DATA_TYPE_PRIMITIVES = Lists.newArrayList(PrimitiveTypeSamples.ALL.keySet());
-        session.execute("CREATE KEYSPACE test_tuple_non_primitive_subtypes " +
+        session().execute("CREATE KEYSPACE test_tuple_non_primitive_subtypes " +
                 "WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor': '1'}");
-        session.execute("USE test_tuple_non_primitive_subtypes");
+        session().execute("USE test_tuple_non_primitive_subtypes");
 
         ArrayList<String> values = new ArrayList<String>();
 
@@ -285,7 +285,7 @@ public class TupleTest extends CCMTestsSupport {
         }
 
         // create table
-        session.execute(String.format("CREATE TABLE mytable (k int PRIMARY KEY, %s)", Joiner.on(',').join(values)));
+        session().execute(String.format("CREATE TABLE mytable (k int PRIMARY KEY, %s)", Joiner.on(',').join(values)));
 
 
         int i = 0;
@@ -298,14 +298,14 @@ public class TupleTest extends CCMTestsSupport {
             dataTypes.add(DataType.list(datatype));
             createdValues.add(Collections.singletonList(PrimitiveTypeSamples.ALL.get(datatype)));
 
-            TupleType t = new TupleType(dataTypes, protocolVersion, cluster.getConfiguration().getCodecRegistry());
+            TupleType t = new TupleType(dataTypes, protocolVersion, cluster().getConfiguration().getCodecRegistry());
             TupleValue createdTuple = t.newValue(createdValues.toArray());
 
             // write tuple
-            session.execute(String.format("INSERT INTO mytable (k, v_%s) VALUES (0, ?)", i), createdTuple);
+            session().execute(String.format("INSERT INTO mytable (k, v_%s) VALUES (0, ?)", i), createdTuple);
 
             // read tuple
-            TupleValue r = session.execute(String.format("SELECT v_%s FROM mytable WHERE k=0", i))
+            TupleValue r = session().execute(String.format("SELECT v_%s FROM mytable WHERE k=0", i))
                     .one().getTupleValue(String.format("v_%s", i));
 
             assertEquals(r, createdTuple);
@@ -321,14 +321,14 @@ public class TupleTest extends CCMTestsSupport {
             dataTypes.add(DataType.set(datatype));
             createdValues.add(new HashSet<Object>(Collections.singletonList(PrimitiveTypeSamples.ALL.get(datatype))));
 
-            TupleType t = new TupleType(dataTypes, protocolVersion, cluster.getConfiguration().getCodecRegistry());
+            TupleType t = new TupleType(dataTypes, protocolVersion, cluster().getConfiguration().getCodecRegistry());
             TupleValue createdTuple = t.newValue(createdValues.toArray());
 
             // write tuple
-            session.execute(String.format("INSERT INTO mytable (k, v_%s) VALUES (0, ?)", i), createdTuple);
+            session().execute(String.format("INSERT INTO mytable (k, v_%s) VALUES (0, ?)", i), createdTuple);
 
             // read tuple
-            TupleValue r = session.execute(String.format("SELECT v_%s FROM mytable WHERE k=0", i))
+            TupleValue r = session().execute(String.format("SELECT v_%s FROM mytable WHERE k=0", i))
                     .one().getTupleValue(String.format("v_%s", i));
 
             assertEquals(r, createdTuple);
@@ -347,14 +347,14 @@ public class TupleTest extends CCMTestsSupport {
             dataTypes.add(DataType.map(datatype, datatype));
             createdValues.add(hm);
 
-            TupleType t = new TupleType(dataTypes, protocolVersion, cluster.getConfiguration().getCodecRegistry());
+            TupleType t = new TupleType(dataTypes, protocolVersion, cluster().getConfiguration().getCodecRegistry());
             TupleValue createdTuple = t.newValue(createdValues.toArray());
 
             // write tuple
-            session.execute(String.format("INSERT INTO mytable (k, v_%s) VALUES (0, ?)", i), createdTuple);
+            session().execute(String.format("INSERT INTO mytable (k, v_%s) VALUES (0, ?)", i), createdTuple);
 
             // read tuple
-            TupleValue r = session.execute(String.format("SELECT v_%s FROM mytable WHERE k=0", i))
+            TupleValue r = session().execute(String.format("SELECT v_%s FROM mytable WHERE k=0", i))
                     .one().getTupleValue(String.format("v_%s", i));
 
             assertEquals(r, createdTuple);
@@ -374,7 +374,7 @@ public class TupleTest extends CCMTestsSupport {
                 DataType.cint(), DataType.text(), DataType.cfloat());
         TupleValue detachedValue = detachedType.newValue(1, "hello", 2.0f);
 
-        TupleType attachedType = cluster.getMetadata().newTupleType(DataType.cint(), DataType.text(), DataType.cfloat());
+        TupleType attachedType = cluster().getMetadata().newTupleType(DataType.cint(), DataType.text(), DataType.cfloat());
         TupleValue attachedValue = attachedType.newValue(1, "hello", 2.0f);
 
         assertThat(detachedValue).isEqualTo(attachedValue);
@@ -395,11 +395,11 @@ public class TupleTest extends CCMTestsSupport {
      */
     private TupleValue nestedTuplesCreatorHelper(int depth) {
         if (depth == 1) {
-            TupleType baseTuple = cluster.getMetadata().newTupleType(DataType.cint());
+            TupleType baseTuple = cluster().getMetadata().newTupleType(DataType.cint());
             return baseTuple.newValue(303);
         } else {
             TupleValue innerTuple = nestedTuplesCreatorHelper(depth - 1);
-            TupleType t = cluster.getMetadata().newTupleType(innerTuple.getType());
+            TupleType t = cluster().getMetadata().newTupleType(innerTuple.getType());
             return t.newValue(innerTuple);
         }
     }
@@ -412,12 +412,12 @@ public class TupleTest extends CCMTestsSupport {
      */
     @Test(groups = "short")
     public void nestedTuplesTest() throws Exception {
-        session.execute("CREATE KEYSPACE test_nested_tuples " +
+        session().execute("CREATE KEYSPACE test_nested_tuples " +
                 "WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor': '1'}");
-        session.execute("USE test_nested_tuples");
+        session().execute("USE test_nested_tuples");
 
         // create a table with multiple sizes of nested tuples
-        session.execute(String.format("CREATE TABLE mytable (" +
+        session().execute(String.format("CREATE TABLE mytable (" +
                         "k int PRIMARY KEY, " +
                         "v_1 %s, " +
                         "v_2 %s, " +
@@ -432,10 +432,10 @@ public class TupleTest extends CCMTestsSupport {
             TupleValue createdTuple = nestedTuplesCreatorHelper(i);
 
             // write tuple
-            session.execute(String.format("INSERT INTO mytable (k, v_%s) VALUES (?, ?)", i), i, createdTuple);
+            session().execute(String.format("INSERT INTO mytable (k, v_%s) VALUES (?, ?)", i), i, createdTuple);
 
             // verify tuple was written and read correctly
-            TupleValue r = session.execute(String.format("SELECT v_%s FROM mytable WHERE k=?", i), i)
+            TupleValue r = session().execute(String.format("SELECT v_%s FROM mytable WHERE k=?", i), i)
                     .one().getTupleValue(String.format("v_%s", i));
 
             assertEquals(r, createdTuple);
@@ -451,27 +451,27 @@ public class TupleTest extends CCMTestsSupport {
     @Test(groups = "short")
     public void testTuplesWithNulls() throws Exception {
         // create keyspace
-        session.execute("CREATE KEYSPACE testTuplesWithNulls " +
+        session().execute("CREATE KEYSPACE testTuplesWithNulls " +
                 "WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor': '1'}");
-        session.execute("USE testTuplesWithNulls");
+        session().execute("USE testTuplesWithNulls");
 
         // create UDT
-        session.execute("CREATE TYPE user (a text, b frozen<tuple<text, int, uuid, blob>>)");
-        session.execute("CREATE TABLE mytable (a int PRIMARY KEY, b frozen<user>)");
+        session().execute("CREATE TYPE user (a text, b frozen<tuple<text, int, uuid, blob>>)");
+        session().execute("CREATE TABLE mytable (a int PRIMARY KEY, b frozen<user>)");
 
         // insert UDT data
-        UserType userTypeDef = cluster.getMetadata().getKeyspace("testTuplesWithNulls").getUserType("user");
+        UserType userTypeDef = cluster().getMetadata().getKeyspace("testTuplesWithNulls").getUserType("user");
         UDTValue userType = userTypeDef.newValue();
 
-        TupleType t = cluster.getMetadata().newTupleType(DataType.text(), DataType.cint(), DataType.uuid(), DataType.blob());
+        TupleType t = cluster().getMetadata().newTupleType(DataType.text(), DataType.cint(), DataType.uuid(), DataType.blob());
         TupleValue v = t.newValue(null, null, null, null);
         userType.setTupleValue("b", v);
 
-        PreparedStatement ins = session.prepare("INSERT INTO mytable (a, b) VALUES (?, ?)");
-        session.execute(ins.bind(0, userType));
+        PreparedStatement ins = session().prepare("INSERT INTO mytable (a, b) VALUES (?, ?)");
+        session().execute(ins.bind(0, userType));
 
         // retrieve and verify data
-        ResultSet rs = session.execute("SELECT * FROM mytable");
+        ResultSet rs = session().execute("SELECT * FROM mytable");
         List<Row> rows = rs.all();
         assertEquals(1, rows.size());
 
@@ -483,10 +483,10 @@ public class TupleTest extends CCMTestsSupport {
         // test empty strings
         v = t.newValue("", null, null, ByteBuffer.allocate(0));
         userType.setTupleValue("b", v);
-        session.execute(ins.bind(0, userType));
+        session().execute(ins.bind(0, userType));
 
         // retrieve and verify data
-        rs = session.execute("SELECT * FROM mytable");
+        rs = session().execute("SELECT * FROM mytable");
         rows = rs.all();
         assertEquals(1, rows.size());
 

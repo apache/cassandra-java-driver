@@ -46,10 +46,9 @@ public class DataTypeIntegrationTest extends CCMTestsSupport {
     enum StatementType {RAW_STRING, SIMPLE_WITH_PARAM, PREPARED}
 
     @Override
-    public Collection<String> createTestFixtures() {
-        Host host = cluster.getMetadata().getAllHosts().iterator().next();
+    public void onTestContextInitialized() {
+        Host host = cluster().getMetadata().getAllHosts().iterator().next();
         cassandraVersion = host.getCassandraVersion().nextStable();
-
         List<String> statements = Lists.newArrayList();
         for (TestTable table : tables) {
             if (cassandraVersion.compareTo(table.minCassandraVersion) < 0)
@@ -58,8 +57,7 @@ public class DataTypeIntegrationTest extends CCMTestsSupport {
             else
                 statements.add(table.createStatement);
         }
-
-        return statements;
+        execute(statements);
     }
 
     @Test(groups = "long")
@@ -79,8 +77,8 @@ public class DataTypeIntegrationTest extends CCMTestsSupport {
     }
 
     protected void should_insert_and_retrieve_data(StatementType statementType) {
-        ProtocolVersion protocolVersion = cluster.getConfiguration().getProtocolOptions().getProtocolVersion();
-        CodecRegistry codecRegistry = cluster.getConfiguration().getCodecRegistry();
+        ProtocolVersion protocolVersion = cluster().getConfiguration().getProtocolOptions().getProtocolVersion();
+        CodecRegistry codecRegistry = cluster().getConfiguration().getCodecRegistry();
 
         for (TestTable table : tables) {
             if (cassandraVersion.compareTo(table.minCassandraVersion) < 0)
@@ -92,22 +90,22 @@ public class DataTypeIntegrationTest extends CCMTestsSupport {
                     String formatValue = codec.format(table.sampleValue);
                     assertThat(formatValue).isNotNull();
                     String query = table.insertStatement.replace("?", formatValue);
-                    session.execute(query);
+                    session().execute(query);
                     break;
                 case SIMPLE_WITH_PARAM:
                     SimpleStatement statement = new SimpleStatement(table.insertStatement, table.sampleValue);
                     checkGetValuesReturnsSerializedValue(protocolVersion, statement, table);
-                    session.execute(statement);
+                    session().execute(statement);
                     break;
                 case PREPARED:
-                    PreparedStatement ps = session.prepare(table.insertStatement);
+                    PreparedStatement ps = session().prepare(table.insertStatement);
                     BoundStatement bs = ps.bind(table.sampleValue);
                     checkGetterReturnsValue(bs, table);
-                    session.execute(bs);
+                    session().execute(bs);
                     break;
             }
 
-            Row row = session.execute(table.selectStatement).one();
+            Row row = session().execute(table.selectStatement).one();
             Object queriedValue = codec.deserialize(row.getBytesUnsafe("v"), protocolVersion);
 
             // Since codec.deserialize will get the unboxed version for primitive check against expected unboxed value.
@@ -130,7 +128,7 @@ public class DataTypeIntegrationTest extends CCMTestsSupport {
                     .isEqualTo(table.expectedPrimitiveValue);
 
 
-            session.execute(table.truncateStatement);
+            session().execute(table.truncateStatement);
         }
     }
 
@@ -145,7 +143,7 @@ public class DataTypeIntegrationTest extends CCMTestsSupport {
     }
 
     public void checkGetValuesReturnsSerializedValue(ProtocolVersion protocolVersion, SimpleStatement statement, TestTable table) {
-        CodecRegistry codecRegistry = cluster.getConfiguration().getCodecRegistry();
+        CodecRegistry codecRegistry = cluster().getConfiguration().getCodecRegistry();
         ByteBuffer[] values = statement.getValues(protocolVersion, codecRegistry);
         assertThat(values.length).isEqualTo(1);
         assertThat(values[0])
@@ -415,7 +413,7 @@ public class DataTypeIntegrationTest extends CCMTestsSupport {
 
     private Object getValue(GettableByIndexData data, DataType dataType) {
         // This is kind of lame, but better than testing all getters manually
-        CodecRegistry codecRegistry = cluster.getConfiguration().getCodecRegistry();
+        CodecRegistry codecRegistry = cluster().getConfiguration().getCodecRegistry();
         switch (dataType.getName()) {
             case ASCII:
                 return data.getString(0);

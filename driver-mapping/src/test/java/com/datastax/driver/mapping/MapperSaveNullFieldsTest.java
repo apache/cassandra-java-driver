@@ -20,11 +20,8 @@ import com.datastax.driver.core.CCMTestsSupport;
 import com.datastax.driver.mapping.Mapper.Option;
 import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
-import com.google.common.collect.Lists;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import java.util.Collection;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -34,13 +31,13 @@ public class MapperSaveNullFieldsTest extends CCMTestsSupport {
     Mapper<User> mapper;
 
     @Override
-    public Collection<String> createTestFixtures() {
-        return Lists.newArrayList("CREATE TABLE user (login text primary key, name text, phone text)");
+    public void onTestContextInitialized() {
+        execute("CREATE TABLE user (login text primary key, name text, phone text)");
     }
 
     @BeforeMethod(groups = "short")
     public void setup() {
-        mapper = new MappingManager(session).mapper(User.class);
+        mapper = new MappingManager(session()).mapper(User.class);
     }
 
     @Test(groups = "short")
@@ -74,7 +71,7 @@ public class MapperSaveNullFieldsTest extends CCMTestsSupport {
 
     private void should_save_null_fields(boolean nullName, boolean nullPhone, boolean saveExpected, Option... options) {
         // Start with clean data
-        session.execute("insert into user(login, name, phone) "
+        session().execute("insert into user(login, name, phone) "
                 + "values ('test_login', 'previous_name', 'previous_phone')");
 
         String newName = nullName ? null : "new_name";

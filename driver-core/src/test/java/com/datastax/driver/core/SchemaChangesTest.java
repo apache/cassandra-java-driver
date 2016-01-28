@@ -24,6 +24,7 @@ import org.mockito.ArgumentCaptor;
 import org.testng.annotations.*;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.Metadata.handleId;
@@ -45,7 +46,7 @@ public class SchemaChangesTest extends CCMTestsSupport {
     /**
      * The maximum time that the test will wait to check that listeners have been notified
      */
-    private static final int NOTIF_TIMEOUT_MS = 120000;
+    private static final long NOTIF_TIMEOUT_MS = TimeUnit.MINUTES.toMillis(1);
 
     Cluster cluster1;
     Cluster cluster2; // a second cluster to check that other clients also get notified
@@ -66,12 +67,14 @@ public class SchemaChangesTest extends CCMTestsSupport {
     @BeforeClass(groups = "short")
     public void setup() throws InterruptedException {
         Cluster.Builder builder = Cluster.builder()
-                .addContactPointsWithPorts(getInitialContactPoints())
+                .addContactPoints(getContactPoints())
+                .withPort(ccm().getBinaryPort())
                 .withQueryOptions(nonDebouncingQueryOptions());
         cluster1 = builder.build();
         cluster2 = builder.build();
         schemaDisabledCluster = spy(Cluster.builder()
-                .addContactPointsWithPorts(getInitialContactPoints())
+                .addContactPoints(getContactPoints())
+                .withPort(ccm().getBinaryPort())
                 .withClusterName("schema-disabled")
                 .withQueryOptions(nonDebouncingQueryOptions()
                                 .setMetadataEnabled(false)
@@ -512,7 +515,8 @@ public class SchemaChangesTest extends CCMTestsSupport {
     @Test(groups = "short", expectedExceptions = IllegalStateException.class)
     public void should_throw_illegal_state_exception_on_newToken_with_metadata_disabled() {
         Cluster cluster = Cluster.builder()
-                .addContactPointsWithPorts(getInitialContactPoints())
+                .addContactPoints(getContactPoints())
+                .withPort(ccm().getBinaryPort())
                 .withQueryOptions(nonDebouncingQueryOptions()
                                 .setMetadataEnabled(false)
                 ).build();
@@ -536,7 +540,8 @@ public class SchemaChangesTest extends CCMTestsSupport {
     @Test(groups = "short", expectedExceptions = IllegalStateException.class)
     public void should_throw_illegal_state_exception_on_newTokenRange_with_metadata_disabled() {
         Cluster cluster = Cluster.builder()
-                .addContactPointsWithPorts(getInitialContactPoints())
+                .addContactPoints(getContactPoints())
+                .withPort(ccm().getBinaryPort())
                 .withQueryOptions(nonDebouncingQueryOptions()
                                 .setMetadataEnabled(false)
                 ).build();

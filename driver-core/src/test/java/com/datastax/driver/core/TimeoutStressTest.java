@@ -18,7 +18,6 @@ package com.datastax.driver.core;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.datastax.driver.core.policies.ConstantReconnectionPolicy;
 import com.datastax.driver.core.utils.SocketChannelMonitor;
-import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -71,8 +70,8 @@ public class TimeoutStressTest extends CCMTestsSupport {
     }
 
     @Override
-    public Collection<String> createTestFixtures() {
-        return Lists.newArrayList(
+    public void onTestContextInitialized() {
+        execute(
                 "create table record (\n"
                         + "  name text,\n"
                         + "  phone text,\n"
@@ -109,13 +108,13 @@ public class TimeoutStressTest extends CCMTestsSupport {
     @Test(groups = "stress")
     public void host_state_should_be_maintained_with_timeouts() throws Exception {
         insertRecords();
-        session.close();
+        session().close();
 
         // Set very low timeouts.
-        cluster.getConfiguration().getSocketOptions().setConnectTimeoutMillis(CONNECTION_TIMEOUT_IN_MS);
-        cluster.getConfiguration().getSocketOptions().setReadTimeoutMillis(READ_TIMEOUT_IN_MS);
-        session = cluster.connect(keyspace);
-        PreparedStatement statement = session.prepare("select * from record where name=? limit 1000;");
+        cluster().getConfiguration().getSocketOptions().setConnectTimeoutMillis(CONNECTION_TIMEOUT_IN_MS);
+        cluster().getConfiguration().getSocketOptions().setReadTimeoutMillis(READ_TIMEOUT_IN_MS);
+        Session newSession = cluster().connect(keyspace);
+        PreparedStatement statement = newSession.prepare("select * from record where name=? limit 1000;");
 
         int workers = Runtime.getRuntime().availableProcessors();
         ExecutorService workerPool = Executors.newFixedThreadPool(workers,
@@ -124,12 +123,12 @@ public class TimeoutStressTest extends CCMTestsSupport {
         AtomicBoolean stopped = new AtomicBoolean(false);
 
         // Ensure that we never exceed MaxConnectionsPerHost * nodes + 1 control connection.
-        int maxConnections = TestUtils.numberOfLocalCoreConnections(cluster) * getInitialContactPoints().size() + 1;
+        int maxConnections = TestUtils.numberOfLocalCoreConnections(cluster()) * getContactPoints().size() + 1;
 
         try {
             Semaphore concurrentQueries = new Semaphore(CONCURRENT_QUERIES);
             for (int i = 0; i < workers; i++) {
-                workerPool.submit(new TimeoutStressWorker(session, statement, concurrentQueries, stopped));
+                workerPool.submit(new TimeoutStressWorker(newSession, statement, concurrentQueries, stopped));
             }
 
             long startTime = System.currentTimeMillis();
@@ -138,7 +137,7 @@ public class TimeoutStressTest extends CCMTestsSupport {
                 channelMonitor.report();
                 // Some connections that are being closed may have had active requests which are delegated to the
                 // reaper for cleanup later.
-                Collection<SocketChannel> openChannels = channelMonitor.openChannels(getInitialContactPoints());
+                Collection<SocketChannel> openChannels = channelMonitor.openChannels(getContactPointsWithPorts());
 
                 // Ensure that we don't exceed maximum connections.  Log as warning as there will be a bit of a timing
                 // factor between retrieving open connections and checking the reaper.
@@ -152,28 +151,28 @@ public class TimeoutStressTest extends CCMTestsSupport {
             stopped.set(true);
 
             // Reset socket timeouts to allow pool to recover.
-            cluster.getConfiguration().getSocketOptions()
+            cluster().getConfiguration().getSocketOptions()
                     .setConnectTimeoutMillis(SocketOptions.DEFAULT_CONNECT_TIMEOUT_MILLIS);
-            cluster.getConfiguration().getSocketOptions()
+            cluster().getConfiguration().getSocketOptions()
                     .setReadTimeoutMillis(SocketOptions.DEFAULT_READ_TIMEOUT_MILLIS);
 
             logger.debug("Sleeping 20 seconds to allow connection reaper to clean up connections " +
                     "and for the pools to recover.");
             Uninterruptibles.sleepUninterruptibly(20, TimeUnit.SECONDS);
 
-            Collection<SocketChannel> openChannels = channelMonitor.openChannels(getInitialContactPoints());
+            Collection<SocketChannel> openChannels = channelMonitor.openChannels(getContactPointsWithPorts());
             assertThat(openChannels.size())
                     .as("Number of open connections does not meet expected: %s", openChannels)
                     .isLessThanOrEqualTo(maxConnections);
 
             // Each host should be in an up state.
-            assertThat(cluster).host(1).comesUpWithin(0, TimeUnit.SECONDS);
-            assertThat(cluster).host(2).comesUpWithin(0, TimeUnit.SECONDS);
-            assertThat(cluster).host(3).comesUpWithin(0, TimeUnit.SECONDS);
+            assertThat(cluster()).host(1).comesUpWithin(0, TimeUnit.SECONDS);
+            assertThat(cluster()).host(2).comesUpWithin(0, TimeUnit.SECONDS);
+            assertThat(cluster()).host(3).comesUpWithin(0, TimeUnit.SECONDS);
 
-            session.close();
+            newSession.close();
 
-            openChannels = channelMonitor.openChannels(getInitialContactPoints());
+            openChannels = channelMonitor.openChannels(getContactPointsWithPorts());
             assertThat(openChannels.size())
                     .as("Number of open connections does not meet expected: %s", openChannels)
                     .isEqualTo(1);
@@ -184,12 +183,12 @@ public class TimeoutStressTest extends CCMTestsSupport {
 
     private void insertRecords() {
         int records = 30000;
-        PreparedStatement insertStmt = session.prepare("insert into record (name, phone, value) values (?, ?, ?)");
+        PreparedStatement insertStmt = session().prepare("insert into record (name, phone, value) values (?, ?, ?)");
 
         for (int i = 0; i < records; i++) {
             if (i % 1000 == 0)
                 logger.debug("Inserting record {}.", i);
-            session.execute(insertStmt.bind("0", Integer.toString(i), "test"));
+            session().execute(insertStmt.bind("0", Integer.toString(i), "test"));
         }
         logger.debug("Inserts complete.");
     }

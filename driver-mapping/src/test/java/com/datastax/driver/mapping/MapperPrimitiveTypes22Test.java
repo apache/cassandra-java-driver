@@ -24,16 +24,15 @@ import com.datastax.driver.mapping.annotations.Table;
 import org.testng.annotations.Test;
 
 import java.nio.ByteBuffer;
-import java.util.Collection;
-import java.util.Collections;
 
 import static org.testng.Assert.assertEquals;
 
 @CassandraVersion(major = 2.2)
 public class MapperPrimitiveTypes22Test extends CCMTestsSupport {
 
-    public Collection<String> createTestFixtures() {
-        return Collections.singletonList("CREATE TABLE primitiveTypes22 ("
+    @Override
+    public void onTestContextInitialized() {
+        execute("CREATE TABLE primitiveTypes22 ("
                 + "byteBufferCol blob primary key,"
                 + "localDateCol date,"
                 + "timeCol time, timeWrapperCol time,"
@@ -62,7 +61,7 @@ public class MapperPrimitiveTypes22Test extends CCMTestsSupport {
         primitiveTypes.setShortCol(shortCol);
         primitiveTypes.setShortWrapperCol(shortWrapperCol);
 
-        Mapper<PrimitiveTypes22> mapper = new MappingManager(session).mapper(PrimitiveTypes22.class);
+        Mapper<PrimitiveTypes22> mapper = new MappingManager(session()).mapper(PrimitiveTypes22.class);
         mapper.save(primitiveTypes);
         PrimitiveTypes22 primitiveTypes2 = mapper.get(byteBufferCol);
 

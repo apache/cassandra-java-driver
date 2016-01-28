@@ -16,14 +16,12 @@
 package com.datastax.driver.core;
 
 import com.datastax.driver.core.utils.CassandraVersion;
-import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListSet;
 
@@ -31,15 +29,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CassandraVersion(major = 2.0, description = "uses paging")
 public class AsyncResultSetTest extends CCMTestsSupport {
+
     @Override
-    public Collection<String> createTestFixtures() {
-        return Lists.newArrayList(
+    public void onTestContextInitialized() {
+        execute(
                 "create table ints (i int primary key)");
     }
 
     @BeforeMethod(groups = "short")
     public void cleanup() {
-        session.execute("truncate ints");
+        session().execute("truncate ints");
     }
 
     @Test(groups = "short")
@@ -54,13 +53,13 @@ public class AsyncResultSetTest extends CCMTestsSupport {
 
     private void should_iterate_result_set_asynchronously(int totalCount, int fetchSize) {
         for (int i = 0; i < totalCount; i++)
-            session.execute(String.format("insert into ints (i) values (%d)", i));
+            session().execute(String.format("insert into ints (i) values (%d)", i));
 
         Statement statement = new SimpleStatement("select * from ints").setFetchSize(fetchSize);
         ResultsAccumulator results = new ResultsAccumulator();
 
         ListenableFuture<ResultSet> future = Futures.transform(
-                session.executeAsync(statement),
+                session().executeAsync(statement),
                 results);
 
         Futures.getUnchecked(future);
@@ -69,7 +68,7 @@ public class AsyncResultSetTest extends CCMTestsSupport {
     }
 
     /**
-     * Dummy tranformation that accumulates all traversed results
+     * Dummy transformation that accumulates all traversed results
      */
     static class ResultsAccumulator implements AsyncFunction<ResultSet, ResultSet> {
         final Set<Integer> all = new ConcurrentSkipListSet<Integer>();

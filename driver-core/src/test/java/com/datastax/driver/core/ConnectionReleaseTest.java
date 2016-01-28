@@ -24,7 +24,6 @@ import org.scassandra.http.client.PrimingRequest;
 import org.testng.annotations.Test;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -84,7 +83,9 @@ public class ConnectionReleaseTest extends ScassandraTestBase {
                             .build()
             );
 
-            cluster = Cluster.builder().addContactPointsWithPorts(Collections.singletonList(hostAddress))
+            cluster = Cluster.builder()
+                    .addContactPoints(hostAddress.getAddress())
+                    .withPort(scassandra.getBinaryPort())
                     .withProtocolVersion(ProtocolVersion.V2)
                     .withPoolingOptions(new PoolingOptions()
                             .setCoreConnectionsPerHost(HostDistance.LOCAL, 1)

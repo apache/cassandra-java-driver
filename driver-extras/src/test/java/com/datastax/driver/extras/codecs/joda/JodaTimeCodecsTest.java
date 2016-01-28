@@ -30,7 +30,9 @@ import org.joda.time.LocalTime;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static com.datastax.driver.core.DataType.timestamp;
 import static com.datastax.driver.core.DataType.varchar;
@@ -44,8 +46,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class JodaTimeCodecsTest extends CCMTestsSupport {
 
     @Override
-    public Collection<String> createTestFixtures() {
-        return Collections.singletonList(
+    public void onTestContextInitialized() {
+        execute(
                 "CREATE TABLE IF NOT EXISTS foo ("
                         + "c1 text PRIMARY KEY, "
                         + "cdate date, "
@@ -61,8 +63,8 @@ public class JodaTimeCodecsTest extends CCMTestsSupport {
 
     @BeforeClass(groups = "short")
     public void registerCodecs() throws Exception {
-        TupleType dateWithTimeZoneType = cluster.getMetadata().newTupleType(timestamp(), varchar());
-        CodecRegistry codecRegistry = cluster.getConfiguration().getCodecRegistry();
+        TupleType dateWithTimeZoneType = cluster().getMetadata().newTupleType(timestamp(), varchar());
+        CodecRegistry codecRegistry = cluster().getConfiguration().getCodecRegistry();
         codecRegistry
                 .register(LocalTimeCodec.instance)
                 .register(LocalDateCodec.instance)
@@ -86,8 +88,8 @@ public class JodaTimeCodecsTest extends CCMTestsSupport {
         // given
         LocalTime time = new LocalTime(12, 16, 34, 999);
         // when
-        session.execute("insert into foo (c1, ctime) values (?, ?)", "should_map_time_to_localtime", time);
-        ResultSet result = session.execute("select ctime from foo where c1=?", "should_map_time_to_localtime");
+        session().execute("insert into foo (c1, ctime) values (?, ?)", "should_map_time_to_localtime", time);
+        ResultSet result = session().execute("select ctime from foo where c1=?", "should_map_time_to_localtime");
         // then
         assertThat(result.getAvailableWithoutFetching()).isEqualTo(1);
         Row row = result.one();
@@ -112,8 +114,8 @@ public class JodaTimeCodecsTest extends CCMTestsSupport {
         LocalDate localDate = new LocalDate(2015, 1, 1);
         com.datastax.driver.core.LocalDate driverLocalDate = com.datastax.driver.core.LocalDate.fromYearMonthDay(2015, 1, 1);
         // when
-        session.execute("insert into foo (c1, cdate) values (?, ?)", "should_map_date_to_localdate", localDate);
-        ResultSet result = session.execute("select cdate from foo where c1=?", "should_map_date_to_localdate");
+        session().execute("insert into foo (c1, cdate) values (?, ?)", "should_map_date_to_localdate", localDate);
+        ResultSet result = session().execute("select cdate from foo where c1=?", "should_map_date_to_localdate");
         // then
         assertThat(result.getAvailableWithoutFetching()).isEqualTo(1);
         Row row = result.one();
@@ -137,8 +139,8 @@ public class JodaTimeCodecsTest extends CCMTestsSupport {
         // given
         Instant instant = Instant.parse("2010-06-30T01:20+05:00");
         // when
-        session.execute("insert into foo (c1, ctimestamp) values (?, ?)", "should_map_timestamp_to_datetime", instant);
-        ResultSet result = session.execute("select ctimestamp from foo where c1=?", "should_map_timestamp_to_datetime");
+        session().execute("insert into foo (c1, ctimestamp) values (?, ?)", "should_map_timestamp_to_datetime", instant);
+        ResultSet result = session().execute("select ctimestamp from foo where c1=?", "should_map_timestamp_to_datetime");
         // then
         assertThat(result.getAvailableWithoutFetching()).isEqualTo(1);
         Row row = result.one();
@@ -162,9 +164,9 @@ public class JodaTimeCodecsTest extends CCMTestsSupport {
         // given
         DateTime expected = DateTime.parse("2010-06-30T01:20+05:30");
         // when
-        PreparedStatement insertStmt = session.prepare("insert into foo (c1, ctuple) values (?, ?)");
-        session.execute(insertStmt.bind("should_map_tuple_to_datetime", expected));
-        ResultSet result = session.execute("select ctuple from foo where c1=?", "should_map_tuple_to_datetime");
+        PreparedStatement insertStmt = session().prepare("insert into foo (c1, ctuple) values (?, ?)");
+        session().execute(insertStmt.bind("should_map_tuple_to_datetime", expected));
+        ResultSet result = session().execute("select ctuple from foo where c1=?", "should_map_tuple_to_datetime");
         // then
         assertThat(result.getAvailableWithoutFetching()).isEqualTo(1);
         Row row = result.one();
@@ -178,7 +180,7 @@ public class JodaTimeCodecsTest extends CCMTestsSupport {
     @Test(groups = "short")
     public void should_use_mapper_to_store_and_retrieve_values_with_custom_joda_codecs() {
         // given
-        MappingManager manager = new MappingManager(session);
+        MappingManager manager = new MappingManager(session());
         Mapper<Mapped> mapper = manager.mapper(Mapped.class);
         // when
         Mapped pojo = new Mapped();

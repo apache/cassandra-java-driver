@@ -26,7 +26,9 @@ import com.google.common.collect.ImmutableMap;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import java.util.*;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -35,8 +37,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class SimpleDateCodecsTest extends CCMTestsSupport {
 
     @Override
-    public Collection<String> createTestFixtures() {
-        return Collections.singletonList(
+    public void onTestContextInitialized() {
+        execute(
                 "CREATE TABLE IF NOT EXISTS foo ("
                         + "c1 text PRIMARY KEY, "
                         + "cdate date, "
@@ -48,7 +50,7 @@ public class SimpleDateCodecsTest extends CCMTestsSupport {
 
     @BeforeClass(groups = "short")
     public void registerCodecs() throws Exception {
-        CodecRegistry codecRegistry = cluster.getConfiguration().getCodecRegistry();
+        CodecRegistry codecRegistry = cluster().getConfiguration().getCodecRegistry();
         codecRegistry
                 .register(SimpleDateCodec.instance)
                 .register(SimpleTimestampCodec.instance);
@@ -72,9 +74,9 @@ public class SimpleDateCodecsTest extends CCMTestsSupport {
         LocalDate localDate = LocalDate.fromDaysSinceEpoch(days);
         // when
         // note: these codecs cannot work with simple statements!
-        BoundStatement bs = session.prepare("insert into foo (c1, cdate) values (?, ?)").bind("should_map_date_to_days_since_epoch", days);
-        session.execute(bs);
-        ResultSet result = session.execute("select cdate from foo where c1=?", "should_map_date_to_days_since_epoch");
+        BoundStatement bs = session().prepare("insert into foo (c1, cdate) values (?, ?)").bind("should_map_date_to_days_since_epoch", days);
+        session().execute(bs);
+        ResultSet result = session().execute("select cdate from foo where c1=?", "should_map_date_to_days_since_epoch");
         // then
         assertThat(result.getAvailableWithoutFetching()).isEqualTo(1);
         Row row = result.one();
@@ -101,9 +103,9 @@ public class SimpleDateCodecsTest extends CCMTestsSupport {
         Date date = new Date(millis);
         // when
         // note: these codecs cannot work with simple statements!
-        BoundStatement bs = session.prepare("insert into foo (c1, ctimestamp) values (?, ?)").bind("should_map_timestamp_to_millis_since_epoch", millis);
-        session.execute(bs);
-        ResultSet result = session.execute("select ctimestamp from foo where c1=?", "should_map_timestamp_to_millis_since_epoch");
+        BoundStatement bs = session().prepare("insert into foo (c1, ctimestamp) values (?, ?)").bind("should_map_timestamp_to_millis_since_epoch", millis);
+        session().execute(bs);
+        ResultSet result = session().execute("select ctimestamp from foo where c1=?", "should_map_timestamp_to_millis_since_epoch");
         // then
         assertThat(result.getAvailableWithoutFetching()).isEqualTo(1);
         Row row = result.one();
@@ -116,7 +118,7 @@ public class SimpleDateCodecsTest extends CCMTestsSupport {
     @Test(groups = "short")
     public void should_use_mapper_to_store_and_retrieve_values_with_simple_date_codecs() {
         // given
-        MappingManager manager = new MappingManager(session);
+        MappingManager manager = new MappingManager(session());
         Mapper<Mapped> mapper = manager.mapper(Mapped.class);
         // when
         Mapped pojo = new Mapped();

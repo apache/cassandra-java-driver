@@ -30,7 +30,10 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static com.datastax.driver.core.DataType.timestamp;
 import static com.datastax.driver.core.DataType.varchar;
@@ -42,8 +45,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class Jdk8TimeCodecsTest extends CCMTestsSupport {
 
     @Override
-    public Collection<String> createTestFixtures() {
-        return Collections.singletonList(
+    public void onTestContextInitialized() {
+        execute(
                 "CREATE TABLE IF NOT EXISTS foo ("
                         + "c1 text PRIMARY KEY, "
                         + "cdate date, "
@@ -59,8 +62,8 @@ public class Jdk8TimeCodecsTest extends CCMTestsSupport {
 
     @BeforeClass(groups = "short")
     public void registerCodecs() throws Exception {
-        TupleType dateWithTimeZoneType = cluster.getMetadata().newTupleType(timestamp(), varchar());
-        CodecRegistry codecRegistry = cluster.getConfiguration().getCodecRegistry();
+        TupleType dateWithTimeZoneType = cluster().getMetadata().newTupleType(timestamp(), varchar());
+        CodecRegistry codecRegistry = cluster().getConfiguration().getCodecRegistry();
         codecRegistry
                 .register(LocalTimeCodec.instance)
                 .register(LocalDateCodec.instance)
@@ -84,8 +87,8 @@ public class Jdk8TimeCodecsTest extends CCMTestsSupport {
         // given
         LocalTime time = LocalTime.of(12, 16, 34, 999);
         // when
-        session.execute("insert into foo (c1, ctime) values (?, ?)", "should_map_time_to_localtime", time);
-        ResultSet result = session.execute("select ctime from foo where c1=?", "should_map_time_to_localtime");
+        session().execute("insert into foo (c1, ctime) values (?, ?)", "should_map_time_to_localtime", time);
+        ResultSet result = session().execute("select ctime from foo where c1=?", "should_map_time_to_localtime");
         // then
         assertThat(result.getAvailableWithoutFetching()).isEqualTo(1);
         Row row = result.one();
@@ -110,8 +113,8 @@ public class Jdk8TimeCodecsTest extends CCMTestsSupport {
         LocalDate localDate = LocalDate.of(2015, 1, 1);
         com.datastax.driver.core.LocalDate driverLocalDate = com.datastax.driver.core.LocalDate.fromYearMonthDay(2015, 1, 1);
         // when
-        session.execute("insert into foo (c1, cdate) values (?, ?)", "should_map_date_to_localdate", localDate);
-        ResultSet result = session.execute("select cdate from foo where c1=?", "should_map_date_to_localdate");
+        session().execute("insert into foo (c1, cdate) values (?, ?)", "should_map_date_to_localdate", localDate);
+        ResultSet result = session().execute("select cdate from foo where c1=?", "should_map_date_to_localdate");
         // then
         assertThat(result.getAvailableWithoutFetching()).isEqualTo(1);
         Row row = result.one();
@@ -135,8 +138,8 @@ public class Jdk8TimeCodecsTest extends CCMTestsSupport {
         // given
         Instant instant = Instant.parse("2010-06-30T01:20:30Z");
         // when
-        session.execute("insert into foo (c1, ctimestamp) values (?, ?)", "should_map_timestamp_to_instant", instant);
-        ResultSet result = session.execute("select ctimestamp from foo where c1=?", "should_map_timestamp_to_instant");
+        session().execute("insert into foo (c1, ctimestamp) values (?, ?)", "should_map_timestamp_to_instant", instant);
+        ResultSet result = session().execute("select ctimestamp from foo where c1=?", "should_map_timestamp_to_instant");
         // then
         assertThat(result.getAvailableWithoutFetching()).isEqualTo(1);
         Row row = result.one();
@@ -160,9 +163,9 @@ public class Jdk8TimeCodecsTest extends CCMTestsSupport {
         // given
         ZonedDateTime expected = ZonedDateTime.parse("2010-06-30T01:20+05:30");
         // when
-        PreparedStatement insertStmt = session.prepare("insert into foo (c1, ctuple) values (?, ?)");
-        session.execute(insertStmt.bind("should_map_tuple_to_instant", expected));
-        ResultSet result = session.execute("select ctuple from foo where c1=?", "should_map_tuple_to_instant");
+        PreparedStatement insertStmt = session().prepare("insert into foo (c1, ctuple) values (?, ?)");
+        session().execute(insertStmt.bind("should_map_tuple_to_instant", expected));
+        ResultSet result = session().execute("select ctuple from foo where c1=?", "should_map_tuple_to_instant");
         // then
         assertThat(result.getAvailableWithoutFetching()).isEqualTo(1);
         Row row = result.one();
@@ -177,7 +180,7 @@ public class Jdk8TimeCodecsTest extends CCMTestsSupport {
     @Test(groups = "short")
     public void should_use_mapper_to_store_and_retrieve_values_with_custom_jdk8_codecs() {
         // given
-        MappingManager manager = new MappingManager(session);
+        MappingManager manager = new MappingManager(session());
         Mapper<Mapped> mapper = manager.mapper(Mapped.class);
         // when
         Mapped pojo = new Mapped();

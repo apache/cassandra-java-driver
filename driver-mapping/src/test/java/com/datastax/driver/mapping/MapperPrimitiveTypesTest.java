@@ -26,8 +26,6 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.UUID;
 
@@ -38,8 +36,8 @@ import static org.testng.Assert.assertEquals;
  */
 public class MapperPrimitiveTypesTest extends CCMTestsSupport {
 
-    public Collection<String> createTestFixtures() {
-        return Collections.singletonList("CREATE TABLE primitiveTypes ("
+    public void onTestContextInitialized() {
+        execute("CREATE TABLE primitiveTypes ("
                 + "byteBufferCol blob primary key,"
                 + "intCol int, intWrapperCol int,"
                 + "longCol bigint, longWrapperCol bigint,"
@@ -96,7 +94,7 @@ public class MapperPrimitiveTypesTest extends CCMTestsSupport {
         primitiveTypes.setUuidCol(uuidCol);
         primitiveTypes.setTimeUuidCol(timeUuidCol);
 
-        Mapper<PrimitiveTypes> mapper = new MappingManager(session).mapper(PrimitiveTypes.class);
+        Mapper<PrimitiveTypes> mapper = new MappingManager(session()).mapper(PrimitiveTypes.class);
         mapper.save(primitiveTypes);
         PrimitiveTypes primitiveTypes2 = mapper.get(byteBufferCol);
 

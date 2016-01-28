@@ -32,7 +32,6 @@ import org.testng.annotations.Test;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -134,7 +133,7 @@ public class ClusterInitTest {
                 // There is a possible race here in that the host is marked down in a separate Executor in onDown
                 // and then starts a periodic reconnection attempt shortly after.  Since setDown is called before
                 // startPeriodicReconnectionAttempt, we add a slight delay here if the future isn't set yet.
-                if (host.getReconnectionAttemptFuture() == null || host.getReconnectionAttemptFuture().isDone()) {
+                if (host != null && (host.getReconnectionAttemptFuture() == null || host.getReconnectionAttemptFuture().isDone())) {
                     logger.warn("Periodic Reconnection Attempt hasn't started yet for {}, waiting 1 second and then checking.", host);
                     Uninterruptibles.sleepUninterruptibly(1, TimeUnit.SECONDS);
                 }
@@ -198,7 +197,7 @@ public class ClusterInitTest {
     @Test(groups = "short")
     public void should_be_able_to_close_cluster_that_never_successfully_connected() throws Exception {
         Cluster cluster = Cluster.builder()
-                .addContactPointsWithPorts(Collections.singleton(new InetSocketAddress("127.0.0.1", 65534)))
+                .addContactPointsWithPorts(new InetSocketAddress("127.0.0.1", 65534))
                 .withNettyOptions(nonQuietClusterCloseOptions)
                 .build();
         try {
@@ -212,6 +211,8 @@ public class ClusterInitTest {
             } catch (TimeoutException e1) {
                 fail("Close Future did not complete quickly.");
             }
+        } finally {
+            cluster.close();
         }
     }
 

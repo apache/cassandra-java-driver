@@ -15,18 +15,15 @@
  */
 package com.datastax.driver.core;
 
-import com.google.common.collect.Lists;
 import org.testng.annotations.Test;
-
-import java.util.Collection;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 
 public class PreparedIdTest extends CCMTestsSupport {
 
     @Override
-    public Collection<String> createTestFixtures() {
-        return Lists.newArrayList(
+    public void onTestContextInitialized() {
+        execute(
                 "CREATE TABLE foo(k1 int, k2 int, k3 int, v int, PRIMARY KEY ((k1, k2, k3)))"
         );
     }
@@ -38,7 +35,7 @@ public class PreparedIdTest extends CCMTestsSupport {
      */
     @Test(groups = "short")
     public void should_have_routing_key_indexes_when_all_bound() {
-        PreparedStatement pst = session.prepare("INSERT INTO foo (k3, k1, k2, v) VALUES (?, ?, ?, ?)");
+        PreparedStatement pst = session().prepare("INSERT INTO foo (k3, k1, k2, v) VALUES (?, ?, ?, ?)");
         assertThat(pst.getPreparedId().routingKeyIndexes).containsExactly(1, 2, 0);
     }
 
@@ -49,7 +46,7 @@ public class PreparedIdTest extends CCMTestsSupport {
      */
     @Test(groups = "short")
     public void should_not_have_routing_key_indexes_when_some_not_bound() {
-        PreparedStatement pst = session.prepare("INSERT INTO foo (k3, k1, k2, v) VALUES (1, ?, ?, ?)");
+        PreparedStatement pst = session().prepare("INSERT INTO foo (k3, k1, k2, v) VALUES (1, ?, ?, ?)");
         assertThat(pst.getPreparedId().routingKeyIndexes).isNull();
     }
 
@@ -60,7 +57,7 @@ public class PreparedIdTest extends CCMTestsSupport {
      */
     @Test(groups = "short")
     public void should_not_have_routing_key_indexes_when_none_bound() {
-        PreparedStatement pst = session.prepare("INSERT INTO foo (k3, k1, k2, v) VALUES (1, 1, 1, 1)");
+        PreparedStatement pst = session().prepare("INSERT INTO foo (k3, k1, k2, v) VALUES (1, 1, 1, 1)");
         assertThat(pst.getPreparedId().routingKeyIndexes).isNull();
     }
 }

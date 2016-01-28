@@ -24,19 +24,19 @@ import com.datastax.driver.mapping.annotations.Table;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.util.Collection;
 import java.util.Iterator;
 
-import static com.google.common.collect.Lists.newArrayList;
 import static org.assertj.core.api.Assertions.assertThat;
 
+@SuppressWarnings("unused")
 @CassandraVersion(major = 3.0)
 public class MapperMaterializedViewTest extends CCMTestsSupport {
 
+
     @Override
-    public Collection<String> createTestFixtures() {
+    public void onTestContextInitialized() {
         // Example schema taken from: http://www.datastax.com/dev/blog/new-in-cassandra-3-0-materialized-views
-        return newArrayList(
+        execute(
                 "CREATE TABLE scores (user TEXT, game TEXT, year INT, month INT, day INT, score INT, PRIMARY KEY(user, game, year, month, day))",
                 "CREATE MATERIALIZED VIEW alltimehigh AS\n"
                         + "       SELECT * FROM scores\n"
@@ -77,7 +77,7 @@ public class MapperMaterializedViewTest extends CCMTestsSupport {
 
     @BeforeMethod(groups = "short")
     public void setUp() {
-        accessor = new MappingManager(session).createAccessor(ScoreAccessor.class);
+        accessor = new MappingManager(session()).createAccessor(ScoreAccessor.class);
     }
 
     /**
@@ -243,6 +243,7 @@ public class MapperMaterializedViewTest extends CCMTestsSupport {
                     '}';
         }
 
+        @SuppressWarnings("SimplifiableIfStatement")
         @Override
         public boolean equals(Object o) {
             if (this == o)

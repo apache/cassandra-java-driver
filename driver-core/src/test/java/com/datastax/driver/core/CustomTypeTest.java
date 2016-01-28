@@ -16,12 +16,10 @@
 package com.datastax.driver.core;
 
 import com.datastax.driver.core.utils.CassandraVersion;
-import com.google.common.collect.Lists;
 import org.testng.annotations.Test;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -45,8 +43,8 @@ public class CustomTypeTest extends CCMTestsSupport {
                     + "org.apache.cassandra.db.marshal.Int32Type)");
 
     @Override
-    public Collection<String> createTestFixtures() {
-        return Lists.newArrayList(
+    public void onTestContextInitialized() {
+        execute(
                 "CREATE TABLE test ("
                         + "    k int,"
                         + "    c1 'DynamicCompositeType(s => UTF8Type, i => Int32Type)',"
@@ -77,17 +75,17 @@ public class CustomTypeTest extends CCMTestsSupport {
     @Test(groups = "short")
     public void should_serialize_and_deserialize_custom_types() {
 
-        TableMetadata table = cluster.getMetadata().getKeyspace(keyspace).getTable("test");
+        TableMetadata table = cluster().getMetadata().getKeyspace(keyspace).getTable("test");
 
         assertThat(table.getColumn("c1")).isClusteringColumn().hasType(CUSTOM_DYNAMIC_COMPOSITE);
         assertThat(table.getColumn("c2")).isClusteringColumn().hasType(CUSTOM_COMPOSITE).hasClusteringOrder(ClusteringOrder.DESC);
         assertThat(table.getColumn("c3")).hasType(cint());
 
-        session.execute("INSERT INTO test(k, c1, c2, c3) VALUES (0, 's@foo:i@32', 'foo:32', 1)");
-        session.execute("INSERT INTO test(k, c1, c2, c3) VALUES (0, 'i@42', ':42', 2)");
-        session.execute("INSERT INTO test(k, c1, c2, c3) VALUES (0, 'i@12:i@3', 'foo', 3)");
+        session().execute("INSERT INTO test(k, c1, c2, c3) VALUES (0, 's@foo:i@32', 'foo:32', 1)");
+        session().execute("INSERT INTO test(k, c1, c2, c3) VALUES (0, 'i@42', ':42', 2)");
+        session().execute("INSERT INTO test(k, c1, c2, c3) VALUES (0, 'i@12:i@3', 'foo', 3)");
 
-        ResultSet rs = session.execute("SELECT * FROM test");
+        ResultSet rs = session().execute("SELECT * FROM test");
 
         Row r = rs.one();
 
@@ -121,13 +119,13 @@ public class CustomTypeTest extends CCMTestsSupport {
      */
     @Test(groups = "short")
     public void should_serialize_and_deserialize_collections_of_custom_types() {
-        TableMetadata table = cluster.getMetadata().getKeyspace(keyspace).getTable("test_collection");
+        TableMetadata table = cluster().getMetadata().getKeyspace(keyspace).getTable("test_collection");
         assertThat(table.getColumn("c1")).hasType(DataType.list(CUSTOM_DYNAMIC_COMPOSITE));
         assertThat(table.getColumn("c2")).hasType(DataType.map(CUSTOM_DYNAMIC_COMPOSITE, CUSTOM_DYNAMIC_COMPOSITE));
 
-        session.execute("INSERT INTO test_collection(k, c1, c2) VALUES (0, [ 's@foo:i@32' ], { 's@foo:i@32': 's@bar:i@42' })");
+        session().execute("INSERT INTO test_collection(k, c1, c2) VALUES (0, [ 's@foo:i@32' ], { 's@foo:i@32': 's@bar:i@42' })");
 
-        Row r = session.execute("SELECT * FROM test_collection").one();
+        Row r = session().execute("SELECT * FROM test_collection").one();
 
         assertThat(r.getColumnDefinitions().getType("c1")).isEqualTo(DataType.list(CUSTOM_DYNAMIC_COMPOSITE));
         List<ByteBuffer> c1 = r.getList("c1", ByteBuffer.class);
@@ -156,26 +154,26 @@ public class CustomTypeTest extends CCMTestsSupport {
     @CassandraVersion(major = 2.1)
     public void should_handle_udt_with_custom_type() {
         // Given: a UDT with custom types, and a table using it.
-        session.execute("CREATE TYPE custom_udt (regular int, c1 'DynamicCompositeType(s => UTF8Type, i => Int32Type)', c2 'LongType')");
-        session.execute("CREATE TABLE custom_udt_tbl (k int primary key, v frozen<custom_udt>)");
+        session().execute("CREATE TYPE custom_udt (regular int, c1 'DynamicCompositeType(s => UTF8Type, i => Int32Type)', c2 'LongType')");
+        session().execute("CREATE TABLE custom_udt_tbl (k int primary key, v frozen<custom_udt>)");
 
         // When: Retrieving User Type via schema metadata.
-        UserType custom_udt = cluster.getMetadata().getKeyspace(keyspace).getUserType("custom_udt");
+        UserType custom_udt = cluster().getMetadata().getKeyspace(keyspace).getUserType("custom_udt");
         assertThat(custom_udt.getFieldType("regular")).isEqualTo(cint());
         // Then: The fields with custom types should be appropriately represented with their defined types.
         assertThat(custom_udt.getFieldType("c1")).isEqualTo(CUSTOM_DYNAMIC_COMPOSITE);
         assertThat(custom_udt.getFieldType("c2")).isEqualTo(DataType.bigint());
 
         // When: Retrieving Table via schema metadata.
-        TableMetadata table = cluster.getMetadata().getKeyspace(keyspace).getTable("custom_udt_tbl");
+        TableMetadata table = cluster().getMetadata().getKeyspace(keyspace).getTable("custom_udt_tbl");
         // Then: The column with the user type should be represented and match the type previously retrieved.
         assertThat(table.getColumn("v")).hasType(custom_udt);
 
         // Given: Existing data in table with a UDT with custom types.
-        session.execute("INSERT INTO custom_udt_tbl (k, v) VALUES (0, {regular: 5, c1: 's@hello:i@93', c2: 400})");
+        session().execute("INSERT INTO custom_udt_tbl (k, v) VALUES (0, {regular: 5, c1: 's@hello:i@93', c2: 400})");
 
         // When: Data is retrieved.
-        Row row = session.execute("select * from custom_udt_tbl").one();
+        Row row = session().execute("select * from custom_udt_tbl").one();
 
         // Then: The resulting row's column definitions should match the table definition.
         assertThat(row.getColumnDefinitions().getType("k")).isEqualTo(cint());

@@ -24,7 +24,10 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.testng.annotations.Test;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 
@@ -33,8 +36,8 @@ import static com.datastax.driver.core.Assertions.assertThat;
 public class MapperNestedCollectionsTest extends CCMTestsSupport {
 
     @Override
-    public Collection<String> createTestFixtures() {
-        return Lists.newArrayList(
+    public void onTestContextInitialized() {
+        execute(
                 "CREATE TYPE testType(i int, ls list<frozen<set<int>>>)",
                 "CREATE TABLE testTable (k int primary key, "
                         + "m1 map<text, frozen<map<int, int>>>, " // nested collection
@@ -44,7 +47,7 @@ public class MapperNestedCollectionsTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void should_map_fields_to_nested_collections() {
-        Mapper<TestTable> mapper = new MappingManager(session).mapper(TestTable.class);
+        Mapper<TestTable> mapper = new MappingManager(session()).mapper(TestTable.class);
 
         TestTable testTable = new TestTable();
         testTable.setK(1);
@@ -67,7 +70,7 @@ public class MapperNestedCollectionsTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void should_map_accessor_params_to_nested_collections() {
-        MappingManager manager = new MappingManager(session);
+        MappingManager manager = new MappingManager(session());
         Mapper<TestTable> mapper = manager.mapper(TestTable.class);
         TestAccessor accessor = manager.createAccessor(TestAccessor.class);
 

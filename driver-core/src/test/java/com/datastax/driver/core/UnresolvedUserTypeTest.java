@@ -16,10 +16,8 @@
 package com.datastax.driver.core;
 
 import com.datastax.driver.core.utils.CassandraVersion;
-import com.google.common.collect.Lists;
 import org.testng.annotations.Test;
 
-import java.util.Collection;
 import java.util.concurrent.ExecutionException;
 
 import static com.datastax.driver.core.Assertions.assertThat;
@@ -29,8 +27,8 @@ import static com.datastax.driver.core.DataType.*;
 public class UnresolvedUserTypeTest extends CCMTestsSupport {
 
     @Override
-    public Collection<String> createTestFixtures() {
-        return Lists.newArrayList(
+    public void onTestContextInitialized() {
+        execute(
             /*
             Creates the following acyclic graph (edges directed upwards
             meaning "depends on"):
@@ -63,13 +61,13 @@ public class UnresolvedUserTypeTest extends CCMTestsSupport {
 
         // Each CREATE TYPE statement in getTableDefinitions() has triggered a partial schema refresh that
         // should have used previous UDT definitions for dependencies.
-        checkUserTypes(cluster.getMetadata());
+        checkUserTypes(cluster().getMetadata());
 
         // Create a different Cluster instance to force a full refresh where all UDTs are loaded at once.
         // The parsing logic should sort them to make sure they are loaded in the right order.
         Cluster newCluster = register(Cluster.builder()
-                .addContactPointsWithPorts(getInitialContactPoints())
-                .withPort(ccm.getBinaryPort())
+                .addContactPoints(getContactPoints())
+                .withPort(ccm().getBinaryPort())
                 .build());
         checkUserTypes(newCluster.getMetadata());
     }

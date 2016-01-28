@@ -35,14 +35,14 @@ import static org.testng.Assert.*;
 public class MapperUDTTest extends CCMTestsSupport {
 
     @Override
-    public Collection<String> createTestFixtures() {
-        return Arrays.asList("CREATE TYPE address (street text, city text, \"ZIP_code\" int, phones set<text>)",
+    public void onTestContextInitialized() {
+        execute("CREATE TYPE address (street text, city text, \"ZIP_code\" int, phones set<text>)",
                 "CREATE TABLE users (user_id uuid PRIMARY KEY, name text, mainaddress frozen<address>, other_addresses map<text,frozen<address>>)");
     }
 
     @BeforeMethod(groups = "short")
     public void clean() {
-        session.execute("TRUNCATE users");
+        session().execute("TRUNCATE users");
     }
 
     @Table(name = "users",
@@ -245,7 +245,7 @@ public class MapperUDTTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void testSimpleEntity() throws Exception {
-        Mapper<User> m = new MappingManager(session).mapper(User.class);
+        Mapper<User> m = new MappingManager(session()).mapper(User.class);
 
         User u1 = new User("Paul", new Address("12 4th Street", "Springfield", 12345, "12341343", "435423245"));
         u1.addOtherAddress("work", new Address("5 Main Street", "Springfield", 12345, "23431342"));
@@ -256,7 +256,7 @@ public class MapperUDTTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void should_handle_null_UDT_value() throws Exception {
-        Mapper<User> m = new MappingManager(session).mapper(User.class);
+        Mapper<User> m = new MappingManager(session()).mapper(User.class);
 
         User u1 = new User("Paul", null);
         m.save(u1);
@@ -266,9 +266,9 @@ public class MapperUDTTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void testAccessor() throws Exception {
-        MappingManager manager = new MappingManager(session);
+        MappingManager manager = new MappingManager(session());
 
-        Mapper<User> m = new MappingManager(session).mapper(User.class);
+        Mapper<User> m = new MappingManager(session()).mapper(User.class);
         User u1 = new User("Paul", new Address("12 4th Street", "Springfield", 12345, "12341343", "435423245"));
         m.save(u1);
 
@@ -309,8 +309,8 @@ public class MapperUDTTest extends CCMTestsSupport {
     public void should_be_able_to_use_udtCodec_standalone() {
         // Create a separate Cluster/Session to start with a CodecRegistry from scratch (so not already registered).
         Cluster cluster = register(Cluster.builder()
-                .addContactPointsWithPorts(getInitialContactPoints())
-                .withPort(ccm.getBinaryPort())
+                .addContactPoints(getContactPoints())
+                .withPort(ccm().getBinaryPort())
                 .build());
         CodecRegistry registry = cluster.getConfiguration().getCodecRegistry();
         Session session = cluster.connect(keyspace);

@@ -19,7 +19,6 @@ import com.datastax.driver.core.exceptions.InvalidTypeException;
 import org.testng.annotations.Test;
 
 import java.nio.ByteBuffer;
-import java.util.Collection;
 
 import static com.google.common.collect.Lists.newArrayList;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -36,8 +35,8 @@ public class TypeCodecOverlappingJavaTypeIntegrationTest extends CCMTestsSupport
     private static final String selectQuery = "SELECT c_int, l_int, c_text FROM \"myTable\" WHERE c_int = ?";
 
     @Override
-    public Collection<String> createTestFixtures() {
-        return newArrayList(
+    public void onTestContextInitialized() {
+        execute(
                 "CREATE TABLE \"myTable\" ("
                         + "c_int int PRIMARY KEY, "
                         + "l_int list<int>, "
@@ -54,22 +53,22 @@ public class TypeCodecOverlappingJavaTypeIntegrationTest extends CCMTestsSupport
 
     @Test(groups = "short")
     public void should_use_custom_codecs_with_prepared_statements() {
-        PreparedStatement ps = session.prepare(insertQuery);
-        session.execute(
+        PreparedStatement ps = session().prepare(insertQuery);
+        session().execute(
                 ps.bind()
                         .setInt(0, 42)
                         .setList(1, newArrayList(42))
                         .setString(2, "42") // here we have the CQL type so VarcharCodec will be used even if IntToStringCodec accepts it
         );
-        session.execute(
+        session().execute(
                 ps.bind()
                         .setString(0, "42")
                         .setList(1, newArrayList("42"), String.class)
                         .setString(2, "42") // here we have the CQL type so VarcharCodec will be used even if IntToStringCodec accepts it
         );
-        ps = session.prepare(selectQuery);
-        assertRow(session.execute(ps.bind().setInt(0, 42)).one());
-        assertRow(session.execute(ps.bind().setString(0, "42")).one());
+        ps = session().prepare(selectQuery);
+        assertRow(session().execute(ps.bind().setInt(0, 42)).one());
+        assertRow(session().execute(ps.bind().setString(0, "42")).one());
     }
 
     private void assertRow(Row row) {

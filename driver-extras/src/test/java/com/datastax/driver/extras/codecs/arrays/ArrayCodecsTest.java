@@ -21,12 +21,10 @@ import com.datastax.driver.mapping.MappingManager;
 import com.datastax.driver.mapping.annotations.Column;
 import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
-import com.google.common.collect.Lists;
 import com.google.common.primitives.Primitives;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import java.util.Collection;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -39,8 +37,8 @@ public class ArrayCodecsTest extends CCMTestsSupport {
             TypeCodec.varchar());
 
     @Override
-    public Collection<String> createTestFixtures() {
-        return Lists.newArrayList(
+    public void onTestContextInitialized() {
+        execute(
                 "CREATE TABLE lists ("
                         + "pk int PRIMARY KEY, "
                         + "l_int list<int>, "
@@ -95,19 +93,19 @@ public class ArrayCodecsTest extends CCMTestsSupport {
 
     @Test(groups = "short", dataProvider = "ArrayCodecsTest-serializing")
     public <A> void should_read_list_column_as_array(String columnName, Class<A> arrayClass, A expected) {
-        Row row = session.execute(String.format("SELECT %s FROM lists WHERE pk = 1", columnName)).one();
+        Row row = session().execute(String.format("SELECT %s FROM lists WHERE pk = 1", columnName)).one();
         A actual = row.get(columnName, arrayClass);
         assertThat(actual).isEqualTo(expected);
     }
 
     @Test(groups = "short", dataProvider = "ArrayCodecsTest-serializing")
     public <A> void should_set_list_column_with_array(String columnName, Class<A> arrayClass, A expected) {
-        PreparedStatement ps = session.prepare(String.format("INSERT INTO lists (pk, %s) VALUES (?, ?)", columnName));
+        PreparedStatement ps = session().prepare(String.format("INSERT INTO lists (pk, %s) VALUES (?, ?)", columnName));
         BoundStatement bs = ps.bind()
                 .setInt(0, 2)
                 .set(columnName, expected, arrayClass);
-        session.execute(bs);
-        Row row = session.execute(String.format("SELECT %s FROM lists WHERE pk = 2", columnName)).one();
+        session().execute(bs);
+        Row row = session().execute(String.format("SELECT %s FROM lists WHERE pk = 2", columnName)).one();
         List<?> list = row.getList(columnName, Primitives.wrap(arrayClass.getComponentType()));
         assertThat(list.toArray()).isEqualTo(expected);
     }
@@ -131,7 +129,7 @@ public class ArrayCodecsTest extends CCMTestsSupport {
     @Test(groups = "short")
     public void should_use_mapper_to_store_and_retrieve_values_with_custom_joda_codecs() {
         // given
-        MappingManager manager = new MappingManager(session);
+        MappingManager manager = new MappingManager(session());
         Mapper<Mapped> mapper = manager.mapper(Mapped.class);
         // when
         Mapped pojo = new Mapped();

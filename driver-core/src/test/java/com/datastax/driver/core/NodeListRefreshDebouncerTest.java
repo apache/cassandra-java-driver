@@ -15,7 +15,6 @@
  */
 package com.datastax.driver.core;
 
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -51,21 +50,17 @@ public class NodeListRefreshDebouncerTest extends CCMTestsSupport {
         queryOptions.setMaxPendingRefreshNodeListRequests(5);
         queryOptions.setRefreshSchemaIntervalMillis(0);
         // Create a separate cluster that will receive the schema events on its control connection.
-        cluster2 = Cluster.builder()
-                .addContactPointsWithPorts(getInitialContactPoints())
+        cluster2 = register(Cluster.builder()
+                .addContactPoints(getContactPoints())
+                .withPort(ccm().getBinaryPort())
                 .withQueryOptions(queryOptions)
-                .build();
+                .build());
         session2 = cluster2.connect();
 
         // Create a spy of the Cluster's control connection and replace it with the spy.
         controlConnection = spy(cluster2.manager.controlConnection);
         cluster2.manager.controlConnection = controlConnection;
         reset(controlConnection);
-    }
-
-    @AfterMethod(groups = "short")
-    public void teardown() {
-        cluster2.close();
     }
 
     /**
@@ -79,7 +74,7 @@ public class NodeListRefreshDebouncerTest extends CCMTestsSupport {
     @Test(groups = "short")
     public void should_debounce_refresh_when_keyspace_created() {
         String keyspace = "sdrwkc";
-        session.execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, keyspace, 1));
+        session().execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, keyspace, 1));
         keyspaces.add(keyspace);
 
         verify(controlConnection, timeout(DEBOUNCE_TIME + queryOptions.getRefreshSchemaIntervalMillis())).refreshNodeListAndTokenMap();
@@ -100,7 +95,7 @@ public class NodeListRefreshDebouncerTest extends CCMTestsSupport {
         String prefix = "srwmprr";
         for (int i = 0; i < 5; i++) {
             String keyspace = prefix + i;
-            session.execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, keyspace, 1));
+            session().execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, keyspace, 1));
             keyspaces.add(keyspace);
         }
 

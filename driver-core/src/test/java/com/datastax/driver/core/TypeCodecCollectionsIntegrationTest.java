@@ -24,7 +24,6 @@ import org.testng.annotations.Test;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -46,15 +45,15 @@ public class TypeCodecCollectionsIntegrationTest extends CCMTestsSupport {
 
     private int n_int = 42;
     private List<Integer> l_int = newArrayList(42, 43);
-    private List<Long> l_bigint = newArrayList(42l, 43l);
+    private List<Long> l_bigint = newArrayList(42L, 43L);
     private Set<Float> s_float = newHashSet(42.42f, 43.43f);
     private Set<Double> s_double = newHashSet(42.42d, 43.43d);
     private Map<Integer, BigInteger> m_varint = ImmutableMap.of(42, new BigInteger("424242"), 43, new BigInteger("434343"));
     private Map<Integer, BigDecimal> m_decimal = ImmutableMap.of(42, new BigDecimal("424242.42"), 43, new BigDecimal("434343.43"));
 
     @Override
-    public Collection<String> createTestFixtures() {
-        return newArrayList(
+    public void onTestContextInitialized() {
+        execute(
                 "CREATE TABLE IF NOT EXISTS \"myTable2\" ("
                         + "c_int int PRIMARY KEY, "
                         + "l_int list<int>, "
@@ -83,24 +82,24 @@ public class TypeCodecCollectionsIntegrationTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void should_use_collection_codecs_with_simple_statements() {
-        session.execute(insertQuery, n_int, l_int, l_bigint, s_float, s_double, m_varint, m_decimal);
-        ResultSet rows = session.execute(selectQuery, n_int);
+        session().execute(insertQuery, n_int, l_int, l_bigint, s_float, s_double, m_varint, m_decimal);
+        ResultSet rows = session().execute(selectQuery, n_int);
         Row row = rows.one();
         assertRow(row);
     }
 
     @Test(groups = "short")
     public void should_use_collection_codecs_with_prepared_statements_1() {
-        session.execute(session.prepare(insertQuery).bind(n_int, l_int, l_bigint, s_float, s_double, m_varint, m_decimal));
-        PreparedStatement ps = session.prepare(selectQuery);
-        ResultSet rows = session.execute(ps.bind(n_int));
+        session().execute(session().prepare(insertQuery).bind(n_int, l_int, l_bigint, s_float, s_double, m_varint, m_decimal));
+        PreparedStatement ps = session().prepare(selectQuery);
+        ResultSet rows = session().execute(ps.bind(n_int));
         Row row = rows.one();
         assertRow(row);
     }
 
     @Test(groups = "short")
     public void should_use_collection_codecs_with_prepared_statements_2() {
-        session.execute(session.prepare(insertQuery).bind()
+        session().execute(session().prepare(insertQuery).bind()
                 .setInt(0, n_int)
                 .setList(1, l_int)
                 .setList(2, l_bigint, Long.class) // variant with element type explicitly set
@@ -109,8 +108,8 @@ public class TypeCodecCollectionsIntegrationTest extends CCMTestsSupport {
                 .setMap(5, m_varint)
                 .setMap(6, m_decimal, Integer.class, BigDecimal.class)  // variant with element type explicitly set
         );
-        PreparedStatement ps = session.prepare(selectQuery);
-        ResultSet rows = session.execute(ps.bind()
+        PreparedStatement ps = session().prepare(selectQuery);
+        ResultSet rows = session().execute(ps.bind()
                         .setInt(0, n_int)
         );
         Row row = rows.one();
@@ -119,7 +118,7 @@ public class TypeCodecCollectionsIntegrationTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void should_use_collection_codecs_with_prepared_statements_3() {
-        session.execute(session.prepare(insertQuery).bind()
+        session().execute(session().prepare(insertQuery).bind()
                         .setInt(0, n_int)
                         .set(1, l_int, TypeTokens.listOf(Integer.class))
                         .set(2, l_bigint, TypeTokens.listOf(Long.class))
@@ -128,8 +127,8 @@ public class TypeCodecCollectionsIntegrationTest extends CCMTestsSupport {
                         .set(5, m_varint, TypeTokens.mapOf(Integer.class, BigInteger.class))
                         .set(6, m_decimal, TypeTokens.mapOf(Integer.class, BigDecimal.class))
         );
-        PreparedStatement ps = session.prepare(selectQuery);
-        ResultSet rows = session.execute(ps.bind()
+        PreparedStatement ps = session().prepare(selectQuery);
+        ResultSet rows = session().execute(ps.bind()
                         .setInt(0, n_int)
         );
         Row row = rows.one();
@@ -138,7 +137,7 @@ public class TypeCodecCollectionsIntegrationTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void should_use_collection_codecs_with_built_statements() {
-        session.execute(session.prepare(insertStmt).bind()
+        session().execute(session().prepare(insertStmt).bind()
                         .setInt(0, n_int)
                         .set(1, l_int, TypeTokens.listOf(Integer.class))
                         .set(2, l_bigint, TypeTokens.listOf(Long.class))
@@ -147,8 +146,8 @@ public class TypeCodecCollectionsIntegrationTest extends CCMTestsSupport {
                         .set(5, m_varint, TypeTokens.mapOf(Integer.class, BigInteger.class))
                         .set(6, m_decimal, TypeTokens.mapOf(Integer.class, BigDecimal.class))
         );
-        PreparedStatement ps = session.prepare(selectStmt);
-        ResultSet rows = session.execute(ps.bind()
+        PreparedStatement ps = session().prepare(selectStmt);
+        ResultSet rows = session().execute(ps.bind()
                         .setInt(0, n_int)
         );
         Row row = rows.one();

@@ -18,11 +18,8 @@ package com.datastax.driver.core;
 import com.datastax.driver.core.utils.CassandraVersion;
 import org.testng.annotations.Test;
 
-import java.util.Collection;
-
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.DataType.cint;
-import static com.google.common.collect.Lists.newArrayList;
 import static org.assertj.core.api.Assertions.entry;
 
 @CassandraVersion(major = 2.2)
@@ -34,9 +31,9 @@ public class FunctionMetadataTest extends CCMTestsSupport {
         // given
         String cql = String.format("CREATE FUNCTION %s.plus(s int,v int) RETURNS NULL ON NULL INPUT RETURNS int LANGUAGE java AS 'return s+v;';", keyspace);
         // when
-        session.execute(cql);
+        session().execute(cql);
         // then
-        KeyspaceMetadata keyspace = cluster.getMetadata().getKeyspace(this.keyspace);
+        KeyspaceMetadata keyspace = cluster().getMetadata().getKeyspace(this.keyspace);
         FunctionMetadata function = keyspace.getFunction("plus", cint(), cint());
         assertThat(function).isNotNull();
         assertThat(function.getKeyspace()).isEqualTo(keyspace);
@@ -66,9 +63,9 @@ public class FunctionMetadataTest extends CCMTestsSupport {
         // given
         String cql = String.format("CREATE FUNCTION %s.pi() CALLED ON NULL INPUT RETURNS double LANGUAGE java AS 'return Math.PI;';", keyspace);
         // when
-        session.execute(cql);
+        session().execute(cql);
         // then
-        KeyspaceMetadata keyspace = cluster.getMetadata().getKeyspace(this.keyspace);
+        KeyspaceMetadata keyspace = cluster().getMetadata().getKeyspace(this.keyspace);
         FunctionMetadata function = keyspace.getFunction("pi");
         assertThat(function).isNotNull();
         assertThat(function.getKeyspace()).isEqualTo(keyspace);
@@ -108,9 +105,9 @@ public class FunctionMetadataTest extends CCMTestsSupport {
                         + body
                         + "';", keyspace);
         // when
-        session.execute(cqlFunction);
+        session().execute(cqlFunction);
         // then
-        KeyspaceMetadata keyspace = cluster.getMetadata().getKeyspace(this.keyspace);
+        KeyspaceMetadata keyspace = cluster().getMetadata().getKeyspace(this.keyspace);
         UserType addressType = keyspace.getUserType("\"Address\"");
         FunctionMetadata function = keyspace.getFunction("\"NUM_PHONES_ACCU\"", cint(), addressType);
         assertThat(function).isNotNull();
@@ -127,8 +124,8 @@ public class FunctionMetadataTest extends CCMTestsSupport {
     }
 
     @Override
-    public Collection<String> createTestFixtures() {
-        return newArrayList(
+    public void onTestContextInitialized() {
+        execute(
                 String.format("CREATE TYPE IF NOT EXISTS %s.\"Phone\" (number text)", keyspace),
                 String.format("CREATE TYPE IF NOT EXISTS %s.\"Address\" ("
                         + "    street text,"

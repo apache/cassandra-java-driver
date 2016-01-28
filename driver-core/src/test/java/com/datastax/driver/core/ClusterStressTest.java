@@ -172,7 +172,9 @@ public class ClusterStressTest extends CCMTestsSupport {
 
         CreateClusterAndCheckConnections(CountDownLatch startSignal) {
             this.startSignal = startSignal;
-            this.cluster = Cluster.builder().addContactPointsWithPorts(getInitialContactPoints())
+            this.cluster = Cluster.builder()
+                    .addContactPoints(getContactPoints())
+                    .withPort(ccm().getBinaryPort())
                     .withPoolingOptions(new PoolingOptions().setCoreConnectionsPerHost(HostDistance.LOCAL, 1))
                     .withNettyOptions(channelMonitor.nettyOptions()).build();
         }
@@ -186,19 +188,19 @@ public class ClusterStressTest extends CCMTestsSupport {
                 cluster.init();
                 assertEquals(cluster.manager.sessions.size(), 0);
                 assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1);
-                assertEquals(channelMonitor.openChannels(getInitialContactPoints()).size(), 1);
+                assertEquals(channelMonitor.openChannels(getContactPointsWithPorts()).size(), 1);
 
                 // The first session initializes the cluster and its control connection
                 Session session = cluster.connect();
                 assertEquals(cluster.manager.sessions.size(), 1);
                 assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1 + TestUtils.numberOfLocalCoreConnections(cluster));
-                assertEquals(channelMonitor.openChannels(getInitialContactPoints()).size(), 1 + TestUtils.numberOfLocalCoreConnections(cluster));
+                assertEquals(channelMonitor.openChannels(getContactPointsWithPorts()).size(), 1 + TestUtils.numberOfLocalCoreConnections(cluster));
 
                 // Closing the session keeps the control connection opened
                 session.close();
                 assertEquals(cluster.manager.sessions.size(), 0);
                 assertEquals((int) cluster.getMetrics().getOpenConnections().getValue(), 1);
-                assertEquals(channelMonitor.openChannels(getInitialContactPoints()).size(), 1);
+                assertEquals(channelMonitor.openChannels(getContactPointsWithPorts()).size(), 1);
 
                 return this;
             } catch (AssertionError e) {
@@ -230,7 +232,7 @@ public class ClusterStressTest extends CCMTestsSupport {
             try {
                 cluster.close();
                 assertEquals(cluster.manager.sessions.size(), 0);
-                assertEquals(channelMonitor.openChannels(getInitialContactPoints()).size(), 0);
+                assertEquals(channelMonitor.openChannels(getContactPointsWithPorts()).size(), 0);
             } finally {
                 channelMonitor.stop();
                 cluster = null;
