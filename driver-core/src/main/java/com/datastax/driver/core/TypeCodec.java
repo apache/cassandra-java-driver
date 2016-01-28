@@ -378,9 +378,19 @@ public abstract class TypeCodec<T> {
 
     /**
      * Return a newly-created codec for the given CQL custom type.
-     * The returned codec maps the custom type into the Java type {@link ByteBuffer}.
-     * This method provides a (very lightweight) support for Cassandra
+     * <p/>
+     * The returned codec maps the custom type into the Java type {@link ByteBuffer},
+     * thus providing a (very lightweight) support for Cassandra
      * types that do not have a CQL equivalent.
+     * <p/>
+     * Note that the returned codec assumes that CQL literals for the given custom
+     * type are expressed in binary form as well, e.g. {@code 0xcafebabe}. If this is
+     * not the case, <em>the returned codec might be unable to {@link #parse(String) parse}
+     * and {@link #format(Object) format} literals for this type</em>.
+     * This is notoriously true for types inheriting from
+     * {@code org.apache.cassandra.db.marshal.AbstractCompositeType}, whose CQL literals
+     * are actually expressed as quoted strings.
+     * <p/>
      * This method does not cache returned instances and returns a newly-allocated object
      * at each invocation.
      *

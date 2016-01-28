@@ -496,7 +496,7 @@ public abstract class DataType {
      * @param typeClassName the server-side fully qualified class name for the type.
      * @return the custom type for {@code typeClassName}.
      */
-    public static DataType custom(String typeClassName) {
+    public static DataType.CustomType custom(String typeClassName) {
         if (typeClassName == null)
             throw new NullPointerException();
         return new DataType.CustomType(Name.CUSTOM, typeClassName);
@@ -600,6 +600,10 @@ public abstract class DataType {
         return toString();
     }
 
+    /**
+     * Instances of this class represent CQL native types,
+     * also known as CQL primitive types.
+     */
     public static class NativeType extends DataType {
 
         private NativeType(DataType.Name name) {
@@ -633,6 +637,10 @@ public abstract class DataType {
         }
     }
 
+    /**
+     * Instances of this class represent collection types, that is,
+     * lists, sets or maps.
+     */
     public static class CollectionType extends DataType {
 
         private final List<DataType> typeArguments;
@@ -691,6 +699,18 @@ public abstract class DataType {
         }
     }
 
+    /**
+     * A "custom" type is a type that cannot be expressed as a CQL type.
+     * <p/>
+     * Each custom type is merely identified by the fully qualified
+     * {@link #getCustomTypeClassName() class name}
+     * that represents this type server-side.
+     * <p/>
+     * The driver provides a minimal support for such types through
+     * instances of this class.
+     * <p/>
+     * A codec for custom types can be obtained via {@link TypeCodec#custom(CustomType)}.
+     */
     public static class CustomType extends DataType {
 
         private final String customClassName;
@@ -705,6 +725,17 @@ public abstract class DataType {
             return false;
         }
 
+        /**
+         * Returns the fully qualified name
+         * of the subtype of
+         * {@code org.apache.cassandra.db.marshal.AbstractType}
+         * that represents this type server-side.
+         *
+         * @return the fully qualified name
+         * of the subtype of
+         * {@code org.apache.cassandra.db.marshal.AbstractType}
+         * that represents this type server-side.
+         */
         public String getCustomTypeClassName() {
             return customClassName;
         }
