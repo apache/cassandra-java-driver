@@ -401,6 +401,7 @@ public class CCMBridge implements CCMAccess {
             return;
         if (logger.isDebugEnabled())
             logger.debug("Stopping: {} - free memory: {} MB", this, TestUtils.getFreeMemoryMB());
+        execute(CCM_COMMAND + " stop");
         if (logger.isDebugEnabled())
             logger.debug("Stopped: {} - free memory: {} MB", this, TestUtils.getFreeMemoryMB());
         closed = true;
