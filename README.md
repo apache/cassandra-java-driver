@@ -16,16 +16,17 @@ exclusively Cassandra's binary protocol and Cassandra Query Language v3.
 
 **Features:**
 
-* [Sync][sync] and [Async][async] API
-* [Simple][simple_st], [Prepared][prepared_st], and [Batch][batch_st] statements
+* [Sync](manual/) and [Async](manual/async/) API
+* [Simple](manual/statements/simple/), [Prepared](manual/statements/prepared/), and [Batch](manual/statements/batch/)
+  statements
 * Asynchronous IO, parallel execution, request pipelining
-* [Connection pooling][pool]
+* [Connection pooling](manual/pooling/)
 * Auto node discovery
 * Automatic reconnection
-* Configurable [load balancing][lbp] and [retry policies][retry_policy]
+* Configurable [load balancing](manual/load_balancing/) and [retry policies](manual/retries/)
 * Works with any cluster size
-* [Query builder][query_builder]
-* [Object mapper][mapper]
+* [Query builder](manual/statements/built/)
+* [Object mapper](manual/object_mapper/)
 
 
 [sync]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Session.html#execute-com.datastax.driver.core.Statement-
