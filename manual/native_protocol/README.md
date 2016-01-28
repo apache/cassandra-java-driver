@@ -40,7 +40,7 @@ To find out which version you're currently using, use
 ```java
 ProtocolVersion myCurrentVersion = cluster.getConfiguration()
     .getProtocolOptions()
-    .getProtocolVersionEnum();
+    .getProtocolVersion();
 ```
 
 The protocol version can not be changed at runtime. However, you can
