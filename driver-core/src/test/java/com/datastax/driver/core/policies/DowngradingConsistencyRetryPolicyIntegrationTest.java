@@ -17,12 +17,9 @@ package com.datastax.driver.core.policies;
 
 import com.datastax.driver.core.*;
 import com.google.common.base.Objects;
-import com.google.common.util.concurrent.Uninterruptibles;
 import org.mockito.Mockito;
 import org.mockito.verification.VerificationMode;
 import org.testng.annotations.Test;
-
-import java.util.concurrent.TimeUnit;
 
 import static com.datastax.driver.core.ConsistencyLevel.*;
 import static com.datastax.driver.core.TestUtils.ipOfNode;
@@ -56,15 +53,14 @@ public class DowngradingConsistencyRetryPolicyIntegrationTest extends CCMTestsSu
         Cluster cluster = register(Cluster.builder()
                 .addContactPoints(getContactPoints().get(0))
                 .withPort(ccm().getBinaryPort())
+                .withSocketOptions(new SocketOptions().setReadTimeoutMillis(120000))
                 .withRetryPolicy(Mockito.spy(DowngradingConsistencyRetryPolicy.INSTANCE))
                 .build());
         Session session = cluster.connect();
 
         String ks = TestUtils.generateIdentifier("ks_");
         session.execute(String.format("CREATE KEYSPACE %s WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 3}", ks));
-        // tests fail randomly here with InvalidQueryException: Keyspace 'xxx' does not exist
-        Uninterruptibles.sleepUninterruptibly(5, TimeUnit.SECONDS);
-        session.execute(String.format("USE %s", ks));
+        useKeyspace(session, ks);
         session.execute("CREATE TABLE foo(k int primary key)");
         session.execute("INSERT INTO foo(k) VALUES (0)");
 
