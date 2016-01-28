@@ -106,6 +106,7 @@ public class SimpleStatementIntegrationTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short", expectedExceptions = UnsupportedFeatureException.class)
+    @CassandraVersion(major = 2.0)
     public void should_fail_if_query_with_named_values_if_protocol_is_V1() {
         if (ccm().getVersion().getMajor() >= 3) {
             throw new SkipException("Skipping since Cassandra 3.0+ does not support protocol v1");
