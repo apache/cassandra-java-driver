@@ -219,6 +219,7 @@ public class CCMCache {
 
         @Override
         public CachedCCMAccess load(CCMBridge.Builder key) {
+            freeUpMemoryIfRequired(key.weight());
             return new CachedCCMAccess(key.build());
         }
 
@@ -255,12 +256,15 @@ public class CCMCache {
     private static final ScheduledExecutorService POOl = MoreExecutors.getExitingScheduledExecutorService(
             new ScheduledThreadPoolExecutor(1, new ThreadFactoryBuilder().setNameFormat("ccm-cache-pool-%d").build()));
 
+    // The amount of memory one CCM node takes in MB.
+    private static final int ONE_CCM_NODE_MB = 1000;
+
     static {
         long maximumWeight;
         String numberOfNodes = System.getProperty("ccm.maxNumberOfNodes");
         if (numberOfNodes == null) {
             long freeMemoryMB = TestUtils.getFreeMemoryMB();
-            if (freeMemoryMB < 1000)
+            if (freeMemoryMB < ONE_CCM_NODE_MB)
                 LOGGER.warn("Available memory below 1GB: {}MB, CCM clusters might fail to start", freeMemoryMB);
             // CCM nodes are started with -Xms500M -Xmx500M
             // and allocate up to 100MB non-heap memory in the general case,
@@ -268,7 +272,7 @@ public class CCMCache {
             // We leave 2 slots out to avoid starving system memory,
             // and we pick a value with a minimum of 1 slot and a maximum of 8 slots.
             // For example, an 8GB VM with ~6.5GB currently available heap will yield 6 slots ((6500/800) - 2 = 6).
-            long slotsAvailable = (freeMemoryMB / 800) - 2;
+            long slotsAvailable = (freeMemoryMB / ONE_CCM_NODE_MB) - 2;
             maximumWeight = Math.min(8, Math.max(1, slotsAvailable));
         } else {
             maximumWeight = Integer.parseInt(numberOfNodes);
@@ -284,17 +288,12 @@ public class CCMCache {
         POOl.scheduleWithFixedDelay(new Runnable() {
             @Override
             public void run() {
-                long freeMemoryMB = TestUtils.getFreeMemoryMB();
-                if (freeMemoryMB < 800) {
-                    LOGGER.warn("Free memory very low: {}, invalidating all cache entries", freeMemoryMB);
-                    CACHE.invalidateAll();
-                    System.gc();
-                } else if (freeMemoryMB < 1600) {
-                    LOGGER.warn("Free memory low: {}, cleaning up cache", freeMemoryMB);
-                    CACHE.cleanUp();
-                    System.gc();
+                freeUpMemoryIfRequired(1);
+                if (LOGGER.isInfoEnabled()) {
+                    LOGGER.info("Free memory: {}", TestUtils.getFreeMemoryMB(), CACHE.asMap().keySet());
+                    LOGGER.info("Cache contents: {}", CACHE.asMap().keySet());
+                    LOGGER.info("Cache stats: {}", CACHE.stats());
                 }
-                LOGGER.info("Free memory: {}, Cache {}", TestUtils.getFreeMemoryMB(), CACHE.asMap().keySet());
             }
         }, 60, 30, TimeUnit.SECONDS);
     }
@@ -325,5 +324,15 @@ public class CCMCache {
     public static void remove(CCMBridge.Builder key) {
         CACHE.invalidate(key);
     }
+
+    private synchronized static void freeUpMemoryIfRequired(int numberOfNodes) {
+        long freeMemoryMB = TestUtils.getFreeMemoryMB();
+        if (freeMemoryMB < numberOfNodes * ONE_CCM_NODE_MB) {
+            LOGGER.warn("Insufficient memory: {}, invalidating all cache entries", freeMemoryMB);
+            CACHE.invalidateAll();
+            System.gc();
+        }
+    }
+
 
 }
