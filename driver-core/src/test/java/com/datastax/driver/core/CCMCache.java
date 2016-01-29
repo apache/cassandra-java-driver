@@ -284,6 +284,7 @@ public class CCMCache {
                 .maximumWeight(maximumWeight)
                 .weigher(new CCMAccessWeigher())
                 .removalListener(new CCMAccessRemovalListener())
+                .recordStats()
                 .build(new CCMAccessLoader());
         POOl.scheduleWithFixedDelay(new Runnable() {
             @Override
