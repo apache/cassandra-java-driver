@@ -26,6 +26,8 @@ import java.util.Map;
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.DataType.cint;
 import static com.datastax.driver.core.DataType.custom;
+import static com.datastax.driver.core.TestUtils.serializeForCompositeType;
+import static com.datastax.driver.core.TestUtils.serializeForDynamicCompositeType;
 
 /**
  * Test we "support" custom types.
@@ -185,73 +187,4 @@ public class CustomTypeTest extends CCMTestsSupport {
         assertThat(value.getBytes("c1")).isEqualTo(serializeForDynamicCompositeType("hello", 93));
         assertThat(value.getLong("c2")).isEqualTo(400);
     }
-
-
-    private ByteBuffer serializeForDynamicCompositeType(Object... params) {
-        List<ByteBuffer> l = new ArrayList<ByteBuffer>();
-        int size = 0;
-        for (Object p : params) {
-            if (p instanceof Integer) {
-                ByteBuffer elt = ByteBuffer.allocate(2 + 2 + 4 + 1);
-                elt.putShort((short) (0x8000 | 'i'));
-                elt.putShort((short) 4);
-                elt.putInt((Integer) p);
-                elt.put((byte) 0);
-                elt.flip();
-                size += elt.remaining();
-                l.add(elt);
-            } else if (p instanceof String) {
-                ByteBuffer bytes = ByteBuffer.wrap(((String) p).getBytes());
-                ByteBuffer elt = ByteBuffer.allocate(2 + 2 + bytes.remaining() + 1);
-                elt.putShort((short) (0x8000 | 's'));
-                elt.putShort((short) bytes.remaining());
-                elt.put(bytes);
-                elt.put((byte) 0);
-                elt.flip();
-                size += elt.remaining();
-                l.add(elt);
-            } else {
-                throw new RuntimeException();
-            }
-        }
-        ByteBuffer res = ByteBuffer.allocate(size);
-        for (ByteBuffer bb : l)
-            res.put(bb);
-        res.flip();
-        return res;
-    }
-
-    private ByteBuffer serializeForCompositeType(Object... params) {
-
-        List<ByteBuffer> l = new ArrayList<ByteBuffer>();
-        int size = 0;
-        for (Object p : params) {
-            if (p instanceof Integer) {
-                ByteBuffer elt = ByteBuffer.allocate(2 + 4 + 1);
-                elt.putShort((short) 4);
-                elt.putInt((Integer) p);
-                elt.put((byte) 0);
-                elt.flip();
-                size += elt.remaining();
-                l.add(elt);
-            } else if (p instanceof String) {
-                ByteBuffer bytes = ByteBuffer.wrap(((String) p).getBytes());
-                ByteBuffer elt = ByteBuffer.allocate(2 + bytes.remaining() + 1);
-                elt.putShort((short) bytes.remaining());
-                elt.put(bytes);
-                elt.put((byte) 0);
-                elt.flip();
-                size += elt.remaining();
-                l.add(elt);
-            } else {
-                throw new RuntimeException();
-            }
-        }
-        ByteBuffer res = ByteBuffer.allocate(size);
-        for (ByteBuffer bb : l)
-            res.put(bb);
-        res.flip();
-        return res;
-    }
-
 }

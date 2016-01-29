@@ -17,6 +17,7 @@
 - [bug] JAVA-1095: Check protocol version for custom payload before sending the query.
 - [improvement] JAVA-1133: Add OSGi headers to cassandra-driver-extras.
 - [bug] JAVA-1137: Incorrect string returned by DataType.asFunctionParameterString() for collections and tuples.
+- [bug] JAVA-1046: (Dynamic)CompositeTypes need to be parsed as string literal, not blob.
 
 Merged from 2.1 branch:
 
