@@ -148,13 +148,6 @@ class RequestHandler {
             execution.cancel();
     }
 
-    private void logError(InetSocketAddress address, Throwable exception) {
-        logger.debug("Error querying {}, trying next host (error is: {})", address, exception.toString());
-        if (errors == null)
-            errors = new ConcurrentHashMap<InetSocketAddress, Throwable>();
-        errors.put(address, exception);
-    }
-
     private void setFinalResult(SpeculativeExecution execution, Connection connection, Message.Response response) {
         if (!isDone.compareAndSet(false, true)) {
             if (logger.isTraceEnabled())
