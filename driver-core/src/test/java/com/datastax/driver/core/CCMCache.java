@@ -17,6 +17,8 @@ package com.datastax.driver.core;
 
 import com.google.common.base.Throwables;
 import com.google.common.cache.*;
+import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,6 +26,9 @@ import java.io.File;
 import java.net.InetSocketAddress;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class CCMCache {
@@ -247,6 +252,9 @@ public class CCMCache {
      */
     private static final LoadingCache<CCMBridge.Builder, CachedCCMAccess> CACHE;
 
+    private static final ScheduledExecutorService POOl = MoreExecutors.getExitingScheduledExecutorService(
+            new ScheduledThreadPoolExecutor(1, new ThreadFactoryBuilder().setNameFormat("ccm-cache-pool-%d").build()));
+
     static {
         long maximumWeight;
         String numberOfNodes = System.getProperty("ccm.maxNumberOfNodes");
@@ -273,6 +281,23 @@ public class CCMCache {
                 .weigher(new CCMAccessWeigher())
                 .removalListener(new CCMAccessRemovalListener())
                 .build(new CCMAccessLoader());
+        POOl.scheduleWithFixedDelay(new Runnable() {
+            @Override
+            public void run() {
+                long freeMemoryMB = TestUtils.getFreeMemoryMB();
+                if (freeMemoryMB < 1600) {
+                    LOGGER.warn("Free memory low: {}, cleaning up cache", freeMemoryMB);
+                    CACHE.cleanUp();
+                    System.gc();
+                } else if (freeMemoryMB < 800) {
+                    LOGGER.warn("Free memory very low: {}, invalidating all cache entries", freeMemoryMB);
+                    CACHE.invalidateAll();
+                    System.gc();
+                } else {
+                    LOGGER.info("Free memory : {}", freeMemoryMB);
+                }
+            }
+        }, 60, 30, TimeUnit.SECONDS);
     }
 
     /**
