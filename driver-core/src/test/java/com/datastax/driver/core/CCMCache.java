@@ -285,17 +285,16 @@ public class CCMCache {
             @Override
             public void run() {
                 long freeMemoryMB = TestUtils.getFreeMemoryMB();
-                if (freeMemoryMB < 1600) {
-                    LOGGER.warn("Free memory low: {}, cleaning up cache", freeMemoryMB);
-                    CACHE.cleanUp();
-                    System.gc();
-                } else if (freeMemoryMB < 800) {
+                if (freeMemoryMB < 800) {
                     LOGGER.warn("Free memory very low: {}, invalidating all cache entries", freeMemoryMB);
                     CACHE.invalidateAll();
                     System.gc();
-                } else {
-                    LOGGER.info("Free memory : {}", freeMemoryMB);
+                } else if (freeMemoryMB < 1600) {
+                    LOGGER.warn("Free memory low: {}, cleaning up cache", freeMemoryMB);
+                    CACHE.cleanUp();
+                    System.gc();
                 }
+                LOGGER.info("Free memory: {}, Cache {}", TestUtils.getFreeMemoryMB(), CACHE.asMap().keySet());
             }
         }, 60, 30, TimeUnit.SECONDS);
     }
@@ -317,7 +316,6 @@ public class CCMCache {
                 throw Throwables.propagate(e);
             }
         }
-        logCache();
         return ccm;
     }
 
@@ -326,11 +324,6 @@ public class CCMCache {
      */
     public static void remove(CCMBridge.Builder key) {
         CACHE.invalidate(key);
-    }
-
-    private static void logCache() {
-        if (LOGGER.isDebugEnabled())
-            LOGGER.debug("Free memory: {}, Cache {}", TestUtils.getFreeMemoryMB(), CACHE.asMap().keySet());
     }
 
 }
