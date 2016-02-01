@@ -291,7 +291,7 @@ public class CCMCache {
             public void run() {
                 freeUpMemoryIfRequired(1);
                 if (LOGGER.isInfoEnabled()) {
-                    LOGGER.info("Free memory: {}", TestUtils.getFreeMemoryMB());
+                    LOGGER.info("Free memory: {}MB", TestUtils.getFreeMemoryMB());
                     LOGGER.info("Cache contents: {}", CACHE.asMap().keySet());
                     LOGGER.info("Cache stats: {}", CACHE.stats());
                 }
