@@ -25,6 +25,7 @@
 - [bug] JAVA-1100: Exception when connecting with shaded java driver in OSGI
 - [bug] JAVA-819: Expose more errors in RetryPolicy + provide idempotent-aware wrapper.
 - [improvement] JAVA-1040: SimpleStatement parameters support in QueryLogger.
+- [bug] JAVA-1064: getTable create statement doesn't properly handle quotes in primary key.
 
 Merged from 2.0 branch:
 

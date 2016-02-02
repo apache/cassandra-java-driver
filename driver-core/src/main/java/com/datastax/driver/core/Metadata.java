@@ -47,6 +47,15 @@ public class Metadata {
     private static final Pattern alphanumeric = Pattern.compile("\\w+"); // this includes _
     private static final Pattern lowercaseAlphanumeric = Pattern.compile("[a-z][a-z0-9_]*");
 
+    private static final Set<String> RESERVED_KEYWORDS = ImmutableSet.of(
+            "add", "allow", "alter", "and", "any", "apply", "asc", "authorize", "batch", "begin", "by",
+            "columnfamily", "create", "delete", "desc", "drop", "each_quorum", "from", "grant", "in",
+            "index", "inet", "insert", "into", "keyspace", "keyspaces", "limit", "local_one",
+            "local_quorum", "modify", "norecursive", "of", "on", "one", "order", "password",
+            "primary", "quorum", "rename", "revoke", "schema", "select", "set", "table", "to",
+            "token", "three", "truncate", "two", "unlogged", "update", "use", "using", "where", "with"
+    );
+
     Metadata(Cluster.Manager cluster) {
         this.cluster = cluster;
     }
@@ -404,7 +413,7 @@ public class Metadata {
             return id.toLowerCase();
 
         // Check if it's enclosed in quotes. If it is, remove them and unescape internal double quotes
-        if (id.charAt(0) == '"' && id.charAt(id.length() - 1) == '"')
+        if (!id.isEmpty() && id.charAt(0) == '"' && id.charAt(id.length() - 1) == '"')
             return id.substring(1, id.length() - 1).replaceAll("\"\"", "\"");
 
         // Otherwise, just return the id.
@@ -418,8 +427,11 @@ public class Metadata {
     // tables. Because it comes from Cassandra, we could just always quote it,
     // but to get a nicer output we don't do it if it's not necessary.
     static String escapeId(String ident) {
-        // we don't need to escape if it's lowercase and match non-quoted CQL3 ids.
-        return lowercaseAlphanumeric.matcher(ident).matches() ? ident : quote(ident);
+        // we don't need to escape if it's lowercase and match non-quoted CQL3 ids,
+        // and if it's not a CQL reserved keyword
+        return lowercaseAlphanumeric.matcher(ident).matches()
+                && !RESERVED_KEYWORDS.contains(ident.toLowerCase()) ?
+                ident : quote(ident);
     }
 
     /**
@@ -430,8 +442,12 @@ public class Metadata {
      * the identifier in double quotes (see the
      * <a href="http://cassandra.apache.org/doc/cql3/CQL.html#identifiers">CQL documentation</a>
      * for details). If you are using case sensitive identifiers, this method
-     * can be used to enclose such identifier in double quotes, making it case
+     * can be used to enclose such identifiers in double quotes, making them case
      * sensitive.
+     * <p/>
+     * Note that
+     * <a href="https://docs.datastax.com/en/cql/3.0/cql/cql_reference/keywords_r.html">reserved CQL keywords</a>
+     * should also be quoted.
      *
      * @param id the keyspace or table identifier.
      * @return {@code id} enclosed in double-quotes, for use in methods like
@@ -439,7 +455,7 @@ public class Metadata {
      * or even {@link Cluster#connect(String)}.
      */
     public static String quote(String id) {
-        return '"' + id + '"';
+        return '"' + id.replace("\"", "\"\"") + '"';
     }
 
     /**
