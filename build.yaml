@@ -16,6 +16,7 @@ build:
       cassandra.version=$CCM_CASSANDRA_VERSION
       ccm.java.home=$CCM_JAVA_HOME
       ccm.path=$CCM_JAVA_HOME/bin
+      ccm.maxNumberOfNodes=4
       failIfNoTests=false
       maven.test.failure.ignore=true
       maven.javadoc.skip=true
