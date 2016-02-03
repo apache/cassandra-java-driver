@@ -257,7 +257,7 @@ public class CCMCache {
             new ScheduledThreadPoolExecutor(1, new ThreadFactoryBuilder().setNameFormat("ccm-cache-pool-%d").build()));
 
     // The amount of memory one CCM node takes in MB.
-    private static final int ONE_CCM_NODE_MB = 1000;
+    private static final int ONE_CCM_NODE_MB = 800;
 
     static {
         long maximumWeight;
@@ -265,7 +265,7 @@ public class CCMCache {
         if (numberOfNodes == null) {
             long freeMemoryMB = TestUtils.getFreeMemoryMB();
             if (freeMemoryMB < ONE_CCM_NODE_MB)
-                LOGGER.warn("Available memory below 1GB: {}MB, CCM clusters might fail to start", freeMemoryMB);
+                LOGGER.warn("Not enough available memory: {}MB, CCM clusters might fail to start", freeMemoryMB);
             // CCM nodes are started with -Xms500M -Xmx500M
             // and allocate up to 100MB non-heap memory in the general case,
             // to be conservative we treat 1 "slot" as 800Mb.
