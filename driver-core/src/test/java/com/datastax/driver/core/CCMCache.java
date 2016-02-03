@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.net.InetSocketAddress;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -247,20 +248,23 @@ public class CCMCache {
      */
     private static final LoadingCache<CCMBridge.Builder, CachedCCMAccess> CACHE;
 
+    // The amount of memory one CCM node takes in MB.
+    private static final int ONE_CCM_NODE_MB = 800;
+
     static {
         long maximumWeight;
         String numberOfNodes = System.getProperty("ccm.maxNumberOfNodes");
         if (numberOfNodes == null) {
             long freeMemoryMB = TestUtils.getFreeMemoryMB();
-            if (freeMemoryMB < 1000)
-                LOGGER.warn("Available memory below 1GB: {}MB, CCM clusters might fail to start", freeMemoryMB);
+            if (freeMemoryMB < ONE_CCM_NODE_MB)
+                LOGGER.warn("Not enough available memory: {} MB, CCM clusters might fail to start", freeMemoryMB);
             // CCM nodes are started with -Xms500M -Xmx500M
             // and allocate up to 100MB non-heap memory in the general case,
             // to be conservative we treat 1 "slot" as 800Mb.
             // We leave 2 slots out to avoid starving system memory,
             // and we pick a value with a minimum of 1 slot and a maximum of 8 slots.
             // For example, an 8GB VM with ~6.5GB currently available heap will yield 6 slots ((6500/800) - 2 = 6).
-            long slotsAvailable = (freeMemoryMB / 800) - 2;
+            long slotsAvailable = (freeMemoryMB / ONE_CCM_NODE_MB) - 2;
             maximumWeight = Math.min(8, Math.max(1, slotsAvailable));
         } else {
             maximumWeight = Integer.parseInt(numberOfNodes);
@@ -272,6 +276,7 @@ public class CCMCache {
                 .maximumWeight(maximumWeight)
                 .weigher(new CCMAccessWeigher())
                 .removalListener(new CCMAccessRemovalListener())
+                .recordStats()
                 .build(new CCMAccessLoader());
     }
 
@@ -304,8 +309,22 @@ public class CCMCache {
     }
 
     private static void logCache() {
-        if (LOGGER.isDebugEnabled())
-            LOGGER.debug("Free memory: {}, Cache {}", TestUtils.getFreeMemoryMB(), CACHE.asMap().keySet());
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Free memory: {} MB", TestUtils.getFreeMemoryMB());
+            StringBuilder sb = new StringBuilder();
+            Iterator<Map.Entry<CCMBridge.Builder, CachedCCMAccess>> iterator = CACHE.asMap().entrySet().iterator();
+            while (iterator.hasNext()) {
+                Map.Entry<CCMBridge.Builder, CachedCCMAccess> entry = iterator.next();
+                sb.append(entry.getValue().getClusterName())
+                        .append(" (")
+                        .append(entry.getKey().weight())
+                        .append(")");
+                if (iterator.hasNext())
+                    sb.append(", ");
+            }
+            LOGGER.debug("Cache contents: {{}}", sb.toString());
+            LOGGER.debug("Cache stats: {}", CACHE.stats());
+        }
     }
 
 }

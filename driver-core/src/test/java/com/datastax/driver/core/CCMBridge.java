@@ -31,6 +31,8 @@ import java.io.*;
 import java.net.InetSocketAddress;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.datastax.driver.core.TestUtils.executeNoFail;
 import static com.datastax.driver.core.TestUtils.findAvailablePort;
@@ -659,22 +661,25 @@ public class CCMBridge implements CCMAccess {
      * use {@link #builder()} to get an instance
      */
     public static class Builder {
-        private final String clusterName = TestUtils.generateIdentifier("cluster_");
+
+        public static final String RANDOM_PORT = "__RANDOM_PORT__";
+        private static final Pattern RANDOM_PORT_PATTERN = Pattern.compile(RANDOM_PORT);
+
         int[] nodes = {1};
         private boolean start = true;
         private boolean isDSE = isDSE();
         private String version = getCassandraVersion();
-        private Set<String> createOptions = new HashSet<String>(getInstallArguments());
+        private Set<String> createOptions = new LinkedHashSet<String>(getInstallArguments());
         private Set<String> jvmArgs = new LinkedHashSet<String>();
-        private final Map<String, Object> cassandraConfiguration = Maps.newHashMap();
-        private final Map<String, Object> dseConfiguration = Maps.newHashMap();
-        // -1 means random
-        private int thriftPort = -1;
-        private int binaryPort = -1;
-        private int storagePort = -1;
+        private final Map<String, Object> cassandraConfiguration = Maps.newLinkedHashMap();
+        private final Map<String, Object> dseConfiguration = Maps.newLinkedHashMap();
         private Map<Integer, Workload> workloads = new HashMap<Integer, Workload>();
 
         private Builder() {
+            cassandraConfiguration.put("start_rpc", false);
+            cassandraConfiguration.put("storage_port", RANDOM_PORT);
+            cassandraConfiguration.put("rpc_port", RANDOM_PORT);
+            cassandraConfiguration.put("native_transport_port", RANDOM_PORT);
         }
 
         /**
@@ -781,17 +786,17 @@ public class CCMBridge implements CCMAccess {
         }
 
         public Builder withStoragePort(int port) {
-            storagePort = port;
+            cassandraConfiguration.put("storage_port", port);
             return this;
         }
 
         public Builder withThriftPort(int port) {
-            thriftPort = port;
+            cassandraConfiguration.put("rpc_port", port);
             return this;
         }
 
         public Builder withBinaryPort(int port) {
-            binaryPort = port;
+            cassandraConfiguration.put("native_transport_port", port);
             return this;
         }
 
@@ -809,10 +814,13 @@ public class CCMBridge implements CCMAccess {
 
         public CCMBridge build() {
             // be careful NOT to alter internal state (hashCode/equals) during build!
-            int storagePort = this.storagePort == -1 ? findAvailablePort() : this.storagePort;
-            int thriftPort = this.thriftPort == -1 ? findAvailablePort() : this.thriftPort;
-            int binaryPort = this.binaryPort == -1 ? findAvailablePort() : this.binaryPort;
+            String clusterName = TestUtils.generateIdentifier("ccm_");
+            Map<String, Object> cassandraConfiguration = randomizePorts(this.cassandraConfiguration);
+            Map<String, Object> dseConfiguration = randomizePorts(this.dseConfiguration);
             VersionNumber version = VersionNumber.parse(this.version);
+            int storagePort = Integer.parseInt(cassandraConfiguration.get("storage_port").toString());
+            int thriftPort = Integer.parseInt(cassandraConfiguration.get("rpc_port").toString());
+            int binaryPort = Integer.parseInt(cassandraConfiguration.get("native_transport_port").toString());
             final CCMBridge ccm = new CCMBridge(clusterName, isDSE, version, storagePort, thriftPort, binaryPort, joinJvmArgs());
             Runtime.getRuntime().addShutdownHook(new Thread() {
                 @Override
@@ -820,14 +828,9 @@ public class CCMBridge implements CCMAccess {
                     ccm.close();
                 }
             });
-            ccm.execute(buildCreateCommand());
+            ccm.execute(buildCreateCommand(clusterName));
             updateNodeConf(ccm);
-            HashMap<String, Object> config = new HashMap<String, Object>(cassandraConfiguration);
-            config.put("start_rpc", false);
-            config.put("storage_port", storagePort);
-            config.put("rpc_port", thriftPort);
-            config.put("native_transport_port", binaryPort);
-            ccm.updateConfig(config);
+            ccm.updateConfig(cassandraConfiguration);
             if (!dseConfiguration.isEmpty())
                 ccm.updateDSEConfig(dseConfiguration);
             for (Map.Entry<Integer, Workload> entry : workloads.entrySet()) {
@@ -851,12 +854,12 @@ public class CCMBridge implements CCMAccess {
             StringBuilder allJvmArgs = new StringBuilder("");
             for (String jvmArg : jvmArgs) {
                 allJvmArgs.append(" --jvm_arg=");
-                allJvmArgs.append(jvmArg);
+                allJvmArgs.append(randomizePorts(jvmArg));
             }
             return allJvmArgs.toString();
         }
 
-        private String buildCreateCommand() {
+        private String buildCreateCommand(String clusterName) {
             StringBuilder result = new StringBuilder(CCM_COMMAND + " create");
             result.append(" ").append(clusterName);
             result.append(" -i ").append(TestUtils.IP_PREFIX);
@@ -870,7 +873,7 @@ public class CCMBridge implements CCMAccess {
                     result.append(node);
                 }
             }
-            result.append(" ").append(Joiner.on(" ").join(createOptions));
+            result.append(" ").append(Joiner.on(" ").join(randomizePorts(createOptions)));
             return result.toString();
         }
 
@@ -888,7 +891,7 @@ public class CCMBridge implements CCMAccess {
                     for (int i = 0; i < nodesInDc; i++) {
                         int jmxPort = findAvailablePort();
                         int debugPort = findAvailablePort();
-                        logger.trace("Node {} in cluster {} using JMX port {} and debug port {}", n, clusterName, jmxPort, debugPort);
+                        logger.trace("Node {} in cluster {} using JMX port {} and debug port {}", n, ccm.getClusterName(), jmxPort, debugPort);
                         File nodeConf = new File(ccm.getNodeDir(n), "node.conf");
                         File nodeConf2 = new File(ccm.getNodeDir(n), "node.conf.tmp");
                         BufferedReader br = closer.register(new BufferedReader(new FileReader(nodeConf)));
@@ -923,6 +926,36 @@ public class CCMBridge implements CCMAccess {
             }
         }
 
+        private Set<String> randomizePorts(Set<String> set) {
+            Set<String> randomized = new LinkedHashSet<String>();
+            for (String value : set) {
+                randomized.add(randomizePorts(value));
+            }
+            return randomized;
+        }
+
+        private Map<String, Object> randomizePorts(Map<String, Object> map) {
+            Map<String, Object> randomized = new HashMap<String, Object>();
+            for (Map.Entry<String, Object> entry : map.entrySet()) {
+                Object value = entry.getValue();
+                if (value instanceof CharSequence) {
+                    value = randomizePorts((CharSequence) value);
+                }
+                randomized.put(entry.getKey(), value);
+            }
+            return randomized;
+        }
+
+        private String randomizePorts(CharSequence str) {
+            Matcher matcher = RANDOM_PORT_PATTERN.matcher(str);
+            StringBuffer sb = new StringBuffer();
+            while (matcher.find()) {
+                matcher.appendReplacement(sb, Integer.toString(TestUtils.findAvailablePort()));
+            }
+            matcher.appendTail(sb);
+            return sb.toString();
+        }
+
         @Override
         @SuppressWarnings("SimplifiableIfStatement")
         public boolean equals(Object o) {
@@ -932,9 +965,6 @@ public class CCMBridge implements CCMAccess {
             if (o == null || getClass() != o.getClass()) return false;
             Builder builder = (Builder) o;
             if (isDSE != builder.isDSE) return false;
-            if (thriftPort != builder.thriftPort) return false;
-            if (binaryPort != builder.binaryPort) return false;
-            if (storagePort != builder.storagePort) return false;
             if (!Arrays.equals(nodes, builder.nodes)) return false;
             if (!createOptions.equals(builder.createOptions)) return false;
             if (!jvmArgs.equals(builder.jvmArgs)) return false;
@@ -955,17 +985,10 @@ public class CCMBridge implements CCMAccess {
             result = 31 * result + cassandraConfiguration.hashCode();
             result = 31 * result + dseConfiguration.hashCode();
             result = 31 * result + workloads.hashCode();
-            result = 31 * result + thriftPort;
-            result = 31 * result + binaryPort;
-            result = 31 * result + storagePort;
             result = 31 * result + version.hashCode();
             return result;
         }
 
-        @Override
-        public String toString() {
-            return String.format("%s (%s nodes)", clusterName, weight());
-        }
     }
 
 }

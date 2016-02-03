@@ -20,7 +20,6 @@ import com.datastax.driver.core.policies.WhiteListPolicy;
 import com.google.common.collect.Lists;
 import org.testng.annotations.Test;
 
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
 import static com.datastax.driver.core.CreateCCM.TestMode.PER_METHOD;
@@ -64,9 +63,10 @@ public class MissingRpcAddressTest extends CCMTestsSupport {
                 .build());
         Session session = cluster.connect();
         String deleteStmt = String.format("DELETE rpc_address FROM system.peers WHERE peer = '%s'",
-                InetAddress.getByName(TestUtils.IP_PREFIX + "2").getHostName());
+                ccm().addressOfNode(2).getHostName());
         session.execute(deleteStmt);
         session.close();
+        cluster.close();
     }
 
 }
