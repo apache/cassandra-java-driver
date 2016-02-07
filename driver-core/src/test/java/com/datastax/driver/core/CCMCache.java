@@ -17,8 +17,6 @@ package com.datastax.driver.core;
 
 import com.google.common.base.Throwables;
 import com.google.common.cache.*;
-import com.google.common.util.concurrent.MoreExecutors;
-import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,9 +24,6 @@ import java.io.File;
 import java.net.InetSocketAddress;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class CCMCache {
@@ -219,7 +214,6 @@ public class CCMCache {
 
         @Override
         public CachedCCMAccess load(CCMBridge.Builder key) {
-            freeUpMemoryIfRequired(key.weight());
             return new CachedCCMAccess(key.build());
         }
 
@@ -253,9 +247,6 @@ public class CCMCache {
      */
     private static final LoadingCache<CCMBridge.Builder, CachedCCMAccess> CACHE;
 
-    private static final ScheduledExecutorService POOl = MoreExecutors.getExitingScheduledExecutorService(
-            new ScheduledThreadPoolExecutor(1, new ThreadFactoryBuilder().setNameFormat("ccm-cache-pool-%d").build()));
-
     // The amount of memory one CCM node takes in MB.
     private static final int ONE_CCM_NODE_MB = 800;
 
@@ -286,17 +277,6 @@ public class CCMCache {
                 .removalListener(new CCMAccessRemovalListener())
                 .recordStats()
                 .build(new CCMAccessLoader());
-        POOl.scheduleWithFixedDelay(new Runnable() {
-            @Override
-            public void run() {
-                freeUpMemoryIfRequired(1);
-                if (LOGGER.isInfoEnabled()) {
-                    LOGGER.info("Free memory: {}MB", TestUtils.getFreeMemoryMB());
-                    LOGGER.info("Cache contents: {}", CACHE.asMap().keySet());
-                    LOGGER.info("Cache stats: {}", CACHE.stats());
-                }
-            }
-        }, 60, 30, TimeUnit.SECONDS);
     }
 
     /**
@@ -316,6 +296,7 @@ public class CCMCache {
                 throw Throwables.propagate(e);
             }
         }
+        logCache();
         return ccm;
     }
 
@@ -326,14 +307,12 @@ public class CCMCache {
         CACHE.invalidate(key);
     }
 
-    private synchronized static void freeUpMemoryIfRequired(int numberOfNodes) {
-        long freeMemoryMB = TestUtils.getFreeMemoryMB();
-        if (freeMemoryMB < numberOfNodes * ONE_CCM_NODE_MB) {
-            LOGGER.warn("Insufficient memory: {}, invalidating all cache entries", freeMemoryMB);
-            CACHE.invalidateAll();
-            System.gc();
+    private static void logCache() {
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.info("Free memory: {}MB", TestUtils.getFreeMemoryMB());
+            LOGGER.info("Cache contents: {}", CACHE.asMap().keySet());
+            LOGGER.info("Cache stats: {}", CACHE.stats());
         }
     }
-
 
 }
