@@ -13,17 +13,47 @@
 -->
 <differences>
 
-  <difference>
-    <differenceType>1001</differenceType> <!-- decreased visibility -->
-    <className>com/datastax/driver/mapping/ColumnMapper$Kind</className>
-    <justification>False positive, the enclosing class is package-private so this was never exposed</justification>
-  </difference>
+    <difference>
+        <differenceType>1001</differenceType> <!-- decreased visibility -->
+        <className>com/datastax/driver/mapping/ColumnMapper$Kind</className>
+        <justification>False positive, the enclosing class is package-private so this was never exposed</justification>
+    </difference>
 
-  <difference>
-    <differenceType>7012</differenceType> <!-- method added to interface -->
-    <className>com/datastax/driver/mapping/annotations/QueryParameters</className>
-    <method>boolean[] idempotent()</method>
-    <justification>False positive, it's an annotation and the new method has a default value</justification>
-  </difference>
+    <difference>
+        <differenceType>7012</differenceType> <!-- method added to interface -->
+        <className>com/datastax/driver/mapping/annotations/QueryParameters</className>
+        <method>boolean[] idempotent()</method>
+        <justification>False positive, it's an annotation and the new method has a default value</justification>
+    </difference>
+
+    <difference>
+        <differenceType>8001</differenceType> <!-- class removed -->
+        <className>com/datastax/driver/extras/codecs/jdk8/InstantCodec</className>
+        <justification>This class is only present if the project was compiled with JDK 8+</justification>
+    </difference>
+
+    <difference>
+        <differenceType>8001</differenceType> <!-- class removed -->
+        <className>com/datastax/driver/extras/codecs/jdk8/LocalDateCodec</className>
+        <justification>This class is only present if the project was compiled with JDK 8+</justification>
+    </difference>
+
+    <difference>
+        <differenceType>8001</differenceType> <!-- class removed -->
+        <className>com/datastax/driver/extras/codecs/jdk8/LocalTimeCodec</className>
+        <justification>This class is only present if the project was compiled with JDK 8+</justification>
+    </difference>
+
+    <difference>
+        <differenceType>8001</differenceType> <!-- class removed -->
+        <className>com/datastax/driver/extras/codecs/jdk8/OptionalCodec</className>
+        <justification>This class is only present if the project was compiled with JDK 8+</justification>
+    </difference>
+
+    <difference>
+        <differenceType>8001</differenceType> <!-- class removed -->
+        <className>com/datastax/driver/extras/codecs/jdk8/ZonedDateTimeCodec</className>
+        <justification>This class is only present if the project was compiled with JDK 8+</justification>
+    </difference>
 
 </differences>
