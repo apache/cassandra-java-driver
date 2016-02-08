@@ -669,7 +669,6 @@ public class CCMBridge implements CCMAccess {
         public static final String RANDOM_PORT = "__RANDOM_PORT__";
         private static final Pattern RANDOM_PORT_PATTERN = Pattern.compile(RANDOM_PORT);
 
-        private final String clusterName = TestUtils.generateIdentifier("ccm_");
         int[] nodes = {1};
         private boolean start = true;
         private boolean isDSE = isDSE();
@@ -819,6 +818,7 @@ public class CCMBridge implements CCMAccess {
 
         public CCMBridge build() {
             // be careful NOT to alter internal state (hashCode/equals) during build!
+            String clusterName = TestUtils.generateIdentifier("ccm_");
             Map<String, Object> cassandraConfiguration = randomizePorts(this.cassandraConfiguration);
             Map<String, Object> dseConfiguration = randomizePorts(this.dseConfiguration);
             VersionNumber version = VersionNumber.parse(this.version);
@@ -832,7 +832,7 @@ public class CCMBridge implements CCMAccess {
                     ccm.close();
                 }
             });
-            ccm.execute(buildCreateCommand());
+            ccm.execute(buildCreateCommand(clusterName));
             updateNodeConf(ccm);
             ccm.updateConfig(cassandraConfiguration);
             if (!dseConfiguration.isEmpty())
@@ -863,7 +863,7 @@ public class CCMBridge implements CCMAccess {
             return allJvmArgs.toString();
         }
 
-        private String buildCreateCommand() {
+        private String buildCreateCommand(String clusterName) {
             StringBuilder result = new StringBuilder(CCM_COMMAND + " create");
             result.append(" ").append(clusterName);
             result.append(" -i ").append(TestUtils.IP_PREFIX);
@@ -895,7 +895,7 @@ public class CCMBridge implements CCMAccess {
                     for (int i = 0; i < nodesInDc; i++) {
                         int jmxPort = findAvailablePort();
                         int debugPort = findAvailablePort();
-                        logger.trace("Node {} in cluster {} using JMX port {} and debug port {}", n, clusterName, jmxPort, debugPort);
+                        logger.trace("Node {} in cluster {} using JMX port {} and debug port {}", n, ccm.getClusterName(), jmxPort, debugPort);
                         File nodeConf = new File(ccm.getNodeDir(n), "node.conf");
                         File nodeConf2 = new File(ccm.getNodeDir(n), "node.conf.tmp");
                         BufferedReader br = closer.register(new BufferedReader(new FileReader(nodeConf)));
@@ -993,10 +993,6 @@ public class CCMBridge implements CCMAccess {
             return result;
         }
 
-        @Override
-        public String toString() {
-            return String.format("%s (%s nodes)", clusterName, weight());
-        }
     }
 
 }

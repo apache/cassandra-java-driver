@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.net.InetSocketAddress;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -309,9 +310,20 @@ public class CCMCache {
 
     private static void logCache() {
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.info("Free memory: {}MB", TestUtils.getFreeMemoryMB());
-            LOGGER.info("Cache contents: {}", CACHE.asMap().keySet());
-            LOGGER.info("Cache stats: {}", CACHE.stats());
+            LOGGER.debug("Free memory: {}MB", TestUtils.getFreeMemoryMB());
+            StringBuilder sb = new StringBuilder();
+            Iterator<Map.Entry<CCMBridge.Builder, CachedCCMAccess>> iterator = CACHE.asMap().entrySet().iterator();
+            while (iterator.hasNext()) {
+                Map.Entry<CCMBridge.Builder, CachedCCMAccess> entry = iterator.next();
+                sb.append(entry.getValue().getClusterName())
+                        .append(" (")
+                        .append(entry.getKey().weight())
+                        .append(")");
+                if (iterator.hasNext())
+                    sb.append(", ");
+            }
+            LOGGER.debug("Cache contents: {{}}", sb.toString());
+            LOGGER.debug("Cache stats: {}", CACHE.stats());
         }
     }
 
