@@ -22,10 +22,10 @@
         <artifactId>cassandra-driver-parent</artifactId>
         <version>3.0.1-SNAPSHOT</version>
     </parent>
-    <artifactId>cassandra-driver-examples-parent</artifactId>
+    <artifactId>cassandra-driver-tests-parent</artifactId>
     <packaging>pom</packaging>
-    <name>DataStax Java Driver for Apache Cassandra Examples</name>
-    <description>A collection of examples to demonstrate DataStax Java Driver for Apache Cassandra.</description>
+    <name>DataStax Java Driver for Apache Cassandra Tests</name>
+    <description>Tests for the DataStax Java Driver for Apache Cassandra.</description>
     <url>https://github.com/datastax/java-driver</url>
 
     <properties>

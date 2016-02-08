@@ -1,14 +1,13 @@
 # OSGi Example
 
-A simple example application that demonstrates using the Java Driver in
-an OSGi service.
+A simple test for the Java Driver in an OSGi environment.
 
 MailboxService is an activated service that uses Cassandra to
 persist a Mailbox by email address.
 
 ## Usage
 
-To build the bundle and run tests execute the following maven task::
+To build the bundle and run tests execute the following maven task:
 
     mvn integration-test -P short
 
@@ -24,7 +23,6 @@ configurations:
 
 1. Default (default classifier with all dependencies)
 2. Netty-Shaded (shaded classifier with all depedencies w/o Netty)
-3. Guava 15 (default classifier with Guava 15.0)
 4. Guava 16
 5. Guava 17
 6. Guava 18

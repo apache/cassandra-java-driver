@@ -12,7 +12,7 @@ fi
 
 if [ "x$STRESS_JAR" = "x" ]; then
 
-    STRESS_JAR="$SCRIPT_DIR/../target/cassandra-driver-examples-stress-*-jar-with-dependencies.jar"
+    STRESS_JAR="$SCRIPT_DIR/../target/cassandra-driver-tests-stress-*-jar-with-dependencies.jar"
 
     if [ ! -f $STRESS_JAR ]; then
         # Trash the version file in case there was some crap in it
