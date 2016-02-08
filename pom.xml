@@ -40,6 +40,7 @@
         <module>driver-core</module>
         <module>driver-mapping</module>
         <module>driver-extras</module>
+        <module>driver-examples</module>
         <module>driver-tests</module>
         <module>driver-dist</module>
     </modules>
