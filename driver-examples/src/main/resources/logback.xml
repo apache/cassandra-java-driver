@@ -1,0 +1,22 @@
+<configuration>
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+
+        <!-- encoders are assigned the type
+             ch.qos.logback.classic.encoder.PatternLayoutEncoder by default -->
+        <encoder>
+            <pattern>%-5level - %msg%n</pattern>
+        </encoder>
+
+    </appender>
+
+    <!-- adjust the driver's log verbosity; see
+    http://datastax.github.io/java-driver/manual/logging/
+    for more information -->
+    <logger name="com.datastax.driver.core" level="INFO"/>
+
+    <root level="INFO">
+        <appender-ref ref="STDOUT"/>
+    </root>
+
+</configuration>
