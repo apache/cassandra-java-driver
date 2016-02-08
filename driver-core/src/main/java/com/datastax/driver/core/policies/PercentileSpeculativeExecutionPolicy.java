@@ -15,10 +15,7 @@
  */
 package com.datastax.driver.core.policies;
 
-import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.Host;
-import com.datastax.driver.core.PerHostPercentileTracker;
-import com.datastax.driver.core.Statement;
+import com.datastax.driver.core.*;
 import com.google.common.annotations.Beta;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -48,7 +45,7 @@ import static com.google.common.base.Preconditions.checkArgument;
  */
 @Beta
 public class PercentileSpeculativeExecutionPolicy implements SpeculativeExecutionPolicy {
-    private final PerHostPercentileTracker percentileTracker;
+    private final PercentileTracker percentileTracker;
     private final double percentile;
     private final int maxSpeculativeExecutions;
 
@@ -61,7 +58,7 @@ public class PercentileSpeculativeExecutionPolicy implements SpeculativeExecutio
      * @param maxSpeculativeExecutions the maximum number of speculative executions that will be triggered for a given request (this does not
      *                                 include the initial, normal request). Must be strictly positive.
      */
-    public PercentileSpeculativeExecutionPolicy(PerHostPercentileTracker percentileTracker, double percentile, int maxSpeculativeExecutions) {
+    public PercentileSpeculativeExecutionPolicy(PercentileTracker percentileTracker, double percentile, int maxSpeculativeExecutions) {
         checkArgument(maxSpeculativeExecutions > 0,
                 "number of speculative executions must be strictly positive (was %d)", maxSpeculativeExecutions);
         checkArgument(percentile >= 0.0 && percentile < 100,
@@ -80,7 +77,7 @@ public class PercentileSpeculativeExecutionPolicy implements SpeculativeExecutio
             @Override
             public long nextExecution(Host lastQueried) {
                 if (remaining.getAndDecrement() > 0)
-                    return percentileTracker.getLatencyAtPercentile(lastQueried, percentile);
+                    return percentileTracker.getLatencyAtPercentile(lastQueried, null, null, percentile);
                 else
                     return -1;
             }

@@ -26,6 +26,7 @@
 - [bug] JAVA-819: Expose more errors in RetryPolicy + provide idempotent-aware wrapper.
 - [improvement] JAVA-1040: SimpleStatement parameters support in QueryLogger.
 - [bug] JAVA-1064: getTable create statement doesn't properly handle quotes in primary key.
+- [improvement] JAVA-888: Add cluster-wide percentile tracker.
 
 Merged from 2.0 branch:
 

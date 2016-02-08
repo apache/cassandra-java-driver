@@ -82,16 +82,16 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
  * Currently the QueryLogger can track slow queries in two different ways:
  * using a constant threshold in milliseconds (which is the default behavior),
  * or using a dynamic threshold based on per-host percentiles computed by
- * {@link PerHostPercentileTracker}.
+ * {@link PercentileTracker}.
  * <p/>
  * <b>Note that the dynamic threshold version is currently provided as a beta preview: it hasn't been extensively
  * tested yet, and the API is still subject to change.</b> To use it, you must first obtain and register
- * an instance of {@link PerHostPercentileTracker}, then create your QueryLogger as follows:
+ * an instance of {@link PercentileTracker}, then create your QueryLogger as follows:
  * <p/>
  * <pre>
  * Cluster cluster = ...
- * // create an instance of PerHostPercentileTracker and register it
- * PerHostPercentileTracker tracker = ...;
+ * // create an instance of PercentileTracker and register it
+ * PercentileTracker tracker = ...;
  * cluster.register(tracker);
  * // create an instance of QueryLogger and register it
  * QueryLogger queryLogger = QueryLogger.builder(cluster)
@@ -295,7 +295,7 @@ public abstract class QueryLogger implements LatencyTracker {
      * to track slow queries.
      * <p/>
      * Dynamic thresholds are based on per-host latency percentiles, as computed
-     * by {@link PerHostPercentileTracker}.
+     * by {@link PercentileTracker}.
      * <p/>
      * <b>This class is currently provided as a beta preview: it hasn't been extensively tested yet, and the API is still subject
      * to change.</b>
@@ -305,35 +305,35 @@ public abstract class QueryLogger implements LatencyTracker {
 
         private volatile double slowQueryLatencyThresholdPercentile;
 
-        private volatile PerHostPercentileTracker perHostPercentileLatencyTracker;
+        private volatile PercentileTracker percentileLatencyTracker;
 
-        private DynamicThresholdQueryLogger(Cluster cluster, int maxQueryStringLength, int maxParameterValueLength, int maxLoggedParameters, double slowQueryLatencyThresholdPercentile, PerHostPercentileTracker perHostPercentileLatencyTracker) {
+        private DynamicThresholdQueryLogger(Cluster cluster, int maxQueryStringLength, int maxParameterValueLength, int maxLoggedParameters, double slowQueryLatencyThresholdPercentile, PercentileTracker percentileLatencyTracker) {
             super(cluster, maxQueryStringLength, maxParameterValueLength, maxLoggedParameters);
             this.setSlowQueryLatencyThresholdPercentile(slowQueryLatencyThresholdPercentile);
-            this.setPerHostPercentileLatencyTracker(perHostPercentileLatencyTracker);
+            this.setPercentileLatencyTracker(percentileLatencyTracker);
         }
 
         /**
-         * Return the {@link PerHostPercentileTracker} instance to use for recording per-host latency histograms.
+         * Return the percentile tracker to use for recording per-host latency histograms.
          * Cannot be {@code null}.
          *
-         * @return the {@link PerHostPercentileTracker} instance to use.
+         * @return the percentile tracker to use.
          */
-        public PerHostPercentileTracker getPerHostPercentileLatencyTracker() {
-            return perHostPercentileLatencyTracker;
+        public PercentileTracker getPercentileLatencyTracker() {
+            return percentileLatencyTracker;
         }
 
         /**
-         * Set the {@link PerHostPercentileTracker} instance to use for recording per-host latency histograms.
+         * Set the percentile tracker to use for recording per-host latency histograms.
          * Cannot be {@code null}.
          *
-         * @param perHostPercentileLatencyTracker the {@link PerHostPercentileTracker} instance to use.
-         * @throws IllegalArgumentException if {@code perHostPercentileLatencyTracker == null}.
+         * @param percentileLatencyTracker the percentile tracker instance to use.
+         * @throws IllegalArgumentException if {@code percentileLatencyTracker == null}.
          */
-        public void setPerHostPercentileLatencyTracker(PerHostPercentileTracker perHostPercentileLatencyTracker) {
-            if (perHostPercentileLatencyTracker == null)
+        public void setPercentileLatencyTracker(PercentileTracker percentileLatencyTracker) {
+            if (percentileLatencyTracker == null)
                 throw new IllegalArgumentException("perHostPercentileLatencyTracker cannot be null");
-            this.perHostPercentileLatencyTracker = perHostPercentileLatencyTracker;
+            this.percentileLatencyTracker = percentileLatencyTracker;
         }
 
         /**
@@ -364,7 +364,7 @@ public abstract class QueryLogger implements LatencyTracker {
 
         @Override
         protected void maybeLogNormalOrSlowQuery(Host host, Statement statement, long latencyMs) {
-            long threshold = perHostPercentileLatencyTracker.getLatencyAtPercentile(host, slowQueryLatencyThresholdPercentile);
+            long threshold = percentileLatencyTracker.getLatencyAtPercentile(host, statement, null, slowQueryLatencyThresholdPercentile);
             if (threshold >= 0 && latencyMs > threshold) {
                 maybeLogSlowQuery(host, statement, latencyMs, threshold);
             } else {
@@ -397,7 +397,7 @@ public abstract class QueryLogger implements LatencyTracker {
 
         private double slowQueryLatencyThresholdPercentile = DEFAULT_SLOW_QUERY_THRESHOLD_PERCENTILE;
 
-        private PerHostPercentileTracker perHostPercentileLatencyTracker;
+        private PercentileTracker percentileLatencyTracker;
 
         private boolean constantThreshold = true;
 
@@ -409,7 +409,7 @@ public abstract class QueryLogger implements LatencyTracker {
          * Enables slow query latency tracking based on constant thresholds.
          * <p/>
          * Note: You should either use {@link #withConstantThreshold(long) constant thresholds}
-         * or {@link #withDynamicThreshold(PerHostPercentileTracker, double) dynamic thresholds},
+         * or {@link #withDynamicThreshold(PercentileTracker, double) dynamic thresholds},
          * not both.
          *
          * @param slowQueryLatencyThresholdMillis The threshold in milliseconds beyond which queries are considered 'slow'
@@ -427,16 +427,16 @@ public abstract class QueryLogger implements LatencyTracker {
          * Enables slow query latency tracking based on dynamic thresholds.
          * <p/>
          * Dynamic thresholds are based on per-host latency percentiles, as computed
-         * by {@link PerHostPercentileTracker}.
+         * by {@link PercentileTracker}.
          * <p/>
          * Note: You should either use {@link #withConstantThreshold(long) constant thresholds}
-         * or {@link #withDynamicThreshold(PerHostPercentileTracker, double) dynamic thresholds},
+         * or {@link #withDynamicThreshold(PercentileTracker, double) dynamic thresholds},
          * not both.
          * <p/>
          * <b>This feature is currently provided as a beta preview: it hasn't been extensively tested yet, and the API is still subject
          * to change.</b>
          *
-         * @param perHostPercentileLatencyTracker     the {@link PerHostPercentileTracker} instance to use for recording per-host latency histograms.
+         * @param percentileLatencyTracker            the {@link PercentileTracker} instance to use for recording per-host latency histograms.
          *                                            Cannot be {@code null}.
          * @param slowQueryLatencyThresholdPercentile Slow queries threshold percentile.
          *                                            It must be comprised between 0 inclusive and 100 exclusive.
@@ -444,8 +444,8 @@ public abstract class QueryLogger implements LatencyTracker {
          * @return this {@link Builder} instance (for method chaining).
          */
         @Beta
-        public Builder withDynamicThreshold(PerHostPercentileTracker perHostPercentileLatencyTracker, double slowQueryLatencyThresholdPercentile) {
-            this.perHostPercentileLatencyTracker = perHostPercentileLatencyTracker;
+        public Builder withDynamicThreshold(PercentileTracker percentileLatencyTracker, double slowQueryLatencyThresholdPercentile) {
+            this.percentileLatencyTracker = percentileLatencyTracker;
             this.slowQueryLatencyThresholdPercentile = slowQueryLatencyThresholdPercentile;
             constantThreshold = false;
             return this;
@@ -514,7 +514,7 @@ public abstract class QueryLogger implements LatencyTracker {
             if (constantThreshold) {
                 return new ConstantThresholdQueryLogger(cluster, maxQueryStringLength, maxParameterValueLength, maxLoggedParameters, slowQueryLatencyThresholdMillis);
             } else {
-                return new DynamicThresholdQueryLogger(cluster, maxQueryStringLength, maxParameterValueLength, maxLoggedParameters, slowQueryLatencyThresholdPercentile, perHostPercentileLatencyTracker);
+                return new DynamicThresholdQueryLogger(cluster, maxQueryStringLength, maxParameterValueLength, maxLoggedParameters, slowQueryLatencyThresholdPercentile, percentileLatencyTracker);
             }
         }
 
