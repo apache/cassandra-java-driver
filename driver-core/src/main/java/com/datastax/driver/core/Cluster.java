@@ -435,9 +435,9 @@ public class Cluster implements Closeable {
      */
     public Cluster register(Host.StateListener listener) {
         checkNotClosed(manager);
-        if (listener instanceof Host.LifecycleAwareStateListener)
+        boolean added = manager.listeners.add(listener);
+        if (added && listener instanceof Host.LifecycleAwareStateListener)
             ((Host.LifecycleAwareStateListener) listener).onRegister(this);
-        manager.listeners.add(listener);
         return this;
     }
 
@@ -452,9 +452,9 @@ public class Cluster implements Closeable {
      */
     public Cluster unregister(Host.StateListener listener) {
         checkNotClosed(manager);
-        if (listener instanceof Host.LifecycleAwareStateListener)
+        boolean removed = manager.listeners.remove(listener);
+        if (removed && listener instanceof Host.LifecycleAwareStateListener)
             ((Host.LifecycleAwareStateListener) listener).onUnregister(this);
-        manager.listeners.remove(listener);
         return this;
     }
 
@@ -479,9 +479,9 @@ public class Cluster implements Closeable {
      */
     public Cluster register(LatencyTracker tracker) {
         checkNotClosed(manager);
-        if (tracker instanceof LifecycleAwareLatencyTracker)
+        boolean added = manager.trackers.add(tracker);
+        if (added && tracker instanceof LifecycleAwareLatencyTracker)
             ((LifecycleAwareLatencyTracker) tracker).onRegister(this);
-        manager.trackers.add(tracker);
         return this;
     }
 
@@ -497,9 +497,9 @@ public class Cluster implements Closeable {
      */
     public Cluster unregister(LatencyTracker tracker) {
         checkNotClosed(manager);
-        if (tracker instanceof LifecycleAwareLatencyTracker)
+        boolean removed = manager.trackers.remove(tracker);
+        if (removed && tracker instanceof LifecycleAwareLatencyTracker)
             ((LifecycleAwareLatencyTracker) tracker).onUnregister(this);
-        manager.trackers.remove(tracker);
         return this;
     }
 
@@ -513,8 +513,9 @@ public class Cluster implements Closeable {
      */
     public Cluster register(SchemaChangeListener listener) {
         checkNotClosed(manager);
-        listener.onRegister(this);
-        manager.schemaChangeListeners.add(listener);
+        boolean added = manager.schemaChangeListeners.add(listener);
+        if (added)
+            listener.onRegister(this);
         return this;
     }
 
@@ -530,8 +531,9 @@ public class Cluster implements Closeable {
      */
     public Cluster unregister(SchemaChangeListener listener) {
         checkNotClosed(manager);
-        listener.onUnregister(this);
-        manager.schemaChangeListeners.remove(listener);
+        boolean removed = manager.schemaChangeListeners.remove(listener);
+        if (removed)
+            listener.onUnregister(this);
         return this;
     }
 

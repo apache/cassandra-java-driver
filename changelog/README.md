@@ -27,6 +27,7 @@
 - [improvement] JAVA-1040: SimpleStatement parameters support in QueryLogger.
 - [bug] JAVA-1064: getTable create statement doesn't properly handle quotes in primary key.
 - [improvement] JAVA-888: Add cluster-wide percentile tracker.
+- [improvement] JAVA-963: Automatically register PercentileTracker from components that use it.
 
 Merged from 2.0 branch:
 

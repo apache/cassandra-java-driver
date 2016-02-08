@@ -39,11 +39,10 @@ import static java.util.concurrent.TimeUnit.*;
  * determined by {@link #computeKey(Host, Statement, Exception)}.
  * <p/>
  * This class is used by percentile-aware components such as
- * {@link QueryLogger.Builder#withDynamicThreshold(PercentileTracker, double) QueryLogger} and
- * {@link com.datastax.driver.core.policies.PercentileSpeculativeExecutionPolicy}. If you have multiple percentile-aware
- * components, you should use a single, shared percentile tracker for efficiency; make sure it is registered only once.
+ * {@link QueryLogger.Builder#withDynamicThreshold(PercentileTracker, double)}  QueryLogger} and
+ * {@link com.datastax.driver.core.policies.PercentileSpeculativeExecutionPolicy}.
  * <p/>
- * This class uses <a href="http://hdrhistogram.github.io/HdrHistogram/">HdrHistogram</a> to record latencies:
+ * It uses <a href="http://hdrhistogram.github.io/HdrHistogram/">HdrHistogram</a> to record latencies:
  * for each category, there is a "live" histogram where current latencies are recorded, and a "cached", read-only
  * histogram that is used when clients call {@link #getLatencyAtPercentile(Host, Statement, Exception, double)}. Each
  * time the cached histogram becomes older than the interval, the two histograms are switched. Statistics will not be
