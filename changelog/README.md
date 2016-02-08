@@ -20,6 +20,7 @@
 - [bug] JAVA-1046: (Dynamic)CompositeTypes need to be parsed as string literal, not blob.
 - [improvement] JAVA-1164: Clarify documentation on Host.listenAddress and broadcastAddress.
 - [improvement] JAVA-1171: Add Host method to determine if DSE Graph is enabled.
+- [improvement]: JAVA-1069: Bootstrap driver-examples module.
 
 Merged from 2.1 branch:
 

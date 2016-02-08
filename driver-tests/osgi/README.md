@@ -1,7 +1,6 @@
 # OSGi Example
 
-A simple example application that demonstrates using the Java Driver in
-an OSGi service.
+A simple test for the Java Driver in an OSGi environment.
 
 `MailboxService` is an OSGi service that uses Cassandra to
 store messages that can be retrieved by email address.
@@ -25,7 +24,7 @@ Once `mvn verify` completes, the bundle jar will be present in the `target/` dir
 
 The project includes integration tests that verify the service can
 be activated and used in an OSGi container.  It also verifies that
-driver-core can be used in an OSGi container in the following
+the Java driver can be used in an OSGi container in the following
 configurations:
 
 1. Default (default classifier with all dependencies)
