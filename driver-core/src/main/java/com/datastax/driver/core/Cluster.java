@@ -435,6 +435,8 @@ public class Cluster implements Closeable {
      */
     public Cluster register(Host.StateListener listener) {
         checkNotClosed(manager);
+        if (listener instanceof Host.LifecycleAwareStateListener)
+            ((Host.LifecycleAwareStateListener) listener).onRegister(this);
         manager.listeners.add(listener);
         return this;
     }
@@ -450,6 +452,8 @@ public class Cluster implements Closeable {
      */
     public Cluster unregister(Host.StateListener listener) {
         checkNotClosed(manager);
+        if (listener instanceof Host.LifecycleAwareStateListener)
+            ((Host.LifecycleAwareStateListener) listener).onUnregister(this);
         manager.listeners.remove(listener);
         return this;
     }
@@ -475,6 +479,8 @@ public class Cluster implements Closeable {
      */
     public Cluster register(LatencyTracker tracker) {
         checkNotClosed(manager);
+        if (tracker instanceof LifecycleAwareLatencyTracker)
+            ((LifecycleAwareLatencyTracker) tracker).onRegister(this);
         manager.trackers.add(tracker);
         return this;
     }
@@ -491,6 +497,8 @@ public class Cluster implements Closeable {
      */
     public Cluster unregister(LatencyTracker tracker) {
         checkNotClosed(manager);
+        if (tracker instanceof LifecycleAwareLatencyTracker)
+            ((LifecycleAwareLatencyTracker) tracker).onUnregister(this);
         manager.trackers.remove(tracker);
         return this;
     }
@@ -1471,6 +1479,14 @@ public class Cluster implements Closeable {
                 // rack...) to initialize the load balancing policy
                 loadBalancingPolicy().init(Cluster.this, contactPointHosts);
                 speculativeRetryPolicy().init(Cluster.this);
+                for (LatencyTracker tracker : trackers) {
+                    if (tracker instanceof LifecycleAwareLatencyTracker)
+                        ((LifecycleAwareLatencyTracker) tracker).onRegister(Cluster.this);
+                }
+                for (Host.StateListener listener : listeners) {
+                    if (listener instanceof Host.LifecycleAwareStateListener)
+                        ((Host.LifecycleAwareStateListener) listener).onRegister(Cluster.this);
+                }
 
                 for (Host host : removedContactPointHosts) {
                     loadBalancingPolicy().onRemove(host);
@@ -1622,6 +1638,14 @@ public class Cluster implements Closeable {
                 if (translater instanceof CloseableAddressTranslater)
                     ((CloseableAddressTranslater) translater).close();
 
+                for (LatencyTracker tracker : trackers) {
+                    if (tracker instanceof LifecycleAwareLatencyTracker)
+                        ((LifecycleAwareLatencyTracker) tracker).onUnregister(Cluster.this);
+                }
+                for (Host.StateListener listener : listeners) {
+                    if (listener instanceof Host.LifecycleAwareStateListener)
+                        ((Host.LifecycleAwareStateListener) listener).onUnregister(Cluster.this);
+                }
                 for (SchemaChangeListener listener : schemaChangeListeners) {
                     listener.onUnregister(Cluster.this);
                 }
