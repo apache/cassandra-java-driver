@@ -382,7 +382,8 @@ class RequestHandler {
 
         private void retry(final boolean retryCurrent, ConsistencyLevel newConsistencyLevel) {
             final Host h = current;
-            this.retryConsistencyLevel = newConsistencyLevel;
+            if (newConsistencyLevel != null)
+                this.retryConsistencyLevel = newConsistencyLevel;
 
             // We should not retry on the current thread as this will be an IO thread.
             manager.executor().execute(new Runnable() {

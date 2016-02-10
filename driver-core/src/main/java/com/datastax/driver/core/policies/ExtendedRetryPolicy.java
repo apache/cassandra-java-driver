@@ -49,7 +49,9 @@ public interface ExtendedRetryPolicy extends RetryPolicy {
      * is known to be idempotent.
      *
      * @param statement the original query that failed.
-     * @param cl        the original consistency level for the operation.
+     * @param cl        the requested consistency level for the operation.
+     *                  Note that this is not necessarily the achieved consistency level (if any),
+     *                  and it is never a {@link ConsistencyLevel#isSerial() serial} one.
      * @param e         the exception that caused this request to fail.
      * @param nbRetry   the number of retries already performed for this operation.
      * @return the retry decision. If {@code RetryDecision.RETHROW} is returned,

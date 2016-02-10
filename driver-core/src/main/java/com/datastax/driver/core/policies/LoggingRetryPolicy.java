@@ -25,9 +25,14 @@ import org.slf4j.LoggerFactory;
 /**
  * A retry policy that wraps another policy, logging the decision made by its sub-policy.
  * <p/>
- * Note that this policy only log the IGNORE and RETRY decisions (since
- * RETHROW decisions are just meant to propagate the cassandra exception). The
- * logging is done at the INFO level.
+ * Note that this policy only logs
+ * {@link com.datastax.driver.core.policies.RetryPolicy.RetryDecision.Type#RETRY RETRY} and
+ * {@link com.datastax.driver.core.policies.RetryPolicy.RetryDecision.Type#IGNORE IGNORE} decisions (since
+ * {@link com.datastax.driver.core.policies.RetryPolicy.RetryDecision.Type#RETHROW RETHROW} decisions
+ * are just meant to propagate the Cassandra exception).
+ * <p/>
+ * The logging is done at the INFO level and the logger name is
+ * {@code com.datastax.driver.core.policies.LoggingRetryPolicy}.
  */
 public class LoggingRetryPolicy implements ExtendedRetryPolicy {
 
