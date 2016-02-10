@@ -12,6 +12,7 @@
 - [bug] JAVA-1039: Minor bugs in Event Debouncer.
 - [improvement] JAVA-843: Disable frozen checks in mapper.
 - [improvement] JAVA-833: Improve message when a nested type can't be serialized.
+- [improvement] JAVA-1011: Expose PoolingOptions default values.
 
 Merged from 2.0 branch:
 
