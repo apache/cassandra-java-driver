@@ -15,21 +15,40 @@
  */
 package com.datastax.driver.core;
 
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * A timestamp generator based on {@code System.currentTimeMillis()}, with an incrementing atomic counter
- * to generate the sub-millisecond part.
- * <p/>
- * This implementation guarantees incrementing timestamps among all client threads, provided that no more than
- * 1000 are requested for a given clock tick (the exact granularity of of {@link System#currentTimeMillis()}
- * depends on the operating system).
- * <p/>
- * If that rate is exceeded, a warning is logged and the timestamps don't increment anymore until the next clock
- * tick. If you consistently exceed that rate, consider using {@link ThreadLocalMonotonicTimestampGenerator}.
+ * A timestamp generator that guarantees monotonically increasing timestamps among all client threads, and logs warnings
+ * when timestamps drift in the future.
+ *
+ * @see AbstractMonotonicTimestampGenerator
  */
-public class AtomicMonotonicTimestampGenerator extends AbstractMonotonicTimestampGenerator {
+public class AtomicMonotonicTimestampGenerator extends LoggingMonotonicTimestampGenerator {
+
     private AtomicLong lastRef = new AtomicLong(0);
+
+    /**
+     * Creates a new instance with a warning threshold and warning interval of one second.
+     *
+     * @see #AtomicMonotonicTimestampGenerator(long, TimeUnit, long, TimeUnit)
+     */
+    public AtomicMonotonicTimestampGenerator() {
+        this(1, TimeUnit.SECONDS, 1, TimeUnit.SECONDS);
+    }
+
+    /**
+     * Creates a new instance.
+     *
+     * @param warningThreshold     how far in the future timestamps are allowed to drift before a warning is logged.
+     * @param warningThresholdUnit the unit for {@code warningThreshold}.
+     * @param warningInterval      how often the warning will be logged if timestamps keep drifting above the threshold.
+     * @param warningIntervalUnit  the unit for {@code warningIntervalUnit}.
+     */
+    public AtomicMonotonicTimestampGenerator(long warningThreshold, TimeUnit warningThresholdUnit,
+                                             long warningInterval, TimeUnit warningIntervalUnit) {
+        super(warningThreshold, warningThresholdUnit, warningInterval, warningIntervalUnit);
+    }
 
     @Override
     public long next() {

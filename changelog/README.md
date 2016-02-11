@@ -53,6 +53,7 @@ Merged from 2.1 branch:
 - [improvement] JAVA-888: Add cluster-wide percentile tracker.
 - [improvement] JAVA-963: Automatically register PercentileTracker from components that use it.
 - [new feature] JAVA-1019: SchemaBuilder support for CREATE/ALTER/DROP KEYSPACE.
+- [bug] JAVA-727: Allow monotonic timestamp generators to drift in the future + use microsecond precision when possible.
 
 
 ### 3.0.2
