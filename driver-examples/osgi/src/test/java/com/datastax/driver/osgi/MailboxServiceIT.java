@@ -31,7 +31,7 @@ import org.testng.annotations.Test;
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.GregorianCalendar;
+import java.util.UUID;
 
 import static com.datastax.driver.osgi.VersionProvider.projectVersion;
 import static org.ops4j.pax.exam.CoreOptions.*;
@@ -178,9 +178,10 @@ public class MailboxServiceIT {
         try {
             Collection<MailboxMessage> inMessages = new ArrayList<MailboxMessage>();
             for (int i = 0; i < 30; i++) {
-                MailboxMessage message = new MailboxMessage(recipient, new GregorianCalendar(2015, 1, i).getTime(), recipient, "" + i);
+                MailboxMessage message = new MailboxMessage(recipient, recipient, "" + i);
+                UUID time = service.sendMessage(message);
+                message.setDate(time);
                 inMessages.add(message);
-                service.sendMessage(message);
             }
 
             Collection<MailboxMessage> messages = service.getMessages(recipient);

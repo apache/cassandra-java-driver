@@ -15,26 +15,34 @@
  */
 package com.datastax.driver.osgi.api;
 
-import java.util.Date;
+import java.util.UUID;
 
 public class MailboxMessage {
     private String recipient;
-    private Date date;
     private String sender;
     private String body;
+    private UUID date;
 
-    public MailboxMessage(String recipient, Date date, String sender, String body) {
+    public MailboxMessage(String recipient, String sender, String body) {
+        this(recipient, sender, body, null);
+    }
+
+    public MailboxMessage(String recipient, String sender, String body, UUID date) {
         this.recipient = recipient;
-        this.date = date;
         this.sender = sender;
         this.body = body;
+        this.date = date;
     }
 
     public String getRecipient() {
         return recipient;
     }
 
-    public Date getDate() {
+    public void setDate(UUID date) {
+        this.date = date;
+    }
+
+    public UUID getDate() {
         return date;
     }
 
