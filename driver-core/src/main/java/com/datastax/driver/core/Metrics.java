@@ -287,7 +287,7 @@ public class Metrics {
         private final Counter speculativeExecutions = registry.counter("speculative-executions");
 
         /**
-         * Returns the number of connection to Cassandra nodes errors.
+         * Returns the number of errors while connecting to Cassandra nodes.
          * <p/>
          * This represents the number of times that a request to a Cassandra node
          * has failed due to a connection problem. This thus also corresponds to
@@ -297,7 +297,7 @@ public class Metrics {
          * (or is stopped) ,but if that number grows continuously you likely have
          * a problem.
          *
-         * @return the number of connection to Cassandra nodes errors.
+         * @return the number of errors while connecting to Cassandra nodes.
          */
         public Counter getConnectionErrors() {
             return connectionErrors;
