@@ -94,6 +94,7 @@ public final class UUIDs {
             update(digest, props.getProperty("os.arch"));
             update(digest, props.getProperty("os.name"));
             update(digest, props.getProperty("os.version"));
+            update(digest, getProcessPiece());
 
             byte[] hash = digest.digest();
 
@@ -107,6 +108,23 @@ public final class UUIDs {
             throw new RuntimeException(e);
         }
     }
+
+	private static String getProcessPiece() {
+
+		int processId = new java.util.Random().nextInt();
+		try {
+			processId = java.lang.management.ManagementFactory.getRuntimeMXBean().getName().hashCode();
+		} catch (Throwable t) {
+		}
+
+		ClassLoader loader = UUIDs.class.getClassLoader();
+		int loaderId = loader != null ? System.identityHashCode(loader) : 0;
+
+		StringBuilder sb = new StringBuilder();
+		sb.append(Integer.toHexString(processId));
+		sb.append(Integer.toHexString(loaderId));
+		return sb.toString();
+	}
 
     private static void update(MessageDigest digest, String value) {
         if (value != null)
