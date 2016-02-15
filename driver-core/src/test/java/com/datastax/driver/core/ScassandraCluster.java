@@ -17,6 +17,7 @@ package com.datastax.driver.core;
 
 import com.beust.jcommander.internal.Lists;
 import com.beust.jcommander.internal.Maps;
+import com.datastax.driver.core.utils.UUIDs;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -310,6 +311,7 @@ public class ScassandraCluster {
                             .put("rack", "rack1")
                             .put("release_version", getPeerInfo(dc, n + 1, "release_version", "2.1.8"))
                             .put("tokens", ImmutableSet.of(Long.toString(tokens.get(n))))
+                            .put("host_id", UUIDs.random())
                             .build();
                     rows.add(row);
                 }
@@ -373,7 +375,8 @@ public class ScassandraCluster {
             column("data_center", TEXT),
             column("rack", TEXT),
             column("release_version", TEXT),
-            column("tokens", set(TEXT))
+            column("tokens", set(TEXT)),
+            column("host_id", UUID)
     };
 
     public static final org.scassandra.http.client.types.ColumnMetadata[] SELECT_LOCAL = {

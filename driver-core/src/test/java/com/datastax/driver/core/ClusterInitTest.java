@@ -35,6 +35,7 @@ import java.net.UnknownHostException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -140,8 +141,7 @@ public class ClusterInitTest {
                 }
                 assertThat(cluster).host(failingHost.address).isReconnectingFromDown();
             }
-            assertThat(cluster).host(missingHostAddress).isNull();
-
+            assertThat(TestUtils.findHost(cluster, missingHostAddress)).isNull();
         } finally {
             if (cluster != null)
                 cluster.close();
@@ -275,6 +275,7 @@ public class ClusterInitTest {
                     .put("rack", "rack1")
                     .put("release_version", "2.0.1")
                     .put("tokens", ImmutableSet.of(Long.toString(Long.MIN_VALUE + i++)))
+                    .put("host_id", UUID.randomUUID())
                     .build());
         }
 
