@@ -448,7 +448,10 @@ class ControlConnection implements Host.StateListener, Connection.Owner {
                     ? new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_LOCAL))
                     : new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_PEERS + " WHERE peer='" + host.listenAddress.getHostAddress() + '\''));
             c.write(future);
-            return future.get().one();
+            Row row = future.get().one();
+            if (row != null) {
+                return row;
+            }
         }
 
         // We have to fetch the whole peers table and find the host we're looking for
