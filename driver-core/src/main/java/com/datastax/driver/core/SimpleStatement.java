@@ -102,11 +102,6 @@ public class SimpleStatement extends RegularStatement {
         return serializedValues;
     }
 
-    /**
-     * Returns the query string.
-     *
-     * @return the query string;
-     */
     @Override
     public String getQueryString() {
         return query;
