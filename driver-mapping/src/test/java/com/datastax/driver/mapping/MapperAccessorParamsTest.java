@@ -18,9 +18,13 @@ package com.datastax.driver.mapping;
 import com.datastax.driver.core.CCMTestsSupport;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
+import com.datastax.driver.core.exceptions.InvalidTypeException;
 import com.datastax.driver.core.utils.CassandraVersion;
 import com.datastax.driver.mapping.annotations.*;
 import org.testng.annotations.Test;
+import org.testng.collections.Lists;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -104,6 +108,19 @@ public class MapperAccessorParamsTest extends CCMTestsSupport {
     public void should_fail_if_too_many_parameters() {
         new MappingManager(session())
                 .createAccessor(UserPhoneAccessor_TooManyParams.class);
+    }
+
+    /**
+     * Ensures that a wrong parameter type is detected when
+     * the accessor is called with a wrong data type.
+     *
+     * @jira_ticket JAVA-974
+     */
+    @Test(groups = "short", expectedExceptions = InvalidTypeException.class)
+    public void should_fail_if_wrong_parameter_type() {
+        UserPhoneAccessor_WrongParameterTypes accessor = new MappingManager(session())
+                .createAccessor(UserPhoneAccessor_WrongParameterTypes.class);
+        accessor.findUsersBykeys(Lists.newArrayList(1, 2, 3));
     }
 
     private void assertPhonesEqual(int key, String home, String work) {
@@ -245,4 +262,12 @@ public class MapperAccessorParamsTest extends CCMTestsSupport {
             this.gender = val;
         }
     }
+
+    @Accessor
+    public interface UserPhoneAccessor_WrongParameterTypes {
+        @Query("select * from user where key IN (:keys)")
+            // WRONG, should be "where key IN :keys"
+        void findUsersBykeys(@Param("keys") List<Integer> keys);
+    }
+
 }

@@ -320,8 +320,7 @@ class AnnotationParser {
                 // We need a specialized mapper to convert UDT instances in the hierarchy.
                 return new NestedUDTParamMapper(paramName, idx, inferredCQLType);
             } else {
-                // Use the default mapper but provide the extracted type
-                return new ParamMapper(paramName, idx, inferredCQLType.dataType);
+                return new ParamMapper(paramName, idx);
             }
         } else {
             throw new IllegalArgumentException(String.format("Cannot map class %s for parameter %s of %s.%s", paramType, paramName, className, methodName));

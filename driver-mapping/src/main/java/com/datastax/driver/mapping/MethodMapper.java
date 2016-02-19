@@ -177,32 +177,31 @@ class MethodMapper {
         // We'll only set one of the other. If paramName is null, then paramIdx is used.
         private final String paramName;
         private final int paramIdx;
-        private final DataType dataType;
 
-        public ParamMapper(String paramName, int paramIdx, DataType dataType) {
+        ParamMapper(String paramName, int paramIdx) {
             this.paramName = paramName;
             this.paramIdx = paramIdx;
-            this.dataType = dataType;
-        }
-
-        public ParamMapper(String paramName, int paramIdx) {
-            this(paramName, paramIdx, null);
         }
 
         void setValue(BoundStatement boundStatement, Object arg, ProtocolVersion protocolVersion) {
-            ByteBuffer serializedArg = (dataType == null)
-                    ? DataType.serializeValue(arg, protocolVersion)
-                    : dataType.serialize(arg, protocolVersion);
-            if (paramName == null) {
-                if (arg == null)
+
+            if (arg == null) {
+                if (paramName == null)
                     boundStatement.setToNull(paramIdx);
                 else
-                    boundStatement.setBytesUnsafe(paramIdx, serializedArg);
-            } else {
-                if (arg == null)
                     boundStatement.setToNull(paramName);
-                else
+            } else {
+                ColumnDefinitions variables = boundStatement.preparedStatement().getVariables();
+                if (paramName == null) {
+                    DataType dataType = variables.getType(paramIdx);
+                    ByteBuffer serializedArg = dataType.serialize(arg, protocolVersion);
+                    boundStatement.setBytesUnsafe(paramIdx, serializedArg);
+                } else {
+                    DataType dataType = variables.getType(paramName);
+                    ByteBuffer serializedArg = dataType.serialize(arg, protocolVersion);
                     boundStatement.setBytesUnsafe(paramName, serializedArg);
+                }
+
             }
         }
     }

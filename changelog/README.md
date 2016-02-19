@@ -17,6 +17,7 @@
 - [improvement] JAVA-851: Improve UUIDs javadoc with regard to user-provided timestamps.
 - [improvement] JAVA-979: Update javadoc for RegularStatement toString() and getQueryString() to indicate that consistency level and other parameters are not maintained in the query string.
 - [improvement] JAVA-1038: Fetch node info by rpc_address if its broadcast_address is not in system.peers.
+- [improvement] JAVA-974: Validate accessor parameter types against bound statement.
 
 Merged from 2.0 branch:
 
