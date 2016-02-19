@@ -287,31 +287,42 @@ public class ScassandraCluster {
                 if (node == peer) { // prime system.local.
                     metadata = SELECT_LOCAL;
                     query = "SELECT * FROM system.local WHERE key='local'";
-                    row = ImmutableMap.<String, Object>builder()
+                    ImmutableMap.Builder<String, Object> rowBuilder = ImmutableMap.<String, Object>builder()
                             .put("key", "local")
                             .put("bootstrapped", "COMPLETED")
                             .put("broadcast_address", address)
                             .put("cluster_name", "scassandra")
                             .put("cql_version", "3.2.0")
                             .put("data_center", datacenter(dc))
-                            .put("listen_address", address)
+                            .put("listen_address", getPeerInfo(dc, n + 1, "listen_address", address))
                             .put("partitioner", "org.apache.cassandra.dht.Murmur3Partitioner")
                             .put("rack", "rack1")
                             .put("release_version", getPeerInfo(dc, n + 1, "release_version", "2.1.8"))
-                            .put("tokens", ImmutableSet.of(tokens.get(n)))
-                            .build();
+                            .put("tokens", ImmutableSet.of(tokens.get(n)));
+
+                    // These columns might not always be present, we don't have to specify them in the scassandra
+                    // column metadata as it will default them to text columns.
+                    rowBuilder = addInfoIfExists(rowBuilder, dc, n + 1, "dse_version");
+                    rowBuilder = addInfoIfExists(rowBuilder, dc, n + 1, "workload");
+
+                    row = rowBuilder.build();
                 } else { // prime system.peers.
                     query = "SELECT * FROM system.peers WHERE peer='" + address + "'";
                     metadata = SELECT_PEERS;
-                    row = ImmutableMap.<String, Object>builder()
+                    ImmutableMap.Builder<String, Object> rowBuilder = ImmutableMap.<String, Object>builder()
                             .put("peer", address)
                             .put("rpc_address", address)
                             .put("data_center", datacenter(dc))
                             .put("rack", "rack1")
                             .put("release_version", getPeerInfo(dc, n + 1, "release_version", "2.1.8"))
-                            .put("tokens", ImmutableSet.of(Long.toString(tokens.get(n))))
-                            .build();
-                    rows.add(row);
+                            .put("tokens", ImmutableSet.of(Long.toString(tokens.get(n))));
+
+                    rowBuilder = addInfoIfExists(rowBuilder, dc, n + 1, "listen_address");
+                    rowBuilder = addInfoIfExists(rowBuilder, dc, n + 1, "dse_version");
+                    rowBuilder = addInfoIfExists(rowBuilder, dc, n + 1, "workload");
+
+                    row = rowBuilder.build();
+                    rows.add(rowBuilder.build());
                 }
                 client.prime(PrimingRequest.queryBuilder()
                         .withQuery(query)
@@ -353,6 +364,18 @@ public class ScassandraCluster {
                 .build());
     }
 
+    private ImmutableMap.Builder<String, Object> addInfoIfExists(ImmutableMap.Builder<String, Object> builder, int dc, int node, String property) {
+        Map<Integer, Map<String, Object>> forDc = forcedPeerInfos.get(dc);
+        if (forDc == null)
+            return builder;
+
+        Map<String, Object> forNode = forDc.get(node);
+        if (forNode == null)
+            return builder;
+
+        return (forNode.containsKey(property)) ? builder.put(property, forNode.get(property)) : builder;
+    }
+
     private Object getPeerInfo(int dc, int node, String property, Object defaultValue) {
         Map<Integer, Map<String, Object>> forDc = forcedPeerInfos.get(dc);
         if (forDc == null)
@@ -373,7 +396,8 @@ public class ScassandraCluster {
             column("data_center", TEXT),
             column("rack", TEXT),
             column("release_version", TEXT),
-            column("tokens", set(TEXT))
+            column("tokens", set(TEXT)),
+            column("listen_address", INET)
     };
 
     static final org.scassandra.http.client.types.ColumnMetadata[] SELECT_LOCAL = {

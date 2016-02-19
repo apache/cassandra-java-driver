@@ -48,4 +48,14 @@ public class CountingReconnectionPolicy implements ReconnectionPolicy {
             return childSchedule.nextDelayMs();
         }
     }
+
+    @Override
+    public void init(Cluster cluster) {
+    }
+
+    @Override
+    public void close() {
+        childPolicy.close();
+    }
+
 }

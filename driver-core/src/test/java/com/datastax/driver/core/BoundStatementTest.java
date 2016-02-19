@@ -15,7 +15,7 @@
  */
 package com.datastax.driver.core;
 
-import com.datastax.driver.core.exceptions.InvalidTypeException;
+import com.datastax.driver.core.exceptions.CodecNotFoundException;
 import com.google.common.collect.Lists;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -56,8 +56,8 @@ public class BoundStatementTest extends CCMTestsSupport {
 
         try {
             statement.getString(0);
-            fail("Expected type error");
-        } catch (InvalidTypeException e) { /* expected */ }
+            fail("Expected codec not found error");
+        } catch (CodecNotFoundException e) { /* expected */ }
 
         try {
             statement.getString(3);

@@ -45,6 +45,17 @@ public abstract class Token implements Comparable<Token> {
      */
     public abstract Object getValue();
 
+    /**
+     * Returns the serialized form of the current token,
+     * using the appropriate codec depending on the
+     * partitioner in use and the CQL datatype for
+     * the token.
+     *
+     * @param protocolVersion the protocol version in use.
+     * @return the serialized form of the current token
+     */
+    public abstract ByteBuffer serialize(ProtocolVersion protocolVersion);
+
     static Token.Factory getFactory(String partitionerName) {
         if (partitionerName.endsWith("Murmur3Partitioner"))
             return M3PToken.FACTORY;
@@ -251,7 +262,7 @@ public abstract class Token implements Comparable<Token> {
 
             @Override
             Token deserialize(ByteBuffer buffer, ProtocolVersion protocolVersion) {
-                return new M3PToken((Long) getTokenType().deserialize(buffer, protocolVersion));
+                return new M3PToken(TypeCodec.bigint().deserialize(buffer, protocolVersion));
             }
 
             @Override
@@ -300,6 +311,11 @@ public abstract class Token implements Comparable<Token> {
         @Override
         public Object getValue() {
             return value;
+        }
+
+        @Override
+        public ByteBuffer serialize(ProtocolVersion protocolVersion) {
+            return TypeCodec.bigint().serialize(value, protocolVersion);
         }
 
         @Override
@@ -505,6 +521,11 @@ public abstract class Token implements Comparable<Token> {
         }
 
         @Override
+        public ByteBuffer serialize(ProtocolVersion protocolVersion) {
+            return TypeCodec.blob().serialize(value, protocolVersion);
+        }
+
+        @Override
         public int compareTo(Token other) {
             assert other instanceof OPPToken;
             return UnsignedBytes.lexicographicalComparator().compare(
@@ -570,7 +591,7 @@ public abstract class Token implements Comparable<Token> {
 
             @Override
             Token deserialize(ByteBuffer buffer, ProtocolVersion protocolVersion) {
-                return new RPToken((BigInteger) getTokenType().deserialize(buffer, protocolVersion));
+                return new RPToken(TypeCodec.varint().deserialize(buffer, protocolVersion));
             }
 
             @Override
@@ -618,6 +639,11 @@ public abstract class Token implements Comparable<Token> {
         @Override
         public Object getValue() {
             return value;
+        }
+
+        @Override
+        public ByteBuffer serialize(ProtocolVersion protocolVersion) {
+            return TypeCodec.varint().serialize(value, protocolVersion);
         }
 
         @Override

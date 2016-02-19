@@ -16,16 +16,22 @@
 package com.datastax.driver.core;
 
 import com.datastax.driver.core.policies.RetryPolicy;
+import com.google.common.collect.ImmutableMap;
 
 import java.nio.ByteBuffer;
 import java.util.List;
+import java.util.Map;
 
-public class DefaultPreparedStatement implements IdempotenceAwarePreparedStatement {
+import static com.datastax.driver.core.ProtocolVersion.V4;
+
+public class DefaultPreparedStatement implements PreparedStatement {
 
     final PreparedId preparedId;
 
     final String query;
     final String queryKeyspace;
+    final Map<String, ByteBuffer> incomingPayload;
+    final Cluster cluster;
 
     volatile ByteBuffer routingKey;
 
@@ -33,27 +39,43 @@ public class DefaultPreparedStatement implements IdempotenceAwarePreparedStateme
     volatile ConsistencyLevel serialConsistency;
     volatile boolean traceQuery;
     volatile RetryPolicy retryPolicy;
+    volatile ImmutableMap<String, ByteBuffer> outgoingPayload;
     volatile Boolean idempotent;
 
-    private DefaultPreparedStatement(PreparedId id, String query, String queryKeyspace) {
+    private DefaultPreparedStatement(PreparedId id, String query, String queryKeyspace, Map<String, ByteBuffer> incomingPayload, Cluster cluster) {
         this.preparedId = id;
         this.query = query;
         this.queryKeyspace = queryKeyspace;
+        this.incomingPayload = incomingPayload;
+        this.cluster = cluster;
     }
 
-    static DefaultPreparedStatement fromMessage(Responses.Result.Prepared msg, Metadata clusterMetadata, ProtocolVersion protocolVersion, String query, String queryKeyspace) {
+    static DefaultPreparedStatement fromMessage(Responses.Result.Prepared msg, Cluster cluster, String query, String queryKeyspace) {
         assert msg.metadata.columns != null;
 
         ColumnDefinitions defs = msg.metadata.columns;
 
-        if (defs.size() == 0)
-            return new DefaultPreparedStatement(new PreparedId(msg.statementId, defs, msg.resultMetadata.columns, null, protocolVersion), query, queryKeyspace);
+        ProtocolVersion protocolVersion = cluster.getConfiguration().getProtocolOptions().getProtocolVersion();
 
+        if (defs.size() == 0) {
+            return new DefaultPreparedStatement(new PreparedId(msg.statementId, defs, msg.resultMetadata.columns, null, protocolVersion), query, queryKeyspace, msg.getCustomPayload(), cluster);
+        }
+
+        int[] pkIndices = (protocolVersion.compareTo(V4) >= 0)
+                ? msg.metadata.pkIndices
+                : computePkIndices(cluster.getMetadata(), defs);
+
+        PreparedId prepId = new PreparedId(msg.statementId, defs, msg.resultMetadata.columns, pkIndices, protocolVersion);
+
+        return new DefaultPreparedStatement(prepId, query, queryKeyspace, msg.getCustomPayload(), cluster);
+    }
+
+    private static int[] computePkIndices(Metadata clusterMetadata, ColumnDefinitions boundColumns) {
         List<ColumnMetadata> partitionKeyColumns = null;
         int[] pkIndexes = null;
-        KeyspaceMetadata km = clusterMetadata.getKeyspace(Metadata.quote(defs.getKeyspace(0)));
+        KeyspaceMetadata km = clusterMetadata.getKeyspace(Metadata.quote(boundColumns.getKeyspace(0)));
         if (km != null) {
-            TableMetadata tm = km.getTable(Metadata.quote(defs.getTable(0)));
+            TableMetadata tm = km.getTable(Metadata.quote(boundColumns.getTable(0)));
             if (tm != null) {
                 partitionKeyColumns = tm.getPartitionKey();
                 pkIndexes = new int[partitionKeyColumns.size()];
@@ -63,12 +85,10 @@ public class DefaultPreparedStatement implements IdempotenceAwarePreparedStateme
         }
 
         // Note: we rely on the fact CQL queries cannot span multiple tables. If that change, we'll have to get smarter.
-        for (int i = 0; i < defs.size(); i++)
-            maybeGetIndex(defs.getName(i), i, partitionKeyColumns, pkIndexes);
+        for (int i = 0; i < boundColumns.size(); i++)
+            maybeGetIndex(boundColumns.getName(i), i, partitionKeyColumns, pkIndexes);
 
-        PreparedId prepId = new PreparedId(msg.statementId, defs, msg.resultMetadata.columns, allSet(pkIndexes) ? pkIndexes : null, protocolVersion);
-
-        return new DefaultPreparedStatement(prepId, query, queryKeyspace);
+        return allSet(pkIndexes) ? pkIndexes : null;
     }
 
     private static void maybeGetIndex(String name, int j, List<ColumnMetadata> pkColumns, int[] pkIndexes) {
@@ -196,11 +216,38 @@ public class DefaultPreparedStatement implements IdempotenceAwarePreparedStateme
     }
 
     @Override
+    public Map<String, ByteBuffer> getIncomingPayload() {
+        return incomingPayload;
+    }
+
+    @Override
+    public Map<String, ByteBuffer> getOutgoingPayload() {
+        return outgoingPayload;
+    }
+
+    @Override
+    public PreparedStatement setOutgoingPayload(Map<String, ByteBuffer> payload) {
+        this.outgoingPayload = payload == null ? null : ImmutableMap.copyOf(payload);
+        return this;
+    }
+
+    @Override
+    public CodecRegistry getCodecRegistry() {
+        return cluster.getConfiguration().getCodecRegistry();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public PreparedStatement setIdempotent(Boolean idempotent) {
         this.idempotent = idempotent;
         return this;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Boolean isIdempotent() {
         return this.idempotent;

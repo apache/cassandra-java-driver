@@ -44,11 +44,13 @@ import java.util.*;
  * token aware policy, replicas from remote data centers may only be
  * returned after all the host of the local data center.
  */
-public class TokenAwarePolicy implements ChainableLoadBalancingPolicy, CloseableLoadBalancingPolicy {
+public class TokenAwarePolicy implements ChainableLoadBalancingPolicy {
 
     private final LoadBalancingPolicy childPolicy;
     private final boolean shuffleReplicas;
-    private Metadata clusterMetadata;
+    private volatile Metadata clusterMetadata;
+    private volatile ProtocolVersion protocolVersion;
+    private volatile CodecRegistry codecRegistry;
 
     /**
      * Creates a new {@code TokenAware} policy.
@@ -86,6 +88,8 @@ public class TokenAwarePolicy implements ChainableLoadBalancingPolicy, Closeable
     @Override
     public void init(Cluster cluster, Collection<Host> hosts) {
         clusterMetadata = cluster.getMetadata();
+        protocolVersion = cluster.getConfiguration().getProtocolOptions().getProtocolVersion();
+        codecRegistry = cluster.getConfiguration().getCodecRegistry();
         childPolicy.init(cluster, hosts);
     }
 
@@ -114,7 +118,7 @@ public class TokenAwarePolicy implements ChainableLoadBalancingPolicy, Closeable
     @Override
     public Iterator<Host> newQueryPlan(final String loggedKeyspace, final Statement statement) {
 
-        ByteBuffer partitionKey = statement.getRoutingKey();
+        ByteBuffer partitionKey = statement.getRoutingKey(protocolVersion, codecRegistry);
         String keyspace = statement.getKeyspace();
         if (keyspace == null)
             keyspace = loggedKeyspace;
@@ -167,11 +171,6 @@ public class TokenAwarePolicy implements ChainableLoadBalancingPolicy, Closeable
     }
 
     @Override
-    public void onSuspected(Host host) {
-        childPolicy.onSuspected(host);
-    }
-
-    @Override
     public void onDown(Host host) {
         childPolicy.onDown(host);
     }
@@ -188,7 +187,6 @@ public class TokenAwarePolicy implements ChainableLoadBalancingPolicy, Closeable
 
     @Override
     public void close() {
-        if (childPolicy instanceof CloseableLoadBalancingPolicy)
-            ((CloseableLoadBalancingPolicy) childPolicy).close();
+        childPolicy.close();
     }
 }

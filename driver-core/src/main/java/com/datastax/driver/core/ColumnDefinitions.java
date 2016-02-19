@@ -15,8 +15,6 @@
  */
 package com.datastax.driver.core;
 
-import com.datastax.driver.core.exceptions.InvalidTypeException;
-
 import java.util.*;
 
 /**
@@ -57,14 +55,16 @@ import java.util.*;
  */
 public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition> {
 
-    static final ColumnDefinitions EMPTY = new ColumnDefinitions(new Definition[0]);
+    static final ColumnDefinitions EMPTY = new ColumnDefinitions(new Definition[0], CodecRegistry.DEFAULT_INSTANCE);
 
     private final Definition[] byIdx;
     private final Map<String, int[]> byName;
+    final CodecRegistry codecRegistry;
 
-    ColumnDefinitions(Definition[] defs) {
+    ColumnDefinitions(Definition[] defs, CodecRegistry codecRegistry) {
 
         this.byIdx = defs;
+        this.codecRegistry = codecRegistry;
         this.byName = new HashMap<String, int[]>(defs.length);
 
         for (int i = 0; i < defs.length; i++) {
@@ -270,34 +270,6 @@ public class ColumnDefinitions implements Iterable<ColumnDefinitions.Definition>
 
     int getFirstIdx(String name) {
         return getAllIdx(name)[0];
-    }
-
-    void checkBounds(int i) {
-        if (i < 0 || i >= size())
-            throw new ArrayIndexOutOfBoundsException(i);
-    }
-
-    // Note: we avoid having a vararg method to avoid the array allocation that comes with it.
-    void checkType(int i, DataType.Name name) {
-        DataType defined = getType(i);
-        if (name != defined.getName())
-            throw new InvalidTypeException(String.format("Column %s is of type %s", getName(i), defined));
-    }
-
-    DataType.Name checkType(int i, DataType.Name name1, DataType.Name name2) {
-        DataType defined = getType(i);
-        if (name1 != defined.getName() && name2 != defined.getName())
-            throw new InvalidTypeException(String.format("Column %s is of type %s", getName(i), defined));
-
-        return defined.getName();
-    }
-
-    DataType.Name checkType(int i, DataType.Name name1, DataType.Name name2, DataType.Name name3) {
-        DataType defined = getType(i);
-        if (name1 != defined.getName() && name2 != defined.getName() && name3 != defined.getName())
-            throw new InvalidTypeException(String.format("Column %s is of type %s", getName(i), defined));
-
-        return defined.getName();
     }
 
     /**

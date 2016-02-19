@@ -16,7 +16,6 @@
 package com.datastax.driver.mapping;
 
 import com.datastax.driver.core.CCMTestsSupport;
-import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.utils.CassandraVersion;
 import com.datastax.driver.mapping.annotations.*;
@@ -35,36 +34,6 @@ public class MapperAccessorParamsTest extends CCMTestsSupport {
                 "CREATE TABLE user_str ( key int primary key, gender text)",
                 "CREATE INDEX on user_str(gender)"
         );
-    }
-
-    @Test(groups = "short")
-    public void should_allow_enum_as_int_in_accessor_params() {
-        UserAccessor accessor = new MappingManager(session())
-                .createAccessor(UserAccessor.class);
-
-        accessor.addUser(0, Enum.FEMALE);
-        accessor.addUser(1, Enum.MALE);
-
-        assertThat(accessor.getUser(Enum.MALE).one().getGender()).isEqualTo(Enum.MALE);
-        assertThat(accessor.getUser(Enum.MALE).one().getKey()).isEqualTo(1);
-
-        assertThat(accessor.getUser(Enum.FEMALE).one().getGender()).isEqualTo(Enum.FEMALE);
-        assertThat(accessor.getUser(Enum.FEMALE).one().getKey()).isEqualTo(0);
-    }
-
-    @Test(groups = "short")
-    public void should_allow_enum_as_string_in_accessor_params() {
-        UserAccessor accessor = new MappingManager(session())
-                .createAccessor(UserAccessor.class);
-
-        accessor.addUserStr(0, Enum.FEMALE);
-        accessor.addUserStr(1, Enum.MALE);
-
-        assertThat(accessor.getUserStr(Enum.MALE).one().getGender()).isEqualTo(Enum.MALE);
-        assertThat(accessor.getUserStr(Enum.MALE).one().getKey()).isEqualTo(1);
-
-        assertThat(accessor.getUserStr(Enum.FEMALE).one().getGender()).isEqualTo(Enum.FEMALE);
-        assertThat(accessor.getUserStr(Enum.FEMALE).one().getKey()).isEqualTo(0);
     }
 
     @Test(groups = "short")
@@ -114,21 +83,6 @@ public class MapperAccessorParamsTest extends CCMTestsSupport {
 
     enum Enum {
         MALE, FEMALE
-    }
-
-    @Accessor
-    public interface UserAccessor {
-        @Query("select * from user where gender=?")
-        Result<User> getUser(@Enumerated(EnumType.ORDINAL) Enum value);
-
-        @Query("select * from user_str where gender=?")
-        Result<UserStr> getUserStr(@Enumerated(EnumType.STRING) Enum value);
-
-        @Query("insert into user (key, gender) values (?,?)")
-        ResultSet addUser(int key, @Enumerated(EnumType.ORDINAL) Enum value);
-
-        @Query("insert into user_str (key, gender) values (?,?)")
-        ResultSet addUserStr(int key, @Enumerated(EnumType.STRING) Enum value);
     }
 
     /**
@@ -186,15 +140,11 @@ public class MapperAccessorParamsTest extends CCMTestsSupport {
         @PartitionKey
         private int key;
 
-        @Enumerated(EnumType.ORDINAL)
-        private Enum gender;
-
         public User() {
         }
 
-        public User(int k, Enum val) {
+        public User(int k) {
             this.key = k;
-            this.gender = val;
         }
 
         public int getKey() {
@@ -205,13 +155,6 @@ public class MapperAccessorParamsTest extends CCMTestsSupport {
             this.key = pk;
         }
 
-        public Enum getGender() {
-            return this.gender;
-        }
-
-        public void setGender(Enum val) {
-            this.gender = val;
-        }
     }
 
     @Table(name = "user")

@@ -22,7 +22,7 @@ import com.datastax.driver.core.exceptions.InvalidQueryException;
 import java.util.*;
 
 /**
- * Static methods to build a CQL3 query.
+ * Builds CQL3 query via a fluent API.
  * <p/>
  * The queries built by this builder will provide a value for the
  * {@link com.datastax.driver.core.Statement#getRoutingKey} method only when a
@@ -30,11 +30,12 @@ import java.util.*;
  * It is thus advised to do so if a {@link com.datastax.driver.core.policies.TokenAwarePolicy}
  * is in use.
  * <p/>
- * The provided builders perform very little validation of the built query.
+ * The provider builders perform very little validation of the built query.
  * There is thus no guarantee that a built query is valid, and it is
  * definitively possible to create invalid queries.
  * <p/>
- * Note that it could be convenient to use an 'import static' to use the methods of this class.
+ * Note that it could be convenient to use an 'import static' to bring the static methods of
+ * this class into scope.
  */
 public final class QueryBuilder {
 
@@ -256,7 +257,7 @@ public final class QueryBuilder {
     public static String token(String... columnNames) {
         StringBuilder sb = new StringBuilder();
         sb.append("token(");
-        Utils.joinAndAppendNames(sb, ",", Arrays.asList((Object[]) columnNames));
+        Utils.joinAndAppendNames(sb, null, ",", Arrays.asList((Object[]) columnNames));
         sb.append(')');
         return sb.toString();
     }

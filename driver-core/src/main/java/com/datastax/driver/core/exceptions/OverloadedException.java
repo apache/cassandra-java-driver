@@ -20,12 +20,8 @@ import java.net.InetSocketAddress;
 
 /**
  * Indicates that the contacted host reported itself being overloaded.
- * This class is mainly intended for internal use;
- * client applications are not expected to deal with this exception directly,
- * because the driver would transparently retry the same query on another host;
- * but such exceptions are likely to appear occasionally in the driver logs.
  */
-public class OverloadedException extends DriverInternalError implements CoordinatorException {
+public class OverloadedException extends QueryExecutionException implements CoordinatorException {
 
     private static final long serialVersionUID = 0;
 

@@ -16,28 +16,76 @@
 package com.datastax.driver.core.querybuilder;
 
 import com.datastax.driver.core.*;
+import com.datastax.driver.core.exceptions.CodecNotFoundException;
 import com.datastax.driver.core.policies.RetryPolicy;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 /**
- * Common ancestor to the query builder built statements.
+ * Common ancestor to statements generated with the {@link QueryBuilder}.
+ * <p/>
+ * The actual query string will be generated and cached the first time it is requested,
+ * which is either when the driver tries to execute the query, or when you call certain
+ * public methods (for example {@link RegularStatement#getQueryString(CodecRegistry)},
+ * {@link #getObject(int, CodecRegistry)}).
+ * <p/>
+ * Whenever possible (and unless you call {@link #setForceNoValues(boolean)}, the builder
+ * will try to handle values passed to its methods as standalone values bound to the query
+ * string with placeholders. For instance:
+ * <pre>
+ *     select().all().from("foo").where(eq("k", "the key"));
+ *     // Is equivalent to:
+ *     new SimpleStatement("SELECT * FROM foo WHERE k=?", "the key");
+ * </pre>
+ * There are a few exceptions to this rule:
+ * <ul>
+ * <li>for fixed-size number types, the builder can't guess what the actual CQL type
+ * is. Standalone values are sent to Cassandra in their serialized form, and number
+ * types aren't all serialized in the same way, so picking the wrong type could
+ * lead to a query error;</li>
+ * <li>if the value is a "special" element like a function call, it can't be serialized.
+ * This also applies to collections mixing special elements and regular objects.</li>
+ * </ul>
+ * In these cases, the builder will inline the value in the query string:
+ * <pre>
+ *     select().all().from("foo").where(eq("k", 1));
+ *     // Is equivalent to:
+ *     new SimpleStatement("SELECT * FROM foo WHERE k=1");
+ * </pre>
+ * One final thing to consider is {@link CodecRegistry custom codecs}. If you've registered
+ * codecs to handle your own Java types against the cluster, then you can pass instances of
+ * those types to query builder methods. But should the builder have to inline those values,
+ * it needs your codecs to {@link TypeCodec#format(Object) convert them to string form}.
+ * That is why some of the public methods of this class take a {@code CodecRegistry} as a
+ * parameter:
+ * <pre>
+ *     BuiltStatement s = select().all().from("foo").where(eq("k", myCustomObject));
+ *     // if we do this codecs will definitely be needed:
+ *     s.forceNoValues(true);
+ *     s.getQueryString(myCodecRegistry);
+ * </pre>
+ * For convenience, there are no-arg versions of those methods that use
+ * {@link CodecRegistry#DEFAULT_INSTANCE}. But you should only use them if you are sure that
+ * no custom values will need to be inlined while building the statement, or if you have
+ * registered your custom codecs with the default registry instance. Otherwise, you will get
+ * a {@link CodecNotFoundException}.
  */
 public abstract class BuiltStatement extends RegularStatement {
 
     private static final Pattern lowercaseId = Pattern.compile("[a-z][a-z0-9_]*");
 
     private final List<ColumnMetadata> partitionKey;
-    private final ByteBuffer[] routingKey;
+    private final List<Object> routingKeyValues;
     final String keyspace;
 
     private boolean dirty;
     private String cache;
     private List<Object> values;
-
     Boolean isCounterOp;
     boolean hasNonIdempotentOps;
 
@@ -48,38 +96,43 @@ public abstract class BuiltStatement extends RegularStatement {
 
     BuiltStatement(String keyspace) {
         this.partitionKey = null;
-        this.routingKey = null;
+        this.routingKeyValues = null;
         this.keyspace = keyspace;
     }
 
     BuiltStatement(TableMetadata tableMetadata) {
         this.partitionKey = tableMetadata.getPartitionKey();
-        this.routingKey = new ByteBuffer[tableMetadata.getPartitionKey().size()];
+        this.routingKeyValues = Arrays.asList(new Object[tableMetadata.getPartitionKey().size()]);
         this.keyspace = escapeId(tableMetadata.getKeyspace().getName());
     }
 
     // Same as Metadata.escapeId, but we don't have access to it here.
-    protected String escapeId(String ident) {
+    protected static String escapeId(String ident) {
         // we don't need to escape if it's lowercase and match non-quoted CQL3 ids.
         return lowercaseId.matcher(ident).matches() ? ident : Metadata.quote(ident);
     }
 
     @Override
-    public String getQueryString() {
-        maybeRebuildCache();
+    public String getQueryString(CodecRegistry codecRegistry) {
+        maybeRebuildCache(codecRegistry);
         return cache;
     }
 
     /**
      * Returns the {@code i}th value as the Java type matching its CQL type.
      *
-     * @param i the index to retrieve.
+     * @param i             the index to retrieve.
+     * @param codecRegistry the codec registry that will be used if the statement must be
+     *                      rebuilt in order to determine if it has values, and Java objects
+     *                      must be inlined in the process (see {@link BuiltStatement} for
+     *                      more explanations on why this is so).
      * @return the value of the {@code i}th value of this statement.
      * @throws IllegalStateException     if this statement does not have values.
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
+     * @see #getObject(int)
      */
-    public Object getObject(int i) {
-        maybeRebuildCache();
+    public Object getObject(int i, CodecRegistry codecRegistry) {
+        maybeRebuildCache(codecRegistry);
         if (values == null || values.isEmpty())
             throw new IllegalStateException("This statement does not have values");
         if (i < 0 || i >= values.size())
@@ -87,7 +140,25 @@ public abstract class BuiltStatement extends RegularStatement {
         return values.get(i);
     }
 
-    private void maybeRebuildCache() {
+    /**
+     * Returns the {@code i}th value as the Java type matching its CQL type.
+     * <p/>
+     * This method calls {@link #getObject(int, CodecRegistry)} with
+     * {@link CodecRegistry#DEFAULT_INSTANCE}.
+     * It's safe to use if you don't use any custom codecs, or if your custom codecs are in
+     * the default registry; otherwise, use the other method and provide the registry that
+     * contains your codecs.
+     *
+     * @param i the index to retrieve.
+     * @return the value of the {@code i}th value of this statement.
+     * @throws IllegalStateException     if this statement does not have values.
+     * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
+     */
+    public Object getObject(int i) {
+        return getObject(i, CodecRegistry.DEFAULT_INSTANCE);
+    }
+
+    private void maybeRebuildCache(CodecRegistry codecRegistry) {
         if (!dirty && cache != null)
             return;
 
@@ -95,10 +166,10 @@ public abstract class BuiltStatement extends RegularStatement {
         values = null;
 
         if (hasBindMarkers || forceNoValues) {
-            sb = buildQueryString(null);
+            sb = buildQueryString(null, codecRegistry);
         } else {
             values = new ArrayList<Object>();
-            sb = buildQueryString(values);
+            sb = buildQueryString(values, codecRegistry);
 
             if (values.size() > 65535)
                 throw new IllegalArgumentException("Too many values for built statement, the maximum allowed is 65535");
@@ -127,7 +198,7 @@ public abstract class BuiltStatement extends RegularStatement {
         return sb;
     }
 
-    abstract StringBuilder buildQueryString(List<Object> variables);
+    abstract StringBuilder buildQueryString(List<Object> variables, CodecRegistry codecRegistry);
 
     boolean isCounterOp() {
         return isCounterOp == null ? false : isCounterOp;
@@ -159,32 +230,32 @@ public abstract class BuiltStatement extends RegularStatement {
 
     // TODO: Correctly document the InvalidTypeException
     void maybeAddRoutingKey(String name, Object value) {
-        if (routingKey == null || name == null || value == null || Utils.containsSpecialValue(value))
+        if (routingKeyValues == null || name == null || value == null || Utils.containsSpecialValue(value))
             return;
 
         for (int i = 0; i < partitionKey.size(); i++) {
             if (name.equals(partitionKey.get(i).getName())) {
-                DataType dt = partitionKey.get(i).getType();
-                // We don't really care which protocol version we use, since the only place it matters if for
-                // collections (not inside UDT), and those are not allowed in a partition key anyway, hence the hardcoding.
-                routingKey[i] = dt.serialize(dt.parse(Utils.toRawString(value)), ProtocolVersion.NEWEST_SUPPORTED);
+                routingKeyValues.set(i, value);
                 return;
             }
         }
     }
 
     @Override
-    public ByteBuffer getRoutingKey() {
-        if (routingKey == null)
+    public ByteBuffer getRoutingKey(ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
+        if (routingKeyValues == null)
             return null;
-
-        for (ByteBuffer bb : routingKey)
-            if (bb == null)
+        ByteBuffer[] routingKeyParts = new ByteBuffer[partitionKey.size()];
+        for (int i = 0; i < partitionKey.size(); i++) {
+            Object value = routingKeyValues.get(i);
+            if (value == null)
                 return null;
-
-        return routingKey.length == 1
-                ? routingKey[0]
-                : compose(routingKey);
+            TypeCodec<Object> codec = codecRegistry.codecFor(partitionKey.get(i).getType(), value);
+            routingKeyParts[i] = codec.serialize(value, protocolVersion);
+        }
+        return routingKeyParts.length == 1
+                ? routingKeyParts[0]
+                : Utils.compose(routingKeyParts);
     }
 
     @Override
@@ -193,15 +264,26 @@ public abstract class BuiltStatement extends RegularStatement {
     }
 
     @Override
-    public ByteBuffer[] getValues(ProtocolVersion protocolVersion) {
-        maybeRebuildCache();
-        return values == null ? null : Utils.convert(values, protocolVersion);
+    public ByteBuffer[] getValues(ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
+        maybeRebuildCache(codecRegistry);
+        return values == null ? null : Utils.convert(values.toArray(), protocolVersion, codecRegistry);
     }
 
     @Override
-    public boolean hasValues() {
-        maybeRebuildCache();
+    public boolean hasValues(CodecRegistry codecRegistry) {
+        maybeRebuildCache(codecRegistry);
         return values != null;
+    }
+
+    @Override
+    public Map<String, ByteBuffer> getNamedValues(ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
+        // Built statements never return named values
+        return null;
+    }
+
+    @Override
+    public boolean usesNamedValues() {
+        return false;
     }
 
     @Override
@@ -216,16 +298,16 @@ public abstract class BuiltStatement extends RegularStatement {
 
     @Override
     public String toString() {
-        if (forceNoValues)
-            return getQueryString();
-
-        return maybeAddSemicolon(buildQueryString(null)).toString();
-    }
-
-    // Not meant to be public
-    List<Object> getRawValues() {
-        maybeRebuildCache();
-        return values;
+        try {
+            if (forceNoValues) {
+                return getQueryString();
+            }
+            StringBuilder queryString = buildQueryString(null, CodecRegistry.DEFAULT_INSTANCE);
+            return maybeAddSemicolon(queryString).toString();
+        } catch (CodecNotFoundException e) {
+            // Ugly but we have absolutely no context to get the registry from
+            return String.format("built query (could not generate with default codec registry: %s)", e.getMessage());
+        }
     }
 
     /**
@@ -233,16 +315,16 @@ public abstract class BuiltStatement extends RegularStatement {
      * <p/>
      * By default (and unless the protocol version 1 is in use, see below) and
      * for performance reasons, the query builder will not serialize all values
-     * provided to strings. This means that the {@link #getQueryString} may
-     * return a query string with bind markers (where and when is at the
+     * provided to strings. This means that {@link #getQueryString(CodecRegistry)}
+     * may return a query string with bind markers (where and when is at the
      * discretion of the builder) and {@link #getValues} will return the binary
      * values for those markers. This method allows to force the builder to not
-     * generate binary values but rather to serialize them all in the query
+     * generate binary values but rather to inline them all in the query
      * string. In practice, this means that if you call {@code
      * setForceNoValues(true)}, you are guaranteed that {@code getValues()} will
      * return {@code null} and that the string returned by {@code
-     * getQueryString()} will contain no other bind markers than the one
-     * inputted by the user.
+     * getQueryString()} will contain no other bind markers than the ones
+     * specified by the user.
      * <p/>
      * If the native protocol version 1 is in use, the driver will default
      * to not generating values since those are not supported by that version of
@@ -262,28 +344,6 @@ public abstract class BuiltStatement extends RegularStatement {
         return this;
     }
 
-    // This is a duplicate of the one in SimpleStatement, but I don't want to expose this publicly so...
-    static ByteBuffer compose(ByteBuffer... buffers) {
-        int totalLength = 0;
-        for (ByteBuffer bb : buffers)
-            totalLength += 2 + bb.remaining() + 1;
-
-        ByteBuffer out = ByteBuffer.allocate(totalLength);
-        for (ByteBuffer buffer : buffers) {
-            ByteBuffer bb = buffer.duplicate();
-            putShortLength(out, bb.remaining());
-            out.put(bb);
-            out.put((byte) 0);
-        }
-        out.flip();
-        return out;
-    }
-
-    private static void putShortLength(ByteBuffer bb, int length) {
-        bb.put((byte) ((length >> 8) & 0xFF));
-        bb.put((byte) (length & 0xFF));
-    }
-
     /**
      * An utility class to create a BuiltStatement that encapsulate another one.
      */
@@ -297,18 +357,18 @@ public abstract class BuiltStatement extends RegularStatement {
         }
 
         @Override
-        public String getQueryString() {
-            return statement.getQueryString();
+        public String getQueryString(CodecRegistry codecRegistry) {
+            return statement.getQueryString(codecRegistry);
         }
 
         @Override
-        StringBuilder buildQueryString(List<Object> values) {
-            return statement.buildQueryString(values);
+        StringBuilder buildQueryString(List<Object> values, CodecRegistry codecRegistry) {
+            return statement.buildQueryString(values, codecRegistry);
         }
 
         @Override
-        public ByteBuffer getRoutingKey() {
-            return statement.getRoutingKey();
+        public ByteBuffer getRoutingKey(ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
+            return statement.getRoutingKey(protocolVersion, codecRegistry);
         }
 
         @Override
@@ -330,11 +390,6 @@ public abstract class BuiltStatement extends RegularStatement {
         public RegularStatement setForceNoValues(boolean forceNoValues) {
             statement.setForceNoValues(forceNoValues);
             return this;
-        }
-
-        @Override
-        List<Object> getRawValues() {
-            return statement.getRawValues();
         }
 
         @Override
@@ -377,8 +432,8 @@ public abstract class BuiltStatement extends RegularStatement {
         }
 
         @Override
-        public ByteBuffer[] getValues(ProtocolVersion protocolVersion) {
-            return statement.getValues(protocolVersion);
+        public ByteBuffer[] getValues(ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
+            return statement.getValues(protocolVersion, codecRegistry);
         }
 
         @Override

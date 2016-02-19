@@ -15,7 +15,13 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.exceptions.InvalidTypeException;
+import com.datastax.driver.core.exceptions.UnsupportedProtocolVersionException;
+import com.datastax.driver.core.querybuilder.BuiltStatement;
+import com.datastax.driver.core.schemabuilder.SchemaStatement;
+
 import java.nio.ByteBuffer;
+import java.util.Map;
 
 /**
  * A regular (non-prepared and non batched) CQL statement.
@@ -36,57 +42,135 @@ public abstract class RegularStatement extends Statement {
     /**
      * Returns the query string for this statement.
      *
+     * @param codecRegistry the codec registry that will be used if the actual
+     *                      implementation needs to serialize Java objects in the
+     *                      process of generating the query. Note that it might be
+     *                      possible to use the no-arg {@link #getQueryString()}
+     *                      depending on the type of statement this is called on.
      * @return a valid CQL query string.
+     * @see #getQueryString()
      */
-    public abstract String getQueryString();
+    public abstract String getQueryString(CodecRegistry codecRegistry);
 
     /**
-     * The values to use for this statement.
+     * Returns the query string for this statement.
      * <p/>
-     * Note: Values for a RegularStatement (i.e. if this method does not return
+     * This method calls {@link #getQueryString(CodecRegistry)} with {@link CodecRegistry#DEFAULT_INSTANCE}.
+     * Whether you should use this or the other variant depends on the type of statement this is
+     * called on:
+     * <ul>
+     * <li>for a {@link SimpleStatement} or {@link SchemaStatement}, the codec registry isn't
+     * actually needed, so it's always safe to use this method;</li>
+     * <li>for a {@link BuiltStatement} you can use this method if you use no custom codecs, or if
+     * your custom codecs are registered with the default registry. Otherwise, use the other method and
+     * provide the registry that contains your codecs (see {@link BuiltStatement} for more explanations
+     * on why this is so);</li>
+     * <li>for a {@link BatchStatement}, use the first rule if it contains no built statements,
+     * or the second rule otherwise.</li>
+     * </ul>
+     *
+     * @return a valid CQL query string.
+     */
+    public String getQueryString() {
+        return getQueryString(CodecRegistry.DEFAULT_INSTANCE);
+    }
+
+    /**
+     * The positional values to use for this statement.
+     * <p/>
+     * A statement can use either positional or named values, but not both. So if this method returns a non-null result,
+     * {@link #getNamedValues(ProtocolVersion, CodecRegistry)} will return {@code null}.
+     * <p/>
+     * Values for a RegularStatement (i.e. if either method does not return
      * {@code null}) are not supported with the native protocol version 1: you
      * will get an {@link UnsupportedProtocolVersionException} when submitting
-     * one if version 1 of the protocol is in use (i.e. if you've force version
+     * one if version 1 of the protocol is in use (i.e. if you've forced version
      * 1 through {@link Cluster.Builder#withProtocolVersion} or you use
      * Cassandra 1.2).
      *
-     * @param protocolVersion the protocol version in which the returned values
-     *                        must be serialized for.
-     * @return the values to use for this statement or {@code null} if there is
-     * no such values.
+     * @param protocolVersion the protocol version that will be used to serialize
+     *                        the values.
+     * @param codecRegistry   the codec registry that will be used to serialize the
+     *                        values.
+     * @throws InvalidTypeException if one of the values is not of a type
+     *                              that can be serialized to a CQL3 type
      * @see SimpleStatement#SimpleStatement(String, Object...)
      */
-    public abstract ByteBuffer[] getValues(ProtocolVersion protocolVersion);
+    public abstract ByteBuffer[] getValues(ProtocolVersion protocolVersion, CodecRegistry codecRegistry);
 
     /**
-     * The values to use for this statement, for the given numeric protocol version.
+     * The named values to use for this statement.
+     * <p/>
+     * A statement can use either positional or named values, but not both. So if this method returns a non-null result,
+     * {@link #getValues(ProtocolVersion, CodecRegistry)} will return {@code null}.
+     * <p/>
+     * Values for a RegularStatement (i.e. if either method does not return
+     * {@code null}) are not supported with the native protocol version 1: you
+     * will get an {@link UnsupportedProtocolVersionException} when submitting
+     * one if version 1 of the protocol is in use (i.e. if you've forced version
+     * 1 through {@link Cluster.Builder#withProtocolVersion} or you use
+     * Cassandra 1.2).
      *
-     * @throws IllegalArgumentException if {@code protocolVersion} does not correspond to any known version.
-     * @deprecated This method is provided for backward compatibility. Use
-     * {@link #getValues(ProtocolVersion)} instead.
+     * @param protocolVersion the protocol version that will be used to serialize
+     *                        the values.
+     * @param codecRegistry   the codec registry that will be used to serialize the
+     *                        values.
+     * @return the named values.
+     * @throws InvalidTypeException if one of the values is not of a type
+     *                              that can be serialized to a CQL3 type
+     * @see SimpleStatement#SimpleStatement(String, Map)
      */
-    @Deprecated
-    public ByteBuffer[] getValues(int protocolVersion) {
-        return getValues(ProtocolVersion.fromInt(protocolVersion));
-    }
-
-    /**
-     * @deprecated This method is provided for binary compatibility only. It is no longer supported, will be removed,
-     * and simply throws {@link UnsupportedOperationException}. Use {@link #getValues(ProtocolVersion)} instead.
-     */
-    @Deprecated
-    public ByteBuffer[] getValues() {
-        throw new UnsupportedOperationException("Method no longer supported; use getValues(ProtocolVersion)");
-    }
+    public abstract Map<String, ByteBuffer> getNamedValues(ProtocolVersion protocolVersion, CodecRegistry codecRegistry);
 
     /**
      * Whether or not this statement has values, that is if {@code getValues}
      * will return {@code null} or not.
      *
+     * @param codecRegistry the codec registry that will be used if the actual
+     *                      implementation needs to serialize Java objects in the
+     *                      process of determining if the query has values.
+     *                      Note that it might be possible to use the no-arg
+     *                      {@link #hasValues()} depending on the type of
+     *                      statement this is called on.
+     * @return {@code false} if both {@link #getValues(ProtocolVersion, CodecRegistry)}
+     * and {@link #getNamedValues(ProtocolVersion, CodecRegistry)} return {@code null}, {@code true}
+     * otherwise.
+     * @see #hasValues()
+     */
+    public abstract boolean hasValues(CodecRegistry codecRegistry);
+
+    /**
+     * Whether this statement uses named values.
+     *
+     * @return {@code false} if {@link #getNamedValues(ProtocolVersion, CodecRegistry)} returns {@code null},
+     * {@code true} otherwise.
+     */
+    public abstract boolean usesNamedValues();
+
+    /**
+     * Whether or not this statement has values, that is if {@code getValues}
+     * will return {@code null} or not.
+     * <p/>
+     * This method calls {@link #hasValues(CodecRegistry)} with {@link ProtocolVersion#NEWEST_SUPPORTED}.
+     * Whether you should use this or the other variant depends on the type of statement this is
+     * called on:
+     * <ul>
+     * <li>for a {@link SimpleStatement} or {@link SchemaStatement}, the codec registry isn't
+     * actually needed, so it's always safe to use this method;</li>
+     * <li>for a {@link BuiltStatement} you can use this method if you use no custom codecs, or if
+     * your custom codecs are registered with the default registry. Otherwise, use the other method and
+     * provide the registry that contains your codecs (see {@link BuiltStatement} for more explanations
+     * on why this is so);</li>
+     * <li>for a {@link BatchStatement}, use the first rule if it contains no built statements,
+     * or the second rule otherwise.</li>
+     * </ul>
+     *
      * @return {@code false} if {@link #getValues} returns {@code null}, {@code true}
      * otherwise.
      */
-    public abstract boolean hasValues();
+    public boolean hasValues() {
+        return hasValues(CodecRegistry.DEFAULT_INSTANCE);
+    }
 
     @Override
     public String toString() {

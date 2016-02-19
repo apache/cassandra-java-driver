@@ -77,6 +77,5 @@ public class SortingLoadBalancingPolicy implements LoadBalancingPolicy {
     }
 
     @Override
-    public void onSuspected(Host host) {
-    }
+    public void close() {/*nothing to do*/}
 }

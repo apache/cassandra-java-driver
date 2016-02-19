@@ -26,9 +26,8 @@ import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Pattern;
-
-import static com.datastax.driver.core.SchemaElement.*;
 
 /**
  * Keeps metadata on the connected cluster, including known nodes and schema definitions.
@@ -37,12 +36,14 @@ public class Metadata {
 
     private static final Logger logger = LoggerFactory.getLogger(Metadata.class);
 
-    private final Cluster.Manager cluster;
+    final Cluster.Manager cluster;
     volatile String clusterName;
     volatile String partitioner;
     private final ConcurrentMap<InetSocketAddress, Host> hosts = new ConcurrentHashMap<InetSocketAddress, Host>();
-    private final ConcurrentMap<String, KeyspaceMetadata> keyspaces = new ConcurrentHashMap<String, KeyspaceMetadata>();
+    final ConcurrentMap<String, KeyspaceMetadata> keyspaces = new ConcurrentHashMap<String, KeyspaceMetadata>();
     volatile TokenMap tokenMap;
+
+    final ReentrantLock lock = new ReentrantLock();
 
     private static final Pattern alphanumeric = Pattern.compile("\\w+"); // this includes _
     private static final Pattern lowercaseAlphanumeric = Pattern.compile("[a-z][a-z0-9_]*");
@@ -51,312 +52,22 @@ public class Metadata {
         this.cluster = cluster;
     }
 
-    // Synchronized to make it easy to detect dropped keyspaces
-    synchronized void rebuildSchema(SchemaElement targetType, String targetKeyspace, String targetName, ResultSet ks, ResultSet udts, ResultSet cfs, ResultSet cols, VersionNumber cassandraVersion) {
-        Map<String, List<Row>> tableRows = groupByKeyspace(cfs);
-        Map<String, List<Row>> udtRows = groupByKeyspace(udts);
-        Map<String, Map<String, Map<String, ColumnMetadata.Raw>>> colsDefs = groupByKeyspaceAndTable(cols, cassandraVersion);
-        if (targetType == null || targetType == KEYSPACE) {
-            // building the whole schema or a keyspace
-            assert ks != null;
-            Map<String, KeyspaceMetadata> keyspaces = buildKeyspaces(ks, tableRows, colsDefs, udtRows, cassandraVersion);
-            updateKeyspaces(this.keyspaces, keyspaces, targetKeyspace);
-        } else if (targetType == TABLE) {
-            assert targetKeyspace != null;
-            KeyspaceMetadata keyspace = this.keyspaces.get(targetKeyspace);
-            // If we update a keyspace we don't know about, something went
-            // wrong. Log an error and schedule a full schema rebuild.
-            if (keyspace == null) {
-                logger.info(String.format("Asked to rebuild table %s.%s but I don't know keyspace %s", targetKeyspace, targetName, targetKeyspace));
-                cluster.submitSchemaRefresh(null, null, null);
+    void rebuildTokenMap(String partitioner, Map<Host, Collection<String>> allTokens) {
+        lock.lock();
+        try {
+            if (allTokens.isEmpty())
                 return;
-            }
-            if (tableRows.containsKey(targetKeyspace)) {
-                Map<String, TableMetadata> tables = buildTables(keyspace, tableRows.get(targetKeyspace), colsDefs.get(targetKeyspace), cassandraVersion);
-                updateTables(keyspace.tables, tables, targetName);
-            }
-        } else if (targetType == TYPE) {
-            assert targetKeyspace != null;
-            KeyspaceMetadata keyspace = this.keyspaces.get(targetKeyspace);
-            if (keyspace == null) {
-                logger.info(String.format("Asked to rebuild UDT %s.%s but I don't know keyspace %s", targetKeyspace, targetName, targetKeyspace));
-                cluster.submitSchemaRefresh(null, null, null);
+
+            Token.Factory factory = partitioner == null
+                    ? (tokenMap == null ? null : tokenMap.factory)
+                    : Token.getFactory(partitioner);
+            if (factory == null)
                 return;
-            }
-            if (udtRows.containsKey(targetKeyspace)) {
-                Map<String, UserType> userTypes = buildUserTypes(udtRows.get(targetKeyspace));
-                updateUserTypes(keyspace.userTypes, userTypes, targetName);
-            }
+
+            this.tokenMap = TokenMap.build(factory, allTokens, keyspaces.values());
+        } finally {
+            lock.unlock();
         }
-    }
-
-    private Map<String, List<Row>> groupByKeyspace(ResultSet rows) {
-        if (rows == null)
-            return Collections.emptyMap();
-
-        Map<String, List<Row>> groupedRows = new HashMap<String, List<Row>>();
-        for (Row row : rows) {
-            String ksName = row.getString(KeyspaceMetadata.KS_NAME);
-            List<Row> l = groupedRows.get(ksName);
-            if (l == null) {
-                l = new ArrayList<Row>();
-                groupedRows.put(ksName, l);
-            }
-            l.add(row);
-        }
-        return groupedRows;
-    }
-
-    private Map<String, Map<String, Map<String, ColumnMetadata.Raw>>> groupByKeyspaceAndTable(ResultSet rows, VersionNumber cassandraVersion) {
-        if (rows == null)
-            return Collections.emptyMap();
-
-        Map<String, Map<String, Map<String, ColumnMetadata.Raw>>> groupedRows = new HashMap<String, Map<String, Map<String, ColumnMetadata.Raw>>>();
-        for (Row row : rows) {
-            String ksName = row.getString(KeyspaceMetadata.KS_NAME);
-            String cfName = row.getString(TableMetadata.CF_NAME);
-            Map<String, Map<String, ColumnMetadata.Raw>> colsByCf = groupedRows.get(ksName);
-            if (colsByCf == null) {
-                colsByCf = new HashMap<String, Map<String, ColumnMetadata.Raw>>();
-                groupedRows.put(ksName, colsByCf);
-            }
-            Map<String, ColumnMetadata.Raw> l = colsByCf.get(cfName);
-            if (l == null) {
-                l = new HashMap<String, ColumnMetadata.Raw>();
-                colsByCf.put(cfName, l);
-            }
-            ColumnMetadata.Raw c = ColumnMetadata.Raw.fromRow(row, cassandraVersion);
-            l.put(c.name, c);
-        }
-        return groupedRows;
-    }
-
-    private Map<String, KeyspaceMetadata> buildKeyspaces(ResultSet keyspaceRows,
-                                                         Map<String, List<Row>> tableRows,
-                                                         Map<String, Map<String, Map<String, ColumnMetadata.Raw>>> colsDefs,
-                                                         Map<String, List<Row>> udtRows,
-                                                         VersionNumber cassandraVersion) {
-        Map<String, KeyspaceMetadata> keyspaces = new LinkedHashMap<String, KeyspaceMetadata>();
-        for (Row keyspaceRow : keyspaceRows) {
-            KeyspaceMetadata keyspace = KeyspaceMetadata.build(keyspaceRow);
-            Map<String, TableMetadata> tables = buildTables(keyspace, tableRows.get(keyspace.getName()), colsDefs.get(keyspace.getName()), cassandraVersion);
-            for (TableMetadata table : tables.values()) {
-                keyspace.add(table);
-            }
-            Map<String, UserType> userTypes = buildUserTypes(udtRows.get(keyspace.getName()));
-            for (UserType userType : userTypes.values()) {
-                keyspace.add(userType);
-            }
-            keyspaces.put(keyspace.getName(), keyspace);
-        }
-        return keyspaces;
-    }
-
-    private Map<String, TableMetadata> buildTables(KeyspaceMetadata keyspace, List<Row> tableRows, Map<String, Map<String, ColumnMetadata.Raw>> colsDefs, VersionNumber cassandraVersion) {
-        Map<String, TableMetadata> tables = new LinkedHashMap<String, TableMetadata>();
-        if (tableRows != null) {
-            for (Row tableDef : tableRows) {
-                String cfName = tableDef.getString(TableMetadata.CF_NAME);
-                try {
-                    Map<String, ColumnMetadata.Raw> cols = colsDefs == null ? null : colsDefs.get(cfName);
-                    if (cols == null || cols.isEmpty()) {
-                        if (cassandraVersion.getMajor() >= 2) {
-                            // In C* >= 2.0, we should never have no columns metadata because at the very least we should
-                            // have the metadata corresponding to the default CQL metadata. So if we don't have any columns,
-                            // that can only mean that the table got creating concurrently with our schema queries, and the
-                            // query for columns metadata reached the node before the table was persisted while the table
-                            // metadata one reached it afterwards. We could make the query to the column metadata sequential
-                            // with the table metadata instead of in parallel, but it's probably not worth making it slower
-                            // all the time to avoid this race since 1) it's very very uncommon and 2) we can just ignore the
-                            // incomplete table here for now and it'll get updated next time with no particular consequence
-                            // (if the table creation was concurrent with our querying, we'll get a notifciation later and
-                            // will reupdate the schema for it anyway). See JAVA-320 for why we need this.
-                            continue;
-                        } else {
-                            // C* 1.2 don't persists default CQL metadata, so it's possible not to have columns (for thirft
-                            // tables). But in that case TableMetadata.build() knows how to handle it.
-                            cols = Collections.emptyMap();
-                        }
-                    }
-                    TableMetadata table = TableMetadata.build(keyspace, tableDef, cols, cassandraVersion);
-                    tables.put(table.getName(), table);
-                } catch (RuntimeException e) {
-                    // See ControlConnection#refreshSchema for why we'd rather not probably this further
-                    logger.error(String.format("Error parsing schema for table %s.%s: "
-                                    + "Cluster.getMetadata().getKeyspace(\"%s\").getTable(\"%s\") will be missing or incomplete",
-                            keyspace.getName(), cfName, keyspace.getName(), cfName), e);
-                }
-            }
-        }
-        return tables;
-    }
-
-    private Map<String, UserType> buildUserTypes(List<Row> udtRows) {
-        Map<String, UserType> userTypes = new LinkedHashMap<String, UserType>();
-        if (udtRows != null) {
-            for (Row udtRow : udtRows) {
-                UserType type = UserType.build(udtRow);
-                userTypes.put(type.getTypeName(), type);
-            }
-        }
-        return userTypes;
-    }
-
-    /**
-     * Update {@code oldKeyspaces} with the changes contained in {@code newKeyspaces}.
-     * This method also takes care of triggering the relevant events
-     * as the updates take place.
-     *
-     * @param oldKeyspaces      the set of keyspaces to be updated.
-     * @param newKeyspaces      the temporary set of keyspaces built with information gathered
-     *                          from schema tables.
-     * @param keyspaceToRebuild If we are rebuilding just one keyspace, the update operation will be limited
-     *                          to this keyspace only (in which case {@code newKeyspaces} shoudl contain only one entry for it)
-     */
-    private void updateKeyspaces(Map<String, KeyspaceMetadata> oldKeyspaces, Map<String, KeyspaceMetadata> newKeyspaces, String keyspaceToRebuild) {
-        Iterator<KeyspaceMetadata> it = oldKeyspaces.values().iterator();
-        while (it.hasNext()) {
-            KeyspaceMetadata oldKeyspace = it.next();
-            String keyspaceName = oldKeyspace.getName();
-            // If we're rebuilding only a single keyspace, we should only consider that one
-            // because newKeyspaces will only contain that keyspace.
-            if ((keyspaceToRebuild == null || keyspaceToRebuild.equals(keyspaceName)) && !newKeyspaces.containsKey(keyspaceName)) {
-                it.remove();
-                triggerOnKeyspaceRemoved(oldKeyspace);
-            }
-        }
-        for (KeyspaceMetadata newKeyspace : newKeyspaces.values()) {
-            KeyspaceMetadata oldKeyspace = oldKeyspaces.put(newKeyspace.getName(), newKeyspace);
-            if (oldKeyspace == null) {
-                triggerOnKeyspaceAdded(newKeyspace);
-            } else if (!oldKeyspace.equals(newKeyspace)) {
-                triggerOnKeyspaceChanged(newKeyspace, oldKeyspace);
-            }
-            Map<String, TableMetadata> oldTables = oldKeyspace == null ? new HashMap<String, TableMetadata>() : oldKeyspace.tables;
-            updateTables(oldTables, newKeyspace.tables, null);
-            Map<String, UserType> oldTypes = oldKeyspace == null ? new HashMap<String, UserType>() : oldKeyspace.userTypes;
-            updateUserTypes(oldTypes, newKeyspace.userTypes, null);
-        }
-    }
-
-    /**
-     * Update {@code oldTables} with the changes contained in {@code newTables}.
-     * This method also takes care of triggering the relevant events
-     * as the updates take place.
-     *
-     * @param oldTables      the set of tables to be updated.
-     * @param newTables      the temporary set of tables built with information gathered
-     *                       from schema tables.
-     * @param tableToRebuild If we are rebuilding just one table, the update operation will be limited
-     *                       to this table only (in which case {@code newTables} shoudl contain only one entry for it)
-     */
-    private void updateTables(Map<String, TableMetadata> oldTables, Map<String, TableMetadata> newTables, String tableToRebuild) {
-        Iterator<TableMetadata> it = oldTables.values().iterator();
-        while (it.hasNext()) {
-            TableMetadata oldTable = it.next();
-            String tableName = oldTable.getName();
-            // If we're rebuilding only a single table, we should only consider that one
-            // because newTables will only contain that table.
-            if ((tableToRebuild == null || tableToRebuild.equals(tableName)) && !newTables.containsKey(tableName)) {
-                it.remove();
-                triggerOnTableRemoved(oldTable);
-            }
-        }
-        for (TableMetadata newTable : newTables.values()) {
-            TableMetadata oldTable = oldTables.put(newTable.getName(), newTable);
-            if (oldTable == null) {
-                triggerOnTableAdded(newTable);
-            } else if (!oldTable.equals(newTable)) {
-                triggerOnTableChanged(newTable, oldTable);
-            }
-        }
-    }
-
-    private void updateUserTypes(Map<String, UserType> oldTypes, Map<String, UserType> newTypes, String typeToRebuild) {
-        Iterator<UserType> it = oldTypes.values().iterator();
-        while (it.hasNext()) {
-            UserType oldType = it.next();
-            String typeName = oldType.getTypeName();
-            if ((typeToRebuild == null || typeToRebuild.equals(typeName)) && !newTypes.containsKey(typeName)) {
-                it.remove();
-                triggerOnUserTypeRemoved(oldType);
-            }
-        }
-        for (UserType newType : newTypes.values()) {
-            UserType oldType = oldTypes.put(newType.getTypeName(), newType);
-            if (oldType == null) {
-                triggerOnUserTypeAdded(newType);
-            } else if (!newType.equals(oldType)) {
-                triggerOnUserTypeChanged(newType, oldType);
-            }
-        }
-    }
-
-    void triggerOnKeyspaceAdded(KeyspaceMetadata keyspace) {
-        for (SchemaChangeListener listener : cluster.schemaChangeListeners) {
-            listener.onKeyspaceAdded(keyspace);
-        }
-    }
-
-    void triggerOnKeyspaceChanged(KeyspaceMetadata current, KeyspaceMetadata previous) {
-        for (SchemaChangeListener listener : cluster.schemaChangeListeners) {
-            listener.onKeyspaceChanged(current, previous);
-        }
-    }
-
-    void triggerOnKeyspaceRemoved(KeyspaceMetadata keyspace) {
-        for (SchemaChangeListener listener : cluster.schemaChangeListeners) {
-            listener.onKeyspaceRemoved(keyspace);
-        }
-    }
-
-    void triggerOnTableAdded(TableMetadata table) {
-        for (SchemaChangeListener listener : cluster.schemaChangeListeners) {
-            listener.onTableAdded(table);
-        }
-    }
-
-    void triggerOnTableChanged(TableMetadata current, TableMetadata previous) {
-        for (SchemaChangeListener listener : cluster.schemaChangeListeners) {
-            listener.onTableChanged(current, previous);
-        }
-    }
-
-    void triggerOnTableRemoved(TableMetadata table) {
-        for (SchemaChangeListener listener : cluster.schemaChangeListeners) {
-            listener.onTableRemoved(table);
-        }
-    }
-
-    void triggerOnUserTypeAdded(UserType type) {
-        for (SchemaChangeListener listener : cluster.schemaChangeListeners) {
-            listener.onUserTypeAdded(type);
-        }
-    }
-
-    void triggerOnUserTypeChanged(UserType current, UserType previous) {
-        for (SchemaChangeListener listener : cluster.schemaChangeListeners) {
-            listener.onUserTypeChanged(current, previous);
-        }
-    }
-
-    void triggerOnUserTypeRemoved(UserType type) {
-        for (SchemaChangeListener listener : cluster.schemaChangeListeners) {
-            listener.onUserTypeRemoved(type);
-        }
-    }
-
-    synchronized void rebuildTokenMap(String partitioner, Map<Host, Collection<String>> allTokens) {
-        if (allTokens.isEmpty())
-            return;
-
-        Token.Factory factory = partitioner == null
-                ? (tokenMap == null ? null : tokenMap.factory)
-                : Token.getFactory(partitioner);
-        if (factory == null)
-            return;
-
-        this.tokenMap = TokenMap.build(factory, allTokens, keyspaces.values());
     }
 
     Host newHost(InetSocketAddress address) {
@@ -404,7 +115,7 @@ public class Metadata {
             return id.toLowerCase();
 
         // Check if it's enclosed in quotes. If it is, remove them and unescape internal double quotes
-        if (id.charAt(0) == '"' && id.charAt(id.length() - 1) == '"')
+        if (!id.isEmpty() && id.charAt(0) == '"' && id.charAt(id.length() - 1) == '"')
             return id.substring(1, id.length() - 1).replaceAll("\"\"", "\"");
 
         // Otherwise, just return the id.
@@ -420,6 +131,45 @@ public class Metadata {
     static String escapeId(String ident) {
         // we don't need to escape if it's lowercase and match non-quoted CQL3 ids.
         return lowercaseAlphanumeric.matcher(ident).matches() ? ident : quote(ident);
+    }
+
+    /**
+     * Builds the internal name of a function/aggregate, which is similar, but not identical,
+     * to the function/aggregate signature.
+     * This is only used to generate keys for internal metadata maps (KeyspaceMetadata.functions and.
+     * KeyspaceMetadata.aggregates).
+     * Note that if simpleName comes from the user, the caller must call handleId on it before passing it to this method.
+     * Note that this method does not necessarily generates a valid CQL function signature.
+     * Note that argumentTypes can be either a list of strings (schema change events)
+     * or a list of DataTypes (function lookup from client code).
+     * This method must ensure that both cases produce the same identifier.
+     */
+    static String fullFunctionName(String simpleName, Collection<?> argumentTypes) {
+        StringBuilder sb = new StringBuilder(simpleName);
+        sb.append('(');
+        boolean first = true;
+        for (Object argumentType : argumentTypes) {
+            if (first)
+                first = false;
+            else
+                sb.append(',');
+            // user types must be represented by their names only,
+            // without keyspace prefix, because that's how
+            // they appear in a schema change event (in targetSignature)
+            if (argumentType instanceof UserType) {
+                UserType userType = (UserType) argumentType;
+                String typeName = Metadata.escapeId(userType.getTypeName());
+                if (userType.isFrozen())
+                    sb.append("frozen<");
+                sb.append(typeName);
+                if (userType.isFrozen())
+                    sb.append(">");
+            } else {
+                sb.append(argumentType);
+            }
+        }
+        sb.append(')');
+        return sb.toString();
     }
 
     /**
@@ -439,7 +189,7 @@ public class Metadata {
      * or even {@link Cluster#connect(String)}.
      */
     public static String quote(String id) {
-        return '"' + id + '"';
+        return '"' + id.replace("\"", "\"\"") + '"';
     }
 
     /**
@@ -594,14 +344,6 @@ public class Metadata {
         return keyspaces.get(handleId(keyspace));
     }
 
-    /**
-     * Used when the keyspace name is unquoted and in the exact case we store it in
-     * (typically when we got it from an internal call, not from the user).
-     */
-    KeyspaceMetadata getKeyspaceInternal(String keyspace) {
-        return keyspaces.get(keyspace);
-    }
-
     KeyspaceMetadata removeKeyspace(String keyspace) {
         KeyspaceMetadata removed = keyspaces.remove(keyspace);
         if (tokenMap != null)
@@ -645,6 +387,26 @@ public class Metadata {
     }
 
     /**
+     * Creates a tuple type given a list of types.
+     *
+     * @param types the types for the tuple type.
+     * @return the newly created tuple type.
+     */
+    public TupleType newTupleType(DataType... types) {
+        return newTupleType(Arrays.asList(types));
+    }
+
+    /**
+     * Creates a tuple type given a list of types.
+     *
+     * @param types the types for the tuple type.
+     * @return the newly created tuple type.
+     */
+    public TupleType newTupleType(List<DataType> types) {
+        return new TupleType(types, cluster.protocolVersion(), cluster.configuration.getCodecRegistry());
+    }
+
+    /**
      * Builds a new {@link Token} from its string representation, according to the partitioner
      * reported by the Cassandra nodes.
      *
@@ -658,7 +420,6 @@ public class Metadata {
         TokenMap current = tokenMap;
         if (current == null)
             throw new IllegalStateException("Token factory not set. This should only happen if metadata was explicitly disabled");
-
         return current.factory.fromString(tokenStr);
     }
 
@@ -683,6 +444,114 @@ public class Metadata {
     Token.Factory tokenFactory() {
         TokenMap current = tokenMap;
         return (current == null) ? null : current.factory;
+    }
+
+    void triggerOnKeyspaceAdded(KeyspaceMetadata keyspace) {
+        for (SchemaChangeListener listener : cluster.schemaChangeListeners) {
+            listener.onKeyspaceAdded(keyspace);
+        }
+    }
+
+    void triggerOnKeyspaceChanged(KeyspaceMetadata current, KeyspaceMetadata previous) {
+        for (SchemaChangeListener listener : cluster.schemaChangeListeners) {
+            listener.onKeyspaceChanged(current, previous);
+        }
+    }
+
+    void triggerOnKeyspaceRemoved(KeyspaceMetadata keyspace) {
+        for (SchemaChangeListener listener : cluster.schemaChangeListeners) {
+            listener.onKeyspaceRemoved(keyspace);
+        }
+    }
+
+    void triggerOnTableAdded(TableMetadata table) {
+        for (SchemaChangeListener listener : cluster.schemaChangeListeners) {
+            listener.onTableAdded(table);
+        }
+    }
+
+    void triggerOnTableChanged(TableMetadata current, TableMetadata previous) {
+        for (SchemaChangeListener listener : cluster.schemaChangeListeners) {
+            listener.onTableChanged(current, previous);
+        }
+    }
+
+    void triggerOnTableRemoved(TableMetadata table) {
+        for (SchemaChangeListener listener : cluster.schemaChangeListeners) {
+            listener.onTableRemoved(table);
+        }
+    }
+
+    void triggerOnUserTypeAdded(UserType type) {
+        for (SchemaChangeListener listener : cluster.schemaChangeListeners) {
+            listener.onUserTypeAdded(type);
+        }
+    }
+
+    void triggerOnUserTypeChanged(UserType current, UserType previous) {
+        for (SchemaChangeListener listener : cluster.schemaChangeListeners) {
+            listener.onUserTypeChanged(current, previous);
+        }
+    }
+
+    void triggerOnUserTypeRemoved(UserType type) {
+        for (SchemaChangeListener listener : cluster.schemaChangeListeners) {
+            listener.onUserTypeRemoved(type);
+        }
+    }
+
+    void triggerOnFunctionAdded(FunctionMetadata function) {
+        for (SchemaChangeListener listener : cluster.schemaChangeListeners) {
+            listener.onFunctionAdded(function);
+        }
+    }
+
+    void triggerOnFunctionChanged(FunctionMetadata current, FunctionMetadata previous) {
+        for (SchemaChangeListener listener : cluster.schemaChangeListeners) {
+            listener.onFunctionChanged(current, previous);
+        }
+    }
+
+    void triggerOnFunctionRemoved(FunctionMetadata function) {
+        for (SchemaChangeListener listener : cluster.schemaChangeListeners) {
+            listener.onFunctionRemoved(function);
+        }
+    }
+
+    void triggerOnAggregateAdded(AggregateMetadata aggregate) {
+        for (SchemaChangeListener listener : cluster.schemaChangeListeners) {
+            listener.onAggregateAdded(aggregate);
+        }
+    }
+
+    void triggerOnAggregateChanged(AggregateMetadata current, AggregateMetadata previous) {
+        for (SchemaChangeListener listener : cluster.schemaChangeListeners) {
+            listener.onAggregateChanged(current, previous);
+        }
+    }
+
+    void triggerOnAggregateRemoved(AggregateMetadata aggregate) {
+        for (SchemaChangeListener listener : cluster.schemaChangeListeners) {
+            listener.onAggregateRemoved(aggregate);
+        }
+    }
+
+    void triggerOnMaterializedViewAdded(MaterializedViewMetadata view) {
+        for (SchemaChangeListener listener : cluster.schemaChangeListeners) {
+            listener.onMaterializedViewAdded(view);
+        }
+    }
+
+    void triggerOnMaterializedViewChanged(MaterializedViewMetadata current, MaterializedViewMetadata previous) {
+        for (SchemaChangeListener listener : cluster.schemaChangeListeners) {
+            listener.onMaterializedViewChanged(current, previous);
+        }
+    }
+
+    void triggerOnMaterializedViewRemoved(MaterializedViewMetadata view) {
+        for (SchemaChangeListener listener : cluster.schemaChangeListeners) {
+            listener.onMaterializedViewRemoved(view);
+        }
     }
 
     static class TokenMap {

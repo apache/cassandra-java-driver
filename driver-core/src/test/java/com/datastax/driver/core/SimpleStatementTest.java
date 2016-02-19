@@ -35,7 +35,6 @@ public class SimpleStatementTest {
         new SimpleStatement("doesn't matter").getObject(0);
     }
 
-
     @Test(groups = "unit", expectedExceptions = {IndexOutOfBoundsException.class})
     public void should_throw_IOOBE_if_getObject_called_with_wrong_index() {
         new SimpleStatement("doesn't matter", new Object()).getObject(1);

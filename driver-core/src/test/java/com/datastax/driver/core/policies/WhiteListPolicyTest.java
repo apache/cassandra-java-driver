@@ -109,6 +109,7 @@ public class WhiteListPolicyTest {
         List<InetSocketAddress> whiteList = Lists.newArrayList(sCluster.address(2));
         Cluster cluster = Cluster.builder()
                 .addContactPointsWithPorts(sCluster.address(3))
+                .withPort(sCluster.getBinaryPort())
                 .withLoadBalancingPolicy(new WhiteListPolicy(new RoundRobinPolicy(), whiteList))
                 .withNettyOptions(nonQuietClusterCloseOptions)
                 .build();

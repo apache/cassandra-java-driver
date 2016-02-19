@@ -51,31 +51,19 @@ to the current page, and [fetchMoreResults] to get a future to the next
 page (see also the section on [paging](../paging/)).
 Here is a full example:
 
-[getAvailableWithoutFetching]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/ResultSet.html#getAvailableWithoutFetching--
-[fetchMoreResults]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/ResultSet.html#fetchMoreResults--
+[getAvailableWithoutFetching]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/ResultSet.html#getAvailableWithoutFetching--
+[fetchMoreResults]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/ResultSet.html#fetchMoreResults--
 
 ```java
 Statement statement = new SimpleStatement("select * from foo").setFetchSize(20);
-ListenableFuture<Void> future = Futures.transform(
+ListenableFuture<ResultSet> future = Futures.transform(
     session.executeAsync(statement),
-    iterateFirst());
+    iterate(1));
 
-// Unfortunately we have to special-case for the first page because the signatures of the
-// futures differ.
-// In 3.0, fetchMoreResults() will return a Future<ResultSet> to avoid this.
-private static AsyncFunction<ResultSet, Void> iterateFirst() {
-    return new AsyncFunction<ResultSet, Void>() {
+private static AsyncFunction<ResultSet, ResultSet> iterate(final int page) {
+    return new AsyncFunction<ResultSet, ResultSet>() {
         @Override
-        public ListenableFuture<Void> apply(ResultSet rs) throws Exception {
-            return iterate(rs, 1).apply(null);
-        }
-    };
-}
-
-private static AsyncFunction<Void, Void> iterate(final ResultSet rs, final int page) {
-    return new AsyncFunction<Void, Void>() {
-        @Override
-        public ListenableFuture<Void> apply(Void v) throws Exception {
+        public ListenableFuture<ResultSet> apply(ResultSet rs) throws Exception {
 
             // How far we can go without triggering the blocking fetch:
             int remainingInPage = rs.getAvailableWithoutFetching();
@@ -92,10 +80,10 @@ private static AsyncFunction<Void, Void> iterate(final ResultSet rs, final int p
             boolean wasLastPage = rs.getExecutionInfo().getPagingState() == null;
             if (wasLastPage) {
                 System.out.println("Done iterating");
-                return Futures.immediateFuture(null);
+                return Futures.immediateFuture(rs);
             } else {
-                ListenableFuture<Void> future = rs.fetchMoreResults();
-                return Futures.transform(future, iterate(rs, page + 1));
+                ListenableFuture<ResultSet> future = rs.fetchMoreResults();
+                return Futures.transform(future, iterate(page + 1));
             }
         }
     };
@@ -157,6 +145,6 @@ There are still a few places where the driver will block internally
   hasn't been fetched already.
 
 [ListenableFuture]: https://code.google.com/p/guava-libraries/wiki/ListenableFutureExplained
-[init]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/Cluster.html#init--
-[setPoolTimeoutMillis]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/PoolingOptions.html#setPoolTimeoutMillis-int-
-[query trace]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/QueryTrace.html
+[init]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Cluster.html#init--
+[setPoolTimeoutMillis]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/PoolingOptions.html#setPoolTimeoutMillis-int-
+[query trace]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/QueryTrace.html

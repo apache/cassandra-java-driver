@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core.querybuilder;
 
+import com.datastax.driver.core.CodecRegistry;
 import com.datastax.driver.core.ProtocolVersion;
 import com.datastax.driver.core.RegularStatement;
 import com.datastax.driver.core.SimpleStatement;
@@ -31,7 +32,6 @@ public class Batch extends BuiltStatement {
     private final List<RegularStatement> statements;
     private final boolean logged;
     private final Options usings;
-    private ByteBuffer routingKey;
 
     // Only used when we add at last one statement that is not a BuiltStatement subclass
     private int nonBuiltStatementValues;
@@ -49,7 +49,7 @@ public class Batch extends BuiltStatement {
     }
 
     @Override
-    StringBuilder buildQueryString(List<Object> variables) {
+    StringBuilder buildQueryString(List<Object> variables, CodecRegistry codecRegistry) {
         StringBuilder builder = new StringBuilder();
 
         builder.append(isCounterOp()
@@ -58,7 +58,7 @@ public class Batch extends BuiltStatement {
 
         if (!usings.usings.isEmpty()) {
             builder.append(" USING ");
-            Utils.joinAndAppend(builder, " AND ", usings.usings, variables);
+            Utils.joinAndAppend(builder, codecRegistry, " AND ", usings.usings, variables);
         }
         builder.append(' ');
 
@@ -66,7 +66,7 @@ public class Batch extends BuiltStatement {
             RegularStatement stmt = statements.get(i);
             if (stmt instanceof BuiltStatement) {
                 BuiltStatement bst = (BuiltStatement) stmt;
-                builder.append(maybeAddSemicolon(bst.buildQueryString(variables)));
+                builder.append(maybeAddSemicolon(bst.buildQueryString(variables, codecRegistry)));
 
             } else {
                 String str = stmt.getQueryString();
@@ -112,21 +112,18 @@ public class Batch extends BuiltStatement {
 
         checkForBindMarkers(null);
 
-        if (routingKey == null && statement.getRoutingKey() != null)
-            routingKey = statement.getRoutingKey();
-
         return this;
     }
 
     @Override
-    public ByteBuffer[] getValues(ProtocolVersion protocolVersion) {
+    public ByteBuffer[] getValues(ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
         // If there is some non-BuiltStatement inside the batch with values, we shouldn't
         // use super.getValues() since it will ignore the values of said non-BuiltStatement.
         // If that's the case, we just collects all those values (and we know
         // super.getValues() == null in that case since we've explicitely set this.hasBindMarker
         // to true). Otherwise, we simply call super.getValues().
         if (nonBuiltStatementValues == 0)
-            return super.getValues(protocolVersion);
+            return super.getValues(protocolVersion, codecRegistry);
 
         ByteBuffer[] values = new ByteBuffer[nonBuiltStatementValues];
         int i = 0;
@@ -134,7 +131,7 @@ public class Batch extends BuiltStatement {
             if (statement instanceof BuiltStatement)
                 continue;
 
-            ByteBuffer[] statementValues = statement.getValues(protocolVersion);
+            ByteBuffer[] statementValues = statement.getValues(protocolVersion, codecRegistry);
             System.arraycopy(statementValues, 0, values, i, statementValues.length);
             i += statementValues.length;
         }
@@ -158,8 +155,14 @@ public class Batch extends BuiltStatement {
      * @return the routing key for this batch statement.
      */
     @Override
-    public ByteBuffer getRoutingKey() {
-        return routingKey;
+    public ByteBuffer getRoutingKey(ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
+        for (RegularStatement statement : statements) {
+            ByteBuffer routingKey = statement.getRoutingKey(protocolVersion, codecRegistry);
+            if (routingKey != null) {
+                return routingKey;
+            }
+        }
+        return null;
     }
 
     /**

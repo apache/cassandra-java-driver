@@ -59,7 +59,8 @@ public abstract class TokenIntegrationTest extends CCMTestsSupport {
         LoadBalancingPolicy lbp = new WhiteListPolicy(new RoundRobinPolicy(),
                 Collections.singleton(ccm().addressOfNode(1)));
         return Cluster.builder()
-                .addContactPointsWithPorts(ccm().addressOfNode(1))
+                .addContactPoints(getContactPoints().get(0))
+                .withPort(ccm().getBinaryPort())
                 .withLoadBalancingPolicy(lbp)
                 .withQueryOptions(TestUtils.nonDebouncingQueryOptions());
     }
@@ -96,7 +97,7 @@ public abstract class TokenIntegrationTest extends CCMTestsSupport {
 
         // Find the replica for a given partition key
         int testKey = 1;
-        Set<Host> replicas = metadata.getReplicas(ks1, DataType.cint().serialize(testKey, cluster().getConfiguration().getProtocolOptions().getProtocolVersionEnum()));
+        Set<Host> replicas = metadata.getReplicas(ks1, TypeCodec.cint().serialize(testKey, cluster().getConfiguration().getProtocolOptions().getProtocolVersion()));
         assertThat(replicas).hasSize(1);
         Host replica = replicas.iterator().next();
 
@@ -287,13 +288,18 @@ public abstract class TokenIntegrationTest extends CCMTestsSupport {
     public void should_expose_tokens_per_host() {
         for (Host host : cluster().getMetadata().allHosts()) {
             assertThat(host.getTokens()).hasSize(numTokens);
-
             // Check against the info in the system tables, which is a bit weak since it's exactly how the metadata is
             // constructed in the first place, but there's not much else we can do.
             // Note that this relies on all queries going to node 1, which is why we use a WhiteList LBP in setup().
-            Row row = (host.listenAddress == null)
-                    ? session().execute("select tokens from system.local").one()
-                    : session().execute("select tokens from system.peers where peer = '" + host.listenAddress.getHostAddress() + "'").one();
+            boolean isControlHost = host.getSocketAddress().equals(cluster().manager.controlConnection.connectionRef.get().address);
+            Row row;
+            if (isControlHost) {
+                row = session().execute("select tokens from system.local").one();
+            } else {
+                // non-control hosts are populated from system.peers and their broadcast address should be known
+                assertThat(host.getBroadcastAddress()).isNotNull();
+                row = session().execute("select tokens from system.peers where peer = '" + host.getBroadcastAddress().getHostAddress() + "'").one();
+            }
             Set<String> tokenStrings = row.getSet("tokens", String.class);
             assertThat(tokenStrings).hasSize(numTokens);
             Iterable<Token> tokensFromSystemTable = Iterables.transform(tokenStrings, new Function<String, Token>() {
@@ -326,12 +332,12 @@ public abstract class TokenIntegrationTest extends CCMTestsSupport {
         assertOnlyOneWrapped(ranges);
 
         Iterable<TokenRange> splitRanges = Iterables.concat(Iterables.transform(ranges,
-                        new Function<TokenRange, Iterable<TokenRange>>() {
-                            @Override
-                            public Iterable<TokenRange> apply(TokenRange input) {
-                                return input.splitEvenly(10);
-                            }
-                        })
+                new Function<TokenRange, Iterable<TokenRange>>() {
+                    @Override
+                    public Iterable<TokenRange> apply(TokenRange input) {
+                        return input.splitEvenly(10);
+                    }
+                })
         );
 
         assertOnlyOneWrapped(splitRanges);

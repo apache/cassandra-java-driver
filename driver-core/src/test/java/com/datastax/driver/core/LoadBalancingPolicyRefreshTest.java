@@ -73,7 +73,7 @@ public class LoadBalancingPolicyRefreshTest extends CCMTestsSupport {
         public void onDown(Host h) {
         }
 
-        public void onSuspected(Host h) {
+        public void close() {
         }
     }
 
@@ -83,7 +83,7 @@ public class LoadBalancingPolicyRefreshTest extends CCMTestsSupport {
         // Ugly
         Host[] hosts = new Host[2];
         for (Host h : cluster().getMetadata().getAllHosts()) {
-            if (h.getAddress().equals(InetAddress.getByName(TestUtils.IP_PREFIX + '1')))
+            if (h.getAddress().equals(ccm().addressOfNode(1).getAddress()))
                 hosts[0] = h;
             else
                 hosts[1] = h;

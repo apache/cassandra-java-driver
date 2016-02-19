@@ -44,7 +44,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * {@link RoundRobinPolicy}, but its DC awareness incurs a slight overhead
  * so the latter should be preferred to this policy in that case.
  */
-public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy, CloseableLoadBalancingPolicy {
+public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
 
     private static final Logger logger = LoggerFactory.getLogger(DCAwareRoundRobinPolicy.class);
 
@@ -69,41 +69,6 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy, CloseableLo
     private final boolean dontHopForLocalCL;
 
     private volatile Configuration configuration;
-
-    /**
-     * @deprecated {@link #builder()} is the recommended way to build instances of this class. This constructor was preserved for
-     * backward-compatibility purposes, it is equivalent to {@code DCAwareRoundRobinPolicy.builder().build()}.
-     */
-    @Deprecated
-    public DCAwareRoundRobinPolicy() {
-        this(null, 0, false, true);
-    }
-
-    /**
-     * @deprecated {@link #builder()} is the recommended way to build instances of this class. This constructor was preserved for
-     * backward-compatibility purposes, it is equivalent to {@code DCAwareRoundRobinPolicy.builder().withLocalDc(localDc).build()}.
-     */
-    public DCAwareRoundRobinPolicy(String localDc) {
-        this(localDc, 0, false, false);
-    }
-
-    /**
-     * @deprecated {@link #builder()} is the recommended way to build instances of this class. This constructor was preserved for
-     * backward-compatibility purposes, it is equivalent to
-     * {@code DCAwareRoundRobinPolicy.builder().withLocalDc(localDc).withUsedHostsPerRemoteDc(usedHostsPerRemoteDc).build()}.
-     */
-    public DCAwareRoundRobinPolicy(String localDc, int usedHostsPerRemoteDc) {
-        this(localDc, usedHostsPerRemoteDc, false, false);
-    }
-
-    /**
-     * @deprecated {@link #builder()} is the recommended way to build instances of this class. This constructor was preserved for
-     * backward-compatibility purposes, it is equivalent to
-     * {@code DCAwareRoundRobinPolicy.builder().withLocalDc(localDc).withUsedHostsPerRemoteDc(usedHostsPerRemoteDc).allowRemoteDCsForLocalConsistencyLevel().build()}.
-     */
-    public DCAwareRoundRobinPolicy(String localDc, int usedHostsPerRemoteDc, boolean allowRemoteDCsForLocalConsistencyLevel) {
-        this(localDc, usedHostsPerRemoteDc, allowRemoteDCsForLocalConsistencyLevel, false);
-    }
 
     private DCAwareRoundRobinPolicy(String localDc, int usedHostsPerRemoteDc, boolean allowRemoteDCsForLocalConsistencyLevel, boolean allowEmptyLocalDc) {
         if (!allowEmptyLocalDc && Strings.isNullOrEmpty(localDc))
@@ -167,8 +132,8 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy, CloseableLo
      * For each remote datacenter, it considers a configurable number of
      * hosts as {@code REMOTE} and the rest is {@code IGNORED}.
      * <p/>
-     * To configure how many host in each remote datacenter is considered
-     * {@code REMOTE}, see {@link #DCAwareRoundRobinPolicy(String, int)}.
+     * To configure how many hosts in each remote datacenter should be considered,
+     * see {@link Builder#withUsedHostsPerRemoteDc(int)}.
      *
      * @param host the host of which to return the distance of.
      * @return the HostDistance to {@code host}.
@@ -292,10 +257,6 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy, CloseableLo
                 return;
         }
         dcHosts.addIfAbsent(host);
-    }
-
-    @Override
-    public void onSuspected(Host host) {
     }
 
     @Override

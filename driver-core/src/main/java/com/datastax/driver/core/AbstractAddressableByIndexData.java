@@ -15,7 +15,8 @@
  */
 package com.datastax.driver.core;
 
-import com.datastax.driver.core.exceptions.InvalidTypeException;
+import com.google.common.base.Objects;
+import com.google.common.reflect.TypeToken;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -45,58 +46,110 @@ abstract class AbstractAddressableByIndexData<T extends SettableByIndexData<T>> 
 
     @Override
     public T setBool(int i, boolean v) {
-        checkType(i, DataType.Name.BOOLEAN);
-        return setValue(i, TypeCodec.booleanCodec.serializeNoBoxing(v));
+        TypeCodec<Boolean> codec = codecFor(i, Boolean.class);
+        ByteBuffer bb;
+        if (codec instanceof TypeCodec.PrimitiveBooleanCodec)
+            bb = ((TypeCodec.PrimitiveBooleanCodec) codec).serializeNoBoxing(v, protocolVersion);
+        else
+            bb = codec.serialize(v, protocolVersion);
+        return setValue(i, bb);
+    }
+
+    @Override
+    public T setByte(int i, byte v) {
+        TypeCodec<Byte> codec = codecFor(i, Byte.class);
+        ByteBuffer bb;
+        if (codec instanceof TypeCodec.PrimitiveByteCodec)
+            bb = ((TypeCodec.PrimitiveByteCodec) codec).serializeNoBoxing(v, protocolVersion);
+        else
+            bb = codec.serialize(v, protocolVersion);
+        return setValue(i, bb);
+    }
+
+    @Override
+    public T setShort(int i, short v) {
+        TypeCodec<Short> codec = codecFor(i, Short.class);
+        ByteBuffer bb;
+        if (codec instanceof TypeCodec.PrimitiveShortCodec)
+            bb = ((TypeCodec.PrimitiveShortCodec) codec).serializeNoBoxing(v, protocolVersion);
+        else
+            bb = codec.serialize(v, protocolVersion);
+        return setValue(i, bb);
     }
 
     @Override
     public T setInt(int i, int v) {
-        checkType(i, DataType.Name.INT);
-        return setValue(i, TypeCodec.intCodec.serializeNoBoxing(v));
+        TypeCodec<Integer> codec = codecFor(i, Integer.class);
+        ByteBuffer bb;
+        if (codec instanceof TypeCodec.PrimitiveIntCodec)
+            bb = ((TypeCodec.PrimitiveIntCodec) codec).serializeNoBoxing(v, protocolVersion);
+        else
+            bb = codec.serialize(v, protocolVersion);
+        return setValue(i, bb);
     }
 
     @Override
     public T setLong(int i, long v) {
-        checkType(i, DataType.Name.BIGINT, DataType.Name.COUNTER);
-        return setValue(i, TypeCodec.longCodec.serializeNoBoxing(v));
+        TypeCodec<Long> codec = codecFor(i, Long.class);
+        ByteBuffer bb;
+        if (codec instanceof TypeCodec.PrimitiveLongCodec)
+            bb = ((TypeCodec.PrimitiveLongCodec) codec).serializeNoBoxing(v, protocolVersion);
+        else
+            bb = codec.serialize(v, protocolVersion);
+        return setValue(i, bb);
     }
 
     @Override
-    public T setDate(int i, Date v) {
-        checkType(i, DataType.Name.TIMESTAMP);
-        return setValue(i, v == null ? null : TypeCodec.dateCodec.serialize(v));
+    public T setTimestamp(int i, Date v) {
+        return setValue(i, codecFor(i, Date.class).serialize(v, protocolVersion));
+    }
+
+    @Override
+    public T setDate(int i, LocalDate v) {
+        return setValue(i, codecFor(i, LocalDate.class).serialize(v, protocolVersion));
+    }
+
+    @Override
+    public T setTime(int i, long v) {
+        TypeCodec<Long> codec = codecFor(i, Long.class);
+        ByteBuffer bb;
+        if (codec instanceof TypeCodec.PrimitiveLongCodec)
+            bb = ((TypeCodec.PrimitiveLongCodec) codec).serializeNoBoxing(v, protocolVersion);
+        else
+            bb = codec.serialize(v, protocolVersion);
+        return setValue(i, bb);
     }
 
     @Override
     public T setFloat(int i, float v) {
-        checkType(i, DataType.Name.FLOAT);
-        return setValue(i, TypeCodec.floatCodec.serializeNoBoxing(v));
+        TypeCodec<Float> codec = codecFor(i, Float.class);
+        ByteBuffer bb;
+        if (codec instanceof TypeCodec.PrimitiveFloatCodec)
+            bb = ((TypeCodec.PrimitiveFloatCodec) codec).serializeNoBoxing(v, protocolVersion);
+        else
+            bb = codec.serialize(v, protocolVersion);
+        return setValue(i, bb);
     }
 
     @Override
     public T setDouble(int i, double v) {
-        checkType(i, DataType.Name.DOUBLE);
-        return setValue(i, TypeCodec.doubleCodec.serializeNoBoxing(v));
+        TypeCodec<Double> codec = codecFor(i, Double.class);
+        ByteBuffer bb;
+        if (codec instanceof TypeCodec.PrimitiveDoubleCodec)
+            bb = ((TypeCodec.PrimitiveDoubleCodec) codec).serializeNoBoxing(v, protocolVersion);
+        else
+            bb = codec.serialize(v, protocolVersion);
+        return setValue(i, bb);
     }
 
     @Override
     public T setString(int i, String v) {
-        DataType.Name type = checkType(i, DataType.Name.VARCHAR, DataType.Name.TEXT, DataType.Name.ASCII);
-        switch (type) {
-            case ASCII:
-                return setValue(i, v == null ? null : TypeCodec.asciiStringCodec.serialize(v));
-            case TEXT:
-            case VARCHAR:
-                return setValue(i, v == null ? null : TypeCodec.utf8StringCodec.serialize(v));
-            default:
-                throw new AssertionError();
-        }
+        return setValue(i, codecFor(i, String.class).serialize(v, protocolVersion));
     }
 
     @Override
     public T setBytes(int i, ByteBuffer v) {
-        checkType(i, DataType.Name.BLOB);
-        return setBytesUnsafe(i, v);
+        return setValue(i, codecFor(i, ByteBuffer.class).serialize(v, protocolVersion));
     }
 
     @Override
@@ -106,125 +159,96 @@ abstract class AbstractAddressableByIndexData<T extends SettableByIndexData<T>> 
 
     @Override
     public T setVarint(int i, BigInteger v) {
-        checkType(i, DataType.Name.VARINT);
-        return setValue(i, v == null ? null : TypeCodec.bigIntegerCodec.serialize(v));
+        return setValue(i, codecFor(i, BigInteger.class).serialize(v, protocolVersion));
     }
 
     @Override
     public T setDecimal(int i, BigDecimal v) {
-        checkType(i, DataType.Name.DECIMAL);
-        return setValue(i, v == null ? null : TypeCodec.decimalCodec.serialize(v));
+        return setValue(i, codecFor(i, BigDecimal.class).serialize(v, protocolVersion));
     }
 
     @Override
     public T setUUID(int i, UUID v) {
-        DataType.Name type = checkType(i, DataType.Name.UUID, DataType.Name.TIMEUUID);
-
-        if (v == null)
-            return setValue(i, null);
-
-        if (type == DataType.Name.TIMEUUID && v.version() != 1)
-            throw new InvalidTypeException(String.format("%s is not a Type 1 (time-based) UUID", v));
-
-        return type == DataType.Name.UUID
-                ? setValue(i, TypeCodec.uuidCodec.serialize(v))
-                : setValue(i, TypeCodec.timeUuidCodec.serialize(v));
+        return setValue(i, codecFor(i, UUID.class).serialize(v, protocolVersion));
     }
 
     @Override
     public T setInet(int i, InetAddress v) {
-        checkType(i, DataType.Name.INET);
-        return setValue(i, v == null ? null : TypeCodec.inetCodec.serialize(v));
+        return setValue(i, codecFor(i, InetAddress.class).serialize(v, protocolVersion));
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public <E> T setList(int i, List<E> v) {
-        DataType type = getType(i);
-        if (type.getName() != DataType.Name.LIST)
-            throw new InvalidTypeException(String.format("Column %s is of type %s, cannot set to a list", getName(i), type));
-
-        if (v == null)
-            return setValue(i, null);
-
-        // If the list is empty, it will never fail validation, but otherwise we should check the list given if of the right type
-        if (!v.isEmpty()) {
-            // Ugly? Yes
-            Class<?> providedClass = v.get(0).getClass();
-            Class<?> expectedClass = type.getTypeArguments().get(0).asJavaClass();
-
-            if (!expectedClass.isAssignableFrom(providedClass))
-                throw new InvalidTypeException(String.format("Invalid value for column %s of CQL type %s, expecting list of %s but provided list of %s", getName(i), type, expectedClass, providedClass));
-        }
-        return setValue(i, type.codec(protocolVersion).serialize(v));
+        return setValue(i, codecFor(i).serialize(v, protocolVersion));
     }
 
     @Override
+    public <E> T setList(int i, List<E> v, Class<E> elementsClass) {
+        return setValue(i, codecFor(i, TypeTokens.listOf(elementsClass)).serialize(v, protocolVersion));
+    }
+
+    @Override
+    public <E> T setList(int i, List<E> v, TypeToken<E> elementsType) {
+        return setValue(i, codecFor(i, TypeTokens.listOf(elementsType)).serialize(v, protocolVersion));
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
     public <K, V> T setMap(int i, Map<K, V> v) {
-        DataType type = getType(i);
-        if (type.getName() != DataType.Name.MAP)
-            throw new InvalidTypeException(String.format("Column %s is of type %s, cannot set to a map", getName(i), type));
-
-        if (v == null)
-            return setValue(i, null);
-
-        if (!v.isEmpty()) {
-            // Ugly? Yes
-            Map.Entry<K, V> entry = v.entrySet().iterator().next();
-            Class<?> providedKeysClass = entry.getKey().getClass();
-            Class<?> providedValuesClass = entry.getValue().getClass();
-
-            Class<?> expectedKeysClass = type.getTypeArguments().get(0).getName().javaType;
-            Class<?> expectedValuesClass = type.getTypeArguments().get(1).getName().javaType;
-            if (!expectedKeysClass.isAssignableFrom(providedKeysClass) || !expectedValuesClass.isAssignableFrom(providedValuesClass))
-                throw new InvalidTypeException(String.format("Invalid value for column %s of CQL type %s, expecting map of %s->%s but provided map of %s->%s", getName(i), type, expectedKeysClass, expectedValuesClass, providedKeysClass, providedValuesClass));
-        }
-        return setValue(i, type.codec(protocolVersion).serialize(v));
+        return setValue(i, codecFor(i).serialize(v, protocolVersion));
     }
 
     @Override
+    public <K, V> T setMap(int i, Map<K, V> v, Class<K> keysClass, Class<V> valuesClass) {
+        return setValue(i, codecFor(i, TypeTokens.mapOf(keysClass, valuesClass)).serialize(v, protocolVersion));
+    }
+
+    @Override
+    public <K, V> T setMap(int i, Map<K, V> v, TypeToken<K> keysType, TypeToken<V> valuesType) {
+        return setValue(i, codecFor(i, TypeTokens.mapOf(keysType, valuesType)).serialize(v, protocolVersion));
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
     public <E> T setSet(int i, Set<E> v) {
-        DataType type = getType(i);
-        if (type.getName() != DataType.Name.SET)
-            throw new InvalidTypeException(String.format("Column %s is of type %s, cannot set to a set", getName(i), type));
+        return setValue(i, codecFor(i).serialize(v, protocolVersion));
+    }
 
-        if (v == null)
-            return setValue(i, null);
+    @Override
+    public <E> T setSet(int i, Set<E> v, Class<E> elementsClass) {
+        return setValue(i, codecFor(i, TypeTokens.setOf(elementsClass)).serialize(v, protocolVersion));
+    }
 
-        if (!v.isEmpty()) {
-            // Ugly? Yes
-            Class<?> providedClass = v.iterator().next().getClass();
-            Class<?> expectedClass = type.getTypeArguments().get(0).getName().javaType;
-
-            if (!expectedClass.isAssignableFrom(providedClass))
-                throw new InvalidTypeException(String.format("Invalid value for column %s of CQL type %s, expecting set of %s but provided set of %s", getName(i), type, expectedClass, providedClass));
-        }
-        return setValue(i, type.codec(protocolVersion).serialize(v));
+    @Override
+    public <E> T setSet(int i, Set<E> v, TypeToken<E> elementsType) {
+        return setValue(i, codecFor(i, TypeTokens.setOf(elementsType)).serialize(v, protocolVersion));
     }
 
     @Override
     public T setUDTValue(int i, UDTValue v) {
-        DataType type = getType(i);
-        if (type.getName() != DataType.Name.UDT)
-            throw new InvalidTypeException(String.format("Column %s is of type %s, cannot set to a UDT", getName(i), type));
-
-        if (v == null)
-            return setValue(i, null);
-
-        // UDT always use the V3 protocol version to encode values
-        return setValue(i, type.codec(ProtocolVersion.V3).serialize(v));
+        return setValue(i, codecFor(i, UDTValue.class).serialize(v, protocolVersion));
     }
 
     @Override
     public T setTupleValue(int i, TupleValue v) {
-        DataType type = getType(i);
-        if (type.getName() != DataType.Name.TUPLE)
-            throw new InvalidTypeException(String.format("Column %s is of type %s, cannot set to a tuple", getName(i), type));
+        return setValue(i, codecFor(i, TupleValue.class).serialize(v, protocolVersion));
+    }
 
-        if (v == null)
-            return setValue(i, null);
+    @Override
+    public <V> T set(int i, V v, Class<V> targetClass) {
+        return set(i, v, codecFor(i, targetClass));
+    }
 
-        // Tuples always user the V3 protocol version to encode values
-        return setValue(i, type.codec(ProtocolVersion.V3).serialize(v));
+    @Override
+    public <V> T set(int i, V v, TypeToken<V> targetType) {
+        return set(i, v, codecFor(i, targetType));
+    }
+
+    @Override
+    public <V> T set(int i, V v, TypeCodec<V> codec) {
+        checkType(i, codec.getCqlType().getName());
+        return setValue(i, codec.serialize(v, protocolVersion));
     }
 
     @Override
@@ -241,6 +265,9 @@ abstract class AbstractAddressableByIndexData<T extends SettableByIndexData<T>> 
         if (values.length != that.values.length)
             return false;
 
+        if (this.protocolVersion != that.protocolVersion)
+            return false;
+
         // Deserializing each value is slightly inefficient, but comparing
         // the bytes could in theory be wrong (for varint for instance, 2 values
         // can have different binary representation but be the same value due to
@@ -251,10 +278,9 @@ abstract class AbstractAddressableByIndexData<T extends SettableByIndexData<T>> 
             if (!thisType.equals(thatType))
                 return false;
 
-            if ((values[i] == null) != (that.values[i] == null))
-                return false;
-
-            if (values[i] != null && !(thisType.deserialize(values[i], protocolVersion).equals(thatType.deserialize(that.values[i], protocolVersion))))
+            Object thisValue = this.codecFor(i).deserialize(this.values[i], this.protocolVersion);
+            Object thatValue = that.codecFor(i).deserialize(that.values[i], that.protocolVersion);
+            if (!Objects.equal(thisValue, thatValue))
                 return false;
         }
         return true;
@@ -265,7 +291,7 @@ abstract class AbstractAddressableByIndexData<T extends SettableByIndexData<T>> 
         // Same as equals
         int hash = 31;
         for (int i = 0; i < values.length; i++)
-            hash += values[i] == null ? 1 : getType(i).deserialize(values[i], protocolVersion).hashCode();
+            hash += values[i] == null ? 1 : codecFor(i).deserialize(values[i], protocolVersion).hashCode();
         return hash;
     }
 }

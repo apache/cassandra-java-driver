@@ -17,8 +17,10 @@ package com.datastax.driver.mapping;
 
 import com.datastax.driver.core.ProtocolVersion;
 import com.datastax.driver.core.Session;
+import com.datastax.driver.core.TypeCodec;
 import com.datastax.driver.mapping.annotations.Accessor;
 import com.datastax.driver.mapping.annotations.Table;
+import com.datastax.driver.mapping.annotations.UDT;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -32,9 +34,9 @@ public class MappingManager {
     private final Session session;
     final boolean isCassandraV1;
 
-    private volatile Map<Class<?>, Mapper<?>> mappers = Collections.<Class<?>, Mapper<?>>emptyMap();
-    private volatile Map<Class<?>, UDTMapper<?>> udtMappers = Collections.<Class<?>, UDTMapper<?>>emptyMap();
-    private volatile Map<Class<?>, Object> accessors = Collections.<Class<?>, Object>emptyMap();
+    private volatile Map<Class<?>, Mapper<?>> mappers = Collections.emptyMap();
+    private volatile Map<Class<?>, MappedUDTCodec<?>> udtCodecs = Collections.emptyMap();
+    private volatile Map<Class<?>, Object> accessors = Collections.emptyMap();
 
     /**
      * Creates a new {@code MappingManager} using the provided {@code Session}.
@@ -50,7 +52,7 @@ public class MappingManager {
 
     private static ProtocolVersion getProtocolVersion(Session session) {
         session.init();
-        return session.getCluster().getConfiguration().getProtocolOptions().getProtocolVersionEnum();
+        return session.getCluster().getConfiguration().getProtocolOptions().getProtocolVersion();
     }
 
     /**
@@ -95,6 +97,10 @@ public class MappingManager {
      * <p/>
      * The {@code MappingManager} only ever keeps one Mapper for each class, and so calling this
      * method multiple times on the same class will always return the same object.
+     * <p/>
+     * If the type of any field in the class is an {@link UDT}-annotated classes, a codec for that
+     * class will automatically be created and registered with the underlying {@code Cluster}.
+     * This works recursively with UDTs nested in other UDTs or in collections.
      *
      * @param <T>   the type of the class to map.
      * @param klass the (annotated) class for which to return the mapper.
@@ -105,21 +111,22 @@ public class MappingManager {
     }
 
     /**
-     * Creates a {@code UDTMapper} for the provided class (that must be
-     * annotated by a {@link com.datastax.driver.mapping.annotations.UDT} annotation).
+     * Creates a {@code TypeCodec} for the provided class (that must be annotated by
+     * a {@link UDT} annotation).
      * <p/>
-     * <p>
-     * The {@code MappingManager} only ever keeps one {@code UDTMapper} for each
-     * class, and so calling this method multiple times on the same class will
-     * always return the same object.
-     * </p>
+     * This method also registers the codec against the underlying {@code Cluster}.
+     * In addition, the codecs for any nested UDTs will also be created and registered.
+     * <p/>
+     * You don't need to call this method explicitly if you already call {@link #mapper(Class)}
+     * for a class that references this UDT class (creating a mapper will automatically
+     * process all UDTs that it uses).
      *
      * @param <T>   the type of the class to map.
-     * @param klass the (annotated) class for which to return the mapper.
-     * @return the {@code UDTMapper} object for class {@code klass}.
+     * @param klass the (annotated) class for which to return the codec.
+     * @return the codec that maps the provided class to the corresponding user-defined type.
      */
-    public <T> UDTMapper<T> udtMapper(Class<T> klass) {
-        return getUDTMapper(klass);
+    public <T> TypeCodec<T> udtCodec(Class<T> klass) {
+        return getUDTCodec(klass);
     }
 
     /**
@@ -156,21 +163,22 @@ public class MappingManager {
     }
 
     @SuppressWarnings("unchecked")
-    <T> UDTMapper<T> getUDTMapper(Class<T> klass) {
-        UDTMapper<T> mapper = (UDTMapper<T>) udtMappers.get(klass);
-        if (mapper == null) {
-            synchronized (udtMappers) {
-                mapper = (UDTMapper<T>) udtMappers.get(klass);
-                if (mapper == null) {
-                    EntityMapper<T> entityMapper = AnnotationParser.parseUDT(klass, ReflectionMapper.factory(), this);
-                    mapper = new UDTMapper<T>(entityMapper, session);
-                    Map<Class<?>, UDTMapper<?>> newMappers = new HashMap<Class<?>, UDTMapper<?>>(udtMappers);
-                    newMappers.put(klass, mapper);
-                    udtMappers = newMappers;
+    <T> TypeCodec<T> getUDTCodec(Class<T> mappedClass) {
+        MappedUDTCodec<T> codec = (MappedUDTCodec<T>) udtCodecs.get(mappedClass);
+        if (codec == null) {
+            synchronized (udtCodecs) {
+                codec = (MappedUDTCodec<T>) udtCodecs.get(mappedClass);
+                if (codec == null) {
+                    codec = AnnotationParser.parseUDT(mappedClass, ReflectionMapper.factory(), this);
+                    session.getCluster().getConfiguration().getCodecRegistry().register(codec);
+
+                    HashMap<Class<?>, MappedUDTCodec<?>> newCodecs = new HashMap<Class<?>, MappedUDTCodec<?>>(udtCodecs);
+                    newCodecs.put(mappedClass, codec);
+                    udtCodecs = newCodecs;
                 }
             }
         }
-        return mapper;
+        return codec;
     }
 
     @SuppressWarnings("unchecked")

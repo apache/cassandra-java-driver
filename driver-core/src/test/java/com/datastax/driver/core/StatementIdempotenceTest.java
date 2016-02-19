@@ -20,16 +20,34 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class StatementIdempotenceTest {
+
+    private Cluster cluster;
+
+    @BeforeMethod(groups = "unit")
+    public void setUpQueryBuilder() throws Exception {
+        CodecRegistry codecRegistry = new CodecRegistry();
+        cluster = mock(Cluster.class);
+        Configuration configuration = mock(Configuration.class);
+        ProtocolOptions protocolOptions = mock(ProtocolOptions.class);
+        when(cluster.getConfiguration()).thenReturn(configuration);
+        when(configuration.getCodecRegistry()).thenReturn(codecRegistry);
+        when(configuration.getProtocolOptions()).thenReturn(protocolOptions);
+        when(protocolOptions.getProtocolVersion()).thenReturn(TestUtils.getDesiredProtocolVersion());
+    }
+
     @Test(groups = "unit")
     public void should_default_to_false_when_not_set_on_statement_nor_query_options() {
         QueryOptions queryOptions = new QueryOptions();
-        SimpleStatement statement = new SimpleStatement("");
+        SimpleStatement statement = new SimpleStatement("", cluster);
 
         assertThat(statement.isIdempotentWithDefault(queryOptions)).isFalse();
     }
@@ -37,7 +55,7 @@ public class StatementIdempotenceTest {
     @Test(groups = "unit")
     public void should_use_query_options_when_not_set_on_statement() {
         QueryOptions queryOptions = new QueryOptions();
-        SimpleStatement statement = new SimpleStatement("");
+        SimpleStatement statement = new SimpleStatement("", cluster);
 
         for (boolean valueInOptions : new boolean[]{true, false}) {
             queryOptions.setDefaultIdempotence(valueInOptions);
@@ -48,7 +66,7 @@ public class StatementIdempotenceTest {
     @Test(groups = "unit")
     public void should_use_statement_when_set_on_statement() {
         QueryOptions queryOptions = new QueryOptions();
-        SimpleStatement statement = new SimpleStatement("");
+        SimpleStatement statement = new SimpleStatement("", cluster);
 
         for (boolean valueInOptions : new boolean[]{true, false})
             for (boolean valueInStatement : new boolean[]{true, false}) {
@@ -86,7 +104,7 @@ public class StatementIdempotenceTest {
         }
     }
 
-    private static ImmutableList<BuiltStatement> idempotentBuiltStatements() {
+    private ImmutableList<BuiltStatement> idempotentBuiltStatements() {
         return ImmutableList.<BuiltStatement>of(
                 update("foo").with(set("v", 1)).where(eq("k", 1)), // set simple value
                 update("foo").with(add("s", 1)).where(eq("k", 1)), // add to set
@@ -101,7 +119,7 @@ public class StatementIdempotenceTest {
         );
     }
 
-    private static ImmutableList<BuiltStatement> nonIdempotentBuiltStatements() {
+    private ImmutableList<BuiltStatement> nonIdempotentBuiltStatements() {
         return ImmutableList.of(
                 update("foo").with(append("l", 1)).where(eq("k", 1)), // append to list
                 update("foo").with(set("v", 1)).and(prepend("l", 1)).where(eq("k", 1)), // prepend to list

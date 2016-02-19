@@ -17,6 +17,9 @@ package com.datastax.driver.osgi;
 
 import com.jcabi.manifests.Manifests;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 /**
  * Attempts to resolve the project version from the Bundle manifest.  If not present, will throw RuntimeException
  * on initialization.   If this happens, try building with 'mvn compile' to generate the Bundle manifest.
@@ -25,12 +28,26 @@ import com.jcabi.manifests.Manifests;
  */
 public class VersionProvider {
 
-    private static String PROJECT_VERSION;
+    private static final Pattern versionPattern = Pattern.compile(("(\\d+.\\d+\\.\\d+)(.*)"));
+
+    private static final String PROJECT_VERSION;
 
     static {
         String bundleName = Manifests.read("Bundle-SymbolicName");
         if (bundleName.equals("com.datastax.driver.osgi")) {
-            PROJECT_VERSION = Manifests.read("Bundle-Version").replaceAll("\\.SNAPSHOT", "-SNAPSHOT");
+            String bundleVersion = Manifests.read("Bundle-Version");
+            Matcher matcher = versionPattern.matcher(bundleVersion);
+            if (matcher.matches()) {
+                String majorVersion = matcher.group(1);
+                // Replace all instances of '.' after the main version with '-' to properly
+                // resolve the correct version.
+                String rest = matcher.group(2).replaceAll("\\.", "-");
+                PROJECT_VERSION = majorVersion + rest;
+            } else {
+                // This should never happen, but if we are using a non X.Y.Z version number
+                // we'll just back off to the bundle version.
+                PROJECT_VERSION = bundleVersion;
+            }
         } else {
             throw new RuntimeException("Couldn't resolve bundle manifest (try building with mvn compile)");
         }

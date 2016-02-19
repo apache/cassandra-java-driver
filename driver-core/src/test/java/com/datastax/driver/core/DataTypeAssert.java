@@ -15,7 +15,6 @@
  */
 package com.datastax.driver.core;
 
-import com.google.common.reflect.TypeToken;
 import org.assertj.core.api.AbstractAssert;
 
 import static com.datastax.driver.core.Assertions.assertThat;
@@ -38,6 +37,14 @@ public class DataTypeAssert extends AbstractAssert<DataTypeAssert, DataType> {
         return this;
     }
 
+    public DataTypeAssert isShallowUserType(String keyspaceName, String userTypeName) {
+        assertThat(actual).isInstanceOf(UserType.Shallow.class);
+        UserType.Shallow shallow = (UserType.Shallow) actual;
+        assertThat(shallow.keyspaceName).isEqualTo(keyspaceName);
+        assertThat(shallow.typeName).isEqualTo(userTypeName);
+        return this;
+    }
+
     public DataTypeAssert isFrozen() {
         assertThat(actual.isFrozen()).isTrue();
         return this;
@@ -45,16 +52,6 @@ public class DataTypeAssert extends AbstractAssert<DataTypeAssert, DataType> {
 
     public DataTypeAssert isNotFrozen() {
         assertThat(actual.isFrozen()).isFalse();
-        return this;
-    }
-
-    public DataTypeAssert canBeDeserializedAs(TypeToken typeToken) {
-        assertThat(actual.canBeDeserializedAs(typeToken)).isTrue();
-        return this;
-    }
-
-    public DataTypeAssert cannotBeDeserializedAs(TypeToken typeToken) {
-        assertThat(actual.canBeDeserializedAs(typeToken)).isFalse();
         return this;
     }
 
@@ -67,4 +64,12 @@ public class DataTypeAssert extends AbstractAssert<DataTypeAssert, DataType> {
         assertThat(actual.getTypeArguments()).containsExactly(expected);
         return this;
     }
+
+    public DataTypeAssert hasField(String name, DataType expected) {
+        assertThat(actual).isInstanceOf(UserType.class);
+        UserType userType = (UserType) this.actual;
+        assertThat(userType.getFieldType(name)).isEqualTo(expected);
+        return this;
+    }
+
 }

@@ -23,9 +23,9 @@ import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
 public class QueryOptions {
 
     /**
-     * The default consistency level for queries: {@link ConsistencyLevel#ONE}.
+     * The default consistency level for queries: {@link ConsistencyLevel#LOCAL_ONE}.
      */
-    public static final ConsistencyLevel DEFAULT_CONSISTENCY_LEVEL = ConsistencyLevel.ONE;
+    public static final ConsistencyLevel DEFAULT_CONSISTENCY_LEVEL = ConsistencyLevel.LOCAL_ONE;
 
     /**
      * The default serial consistency level for conditional updates: {@link ConsistencyLevel#SERIAL}.
@@ -299,7 +299,7 @@ public class QueryOptions {
         boolean wasEnabled = this.metadataEnabled;
         this.metadataEnabled = enabled;
         if (!wasEnabled && enabled && manager != null) {
-            manager.submitSchemaRefresh(null, null, null); // will also refresh token map
+            manager.submitSchemaRefresh(null, null, null, null); // will also refresh token map
         }
         return this;
     }

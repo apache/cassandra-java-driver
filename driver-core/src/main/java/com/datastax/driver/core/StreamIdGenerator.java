@@ -45,6 +45,7 @@ class StreamIdGenerator {
             case V2:
                 return 1;
             case V3:
+            case V4:
                 return 2;
             default:
                 throw version.unsupported();
@@ -80,7 +81,7 @@ class StreamIdGenerator {
         offset = new AtomicInteger(bits.length() - 1);
     }
 
-    public int next() throws BusyConnectionException {
+    public int next() {
         int previousOffset, myOffset;
         do {
             previousOffset = offset.get();
@@ -94,7 +95,7 @@ class StreamIdGenerator {
             if (id >= 0)
                 return id + (64 * j);
         }
-        throw new BusyConnectionException();
+        return -1;
     }
 
     public void release(int streamId) {

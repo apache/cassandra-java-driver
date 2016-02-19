@@ -35,7 +35,7 @@ public class QueryBuilderExecutionTest extends CCMTestsSupport {
     @Override
     public void onTestContextInitialized() {
         execute(
-                String.format(TestUtils.CREATE_TABLE_SIMPLE_FORMAT, TABLE1),
+                String.format("CREATE TABLE %s (k text PRIMARY KEY, t text, i int, f float)", TABLE1),
                 "CREATE TABLE dateTest (t timestamp PRIMARY KEY)",
                 "CREATE TABLE test_coll (k int PRIMARY KEY, a list<int>, b map<int,text>, c set<text>)");
     }
@@ -74,12 +74,11 @@ public class QueryBuilderExecutionTest extends CCMTestsSupport {
         assertEquals(1, rows.size());
 
         Row r1 = rows.get(0);
-        assertEquals(d, r1.getDate("t"));
+        assertEquals(d, r1.getTimestamp("t"));
     }
 
-    @Test(groups = "unit")
+    @Test(groups = "short")
     public void prepareTest() throws Exception {
-
         // Just check we correctly avoid values when there is a bind marker
         String query = "INSERT INTO foo (a,b,c,d) VALUES ('foo','bar',?,0);";
         BuiltStatement stmt = insertInto("foo").value("a", "foo").value("b", "bar").value("c", bindMarker()).value("d", 0);

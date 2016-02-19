@@ -39,15 +39,6 @@ public abstract class AbstractGettableData extends AbstractGettableByIndexData i
     }
 
     /**
-     * @throws IllegalArgumentException if {@code protocolVersion} does not correspond to any known version.
-     * @deprecated This constructor is provided for backward compatibility, use {@link #AbstractGettableData(ProtocolVersion)} instead.
-     */
-    @Deprecated
-    protected AbstractGettableData(int protocolVersion) {
-        this(ProtocolVersion.fromInt(protocolVersion));
-    }
-
-    /**
      * Returns the index corresponding to a given name.
      *
      * @param name the name for which to return the index of.
@@ -76,6 +67,22 @@ public abstract class AbstractGettableData extends AbstractGettableByIndexData i
      * {@inheritDoc}
      */
     @Override
+    public byte getByte(String name) {
+        return getByte(getIndexOf(name));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public short getShort(String name) {
+        return getShort(getIndexOf(name));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public int getInt(String name) {
         return getInt(getIndexOf(name));
     }
@@ -92,8 +99,24 @@ public abstract class AbstractGettableData extends AbstractGettableByIndexData i
      * {@inheritDoc}
      */
     @Override
-    public Date getDate(String name) {
+    public Date getTimestamp(String name) {
+        return getTimestamp(getIndexOf(name));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public LocalDate getDate(String name) {
         return getDate(getIndexOf(name));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public long getTime(String name) {
+        return getTime(getIndexOf(name));
     }
 
     /**
@@ -238,5 +261,29 @@ public abstract class AbstractGettableData extends AbstractGettableByIndexData i
     @Override
     public Object getObject(String name) {
         return getObject(getIndexOf(name));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public <T> T get(String name, Class<T> targetClass) {
+        return get(getIndexOf(name), targetClass);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public <T> T get(String name, TypeToken<T> targetType) {
+        return get(getIndexOf(name), targetType);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public <T> T get(String name, TypeCodec<T> codec) {
+        return get(getIndexOf(name), codec);
     }
 }

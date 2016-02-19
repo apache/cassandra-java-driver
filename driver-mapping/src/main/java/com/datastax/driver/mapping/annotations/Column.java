@@ -15,6 +15,8 @@
  */
 package com.datastax.driver.mapping.annotations;
 
+import com.datastax.driver.core.TypeCodec;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -49,4 +51,12 @@ public @interface Column {
      * @return whether the column name is a case sensitive one.
      */
     boolean caseSensitive() default false;
+
+    /**
+     * A custom codec that will be used to serialize and deserialize the column.
+     *
+     * @return the codec's class. It must have a no-argument constructor (the mapper
+     * will create an instance and cache it).
+     */
+    Class<? extends TypeCodec<?>> codec() default Defaults.NoCodec.class;
 }

@@ -1,6 +1,6 @@
 # Datastax Java Driver for Apache Cassandra
 
-[![Build Status](https://travis-ci.org/datastax/java-driver.svg?branch=2.1)](https://travis-ci.org/datastax/java-driver)
+[![Build Status](https://travis-ci.org/datastax/java-driver.svg?branch=3.0)](https://travis-ci.org/datastax/java-driver)
 
 *If you're reading this on github.com, please note that this is the readme
 for the development version and that some features described here might
@@ -8,7 +8,7 @@ not yet have been released. You can find the documentation for latest
 version through [Java driver
 docs](http://datastax.github.io/java-driver/) or via the release tags,
 [e.g.
-2.1.9](https://github.com/datastax/java-driver/tree/2.1.9).*
+3.0.0](https://github.com/datastax/java-driver/tree/3.0.0).*
 
 A modern, [feature-rich](manual/) and highly tunable Java client
 library for Apache Cassandra (1.2+) and DataStax Enterprise (3.1+) using
@@ -29,16 +29,16 @@ exclusively Cassandra's binary protocol and Cassandra Query Language v3.
 * [Object mapper](manual/object_mapper/)
 
 
-[sync]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/Session.html#execute-com.datastax.driver.core.Statement-
-[async]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/Session.html#executeAsync-com.datastax.driver.core.Statement-
-[simple_st]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/SimpleStatement.html
-[prepared_st]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/Session.html#prepare-com.datastax.driver.core.RegularStatement-
-[batch_st]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/BatchStatement.html
+[sync]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Session.html#execute-com.datastax.driver.core.Statement-
+[async]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Session.html#executeAsync-com.datastax.driver.core.Statement-
+[simple_st]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/SimpleStatement.html
+[prepared_st]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Session.html#prepare-com.datastax.driver.core.RegularStatement-
+[batch_st]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/BatchStatement.html
 [pool]: manual/pooling/
-[lbp]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/policies/LoadBalancingPolicy.html
-[retry_policy]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/policies/RetryPolicy.html
-[query_builder]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/querybuilder/QueryBuilder.html
-[mapper]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/mapping/MappingManager.html 
+[lbp]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/policies/LoadBalancingPolicy.html
+[retry_policy]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/policies/RetryPolicy.html
+[query_builder]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/querybuilder/QueryBuilder.html
+[mapper]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/MappingManager.html
 
 The driver architecture is based on layers. At the bottom lies the driver core.
 This core handles everything related to the connections to a Cassandra
@@ -52,7 +52,7 @@ The driver contains the following modules:
 - driver-examples: example applications using the other modules which are
   only meant for demonstration purposes.
 
-**Community:**
+**Useful links:**
 
 - JIRA: https://datastax-oss.atlassian.net/browse/JAVA
 - MAILING LIST: https://groups.google.com/a/lists.datastax.com/forum/#!forum/java-driver-user
@@ -64,21 +64,22 @@ The driver contains the following modules:
 - DOCS: the [user guide](http://docs.datastax.com/en/developer/java-driver/2.1/java-driver/whatsNew2.html)
   has introductory material. We are progressively migrating the doc
   [here](manual/) with more technical details.
-- API: http://www.datastax.com/drivers/java/2.1
+- API: http://www.datastax.com/drivers/java/3.0
+- [changelog](changelog/)
+- [binary tarball](http://downloads.datastax.com/java-driver/cassandra-java-driver-3.0.0.tar.gz)
 
 **Feeback requested:** help us focus our efforts, provide your input on the [Platform and Runtime Survey](http://goo.gl/forms/qwUE6qnL7U) (we kept it short).  
 
-
 ## Getting the driver
 
-The latest release of the driver is available on Maven Central. You can install
+The last release of the driver is available on Maven Central. You can install
 it in your application using the following Maven dependency:
 
 ```xml
 <dependency>
   <groupId>com.datastax.cassandra</groupId>
   <artifactId>cassandra-driver-core</artifactId>
-  <version>2.1.9</version>
+  <version>3.0.0</version>
 </dependency>
 ```
 
@@ -88,31 +89,42 @@ Note that the object mapper is published as a separate artifact:
 <dependency>
   <groupId>com.datastax.cassandra</groupId>
   <artifactId>cassandra-driver-mapping</artifactId>
-  <version>2.1.9</version>
+  <version>3.0.0</version>
 </dependency>
 ```
+
+The 'extras' module is also published as a separate artifact:
+
+```xml
+<dependency>
+  <groupId>com.datastax.cassandra</groupId>
+  <artifactId>cassandra-driver-extras</artifactId>
+  <version>3.0.0</version>
+</dependency>
+```
+
 
 We also provide a [shaded JAR](manual/shaded_jar/)
 to avoid the explicit dependency to Netty.
 
 If you can't use a dependency management tool, a
-[binary tarball](http://downloads.datastax.com/java-driver/cassandra-java-driver-2.1.9.tar.gz)
+[binary tarball](http://downloads.datastax.com/java-driver/cassandra-java-driver-3.0.0.tar.gz)
 is available for download.
 
 ## Compatibility
 
-The Java client driver 2.1 ([branch 2.1](https://github.com/datastax/java-driver/tree/2.1)) is compatible with Apache
-Cassandra 1.2, 2.0, 2.1 and 2.2 (see [this page](http://datastax.github.io/java-driver/manual/native_protocol) for
+The Java client driver 3.0 ([branch 3.0](https://github.com/datastax/java-driver/tree/3.0)) is compatible with Apache
+Cassandra 1.2, 2.0, 2.1, 2.2 and 3.0 (see [this page](http://datastax.github.io/java-driver/manual/native_protocol) for
 the most up-to-date compatibility information).
 
 UDT and tuple support is available only when using Apache Cassandra 2.1 or higher (see [CQL improvements in Cassandra 2.1](http://www.datastax.com/dev/blog/cql-in-2-1)).
 
 Other features are available only when using Apache Cassandra 2.0 or higher (e.g. result set paging,
-[BatchStatement](https://github.com/datastax/java-driver/blob/2.1/driver-core/src/main/java/com/datastax/driver/core/BatchStatement.java), 
+[BatchStatement](https://github.com/datastax/java-driver/blob/3.0/driver-core/src/main/java/com/datastax/driver/core/BatchStatement.java), 
 [lightweight transactions](http://www.datastax.com/documentation/cql/3.1/cql/cql_using/use_ltweight_transaction_t.html) 
 -- see [What's new in Cassandra 2.0](http://www.datastax.com/documentation/cassandra/2.0/cassandra/features/features_key_c.html)). 
 Trying to use these with a cluster running Cassandra 1.2 will result in 
-an [UnsupportedFeatureException](https://github.com/datastax/java-driver/blob/2.1/driver-core/src/main/java/com/datastax/driver/core/exceptions/UnsupportedFeatureException.java) being thrown.
+an [UnsupportedFeatureException](https://github.com/datastax/java-driver/blob/3.0/driver-core/src/main/java/com/datastax/driver/core/exceptions/UnsupportedFeatureException.java) being thrown.
 
 
 ## Upgrading from previous versions

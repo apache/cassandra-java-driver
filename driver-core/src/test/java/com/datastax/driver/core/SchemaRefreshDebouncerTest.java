@@ -16,15 +16,18 @@
 package com.datastax.driver.core;
 
 import org.mockito.ArgumentCaptor;
+import org.testng.SkipException;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
+import java.util.Collections;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.CreateCCM.TestMode.PER_METHOD;
 import static com.datastax.driver.core.SchemaElement.KEYSPACE;
 import static com.datastax.driver.core.SchemaElement.TABLE;
 import static com.datastax.driver.core.TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT;
-import static com.datastax.driver.core.TestUtils.CREATE_TABLE_SIMPLE_FORMAT;
 import static org.mockito.ArgumentCaptor.forClass;
 import static org.mockito.Mockito.*;
 
@@ -91,7 +94,7 @@ public class SchemaRefreshDebouncerTest extends CCMTestsSupport {
 
         // Verify that the schema refresh was debounced and coalesced when a keyspace creation
         // and update event occur for the same keyspace.
-        verify(controlConnection, times(1)).refreshSchema(KEYSPACE, keyspace, null);
+        verify(controlConnection, times(1)).refreshSchema(KEYSPACE, keyspace, null, null);
 
         KeyspaceMetadata ksm = cluster2.getMetadata().getKeyspace(keyspace);
         // By ensuring durable writes is false, we know that the single schema refresh occurred
@@ -115,7 +118,7 @@ public class SchemaRefreshDebouncerTest extends CCMTestsSupport {
         String keyspace = TestUtils.generateIdentifier("ks_");
         String table = "tbl1";
         session().execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, keyspace, 1));
-        session().execute(String.format(CREATE_TABLE_SIMPLE_FORMAT, keyspace + "." + table));
+        session().execute(String.format("CREATE TABLE %s (k text PRIMARY KEY, t text, i int, f float)", keyspace + "." + table));
 
         ArgumentCaptor<KeyspaceMetadata> keyspaceCaptor = forClass(KeyspaceMetadata.class);
         verify(listener, timeout(DEBOUNCE_TIME * 2).times(1)).onKeyspaceAdded(keyspaceCaptor.capture());
@@ -127,8 +130,8 @@ public class SchemaRefreshDebouncerTest extends CCMTestsSupport {
 
         // Verify the schema refresh was debounced and coalesced when a keyspace event and table event
         // in that keyspace is detected.
-        verify(controlConnection).refreshSchema(KEYSPACE, keyspace, null);
-        verify(controlConnection, never()).refreshSchema(TABLE, keyspace, table);
+        verify(controlConnection).refreshSchema(KEYSPACE, keyspace, null, null);
+        verify(controlConnection, never()).refreshSchema(TABLE, keyspace, table, null);
 
         KeyspaceMetadata ksm = cluster2.getMetadata().getKeyspace(keyspace);
         assertThat(ksm).isNotNull();
@@ -155,14 +158,14 @@ public class SchemaRefreshDebouncerTest extends CCMTestsSupport {
 
         int tableCount = 3;
         for (int i = 0; i < tableCount; i++) {
-            session().execute(String.format(CREATE_TABLE_SIMPLE_FORMAT, keyspace + "." + "tbl" + i));
+            session().execute(String.format("CREATE TABLE %s (k text PRIMARY KEY, t text, i int, f float)", keyspace + "." + "tbl" + i));
         }
 
         verify(listener, timeout(DEBOUNCE_TIME * 3).times(3)).onTableAdded(any(TableMetadata.class));
 
         // Verify a refresh of the keyspace was executed, but not individually on the
         // tables since those events were coalesced.
-        verify(controlConnection).refreshSchema(KEYSPACE, keyspace, null);
+        verify(controlConnection).refreshSchema(KEYSPACE, keyspace, null, null);
 
         KeyspaceMetadata ksm = cluster2.getMetadata().getKeyspace(keyspace);
         assertThat(ksm).isNotNull();
@@ -170,7 +173,7 @@ public class SchemaRefreshDebouncerTest extends CCMTestsSupport {
         for (int i = 0; i < tableCount; i++) {
             String table = "tbl" + i;
             // Should have never been a refreshSchema on the table.
-            verify(controlConnection, never()).refreshSchema(TABLE, keyspace, table);
+            verify(controlConnection, never()).refreshSchema(TABLE, keyspace, table, null);
             assertThat(ksm.getTable(table)).isNotNull();
         }
     }
@@ -187,13 +190,16 @@ public class SchemaRefreshDebouncerTest extends CCMTestsSupport {
      */
     @Test(groups = "short")
     public void should_debounce_and_coalesce_multiple_alter_events_on_same_table_into_refresh_table() throws Exception {
+        if (ccm().getVersion().getMajor() > 2 || ccm().getVersion().getMajor() == 2 && ccm().getVersion().getMinor() > 1)
+            throw new SkipException("Disabled in Cassandra 2.2+ because of CASSANDRA-9996");
+
         String keyspace = TestUtils.generateIdentifier("ks_");
         String table = "tbl1";
         String comment = "I am changing this table.";
         String columnName = "added_column";
         // Execute on session 2 which refreshes schema as part of processing responses.
         session2.execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, keyspace, 1));
-        session2.execute(String.format(CREATE_TABLE_SIMPLE_FORMAT, keyspace + "." + table));
+        session2.execute(String.format("CREATE TABLE %s (k text PRIMARY KEY, t text, i int, f float)", keyspace + "." + table));
         reset(controlConnection);
         reset(listener);
 
@@ -202,7 +208,7 @@ public class SchemaRefreshDebouncerTest extends CCMTestsSupport {
 
         ArgumentCaptor<TableMetadata> original = forClass(TableMetadata.class);
         ArgumentCaptor<TableMetadata> captor = forClass(TableMetadata.class);
-        verify(listener, timeout(DEBOUNCE_TIME * 2).only()).onTableChanged(captor.capture(), original.capture());
+        verify(listener, timeout(DEBOUNCE_TIME * 2).times(1)).onTableChanged(captor.capture(), original.capture());
         assertThat(captor.getValue())
                 .hasName(table)
                 .isInKeyspace(keyspace)
@@ -216,7 +222,7 @@ public class SchemaRefreshDebouncerTest extends CCMTestsSupport {
                 .doesNotHaveComment(comment);
 
         // Verify a refresh of the table was executed, but only once.
-        verify(controlConnection, times(1)).refreshSchema(TABLE, keyspace, table);
+        verify(controlConnection, times(1)).refreshSchema(TABLE, keyspace, table, Collections.<String>emptyList());
 
         KeyspaceMetadata ksm = cluster2.getMetadata().getKeyspace(keyspace);
         assertThat(ksm).isNotNull();
@@ -247,7 +253,7 @@ public class SchemaRefreshDebouncerTest extends CCMTestsSupport {
 
         verify(listener, timeout(DEBOUNCE_TIME * 3).times(3)).onKeyspaceAdded(any(KeyspaceMetadata.class));
         // Verify a complete schema refresh was executed, but only once.
-        verify(controlConnection, times(1)).refreshSchema(null, null, null);
+        verify(controlConnection, times(1)).refreshSchema(null, null, null, null);
 
         for (int i = 0; i < 3; i++) {
             KeyspaceMetadata ksm = cluster2.getMetadata().getKeyspace(prefix + i);
@@ -272,9 +278,9 @@ public class SchemaRefreshDebouncerTest extends CCMTestsSupport {
         }
 
         // Event should be processed immediately as we hit our threshold.
-        verify(listener, times(5)).onKeyspaceAdded(any(KeyspaceMetadata.class));
+        verify(listener, timeout(DEBOUNCE_TIME * 5).times(5)).onKeyspaceAdded(any(KeyspaceMetadata.class));
         // Verify a complete schema refresh was executed, but only once.
-        verify(controlConnection, times(1)).refreshSchema(null, null, null);
+        verify(controlConnection, times(1)).refreshSchema(null, null, null, null);
 
         for (int i = 0; i < 5; i++) {
             KeyspaceMetadata ksm = cluster2.getMetadata().getKeyspace(prefix + i);

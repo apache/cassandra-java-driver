@@ -16,6 +16,7 @@
 package com.datastax.driver.core.querybuilder;
 
 import com.datastax.driver.core.*;
+import com.datastax.driver.core.exceptions.CodecNotFoundException;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.utils.Bytes;
 import com.datastax.driver.core.utils.CassandraVersion;
@@ -30,7 +31,6 @@ import java.math.BigInteger;
 import java.net.InetAddress;
 import java.util.*;
 
-import static com.datastax.driver.core.DataType.cint;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.testng.Assert.*;
@@ -137,7 +137,6 @@ public class QueryBuilderTest {
         select = select().from("foo").where(containsKey("e", "key1"));
         assertEquals(select.toString(), query);
 
-
         try {
             select().countAll().from("foo").orderBy(asc("a"), desc("b")).orderBy(asc("a"), desc("b"));
             fail();
@@ -175,7 +174,7 @@ public class QueryBuilderTest {
     }
 
     @Test(groups = "unit")
-    @SuppressWarnings("serial")
+    @SuppressWarnings({"serial", "deprecation"})
     public void insertTest() throws Exception {
 
         String query;
@@ -254,10 +253,7 @@ public class QueryBuilderTest {
         insert = insertInto("foo").value("k", 0).value("x", 1).ifNotExists();
         assertEquals(insert.toString(), query);
 
-        query = "INSERT INTO foo (k,x) VALUES (0,(1));";
-        insert = insertInto("foo").value("k", 0).value("x", TupleType.of(cint()).newValue(1));
-        assertEquals(insert.toString(), query);
-
+        // Tuples: see QueryBuilderTupleExecutionTest
         // UDT: see QueryBuilderExecutionTest
     }
 
@@ -711,12 +707,12 @@ public class QueryBuilderTest {
 
     @Test(groups = "unit")
     public void rejectUnknownValueTest() throws Exception {
-
         try {
-            //noinspection ResultOfMethodCallIgnored
-            update("foo").with(set("a", new byte[13])).where(eq("k", 2)).toString();
-            fail("Byte arrays should not be valid, ByteBuffer should be used instead");
-        } catch (IllegalArgumentException e) {
+            RegularStatement s = update("foo").with(set("a", new byte[13])).where(eq("k", 2))
+                    .setForceNoValues(true);
+            s.getQueryString();
+            fail("should have failed to inline a byte[]");
+        } catch (CodecNotFoundException e) {
             // Ok, that's what we expect
         }
     }
@@ -729,13 +725,13 @@ public class QueryBuilderTest {
 
     @Test(groups = "unit")
     public void quotingTest() {
-        assertEquals(select().from("Metrics", "epochs").getQueryString(),
+        assertEquals(select().from("Metrics", "epochs").toString(),
                 "SELECT * FROM Metrics.epochs;");
-        assertEquals(select().from("Metrics", quote("epochs")).getQueryString(),
+        assertEquals(select().from("Metrics", quote("epochs")).toString(),
                 "SELECT * FROM Metrics.\"epochs\";");
-        assertEquals(select().from(quote("Metrics"), "epochs").getQueryString(),
+        assertEquals(select().from(quote("Metrics"), "epochs").toString(),
                 "SELECT * FROM \"Metrics\".epochs;");
-        assertEquals(select().from(quote("Metrics"), quote("epochs")).getQueryString(),
+        assertEquals(select().from(quote("Metrics"), quote("epochs")).toString(),
                 "SELECT * FROM \"Metrics\".\"epochs\";");
 
         assertEquals(insertInto("Metrics", "epochs").toString(),
@@ -784,18 +780,7 @@ public class QueryBuilderTest {
 
         // But we still want to check it client-side, to fail fast instead of sending a bad query to Cassandra.
         // getValues() is called on any RegularStatement before we send it (see SessionManager.makeRequestMessage).
-        statement.getValues(ProtocolVersion.V3);
-    }
-
-    @Test(groups = "unit")
-    public void should_handle_collections_of_tuples() {
-        String query;
-        Statement statement;
-
-        query = "UPDATE foo SET l=[(1, 2)] WHERE k=1;";
-        List<TupleValue> list = ImmutableList.of(TupleType.of(cint(), cint()).newValue(1, 2));
-        statement = update("foo").with(set("l", list)).where(eq("k", 1));
-        assertThat(statement.toString()).isEqualTo(query);
+        statement.getValues(ProtocolVersion.NEWEST_SUPPORTED, CodecRegistry.DEFAULT_INSTANCE);
     }
 
     @Test(groups = "unit")
@@ -874,7 +859,7 @@ public class QueryBuilderTest {
     public void should_not_serialize_raw_query_values() {
         RegularStatement select = select().from("test").where(gt("i", raw("1")));
         assertThat(select.getQueryString()).doesNotContain("?");
-        assertThat(select.getValues(ProtocolVersion.V3)).isNull();
+        assertThat(select.getValues(ProtocolVersion.NEWEST_SUPPORTED, CodecRegistry.DEFAULT_INSTANCE)).isNull();
     }
 
     @Test(groups = "unit", expectedExceptions = {IllegalStateException.class})
@@ -916,15 +901,7 @@ public class QueryBuilderTest {
     public void should_not_attempt_to_serialize_function_calls_in_collections() {
         BuiltStatement query = insertInto("foo").value("v", Sets.newHashSet(fcall("func", 1)));
         assertThat(query.getQueryString()).isEqualTo("INSERT INTO foo (v) VALUES ({func(1)});");
-        assertThat(query.getValues(ProtocolVersion.V3)).isNullOrEmpty();
-    }
-
-    @Test(groups = "unit")
-    @CassandraVersion(major = 2.1)
-    public void should_not_attempt_to_serialize_bind_markers_in_collections() {
-        BuiltStatement query = insertInto("foo").value("v", Lists.newArrayList(1, 2, bindMarker()));
-        assertThat(query.getQueryString()).isEqualTo("INSERT INTO foo (v) VALUES ([1,2,?]);");
-        assertThat(query.getValues(ProtocolVersion.V3)).isNullOrEmpty();
+        assertThat(query.getValues(ProtocolVersion.NEWEST_SUPPORTED, CodecRegistry.DEFAULT_INSTANCE)).isNullOrEmpty();
     }
 
     @Test(groups = "unit")
@@ -932,7 +909,7 @@ public class QueryBuilderTest {
     public void should_not_attempt_to_serialize_raw_values_in_collections() {
         BuiltStatement query = insertInto("foo").value("v", ImmutableMap.of(1, raw("x")));
         assertThat(query.getQueryString()).isEqualTo("INSERT INTO foo (v) VALUES ({1:x});");
-        assertThat(query.getValues(ProtocolVersion.V3)).isNullOrEmpty();
+        assertThat(query.getValues(ProtocolVersion.NEWEST_SUPPORTED, CodecRegistry.DEFAULT_INSTANCE)).isNullOrEmpty();
     }
 
     @Test(groups = "unit")

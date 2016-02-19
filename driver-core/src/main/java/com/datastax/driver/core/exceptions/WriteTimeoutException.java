@@ -23,7 +23,7 @@ import java.net.InetSocketAddress;
 /**
  * A Cassandra timeout during a write query.
  */
-public class WriteTimeoutException extends QueryTimeoutException {
+public class WriteTimeoutException extends QueryConsistencyException {
 
     private static final long serialVersionUID = 0;
 
@@ -62,7 +62,7 @@ public class WriteTimeoutException extends QueryTimeoutException {
     }
 
     @Override
-    public DriverException copy() {
+    public WriteTimeoutException copy() {
         return new WriteTimeoutException(
                 getAddress(),
                 getMessage(),

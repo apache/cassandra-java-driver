@@ -28,14 +28,6 @@ public class UnauthorizedException extends QueryValidationException implements C
 
     private final InetSocketAddress address;
 
-    /**
-     * @deprecated This constructor is kept for backwards compatibility.
-     */
-    @Deprecated
-    public UnauthorizedException(String msg) {
-        this(null, msg);
-    }
-
     public UnauthorizedException(InetSocketAddress address, String msg) {
         super(msg);
         this.address = address;
@@ -63,7 +55,7 @@ public class UnauthorizedException extends QueryValidationException implements C
     }
 
     @Override
-    public DriverException copy() {
+    public UnauthorizedException copy() {
         return new UnauthorizedException(getAddress(), getMessage(), this);
     }
 }

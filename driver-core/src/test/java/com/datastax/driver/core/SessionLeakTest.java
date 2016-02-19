@@ -67,6 +67,7 @@ public class SessionLeakTest extends CCMTestsSupport {
         // ensure bootstrapping a node does not create additional connections
         ccm().add(2);
         ccm().start(2);
+        ccm().waitForUp(2);
         assertThat(cluster).host(2).comesUpWithin(2, MINUTES);
 
         assertThat(cluster.manager.sessions.size()).isEqualTo(0);

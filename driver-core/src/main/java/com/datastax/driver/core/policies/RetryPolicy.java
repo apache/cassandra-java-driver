@@ -15,13 +15,11 @@
  */
 package com.datastax.driver.core.policies;
 
-import com.datastax.driver.core.ConsistencyLevel;
-import com.datastax.driver.core.Statement;
-import com.datastax.driver.core.WriteType;
+import com.datastax.driver.core.*;
+import com.datastax.driver.core.exceptions.DriverException;
 
 /**
- * A policy that defines a default behavior to adopt when a request returns
- * a TimeoutException or an UnavailableException.
+ * A policy that defines a default behavior to adopt when a request fails.
  * <p/>
  * Such policy allows to centralize the handling of query retries, allowing to
  * minimize the need for exception catching/handling in business code.
@@ -32,9 +30,9 @@ public interface RetryPolicy {
      * A retry decision to adopt on a Cassandra exception (read/write timeout
      * or unavailable exception).
      * <p/>
-     * There is three possible decision:
+     * There are three possible decisions:
      * <ul>
-     * <li>RETHROW: no retry should be attempted and an exception should be thrown</li>
+     * <li>RETHROW: no retry should be attempted and an exception should be thrown.</li>
      * <li>RETRY: the operation will be retried. The consistency level of the
      * retry should be specified.</li>
      * <li>IGNORE: no retry should be attempted and the exception should be
@@ -44,13 +42,11 @@ public interface RetryPolicy {
      */
     class RetryDecision {
         /**
-         * The type of retry decisions.
+         * The types of retry decisions.
          */
         public enum Type {
             RETRY, RETHROW, IGNORE
         }
-
-        ;
 
         private final Type type;
         private final ConsistencyLevel retryCL;
@@ -72,57 +68,67 @@ public interface RetryPolicy {
         }
 
         /**
-         * The consistency level for a retry decision.
+         * The consistency level for this retry decision.
+         * This is only meaningful for {@code RETRY} decisions.
+         * The consistency level is always {@code null} for an
+         * {@code IGNORE} or a {@code RETHROW} decision;
+         * for a {@code RETRY} decision, the consistency level can be {@code null},
+         * in which case the retry is done at the same consistency level
+         * as in the original attempt.
          *
-         * @return the consistency level for a retry decision or {@code null}
-         * if this retry decision is an {@code IGNORE} or a {@code RETHROW}.
+         * @return the consistency level for a retry decision.
          */
         public ConsistencyLevel getRetryConsistencyLevel() {
             return retryCL;
         }
 
         /**
-         * Whether the retry policy uses the same host for retry decision.
+         * Whether this decision is to retry the same host.
+         * This is only meaningful for {@code RETRY} decisions.
          *
-         * @return the retry on next host boolean. Default is false.
+         * @return {@code true} if the decision is to retry the same host,
+         * {@code false} otherwise. Default is {@code false}.
          */
         public boolean isRetryCurrent() {
             return retryCurrent;
         }
 
         /**
-         * Creates a RETHROW retry decision.
+         * Creates a {@link RetryDecision.Type#RETHROW} retry decision.
          *
-         * @return a RETHROW retry decision.
+         * @return a {@link RetryDecision.Type#RETHROW} retry decision.
          */
         public static RetryDecision rethrow() {
             return new RetryDecision(Type.RETHROW, null, true);
         }
 
         /**
-         * Creates a RETRY retry decision using the provided consistency level.
+         * Creates a {@link RetryDecision.Type#RETRY} retry decision using
+         * the same host and the provided consistency level.
          *
          * @param consistency the consistency level to use for the retry.
-         * @return a RETRY with consistency level {@code consistency} retry decision.
+         * @return a {@link RetryDecision.Type#RETRY} decision using
+         * the same host and the provided consistency level
          */
         public static RetryDecision retry(ConsistencyLevel consistency) {
             return new RetryDecision(Type.RETRY, consistency, true);
         }
 
         /**
-         * Creates an IGNORE retry decision.
+         * Creates an {@link RetryDecision.Type#IGNORE} retry decision.
          *
-         * @return an IGNORE retry decision.
+         * @return an {@link RetryDecision.Type#IGNORE} retry decision.
          */
         public static RetryDecision ignore() {
             return new RetryDecision(Type.IGNORE, null, true);
         }
 
         /**
-         * Creates a RETRY retry decision and indicates to retry on another host
-         * using the provided consistency level.
+         * Creates a {@link RetryDecision.Type#RETRY} retry decision using the next host
+         * in the query plan, and using the provided consistency level.
          *
-         * @return a RETRY retry decision.
+         * @return a {@link RetryDecision.Type#RETRY} retry decision using the next host
+         * in the query plan, and using the provided consistency level.
          */
         public static RetryDecision tryNextHost(ConsistencyLevel retryCL) {
             return new RetryDecision(Type.RETRY, retryCL, false);
@@ -163,7 +169,7 @@ public interface RetryPolicy {
      * a {@link com.datastax.driver.core.exceptions.ReadTimeoutException} will
      * be thrown for the operation.
      */
-    public RetryDecision onReadTimeout(Statement statement, ConsistencyLevel cl, int requiredResponses, int receivedResponses, boolean dataRetrieved, int nbRetry);
+    RetryDecision onReadTimeout(Statement statement, ConsistencyLevel cl, int requiredResponses, int receivedResponses, boolean dataRetrieved, int nbRetry);
 
     /**
      * Defines whether to retry and at which consistency level on a write timeout.
@@ -180,7 +186,7 @@ public interface RetryPolicy {
      * a {@link com.datastax.driver.core.exceptions.WriteTimeoutException} will
      * be thrown for the operation.
      */
-    public RetryDecision onWriteTimeout(Statement statement, ConsistencyLevel cl, WriteType writeType, int requiredAcks, int receivedAcks, int nbRetry);
+    RetryDecision onWriteTimeout(Statement statement, ConsistencyLevel cl, WriteType writeType, int requiredAcks, int receivedAcks, int nbRetry);
 
     /**
      * Defines whether to retry and at which consistency level on an
@@ -198,5 +204,45 @@ public interface RetryPolicy {
      * an {@link com.datastax.driver.core.exceptions.UnavailableException} will
      * be thrown for the operation.
      */
-    public RetryDecision onUnavailable(Statement statement, ConsistencyLevel cl, int requiredReplica, int aliveReplica, int nbRetry);
+    RetryDecision onUnavailable(Statement statement, ConsistencyLevel cl, int requiredReplica, int aliveReplica, int nbRetry);
+
+    /**
+     * Defines whether to retry and at which consistency level on an
+     * unexpected error.
+     * <p/>
+     * This method might be invoked in the following situations:
+     * <ol>
+     * <li>On a client timeout, while waiting for the server response
+     * (see {@link SocketOptions#getReadTimeoutMillis()});</li>
+     * <li>On a connection error (socket closed, etc.);</li>
+     * <li>When the contacted host replies with an error, such as
+     * {@code OVERLOADED}, {@code IS_BOOTSTRAPPING}, {@code SERVER_ERROR}, etc.</li>
+     * </ol>
+     * <p/>
+     * Note that when this method is invoked, <em>the driver cannot guarantee that the mutation has
+     * been effectively applied server-side</em>; a retry should only be attempted if the request
+     * is known to be idempotent.
+     *
+     * @param statement the original query that failed.
+     * @param cl        the original consistency level for the operation.
+     * @param e         the exception that caused this request to fail.
+     * @param nbRetry   the number of retries already performed for this operation.
+     * @return the retry decision. If {@code RetryDecision.RETHROW} is returned,
+     * the {@link DriverException} passed to this method will be thrown for the operation.
+     */
+    RetryDecision onRequestError(Statement statement, ConsistencyLevel cl, DriverException e, int nbRetry);
+
+    /**
+     * Gets invoked at cluster startup.
+     *
+     * @param cluster the cluster that this policy is associated with.
+     */
+    void init(Cluster cluster);
+
+    /**
+     * Gets invoked at cluster shutdown.
+     * <p/>
+     * This gives the policy the opportunity to perform some cleanup, for instance stop threads that it might have started.
+     */
+    void close();
 }

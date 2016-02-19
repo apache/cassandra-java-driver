@@ -16,13 +16,13 @@
 package com.datastax.driver.core;
 
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
-import com.google.common.base.Optional;
 import org.testng.annotations.Test;
 
 import java.util.concurrent.TimeUnit;
 
 import static com.datastax.driver.core.Assertions.assertThat;
-import static com.datastax.driver.core.CCMBridge.*;
+import static com.datastax.driver.core.CCMBridge.DEFAULT_CLIENT_TRUSTSTORE_FILE;
+import static com.datastax.driver.core.CCMBridge.DEFAULT_CLIENT_TRUSTSTORE_PASSWORD;
 import static com.datastax.driver.core.CreateCCM.TestMode.PER_METHOD;
 
 @CreateCCM(PER_METHOD)
@@ -38,9 +38,9 @@ public class SSLEncryptionTest extends SSLTestBase {
      * @test_category connection:ssl
      * @expected_result Connection can be established to a cassandra node using SSL.
      */
-    @Test(groups = "short")
-    public void should_connect_with_ssl_without_client_auth_and_node_doesnt_require_auth() throws Exception {
-        connectWithSSLOptions(getSSLOptions(Optional.<String>absent(), Optional.of(DEFAULT_CLIENT_TRUSTSTORE_PATH)));
+    @Test(groups = "short", dataProvider = "sslImplementation", dataProviderClass = SSLTestBase.class)
+    public void should_connect_with_ssl_without_client_auth_and_node_doesnt_require_auth(SslImplementation sslImplementation) throws Exception {
+        connectWithSSLOptions(getSSLOptions(sslImplementation, false, true));
     }
 
     /**
@@ -52,9 +52,9 @@ public class SSLEncryptionTest extends SSLTestBase {
      * @test_category connection:ssl
      * @expected_result Connection can not be established to a cassandra node using SSL with an untrusted cert.
      */
-    @Test(groups = "short", expectedExceptions = {NoHostAvailableException.class})
-    public void should_not_connect_with_ssl_without_trusting_server_cert() throws Exception {
-        connectWithSSLOptions(getSSLOptions(Optional.<String>absent(), Optional.<String>absent()));
+    @Test(groups = "short", dataProvider = "sslImplementation", dataProviderClass = SSLTestBase.class, expectedExceptions = {NoHostAvailableException.class})
+    public void should_not_connect_with_ssl_without_trusting_server_cert(SslImplementation sslImplementation) throws Exception {
+        connectWithSSLOptions(getSSLOptions(sslImplementation, false, false));
     }
 
     /**
@@ -90,12 +90,12 @@ public class SSLEncryptionTest extends SSLTestBase {
      * @expected_result Connection is re-established within a sufficient amount of time after a node comes back online.
      */
     @CCMConfig(dirtiesContext = true)
-    @Test(groups = "long")
-    public void should_reconnect_with_ssl_on_node_up() throws Exception {
+    @Test(groups = "long", dataProvider = "sslImplementation", dataProviderClass = SSLTestBase.class)
+    public void should_reconnect_with_ssl_on_node_up(SslImplementation sslImplementation) throws Exception {
         Cluster cluster = register(Cluster.builder()
-                .addContactPoints(getContactPoints())
+                .addContactPoints(this.getContactPoints())
                 .withPort(ccm().getBinaryPort())
-                .withSSL(getSSLOptions(Optional.of(DEFAULT_CLIENT_KEYSTORE_PATH), Optional.of(DEFAULT_CLIENT_TRUSTSTORE_PATH)))
+                .withSSL(getSSLOptions(sslImplementation, true, true))
                 .build());
 
         cluster.connect();

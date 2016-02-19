@@ -40,9 +40,74 @@ public class MapperDefaultKeyspaceTest extends CCMTestsSupport {
     @Override
     public void onTestContextInitialized() {
         execute(
-                "CREATE TABLE groups (group_id uuid PRIMARY KEY, name text)",
-                "CREATE TYPE IF NOT EXISTS group_name (name text)");
+                String.format("CREATE KEYSPACE IF NOT EXISTS %s WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 }", KEYSPACE),
+                String.format("CREATE TYPE IF NOT EXISTS %s.group_name (name text)", KEYSPACE),
+                String.format("CREATE TABLE IF NOT EXISTS %s.groups (group_id uuid PRIMARY KEY, name text)", KEYSPACE),
+                String.format("CREATE TABLE IF NOT EXISTS %s.groups2 (group_id uuid PRIMARY KEY, name frozen<group_name>)", KEYSPACE));
     }
+
+    @Test(groups = "short")
+    public void testTableWithDefaultKeyspace() throws Exception {
+        // Ensure that the test session is logged into the keyspace.
+        session().execute("USE " + KEYSPACE);
+
+        MappingManager manager = new MappingManager(session());
+        Mapper<Group> m = manager.mapper(Group.class);
+        Group group = new Group("testGroup");
+        UUID groupId = group.getGroupId();
+
+        // Check the save operation.
+        m.save(group);
+
+        // Check the select operation.
+        Group selectedGroup = m.get(groupId);
+        assertEquals(selectedGroup.getGroupId(), groupId);
+
+        // Check the delete operation.
+        m.delete(group);
+        assertNull(m.get(groupId));
+    }
+
+    @Test(groups = "short")
+    public void testUDTWithDefaultKeyspace() throws Exception {
+        // Ensure that the test session is logged into the keyspace.
+        session().execute("USE " + KEYSPACE);
+
+        MappingManager manager = new MappingManager(session());
+        Mapper<Group2> m = manager.mapper(Group2.class);
+        Group2 group = new Group2(new GroupName("testGroup"));
+        UUID groupId = group.getGroupId();
+
+        // Check the save operation.
+        m.save(group);
+
+        // Check the select operation.
+        Group2 selectedGroup = m.get(groupId);
+        assertEquals(selectedGroup.getGroupId(), groupId);
+
+        // Check the delete operation.
+        m.delete(group);
+        assertNull(m.get(groupId));
+    }
+
+    @Test(groups = "short",
+            expectedExceptions = IllegalArgumentException.class,
+            expectedExceptionsMessageRegExp = "Error creating mapper for class Group, the @Table annotation declares no default keyspace, and the session is not currently logged to any keyspace")
+    public void should_throw_a_meaningful_error_message_when_no_default_table_keyspace_and_session_not_logged() {
+        Session session2 = cluster().connect();
+        MappingManager manager = new MappingManager(session2);
+        manager.mapper(Group.class);
+    }
+
+    @Test(groups = "short",
+            expectedExceptions = IllegalArgumentException.class,
+            expectedExceptionsMessageRegExp = "Error creating UDT codec for class GroupName, the @UDT annotation declares no default keyspace, and the session is not currently logged to any keyspace")
+    public void should_throw_a_meaningful_error_message_when_no_default_udt_keyspace_and_session_not_logged() {
+        Session session2 = cluster().connect();
+        MappingManager manager = new MappingManager(session2);
+        manager.udtCodec(GroupName.class);
+    }
+
 
     /*
      * An entity that does not specify a keyspace in its @Table annotation. When a keyspace is
@@ -95,28 +160,6 @@ public class MapperDefaultKeyspaceTest extends CCMTestsSupport {
         public int hashCode() {
             return Objects.hashCode(groupId, name);
         }
-    }
-
-    @Test(groups = "short")
-    public void testTableWithDefaultKeyspace() throws Exception {
-        // Ensure that the test session is logged into the "ks" keyspace.
-        session().execute("USE " + keyspace);
-
-        MappingManager manager = new MappingManager(session());
-        Mapper<Group> m = manager.mapper(Group.class);
-        Group group = new Group("testGroup");
-        UUID groupId = group.getGroupId();
-
-        // Check the save operation.
-        m.save(group);
-
-        // Check the select operation.
-        Group selectedGroup = m.get(groupId);
-        assertEquals(selectedGroup.getGroupId(), groupId);
-
-        // Check the delete operation.
-        m.delete(group);
-        assertNull(m.get(groupId));
     }
 
     @Table(keyspace = KEYSPACE, name = "groups2")
@@ -207,47 +250,4 @@ public class MapperDefaultKeyspaceTest extends CCMTestsSupport {
         }
     }
 
-    @Test(groups = "short")
-    public void testUDTWithDefaultKeyspace() throws Exception {
-        // Create test specific keyspace and table.
-        session().execute(String.format("CREATE KEYSPACE IF NOT EXISTS %s WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor' : 1 }", KEYSPACE));
-        session().execute(String.format("CREATE TYPE IF NOT EXISTS %s.group_name (name text)", KEYSPACE));
-        session().execute(String.format("CREATE TABLE IF NOT EXISTS %s.groups2 (group_id uuid PRIMARY KEY, name frozen<group_name>)", KEYSPACE));
-        // Ensure that the test session is logged into the keyspace.
-        session().execute("USE " + keyspace);
-
-        MappingManager manager = new MappingManager(session());
-        Mapper<Group2> m = manager.mapper(Group2.class);
-        Group2 group = new Group2(new GroupName("testGroup"));
-        UUID groupId = group.getGroupId();
-
-        // Check the save operation.
-        m.save(group);
-
-        // Check the select operation.
-        Group2 selectedGroup = m.get(groupId);
-        assertEquals(selectedGroup.getGroupId(), groupId);
-
-        // Check the delete operation.
-        m.delete(group);
-        assertNull(m.get(groupId));
-    }
-
-    @Test(groups = "short",
-            expectedExceptions = IllegalArgumentException.class,
-            expectedExceptionsMessageRegExp = "Error creating mapper for class Group, the @Table annotation declares no default keyspace, and the session is not currently logged to any keyspace")
-    public void should_throw_a_meaningful_error_message_when_no_default_table_keyspace_and_session_not_logged() {
-        Session session2 = cluster().connect();
-        MappingManager manager = new MappingManager(session2);
-        manager.mapper(Group.class);
-    }
-
-    @Test(groups = "short",
-            expectedExceptions = IllegalArgumentException.class,
-            expectedExceptionsMessageRegExp = "Error creating UDT mapper for class GroupName, the @UDT annotation declares no default keyspace, and the session is not currently logged to any keyspace")
-    public void should_throw_a_meaningful_error_message_when_no_default_udt_keyspace_and_session_not_logged() {
-        Session session2 = cluster().connect();
-        MappingManager manager = new MappingManager(session2);
-        manager.udtMapper(GroupName.class);
-    }
 }

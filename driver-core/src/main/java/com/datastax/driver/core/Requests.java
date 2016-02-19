@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import io.netty.buffer.ByteBuf;
 
@@ -29,13 +30,13 @@ class Requests {
     private Requests() {
     }
 
-    public static class Startup extends Message.Request {
+    static class Startup extends Message.Request {
         private static final String CQL_VERSION_OPTION = "CQL_VERSION";
         private static final String CQL_VERSION = "3.0.0";
 
-        public static final String COMPRESSION_OPTION = "COMPRESSION";
+        static final String COMPRESSION_OPTION = "COMPRESSION";
 
-        public static final Message.Coder<Startup> coder = new Message.Coder<Startup>() {
+        static final Message.Coder<Startup> coder = new Message.Coder<Startup>() {
             @Override
             public void encode(Startup msg, ByteBuf dest, ProtocolVersion version) {
                 CBUtil.writeStringMap(msg.options, dest);
@@ -49,7 +50,7 @@ class Requests {
 
         private final Map<String, String> options;
 
-        public Startup(ProtocolOptions.Compression compression) {
+        Startup(ProtocolOptions.Compression compression) {
             super(Message.Request.Type.STARTUP);
 
             ImmutableMap.Builder<String, String> map = new ImmutableMap.Builder<String, String>();
@@ -66,9 +67,9 @@ class Requests {
     }
 
     // Only for protocol v1
-    public static class Credentials extends Message.Request {
+    static class Credentials extends Message.Request {
 
-        public static final Message.Coder<Credentials> coder = new Message.Coder<Credentials>() {
+        static final Message.Coder<Credentials> coder = new Message.Coder<Credentials>() {
 
             @Override
             public void encode(Credentials msg, ByteBuf dest, ProtocolVersion version) {
@@ -85,15 +86,15 @@ class Requests {
 
         private final Map<String, String> credentials;
 
-        public Credentials(Map<String, String> credentials) {
+        Credentials(Map<String, String> credentials) {
             super(Message.Request.Type.CREDENTIALS);
             this.credentials = credentials;
         }
     }
 
-    public static class Options extends Message.Request {
+    static class Options extends Message.Request {
 
-        public static final Message.Coder<Options> coder = new Message.Coder<Options>() {
+        static final Message.Coder<Options> coder = new Message.Coder<Options>() {
             @Override
             public void encode(Options msg, ByteBuf dest, ProtocolVersion version) {
             }
@@ -104,7 +105,7 @@ class Requests {
             }
         };
 
-        public Options() {
+        Options() {
             super(Message.Request.Type.OPTIONS);
         }
 
@@ -114,9 +115,9 @@ class Requests {
         }
     }
 
-    public static class Query extends Message.Request {
+    static class Query extends Message.Request {
 
-        public static final Message.Coder<Query> coder = new Message.Coder<Query>() {
+        static final Message.Coder<Query> coder = new Message.Coder<Query>() {
             @Override
             public void encode(Query msg, ByteBuf dest, ProtocolVersion version) {
                 CBUtil.writeLongString(msg.query, dest);
@@ -130,14 +131,14 @@ class Requests {
             }
         };
 
-        public final String query;
-        public final QueryProtocolOptions options;
+        final String query;
+        final QueryProtocolOptions options;
 
-        public Query(String query) {
+        Query(String query) {
             this(query, QueryProtocolOptions.DEFAULT, false);
         }
 
-        public Query(String query, QueryProtocolOptions options, boolean tracingRequested) {
+        Query(String query, QueryProtocolOptions options, boolean tracingRequested) {
             super(Type.QUERY, tracingRequested);
             this.query = query;
             this.options = options;
@@ -159,9 +160,9 @@ class Requests {
         }
     }
 
-    public static class Execute extends Message.Request {
+    static class Execute extends Message.Request {
 
-        public static final Message.Coder<Execute> coder = new Message.Coder<Execute>() {
+        static final Message.Coder<Execute> coder = new Message.Coder<Execute>() {
             @Override
             public void encode(Execute msg, ByteBuf dest, ProtocolVersion version) {
                 CBUtil.writeBytes(msg.statementId.bytes, dest);
@@ -175,10 +176,10 @@ class Requests {
             }
         };
 
-        public final MD5Digest statementId;
-        public final QueryProtocolOptions options;
+        final MD5Digest statementId;
+        final QueryProtocolOptions options;
 
-        public Execute(MD5Digest statementId, QueryProtocolOptions options, boolean tracingRequested) {
+        Execute(MD5Digest statementId, QueryProtocolOptions options, boolean tracingRequested) {
             super(Message.Request.Type.EXECUTE, tracingRequested);
             this.statementId = statementId;
             this.options = options;
@@ -200,7 +201,7 @@ class Requests {
         }
     }
 
-    static enum QueryFlag {
+    enum QueryFlag {
         // The order of that enum matters!!
         VALUES,
         SKIP_METADATA,
@@ -210,7 +211,7 @@ class Requests {
         DEFAULT_TIMESTAMP,
         VALUE_NAMES;
 
-        public static EnumSet<QueryFlag> deserialize(int flags) {
+        static EnumSet<QueryFlag> deserialize(int flags) {
             EnumSet<QueryFlag> set = EnumSet.noneOf(QueryFlag.class);
             QueryFlag[] values = QueryFlag.values();
             for (int n = 0; n < values.length; n++) {
@@ -220,7 +221,7 @@ class Requests {
             return set;
         }
 
-        public static int serialize(EnumSet<QueryFlag> flags) {
+        static int serialize(EnumSet<QueryFlag> flags) {
             int i = 0;
             for (QueryFlag flag : flags)
                 i |= 1 << flag.ordinal();
@@ -228,10 +229,11 @@ class Requests {
         }
     }
 
-    public static class QueryProtocolOptions {
+    static class QueryProtocolOptions {
 
-        public static final QueryProtocolOptions DEFAULT = new QueryProtocolOptions(ConsistencyLevel.ONE,
+        static final QueryProtocolOptions DEFAULT = new QueryProtocolOptions(ConsistencyLevel.ONE,
                 Collections.<ByteBuffer>emptyList(),
+                Collections.<String, ByteBuffer>emptyMap(),
                 false,
                 -1,
                 null,
@@ -239,24 +241,29 @@ class Requests {
                 Long.MIN_VALUE);
 
         private final EnumSet<QueryFlag> flags = EnumSet.noneOf(QueryFlag.class);
-        public final ConsistencyLevel consistency;
-        public final List<ByteBuffer> values;
-        public final boolean skipMetadata;
-        public final int pageSize;
-        public final ByteBuffer pagingState;
-        public final ConsistencyLevel serialConsistency;
-        public final long defaultTimestamp;
+        final ConsistencyLevel consistency;
+        final List<ByteBuffer> positionalValues;
+        final Map<String, ByteBuffer> namedValues;
+        final boolean skipMetadata;
+        final int pageSize;
+        final ByteBuffer pagingState;
+        final ConsistencyLevel serialConsistency;
+        final long defaultTimestamp;
 
-        public QueryProtocolOptions(ConsistencyLevel consistency,
-                                    List<ByteBuffer> values,
-                                    boolean skipMetadata,
-                                    int pageSize,
-                                    ByteBuffer pagingState,
-                                    ConsistencyLevel serialConsistency,
-                                    long defaultTimestamp) {
+        QueryProtocolOptions(ConsistencyLevel consistency,
+                             List<ByteBuffer> positionalValues,
+                             Map<String, ByteBuffer> namedValues,
+                             boolean skipMetadata,
+                             int pageSize,
+                             ByteBuffer pagingState,
+                             ConsistencyLevel serialConsistency,
+                             long defaultTimestamp) {
+
+            Preconditions.checkArgument(positionalValues.isEmpty() || namedValues.isEmpty());
 
             this.consistency = consistency;
-            this.values = values;
+            this.positionalValues = positionalValues;
+            this.namedValues = namedValues;
             this.skipMetadata = skipMetadata;
             this.pageSize = pageSize;
             this.pagingState = pagingState;
@@ -264,8 +271,12 @@ class Requests {
             this.defaultTimestamp = defaultTimestamp;
 
             // Populate flags
-            if (!values.isEmpty())
+            if (!positionalValues.isEmpty())
                 flags.add(QueryFlag.VALUES);
+            if (!namedValues.isEmpty()) {
+                flags.add(QueryFlag.VALUES);
+                flags.add(QueryFlag.VALUE_NAMES);
+            }
             if (skipMetadata)
                 flags.add(QueryFlag.SKIP_METADATA);
             if (pageSize >= 0)
@@ -278,30 +289,38 @@ class Requests {
                 flags.add(QueryFlag.DEFAULT_TIMESTAMP);
         }
 
-        public QueryProtocolOptions copy(ConsistencyLevel newConsistencyLevel) {
-            return new QueryProtocolOptions(newConsistencyLevel, values, skipMetadata, pageSize, pagingState, serialConsistency, defaultTimestamp);
+        QueryProtocolOptions copy(ConsistencyLevel newConsistencyLevel) {
+            return new QueryProtocolOptions(newConsistencyLevel, positionalValues, namedValues, skipMetadata, pageSize, pagingState, serialConsistency, defaultTimestamp);
         }
 
-        public void encode(ByteBuf dest, ProtocolVersion version) {
+        void encode(ByteBuf dest, ProtocolVersion version) {
             switch (version) {
                 case V1:
+                    // Values in protocol v1 are only for bound statements, and these are never named
                     if (flags.contains(QueryFlag.VALUES))
-                        CBUtil.writeValueList(values, dest);
+                        CBUtil.writeValueList(positionalValues, dest);
                     CBUtil.writeConsistencyLevel(consistency, dest);
                     break;
                 case V2:
                 case V3:
+                case V4:
                     CBUtil.writeConsistencyLevel(consistency, dest);
                     dest.writeByte((byte) QueryFlag.serialize(flags));
-                    if (flags.contains(QueryFlag.VALUES))
-                        CBUtil.writeValueList(values, dest);
+                    if (flags.contains(QueryFlag.VALUES)) {
+                        if (flags.contains(QueryFlag.VALUE_NAMES)) {
+                            assert version.compareTo(ProtocolVersion.V3) >= 0;
+                            CBUtil.writeNamedValueList(namedValues, dest);
+                        } else {
+                            CBUtil.writeValueList(positionalValues, dest);
+                        }
+                    }
                     if (flags.contains(QueryFlag.PAGE_SIZE))
                         dest.writeInt(pageSize);
                     if (flags.contains(QueryFlag.PAGING_STATE))
                         CBUtil.writeValue(pagingState, dest);
                     if (flags.contains(QueryFlag.SERIAL_CONSISTENCY))
                         CBUtil.writeConsistencyLevel(serialConsistency, dest);
-                    if (version == ProtocolVersion.V3 && flags.contains(QueryFlag.DEFAULT_TIMESTAMP))
+                    if (version.compareTo(ProtocolVersion.V3) >= 0 && flags.contains(QueryFlag.DEFAULT_TIMESTAMP))
                         dest.writeLong(defaultTimestamp);
                     break;
                 default:
@@ -309,18 +328,25 @@ class Requests {
             }
         }
 
-        public int encodedSize(ProtocolVersion version) {
+        int encodedSize(ProtocolVersion version) {
             switch (version) {
                 case V1:
-                    return CBUtil.sizeOfValueList(values)
+                    return CBUtil.sizeOfValueList(positionalValues)
                             + CBUtil.sizeOfConsistencyLevel(consistency);
                 case V2:
                 case V3:
+                case V4:
                     int size = 0;
                     size += CBUtil.sizeOfConsistencyLevel(consistency);
                     size += 1; // flags
-                    if (flags.contains(QueryFlag.VALUES))
-                        size += CBUtil.sizeOfValueList(values);
+                    if (flags.contains(QueryFlag.VALUES)) {
+                        if (flags.contains(QueryFlag.VALUE_NAMES)) {
+                            assert version.compareTo(ProtocolVersion.V3) >= 0;
+                            size += CBUtil.sizeOfNamedValueList(namedValues);
+                        } else {
+                            size += CBUtil.sizeOfValueList(positionalValues);
+                        }
+                    }
                     if (flags.contains(QueryFlag.PAGE_SIZE))
                         size += 4;
                     if (flags.contains(QueryFlag.PAGING_STATE))
@@ -337,13 +363,14 @@ class Requests {
 
         @Override
         public String toString() {
-            return String.format("[cl=%s, vals=%s, skip=%b, psize=%d, state=%s, serialCl=%s]", consistency, values, skipMetadata, pageSize, pagingState, serialConsistency);
+            return String.format("[cl=%s, positionalVals=%s, namedVals=%s, skip=%b, psize=%d, state=%s, serialCl=%s]",
+                    consistency, positionalValues, namedValues, skipMetadata, pageSize, pagingState, serialConsistency);
         }
     }
 
-    public static class Batch extends Message.Request {
+    static class Batch extends Message.Request {
 
-        public static final Message.Coder<Batch> coder = new Message.Coder<Batch>() {
+        static final Message.Coder<Batch> coder = new Message.Coder<Batch>() {
             @Override
             public void encode(Batch msg, ByteBuf dest, ProtocolVersion version) {
                 int queries = msg.queryOrIdList.size();
@@ -395,12 +422,12 @@ class Requests {
             }
         };
 
-        public final BatchStatement.Type type;
-        public final List<Object> queryOrIdList;
-        public final List<List<ByteBuffer>> values;
-        public final BatchProtocolOptions options;
+        final BatchStatement.Type type;
+        final List<Object> queryOrIdList;
+        final List<List<ByteBuffer>> values;
+        final BatchProtocolOptions options;
 
-        public Batch(BatchStatement.Type type, List<Object> queryOrIdList, List<List<ByteBuffer>> values, BatchProtocolOptions options, boolean tracingRequested) {
+        Batch(BatchStatement.Type type, List<Object> queryOrIdList, List<List<ByteBuffer>> values, BatchProtocolOptions options, boolean tracingRequested) {
             super(Message.Request.Type.BATCH, tracingRequested);
             this.type = type;
             this.queryOrIdList = queryOrIdList;
@@ -431,13 +458,13 @@ class Requests {
         }
     }
 
-    public static class BatchProtocolOptions {
+    static class BatchProtocolOptions {
         private final EnumSet<QueryFlag> flags = EnumSet.noneOf(QueryFlag.class);
-        public final ConsistencyLevel consistency;
-        public final ConsistencyLevel serialConsistency;
-        public final long defaultTimestamp;
+        final ConsistencyLevel consistency;
+        final ConsistencyLevel serialConsistency;
+        final long defaultTimestamp;
 
-        public BatchProtocolOptions(ConsistencyLevel consistency, ConsistencyLevel serialConsistency, long defaultTimestamp) {
+        BatchProtocolOptions(ConsistencyLevel consistency, ConsistencyLevel serialConsistency, long defaultTimestamp) {
             this.consistency = consistency;
             this.serialConsistency = serialConsistency;
             this.defaultTimestamp = defaultTimestamp;
@@ -452,12 +479,13 @@ class Requests {
             return new BatchProtocolOptions(newConsistencyLevel, serialConsistency, defaultTimestamp);
         }
 
-        public void encode(ByteBuf dest, ProtocolVersion version) {
+        void encode(ByteBuf dest, ProtocolVersion version) {
             switch (version) {
                 case V2:
                     CBUtil.writeConsistencyLevel(consistency, dest);
                     break;
                 case V3:
+                case V4:
                     CBUtil.writeConsistencyLevel(consistency, dest);
                     dest.writeByte((byte) QueryFlag.serialize(flags));
                     if (flags.contains(QueryFlag.SERIAL_CONSISTENCY))
@@ -470,11 +498,12 @@ class Requests {
             }
         }
 
-        public int encodedSize(ProtocolVersion version) {
+        int encodedSize(ProtocolVersion version) {
             switch (version) {
                 case V2:
                     return CBUtil.sizeOfConsistencyLevel(consistency);
                 case V3:
+                case V4:
                     int size = 0;
                     size += CBUtil.sizeOfConsistencyLevel(consistency);
                     size += 1; // flags
@@ -495,9 +524,9 @@ class Requests {
         }
     }
 
-    public static class Prepare extends Message.Request {
+    static class Prepare extends Message.Request {
 
-        public static final Message.Coder<Prepare> coder = new Message.Coder<Prepare>() {
+        static final Message.Coder<Prepare> coder = new Message.Coder<Prepare>() {
 
             @Override
             public void encode(Prepare msg, ByteBuf dest, ProtocolVersion version) {
@@ -512,7 +541,7 @@ class Requests {
 
         private final String query;
 
-        public Prepare(String query) {
+        Prepare(String query) {
             super(Message.Request.Type.PREPARE);
             this.query = query;
         }
@@ -523,9 +552,9 @@ class Requests {
         }
     }
 
-    public static class Register extends Message.Request {
+    static class Register extends Message.Request {
 
-        public static final Message.Coder<Register> coder = new Message.Coder<Register>() {
+        static final Message.Coder<Register> coder = new Message.Coder<Register>() {
             @Override
             public void encode(Register msg, ByteBuf dest, ProtocolVersion version) {
                 dest.writeShort(msg.eventTypes.size());
@@ -544,7 +573,7 @@ class Requests {
 
         private final List<ProtocolEvent.Type> eventTypes;
 
-        public Register(List<ProtocolEvent.Type> eventTypes) {
+        Register(List<ProtocolEvent.Type> eventTypes) {
             super(Message.Request.Type.REGISTER);
             this.eventTypes = eventTypes;
         }
@@ -555,9 +584,9 @@ class Requests {
         }
     }
 
-    public static class AuthResponse extends Message.Request {
+    static class AuthResponse extends Message.Request {
 
-        public static final Message.Coder<AuthResponse> coder = new Message.Coder<AuthResponse>() {
+        static final Message.Coder<AuthResponse> coder = new Message.Coder<AuthResponse>() {
 
             @Override
             public void encode(AuthResponse response, ByteBuf dest, ProtocolVersion version) {
@@ -572,7 +601,7 @@ class Requests {
 
         private final byte[] token;
 
-        public AuthResponse(byte[] token) {
+        AuthResponse(byte[] token) {
             super(Message.Request.Type.AUTH_RESPONSE);
             this.token = token;
         }

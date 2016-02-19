@@ -15,6 +15,8 @@
  */
 package com.datastax.driver.core.policies;
 
+import com.datastax.driver.core.Cluster;
+
 /**
  * A reconnection policy that waits a constant time between each reconnection attempt.
  */
@@ -61,5 +63,15 @@ public class ConstantReconnectionPolicy implements ReconnectionPolicy {
         public long nextDelayMs() {
             return delayMs;
         }
+    }
+
+    @Override
+    public void init(Cluster cluster) {
+        // nothing to do
+    }
+
+    @Override
+    public void close() {
+        // nothing to do
     }
 }

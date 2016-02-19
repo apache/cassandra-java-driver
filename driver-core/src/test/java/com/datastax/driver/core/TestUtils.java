@@ -18,6 +18,7 @@ package com.datastax.driver.core;
 import com.datastax.driver.core.policies.RoundRobinPolicy;
 import com.datastax.driver.core.policies.WhiteListPolicy;
 import com.google.common.base.Predicate;
+import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.sun.management.OperatingSystemMXBean;
@@ -31,10 +32,7 @@ import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
+import java.net.*;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.*;
@@ -65,120 +63,271 @@ public abstract class TestUtils {
     public static final String CREATE_KEYSPACE_SIMPLE_FORMAT = "CREATE KEYSPACE %s WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor' : %d }";
     public static final String CREATE_KEYSPACE_GENERIC_FORMAT = "CREATE KEYSPACE %s WITH replication = { 'class' : '%s', %s }";
 
-    public static final String CREATE_TABLE_SIMPLE_FORMAT = "CREATE TABLE %s (k text PRIMARY KEY, t text, i int, f float)";
-
-    public static final String INSERT_FORMAT = "INSERT INTO %s (k, t, i, f) VALUES ('%s', '%s', %d, %f)";
-
     public static final String SELECT_ALL_FORMAT = "SELECT * FROM %s";
 
     public static final int TEST_BASE_NODE_WAIT = SystemProperties.getInt("com.datastax.driver.TEST_BASE_NODE_WAIT", 60);
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public static BoundStatement setBoundValue(BoundStatement bs, String name, DataType type, Object value) {
+    public static void setValue(SettableByIndexData<?> data, int i, DataType type, Object value) {
         switch (type.getName()) {
             case ASCII:
-                bs.setString(name, (String) value);
+                data.setString(i, (String) value);
                 break;
             case BIGINT:
-                bs.setLong(name, (Long) value);
+                data.setLong(i, (Long) value);
                 break;
             case BLOB:
-                bs.setBytes(name, (ByteBuffer) value);
+                data.setBytes(i, (ByteBuffer) value);
                 break;
             case BOOLEAN:
-                bs.setBool(name, (Boolean) value);
+                data.setBool(i, (Boolean) value);
                 break;
             case COUNTER:
                 // Just a no-op, we shouldn't handle counters the same way than other types
                 break;
             case DECIMAL:
-                bs.setDecimal(name, (BigDecimal) value);
+                data.setDecimal(i, (BigDecimal) value);
                 break;
             case DOUBLE:
-                bs.setDouble(name, (Double) value);
+                data.setDouble(i, (Double) value);
                 break;
             case FLOAT:
-                bs.setFloat(name, (Float) value);
+                data.setFloat(i, (Float) value);
                 break;
             case INET:
-                bs.setInet(name, (InetAddress) value);
+                data.setInet(i, (InetAddress) value);
+                break;
+            case TINYINT:
+                data.setByte(i, (Byte) value);
+                break;
+            case SMALLINT:
+                data.setShort(i, (Short) value);
                 break;
             case INT:
-                bs.setInt(name, (Integer) value);
+                data.setInt(i, (Integer) value);
                 break;
             case TEXT:
-                bs.setString(name, (String) value);
+                data.setString(i, (String) value);
                 break;
             case TIMESTAMP:
-                bs.setDate(name, (Date) value);
+                data.setTimestamp(i, (Date) value);
+                break;
+            case DATE:
+                data.setDate(i, (LocalDate) value);
+                break;
+            case TIME:
+                data.setTime(i, (Long) value);
                 break;
             case UUID:
-                bs.setUUID(name, (UUID) value);
+                data.setUUID(i, (UUID) value);
                 break;
             case VARCHAR:
-                bs.setString(name, (String) value);
+                data.setString(i, (String) value);
                 break;
             case VARINT:
-                bs.setVarint(name, (BigInteger) value);
+                data.setVarint(i, (BigInteger) value);
                 break;
             case TIMEUUID:
-                bs.setUUID(name, (UUID) value);
+                data.setUUID(i, (UUID) value);
                 break;
             case LIST:
-                bs.setList(name, (List) value);
+                data.setList(i, (List) value);
                 break;
             case SET:
-                bs.setSet(name, (Set) value);
+                data.setSet(i, (Set) value);
                 break;
             case MAP:
-                bs.setMap(name, (Map) value);
+                data.setMap(i, (Map) value);
                 break;
             default:
                 throw new RuntimeException("Missing handling of " + type);
         }
-        return bs;
     }
 
-    public static Object getValue(Row row, String name, DataType type) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public static void setValue(SettableByNameData<?> data, String name, DataType type, Object value) {
         switch (type.getName()) {
             case ASCII:
-                return row.getString(name);
+                data.setString(name, (String) value);
+                break;
             case BIGINT:
-                return row.getLong(name);
+                data.setLong(name, (Long) value);
+                break;
             case BLOB:
-                return row.getBytes(name);
+                data.setBytes(name, (ByteBuffer) value);
+                break;
             case BOOLEAN:
-                return row.getBool(name);
+                data.setBool(name, (Boolean) value);
+                break;
             case COUNTER:
-                return row.getLong(name);
+                // Just a no-op, we shouldn't handle counters the same way than other types
+                break;
             case DECIMAL:
-                return row.getDecimal(name);
+                data.setDecimal(name, (BigDecimal) value);
+                break;
             case DOUBLE:
-                return row.getDouble(name);
+                data.setDouble(name, (Double) value);
+                break;
             case FLOAT:
-                return row.getFloat(name);
+                data.setFloat(name, (Float) value);
+                break;
             case INET:
-                return row.getInet(name);
+                data.setInet(name, (InetAddress) value);
+                break;
+            case TINYINT:
+                data.setByte(name, (Byte) value);
+                break;
+            case SMALLINT:
+                data.setShort(name, (Short) value);
+                break;
             case INT:
-                return row.getInt(name);
+                data.setInt(name, (Integer) value);
+                break;
             case TEXT:
-                return row.getString(name);
+                data.setString(name, (String) value);
+                break;
             case TIMESTAMP:
-                return row.getDate(name);
+                data.setTimestamp(name, (Date) value);
+                break;
+            case DATE:
+                data.setDate(name, (LocalDate) value);
+                break;
+            case TIME:
+                data.setTime(name, (Long) value);
+                break;
             case UUID:
-                return row.getUUID(name);
+                data.setUUID(name, (UUID) value);
+                break;
             case VARCHAR:
-                return row.getString(name);
+                data.setString(name, (String) value);
+                break;
             case VARINT:
-                return row.getVarint(name);
+                data.setVarint(name, (BigInteger) value);
+                break;
             case TIMEUUID:
-                return row.getUUID(name);
+                data.setUUID(name, (UUID) value);
+                break;
             case LIST:
-                return row.getList(name, type.getTypeArguments().get(0).asJavaClass());
+                data.setList(name, (List) value);
+                break;
             case SET:
-                return row.getSet(name, type.getTypeArguments().get(0).asJavaClass());
+                data.setSet(name, (Set) value);
+                break;
             case MAP:
-                return row.getMap(name, type.getTypeArguments().get(0).asJavaClass(), type.getTypeArguments().get(1).asJavaClass());
+                data.setMap(name, (Map) value);
+                break;
+            default:
+                throw new RuntimeException("Missing handling of " + type);
+        }
+    }
+
+    public static Object getValue(GettableByIndexData data, int i, DataType type, CodecRegistry codecRegistry) {
+        switch (type.getName()) {
+            case ASCII:
+                return data.getString(i);
+            case BIGINT:
+                return data.getLong(i);
+            case BLOB:
+                return data.getBytes(i);
+            case BOOLEAN:
+                return data.getBool(i);
+            case COUNTER:
+                return data.getLong(i);
+            case DECIMAL:
+                return data.getDecimal(i);
+            case DOUBLE:
+                return data.getDouble(i);
+            case FLOAT:
+                return data.getFloat(i);
+            case INET:
+                return data.getInet(i);
+            case TINYINT:
+                return data.getByte(i);
+            case SMALLINT:
+                return data.getShort(i);
+            case INT:
+                return data.getInt(i);
+            case TEXT:
+                return data.getString(i);
+            case TIMESTAMP:
+                return data.getTimestamp(i);
+            case DATE:
+                return data.getDate(i);
+            case TIME:
+                return data.getTime(i);
+            case UUID:
+                return data.getUUID(i);
+            case VARCHAR:
+                return data.getString(i);
+            case VARINT:
+                return data.getVarint(i);
+            case TIMEUUID:
+                return data.getUUID(i);
+            case LIST:
+                Class<?> listEltClass = codecRegistry.codecFor(type.getTypeArguments().get(0)).getJavaType().getRawType();
+                return data.getList(i, listEltClass);
+            case SET:
+                Class<?> setEltClass = codecRegistry.codecFor(type.getTypeArguments().get(0)).getJavaType().getRawType();
+                return data.getSet(i, setEltClass);
+            case MAP:
+                Class<?> keyClass = codecRegistry.codecFor(type.getTypeArguments().get(0)).getJavaType().getRawType();
+                Class<?> valueClass = codecRegistry.codecFor(type.getTypeArguments().get(1)).getJavaType().getRawType();
+                return data.getMap(i, keyClass, valueClass);
+        }
+        throw new RuntimeException("Missing handling of " + type);
+    }
+
+    public static Object getValue(GettableByNameData data, String name, DataType type, CodecRegistry codecRegistry) {
+        switch (type.getName()) {
+            case ASCII:
+                return data.getString(name);
+            case BIGINT:
+                return data.getLong(name);
+            case BLOB:
+                return data.getBytes(name);
+            case BOOLEAN:
+                return data.getBool(name);
+            case COUNTER:
+                return data.getLong(name);
+            case DECIMAL:
+                return data.getDecimal(name);
+            case DOUBLE:
+                return data.getDouble(name);
+            case FLOAT:
+                return data.getFloat(name);
+            case INET:
+                return data.getInet(name);
+            case TINYINT:
+                return data.getByte(name);
+            case SMALLINT:
+                return data.getShort(name);
+            case INT:
+                return data.getInt(name);
+            case TEXT:
+                return data.getString(name);
+            case TIMESTAMP:
+                return data.getTimestamp(name);
+            case DATE:
+                return data.getDate(name);
+            case TIME:
+                return data.getTime(name);
+            case UUID:
+                return data.getUUID(name);
+            case VARCHAR:
+                return data.getString(name);
+            case VARINT:
+                return data.getVarint(name);
+            case TIMEUUID:
+                return data.getUUID(name);
+            case LIST:
+                Class<?> listEltClass = codecRegistry.codecFor(type.getTypeArguments().get(0)).getJavaType().getRawType();
+                return data.getList(name, listEltClass);
+            case SET:
+                Class<?> setEltClass = codecRegistry.codecFor(type.getTypeArguments().get(0)).getJavaType().getRawType();
+                return data.getSet(name, setEltClass);
+            case MAP:
+                Class<?> keyClass = codecRegistry.codecFor(type.getTypeArguments().get(0)).getJavaType().getRawType();
+                Class<?> valueClass = codecRegistry.codecFor(type.getTypeArguments().get(1)).getJavaType().getRawType();
+                return data.getMap(name, keyClass, valueClass);
         }
         throw new RuntimeException("Missing handling of " + type);
     }
@@ -206,12 +355,20 @@ public abstract class TestUtils {
                     return 3.142519f;
                 case INET:
                     return InetAddress.getByAddress(new byte[]{(byte) 127, (byte) 0, (byte) 0, (byte) 1});
+                case TINYINT:
+                    return (byte) 25;
+                case SMALLINT:
+                    return (short) 26;
                 case INT:
                     return 24;
                 case TEXT:
                     return "A text string";
                 case TIMESTAMP:
                     return new Date(1352288289L);
+                case DATE:
+                    return LocalDate.fromDaysSinceEpoch(0);
+                case TIME:
+                    return 54012123450000L;
                 case UUID:
                     return UUID.fromString("087E9967-CCDC-4A9B-9036-05930140A41B");
                 case VARCHAR:
@@ -266,12 +423,20 @@ public abstract class TestUtils {
                     return Float.POSITIVE_INFINITY;
                 case INET:
                     return InetAddress.getByName("123.123.123.123");
+                case TINYINT:
+                    return Byte.MAX_VALUE;
+                case SMALLINT:
+                    return Short.MAX_VALUE;
                 case INT:
                     return Integer.MAX_VALUE;
                 case TEXT:
                     return "résumé";
                 case TIMESTAMP:
                     return new Date(872835240000L);
+                case DATE:
+                    return LocalDate.fromDaysSinceEpoch(0);
+                case TIME:
+                    return 54012123450000L;
                 case UUID:
                     return UUID.fromString("067e6162-3b6f-4ae2-a171-2470b63dff00");
                 case VARCHAR:
@@ -328,7 +493,7 @@ public abstract class TestUtils {
         // keep alive kicks in, but that's a fairly long time. So we cheat and trigger a force
         // the detection by forcing a request.
         if (waitForDown)
-            Futures.getUnchecked(cluster.manager.submitSchemaRefresh(null, null, null));
+            Futures.getUnchecked(cluster.manager.submitSchemaRefresh(null, null, null, null));
         if (waitForDown) {
             check()
                     .every(1, SECONDS)
@@ -381,7 +546,7 @@ public abstract class TestUtils {
     }
 
     /**
-     * Returns the IP of the {@code nth} host in the CCM cluster (counting from 1, i.e.,
+     * Returns the IP of the {@code nth} host in the cluster (counting from 1, i.e.,
      * {@code ipOfNode(1)} returns the IP of the first node.
      * <p/>
      * In multi-DC setups, nodes are numbered in ascending order of their datacenter number.
@@ -391,6 +556,24 @@ public abstract class TestUtils {
      */
     public static String ipOfNode(int n) {
         return IP_PREFIX + n;
+    }
+
+    /**
+     * Returns the address of the {@code nth} host in the cluster (counting from 1, i.e.,
+     * {@code ipOfNode(1)} returns the address of the first node.
+     * <p/>
+     * In multi-DC setups, nodes are numbered in ascending order of their datacenter number.
+     * E.g. with 2 DCs and 3 nodes in each DC, the first node in DC 2 is number 4.
+     *
+     * @return the IP of the {@code nth} host in the cluster.
+     */
+    public static InetAddress addressOfNode(int i) {
+        try {
+            return InetAddress.getByName(IP_PREFIX + i);
+        } catch (UnknownHostException e) {
+            // should never happen
+            throw Throwables.propagate(e);
+        }
     }
 
     public static Host findOrWaitForHost(Cluster cluster, int node, long duration, TimeUnit unit) {
@@ -582,9 +765,20 @@ public abstract class TestUtils {
             return ProtocolVersion.V1;
         } else if (major < 2.1) {
             return ProtocolVersion.V2;
-        } else {
+        } else if (major < 2.2) {
             return ProtocolVersion.V3;
+        } else {
+            return ProtocolVersion.V4;
         }
+    }
+
+    /**
+     * @param maximumAllowed The maximum protocol version to use.
+     * @return The desired protocolVersion or maximumAllowed if {@link #getDesiredProtocolVersion} is greater.
+     */
+    public static ProtocolVersion getDesiredProtocolVersion(ProtocolVersion maximumAllowed) {
+        ProtocolVersion versionToUse = getDesiredProtocolVersion();
+        return versionToUse.compareTo(maximumAllowed) > 0 ? maximumAllowed : versionToUse;
     }
 
     /**
@@ -594,7 +788,7 @@ public abstract class TestUtils {
         Host controlHost = cluster.manager.controlConnection.connectedHost();
         List<InetSocketAddress> singleAddress = Collections.singletonList(controlHost.getSocketAddress());
         return Cluster.builder()
-                .addContactPointsWithPorts(singleAddress)
+                .addContactPoints(controlHost.getSocketAddress().getAddress())
                 .withPort(ccm.getBinaryPort())
                 .withLoadBalancingPolicy(new WhiteListPolicy(new RoundRobinPolicy(), singleAddress))
                 .build();

@@ -82,7 +82,7 @@ public class SchemaAgreementTest extends CCMTestsSupport {
 
     private static void forceSchemaVersion(Session session, InetAddress peerAddress, UUID schemaVersion) {
         session.execute(String.format("UPDATE system.peers SET schema_version = %s WHERE peer = %s",
-                DataType.uuid().format(schemaVersion), DataType.inet().format(peerAddress)));
+                TypeCodec.uuid().format(schemaVersion), TypeCodec.inet().format(peerAddress)));
     }
 
 }

@@ -15,8 +15,9 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.exceptions.ConnectionException;
 import com.datastax.driver.core.exceptions.DriverInternalError;
-import com.datastax.driver.core.utils.MoreFutures;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
@@ -43,12 +44,14 @@ abstract class ArrayBackedResultSet implements ResultSet {
     private final boolean wasApplied;
 
     protected final ProtocolVersion protocolVersion;
+    protected final CodecRegistry codecRegistry;
 
-    private ArrayBackedResultSet(ColumnDefinitions metadata, Token.Factory tokenFactory, List<ByteBuffer> firstRow, ProtocolVersion protocolVersion) {
+    private ArrayBackedResultSet(ColumnDefinitions metadata, Token.Factory tokenFactory, List<ByteBuffer> firstRow, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
         this.metadata = metadata;
         this.protocolVersion = protocolVersion;
+        this.codecRegistry = codecRegistry;
         this.tokenFactory = tokenFactory;
-        this.wasApplied = checkWasApplied(firstRow, metadata);
+        this.wasApplied = checkWasApplied(firstRow, metadata, protocolVersion);
     }
 
     static ArrayBackedResultSet fromMessage(Responses.Result msg, SessionManager session, ProtocolVersion protocolVersion, ExecutionInfo info, Statement statement) {
@@ -75,9 +78,10 @@ abstract class ArrayBackedResultSet implements ResultSet {
                 // info can be null only for internal calls, but we don't page those. We assert
                 // this explicitly because MultiPage implementation don't support info == null.
                 assert r.metadata.pagingState == null || info != null;
+
                 return r.metadata.pagingState == null
-                        ? new SinglePage(columnDefs, tokenFactory, protocolVersion, r.data, info)
-                        : new MultiPage(columnDefs, tokenFactory, protocolVersion, r.data, info, r.metadata.pagingState, session, statement);
+                        ? new SinglePage(columnDefs, tokenFactory, protocolVersion, columnDefs.codecRegistry, r.data, info)
+                        : new MultiPage(columnDefs, tokenFactory, protocolVersion, columnDefs.codecRegistry, r.data, info, r.metadata.pagingState, session, statement);
 
             case SET_KEYSPACE:
             case SCHEMA_CHANGE:
@@ -91,13 +95,18 @@ abstract class ArrayBackedResultSet implements ResultSet {
     }
 
     private static ExecutionInfo update(ExecutionInfo info, Responses.Result msg, SessionManager session) {
+        if (info == null)
+            return null;
+
         UUID tracingId = msg.getTracingId();
-        return tracingId == null || info == null ? info : info.withTrace(new QueryTrace(tracingId, session));
+        QueryTrace trace = (tracingId == null) ? null : new QueryTrace(tracingId, session);
+
+        return info.withTraceAndWarnings(trace, msg.warnings);
     }
 
     private static ArrayBackedResultSet empty(ExecutionInfo info) {
         // We could pass the protocol version but we know we won't need it so passing a bogus value (null)
-        return new SinglePage(ColumnDefinitions.EMPTY, null, null, EMPTY_QUEUE, info);
+        return new SinglePage(ColumnDefinitions.EMPTY, null, null, null, EMPTY_QUEUE, info);
     }
 
     @Override
@@ -160,9 +169,10 @@ abstract class ArrayBackedResultSet implements ResultSet {
         private SinglePage(ColumnDefinitions metadata,
                            Token.Factory tokenFactory,
                            ProtocolVersion protocolVersion,
+                           CodecRegistry codecRegistry,
                            Queue<List<ByteBuffer>> rows,
                            ExecutionInfo info) {
-            super(metadata, tokenFactory, rows.peek(), protocolVersion);
+            super(metadata, tokenFactory, rows.peek(), protocolVersion, codecRegistry);
             this.info = info;
             this.rows = rows;
         }
@@ -188,8 +198,8 @@ abstract class ArrayBackedResultSet implements ResultSet {
         }
 
         @Override
-        public ListenableFuture<Void> fetchMoreResults() {
-            return MoreFutures.VOID_SUCCESS;
+        public ListenableFuture<ResultSet> fetchMoreResults() {
+            return Futures.<ResultSet>immediateFuture(this);
         }
 
         @Override
@@ -231,6 +241,7 @@ abstract class ArrayBackedResultSet implements ResultSet {
         private MultiPage(ColumnDefinitions metadata,
                           Token.Factory tokenFactory,
                           ProtocolVersion protocolVersion,
+                          CodecRegistry codecRegistry,
                           Queue<List<ByteBuffer>> rows,
                           ExecutionInfo info,
                           ByteBuffer pagingState,
@@ -240,9 +251,9 @@ abstract class ArrayBackedResultSet implements ResultSet {
             // Note: as of Cassandra 2.1.0, it turns out that the result of a CAS update is never paged, so
             // we could hard-code the result of wasApplied in this class to "true". However, we can not be sure
             // that this will never change, so apply the generic check by peeking at the first row.
-            super(metadata, tokenFactory, rows.peek(), protocolVersion);
+            super(metadata, tokenFactory, rows.peek(), protocolVersion, codecRegistry);
             this.currentPage = rows;
-            this.infos.offer(info.withPagingState(pagingState, protocolVersion).withStatement(statement));
+            this.infos.offer(info.withPagingState(pagingState, protocolVersion, codecRegistry).withStatement(statement));
 
             this.fetchState = new FetchingState(pagingState, null);
             this.session = session;
@@ -300,25 +311,25 @@ abstract class ArrayBackedResultSet implements ResultSet {
         }
 
         @Override
-        public ListenableFuture<Void> fetchMoreResults() {
+        public ListenableFuture<ResultSet> fetchMoreResults() {
             return fetchMoreResults(this.fetchState);
         }
 
-        private ListenableFuture<Void> fetchMoreResults(FetchingState fetchState) {
+        private ListenableFuture<ResultSet> fetchMoreResults(FetchingState fetchState) {
             if (fetchState == null)
-                return MoreFutures.VOID_SUCCESS;
+                return Futures.<ResultSet>immediateFuture(this);
 
             if (fetchState.inProgress != null)
                 return fetchState.inProgress;
 
             assert fetchState.nextStart != null;
             ByteBuffer state = fetchState.nextStart;
-            SettableFuture<Void> future = SettableFuture.create();
+            SettableFuture<ResultSet> future = SettableFuture.create();
             this.fetchState = new FetchingState(null, future);
             return queryNextPage(state, future);
         }
 
-        private ListenableFuture<Void> queryNextPage(ByteBuffer nextStart, final SettableFuture<Void> future) {
+        private ListenableFuture<ResultSet> queryNextPage(ByteBuffer nextStart, final SettableFuture<ResultSet> future) {
 
             assert !(statement instanceof BatchStatement);
 
@@ -344,7 +355,7 @@ abstract class ArrayBackedResultSet implements ResultSet {
                                 if (rm.kind == Responses.Result.Kind.ROWS) {
                                     Responses.Result.Rows rows = (Responses.Result.Rows) rm;
                                     if (rows.metadata.pagingState != null)
-                                        info = info.withPagingState(rows.metadata.pagingState, protocolVersion).withStatement(statement);
+                                        info = info.withPagingState(rows.metadata.pagingState, protocolVersion, codecRegistry).withStatement(statement);
                                     MultiPage.this.nextPages.offer(rows.data);
                                     MultiPage.this.fetchState = rows.metadata.pagingState == null ? null : new FetchingState(rows.metadata.pagingState, null);
                                 } else if (rm.kind == Responses.Result.Kind.VOID) {
@@ -359,7 +370,7 @@ abstract class ArrayBackedResultSet implements ResultSet {
                                 }
 
                                 MultiPage.this.infos.offer(info);
-                                future.set(null);
+                                future.set(MultiPage.this);
                                 break;
                             case ERROR:
                                 future.setException(((Responses.Error) response).asException(connection.address));
@@ -416,9 +427,9 @@ abstract class ArrayBackedResultSet implements ResultSet {
 
         private static class FetchingState {
             public final ByteBuffer nextStart;
-            public final ListenableFuture<Void> inProgress;
+            public final ListenableFuture<ResultSet> inProgress;
 
-            FetchingState(ByteBuffer nextStart, ListenableFuture<Void> inProgress) {
+            FetchingState(ByteBuffer nextStart, ListenableFuture<ResultSet> inProgress) {
                 assert (nextStart == null) != (inProgress == null);
                 this.nextStart = nextStart;
                 this.inProgress = inProgress;
@@ -428,7 +439,7 @@ abstract class ArrayBackedResultSet implements ResultSet {
 
     // This method checks the value of the "[applied]" column manually, to avoid instantiating an ArrayBackedRow
     // object that we would throw away immediately.
-    private static boolean checkWasApplied(List<ByteBuffer> firstRow, ColumnDefinitions metadata) {
+    private static boolean checkWasApplied(List<ByteBuffer> firstRow, ColumnDefinitions metadata, ProtocolVersion protocolVersion) {
         // If the column is not present or not a boolean, we assume the query
         // was not a conditional statement, and therefore return true.
         if (firstRow == null)
@@ -445,6 +456,6 @@ abstract class ArrayBackedResultSet implements ResultSet {
         if (value == null || value.remaining() == 0)
             return false;
 
-        return TypeCodec.booleanCodec.deserializeNoBoxing(value);
+        return TypeCodec.cboolean().deserializeNoBoxing(value, protocolVersion);
     }
 }

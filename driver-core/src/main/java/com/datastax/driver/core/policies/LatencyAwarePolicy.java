@@ -59,7 +59,7 @@ import java.util.concurrent.atomic.AtomicReference;
  *
  * @since 1.0.4
  */
-public class LatencyAwarePolicy implements ChainableLoadBalancingPolicy, CloseableLoadBalancingPolicy {
+public class LatencyAwarePolicy implements ChainableLoadBalancingPolicy {
 
     private static final Logger logger = LoggerFactory.getLogger(LatencyAwarePolicy.class);
 
@@ -272,11 +272,6 @@ public class LatencyAwarePolicy implements ChainableLoadBalancingPolicy, Closeab
     }
 
     @Override
-    public void onSuspected(Host host) {
-        childPolicy.onSuspected(host);
-    }
-
-    @Override
     public void onDown(Host host) {
         childPolicy.onDown(host);
         latencyTracker.resetHost(host);
@@ -444,6 +439,16 @@ public class LatencyAwarePolicy implements ChainableLoadBalancingPolicy, Closeab
 
         public void resetHost(Host host) {
             latencies.remove(host);
+        }
+
+        @Override
+        public void onRegister(Cluster cluster) {
+            // nothing to do
+        }
+
+        @Override
+        public void onUnregister(Cluster cluster) {
+            // nothing to do
         }
     }
 
@@ -717,8 +722,7 @@ public class LatencyAwarePolicy implements ChainableLoadBalancingPolicy, Closeab
 
     @Override
     public void close() {
-        if (childPolicy instanceof CloseableLoadBalancingPolicy)
-            ((CloseableLoadBalancingPolicy) childPolicy).close();
+        childPolicy.close();
         updaterService.shutdown();
     }
 }

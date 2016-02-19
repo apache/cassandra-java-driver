@@ -51,6 +51,14 @@ public class LatencyAwarePolicyTest extends ScassandraTestBase {
         public void await() throws InterruptedException {
             latch.await(10, SECONDS);
         }
+
+        @Override
+        public void onRegister(Cluster cluster) {
+        }
+
+        @Override
+        public void onUnregister(Cluster cluster) {
+        }
     }
 
     @Test(groups = "short")

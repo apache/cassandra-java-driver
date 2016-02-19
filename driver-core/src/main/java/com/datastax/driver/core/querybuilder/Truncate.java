@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core.querybuilder;
 
+import com.datastax.driver.core.CodecRegistry;
 import com.datastax.driver.core.TableMetadata;
 
 import java.util.List;
@@ -37,7 +38,7 @@ public class Truncate extends BuiltStatement {
     }
 
     @Override
-    protected StringBuilder buildQueryString(List<Object> variables) {
+    protected StringBuilder buildQueryString(List<Object> variables, CodecRegistry codecRegistry) {
         StringBuilder builder = new StringBuilder();
 
         builder.append("TRUNCATE ");

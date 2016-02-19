@@ -278,14 +278,14 @@ either:
   [newConnectionThreshold][nct] so that enough connections are added by
   the time you reach the bottleneck.
 
-[result_set_future]:http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/ResultSetFuture.html
-[pooling_options]:http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/PoolingOptions.html
-[lbp]:http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/policies/LoadBalancingPolicy.html
-[nct]:http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/PoolingOptions.html#setNewConnectionThreshold-com.datastax.driver.core.HostDistance-int-
-[mrpc]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/PoolingOptions.html#setMaxRequestsPerConnection-com.datastax.driver.core.HostDistance-int-
-[sits]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/PoolingOptions.html#setIdleTimeoutSeconds-int-
-[rtm]:http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/SocketOptions.html#getReadTimeoutMillis--
-[exec_async]:http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/Session.html#executeAsync-com.datastax.driver.core.Statement-
-[ptm]:http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/PoolingOptions.html#setPoolTimeoutMillis-int-
-[nhae]:http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/exceptions/NoHostAvailableException.html
-[get_state]:http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/Session.html#getState--
+[result_set_future]:http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/ResultSetFuture.html
+[pooling_options]:http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/PoolingOptions.html
+[lbp]:http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/policies/LoadBalancingPolicy.html
+[nct]:http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/PoolingOptions.html#setNewConnectionThreshold-com.datastax.driver.core.HostDistance-int-
+[mrpc]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/PoolingOptions.html#setMaxRequestsPerConnection-com.datastax.driver.core.HostDistance-int-
+[sits]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/PoolingOptions.html#setIdleTimeoutSeconds-int-
+[rtm]:http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/SocketOptions.html#getReadTimeoutMillis--
+[exec_async]:http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Session.html#executeAsync-com.datastax.driver.core.Statement-
+[ptm]:http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/PoolingOptions.html#setPoolTimeoutMillis-int-
+[nhae]:http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/exceptions/NoHostAvailableException.html
+[get_state]:http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Session.html#getState--

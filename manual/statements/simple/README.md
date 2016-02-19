@@ -42,14 +42,27 @@ If you execute the same query often (or a similar query with different column va
 
 ### Using values
 
-Instead of sending a raw query string, you can use anonymous bind markers and provide values separately:
+Instead of sending a raw query string, you can use bind markers and provide values separately:
 
-```java
-String paramName = ...
-session.execute(
-    "SELECT value FROM application_params WHERE name = ?",
-    paramName);
-```
+* by position:
+
+    ```java
+    String paramName = ...
+    session.execute(
+        "SELECT value FROM application_params WHERE name = ?",
+        paramName);
+    ```
+* by name:
+
+    ```java
+    // Just a convenience to build a java.util.Map with a one-liner
+    import com.google.common.collect.ImmutableMap;
+
+    String paramName = ...
+    session.execute(
+        "SELECT value FROM application_params WHERE name = :n",
+        ImmutableMap.<String, Object>of("n", paramName));
+    ```
 
 This syntax has a few advantages:
 
@@ -115,4 +128,4 @@ session.execute(
         1, bytes);
 ```
 
-[SimpleStatement]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/SimpleStatement.html
+[SimpleStatement]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/SimpleStatement.html

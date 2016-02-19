@@ -15,8 +15,8 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.policies.AddressTranslator;
 import com.google.common.collect.ImmutableList;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,7 +38,19 @@ public class Host {
 
     static final Logger statesLogger = LoggerFactory.getLogger(Host.class.getName() + ".STATES");
 
+    // The address we'll use to connect to the node
     private final InetSocketAddress address;
+
+    // The broadcast_address as known by Cassandra.
+    // We use that internally because
+    // that's the 'peer' in the 'System.peers' table and avoids querying the full peers table in
+    // ControlConnection.refreshNodeInfo.
+    private volatile InetAddress broadcastAddress;
+
+    // The listen_address as known by Cassandra.
+    // This is usually the same as broadcast_address unless
+    // specified otherwise in cassandra.yaml file.
+    private volatile InetAddress listenAddress;
 
     enum State {ADDED, DOWN, UP}
 
@@ -60,13 +72,10 @@ public class Host {
     private volatile String rack;
     private volatile VersionNumber cassandraVersion;
 
-    // The listen_address (really, the broadcast one) as know by Cassandra. We use that internally because
-    // that's the 'peer' in the 'System.peers' table and avoids querying the full peers table in
-    // ControlConnection.refreshNodeInfo. We don't want to expose however because we don't always have the info
-    // (partly because the 'System.local' doesn't have it for some weird reason for instance).
-    volatile InetAddress listenAddress;
-
     private volatile Set<Token> tokens;
+
+    private volatile String dseWorkload;
+    private volatile VersionNumber dseVersion;
 
     // ClusterMetadata keeps one Host object per inet address and we rely on this (more precisely,
     // we rely on the fact that we can use Object equality as a valid equality), so don't use
@@ -87,37 +96,107 @@ public class Host {
         this.rack = rack;
     }
 
-    void setVersionAndListenAdress(String cassandraVersion, InetAddress listenAddress) {
-        if (listenAddress != null)
-            this.listenAddress = listenAddress;
-
-        if (cassandraVersion == null)
-            return;
+    void setVersion(String cassandraVersion) {
+        VersionNumber versionNumber = null;
         try {
-            this.cassandraVersion = VersionNumber.parse(cassandraVersion);
+            if (cassandraVersion != null) {
+                versionNumber = VersionNumber.parse(cassandraVersion);
+            }
         } catch (IllegalArgumentException e) {
             logger.warn("Error parsing Cassandra version {}. This shouldn't have happened", cassandraVersion);
         }
+        this.cassandraVersion = versionNumber;
+    }
+
+    void setBroadcastAddress(InetAddress broadcastAddress) {
+        this.broadcastAddress = broadcastAddress;
+    }
+
+    void setListenAddress(InetAddress listenAddress) {
+        this.listenAddress = listenAddress;
+    }
+
+    void setDseVersion(String dseVersion) {
+        VersionNumber versionNumber = null;
+        try {
+            if (dseVersion != null) {
+                versionNumber = VersionNumber.parse(dseVersion);
+            }
+        } catch (IllegalArgumentException e) {
+            logger.warn("Error parsing DSE version {}. This shouldn't have happened", dseVersion);
+        }
+        this.dseVersion = versionNumber;
+    }
+
+    void setDseWorkload(String dseWorkload) {
+        this.dseWorkload = dseWorkload;
     }
 
     /**
-     * Returns the node address.
+     * Returns the address that the driver will use to connect to the node.
      * <p/>
      * This is a shortcut for {@code getSocketAddress().getAddress()}.
      *
-     * @return the node {@link InetAddress}.
+     * @return the address.
+     * @see #getSocketAddress()
      */
     public InetAddress getAddress() {
         return address.getAddress();
     }
 
     /**
-     * Returns the node socket address.
+     * Returns the address and port that the driver will use to connect to the node.
+     * <p/>
+     * This is the node's broadcast RPC address, possibly translated if an {@link AddressTranslator} has been configured
+     * for this cluster.
+     * <p/>
+     * The broadcast RPC address is inferred from the following cassandra.yaml file settings:
+     * <ol>
+     * <li>{@code rpc_address}, {@code rpc_interface} or {@code broadcast_rpc_address}</li>
+     * <li>{@code native_transport_port}</li>
+     * </ol>
      *
-     * @return the node {@link InetSocketAddress}.
+     * @return the address and port.
+     * @see <a href="https://docs.datastax.com/en/cassandra/2.1/cassandra/configuration/configCassandra_yaml_r.html">The cassandra.yaml configuration file</a>
      */
     public InetSocketAddress getSocketAddress() {
         return address;
+    }
+
+    /**
+     * Returns the node broadcast address, that is, the IP by which it should be contacted by other peers in the cluster.
+     * <p/>
+     * This corresponds to the {@code broadcast_address} cassandra.yaml file setting and
+     * is by default the same as {@link #getListenAddress()}, unless specified
+     * otherwise in cassandra.yaml.
+     * <em>This is NOT the address clients should use to contact this node</em>.
+     * <p/>
+     * Note that, depending on the Cassandra version the node is currently in,
+     * it might not be possible to determine the node's broadcast address, in which
+     * case this method will return {@code null}.
+     *
+     * @return the node broadcast address.
+     * @see <a href="https://docs.datastax.com/en/cassandra/2.1/cassandra/configuration/configCassandra_yaml_r.html">The cassandra.yaml configuration file</a>
+     */
+    public InetAddress getBroadcastAddress() {
+        return broadcastAddress;
+    }
+
+    /**
+     * Returns the node listen address, that is, the IP the node uses to contact other peers in the cluster.
+     * <p/>
+     * This corresponds to the {@code listen_address} cassandra.yaml file setting.
+     * <em>This is NOT the address clients should use to contact this node</em>.
+     * <p/>
+     * Note that, depending on the Cassandra version the node is currently in,
+     * it might not be possible to determine the node's listen address, in which
+     * case this method will return {@code null}.
+     *
+     * @return the node listen address.
+     * @see <a href="https://docs.datastax.com/en/cassandra/2.1/cassandra/configuration/configCassandra_yaml_r.html">The cassandra.yaml configuration file</a>
+     */
+    public InetAddress getListenAddress() {
+        return listenAddress;
     }
 
     /**
@@ -139,7 +218,7 @@ public class Host {
      * <p/>
      * The returned rack name is the one as known by Cassandra.
      * It is also possible for this information to be unavailable. In that case
-     * this method returns {@code null}, and the caller should always aware of this
+     * this method returns {@code null}, and the caller should always be aware of this
      * possibility.
      *
      * @return the Cassandra rack name or null if the rack is unavailable
@@ -151,13 +230,40 @@ public class Host {
     /**
      * The Cassandra version the host is running.
      * <p/>
-     * As for other host information fetch from Cassandra above, the returned
-     * version can theoretically be null if the information is unavailable.
+     * It is also possible for this information to be unavailable. In that case
+     * this method returns {@code null}, and the caller should always be aware of this
+     * possibility.
      *
      * @return the Cassandra version the host is running.
      */
     public VersionNumber getCassandraVersion() {
         return cassandraVersion;
+    }
+
+    /**
+     * The DSE version the host is running.
+     * <p/>
+     * It is also possible for this information to be unavailable. In that case
+     * this method returns {@code null}, and the caller should always be aware of this
+     * possibility.
+     *
+     * @return the DSE version the host is running.
+     */
+    public VersionNumber getDseVersion() {
+        return dseVersion;
+    }
+
+    /**
+     * The DSE Workload the host is running.
+     * <p/>
+     * It is also possible for this information to be unavailable. In that case
+     * this method returns {@code null}, and the caller should always be aware of this
+     * possibility.
+     *
+     * @return the DSE workload the host is running.
+     */
+    public String getDseWorkload() {
+        return dseWorkload;
     }
 
     /**
@@ -201,22 +307,6 @@ public class Host {
      */
     public String getState() {
         return state.name();
-    }
-
-    /**
-     * Returns a {@code ListenableFuture} representing the completion of the first
-     * reconnection attempt after a node has been suspected.
-     * <p/>
-     * This is useful in load balancing policies when there are no more live nodes and
-     * we are trying suspected nodes.
-     *
-     * @return the future.
-     * @deprecated the suspicion mechanism has been disabled. This will always return
-     * a completed future.
-     */
-    @Deprecated
-    public ListenableFuture<?> getInitialReconnectionAttemptFuture() {
-        return Futures.immediateFuture(null);
     }
 
     /**
@@ -300,34 +390,44 @@ public class Host {
          *
          * @param host the host that has been newly added.
          */
-        public void onAdd(Host host);
+        void onAdd(Host host);
 
         /**
          * Called when a node is determined to be up.
          *
          * @param host the host that has been detected up.
          */
-        public void onUp(Host host);
-
-        /**
-         * @deprecated the "suspicion" mechanism has been deprecated. This will never
-         * get called.
-         */
-        @Deprecated
-        public void onSuspected(Host host);
+        void onUp(Host host);
 
         /**
          * Called when a node is determined to be down.
          *
          * @param host the host that has been detected down.
          */
-        public void onDown(Host host);
+        void onDown(Host host);
 
         /**
          * Called when a node is removed from the cluster.
          *
          * @param host the removed host.
          */
-        public void onRemove(Host host);
+        void onRemove(Host host);
+
+        /**
+         * Gets invoked when the tracker is registered with a cluster, or at cluster startup if the
+         * tracker was registered at initialization with
+         * {@link com.datastax.driver.core.Cluster.Initializer#register(LatencyTracker)}.
+         *
+         * @param cluster the cluster that this tracker is registered with.
+         */
+        void onRegister(Cluster cluster);
+
+        /**
+         * Gets invoked when the tracker is unregistered from a cluster, or at cluster shutdown if
+         * the tracker was not unregistered.
+         *
+         * @param cluster the cluster that this tracker was registered with.
+         */
+        void onUnregister(Cluster cluster);
     }
 }

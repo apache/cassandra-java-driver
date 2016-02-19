@@ -15,6 +15,8 @@
  */
 package com.datastax.driver.core.policies;
 
+import com.datastax.driver.core.Cluster;
+
 /**
  * A reconnection policy that waits exponentially longer between each
  * reconnection attempt (but keeps a constant delay once a maximum delay is
@@ -94,5 +96,15 @@ public class ExponentialReconnectionPolicy implements ReconnectionPolicy {
 
             return Math.min(baseDelayMs * (1L << attempts++), maxDelayMs);
         }
+    }
+
+    @Override
+    public void init(Cluster cluster) {
+        // nothing to do
+    }
+
+    @Override
+    public void close() {
+        // nothing to do
     }
 }

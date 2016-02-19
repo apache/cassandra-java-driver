@@ -89,7 +89,7 @@ public class ReconnectionTest extends CCMTestsSupport {
         CountingReconnectionPolicy reconnectionPolicy = new CountingReconnectionPolicy(new ConstantReconnectionPolicy(reconnectionDelayMillis));
         CountingAuthProvider authProvider = new CountingAuthProvider("cassandra", "cassandra");
         Cluster cluster = register(Cluster.builder()
-                .addContactPointsWithPorts(ccm().addressOfNode(1))
+                .addContactPoints(getContactPoints().get(0))
                 .withPort(ccm().getBinaryPort())
                 // Start with the correct auth so that we can initialize the server
                 .withAuthProvider(authProvider)
@@ -130,7 +130,7 @@ public class ReconnectionTest extends CCMTestsSupport {
         CountingReconnectionPolicy reconnectionPolicy = new CountingReconnectionPolicy(new ConstantReconnectionPolicy(reconnectionDelayMillis));
 
         Cluster cluster = register(Cluster.builder()
-                .addContactPointsWithPorts(ccm().addressOfNode(1))
+                .addContactPoints(getContactPoints().get(0))
                 .withPort(ccm().getBinaryPort())
                 .withReconnectionPolicy(reconnectionPolicy).build());
         cluster.connect();
@@ -214,7 +214,7 @@ public class ReconnectionTest extends CCMTestsSupport {
         // Spy SocketOptions.getKeepAlive to count how many connections were instantiated.
         SocketOptions socketOptions = spy(new SocketOptions());
         Cluster cluster = register(Cluster.builder()
-                .addContactPointsWithPorts(ccm().addressOfNode(1))
+                .addContactPoints(getContactPoints().get(0))
                 .withPort(ccm().getBinaryPort())
                 .withReconnectionPolicy(new ConstantReconnectionPolicy(5000))
                 .withLoadBalancingPolicy(loadBalancingPolicy)
@@ -264,9 +264,9 @@ public class ReconnectionTest extends CCMTestsSupport {
         }
 
         @Override
-        public Authenticator newAuthenticator(InetSocketAddress host) {
+        public Authenticator newAuthenticator(InetSocketAddress host, String authenticator) {
             count.incrementAndGet();
-            return super.newAuthenticator(host);
+            return super.newAuthenticator(host, authenticator);
         }
     }
 

@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.exceptions.DriverException;
 import com.datastax.driver.core.policies.*;
 import org.testng.annotations.Test;
 
@@ -143,6 +144,21 @@ public class StatementWrapperTest extends CCMTestsSupport {
         @Override
         public RetryDecision onWriteTimeout(Statement statement, ConsistencyLevel cl, WriteType writeType, int requiredAcks, int receivedAcks, int nbRetry) {
             return RetryDecision.rethrow();
+        }
+
+        @Override
+        public RetryDecision onRequestError(Statement statement, ConsistencyLevel cl, DriverException e, int nbRetry) {
+            return RetryDecision.tryNextHost(cl);
+        }
+
+        @Override
+        public void init(Cluster cluster) {
+            // nothing to do
+        }
+
+        @Override
+        public void close() {
+            // nothing to do
         }
     }
 }

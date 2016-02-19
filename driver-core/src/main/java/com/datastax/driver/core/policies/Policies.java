@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core.policies;
 
+import com.datastax.driver.core.AtomicMonotonicTimestampGenerator;
 import com.datastax.driver.core.ServerSideTimestampGenerator;
 import com.datastax.driver.core.TimestampGenerator;
 import com.google.common.base.Objects;
@@ -35,36 +36,26 @@ public class Policies {
 
     private static final ReconnectionPolicy DEFAULT_RECONNECTION_POLICY = new ExponentialReconnectionPolicy(1000, 10 * 60 * 1000);
     private static final RetryPolicy DEFAULT_RETRY_POLICY = DefaultRetryPolicy.INSTANCE;
-    private static final AddressTranslater DEFAULT_ADDRESS_TRANSLATER = new IdentityTranslater();
+    private static final AddressTranslator DEFAULT_ADDRESS_TRANSLATOR = new IdentityTranslator();
     private static final SpeculativeExecutionPolicy DEFAULT_SPECULATIVE_EXECUTION_POLICY = NoSpeculativeExecutionPolicy.INSTANCE;
 
     private final LoadBalancingPolicy loadBalancingPolicy;
     private final ReconnectionPolicy reconnectionPolicy;
     private final RetryPolicy retryPolicy;
-    private final AddressTranslater addressTranslater;
+    private final AddressTranslator addressTranslator;
     private final TimestampGenerator timestampGenerator;
     private final SpeculativeExecutionPolicy speculativeExecutionPolicy;
 
-    /**
-     * @deprecated this constructor is exposed for backward compatibility.
-     * Use {@link #builder()} instead.
-     */
-    @Deprecated
-    /*
-     * This constructor should be private and called only by the builder.
-     * If a new field gets added, add it to this constructor and make it private, then expose the current signature as a deprecated method
-     * (see end of class).
-     */
-    public Policies(LoadBalancingPolicy loadBalancingPolicy,
-                    ReconnectionPolicy reconnectionPolicy,
-                    RetryPolicy retryPolicy,
-                    AddressTranslater addressTranslater,
-                    TimestampGenerator timestampGenerator,
-                    SpeculativeExecutionPolicy speculativeExecutionPolicy) {
+    private Policies(LoadBalancingPolicy loadBalancingPolicy,
+                     ReconnectionPolicy reconnectionPolicy,
+                     RetryPolicy retryPolicy,
+                     AddressTranslator addressTranslator,
+                     TimestampGenerator timestampGenerator,
+                     SpeculativeExecutionPolicy speculativeExecutionPolicy) {
         this.loadBalancingPolicy = loadBalancingPolicy;
         this.reconnectionPolicy = reconnectionPolicy;
         this.retryPolicy = retryPolicy;
-        this.addressTranslater = addressTranslater;
+        this.addressTranslator = addressTranslator;
         this.timestampGenerator = timestampGenerator;
         this.speculativeExecutionPolicy = speculativeExecutionPolicy;
     }
@@ -111,14 +102,14 @@ public class Policies {
     }
 
     /**
-     * The default address translater.
+     * The default address translator.
      * <p/>
-     * The default address translater is {@link IdentityTranslater}.
+     * The default address translator is {@link IdentityTranslator}.
      *
-     * @return the default address translater.
+     * @return the default address translator.
      */
-    public static AddressTranslater defaultAddressTranslater() {
-        return DEFAULT_ADDRESS_TRANSLATER;
+    public static AddressTranslator defaultAddressTranslator() {
+        return DEFAULT_ADDRESS_TRANSLATOR;
     }
 
     /**
@@ -129,7 +120,7 @@ public class Policies {
      * @return the default timestamp generator.
      */
     public static TimestampGenerator defaultTimestampGenerator() {
-        return ServerSideTimestampGenerator.INSTANCE;
+        return new AtomicMonotonicTimestampGenerator();
     }
 
     /**
@@ -178,12 +169,12 @@ public class Policies {
     }
 
     /**
-     * The address translater in use.
+     * The address translator in use.
      *
-     * @return the address translater in use.
+     * @return the address translator in use.
      */
-    public AddressTranslater getAddressTranslater() {
-        return addressTranslater;
+    public AddressTranslator getAddressTranslator() {
+        return addressTranslator;
     }
 
     /**
@@ -211,7 +202,7 @@ public class Policies {
         private LoadBalancingPolicy loadBalancingPolicy;
         private ReconnectionPolicy reconnectionPolicy;
         private RetryPolicy retryPolicy;
-        private AddressTranslater addressTranslater;
+        private AddressTranslator addressTranslator;
         private TimestampGenerator timestampGenerator;
         private SpeculativeExecutionPolicy speculativeExecutionPolicy;
 
@@ -251,11 +242,11 @@ public class Policies {
         /**
          * Sets the address translator.
          *
-         * @param addressTranslater see {@link #getAddressTranslater()}.
+         * @param addressTranslator see {@link #getAddressTranslator()}.
          * @return this builder.
          */
-        public Builder withAddressTranslater(AddressTranslater addressTranslater) {
-            this.addressTranslater = addressTranslater;
+        public Builder withAddressTranslator(AddressTranslator addressTranslator) {
+            this.addressTranslator = addressTranslator;
             return this;
         }
 
@@ -293,67 +284,9 @@ public class Policies {
                     loadBalancingPolicy == null ? Policies.defaultLoadBalancingPolicy() : loadBalancingPolicy,
                     Objects.firstNonNull(reconnectionPolicy, Policies.defaultReconnectionPolicy()),
                     Objects.firstNonNull(retryPolicy, Policies.defaultRetryPolicy()),
-                    Objects.firstNonNull(addressTranslater, Policies.defaultAddressTranslater()),
+                    Objects.firstNonNull(addressTranslator, Policies.defaultAddressTranslator()),
                     Objects.firstNonNull(timestampGenerator, Policies.defaultTimestampGenerator()),
                     Objects.firstNonNull(speculativeExecutionPolicy, Policies.defaultSpeculativeExecutionPolicy()));
         }
-    }
-
-    /*
-     * The public constructors of this class were mistakenly changed over time (this is a breaking change).
-     *
-     * The code below provides backward compatibility with every signature that was ever exposed in a released version.
-     * This is ugly but the safest way to avoid issues for clients upgrading from a previous version.
-     *
-     * In the future, new fields will only be added to the builder, which avoids this problem.
-     */
-
-    /**
-     * @deprecated this constructor is provided for backward compatibility.
-     * Use {@link #builder()} instead.
-     */
-    @Deprecated
-    public Policies() {
-        this(defaultLoadBalancingPolicy(), defaultReconnectionPolicy(), defaultRetryPolicy(), defaultAddressTranslater(), defaultTimestampGenerator(), defaultSpeculativeExecutionPolicy());
-    }
-
-    /**
-     * @deprecated this constructor is provided for backward compatibility.
-     * Use {@link #builder()} instead.
-     */
-    public Policies(LoadBalancingPolicy loadBalancingPolicy, ReconnectionPolicy reconnectionPolicy, RetryPolicy retryPolicy) {
-        this(loadBalancingPolicy, reconnectionPolicy, retryPolicy, defaultAddressTranslater(), defaultTimestampGenerator(), defaultSpeculativeExecutionPolicy());
-    }
-
-    /**
-     * @deprecated this constructor is provided for backward compatibility.
-     * Use {@link #builder()} instead.
-     */
-    public Policies(LoadBalancingPolicy loadBalancingPolicy, ReconnectionPolicy reconnectionPolicy, RetryPolicy retryPolicy, AddressTranslater addressTranslater) {
-        this(loadBalancingPolicy, reconnectionPolicy, retryPolicy, addressTranslater, defaultTimestampGenerator(), defaultSpeculativeExecutionPolicy());
-    }
-
-    /**
-     * @deprecated this constructor is provided for backward compatibility.
-     * Use {@link #builder()} instead.
-     */
-    public Policies(LoadBalancingPolicy loadBalancingPolicy, ReconnectionPolicy reconnectionPolicy, RetryPolicy retryPolicy, SpeculativeExecutionPolicy speculativeExecutionPolicy) {
-        this(loadBalancingPolicy, reconnectionPolicy, retryPolicy, defaultAddressTranslater(), defaultTimestampGenerator(), speculativeExecutionPolicy);
-    }
-
-    /**
-     * @deprecated this constructor is provided for backward compatibility.
-     * Use {@link #builder()} instead.
-     */
-    public Policies(LoadBalancingPolicy loadBalancingPolicy, ReconnectionPolicy reconnectionPolicy, RetryPolicy retryPolicy, AddressTranslater addressTranslater, TimestampGenerator timestampGenerator) {
-        this(loadBalancingPolicy, reconnectionPolicy, retryPolicy, addressTranslater, timestampGenerator, defaultSpeculativeExecutionPolicy());
-    }
-
-    /**
-     * @deprecated this constructor is provided for backward compatibility.
-     * Use {@link #builder()} instead.
-     */
-    public Policies(LoadBalancingPolicy loadBalancingPolicy, ReconnectionPolicy reconnectionPolicy, RetryPolicy retryPolicy, AddressTranslater addressTranslater, SpeculativeExecutionPolicy speculativeExecutionPolicy) {
-        this(loadBalancingPolicy, reconnectionPolicy, retryPolicy, addressTranslater, defaultTimestampGenerator(), speculativeExecutionPolicy);
     }
 }

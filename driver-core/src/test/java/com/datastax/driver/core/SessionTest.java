@@ -40,9 +40,9 @@ public class SessionTest extends CCMTestsSupport {
 
     @Override
     public void onTestContextInitialized() {
-        execute(String.format(TestUtils.CREATE_TABLE_SIMPLE_FORMAT, TABLE1),
-                String.format(TestUtils.CREATE_TABLE_SIMPLE_FORMAT, TABLE2),
-                String.format(TestUtils.CREATE_TABLE_SIMPLE_FORMAT, TABLE3),
+        execute(String.format("CREATE TABLE %s (k text PRIMARY KEY, t text, i int, f float)", TABLE1),
+                String.format("CREATE TABLE %s (k text PRIMARY KEY, t text, i int, f float)", TABLE2),
+                String.format("CREATE TABLE %s (k text PRIMARY KEY, t text, i int, f float)", TABLE3),
                 String.format("CREATE TABLE %s (k text PRIMARY KEY, c counter)", COUNTER_TABLE));
     }
 
@@ -50,7 +50,7 @@ public class SessionTest extends CCMTestsSupport {
     public void executeTest() throws Exception {
         // Simple calls to all versions of the execute/executeAsync methods
         String key = "execute_test";
-        ResultSet rs = session().execute(String.format(Locale.US, TestUtils.INSERT_FORMAT, TABLE1, key, "foo", 42, 24.03f));
+        ResultSet rs = session().execute(String.format(Locale.US, "INSERT INTO %s (k, t, i, f) VALUES ('%s', '%s', %d, %f)", TABLE1, key, "foo", 42, 24.03f));
         assertTrue(rs.isExhausted());
 
         // execute
@@ -67,7 +67,7 @@ public class SessionTest extends CCMTestsSupport {
         // Simple calls to all versions of the execute/executeAsync methods for prepared statements
         // Note: the goal is only to exercice the Session methods, PreparedStatementTest have better prepared statement tests.
         String key = "execute_prepared_test";
-        ResultSet rs = session().execute(String.format(Locale.US, TestUtils.INSERT_FORMAT, TABLE2, key, "foo", 42, 24.03f));
+        ResultSet rs = session().execute(String.format(Locale.US, "INSERT INTO %s (k, t, i, f) VALUES ('%s', '%s', %d, %f)", TABLE2, key, "foo", 42, 24.03f));
         assertTrue(rs.isExhausted());
 
         PreparedStatement p = session().prepare(String.format(TestUtils.SELECT_ALL_FORMAT + " WHERE k = ?", TABLE2));
@@ -137,7 +137,7 @@ public class SessionTest extends CCMTestsSupport {
 
             // Simple calls to all versions of the execute/executeAsync methods
             String key = "execute_compressed_test_" + compression;
-            ResultSet rs = compressedSession.execute(String.format(Locale.US, TestUtils.INSERT_FORMAT, TABLE3, key, "foo", 42, 24.03f));
+            ResultSet rs = compressedSession.execute(String.format(Locale.US, "INSERT INTO %s (k, t, i, f) VALUES ('%s', '%s', %d, %f)", TABLE3, key, "foo", 42, 24.03f));
             assertTrue(rs.isExhausted());
 
             String SELECT_ALL = String.format(TestUtils.SELECT_ALL_FORMAT + " WHERE k = '%s'", TABLE3, key);

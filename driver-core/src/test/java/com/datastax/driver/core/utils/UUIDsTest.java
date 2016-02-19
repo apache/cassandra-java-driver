@@ -15,8 +15,8 @@
  */
 package com.datastax.driver.core.utils;
 
-import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.ProtocolVersion;
+import com.datastax.driver.core.TypeCodec;
 import org.testng.annotations.Test;
 
 import java.nio.ByteBuffer;
@@ -112,9 +112,9 @@ public class UUIDsTest {
     }
 
     private static void assertWithin(UUID uuid, UUID lowerBound, UUID upperBound) {
-        ByteBuffer uuidBytes = DataType.uuid().serialize(uuid, ProtocolVersion.V1);
-        ByteBuffer lb = DataType.uuid().serialize(lowerBound, ProtocolVersion.V1);
-        ByteBuffer ub = DataType.uuid().serialize(upperBound, ProtocolVersion.V1);
+        ByteBuffer uuidBytes = TypeCodec.uuid().serialize(uuid, ProtocolVersion.V1);
+        ByteBuffer lb = TypeCodec.uuid().serialize(lowerBound, ProtocolVersion.V1);
+        ByteBuffer ub = TypeCodec.uuid().serialize(upperBound, ProtocolVersion.V1);
         assertTrue(compareTimestampBytes(lb, uuidBytes) <= 0);
         assertTrue(compareTimestampBytes(ub, uuidBytes) >= 0);
     }

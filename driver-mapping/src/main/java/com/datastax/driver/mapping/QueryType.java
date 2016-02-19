@@ -56,10 +56,6 @@ class QueryType {
         this.endInclusive = endInclusive;
     }
 
-    public static QueryType slice(int startBoundSize, boolean startInclusive, int endBoundSize, boolean endInclusive, boolean reversed) {
-        return new QueryType(reversed ? Kind.REVERSED_SLICE : Kind.SLICE, startBoundSize, startInclusive, endBoundSize, endInclusive);
-    }
-
     String makePreparedQueryString(TableMetadata table, EntityMapper<?> mapper, MappingManager manager, Set<ColumnMapper<?>> columns, Collection<Mapper.Option> options) {
         switch (kind) {
             case SAVE: {

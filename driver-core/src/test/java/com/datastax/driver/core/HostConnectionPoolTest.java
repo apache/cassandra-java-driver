@@ -16,6 +16,8 @@
 package com.datastax.driver.core;
 
 import com.codahale.metrics.Gauge;
+import com.datastax.driver.core.exceptions.BusyConnectionException;
+import com.datastax.driver.core.exceptions.ConnectionException;
 import com.datastax.driver.core.policies.ConstantReconnectionPolicy;
 import com.google.common.util.concurrent.*;
 import org.scassandra.cql.PrimitiveType;
@@ -75,14 +77,6 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
                 assertThat(expectedConnections).contains(request.connection);
         }
         return requests;
-    }
-
-    @Override
-    protected Cluster.Builder configure(Cluster.Builder builder) {
-        // Use version 2 at highest.
-        ProtocolVersion versionToUse = TestUtils.getDesiredProtocolVersion();
-        versionToUse = versionToUse == ProtocolVersion.V3 ? ProtocolVersion.V2 : versionToUse;
-        return builder.withProtocolVersion(versionToUse);
     }
 
     /**
@@ -1055,7 +1049,7 @@ public class HostConnectionPoolTest extends ScassandraTestBase.PerClassCluster {
         static MockRequest send(HostConnectionPool pool) throws ConnectionException, BusyConnectionException, TimeoutException {
             // Create a MockRequest and spy on it.  Create a response handler and add it to the connection's dispatcher.
             MockRequest request = spy(new MockRequest(pool));
-            request.responseHandler = new Connection.ResponseHandler(request.connection, request);
+            request.responseHandler = new Connection.ResponseHandler(request.connection, -1, request);
             request.connection.dispatcher.add(request.responseHandler);
             return request;
         }

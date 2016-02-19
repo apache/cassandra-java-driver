@@ -73,12 +73,13 @@ public class PlainTextAuthProvider implements AuthProvider {
      * Uses the supplied credentials and the SASL PLAIN mechanism to login
      * to the server.
      *
-     * @param host the Cassandra host with which we want to authenticate
+     * @param host          the Cassandra host with which we want to authenticate
+     * @param authenticator the configured authenticator on the host
      * @return an Authenticator instance which can be used to perform
      * authentication negotiations on behalf of the client
      */
     @Override
-    public Authenticator newAuthenticator(InetSocketAddress host) {
+    public Authenticator newAuthenticator(InetSocketAddress host, String authenticator) {
         return new PlainTextAuthenticator(username, password);
     }
 

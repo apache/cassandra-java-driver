@@ -16,18 +16,18 @@
 package com.datastax.driver.core;
 
 import com.datastax.driver.core.exceptions.DriverInternalError;
+import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToMessageDecoder;
 import io.netty.handler.codec.MessageToMessageEncoder;
+import io.netty.util.AttributeKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * A message from the CQL binary protocol.
@@ -36,33 +36,52 @@ abstract class Message {
 
     protected static final Logger logger = LoggerFactory.getLogger(Message.class);
 
-    public interface Coder<R extends Request> {
-        public void encode(R request, ByteBuf dest, ProtocolVersion version);
+    static AttributeKey<CodecRegistry> CODEC_REGISTRY_ATTRIBUTE_KEY = AttributeKey.valueOf("com.datastax.driver.core.CodecRegistry");
 
-        public int encodedSize(R request, ProtocolVersion version);
+    interface Coder<R extends Request> {
+        void encode(R request, ByteBuf dest, ProtocolVersion version);
+
+        int encodedSize(R request, ProtocolVersion version);
     }
 
-    public interface Decoder<R extends Response> {
-        public R decode(ByteBuf body, ProtocolVersion version);
+    interface Decoder<R extends Response> {
+        R decode(ByteBuf body, ProtocolVersion version, CodecRegistry codecRegistry);
     }
 
     private volatile int streamId;
 
+    /**
+     * A generic key-value custom payload. Custom payloads are simply
+     * ignored by the default QueryHandler implementation server-side.
+     *
+     * @since Protocol V4
+     */
+    private volatile Map<String, ByteBuffer> customPayload;
+
     protected Message() {
     }
 
-    public Message setStreamId(int streamId) {
+    Message setStreamId(int streamId) {
         this.streamId = streamId;
         return this;
     }
 
-    public int getStreamId() {
+    int getStreamId() {
         return streamId;
     }
 
-    public static abstract class Request extends Message {
+    Map<String, ByteBuffer> getCustomPayload() {
+        return customPayload;
+    }
 
-        public enum Type {
+    Message setCustomPayload(Map<String, ByteBuffer> customPayload) {
+        this.customPayload = customPayload;
+        return this;
+    }
+
+    static abstract class Request extends Message {
+
+        enum Type {
             STARTUP(1, Requests.Startup.coder),
             CREDENTIALS(4, Requests.Credentials.coder),
             OPTIONS(5, Requests.Options.coder),
@@ -73,16 +92,16 @@ abstract class Message {
             BATCH(13, Requests.Batch.coder),
             AUTH_RESPONSE(15, Requests.AuthResponse.coder);
 
-            public final int opcode;
-            public final Coder<?> coder;
+            final int opcode;
+            final Coder<?> coder;
 
-            private Type(int opcode, Coder<?> coder) {
+            Type(int opcode, Coder<?> coder) {
                 this.opcode = opcode;
                 this.coder = coder;
             }
         }
 
-        public final Type type;
+        final Type type;
         private final boolean tracingRequested;
 
         protected Request(Type type) {
@@ -94,7 +113,7 @@ abstract class Message {
             this.tracingRequested = tracingRequested;
         }
 
-        public boolean isTracingRequested() {
+        boolean isTracingRequested() {
             return tracingRequested;
         }
 
@@ -157,9 +176,9 @@ abstract class Message {
         }
     }
 
-    public static abstract class Response extends Message {
+    static abstract class Response extends Message {
 
-        public enum Type {
+        enum Type {
             ERROR(0, Responses.Error.decoder),
             READY(2, Responses.Ready.decoder),
             AUTHENTICATE(3, Responses.Authenticate.decoder),
@@ -169,8 +188,8 @@ abstract class Message {
             AUTH_CHALLENGE(14, Responses.AuthChallenge.decoder),
             AUTH_SUCCESS(16, Responses.AuthSuccess.decoder);
 
-            public final int opcode;
-            public final Decoder<?> decoder;
+            final int opcode;
+            final Decoder<?> decoder;
 
             private static final Type[] opcodeIdx;
 
@@ -186,12 +205,12 @@ abstract class Message {
                 }
             }
 
-            private Type(int opcode, Decoder<?> decoder) {
+            Type(int opcode, Decoder<?> decoder) {
                 this.opcode = opcode;
                 this.decoder = decoder;
             }
 
-            public static Type fromOpcode(int opcode) {
+            static Type fromOpcode(int opcode) {
                 if (opcode < 0 || opcode >= opcodeIdx.length)
                     throw new DriverInternalError(String.format("Unknown response opcode %d", opcode));
                 Type t = opcodeIdx[opcode];
@@ -201,47 +220,69 @@ abstract class Message {
             }
         }
 
-        public final Type type;
-        protected UUID tracingId;
+        final Type type;
+        protected volatile UUID tracingId;
+        protected volatile List<String> warnings;
 
         protected Response(Type type) {
             this.type = type;
         }
 
-        public Response setTracingId(UUID tracingId) {
+        Response setTracingId(UUID tracingId) {
             this.tracingId = tracingId;
             return this;
         }
 
-        public UUID getTracingId() {
+        UUID getTracingId() {
             return tracingId;
+        }
+
+        Response setWarnings(List<String> warnings) {
+            this.warnings = warnings;
+            return this;
         }
     }
 
     @ChannelHandler.Sharable
-    public static class ProtocolDecoder extends MessageToMessageDecoder<Frame> {
+    static class ProtocolDecoder extends MessageToMessageDecoder<Frame> {
 
         @Override
         protected void decode(ChannelHandlerContext ctx, Frame frame, List<Object> out) throws Exception {
             boolean isTracing = frame.header.flags.contains(Frame.Header.Flag.TRACING);
+            boolean isCustomPayload = frame.header.flags.contains(Frame.Header.Flag.CUSTOM_PAYLOAD);
             UUID tracingId = isTracing ? CBUtil.readUUID(frame.body) : null;
+            Map<String, ByteBuffer> customPayload = isCustomPayload ? CBUtil.readBytesMap(frame.body) : null;
+
+            if (customPayload != null && logger.isTraceEnabled()) {
+                logger.trace("Received payload: {} ({} bytes total)", printPayload(customPayload), CBUtil.sizeOfBytesMap(customPayload));
+            }
+
+            boolean hasWarnings = frame.header.flags.contains(Frame.Header.Flag.WARNING);
+            List<String> warnings = hasWarnings ? CBUtil.readStringList(frame.body) : Collections.<String>emptyList();
 
             try {
-                Response response = Response.Type.fromOpcode(frame.header.opcode).decoder.decode(frame.body, frame.header.version);
-                response.setTracingId(tracingId).setStreamId(frame.header.streamId);
+                CodecRegistry codecRegistry = ctx.channel().attr(CODEC_REGISTRY_ATTRIBUTE_KEY).get();
+                assert codecRegistry != null;
+                Response response = Response.Type.fromOpcode(frame.header.opcode).decoder.decode(frame.body, frame.header.version, codecRegistry);
+                response
+                        .setTracingId(tracingId)
+                        .setWarnings(warnings)
+                        .setCustomPayload(customPayload)
+                        .setStreamId(frame.header.streamId);
                 out.add(response);
             } finally {
                 frame.body.release();
             }
         }
+
     }
 
     @ChannelHandler.Sharable
-    public static class ProtocolEncoder extends MessageToMessageEncoder<Request> {
+    static class ProtocolEncoder extends MessageToMessageEncoder<Request> {
 
         private final ProtocolVersion protocolVersion;
 
-        public ProtocolEncoder(ProtocolVersion version) {
+        ProtocolEncoder(ProtocolVersion version) {
             this.protocolVersion = version;
         }
 
@@ -250,13 +291,72 @@ abstract class Message {
             EnumSet<Frame.Header.Flag> flags = EnumSet.noneOf(Frame.Header.Flag.class);
             if (request.isTracingRequested())
                 flags.add(Frame.Header.Flag.TRACING);
+            Map<String, ByteBuffer> customPayload = request.getCustomPayload();
+            if (customPayload != null) {
+                if (protocolVersion.compareTo(ProtocolVersion.V4) < 0)
+                    throw new UnsupportedFeatureException(
+                            protocolVersion,
+                            "Custom payloads are only supported since native protocol V4");
+                flags.add(Frame.Header.Flag.CUSTOM_PAYLOAD);
+            }
 
             @SuppressWarnings("unchecked")
             Coder<Request> coder = (Coder<Request>) request.type.coder;
-            ByteBuf body = ctx.alloc().buffer(coder.encodedSize(request, protocolVersion));
-            coder.encode(request, body, protocolVersion);
+            int messageSize = coder.encodedSize(request, protocolVersion);
+            int payloadLength = -1;
+            if (customPayload != null) {
+                payloadLength = CBUtil.sizeOfBytesMap(customPayload);
+                messageSize += payloadLength;
+            }
+            ByteBuf body = ctx.alloc().buffer(messageSize);
+            if (customPayload != null) {
+                CBUtil.writeBytesMap(customPayload, body);
+                if (logger.isTraceEnabled()) {
+                    logger.trace("Sending payload: {} ({} bytes total)", printPayload(customPayload), payloadLength);
+                }
+            }
 
+            coder.encode(request, body, protocolVersion);
             out.add(Frame.create(protocolVersion, request.type.opcode, request.getStreamId(), flags, body));
         }
+    }
+
+    // private stuff to debug custom payloads
+
+    private static final char[] hexArray = "0123456789ABCDEF".toCharArray();
+
+    static String printPayload(Map<String, ByteBuffer> customPayload) {
+        if (customPayload == null)
+            return "null";
+        if (customPayload.isEmpty())
+            return "{}";
+        StringBuilder sb = new StringBuilder("{");
+        Iterator<Map.Entry<String, ByteBuffer>> iterator = customPayload.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<String, ByteBuffer> entry = iterator.next();
+            sb.append(entry.getKey());
+            sb.append(":");
+            if (entry.getValue() == null)
+                sb.append("null");
+            else
+                bytesToHex(entry.getValue(), sb);
+            if (iterator.hasNext())
+                sb.append(", ");
+        }
+        sb.append("}");
+        return sb.toString();
+    }
+
+    // this method doesn't modify the given ByteBuffer
+    static void bytesToHex(ByteBuffer bytes, StringBuilder sb) {
+        int length = Math.min(bytes.remaining(), 50);
+        sb.append("0x");
+        for (int i = 0; i < length; i++) {
+            int v = bytes.get(i) & 0xFF;
+            sb.append(hexArray[v >>> 4]);
+            sb.append(hexArray[v & 0x0F]);
+        }
+        if (bytes.remaining() > 50)
+            sb.append("... [TRUNCATED]");
     }
 }

@@ -15,6 +15,9 @@
  */
 package com.datastax.driver.core;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Lists;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -30,6 +33,7 @@ public class KeyspaceMetadata {
     private static final String DURABLE_WRITES = "durable_writes";
     private static final String STRATEGY_CLASS = "strategy_class";
     private static final String STRATEGY_OPTIONS = "strategy_options";
+    private static final String REPLICATION = "replication";
 
     private final String name;
     private final boolean durableWrites;
@@ -38,27 +42,33 @@ public class KeyspaceMetadata {
     private final Map<String, String> replication;
 
     final Map<String, TableMetadata> tables = new ConcurrentHashMap<String, TableMetadata>();
+    final Map<String, MaterializedViewMetadata> views = new ConcurrentHashMap<String, MaterializedViewMetadata>();
     final Map<String, UserType> userTypes = new ConcurrentHashMap<String, UserType>();
+    final Map<String, FunctionMetadata> functions = new ConcurrentHashMap<String, FunctionMetadata>();
+    final Map<String, AggregateMetadata> aggregates = new ConcurrentHashMap<String, AggregateMetadata>();
 
-    private KeyspaceMetadata(String name, boolean durableWrites, Map<String, String> replication) {
+    @VisibleForTesting
+    KeyspaceMetadata(String name, boolean durableWrites, Map<String, String> replication) {
         this.name = name;
         this.durableWrites = durableWrites;
         this.replication = replication;
         this.strategy = ReplicationStrategy.create(replication);
     }
 
-    static KeyspaceMetadata build(Row row) {
-
-        String name = row.getString(KS_NAME);
-        boolean durableWrites = row.getBool(DURABLE_WRITES);
-
-        Map<String, String> replicationOptions = new HashMap<String, String>();
-        replicationOptions.put("class", row.getString(STRATEGY_CLASS));
-        replicationOptions.putAll(SimpleJSONParser.parseStringMap(row.getString(STRATEGY_OPTIONS)));
-
-        KeyspaceMetadata ksm = new KeyspaceMetadata(name, durableWrites, replicationOptions);
-
-        return ksm;
+    static KeyspaceMetadata build(Row row, VersionNumber cassandraVersion) {
+        if (cassandraVersion.getMajor() <= 2) {
+            String name = row.getString(KS_NAME);
+            boolean durableWrites = row.getBool(DURABLE_WRITES);
+            Map<String, String> replicationOptions;
+            replicationOptions = new HashMap<String, String>();
+            replicationOptions.put("class", row.getString(STRATEGY_CLASS));
+            replicationOptions.putAll(SimpleJSONParser.parseStringMap(row.getString(STRATEGY_OPTIONS)));
+            return new KeyspaceMetadata(name, durableWrites, replicationOptions);
+        } else {
+            String name = row.getString(KS_NAME);
+            boolean durableWrites = row.getBool(DURABLE_WRITES);
+            return new KeyspaceMetadata(name, durableWrites, row.getMap(REPLICATION, String.class, String.class));
+        }
     }
 
     /**
@@ -115,6 +125,31 @@ public class KeyspaceMetadata {
     }
 
     /**
+     * Returns the metadata for a materialized view contained in this keyspace.
+     *
+     * @param name the name of materialized view to retrieve
+     * @return the metadata for materialized view {@code name} if it exists in this keyspace,
+     * {@code null} otherwise.
+     */
+    public MaterializedViewMetadata getMaterializedView(String name) {
+        return views.get(Metadata.handleId(name));
+    }
+
+    MaterializedViewMetadata removeMaterializedView(String materializedView) {
+        return views.remove(materializedView);
+    }
+
+    /**
+     * Returns the materialized views defined in this keyspace.
+     *
+     * @return a collection of the metadata for the materialized views defined in this
+     * keyspace.
+     */
+    public Collection<MaterializedViewMetadata> getMaterializedViews() {
+        return Collections.unmodifiableCollection(views.values());
+    }
+
+    /**
      * Returns the definition for a user defined type (UDT) in this keyspace.
      *
      * @param name the name of UDT definition to retrieve
@@ -132,11 +167,83 @@ public class KeyspaceMetadata {
      * keyspace.
      */
     public Collection<UserType> getUserTypes() {
-        return Collections.<UserType>unmodifiableCollection(userTypes.values());
+        return Collections.unmodifiableCollection(userTypes.values());
     }
 
     UserType removeUserType(String userType) {
         return userTypes.remove(userType);
+    }
+
+    /**
+     * Returns the definition of a function in this keyspace.
+     *
+     * @param name          the name of the function.
+     * @param argumentTypes the types of the function's arguments.
+     * @return the function definition if it exists in this keyspace, {@code null} otherwise.
+     */
+    public FunctionMetadata getFunction(String name, Collection<DataType> argumentTypes) {
+        return functions.get(Metadata.fullFunctionName(Metadata.handleId(name), argumentTypes));
+    }
+
+    /**
+     * Returns the definition of a function in this keyspace.
+     *
+     * @param name          the name of the function.
+     * @param argumentTypes the types of the function's arguments.
+     * @return the function definition if it exists in this keyspace, {@code null} otherwise.
+     */
+    public FunctionMetadata getFunction(String name, DataType... argumentTypes) {
+        return getFunction(name, Lists.newArrayList(argumentTypes));
+    }
+
+    /**
+     * Returns the functions defined in this keyspace.
+     *
+     * @return a collection of the definition for the functions defined in this
+     * keyspace.
+     */
+    public Collection<FunctionMetadata> getFunctions() {
+        return Collections.unmodifiableCollection(functions.values());
+    }
+
+    FunctionMetadata removeFunction(String fullName) {
+        return functions.remove(fullName);
+    }
+
+    /**
+     * Returns the definition of an aggregate in this keyspace.
+     *
+     * @param name          the name of the aggregate.
+     * @param argumentTypes the types of the aggregate's arguments.
+     * @return the aggregate definition if it exists in this keyspace, {@code null} otherwise.
+     */
+    public AggregateMetadata getAggregate(String name, Collection<DataType> argumentTypes) {
+        return aggregates.get(Metadata.fullFunctionName(Metadata.handleId(name), argumentTypes));
+    }
+
+    /**
+     * Returns the definition of an aggregate in this keyspace.
+     *
+     * @param name          the name of the aggregate.
+     * @param argumentTypes the types of the aggregate's arguments.
+     * @return the aggregate definition if it exists in this keyspace, {@code null} otherwise.
+     */
+    public AggregateMetadata getAggregate(String name, DataType... argumentTypes) {
+        return getAggregate(name, Lists.newArrayList(argumentTypes));
+    }
+
+    /**
+     * Returns the aggregates defined in this keyspace.
+     *
+     * @return a collection of the definition for the aggregates defined in this
+     * keyspace.
+     */
+    public Collection<AggregateMetadata> getAggregates() {
+        return Collections.unmodifiableCollection(aggregates.values());
+    }
+
+    AggregateMetadata removeAggregate(String fullName) {
+        return aggregates.remove(fullName);
     }
 
     /**
@@ -163,6 +270,12 @@ public class KeyspaceMetadata {
 
         for (TableMetadata tm : tables.values())
             sb.append('\n').append(tm.exportAsString()).append('\n');
+
+        for (FunctionMetadata fm : functions.values())
+            sb.append('\n').append(fm.exportAsString()).append('\n');
+
+        for (AggregateMetadata am : aggregates.values())
+            sb.append('\n').append(am.exportAsString()).append('\n');
 
         return sb.toString();
     }
@@ -229,6 +342,20 @@ public class KeyspaceMetadata {
 
     void add(TableMetadata tm) {
         tables.put(tm.getName(), tm);
+    }
+
+    void add(MaterializedViewMetadata view) {
+        views.put(view.getName(), view);
+    }
+
+    void add(FunctionMetadata function) {
+        String functionName = Metadata.fullFunctionName(function.getSimpleName(), function.getArguments().values());
+        functions.put(functionName, function);
+    }
+
+    void add(AggregateMetadata aggregate) {
+        String aggregateName = Metadata.fullFunctionName(aggregate.getSimpleName(), aggregate.getArgumentTypes());
+        aggregates.put(aggregateName, aggregate);
     }
 
     void add(UserType type) {

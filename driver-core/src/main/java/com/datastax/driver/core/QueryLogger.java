@@ -33,7 +33,7 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
  * <p/>
  * <pre>
  * Cluster cluster = ...
- * QueryLogger queryLogger = QueryLogger.builder(cluster)
+ * QueryLogger queryLogger = QueryLogger.builder()
  *     .withConstantThreshold(...)
  *     .withMaxQueryStringLength(...)
  *     .build();
@@ -94,7 +94,7 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
  * PerHostPercentileTracker tracker = ...;
  * cluster.register(tracker);
  * // create an instance of QueryLogger and register it
- * QueryLogger queryLogger = QueryLogger.builder(cluster)
+ * QueryLogger queryLogger = QueryLogger.builder()
  *     .withDynamicThreshold(tracker, ...)
  *     .withMaxQueryStringLength(...)
  *     .build();
@@ -195,7 +195,7 @@ public abstract class QueryLogger implements LatencyTracker {
     @VisibleForTesting
     static final String FURTHER_PARAMS_OMITTED = " [further parameters omitted]";
 
-    protected final Cluster cluster;
+    protected volatile Cluster cluster;
 
     private volatile ProtocolVersion protocolVersion;
 
@@ -206,10 +206,9 @@ public abstract class QueryLogger implements LatencyTracker {
     protected volatile int maxLoggedParameters;
 
     /**
-     * Private constructor. Instances of QueryLogger should be obtained via the {@link #builder(Cluster)} method.
+     * Private constructor. Instances of QueryLogger should be obtained via the {@link #builder()} method.
      */
-    private QueryLogger(Cluster cluster, int maxQueryStringLength, int maxParameterValueLength, int maxLoggedParameters) {
-        this.cluster = cluster;
+    private QueryLogger(int maxQueryStringLength, int maxParameterValueLength, int maxLoggedParameters) {
         this.maxQueryStringLength = maxQueryStringLength;
         this.maxParameterValueLength = maxParameterValueLength;
         this.maxLoggedParameters = maxLoggedParameters;
@@ -220,13 +219,21 @@ public abstract class QueryLogger implements LatencyTracker {
      * <p/>
      * This is a convenience method for {@code new QueryLogger.Builder()}.
      *
-     * @param cluster the {@link Cluster} this QueryLogger will be attached to.
      * @return the new QueryLogger builder.
      * @throws NullPointerException if {@code cluster} is {@code null}.
      */
-    public static QueryLogger.Builder builder(Cluster cluster) {
-        if (cluster == null) throw new NullPointerException("QueryLogger.Builder: cluster parameter cannot be null");
-        return new QueryLogger.Builder(cluster);
+    public static QueryLogger.Builder builder() {
+        return new QueryLogger.Builder();
+    }
+
+    @Override
+    public void onRegister(Cluster cluster) {
+        this.cluster = cluster;
+    }
+
+    @Override
+    public void onUnregister(Cluster cluster) {
+        // nothing to do
     }
 
     /**
@@ -239,8 +246,8 @@ public abstract class QueryLogger implements LatencyTracker {
 
         private volatile long slowQueryLatencyThresholdMillis;
 
-        private ConstantThresholdQueryLogger(Cluster cluster, int maxQueryStringLength, int maxParameterValueLength, int maxLoggedParameters, long slowQueryLatencyThresholdMillis) {
-            super(cluster, maxQueryStringLength, maxParameterValueLength, maxLoggedParameters);
+        private ConstantThresholdQueryLogger(int maxQueryStringLength, int maxParameterValueLength, int maxLoggedParameters, long slowQueryLatencyThresholdMillis) {
+            super(maxQueryStringLength, maxParameterValueLength, maxLoggedParameters);
             this.setSlowQueryLatencyThresholdMillis(slowQueryLatencyThresholdMillis);
         }
 
@@ -304,8 +311,8 @@ public abstract class QueryLogger implements LatencyTracker {
 
         private volatile PerHostPercentileTracker perHostPercentileLatencyTracker;
 
-        private DynamicThresholdQueryLogger(Cluster cluster, int maxQueryStringLength, int maxParameterValueLength, int maxLoggedParameters, double slowQueryLatencyThresholdPercentile, PerHostPercentileTracker perHostPercentileLatencyTracker) {
-            super(cluster, maxQueryStringLength, maxParameterValueLength, maxLoggedParameters);
+        private DynamicThresholdQueryLogger(int maxQueryStringLength, int maxParameterValueLength, int maxLoggedParameters, double slowQueryLatencyThresholdPercentile, PerHostPercentileTracker perHostPercentileLatencyTracker) {
+            super(maxQueryStringLength, maxParameterValueLength, maxLoggedParameters);
             this.setSlowQueryLatencyThresholdPercentile(slowQueryLatencyThresholdPercentile);
             this.setPerHostPercentileLatencyTracker(perHostPercentileLatencyTracker);
         }
@@ -382,8 +389,6 @@ public abstract class QueryLogger implements LatencyTracker {
      */
     public static class Builder {
 
-        private final Cluster cluster;
-
         private int maxQueryStringLength = DEFAULT_MAX_QUERY_STRING_LENGTH;
 
         private int maxParameterValueLength = DEFAULT_MAX_PARAMETER_VALUE_LENGTH;
@@ -397,10 +402,6 @@ public abstract class QueryLogger implements LatencyTracker {
         private PerHostPercentileTracker perHostPercentileLatencyTracker;
 
         private boolean constantThreshold = true;
-
-        public Builder(Cluster cluster) {
-            this.cluster = cluster;
-        }
 
         /**
          * Enables slow query latency tracking based on constant thresholds.
@@ -509,9 +510,9 @@ public abstract class QueryLogger implements LatencyTracker {
          */
         public QueryLogger build() {
             if (constantThreshold) {
-                return new ConstantThresholdQueryLogger(cluster, maxQueryStringLength, maxParameterValueLength, maxLoggedParameters, slowQueryLatencyThresholdMillis);
+                return new ConstantThresholdQueryLogger(maxQueryStringLength, maxParameterValueLength, maxLoggedParameters, slowQueryLatencyThresholdMillis);
             } else {
-                return new DynamicThresholdQueryLogger(cluster, maxQueryStringLength, maxParameterValueLength, maxLoggedParameters, slowQueryLatencyThresholdPercentile, perHostPercentileLatencyTracker);
+                return new DynamicThresholdQueryLogger(maxQueryStringLength, maxParameterValueLength, maxLoggedParameters, slowQueryLatencyThresholdPercentile, perHostPercentileLatencyTracker);
             }
         }
 
@@ -616,6 +617,9 @@ public abstract class QueryLogger implements LatencyTracker {
      */
     @Override
     public void update(Host host, Statement statement, Exception exception, long newLatencyNanos) {
+        if (cluster == null)
+            throw new IllegalStateException("This method should only be called after the logger has been registered with a cluster");
+
         long latencyMs = NANOSECONDS.toMillis(newLatencyNanos);
         if (exception == null) {
             maybeLogNormalOrSlowQuery(host, statement, latencyMs);
@@ -699,7 +703,7 @@ public abstract class QueryLogger implements LatencyTracker {
             if (remaining == -1) {
                 numberOfLoggedParameters = numberOfParameters;
             } else {
-                numberOfLoggedParameters = remaining > numberOfParameters ? numberOfParameters : remaining;
+                numberOfLoggedParameters = Math.min(remaining, numberOfParameters);
                 remaining -= numberOfLoggedParameters;
             }
             for (int i = 0; i < numberOfLoggedParameters; i++) {
@@ -707,7 +711,10 @@ public abstract class QueryLogger implements LatencyTracker {
                     buffer.append(" [");
                 else
                     buffer.append(", ");
-                buffer.append(String.format("%s:%s", metadata.getName(i), parameterValueAsString(definitions.get(i), statement.wrapper.values[i])));
+                String value = statement.isSet(i)
+                        ? parameterValueAsString(definitions.get(i), statement.wrapper.values[i])
+                        : "<UNSET>";
+                buffer.append(String.format("%s:%s", metadata.getName(i), value));
             }
             if (numberOfLoggedParameters < numberOfParameters) {
                 buffer.append(FURTHER_PARAMS_OMITTED);
@@ -722,6 +729,8 @@ public abstract class QueryLogger implements LatencyTracker {
             valueStr = "NULL";
         } else {
             DataType type = definition.getType();
+            CodecRegistry codecRegistry = cluster.getConfiguration().getCodecRegistry();
+            TypeCodec<Object> codec = codecRegistry.codecFor(type);
             int maxParameterValueLength = this.maxParameterValueLength;
             if (type.equals(DataType.blob()) && maxParameterValueLength != -1) {
                 // prevent large blobs from being converted to strings
@@ -730,14 +739,14 @@ public abstract class QueryLogger implements LatencyTracker {
                 if (bufferTooLarge) {
                     raw = (ByteBuffer) raw.duplicate().limit(maxBufferLength);
                 }
-                Object value = type.deserialize(raw, protocolVersion());
-                valueStr = type.format(value);
+                Object value = codec.deserialize(raw, protocolVersion());
+                valueStr = codec.format(value);
                 if (bufferTooLarge) {
                     valueStr = valueStr + TRUNCATED_OUTPUT;
                 }
             } else {
-                Object value = type.deserialize(raw, protocolVersion());
-                valueStr = type.format(value);
+                Object value = codec.deserialize(raw, protocolVersion());
+                valueStr = codec.format(value);
                 if (maxParameterValueLength != -1 && valueStr.length() > maxParameterValueLength) {
                     valueStr = valueStr.substring(0, maxParameterValueLength) + TRUNCATED_OUTPUT;
                 }
@@ -751,7 +760,7 @@ public abstract class QueryLogger implements LatencyTracker {
         // it at construction time. Cache it field at first use (a volatile field is good enough since we
         // don't need mutual exclusion).
         if (protocolVersion == null) {
-            protocolVersion = cluster.getConfiguration().getProtocolOptions().getProtocolVersionEnum();
+            protocolVersion = cluster.getConfiguration().getProtocolOptions().getProtocolVersion();
             // At least one connection was established when QueryLogger is invoked
             assert protocolVersion != null : "protocol version should be defined";
         }
@@ -763,7 +772,9 @@ public abstract class QueryLogger implements LatencyTracker {
             statement = ((StatementWrapper) statement).getWrappedStatement();
 
         if (statement instanceof RegularStatement) {
-            remaining = append(((RegularStatement) statement).getQueryString().trim(), buffer, remaining);
+            RegularStatement rs = (RegularStatement) statement;
+            String query = rs.getQueryString();
+            remaining = append(query.trim(), buffer, remaining);
         } else if (statement instanceof BoundStatement) {
             remaining = append(((BoundStatement) statement).preparedStatement().getQueryString().trim(), buffer, remaining);
         } else if (statement instanceof BatchStatement) {

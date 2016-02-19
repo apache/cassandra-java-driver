@@ -20,13 +20,14 @@ package com.datastax.driver.core;
  */
 public class MetricsOptions {
 
+    private final boolean metricsEnabled;
     private final boolean jmxEnabled;
 
     /**
-     * Creates a new {@code MetricsOptions} object with default values.
+     * Creates a new {@code MetricsOptions} object with default values (metrics enabled, JMX reporting enabled).
      */
     public MetricsOptions() {
-        this(true);
+        this(true, true);
     }
 
     /**
@@ -34,12 +35,22 @@ public class MetricsOptions {
      *
      * @param jmxEnabled whether to enable JMX reporting or not.
      */
-    public MetricsOptions(boolean jmxEnabled) {
+    public MetricsOptions(boolean enabled, boolean jmxEnabled) {
+        this.metricsEnabled = enabled;
         this.jmxEnabled = jmxEnabled;
     }
 
     /**
-     * Returns whether JMX reporting is enabled (the default).
+     * Returns whether metrics are enabled.
+     *
+     * @return whether metrics are enabled.
+     */
+    public boolean isEnabled() {
+        return metricsEnabled;
+    }
+
+    /**
+     * Returns whether JMX reporting is enabled.
      *
      * @return whether JMX reporting is enabled.
      */

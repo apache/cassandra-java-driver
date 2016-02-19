@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core.querybuilder;
 
+import com.datastax.driver.core.CodecRegistry;
 import com.datastax.driver.core.TableMetadata;
 
 import java.util.ArrayList;
@@ -51,12 +52,12 @@ public class Delete extends BuiltStatement {
     }
 
     @Override
-    StringBuilder buildQueryString(List<Object> variables) {
+    StringBuilder buildQueryString(List<Object> variables, CodecRegistry codecRegistry) {
         StringBuilder builder = new StringBuilder();
 
         builder.append("DELETE");
         if (!columns.isEmpty())
-            Utils.joinAndAppend(builder.append(" "), ",", columns, variables);
+            Utils.joinAndAppend(builder.append(" "), codecRegistry, ",", columns, variables);
 
         builder.append(" FROM ");
         if (keyspace != null)
@@ -64,12 +65,12 @@ public class Delete extends BuiltStatement {
         Utils.appendName(table, builder);
         if (!usings.usings.isEmpty()) {
             builder.append(" USING ");
-            Utils.joinAndAppend(builder, " AND ", usings.usings, variables);
+            Utils.joinAndAppend(builder, codecRegistry, " AND ", usings.usings, variables);
         }
 
         if (!where.clauses.isEmpty()) {
             builder.append(" WHERE ");
-            Utils.joinAndAppend(builder, " AND ", where.clauses, variables);
+            Utils.joinAndAppend(builder, codecRegistry, " AND ", where.clauses, variables);
         }
 
         if (ifExists) {
@@ -78,7 +79,7 @@ public class Delete extends BuiltStatement {
 
         if (!conditions.conditions.isEmpty()) {
             builder.append(" IF ");
-            Utils.joinAndAppend(builder, " AND ", conditions.conditions, variables);
+            Utils.joinAndAppend(builder, codecRegistry, " AND ", conditions.conditions, variables);
         }
 
         return builder;
@@ -422,7 +423,7 @@ public class Delete extends BuiltStatement {
         }
 
         @Override
-        void appendTo(StringBuilder sb, List<Object> values) {
+        void appendTo(StringBuilder sb, List<Object> values, CodecRegistry codecRegistry) {
             Utils.appendName(columnName, sb);
         }
 
@@ -433,9 +434,7 @@ public class Delete extends BuiltStatement {
 
         @Override
         public String toString() {
-            StringBuilder sb = new StringBuilder();
-            appendTo(sb, new ArrayList<Object>());
-            return sb.toString();
+            return columnName;
         }
     }
 
@@ -452,10 +451,10 @@ public class Delete extends BuiltStatement {
         }
 
         @Override
-        void appendTo(StringBuilder sb, List<Object> values) {
-            super.appendTo(sb, values);
+        void appendTo(StringBuilder sb, List<Object> values, CodecRegistry codecRegistry) {
+            super.appendTo(sb, values, codecRegistry);
             sb.append('[');
-            Utils.appendValue(key, sb);
+            Utils.appendValue(key, codecRegistry, sb, values);
             sb.append(']');
         }
 

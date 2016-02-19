@@ -75,7 +75,7 @@ public class Mapper<T> {
         KeyspaceMetadata keyspace = session().getCluster().getMetadata().getKeyspace(mapper.getKeyspace());
         this.tableMetadata = keyspace == null ? null : keyspace.getTable(mapper.getTable());
 
-        this.protocolVersion = manager.getSession().getCluster().getConfiguration().getProtocolOptions().getProtocolVersionEnum();
+        this.protocolVersion = manager.getSession().getCluster().getConfiguration().getProtocolOptions().getProtocolVersion();
         this.mapOneFunction = new Function<ResultSet, T>() {
             @Override
             public T apply(ResultSet rs) {
@@ -201,9 +201,9 @@ public class Mapper<T> {
         BoundStatement bs = getPreparedQuery(QueryType.SAVE, values.keySet(), options).bind();
         int i = 0;
         for (Map.Entry<ColumnMapper<?>, Object> entry : values.entrySet()) {
-            DataType type = entry.getKey().getDataType();
+            ColumnMapper<?> mapper = entry.getKey();
             Object value = entry.getValue();
-            bs.setBytesUnsafe(i++, value == null ? null : type.serialize(value, protocolVersion));
+            setObject(bs, i++, value, mapper);
         }
 
         if (mapper.writeConsistency != null)
@@ -220,6 +220,14 @@ public class Mapper<T> {
     private static boolean shouldSaveNullFields(EnumMap<Option.Type, Option> options) {
         SaveNullFields option = (SaveNullFields) options.get(SAVE_NULL_FIELDS);
         return option == null || option.saveNullFields;
+    }
+
+    private static void setObject(BoundStatement bs, int i, Object value, ColumnMapper<?> mapper) {
+        TypeCodec<Object> customCodec = mapper.getCustomCodec();
+        if (customCodec != null)
+            bs.set(i, value, customCodec);
+        else
+            bs.set(i, value, mapper.getJavaType());
     }
 
     /**
@@ -329,7 +337,7 @@ public class Mapper<T> {
             if (value == null) {
                 throw new IllegalArgumentException(String.format("Invalid null value for PRIMARY KEY column %s (argument %d)", column.getColumnName(), i));
             }
-            bs.setBytesUnsafe(i++, column.getDataType().serialize(value, protocolVersion));
+            setObject(bs, i++, value, column);
         }
 
         if (mapper.readConsistency != null)
@@ -511,7 +519,7 @@ public class Mapper<T> {
             if (value == null) {
                 throw new IllegalArgumentException(String.format("Invalid null value for PRIMARY KEY column %s (argument %d)", column.getColumnName(), i));
             }
-            bs.setBytesUnsafe(i++, column.getDataType().serialize(value, protocolVersion));
+            setObject(bs, i++, value, column);
             columnNumber++;
         }
         return bs;

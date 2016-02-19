@@ -23,8 +23,7 @@ public class UDTValue extends AbstractData<UDTValue> {
     private final UserType definition;
 
     UDTValue(UserType definition) {
-        // All things in a UDT are encoded with the protocol v3
-        super(ProtocolVersion.V3, definition.size());
+        super(definition.getProtocolVersion(), definition.size());
         this.definition = definition;
     }
 
@@ -36,6 +35,11 @@ public class UDTValue extends AbstractData<UDTValue> {
     @Override
     protected String getName(int i) {
         return definition.byIdx[i].getName();
+    }
+
+    @Override
+    protected CodecRegistry getCodecRegistry() {
+        return definition.getCodecRegistry();
     }
 
     @Override
@@ -75,17 +79,8 @@ public class UDTValue extends AbstractData<UDTValue> {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("{");
-        for (int i = 0; i < values.length; i++) {
-            if (i > 0)
-                sb.append(", ");
-
-            sb.append(getName(i));
-            sb.append(":");
-            DataType dt = getType(i);
-            sb.append(values[i] == null ? "null" : dt.format(dt.deserialize(values[i], ProtocolVersion.V3)));
-        }
-        sb.append("}");
+        TypeCodec<Object> codec = getCodecRegistry().codecFor(definition);
+        sb.append(codec.format(this));
         return sb.toString();
     }
 }

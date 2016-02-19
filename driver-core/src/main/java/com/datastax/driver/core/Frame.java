@@ -24,33 +24,61 @@ import io.netty.handler.codec.*;
 import java.util.EnumSet;
 import java.util.List;
 
+/**
+ * A frame for the CQL binary protocol.
+ * <p/>
+ * Each frame contains a fixed size header (8 bytes for V1 and V2, 9 bytes for V3 and V4)
+ * followed by a variable size body. The content of the body depends
+ * on the header opcode value (the body can in particular be empty for some
+ * opcode values).
+ * <p/>
+ * The protocol distinguishes 2 types of frames: requests and responses. Requests
+ * are those frames sent by the clients to the server, response are the ones sent
+ * by the server. Note however that the protocol supports server pushes (events)
+ * so responses does not necessarily come right after a client request.
+ * <p/>
+ * Frames for protocol versions 1+2 are defined as:
+ * <p/>
+ * <pre>
+ *  0         8        16        24        32
+ * +---------+---------+---------+---------+
+ * | version |  flags  | stream  | opcode  |
+ * +---------+---------+---------+---------+
+ * |                length                 |
+ * +---------+---------+---------+---------+
+ * |                                       |
+ * .            ...  body ...              .
+ * .                                       .
+ * .                                       .
+ * +---------------------------------------- *
+ * </pre>
+ * <p/>
+ * Frames for protocol versions 3+4 are defined as:
+ * <p/>
+ * <pre>
+ * 0         8        16        24        32         40
+ * +---------+---------+---------+---------+---------+
+ * | version |  flags  |      stream       | opcode  |
+ * +---------+---------+---------+---------+---------+
+ * |                length                 |
+ * +---------+---------+---------+---------+
+ * |                                       |
+ * .            ...  body ...              .
+ * .                                       .
+ * .                                       .
+ * +----------------------------------------
+ * </pre>
+ *
+ * @see "https://github.com/apache/cassandra/blob/trunk/doc/native_protocol_v1.spec"
+ * @see "https://github.com/apache/cassandra/blob/trunk/doc/native_protocol_v2.spec"
+ * @see "https://github.com/apache/cassandra/blob/trunk/doc/native_protocol_v3.spec"
+ * @see "https://github.com/apache/cassandra/blob/trunk/doc/native_protocol_v4.spec"
+ */
 class Frame {
 
-    public final Header header;
-    public final ByteBuf body;
+    final Header header;
+    final ByteBuf body;
 
-    /**
-     * On-wire frame.
-     * Frames for protocol versions 1+2 are defined as:
-     * <p/>
-     * 0         8        16        24        32
-     * +---------+---------+---------+---------+
-     * | version |  flags  | stream  | opcode  |
-     * +---------+---------+---------+---------+
-     * |                length                 |
-     * +---------+---------+---------+---------+
-     * <p/>
-     * Frames for protocol version 3 are defined as:
-     * <p/>
-     * 0         8        16        24        32
-     * +---------+---------+---------+---------+
-     * | version |  flags  |      stream       |
-     * +---------+---------+---------+---------+
-     * | opcode  |      length                 |
-     * +---------+---------+---------+---------+
-     * | length  |
-     * +---------+
-     */
     private Frame(Header header, ByteBuf body) {
         this.header = header;
         this.body = body;
@@ -81,23 +109,24 @@ class Frame {
             case V2:
                 return fullFrame.readByte();
             case V3:
+            case V4:
                 return fullFrame.readShort();
             default:
                 throw version.unsupported();
         }
     }
 
-    public static Frame create(ProtocolVersion version, int opcode, int streamId, EnumSet<Header.Flag> flags, ByteBuf body) {
+    static Frame create(ProtocolVersion version, int opcode, int streamId, EnumSet<Header.Flag> flags, ByteBuf body) {
         Header header = new Header(version, flags, streamId, opcode);
         return new Frame(header, body);
     }
 
-    public static class Header {
+    static class Header {
 
-        public final ProtocolVersion version;
-        public final EnumSet<Flag> flags;
-        public final int streamId;
-        public final int opcode;
+        final ProtocolVersion version;
+        final EnumSet<Flag> flags;
+        final int streamId;
+        final int opcode;
 
         private Header(ProtocolVersion version, int flags, int streamId, int opcode) {
             this(version, Flag.deserialize(flags), streamId, opcode);
@@ -110,24 +139,33 @@ class Frame {
             this.opcode = opcode;
         }
 
-        public static int lengthFor(ProtocolVersion version) {
+        /**
+         * Return the expected frame header length in bytes according to the protocol version in use.
+         *
+         * @param version the protocol version in use
+         * @return the expected frame header length in bytes
+         */
+        static int lengthFor(ProtocolVersion version) {
             switch (version) {
                 case V1:
                 case V2:
                     return 8;
                 case V3:
+                case V4:
                     return 9;
                 default:
                     throw version.unsupported();
             }
         }
 
-        public static enum Flag {
+        enum Flag {
             // The order of that enum matters!!
             COMPRESSED,
-            TRACING;
+            TRACING,
+            CUSTOM_PAYLOAD,
+            WARNING;
 
-            public static EnumSet<Flag> deserialize(int flags) {
+            static EnumSet<Flag> deserialize(int flags) {
                 EnumSet<Flag> set = EnumSet.noneOf(Flag.class);
                 Flag[] values = Flag.values();
                 for (int n = 0; n < 8; n++) {
@@ -137,7 +175,7 @@ class Frame {
                 return set;
             }
 
-            public static int serialize(EnumSet<Flag> flags) {
+            static int serialize(EnumSet<Flag> flags) {
                 int i = 0;
                 for (Flag flag : flags)
                     i |= 1 << flag.ordinal();
@@ -146,11 +184,11 @@ class Frame {
         }
     }
 
-    public Frame with(ByteBuf newBody) {
+    Frame with(ByteBuf newBody) {
         return new Frame(header, newBody);
     }
 
-    public static final class Decoder extends ByteToMessageDecoder {
+    static final class Decoder extends ByteToMessageDecoder {
         static final DecoderForStreamIdSize decoderV1 = new DecoderForStreamIdSize(1);
         static final DecoderForStreamIdSize decoderV3 = new DecoderForStreamIdSize(2);
 
@@ -205,7 +243,7 @@ class Frame {
     }
 
     @ChannelHandler.Sharable
-    public static class Encoder extends MessageToMessageEncoder<Frame> {
+    static class Encoder extends MessageToMessageEncoder<Frame> {
 
         @Override
         protected void encode(ChannelHandlerContext ctx, Frame frame, List<Object> out) throws Exception {
@@ -229,6 +267,7 @@ class Frame {
                     header.writeByte(streamId);
                     break;
                 case V3:
+                case V4:
                     header.writeShort(streamId);
                     break;
                 default:
@@ -237,11 +276,11 @@ class Frame {
         }
     }
 
-    public static class Decompressor extends MessageToMessageDecoder<Frame> {
+    static class Decompressor extends MessageToMessageDecoder<Frame> {
 
         private final FrameCompressor compressor;
 
-        public Decompressor(FrameCompressor compressor) {
+        Decompressor(FrameCompressor compressor) {
             assert compressor != null;
             this.compressor = compressor;
         }
@@ -263,11 +302,11 @@ class Frame {
         }
     }
 
-    public static class Compressor extends MessageToMessageEncoder<Frame> {
+    static class Compressor extends MessageToMessageEncoder<Frame> {
 
         private final FrameCompressor compressor;
 
-        public Compressor(FrameCompressor compressor) {
+        Compressor(FrameCompressor compressor) {
             assert compressor != null;
             this.compressor = compressor;
         }

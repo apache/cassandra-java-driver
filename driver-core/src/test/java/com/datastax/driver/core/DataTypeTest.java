@@ -17,7 +17,6 @@ package com.datastax.driver.core;
 
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 import com.datastax.driver.core.utils.Bytes;
-import com.google.common.reflect.TypeToken;
 import org.testng.annotations.Test;
 
 import java.math.BigDecimal;
@@ -27,6 +26,7 @@ import java.nio.ByteBuffer;
 import java.util.*;
 
 import static com.datastax.driver.core.Assertions.assertThat;
+import static com.google.common.collect.Lists.newArrayList;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
 
@@ -35,78 +35,136 @@ import static org.testng.Assert.fail;
  */
 public class DataTypeTest {
 
+    CodecRegistry codecRegistry = new CodecRegistry();
+
+    ProtocolVersion protocolVersion = TestUtils.getDesiredProtocolVersion();
+
     static boolean exclude(DataType t) {
         return t.getName() == DataType.Name.COUNTER;
     }
 
-    private static String[] getCQLStringTestData(DataType dt) {
-        switch (dt.getName()) {
-            case ASCII:
-            case TEXT:
-            case VARCHAR:
-                return new String[]{"'foo'", "'fo''o'"};
-            case BIGINT:
-            case TIMESTAMP:
-                return new String[]{"42", "91294377723", "-133"};
-            case BLOB:
-                return new String[]{"0x2450", "0x"};
-            case BOOLEAN:
-                return new String[]{"true", "false"};
-            case DECIMAL:
-                return new String[]{"1.23E+8"};
-            case DOUBLE:
-                return new String[]{"2.39324324", "-12.0"};
-            case FLOAT:
-                return new String[]{"2.39", "-12.0"};
-            case INET:
-                return new String[]{"'128.2.12.3'"};
-            case INT:
-                return new String[]{"-2", "42"};
-            case TIMEUUID:
-                return new String[]{"fe2b4360-28c6-11e2-81c1-0800200c9a66"};
-            case UUID:
-                return new String[]{"fe2b4360-28c6-11e2-81c1-0800200c9a66", "067e6162-3b6f-4ae2-a171-2470b63dff00"};
-            case VARINT:
-                return new String[]{"12387290982347987032483422342432"};
-            default:
-                throw new RuntimeException("Missing handling of " + dt);
+    /**
+     * A test value for a primitive data type
+     */
+    static class TestValue {
+        /**
+         * The value as a Java object
+         */
+        final Object javaObject;
+        /**
+         * A CQL string that should parse to the value
+         */
+        final String cqlInputString;
+        /**
+         * How the value should be formatted in CQL
+         */
+        final String cqlOutputString;
+
+        TestValue(Object javaObject, String cqlInputString, String cqlOutputString) {
+            this.javaObject = javaObject;
+            this.cqlInputString = cqlInputString;
+            this.cqlOutputString = cqlOutputString;
         }
     }
 
-    private static Object[] getTestData(DataType dt) {
+    private static TestValue[] primitiveTestValues(DataType dt) {
         switch (dt.getName()) {
             case ASCII:
             case TEXT:
             case VARCHAR:
-                return new Object[]{"foo", "fo'o"};
+                return new TestValue[]{
+                        new TestValue("foo", "'foo'", "'foo'"),
+                        new TestValue("fo'o", "'fo''o'", "'fo''o'"),
+                        new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL")};
             case BIGINT:
-                return new Object[]{42L, 91294377723L, -133L};
+                return new TestValue[]{
+                        new TestValue(42L, "42", "42"),
+                        new TestValue(91294377723L, "91294377723", "91294377723"),
+                        new TestValue(-133L, "-133", "-133"),
+                        new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL")};
             case TIMESTAMP:
-                return new Object[]{new Date(42L), new Date(91294377723L), new Date(-133L)};
+                // input: single quotes are optional for long literals, mandatory for date patterns
+                return new TestValue[]{
+                        new TestValue(new Date(42L), "42", "42"),
+                        new TestValue(new Date(91294377723L), "91294377723", "91294377723"),
+                        new TestValue(new Date(-133L), "-133", "-133"),
+                        new TestValue(new Date(784041330999L), "'1994-11-05T14:15:30.999+0100'", "784041330999"),
+                        new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL")};
+            case DATE:
+                // input: single quotes are optional for long literals, mandatory for date patterns
+                return new TestValue[]{
+                        new TestValue(LocalDate.fromDaysSinceEpoch(16071), "'2014-01-01'", "'2014-01-01'"),
+                        new TestValue(LocalDate.fromDaysSinceEpoch(0), "'1970-01-01'", "'1970-01-01'"),
+                        new TestValue(LocalDate.fromDaysSinceEpoch((int) (2147483648L - (1L << 31))), "'2147483648'", "'1970-01-01'"),
+                        new TestValue(LocalDate.fromDaysSinceEpoch((int) (0 - (1L << 31))), "0", "'-5877641-06-23'"),
+                        new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL")};
+            case TIME:
+                // input: all literals must by enclosed in single quotes
+                return new TestValue[]{
+                        new TestValue(54012123450000L, "'54012123450000'", "'15:00:12.123450000'"),
+                        new TestValue(0L, "'0'", "'00:00:00.000000000'"),
+                        new TestValue(54012012345000L, "'15:00:12.012345000'", "'15:00:12.012345000'"),
+                        new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL")};
             case BLOB:
-                return new Object[]{Bytes.fromHexString("0x2450"), ByteBuffer.allocate(0)};
+                return new TestValue[]{
+                        new TestValue(Bytes.fromHexString("0x2450"), "0x2450", "0x2450"),
+                        new TestValue(ByteBuffer.allocate(0), "0x", "0x"),
+                        new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL")};
             case BOOLEAN:
-                return new Object[]{true, false};
+                return new TestValue[]{
+                        new TestValue(true, "true", "true"),
+                        new TestValue(false, "false", "false"),
+                        new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL")};
             case DECIMAL:
-                return new Object[]{new BigDecimal("1.23E+8")};
+                return new TestValue[]{
+                        new TestValue(new BigDecimal("1.23E+8"), "1.23E+8", "1.23E+8"),
+                        new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL")};
             case DOUBLE:
-                return new Object[]{2.39324324, -12.};
+                return new TestValue[]{
+                        new TestValue(2.39324324, "2.39324324", "2.39324324"),
+                        new TestValue(-12., "-12.0", "-12.0"),
+                        new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL")};
             case FLOAT:
-                return new Object[]{2.39f, -12.f};
+                return new TestValue[]{
+                        new TestValue(2.39f, "2.39", "2.39"),
+                        new TestValue(-12.f, "-12.0", "-12.0"),
+                        new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL")};
             case INET:
                 try {
-                    return new Object[]{InetAddress.getByName("128.2.12.3")};
+                    return new TestValue[]{
+                            new TestValue(InetAddress.getByName("128.2.12.3"), "'128.2.12.3'", "'128.2.12.3'"),
+                            new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL")};
                 } catch (java.net.UnknownHostException e) {
                     throw new RuntimeException();
                 }
+            case TINYINT:
+                return new TestValue[]{
+                        new TestValue((byte) -4, "-4", "-4"),
+                        new TestValue((byte) 44, "44", "44"),
+                        new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL")};
+            case SMALLINT:
+                return new TestValue[]{
+                        new TestValue((short) -3, "-3", "-3"),
+                        new TestValue((short) 43, "43", "43"),
+                        new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL")};
             case INT:
-                return new Object[]{-2, 42};
+                return new TestValue[]{
+                        new TestValue(-2, "-2", "-2"),
+                        new TestValue(42, "42", "42"),
+                        new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL")};
             case TIMEUUID:
-                return new Object[]{UUID.fromString("FE2B4360-28C6-11E2-81C1-0800200C9A66")};
+                return new TestValue[]{
+                        new TestValue(UUID.fromString("FE2B4360-28C6-11E2-81C1-0800200C9A66"), "fe2b4360-28c6-11e2-81c1-0800200c9a66", "fe2b4360-28c6-11e2-81c1-0800200c9a66"),
+                        new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL")};
             case UUID:
-                return new Object[]{UUID.fromString("FE2B4360-28C6-11E2-81C1-0800200C9A66"), UUID.fromString("067e6162-3b6f-4ae2-a171-2470b63dff00")};
+                return new TestValue[]{
+                        new TestValue(UUID.fromString("FE2B4360-28C6-11E2-81C1-0800200C9A66"), "fe2b4360-28c6-11e2-81c1-0800200c9a66", "fe2b4360-28c6-11e2-81c1-0800200c9a66"),
+                        new TestValue(UUID.fromString("067e6162-3b6f-4ae2-a171-2470b63dff00"), "067e6162-3b6f-4ae2-a171-2470b63dff00", "067e6162-3b6f-4ae2-a171-2470b63dff00"),
+                        new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL")};
             case VARINT:
-                return new Object[]{new BigInteger("12387290982347987032483422342432")};
+                return new TestValue[]{
+                        new TestValue(new BigInteger("12387290982347987032483422342432"), "12387290982347987032483422342432", "12387290982347987032483422342432"),
+                        new TestValue(null, null, "NULL"), new TestValue(null, "null", "NULL"), new TestValue(null, "NULL", "NULL")};
             default:
                 throw new RuntimeException("Missing handling of " + dt);
         }
@@ -118,10 +176,10 @@ public class DataTypeTest {
             if (exclude(dt))
                 continue;
 
-            String[] s = getCQLStringTestData(dt);
-            Object[] o = getTestData(dt);
-            for (int i = 0; i < s.length; i++)
-                assertEquals(dt.parse(s[i]), o[i], String.format("For input %d of %s, ", i, dt, s[i], o[i]));
+            for (TestValue value : primitiveTestValues(dt))
+                assertThat(codecRegistry.codecFor(dt).parse(value.cqlInputString))
+                        .as("Parsing input %s to a %s", value.cqlInputString, dt)
+                        .isEqualTo(value.javaObject);
         }
     }
 
@@ -131,85 +189,85 @@ public class DataTypeTest {
             if (exclude(dt))
                 continue;
 
-            String[] s = getCQLStringTestData(dt);
-            Object[] o = getTestData(dt);
-            for (int i = 0; i < s.length; i++)
-                assertEquals(dt.format(o[i]), s[i], String.format("For input %d of %s, ", i, dt, o[i], s[i]));
+            for (TestValue value : primitiveTestValues(dt))
+                assertThat(codecRegistry.codecFor(dt).format(value.javaObject))
+                        .as("Formatting a %s expecting %s", dt, value.cqlOutputString)
+                        .isEqualTo(value.cqlOutputString);
         }
     }
 
     @Test(groups = "unit")
     public void parseFormatListTest() {
-        String toParse = "['Foo', 'Bar', 'Foo''bar']";
+        String toParse = "['Foo','Bar','Foo''bar']";
         List<String> toFormat = Arrays.asList("Foo", "Bar", "Foo'bar");
         DataType dt = DataType.list(DataType.text());
-        assertEquals(dt.parse(toParse), toFormat);
-        assertEquals(dt.format(toFormat), toParse);
+        assertEquals(codecRegistry.codecFor(dt).parse(toParse), toFormat);
+        assertEquals(codecRegistry.codecFor(dt).format(toFormat), toParse);
     }
 
     @SuppressWarnings("serial")
     @Test(groups = "unit")
     public void parseFormatSetTest() {
-        String toParse = "{'Foo', 'Bar', 'Foo''bar'}";
+        String toParse = "{'Foo','Bar','Foo''bar'}";
         Set<String> toFormat = new LinkedHashSet<String>() {{
             add("Foo");
             add("Bar");
             add("Foo'bar");
         }};
         DataType dt = DataType.set(DataType.text());
-        assertEquals(dt.parse(toParse), toFormat);
-        assertEquals(dt.format(toFormat), toParse);
+        assertEquals(codecRegistry.codecFor(dt).parse(toParse), toFormat);
+        assertEquals(codecRegistry.codecFor(dt).format(toFormat), toParse);
     }
 
     @SuppressWarnings("serial")
     @Test(groups = "unit")
     public void parseFormatMapTest() {
-        String toParse = "{'Foo':3, 'Bar':42, 'Foo''bar':-24}";
+        String toParse = "{'Foo':3,'Bar':42,'Foo''bar':-24}";
         Map<String, Integer> toFormat = new LinkedHashMap<String, Integer>() {{
             put("Foo", 3);
             put("Bar", 42);
             put("Foo'bar", -24);
         }};
         DataType dt = DataType.map(DataType.text(), DataType.cint());
-        assertEquals(dt.parse(toParse), toFormat);
-        assertEquals(dt.format(toFormat), toParse);
+        assertEquals(codecRegistry.codecFor(dt).parse(toParse), toFormat);
+        assertEquals(codecRegistry.codecFor(dt).format(toFormat), toParse);
     }
 
     @SuppressWarnings("serial")
     @Test(groups = "unit")
     public void parseFormatUDTTest() {
+        String toParse = "{t:'fo''o',i:3,\"L\":['a','b'],s:{3:{a:0x01}}}";
 
-        String toParse = "{t:'fo''o', i:3, l:['a', 'b'], s:{3:{a:0x01}}}";
-
-        final UserType udt1 = new UserType("ks", "t", Arrays.asList(new UserType.Field("a", DataType.blob())));
+        final UserType udt1 = new UserType("ks", "t", Arrays.asList(new UserType.Field("a", DataType.blob())), protocolVersion, codecRegistry);
         UserType udt2 = new UserType("ks", "t", Arrays.asList(
                 new UserType.Field("t", DataType.text()),
                 new UserType.Field("i", DataType.cint()),
-                new UserType.Field("l", DataType.list(DataType.text())),
+                new UserType.Field("L", DataType.list(DataType.text())),
                 new UserType.Field("s", DataType.map(DataType.cint(), udt1))
-        ));
+        ), protocolVersion, codecRegistry);
 
         UDTValue toFormat = udt2.newValue();
         toFormat.setString("t", "fo'o");
         toFormat.setInt("i", 3);
-        toFormat.setList("l", Arrays.<String>asList("a", "b"));
+        toFormat.setList("\"L\"", Arrays.<String>asList("a", "b"));
         toFormat.setMap("s", new HashMap<Integer, UDTValue>() {{
             put(3, udt1.newValue().setBytes("a", ByteBuffer.wrap(new byte[]{1})));
         }});
 
-        assertEquals(udt2.parse(toParse), toFormat);
-        assertEquals(udt2.format(toFormat), toParse);
+        assertEquals(codecRegistry.codecFor(udt2).parse(toParse), toFormat);
+        assertEquals(codecRegistry.codecFor(udt2).format(toFormat), toParse);
     }
 
+    @SuppressWarnings("deprecation")
     @Test(groups = "unit")
     public void parseFormatTupleTest() {
 
-        String toParse = "(1, 'foo', 1.0)";
-        TupleType t = TupleType.of(DataType.cint(), DataType.text(), DataType.cfloat());
+        String toParse = "(1,'foo',1.0)";
+        TupleType t = new TupleType(newArrayList(DataType.cint(), DataType.text(), DataType.cfloat()), protocolVersion, codecRegistry);
         TupleValue toFormat = t.newValue(1, "foo", 1.0f);
 
-        assertEquals(t.parse(toParse), toFormat);
-        assertEquals(t.format(toFormat), toParse);
+        assertEquals(codecRegistry.codecFor(t).parse(toParse), toFormat);
+        assertEquals(codecRegistry.codecFor(t).format(toFormat), toParse);
     }
 
     @Test(groups = "unit")
@@ -225,17 +283,15 @@ public class DataTypeTest {
                 continue;
 
             Object value = TestUtils.getFixedValue(dt);
-            assertEquals(dt.deserialize(dt.serialize(value, version), version), value);
+            TypeCodec<Object> codec = codecRegistry.codecFor(dt);
+            assertEquals(codec.deserialize(codec.serialize(value, version), version), value);
         }
 
-        try {
-            DataType.bigint().serialize(4, version);
-            fail("This should not have worked");
-        } catch (InvalidTypeException e) { /* That's what we want */ }
+        TypeCodec<Long> codec = codecRegistry.codecFor(DataType.bigint());
 
         try {
             ByteBuffer badValue = ByteBuffer.allocate(4);
-            DataType.bigint().deserialize(badValue, version);
+            codec.deserialize(badValue, version);
             fail("This should not have worked");
         } catch (InvalidTypeException e) { /* That's what we want */ }
     }
@@ -251,37 +307,32 @@ public class DataTypeTest {
         List<String> l = Arrays.asList("foo", "bar");
 
         DataType dt = DataType.list(DataType.text());
-        assertEquals(dt.deserialize(dt.serialize(l, version), version), l);
+        TypeCodec<List<String>> codec = codecRegistry.codecFor(dt);
+        assertEquals(codec.deserialize(codec.serialize(l, version), version), l);
 
         try {
-            DataType.list(DataType.bigint()).serialize(l, version);
+            DataType listOfBigint = DataType.list(DataType.bigint());
+            codec = codecRegistry.codecFor(listOfBigint);
+            codec.serialize(l, version);
             fail("This should not have worked");
         } catch (InvalidTypeException e) { /* That's what we want */ }
     }
 
     @Test(groups = "unit")
-    public void should_check_which_java_type_it_can_be_deserialized_to() {
-        assertThat(DataType.cint())
-                .canBeDeserializedAs(TypeToken.of(Integer.class))
-                .canBeDeserializedAs(TypeToken.of(Number.class))
-                .cannotBeDeserializedAs(TypeToken.of(String.class));
+    public void should_not_return_v4_types_in_all_primitive_types_with_v3() {
+        Set<DataType> dataTypes = DataType.allPrimitiveTypes(ProtocolVersion.V3);
 
-        assertThat(DataType.list(DataType.cint()))
-                .canBeDeserializedAs(new TypeToken<List<Integer>>() {
-                })
-                .canBeDeserializedAs(new TypeToken<Collection<Integer>>() {
-                })
-                .cannotBeDeserializedAs(new TypeToken<Set<Integer>>() {
-                })
-                .cannotBeDeserializedAs(new TypeToken<List<String>>() {
-                });
+        // Ensure it does not contain specific newer types tinyint and smallint.
+        assertThat(dataTypes).doesNotContainAnyElementsOf(newArrayList(DataType.tinyint(), DataType.smallint()));
 
-        assertThat(DataType.map(DataType.cint(), DataType.frozenList(DataType.text())))
-                .canBeDeserializedAs(new TypeToken<Map<Integer, List<String>>>() {
-                })
-                .canBeDeserializedAs(new TypeToken<Map<Number, Collection<String>>>() {
-                })
-                .cannotBeDeserializedAs(new TypeToken<Map<Integer, Collection<Integer>>>() {
-                });
+        // Ensure all values are <= V3.
+        for (DataType dataType : dataTypes) {
+            assertThat(dataType.getName().minProtocolVersion).isLessThanOrEqualTo(ProtocolVersion.V3);
+        }
+    }
+
+    @Test(groups = "unit")
+    public void should_return_same_elements_with_all_primitive_types_using_latest_protocol_version() {
+        assertThat(DataType.allPrimitiveTypes(ProtocolVersion.NEWEST_SUPPORTED)).isEqualTo(DataType.allPrimitiveTypes());
     }
 }

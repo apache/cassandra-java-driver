@@ -49,7 +49,7 @@ public class ExceptionsTest extends CCMTestsSupport {
         String[] cqlCommands = new String[]{
                 String.format(TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT, keyspace, 1),
                 "USE " + keyspace,
-                String.format(TestUtils.CREATE_TABLE_SIMPLE_FORMAT, table)
+                String.format("CREATE TABLE %s (k text PRIMARY KEY, t text, i int, f float)", table)
         };
 
         // Create the schema once

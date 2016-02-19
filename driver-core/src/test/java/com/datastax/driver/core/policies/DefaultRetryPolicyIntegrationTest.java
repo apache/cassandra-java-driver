@@ -15,14 +15,12 @@
  */
 package com.datastax.driver.core.policies;
 
-import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.Metrics;
-import com.datastax.driver.core.Session;
-import com.datastax.driver.core.exceptions.NoHostAvailableException;
-import com.datastax.driver.core.exceptions.ReadTimeoutException;
-import com.datastax.driver.core.exceptions.UnavailableException;
-import com.datastax.driver.core.exceptions.WriteTimeoutException;
+import com.datastax.driver.core.*;
+import com.datastax.driver.core.exceptions.*;
+import org.assertj.core.api.Fail;
 import org.scassandra.Scassandra;
+import org.scassandra.http.client.ClosedConnectionConfig;
+import org.scassandra.http.client.PrimingRequest;
 import org.testng.annotations.Test;
 
 import java.util.Collections;
@@ -30,6 +28,7 @@ import java.util.Collections;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.scassandra.http.client.PrimingRequest.Result.*;
+import static org.scassandra.http.client.PrimingRequest.then;
 
 public class DefaultRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegrationTest {
     public DefaultRetryPolicyIntegrationTest() {
@@ -46,6 +45,8 @@ public class DefaultRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegr
         } catch (ReadTimeoutException e) {/*expected*/ }
 
         assertOnReadTimeoutWasCalled(1);
+        assertThat(errors.getReadTimeouts().getCount()).isEqualTo(1);
+        assertThat(errors.getRetries().getCount()).isEqualTo(0);
         assertThat(errors.getRetriesOnReadTimeout().getCount()).isEqualTo(0);
         assertQueried(1, 1);
         assertQueried(2, 0);
@@ -62,6 +63,8 @@ public class DefaultRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegr
         } catch (WriteTimeoutException e) {/*expected*/}
 
         assertOnWriteTimeoutWasCalled(1);
+        assertThat(errors.getWriteTimeouts().getCount()).isEqualTo(1);
+        assertThat(errors.getRetries().getCount()).isEqualTo(0);
         assertThat(errors.getRetriesOnWriteTimeout().getCount()).isEqualTo(0);
         assertQueried(1, 1);
         assertQueried(2, 0);
@@ -76,6 +79,8 @@ public class DefaultRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegr
         query();
 
         assertOnUnavailableWasCalled(1);
+        assertThat(errors.getUnavailables().getCount()).isEqualTo(1);
+        assertThat(errors.getRetries().getCount()).isEqualTo(1);
         assertThat(errors.getRetriesOnUnavailable().getCount()).isEqualTo(1);
         assertQueried(1, 1);
         assertQueried(2, 1);
@@ -93,6 +98,8 @@ public class DefaultRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegr
         } catch (UnavailableException e) {/*expected*/}
 
         assertOnUnavailableWasCalled(2);
+        assertThat(errors.getUnavailables().getCount()).isEqualTo(2);
+        assertThat(errors.getRetries().getCount()).isEqualTo(1);
         assertThat(errors.getRetriesOnUnavailable().getCount()).isEqualTo(1);
         assertQueried(1, 1);
         assertQueried(2, 1);
@@ -108,6 +115,8 @@ public class DefaultRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegr
         Cluster whiteListedCluster = Cluster.builder()
                 .addContactPoints(scassandras.address(1).getAddress())
                 .withPort(scassandras.getBinaryPort())
+                // Scassandra does not support V3 nor V4 yet, and V4 may cause the server to crash
+                .withProtocolVersion(ProtocolVersion.V2)
                 .withRetryPolicy(retryPolicy)
                 .withLoadBalancingPolicy(firstHostOnlyPolicy)
                 .build();
@@ -141,5 +150,104 @@ public class DefaultRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegr
         } finally {
             whiteListedCluster.close();
         }
+    }
+
+    @Test(groups = "short")
+    public void should_try_next_host_on_client_timeouts() {
+        cluster.getConfiguration().getSocketOptions().setReadTimeoutMillis(1);
+        try {
+            scassandras
+                    .node(1).primingClient().prime(PrimingRequest.queryBuilder()
+                    .withQuery("mock query")
+                    .withThen(then().withFixedDelay(1000L).withRows(row("result", "result1")))
+                    .build());
+            scassandras
+                    .node(2).primingClient().prime(PrimingRequest.queryBuilder()
+                    .withQuery("mock query")
+                    .withThen(then().withFixedDelay(1000L).withRows(row("result", "result2")))
+                    .build());
+            scassandras
+                    .node(3).primingClient().prime(PrimingRequest.queryBuilder()
+                    .withQuery("mock query")
+                    .withThen(then().withFixedDelay(1000L).withRows(row("result", "result3")))
+                    .build());
+            try {
+                query();
+                fail("expected a NoHostAvailableException");
+            } catch (NoHostAvailableException e) {
+                assertThat(e.getErrors().keySet()).hasSize(3).containsOnly(
+                        host1.getSocketAddress(),
+                        host2.getSocketAddress(),
+                        host3.getSocketAddress());
+                assertThat(e.getErrors().values())
+                        .hasOnlyElementsOfType(OperationTimedOutException.class)
+                        .extractingResultOf("getMessage")
+                        .containsOnlyOnce(
+                                String.format("[%s] Timed out waiting for server response", host1.getAddress()),
+                                String.format("[%s] Timed out waiting for server response", host2.getAddress()),
+                                String.format("[%s] Timed out waiting for server response", host3.getAddress())
+                        );
+            }
+            assertOnRequestErrorWasCalled(3, OperationTimedOutException.class);
+            assertThat(errors.getRetries().getCount()).isEqualTo(3);
+            assertThat(errors.getClientTimeouts().getCount()).isEqualTo(3);
+            assertThat(errors.getRetriesOnClientTimeout().getCount()).isEqualTo(3);
+            assertQueried(1, 1);
+            assertQueried(2, 1);
+            assertQueried(3, 1);
+        } finally {
+            cluster.getConfiguration().getSocketOptions().setReadTimeoutMillis(SocketOptions.DEFAULT_READ_TIMEOUT_MILLIS);
+        }
+    }
+
+
+    @Test(groups = "short", dataProvider = "serverSideErrors")
+    public void should_try_next_host_on_server_side_error(PrimingRequest.Result error, Class<? extends DriverException> exception) {
+        simulateError(1, error);
+        simulateError(2, error);
+        simulateError(3, error);
+        try {
+            query();
+            Fail.fail("expected a NoHostAvailableException");
+        } catch (NoHostAvailableException e) {
+            assertThat(e.getErrors().keySet()).hasSize(3).containsOnly(
+                    host1.getSocketAddress(),
+                    host2.getSocketAddress(),
+                    host3.getSocketAddress());
+            assertThat(e.getErrors().values()).hasOnlyElementsOfType(exception);
+        }
+        assertOnRequestErrorWasCalled(3, exception);
+        assertThat(errors.getOthers().getCount()).isEqualTo(3);
+        assertThat(errors.getRetries().getCount()).isEqualTo(3);
+        assertThat(errors.getRetriesOnOtherErrors().getCount()).isEqualTo(3);
+        assertQueried(1, 1);
+        assertQueried(2, 1);
+        assertQueried(3, 1);
+    }
+
+
+    @Test(groups = "short", dataProvider = "connectionErrors")
+    public void should_try_next_host_on_connection_error(ClosedConnectionConfig.CloseType closeType) {
+        simulateError(1, PrimingRequest.Result.closed_connection, new ClosedConnectionConfig(closeType));
+        simulateError(2, PrimingRequest.Result.closed_connection, new ClosedConnectionConfig(closeType));
+        simulateError(3, PrimingRequest.Result.closed_connection, new ClosedConnectionConfig(closeType));
+        try {
+            query();
+            Fail.fail("expected a NoHostAvailableException");
+        } catch (NoHostAvailableException e) {
+            assertThat(e.getErrors().keySet()).hasSize(3).containsOnly(
+                    host1.getSocketAddress(),
+                    host2.getSocketAddress(),
+                    host3.getSocketAddress());
+            assertThat(e.getErrors().values()).hasOnlyElementsOfType(TransportException.class);
+        }
+        assertOnRequestErrorWasCalled(3, TransportException.class);
+        assertThat(errors.getRetries().getCount()).isEqualTo(3);
+        assertThat(errors.getConnectionErrors().getCount()).isEqualTo(3);
+        assertThat(errors.getIgnoresOnConnectionError().getCount()).isEqualTo(0);
+        assertThat(errors.getRetriesOnConnectionError().getCount()).isEqualTo(3);
+        assertQueried(1, 1);
+        assertQueried(2, 1);
+        assertQueried(3, 1);
     }
 }

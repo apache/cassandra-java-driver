@@ -17,6 +17,8 @@ package com.datastax.driver.core;
 
 import com.datastax.driver.core.AbstractReconnectionHandler.HandlerFuture;
 import com.datastax.driver.core.AbstractReconnectionHandlerTest.MockReconnectionWork.ReconnectBehavior;
+import com.datastax.driver.core.exceptions.ConnectionException;
+import com.datastax.driver.core.exceptions.UnsupportedProtocolVersionException;
 import com.datastax.driver.core.policies.ReconnectionPolicy.ReconnectionSchedule;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;

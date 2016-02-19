@@ -17,13 +17,13 @@ package com.datastax.driver.mapping;
 
 import com.datastax.driver.core.*;
 import com.google.common.collect.Sets;
+import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.nio.ByteBuffer;
 import java.util.Set;
 
 // TODO: we probably should make that an abstract class and move some bit in a "ReflexionMethodMapper"
@@ -140,9 +140,9 @@ class MethodMapper {
 
         BoundStatement bs = statement.bind();
 
-        ProtocolVersion protocolVersion = session.getCluster().getConfiguration().getProtocolOptions().getProtocolVersionEnum();
+        ProtocolVersion protocolVersion = session.getCluster().getConfiguration().getProtocolOptions().getProtocolVersion();
         for (int i = 0; i < args.length; i++) {
-            paramMappers[i].setValue(bs, args[i], protocolVersion);
+            paramMappers[i].setValue(bs, args[i]);
         }
 
         if (consistency != null)
@@ -174,101 +174,40 @@ class MethodMapper {
     }
 
     static class ParamMapper {
-        // We'll only set one of the other. If paramName is null, then paramIdx is used.
+        // We'll only set one or the other. If paramName is null, then paramIdx is used.
         private final String paramName;
         private final int paramIdx;
-        private final DataType dataType;
+        private final TypeToken<Object> paramType;
+        private final TypeCodec<Object> codec;
 
-        public ParamMapper(String paramName, int paramIdx, DataType dataType) {
+        @SuppressWarnings("unchecked")
+        public ParamMapper(String paramName, int paramIdx, TypeToken<?> paramType, Class<? extends TypeCodec<?>> codecClass) {
             this.paramName = paramName;
             this.paramIdx = paramIdx;
-            this.dataType = dataType;
+            this.paramType = (TypeToken<Object>) paramType;
+            try {
+                this.codec = (codecClass == null) ? null : (TypeCodec<Object>) codecClass.newInstance();
+            } catch (Exception e) {
+                throw new IllegalArgumentException(String.format(
+                        "Cannot create instance of codec %s for parameter %s",
+                        codecClass, (paramName == null) ? paramIdx : paramName
+                ), e);
+            }
         }
 
-        public ParamMapper(String paramName, int paramIdx) {
-            this(paramName, paramIdx, null);
-        }
-
-        void setValue(BoundStatement boundStatement, Object arg, ProtocolVersion protocolVersion) {
-            ByteBuffer serializedArg = (dataType == null)
-                    ? DataType.serializeValue(arg, protocolVersion)
-                    : dataType.serialize(arg, protocolVersion);
+        void setValue(BoundStatement boundStatement, Object arg) {
             if (paramName == null) {
-                if (arg == null)
-                    boundStatement.setToNull(paramIdx);
+                if (codec == null)
+                    boundStatement.set(paramIdx, arg, paramType);
                 else
-                    boundStatement.setBytesUnsafe(paramIdx, serializedArg);
+                    boundStatement.set(paramIdx, arg, codec);
             } else {
-                if (arg == null)
-                    boundStatement.setToNull(paramName);
+                if (codec == null)
+                    boundStatement.set(paramName, arg, paramType);
                 else
-                    boundStatement.setBytesUnsafe(paramName, serializedArg);
+                    boundStatement.set(paramName, arg, codec);
             }
         }
     }
 
-    static class UDTParamMapper<V> extends ParamMapper {
-        private final UDTMapper<V> udtMapper;
-
-        UDTParamMapper(String paramName, int paramIdx, UDTMapper<V> udtMapper) {
-            super(paramName, paramIdx);
-            this.udtMapper = udtMapper;
-        }
-
-        @Override
-        void setValue(BoundStatement boundStatement, Object arg, ProtocolVersion protocolVersion) {
-            @SuppressWarnings("unchecked")
-            V entity = (V) arg;
-            UDTValue udtArg = arg != null ? udtMapper.toUDT(entity) : null;
-            super.setValue(boundStatement, udtArg, protocolVersion);
-        }
-    }
-
-    /**
-     * Maps a nested collection which has a mapped UDT somewhere in the hierarchy.
-     */
-    static class NestedUDTParamMapper extends ParamMapper {
-        private final InferredCQLType inferredCQLType;
-
-        NestedUDTParamMapper(String paramName, int paramIdx, InferredCQLType inferredCQLType) {
-            super(paramName, paramIdx);
-            this.inferredCQLType = inferredCQLType;
-        }
-
-        @Override
-        void setValue(BoundStatement boundStatement, Object arg, ProtocolVersion protocolVersion) {
-            super.setValue(boundStatement,
-                    UDTMapper.convertEntitiesToUDTs(arg, inferredCQLType),
-                    protocolVersion);
-        }
-    }
-
-    static class EnumParamMapper extends ParamMapper {
-
-        private final EnumType enumType;
-
-        public EnumParamMapper(String paramName, int paramIdx, EnumType enumType) {
-            super(paramName, paramIdx);
-            this.enumType = enumType;
-        }
-
-        @Override
-        void setValue(BoundStatement boundStatement, Object arg, ProtocolVersion protocolVersion) {
-            super.setValue(boundStatement, convert(arg), protocolVersion);
-        }
-
-        @SuppressWarnings("rawtypes")
-        private Object convert(Object arg) {
-            if (arg == null)
-                return arg;
-
-            switch (enumType) {
-                case STRING:
-                    return arg.toString();
-                case ORDINAL:
-                    return ((Enum) arg).ordinal();
-            }
-            throw new AssertionError();
-        }
-    }
 }

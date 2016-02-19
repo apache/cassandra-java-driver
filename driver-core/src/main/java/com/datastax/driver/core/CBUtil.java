@@ -16,6 +16,7 @@
 package com.datastax.driver.core;
 
 import com.datastax.driver.core.exceptions.DriverInternalError;
+import com.google.common.collect.ImmutableMap;
 import io.netty.buffer.ByteBuf;
 import io.netty.util.CharsetUtil;
 
@@ -117,8 +118,50 @@ abstract class CBUtil { // TODO rename
         cb.writeBytes(bytes);
     }
 
+    public static void writeBytes(ByteBuffer bytes, ByteBuf cb) {
+        cb.writeShort(bytes.remaining());
+        cb.writeBytes(bytes.duplicate());
+    }
+
     public static int sizeOfBytes(byte[] bytes) {
         return 2 + bytes.length;
+    }
+
+    public static int sizeOfBytes(ByteBuffer bytes) {
+        return 2 + bytes.remaining();
+    }
+
+    public static Map<String, ByteBuffer> readBytesMap(ByteBuf cb) {
+        int length = cb.readUnsignedShort();
+        ImmutableMap.Builder<String, ByteBuffer> builder = ImmutableMap.builder();
+        for (int i = 0; i < length; i++) {
+            String key = readString(cb);
+            ByteBuffer value = readValue(cb);
+            if (value == null)
+                value = Statement.NULL_PAYLOAD_VALUE;
+            builder.put(key, value);
+        }
+        return builder.build();
+    }
+
+    public static void writeBytesMap(Map<String, ByteBuffer> m, ByteBuf cb) {
+        cb.writeShort(m.size());
+        for (Map.Entry<String, ByteBuffer> entry : m.entrySet()) {
+            writeString(entry.getKey(), cb);
+            ByteBuffer value = entry.getValue();
+            if (value == Statement.NULL_PAYLOAD_VALUE)
+                value = null;
+            writeValue(value, cb);
+        }
+    }
+
+    public static int sizeOfBytesMap(Map<String, ByteBuffer> m) {
+        int size = 2;
+        for (Map.Entry<String, ByteBuffer> entry : m.entrySet()) {
+            size += sizeOfString(entry.getKey());
+            size += sizeOfBytes(entry.getValue());
+        }
+        return size;
     }
 
     public static ConsistencyLevel readConsistencyLevel(ByteBuf cb) {
@@ -267,6 +310,11 @@ abstract class CBUtil { // TODO rename
             return;
         }
 
+        if (bytes == BoundStatement.UNSET) {
+            cb.writeInt(-2);
+            return;
+        }
+
         cb.writeInt(bytes.remaining());
         cb.writeBytes(bytes.duplicate());
     }
@@ -300,6 +348,23 @@ abstract class CBUtil { // TODO rename
         int size = 2;
         for (ByteBuffer value : values)
             size += CBUtil.sizeOfValue(value);
+        return size;
+    }
+
+    public static void writeNamedValueList(Map<String, ByteBuffer> namedValues, ByteBuf cb) {
+        cb.writeShort(namedValues.size());
+        for (Map.Entry<String, ByteBuffer> entry : namedValues.entrySet()) {
+            CBUtil.writeString(entry.getKey(), cb);
+            CBUtil.writeValue(entry.getValue(), cb);
+        }
+    }
+
+    public static int sizeOfNamedValueList(Map<String, ByteBuffer> namedValues) {
+        int size = 2;
+        for (Map.Entry<String, ByteBuffer> entry : namedValues.entrySet()) {
+            size += CBUtil.sizeOfString(entry.getKey());
+            size += CBUtil.sizeOfValue(entry.getValue());
+        }
         return size;
     }
 

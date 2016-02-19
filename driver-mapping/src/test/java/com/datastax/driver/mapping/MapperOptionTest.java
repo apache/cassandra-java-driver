@@ -47,7 +47,7 @@ public class MapperOptionTest extends CCMTestsSupport {
     @BeforeMethod(groups = "short")
     public void setup() {
         mapper = new MappingManager(session()).mapper(User.class);
-        protocolVersion = cluster().getConfiguration().getProtocolOptions().getProtocolVersionEnum();
+        protocolVersion = cluster().getConfiguration().getProtocolOptions().getProtocolVersion();
     }
 
     @Test(groups = "short")

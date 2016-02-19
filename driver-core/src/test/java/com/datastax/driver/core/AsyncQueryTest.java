@@ -71,24 +71,18 @@ public class AsyncQueryTest extends CCMTestsSupport {
         // parent class. Rebuild a new one with the same (unique) host.
         Host host = cluster().getMetadata().allHosts().iterator().next();
 
-        Cluster cluster2 = null;
-        try {
-            cluster2 = Cluster.builder()
-                    .addContactPointsWithPorts(Lists.newArrayList(host.getSocketAddress()))
-                    .build();
-            Session session2 = cluster2.newSession();
+        Cluster cluster2 = register(Cluster.builder()
+                .addContactPointsWithPorts(Lists.newArrayList(host.getSocketAddress()))
+                .build());
+        Session session2 = cluster2.newSession();
 
-            // Neither cluster2 nor session2 are initialized at this point
-            assertThat(cluster2.manager.metadata).isNull();
+        // Neither cluster2 nor session2 are initialized at this point
+        assertThat(cluster2.manager.metadata).isNull();
 
-            ResultSetFuture future = session2.executeAsync("select release_version from system.local");
-            Row row = Uninterruptibles.getUninterruptibly(future).one();
+        ResultSetFuture future = session2.executeAsync("select release_version from system.local");
+        Row row = Uninterruptibles.getUninterruptibly(future).one();
 
-            assertThat(row.getString(0)).isNotEmpty();
-        } finally {
-            if (cluster2 != null)
-                cluster2.close();
-        }
+        assertThat(row.getString(0)).isNotEmpty();
     }
 
     @Test(groups = "short", dataProvider = "keyspace", enabled = false,

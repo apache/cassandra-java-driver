@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core.querybuilder;
 
+import com.datastax.driver.core.CodecRegistry;
 import com.datastax.driver.core.TableMetadata;
 
 import java.util.ArrayList;
@@ -54,7 +55,7 @@ public class Select extends BuiltStatement {
     }
 
     @Override
-    StringBuilder buildQueryString(List<Object> variables) {
+    StringBuilder buildQueryString(List<Object> variables, CodecRegistry codecRegistry) {
         StringBuilder builder = new StringBuilder();
 
         builder.append("SELECT ");
@@ -63,7 +64,7 @@ public class Select extends BuiltStatement {
         if (columnNames == null) {
             builder.append('*');
         } else {
-            Utils.joinAndAppendNames(builder, ",", columnNames);
+            Utils.joinAndAppendNames(builder, codecRegistry, ",", columnNames);
         }
         builder.append(" FROM ");
         if (keyspace != null)
@@ -72,12 +73,12 @@ public class Select extends BuiltStatement {
 
         if (!where.clauses.isEmpty()) {
             builder.append(" WHERE ");
-            Utils.joinAndAppend(builder, " AND ", where.clauses, variables);
+            Utils.joinAndAppend(builder, codecRegistry, " AND ", where.clauses, variables);
         }
 
         if (orderings != null) {
             builder.append(" ORDER BY ");
-            Utils.joinAndAppend(builder, ",", orderings, variables);
+            Utils.joinAndAppend(builder, codecRegistry, ",", orderings, variables);
         }
 
         if (limit != null) {
@@ -387,9 +388,6 @@ public class Select extends BuiltStatement {
     public static class SelectionOrAlias extends Selection {
 
         private Object previousSelection;
-
-        SelectionOrAlias() {
-        }
 
         /**
          * Adds an alias for the just selected item.

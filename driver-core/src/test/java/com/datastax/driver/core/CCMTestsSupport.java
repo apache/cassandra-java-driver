@@ -662,7 +662,9 @@ public class CCMTestsSupport {
      * @return The cluster builder to use for the tests.
      */
     public Cluster.Builder createClusterBuilder() {
-        return Cluster.builder();
+        return Cluster.builder()
+                // use a different codec registry for each cluster instance
+                .withCodecRegistry(new CodecRegistry());
     }
 
     /**

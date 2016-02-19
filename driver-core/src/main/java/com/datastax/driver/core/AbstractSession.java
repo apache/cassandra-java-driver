@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
 
 import java.nio.ByteBuffer;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -28,7 +29,7 @@ import java.util.concurrent.ExecutionException;
  * <p/>
  * This is primarly intended to make mocking easier.
  */
-public abstract class AbstractSession implements Session, AsyncInitSession {
+public abstract class AbstractSession implements Session {
 
     /**
      * {@inheritDoc}
@@ -50,6 +51,14 @@ public abstract class AbstractSession implements Session, AsyncInitSession {
      * {@inheritDoc}
      */
     @Override
+    public ResultSet execute(String query, Map<String, Object> values) {
+        return execute(new SimpleStatement(query, values));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public ResultSet execute(Statement statement) {
         return executeAsync(statement).getUninterruptibly();
     }
@@ -60,6 +69,14 @@ public abstract class AbstractSession implements Session, AsyncInitSession {
     @Override
     public ResultSetFuture executeAsync(String query) {
         return executeAsync(new SimpleStatement(query));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public ResultSetFuture executeAsync(String query, Map<String, Object> values) {
+        return executeAsync(new SimpleStatement(query, values));
     }
 
     /**
@@ -98,29 +115,49 @@ public abstract class AbstractSession implements Session, AsyncInitSession {
      * {@inheritDoc}
      */
     @Override
+    public ListenableFuture<PreparedStatement> prepareAsync(String query) {
+        return prepareAsync(query, null);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public ListenableFuture<PreparedStatement> prepareAsync(final RegularStatement statement) {
+
         if (statement.hasValues())
             throw new IllegalArgumentException("A statement to prepare should not have values");
 
-        ListenableFuture<PreparedStatement> prepared = prepareAsync(statement.toString());
+        ListenableFuture<PreparedStatement> prepared = prepareAsync(statement.getQueryString(), statement.getOutgoingPayload());
         return Futures.transform(prepared, new Function<PreparedStatement, PreparedStatement>() {
             @Override
             public PreparedStatement apply(PreparedStatement prepared) {
-                ByteBuffer routingKey = statement.getRoutingKey();
+                ProtocolVersion protocolVersion = getCluster().getConfiguration().getProtocolOptions().getProtocolVersion();
+                CodecRegistry codecRegistry = getCluster().getConfiguration().getCodecRegistry();
+                ByteBuffer routingKey = statement.getRoutingKey(protocolVersion, codecRegistry);
                 if (routingKey != null)
                     prepared.setRoutingKey(routingKey);
                 prepared.setConsistencyLevel(statement.getConsistencyLevel());
                 if (statement.isTracing())
                     prepared.enableTracing();
                 prepared.setRetryPolicy(statement.getRetryPolicy());
-                if (prepared instanceof IdempotenceAwarePreparedStatement) {
-                    IdempotenceAwarePreparedStatement idempotenceAwarePS = (IdempotenceAwarePreparedStatement) prepared;
-                    idempotenceAwarePS.setIdempotent(statement.isIdempotent());
-                }
+                prepared.setOutgoingPayload(statement.getOutgoingPayload());
+                prepared.setIdempotent(statement.isIdempotent());
+
                 return prepared;
             }
         });
     }
+
+    /**
+     * Prepares the provided query string asynchronously,
+     * sending along the provided custom payload, if any.
+     *
+     * @param query         the CQL query string to prepare
+     * @param customPayload the custom payload to send along the query, or {@code null} if no payload is to be sent
+     * @return a future on the prepared statement corresponding to {@code query}.
+     */
+    protected abstract ListenableFuture<PreparedStatement> prepareAsync(String query, Map<String, ByteBuffer> customPayload);
 
     /**
      * {@inheritDoc}

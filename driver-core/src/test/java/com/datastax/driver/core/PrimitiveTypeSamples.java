@@ -16,17 +16,16 @@
 package com.datastax.driver.core;
 
 import com.datastax.driver.core.utils.Bytes;
+import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -41,7 +40,8 @@ public class PrimitiveTypeSamples {
 
     private static Map<DataType, Object> generateAll() {
         try {
-            ImmutableMap<DataType, Object> result = ImmutableMap.<DataType, Object>builder()
+            final Collection<DataType> primitiveTypes = DataType.allPrimitiveTypes(TestUtils.getDesiredProtocolVersion());
+            ImmutableMap<DataType, Object> data = ImmutableMap.<DataType, Object>builder()
                     .put(DataType.ascii(), "ascii")
                     .put(DataType.bigint(), Long.MAX_VALUE)
                     .put(DataType.blob(), Bytes.fromHexString("0xCAFE"))
@@ -50,16 +50,28 @@ public class PrimitiveTypeSamples {
                     .put(DataType.cdouble(), Double.MAX_VALUE)
                     .put(DataType.cfloat(), Float.MAX_VALUE)
                     .put(DataType.inet(), InetAddress.getByName("123.123.123.123"))
+                    .put(DataType.tinyint(), Byte.MAX_VALUE)
+                    .put(DataType.smallint(), Short.MAX_VALUE)
                     .put(DataType.cint(), Integer.MAX_VALUE)
                     .put(DataType.text(), "text")
                     .put(DataType.timestamp(), new Date(872835240000L))
+                    .put(DataType.date(), LocalDate.fromDaysSinceEpoch(16071))
+                    .put(DataType.time(), 54012123450000L)
                     .put(DataType.timeuuid(), UUID.fromString("FE2B4360-28C6-11E2-81C1-0800200C9A66"))
                     .put(DataType.uuid(), UUID.fromString("067e6162-3b6f-4ae2-a171-2470b63dff00"))
                     .put(DataType.varint(), new BigInteger(Integer.toString(Integer.MAX_VALUE) + "000"))
                     .build();
 
+            // Only include data types that support the desired protocol version.
+            Map<DataType, Object> result = Maps.filterKeys(data, new Predicate<DataType>() {
+                @Override
+                public boolean apply(DataType input) {
+                    return primitiveTypes.contains(input);
+                }
+            });
+
             // Check that we cover all types (except counter)
-            List<DataType> tmp = Lists.newArrayList(DataType.allPrimitiveTypes());
+            List<DataType> tmp = Lists.newArrayList(primitiveTypes);
             tmp.removeAll(result.keySet());
             assertThat(tmp)
                     .as("new datatype not covered in test")

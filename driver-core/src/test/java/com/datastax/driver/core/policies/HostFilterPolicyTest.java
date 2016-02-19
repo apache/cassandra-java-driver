@@ -48,7 +48,7 @@ public class HostFilterPolicyTest {
     InetSocketAddress address3 = InetSocketAddress.createUnresolved("192.168.1.3", 6666);
 
     @Mock
-    CloseableLoadBalancingPolicy wrappedPolicy;
+    LoadBalancingPolicy wrappedPolicy;
 
     @Captor
     ArgumentCaptor<Collection<Host>> hostsCaptor;

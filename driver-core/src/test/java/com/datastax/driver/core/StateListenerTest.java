@@ -97,11 +97,6 @@ public class StateListenerTest extends CCMTestsSupport {
         }
 
         @Override
-        public void onSuspected(Host host) {
-            reportActualEvent(SUSPECTED);
-        }
-
-        @Override
         public void onDown(Host host) {
             reportActualEvent(DOWN);
         }
@@ -109,6 +104,14 @@ public class StateListenerTest extends CCMTestsSupport {
         @Override
         public void onRemove(Host host) {
             reportActualEvent(REMOVE);
+        }
+
+        @Override
+        public void onRegister(Cluster cluster) {
+        }
+
+        @Override
+        public void onUnregister(Cluster cluster) {
         }
     }
 }

@@ -95,6 +95,72 @@ public interface SchemaChangeListener {
     void onUserTypeChanged(UserType current, UserType previous);
 
     /**
+     * Called when a user-defined function has been added.
+     *
+     * @param function the function that has been newly added.
+     */
+    void onFunctionAdded(FunctionMetadata function);
+
+    /**
+     * Called when a user-defined function has been removed.
+     *
+     * @param function the function that has been removed.
+     */
+    void onFunctionRemoved(FunctionMetadata function);
+
+    /**
+     * Called when a user-defined function has changed.
+     *
+     * @param current  the function that has changed, in its current form (after the change).
+     * @param previous the function that has changed, in its previous form (before the change).
+     */
+    void onFunctionChanged(FunctionMetadata current, FunctionMetadata previous);
+
+    /**
+     * Called when a user-defined aggregate has been added.
+     *
+     * @param aggregate the aggregate that has been newly added.
+     */
+    void onAggregateAdded(AggregateMetadata aggregate);
+
+    /**
+     * Called when a user-defined aggregate has been removed.
+     *
+     * @param aggregate the aggregate that has been removed.
+     */
+    void onAggregateRemoved(AggregateMetadata aggregate);
+
+    /**
+     * Called when a user-defined aggregate has changed.
+     *
+     * @param current  the aggregate that has changed, in its current form (after the change).
+     * @param previous the aggregate that has changed, in its previous form (before the change).
+     */
+    void onAggregateChanged(AggregateMetadata current, AggregateMetadata previous);
+
+    /**
+     * Called when a materialized view has been added.
+     *
+     * @param view the materialized view that has been newly added.
+     */
+    void onMaterializedViewAdded(MaterializedViewMetadata view);
+
+    /**
+     * Called when a materialized view has been removed.
+     *
+     * @param view the materialized view that has been removed.
+     */
+    void onMaterializedViewRemoved(MaterializedViewMetadata view);
+
+    /**
+     * Called when a materialized view has changed.
+     *
+     * @param current  the materialized view that has changed, in its current form (after the change).
+     * @param previous the materialized view that has changed, in its previous form (before the change).
+     */
+    void onMaterializedViewChanged(MaterializedViewMetadata current, MaterializedViewMetadata previous);
+
+    /**
      * Gets invoked when the listener is registered with a cluster.
      *
      * @param cluster the cluster that this tracker is registered with.

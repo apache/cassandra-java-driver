@@ -16,26 +16,31 @@ Cassandra when the first connection is established. Both sides are
 backward-compatible with older versions:
 
 <table border="1" style="text-align:center; width:100%;margin-bottom:1em;">
-<tr><td>&nbsp;</td><td>Cassandra: 1.2.x<br/>(DSE 3.2)</td><td>2.0.x<br/>(DSE 4.0 to 4.6)</td><td>2.1.x<br/>(DSE 4.7)</td></tr>
-<tr><td>Driver: 1.0.x</td> <td>v1</td> <td>v1</td>  <td>v1</td> </tr>
-<tr><td>2.0.x to 2.1.1</td> <td>v1</td> <td>v2</td>  <td>v2</td> </tr>
-<tr><td>2.1.2 or more</td> <td>v1</td> <td>v2</td>  <td>v3</td> </tr>
+<tr><td>&nbsp;</td><td>Cassandra: 1.2.x<br/>(DSE 3.2)</td><td>2.0.x<br/>(DSE 4.0 to 4.6)</td><td>2.1.x<br/>(DSE 4.7)</td><td>2.2.x</td><td>3.0.x</td></tr>
+<tr><td>Driver: 1.0.x</td> <td>v1</td> <td>v1</td>  <td>v1</td> <td>v1</td>  <td>Unsupported <i>(1)</i></td> </tr>
+<tr><td>2.0.x to 2.1.1</td> <td>v1</td> <td>v2</td>  <td>v2</td> <td>v2</td> <td>Unsupported <i>(1)</i></td> </tr>
+<tr><td>2.1.2 to 2.1.x</td> <td>v1</td> <td>v2</td>  <td>v3</td> <td>v3</td> <td>Unsupported <i>(2)</i></td> </tr>
+<tr><td>3.x</td> <td>v1</td> <td>v2</td>  <td>v3</td> <td>v4</td> <td>v4</td> </tr>
 </table>
+
+*(1) Cassandra 3.0 does not support protocol versions v1 and v2*
+
+*(2) There is a matching protocol version (v3), but the driver 2.1.x can't read the new system table format of Cassandra 3.0*
 
 For example, if you use version 2.1.5 of the driver to connect to
 Cassandra 2.0.9, the maximum version you can use (and the one you'll get
-by default) is protocol v2 (last line, middle column). If you use the
+by default) is protocol v2 (third row, second column). If you use the
 same version to connect to Cassandra 2.1.4, you can use protocol v3.
 
 ### Controlling the protocol version
 
 To find out which version you're currently using, use
-[ProtocolOptions#getProtocolVersionEnum()][gpve]:
+[ProtocolOptions#getProtocolVersion()][gpv]:
 
 ```java
 ProtocolVersion myCurrentVersion = cluster.getConfiguration()
     .getProtocolOptions()
-    .getProtocolVersionEnum();
+    .getProtocolVersion();
 ```
 
 The protocol version can not be changed at runtime. However, you can
@@ -58,7 +63,7 @@ All host(s) tried for query failed
   [/127.0.0.1:9042] Host /127.0.0.1:9042 does not support protocol version V3 but V2))
 ```
 
-[gpve]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/ProtocolOptions.html#getProtocolVersionEnum--
+[gpv]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/ProtocolOptions.html#getProtocolVersion--
 
 #### Protocol version with mixed clusters
 
@@ -89,13 +94,19 @@ To avoid this issue, you can use one the following workarounds:
 #### v1 to v2
 
 * bound variables in simple statements
-  ([Session#execute(String, Object...)](http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/Session.html#execute-java.lang.String-java.lang.Object...-))
-* [batch statements](http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/BatchStatement.html)
+  ([Session#execute(String, Object...)](http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Session.html#execute-java.lang.String-java.lang.Object...-))
+* [batch statements](http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/BatchStatement.html)
 * [query paging](../paging/)
 
 #### v2 to v3
 
 * the number of stream ids per connection goes from 128 to 32768 (see
   [Connection pooling](../pooling/))
-* [serial consistency on batch statements](http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/BatchStatement.html#setSerialConsistencyLevel-com.datastax.driver.core.ConsistencyLevel-)
+* [serial consistency on batch statements](http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/BatchStatement.html#setSerialConsistencyLevel-com.datastax.driver.core.ConsistencyLevel-)
 * [client-side timestamps](../query_timestamps/)
+
+#### v3 to v4
+
+* [query warnings](http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/ExecutionInfo.html#getWarnings--)
+* allowed unset values in bound statements
+* [Custom payloads](../custom_payloads/)

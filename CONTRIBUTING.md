@@ -12,7 +12,7 @@ Before you send your pull request, make sure that:
 
 - you have a unit test that failed before the fix and succeeds after.
 - the fix is mentioned in `changelog/README.md`.
-- the commit message includes the reference of the JIRA ticket for automatic linking
+- the commit message include the reference of the JIRA ticket for automatic linking
   (example: `JAVA-503: Fix NPE when a connection fails during pool construction.`).
 
 As long as your pull request is not merged, it's OK to rebase your branch and push with

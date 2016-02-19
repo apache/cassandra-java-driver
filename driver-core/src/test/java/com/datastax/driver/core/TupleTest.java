@@ -23,11 +23,14 @@ import org.testng.annotations.Test;
 import java.nio.ByteBuffer;
 import java.util.*;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
 
 @CassandraVersion(major = 2.1)
 public class TupleTest extends CCMTestsSupport {
+
+    ProtocolVersion protocolVersion = TestUtils.getDesiredProtocolVersion();
 
     @Override
     public void onTestContextInitialized() {
@@ -36,7 +39,7 @@ public class TupleTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void simpleValueTest() throws Exception {
-        TupleType t = TupleType.of(DataType.cint(), DataType.text(), DataType.cfloat());
+        TupleType t = cluster().getMetadata().newTupleType(DataType.cint(), DataType.text(), DataType.cfloat());
         TupleValue v = t.newValue();
         v.setInt(0, 1);
         v.setString(1, "a");
@@ -50,7 +53,7 @@ public class TupleTest extends CCMTestsSupport {
         assertEquals(v.getString(1), "a");
         assertEquals(v.getFloat(2), 1.0f);
 
-        assertEquals(t.format(v), "(1, 'a', 1.0)");
+        assertEquals(TypeCodec.tuple(t).format(v), "(1,'a',1.0)");
     }
 
     @Test(groups = "short")
@@ -59,7 +62,7 @@ public class TupleTest extends CCMTestsSupport {
         PreparedStatement ins = session().prepare("INSERT INTO t(k, v) VALUES (?, ?)");
         PreparedStatement sel = session().prepare("SELECT * FROM t WHERE k=?");
 
-        TupleType t = TupleType.of(DataType.cint(), DataType.text(), DataType.cfloat());
+        TupleType t = cluster().getMetadata().newTupleType(DataType.cint(), DataType.text(), DataType.cfloat());
 
         int k = 1;
         TupleValue v = t.newValue(1, "a", 1.0f);
@@ -92,7 +95,7 @@ public class TupleTest extends CCMTestsSupport {
         session().execute("USE test_tuple_type");
         session().execute("CREATE TABLE mytable (a int PRIMARY KEY, b frozen<tuple<ascii, int, boolean>>)");
 
-        TupleType t = TupleType.of(DataType.ascii(), DataType.cint(), DataType.cboolean());
+        TupleType t = cluster().getMetadata().newTupleType(DataType.ascii(), DataType.cint(), DataType.cboolean());
 
         // test non-prepared statement
         TupleValue complete = t.newValue("foo", 123, true);
@@ -109,7 +112,7 @@ public class TupleTest extends CCMTestsSupport {
         }
 
         // test incomplete tuples with new TupleType
-        TupleType t1 = TupleType.of(DataType.ascii(), DataType.cint());
+        TupleType t1 = cluster().getMetadata().newTupleType(DataType.ascii(), DataType.cint());
         TupleValue partial = t1.newValue("bar", 456);
         TupleValue partionResult = t.newValue("bar", 456, null);
         session().execute("INSERT INTO mytable (a, b) VALUES (0, ?)", partial);
@@ -125,7 +128,7 @@ public class TupleTest extends CCMTestsSupport {
         }
 
         // test single value tuples with new TupleType
-        TupleType t2 = TupleType.of(DataType.ascii());
+        TupleType t2 = cluster().getMetadata().newTupleType(DataType.ascii());
         TupleValue subpartial = t2.newValue("zoo");
         TupleValue subpartialResult = t.newValue("zoo", null, null);
         session().execute("INSERT INTO mytable (a, b) VALUES (0, ?)", subpartial);
@@ -179,7 +182,7 @@ public class TupleTest extends CCMTestsSupport {
                 dataTypes.add(DataType.cint());
                 values.add(j);
             }
-            TupleType t = new TupleType(dataTypes);
+            TupleType t = new TupleType(dataTypes, protocolVersion, cluster().getConfiguration().getCodecRegistry());
             TupleValue createdTuple = t.newValue(values.toArray());
 
             // write tuple
@@ -234,8 +237,8 @@ public class TupleTest extends CCMTestsSupport {
             }
 
             // actually create the tuples
-            TupleType t = new TupleType(dataTypes);
-            TupleType t2 = new TupleType(completeDataTypes);
+            TupleType t = new TupleType(dataTypes, protocolVersion, cluster().getConfiguration().getCodecRegistry());
+            TupleType t2 = new TupleType(completeDataTypes, protocolVersion, cluster().getConfiguration().getCodecRegistry());
             TupleValue createdTuple = t.newValue(createdValues.toArray());
             TupleValue completeTuple = t2.newValue(completeValues.toArray());
 
@@ -295,7 +298,7 @@ public class TupleTest extends CCMTestsSupport {
             dataTypes.add(DataType.list(datatype));
             createdValues.add(Collections.singletonList(PrimitiveTypeSamples.ALL.get(datatype)));
 
-            TupleType t = new TupleType(dataTypes);
+            TupleType t = new TupleType(dataTypes, protocolVersion, cluster().getConfiguration().getCodecRegistry());
             TupleValue createdTuple = t.newValue(createdValues.toArray());
 
             // write tuple
@@ -318,7 +321,7 @@ public class TupleTest extends CCMTestsSupport {
             dataTypes.add(DataType.set(datatype));
             createdValues.add(new HashSet<Object>(Collections.singletonList(PrimitiveTypeSamples.ALL.get(datatype))));
 
-            TupleType t = new TupleType(dataTypes);
+            TupleType t = new TupleType(dataTypes, protocolVersion, cluster().getConfiguration().getCodecRegistry());
             TupleValue createdTuple = t.newValue(createdValues.toArray());
 
             // write tuple
@@ -344,7 +347,7 @@ public class TupleTest extends CCMTestsSupport {
             dataTypes.add(DataType.map(datatype, datatype));
             createdValues.add(hm);
 
-            TupleType t = new TupleType(dataTypes);
+            TupleType t = new TupleType(dataTypes, protocolVersion, cluster().getConfiguration().getCodecRegistry());
             TupleValue createdTuple = t.newValue(createdValues.toArray());
 
             // write tuple
@@ -357,6 +360,24 @@ public class TupleTest extends CCMTestsSupport {
             assertEquals(r, createdTuple);
             ++i;
         }
+    }
+
+    /**
+     * Validates that tuple values generated from an attached type (cluster-provided TupleType) and
+     * a detached type (using TupleType.of) are the same.
+     *
+     * @since 2.2.0
+     */
+    @Test(groups = "short")
+    public void detachedTupleTypeTest() {
+        TupleType detachedType = TupleType.of(TestUtils.getDesiredProtocolVersion(), CodecRegistry.DEFAULT_INSTANCE,
+                DataType.cint(), DataType.text(), DataType.cfloat());
+        TupleValue detachedValue = detachedType.newValue(1, "hello", 2.0f);
+
+        TupleType attachedType = cluster().getMetadata().newTupleType(DataType.cint(), DataType.text(), DataType.cfloat());
+        TupleValue attachedValue = attachedType.newValue(1, "hello", 2.0f);
+
+        assertThat(detachedValue).isEqualTo(attachedValue);
     }
 
     /**
@@ -374,11 +395,11 @@ public class TupleTest extends CCMTestsSupport {
      */
     private TupleValue nestedTuplesCreatorHelper(int depth) {
         if (depth == 1) {
-            TupleType baseTuple = TupleType.of(DataType.cint());
+            TupleType baseTuple = cluster().getMetadata().newTupleType(DataType.cint());
             return baseTuple.newValue(303);
         } else {
             TupleValue innerTuple = nestedTuplesCreatorHelper(depth - 1);
-            TupleType t = TupleType.of(innerTuple.getType());
+            TupleType t = cluster().getMetadata().newTupleType(innerTuple.getType());
             return t.newValue(innerTuple);
         }
     }
@@ -442,7 +463,7 @@ public class TupleTest extends CCMTestsSupport {
         UserType userTypeDef = cluster().getMetadata().getKeyspace("testTuplesWithNulls").getUserType("user");
         UDTValue userType = userTypeDef.newValue();
 
-        TupleType t = TupleType.of(DataType.text(), DataType.cint(), DataType.uuid(), DataType.blob());
+        TupleType t = cluster().getMetadata().newTupleType(DataType.text(), DataType.cint(), DataType.uuid(), DataType.blob());
         TupleValue v = t.newValue(null, null, null, null);
         userType.setTupleValue("b", v);
 

@@ -85,7 +85,7 @@ public class QueryLoggerErrorsTest extends ScassandraTestBase.PerClassCluster {
     public void should_log_slow_queries() throws Exception {
         // given
         slow.setLevel(DEBUG);
-        queryLogger = builder(cluster)
+        queryLogger = builder()
                 .withConstantThreshold(10)
                 .build();
         cluster.register(queryLogger);
@@ -110,7 +110,7 @@ public class QueryLoggerErrorsTest extends ScassandraTestBase.PerClassCluster {
     public void should_log_timed_out_queries() throws Exception {
         // given
         error.setLevel(DEBUG);
-        queryLogger = builder(cluster).build();
+        queryLogger = builder().build();
         cluster.register(queryLogger);
         cluster.getConfiguration().getSocketOptions().setReadTimeoutMillis(1);
         String query = "SELECT foo FROM bar";
@@ -134,7 +134,7 @@ public class QueryLoggerErrorsTest extends ScassandraTestBase.PerClassCluster {
                 .contains(ip)
                 .contains(Integer.toString(scassandra.getBinaryPort()))
                 .contains(query)
-                .contains(OperationTimedOutException.class.getName());
+                .contains("Timed out waiting for server response");
     }
 
     @DataProvider(name = "errors")
@@ -161,7 +161,7 @@ public class QueryLoggerErrorsTest extends ScassandraTestBase.PerClassCluster {
     public void should_log_exception_from_the_given_result(PrimingRequest.Result result, Class<? extends Exception> expectedException, Class<? extends Exception> loggedException) throws Exception {
         // given
         error.setLevel(DEBUG);
-        queryLogger = builder(cluster).build();
+        queryLogger = builder().build();
         cluster.register(queryLogger);
         String query = "SELECT foo FROM bar";
         primingClient.prime(
@@ -177,14 +177,8 @@ public class QueryLoggerErrorsTest extends ScassandraTestBase.PerClassCluster {
         } catch (Exception e) {
             if (e instanceof NoHostAvailableException) {
                 assertThat(expectedException).isEqualTo(NoHostAvailableException.class);
-                // ok
                 Throwable error = ((NoHostAvailableException) e).getErrors().get(hostAddress);
-                assertThat(error).isNotNull();
-                if (loggedException.getSuperclass() == DriverInternalError.class) {
-                    assertThat(error).isOfAnyClassIn(DriverException.class);
-                } else {
-                    assertThat(error).isOfAnyClassIn(loggedException);
-                }
+                assertThat(error).isNotNull().isOfAnyClassIn(loggedException);
             } else {
                 assertThat(e).isInstanceOf(expectedException);
             }

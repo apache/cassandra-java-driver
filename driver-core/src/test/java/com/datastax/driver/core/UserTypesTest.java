@@ -36,15 +36,20 @@ import static org.testng.Assert.assertNotEquals;
 @CassandraVersion(major = 2.1)
 public class UserTypesTest extends CCMTestsSupport {
 
-    private final static List<DataType> DATA_TYPE_PRIMITIVES = new ArrayList<DataType>(DataType.allPrimitiveTypes());
+    private final static List<DataType> DATA_TYPE_PRIMITIVES = new ArrayList<DataType>(DataType.allPrimitiveTypes(TestUtils.getDesiredProtocolVersion()));
+
+    static {
+        DATA_TYPE_PRIMITIVES.remove(DataType.counter());
+    }
+
     private final static List<DataType.Name> DATA_TYPE_NON_PRIMITIVE_NAMES =
             new ArrayList<DataType.Name>(EnumSet.of(DataType.Name.LIST, DataType.Name.SET, DataType.Name.MAP, DataType.Name.TUPLE));
 
     @Override
     public void onTestContextInitialized() {
         String type1 = "CREATE TYPE phone (alias text, number text)";
-        String type2 = "CREATE TYPE address (street text, \"ZIP\" int, phones set<frozen<phone>>)";
-        String table = "CREATE TABLE user (id int PRIMARY KEY, addr frozen<address>)";
+        String type2 = "CREATE TYPE \"\"\"User Address\"\"\" (street text, \"ZIP\"\"\" int, phones set<frozen<phone>>)";
+        String table = "CREATE TABLE user (id int PRIMARY KEY, addr frozen<\"\"\"User Address\"\"\">)";
         execute(type1, type2, table);
     }
 
@@ -59,13 +64,13 @@ public class UserTypesTest extends CCMTestsSupport {
         PreparedStatement ins = session().prepare("INSERT INTO user(id, addr) VALUES (?, ?)");
         PreparedStatement sel = session().prepare("SELECT * FROM user WHERE id=?");
 
-        UserType addrDef = cluster().getMetadata().getKeyspace(keyspace).getUserType("address");
+        UserType addrDef = cluster().getMetadata().getKeyspace(keyspace).getUserType(quote("\"User Address\""));
         UserType phoneDef = cluster().getMetadata().getKeyspace(keyspace).getUserType("phone");
 
         UDTValue phone1 = phoneDef.newValue().setString("alias", "home").setString("number", "0123548790");
         UDTValue phone2 = phoneDef.newValue().setString("alias", "work").setString("number", "0698265251");
 
-        UDTValue addr = addrDef.newValue().setString("street", "1600 Pennsylvania Ave NW").setInt(quote("ZIP"), 20500).setSet("phones", ImmutableSet.of(phone1, phone2));
+        UDTValue addr = addrDef.newValue().setString("street", "1600 Pennsylvania Ave NW").setInt(quote("ZIP\""), 20500).setSet("phones", ImmutableSet.of(phone1, phone2));
 
         session().execute(ins.bind(userId, addr));
 
@@ -83,13 +88,14 @@ public class UserTypesTest extends CCMTestsSupport {
     @Test(groups = "short")
     public void simpleUnpreparedWriteReadTest() throws Exception {
         int userId = 1;
-        UserType addrDef = cluster().getMetadata().getKeyspace(keyspace).getUserType("address");
+        session().execute("USE " + keyspace);
+        UserType addrDef = cluster().getMetadata().getKeyspace(keyspace).getUserType(quote("\"User Address\""));
         UserType phoneDef = cluster().getMetadata().getKeyspace(keyspace).getUserType("phone");
 
         UDTValue phone1 = phoneDef.newValue().setString("alias", "home").setString("number", "0123548790");
         UDTValue phone2 = phoneDef.newValue().setString("alias", "work").setString("number", "0698265251");
 
-        UDTValue addr = addrDef.newValue().setString("street", "1600 Pennsylvania Ave NW").setInt(quote("ZIP"), 20500).setSet("phones", ImmutableSet.of(phone1, phone2));
+        UDTValue addr = addrDef.newValue().setString("street", "1600 Pennsylvania Ave NW").setInt(quote("ZIP\""), 20500).setSet("phones", ImmutableSet.of(phone1, phone2));
 
         session().execute("INSERT INTO user(id, addr) VALUES (?, ?)", userId, addr);
 
@@ -111,7 +117,7 @@ public class UserTypesTest extends CCMTestsSupport {
         assertEquals(addrDef, null);
         assertEquals(phoneDef, null);
 
-        addrDef = cluster().getMetadata().getKeyspace(keyspace).getUserType("address");
+        addrDef = cluster().getMetadata().getKeyspace(keyspace).getUserType(quote("\"User Address\""));
         phoneDef = cluster().getMetadata().getKeyspace(keyspace).getUserType("phone");
         assertNotEquals(addrDef, null);
         assertNotEquals(phoneDef, null);
@@ -122,14 +128,14 @@ public class UserTypesTest extends CCMTestsSupport {
                 "WITH replication = { 'class' : 'SimpleStrategy', 'replication_factor': '1'}");
         session().execute("USE " + nonExistingKeyspace);
 
-        addrDef = cluster().getMetadata().getKeyspace(nonExistingKeyspace).getUserType("address");
+        addrDef = cluster().getMetadata().getKeyspace(nonExistingKeyspace).getUserType(quote("\"User Address\""));
         phoneDef = cluster().getMetadata().getKeyspace(nonExistingKeyspace).getUserType("phone");
         assertEquals(addrDef, null);
         assertEquals(phoneDef, null);
 
         session().execute("USE " + keyspace);
 
-        addrDef = cluster().getMetadata().getKeyspace(keyspace).getUserType("address");
+        addrDef = cluster().getMetadata().getKeyspace(keyspace).getUserType(quote("\"User Address\""));
         phoneDef = cluster().getMetadata().getKeyspace(keyspace).getUserType("phone");
         assertNotEquals(addrDef, null);
         assertNotEquals(phoneDef, null);
@@ -221,34 +227,46 @@ public class UserTypesTest extends CCMTestsSupport {
                     alldatatypes.setString(index, (String) sampleData);
                     break;
                 case BIGINT:
-                    alldatatypes.setLong(index, (Long) sampleData);
+                    alldatatypes.setLong(index, ((Long) sampleData).longValue());
                     break;
                 case BLOB:
                     alldatatypes.setBytes(index, (ByteBuffer) sampleData);
                     break;
                 case BOOLEAN:
-                    alldatatypes.setBool(index, (Boolean) sampleData);
+                    alldatatypes.setBool(index, ((Boolean) sampleData).booleanValue());
                     break;
                 case DECIMAL:
                     alldatatypes.setDecimal(index, (BigDecimal) sampleData);
                     break;
                 case DOUBLE:
-                    alldatatypes.setDouble(index, (Double) sampleData);
+                    alldatatypes.setDouble(index, ((Double) sampleData).doubleValue());
                     break;
                 case FLOAT:
-                    alldatatypes.setFloat(index, (Float) sampleData);
+                    alldatatypes.setFloat(index, ((Float) sampleData).floatValue());
                     break;
                 case INET:
                     alldatatypes.setInet(index, (InetAddress) sampleData);
                     break;
+                case TINYINT:
+                    alldatatypes.setByte(index, (Byte) sampleData);
+                    break;
+                case SMALLINT:
+                    alldatatypes.setShort(index, (Short) sampleData);
+                    break;
                 case INT:
-                    alldatatypes.setInt(index, (Integer) sampleData);
+                    alldatatypes.setInt(index, ((Integer) sampleData).intValue());
                     break;
                 case TEXT:
                     alldatatypes.setString(index, (String) sampleData);
                     break;
                 case TIMESTAMP:
-                    alldatatypes.setDate(index, ((Date) sampleData));
+                    alldatatypes.setTimestamp(index, ((Date) sampleData));
+                    break;
+                case DATE:
+                    alldatatypes.setDate(index, ((LocalDate) sampleData));
+                    break;
+                case TIME:
+                    alldatatypes.setTime(index, ((Long) sampleData));
                     break;
                 case TIMEUUID:
                     alldatatypes.setUUID(index, (UUID) sampleData);
@@ -342,7 +360,7 @@ public class UserTypesTest extends CCMTestsSupport {
                         alldatatypes.setMap(index, ImmutableMap.of(sampleElement, sampleElement));
                         break;
                     case TUPLE:
-                        alldatatypes.setTupleValue(index, TupleType.of(dataType).newValue(sampleElement));
+                        alldatatypes.setTupleValue(index, cluster().getMetadata().newTupleType(dataType).newValue(sampleElement));
                 }
             }
 

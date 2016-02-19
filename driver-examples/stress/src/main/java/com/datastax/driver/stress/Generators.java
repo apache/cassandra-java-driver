@@ -108,11 +108,11 @@ public class Generators {
         public QueryGenerator create(int id, int iterations, OptionSet options, Session session) {
 
             return options.has("no-prepare")
-                    ? createRegular(id, iterations, options)
+                    ? createRegular(id, iterations, options, session)
                     : createPrepared(id, iterations, options, session);
         }
 
-        public QueryGenerator createRegular(int id, int iterations, OptionSet options) {
+        public QueryGenerator createRegular(int id, int iterations, OptionSet options, final Session session) {
             final int valueSize = (Integer) options.valueOf("value-size");
             final int columnsPerRow = (Integer) options.valueOf("columns-per-row");
             final long prefix = (long) id << 32;
@@ -192,11 +192,11 @@ public class Generators {
         @Override
         public QueryGenerator create(int id, int iterations, OptionSet options, Session session) {
             return options.has("no-prepare")
-                    ? createRegular(id, iterations)
+                    ? createRegular(id, iterations, session)
                     : createPrepared(id, iterations, session);
         }
 
-        public QueryGenerator createRegular(long id, int iterations) {
+        public QueryGenerator createRegular(long id, int iterations, final Session session) {
             final long prefix = (long) id << 32;
             return new AbstractGenerator(iterations) {
                 @Override

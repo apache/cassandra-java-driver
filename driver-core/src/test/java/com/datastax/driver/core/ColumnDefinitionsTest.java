@@ -30,7 +30,7 @@ public class ColumnDefinitionsTest {
                 new ColumnDefinitions.Definition("ks", "cf", "aColumn", DataType.text()),
                 new ColumnDefinitions.Definition("ks", "cf", "fOO", DataType.text()),
                 new ColumnDefinitions.Definition("ks", "cf", "anotherColumn", DataType.text())
-        });
+        }, CodecRegistry.DEFAULT_INSTANCE);
 
         assertTrue(defs.contains("foo"));
         assertTrue(defs.contains("fOO"));
@@ -44,7 +44,7 @@ public class ColumnDefinitionsTest {
                 new ColumnDefinitions.Definition("ks", "cf", "with \" quote", DataType.text()),
                 new ColumnDefinitions.Definition("ks", "cf", "\"in quote\"", DataType.text()),
                 new ColumnDefinitions.Definition("ks", "cf", "in quote", DataType.cint()),
-        });
+        }, CodecRegistry.DEFAULT_INSTANCE);
 
         assertTrue(defs.getType("foo").equals(DataType.text()));
         assertTrue(defs.getType("Foo").equals(DataType.text()));
@@ -65,7 +65,7 @@ public class ColumnDefinitionsTest {
                 new ColumnDefinitions.Definition("ks", "cf1", "column", DataType.text()),
                 new ColumnDefinitions.Definition("ks", "cf2", "column", DataType.cint()),
                 new ColumnDefinitions.Definition("ks", "cf3", "column", DataType.cfloat())
-        });
+        }, CodecRegistry.DEFAULT_INSTANCE);
 
         assertTrue(defs.getType("column").equals(DataType.text()));
     }

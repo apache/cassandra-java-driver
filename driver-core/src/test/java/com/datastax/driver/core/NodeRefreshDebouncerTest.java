@@ -57,8 +57,11 @@ public class NodeRefreshDebouncerTest extends CCMTestsSupport {
 
         ArgumentCaptor<Host> captor = forClass(Host.class);
 
-        // Only onAdd should be called, since stop and start should be discarded.
-        verify(listener, timeout(refreshNodeInterval + TimeUnit.MILLISECONDS.convert(Cluster.NEW_NODE_DELAY_SECONDS, TimeUnit.SECONDS)).only()).onAdd(captor.capture());
+        // Only register and onAdd should be called, since stop and start should be discarded.
+        verify(listener).onRegister(cluster);
+        long addDelay = refreshNodeInterval + TimeUnit.MILLISECONDS.convert(Cluster.NEW_NODE_DELAY_SECONDS, TimeUnit.SECONDS);
+        verify(listener, timeout(addDelay)).onAdd(captor.capture());
+        verifyNoMoreInteractions(listener);
 
         // The hosts state should be UP.
         assertThat(captor.getValue().getState()).isEqualTo("UP");

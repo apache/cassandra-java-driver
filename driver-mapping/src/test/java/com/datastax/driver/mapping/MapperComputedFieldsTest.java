@@ -16,6 +16,7 @@
 package com.datastax.driver.mapping;
 
 import com.datastax.driver.core.*;
+import com.datastax.driver.core.exceptions.CodecNotFoundException;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.utils.CassandraVersion;
 import com.datastax.driver.mapping.annotations.*;
@@ -48,7 +49,7 @@ public class MapperComputedFieldsTest extends CCMTestsSupport {
     @BeforeMethod(groups = "short")
     void setup() {
         mappingManager = new MappingManager(session());
-        protocolVersion = cluster().getConfiguration().getProtocolOptions().getProtocolVersionEnum();
+        protocolVersion = cluster().getConfiguration().getProtocolOptions().getProtocolVersion();
         if (protocolVersion.compareTo(V1) > 0)
             userMapper = mappingManager.mapper(User.class);
     }
@@ -120,10 +121,12 @@ public class MapperComputedFieldsTest extends CCMTestsSupport {
         assertThat(user.getWriteTime()).isEqualTo(0);
     }
 
-    @Test(groups = "short", expectedExceptions = IllegalArgumentException.class)
+    @Test(groups = "short", expectedExceptions = CodecNotFoundException.class)
     @CassandraVersion(major = 2.0)
     void should_fail_if_computed_field_is_not_right_type() {
-        mappingManager.mapper(User_WrongComputedType.class);
+        Mapper<User_WrongComputedType> mapper = mappingManager.mapper(User_WrongComputedType.class);
+
+        User_WrongComputedType user = mapper.get("testlogin");
     }
 
     @Test(groups = "short")
@@ -208,8 +211,8 @@ public class MapperComputedFieldsTest extends CCMTestsSupport {
         private String login;
         private String name;
 
-        @Column(name = "writetime(v)")
-        byte writeTime;
+        @Computed(value = "writetime(name)")
+        String writeTime;
 
         public String getLogin() {
             return login;
@@ -227,11 +230,11 @@ public class MapperComputedFieldsTest extends CCMTestsSupport {
             this.name = name;
         }
 
-        public byte getWriteTime() {
+        public String getWriteTime() {
             return writeTime;
         }
 
-        public void setWriteTime(byte writeTime) {
+        public void setWriteTime(String writeTime) {
             this.writeTime = writeTime;
         }
     }

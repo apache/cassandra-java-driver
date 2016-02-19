@@ -24,7 +24,6 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
 import static com.datastax.driver.core.CreateCCM.TestMode.PER_METHOD;
-import static java.util.Collections.singleton;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNull;
 
@@ -56,7 +55,7 @@ public class MissingRpcAddressTest extends CCMTestsSupport {
     private void deleteNode2RpcAddressFromNode1() throws Exception {
         InetSocketAddress firstHost = ccm().addressOfNode(1);
         Cluster cluster = register(Cluster.builder()
-                .addContactPointsWithPorts(singleton(firstHost))
+                .addContactPoints(firstHost.getAddress())
                 .withPort(ccm().getBinaryPort())
                 // ensure we will only connect to node1
                 .withLoadBalancingPolicy(new WhiteListPolicy(Policies.defaultLoadBalancingPolicy(),

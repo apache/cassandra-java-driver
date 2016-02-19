@@ -56,7 +56,7 @@ public class FetchingTest extends CCMTestsSupport {
 
         } catch (UnsupportedFeatureException e) {
             // This is expected when testing the protocol v1
-            assertEquals(cluster().getConfiguration().getProtocolOptions().getProtocolVersionEnum(), ProtocolVersion.V1);
+            assertEquals(cluster().getConfiguration().getProtocolOptions().getProtocolVersion(), ProtocolVersion.V1);
         }
     }
 }

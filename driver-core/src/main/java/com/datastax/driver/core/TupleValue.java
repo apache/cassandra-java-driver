@@ -25,11 +25,10 @@ public class TupleValue extends AbstractAddressableByIndexData<TupleValue> {
     /**
      * Builds a new value for a tuple.
      *
-     * @param types the types of the tuple's components.
+     * @param type the {@link TupleType} instance defining this tuple's components.
      */
     TupleValue(TupleType type) {
-        // All things in a tuple are encoded with the protocol v3
-        super(ProtocolVersion.V3, type.getComponentTypes().size());
+        super(type.getProtocolVersion(), type.getComponentTypes().size());
         this.type = type;
     }
 
@@ -41,6 +40,11 @@ public class TupleValue extends AbstractAddressableByIndexData<TupleValue> {
     protected String getName(int i) {
         // This is used for error messages
         return "component " + i;
+    }
+
+    @Override
+    protected CodecRegistry getCodecRegistry() {
+        return type.getCodecRegistry();
     }
 
     /**
@@ -72,15 +76,8 @@ public class TupleValue extends AbstractAddressableByIndexData<TupleValue> {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("(");
-        for (int i = 0; i < values.length; i++) {
-            if (i > 0)
-                sb.append(", ");
-
-            DataType dt = getType(i);
-            sb.append(values[i] == null ? "null" : dt.format(dt.deserialize(values[i], ProtocolVersion.V3)));
-        }
-        sb.append(")");
+        TypeCodec<Object> codec = getCodecRegistry().codecFor(type);
+        sb.append(codec.format(this));
         return sb.toString();
     }
 }

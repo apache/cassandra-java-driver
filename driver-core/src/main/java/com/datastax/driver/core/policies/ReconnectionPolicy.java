@@ -15,6 +15,8 @@
  */
 package com.datastax.driver.core.policies;
 
+import com.datastax.driver.core.Cluster;
+
 /**
  * Policy that decides how often the reconnection to a dead node is attempted.
  * <p/>
@@ -59,4 +61,18 @@ public interface ReconnectionPolicy {
          */
         public long nextDelayMs();
     }
+
+    /**
+     * Gets invoked at cluster startup.
+     *
+     * @param cluster the cluster that this policy is associated with.
+     */
+    void init(Cluster cluster);
+
+    /**
+     * Gets invoked at cluster shutdown.
+     * <p/>
+     * This gives the policy the opportunity to perform some cleanup, for instance stop threads that it might have started.
+     */
+    void close();
 }

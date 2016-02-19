@@ -15,10 +15,7 @@
  */
 package com.datastax.driver.core;
 
-import com.datastax.driver.core.exceptions.AuthenticationException;
-import com.datastax.driver.core.exceptions.DriverInternalError;
-import com.datastax.driver.core.exceptions.InvalidQueryException;
-import com.datastax.driver.core.exceptions.NoHostAvailableException;
+import com.datastax.driver.core.exceptions.*;
 import com.datastax.driver.core.policies.*;
 import com.datastax.driver.core.utils.MoreFutures;
 import com.google.common.annotations.VisibleForTesting;
@@ -64,6 +61,11 @@ import static com.datastax.driver.core.SchemaElement.KEYSPACE;
 public class Cluster implements Closeable {
 
     private static final Logger logger = LoggerFactory.getLogger(Cluster.class);
+
+    static {
+        // Perform sanity checks to inform user of possible environment misconfiguration.
+        SanityChecks.check();
+    }
 
     @VisibleForTesting
     static final int NEW_NODE_DELAY_SECONDS = SystemProperties.getInt("com.datastax.driver.NEW_NODE_DELAY_SECONDS", 1);
@@ -270,7 +272,7 @@ public class Cluster implements Closeable {
      *                                  be contacted to set the {@code keyspace}.
      * @throws AuthenticationException  if an authentication error occurs while
      *                                  contacting the initial contact points.
-     * @throws InvalidQueryException    if the keyspace does not exists.
+     * @throws InvalidQueryException    if the keyspace does not exist.
      * @throws IllegalStateException    if the Cluster was closed prior to calling
      *                                  this method. This can occur either directly (through {@link #close()} or
      *                                  {@link #closeAsync()}), or as a result of an error while initializing the
@@ -329,7 +331,7 @@ public class Cluster implements Closeable {
     public ListenableFuture<Session> connectAsync(final String keyspace) {
         checkNotClosed(manager);
         init();
-        final AsyncInitSession session = manager.newSession();
+        final Session session = manager.newSession();
         ListenableFuture<Session> sessionInitialized = session.initAsync();
         if (keyspace == null) {
             return sessionInitialized;
@@ -346,7 +348,7 @@ public class Cluster implements Closeable {
                     session.closeAsync();
                 }
             });
-            return Futures.transform(keyspaceSet, Functions.<Session>constant(session));
+            return Futures.transform(keyspaceSet, Functions.constant(session));
         }
     }
 
@@ -418,16 +420,21 @@ public class Cluster implements Closeable {
      * <p/>
      * Registering the same listener multiple times is a no-op.
      * <p/>
-     * Note that while {@link LoadBalancingPolicy} implements
-     * {@code Host.StateListener}, the configured load balancing does not
-     * need to (and should not) be registered through this method to
-     * received host related events.
+     * This method should be used to register additional listeners
+     * on an already-initialized cluster.
+     * To add listeners to a cluster object prior to its initialization,
+     * use {@link Builder#withInitialListeners(Collection)}.
+     * Calling this method on a non-initialized cluster
+     * will result in the listener being
+     * {@link com.datastax.driver.core.Host.StateListener#onRegister(Cluster) notified}
+     * twice of cluster registration: once inside this method, and once at cluster initialization.
      *
      * @param listener the new {@link Host.StateListener} to register.
      * @return this {@code Cluster} object;
      */
     public Cluster register(Host.StateListener listener) {
         checkNotClosed(manager);
+        listener.onRegister(this);
         manager.listeners.add(listener);
         return this;
     }
@@ -435,7 +442,7 @@ public class Cluster implements Closeable {
     /**
      * Unregisters the provided listener from being notified on hosts events.
      * <p/>
-     * This method is a no-op if {@code listener} hadn't previously be
+     * This method is a no-op if {@code listener} hasn't previously been
      * registered against this Cluster.
      *
      * @param listener the {@link Host.StateListener} to unregister.
@@ -443,6 +450,7 @@ public class Cluster implements Closeable {
      */
     public Cluster unregister(Host.StateListener listener) {
         checkNotClosed(manager);
+        listener.onUnregister(this);
         manager.listeners.remove(listener);
         return this;
     }
@@ -453,13 +461,15 @@ public class Cluster implements Closeable {
      * <p/>
      * Registering the same listener multiple times is a no-op.
      * <p/>
-     * Be wary that the registered tracker {@code update} method will be call
+     * Beware that the registered tracker's
+     * {@link LatencyTracker#update(Host, Statement, Exception, long) update}
+     * method will be called
      * very frequently (at the end of every query to a Cassandra host) and
      * should thus not be costly.
      * <p/>
-     * The main use case for a {@code LatencyTracker} is so
-     * {@link LoadBalancingPolicy} can implement latency awareness
-     * Typically, {@link LatencyAwarePolicy} registers  it's own internal
+     * The main use case for a {@link LatencyTracker} is to allow
+     * load balancing policies to implement latency awareness.
+     * For example, {@link LatencyAwarePolicy} registers  it's own internal
      * {@code LatencyTracker} (automatically, you don't have to call this
      * method directly).
      *
@@ -468,6 +478,7 @@ public class Cluster implements Closeable {
      */
     public Cluster register(LatencyTracker tracker) {
         checkNotClosed(manager);
+        tracker.onRegister(this);
         manager.trackers.add(tracker);
         return this;
     }
@@ -476,7 +487,7 @@ public class Cluster implements Closeable {
      * Unregisters the provided latency tracking from being updated
      * with host read latencies.
      * <p/>
-     * This method is a no-op if {@code tracker} hadn't previously be
+     * This method is a no-op if {@code tracker} hasn't previously been
      * registered against this Cluster.
      *
      * @param tracker the {@link LatencyTracker} to unregister.
@@ -484,6 +495,7 @@ public class Cluster implements Closeable {
      */
     public Cluster unregister(LatencyTracker tracker) {
         checkNotClosed(manager);
+        tracker.onUnregister(this);
         manager.trackers.remove(tracker);
         return this;
     }
@@ -507,7 +519,7 @@ public class Cluster implements Closeable {
      * Unregisters the provided schema change listener from being updated
      * with schema change events.
      * <p/>
-     * This method is a no-op if {@code listener} hadn't previously be
+     * This method is a no-op if {@code listener} hasn't previously been
      * registered against this Cluster.
      *
      * @param listener the {@link SchemaChangeListener} to unregister.
@@ -655,26 +667,15 @@ public class Cluster implements Closeable {
         private ProtocolVersion protocolVersion;
         private AuthProvider authProvider = AuthProvider.NONE;
 
-        private LoadBalancingPolicy loadBalancingPolicy;
-        private ReconnectionPolicy reconnectionPolicy;
-        private RetryPolicy retryPolicy;
-        private AddressTranslater addressTranslater;
-        private TimestampGenerator timestampGenerator;
-        private SpeculativeExecutionPolicy speculativeExecutionPolicy;
+        private final Policies.Builder policiesBuilder = Policies.builder();
+        private final Configuration.Builder configurationBuilder = Configuration.builder();
 
         private ProtocolOptions.Compression compression = ProtocolOptions.Compression.NONE;
         private SSLOptions sslOptions = null;
         private boolean metricsEnabled = true;
         private boolean jmxEnabled = true;
 
-        private PoolingOptions poolingOptions;
-        private SocketOptions socketOptions;
-        private QueryOptions queryOptions;
-
-        private NettyOptions nettyOptions = NettyOptions.DEFAULT_INSTANCE;
-
         private Collection<Host.StateListener> listeners;
-
 
         @Override
         public String getClusterName() {
@@ -796,23 +797,8 @@ public class Cluster implements Closeable {
         }
 
         /**
-         * The native protocol version to use, as a number.
-         *
-         * @param version the native protocol version as a number.
-         * @return this Builder.
-         * @throws IllegalArgumentException if the number does not correspond to any known
-         *                                  native protocol version.
-         * @deprecated This method is provided for backward compatibility. Use
-         * {@link #withProtocolVersion(ProtocolVersion)} instead.
-         */
-        @Deprecated
-        public Builder withProtocolVersion(int version) {
-            this.protocolVersion = ProtocolVersion.fromInt(version);
-            return this;
-        }
-
-        /**
-         * Adds a contact point.
+         * Adds a contact point - or many if it host resolves to multiple
+         * <code>InetAddress</code>s (A records).
          * <p/>
          * Contact points are addresses of Cassandra nodes that the driver uses
          * to discover the cluster topology. Only one contact point is required
@@ -822,13 +808,17 @@ public class Cluster implements Closeable {
          * the driver cannot initialize itself correctly.
          * <p/>
          * Note that by default (that is, unless you use the {@link #withLoadBalancingPolicy})
-         * method of this builder), the first succesfully contacted host will be use
+         * method of this builder), the first succesfully contacted host will be used
          * to define the local data-center for the client. If follows that if you are
          * running Cassandra in a  multiple data-center setting, it is a good idea to
-         * only provided contact points that are in the same datacenter than the client,
+         * only provide contact points that are in the same datacenter than the client,
          * or to provide manually the load balancing policy that suits your need.
+         * <p/>
+         * If the host name points to a DNS record with multiple a-records, all InetAddresses
+         * returned will be used. Make sure that all resulting <code>InetAddress</code>s returned
+         * point to the same cluster and datacenter.
          *
-         * @param address the address of the node to connect to
+         * @param address the address of the node(s) to connect to
          * @return this Builder.
          * @throws IllegalArgumentException if no IP address for {@code address}
          *                                  could be found
@@ -843,7 +833,7 @@ public class Cluster implements Closeable {
                 throw new NullPointerException();
 
             try {
-                this.rawAddresses.add(InetAddress.getByName(address));
+                addContactPoints(InetAddress.getAllByName(address));
                 return this;
             } catch (UnknownHostException e) {
                 throw new IllegalArgumentException(e.getMessage());
@@ -867,36 +857,6 @@ public class Cluster implements Closeable {
         public Builder addContactPoints(String... addresses) {
             for (String address : addresses)
                 addContactPoint(address);
-            return this;
-        }
-
-        /**
-         * Adds a contact point - or many if it host resolves to multiple <code>InetAddress</code>s (A records).
-         * <p/>
-         * <p/>
-         * If the host name points to a dns records with multiple a-records, all InetAddresses
-         * returned will be used. Make sure that all resulting <code>InetAddress</code>s returned
-         * points to the same cluster and datacenter.
-         * <p/>
-         * See {@link Builder#addContactPoint} for more details on contact
-         * points and thrown exceptions
-         *
-         * @param address address of the nodes to look up InetAddresses from to add as contact points.
-         * @return this Builder.
-         * @see Builder#addContactPoint
-         */
-        public Builder addContactPoints(String address) {
-            // We explicitely check for nulls because InetAdress.getByName() will happily
-            // accept it and use localhost (while a null here almost likely mean a user error,
-            // not "connect to localhost")
-            if (address == null)
-                throw new NullPointerException();
-
-            try {
-                addContactPoints(InetAddress.getAllByName(address));
-            } catch (UnknownHostException e) {
-                throw new IllegalArgumentException(e.getMessage());
-            }
             return this;
         }
 
@@ -941,8 +901,8 @@ public class Cluster implements Closeable {
          * this one. However, this can be useful if the Cassandra nodes are behind
          * a router and are not accessed directly. Note that if you are in this
          * situation (Cassandra nodes are behind a router, not directly accessible),
-         * you almost surely want to provide a specific {@code AddressTranslater}
-         * (through {@link #withAddressTranslater}) to translate actual Cassandra node
+         * you almost surely want to provide a specific {@code AddressTranslator}
+         * (through {@link #withAddressTranslator}) to translate actual Cassandra node
          * addresses to the addresses the driver should use, otherwise the driver
          * will not be able to auto-detect new nodes (and will generally not function
          * optimally).
@@ -967,8 +927,8 @@ public class Cluster implements Closeable {
          * this one. However, this can be useful if the Cassandra nodes are behind
          * a router and are not accessed directly. Note that if you are in this
          * situation (Cassandra nodes are behind a router, not directly accessible),
-         * you almost surely want to provide a specific {@code AddressTranslater}
-         * (through {@link #withAddressTranslater}) to translate actual Cassandra node
+         * you almost surely want to provide a specific {@code AddressTranslator}
+         * (through {@link #withAddressTranslator}) to translate actual Cassandra node
          * addresses to the addresses the driver should use, otherwise the driver
          * will not be able to auto-detect new nodes (and will generally not function
          * optimally).
@@ -992,7 +952,7 @@ public class Cluster implements Closeable {
          * @return this Builder.
          */
         public Builder withLoadBalancingPolicy(LoadBalancingPolicy policy) {
-            this.loadBalancingPolicy = policy;
+            policiesBuilder.withLoadBalancingPolicy(policy);
             return this;
         }
 
@@ -1006,7 +966,7 @@ public class Cluster implements Closeable {
          * @return this Builder.
          */
         public Builder withReconnectionPolicy(ReconnectionPolicy policy) {
-            this.reconnectionPolicy = policy;
+            policiesBuilder.withReconnectionPolicy(policy);
             return this;
         }
 
@@ -1020,22 +980,22 @@ public class Cluster implements Closeable {
          * @return this Builder.
          */
         public Builder withRetryPolicy(RetryPolicy policy) {
-            this.retryPolicy = policy;
+            policiesBuilder.withRetryPolicy(policy);
             return this;
         }
 
         /**
-         * Configures the address translater to use for the new cluster.
+         * Configures the address translator to use for the new cluster.
          * <p/>
-         * See {@link AddressTranslater} for more detail on address translation,
-         * but the default translater, {@link IdentityTranslater}, should be
+         * See {@link AddressTranslator} for more detail on address translation,
+         * but the default translator, {@link IdentityTranslator}, should be
          * correct in most cases. If unsure, stick to the default.
          *
-         * @param translater the translater to use.
+         * @param translator the translator to use.
          * @return this Builder.
          */
-        public Builder withAddressTranslater(AddressTranslater translater) {
-            this.addressTranslater = translater;
+        public Builder withAddressTranslator(AddressTranslator translator) {
+            policiesBuilder.withAddressTranslator(translator);
             return this;
         }
 
@@ -1055,7 +1015,7 @@ public class Cluster implements Closeable {
          * @return this Builder.
          */
         public Builder withTimestampGenerator(TimestampGenerator timestampGenerator) {
-            this.timestampGenerator = timestampGenerator;
+            policiesBuilder.withTimestampGenerator(timestampGenerator);
             return this;
         }
 
@@ -1069,7 +1029,27 @@ public class Cluster implements Closeable {
          * @return this Builder.
          */
         public Builder withSpeculativeExecutionPolicy(SpeculativeExecutionPolicy policy) {
-            this.speculativeExecutionPolicy = policy;
+            policiesBuilder.withSpeculativeExecutionPolicy(policy);
+            return this;
+        }
+
+
+        /**
+         * Configures the {@link CodecRegistry} instance to use for the new cluster.
+         * <p/>
+         * If no codec registry is set through this method, {@link CodecRegistry#DEFAULT_INSTANCE}
+         * will be used instead.
+         * <p>Note that if two or more {@link Cluster} instances are configured to
+         * use the default codec registry, they are going to share the same instance.
+         * In this case, care should be taken when registering new codecs on it as any
+         * codec registered by one cluster would be immediately available to others
+         * sharing the same default instance.
+         *
+         * @param codecRegistry the codec registry to use.
+         * @return this Builder.
+         */
+        public Builder withCodecRegistry(CodecRegistry codecRegistry) {
+            configurationBuilder.withCodecRegistry(codecRegistry);
             return this;
         }
 
@@ -1134,8 +1114,9 @@ public class Cluster implements Closeable {
         /**
          * Enables the use of SSL for the created {@code Cluster}.
          * <p/>
-         * Calling this method will use default SSL options (see {@link SSLOptions#SSLOptions()}).
-         * This is thus a shortcut for {@code withSSL(new SSLOptions())}.
+         * Calling this method will use the JDK-based implementation with the default options
+         * (see {@link JdkSSLOptions.Builder}).
+         * This is thus a shortcut for {@code withSSL(JdkSSLOptions.builder().build())}.
          * <p/>
          * Note that if SSL is enabled, the driver will not connect to any
          * Cassandra nodes that doesn't have SSL enabled and it is strongly
@@ -1145,7 +1126,7 @@ public class Cluster implements Closeable {
          * @return this builder.
          */
         public Builder withSSL() {
-            this.sslOptions = new SSLOptions();
+            this.sslOptions = JdkSSLOptions.builder().build();
             return this;
         }
 
@@ -1197,7 +1178,7 @@ public class Cluster implements Closeable {
          * @return this builder.
          */
         public Builder withPoolingOptions(PoolingOptions options) {
-            this.poolingOptions = options;
+            configurationBuilder.withPoolingOptions(options);
             return this;
         }
 
@@ -1211,7 +1192,7 @@ public class Cluster implements Closeable {
          * @return this builder.
          */
         public Builder withSocketOptions(SocketOptions options) {
-            this.socketOptions = options;
+            configurationBuilder.withSocketOptions(options);
             return this;
         }
 
@@ -1225,7 +1206,7 @@ public class Cluster implements Closeable {
          * @return this builder.
          */
         public Builder withQueryOptions(QueryOptions options) {
-            this.queryOptions = options;
+            configurationBuilder.withQueryOptions(options);
             return this;
         }
 
@@ -1239,7 +1220,7 @@ public class Cluster implements Closeable {
          * @return this builder.
          */
         public Builder withNettyOptions(NettyOptions nettyOptions) {
-            this.nettyOptions = nettyOptions;
+            configurationBuilder.withNettyOptions(nettyOptions);
             return this;
         }
 
@@ -1254,21 +1235,16 @@ public class Cluster implements Closeable {
          */
         @Override
         public Configuration getConfiguration() {
-            Policies policies = Policies.builder()
-                    .withLoadBalancingPolicy(loadBalancingPolicy)
-                    .withReconnectionPolicy(reconnectionPolicy)
-                    .withRetryPolicy(retryPolicy)
-                    .withAddressTranslater(addressTranslater)
-                    .withTimestampGenerator(timestampGenerator)
-                    .withSpeculativeExecutionPolicy(speculativeExecutionPolicy)
+            ProtocolOptions protocolOptions = new ProtocolOptions(port, protocolVersion, maxSchemaAgreementWaitSeconds, sslOptions, authProvider)
+                    .setCompression(compression);
+
+            MetricsOptions metricsOptions = new MetricsOptions(metricsEnabled, jmxEnabled);
+
+            return configurationBuilder
+                    .withProtocolOptions(protocolOptions)
+                    .withMetricsOptions(metricsOptions)
+                    .withPolicies(policiesBuilder.build())
                     .build();
-            return new Configuration(policies,
-                    new ProtocolOptions(port, protocolVersion, maxSchemaAgreementWaitSeconds, sslOptions, authProvider).setCompression(compression),
-                    poolingOptions == null ? new PoolingOptions() : poolingOptions,
-                    socketOptions == null ? new SocketOptions() : socketOptions,
-                    metricsEnabled ? new MetricsOptions(jmxEnabled) : null,
-                    queryOptions == null ? new QueryOptions() : queryOptions,
-                    nettyOptions);
         }
 
         @Override
@@ -1388,7 +1364,7 @@ public class Cluster implements Closeable {
             this.metadata = new Metadata(this);
             this.connectionFactory = new Connection.Factory(this, configuration);
             this.controlConnection = new ControlConnection(this);
-            this.metrics = configuration.getMetricsOptions() == null ? null : new Metrics(this);
+            this.metrics = configuration.getMetricsOptions().isEnabled() ? new Metrics(this) : null;
             this.preparedQueries = new MapMaker().weakValues().makeMap();
 
             // create debouncers - at this stage, they are not running yet
@@ -1437,9 +1413,9 @@ public class Cluster implements Closeable {
                 try {
                     controlConnection.connect();
                 } catch (UnsupportedProtocolVersionException e) {
-                    logger.debug("Cannot connect with protocol {}, trying {}", e.unsupportedVersion, e.serverVersion);
+                    logger.debug("Cannot connect with protocol {}, trying {}", e.getUnsupportedVersion(), e.getServerVersion());
 
-                    connectionFactory.protocolVersion = e.serverVersion;
+                    connectionFactory.protocolVersion = e.getServerVersion();
                     try {
                         controlConnection.connect();
                     } catch (UnsupportedProtocolVersionException e1) {
@@ -1463,13 +1439,22 @@ public class Cluster implements Closeable {
                 // Now that the control connection is ready, we have all the information we need about the nodes (datacenter,
                 // rack...) to initialize the load balancing policy
                 loadBalancingPolicy().init(Cluster.this, contactPointHosts);
-                speculativeRetryPolicy().init(Cluster.this);
+
+                speculativeExecutionPolicy().init(Cluster.this);
+                configuration.getPolicies().getRetryPolicy().init(Cluster.this);
+                reconnectionPolicy().init(Cluster.this);
+                configuration.getPolicies().getAddressTranslator().init(Cluster.this);
+                for (LatencyTracker tracker : trackers)
+                    tracker.onRegister(Cluster.this);
+                for (Host.StateListener listener : listeners)
+                    listener.onRegister(Cluster.this);
 
                 for (Host host : removedContactPointHosts) {
                     loadBalancingPolicy().onRemove(host);
                     for (Host.StateListener listener : listeners)
                         listener.onRemove(host);
                 }
+
                 for (Host host : downContactPointHosts) {
                     loadBalancingPolicy().onDown(host);
                     for (Host.StateListener listener : listeners)
@@ -1543,7 +1528,7 @@ public class Cluster implements Closeable {
             return configuration.getPolicies().getLoadBalancingPolicy();
         }
 
-        SpeculativeExecutionPolicy speculativeRetryPolicy() {
+        SpeculativeExecutionPolicy speculativeExecutionPolicy() {
             return configuration.getPolicies().getSpeculativeExecutionPolicy();
         }
 
@@ -1553,11 +1538,11 @@ public class Cluster implements Closeable {
 
         InetSocketAddress translateAddress(InetAddress address) {
             InetSocketAddress sa = new InetSocketAddress(address, connectionFactory.getPort());
-            InetSocketAddress translated = configuration.getPolicies().getAddressTranslater().translate(sa);
+            InetSocketAddress translated = configuration.getPolicies().getAddressTranslator().translate(sa);
             return translated == null ? sa : translated;
         }
 
-        private AsyncInitSession newSession() {
+        private Session newSession() {
             SessionManager session = new SessionManager(Cluster.this);
             sessions.add(session);
             return session;
@@ -1604,20 +1589,17 @@ public class Cluster implements Closeable {
                 if (metrics != null)
                     metrics.shutdown();
 
-                // And the load balancing policy
-                LoadBalancingPolicy loadBalancingPolicy = loadBalancingPolicy();
-                if (loadBalancingPolicy instanceof CloseableLoadBalancingPolicy)
-                    ((CloseableLoadBalancingPolicy) loadBalancingPolicy).close();
-
-                speculativeRetryPolicy().close();
-
-                AddressTranslater translater = configuration.getPolicies().getAddressTranslater();
-                if (translater instanceof CloseableAddressTranslater)
-                    ((CloseableAddressTranslater) translater).close();
-
-                for (SchemaChangeListener listener : schemaChangeListeners) {
+                loadBalancingPolicy().close();
+                speculativeExecutionPolicy().close();
+                configuration.getPolicies().getRetryPolicy().close();
+                reconnectionPolicy().close();
+                configuration.getPolicies().getAddressTranslator().close();
+                for (LatencyTracker tracker : trackers)
+                    tracker.onUnregister(Cluster.this);
+                for (Host.StateListener listener : listeners)
                     listener.onUnregister(Cluster.this);
-                }
+                for (SchemaChangeListener listener : schemaChangeListeners)
+                    listener.onUnregister(Cluster.this);
 
                 // Then we shutdown all connections
                 List<CloseFuture> futures = new ArrayList<CloseFuture>(sessions.size() + 1);
@@ -1709,7 +1691,7 @@ public class Cluster implements Closeable {
                         Thread.currentThread().interrupt();
                         // Don't propagate because we don't want to prevent other listener to run
                     } catch (UnsupportedProtocolVersionException e) {
-                        logUnsupportedVersionProtocol(host, e.unsupportedVersion);
+                        logUnsupportedVersionProtocol(host, e.getUnsupportedVersion());
                         return;
                     } catch (ClusterNameMismatchException e) {
                         logClusterNameMismatch(host, e.expectedClusterName, e.actualClusterName);
@@ -2006,7 +1988,7 @@ public class Cluster implements Closeable {
                         Thread.currentThread().interrupt();
                         // Don't propagate because we don't want to prevent other listener to run
                     } catch (UnsupportedProtocolVersionException e) {
-                        logUnsupportedVersionProtocol(host, e.unsupportedVersion);
+                        logUnsupportedVersionProtocol(host, e.getUnsupportedVersion());
                         return;
                     } catch (ClusterNameMismatchException e) {
                         logClusterNameMismatch(host, e.expectedClusterName, e.actualClusterName);
@@ -2233,8 +2215,8 @@ public class Cluster implements Closeable {
             }
         }
 
-        ListenableFuture<Void> submitSchemaRefresh(final SchemaElement targetType, final String targetKeyspace, final String targetName) {
-            SchemaRefreshRequest request = new SchemaRefreshRequest(targetType, targetKeyspace, targetName);
+        ListenableFuture<Void> submitSchemaRefresh(final SchemaElement targetType, final String targetKeyspace, final String targetName, final List<String> targetSignature) {
+            SchemaRefreshRequest request = new SchemaRefreshRequest(targetType, targetKeyspace, targetName, targetSignature);
             logger.trace("Submitting schema refresh: {}", request);
             return schemaRefreshRequestDebouncer.eventReceived(request);
         }
@@ -2251,20 +2233,20 @@ public class Cluster implements Closeable {
         }
 
         // refresh the schema using the provided connection, and notice the future with the provided resultset once done
-        public void refreshSchemaAndSignal(final Connection connection, final DefaultResultSetFuture future, final ResultSet rs, final SchemaElement target, final String keyspace, final String name) {
+        public void refreshSchemaAndSignal(final Connection connection, final DefaultResultSetFuture future, final ResultSet rs, final SchemaElement targetType, final String targetKeyspace, final String targetName, final List<String> targetSignature) {
             if (logger.isDebugEnabled())
                 logger.debug("Refreshing schema for {}{}",
-                        target == null ? "everything" : keyspace,
-                        (target == KEYSPACE) ? "" : "." + name + " (" + target + ")");
+                        targetType == null ? "everything" : targetKeyspace,
+                        (targetType == KEYSPACE) ? "" : "." + targetName + " (" + targetType + ")");
 
-            maybeRefreshSchemaAndSignal(connection, future, rs, target, keyspace, name);
+            maybeRefreshSchemaAndSignal(connection, future, rs, targetType, targetKeyspace, targetName, targetSignature);
         }
 
         public void waitForSchemaAgreementAndSignal(final Connection connection, final DefaultResultSetFuture future, final ResultSet rs) {
-            maybeRefreshSchemaAndSignal(connection, future, rs, null, null, null);
+            maybeRefreshSchemaAndSignal(connection, future, rs, null, null, null, null);
         }
 
-        private void maybeRefreshSchemaAndSignal(final Connection connection, final DefaultResultSetFuture future, final ResultSet rs, final SchemaElement targetType, final String targetKeyspace, final String targetName) {
+        private void maybeRefreshSchemaAndSignal(final Connection connection, final DefaultResultSetFuture future, final ResultSet rs, final SchemaElement targetType, final String targetKeyspace, final String targetName, final List<String> targetSignature) {
             final boolean refreshSchema = (targetKeyspace != null); // if false, only wait for schema agreement
 
             executor.submit(new Runnable() {
@@ -2278,7 +2260,7 @@ public class Cluster implements Closeable {
                         if (!schemaInAgreement)
                             logger.warn("No schema agreement from live replicas after {} s. The schema may not be up to date on some nodes.", configuration.getProtocolOptions().getMaxSchemaAgreementWaitSeconds());
 
-                        ListenableFuture<Void> schemaReady = refreshSchema ? submitSchemaRefresh(targetType, targetKeyspace, targetName) : MoreFutures.VOID_SUCCESS;
+                        ListenableFuture<Void> schemaReady = refreshSchema ? submitSchemaRefresh(targetType, targetKeyspace, targetName, targetSignature) : MoreFutures.VOID_SUCCESS;
                         final boolean finalSchemaInAgreement = schemaInAgreement;
                         schemaReady.addListener(new Runnable() {
                             @Override
@@ -2350,56 +2332,85 @@ public class Cluster implements Closeable {
                     switch (scc.change) {
                         case CREATED:
                         case UPDATED:
-                            submitSchemaRefresh(scc.targetType, scc.targetKeyspace, scc.targetName);
+                            submitSchemaRefresh(scc.targetType, scc.targetKeyspace, scc.targetName, scc.targetSignature);
                             break;
                         case DROPPED:
-                            final KeyspaceMetadata keyspace;
-                            switch (scc.targetType) {
-                                case KEYSPACE:
-                                    final KeyspaceMetadata removedKeyspace = manager.metadata.removeKeyspace(scc.targetKeyspace);
-                                    if (removedKeyspace != null) {
-                                        executor.submit(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                manager.metadata.triggerOnKeyspaceRemoved(removedKeyspace);
+                            if (scc.targetType == KEYSPACE) {
+                                final KeyspaceMetadata removedKeyspace = manager.metadata.removeKeyspace(scc.targetKeyspace);
+                                if (removedKeyspace != null) {
+                                    executor.submit(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            manager.metadata.triggerOnKeyspaceRemoved(removedKeyspace);
+                                        }
+                                    });
+                                }
+                            } else {
+                                KeyspaceMetadata keyspace = manager.metadata.keyspaces.get(scc.targetKeyspace);
+                                if (keyspace == null) {
+                                    logger.warn("Received a DROPPED notification for {} {}.{}, but this keyspace is unknown in our metadata",
+                                            scc.targetType, scc.targetKeyspace, scc.targetName);
+                                } else {
+                                    switch (scc.targetType) {
+                                        case TABLE:
+                                            // we can't tell whether it's a table or a view,
+                                            // but since two objects cannot have the same name,
+                                            // try removing both
+                                            final TableMetadata removedTable = keyspace.removeTable(scc.targetName);
+                                            if (removedTable != null) {
+                                                executor.submit(new Runnable() {
+                                                    @Override
+                                                    public void run() {
+                                                        manager.metadata.triggerOnTableRemoved(removedTable);
+                                                    }
+                                                });
+                                            } else {
+                                                final MaterializedViewMetadata removedView = keyspace.removeMaterializedView(scc.targetName);
+                                                if (removedView != null) {
+                                                    executor.submit(new Runnable() {
+                                                        @Override
+                                                        public void run() {
+                                                            manager.metadata.triggerOnMaterializedViewRemoved(removedView);
+                                                        }
+                                                    });
+                                                }
                                             }
-                                        });
+                                            break;
+                                        case TYPE:
+                                            final UserType removedType = keyspace.removeUserType(scc.targetName);
+                                            if (removedType != null) {
+                                                executor.submit(new Runnable() {
+                                                    @Override
+                                                    public void run() {
+                                                        manager.metadata.triggerOnUserTypeRemoved(removedType);
+                                                    }
+                                                });
+                                            }
+                                            break;
+                                        case FUNCTION:
+                                            final FunctionMetadata removedFunction = keyspace.removeFunction(Metadata.fullFunctionName(scc.targetName, scc.targetSignature));
+                                            if (removedFunction != null) {
+                                                executor.submit(new Runnable() {
+                                                    @Override
+                                                    public void run() {
+                                                        manager.metadata.triggerOnFunctionRemoved(removedFunction);
+                                                    }
+                                                });
+                                            }
+                                            break;
+                                        case AGGREGATE:
+                                            final AggregateMetadata removedAggregate = keyspace.removeAggregate(Metadata.fullFunctionName(scc.targetName, scc.targetSignature));
+                                            if (removedAggregate != null) {
+                                                executor.submit(new Runnable() {
+                                                    @Override
+                                                    public void run() {
+                                                        manager.metadata.triggerOnAggregateRemoved(removedAggregate);
+                                                    }
+                                                });
+                                            }
+                                            break;
                                     }
-                                    break;
-                                case TABLE:
-                                    keyspace = manager.metadata.getKeyspaceInternal(scc.targetKeyspace);
-                                    if (keyspace == null)
-                                        logger.warn("Received a DROPPED notification for table {}.{}, but this keyspace is unknown in our metadata",
-                                                scc.targetKeyspace, scc.targetName);
-                                    else {
-                                        final TableMetadata removedTable = keyspace.removeTable(scc.targetName);
-                                        if (removedTable != null) {
-                                            executor.submit(new Runnable() {
-                                                @Override
-                                                public void run() {
-                                                    manager.metadata.triggerOnTableRemoved(removedTable);
-                                                }
-                                            });
-                                        }
-                                    }
-                                    break;
-                                case TYPE:
-                                    keyspace = manager.metadata.getKeyspaceInternal(scc.targetKeyspace);
-                                    if (keyspace == null)
-                                        logger.warn("Received a DROPPED notification for UDT {}.{}, but this keyspace is unknown in our metadata",
-                                                scc.targetKeyspace, scc.targetName);
-                                    else {
-                                        final UserType removedType = keyspace.removeUserType(scc.targetName);
-                                        if (removedType != null) {
-                                            executor.submit(new Runnable() {
-                                                @Override
-                                                public void run() {
-                                                    manager.metadata.triggerOnUserTypeRemoved(removedType);
-                                                }
-                                            });
-                                        }
-                                    }
-                                    break;
+                                }
                             }
                             break;
                     }
@@ -2502,11 +2513,13 @@ public class Cluster implements Closeable {
             private final SchemaElement targetType;
             private final String targetKeyspace;
             private final String targetName;
+            private final List<String> targetSignature;
 
-            public SchemaRefreshRequest(SchemaElement targetType, String targetKeyspace, String targetName) {
+            public SchemaRefreshRequest(SchemaElement targetType, String targetKeyspace, String targetName, List<String> targetSignature) {
                 this.targetType = targetType;
                 this.targetKeyspace = Strings.emptyToNull(targetKeyspace);
                 this.targetName = Strings.emptyToNull(targetName);
+                this.targetSignature = targetSignature;
             }
 
             /**
@@ -2521,13 +2534,13 @@ public class Cluster implements Closeable {
              */
             SchemaRefreshRequest coalesce(SchemaRefreshRequest that) {
                 if (this.targetType == null || that.targetType == null)
-                    return new SchemaRefreshRequest(null, null, null);
+                    return new SchemaRefreshRequest(null, null, null, null);
                 if (!this.targetKeyspace.equals(that.targetKeyspace))
-                    return new SchemaRefreshRequest(null, null, null);
+                    return new SchemaRefreshRequest(null, null, null, null);
                 if (this.targetName == null || that.targetName == null)
-                    return new SchemaRefreshRequest(KEYSPACE, targetKeyspace, null);
+                    return new SchemaRefreshRequest(KEYSPACE, targetKeyspace, null, null);
                 if (!this.targetName.equals(that.targetName))
-                    return new SchemaRefreshRequest(KEYSPACE, targetKeyspace, null);
+                    return new SchemaRefreshRequest(KEYSPACE, targetKeyspace, null, null);
                 return this;
             }
 
@@ -2554,7 +2567,7 @@ public class Cluster implements Closeable {
                         }
                         assert coalesced != null;
                         logger.trace("Coalesced schema refresh request: {}", coalesced);
-                        controlConnection.refreshSchema(coalesced.targetType, coalesced.targetKeyspace, coalesced.targetName);
+                        controlConnection.refreshSchema(coalesced.targetType, coalesced.targetKeyspace, coalesced.targetName, coalesced.targetSignature);
                     }
                 });
             }
@@ -2645,27 +2658,32 @@ public class Cluster implements Closeable {
             private ListenableFuture<?> schedule(final ExceptionCatchingRunnable task) {
                 // Cassandra tends to send notifications for new/up nodes a bit early (it is triggered once
                 // gossip is up, but that is before the client-side server is up), so we add a delay
-                // (otherwise the connection will likely fail and have to be retry which is wasteful). This
-                // probably should be fixed C* side, after which we'll be able to remove this.
-                final SettableFuture<?> future = SettableFuture.create();
-                scheduledTasksExecutor.schedule(new ExceptionCatchingRunnable() {
-                    @Override
-                    public void runMayThrow() throws Exception {
-                        ListenableFuture<?> f = execute(task);
-                        Futures.addCallback(f, new FutureCallback<Object>() {
-                            @Override
-                            public void onSuccess(Object result) {
-                                future.set(null);
-                            }
+                // (otherwise the connection will likely fail and have to be retry which is wasteful).
+                // This has been fixed by CASSANDRA-8236 and does not apply to protocol versions >= 4
+                // and C* versions >= 2.2.0
+                if (protocolVersion().compareTo(ProtocolVersion.V4) < 0) {
+                    final SettableFuture<?> future = SettableFuture.create();
+                    scheduledTasksExecutor.schedule(new ExceptionCatchingRunnable() {
+                        @Override
+                        public void runMayThrow() throws Exception {
+                            ListenableFuture<?> f = execute(task);
+                            Futures.addCallback(f, new FutureCallback<Object>() {
+                                @Override
+                                public void onSuccess(Object result) {
+                                    future.set(null);
+                                }
 
-                            @Override
-                            public void onFailure(Throwable t) {
-                                future.setException(t);
-                            }
-                        });
-                    }
-                }, NEW_NODE_DELAY_SECONDS, TimeUnit.SECONDS);
-                return future;
+                                @Override
+                                public void onFailure(Throwable t) {
+                                    future.setException(t);
+                                }
+                            });
+                        }
+                    }, NEW_NODE_DELAY_SECONDS, TimeUnit.SECONDS);
+                    return future;
+                } else {
+                    return execute(task);
+                }
             }
 
             // Make sure we  call controlConnection.refreshNodeInfo(host)

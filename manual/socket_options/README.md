@@ -57,12 +57,22 @@ write_request_timeout_in_ms: 2000
 
 The goal of `setReadTimeoutMillis` is to give up on a node if it took longer than these thresholds to reply, on the
 assumption that there's probably something wrong with it. Therefore it should be set **higher than the server-side
-timeouts**. The default value is **12 seconds** (lower than `truncate_request_timeout_in_ms`, but we consider `TRUNCATE`
-queries as maintenance operations that shouldn't be run from your application). Do not set it too low, or the driver
-might give up on requests that had a chance of succeeding.
+timeouts**.
 
-If the timeout is reached, the driver will receive an `OperationTimedOutException` and retry the query on the next node
-in the [query plan](../load_balancing/#query-plan).
+The default value is **12 seconds**. For truncate queries (where the server timeout is 60 seconds) or aggregate queries
+(where `read_request_timeout_in_ms` applies per page of processed data, not to the whole query), you can increase the
+timeout on a specific statement:
+
+```java
+session.execute(
+        new SimpleStatement("TRUNCATE tmp").setReadTimeoutMillis(65000));
+```
+
+Do not set the read timeout too low, or the driver might give up on requests that had a chance of succeeding.
+
+If the timeout is reached, the driver will receive an [OperationTimedOutException], and invoke [onRequestError] on the
+[retry policy](../retries/) to decide what to do (the default is to retry on the next node in the
+[query plan](../load_balancing/#query-plan)).
 
 #### Limiting overall query time
 
@@ -98,20 +108,23 @@ reply with a `Read_timeout` error when it didn't hear back from enough replicas 
 To clarify:
 
 * **driver read timeout:** the driver did not receive any response from the current coordinator within
-  `SocketOptions.setReadTimeoutMillis`. It retries the query on the next node.
+  `SocketOptions.setReadTimeoutMillis`. It invokes [onRequestError] on the [retry policy](../retries/) with an
+  [OperationTimedOutException] to decide what to do.
 * **server read timeout:** the driver *did* receive a response, but that response indicates that the coordinator timed
   out while waiting for other replicas. It invokes [onReadTimeout] on the [retry policy](../retries/) to decide what to
   do.
 
 We might rename `SocketOptions.setReadTimeoutMillis` in a future version to clear up any confusion.
 
-[SocketOptions]:           http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/SocketOptions.html
-[setReadTimeoutMillis]:    http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/SocketOptions.html#setReadTimeoutMillis-int-
-[setConnectTimeoutMillis]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/SocketOptions.html#setConnectTimeoutMillis-int-
-[setKeepAlive]:            http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/SocketOptions.html#setKeepAlive-boolean-
-[setReceiveBufferSize]:    http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/SocketOptions.html#setReceiveBufferSize-int-
-[setReuseAddress]:         http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/SocketOptions.html#setReuseAddress-boolean-
-[setSendBufferSize]:       http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/SocketOptions.html#setSendBufferSize-int-
-[setSoLinger]:             http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/SocketOptions.html#setSoLinger-int-
-[setTcpNoDelay]:           http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/SocketOptions.html#setTcpNoDelay-boolean-
-[onReadTimeout]:           http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/policies/RetryPolicy.html#onReadTimeout-com.datastax.driver.core.Statement-com.datastax.driver.core.ConsistencyLevel-int-int-boolean-int-
+[SocketOptions]:              http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/SocketOptions.html
+[setReadTimeoutMillis]:       http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/SocketOptions.html#setReadTimeoutMillis-int-
+[setConnectTimeoutMillis]:    http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/SocketOptions.html#setConnectTimeoutMillis-int-
+[setKeepAlive]:               http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/SocketOptions.html#setKeepAlive-boolean-
+[setReceiveBufferSize]:       http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/SocketOptions.html#setReceiveBufferSize-int-
+[setReuseAddress]:            http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/SocketOptions.html#setReuseAddress-boolean-
+[setSendBufferSize]:          http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/SocketOptions.html#setSendBufferSize-int-
+[setSoLinger]:                http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/SocketOptions.html#setSoLinger-int-
+[setTcpNoDelay]:              http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/SocketOptions.html#setTcpNoDelay-boolean-
+[onReadTimeout]:              http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/policies/RetryPolicy.html#onReadTimeout-com.datastax.driver.core.Statement-com.datastax.driver.core.ConsistencyLevel-int-int-boolean-int-
+[onRequestError]:             http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/policies/RetryPolicy.html#onRequestError-com.datastax.driver.core.Statement-com.datastax.driver.core.ConsistencyLevel-com.datastax.driver.core.exceptions.DriverException-int-
+[OperationTimedOutException]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/exceptions/OperationTimedOutException.html

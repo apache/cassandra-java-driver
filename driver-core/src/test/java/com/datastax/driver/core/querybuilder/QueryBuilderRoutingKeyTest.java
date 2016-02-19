@@ -39,17 +39,19 @@ public class QueryBuilderRoutingKeyTest extends CCMTestsSupport {
     @Test(groups = "short")
     public void textRoutingKeyTest() throws Exception {
 
-        Statement query;
+        BuiltStatement query;
         TableMetadata table = cluster().getMetadata().getKeyspace(keyspace).getTable(TABLE_TEXT);
         assertNotNull(table);
+        ProtocolVersion protocolVersion = cluster().getConfiguration().getProtocolOptions().getProtocolVersion();
+        CodecRegistry codecRegistry = CodecRegistry.DEFAULT_INSTANCE;
 
         String txt = "If she weighs the same as a duck... she's made of wood.";
         query = insertInto(table).values(new String[]{"k", "a", "b"}, new Object[]{txt, 1, 2});
-        assertEquals(query.getRoutingKey(), ByteBuffer.wrap(txt.getBytes()));
+        assertEquals(query.getRoutingKey(protocolVersion, codecRegistry), ByteBuffer.wrap(txt.getBytes()));
         session().execute(query);
 
         query = select().from(table).where(eq("k", txt));
-        assertEquals(query.getRoutingKey(), ByteBuffer.wrap(txt.getBytes()));
+        assertEquals(query.getRoutingKey(protocolVersion, codecRegistry), ByteBuffer.wrap(txt.getBytes()));
         Row row = session().execute(query).one();
         assertEquals(row.getString("k"), txt);
         assertEquals(row.getInt("a"), 1);
@@ -59,18 +61,20 @@ public class QueryBuilderRoutingKeyTest extends CCMTestsSupport {
     @Test(groups = "short")
     public void intRoutingKeyTest() throws Exception {
 
-        Statement query;
+        BuiltStatement query;
         TableMetadata table = cluster().getMetadata().getKeyspace(keyspace).getTable(TABLE_INT);
         assertNotNull(table);
+        ProtocolVersion protocolVersion = cluster().getConfiguration().getProtocolOptions().getProtocolVersion();
+        CodecRegistry codecRegistry = CodecRegistry.DEFAULT_INSTANCE;
 
         query = insertInto(table).values(new String[]{"k", "a", "b"}, new Object[]{42, 1, 2});
         ByteBuffer bb = ByteBuffer.allocate(4);
         bb.putInt(0, 42);
-        assertEquals(query.getRoutingKey(), bb);
+        assertEquals(query.getRoutingKey(protocolVersion, codecRegistry), bb);
         session().execute(query);
 
         query = select().from(table).where(eq("k", 42));
-        assertEquals(query.getRoutingKey(), bb);
+        assertEquals(query.getRoutingKey(protocolVersion, codecRegistry), bb);
         Row row = session().execute(query).one();
         assertEquals(row.getInt("k"), 42);
         assertEquals(row.getInt("a"), 1);
@@ -80,15 +84,17 @@ public class QueryBuilderRoutingKeyTest extends CCMTestsSupport {
     @Test(groups = "short")
     public void intRoutingBatchKeyTest() throws Exception {
 
-        RegularStatement query;
+        BuiltStatement query;
         TableMetadata table = cluster().getMetadata().getKeyspace(keyspace).getTable(TABLE_INT);
         assertNotNull(table);
+        ProtocolVersion protocolVersion = cluster().getConfiguration().getProtocolOptions().getProtocolVersion();
+        CodecRegistry codecRegistry = CodecRegistry.DEFAULT_INSTANCE;
 
         ByteBuffer bb = ByteBuffer.allocate(4);
         bb.putInt(0, 42);
 
         String batch_query;
-        Statement batch;
+        BuiltStatement batch;
 
         query = select().from(table).where(eq("k", 42));
 
@@ -99,7 +105,7 @@ public class QueryBuilderRoutingKeyTest extends CCMTestsSupport {
         batch = batch()
                 .add(insertInto(table).values(new String[]{"k", "a"}, new Object[]{42, 1}))
                 .add(update(table).using(ttl(400)));
-        assertEquals(batch.getRoutingKey(), bb);
+        assertEquals(batch.getRoutingKey(protocolVersion, codecRegistry), bb);
         assertEquals(batch.toString(), batch_query);
         // TODO: rs = session().execute(batch); // Not guaranteed to be valid CQL
 
@@ -107,7 +113,7 @@ public class QueryBuilderRoutingKeyTest extends CCMTestsSupport {
         batch_query += String.format("SELECT * FROM %s.test_int WHERE k=42;", keyspace);
         batch_query += "APPLY BATCH;";
         batch = batch(query);
-        assertEquals(batch.getRoutingKey(), bb);
+        assertEquals(batch.getRoutingKey(protocolVersion, codecRegistry), bb);
         assertEquals(batch.toString(), batch_query);
         // TODO: rs = session().execute(batch); // Not guaranteed to be valid CQL
 
@@ -115,7 +121,7 @@ public class QueryBuilderRoutingKeyTest extends CCMTestsSupport {
         batch_query += "SELECT * FROM foo WHERE k=42;";
         batch_query += "APPLY BATCH;";
         batch = batch().add(select().from("foo").where(eq("k", 42)));
-        assertEquals(batch.getRoutingKey(), null);
+        assertEquals(batch.getRoutingKey(protocolVersion, codecRegistry), null);
         assertEquals(batch.toString(), batch_query);
         // TODO: rs = session().execute(batch); // Not guaranteed to be valid CQL
 
@@ -123,7 +129,7 @@ public class QueryBuilderRoutingKeyTest extends CCMTestsSupport {
         batch_query += "INSERT INTO foo.bar (a) VALUES (123);";
         batch_query += "APPLY BATCH;";
         batch = batch().using(timestamp(42)).add(insertInto("foo", "bar").value("a", 123));
-        assertEquals(batch.getRoutingKey(), null);
+        assertEquals(batch.getRoutingKey(protocolVersion, codecRegistry), null);
         assertEquals(batch.toString(), batch_query);
         // TODO: rs = session().execute(batch); // Not guaranteed to be valid CQL
     }

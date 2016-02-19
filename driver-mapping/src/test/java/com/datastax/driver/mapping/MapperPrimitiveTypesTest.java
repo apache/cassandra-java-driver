@@ -118,7 +118,6 @@ public class MapperPrimitiveTypesTest extends CCMTestsSupport {
         assertEquals(primitiveTypes2.getTimeUuidCol(), timeUuidCol);
     }
 
-
     @Table(name = "primitiveTypes")
     public static class PrimitiveTypes {
         @PartitionKey

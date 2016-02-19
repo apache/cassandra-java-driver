@@ -22,7 +22,7 @@ import java.net.InetSocketAddress;
 /**
  * A Cassandra timeout during a read query.
  */
-public class ReadTimeoutException extends QueryTimeoutException {
+public class ReadTimeoutException extends QueryConsistencyException {
 
     private static final long serialVersionUID = 0;
 
@@ -65,20 +65,19 @@ public class ReadTimeoutException extends QueryTimeoutException {
      * Whether the actual data was amongst the received replica responses.
      * <p/>
      * During reads, Cassandra doesn't request data from every replica to
-     * minimize internal network traffic. Instead, some replica are only asked
+     * minimize internal network traffic. Instead, some replicas are only asked
      * for a checksum of the data. A read timeout may occurred even if enough
-     * replica have responded to fulfill the consistency level if only checksum
-     * responses have been received. This method allow to detect that case.
+     * replicas have responded to fulfill the consistency level if only checksum
+     * responses have been received. This method allows to detect that case.
      *
-     * @return {@code true} if the data was amongst the received replica
-     * responses, {@code false} otherwise.
+     * @return whether the data was amongst the received replica responses.
      */
     public boolean wasDataRetrieved() {
         return dataPresent;
     }
 
     @Override
-    public DriverException copy() {
+    public ReadTimeoutException copy() {
         return new ReadTimeoutException(
                 getAddress(),
                 getMessage(),

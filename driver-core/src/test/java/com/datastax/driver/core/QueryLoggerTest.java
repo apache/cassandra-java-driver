@@ -49,12 +49,13 @@ import static org.mockito.Mockito.mock;
  */
 public class QueryLoggerTest extends CCMTestsSupport {
 
-    private static final List<DataType> dataTypes = new ArrayList<DataType>(Sets.filter(DataType.allPrimitiveTypes(), new Predicate<DataType>() {
-        @Override
-        public boolean apply(DataType type) {
-            return type != DataType.counter();
-        }
-    }));
+    private static final List<DataType> dataTypes = new ArrayList<DataType>(
+            Sets.filter(DataType.allPrimitiveTypes(TestUtils.getDesiredProtocolVersion()), new Predicate<DataType>() {
+                @Override
+                public boolean apply(DataType type) {
+                    return type != DataType.counter();
+                }
+            }));
 
     private static final List<Object> values = Lists.transform(dataTypes, new Function<DataType, Object>() {
                 @Override
@@ -133,7 +134,7 @@ public class QueryLoggerTest extends CCMTestsSupport {
     public void should_log_regular_statements() throws Exception {
         // given
         normal.setLevel(DEBUG);
-        queryLogger = QueryLogger.builder(cluster())
+        queryLogger = QueryLogger.builder()
                 .withConstantThreshold(Long.MAX_VALUE)
                 .build();
         cluster().register(queryLogger);
@@ -152,7 +153,7 @@ public class QueryLoggerTest extends CCMTestsSupport {
     public void should_log_bound_statements() throws Exception {
         // given
         normal.setLevel(DEBUG);
-        queryLogger = QueryLogger.builder(cluster())
+        queryLogger = QueryLogger.builder()
                 .withConstantThreshold(Long.MAX_VALUE)
                 .build();
         cluster().register(queryLogger);
@@ -174,7 +175,7 @@ public class QueryLoggerTest extends CCMTestsSupport {
     public void should_log_batch_statements() throws Exception {
         // given
         normal.setLevel(DEBUG);
-        queryLogger = QueryLogger.builder(cluster())
+        queryLogger = QueryLogger.builder()
                 .withConstantThreshold(Long.MAX_VALUE)
                 .withMaxQueryStringLength(Integer.MAX_VALUE)
                 .build();
@@ -205,7 +206,7 @@ public class QueryLoggerTest extends CCMTestsSupport {
     public void should_log_unlogged_batch_statements() throws Exception {
         // given
         normal.setLevel(DEBUG);
-        queryLogger = QueryLogger.builder(cluster())
+        queryLogger = QueryLogger.builder()
                 .withConstantThreshold(Long.MAX_VALUE)
                 .withMaxQueryStringLength(Integer.MAX_VALUE)
                 .build();
@@ -240,7 +241,7 @@ public class QueryLoggerTest extends CCMTestsSupport {
 
         // given
         normal.setLevel(DEBUG);
-        queryLogger = QueryLogger.builder(cluster())
+        queryLogger = QueryLogger.builder()
                 .withConstantThreshold(Long.MAX_VALUE)
                 .withMaxQueryStringLength(Integer.MAX_VALUE)
                 .build();
@@ -272,7 +273,7 @@ public class QueryLoggerTest extends CCMTestsSupport {
         normal.setLevel(DEBUG);
         Statement unknownStatement = new Statement() {
             @Override
-            public ByteBuffer getRoutingKey() {
+            public ByteBuffer getRoutingKey(ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
                 return null;
             }
 
@@ -287,7 +288,8 @@ public class QueryLoggerTest extends CCMTestsSupport {
             }
         };
         // when
-        queryLogger = QueryLogger.builder(mock(Cluster.class)).build();
+        queryLogger = QueryLogger.builder().build();
+        queryLogger.onRegister(mock(Cluster.class));
         queryLogger.update(null, unknownStatement, null, 0);
         // then
         String line = normalAppender.get();
@@ -303,7 +305,8 @@ public class QueryLoggerTest extends CCMTestsSupport {
         slow.setLevel(INFO);
         error.setLevel(INFO);
         // when
-        queryLogger = QueryLogger.builder(mock(Cluster.class)).build();
+        queryLogger = QueryLogger.builder().build();
+        queryLogger.onRegister(mock(Cluster.class));
         queryLogger.update(null, mock(BoundStatement.class), null, 0);
         // then
         assertThat(normalAppender.get()).isEmpty();
@@ -318,7 +321,8 @@ public class QueryLoggerTest extends CCMTestsSupport {
         slow.setLevel(INFO);
         error.setLevel(INFO);
         // when
-        queryLogger = QueryLogger.builder(mock(Cluster.class)).build();
+        queryLogger = QueryLogger.builder().build();
+        queryLogger.onRegister(mock(Cluster.class));
         queryLogger.update(null, mock(BoundStatement.class), null, DEFAULT_SLOW_QUERY_THRESHOLD_MS + 1);
         // then
         assertThat(normalAppender.get()).isEmpty();
@@ -333,7 +337,8 @@ public class QueryLoggerTest extends CCMTestsSupport {
         slow.setLevel(INFO);
         error.setLevel(INFO);
         // when
-        queryLogger = QueryLogger.builder(mock(Cluster.class)).build();
+        queryLogger = QueryLogger.builder().build();
+        queryLogger.onRegister(mock(Cluster.class));
         queryLogger.update(null, mock(BoundStatement.class), new DriverException("booh"), 0);
         // then
         assertThat(normalAppender.get()).isEmpty();
@@ -347,7 +352,7 @@ public class QueryLoggerTest extends CCMTestsSupport {
     public void should_log_normal_queries() throws Exception {
         // given
         normal.setLevel(DEBUG);
-        queryLogger = QueryLogger.builder(cluster())
+        queryLogger = QueryLogger.builder()
                 .withConstantThreshold(Long.MAX_VALUE)
                 .withMaxQueryStringLength(Integer.MAX_VALUE)
                 .build();
@@ -375,7 +380,7 @@ public class QueryLoggerTest extends CCMTestsSupport {
     public void should_log_non_null_named_parameter() throws Exception {
         // given
         normal.setLevel(TRACE);
-        queryLogger = QueryLogger.builder(cluster())
+        queryLogger = QueryLogger.builder()
                 .withConstantThreshold(Long.MAX_VALUE)
                 .withMaxQueryStringLength(Integer.MAX_VALUE)
                 .build();
@@ -401,7 +406,7 @@ public class QueryLoggerTest extends CCMTestsSupport {
     public void should_log_non_null_positional_parameter() throws Exception {
         // given
         normal.setLevel(TRACE);
-        queryLogger = QueryLogger.builder(cluster()).build();
+        queryLogger = QueryLogger.builder().build();
         cluster().register(queryLogger);
         // when
         String query = "UPDATE test SET c_text = ? WHERE pk = ?";
@@ -424,7 +429,7 @@ public class QueryLoggerTest extends CCMTestsSupport {
     public void should_log_null_parameter() throws Exception {
         // given
         normal.setLevel(TRACE);
-        queryLogger = QueryLogger.builder(cluster()).build();
+        queryLogger = QueryLogger.builder().build();
         cluster().register(queryLogger);
         // when
         String query = "UPDATE test SET c_text = ? WHERE pk = ?";
@@ -444,11 +449,34 @@ public class QueryLoggerTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short")
+    @CassandraVersion(major = 3.0)
+    public void should_log_unset_parameter() throws Exception {
+        // given
+        normal.setLevel(TRACE);
+        queryLogger = QueryLogger.builder().build();
+        cluster().register(queryLogger);
+        // when
+        String query = "UPDATE test SET c_text = ? WHERE pk = ?";
+        PreparedStatement ps = session().prepare(query);
+        BoundStatement bs = ps.bind();
+        bs.setInt("pk", 42);
+        session().execute(bs);
+        // then
+        String line = normalAppender.waitAndGet(10000);
+        assertThat(line)
+                .contains("Query completed normally")
+                .contains(ipOfNode(1))
+                .contains(query)
+                .contains("pk:42")
+                .contains("c_text:<UNSET>");
+    }
+
+    @Test(groups = "short")
     @CassandraVersion(major = 2.0)
     public void should_log_bound_statement_parameters_inside_batch_statement() throws Exception {
         // given
         normal.setLevel(TRACE);
-        queryLogger = QueryLogger.builder(cluster()).build();
+        queryLogger = QueryLogger.builder().build();
         cluster().register(queryLogger);
         // when
         String query1 = "UPDATE test SET c_text = ? WHERE pk = ?";
@@ -475,7 +503,7 @@ public class QueryLoggerTest extends CCMTestsSupport {
     public void should_log_all_parameter_types() throws Exception {
         // given
         normal.setLevel(TRACE);
-        queryLogger = QueryLogger.builder(cluster())
+        queryLogger = QueryLogger.builder()
                 .withMaxParameterValueLength(Integer.MAX_VALUE)
                 .build();
         cluster().register(queryLogger);
@@ -490,8 +518,10 @@ public class QueryLoggerTest extends CCMTestsSupport {
                 .contains("Query completed normally")
                 .contains(ipOfNode(1))
                 .contains(query);
+        CodecRegistry codecRegistry = cluster().getConfiguration().getCodecRegistry();
         for (DataType type : dataTypes) {
-            assertThat(line).contains(type.format(getFixedValue(type)));
+            TypeCodec<Object> codec = codecRegistry.codecFor(type);
+            assertThat(line).contains(codec.format(getFixedValue(type)));
         }
     }
 
@@ -501,7 +531,7 @@ public class QueryLoggerTest extends CCMTestsSupport {
     public void should_truncate_query_when_max_length_exceeded() throws Exception {
         // given
         normal.setLevel(DEBUG);
-        queryLogger = QueryLogger.builder(cluster())
+        queryLogger = QueryLogger.builder()
                 .withMaxQueryStringLength(5)
                 .build();
         cluster().register(queryLogger);
@@ -522,7 +552,7 @@ public class QueryLoggerTest extends CCMTestsSupport {
     public void should_show_total_statements_for_batches_even_if_query_truncated() throws Exception {
         // given
         normal.setLevel(DEBUG);
-        queryLogger = QueryLogger.builder(cluster())
+        queryLogger = QueryLogger.builder()
                 .withMaxQueryStringLength(5)
                 .build();
         cluster().register(queryLogger);
@@ -548,7 +578,7 @@ public class QueryLoggerTest extends CCMTestsSupport {
     public void should_not_truncate_query_when_max_length_unlimited() throws Exception {
         // given
         normal.setLevel(DEBUG);
-        queryLogger = QueryLogger.builder(cluster())
+        queryLogger = QueryLogger.builder()
                 .withMaxQueryStringLength(-1)
                 .build();
         cluster().register(queryLogger);
@@ -569,7 +599,7 @@ public class QueryLoggerTest extends CCMTestsSupport {
     public void should_truncate_parameter_when_max_length_exceeded() throws Exception {
         // given
         normal.setLevel(TRACE);
-        queryLogger = QueryLogger.builder(cluster())
+        queryLogger = QueryLogger.builder()
                 .withMaxParameterValueLength(5)
                 .build();
         cluster().register(queryLogger);
@@ -593,7 +623,7 @@ public class QueryLoggerTest extends CCMTestsSupport {
     public void should_truncate_blob_parameter_when_max_length_exceeded() throws Exception {
         // given
         normal.setLevel(TRACE);
-        queryLogger = QueryLogger.builder(cluster())
+        queryLogger = QueryLogger.builder()
                 .withMaxParameterValueLength(6)
                 .build();
         cluster().register(queryLogger);
@@ -617,7 +647,7 @@ public class QueryLoggerTest extends CCMTestsSupport {
     public void should_not_truncate_parameter_when_max_length_unlimited() throws Exception {
         // given
         normal.setLevel(TRACE);
-        queryLogger = QueryLogger.builder(cluster())
+        queryLogger = QueryLogger.builder()
                 .withMaxParameterValueLength(-1)
                 .build();
         cluster().register(queryLogger);
@@ -641,7 +671,7 @@ public class QueryLoggerTest extends CCMTestsSupport {
     public void should_not_log_exceeding_number_of_parameters() throws Exception {
         // given
         normal.setLevel(TRACE);
-        queryLogger = QueryLogger.builder(cluster())
+        queryLogger = QueryLogger.builder()
                 .withMaxLoggedParameters(1)
                 .build();
         cluster().register(queryLogger);
@@ -667,7 +697,7 @@ public class QueryLoggerTest extends CCMTestsSupport {
     public void should_not_log_exceeding_number_of_parameters_in_batch_statement() throws Exception {
         // given
         normal.setLevel(TRACE);
-        queryLogger = QueryLogger.builder(cluster())
+        queryLogger = QueryLogger.builder()
                 .withMaxLoggedParameters(1)
                 .build();
         cluster().register(queryLogger);
@@ -696,7 +726,7 @@ public class QueryLoggerTest extends CCMTestsSupport {
     public void should_log_all_parameters_when_max_unlimited() throws Exception {
         // given
         normal.setLevel(TRACE);
-        queryLogger = QueryLogger.builder(cluster())
+        queryLogger = QueryLogger.builder()
                 .withMaxLoggedParameters(-1)
                 .build();
         cluster().register(queryLogger);

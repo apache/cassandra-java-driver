@@ -19,7 +19,8 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
 /**
- * Indicates that the contacted host reported un expected error.
+ * Indicates that the contacted host reported an internal error.
+ * This should be considered as a bug in Cassandra and reported as such.
  */
 public class ServerError extends DriverInternalError implements CoordinatorException {
 

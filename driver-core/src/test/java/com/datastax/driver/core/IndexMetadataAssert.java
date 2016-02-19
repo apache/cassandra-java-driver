@@ -15,7 +15,7 @@
  */
 package com.datastax.driver.core;
 
-import com.datastax.driver.core.ColumnMetadata.IndexMetadata;
+import com.datastax.driver.core.IndexMetadata.Kind;
 import org.assertj.core.api.AbstractAssert;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -31,6 +31,11 @@ public class IndexMetadataAssert extends AbstractAssert<IndexMetadataAssert, Ind
         return this;
     }
 
+    public IndexMetadataAssert hasParent(TableMetadata parent) {
+        assertThat(actual.getTable()).isEqualTo(parent);
+        return this;
+    }
+
     public IndexMetadataAssert hasOption(String name, String value) {
         assertThat(actual.getOption(name)).isEqualTo(value);
         return this;
@@ -38,36 +43,6 @@ public class IndexMetadataAssert extends AbstractAssert<IndexMetadataAssert, Ind
 
     public IndexMetadataAssert asCqlQuery(String cqlQuery) {
         assertThat(actual.asCQLQuery()).isEqualTo(cqlQuery);
-        return this;
-    }
-
-    public IndexMetadataAssert isKeys() {
-        assertThat(actual.isKeys()).isTrue();
-        return this;
-    }
-
-    public IndexMetadataAssert isNotKeys() {
-        assertThat(actual.isKeys()).isFalse();
-        return this;
-    }
-
-    public IndexMetadataAssert isFull() {
-        assertThat(actual.isFull()).isTrue();
-        return this;
-    }
-
-    public IndexMetadataAssert isNotFull() {
-        assertThat(actual.isFull()).isFalse();
-        return this;
-    }
-
-    public IndexMetadataAssert isEntries() {
-        assertThat(actual.isEntries()).isTrue();
-        return this;
-    }
-
-    public IndexMetadataAssert isNotEntries() {
-        assertThat(actual.isEntries()).isFalse();
         return this;
     }
 
@@ -81,4 +56,13 @@ public class IndexMetadataAssert extends AbstractAssert<IndexMetadataAssert, Ind
         return this;
     }
 
+    public IndexMetadataAssert hasTarget(String target) {
+        assertThat(actual.getTarget()).isEqualTo(target);
+        return this;
+    }
+
+    public IndexMetadataAssert hasKind(Kind kind) {
+        assertThat(actual.getKind()).isEqualTo(kind);
+        return this;
+    }
 }

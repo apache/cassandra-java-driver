@@ -60,4 +60,29 @@ public class TableMetadataAssert extends AbstractAssert<TableMetadataAssert, Tab
         assertThat(actual.getOptions().getComment()).isNotEqualTo(comment);
         return this;
     }
+
+    public TableMetadataAssert isCompactStorage() {
+        assertThat(actual.getOptions().isCompactStorage()).isTrue();
+        return this;
+    }
+
+    public TableMetadataAssert isNotCompactStorage() {
+        assertThat(actual.getOptions().isCompactStorage()).isFalse();
+        return this;
+    }
+
+    public TableMetadataAssert hasNumberOfColumns(int expected) {
+        assertThat(actual.getColumns().size()).isEqualTo(expected);
+        return this;
+    }
+
+    public TableMetadataAssert hasMaterializedView(MaterializedViewMetadata expected) {
+        assertThat(actual.getView(Metadata.quote(expected.getName()))).isNotNull().isEqualTo(expected);
+        return this;
+    }
+
+    public TableMetadataAssert hasIndex(IndexMetadata index) {
+        assertThat(actual.getIndexes()).contains(index);
+        return this;
+    }
 }

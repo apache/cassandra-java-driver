@@ -3,9 +3,276 @@
 The purpose of this guide is to detail changes made by successive
 versions of the Java driver.
 
+### 3.0
+
+This version brings parity with Cassandra 2.2 and 3.0.
+
+It is **not binary compatible** with the driver's 2.1 branch.
+The main changes were introduced by the custom codecs feature (see below).
+We've also seized the opportunity to remove code that was deprecated in 2.1.
+
+1.  The default consistency level in `QueryOptions` is now `LOCAL_ONE`.
+2.  [Custom codecs](../manual/custom_codecs/)
+    ([JAVA-721](https://datastax-oss.atlassian.net/browse/JAVA-721))
+    introduce several breaking changes and also modify a few runtime behaviors.
+
+    Here is a detailed list of breaking API changes:
+    * `TypeCodec` was package-private before and is now public.
+    * `DataType` has no more references to `TypeCodec`, so methods that dealt with serialization and deserialization of
+        data types have been removed:
+        * `ByteBuffer serialize(Object value, ProtocolVersion protocolVersion)`
+        * `ByteBuffer serializeValue(Object value, ProtocolVersion protocolVersion)`
+        * `Object deserialize(ByteBuffer bytes, ProtocolVersion protocolVersion)`
+        * `Object deserialize(ByteBuffer bytes, int protocolVersion)`
+        * `Object parse(String value)`
+        * `String format(Object value)`
+        * `Class<?> asJavaClass()`
+
+        These methods must now be invoked on `TypeCodec` directly. To resolve the `TypeCodec` instance for a particular
+        data type, use `CodecRegistry#codecFor`.
+    * `GettableByIndexData` (affects `Row`, `BoundStatement`, `TupleValue` and `UDTValue`). The following public methods were added:
+        * `<T> T get(int i, Class<T> targetClass)`
+        * `<T> T get(int i, TypeToken<T> targetType)`
+        * `<T> T get(int i, TypeCodec<T> codec)`
+    * `GettableByNameData` (affects `Row`, `BoundStatement` and `UDTValue`). The following public methods were added:
+        * `<T> T get(String name, Class<T> targetClass)`
+        * `<T> T get(String name, TypeToken<T> targetType)`
+        * `<T> T get(String name, TypeCodec<T> codec)`
+    * `SettableByIndexData` (affects `Row`, `BoundStatement`, `TupleValue` and `UDTValue`). The following public methods were added:
+        * `<V> T set(int i, V v, Class<V> targetClass)`
+        * `<V> T set(int i, V v, TypeToken<V> targetType)`
+        * `<V> T set(int i, V v, TypeCodec<V> codec)`
+    * `SettableByNameData` (affects `Row`, `BoundStatement` and `UDTValue`). The following public methods were added:
+        * `<V> T set(String name, V v, Class<V> targetClass)`
+        * `<V> T set(String name, V v, TypeToken<V> targetType)`
+        * `<V> T set(String name, V v, TypeCodec<V> codec)`
+    * `Statement`. The following public methods were modified:
+        * `getRoutingKey(ProtocolVersion, CodecRegistry)`: both parameters added.
+    * `RegularStatement`. The following public methods were modified:
+        * `getValues(ProtocolVersion, CodecRegistry)`: second parameter added.
+        * `getQueryString(CodecRegistry)` and `hasValues(CodecRegistry)`: parameter added. No-arg versions are still present
+           and use the default codec registry; refer to the Javadocs for guidance on which version to use.
+    * `PreparedStatement`. The following public method was added:
+        * `CodecRegistry getCodecRegistry()`.
+    * `TupleType`. The following public method was deleted:
+        * `TupleType of(DataType... types)`; users should now use `Metadata.newTupleType(DataType...)`.
+
+    <p>The driver runtime behavior changes in the following situations:</p>
+    * By default, the driver now returns _mutable_, _non thread-safe_ instances for CQL collection types;
+      This affects methods `getList`, `getSet`, `getMap`, `getObject` and `get` for all instances of
+      `GettableByIndexData` and `GettableByNameData` (`Row`, `BoundStatement`, `TupleValue` and `UDTValue`)
+    * `RuntimeException`s thrown during serialization or deserialization might not be
+      the same ones as before, due to the newly-introduced `CodecNotFoundException`
+      and to the dynamic nature of codec search introduced by JAVA-721.
+    * `TypeCodec.format(Object)` now returns the CQL keyword `"NULL"` instead of a `null` reference
+      for `null` inputs.
+
+3.  The driver now depends on Guava 16.0.1 (instead of 14.0.1).
+    This update has been mainly motivated by Guava's [Issue #1635](https://code.google.com/p/guava-libraries/issues/detail?id=1635),
+    which affects `TypeToken`, and hence all `TypeCodec` implementations handling parameterized types.
+
+4.  `UDTMapper` (the type previously used to convert `@UDT`-annotated
+    classes to their CQL counterpart) was removed, as well as the
+    corresponding method `MappingManager#udtMapper`.
+
+    The mapper now uses custom codecs to convert UDTs. See more
+    explanations [here](../manual/object_mapper/custom_codecs/#implicit-udt-codecs).
+
+5.  All methods that took the protocol version as an `int` or assumed a
+    default version have been removed (they were already deprecated in
+    2.1):
+    * `AbstractGettableData(int)`
+    * `Cluster.Builder#withProtocolVersion(int)`
+    * in `ProtocolOptions`:
+      * `NEWEST_SUPPORTED_PROTOCOL_VERSION` (replaced by
+        `ProtocolVersion#NEWEST_SUPPORTED`)
+      * `int getProtocolVersion()`
+
+    There are now variants of these methods using the `ProtocolVersion`
+    enum. In addition, `ProtocolOptions#getProtocolVersionEnum` has been
+    renamed to `ProtocolOptions#getProtocolVersion`.
+
+6.  All methods related to the "suspected" host state have been removed
+    (they had been deprecated in 2.1.6 when the suspicion mechanism was
+    removed):
+    * `Host.StateListener#onSuspected()` (was inherited by
+      `LoadBalancingPolicy`)
+    * `Host#getInitialReconnectionAttemptFuture()`
+
+7.  `PoolingOptions#setMinSimultaneousRequestsPerConnectionThreshold(HostDistance,
+    int)` has been removed. The new connection pool resizing algorithm introduced by
+    [JAVA-419](https://datastax-oss.atlassian.net/browse/JAVA-419) does not need this
+    threshold anymore.
+
+8.  `AddressTranslater` has been renamed to `AddressTranslator`. All
+    related methods and classes have also been renamed.
+
+    In addition, the `close()` method has been pulled up into
+    `AddressTranslator`, and `CloseableAddressTranslator` has been removed.
+    Existing third-party `AddressTranslator` implementations only need
+    to add an empty `close()` method.
+
+9.  The `close()` method has been pulled up into `LoadBalancingPolicy`,
+    and `CloseableLoadBalancingPolicy` has been removed. Existing third-party
+    `LoadBalancingPolicy` implementations only need to add an empty
+    `close()` method.
+
+10. All pluggable components now have callbacks to detect when they get
+    associated with a `Cluster` instance:
+    * `ReconnectionPolicy`, `RetryPolicy`, `AddressTranslator`,
+      and `TimestampGenerator`:
+      * `init(Cluster)`
+      * `close()`
+    * `Host.StateListener` and `LatencyTracker`:
+      * `onRegister(Cluster)`
+      * `onUnregister(Cluster)`
+
+    This gives these components the opportunity to perform
+    initialization / cleanup tasks. Existing third-party implementations
+    only need to add empty methods.
+
+11. `LoadBalancingPolicy` does not extend `Host.StateListener` anymore:
+    callback methods (`onUp`, `onDown`, etc.) have been duplicated. This
+    is unlikely to affect clients.
+
+12. [Client-side timestamp generation](../manual/query_timestamps/) is
+    now the default (provided that [native
+    protocol](../manual/native_protocol) v3 or higher is in use). The
+    generator used is `AtomicMonotonicTimestampGenerator`.
+
+13. If a DNS name resolves to multiple A-records,
+    `Cluster.Builder#addContactPoint(String)` will now use all of these
+    addresses as contact points. This gives you the possibility of
+    maintaining contact points in DNS configuration, and having a single,
+    static contact point in your Java code.
+
+14. The following methods were added for [Custom payloads](../manual/custom_payloads):
+    * in `PreparedStatement`: `getIncomingPayload()`,
+      `getOutgoingPayload()` and
+      `setOutgoingPayload(Map<String,ByteBuffer>)`
+    * `AbstractSession#prepareAsync(String, Map<String,ByteBuffer>)`
+
+    Also, note that `AbstractSession#prepareAsync(Statement)` does not
+    call `AbstractSession#prepareAsync(String)` anymore, they now both
+    delegate to a protected method.
+
+    This breaks binary compatibility for these two classes; if you have
+    custom implementations, you will have to adapt them accordingly.
+
+15. Getters and setters have been added to "data-container" classes for
+    new CQL types:
+    * `getByte`/`setByte` for the `TINYINT` type
+    * `getShort`/`setShort` for the `SMALLINT` type
+    * `getTime`/`setTime` for the `TIME` type
+    * `getDate`/`setDate` for the `DATE` type
+
+    The methods for the `TIMESTAMP` CQL type have been renamed to
+    `getTimestamp` and `setTimestamp`.
+
+    This affects `Row`, `BoundStatement`, `TupleValue` and `UDTValue`.
+
+16. New exception types have been added to handle additional server-side
+    errors introduced in Cassandra 2.2:
+    * `ReadFailureException`
+    * `WriteFailureException`
+    * `FunctionExecutionException`
+
+    This is not a breaking change since all driver exceptions are
+    unchecked; but clients might decide to handle these errors in a specific
+    way.
+
+    In addition, `QueryTimeoutException` has been renamed to
+    `QueryExecutionException` (this is an intermediary class in our
+    exception hierarchy, it now has new child classes that are not
+    related to timeouts).
+
+17. `ResultSet#fetchMoreResults()` now returns a `ListenableFuture<ResultSet>`.
+    This makes the API more friendly if you chain transformations on an async
+    query to process all pages (see `AsyncResultSetTest` in the sources for an
+    example).
+
+18. `Frozen` annotations in the mapper are no longer checked at runtime (see
+    [JAVA-843](https://datastax-oss.atlassian.net/browse/JAVA-843) for more
+    explanations). So they become purely informational at this stage.
+    However it is a good idea to keep using these annotations and make sure
+    they match the schema, in anticipation for the schema generation features
+    that will be added in a future version.
+
+19. `AsyncInitSession` has been removed, `initAsync()` is now part of the
+    `Session` interface (the only purpose of the extra interface was to preserve
+    binary compatibility on the 2.1 branch).
+
+20. `TableMetadata.Options` has been made a top-level class and renamed to
+    `TableOptionsMetadata`. It is now also used by `MaterializedViewMetadata`.
+
+21. The mapper annotation `@Enumerated` has been removed, users should now
+    use the newly-introduced `driver-extras` module to get automatic
+    enum-to-CQL mappings. Two new codecs provide the same functionality:
+    `EnumOrdinalCodec` and `EnumNameCodec`:
+
+    ```java
+    enum Foo {...}
+    enum Bar {...}
+
+    // register the appropriate codecs
+    CodecRegistry.DEFAULT_INSTANCE
+        .register(new EnumOrdinalCodec<Foo>(Foo.class))
+        .register(new EnumNameCodec<Bar>(Bar.class))
+
+    // the following mappings are handled out-of-the-box
+    @Table
+    public class MyPojo {
+        private Foo foo;
+        private List<Bar> bars;
+        ...
+    }
+    ```
+
+22. The interface `IdempotenceAwarePreparedStatement` has been removed
+    and now the `PreparedStatement` interface exposes 2 new methods,
+    `setIdempotent(Boolean)` and `isIdempotent()`.
+
+23. `RetryPolicy` and `ExtendedRetryPolicy` (introduced in 2.1.10)
+    were merged together; as a consequence, `RetryPolicy` now has one
+    more method: `onRequestError`; see
+    [JAVA-819](https://datastax-oss.atlassian.net/browse/JAVA-819) for
+    more information. Furthermore, `FallthroughRetryPolicy` now returns
+    `RetryDecision.rethrow()` when `onRequestError` is called.
+
+24. `DseAuthProvider` has been deprecated and is now replaced by
+    `DseGSSAPIAuthProvider` for Kerberos authentication. `DsePlainTextAuthProvider`
+    has been introduced to handle plain text authentication with the
+    `DseAuthenticator`.
+
+25. The constructor of `DCAwareRoundRobinPolicy` is not accessible anymore. You
+    should use `DCAwareRoundRobinPolicy#builder()` to create new instances.
+    
+26. `ColumnMetadata.getTable()` has been renamed to `ColumnMetadata.getParent()`.
+    Also, its return type is now `AbstractTableMetadata` which can be either
+    a `TableMetadata` object or a `MaterializedViewMetadata` object.
+    This change is motivated by the fact that a column can now belong to a 
+    table or a materialized view.
+    
+27. `ColumnMetadata.getIndex()` has been removed. 
+    This is due to the fact that secondary indexes have been completely redesigned 
+    in Cassandra 3.0, and the former one-to-one relationship between a column and its index
+    has been replaced with a one-to-many relationship between a table and its indexes.
+    This is reflected in the driver's API by the new methods
+    `TableMetadata.getIndexes()` and `TableMetadata.getIndex(String name)`.
+    See [CASSANDRA-9459](https://issues.apache.org/jira/browse/CASSANDRA-9459) and
+    and [JAVA-1008](https://datastax-oss.atlassian.net/browse/JAVA-1008) for
+    more details.
+    Unfortunately, there is no easy way to recover the functionality provided
+    by the deleted method, _even for Cassandra versions <= 3.0_.
+
+28. `IndexMetadata` is now a top-level class and its structure has been deeply modified. 
+    Again, this is due to the fact that secondary indexes have been completely redesigned 
+    in Cassandra 3.0.
+
+
 ### 2.1.8
 
-2.1.8 is binary-compatible with 2.1.7 but introduces a small change in the 
+2.1.8 is binary-compatible with 2.1.7 but introduces a small change in the
 driver's behavior:
 
 1. The list of contact points provided at startup is now shuffled before trying

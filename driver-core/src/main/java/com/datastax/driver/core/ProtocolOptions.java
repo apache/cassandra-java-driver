@@ -88,14 +88,6 @@ public class ProtocolOptions {
      */
     public static final int DEFAULT_MAX_SCHEMA_AGREEMENT_WAIT_SECONDS = 10;
 
-    /**
-     * The newest version of the protocol that this version of the driver support.
-     *
-     * @deprecated This is provided for backward compatibility; use {@link ProtocolVersion#NEWEST_SUPPORTED} instead.
-     */
-    @Deprecated
-    public static final int NEWEST_SUPPORTED_PROTOCOL_VERSION = ProtocolVersion.NEWEST_SUPPORTED.toInt();
-
     private volatile Cluster.Manager manager;
 
     private final int port;
@@ -150,15 +142,6 @@ public class ProtocolOptions {
         this.authProvider = authProvider;
     }
 
-    /**
-     * @throws IllegalArgumentException if {@code protocolVersion} does not correspond to any known version.
-     * @deprecated This is provided for backward compatibility; use {@link #ProtocolOptions(int, ProtocolVersion, int, SSLOptions, AuthProvider))} instead.
-     */
-    @Deprecated
-    public ProtocolOptions(int port, int protocolVersion, SSLOptions sslOptions, AuthProvider authProvider) {
-        this(port, ProtocolVersion.fromInt(protocolVersion), DEFAULT_MAX_SCHEMA_AGREEMENT_WAIT_SECONDS, sslOptions, authProvider);
-    }
-
     void register(Cluster.Manager manager) {
         this.manager = manager;
     }
@@ -181,18 +164,8 @@ public class ProtocolOptions {
      * Cluster instance is connected, this is guaranteed to return a non-null value). Note that
      * nodes that do not support this protocol version will be ignored.
      */
-    public ProtocolVersion getProtocolVersionEnum() {
+    public ProtocolVersion getProtocolVersion() {
         return manager.connectionFactory.protocolVersion;
-    }
-
-    /**
-     * The protocol version used by the Cluster instance, as a number.
-     *
-     * @deprecated This is provided for backward compatibility, use {@link #getProtocolVersionEnum()} instead.
-     */
-    @Deprecated
-    public int getProtocolVersion() {
-        return getProtocolVersionEnum().toInt();
     }
 
     /**

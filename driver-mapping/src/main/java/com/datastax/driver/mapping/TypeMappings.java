@@ -15,80 +15,74 @@
  */
 package com.datastax.driver.mapping;
 
-import com.datastax.driver.core.DataType;
-import com.datastax.driver.core.TupleValue;
-import com.datastax.driver.core.UDTValue;
 import com.datastax.driver.mapping.annotations.UDT;
+import com.google.common.collect.Sets;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.net.InetAddress;
-import java.nio.ByteBuffer;
-import java.util.*;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Utility methods to determine which CQL type we expect for a given Java field type.
  */
 class TypeMappings {
 
-    static DataType getSimpleType(Class<?> klass, String fieldName) {
-        if (ByteBuffer.class.isAssignableFrom(klass))
-            return DataType.blob();
-
-        if (klass == int.class || Integer.class.isAssignableFrom(klass))
-            return DataType.cint();
-        if (klass == long.class || Long.class.isAssignableFrom(klass))
-            return DataType.bigint();
-        if (klass == float.class || Float.class.isAssignableFrom(klass))
-            return DataType.cfloat();
-        if (klass == double.class || Double.class.isAssignableFrom(klass))
-            return DataType.cdouble();
-        if (klass == boolean.class || Boolean.class.isAssignableFrom(klass))
-            return DataType.cboolean();
-
-        if (BigDecimal.class.isAssignableFrom(klass))
-            return DataType.decimal();
-        if (BigInteger.class.isAssignableFrom(klass))
-            return DataType.varint();
-
-        if (String.class.isAssignableFrom(klass))
-            return DataType.text();
-        if (InetAddress.class.isAssignableFrom(klass))
-            return DataType.inet();
-        if (Date.class.isAssignableFrom(klass))
-            return DataType.timestamp();
-        if (UUID.class.isAssignableFrom(klass))
-            return DataType.uuid();
-
-        if (Collection.class.isAssignableFrom(klass))
-            throw new IllegalArgumentException(String.format("Cannot map non-parametrized collection type %s for field %s; Please use a concrete type parameter", klass.getName(), fieldName));
-
-        throw new IllegalArgumentException(String.format("Cannot map unknown class %s for field %s", klass.getName(), fieldName));
+    static boolean mapsToCollection(Class<?> klass) {
+        return mapsToList(klass) || mapsToSet(klass) || mapsToMap(klass);
     }
 
-    static boolean mapsToList(Class<?> klass) {
+    private static boolean mapsToList(Class<?> klass) {
         return List.class.equals(klass);
     }
 
-    static boolean mapsToSet(Class<?> klass) {
+    private static boolean mapsToSet(Class<?> klass) {
         return Set.class.equals(klass);
     }
 
-    static boolean mapsToMap(Class<?> klass) {
+    private static boolean mapsToMap(Class<?> klass) {
         return Map.class.equals(klass);
-    }
-
-    static boolean mapsToCollection(Class<?> klass) {
-        return mapsToList(klass) || mapsToSet(klass) || mapsToMap(klass);
     }
 
     static boolean isMappedUDT(Class<?> klass) {
         return klass.isAnnotationPresent(UDT.class);
     }
 
-    static boolean mapsToUserTypeOrTuple(Class<?> klass) {
-        return isMappedUDT(klass) ||
-                klass.equals(UDTValue.class) ||
-                klass.equals(TupleValue.class);
+    /**
+     * Traverses the type of a Java field or parameter to find classes annotated with @UDT.
+     * This will recurse into nested collections, e.g. List<Set<TheMappedUDT>>
+     */
+    static Set<Class<?>> findUDTs(Type type) {
+        Set<Class<?>> udts = findUDTs(type, null);
+        return (udts == null)
+                ? Collections.<Class<?>>emptySet()
+                : udts;
+    }
+
+    private static Set<Class<?>> findUDTs(Type type, Set<Class<?>> udts) {
+        if (type instanceof ParameterizedType) {
+            ParameterizedType pt = (ParameterizedType) type;
+            Type raw = pt.getRawType();
+            if ((raw instanceof Class)) {
+                Class<?> klass = (Class<?>) raw;
+                if (mapsToCollection(klass)) {
+                    Type[] childTypes = pt.getActualTypeArguments();
+                    udts = findUDTs(childTypes[0], udts);
+
+                    if (mapsToMap(klass))
+                        udts = findUDTs(childTypes[1], udts);
+                }
+            }
+        } else if (type instanceof Class) {
+            Class<?> klass = (Class<?>) type;
+            if (isMappedUDT(klass)) {
+                if (udts == null)
+                    udts = Sets.newHashSet();
+                udts.add(klass);
+            }
+        }
+        return udts;
     }
 }

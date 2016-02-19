@@ -27,14 +27,6 @@ public class TruncateException extends QueryExecutionException implements Coordi
 
     private final InetSocketAddress address;
 
-    /**
-     * @deprecated This constructor is kept for backwards compatibility.
-     */
-    @Deprecated
-    public TruncateException(String msg) {
-        this(null, msg);
-    }
-
     public TruncateException(InetSocketAddress address, String msg) {
         super(msg);
         this.address = address;
@@ -62,7 +54,7 @@ public class TruncateException extends QueryExecutionException implements Coordi
     }
 
     @Override
-    public DriverException copy() {
+    public TruncateException copy() {
         return new TruncateException(getAddress(), getMessage(), this);
     }
 }

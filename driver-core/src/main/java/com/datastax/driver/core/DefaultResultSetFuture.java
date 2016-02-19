@@ -15,10 +15,7 @@
  */
 package com.datastax.driver.core;
 
-import com.datastax.driver.core.exceptions.DriverInternalError;
-import com.datastax.driver.core.exceptions.NoHostAvailableException;
-import com.datastax.driver.core.exceptions.QueryExecutionException;
-import com.datastax.driver.core.exceptions.QueryValidationException;
+import com.datastax.driver.core.exceptions.*;
 import com.google.common.util.concurrent.AbstractFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
 import org.slf4j.Logger;
@@ -27,6 +24,8 @@ import org.slf4j.LoggerFactory;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+
+import static com.datastax.driver.core.SchemaElement.KEYSPACE;
 
 /**
  * Internal implementation of ResultSetFuture.
@@ -78,61 +77,90 @@ class DefaultResultSetFuture extends AbstractFuture<ResultSet> implements Result
                                 switch (scc.change) {
                                     case CREATED:
                                     case UPDATED:
-                                        cluster.refreshSchemaAndSignal(connection, this, rs, scc.targetType, scc.targetKeyspace, scc.targetName);
+                                        cluster.refreshSchemaAndSignal(connection, this, rs, scc.targetType, scc.targetKeyspace, scc.targetName, scc.targetSignature);
                                         break;
                                     case DROPPED:
-                                        KeyspaceMetadata keyspace;
-                                        switch (scc.targetType) {
-                                            case KEYSPACE:
-                                                // If that the one keyspace we are logged in, reset to null (it shouldn't really happen but ...)
-                                                // Note: Actually, Cassandra doesn't do that so we don't either as this could confuse prepared statements.
-                                                // We'll add it back if CASSANDRA-5358 changes that behavior
-                                                //if (scc.keyspace.equals(session.poolsState.keyspace))
-                                                //    session.poolsState.setKeyspace(null);
-                                                final KeyspaceMetadata removedKeyspace = cluster.metadata.removeKeyspace(scc.targetKeyspace);
-                                                if (removedKeyspace != null) {
-                                                    cluster.executor.submit(new Runnable() {
-                                                        @Override
-                                                        public void run() {
-                                                            cluster.metadata.triggerOnKeyspaceRemoved(removedKeyspace);
+                                        if (scc.targetType == KEYSPACE) {
+                                            // If that the one keyspace we are logged in, reset to null (it shouldn't really happen but ...)
+                                            // Note: Actually, Cassandra doesn't do that so we don't either as this could confuse prepared statements.
+                                            // We'll add it back if CASSANDRA-5358 changes that behavior
+                                            //if (scc.keyspace.equals(session.poolsState.keyspace))
+                                            //    session.poolsState.setKeyspace(null);
+                                            final KeyspaceMetadata removedKeyspace = cluster.metadata.removeKeyspace(scc.targetKeyspace);
+                                            if (removedKeyspace != null) {
+                                                cluster.executor.submit(new Runnable() {
+                                                    @Override
+                                                    public void run() {
+                                                        cluster.metadata.triggerOnKeyspaceRemoved(removedKeyspace);
+                                                    }
+                                                });
+                                            }
+                                        } else {
+                                            KeyspaceMetadata keyspace = session.cluster.manager.metadata.keyspaces.get(scc.targetKeyspace);
+                                            if (keyspace == null) {
+                                                logger.warn("Received a DROPPED notification for {} {}.{}, but this keyspace is unknown in our metadata",
+                                                        scc.targetType, scc.targetKeyspace, scc.targetName);
+                                            } else {
+                                                switch (scc.targetType) {
+                                                    case TABLE:
+                                                        // we can't tell whether it's a table or a view,
+                                                        // but since two objects cannot have the same name,
+                                                        // try removing both
+                                                        final TableMetadata removedTable = keyspace.removeTable(scc.targetName);
+                                                        if (removedTable != null) {
+                                                            cluster.executor.submit(new Runnable() {
+                                                                @Override
+                                                                public void run() {
+                                                                    cluster.metadata.triggerOnTableRemoved(removedTable);
+                                                                }
+                                                            });
+                                                        } else {
+                                                            final MaterializedViewMetadata removedView = keyspace.removeMaterializedView(scc.targetName);
+                                                            if (removedView != null) {
+                                                                cluster.executor.submit(new Runnable() {
+                                                                    @Override
+                                                                    public void run() {
+                                                                        cluster.metadata.triggerOnMaterializedViewRemoved(removedView);
+                                                                    }
+                                                                });
+                                                            }
                                                         }
-                                                    });
+                                                        break;
+                                                    case TYPE:
+                                                        final UserType removedType = keyspace.removeUserType(scc.targetName);
+                                                        if (removedType != null) {
+                                                            cluster.executor.submit(new Runnable() {
+                                                                @Override
+                                                                public void run() {
+                                                                    cluster.metadata.triggerOnUserTypeRemoved(removedType);
+                                                                }
+                                                            });
+                                                        }
+                                                        break;
+                                                    case FUNCTION:
+                                                        final FunctionMetadata removedFunction = keyspace.removeFunction(Metadata.fullFunctionName(scc.targetName, scc.targetSignature));
+                                                        if (removedFunction != null) {
+                                                            cluster.executor.submit(new Runnable() {
+                                                                @Override
+                                                                public void run() {
+                                                                    cluster.metadata.triggerOnFunctionRemoved(removedFunction);
+                                                                }
+                                                            });
+                                                        }
+                                                        break;
+                                                    case AGGREGATE:
+                                                        final AggregateMetadata removedAggregate = keyspace.removeAggregate(Metadata.fullFunctionName(scc.targetName, scc.targetSignature));
+                                                        if (removedAggregate != null) {
+                                                            cluster.executor.submit(new Runnable() {
+                                                                @Override
+                                                                public void run() {
+                                                                    cluster.metadata.triggerOnAggregateRemoved(removedAggregate);
+                                                                }
+                                                            });
+                                                        }
+                                                        break;
                                                 }
-                                                break;
-                                            case TABLE:
-                                                keyspace = session.cluster.manager.metadata.getKeyspaceInternal(scc.targetKeyspace);
-                                                if (keyspace == null)
-                                                    logger.warn("Received a DROPPED notification for table {}.{}, but this keyspace is unknown in our metadata",
-                                                            scc.targetKeyspace, scc.targetName);
-                                                else {
-                                                    final TableMetadata removedTable = keyspace.removeTable(scc.targetName);
-                                                    if (removedTable != null) {
-                                                        cluster.executor.submit(new Runnable() {
-                                                            @Override
-                                                            public void run() {
-                                                                cluster.metadata.triggerOnTableRemoved(removedTable);
-                                                            }
-                                                        });
-                                                    }
-                                                }
-                                                break;
-                                            case TYPE:
-                                                keyspace = session.cluster.manager.metadata.getKeyspaceInternal(scc.targetKeyspace);
-                                                if (keyspace == null)
-                                                    logger.warn("Received a DROPPED notification for UDT {}.{}, but this keyspace is unknown in our metadata",
-                                                            scc.targetKeyspace, scc.targetName);
-                                                else {
-                                                    final UserType removedType = keyspace.removeUserType(scc.targetName);
-                                                    if (removedType != null) {
-                                                        cluster.executor.submit(new Runnable() {
-                                                            @Override
-                                                            public void run() {
-                                                                cluster.metadata.triggerOnUserTypeRemoved(removedType);
-                                                            }
-                                                        });
-                                                    }
-                                                }
-                                                break;
+                                            }
                                         }
                                         session.cluster.manager.waitForSchemaAgreementAndSignal(connection, this, rs);
                                         break;

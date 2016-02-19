@@ -15,9 +15,11 @@
  */
 package com.datastax.driver.core.policies;
 
+import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.ConsistencyLevel;
 import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.WriteType;
+import com.datastax.driver.core.exceptions.DriverException;
 
 /**
  * A retry policy that sometimes retry with a lower consistency level than
@@ -194,5 +196,29 @@ public class DowngradingConsistencyRetryPolicy implements RetryPolicy {
 
         // Tries the biggest CL that is expected to work
         return maxLikelyToWorkCL(aliveReplica);
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p/>
+     * For historical reasons, this implementation triggers a retry on the next host in the query plan
+     * with the same consistency level, regardless of the statement's idempotence.
+     * Note that this breaks the general rule
+     * stated in {@link RetryPolicy#onRequestError(Statement, ConsistencyLevel, DriverException, int)}:
+     * "a retry should only be attempted if the request is known to be idempotent".`
+     */
+    @Override
+    public RetryDecision onRequestError(Statement statement, ConsistencyLevel cl, DriverException e, int nbRetry) {
+        return RetryDecision.tryNextHost(cl);
+    }
+
+    @Override
+    public void init(Cluster cluster) {
+        // nothing to do
+    }
+
+    @Override
+    public void close() {
+        // nothing to do
     }
 }

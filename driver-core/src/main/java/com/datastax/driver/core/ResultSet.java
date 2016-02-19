@@ -156,7 +156,7 @@ public interface ResultSet extends Iterable<Row> {
      * thrown (you should thus call {@code isFullyFetched() to know if calling this
      * method can be of any use}).
      */
-    public ListenableFuture<Void> fetchMoreResults();
+    public ListenableFuture<ResultSet> fetchMoreResults();
 
     /**
      * Returns information on the execution of the last query made for this ResultSet.

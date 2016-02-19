@@ -19,11 +19,19 @@ import com.datastax.driver.core.exceptions.DriverInternalError;
 
 import java.nio.ByteBuffer;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * Implementation of a Row backed by an ArrayList.
  */
 class ArrayBackedRow extends AbstractGettableData implements Row {
+
+    /**
+     * A pattern to parse (non-aliased) token column names of the form token(x).
+     * Note that starting from Cassandra 2.2 built-in functions are declared in
+     * the system keyspace, so the function name is prefixed with "system.".
+     */
+    private static final Pattern TOKEN_COLUMN_NAME = Pattern.compile("(system\\.)?token(.*)");
 
     private final ColumnDefinitions metadata;
     private final Token.Factory tokenFactory;
@@ -64,6 +72,11 @@ class ArrayBackedRow extends AbstractGettableData implements Row {
     }
 
     @Override
+    protected CodecRegistry getCodecRegistry() {
+        return metadata.codecRegistry;
+    }
+
+    @Override
     protected int getIndexOf(String name) {
         return metadata.getFirstIdx(name);
     }
@@ -73,7 +86,7 @@ class ArrayBackedRow extends AbstractGettableData implements Row {
         if (tokenFactory == null)
             throw new DriverInternalError("Token factory not set. This should only happen at initialization time");
 
-        metadata.checkType(i, tokenFactory.getTokenType().getName());
+        checkType(i, tokenFactory.getTokenType().getName());
 
         ByteBuffer value = data.get(i);
         if (value == null || value.remaining() == 0)
@@ -91,7 +104,7 @@ class ArrayBackedRow extends AbstractGettableData implements Row {
     public Token getPartitionKeyToken() {
         int i = 0;
         for (ColumnDefinitions.Definition column : metadata) {
-            if (column.getName().matches("token(.*)"))
+            if (TOKEN_COLUMN_NAME.matcher(column.getName()).matches())
                 return getToken(i);
             i++;
         }
@@ -109,7 +122,7 @@ class ArrayBackedRow extends AbstractGettableData implements Row {
             if (bb == null)
                 sb.append("NULL");
             else
-                sb.append(metadata.getType(i).codec(protocolVersion).deserialize(bb).toString());
+                sb.append(getCodecRegistry().codecFor(metadata.getType(i)).deserialize(bb, protocolVersion).toString());
         }
         sb.append(']');
         return sb.toString();

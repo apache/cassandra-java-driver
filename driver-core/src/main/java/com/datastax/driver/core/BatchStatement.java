@@ -82,13 +82,16 @@ public class BatchStatement extends Statement {
         this.batchType = batchType;
     }
 
-    IdAndValues getIdAndValues(ProtocolVersion protocolVersion) {
+    IdAndValues getIdAndValues(ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
         IdAndValues idAndVals = new IdAndValues(statements.size());
         for (Statement statement : statements) {
+            if (statement instanceof StatementWrapper)
+                statement = ((StatementWrapper) statement).getWrappedStatement();
             if (statement instanceof RegularStatement) {
                 RegularStatement st = (RegularStatement) statement;
-                ByteBuffer[] vals = st.getValues(protocolVersion);
-                idAndVals.ids.add(st.getQueryString());
+                ByteBuffer[] vals = st.getValues(protocolVersion, codecRegistry);
+                String query = st.getQueryString();
+                idAndVals.ids.add(query);
                 idAndVals.values.add(vals == null ? Collections.<ByteBuffer>emptyList() : Arrays.asList(vals));
             } else {
                 // We handle BatchStatement in add() so ...
@@ -110,6 +113,9 @@ public class BatchStatement extends Statement {
      * is also allowed for convenience and is equivalent to adding all the {@code Statement}
      * contained in that other {@code BatchStatement}.
      * <p/>
+     * Due to a protocol-level limitation, adding a {@code RegularStatement} with named values
+     * is currently not supported; an {@code IllegalArgument} will be thrown.
+     * <p/>
      * When adding a {@code BoundStatement}, all of its values must be set, otherwise an
      * {@code IllegalStateException} will be thrown when submitting the batch statement.
      * See {@link BoundStatement} for more details, in particular how to handle {@code null}
@@ -122,14 +128,19 @@ public class BatchStatement extends Statement {
      *
      * @param statement the new statement to add.
      * @return this batch statement.
-     * @throws IllegalStateException if adding the new statement means that this
-     *                               {@code BatchStatement} has more than 65536 statements (since this is the maximum number
-     *                               of statements for a BatchStatement allowed by the underlying protocol).
+     * @throws IllegalStateException    if adding the new statement means that this
+     *                                  {@code BatchStatement} has more than 65536 statements (since this is the maximum number
+     *                                  of statements for a BatchStatement allowed by the underlying protocol).
+     * @throws IllegalArgumentException if adding a regular statement that uses named values.
      */
     public BatchStatement add(Statement statement) {
+        if ((statement instanceof RegularStatement) && ((RegularStatement) statement).usesNamedValues()) {
+            throw new IllegalArgumentException("Batch statement cannot contain regular statements with named values ("
+                    + ((RegularStatement) statement).getQueryString() + ")");
+        }
 
         // We handle BatchStatement here (rather than in getIdAndValues) as it make it slightly
-        // easier to avoid endless loop if the use mistakenly pass a batch that depends on this
+        // easier to avoid endless loops if the user mistakenly passes a batch that depends on this
         // object (or this directly).
         if (statement instanceof BatchStatement) {
             for (Statement subStatements : ((BatchStatement) statement).statements) {
@@ -208,9 +219,11 @@ public class BatchStatement extends Statement {
     }
 
     @Override
-    public ByteBuffer getRoutingKey() {
+    public ByteBuffer getRoutingKey(ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
         for (Statement statement : statements) {
-            ByteBuffer rk = statement.getRoutingKey();
+            if (statement instanceof StatementWrapper)
+                statement = ((StatementWrapper) statement).getWrappedStatement();
+            ByteBuffer rk = statement.getRoutingKey(protocolVersion, codecRegistry);
             if (rk != null)
                 return rk;
         }

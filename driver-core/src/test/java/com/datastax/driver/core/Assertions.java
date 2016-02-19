@@ -15,8 +15,6 @@
  */
 package com.datastax.driver.core;
 
-import com.datastax.driver.core.ColumnMetadata.IndexMetadata;
-
 /**
  * Augment AssertJ with custom assertions for the Java driver.
  */
@@ -41,15 +39,49 @@ public class Assertions extends org.assertj.core.api.Assertions {
         return new DataTypeAssert(type);
     }
 
-    public static IndexMetadataAssert assertThat(IndexMetadata indexMetadata) {
-        return new IndexMetadataAssert(indexMetadata);
+    /**
+     * This method is here only to disambiguate
+     * calls to assertThat with a UserType instance,
+     * because UserType also implements Iterable.
+     */
+    public static DataTypeAssert assertThat(UserType type) {
+        return new DataTypeAssert(type);
+    }
+
+    public static LocalDateAssert assertThat(LocalDate localDate) {
+        return new LocalDateAssert(localDate);
     }
 
     public static KeyspaceMetadataAssert assertThat(KeyspaceMetadata metadata) {
         return new KeyspaceMetadataAssert(metadata);
     }
 
-    public static TableMetadataAssert assertThat(TableMetadata metadata) {
-        return new TableMetadataAssert(metadata);
+    public static TableMetadataAssert assertThat(TableMetadata table) {
+        return new TableMetadataAssert(table);
     }
+
+    public static ColumnMetadataAssert assertThat(ColumnMetadata column) {
+        return new ColumnMetadataAssert(column);
+    }
+
+    public static FunctionMetadataAssert assertThat(FunctionMetadata function) {
+        return new FunctionMetadataAssert(function);
+    }
+
+    public static AggregateMetadataAssert assertThat(AggregateMetadata aggregate) {
+        return new AggregateMetadataAssert(aggregate);
+    }
+
+    public static IndexMetadataAssert assertThat(IndexMetadata index) {
+        return new IndexMetadataAssert(index);
+    }
+
+    public static <T> TypeCodecAssert<T> assertThat(TypeCodec<T> codec) {
+        return new TypeCodecAssert<T>(codec);
+    }
+
+    public static MaterializedViewMetadataAssert assertThat(MaterializedViewMetadata view) {
+        return new MaterializedViewMetadataAssert(view);
+    }
+
 }

@@ -15,9 +15,7 @@
  */
 package com.datastax.driver.core;
 
-import com.google.common.base.Predicate;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Iterables;
+import com.google.common.base.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,12 +24,12 @@ import java.util.*;
 /**
  * Describes a Table.
  */
-public class TableMetadata {
+public class TableMetadata extends AbstractTableMetadata {
 
     private static final Logger logger = LoggerFactory.getLogger(TableMetadata.class);
 
-    static final String CF_NAME = "columnfamily_name";
-    private static final String CF_ID = "cf_id";
+    private static final String CF_ID_V2 = "cf_id";
+    private static final String CF_ID_V3 = "id";
 
     private static final String KEY_VALIDATOR = "key_validator";
     private static final String COMPARATOR = "comparator";
@@ -45,88 +43,98 @@ public class TableMetadata {
     private static final String DEFAULT_COLUMN_ALIAS = "column";
     private static final String DEFAULT_VALUE_ALIAS = "value";
 
-    private static final Comparator<ColumnMetadata> columnMetadataComparator = new Comparator<ColumnMetadata>() {
-        @Override
-        public int compare(ColumnMetadata c1, ColumnMetadata c2) {
-            return c1.getName().compareTo(c2.getName());
-        }
-    };
+    private static final String FLAGS = "flags";
+    private static final String DENSE = "dense";
+    private static final String SUPER = "super";
+    private static final String COMPOUND = "compound";
 
-    private final KeyspaceMetadata keyspace;
-    private final String name;
-    private final UUID id;
-    private final List<ColumnMetadata> partitionKey;
-    private final List<ColumnMetadata> clusteringColumns;
-    private final Map<String, ColumnMetadata> columns;
-    private final Options options;
-    private final List<Order> clusteringOrder;
+    private static final String EMPTY_TYPE = "empty";
 
-    private final VersionNumber cassandraVersion;
+    private final Map<String, IndexMetadata> indexes;
 
-    /**
-     * Clustering orders.
-     * <p/>
-     * This is used by {@link #getClusteringOrder} to indicate the clustering
-     * order of a table.
-     */
-    public static enum Order {
-        ASC, DESC;
-
-        static final Predicate<Order> isAscending = new Predicate<Order>() {
-            @Override
-            public boolean apply(Order o) {
-                return o == ASC;
-            }
-        };
-    }
+    private final Map<String, MaterializedViewMetadata> views;
 
     private TableMetadata(KeyspaceMetadata keyspace,
                           String name,
                           UUID id,
                           List<ColumnMetadata> partitionKey,
                           List<ColumnMetadata> clusteringColumns,
-                          LinkedHashMap<String, ColumnMetadata> columns,
-                          Options options,
-                          List<Order> clusteringOrder,
+                          Map<String, ColumnMetadata> columns,
+                          Map<String, IndexMetadata> indexes,
+                          TableOptionsMetadata options,
+                          List<ClusteringOrder> clusteringOrder,
                           VersionNumber cassandraVersion) {
-        this.keyspace = keyspace;
-        this.name = name;
-        this.id = id;
-        this.partitionKey = partitionKey;
-        this.clusteringColumns = clusteringColumns;
-        this.columns = columns;
-        this.options = options;
-        this.clusteringOrder = clusteringOrder;
-        this.cassandraVersion = cassandraVersion;
+        super(keyspace, name, id, partitionKey, clusteringColumns, columns, options, clusteringOrder, cassandraVersion);
+        this.indexes = indexes;
+        this.views = new HashMap<String, MaterializedViewMetadata>();
     }
 
-    static TableMetadata build(KeyspaceMetadata ksm, Row row, Map<String, ColumnMetadata.Raw> rawCols, VersionNumber cassandraVersion) {
+    static TableMetadata build(KeyspaceMetadata ksm, Row row, Map<String, ColumnMetadata.Raw> rawCols, List<Row> indexRows, String nameColumn, VersionNumber cassandraVersion, Cluster cluster) {
 
-        String name = row.getString(CF_NAME);
-        UUID id = (cassandraVersion.getMajor() > 2 || (cassandraVersion.getMajor() == 2 && cassandraVersion.getMinor() >= 1))
-                ? row.getUUID(CF_ID)
-                : null;
+        String name = row.getString(nameColumn);
 
-        CassandraTypeParser.ParseResult keyValidator = CassandraTypeParser.parseWithComposite(row.getString(KEY_VALIDATOR));
-        CassandraTypeParser.ParseResult comparator = CassandraTypeParser.parseWithComposite(row.getString(COMPARATOR));
-        List<String> columnAliases = cassandraVersion.getMajor() >= 2 || row.getString(COLUMN_ALIASES) == null
-                ? Collections.<String>emptyList()
-                : SimpleJSONParser.parseStringList(row.getString(COLUMN_ALIASES));
+        UUID id = null;
 
-        int clusteringSize = findClusteringSize(comparator, rawCols.values(), columnAliases, cassandraVersion);
-        boolean isDense = clusteringSize != comparator.types.size() - 1;
-        boolean isCompact = isDense || !comparator.isComposite;
+        if (cassandraVersion.getMajor() == 2 && cassandraVersion.getMinor() >= 1)
+            id = row.getUUID(CF_ID_V2);
+        else if (cassandraVersion.getMajor() > 2)
+            id = row.getUUID(CF_ID_V3);
 
-        List<ColumnMetadata> partitionKey = nullInitializedList(keyValidator.types.size());
-        List<ColumnMetadata> clusteringColumns = nullInitializedList(clusteringSize);
-        List<Order> clusteringOrder = nullInitializedList(clusteringSize);
+        DataTypeClassNameParser.ParseResult comparator = null;
+        DataTypeClassNameParser.ParseResult keyValidator = null;
+        List<String> columnAliases = null;
+
+        ProtocolVersion protocolVersion = cluster.getConfiguration().getProtocolOptions().getProtocolVersion();
+        CodecRegistry codecRegistry = cluster.getConfiguration().getCodecRegistry();
+
+        if (cassandraVersion.getMajor() <= 2) {
+            comparator = DataTypeClassNameParser.parseWithComposite(row.getString(COMPARATOR), protocolVersion, codecRegistry);
+            keyValidator = DataTypeClassNameParser.parseWithComposite(row.getString(KEY_VALIDATOR), protocolVersion, codecRegistry);
+            columnAliases = cassandraVersion.getMajor() >= 2 || row.getString(COLUMN_ALIASES) == null
+                    ? Collections.<String>emptyList()
+                    : SimpleJSONParser.parseStringList(row.getString(COLUMN_ALIASES));
+        }
+
+        int partitionKeySize = findPartitionKeySize(rawCols.values(), keyValidator);
+        int clusteringSize;
+
+        boolean isDense;
+        boolean isCompact;
+        if (cassandraVersion.getMajor() > 2) {
+            Set<String> flags = row.getSet(FLAGS, String.class);
+            isDense = flags.contains(DENSE);
+            boolean isSuper = flags.contains(SUPER);
+            boolean isCompound = flags.contains(COMPOUND);
+            isCompact = isSuper || isDense || !isCompound;
+            boolean isStaticCompact = !isSuper && !isDense && !isCompound;
+            if (isStaticCompact) {
+                rawCols = pruneStaticCompactTableColumns(rawCols);
+            }
+            if (isDense) {
+                rawCols = pruneDenseTableColumnsV3(rawCols);
+            }
+            clusteringSize = findClusteringSize(comparator, rawCols.values(), columnAliases, cassandraVersion);
+        } else {
+            assert comparator != null;
+            clusteringSize = findClusteringSize(comparator, rawCols.values(), columnAliases, cassandraVersion);
+            isDense = clusteringSize != comparator.types.size() - 1;
+            if (isDense) {
+                rawCols = pruneDenseTableColumnsV2(rawCols);
+            }
+            isCompact = isDense || !comparator.isComposite;
+        }
+
+        List<ColumnMetadata> partitionKey = new ArrayList<ColumnMetadata>(Collections.<ColumnMetadata>nCopies(partitionKeySize, null));
+        List<ColumnMetadata> clusteringColumns = new ArrayList<ColumnMetadata>(Collections.<ColumnMetadata>nCopies(clusteringSize, null));
+        List<ClusteringOrder> clusteringOrder = new ArrayList<ClusteringOrder>(Collections.<ClusteringOrder>nCopies(clusteringSize, null));
+
         // We use a linked hashmap because we will keep this in the order of a 'SELECT * FROM ...'.
         LinkedHashMap<String, ColumnMetadata> columns = new LinkedHashMap<String, ColumnMetadata>();
+        LinkedHashMap<String, IndexMetadata> indexes = new LinkedHashMap<String, IndexMetadata>();
 
-
-        Options options = null;
+        TableOptionsMetadata options = null;
         try {
-            options = new Options(row, isCompact, cassandraVersion);
+            options = new TableOptionsMetadata(row, isCompact, cassandraVersion);
         } catch (RuntimeException e) {
             // See ControlConnection#refreshSchema for why we'd rather not probably this further. Since table options is one thing
             // that tends to change often in Cassandra, it's worth special casing this.
@@ -135,13 +143,18 @@ public class TableMetadata {
                     ksm.getName(), name, ksm.getName(), name), e);
         }
 
-        TableMetadata tm = new TableMetadata(ksm, name, id, partitionKey, clusteringColumns, columns, options, clusteringOrder, cassandraVersion);
+        TableMetadata tm = new TableMetadata(ksm, name, id, partitionKey, clusteringColumns, columns, indexes, options, clusteringOrder, cassandraVersion);
 
         // We use this temporary set just so non PK columns are added in lexicographical order, which is the one of a
         // 'SELECT * FROM ...'
         Set<ColumnMetadata> otherColumns = new TreeSet<ColumnMetadata>(columnMetadataComparator);
 
         if (cassandraVersion.getMajor() < 2) {
+
+            assert comparator != null;
+            assert keyValidator != null;
+            assert columnAliases != null;
+
             // In C* 1.2, only the REGULAR columns are in the columns schema table, so we need to add the names from
             // the aliases (and make sure we handle default aliases).
             List<String> keyAliases = row.getString(KEY_ALIASES) == null
@@ -155,31 +168,45 @@ public class TableMetadata {
             for (int i = 0; i < clusteringSize; i++) {
                 String alias = columnAliases.size() > i ? columnAliases.get(i) : DEFAULT_COLUMN_ALIAS + (i + 1);
                 clusteringColumns.set(i, ColumnMetadata.forAlias(tm, alias, comparator.types.get(i)));
-                clusteringOrder.set(i, comparator.reversed.get(i) ? Order.DESC : Order.ASC);
+                clusteringOrder.set(i, comparator.reversed.get(i) ? ClusteringOrder.DESC : ClusteringOrder.ASC);
             }
 
-            // We have a value alias if we're dense
+            // if we're dense, chances are that we have a single regular "value" column with an alias
             if (isDense) {
                 String alias = row.isNull(VALUE_ALIAS) ? DEFAULT_VALUE_ALIAS : row.getString(VALUE_ALIAS);
-                DataType type = CassandraTypeParser.parseOne(row.getString(VALIDATOR));
-                otherColumns.add(ColumnMetadata.forAlias(tm, alias, type));
+                // ...unless the table does not have any regular column, only primary key columns (JAVA-873)
+                if (!alias.isEmpty()) {
+                    DataType type = DataTypeClassNameParser.parseOne(row.getString(VALIDATOR), protocolVersion, codecRegistry);
+                    otherColumns.add(ColumnMetadata.forAlias(tm, alias, type));
+                }
             }
         }
 
         for (ColumnMetadata.Raw rawCol : rawCols.values()) {
-            ColumnMetadata col = ColumnMetadata.fromRaw(tm, rawCol);
+            DataType dataType;
+            if (cassandraVersion.getMajor() >= 3) {
+                dataType = DataTypeCqlNameParser.parse(rawCol.dataType, cluster, ksm.getName(), ksm.userTypes, null, false, false);
+            } else {
+                dataType = DataTypeClassNameParser.parseOne(rawCol.dataType, protocolVersion, codecRegistry);
+            }
+            ColumnMetadata col = ColumnMetadata.fromRaw(tm, rawCol, dataType);
             switch (rawCol.kind) {
                 case PARTITION_KEY:
-                    partitionKey.set(rawCol.componentIndex, col);
+                    partitionKey.set(rawCol.position, col);
                     break;
-                case CLUSTERING_KEY:
-                    clusteringColumns.set(rawCol.componentIndex, col);
-                    clusteringOrder.set(rawCol.componentIndex, rawCol.isReversed ? Order.DESC : Order.ASC);
+                case CLUSTERING_COLUMN:
+                    clusteringColumns.set(rawCol.position, col);
+                    clusteringOrder.set(rawCol.position, rawCol.isReversed ? ClusteringOrder.DESC : ClusteringOrder.ASC);
                     break;
                 default:
                     otherColumns.add(col);
                     break;
             }
+
+            // legacy secondary indexes (C* < 3.0)
+            IndexMetadata index = IndexMetadata.fromLegacy(col, rawCol);
+            if (index != null)
+                indexes.put(index.getName(), index);
         }
 
         for (ColumnMetadata c : partitionKey)
@@ -189,21 +216,95 @@ public class TableMetadata {
         for (ColumnMetadata c : otherColumns)
             columns.put(c.getName(), c);
 
+        // create secondary indexes (C* >= 3.0)
+        if (indexRows != null)
+            for (Row indexRow : indexRows) {
+                IndexMetadata index = IndexMetadata.fromRow(tm, indexRow);
+                indexes.put(index.getName(), index);
+            }
+
         return tm;
     }
 
-    private static int findClusteringSize(CassandraTypeParser.ParseResult comparator,
+    /**
+     * Upon migration from thrift to CQL, we internally create a pair of surrogate clustering/regular columns
+     * for compact static tables. These columns shouldn't be exposed to the user but are currently returned by C*.
+     * We also need to remove the static keyword for all other columns in the table.
+     */
+    private static Map<String, ColumnMetadata.Raw> pruneStaticCompactTableColumns(Map<String, ColumnMetadata.Raw> rawCols) {
+        Collection<ColumnMetadata.Raw> cols = rawCols.values();
+        Iterator<ColumnMetadata.Raw> it = cols.iterator();
+        while (it.hasNext()) {
+            ColumnMetadata.Raw col = it.next();
+            if (col.kind == ColumnMetadata.Raw.Kind.CLUSTERING_COLUMN) {
+                // remove "column1 text" clustering column
+                it.remove();
+            } else if (col.kind == ColumnMetadata.Raw.Kind.REGULAR) {
+                // remove "value blob" regular column
+                it.remove();
+            } else if (col.kind == ColumnMetadata.Raw.Kind.STATIC) {
+                // remove "static" keyword
+                col.kind = ColumnMetadata.Raw.Kind.REGULAR;
+            }
+        }
+        return rawCols;
+    }
+
+    /**
+     * Upon migration from thrift to CQL, we internally create a surrogate column "value" of type
+     * EmptyType for dense tables. This column shouldn't be exposed to the user but is currently returned by C*.
+     */
+    private static Map<String, ColumnMetadata.Raw> pruneDenseTableColumnsV3(Map<String, ColumnMetadata.Raw> rawCols) {
+        Collection<ColumnMetadata.Raw> cols = rawCols.values();
+        Iterator<ColumnMetadata.Raw> it = cols.iterator();
+        while (it.hasNext()) {
+            ColumnMetadata.Raw col = it.next();
+            if (col.kind == ColumnMetadata.Raw.Kind.REGULAR
+                    && col.dataType.equals(EMPTY_TYPE)) {
+                // remove "value empty" regular column
+                it.remove();
+            }
+        }
+        return rawCols;
+    }
+
+    private static Map<String, ColumnMetadata.Raw> pruneDenseTableColumnsV2(Map<String, ColumnMetadata.Raw> rawCols) {
+        Collection<ColumnMetadata.Raw> cols = rawCols.values();
+        Iterator<ColumnMetadata.Raw> it = cols.iterator();
+        while (it.hasNext()) {
+            ColumnMetadata.Raw col = it.next();
+            if (col.kind == ColumnMetadata.Raw.Kind.COMPACT_VALUE && col.name.isEmpty()) {
+                // remove "" blob regular COMPACT_VALUE column
+                it.remove();
+            }
+        }
+        return rawCols;
+    }
+
+    private static int findPartitionKeySize(Collection<ColumnMetadata.Raw> cols, DataTypeClassNameParser.ParseResult keyValidator) {
+        // C* 1.2, 2.0, 2.1 and 2.2
+        if (keyValidator != null)
+            return keyValidator.types.size();
+        // C* 3.0 onwards
+        int maxId = -1;
+        for (ColumnMetadata.Raw col : cols)
+            if (col.kind == ColumnMetadata.Raw.Kind.PARTITION_KEY)
+                maxId = Math.max(maxId, col.position);
+        return maxId + 1;
+    }
+
+    private static int findClusteringSize(DataTypeClassNameParser.ParseResult comparator,
                                           Collection<ColumnMetadata.Raw> cols,
                                           List<String> columnAliases,
                                           VersionNumber cassandraVersion) {
-        // In 2.0, this is relatively easy, we just find the biggest 'componentIndex' amongst the clustering columns.
+        // In 2.0 onwards, this is relatively easy, we just find the biggest 'position' amongst the clustering columns.
         // For 1.2 however, this is slightly more subtle: we need to infer it based on whether the comparator is composite or not, and whether we have
         // regular columns or not.
         if (cassandraVersion.getMajor() >= 2) {
             int maxId = -1;
             for (ColumnMetadata.Raw col : cols)
-                if (col.kind == ColumnMetadata.Raw.Kind.CLUSTERING_KEY)
-                    maxId = Math.max(maxId, col.componentIndex);
+                if (col.kind == ColumnMetadata.Raw.Kind.CLUSTERING_COLUMN)
+                    maxId = Math.max(maxId, col.position);
             return maxId + 1;
         } else {
             int size = comparator.types.size();
@@ -215,136 +316,52 @@ public class TableMetadata {
         }
     }
 
-    private static <T> List<T> nullInitializedList(int size) {
-        List<T> l = new ArrayList<T>(size);
-        for (int i = 0; i < size; ++i)
-            l.add(null);
-        return l;
-    }
-
     /**
-     * Returns the name of this table.
+     * Returns metadata on a index of this table.
      *
-     * @return the name of this CQL table.
-     */
-    public String getName() {
-        return name;
-    }
-
-    /**
-     * Returns the unique id of this table.
-     * <p/>
-     * Note: this id is available in Cassandra 2.1 and above. It will be
-     * {@code null} for earlier versions.
-     *
-     * @return the unique id of the table.
-     */
-    public UUID getId() {
-        return id;
-    }
-
-    /**
-     * Returns the keyspace this table belong to.
-     *
-     * @return the keyspace metadata of the keyspace this table belong to.
-     */
-    public KeyspaceMetadata getKeyspace() {
-        return keyspace;
-    }
-
-    /**
-     * Returns metadata on a column of this table.
-     *
-     * @param name the name of the column to retrieve ({@code name} will be
+     * @param name the name of the index to retrieve ({@code name} will be
      *             interpreted as a case-insensitive identifier unless enclosed in double-quotes,
      *             see {@link Metadata#quote}).
-     * @return the metadata for the {@code name} column if it exists, or
+     * @return the metadata for the {@code name} index if it exists, or
      * {@code null} otherwise.
      */
-    public ColumnMetadata getColumn(String name) {
-        return columns.get(Metadata.handleId(name));
+    public IndexMetadata getIndex(String name) {
+        return indexes.get(Metadata.handleId(name));
     }
 
     /**
-     * Returns a list containing all the columns of this table.
-     * <p/>
-     * The order of the columns in the list is consistent with
-     * the order of the columns returned by a {@code SELECT * FROM thisTable}:
-     * the first column is the partition key, next are the clustering
-     * columns in their defined order, and then the rest of the
-     * columns follow in alphabetic order.
+     * Returns all indexes based on this table.
      *
-     * @return a list containing the metadata for the columns of this table.
+     * @return all indexes based on this table.
      */
-    public List<ColumnMetadata> getColumns() {
-        return new ArrayList<ColumnMetadata>(columns.values());
+    public Collection<IndexMetadata> getIndexes() {
+        return Collections.unmodifiableCollection(indexes.values());
     }
 
     /**
-     * Returns the list of columns composing the primary key for this table.
-     * <p/>
-     * A table will always at least have a partition key (that
-     * may itself be one or more columns), so the returned list at least
-     * has one element.
+     * Returns metadata on a view of this table.
      *
-     * @return the list of columns composing the primary key for this table.
+     * @param name the name of the view to retrieve ({@code name} will be
+     *             interpreted as a case-insensitive identifier unless enclosed in double-quotes,
+     *             see {@link Metadata#quote}).
+     * @return the metadata for the {@code name} view if it exists, or
+     * {@code null} otherwise.
      */
-    public List<ColumnMetadata> getPrimaryKey() {
-        List<ColumnMetadata> pk = new ArrayList<ColumnMetadata>(partitionKey.size() + clusteringColumns.size());
-        pk.addAll(partitionKey);
-        pk.addAll(clusteringColumns);
-        return pk;
+    public MaterializedViewMetadata getView(String name) {
+        return views.get(Metadata.handleId(name));
     }
 
     /**
-     * Returns the list of columns composing the partition key for this table.
-     * <p/>
-     * A table always has a partition key so the returned list has
-     * at least one element.
+     * Returns all views based on this table.
      *
-     * @return the list of columns composing the partition key for this table.
+     * @return all views based on this table.
      */
-    public List<ColumnMetadata> getPartitionKey() {
-        return Collections.unmodifiableList(partitionKey);
+    public Collection<MaterializedViewMetadata> getViews() {
+        return Collections.unmodifiableCollection(views.values());
     }
 
-    /**
-     * Returns the list of clustering columns for this table.
-     *
-     * @return the list of clustering columns for this table.
-     * If there is no clustering columns, an empty list is returned.
-     */
-    public List<ColumnMetadata> getClusteringColumns() {
-        return Collections.unmodifiableList(clusteringColumns);
-    }
-
-    /**
-     * Returns the clustering order for this table.
-     * <p/>
-     * The returned contains the clustering order of each clustering column. The
-     * {@code i}th element of the result correspond to the order (ascending or
-     * descending) of the {@code i}th clustering column (see
-     * {@link #getClusteringColumns}). Note that a table defined without any
-     * particular clustering order is equivalent to one for which all the
-     * clustering key are in ascending order.
-     *
-     * @return a list with the clustering order for each clustering column.
-     */
-    public List<Order> getClusteringOrder() {
-        return clusteringOrder;
-    }
-
-    /**
-     * Returns the options for this table.
-     *
-     * @return the options for this table.
-     */
-    public Options getOptions() {
-        return options;
-    }
-
-    void add(ColumnMetadata column) {
-        columns.put(column.getName(), column);
+    void add(MaterializedViewMetadata view) {
+        views.put(view.getName(), view);
     }
 
     /**
@@ -352,8 +369,8 @@ public class TableMetadata {
      * table and the index on it.
      * <p/>
      * In other words, this method returns the queries that would allow you to
-     * recreate the schema of this table, along with the index defined on
-     * columns of this table.
+     * recreate the schema of this table, along with the indexes and views defined on
+     * this table, if any.
      * <p/>
      * Note that the returned String is formatted to be human readable (for
      * some definition of human readable at least).
@@ -361,77 +378,26 @@ public class TableMetadata {
      * @return the CQL queries representing this table schema as a {code
      * String}.
      */
+    @Override
     public String exportAsString() {
         StringBuilder sb = new StringBuilder();
 
-        sb.append(asCQLQuery(true));
+        sb.append(super.exportAsString());
 
-        for (ColumnMetadata column : columns.values()) {
-            ColumnMetadata.IndexMetadata index = column.getIndex();
-            if (index == null)
-                continue;
-
+        for (IndexMetadata index : indexes.values()) {
             sb.append('\n').append(index.asCQLQuery());
         }
+
+        for (MaterializedViewMetadata view : views.values()) {
+            sb.append('\n').append(view.asCQLQuery());
+        }
+
         return sb.toString();
     }
 
-    /**
-     * Returns a CQL query representing this table.
-     * <p/>
-     * This method returns a single 'CREATE TABLE' query with the options
-     * corresponding to this table definition.
-     * <p/>
-     * Note that the returned string is a single line; the returned query
-     * is not formatted in any way.
-     *
-     * @return the 'CREATE TABLE' query corresponding to this table.
-     * @see #exportAsString
-     */
-    public String asCQLQuery() {
-        return asCQLQuery(false);
-    }
-
     @Override
-    public boolean equals(Object o) {
-        if (this == o)
-            return true;
-        if (o == null || getClass() != o.getClass())
-            return false;
-
-        TableMetadata that = (TableMetadata) o;
-
-        if (!name.equals(that.name))
-            return false;
-        if (!partitionKey.equals(that.partitionKey))
-            return false;
-        if (!clusteringColumns.equals(that.clusteringColumns))
-            return false;
-        if (!columns.equals(that.columns))
-            return false;
-        if (!options.equals(that.options))
-            return false;
-        if (!clusteringOrder.equals(that.clusteringOrder))
-            return false;
-        return cassandraVersion.equals(that.cassandraVersion);
-
-    }
-
-    @Override
-    public int hashCode() {
-        int result = name.hashCode();
-        result = 31 * result + partitionKey.hashCode();
-        result = 31 * result + clusteringColumns.hashCode();
-        result = 31 * result + columns.hashCode();
-        result = 31 * result + options.hashCode();
-        result = 31 * result + clusteringOrder.hashCode();
-        result = 31 * result + cassandraVersion.hashCode();
-        return result;
-    }
-
-    private String asCQLQuery(boolean formatted) {
+    protected String asCQLQuery(boolean formatted) {
         StringBuilder sb = new StringBuilder();
-
         sb.append("CREATE TABLE ").append(Metadata.escapeId(keyspace.getName())).append('.').append(Metadata.escapeId(name)).append(" (");
         newLine(sb, formatted);
         for (ColumnMetadata cm : columns.values())
@@ -445,8 +411,10 @@ public class TableMetadata {
             sb.append('(');
             boolean first = true;
             for (ColumnMetadata cm : partitionKey) {
-                if (first) first = false;
-                else sb.append(", ");
+                if (first)
+                    first = false;
+                else
+                    sb.append(", ");
                 sb.append(Metadata.escapeId(cm.getName()));
             }
             sb.append(')');
@@ -457,438 +425,33 @@ public class TableMetadata {
         newLine(sb, formatted);
         // end PK
 
-        // Options
-        sb.append(") WITH ");
-
-        if (options.isCompactStorage)
-            and(sb.append("COMPACT STORAGE"), formatted);
-        if (!Iterables.all(clusteringOrder, Order.isAscending))
-            and(appendClusteringOrder(sb), formatted);
-        sb.append("read_repair_chance = ").append(options.readRepair);
-        and(sb, formatted).append("dclocal_read_repair_chance = ").append(options.localReadRepair);
-        if (cassandraVersion.getMajor() < 2 || (cassandraVersion.getMajor() == 2 && cassandraVersion.getMinor() == 0))
-            and(sb, formatted).append("replicate_on_write = ").append(options.replicateOnWrite);
-        and(sb, formatted).append("gc_grace_seconds = ").append(options.gcGrace);
-        and(sb, formatted).append("bloom_filter_fp_chance = ").append(options.bfFpChance);
-        if (cassandraVersion.getMajor() < 2 || cassandraVersion.getMajor() == 2 && cassandraVersion.getMinor() < 1)
-            and(sb, formatted).append("caching = '").append(options.caching.get("keys")).append('\'');
-        else
-            and(sb, formatted).append("caching = ").append(formatOptionMap(options.caching));
-        if (options.comment != null)
-            and(sb, formatted).append("comment = '").append(options.comment.replace("'", "''")).append('\'');
-        and(sb, formatted).append("compaction = ").append(formatOptionMap(options.compaction));
-        and(sb, formatted).append("compression = ").append(formatOptionMap(options.compression));
-        if (cassandraVersion.getMajor() >= 2) {
-            and(sb, formatted).append("default_time_to_live = ").append(options.defaultTTL);
-            and(sb, formatted).append("speculative_retry = '").append(options.speculativeRetry).append('\'');
-            if (options.indexInterval != null)
-                and(sb, formatted).append("index_interval = ").append(options.indexInterval);
-        }
-        if (cassandraVersion.getMajor() > 2 || (cassandraVersion.getMajor() == 2 && cassandraVersion.getMinor() >= 1)) {
-            and(sb, formatted).append("min_index_interval = ").append(options.minIndexInterval);
-            and(sb, formatted).append("max_index_interval = ").append(options.maxIndexInterval);
-        }
-        sb.append(';');
+        sb.append(")");
+        appendOptions(sb, formatted);
         return sb.toString();
     }
 
     @Override
-    public String toString() {
-        return asCQLQuery();
+    public boolean equals(Object other) {
+        if (other == this)
+            return true;
+        if (!(other instanceof TableMetadata))
+            return false;
+
+        TableMetadata that = (TableMetadata) other;
+
+        return Objects.equal(this.name, that.name) &&
+                Objects.equal(this.id, that.id) &&
+                Objects.equal(this.partitionKey, that.partitionKey) &&
+                Objects.equal(this.clusteringColumns, that.clusteringColumns) &&
+                Objects.equal(this.columns, that.columns) &&
+                Objects.equal(this.options, that.options) &&
+                Objects.equal(this.clusteringOrder, that.clusteringOrder) &&
+                Objects.equal(this.indexes, that.indexes) &&
+                Objects.equal(this.views, that.views);
     }
 
-    private StringBuilder appendClusteringOrder(StringBuilder sb) {
-        sb.append("CLUSTERING ORDER BY (");
-        for (int i = 0; i < clusteringColumns.size(); i++) {
-            if (i > 0) sb.append(", ");
-            sb.append(clusteringColumns.get(i).getName()).append(' ').append(clusteringOrder.get(i));
-        }
-        return sb.append(')');
-    }
-
-    private static String formatOptionMap(Map<String, String> m) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("{ ");
-        boolean first = true;
-        for (Map.Entry<String, String> entry : m.entrySet()) {
-            if (first) first = false;
-            else sb.append(", ");
-            sb.append('\'').append(entry.getKey()).append('\'');
-            sb.append(" : ");
-            try {
-                sb.append(Integer.parseInt(entry.getValue()));
-            } catch (NumberFormatException e) {
-                sb.append('\'').append(entry.getValue()).append('\'');
-            }
-        }
-        sb.append(" }");
-        return sb.toString();
-    }
-
-    private StringBuilder and(StringBuilder sb, boolean formatted) {
-        return newLine(sb, formatted).append(spaces(2, formatted)).append(" AND ");
-    }
-
-    static String spaces(int n, boolean formatted) {
-        if (!formatted)
-            return "";
-
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < n; i++)
-            sb.append(' ');
-
-        return sb.toString();
-    }
-
-    static StringBuilder newLine(StringBuilder sb, boolean formatted) {
-        if (formatted)
-            sb.append('\n');
-        return sb;
-    }
-
-    public static class Options {
-
-        private static final String COMMENT = "comment";
-        private static final String READ_REPAIR = "read_repair_chance";
-        private static final String LOCAL_READ_REPAIR = "local_read_repair_chance";
-        private static final String REPLICATE_ON_WRITE = "replicate_on_write";
-        private static final String GC_GRACE = "gc_grace_seconds";
-        private static final String BF_FP_CHANCE = "bloom_filter_fp_chance";
-        private static final String CACHING = "caching";
-        private static final String COMPACTION_CLASS = "compaction_strategy_class";
-        private static final String COMPACTION_OPTIONS = "compaction_strategy_options";
-        private static final String MIN_COMPACTION_THRESHOLD = "min_compaction_threshold";
-        private static final String MAX_COMPACTION_THRESHOLD = "max_compaction_threshold";
-        private static final String POPULATE_CACHE_ON_FLUSH = "populate_io_cache_on_flush";
-        private static final String COMPRESSION_PARAMS = "compression_parameters";
-        private static final String MEMTABLE_FLUSH_PERIOD_MS = "memtable_flush_period_in_ms";
-        private static final String DEFAULT_TTL = "default_time_to_live";
-        private static final String SPECULATIVE_RETRY = "speculative_retry";
-        private static final String INDEX_INTERVAL = "index_interval";
-        private static final String MIN_INDEX_INTERVAL = "min_index_interval";
-        private static final String MAX_INDEX_INTERVAL = "max_index_interval";
-
-        private static final boolean DEFAULT_REPLICATE_ON_WRITE = true;
-        private static final double DEFAULT_BF_FP_CHANCE = 0.01;
-        private static final boolean DEFAULT_POPULATE_CACHE_ON_FLUSH = false;
-        private static final int DEFAULT_MEMTABLE_FLUSH_PERIOD = 0;
-        private static final int DEFAULT_DEFAULT_TTL = 0;
-        private static final String DEFAULT_SPECULATIVE_RETRY = "NONE";
-        private static final int DEFAULT_INDEX_INTERVAL = 128;
-        private static final int DEFAULT_MIN_INDEX_INTERVAL = 128;
-        private static final int DEFAULT_MAX_INDEX_INTERVAL = 2048;
-
-        private final boolean isCompactStorage;
-
-        private final String comment;
-        private final double readRepair;
-        private final double localReadRepair;
-        private final boolean replicateOnWrite;
-        private final int gcGrace;
-        private final double bfFpChance;
-        private final Map<String, String> caching;
-        private final boolean populateCacheOnFlush;
-        private final int memtableFlushPeriodMs;
-        private final int defaultTTL;
-        private final String speculativeRetry;
-        private final Integer indexInterval;
-        private final Integer minIndexInterval;
-        private final Integer maxIndexInterval;
-        private final Map<String, String> compaction = new HashMap<String, String>();
-        private final Map<String, String> compression = new HashMap<String, String>();
-
-        Options(Row row, boolean isCompactStorage, VersionNumber version) {
-            this.isCompactStorage = isCompactStorage;
-            this.comment = isNullOrAbsent(row, COMMENT) ? "" : row.getString(COMMENT);
-            this.readRepair = row.getDouble(READ_REPAIR);
-            this.localReadRepair = row.getDouble(LOCAL_READ_REPAIR);
-            boolean is210OrMore = version.getMajor() > 2 || (version.getMajor() == 2 && version.getMinor() >= 1);
-            this.replicateOnWrite = is210OrMore || isNullOrAbsent(row, REPLICATE_ON_WRITE) ? DEFAULT_REPLICATE_ON_WRITE : row.getBool(REPLICATE_ON_WRITE);
-            this.gcGrace = row.getInt(GC_GRACE);
-            this.bfFpChance = isNullOrAbsent(row, BF_FP_CHANCE) ? DEFAULT_BF_FP_CHANCE : row.getDouble(BF_FP_CHANCE);
-            this.caching = is210OrMore
-                    ? SimpleJSONParser.parseStringMap(row.getString(CACHING))
-                    : ImmutableMap.of("keys", row.getString(CACHING));
-            this.populateCacheOnFlush = isNullOrAbsent(row, POPULATE_CACHE_ON_FLUSH) ? DEFAULT_POPULATE_CACHE_ON_FLUSH : row.getBool(POPULATE_CACHE_ON_FLUSH);
-            this.memtableFlushPeriodMs = version.getMajor() < 2 || isNullOrAbsent(row, MEMTABLE_FLUSH_PERIOD_MS) ? DEFAULT_MEMTABLE_FLUSH_PERIOD : row.getInt(MEMTABLE_FLUSH_PERIOD_MS);
-            this.defaultTTL = version.getMajor() < 2 || isNullOrAbsent(row, DEFAULT_TTL) ? DEFAULT_DEFAULT_TTL : row.getInt(DEFAULT_TTL);
-            this.speculativeRetry = version.getMajor() < 2 || isNullOrAbsent(row, SPECULATIVE_RETRY) ? DEFAULT_SPECULATIVE_RETRY : row.getString(SPECULATIVE_RETRY);
-
-            if (version.getMajor() >= 2 && !is210OrMore)
-                this.indexInterval = isNullOrAbsent(row, INDEX_INTERVAL) ? DEFAULT_INDEX_INTERVAL : row.getInt(INDEX_INTERVAL);
-            else
-                this.indexInterval = null;
-
-            if (is210OrMore) {
-                this.minIndexInterval = isNullOrAbsent(row, MIN_INDEX_INTERVAL)
-                        ? DEFAULT_MIN_INDEX_INTERVAL
-                        : row.getInt(MIN_INDEX_INTERVAL);
-                this.maxIndexInterval = isNullOrAbsent(row, MAX_INDEX_INTERVAL)
-                        ? DEFAULT_MAX_INDEX_INTERVAL
-                        : row.getInt(MAX_INDEX_INTERVAL);
-            } else {
-                this.minIndexInterval = null;
-                this.maxIndexInterval = null;
-            }
-
-            this.compaction.put("class", row.getString(COMPACTION_CLASS));
-            this.compaction.putAll(SimpleJSONParser.parseStringMap(row.getString(COMPACTION_OPTIONS)));
-
-            this.compression.putAll(SimpleJSONParser.parseStringMap(row.getString(COMPRESSION_PARAMS)));
-        }
-
-        private static boolean isNullOrAbsent(Row row, String name) {
-            return row.getColumnDefinitions().getIndexOf(name) < 0
-                    || row.isNull(name);
-        }
-
-        /**
-         * Returns whether the table uses the {@code COMPACT STORAGE} option.
-         *
-         * @return whether the table uses the {@code COMPACT STORAGE} option.
-         */
-        public boolean isCompactStorage() {
-            return isCompactStorage;
-        }
-
-        /**
-         * Returns the commentary set for this table.
-         *
-         * @return the commentary set for this table, or {@code null} if noe has been set.
-         */
-        public String getComment() {
-            return comment;
-        }
-
-        /**
-         * Returns the chance with which a read repair is triggered for this table.
-         *
-         * @return the read repair change set for table (in [0.0, 1.0]).
-         */
-        public double getReadRepairChance() {
-            return readRepair;
-        }
-
-        /**
-         * Returns the cluster local read repair chance set for this table.
-         *
-         * @return the local read repair change set for table (in [0.0, 1.0]).
-         */
-        public double getLocalReadRepairChance() {
-            return localReadRepair;
-        }
-
-        /**
-         * Returns whether replicateOnWrite is set for this table.
-         * <p/>
-         * This is only meaningful for tables holding counters.
-         *
-         * @return whether replicateOnWrite is set for this table.
-         */
-        public boolean getReplicateOnWrite() {
-            return replicateOnWrite;
-        }
-
-        /**
-         * Returns the tombstone garbage collection grace time in seconds for this table.
-         *
-         * @return the tombstone garbage collection grace time in seconds for this table.
-         */
-        public int getGcGraceInSeconds() {
-            return gcGrace;
-        }
-
-        /**
-         * Returns the false positive chance for the Bloom filter of this table.
-         *
-         * @return the Bloom filter false positive chance for this table (in [0.0, 1.0]).
-         */
-        public double getBloomFilterFalsePositiveChance() {
-            return bfFpChance;
-        }
-
-        /**
-         * Returns the caching options for this table.
-         *
-         * @return the caching options for this table.
-         */
-        public Map<String, String> getCaching() {
-            return caching;
-        }
-
-        /**
-         * Whether the populate I/O cache on flush is set on this table.
-         *
-         * @return whether the populate I/O cache on flush is set on this table.
-         */
-        public boolean getPopulateIOCacheOnFlush() {
-            return populateCacheOnFlush;
-        }
-
-        /*
-         * Returns the memtable flush period (in milliseconds) option for this table.
-         * <p>
-         * Note: this option is not available in Cassandra 1.2 and will return 0 (no periodic
-         * flush) when connected to 1.2 nodes.
-         *
-         * @return the memtable flush period option for this table or 0 if no
-         * periodic flush is configured.
-         */
-        public int getMemtableFlushPeriodInMs() {
-            return memtableFlushPeriodMs;
-        }
-
-        /**
-         * Returns the default TTL for this table.
-         * <p/>
-         * Note: this option is not available in Cassandra 1.2 and will return 0 (no default
-         * TTL) when connected to 1.2 nodes.
-         *
-         * @return the default TTL for this table or 0 if no default TTL is
-         * configured.
-         */
-        public int getDefaultTimeToLive() {
-            return defaultTTL;
-        }
-
-        /**
-         * Returns the speculative retry option for this table.
-         * <p/>
-         * Note: this option is not available in Cassandra 1.2 and will return "NONE" (no
-         * speculative retry) when connected to 1.2 nodes.
-         *
-         * @return the speculative retry option this table.
-         */
-        public String getSpeculativeRetry() {
-            return speculativeRetry;
-        }
-
-        /**
-         * Returns the index interval option for this table.
-         * <p/>
-         * Note: this option is not available in Cassandra 1.2 (more precisely, it is not
-         * configurable per-table) and will return 128 (the default index interval) when
-         * connected to 1.2 nodes. It is deprecated in Cassandra 2.1 and above, and will
-         * therefore return {@code null} for 2.1 nodes.
-         *
-         * @return the index interval option for this table.
-         */
-        public Integer getIndexInterval() {
-            return indexInterval;
-        }
-
-        /**
-         * Returns the minimum index interval option for this table.
-         * <p/>
-         * Note: this option is available in Cassandra 2.1 and above, and will return
-         * {@code null} for earlier versions.
-         *
-         * @return the minimum index interval option for this table.
-         */
-        public Integer getMinIndexInterval() {
-            return minIndexInterval;
-        }
-
-        /**
-         * Returns the maximum index interval option for this table.
-         * <p/>
-         * Note: this option is available in Cassandra 2.1 and above, and will return
-         * {@code null} for earlier versions.
-         *
-         * @return the maximum index interval option for this table.
-         */
-        public Integer getMaxIndexInterval() {
-            return maxIndexInterval;
-        }
-
-        /**
-         * Returns the compaction options for this table.
-         *
-         * @return a map containing the compaction options for this table.
-         */
-        public Map<String, String> getCompaction() {
-            return new HashMap<String, String>(compaction);
-        }
-
-        /**
-         * Returns the compression options for this table.
-         *
-         * @return a map containing the compression options for this table.
-         */
-        public Map<String, String> getCompression() {
-            return new HashMap<String, String>(compression);
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o)
-                return true;
-            if (o == null || getClass() != o.getClass())
-                return false;
-
-            Options options = (Options) o;
-
-            if (isCompactStorage != options.isCompactStorage)
-                return false;
-            if (Double.compare(options.readRepair, readRepair) != 0)
-                return false;
-            if (Double.compare(options.localReadRepair, localReadRepair) != 0)
-                return false;
-            if (replicateOnWrite != options.replicateOnWrite)
-                return false;
-            if (gcGrace != options.gcGrace)
-                return false;
-            if (Double.compare(options.bfFpChance, bfFpChance) != 0)
-                return false;
-            if (populateCacheOnFlush != options.populateCacheOnFlush)
-                return false;
-            if (memtableFlushPeriodMs != options.memtableFlushPeriodMs)
-                return false;
-            if (defaultTTL != options.defaultTTL)
-                return false;
-            if (indexInterval != null ? !indexInterval.equals(options.indexInterval) : options.indexInterval != null)
-                return false;
-            if (minIndexInterval != null ? !minIndexInterval.equals(options.minIndexInterval) : options.minIndexInterval != null)
-                return false;
-            if (maxIndexInterval != null ? !maxIndexInterval.equals(options.maxIndexInterval) : options.maxIndexInterval != null)
-                return false;
-            if (comment != null ? !comment.equals(options.comment) : options.comment != null)
-                return false;
-            if (caching != null ? !caching.equals(options.caching) : options.caching != null)
-                return false;
-            if (speculativeRetry != null ? !speculativeRetry.equals(options.speculativeRetry) : options.speculativeRetry != null)
-                return false;
-            if (compaction != null ? !compaction.equals(options.compaction) : options.compaction != null)
-                return false;
-            return !(compression != null ? !compression.equals(options.compression) : options.compression != null);
-
-        }
-
-        @Override
-        public int hashCode() {
-            int result;
-            long temp;
-            result = (isCompactStorage ? 1 : 0);
-            result = 31 * result + (comment != null ? comment.hashCode() : 0);
-            temp = Double.doubleToLongBits(readRepair);
-            result = 31 * result + (int) (temp ^ (temp >>> 32));
-            temp = Double.doubleToLongBits(localReadRepair);
-            result = 31 * result + (int) (temp ^ (temp >>> 32));
-            result = 31 * result + (replicateOnWrite ? 1 : 0);
-            result = 31 * result + gcGrace;
-            temp = Double.doubleToLongBits(bfFpChance);
-            result = 31 * result + (int) (temp ^ (temp >>> 32));
-            result = 31 * result + (caching != null ? caching.hashCode() : 0);
-            result = 31 * result + (populateCacheOnFlush ? 1 : 0);
-            result = 31 * result + memtableFlushPeriodMs;
-            result = 31 * result + defaultTTL;
-            result = 31 * result + (speculativeRetry != null ? speculativeRetry.hashCode() : 0);
-            result = 31 * result + (indexInterval != null ? indexInterval.hashCode() : 0);
-            result = 31 * result + (minIndexInterval != null ? minIndexInterval.hashCode() : 0);
-            result = 31 * result + (maxIndexInterval != null ? maxIndexInterval.hashCode() : 0);
-            result = 31 * result + (compaction != null ? compaction.hashCode() : 0);
-            result = 31 * result + (compression != null ? compression.hashCode() : 0);
-            return result;
-        }
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(name, id, partitionKey, clusteringColumns, columns, options, clusteringOrder, indexes, views);
     }
 }

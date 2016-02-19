@@ -17,7 +17,6 @@ package com.datastax.driver.core;
 
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 import com.google.common.collect.ImmutableList;
-import com.google.common.reflect.TypeToken;
 
 import java.util.Arrays;
 import java.util.List;
@@ -30,26 +29,34 @@ import java.util.List;
 public class TupleType extends DataType {
 
     private final List<DataType> types;
+    private final ProtocolVersion protocolVersion;
+    private volatile CodecRegistry codecRegistry;
 
-    TupleType(List<DataType> types) {
+    TupleType(List<DataType> types, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
         super(DataType.Name.TUPLE);
         this.types = ImmutableList.copyOf(types);
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    TypeCodec<Object> codec(ProtocolVersion protocolVersion) {
-        return (TypeCodec) TypeCodec.tupleOf(this);
+        this.protocolVersion = protocolVersion;
+        this.codecRegistry = codecRegistry;
     }
 
     /**
-     * Creates a tuple type given a list of types.
+     * Creates a "disconnected" tuple type (<b>you should prefer
+     * {@link Metadata#newTupleType(DataType...) cluster.getMetadata().newTupleType(...)}
+     * whenever possible</b>).
+     * <p/>
+     * This method is only exposed for situations where you don't have a {@code Cluster}
+     * instance available. If you create a type with this method and use it with a
+     * {@code Cluster} later, you won't be able to set tuple fields with custom codecs
+     * registered against the cluster, or you might get errors if the protocol versions don't
+     * match.
      *
-     * @param types the types for the tuple type.
+     * @param protocolVersion the protocol version to use.
+     * @param codecRegistry   the codec registry to use.
+     * @param types           the types for the tuple type.
      * @return the newly created tuple type.
      */
-    public static TupleType of(DataType... types) {
-        return new TupleType(Arrays.asList(types));
+    public static TupleType of(ProtocolVersion protocolVersion, CodecRegistry codecRegistry, DataType... types) {
+        return new TupleType(Arrays.asList(types), protocolVersion, codecRegistry);
     }
 
     /**
@@ -94,8 +101,13 @@ public class TupleType extends DataType {
             throw new IllegalArgumentException(String.format("Invalid number of values. Expecting %d but got %d", types.size(), values.length));
 
         TupleValue t = newValue();
-        for (int i = 0; i < values.length; i++)
-            t.setValue(i, values[i] == null ? null : types.get(i).serialize(values[i], ProtocolVersion.V3));
+        for (int i = 0; i < values.length; i++) {
+            DataType dataType = types.get(i);
+            if (values[i] == null)
+                t.setValue(i, null);
+            else
+                t.setValue(i, codecRegistry.codecFor(dataType, values[i]).serialize(values[i], protocolVersion));
+        }
         return t;
     }
 
@@ -104,10 +116,29 @@ public class TupleType extends DataType {
         return true;
     }
 
-    @Override
-    boolean canBeDeserializedAs(TypeToken typeToken) {
-        return typeToken.isAssignableFrom(getName().javaType);
+    /**
+     * Return the protocol version that has been used to deserialize
+     * this tuple type, or that will be used to serialize it.
+     * In most cases this should be the version
+     * currently in use by the cluster instance
+     * that this tuple type belongs to, as reported by
+     * {@link ProtocolOptions#getProtocolVersion()}.
+     *
+     * @return the protocol version that has been used to deserialize
+     * this tuple type, or that will be used to serialize it.
+     */
+    ProtocolVersion getProtocolVersion() {
+        return protocolVersion;
     }
+
+    CodecRegistry getCodecRegistry() {
+        return codecRegistry;
+    }
+
+    void setCodecRegistry(CodecRegistry codecRegistry) {
+        this.codecRegistry = codecRegistry;
+    }
+
 
     @Override
     public int hashCode() {
@@ -123,13 +154,44 @@ public class TupleType extends DataType {
         return name == d.name && types.equals(d.types);
     }
 
+    /**
+     * Return {@code true} if this tuple type contains the given tuple type,
+     * and {@code false} otherwise.
+     * <p/>
+     * A tuple type is said to contain another one
+     * if the latter has fewer components than the former,
+     * but all of them are of the same type.
+     * E.g. the type {@code tuple<int, text>}
+     * is contained by the type {@code tuple<int, text, double>}.
+     * <p/>
+     * A contained type can be seen as a "partial" view
+     * of a containing type, where the missing components
+     * are supposed to be {@code null}.
+     *
+     * @param other the tuple type to compare against the current one
+     * @return {@code true} if this tuple type contains the given tuple type,
+     * and {@code false} otherwise.
+     */
+    public boolean contains(TupleType other) {
+        if (this.equals(other))
+            return true;
+        if (other.types.size() > this.types.size())
+            return false;
+        return types.subList(0, other.types.size()).equals(other.types);
+    }
+
     @Override
     public String toString() {
+        return "frozen<" + asFunctionParameterString() + ">";
+    }
+
+    @Override
+    public String asFunctionParameterString() {
         StringBuilder sb = new StringBuilder();
         for (DataType type : types) {
-            sb.append(sb.length() == 0 ? "frozen<tuple<" : ", ");
+            sb.append(sb.length() == 0 ? "tuple<" : ", ");
             sb.append(type);
         }
-        return sb.append(">>").toString();
+        return sb.append(">").toString();
     }
 }

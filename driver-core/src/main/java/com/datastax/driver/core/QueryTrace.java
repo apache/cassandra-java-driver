@@ -199,7 +199,7 @@ public class QueryTrace {
                     coordinator = sessRow.getInet("coordinator");
                     if (!sessRow.isNull("parameters"))
                         parameters = Collections.unmodifiableMap(sessRow.getMap("parameters", String.class, String.class));
-                    startedAt = sessRow.getDate("started_at").getTime();
+                    startedAt = sessRow.getTimestamp("started_at").getTime();
 
                     events = new ArrayList<Event>();
                     for (Row evRow : eventsFuture.get()) {

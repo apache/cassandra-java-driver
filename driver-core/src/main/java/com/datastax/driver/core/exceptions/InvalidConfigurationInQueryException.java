@@ -28,14 +28,6 @@ public class InvalidConfigurationInQueryException extends InvalidQueryException 
 
     private static final long serialVersionUID = 0;
 
-    /**
-     * @deprecated This constructor is kept for backwards compatibility.
-     */
-    @Deprecated
-    public InvalidConfigurationInQueryException(String msg) {
-        this(null, msg);
-    }
-
     public InvalidConfigurationInQueryException(InetSocketAddress address, String msg) {
         super(address, msg);
     }

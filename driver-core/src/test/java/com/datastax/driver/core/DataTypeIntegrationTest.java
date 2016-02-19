@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.Test;
 
+import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -76,49 +77,78 @@ public class DataTypeIntegrationTest extends CCMTestsSupport {
     }
 
     protected void should_insert_and_retrieve_data(StatementType statementType) {
-        ProtocolVersion protocolVersion = cluster().getConfiguration().getProtocolOptions().getProtocolVersionEnum();
+        ProtocolVersion protocolVersion = cluster().getConfiguration().getProtocolOptions().getProtocolVersion();
+        CodecRegistry codecRegistry = cluster().getConfiguration().getCodecRegistry();
 
         for (TestTable table : tables) {
             if (cassandraVersion.compareTo(table.minCassandraVersion) < 0)
                 continue;
 
+            TypeCodec<Object> codec = codecRegistry.codecFor(table.testColumnType);
             switch (statementType) {
                 case RAW_STRING:
-                    session().execute(table.insertStatement.replace("?", table.testColumnType.format(table.sampleValue)));
+                    String formatValue = codec.format(table.sampleValue);
+                    assertThat(formatValue).isNotNull();
+                    String query = table.insertStatement.replace("?", formatValue);
+                    session().execute(query);
                     break;
                 case SIMPLE_WITH_PARAM:
-                    session().execute(table.insertStatement, table.sampleValue);
+                    SimpleStatement statement = new SimpleStatement(table.insertStatement, table.sampleValue);
+                    checkGetValuesReturnsSerializedValue(protocolVersion, statement, table);
+                    session().execute(statement);
                     break;
                 case PREPARED:
                     PreparedStatement ps = session().prepare(table.insertStatement);
                     BoundStatement bs = ps.bind(table.sampleValue);
-                    checkGetterReturnsBoundValue(bs, table);
+                    checkGetterReturnsValue(bs, table);
                     session().execute(bs);
                     break;
             }
 
             Row row = session().execute(table.selectStatement).one();
-            Object queriedValue = table.testColumnType.deserialize(row.getBytesUnsafe("v"), protocolVersion);
+            Object queriedValue = codec.deserialize(row.getBytesUnsafe("v"), protocolVersion);
 
+            // Since codec.deserialize will get the unboxed version for primitive check against expected unboxed value.
             assertThat(queriedValue)
                     .as("Test failure on %s statement with table:%n%s;%n" +
                                     "insert statement:%n%s;%n",
                             statementType,
                             table.createStatement,
                             table.insertStatement)
-                    .isEqualTo(table.sampleValue);
+                    .isEqualTo(table.expectedValue);
+
+
+            // Since calling row.get* will return boxed version for primitives check against expected primitive value.
+            assertThat(getValue(row, table.testColumnType))
+                    .as("Test failure on %s statement with table:%n%s;%n" +
+                                    "insert statement:%n%s;%n",
+                            statementType,
+                            table.createStatement,
+                            table.insertStatement)
+                    .isEqualTo(table.expectedPrimitiveValue);
+
 
             session().execute(table.truncateStatement);
         }
     }
 
-    private void checkGetterReturnsBoundValue(BoundStatement bs, TestTable table) {
-        Object getterResult = getBoundValue(bs, table.testColumnType);
-        assertThat(getterResult).isEqualTo(table.sampleValue);
+    private void checkGetterReturnsValue(BoundStatement bs, TestTable table) {
+        // Driver will not serialize null references in a statement.
+        Object getterResult = getValue(bs, table.testColumnType);
+        assertThat(getterResult).as("Expected values to match for " + table.testColumnType).isEqualTo(table.expectedPrimitiveValue);
 
         // Ensure that bs.getObject() also returns the expected value.
-        assertThat(bs.getObject(0)).isEqualTo(table.sampleValue);
-        assertThat(bs.getObject("v")).isEqualTo(table.sampleValue);
+        assertThat(bs.getObject(0)).as("Expected values to match for " + table.testColumnType).isEqualTo(table.sampleValue);
+        assertThat(bs.getObject("v")).as("Expected values to match for " + table.testColumnType).isEqualTo(table.sampleValue);
+    }
+
+    public void checkGetValuesReturnsSerializedValue(ProtocolVersion protocolVersion, SimpleStatement statement, TestTable table) {
+        CodecRegistry codecRegistry = cluster().getConfiguration().getCodecRegistry();
+        ByteBuffer[] values = statement.getValues(protocolVersion, codecRegistry);
+        assertThat(values.length).isEqualTo(1);
+        assertThat(values[0])
+                .as("Value not serialized as expected for " + table.sampleValue)
+                .isEqualTo(codecRegistry.codecFor(table.testColumnType).serialize(table.sampleValue, protocolVersion));
     }
 
     /**
@@ -130,6 +160,8 @@ public class DataTypeIntegrationTest extends CCMTestsSupport {
 
         final DataType testColumnType;
         final Object sampleValue;
+        final Object expectedValue;
+        final Object expectedPrimitiveValue;
 
         final String createStatement;
         final String insertStatement = String.format("INSERT INTO %s (k, v) VALUES (1, ?)", tableName);
@@ -139,8 +171,18 @@ public class DataTypeIntegrationTest extends CCMTestsSupport {
         final VersionNumber minCassandraVersion;
 
         TestTable(DataType testColumnType, Object sampleValue, String minCassandraVersion) {
+            this(testColumnType, sampleValue, sampleValue, minCassandraVersion);
+        }
+
+        TestTable(DataType testColumnType, Object sampleValue, Object expectedValue, String minCassandraVersion) {
+            this(testColumnType, sampleValue, expectedValue, expectedValue, minCassandraVersion);
+        }
+
+        TestTable(DataType testColumnType, Object sampleValue, Object expectedValue, Object expectedPrimitiveValue, String minCassandraVersion) {
             this.testColumnType = testColumnType;
             this.sampleValue = sampleValue;
+            this.expectedValue = expectedValue;
+            this.expectedPrimitiveValue = expectedPrimitiveValue;
             this.minCassandraVersion = VersionNumber.parse(minCassandraVersion);
 
             this.createStatement = String.format("CREATE TABLE %s (k int PRIMARY KEY, v %s)", tableName, testColumnType);
@@ -151,6 +193,7 @@ public class DataTypeIntegrationTest extends CCMTestsSupport {
         List<TestTable> tables = Lists.newArrayList();
 
         tables.addAll(tablesWithPrimitives());
+        tables.addAll(tablesWithPrimitivesNull());
         tables.addAll(tablesWithCollectionsOfPrimitives());
         tables.addAll(tablesWithMapsOfPrimitives());
         tables.addAll(tablesWithNestedCollections());
@@ -164,6 +207,45 @@ public class DataTypeIntegrationTest extends CCMTestsSupport {
         for (Map.Entry<DataType, Object> entry : PrimitiveTypeSamples.ALL.entrySet())
             tables.add(new TestTable(entry.getKey(), entry.getValue(), "1.2.0"));
         return tables;
+    }
+
+    private static List<TestTable> tablesWithPrimitivesNull() {
+        List<TestTable> tables = Lists.newArrayList();
+        // Create a test table for each primitive type testing with null values.  If the
+        // type maps to a java primitive type it's value will by the default value instead of null.
+        for (DataType dataType : DataType.allPrimitiveTypes(TestUtils.getDesiredProtocolVersion())) {
+            Object expectedPrimitiveValue = null;
+            switch (dataType.getName()) {
+                case BIGINT:
+                case TIME:
+                    expectedPrimitiveValue = 0L;
+                    break;
+                case DOUBLE:
+                    expectedPrimitiveValue = 0.0;
+                    break;
+                case FLOAT:
+                    expectedPrimitiveValue = 0.0f;
+                    break;
+                case INT:
+                    expectedPrimitiveValue = 0;
+                    break;
+                case SMALLINT:
+                    expectedPrimitiveValue = (short) 0;
+                    break;
+                case TINYINT:
+                    expectedPrimitiveValue = (byte) 0;
+                    break;
+                case BOOLEAN:
+                    expectedPrimitiveValue = false;
+                    break;
+            }
+
+            if (!dataType.getName().equals(DataType.Name.COUNTER)) {
+                tables.add(new TestTable(dataType, null, null, expectedPrimitiveValue, "1.2.0"));
+            }
+        }
+        return tables;
+
     }
 
     private static List<TestTable> tablesWithCollectionsOfPrimitives() {
@@ -247,7 +329,7 @@ public class DataTypeIntegrationTest extends CCMTestsSupport {
 
         int typeIdx = type.getTypeArguments().size() > 1 ? 1 : 0;
         DataType argument = type.getTypeArguments().get(typeIdx);
-        boolean isAtBottom = !argument.isCollection();
+        boolean isAtBottom = !(argument instanceof DataType.CollectionType);
 
         if (isAtBottom) {
             switch (type.getName()) {
@@ -329,43 +411,54 @@ public class DataTypeIntegrationTest extends CCMTestsSupport {
         return null;
     }
 
-    private Object getBoundValue(BoundStatement bs, DataType dataType) {
+    private Object getValue(GettableByIndexData data, DataType dataType) {
         // This is kind of lame, but better than testing all getters manually
+        CodecRegistry codecRegistry = cluster().getConfiguration().getCodecRegistry();
         switch (dataType.getName()) {
             case ASCII:
-                return bs.getString(0);
+                return data.getString(0);
             case BIGINT:
-                return bs.getLong(0);
+                return data.getLong(0);
             case BLOB:
-                return bs.getBytes(0);
+                return data.getBytes(0);
             case BOOLEAN:
-                return bs.getBool(0);
+                return data.getBool(0);
             case DECIMAL:
-                return bs.getDecimal(0);
+                return data.getDecimal(0);
             case DOUBLE:
-                return bs.getDouble(0);
+                return data.getDouble(0);
             case FLOAT:
-                return bs.getFloat(0);
+                return data.getFloat(0);
             case INET:
-                return bs.getInet(0);
+                return data.getInet(0);
+            case TINYINT:
+                return data.getByte(0);
+            case SMALLINT:
+                return data.getShort(0);
             case INT:
-                return bs.getInt(0);
+                return data.getInt(0);
             case TEXT:
             case VARCHAR:
-                return bs.getString(0);
+                return data.getString(0);
             case TIMESTAMP:
-                return bs.getDate(0);
+                return data.getTimestamp(0);
+            case DATE:
+                return data.getDate(0);
+            case TIME:
+                return data.getTime(0);
             case UUID:
             case TIMEUUID:
-                return bs.getUUID(0);
+                return data.getUUID(0);
             case VARINT:
-                return bs.getVarint(0);
+                return data.getVarint(0);
             case LIST:
-                return bs.getList(0, dataType.getTypeArguments().get(0).asJavaClass());
+                return data.getList(0, codecRegistry.codecFor(dataType.getTypeArguments().get(0)).getJavaType());
             case SET:
-                return bs.getSet(0, dataType.getTypeArguments().get(0).asJavaClass());
+                return data.getSet(0, codecRegistry.codecFor(dataType.getTypeArguments().get(0)).getJavaType());
             case MAP:
-                return bs.getMap(0, dataType.getTypeArguments().get(0).asJavaClass(), dataType.getTypeArguments().get(1).asJavaClass());
+                return data.getMap(0,
+                        codecRegistry.codecFor(dataType.getTypeArguments().get(0)).getJavaType(),
+                        codecRegistry.codecFor(dataType.getTypeArguments().get(1)).getJavaType());
             case CUSTOM:
             case COUNTER:
             default:

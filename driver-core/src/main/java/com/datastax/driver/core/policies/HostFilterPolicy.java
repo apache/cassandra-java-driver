@@ -38,7 +38,7 @@ import java.util.List;
  * returned. Any host not matching the predicate will be considered {@code IGNORED}
  * and thus will not be connected to.
  */
-public class HostFilterPolicy implements ChainableLoadBalancingPolicy, CloseableLoadBalancingPolicy {
+public class HostFilterPolicy implements ChainableLoadBalancingPolicy {
     private final LoadBalancingPolicy childPolicy;
     private final Predicate<Host> predicate;
 
@@ -111,13 +111,6 @@ public class HostFilterPolicy implements ChainableLoadBalancingPolicy, Closeable
             childPolicy.onUp(host);
     }
 
-    @SuppressWarnings("deprecation")
-    @Override
-    public void onSuspected(Host host) {
-        if (predicate.apply(host))
-            childPolicy.onSuspected(host);
-    }
-
     @Override
     public void onDown(Host host) {
         if (predicate.apply(host))
@@ -138,8 +131,7 @@ public class HostFilterPolicy implements ChainableLoadBalancingPolicy, Closeable
 
     @Override
     public void close() {
-        if (childPolicy instanceof CloseableLoadBalancingPolicy)
-            ((CloseableLoadBalancingPolicy) childPolicy).close();
+        childPolicy.close();
     }
 
     /**

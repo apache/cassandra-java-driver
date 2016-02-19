@@ -57,7 +57,7 @@ public class LargeDataTest extends CCMTestsSupport {
     }
 
     /*
-     * Test a batch that writes a row of size 10,000
+     * Test a batch that writes a row of size 4,000
      * @param c The cluster object
      * @param key The key value that will receive the data
      * @throws Throwable
@@ -65,7 +65,7 @@ public class LargeDataTest extends CCMTestsSupport {
     private void testWideBatchRows(int key) throws Throwable {
         // Write data
         Batch q = batch();
-        for (int i = 0; i < 10000; ++i) {
+        for (int i = 0; i < 4000; ++i) {
             q = q.add(insertInto("wide_batch_rows").value("k", key).value("i", i));
         }
         session().execute(q.setConsistencyLevel(ConsistencyLevel.QUORUM));
@@ -193,7 +193,7 @@ public class LargeDataTest extends CCMTestsSupport {
     }
 
     /**
-     * Test a batch that writes a row of size 10,000
+     * Test a batch that writes a row of size 4,000 (just below the error threshold for 2.2).
      *
      * @throws Throwable
      */

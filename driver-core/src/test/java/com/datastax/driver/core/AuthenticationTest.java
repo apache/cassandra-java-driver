@@ -23,6 +23,8 @@ import org.testng.annotations.Test;
 import java.util.concurrent.TimeUnit;
 
 import static com.datastax.driver.core.CreateCCM.TestMode.PER_METHOD;
+import static com.datastax.driver.core.TestUtils.findHost;
+import static org.mockito.Mockito.*;
 
 /**
  * Tests for authenticated cluster access
@@ -33,7 +35,6 @@ import static com.datastax.driver.core.CreateCCM.TestMode.PER_METHOD;
         jvmArgs = "-Dcassandra.superuser_setup_delay_ms=0",
         createCluster = false)
 public class AuthenticationTest extends CCMTestsSupport {
-
 
     @BeforeMethod(groups = "short")
     public void sleepIf12() {
@@ -46,12 +47,14 @@ public class AuthenticationTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void should_connect_with_credentials() throws InterruptedException {
-        Cluster cluster = register(Cluster.builder()
+        PlainTextAuthProvider authProvider = spy(new PlainTextAuthProvider("cassandra", "cassandra"));
+        Cluster cluster = Cluster.builder()
                 .addContactPoints(getContactPoints())
                 .withPort(ccm().getBinaryPort())
-                .withCredentials("cassandra", "cassandra")
-                .build());
+                .withAuthProvider(authProvider)
+                .build();
         cluster.connect();
+        verify(authProvider, atLeastOnce()).newAuthenticator(findHost(cluster, 1).getSocketAddress(), "org.apache.cassandra.auth.PasswordAuthenticator");
     }
 
     @Test(groups = "short", expectedExceptions = AuthenticationException.class)

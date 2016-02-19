@@ -209,6 +209,7 @@ String firstName = row.getString("first_name");
     <tr> <td>blob</td> <td>getBytes</td> <td>java.nio.ByteBuffer</td> </tr>
     <tr> <td>boolean</td> <td>getBool</td> <td>boolean</td> </tr>
     <tr> <td>counter</td> <td>getLong</td> <td>long</td> </tr>
+    <tr> <td>date</td> <td>getDate</td> <td><a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/LocalDate.html">LocalDate</a></td> </tr>
     <tr> <td>decimal</td> <td>getDecimal</td> <td>java.math.BigDecimal</td> </tr>
     <tr> <td>double</td> <td>getDouble</td> <td>double</td> </tr>
     <tr> <td>float</td> <td>getFloat</td> <td>float</td> </tr>
@@ -217,15 +218,20 @@ String firstName = row.getString("first_name");
     <tr> <td>list</td> <td>getList</td> <td>java.util.List<T></td> </tr>
     <tr> <td>map</td> <td>getMap</td> <td>java.util.Map<K, V></td> </tr>
     <tr> <td>set</td> <td>getSet</td> <td>java.util.Set<T></td> </tr>
+    <tr> <td>smallint</td> <td>getShort</td> <td>short</td> </tr>
     <tr> <td>text</td> <td>getString</td> <td>java.lang.String</td> </tr>
-    <tr> <td>timestamp</td> <td>getDate</td> <td>java.util.Date</td> </tr>
+    <tr> <td>time</td> <td>getTime</td> <td>long</td> </tr>
+    <tr> <td>timestamp</td> <td>getTimestamp</td> <td>java.util.Date</td> </tr>
     <tr> <td>timeuuid</td> <td>getUUID</td> <td>java.util.UUID</td> </tr>
+    <tr> <td>tinyint</td> <td>getByte</td> <td>byte</td> </tr>
     <tr> <td>tuple</td> <td>getTupleValue</td> <td><a href="tuples/">TupleValue</a></td> </tr>
     <tr> <td>user-defined types</td> <td>getUDTValue</td> <td><a href="udts/">UDTValue</a></td> </tr>
     <tr> <td>uuid</td> <td>getUUID</td> <td>java.util.UUID</td> </tr>
     <tr> <td>varchar</td> <td>getString</td> <td>java.lang.String</td> </tr>
     <tr> <td>varint</td> <td>getVarint</td> <td>java.math.BigInteger</td> </tr>
 </table>
+
+In addition to these default mappings, you can register your own types with [custom codecs](custom_codecs/).
 
 ##### Primitive types
 
@@ -277,19 +283,20 @@ for (ColumnDefinitions.Definition definition : row.getColumnDefinitions()) {
 If you're reading this from the [generated HTML documentation on
 github.io](http://datastax.github.io/java-driver/), use the "Contents"
 menu on the left hand side to navigate sub-sections. If you're [browsing the source files on
-github.com](https://github.com/datastax/java-driver/tree/2.1/manual),
+github.com](https://github.com/datastax/java-driver/tree/3.0/manual),
 simply navigate to each sub-directory.
 
-[Cluster]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/Cluster.html
-[Cluster.Builder]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/Cluster.Builder.html
-[Initializer]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/Cluster.Initializer.html
-[Session]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/Session.html
-[ResultSet]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/ResultSet.html
-[Row]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/Row.html
-[NettyOptions]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/NettyOptions.html
-[QueryOptions]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/QueryOptions.html
-[SocketOptions]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/SocketOptions.html
-[Host.StateListener]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/Host.StateListener.html
-[LatencyTracker]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/LatencyTracker.html
-[SchemaChangeListener]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/SchemaChangeListener.html
-[NoHostAvailableException]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/exceptions/NoHostAvailableException.html
+[Cluster]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Cluster.html
+[Cluster.Builder]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Cluster.Builder.html
+[Initializer]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Cluster.Initializer.html
+[Session]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Session.html
+[ResultSet]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/ResultSet.html
+[Row]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Row.html
+[NettyOptions]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/NettyOptions.html
+[QueryOptions]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/QueryOptions.html
+[SocketOptions]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/SocketOptions.html
+[Host.StateListener]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Host.StateListener.html
+[LatencyTracker]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/LatencyTracker.html
+[SchemaChangeListener]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/SchemaChangeListener.html
+[NoHostAvailableException]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/exceptions/NoHostAvailableException.html
+[LocalDate]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/LocalDate.html

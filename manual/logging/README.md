@@ -107,6 +107,9 @@ and provide hints about what's going wrong.
         * Authentication progress
         * Sending requests
         * Receiving responses
+* `com.datastax.driver.core.Message`
+    * TRACE
+        * Custom payloads
 
 ### Logging query latencies
 
@@ -119,7 +122,7 @@ To turn on this feature, you first need to instantiate and register a `QueryLogg
 
 ```java
 Cluster cluster = ...
-QueryLogger queryLogger = QueryLogger.builder(cluster)
+QueryLogger queryLogger = QueryLogger.builder()
     .withConstantThreshold(...)
     .withMaxQueryStringLength(...)
 .build();
@@ -178,9 +181,8 @@ Currently the `QueryLogger` can be configured to track slow queries using either
 a constant threshold in milliseconds (which is the default behavior), or 
 a dynamic threshold based on per-host latency percentiles, as computed by `PerHostPercentileTracker`.
 
-**Dynamic thresholds are still a beta feature as of version 2.1.6: they
-haven't been extensively tested yet, and the API is still subject to
-change.**
+**Dynamic thresholds are still a beta feature: they haven't been extensively 
+tested yet, and the API is still subject to change.**
 
 Refer to the `QueryLogger` [API docs][query_logger] for an example of usage.
 
@@ -300,4 +302,4 @@ It also turns on slow query tracing as described above.
 </log4j:configuration>
 ```
 
-[query_logger]:http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/QueryLogger.html
+[query_logger]:http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/QueryLogger.html

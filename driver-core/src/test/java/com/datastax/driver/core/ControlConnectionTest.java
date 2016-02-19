@@ -15,10 +15,7 @@
  */
 package com.datastax.driver.core;
 
-import com.datastax.driver.core.policies.DelegatingLoadBalancingPolicy;
-import com.datastax.driver.core.policies.LoadBalancingPolicy;
-import com.datastax.driver.core.policies.Policies;
-import com.datastax.driver.core.policies.ReconnectionPolicy;
+import com.datastax.driver.core.policies.*;
 import com.datastax.driver.core.utils.CassandraVersion;
 import com.google.common.base.Function;
 import com.google.common.collect.HashMultiset;
@@ -50,7 +47,6 @@ public class ControlConnectionTest extends CCMTestsSupport {
     @Test(groups = "short")
     @CCMConfig(numberOfNodes = 2)
     public void should_prevent_simultaneous_reconnection_attempts() throws InterruptedException {
-        Cluster cluster;
 
         // Custom load balancing policy that counts the number of calls to newQueryPlan().
         // Since we don't open any session from our Cluster, only the control connection reattempts are calling this
@@ -60,20 +56,10 @@ public class ControlConnectionTest extends CCMTestsSupport {
 
         // Custom reconnection policy with a very large delay (longer than the test duration), to make sure we count
         // only the first reconnection attempt of each reconnection handler.
-        ReconnectionPolicy reconnectionPolicy = new ReconnectionPolicy() {
-            @Override
-            public ReconnectionSchedule newSchedule() {
-                return new ReconnectionSchedule() {
-                    @Override
-                    public long nextDelayMs() {
-                        return 60 * 1000;
-                    }
-                };
-            }
-        };
+        ReconnectionPolicy reconnectionPolicy = new ConstantReconnectionPolicy(60 * 1000);
 
         // We pass only the first host as contact point, so we know the control connection will be on this host
-        cluster = register(Cluster.builder()
+        Cluster cluster = register(Cluster.builder()
                 .addContactPoints(getContactPoints().get(0))
                 .withPort(ccm().getBinaryPort())
                 .withReconnectionPolicy(reconnectionPolicy)
@@ -100,11 +86,9 @@ public class ControlConnectionTest extends CCMTestsSupport {
     @Test(groups = "short")
     @CassandraVersion(major = 2.1)
     public void should_parse_UDT_definitions_when_using_default_protocol_version() {
-        Cluster cluster;
-        InetSocketAddress firstHost = ccm().addressOfNode(1);
         // First driver instance: create UDT
-        cluster = register(Cluster.builder()
-                .addContactPointsWithPorts(firstHost)
+        Cluster cluster = register(Cluster.builder()
+                .addContactPoints(getContactPoints().get(0))
                 .withPort(ccm().getBinaryPort())
                 .build());
         Session session = cluster.connect();
@@ -113,8 +97,11 @@ public class ControlConnectionTest extends CCMTestsSupport {
         cluster.close();
 
         // Second driver instance: read UDT definition
-        cluster = register(Cluster.builder().addContactPointsWithPorts(firstHost).build());
-        UserType fooType = cluster.getMetadata().getKeyspace("ks").getUserType("foo");
+        Cluster cluster2 = register(Cluster.builder()
+                .addContactPoints(getContactPoints().get(0))
+                .withPort(ccm().getBinaryPort())
+                .build());
+        UserType fooType = cluster2.getMetadata().getKeyspace("ks").getUserType("foo");
 
         assertThat(fooType.getFieldNames()).containsExactly("i");
     }
@@ -133,7 +120,7 @@ public class ControlConnectionTest extends CCMTestsSupport {
     public void should_reestablish_if_control_node_decommissioned() throws InterruptedException {
         InetSocketAddress firstHost = ccm().addressOfNode(1);
         Cluster cluster = register(Cluster.builder()
-                .addContactPointsWithPorts(firstHost)
+                .addContactPoints(firstHost.getAddress())
                 .withPort(ccm().getBinaryPort())
                 .withQueryOptions(nonDebouncingQueryOptions())
                 .build());

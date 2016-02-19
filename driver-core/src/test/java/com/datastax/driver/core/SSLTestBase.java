@@ -15,7 +15,8 @@
  */
 package com.datastax.driver.core;
 
-import com.google.common.base.Optional;
+import io.netty.handler.ssl.SslContextBuilder;
+import org.testng.annotations.DataProvider;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -23,11 +24,24 @@ import javax.net.ssl.TrustManagerFactory;
 import java.security.KeyStore;
 import java.security.SecureRandom;
 
-import static com.datastax.driver.core.CCMBridge.DEFAULT_CLIENT_KEYSTORE_PASSWORD;
-import static com.datastax.driver.core.CCMBridge.DEFAULT_CLIENT_TRUSTSTORE_PASSWORD;
+import static com.datastax.driver.core.SSLTestBase.SslImplementation.JDK;
+import static com.datastax.driver.core.SSLTestBase.SslImplementation.NETTY_OPENSSL;
+import static io.netty.handler.ssl.SslProvider.OPENSSL;
+import static org.assertj.core.api.Assertions.fail;
 
 @CCMConfig(ssl = true, createCluster = false)
 public abstract class SSLTestBase extends CCMTestsSupport {
+
+    @DataProvider(name = "sslImplementation")
+    public static Object[][] sslImplementation() {
+        // Bypass Netty SSL if on JDK 1.6 since it only works on 1.7+.
+        String javaVersion = System.getProperty("java.version");
+        if (javaVersion.startsWith("1.6")) {
+            return new Object[][]{{JDK}};
+        } else {
+            return new Object[][]{{JDK}, {NETTY_OPENSSL}};
+        }
+    }
 
     /**
      * <p>
@@ -66,35 +80,61 @@ public abstract class SSLTestBase extends CCMTestsSupport {
         cluster.connect();
     }
 
+    enum SslImplementation {JDK, NETTY_OPENSSL}
+
     /**
-     * @param keyStorePath   Path to keystore, if absent is not used.
-     * @param trustStorePath Path to truststore, if absent is not used.
-     * @return {@link com.datastax.driver.core.SSLOptions} with the given keystore and truststore path's for
+     * @param sslImplementation the SSL implementation to use
+     * @param clientAuth        whether the client should authenticate
+     * @param trustingServer    whether the client should trust the server's certificate
+     * @return {@link com.datastax.driver.core.SSLOptions} with the given configuration for
      * server certificate validation and client certificate authentication.
      */
-    public SSLOptions getSSLOptions(Optional<String> keyStorePath, Optional<String> trustStorePath) throws Exception {
+    public SSLOptions getSSLOptions(SslImplementation sslImplementation, boolean clientAuth, boolean trustingServer) throws Exception {
 
         TrustManagerFactory tmf = null;
-        if (trustStorePath.isPresent()) {
+        if (trustingServer) {
             KeyStore ks = KeyStore.getInstance("JKS");
-            ks.load(this.getClass().getResourceAsStream(trustStorePath.get()), DEFAULT_CLIENT_TRUSTSTORE_PASSWORD.toCharArray());
+            ks.load(
+                    this.getClass().getResourceAsStream(CCMBridge.DEFAULT_CLIENT_TRUSTSTORE_PATH),
+                    CCMBridge.DEFAULT_CLIENT_TRUSTSTORE_PASSWORD.toCharArray());
 
             tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
             tmf.init(ks);
         }
 
-        KeyManagerFactory kmf = null;
-        if (keyStorePath.isPresent()) {
-            KeyStore ks = KeyStore.getInstance("JKS");
-            ks.load(this.getClass().getResourceAsStream(keyStorePath.get()), DEFAULT_CLIENT_KEYSTORE_PASSWORD.toCharArray());
 
-            kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-            kmf.init(ks, DEFAULT_CLIENT_KEYSTORE_PASSWORD.toCharArray());
+        switch (sslImplementation) {
+            case JDK:
+                KeyManagerFactory kmf = null;
+                if (clientAuth) {
+                    KeyStore ks = KeyStore.getInstance("JKS");
+                    ks.load(
+                            this.getClass().getResourceAsStream(CCMBridge.DEFAULT_CLIENT_KEYSTORE_PATH),
+                            CCMBridge.DEFAULT_CLIENT_KEYSTORE_PASSWORD.toCharArray());
+
+                    kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+                    kmf.init(ks, CCMBridge.DEFAULT_CLIENT_KEYSTORE_PASSWORD.toCharArray());
+                }
+
+                SSLContext sslContext = SSLContext.getInstance("TLS");
+                sslContext.init(kmf != null ? kmf.getKeyManagers() : null, tmf != null ? tmf.getTrustManagers() : null, new SecureRandom());
+
+                return JdkSSLOptions.builder().withSSLContext(sslContext).build();
+
+            case NETTY_OPENSSL:
+                SslContextBuilder builder = SslContextBuilder
+                        .forClient()
+                        .sslProvider(OPENSSL)
+                        .trustManager(tmf);
+
+                if (clientAuth) {
+                    builder.keyManager(CCMBridge.DEFAULT_CLIENT_CERT_CHAIN_FILE, CCMBridge.DEFAULT_CLIENT_PRIVATE_KEY_FILE);
+                }
+
+                return new NettySSLOptions(builder.build());
+            default:
+                fail("Unsupported SSL implementation: " + sslImplementation);
+                return null;
         }
-
-        SSLContext sslContext = SSLContext.getInstance("TLS");
-        sslContext.init(kmf != null ? kmf.getKeyManagers() : null, tmf != null ? tmf.getTrustManagers() : null, new SecureRandom());
-
-        return new SSLOptions(sslContext, SSLOptions.DEFAULT_SSL_CIPHER_SUITES);
     }
 }

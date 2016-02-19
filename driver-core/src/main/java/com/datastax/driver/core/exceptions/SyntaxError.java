@@ -27,14 +27,6 @@ public class SyntaxError extends QueryValidationException implements Coordinator
 
     private final InetSocketAddress address;
 
-    /**
-     * @deprecated This constructor is kept for backwards compatibility.
-     */
-    @Deprecated
-    public SyntaxError(String msg) {
-        this(null, msg);
-    }
-
     public SyntaxError(InetSocketAddress address, String msg) {
         super(msg);
         this.address = address;
@@ -62,7 +54,7 @@ public class SyntaxError extends QueryValidationException implements Coordinator
     }
 
     @Override
-    public DriverException copy() {
+    public SyntaxError copy() {
         return new SyntaxError(getAddress(), getMessage(), this);
     }
 }

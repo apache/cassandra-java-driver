@@ -15,54 +15,28 @@
  */
 package com.datastax.driver.core;
 
-import javax.net.ssl.SSLContext;
-import java.security.NoSuchAlgorithmException;
+import io.netty.channel.socket.SocketChannel;
+import io.netty.handler.ssl.SslHandler;
 
 /**
- * Options to provide to enable SSL connections.
+ * Defines how the driver configures SSL connections.
+ *
+ * @see JdkSSLOptions
+ * @see NettySSLOptions
  */
-public class SSLOptions {
+public interface SSLOptions {
 
     /**
-     * The default SSL cipher suites.
-     */
-    public static final String[] DEFAULT_SSL_CIPHER_SUITES = {"TLS_RSA_WITH_AES_128_CBC_SHA", "TLS_RSA_WITH_AES_256_CBC_SHA"};
-
-    final SSLContext context;
-    final String[] cipherSuites;
-
-    /**
-     * Creates default SSL options.
+     * Creates a new SSL handler for the given Netty channel.
      * <p/>
-     * The resulting options will use the default JSSE options, and you can use the default
-     * <a href="http://docs.oracle.com/javase/6/docs/technotes/guides/security/jsse/JSSERefGuide.html#Customization">JSSE System properties</a>
-     * to customize it's behavior. This may in particular involve
-     * <a href="http://docs.oracle.com/javase/6/docs/technotes/guides/security/jsse/JSSERefGuide.html#CreateKeystore">creating a simple keyStore and trustStore</a>.
+     * This gets called each time the driver opens a new connection to a Cassandra host. The newly created handler will be added
+     * to the channel's pipeline to provide SSL support for the connection.
      * <p/>
-     * The cipher suites used by this default instance are the one defined by
-     * {@code DEFAULT_SSL_CIPHER_SUITES} and match the default cipher suites
-     * supported by Cassandra server side.
-     */
-    public SSLOptions() {
-        this(makeDefaultContext(), DEFAULT_SSL_CIPHER_SUITES);
-    }
-
-    /**
-     * Creates SSL options that uses the provided SSL context and cipher suites.
+     * You don't necessarily need to implement this method directly; see the provided implementations: {@link JdkSSLOptions} and
+     * {@link NettySSLOptions}.
      *
-     * @param context      the {@code SSLContext} to use.
-     * @param cipherSuites the cipher suites to use.
+     * @param channel the channel.
+     * @return the handler.
      */
-    public SSLOptions(SSLContext context, String[] cipherSuites) {
-        this.context = context;
-        this.cipherSuites = cipherSuites;
-    }
-
-    private static SSLContext makeDefaultContext() throws IllegalStateException {
-        try {
-            return SSLContext.getDefault();
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("Cannot initialize SSL Context", e);
-        }
-    }
+    SslHandler newSSLHandler(SocketChannel channel);
 }

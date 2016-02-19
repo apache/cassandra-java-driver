@@ -15,100 +15,427 @@
  */
 package com.datastax.driver.core.policies;
 
-import com.datastax.driver.core.*;
-import com.google.common.base.Objects;
-import org.mockito.Mockito;
-import org.mockito.verification.VerificationMode;
+import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.core.SocketOptions;
+import com.datastax.driver.core.WriteType;
+import com.datastax.driver.core.exceptions.*;
+import org.assertj.core.api.Assertions;
+import org.assertj.core.api.Fail;
+import org.scassandra.http.client.*;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import static com.datastax.driver.core.ConsistencyLevel.*;
-import static com.datastax.driver.core.TestUtils.ipOfNode;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
+import static org.scassandra.http.client.PrimingRequest.Result.*;
+import static org.scassandra.http.client.PrimingRequest.then;
+import static org.scassandra.http.client.WriteTypePrime.UNLOGGED_BATCH;
+import static org.testng.Assert.fail;
 
-/**
- * Note: we can't extend {@link AbstractRetryPolicyIntegrationTest} here, because SCassandra doesn't allow custom values for
- * receivedResponses in primed responses.
- * If that becomes possible in the future, we could refactor this test.
- */
-@CCMConfig(
-        dirtiesContext = true,
-        createCluster = false,
-        numberOfNodes = 3,
-        config = {
-                // tests fail often with write or read timeouts
-                "hinted_handoff_enabled:true",
-                "phi_convict_threshold:5",
-                "read_request_timeout_in_ms:100000",
-                "write_request_timeout_in_ms:100000"
+public class DowngradingConsistencyRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegrationTest {
+
+    public DowngradingConsistencyRetryPolicyIntegrationTest() {
+        super(DowngradingConsistencyRetryPolicy.INSTANCE);
+    }
+
+    /**
+     * @return An array of pairs that match # of alive replicas with the expected downgraded CL used on read/write/unavailable.
+     */
+    @DataProvider
+    public static Object[][] consistencyLevels() {
+        return new Object[][]{
+                {4, ConsistencyLevel.THREE},
+                {3, ConsistencyLevel.THREE},
+                {2, ConsistencyLevel.TWO},
+                {1, ConsistencyLevel.ONE}
+        };
+    }
+
+
+    /**
+     * @return Write Types for which we expect a rethrow if used and there are no received acks.
+     */
+    @DataProvider
+    public static Object[][] rethrowWriteTypes() {
+        return new Object[][]{
+                {WriteTypePrime.SIMPLE},
+                {WriteTypePrime.BATCH},
+                {WriteTypePrime.COUNTER},
+                {WriteTypePrime.CAS}
+        };
+    }
+
+
+    /**
+     * @return Write Types for which we expect an ignore if used and there are received acks.
+     */
+    @DataProvider
+    public static Object[][] ignoreWriteTypesWithReceivedAcks() {
+        return new Object[][]{
+                {WriteTypePrime.SIMPLE},
+                {WriteTypePrime.BATCH}
+        };
+    }
+
+
+    /**
+     * Ensures that when handling a read timeout with {@link DowngradingConsistencyRetryPolicy} that a retry is
+     * reattempted with a {@link ConsistencyLevel} that matches min(received acknowledgements, THREE) and is only
+     * retried once.
+     *
+     * @param received             The number of received acknowledgements to use in read timeout.
+     * @param expectedDowngradedCL The consistency level that is expected to be used on the retry.
+     * @test_category retry_policy
+     */
+    @Test(groups = "short", dataProvider = "consistencyLevels")
+    public void should_retry_once_on_same_host_with_reduced_consistency_level_on_read_timeout(int received, ConsistencyLevel expectedDowngradedCL) {
+        simulateError(1, read_request_timeout, new ReadTimeoutConfig(received, received + 1, true));
+
+        try {
+            query();
+            fail("expected an ReadTimeoutException");
+        } catch (ReadTimeoutException e) {
+            assertThat(e.getConsistencyLevel()).isEqualTo(expectedDowngradedCL);
         }
-)
-public class DowngradingConsistencyRetryPolicyIntegrationTest extends CCMTestsSupport {
 
-    @Test(groups = "long")
-    public void should_downgrade_if_not_enough_replicas_for_requested_CL() {
-        Cluster cluster = register(Cluster.builder()
-                .addContactPoints(getContactPoints().get(0))
-                .withPort(ccm().getBinaryPort())
-                .withSocketOptions(new SocketOptions().setReadTimeoutMillis(120000))
-                .withRetryPolicy(Mockito.spy(DowngradingConsistencyRetryPolicy.INSTANCE))
-                .build());
-        Session session = cluster.connect();
-
-        String ks = TestUtils.generateIdentifier("ks_");
-        session.execute(String.format("CREATE KEYSPACE %s WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 3}", ks));
-        useKeyspace(session, ks);
-        session.execute("CREATE TABLE foo(k int primary key)");
-        session.execute("INSERT INTO foo(k) VALUES (0)");
-
-        // All replicas up: should achieve all levels without downgrading
-        checkAchievedConsistency(ALL, ALL, session);
-        checkAchievedConsistency(QUORUM, QUORUM, session);
-        checkAchievedConsistency(ONE, ONE, session);
-
-        stopAndWait(1, cluster);
-        // Two replicas remaining: should downgrade to 2 when CL > 2
-        checkAchievedConsistency(ALL, TWO, session);
-        checkAchievedConsistency(QUORUM, QUORUM, session); // since RF = 3, quorum is still achievable with two nodes
-        checkAchievedConsistency(TWO, TWO, session);
-        checkAchievedConsistency(ONE, ONE, session);
-
-        stopAndWait(2, cluster);
-        // One replica remaining: should downgrade to 1 when CL > 1
-        checkAchievedConsistency(ALL, ONE, session);
-        checkAchievedConsistency(QUORUM, ONE, session);
-        checkAchievedConsistency(TWO, ONE, session);
-        checkAchievedConsistency(ONE, ONE, session);
-
+        assertOnReadTimeoutWasCalled(2);
+        assertThat(errors.getRetries().getCount()).isEqualTo(1);
+        assertThat(errors.getReadTimeouts().getCount()).isEqualTo(2);
+        assertThat(errors.getRetriesOnReadTimeout().getCount()).isEqualTo(1);
+        assertQueried(1, 2);
+        assertQueried(2, 0);
+        assertQueried(3, 0);
     }
 
-    private void stopAndWait(int node, Cluster cluster) {
-        ccm().stop(node);
-        ccm().waitForDown(node);// this uses port ping
-        TestUtils.waitForDown(ipOfNode(node), cluster); // this uses UP/DOWN events
+
+    /**
+     * Ensures that when handling a read timeout with {@link DowngradingConsistencyRetryPolicy} that a retry is
+     * reattempted if data was not retrieved, but enough replicas were alive to handle the request.
+     *
+     * @test_category retry_policy
+     */
+    @Test(groups = "short")
+    public void should_retry_once_if_not_data_was_retrieved_and_enough_replicas_alive() {
+        simulateError(1, read_request_timeout, new ReadTimeoutConfig(1, 1, false));
+
+        try {
+            query();
+            fail("expected an ReadTimeoutException");
+        } catch (ReadTimeoutException e) {/*expected*/}
+
+        assertOnReadTimeoutWasCalled(2);
+        assertThat(errors.getRetries().getCount()).isEqualTo(1);
+        assertThat(errors.getReadTimeouts().getCount()).isEqualTo(2);
+        assertThat(errors.getRetriesOnReadTimeout().getCount()).isEqualTo(1);
+        assertQueried(1, 2);
+        assertQueried(2, 0);
+        assertQueried(3, 0);
     }
 
-    private void checkAchievedConsistency(ConsistencyLevel requested, ConsistencyLevel expected, Session session) {
-        RetryPolicy retryPolicy = session.getCluster().getConfiguration().getPolicies().getRetryPolicy();
-        Mockito.reset(retryPolicy);
 
-        Statement s = new SimpleStatement("SELECT * FROM foo WHERE k = 0")
-                .setConsistencyLevel(requested);
+    /**
+     * Ensures that when handling a read timeout with {@link DowngradingConsistencyRetryPolicy} that a retry is not
+     * attempted if no replicas were alive.   In a real scenario, this would not be expected as we'd anticipate an
+     * {@link UnavailableException} instead.
+     *
+     * @test_category retry_policy
+     */
+    @Test(groups = "short")
+    public void should_rethrow_if_no_hosts_alive_on_read_timeout() {
+        simulateError(1, read_request_timeout);
 
-        ResultSet rs = session.execute(s);
+        try {
+            query();
+            fail("expected a ReadTimeoutException");
+        } catch (ReadTimeoutException e) {/*expected*/ }
 
-        ConsistencyLevel achieved = rs.getExecutionInfo().getAchievedConsistencyLevel();
-        // ExecutionInfo returns null when the requested level was met.
-        ConsistencyLevel actual = Objects.firstNonNull(achieved, requested);
+        assertOnReadTimeoutWasCalled(1);
+        assertThat(errors.getReadTimeouts().getCount()).isEqualTo(1);
+        assertThat(errors.getRetries().getCount()).isEqualTo(0);
+        assertThat(errors.getRetriesOnReadTimeout().getCount()).isEqualTo(0);
+        assertQueried(1, 1);
+        assertQueried(2, 0);
+        assertQueried(3, 0);
+    }
 
-        assertThat(actual).isEqualTo(expected);
 
-        // If the level was downgraded the policy should have been invoked
-        VerificationMode expectedCallsToPolicy = (expected == requested) ? never() : times(1);
-        Mockito.verify(retryPolicy, expectedCallsToPolicy).onUnavailable(
-                any(Statement.class), any(ConsistencyLevel.class), anyInt(), anyInt(), anyInt());
+    /**
+     * Ensures that when handling a write timeout with {@link DowngradingConsistencyRetryPolicy} that it rethrows
+     * the exception if the {@link WriteType} was any of {@link #rethrowWriteTypes}.
+     *
+     * @param writeType writeType communicated by {@link WriteTimeoutException}.
+     * @test_category retry_policy
+     */
+    @Test(groups = "short", dataProvider = "rethrowWriteTypes")
+    public void should_rethrow_on_write_timeout_with_write_type(WriteTypePrime writeType) {
+        simulateError(1, write_request_timeout, new WriteTimeoutConfig(writeType, 0, 2));
+
+        try {
+            query();
+            fail("expected a WriteTimeoutException");
+        } catch (WriteTimeoutException e) {/*expected*/}
+
+        assertOnWriteTimeoutWasCalled(1);
+        assertThat(errors.getWriteTimeouts().getCount()).isEqualTo(1);
+        assertThat(errors.getRetries().getCount()).isEqualTo(0);
+        assertThat(errors.getRetriesOnWriteTimeout().getCount()).isEqualTo(0);
+        assertQueried(1, 1);
+        assertQueried(2, 0);
+        assertQueried(3, 0);
+    }
+
+
+    /**
+     * Ensures that when handling a write timeout with {@link DowngradingConsistencyRetryPolicy} that it ignores
+     * the exception if the {@link WriteType} was any of {@link #ignoreWriteTypesWithReceivedAcks} and we received acks
+     * some at least one replica.
+     *
+     * @param writeType writeType communicated by {@link WriteTimeoutException}.
+     * @test_category retry_policy
+     */
+    @Test(groups = "short", dataProvider = "ignoreWriteTypesWithReceivedAcks")
+    public void should_ignore_on_write_timeout_with_write_type_and_received_acks(WriteTypePrime writeType) {
+        simulateError(1, write_request_timeout, new WriteTimeoutConfig(writeType, 1, 2));
+
+        query();
+
+        assertOnWriteTimeoutWasCalled(1);
+        assertThat(errors.getWriteTimeouts().getCount()).isEqualTo(1);
+        assertThat(errors.getRetries().getCount()).isEqualTo(0);
+        assertThat(errors.getRetriesOnWriteTimeout().getCount()).isEqualTo(0);
+        assertThat(errors.getIgnoresOnWriteTimeout().getCount()).isEqualTo(1);
+        assertQueried(1, 1);
+        assertQueried(2, 0);
+        assertQueried(3, 0);
+    }
+
+
+    /**
+     * Ensures that when handling a write timeout with {@link DowngradingConsistencyRetryPolicy} that a retry is
+     * attempted on the same host if the {@link WriteType} is {@link WriteType#BATCH_LOG}.
+     *
+     * @test_category retry_policy
+     */
+    @Test(groups = "short")
+    public void should_retry_once_on_same_host_with_BATCH_LOG_write_type() {
+        simulateError(1, write_request_timeout, new WriteTimeoutConfig(WriteTypePrime.BATCH_LOG, 1, 2));
+
+        try {
+            query();
+            fail("expected a WriteTimeoutException");
+        } catch (WriteTimeoutException e) {/*expected*/}
+
+        assertOnWriteTimeoutWasCalled(2);
+        assertThat(errors.getRetries().getCount()).isEqualTo(1);
+        assertThat(errors.getWriteTimeouts().getCount()).isEqualTo(2);
+        assertThat(errors.getRetriesOnWriteTimeout().getCount()).isEqualTo(1);
+        assertQueried(1, 2);
+        assertQueried(2, 0);
+        assertQueried(3, 0);
+    }
+
+
+    /**
+     * Ensures that when handling a write timeout with {@link DowngradingConsistencyRetryPolicy} that a retry is
+     * attempted on the same host with a reduced consistency level that matches min(received acknowledgments, THREE)
+     * if the {@link WriteType} is {@link WriteType#UNLOGGED_BATCH} and is only retries once.
+     *
+     * @param alive                The number of received acknowledgements to use in write timeout.
+     * @param expectedDowngradedCL The consistency level that is expected to be used on the retry.
+     * @test_category retry_policy
+     */
+    @Test(groups = "short", dataProvider = "consistencyLevels")
+    public void should_retry_once_on_same_host_with_reduced_consistency_level_on_write_timeout(int alive, ConsistencyLevel expectedDowngradedCL) {
+        simulateError(1, write_request_timeout, new WriteTimeoutConfig(UNLOGGED_BATCH, alive, alive + 1));
+
+        try {
+            query();
+            fail("expected a WriteTimeoutException");
+        } catch (WriteTimeoutException e) {
+            assertThat(e.getConsistencyLevel()).isEqualTo(expectedDowngradedCL);
+        }
+
+        assertOnWriteTimeoutWasCalled(2);
+        assertThat(errors.getRetries().getCount()).isEqualTo(1);
+        assertThat(errors.getWriteTimeouts().getCount()).isEqualTo(2);
+        assertThat(errors.getRetriesOnWriteTimeout().getCount()).isEqualTo(1);
+        assertQueried(1, 2);
+        assertQueried(2, 0);
+        assertQueried(3, 0);
+    }
+
+
+    /**
+     * Ensures that when handling an unavailable with {@link DowngradingConsistencyRetryPolicy} that a retry is
+     * reattempted with a {@link ConsistencyLevel} that matches min(received acknowledgements, THREE) and is only
+     * retried once.
+     *
+     * @param alive                The number of received acknowledgements to use in unavailable.
+     * @param expectedDowngradedCL The consistency level that is expected to be used on the retry.
+     * @test_category retry_policy
+     */
+    @Test(groups = "short", dataProvider = "consistencyLevels")
+    public void should_retry_once_on_same_host_with_reduced_consistency_level_on_unavailable(int alive, ConsistencyLevel expectedDowngradedCL) {
+        simulateError(1, unavailable, new UnavailableConfig(alive + 1, alive));
+
+        try {
+            query();
+            fail("expected an UnavailableException");
+        } catch (UnavailableException e) {
+            assertThat(e.getConsistencyLevel()).isEqualTo(expectedDowngradedCL);
+        }
+
+        assertOnUnavailableWasCalled(2);
+        assertThat(errors.getRetries().getCount()).isEqualTo(1);
+        assertThat(errors.getUnavailables().getCount()).isEqualTo(2);
+        assertThat(errors.getRetriesOnUnavailable().getCount()).isEqualTo(1);
+        assertQueried(1, 2);
+        assertQueried(2, 0);
+        assertQueried(3, 0);
+    }
+
+
+    /**
+     * Ensures that when handling an unavailable with {@link DowngradingConsistencyRetryPolicy} that a retry is
+     * is not reattempted if no replicas are alive.
+     *
+     * @test_category retry_policy
+     */
+    @Test(groups = "short")
+    public void should_rethrow_if_no_hosts_alive_on_unavailable() {
+        simulateError(1, unavailable, new UnavailableConfig(1, 0));
+
+        try {
+            query();
+            fail("expected an UnavailableException");
+        } catch (UnavailableException e) {/*expected*/}
+
+        assertOnUnavailableWasCalled(1);
+        assertThat(errors.getRetries().getCount()).isEqualTo(0);
+        assertThat(errors.getUnavailables().getCount()).isEqualTo(1);
+        assertThat(errors.getRetriesOnUnavailable().getCount()).isEqualTo(0);
+        assertQueried(1, 1);
+        assertQueried(2, 0);
+        assertQueried(3, 0);
+    }
+
+    /**
+     * Ensures that when handling a client timeout with {@link DowngradingConsistencyRetryPolicy} that a retry is
+     * attempted on the next host until all hosts are tried at which point a {@link NoHostAvailableException} is
+     * returned.
+     *
+     * @test_category retry_policy
+     */
+    @Test(groups = "short")
+    public void should_try_next_host_on_client_timeouts() {
+        cluster.getConfiguration().getSocketOptions().setReadTimeoutMillis(1);
+        try {
+            scassandras
+                    .node(1).primingClient().prime(PrimingRequest.queryBuilder()
+                    .withQuery("mock query")
+                    .withThen(then().withFixedDelay(1000L).withRows(row("result", "result1")))
+                    .build());
+            scassandras
+                    .node(2).primingClient().prime(PrimingRequest.queryBuilder()
+                    .withQuery("mock query")
+                    .withThen(then().withFixedDelay(1000L).withRows(row("result", "result2")))
+                    .build());
+            scassandras
+                    .node(3).primingClient().prime(PrimingRequest.queryBuilder()
+                    .withQuery("mock query")
+                    .withThen(then().withFixedDelay(1000L).withRows(row("result", "result3")))
+                    .build());
+            try {
+                query();
+                Assertions.fail("expected a NoHostAvailableException");
+            } catch (NoHostAvailableException e) {
+                assertThat(e.getErrors().keySet()).hasSize(3).containsOnly(
+                        host1.getSocketAddress(),
+                        host2.getSocketAddress(),
+                        host3.getSocketAddress());
+                assertThat(e.getErrors().values())
+                        .hasOnlyElementsOfType(OperationTimedOutException.class)
+                        .extractingResultOf("getMessage")
+                        .containsOnlyOnce(
+                                String.format("[%s] Timed out waiting for server response", host1.getAddress()),
+                                String.format("[%s] Timed out waiting for server response", host2.getAddress()),
+                                String.format("[%s] Timed out waiting for server response", host3.getAddress())
+                        );
+            }
+            assertOnRequestErrorWasCalled(3, OperationTimedOutException.class);
+            assertThat(errors.getRetries().getCount()).isEqualTo(3);
+            assertThat(errors.getClientTimeouts().getCount()).isEqualTo(3);
+            assertThat(errors.getRetriesOnClientTimeout().getCount()).isEqualTo(3);
+            assertQueried(1, 1);
+            assertQueried(2, 1);
+            assertQueried(3, 1);
+        } finally {
+            cluster.getConfiguration().getSocketOptions().setReadTimeoutMillis(SocketOptions.DEFAULT_READ_TIMEOUT_MILLIS);
+        }
+    }
+
+
+    /**
+     * Ensures that when handling a server error defined in {@link #serverSideErrors} with
+     * {@link DowngradingConsistencyRetryPolicy} that a retry is attempted on the next host until all hosts are tried
+     * at which point a {@link NoHostAvailableException} is raised and it's errors include the expected exception.
+     *
+     * @param error     Server side error to be produced.
+     * @param exception The exception we expect to be raised.
+     * @test_category retry_policy
+     */
+    @Test(groups = "short", dataProvider = "serverSideErrors")
+    public void should_try_next_host_on_server_side_error(PrimingRequest.Result error, Class<? extends DriverException> exception) {
+        simulateError(1, error);
+        simulateError(2, error);
+        simulateError(3, error);
+        try {
+            query();
+            Fail.fail("expected a NoHostAvailableException");
+        } catch (NoHostAvailableException e) {
+            assertThat(e.getErrors().keySet()).hasSize(3).containsOnly(
+                    host1.getSocketAddress(),
+                    host2.getSocketAddress(),
+                    host3.getSocketAddress());
+            assertThat(e.getErrors().values()).hasOnlyElementsOfType(exception);
+        }
+        assertOnRequestErrorWasCalled(3, exception);
+        assertThat(errors.getOthers().getCount()).isEqualTo(3);
+        assertThat(errors.getRetries().getCount()).isEqualTo(3);
+        assertThat(errors.getRetriesOnOtherErrors().getCount()).isEqualTo(3);
+        assertQueried(1, 1);
+        assertQueried(2, 1);
+        assertQueried(3, 1);
+    }
+
+
+    /**
+     * Ensures that when handling a connection error caused by the connection closing during a request in a way
+     * described by {@link #connectionErrors} that the next host is tried.
+     *
+     * @param closeType The way the connection should be closed during the request.
+     */
+    @Test(groups = "short", dataProvider = "connectionErrors")
+    public void should_try_next_host_on_connection_error(ClosedConnectionConfig.CloseType closeType) {
+        simulateError(1, PrimingRequest.Result.closed_connection, new ClosedConnectionConfig(closeType));
+        simulateError(2, PrimingRequest.Result.closed_connection, new ClosedConnectionConfig(closeType));
+        simulateError(3, PrimingRequest.Result.closed_connection, new ClosedConnectionConfig(closeType));
+        try {
+            query();
+            Fail.fail("expected a TransportException");
+        } catch (NoHostAvailableException e) {
+            assertThat(e.getErrors().keySet()).hasSize(3).containsOnly(
+                    host1.getSocketAddress(),
+                    host2.getSocketAddress(),
+                    host3.getSocketAddress());
+            assertThat(e.getErrors().values()).hasOnlyElementsOfType(TransportException.class);
+        }
+        assertOnRequestErrorWasCalled(3, TransportException.class);
+        assertThat(errors.getRetries().getCount()).isEqualTo(3);
+        assertThat(errors.getConnectionErrors().getCount()).isEqualTo(3);
+        assertThat(errors.getIgnoresOnConnectionError().getCount()).isEqualTo(0);
+        assertThat(errors.getRetriesOnConnectionError().getCount()).isEqualTo(3);
+        assertQueried(1, 1);
+        assertQueried(2, 1);
+        assertQueried(3, 1);
     }
 }

@@ -15,10 +15,8 @@
  */
 package com.datastax.driver.core;
 
-import com.datastax.driver.core.exceptions.InvalidTypeException;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterators;
-import com.google.common.reflect.TypeToken;
 
 import java.util.*;
 
@@ -29,12 +27,15 @@ import java.util.*;
  */
 public class UserType extends DataType implements Iterable<UserType.Field> {
 
-    private static final String TYPE_NAME = "type_name";
+    static final String TYPE_NAME = "type_name";
     private static final String COLS_NAMES = "field_names";
-    private static final String COLS_TYPES = "field_types";
+    static final String COLS_TYPES = "field_types";
 
     private final String keyspace;
     private final String typeName;
+    private final ProtocolVersion protocolVersion;
+
+    private volatile CodecRegistry codecRegistry;
 
     // Note that we don't expose the order of fields, from an API perspective this is a map
     // of String->Field, but internally we care about the order because the serialization format
@@ -45,11 +46,14 @@ public class UserType extends DataType implements Iterable<UserType.Field> {
     // implementation.
     final Map<String, int[]> byName;
 
-    UserType(String keyspace, String typeName, Collection<Field> fields) {
+    UserType(String keyspace, String typeName, Collection<Field> fields, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
         super(DataType.Name.UDT);
-
         this.keyspace = keyspace;
         this.typeName = typeName;
+        this.protocolVersion = protocolVersion;
+        // codecRegistry can be null, if this object is being constructed from a response message
+        // see Responses.Result.Rows.Metadata.decode()
+        this.codecRegistry = codecRegistry;
         this.byIdx = fields.toArray(new Field[fields.size()]);
 
         ImmutableMap.Builder<String, int[]> builder = new ImmutableMap.Builder<String, int[]>();
@@ -58,7 +62,10 @@ public class UserType extends DataType implements Iterable<UserType.Field> {
         this.byName = builder.build();
     }
 
-    static UserType build(Row row) {
+    static UserType build(KeyspaceMetadata ksm, Row row, VersionNumber version, Cluster cluster, Map<String, UserType> userTypes) {
+        ProtocolVersion protocolVersion = cluster.getConfiguration().getProtocolOptions().getProtocolVersion();
+        CodecRegistry codecRegistry = cluster.getConfiguration().getCodecRegistry();
+
         String keyspace = row.getString(KeyspaceMetadata.KS_NAME);
         String name = row.getString(TYPE_NAME);
 
@@ -66,16 +73,16 @@ public class UserType extends DataType implements Iterable<UserType.Field> {
         List<String> fieldTypes = row.getList(COLS_TYPES, String.class);
 
         List<Field> fields = new ArrayList<Field>(fieldNames.size());
-        for (int i = 0; i < fieldNames.size(); i++)
-            fields.add(new Field(fieldNames.get(i), CassandraTypeParser.parseOne(fieldTypes.get(i))));
-
-        return new UserType(keyspace, name, fields);
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    TypeCodec<Object> codec(ProtocolVersion protocolVersion) {
-        return (TypeCodec) TypeCodec.udtOf(this);
+        for (int i = 0; i < fieldNames.size(); i++) {
+            DataType fieldType;
+            if (version.getMajor() >= 3.0) {
+                fieldType = DataTypeCqlNameParser.parse(fieldTypes.get(i), cluster, ksm.getName(), userTypes, ksm.userTypes, false, false);
+            } else {
+                fieldType = DataTypeClassNameParser.parseOne(fieldTypes.get(i), protocolVersion, codecRegistry);
+            }
+            fields.add(new Field(fieldNames.get(i), fieldType));
+        }
+        return new UserType(keyspace, name, fields, protocolVersion, codecRegistry);
     }
 
     /**
@@ -171,12 +178,7 @@ public class UserType extends DataType implements Iterable<UserType.Field> {
     }
 
     @Override
-    boolean canBeDeserializedAs(TypeToken typeToken) {
-        return typeToken.isAssignableFrom(getName().javaType);
-    }
-
-    @Override
-    public final int hashCode() {
+    public int hashCode() {
         int result = name.hashCode();
         result = 31 * result + keyspace.hashCode();
         result = 31 * result + typeName.hashCode();
@@ -185,7 +187,7 @@ public class UserType extends DataType implements Iterable<UserType.Field> {
     }
 
     @Override
-    public final boolean equals(Object o) {
+    public boolean equals(Object o) {
         if (!(o instanceof UserType))
             return false;
 
@@ -227,6 +229,29 @@ public class UserType extends DataType implements Iterable<UserType.Field> {
         return asCQLQuery(false);
     }
 
+    /**
+     * Return the protocol version that has been used to deserialize
+     * this UDT, or that will be used to serialize it.
+     * In most cases this should be the version
+     * currently in use by the cluster instance
+     * that this UDT belongs to, as reported by
+     * {@link ProtocolOptions#getProtocolVersion()}.
+     *
+     * @return the protocol version that has been used to deserialize
+     * this UDT, or that will be used to serialize it.
+     */
+    ProtocolVersion getProtocolVersion() {
+        return protocolVersion;
+    }
+
+    CodecRegistry getCodecRegistry() {
+        return codecRegistry;
+    }
+
+    void setCodecRegistry(CodecRegistry codecRegistry) {
+        this.codecRegistry = codecRegistry;
+    }
+
     private String asCQLQuery(boolean formatted) {
         StringBuilder sb = new StringBuilder();
 
@@ -247,58 +272,9 @@ public class UserType extends DataType implements Iterable<UserType.Field> {
         return "frozen<" + Metadata.escapeId(getKeyspace()) + '.' + Metadata.escapeId(getTypeName()) + ">";
     }
 
-    // We don't want to expose that, it's already exposed through DataType.parse
-    UDTValue parseValue(String value) {
-        UDTValue v = newValue();
-
-        int idx = ParseUtils.skipSpaces(value, 0);
-        if (value.charAt(idx++) != '{')
-            throw new InvalidTypeException(String.format("Cannot parse UDT value from \"%s\", at character %d expecting '{' but got '%c'", value, idx, value.charAt(idx)));
-
-        idx = ParseUtils.skipSpaces(value, idx);
-
-        if (value.charAt(idx) == '}')
-            return v;
-
-        while (idx < value.length()) {
-
-            int n;
-            try {
-                n = ParseUtils.skipCQLId(value, idx);
-            } catch (IllegalArgumentException e) {
-                throw new InvalidTypeException(String.format("Cannot parse UDT value from \"%s\", cannot parse a CQL identifier at character %d", value, idx), e);
-            }
-            String name = value.substring(idx, n);
-            idx = n;
-
-            if (!contains(name))
-                throw new InvalidTypeException(String.format("Unknown field %s in value \"%s\"", name, value));
-
-            idx = ParseUtils.skipSpaces(value, idx);
-            if (value.charAt(idx++) != ':')
-                throw new InvalidTypeException(String.format("Cannot parse UDT value from \"%s\", at character %d expecting ':' but got '%c'", value, idx, value.charAt(idx)));
-            idx = ParseUtils.skipSpaces(value, idx);
-
-            try {
-                n = ParseUtils.skipCQLValue(value, idx);
-            } catch (IllegalArgumentException e) {
-                throw new InvalidTypeException(String.format("Cannot parse UDT value from \"%s\", invalid CQL value at character %d", value, idx), e);
-            }
-
-            DataType dt = getFieldType(name);
-            v.setBytesUnsafe(name, dt.serialize(dt.parse(value.substring(idx, n)), ProtocolVersion.V3));
-            idx = n;
-
-            idx = ParseUtils.skipSpaces(value, idx);
-            if (value.charAt(idx) == '}')
-                return v;
-            if (value.charAt(idx) != ',')
-                throw new InvalidTypeException(String.format("Cannot parse UDT value from \"%s\", at character %d expecting ',' but got '%c'", value, idx, value.charAt(idx)));
-            ++idx; // skip ','
-
-            idx = ParseUtils.skipSpaces(value, idx);
-        }
-        throw new InvalidTypeException(String.format("Malformed UDT value \"%s\", missing closing '}'", value));
+    @Override
+    public String asFunctionParameterString() {
+        return Metadata.escapeId(getTypeName());
     }
 
     /**
@@ -349,6 +325,31 @@ public class UserType extends DataType implements Iterable<UserType.Field> {
         @Override
         public String toString() {
             return Metadata.escapeId(name) + ' ' + type;
+        }
+    }
+
+    /**
+     * A "shallow" definition of a UDT that only contains the keyspace and type name, without any information
+     * about the type's structure.
+     * <p/>
+     * This is used for internal dependency analysis only, and never returned to the client.
+     *
+     * @since 3.0.0
+     */
+    static class Shallow extends DataType {
+
+        final String keyspaceName;
+        final String typeName;
+
+        Shallow(String keyspaceName, String typeName) {
+            super(Name.UDT);
+            this.keyspaceName = keyspaceName;
+            this.typeName = typeName;
+        }
+
+        @Override
+        public boolean isFrozen() {
+            return false;
         }
     }
 }

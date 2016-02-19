@@ -16,10 +16,13 @@
 package com.datastax.driver.core;
 
 import com.datastax.driver.core.exceptions.PagingStateException;
+import com.datastax.driver.core.exceptions.UnsupportedProtocolVersionException;
 import com.datastax.driver.core.policies.RetryPolicy;
 import com.datastax.driver.core.querybuilder.BuiltStatement;
+import com.google.common.collect.ImmutableMap;
 
 import java.nio.ByteBuffer;
+import java.util.Map;
 
 /**
  * An executable query.
@@ -30,17 +33,28 @@ import java.nio.ByteBuffer;
  */
 public abstract class Statement {
 
+    /**
+     * A special ByteBuffer value that can be used with custom payloads
+     * to denote a null value in a payload map.
+     */
+    public static final ByteBuffer NULL_PAYLOAD_VALUE = ByteBuffer.allocate(0);
+
     // An exception to the RegularStatement, BoundStatement or BatchStatement rule above. This is
     // used when preparing a statement and for other internal queries. Do not expose publicly.
     static final Statement DEFAULT = new Statement() {
         @Override
-        public ByteBuffer getRoutingKey() {
+        public ByteBuffer getRoutingKey(ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
             return null;
         }
 
         @Override
         public String getKeyspace() {
             return null;
+        }
+
+        @Override
+        public ConsistencyLevel getConsistencyLevel() {
+            return ConsistencyLevel.ONE;
         }
     };
 
@@ -49,9 +63,11 @@ public abstract class Statement {
     private volatile boolean traceQuery;
     private volatile int fetchSize;
     private volatile long defaultTimestamp = Long.MIN_VALUE;
+    private volatile int readTimeoutMillis = Integer.MIN_VALUE;
     private volatile RetryPolicy retryPolicy;
     private volatile ByteBuffer pagingState;
     protected volatile Boolean idempotent;
+    private volatile Map<String, ByteBuffer> outgoingPayload;
 
     // We don't want to expose the constructor, because the code relies on this being only sub-classed by RegularStatement, BoundStatement and BatchStatement
     Statement() {
@@ -169,9 +185,15 @@ public abstract class Statement {
      * to fail and if the load balancing policy used is not token aware, then
      * the routing key can be safely ignored.
      *
+     * @param protocolVersion the protocol version that will be used if the actual
+     *                        implementation needs to serialize something to compute
+     *                        the key.
+     * @param codecRegistry   the codec registry that will be used if the actual
+     *                        implementation needs to serialize something to compute
+     *                        this key.
      * @return the routing key for this query or {@code null}.
      */
-    public abstract ByteBuffer getRoutingKey();
+    public abstract ByteBuffer getRoutingKey(ProtocolVersion protocolVersion, CodecRegistry codecRegistry);
 
     /**
      * Returns the keyspace this query operates on.
@@ -301,6 +323,31 @@ public abstract class Statement {
     }
 
     /**
+     * Overrides the default per-host read timeout ({@link SocketOptions#getReadTimeoutMillis()})
+     * for this statement.
+     * <p/>
+     * You should only override this only for statements for which the coordinator may allow a longer server-side
+     * timeout (for example aggregation queries).
+     *
+     * @param readTimeoutMillis the timeout to set. Must be greater than 0 (or the default will be used).
+     * @return this {@code Statement} object.
+     */
+    public Statement setReadTimeoutMillis(int readTimeoutMillis) {
+        this.readTimeoutMillis = readTimeoutMillis;
+        return this;
+    }
+
+    /**
+     * Return the per-host read timeout that was set for this statement.
+     *
+     * @return the timeout. Note that a negative value means that the default
+     * {@link SocketOptions#getReadTimeoutMillis()} will be used.
+     */
+    public int getReadTimeoutMillis() {
+        return readTimeoutMillis;
+    }
+
+    /**
      * Sets the paging state.
      * <p/>
      * This will cause the next execution of this statement to fetch results from a given
@@ -348,18 +395,21 @@ public abstract class Statement {
      * with a higher version. If that is a problem for you, consider using the "unsafe" API (see
      * {@link #setPagingStateUnsafe(byte[])}).
      *
-     * @param pagingState the paging state to set, or {@code null} to remove any state that was
-     *                    previously set on this statement.
+     * @param pagingState   the paging state to set, or {@code null} to remove any state that was
+     *                      previously set on this statement.
+     * @param codecRegistry the codec registry that will be used if this method needs to serialize the
+     *                      statement's values in order to check that the paging state matches.
      * @return this {@code Statement} object.
      * @throws PagingStateException if the paging state does not match this statement.
+     * @see #setPagingState(PagingState)
      */
-    public Statement setPagingState(PagingState pagingState) {
+    public Statement setPagingState(PagingState pagingState, CodecRegistry codecRegistry) {
         if (this instanceof BatchStatement) {
             throw new UnsupportedOperationException("Cannot set the paging state on a batch statement");
         } else {
             if (pagingState == null) {
                 this.pagingState = null;
-            } else if (pagingState.matches(this)) {
+            } else if (pagingState.matches(this, codecRegistry)) {
                 this.pagingState = pagingState.getRawState();
             } else {
                 throw new PagingStateException("Paging state mismatch, "
@@ -368,6 +418,27 @@ public abstract class Statement {
             }
         }
         return this;
+    }
+
+    /**
+     * Sets the paging state.
+     * <p/>
+     * This method calls {@link #setPagingState(PagingState, CodecRegistry)} with {@link CodecRegistry#DEFAULT_INSTANCE}.
+     * Whether you should use this or the other variant depends on the type of statement this is
+     * called on:
+     * <ul>
+     * <li>for a {@link BoundStatement}, the codec registry isn't actually needed, so it's always safe to
+     * use this method;</li>
+     * <li>for a {@link SimpleStatement} or {@link BuiltStatement}, you can use this method if you use no
+     * custom codecs, or if your custom codecs are registered with the default registry. Otherwise, use
+     * the other method and provide the registry that contains your codecs.</li>
+     * </ul>
+     *
+     * @param pagingState the paging state to set, or {@code null} to remove any state that was
+     *                    previously set on this statement.
+     */
+    public Statement setPagingState(PagingState pagingState) {
+        return setPagingState(pagingState, CodecRegistry.DEFAULT_INSTANCE);
     }
 
     /**
@@ -445,5 +516,50 @@ public abstract class Statement {
             return myValue;
         else
             return queryOptions.getDefaultIdempotence();
+    }
+
+    /**
+     * Returns this statement's outgoing payload.
+     * Each time this statement is executed, this payload will be included in the query request.
+     * <p/>
+     * This method returns {@code null} if no payload has been set, otherwise
+     * it always returns immutable maps.
+     * <p/>
+     * This feature is only available with {@link ProtocolVersion#V4} or above.
+     * Trying to include custom payloads in requests sent by the driver
+     * under lower protocol versions will result in an
+     * {@link com.datastax.driver.core.exceptions.UnsupportedFeatureException}
+     * (wrapped in a {@link com.datastax.driver.core.exceptions.NoHostAvailableException}).
+     *
+     * @return the outgoing payload to include with this statement,
+     * or {@code null} if no payload has been set.
+     * @since 2.2
+     */
+    public Map<String, ByteBuffer> getOutgoingPayload() {
+        return outgoingPayload;
+    }
+
+    /**
+     * Set the given outgoing payload on this statement.
+     * Each time this statement is executed, this payload will be included in the query request.
+     * <p/>
+     * This method makes a defensive copy of the given map, but its values
+     * remain inherently mutable. Care should be taken not to modify the original map
+     * once it is passed to this method.
+     * <p/>
+     * This feature is only available with {@link ProtocolVersion#V4} or above.
+     * Trying to include custom payloads in requests sent by the driver
+     * under lower protocol versions will result in an
+     * {@link com.datastax.driver.core.exceptions.UnsupportedFeatureException}
+     * (wrapped in a {@link com.datastax.driver.core.exceptions.NoHostAvailableException}).
+     *
+     * @param payload the outgoing payload to include with this statement,
+     *                or {@code null} to clear any previously entered payload.
+     * @return this {@link Statement} object.
+     * @since 2.2
+     */
+    public Statement setOutgoingPayload(Map<String, ByteBuffer> payload) {
+        this.outgoingPayload = payload == null ? null : ImmutableMap.copyOf(payload);
+        return this;
     }
 }

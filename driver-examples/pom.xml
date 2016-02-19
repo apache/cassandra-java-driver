@@ -16,68 +16,68 @@
 
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <parent>
-    <groupId>com.datastax.cassandra</groupId>
-    <artifactId>cassandra-driver-parent</artifactId>
-    <version>2.1.10-SNAPSHOT</version>
-  </parent>
-  <artifactId>cassandra-driver-examples-parent</artifactId>
-  <packaging>pom</packaging>
-  <name>DataStax Java Driver for Apache Cassandra Examples</name>
-  <description>A collection of examples to demonstrate DataStax Java Driver for Apache Cassandra.</description>
-  <url>https://github.com/datastax/java-driver</url>
-
-  <properties>
-    <main.basedir>${project.parent.basedir}</main.basedir>
-  </properties>
-
-  <modules>
-    <module>stress</module>
-    <module>osgi</module>
-  </modules>
-  
-  <licenses>
-    <license>
-      <name>Apache 2</name>
-      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-      <distribution>repo</distribution>
-      <comments>Apache License Version 2.0</comments>
-    </license>
-  </licenses>
-  
-  <scm>
-    <connection>scm:git:git@github.com:datastax/java-driver.git</connection>
-    <developerConnection>scm:git:git@github.com:datastax/java-driver.git</developerConnection>
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.datastax.cassandra</groupId>
+        <artifactId>cassandra-driver-parent</artifactId>
+        <version>3.0.1-SNAPSHOT</version>
+    </parent>
+    <artifactId>cassandra-driver-examples-parent</artifactId>
+    <packaging>pom</packaging>
+    <name>DataStax Java Driver for Apache Cassandra Examples</name>
+    <description>A collection of examples to demonstrate DataStax Java Driver for Apache Cassandra.</description>
     <url>https://github.com/datastax/java-driver</url>
-    <tag>HEAD</tag>
-  </scm>
-  
-  <developers>
-    <developer>
-      <name>Various</name>
-      <organization>DataStax</organization>
-    </developer>
-  </developers>
 
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-install-plugin</artifactId>
-        <version>2.5.1</version>
-        <configuration>
-          <skip>true</skip>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-deploy-plugin</artifactId>
-        <version>2.8.1</version>
-        <configuration>
-          <skip>true</skip>
-        </configuration>
-      </plugin>
-    </plugins>
-  </build>
+    <properties>
+        <main.basedir>${project.parent.basedir}</main.basedir>
+    </properties>
+
+    <modules>
+        <module>stress</module>
+        <module>osgi</module>
+    </modules>
+
+    <licenses>
+        <license>
+            <name>Apache 2</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+            <comments>Apache License Version 2.0</comments>
+        </license>
+    </licenses>
+
+    <scm>
+        <connection>scm:git:git@github.com:datastax/java-driver.git</connection>
+        <developerConnection>scm:git:git@github.com:datastax/java-driver.git</developerConnection>
+        <url>https://github.com/datastax/java-driver</url>
+        <tag>HEAD</tag>
+    </scm>
+
+    <developers>
+        <developer>
+            <name>Various</name>
+            <organization>DataStax</organization>
+        </developer>
+    </developers>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-install-plugin</artifactId>
+                <version>2.5.1</version>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <version>2.8.1</version>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>

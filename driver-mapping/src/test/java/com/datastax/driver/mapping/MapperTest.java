@@ -58,6 +58,7 @@ public class MapperTest extends CCMTestsSupport {
      *
      * And the next step will be to support UDT (which should be relatively simple).
      */
+    @SuppressWarnings("unused")
     @Table(name = "users",
             readConsistency = "QUORUM",
             writeConsistency = "QUORUM")
@@ -65,8 +66,6 @@ public class MapperTest extends CCMTestsSupport {
 
         // Dummy constant to test that static fields are properly ignored
         public static final int FOO = 1;
-
-        public enum Gender {FEMALE, MALE}
 
         @PartitionKey
         @Column(name = "user_id")
@@ -77,16 +76,13 @@ public class MapperTest extends CCMTestsSupport {
         @Column // not strictly required, but we want to check that the annotation works without a name
         private int year;
 
-        private Gender gender;
-
         public User() {
         }
 
-        public User(String name, String email, Gender gender) {
+        public User(String name, String email) {
             this.userId = UUIDs.random();
             this.name = name;
             this.email = email;
-            this.gender = gender;
         }
 
         public UUID getUserId() {
@@ -117,14 +113,6 @@ public class MapperTest extends CCMTestsSupport {
             return year;
         }
 
-        public void setGender(Gender gender) {
-            this.gender = gender;
-        }
-
-        public Gender getGender() {
-            return gender;
-        }
-
         public void setYear(int year) {
             this.year = year;
         }
@@ -138,13 +126,12 @@ public class MapperTest extends CCMTestsSupport {
             return Objects.equal(userId, that.userId)
                     && Objects.equal(name, that.name)
                     && Objects.equal(email, that.email)
-                    && Objects.equal(year, that.year)
-                    && Objects.equal(gender, that.gender);
+                    && Objects.equal(year, that.year);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hashCode(userId, name, email, year, gender);
+            return Objects.hashCode(userId, name, email, year);
         }
     }
 
@@ -154,6 +141,7 @@ public class MapperTest extends CCMTestsSupport {
      * the order must be specified (@ClusteringColumn(0), @ClusteringColumn(1), ...).
      * The same stands for the @PartitionKey.
      */
+    @SuppressWarnings("unused")
     @Table(name = "posts")
     public static class Post {
 
@@ -292,13 +280,6 @@ public class MapperTest extends CCMTestsSupport {
         Result<Post> getAll();
     }
 
-    @Accessor
-    public interface UserAccessor {
-        // Demonstrates use of an enum as an accessor parameter
-        @Query("UPDATE users SET name=?, gender=? WHERE user_id=?")
-        ResultSet updateNameAndGender(String name, User.Gender gender, UUID userId);
-    }
-
     @Test(groups = "short")
     public void testStaticEntity() throws Exception {
         // Very simple mapping a User, saving and getting it. Note that here we
@@ -306,7 +287,7 @@ public class MapperTest extends CCMTestsSupport {
         // supported by the Mapper object.
         Mapper<User> m = new MappingManager(session()).mapper(User.class);
 
-        User u1 = new User("Paul", "paul@yahoo.com", User.Gender.MALE);
+        User u1 = new User("Paul", "paul@yahoo.com");
         u1.setYear(2014);
         m.save(u1);
 
@@ -324,7 +305,7 @@ public class MapperTest extends CCMTestsSupport {
 
         Mapper<Post> m = manager.mapper(Post.class);
 
-        User u1 = new User("Paul", "paul@gmail.com", User.Gender.MALE);
+        User u1 = new User("Paul", "paul@gmail.com");
         Post p1 = new Post(u1, "Something about mapping");
         Post p2 = new Post(u1, "Something else");
         Post p3 = new Post(u1, "Something more");
@@ -376,15 +357,6 @@ public class MapperTest extends CCMTestsSupport {
 
         assertTrue(postAccessor.getAllAsync(u1.getUserId()).get().isExhausted());
 
-        // Pass an enum constant as an accessor parameter
-        UserAccessor userAccessor = manager.createAccessor(UserAccessor.class);
-        userAccessor.updateNameAndGender("Paule", User.Gender.FEMALE, u1.getUserId());
-        Mapper<User> userMapper = manager.mapper(User.class);
-        assertEquals(userMapper.get(u1.getUserId()).getGender(), User.Gender.FEMALE);
-
-        // Test that an enum value can be unassigned through an accessor (set to null).
-        userAccessor.updateNameAndGender("Paule", null, u1.getUserId());
-        assertEquals(userMapper.get(u1.getUserId()).getGender(), null);
     }
 
     @Test(groups = "short")
@@ -394,7 +366,7 @@ public class MapperTest extends CCMTestsSupport {
         Mapper<Post> m = manager.mapper(Post.class);
 
         // Insert a few posts
-        User u1 = new User("Paul", "paul@gmail.com", User.Gender.MALE);
+        User u1 = new User("Paul", "paul@gmail.com");
         Post p1 = new Post(u1, "Something about mapping");
         Post p2 = new Post(u1, "Something else");
         Post p3 = new Post(u1, "Something more");
