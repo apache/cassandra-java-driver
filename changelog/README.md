@@ -14,6 +14,7 @@
 - [improvement] JAVA-833: Improve message when a nested type can't be serialized.
 - [improvement] JAVA-1011: Expose PoolingOptions default values.
 - [improvement] JAVA-630: Don't process DOWN events for nodes that have active connections.
+- [improvement] JAVA-851: Improve UUIDs javadoc with regard to user-provided timestamps.
 
 Merged from 2.0 branch:
 
