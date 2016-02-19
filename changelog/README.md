@@ -31,6 +31,7 @@
 - [bug] JAVA-1089: Set LWT made from BuiltStatements to non-idempotent.
 - [improvement] JAVA-923: Position idempotent flag on object mapper queries.
 - [new feature] JAVA-1019: SchemaBuilder support for CREATE/ALTER/DROP KEYSPACE.
+- [bug] JAVA-1070: The Mapper should not prepare queries synchronously.
 
 Merged from 2.0 branch:
 
