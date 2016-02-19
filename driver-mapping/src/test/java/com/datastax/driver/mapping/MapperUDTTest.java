@@ -17,7 +17,6 @@ package com.datastax.driver.mapping;
 
 import com.datastax.driver.core.CCMTestsSupport;
 import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.utils.UUIDs;
 import com.datastax.driver.mapping.annotations.*;
 import com.google.common.base.Objects;
 import com.google.common.collect.Maps;
@@ -35,7 +34,8 @@ public class MapperUDTTest extends CCMTestsSupport {
     @Override
     public void onTestContextInitialized() {
         execute("CREATE TYPE address (street text, city text, zip_code int, phones set<text>)",
-                "CREATE TABLE users (user_id uuid PRIMARY KEY, name text, mainaddress frozen<address>, other_addresses map<text,frozen<address>>)");
+                "CREATE TYPE user_id (id uuid, login text)",
+                "CREATE TABLE users (user_id frozen<user_id> PRIMARY KEY, name text, mainaddress frozen<address>, other_addresses map<text,frozen<address>>)");
     }
 
     @BeforeMethod(groups = "short")
@@ -47,9 +47,11 @@ public class MapperUDTTest extends CCMTestsSupport {
             readConsistency = "QUORUM",
             writeConsistency = "QUORUM")
     public static class User {
+
         @PartitionKey
         @Column(name = "user_id")
-        private UUID userId;
+        @Frozen
+        private UserId userId;
 
         private String name;
 
@@ -64,17 +66,17 @@ public class MapperUDTTest extends CCMTestsSupport {
         }
 
         public User(String name, Address address) {
-            this.userId = UUIDs.random();
+            this.userId = new UserId(UUID.randomUUID(), name);
             this.name = name;
             this.mainAddress = address;
             this.otherAddresses = new HashMap<String, Address>();
         }
 
-        public UUID getUserId() {
+        public UserId getUserId() {
             return userId;
         }
 
-        public void setUserId(UUID userId) {
+        public void setUserId(UserId userId) {
             this.userId = userId;
         }
 
@@ -191,16 +193,59 @@ public class MapperUDTTest extends CCMTestsSupport {
         }
     }
 
+    @UDT(name = "user_id")
+    public static class UserId {
+
+        private UUID id;
+
+        private String login;
+
+        public UserId() {
+        }
+
+        public UserId(UUID id, String login) {
+            this.id = id;
+            this.login = login;
+        }
+
+        public UUID getId() {
+            return id;
+        }
+
+        public void setId(UUID id) {
+            this.id = id;
+        }
+
+        public String getLogin() {
+            return login;
+        }
+
+        public void setLogin(String login) {
+            this.login = login;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (other instanceof UserId) {
+                UserId that = (UserId) other;
+                return Objects.equal(this.id, that.id) &&
+                        Objects.equal(this.login, that.login);
+            }
+            return false;
+        }
+
+    }
+
     @Accessor
     public interface UserAccessor {
         @Query("SELECT * FROM users WHERE user_id=:userId")
-        User getOne(@Param("userId") UUID userId);
+        User getOne(@Param("userId") UserId id);
 
         @Query("UPDATE users SET other_addresses[:name]=:address WHERE user_id=:id")
-        ResultSet addAddress(@Param("id") UUID id, @Param("name") String addressName, @Param("address") Address address);
+        ResultSet addAddress(@Param("id") UserId id, @Param("name") String addressName, @Param("address") Address address);
 
         @Query("UPDATE users SET other_addresses=:addresses where user_id=:id")
-        ResultSet setOtherAddresses(@Param("id") UUID id, @Param("addresses") Map<String, Address> addresses);
+        ResultSet setOtherAddresses(@Param("id") UserId id, @Param("addresses") Map<String, Address> addresses);
 
         @Query("SELECT * FROM users")
         Result<User> getAll();
@@ -267,4 +312,22 @@ public class MapperUDTTest extends CCMTestsSupport {
         assertEquals(u.one(), u5);
         assertTrue(u.isExhausted());
     }
+
+    /**
+     * Ensures that an entity that has an UDT as part of its primary key
+     * can be successfully stored and retrieved.
+     *
+     * @jira_ticket JAVA-831
+     */
+    @Test(groups = "short")
+    public void should_handle_UDT_in_partition_key() throws Exception {
+        Mapper<User> m = new MappingManager(session()).mapper(User.class);
+        User u1 = new User("Paul", null);
+        m.save(u1);
+        User u2 = m.get(u1.getUserId());
+        assertThat(u1).isEqualTo(u2);
+        m.delete(u1.getUserId());
+        assertThat(m.get(u1.getUserId())).isNull();
+    }
+
 }

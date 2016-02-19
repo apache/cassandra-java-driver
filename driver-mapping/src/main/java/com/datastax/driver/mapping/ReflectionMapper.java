@@ -72,7 +72,7 @@ class ReflectionMapper<T> extends EntityMapper<T> {
         @Override
         public Object getValue(T entity) {
             try {
-                return readMethod.invoke(entity);
+                return toSerializableValue(readMethod.invoke(entity));
             } catch (IllegalArgumentException e) {
                 throw new IllegalArgumentException("Could not get field '" + fieldName + "'");
             } catch (Exception e) {
@@ -111,19 +111,6 @@ class ReflectionMapper<T> extends EntityMapper<T> {
             }
         }
 
-        @SuppressWarnings("rawtypes")
-        @Override
-        public Object getValue(T entity) {
-            Object value = super.getValue(entity);
-            switch (enumType) {
-                case STRING:
-                    return (value == null) ? null : value.toString();
-                case ORDINAL:
-                    return (value == null) ? null : ((Enum) value).ordinal();
-            }
-            throw new AssertionError();
-        }
-
         @Override
         public void setValue(Object entity, Object value) {
             Object converted = null;
@@ -137,6 +124,18 @@ class ReflectionMapper<T> extends EntityMapper<T> {
             }
             super.setValue(entity, converted);
         }
+
+        @Override
+        Object toSerializableValue(Object value) {
+            switch (enumType) {
+                case STRING:
+                    return (value == null) ? null : value.toString();
+                case ORDINAL:
+                    return (value == null) ? null : ((Enum) value).ordinal();
+            }
+            throw new AssertionError();
+        }
+
     }
 
     private static class UDTColumnMapper<T, U> extends LiteralMapper<T> {
@@ -148,19 +147,23 @@ class ReflectionMapper<T> extends EntityMapper<T> {
         }
 
         @Override
-        public Object getValue(T entity) {
-            @SuppressWarnings("unchecked")
-            U udtEntity = (U) super.getValue(entity);
-            return udtEntity == null ? null : udtMapper.toUDT(udtEntity);
-        }
-
-        @Override
         public void setValue(Object entity, Object value) {
             assert value instanceof UDTValue;
             UDTValue udtValue = (UDTValue) value;
             assert udtValue.getType().equals(udtMapper.getUserType());
 
             super.setValue(entity, udtMapper.toEntity((udtValue)));
+        }
+
+        @Override
+        Object toSerializableValue(Object value) {
+            if (value == null) {
+                return null;
+            } else {
+                @SuppressWarnings("unchecked")
+                U mappedUdt = (U) value;
+                return udtMapper.toUDT(mappedUdt);
+            }
         }
     }
 
@@ -173,15 +176,13 @@ class ReflectionMapper<T> extends EntityMapper<T> {
         }
 
         @Override
-        @SuppressWarnings("unchecked")
-        public Object getValue(T entity) {
-            Object valueWithEntities = super.getValue(entity);
-            return (T) UDTMapper.convertEntitiesToUDTs(valueWithEntities, inferredCQLType);
+        public void setValue(Object entity, Object valueWithUDTValues) {
+            super.setValue(entity, UDTMapper.convertUDTsToEntities(valueWithUDTValues, inferredCQLType));
         }
 
         @Override
-        public void setValue(Object entity, Object valueWithUDTValues) {
-            super.setValue(entity, UDTMapper.convertUDTsToEntities(valueWithUDTValues, inferredCQLType));
+        Object toSerializableValue(Object value) {
+            return UDTMapper.convertEntitiesToUDTs(value, inferredCQLType);
         }
     }
 

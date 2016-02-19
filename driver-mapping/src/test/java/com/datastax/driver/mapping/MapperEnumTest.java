@@ -21,6 +21,7 @@ import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
 import org.testng.annotations.Test;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertNull;
 
 /**
@@ -32,7 +33,8 @@ public class MapperEnumTest extends CCMTestsSupport {
     @Override
     public void onTestContextInitialized() {
         execute("CREATE TABLE asOrdinal (k int primary key, v int)",
-                "CREATE TABLE asString (k int primary key, v text)");
+                "CREATE TABLE asString (k int primary key, v text)",
+                "CREATE TABLE asPk (k int primary key, v int)");
     }
 
     public enum Enum {
@@ -57,6 +59,25 @@ public class MapperEnumTest extends CCMTestsSupport {
         AsString o = mapper.get(1);
 
         assertNull(o.getV());
+    }
+
+    /**
+     * Ensures that an entity that has an Enum as part of its primary key
+     * can be successfully stored and retrieved.
+     *
+     * @jira_ticket JAVA-831
+     */
+    @Test(groups = "short")
+    public void should_handle_enum_as_primary_key() {
+        Mapper<AsPk> mapper = new MappingManager(session()).mapper(AsPk.class);
+
+        mapper.save(new AsPk(Enum.FOO, 42));
+        AsPk o = mapper.get(Enum.FOO);
+
+        assertThat(o.getV()).isEqualTo(42);
+        mapper.delete(Enum.FOO);
+
+        assertThat(mapper.get(Enum.FOO)).isNull();
     }
 
     @Table(name = "asOrdinal")
@@ -124,4 +145,39 @@ public class MapperEnumTest extends CCMTestsSupport {
             this.v = v;
         }
     }
+
+    @Table(name = "asPk")
+    public static class AsPk {
+
+        @PartitionKey
+        @Enumerated(EnumType.ORDINAL)
+        private Enum k;
+
+        private int v;
+
+        public AsPk(Enum k, int v) {
+            this.k = k;
+            this.v = v;
+        }
+
+        public AsPk() {
+        }
+
+        public Enum getK() {
+            return k;
+        }
+
+        public void setK(Enum k) {
+            this.k = k;
+        }
+
+        public int getV() {
+            return v;
+        }
+
+        public void setV(int v) {
+            this.v = v;
+        }
+    }
+
 }

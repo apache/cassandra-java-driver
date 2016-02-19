@@ -329,7 +329,7 @@ public class Mapper<T> {
             if (value == null) {
                 throw new IllegalArgumentException(String.format("Invalid null value for PRIMARY KEY column %s (argument %d)", column.getColumnName(), i));
             }
-            bs.setBytesUnsafe(i++, column.getDataType().serialize(value, protocolVersion));
+            bs.setBytesUnsafe(i++, column.getDataType().serialize(column.toSerializableValue(value), protocolVersion));
         }
 
         if (mapper.readConsistency != null)
@@ -511,7 +511,7 @@ public class Mapper<T> {
             if (value == null) {
                 throw new IllegalArgumentException(String.format("Invalid null value for PRIMARY KEY column %s (argument %d)", column.getColumnName(), i));
             }
-            bs.setBytesUnsafe(i++, column.getDataType().serialize(value, protocolVersion));
+            bs.setBytesUnsafe(i++, column.getDataType().serialize(column.toSerializableValue(value), protocolVersion));
             columnNumber++;
         }
         return bs;
