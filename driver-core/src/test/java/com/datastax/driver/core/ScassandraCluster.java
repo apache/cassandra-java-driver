@@ -259,7 +259,7 @@ public class ScassandraCluster {
         start(cluster, ipSuffix(dc, node));
     }
 
-    private List<Long> getTokensForDC(int dc) {
+    public List<Long> getTokensForDC(int dc) {
         // Offset DCs by dc * 100 to ensure unique tokens.
         int offset = (dc - 1) * 100;
         int dcNodeCount = nodes(dc).size();
@@ -367,7 +367,7 @@ public class ScassandraCluster {
                 : defaultValue;
     }
 
-    static final org.scassandra.http.client.types.ColumnMetadata[] SELECT_PEERS = {
+    public static final org.scassandra.http.client.types.ColumnMetadata[] SELECT_PEERS = {
             column("peer", INET),
             column("rpc_address", INET),
             column("data_center", TEXT),
@@ -376,7 +376,7 @@ public class ScassandraCluster {
             column("tokens", set(TEXT))
     };
 
-    static final org.scassandra.http.client.types.ColumnMetadata[] SELECT_LOCAL = {
+    public static final org.scassandra.http.client.types.ColumnMetadata[] SELECT_LOCAL = {
             column("key", TEXT),
             column("bootstrapped", TEXT),
             column("broadcast_address", INET),

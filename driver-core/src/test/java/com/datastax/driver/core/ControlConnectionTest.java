@@ -22,13 +22,17 @@ import com.datastax.driver.core.policies.ReconnectionPolicy;
 import com.datastax.driver.core.utils.CassandraVersion;
 import com.google.common.base.Function;
 import com.google.common.collect.HashMultiset;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
+import org.scassandra.http.client.PrimingRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.Test;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
@@ -37,9 +41,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.CreateCCM.TestMode.PER_METHOD;
+import static com.datastax.driver.core.ScassandraCluster.SELECT_PEERS;
+import static com.datastax.driver.core.ScassandraCluster.datacenter;
 import static com.datastax.driver.core.TestUtils.nonDebouncingQueryOptions;
 import static com.datastax.driver.core.TestUtils.nonQuietClusterCloseOptions;
 import static com.google.common.collect.Lists.newArrayList;
+import static org.scassandra.http.client.PrimingRequest.then;
 
 @CreateCCM(PER_METHOD)
 @CCMConfig(dirtiesContext = true, createCluster = false)
@@ -210,6 +217,96 @@ public class ControlConnectionTest extends CCMTestsSupport {
                             + " is a bug.")
                     .isEqualTo(hostCount);
         } finally {
+            scassandras.stop();
+        }
+
+    }
+
+    /**
+     * Ensures that when a node changes its broadcast address (for example, after
+     * a shutdown and startup on EC2 and its public IP has changed),
+     * the driver will be able to detect that change and recognize the host
+     * in the system.peers table in spite of that change.
+     *
+     * @jira_ticket JAVA-1038
+     * @expected_result The driver should be able to detect that a host has changed its broadcast address
+     * and update its metadata accordingly.
+     * @test_category control_connection
+     * @since 2.1.10
+     */
+    @SuppressWarnings("unchecked")
+    @Test(groups = "short")
+    @CCMConfig(createCcm = false)
+    public void should_fetch_whole_peers_table_if_broadcast_address_changed() throws UnknownHostException {
+        ScassandraCluster scassandras = ScassandraCluster.builder().withNodes(2).build();
+        scassandras.init();
+
+        InetSocketAddress node2RpcAddress = scassandras.address(2);
+
+        Cluster cluster = Cluster.builder()
+                .addContactPoints(scassandras.address(1).getAddress())
+                .withPort(scassandras.getBinaryPort())
+                .withNettyOptions(nonQuietClusterCloseOptions)
+                .build();
+
+        try {
+
+            cluster.init();
+
+            Host host2 = cluster.getMetadata().getHost(node2RpcAddress);
+            assertThat(host2).isNotNull();
+
+            InetAddress node2OldBroadcastAddress = host2.listenAddress;
+            InetAddress node2NewBroadcastAddress = InetAddress.getByName("1.2.3.4");
+
+            // host 2 has the old broadcast_address (which is identical to its rpc_broadcast_address)
+            assertThat(host2.getAddress())
+                    .isEqualTo(node2OldBroadcastAddress);
+
+            // simulate a change in host 2 public IP
+            Map<String, ?> rows = ImmutableMap.<String, Object>builder()
+                    .put("peer", node2NewBroadcastAddress) // new broadcast address for host 2
+                    .put("rpc_address", host2.getAddress()) // rpc_broadcast_address remains unchanged
+                    .put("data_center", datacenter(1))
+                    .put("rack", "rack1")
+                    .put("release_version", "2.1.8")
+                    .put("tokens", ImmutableSet.of(Long.toString(scassandras.getTokensForDC(1).get(1))))
+                    .build();
+
+            scassandras.node(1).primingClient().clearAllPrimes();
+
+            // the driver will attempt to locate host2 in system.peers by its old broadcast address, and that will fail
+            scassandras.node(1).primingClient().prime(PrimingRequest.queryBuilder()
+                    .withQuery("SELECT * FROM system.peers WHERE peer='" + node2OldBroadcastAddress + "'")
+                    .withThen(then()
+                            .withColumnTypes(SELECT_PEERS)
+                            .build())
+                    .build());
+
+            // the driver will then attempt to fetch the whole system.peers
+            scassandras.node(1).primingClient().prime(PrimingRequest.queryBuilder()
+                    .withQuery("SELECT * FROM system.peers")
+                    .withThen(then()
+                            .withColumnTypes(SELECT_PEERS)
+                            .withRows(rows)
+                            .build())
+                    .build());
+
+            assertThat(cluster.manager.controlConnection.refreshNodeInfo(host2)).isTrue();
+
+            host2 = cluster.getMetadata().getHost(node2RpcAddress);
+
+            // host2 should now have a new broadcast address
+            assertThat(host2).isNotNull();
+            assertThat(host2.listenAddress)
+                    .isEqualTo(node2NewBroadcastAddress);
+
+            // host 2 should keep its old rpc broadcast address
+            assertThat(host2.getSocketAddress())
+                    .isEqualTo(node2RpcAddress);
+
+        } finally {
+            cluster.close();
             scassandras.stop();
         }
 
