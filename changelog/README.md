@@ -2,6 +2,10 @@
 
 ### 3.0.1 (in progress)
 
+Merged from 2.1 branch:
+
+- [improvement] JAVA-1011: Expose PoolingOptions default values.
+
 
 ### 3.0.0
 
