@@ -6,6 +6,7 @@ Merged from 2.1 branch:
 
 - [improvement] JAVA-1011: Expose PoolingOptions default values.
 - [improvement] JAVA-630: Don't process DOWN events for nodes that have active connections.
+- [improvement] JAVA-851: Improve UUIDs javadoc with regard to user-provided timestamps.
 
 
 ### 3.0.0
