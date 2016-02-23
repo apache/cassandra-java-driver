@@ -53,6 +53,8 @@ abstract class ConvictionPolicy {
 
     abstract boolean canReconnectNow();
 
+    abstract boolean hasActiveConnections();
+
     /**
      * Simple factory interface to allow creating {@link ConvictionPolicy} instances.
      */
@@ -130,6 +132,11 @@ abstract class ConvictionPolicy {
                     System.nanoTime() >= nextReconnectionTime;
             Host.statesLogger.trace("canReconnectNow={}", canReconnectNow);
             return canReconnectNow;
+        }
+
+        @Override
+        boolean hasActiveConnections() {
+            return openConnections.get() > 0;
         }
 
         static class Factory implements ConvictionPolicy.Factory {
