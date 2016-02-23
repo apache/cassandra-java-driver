@@ -159,7 +159,7 @@ abstract class TypeCodec<T> {
     }
 
     /* This is ugly, but not sure how we can do much better/faster
-     * Returns null if it's doesn't correspond to a known type.
+     * Throws IllegalArgumentException if it's doesn't correspond to a known type.
      *
      * Also, note that this only a dataType that is fit for the value,
      * but for instance, for a UUID, this will return DataType.uuid() but
@@ -187,7 +187,7 @@ abstract class TypeCodec<T> {
                 return DataType.decimal();
             if (value instanceof BigInteger)
                 return DataType.varint();
-            return null;
+            throw new IllegalArgumentException("Type " + value.getClass().getName() + " does not correspond to any CQL type");
         }
 
         if (value instanceof String)
@@ -210,7 +210,7 @@ abstract class TypeCodec<T> {
             if (l.isEmpty())
                 return DataType.list(DataType.blob());
             DataType eltType = getDataTypeFor(l.get(0));
-            return eltType == null ? null : DataType.list(eltType);
+            return DataType.list(eltType);
         }
 
         if (value instanceof Set) {
@@ -218,7 +218,7 @@ abstract class TypeCodec<T> {
             if (s.isEmpty())
                 return DataType.set(DataType.blob());
             DataType eltType = getDataTypeFor(s.iterator().next());
-            return eltType == null ? null : DataType.set(eltType);
+            return DataType.set(eltType);
         }
 
         if (value instanceof Map) {
@@ -226,11 +226,9 @@ abstract class TypeCodec<T> {
             if (m.isEmpty())
                 return DataType.map(DataType.blob(), DataType.blob());
             Map.Entry<?, ?> e = m.entrySet().iterator().next();
-            DataType keyType = getDataTypeFor(e.getKey());
-            DataType valueType = getDataTypeFor(e.getValue());
-            return keyType == null || valueType == null
-                    ? null
-                    : DataType.map(keyType, valueType);
+            return DataType.map(
+                    getDataTypeFor(e.getKey()),
+                    getDataTypeFor(e.getValue()));
         }
 
         if (value instanceof UDTValue) {
@@ -241,7 +239,7 @@ abstract class TypeCodec<T> {
             return ((TupleValue) value).getType();
         }
 
-        return null;
+        throw new IllegalArgumentException("Type " + value.getClass().getName() + " does not correspond to any CQL type");
     }
 
     private static ByteBuffer pack(List<ByteBuffer> buffers, int elements, ProtocolVersion version) {
