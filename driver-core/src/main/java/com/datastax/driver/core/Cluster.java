@@ -2625,8 +2625,16 @@ public class Cluster implements Closeable {
                             // But it is unlikely, and don't have too much consequence since we'll try reconnecting
                             // right away, so we favor the detection to make the Host.isUp method more reliable.
                             Host downHost = metadata.getHost(address);
-                            if (downHost != null)
-                                futures.add(execute(hostDown(downHost)));
+                            if (downHost != null) {
+                                // Only process DOWN events if we have no active connections to the host . Otherwise, we
+                                // wait for the connections to fail. This is to prevent against a bad control host
+                                // aggressively marking DOWN all of its peers.
+                                if (downHost.convictionPolicy.hasActiveConnections()) {
+                                    logger.debug("Ignoring down event on {} because it still has active connections", downHost);
+                                } else {
+                                    futures.add(execute(hostDown(downHost)));
+                                }
+                            }
                             break;
                         case REMOVED:
                             Host removedHost = metadata.getHost(address);
@@ -2702,11 +2710,7 @@ public class Cluster implements Closeable {
                 return new ExceptionCatchingRunnable() {
                     @Override
                     public void runMayThrow() throws Exception {
-                        if (controlConnection.refreshNodeInfo(host)) {
-                            onDown(host, false, true);
-                        } else {
-                            logger.debug("Not enough info for {}, ignoring host", host);
-                        }
+                        onDown(host, false, true);
                     }
                 };
             }
