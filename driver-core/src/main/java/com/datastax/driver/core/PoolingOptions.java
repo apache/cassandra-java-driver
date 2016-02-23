@@ -66,33 +66,76 @@ public class PoolingOptions {
      */
     public static final int UNSET = Integer.MIN_VALUE;
 
-    private static final Map<ProtocolVersion, Map<String, Integer>> DEFAULTS = ImmutableMap.<ProtocolVersion, Map<String, Integer>>of(
-            ProtocolVersion.V2, ImmutableMap.<String, Integer>builder()
-                    .put("corePoolLocal", 2)
-                    .put("maxPoolLocal", 8)
-                    .put("corePoolRemote", 1)
-                    .put("maxPoolRemote", 2)
-                    .put("newConnectionThresholdLocal", 100)
-                    .put("newConnectionThresholdRemote", 100)
-                    .put("maxRequestsPerConnectionLocal", 128)
-                    .put("maxRequestsPerConnectionRemote", 128)
+    public static final String CORE_POOL_LOCAL_KEY = "corePoolLocal";
+    public static final String MAX_POOL_LOCAL_KEY = "maxPoolLocal";
+    public static final String CORE_POOL_REMOTE_KEY = "corePoolRemote";
+    public static final String MAX_POOL_REMOTE_KEY = "maxPoolRemote";
+    public static final String NEW_CONNECTION_THRESHOLD_LOCAL_KEY = "newConnectionThresholdLocal";
+    public static final String NEW_CONNECTION_THRESHOLD_REMOTE_KEY = "newConnectionThresholdRemote";
+    public static final String MAX_REQUESTS_PER_CONNECTION_LOCAL_KEY = "maxRequestsPerConnectionLocal";
+    public static final String MAX_REQUESTS_PER_CONNECTION_REMOTE_KEY = "maxRequestsPerConnectionRemote";
+
+    /**
+     * The default values for connection options, that depend on the native protocol version.
+     * <p/>
+     * The map stores protocol versions in ascending order, and only the versions that introduced a change are present.
+     * To find the defaults for a particular version, look for the highest key that is less than or equal to that
+     * version, in other words:
+     * <pre>{@code
+     * ProtocolVersion referenceVersion = null;
+     * for (ProtocolVersion key : DEFAULTS.keySet()) {
+     *     if (key.compareTo(actualVersion) > 0)
+     *         break;
+     *     else
+     *         referenceVersion = key;
+     * }
+     * Map<String, Integer> defaults = DEFAULTS.get(referenceVersion);
+     * }</pre>
+     * Once you've extracted the underlying map, use the keys {@code CORE_POOL_LOCAL_KEY},
+     * {@code MAX_POOL_LOCAL_KEY}, {@code CORE_POOL_REMOTE_KEY}, {@code MAX_POOL_REMOTE_KEY},
+     * {@code NEW_CONNECTION_THRESHOLD_LOCAL_KEY}, {@code NEW_CONNECTION_THRESHOLD_REMOTE_KEY},
+     * {@code MAX_REQUESTS_PER_CONNECTION_LOCAL_KEY} and {@code MAX_REQUESTS_PER_CONNECTION_REMOTE_KEY}.
+     *
+     * @see #UNSET
+     */
+    public static final Map<ProtocolVersion, Map<String, Integer>> DEFAULTS = ImmutableMap.<ProtocolVersion, Map<String, Integer>>of(
+            ProtocolVersion.V1, ImmutableMap.<String, Integer>builder()
+                    .put(CORE_POOL_LOCAL_KEY, 2)
+                    .put(MAX_POOL_LOCAL_KEY, 8)
+                    .put(CORE_POOL_REMOTE_KEY, 1)
+                    .put(MAX_POOL_REMOTE_KEY, 2)
+                    .put(NEW_CONNECTION_THRESHOLD_LOCAL_KEY, 100)
+                    .put(NEW_CONNECTION_THRESHOLD_REMOTE_KEY, 100)
+                    .put(MAX_REQUESTS_PER_CONNECTION_LOCAL_KEY, 128)
+                    .put(MAX_REQUESTS_PER_CONNECTION_REMOTE_KEY, 128)
                     .build(),
 
             ProtocolVersion.V3, ImmutableMap.<String, Integer>builder()
-                    .put("corePoolLocal", 1)
-                    .put("maxPoolLocal", 1)
-                    .put("corePoolRemote", 1)
-                    .put("maxPoolRemote", 1)
-                    .put("newConnectionThresholdLocal", 800)
-                    .put("newConnectionThresholdRemote", 200)
-                    .put("maxRequestsPerConnectionLocal", 1024)
-                    .put("maxRequestsPerConnectionRemote", 256)
+                    .put(CORE_POOL_LOCAL_KEY, 1)
+                    .put(MAX_POOL_LOCAL_KEY, 1)
+                    .put(CORE_POOL_REMOTE_KEY, 1)
+                    .put(MAX_POOL_REMOTE_KEY, 1)
+                    .put(NEW_CONNECTION_THRESHOLD_LOCAL_KEY, 800)
+                    .put(NEW_CONNECTION_THRESHOLD_REMOTE_KEY, 200)
+                    .put(MAX_REQUESTS_PER_CONNECTION_LOCAL_KEY, 1024)
+                    .put(MAX_REQUESTS_PER_CONNECTION_REMOTE_KEY, 256)
                     .build()
     );
 
-    private static final int DEFAULT_IDLE_TIMEOUT_SECONDS = 120;
-    private static final int DEFAULT_POOL_TIMEOUT_MILLIS = 5000;
-    private static final int DEFAULT_HEARTBEAT_INTERVAL_SECONDS = 30;
+    /**
+     * The default value for {@link #getIdleTimeoutSeconds()} ({@value}).
+     */
+    public static final int DEFAULT_IDLE_TIMEOUT_SECONDS = 120;
+
+    /**
+     * The default value for {@link #getPoolTimeoutMillis()} ({@value}).
+     */
+    public static final int DEFAULT_POOL_TIMEOUT_MILLIS = 5000;
+
+    /**
+     * The default value for {@link #getHeartbeatIntervalSeconds()} ({@value}).
+     */
+    public static final int DEFAULT_HEARTBEAT_INTERVAL_SECONDS = 30;
 
     private static final Executor DEFAULT_INITIALIZATION_EXECUTOR = MoreExecutors.sameThreadExecutor();
 
@@ -450,40 +493,46 @@ public class PoolingOptions {
         return this;
     }
 
-    synchronized void setProtocolVersion(ProtocolVersion protocolVersion) {
-        this.protocolVersion = protocolVersion;
+    synchronized void setProtocolVersion(ProtocolVersion actualVersion) {
+        this.protocolVersion = actualVersion;
 
-        ProtocolVersion referenceVersion = (protocolVersion.compareTo(ProtocolVersion.V2) <= 0)
-                ? ProtocolVersion.V2
-                : ProtocolVersion.V3;
+        ProtocolVersion referenceVersion = null;
+        for (ProtocolVersion key : DEFAULTS.keySet()) {
+            if (key.compareTo(actualVersion) > 0)
+                break;
+            else
+                referenceVersion = key;
+        }
+        assert referenceVersion != null; // will not happen since V1 is a key
+
         Map<String, Integer> defaults = DEFAULTS.get(referenceVersion);
 
         if (coreConnections[LOCAL.ordinal()] == UNSET)
-            coreConnections[LOCAL.ordinal()] = defaults.get("corePoolLocal");
+            coreConnections[LOCAL.ordinal()] = defaults.get(CORE_POOL_LOCAL_KEY);
         if (maxConnections[LOCAL.ordinal()] == UNSET)
-            maxConnections[LOCAL.ordinal()] = defaults.get("maxPoolLocal");
+            maxConnections[LOCAL.ordinal()] = defaults.get(MAX_POOL_LOCAL_KEY);
         checkConnectionsPerHostOrder(coreConnections[LOCAL.ordinal()], maxConnections[LOCAL.ordinal()], LOCAL);
 
         if (coreConnections[REMOTE.ordinal()] == UNSET)
-            coreConnections[REMOTE.ordinal()] = defaults.get("corePoolRemote");
+            coreConnections[REMOTE.ordinal()] = defaults.get(CORE_POOL_REMOTE_KEY);
         if (maxConnections[REMOTE.ordinal()] == UNSET)
-            maxConnections[REMOTE.ordinal()] = defaults.get("maxPoolRemote");
+            maxConnections[REMOTE.ordinal()] = defaults.get(MAX_POOL_REMOTE_KEY);
         checkConnectionsPerHostOrder(coreConnections[REMOTE.ordinal()], maxConnections[REMOTE.ordinal()], REMOTE);
 
         if (newConnectionThreshold[LOCAL.ordinal()] == UNSET)
-            newConnectionThreshold[LOCAL.ordinal()] = defaults.get("newConnectionThresholdLocal");
+            newConnectionThreshold[LOCAL.ordinal()] = defaults.get(NEW_CONNECTION_THRESHOLD_LOCAL_KEY);
         checkRequestsPerConnectionRange(newConnectionThreshold[LOCAL.ordinal()], "New connection threshold", LOCAL);
 
         if (newConnectionThreshold[REMOTE.ordinal()] == UNSET)
-            newConnectionThreshold[REMOTE.ordinal()] = defaults.get("newConnectionThresholdRemote");
+            newConnectionThreshold[REMOTE.ordinal()] = defaults.get(NEW_CONNECTION_THRESHOLD_REMOTE_KEY);
         checkRequestsPerConnectionRange(newConnectionThreshold[REMOTE.ordinal()], "New connection threshold", REMOTE);
 
         if (maxRequestsPerConnectionLocal == UNSET)
-            maxRequestsPerConnectionLocal = defaults.get("maxRequestsPerConnectionLocal");
+            maxRequestsPerConnectionLocal = defaults.get(MAX_REQUESTS_PER_CONNECTION_LOCAL_KEY);
         checkRequestsPerConnectionRange(maxRequestsPerConnectionLocal, "Max requests per connection", LOCAL);
 
         if (maxRequestsPerConnectionRemote == UNSET)
-            maxRequestsPerConnectionRemote = defaults.get("maxRequestsPerConnectionRemote");
+            maxRequestsPerConnectionRemote = defaults.get(MAX_REQUESTS_PER_CONNECTION_REMOTE_KEY);
         checkRequestsPerConnectionRange(maxRequestsPerConnectionRemote, "Max requests per connection", REMOTE);
     }
 
