@@ -83,7 +83,7 @@ public class MapperOptionTest extends CCMTestsSupport {
 
         ResultSet rs = session().execute(bs);
         assertThat(rs.getExecutionInfo().getQueryTrace()).isNotNull();
-        User us = mapper.mapAliased(rs).one();
+        User us = mapper.map(rs).one();
         assertThat(us.getV()).isEqualTo("toget");
 
         mapper.getQuery(45, Option.timestamp(1337));

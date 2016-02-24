@@ -102,7 +102,7 @@ public class MapperComputedFieldsTest extends CCMTestsSupport {
         getQuery.setConsistencyLevel(ConsistencyLevel.QUORUM);
         ResultSet rs = session().execute(getQuery);
 
-        Result<User> result = userMapper.mapAliased(rs);
+        Result<User> result = userMapper.map(rs);
         User user = result.one();
 
         assertThat(user.getLogin()).isEqualTo("testlogin");
