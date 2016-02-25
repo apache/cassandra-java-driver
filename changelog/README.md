@@ -1,5 +1,9 @@
 ## Changelog
 
+### 3.0.1 (in progress)
+
+- [improvement] JAVA-1040: SimpleStatement parameters support in QueryLogger
+
 ### 3.0.0
 
 - [bug] JAVA-1034: fix metadata parser for collections of custom types.

@@ -31,7 +31,9 @@ import org.testng.annotations.Test;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static com.datastax.driver.core.BatchStatement.Type.COUNTER;
 import static com.datastax.driver.core.BatchStatement.Type.UNLOGGED;
@@ -377,7 +379,7 @@ public class QueryLoggerTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     @CassandraVersion(major = 2.0)
-    public void should_log_non_null_named_parameter() throws Exception {
+    public void should_log_non_null_named_parameter_bound_statements() throws Exception {
         // given
         normal.setLevel(TRACE);
         queryLogger = QueryLogger.builder()
@@ -403,7 +405,7 @@ public class QueryLoggerTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short")
-    public void should_log_non_null_positional_parameter() throws Exception {
+    public void should_log_non_null_positional_parameter_bound_statements() throws Exception {
         // given
         normal.setLevel(TRACE);
         queryLogger = QueryLogger.builder().build();
@@ -426,7 +428,27 @@ public class QueryLoggerTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short")
-    public void should_log_null_parameter() throws Exception {
+    public void should_log_non_null_positional_parameter_simple_statements() throws Exception {
+        // given
+        normal.setLevel(TRACE);
+        queryLogger = QueryLogger.builder().build();
+        cluster().register(queryLogger);
+        // when
+        String query = "UPDATE test SET c_text = ? WHERE pk = ?";
+        SimpleStatement ss = new SimpleStatement(query, "foo", 42);
+        session().execute(ss);
+        // then
+        String line = normalAppender.waitAndGet(10000);
+        assertThat(line)
+                .contains("Query completed normally")
+                .contains(ipOfNode(1))
+                .contains(query)
+                .contains("42")
+                .contains("'foo'");
+    }
+
+    @Test(groups = "short")
+    public void should_log_null_parameter_bound_statements() throws Exception {
         // given
         normal.setLevel(TRACE);
         queryLogger = QueryLogger.builder().build();
@@ -446,6 +468,26 @@ public class QueryLoggerTest extends CCMTestsSupport {
                 .contains(query)
                 .contains("pk:42")
                 .contains("c_text:NULL");
+    }
+
+    @Test(groups = "short")
+    public void should_log_null_parameter_simple_statements() throws Exception {
+        // given
+        normal.setLevel(TRACE);
+        queryLogger = QueryLogger.builder().build();
+        cluster().register(queryLogger);
+        // when
+        String query = "UPDATE test SET c_text = ? WHERE pk = ?";
+        SimpleStatement ss = new SimpleStatement(query, null, 42);
+        session().execute(ss);
+        // then
+        String line = normalAppender.waitAndGet(10000);
+        assertThat(line)
+                .contains("Query completed normally")
+                .contains(ipOfNode(1))
+                .contains(query)
+                .contains("42")
+                .contains("NULL");
     }
 
     @Test(groups = "short")
@@ -497,10 +539,38 @@ public class QueryLoggerTest extends CCMTestsSupport {
                 .contains("c_text:'foo'")
                 .contains("c_int:12345");
     }
+
+    @Test(groups = "short")
+    @CassandraVersion(major = 2.0)
+    public void should_log_simple_statement_parameters_inside_batch_statement() throws Exception {
+        // given
+        normal.setLevel(TRACE);
+        queryLogger = QueryLogger.builder().build();
+        cluster().register(queryLogger);
+        // when
+        String query1 = "UPDATE test SET c_text = ? WHERE pk = ?";
+        String query2 = "UPDATE test SET c_int = ? WHERE pk = ?";
+        BatchStatement batch = new BatchStatement();
+        batch.add(new SimpleStatement(query1, "foo", 42));
+        batch.add(new SimpleStatement(query2, 12345, 43));
+        session().execute(batch);
+        // then
+        String line = normalAppender.waitAndGet(10000);
+        assertThat(line)
+                .contains("Query completed normally")
+                .contains(ipOfNode(1))
+                .contains(query1)
+                .contains(query2)
+                .contains("42")
+                .contains("43")
+                .contains("'foo'")
+                .contains("12345");
+    }
+
     // Test different CQL types
 
     @Test(groups = "short")
-    public void should_log_all_parameter_types() throws Exception {
+    public void should_log_all_parameter_types_bound_statements() throws Exception {
         // given
         normal.setLevel(TRACE);
         queryLogger = QueryLogger.builder()
@@ -521,6 +591,37 @@ public class QueryLoggerTest extends CCMTestsSupport {
         CodecRegistry codecRegistry = cluster().getConfiguration().getCodecRegistry();
         for (DataType type : dataTypes) {
             TypeCodec<Object> codec = codecRegistry.codecFor(type);
+            assertThat(line).contains(codec.format(getFixedValue(type)));
+        }
+    }
+
+    @Test(groups = "short")
+    public void should_log_all_parameter_types_simple_statements() throws Exception {
+        // given
+        normal.setLevel(TRACE);
+        queryLogger = QueryLogger.builder()
+                .withMaxParameterValueLength(Integer.MAX_VALUE)
+                .build();
+        cluster().register(queryLogger);
+        // when
+        String query = "UPDATE test SET " + assignments + " WHERE pk = 42";
+        SimpleStatement ss = new SimpleStatement(query, values.toArray());
+        session().execute(ss);
+        // then
+        String line = normalAppender.waitAndGet(10000);
+        assertThat(line)
+                .contains("Query completed normally")
+                .contains(ipOfNode(1))
+                .contains(query);
+        CodecRegistry codecRegistry = cluster().getConfiguration().getCodecRegistry();
+        for (DataType type : dataTypes) {
+            TypeCodec<Object> codec;
+            if (type.equals(DataType.time())) {
+                codec = codecRegistry.codecFor(DataType.bigint());
+            }
+            else {
+                codec = codecRegistry.codecFor(type);
+            }
             assertThat(line).contains(codec.format(getFixedValue(type)));
         }
     }
@@ -596,7 +697,7 @@ public class QueryLoggerTest extends CCMTestsSupport {
 
     @CassandraVersion(major = 2.0)
     @Test(groups = "short")
-    public void should_truncate_parameter_when_max_length_exceeded() throws Exception {
+    public void should_truncate_parameter_when_max_length_exceeded_bound_statements() throws Exception {
         // given
         normal.setLevel(TRACE);
         queryLogger = QueryLogger.builder()
@@ -619,8 +720,30 @@ public class QueryLoggerTest extends CCMTestsSupport {
                 .doesNotContain("123456");
     }
 
+    @CassandraVersion(major = 2.0)
     @Test(groups = "short")
-    public void should_truncate_blob_parameter_when_max_length_exceeded() throws Exception {
+    public void should_truncate_parameter_when_max_length_exceeded_simple_statements() throws Exception {
+        // given
+        normal.setLevel(TRACE);
+        queryLogger = QueryLogger.builder()
+                .withMaxParameterValueLength(5)
+                .build();
+        cluster().register(queryLogger);
+        // when
+        String query = "UPDATE test SET c_int = ? WHERE pk = ?";
+        SimpleStatement ss = new SimpleStatement(query, 123456, 42);
+        session().execute(ss);
+        // then
+        String line = normalAppender.waitAndGet(10000);
+        assertThat(line)
+                .contains("Query completed normally")
+                .contains(ipOfNode(1))
+                .contains("12345" + TRUNCATED_OUTPUT)
+                .doesNotContain("123456");
+    }
+
+    @Test(groups = "short")
+    public void should_truncate_blob_parameter_when_max_length_exceeded_bound_statements() throws Exception {
         // given
         normal.setLevel(TRACE);
         queryLogger = QueryLogger.builder()
@@ -640,11 +763,32 @@ public class QueryLoggerTest extends CCMTestsSupport {
                 .contains("Query completed normally")
                 .contains(ipOfNode(1))
                 .contains("c_blob:0x0102" + TRUNCATED_OUTPUT)
-                .doesNotContain("123456");
+                .doesNotContain("0x010203");
     }
 
     @Test(groups = "short")
-    public void should_not_truncate_parameter_when_max_length_unlimited() throws Exception {
+    public void should_truncate_blob_parameter_when_max_length_exceeded_simple_statements() throws Exception {
+        // given
+        normal.setLevel(TRACE);
+        queryLogger = QueryLogger.builder()
+                .withMaxParameterValueLength(6)
+                .build();
+        cluster().register(queryLogger);
+        // when
+        String query = "UPDATE test SET c_blob = ? WHERE pk = ?";
+        SimpleStatement ss = new SimpleStatement(query, ByteBuffer.wrap(Bytes.toArray(Lists.newArrayList(1, 2, 3))), 42);
+        session().execute(ss);
+        // then
+        String line = normalAppender.waitAndGet(10000);
+        assertThat(line)
+                .contains("Query completed normally")
+                .contains(ipOfNode(1))
+                .contains("0x0102" + TRUNCATED_OUTPUT)
+                .doesNotContain("0x010203");
+    }
+
+    @Test(groups = "short")
+    public void should_not_truncate_parameter_when_max_length_unlimited_bound_statements() throws Exception {
         // given
         normal.setLevel(TRACE);
         queryLogger = QueryLogger.builder()
@@ -668,7 +812,28 @@ public class QueryLoggerTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short")
-    public void should_not_log_exceeding_number_of_parameters() throws Exception {
+    public void should_not_truncate_parameter_when_max_length_unlimited_simple_statements() throws Exception {
+        // given
+        normal.setLevel(TRACE);
+        queryLogger = QueryLogger.builder()
+                .withMaxParameterValueLength(-1)
+                .build();
+        cluster().register(queryLogger);
+        // when
+        String query = "UPDATE test SET c_int = ? WHERE pk = ?";
+        SimpleStatement ss = new SimpleStatement(query, 123456, 42);
+        session().execute(ss);
+        // then
+        String line = normalAppender.waitAndGet(10000);
+        assertThat(line)
+                .contains("Query completed normally")
+                .contains(ipOfNode(1))
+                .contains("123456")
+                .doesNotContain(TRUNCATED_OUTPUT);
+    }
+
+    @Test(groups = "short")
+    public void should_not_log_exceeding_number_of_parameters_bound_statements() throws Exception {
         // given
         normal.setLevel(TRACE);
         queryLogger = QueryLogger.builder()
@@ -693,8 +858,53 @@ public class QueryLoggerTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short")
+    public void should_not_log_exceeding_number_of_parameters_simple_statements() throws Exception {
+        // given
+        normal.setLevel(TRACE);
+        queryLogger = QueryLogger.builder()
+                .withMaxLoggedParameters(1)
+                .build();
+        cluster().register(queryLogger);
+        // when
+        String query = "UPDATE test SET c_int = ? WHERE pk = ?";
+        SimpleStatement ss = new SimpleStatement(query, 123456, 42);
+        session().execute(ss);
+        // then
+        String line = normalAppender.waitAndGet(10000);
+        assertThat(line)
+                .contains("Query completed normally")
+                .contains(ipOfNode(1))
+                .contains("123456")
+                .doesNotContain("42")
+                .contains(FURTHER_PARAMS_OMITTED);
+    }
+
+    @Test(groups = "short")
+    public void should_not_log_exceeding_number_of_parameters_simple_statements_with_named_values() throws Exception {
+        // given
+        normal.setLevel(TRACE);
+        queryLogger = QueryLogger.builder()
+                .withMaxLoggedParameters(1)
+                .build();
+        cluster().register(queryLogger);
+        // when
+        String query = "UPDATE test SET c_int = :c_int WHERE pk = :pk";
+        Map<String, Object> namedValues = new HashMap<String, Object>();
+        namedValues.put("c_int", 123456);
+        namedValues.put("pk", 42);
+		SimpleStatement ss = new SimpleStatement(query, namedValues);
+        session().execute(ss);
+        // then
+        String line = normalAppender.waitAndGet(10000);
+        assertThat(line)
+                .contains("Query completed normally")
+                .contains(ipOfNode(1))
+                .contains(FURTHER_PARAMS_OMITTED);
+    }
+
+    @Test(groups = "short")
     @CassandraVersion(major = 2.0)
-    public void should_not_log_exceeding_number_of_parameters_in_batch_statement() throws Exception {
+    public void should_not_log_exceeding_number_of_parameters_in_batch_statement_bound_statements() throws Exception {
         // given
         normal.setLevel(TRACE);
         queryLogger = QueryLogger.builder()
@@ -723,7 +933,37 @@ public class QueryLoggerTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short")
-    public void should_log_all_parameters_when_max_unlimited() throws Exception {
+    @CassandraVersion(major = 2.0)
+    public void should_not_log_exceeding_number_of_parameters_in_batch_statement_simple_statements() throws Exception {
+        // given
+        normal.setLevel(TRACE);
+        queryLogger = QueryLogger.builder()
+                .withMaxLoggedParameters(1)
+                .build();
+        cluster().register(queryLogger);
+        // when
+        String query1 = "UPDATE test SET c_text = ? WHERE pk = ?";
+        String query2 = "UPDATE test SET c_int = ? WHERE pk = ?";
+        BatchStatement batch = new BatchStatement();
+        batch.add(new SimpleStatement(query1, "foo", 42));
+        batch.add(new SimpleStatement(query2, 12345, 43));
+        session().execute(batch);
+        // then
+        String line = normalAppender.waitAndGet(10000);
+        assertThat(line)
+                .contains("Query completed normally")
+                .contains(ipOfNode(1))
+                .contains(query1)
+                .contains(query2)
+                .contains("'foo'")
+                .doesNotContain("42")
+                .doesNotContain("12345")
+                .doesNotContain("43")
+                .contains(FURTHER_PARAMS_OMITTED);
+    }
+
+    @Test(groups = "short")
+    public void should_log_all_parameters_when_max_unlimited_bound_statements() throws Exception {
         // given
         normal.setLevel(TRACE);
         queryLogger = QueryLogger.builder()
@@ -744,6 +984,51 @@ public class QueryLoggerTest extends CCMTestsSupport {
                 .contains(ipOfNode(1))
                 .contains("c_int:123456")
                 .contains("pk:42");
+    }
+
+    @Test(groups = "short")
+    public void should_log_all_parameters_when_max_unlimited_simple_statements() throws Exception {
+        // given
+        normal.setLevel(TRACE);
+        queryLogger = QueryLogger.builder()
+                .withMaxLoggedParameters(-1)
+                .build();
+        cluster().register(queryLogger);
+        // when
+        String query = "UPDATE test SET c_int = ? WHERE pk = ?";
+        SimpleStatement ss = new SimpleStatement(query, 123456, 42);
+        session().execute(ss);
+        // then
+        String line = normalAppender.waitAndGet(10000);
+        assertThat(line)
+                .contains("Query completed normally")
+                .contains(ipOfNode(1))
+                .contains("123456")
+                .contains("42");
+    }
+
+    @Test(groups = "short")
+    public void should_log_all_parameters_when_max_unlimited_simple_statements_with_named_values() throws Exception {
+        // given
+        normal.setLevel(TRACE);
+        queryLogger = QueryLogger.builder()
+                .withMaxLoggedParameters(-1)
+                .build();
+        cluster().register(queryLogger);
+        // when
+        String query = "UPDATE test SET c_int = :c_int WHERE pk = :pk";
+        Map<String, Object> namedValues = new HashMap<String, Object>();
+        namedValues.put("c_int", 123456);
+        namedValues.put("pk", 42);
+		SimpleStatement ss = new SimpleStatement(query, namedValues);
+        session().execute(ss);
+        // then
+        String line = normalAppender.waitAndGet(10000);
+        assertThat(line)
+                .contains("Query completed normally")
+                .contains(ipOfNode(1))
+                .contains("123456")
+                .contains("42");
     }
 
     @Override

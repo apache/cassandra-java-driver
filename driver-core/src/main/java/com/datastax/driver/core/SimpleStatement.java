@@ -18,6 +18,7 @@ package com.datastax.driver.core;
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 
 import java.nio.ByteBuffer;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -190,6 +191,19 @@ public class SimpleStatement extends RegularStatement {
         if (i < 0 || i >= values.length)
             throw new ArrayIndexOutOfBoundsException(i);
         return values[i];
+    }
+
+    /**
+     * Returns the named values as a {@code Map<String, Object>}.
+     *
+     * @return the named values of this statement.
+     * @throws IllegalStateException     if this statement does not have named values.
+     */
+    public Map<String, Object> getObjectMap() {
+        if (namedValues == null)
+            throw new IllegalStateException("This statement does not have named values");
+
+        return Collections.unmodifiableMap(namedValues);
     }
 
     /**
