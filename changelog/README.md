@@ -3,6 +3,7 @@
 ### 3.0.1 (in progress)
 
 - [bug] JAVA-1132: Executing bound statement with no variables results in exception with protocol v1.
+- [improvement] JAVA-1040: SimpleStatement parameters support in QueryLogger.
 
 Merged from 2.1 branch:
 
