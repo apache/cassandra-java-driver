@@ -37,6 +37,7 @@
 - [bug] JAVA-727: Allow monotonic timestamp generators to drift in the future + use microsecond precision when possible.
 - [improvement] JAVA-444: Add Java process information to UUIDs.makeNode() hash.
 - [improvement] JAVA-977: Preserve original cause when BuiltStatement value can't be serialized.
+- [bug] JAVA-1094: Backport TypeCodec parse and format fixes from 3.0.
 
 Merged from 2.0 branch:
 
