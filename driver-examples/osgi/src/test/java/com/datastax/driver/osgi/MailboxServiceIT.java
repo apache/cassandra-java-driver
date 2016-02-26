@@ -81,7 +81,6 @@ public class MailboxServiceIT {
                 return options(
                         systemProperty("cassandra.contactpoints").value(TestUtils.IP_PREFIX + 1),
                         bundle("reference:file:target/classes"),
-                        bootDelegationPackages("javax.security.*"),
                         mavenBundle("com.codahale.metrics", "metrics-core", "3.0.2"),
                         mavenBundle("org.slf4j", "slf4j-api", "1.7.5"),
                         mavenBundle("org.slf4j", "slf4j-simple", "1.7.5").noStart(),

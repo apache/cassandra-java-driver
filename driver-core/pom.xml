@@ -189,7 +189,7 @@
             <configuration>
               <manifestLocation>${project.build.directory}/META-INF-shaded</manifestLocation>
               <instructions>
-                <Import-Package><![CDATA[com.google.common.*;version="[14.0,19)",!io.netty.*,*]]></Import-Package>
+                <Import-Package><![CDATA[com.google.common.*;version="[14.0,19)",!io.netty.*,javax.security.cert,*]]></Import-Package>
                 <Private-Package>com.datastax.shaded.*</Private-Package>
               </instructions>
             </configuration>
