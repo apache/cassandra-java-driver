@@ -15,8 +15,10 @@
  */
 package com.datastax.driver.core.querybuilder;
 
+import com.datastax.driver.core.ColumnMetadata;
 import com.datastax.driver.core.TableMetadata;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -38,16 +40,26 @@ public class Select extends BuiltStatement {
     private boolean allowFiltering;
 
     Select(String keyspace, String table, List<Object> columnNames, boolean isDistinct) {
-        super(keyspace);
-        this.table = table;
-        this.isDistinct = isDistinct;
-        this.columnNames = columnNames;
-        this.where = new Where(this);
+        this(keyspace, table, null, null, columnNames, isDistinct);
     }
 
     Select(TableMetadata table, List<Object> columnNames, boolean isDistinct) {
-        super(table);
-        this.table = escapeId(table.getName());
+        this(escapeId(table.getKeyspace().getName()),
+                escapeId(table.getName()),
+                new ByteBuffer[table.getPartitionKey().size()],
+                table.getPartitionKey(),
+                columnNames,
+                isDistinct);
+    }
+
+    Select(String keyspace,
+           String table,
+           ByteBuffer[] routingKey,
+           List<ColumnMetadata> partitionKey,
+           List<Object> columnNames,
+           boolean isDistinct) {
+        super(keyspace, partitionKey, routingKey);
+        this.table = table;
         this.isDistinct = isDistinct;
         this.columnNames = columnNames;
         this.where = new Where(this);

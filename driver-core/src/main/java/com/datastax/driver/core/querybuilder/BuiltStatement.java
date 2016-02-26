@@ -28,7 +28,7 @@ import java.util.regex.Pattern;
  */
 public abstract class BuiltStatement extends RegularStatement {
 
-    private static final Pattern lowercaseId = Pattern.compile("[a-z][a-z0-9_]*");
+    private static final Pattern lowercaseAlphanumeric = Pattern.compile("[a-z][a-z0-9_]*");
 
     private final List<ColumnMetadata> partitionKey;
     private final ByteBuffer[] routingKey;
@@ -46,22 +46,16 @@ public abstract class BuiltStatement extends RegularStatement {
     boolean hasBindMarkers;
     private boolean forceNoValues;
 
-    BuiltStatement(String keyspace) {
-        this.partitionKey = null;
-        this.routingKey = null;
+    BuiltStatement(String keyspace, List<ColumnMetadata> partitionKey, ByteBuffer[] routingKey) {
+        this.partitionKey = partitionKey;
+        this.routingKey = routingKey;
         this.keyspace = keyspace;
     }
 
-    BuiltStatement(TableMetadata tableMetadata) {
-        this.partitionKey = tableMetadata.getPartitionKey();
-        this.routingKey = new ByteBuffer[tableMetadata.getPartitionKey().size()];
-        this.keyspace = escapeId(tableMetadata.getKeyspace().getName());
-    }
-
     // Same as Metadata.escapeId, but we don't have access to it here.
-    protected String escapeId(String ident) {
+    protected static String escapeId(String ident) {
         // we don't need to escape if it's lowercase and match non-quoted CQL3 ids.
-        return lowercaseId.matcher(ident).matches() ? ident : Metadata.quote(ident);
+        return lowercaseAlphanumeric.matcher(ident).matches() ? ident : Metadata.quote(ident);
     }
 
     @Override
@@ -292,7 +286,7 @@ public abstract class BuiltStatement extends RegularStatement {
         T statement;
 
         ForwardingStatement(T statement) {
-            super((String) null);
+            super(null, null, null);
             this.statement = statement;
         }
 
