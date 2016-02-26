@@ -20,6 +20,7 @@
 - [improvement] JAVA-974: Validate accessor parameter types against bound statement.
 - [bug] JAVA-1068: Unwrap StatementWrappers when hashing the paging state.
 - [bug] JAVA-831: Mapper can't load an entity where the PK is a UDT.
+- [improvement] JAVA-1021: Improve error message when connect() is called with an invalid keyspace name.
 
 Merged from 2.0 branch:
 
