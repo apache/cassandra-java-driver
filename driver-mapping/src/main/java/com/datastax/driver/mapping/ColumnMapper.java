@@ -69,4 +69,16 @@ abstract class ColumnMapper<T> {
         return dataType;
     }
 
+    /**
+     * Converts the given value to another object that
+     * can in turn be serialized.
+     * Some subclasses might return a different object from the given one
+     * if the original object is not serializable as is
+     * and requires some transformation, e.g. instances of
+     * classes annotated with {@link com.datastax.driver.mapping.annotations.UDT}.
+     */
+    Object toSerializableValue(Object value) {
+        return value;
+    }
+
 }

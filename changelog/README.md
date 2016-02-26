@@ -19,6 +19,7 @@
 - [improvement] JAVA-1038: Fetch node info by rpc_address if its broadcast_address is not in system.peers.
 - [improvement] JAVA-974: Validate accessor parameter types against bound statement.
 - [bug] JAVA-1068: Unwrap StatementWrappers when hashing the paging state.
+- [bug] JAVA-831: Mapper can't load an entity where the PK is a UDT.
 
 Merged from 2.0 branch:
 
