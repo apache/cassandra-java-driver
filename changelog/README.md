@@ -9,6 +9,7 @@ Merged from 2.1 branch:
 - [improvement] JAVA-851: Improve UUIDs javadoc with regard to user-provided timestamps.
 - [improvement] JAVA-979: Update javadoc for RegularStatement toString() and getQueryString() to indicate that consistency level and other parameters are not maintained in the query string.
 - [bug] JAVA-1068: Unwrap StatementWrappers when hashing the paging state.
+- [improvement] JAVA-1021: Improve error message when connect() is called with an invalid keyspace name.
 
 
 ### 3.0.0
