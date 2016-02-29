@@ -46,5 +46,11 @@
     <className>com/datastax/driver/core/ConvictionPolicy$Simple$Factory</className>
     <justification>False positive, the enclosing class is package-private so this was never exposed</justification>
   </difference>
-  
+
+  <difference>
+    <differenceType>1001</differenceType> <!-- decreased visibility -->
+    <className>com/datastax/driver/mapping/ColumnMapper$Kind</className>
+    <justification>False positive, the enclosing class is package-private so this was never exposed</justification>
+  </difference>
+
 </differences>
