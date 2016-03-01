@@ -145,17 +145,18 @@ public class MapperTest extends CCMTestsSupport {
     @Table(name = "posts")
     public static class Post {
 
-        @PartitionKey
-        @Column(name = "user_id")
-        private UUID userId;
+        private String title;
+        private String content;
+        private InetAddress device;
 
         @ClusteringColumn
         @Column(name = "post_id")
         private UUID postId;
 
-        private String title;
-        private String content;
-        private InetAddress device;
+        @PartitionKey
+        @Column(name = "user_id")
+        private UUID userId;
+
 
         private Set<String> tags;
 
@@ -394,7 +395,6 @@ public class MapperTest extends CCMTestsSupport {
         // cleanup
         session().execute("delete from posts where user_id = " + u1.getUserId());
     }
-
 
     @Test(groups = "short")
     public void should_return_table_metadata() throws Exception {

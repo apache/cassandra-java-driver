@@ -9,4 +9,11 @@
   * add new differences if needed. Difference types are explained at http://www.mojohaus.org/clirr-maven-plugin/examples/ignored-differences.html
 -->
 <differences>
+
+  <difference>
+    <differenceType>1001</differenceType> <!-- decreased visibility -->
+    <className>com/datastax/driver/mapping/ColumnMapper$Kind</className>
+    <justification>False positive, the enclosing class is package-private so this was never exposed</justification>
+  </difference>
+  
 </differences>
