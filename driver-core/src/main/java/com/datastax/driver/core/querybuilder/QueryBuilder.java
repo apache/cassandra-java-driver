@@ -227,6 +227,7 @@ public final class QueryBuilder {
      *
      * @param columnName the column name to quote.
      * @return the quoted column name.
+     * @see Metadata#quote(String)
      */
     public static String quote(String columnName) {
         return Metadata.quote(columnName);
