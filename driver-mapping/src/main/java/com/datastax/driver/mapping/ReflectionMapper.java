@@ -70,7 +70,7 @@ class ReflectionMapper<T> extends EntityMapper<T> {
         }
 
         @Override
-        public Object getValue(T entity) {
+        Object getValue(T entity) {
             try {
                 return toSerializableValue(readMethod.invoke(entity));
             } catch (IllegalArgumentException e) {
@@ -81,7 +81,7 @@ class ReflectionMapper<T> extends EntityMapper<T> {
         }
 
         @Override
-        public void setValue(Object entity, Object value) {
+        void setValue(Object entity, Object value) {
             try {
                 writeMethod.invoke(entity, value);
             } catch (IllegalArgumentException e) {
@@ -112,7 +112,7 @@ class ReflectionMapper<T> extends EntityMapper<T> {
         }
 
         @Override
-        public void setValue(Object entity, Object value) {
+        void setValue(Object entity, Object value) {
             Object converted = null;
             switch (enumType) {
                 case STRING:
@@ -147,7 +147,7 @@ class ReflectionMapper<T> extends EntityMapper<T> {
         }
 
         @Override
-        public void setValue(Object entity, Object value) {
+        void setValue(Object entity, Object value) {
             assert value instanceof UDTValue;
             UDTValue udtValue = (UDTValue) value;
             assert udtValue.getType().equals(udtMapper.getUserType());

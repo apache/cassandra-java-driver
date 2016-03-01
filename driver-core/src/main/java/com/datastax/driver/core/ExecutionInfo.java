@@ -46,20 +46,17 @@ public class ExecutionInfo {
         this(triedHosts, null, null, null, null, null, true);
     }
 
-    ExecutionInfo withTrace(QueryTrace newTrace) {
-        return new ExecutionInfo(triedHosts, achievedConsistency, newTrace, pagingState, protocolVersion, statement, schemaInAgreement);
-    }
-
     ExecutionInfo withAchievedConsistency(ConsistencyLevel newConsistency) {
         return new ExecutionInfo(triedHosts, newConsistency, trace, pagingState, protocolVersion, statement, schemaInAgreement);
     }
 
-    ExecutionInfo withPagingState(ByteBuffer pagingState, ProtocolVersion protocolVersion) {
-        return new ExecutionInfo(triedHosts, achievedConsistency, trace, pagingState, protocolVersion, statement, schemaInAgreement);
-    }
-
-    ExecutionInfo withStatement(Statement statement) {
-        return new ExecutionInfo(triedHosts, achievedConsistency, trace, pagingState, protocolVersion, statement, schemaInAgreement);
+    ExecutionInfo with(QueryTrace newTrace, ByteBuffer newPagingState, Statement newStatement, ProtocolVersion protocolVersion) {
+        return new ExecutionInfo(this.triedHosts, this.achievedConsistency,
+                newTrace,
+                newPagingState, protocolVersion,
+                newStatement,
+                schemaInAgreement
+        );
     }
 
     /**
@@ -184,5 +181,14 @@ public class ExecutionInfo {
 
     void setSchemaInAgreement(boolean schemaAgreement) {
         this.schemaInAgreement = schemaAgreement;
+    }
+
+    /**
+     * Get the statement that has been executed.
+     *
+     * @return the statement executed.
+     */
+    public Statement getStatement() {
+        return this.statement;
     }
 }
