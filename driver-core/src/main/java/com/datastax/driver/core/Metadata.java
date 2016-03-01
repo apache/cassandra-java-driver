@@ -470,12 +470,12 @@ public class Metadata {
      * convenience utility and should not be considered as an authoritative
      * source of truth for checking reserved CQL keywords.
      *
-     * @param id the identifier to check.
+     * @param id the identifier to check; should not be {@code null}.
      * @return {@code true} if the given identifier is a known reserved
      * CQL keyword, {@code false} otherwise.
      */
     public static boolean isReservedCqlKeyword(String id) {
-        return RESERVED_KEYWORDS.contains(id.toLowerCase());
+        return id != null && RESERVED_KEYWORDS.contains(id.toLowerCase());
     }
 
     /**
