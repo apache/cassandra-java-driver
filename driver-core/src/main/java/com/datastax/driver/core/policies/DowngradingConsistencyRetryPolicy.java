@@ -114,7 +114,7 @@ public class DowngradingConsistencyRetryPolicy implements ExtendedRetryPolicy {
         // normal consistency levels on the committing phase. So the main use case for CAS reads is probably for
         // when you've timed out on a CAS write and want to make sure what happened. Downgrading in that case
         // would be always wrong so we just special case to rethrow.
-        if (cl == ConsistencyLevel.SERIAL || cl == ConsistencyLevel.LOCAL_SERIAL)
+        if (cl.isSerial())
             return RetryDecision.rethrow();
 
         if (receivedResponses < requiredResponses) {

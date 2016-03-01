@@ -32,6 +32,7 @@
 - [improvement] JAVA-923: Position idempotent flag on object mapper queries.
 - [new feature] JAVA-1019: SchemaBuilder support for CREATE/ALTER/DROP KEYSPACE.
 - [bug] JAVA-1070: The Mapper should not prepare queries synchronously.
+- [new feature] JAVA-982: Introduce new method ConsistencyLevel.isSerial().
 
 Merged from 2.0 branch:
 
