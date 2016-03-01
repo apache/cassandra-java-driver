@@ -11,6 +11,7 @@ Merged from 2.1 branch:
 - [bug] JAVA-1068: Unwrap StatementWrappers when hashing the paging state.
 - [improvement] JAVA-1021: Improve error message when connect() is called with an invalid keyspace name.
 - [improvement] JAVA-879: Mapper.map() accepts mapper-generated and user queries.
+- [bug] JAVA-1100: Exception when connecting with shaded java driver in OSGI
 
 
 ### 3.0.0
