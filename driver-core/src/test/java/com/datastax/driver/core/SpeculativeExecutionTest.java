@@ -16,7 +16,7 @@
 package com.datastax.driver.core;
 
 import com.datastax.driver.core.policies.ConstantSpeculativeExecutionPolicy;
-import com.datastax.driver.core.policies.RetryPolicy;
+import com.datastax.driver.core.policies.ExtendedRetryPolicy;
 import com.datastax.driver.core.policies.SpeculativeExecutionPolicy;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -52,6 +52,7 @@ public class SpeculativeExecutionTest {
         cluster = Cluster.builder()
                 .addContactPoints(scassandras.address(2).getAddress())
                 .withPort(scassandras.getBinaryPort())
+                .withProtocolVersion(ProtocolVersion.V2) // Scassandra does not support V3 nor V4 yet
                 .withLoadBalancingPolicy(loadBalancingPolicy)
                 .withSpeculativeExecutionPolicy(new ConstantSpeculativeExecutionPolicy(speculativeExecutionDelay, 1))
                 .withQueryOptions(new QueryOptions().setDefaultIdempotence(true))
@@ -203,6 +204,8 @@ public class SpeculativeExecutionTest {
         Cluster cluster = Cluster.builder()
                 .addContactPoints(scassandras.address(2).getAddress())
                 .withPort(scassandras.getBinaryPort())
+                // Scassandra does not support V3 nor V4 yet, and V4 may cause the server to crash
+                .withProtocolVersion(ProtocolVersion.V2)
                 .withSpeculativeExecutionPolicy(mockPolicy)
                 .build();
 
@@ -222,7 +225,7 @@ public class SpeculativeExecutionTest {
      * Custom retry policy that retries at ONE on read timeout.
      * This deals with the fact that Scassandra only allows read timeouts with 0 replicas.
      */
-    static class CustomRetryPolicy implements RetryPolicy {
+    static class CustomRetryPolicy implements ExtendedRetryPolicy {
         @Override
         public RetryDecision onReadTimeout(Statement statement, ConsistencyLevel cl, int requiredResponses, int receivedResponses, boolean dataRetrieved, int nbRetry) {
             if (nbRetry != 0)
@@ -239,6 +242,12 @@ public class SpeculativeExecutionTest {
         public RetryDecision onUnavailable(Statement statement, ConsistencyLevel cl, int requiredReplica, int aliveReplica, int nbRetry) {
             return RetryDecision.rethrow();
         }
+
+        @Override
+        public RetryDecision onRequestError(Statement statement, ConsistencyLevel cl, Exception e, int nbRetry) {
+            return RetryDecision.tryNextHost(cl);
+        }
+
     }
 
     private static List<Map<String, ?>> row(String key, String value) {
