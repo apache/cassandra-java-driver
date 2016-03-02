@@ -148,8 +148,9 @@ public abstract class QueryLogger implements LatencyTracker {
      * within a configurable threshold in milliseconds.
      * <p/>
      * This logger is activated by setting its level to {@code DEBUG} or {@code TRACE}.
-     * Additionally, if the level is set to {@code TRACE} and the statement being logged is a {@link BoundStatement},
-     * then the query parameters (if any) will be logged as well (names and actual values).
+     * Additionally, if the level is set to {@code TRACE} and the statement being logged is a {@link BoundStatement}
+     * or a {@link SimpleStatement}, then the query parameters (if any) will be logged. For a {@link BoundStatement}
+     * names and actual values are logged and for a {@link SimpleStatement} values are logged in positional order.
      * <p/>
      * The name of this logger is {@code com.datastax.driver.core.QueryLogger.NORMAL}.
      */
@@ -160,8 +161,9 @@ public abstract class QueryLogger implements LatencyTracker {
      * but whose execution time exceeded a configurable threshold in milliseconds.
      * <p/>
      * This logger is activated by setting its level to {@code DEBUG} or {@code TRACE}.
-     * Additionally, if the level is set to {@code TRACE} and the statement being logged is a {@link BoundStatement},
-     * then the query parameters (if any) will be logged as well (names and actual values).
+     * Additionally, if the level is set to {@code TRACE} and the statement being logged is a {@link BoundStatement}
+     * or a {@link SimpleStatement}, then the query parameters (if any) will be logged. For a {@link BoundStatement}
+     * names and actual values are logged and for a {@link SimpleStatement} values are logged in positional order.
      * <p/>
      * The name of this logger is {@code com.datastax.driver.core.QueryLogger.SLOW}.
      */
@@ -171,8 +173,9 @@ public abstract class QueryLogger implements LatencyTracker {
      * The logger used to log unsuccessful queries, i.e., queries that did not complete normally and threw an exception.
      * <p/>
      * This logger is activated by setting its level to {@code DEBUG} or {@code TRACE}.
-     * Additionally, if the level is set to {@code TRACE} and the statement being logged is a {@link BoundStatement},
-     * then the query parameters (if any) will be logged as well (names and actual values).
+     * Additionally, if the level is set to {@code TRACE} and the statement being logged is a {@link BoundStatement}
+     * or a {@link SimpleStatement}, then the query parameters (if any) will be logged. For a {@link BoundStatement}
+     * names and actual values are logged and for a {@link SimpleStatement} values are logged in positional order.
      * Note this this logger will also print the full stack trace of the reported exception.
      * <p/>
      * The name of this logger is {@code com.datastax.driver.core.QueryLogger.ERROR}.
@@ -646,12 +649,18 @@ public abstract class QueryLogger implements LatencyTracker {
             StringBuilder params = new StringBuilder();
             if (statement instanceof BoundStatement) {
                 appendParameters((BoundStatement) statement, params, maxLoggedParameters);
-            } else if (statement instanceof BatchStatement) {
+            } else if (statement instanceof SimpleStatement) {
+                appendParameters((SimpleStatement) statement, params, maxLoggedParameters);
+            }
+            else if (statement instanceof BatchStatement) {
                 BatchStatement batchStatement = (BatchStatement) statement;
                 int remaining = maxLoggedParameters;
                 for (Statement inner : batchStatement.getStatements()) {
                     if (inner instanceof BoundStatement) {
                         remaining = appendParameters((BoundStatement) inner, params, remaining);
+                    }
+                    else if (inner instanceof SimpleStatement) {
+                        remaining = appendParameters((SimpleStatement) inner, params, remaining);
                     }
                 }
             }
@@ -673,6 +682,9 @@ public abstract class QueryLogger implements LatencyTracker {
         } else if (statement instanceof BoundStatement) {
             int boundValues = ((BoundStatement) statement).wrapper.values.length;
             sb.append("[" + boundValues + " bound values] ");
+        } else if (statement instanceof SimpleStatement) {
+            int boundValues = ((SimpleStatement) statement).valuesCount();
+            sb.append("[" + boundValues + " bound values] ");
         }
 
         append(statement, sb, maxQueryStringLength);
@@ -684,6 +696,8 @@ public abstract class QueryLogger implements LatencyTracker {
         for (Statement s : bs.getStatements()) {
             if (s instanceof BoundStatement)
                 count += ((BoundStatement) s).wrapper.values.length;
+            else if (s instanceof SimpleStatement)
+                count += ((SimpleStatement) s).valuesCount();
         }
         return count;
     }
@@ -737,6 +751,61 @@ public abstract class QueryLogger implements LatencyTracker {
                 }
             } else {
                 Object value = type.deserialize(raw, protocolVersion());
+                valueStr = type.format(value);
+                if (maxParameterValueLength != -1 && valueStr.length() > maxParameterValueLength) {
+                    valueStr = valueStr.substring(0, maxParameterValueLength) + TRUNCATED_OUTPUT;
+                }
+            }
+        }
+        return valueStr;
+    }
+
+    protected int appendParameters(SimpleStatement statement, StringBuilder buffer, int remaining) {
+        if (remaining == 0)
+            return 0;
+        int numberOfParameters = statement.valuesCount();
+        if (numberOfParameters > 0) {
+            int numberOfLoggedParameters;
+            if (remaining == -1) {
+                numberOfLoggedParameters = numberOfParameters;
+            } else {
+                numberOfLoggedParameters = remaining > numberOfParameters ? numberOfParameters : remaining;
+                remaining -= numberOfLoggedParameters;
+            }
+            for (int i = 0; i < numberOfLoggedParameters; i++) {
+                if (buffer.length() == 0)
+                    buffer.append(" [");
+                else
+                    buffer.append(", ");
+                buffer.append(parameterValueAsString(statement.getObject(i)));
+            }
+            if (numberOfLoggedParameters < numberOfParameters) {
+                buffer.append(FURTHER_PARAMS_OMITTED);
+            }
+        }
+        return remaining;
+    }
+
+    protected String parameterValueAsString(Object value) {
+        String valueStr;
+        if (value == null) {
+            valueStr = "NULL";
+        } else {
+            DataType type = TypeCodec.getDataTypeFor(value);
+            int maxParameterValueLength = this.maxParameterValueLength;
+            if (type.equals(DataType.blob()) && maxParameterValueLength != -1) {
+                // prevent large blobs from being converted to strings
+                ByteBuffer buf = (ByteBuffer) value;
+                int maxBufferLength = Math.max(2, (maxParameterValueLength - 2) / 2);
+                boolean bufferTooLarge = buf.remaining() > maxBufferLength;
+                if (bufferTooLarge) {
+                    value = (ByteBuffer) buf.duplicate().limit(maxBufferLength);
+                }
+                valueStr = type.format(value);
+                if (bufferTooLarge) {
+                    valueStr = valueStr + TRUNCATED_OUTPUT;
+                }
+            } else {
                 valueStr = type.format(value);
                 if (maxParameterValueLength != -1 && valueStr.length() > maxParameterValueLength) {
                     valueStr = valueStr.substring(0, maxParameterValueLength) + TRUNCATED_OUTPUT;

@@ -24,6 +24,7 @@
 - [improvement] JAVA-879: Mapper.map() accepts mapper-generated and user queries.
 - [bug] JAVA-1100: Exception when connecting with shaded java driver in OSGI
 - [bug] JAVA-819: Expose more errors in RetryPolicy + provide idempotent-aware wrapper.
+- [improvement] JAVA-1040: SimpleStatement parameters support in QueryLogger.
 
 Merged from 2.0 branch:
 
