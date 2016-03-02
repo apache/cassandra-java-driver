@@ -269,6 +269,10 @@ We've also seized the opportunity to remove code that was deprecated in 2.1.
     Again, this is due to the fact that secondary indexes have been completely redesigned 
     in Cassandra 3.0.
 
+29. `SSLOptions` has been refactored to allow the option to choose between JDK and Netty-based
+    SSL implementations.  See [JAVA-841](https://datastax-oss.atlassian.net/browse/JAVA-841) and
+    the [SSL documentation](../manual/ssl) for more details.
+
 
 ### 2.1.8
 

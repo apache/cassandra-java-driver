@@ -7,6 +7,7 @@
 - [improvement] JAVA-1151: Fail fast if HdrHistogram is not in the classpath.
 - [improvement] JAVA-1154: Allow individual Statement to cancel the read timeout.
 - [bug] JAVA-1074: Fix documentation around default timestamp generator.
+- [improvement] JAVA-1109: Document SSLOptions changes in upgrade guide.
 
 Merged from 2.1 branch:
 
