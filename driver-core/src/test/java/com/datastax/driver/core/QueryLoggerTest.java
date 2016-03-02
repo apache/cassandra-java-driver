@@ -421,6 +421,7 @@ public class QueryLoggerTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short")
+    @CassandraVersion(major = 2.0)
     public void should_log_non_null_positional_parameter_simple_statements() throws Exception {
         // given
         normal.setLevel(TRACE);
@@ -464,6 +465,7 @@ public class QueryLoggerTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short")
+    @CassandraVersion(major = 2.0)
     public void should_log_null_parameter_simple_statements() throws Exception {
         // given
         normal.setLevel(TRACE);
@@ -564,6 +566,7 @@ public class QueryLoggerTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short")
+    @CassandraVersion(major = 2.0)
     public void should_log_all_parameter_types_simple_statements() throws Exception {
         // given
         normal.setLevel(TRACE);
@@ -727,6 +730,7 @@ public class QueryLoggerTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short")
+    @CassandraVersion(major = 2.0)
     public void should_truncate_blob_parameter_when_max_length_exceeded_simple_statements() throws Exception {
         // given
         normal.setLevel(TRACE);
@@ -772,6 +776,7 @@ public class QueryLoggerTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short")
+    @CassandraVersion(major = 2.0)
     public void should_not_truncate_parameter_when_max_length_unlimited_simple_statements() throws Exception {
         // given
         normal.setLevel(TRACE);
@@ -818,6 +823,7 @@ public class QueryLoggerTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short")
+    @CassandraVersion(major = 2.0)
     public void should_not_log_exceeding_number_of_parameters_simple_statements() throws Exception {
         // given
         normal.setLevel(TRACE);
@@ -924,6 +930,7 @@ public class QueryLoggerTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short")
+    @CassandraVersion(major = 2.0)
     public void should_log_all_parameters_when_max_unlimited_simple_statements() throws Exception {
         // given
         normal.setLevel(TRACE);
