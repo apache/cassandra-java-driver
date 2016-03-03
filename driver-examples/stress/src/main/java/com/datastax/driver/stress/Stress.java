@@ -59,6 +59,8 @@ public class Stress {
             accepts("print-delay", "The delay in seconds at which to report on the console").withRequiredArg().ofType(Integer.class).defaultsTo(5);
             accepts("compression", "Use compression (SNAPPY)");
             accepts("connections-per-host", "The number of connections per hosts (default: based on the number of threads)").withRequiredArg().ofType(Integer.class);
+            accepts("consistency-level", "Consistency level").withRequiredArg().withValuesConvertedBy(new ConsistencyLevelConverter())
+                    .ofType(ConsistencyLevel.class).defaultsTo(ConsistencyLevel.LOCAL_ONE);
         }};
         String msg = "Where <generator> can be one of " + generators.keySet() + '\n'
                 + "You can get more help on a particular generator with: stress <generator> -h";
@@ -198,6 +200,7 @@ public class Stress {
 
         int requests = options.has("n") ? (Integer) options.valueOf("n") : -1;
         int concurrency = (Integer) options.valueOf("t");
+        ConsistencyLevel consistencyLevel = (ConsistencyLevel) options.valueOf("consistency-level");
 
         String reportFileName = (String) options.valueOf("report-file");
 
@@ -223,6 +226,7 @@ public class Stress {
         System.out.println("  mode:                 " + (async ? "asynchronous" : "blocking"));
         System.out.println("  per-host connections: " + maxConnections);
         System.out.println("  compression:          " + options.has("compression"));
+        System.out.println("  consistency-level:    " + consistencyLevel.name());
 
         try {
             // Create session to hosts
@@ -230,6 +234,7 @@ public class Stress {
                     .addContactPoints(String.valueOf(options.valueOf("ip")))
                     .withPoolingOptions(pools)
                     .withSocketOptions(new SocketOptions().setTcpNoDelay(true))
+                    .withQueryOptions(new QueryOptions().setConsistencyLevel(consistencyLevel))
                     .build();
 
             if (options.has("compression"))
