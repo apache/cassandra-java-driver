@@ -16,6 +16,7 @@
 package com.datastax.driver.core;
 
 import com.datastax.driver.core.exceptions.*;
+import com.google.common.util.concurrent.Uninterruptibles;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.scassandra.http.client.Result;
@@ -23,6 +24,8 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+
+import java.util.concurrent.TimeUnit;
 
 import static com.datastax.driver.core.QueryLogger.builder;
 import static org.apache.log4j.Level.DEBUG;
@@ -82,7 +85,7 @@ public class QueryLoggerErrorsTest extends ScassandraTestBase.PerClassCluster {
     }
 
     @Test(groups = "short")
-    public void should_log_slow_queries() throws Exception {
+    public void should_log_queries_beyond_constant_threshold() throws Exception {
         // given
         slow.setLevel(DEBUG);
         queryLogger = builder()
@@ -104,6 +107,55 @@ public class QueryLoggerErrorsTest extends ScassandraTestBase.PerClassCluster {
                 .contains("Query too slow")
                 .contains(ip)
                 .contains(query);
+    }
+
+    @Test(groups = "short")
+    public void should_log_queries_beyond_dynamic_threshold() throws Exception {
+        // given
+        slow.setLevel(DEBUG);
+        queryLogger = builder()
+                .withDynamicThreshold(ClusterWidePercentileTracker.builder(1000)
+                        .withMinRecordedValues(100)
+                        .withInterval(1, TimeUnit.SECONDS).build(), 99)
+                .build();
+        cluster.register(queryLogger);
+
+        // prime a fast query to respond right away.
+        String fastQuery = "SELECT foo FROM bar";
+        primingClient.prime(
+                queryBuilder()
+                        .withQuery(fastQuery)
+                        .build()
+        );
+
+        // prime a slow query to respond after 100ms.
+        String slowQuery = "SELECT bar from foo";
+        primingClient.prime(
+                queryBuilder()
+                        .withQuery(slowQuery)
+                        .withThen(then().withFixedDelay(100L))
+                        .build()
+        );
+
+        // submit 100 fast queries to prime to the histogram.
+        long startTime = System.currentTimeMillis();
+        for (int i = 0; i < 100; i++) {
+            session.execute(fastQuery);
+        }
+
+        // Wait up to 1 second to allow initial histogram to be cached.
+        long waitTime = 1000 - (System.currentTimeMillis() - startTime);
+        Uninterruptibles.sleepUninterruptibly(waitTime, TimeUnit.MILLISECONDS);
+
+        // when
+        session.execute(slowQuery);
+        // then
+        String line = slowAppender.waitAndGet(5000);
+        assertThat(line)
+                .contains("Query too slow")
+                .contains(ip)
+                .contains(slowQuery)
+                .doesNotContain(fastQuery);
     }
 
     @Test(groups = "short")

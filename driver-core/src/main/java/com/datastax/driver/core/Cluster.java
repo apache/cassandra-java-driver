@@ -444,8 +444,9 @@ public class Cluster implements Closeable {
      */
     public Cluster register(Host.StateListener listener) {
         checkNotClosed(manager);
-        listener.onRegister(this);
-        manager.listeners.add(listener);
+        boolean added = manager.listeners.add(listener);
+        if (added)
+            listener.onRegister(this);
         return this;
     }
 
@@ -460,8 +461,9 @@ public class Cluster implements Closeable {
      */
     public Cluster unregister(Host.StateListener listener) {
         checkNotClosed(manager);
-        listener.onUnregister(this);
-        manager.listeners.remove(listener);
+        boolean removed = manager.listeners.remove(listener);
+        if (removed)
+            listener.onUnregister(this);
         return this;
     }
 
@@ -488,8 +490,9 @@ public class Cluster implements Closeable {
      */
     public Cluster register(LatencyTracker tracker) {
         checkNotClosed(manager);
-        tracker.onRegister(this);
-        manager.trackers.add(tracker);
+        boolean added = manager.trackers.add(tracker);
+        if (added)
+            tracker.onRegister(this);
         return this;
     }
 
@@ -505,8 +508,9 @@ public class Cluster implements Closeable {
      */
     public Cluster unregister(LatencyTracker tracker) {
         checkNotClosed(manager);
-        tracker.onUnregister(this);
-        manager.trackers.remove(tracker);
+        boolean removed = manager.trackers.remove(tracker);
+        if (removed)
+            tracker.onUnregister(this);
         return this;
     }
 
@@ -520,8 +524,9 @@ public class Cluster implements Closeable {
      */
     public Cluster register(SchemaChangeListener listener) {
         checkNotClosed(manager);
-        listener.onRegister(this);
-        manager.schemaChangeListeners.add(listener);
+        boolean added = manager.schemaChangeListeners.add(listener);
+        if (added)
+            listener.onRegister(this);
         return this;
     }
 
@@ -537,8 +542,9 @@ public class Cluster implements Closeable {
      */
     public Cluster unregister(SchemaChangeListener listener) {
         checkNotClosed(manager);
-        listener.onUnregister(this);
-        manager.schemaChangeListeners.remove(listener);
+        boolean removed = manager.schemaChangeListeners.remove(listener);
+        if (removed)
+            listener.onUnregister(this);
         return this;
     }
 
