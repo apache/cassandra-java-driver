@@ -37,7 +37,7 @@ public class Batch extends BuiltStatement {
     private int nonBuiltStatementValues;
 
     Batch(RegularStatement[] statements, boolean logged) {
-        super((String) null);
+        super(null, null, null);
         this.statements = statements.length == 0
                 ? new ArrayList<RegularStatement>()
                 : new ArrayList<RegularStatement>(statements.length);

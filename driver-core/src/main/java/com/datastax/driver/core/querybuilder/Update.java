@@ -15,9 +15,11 @@
  */
 package com.datastax.driver.core.querybuilder;
 
+import com.datastax.driver.core.ColumnMetadata;
 import com.datastax.driver.core.TableMetadata;
 import com.datastax.driver.core.querybuilder.Assignment.CounterAssignment;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,18 +36,22 @@ public class Update extends BuiltStatement {
     private boolean ifExists;
 
     Update(String keyspace, String table) {
-        super(keyspace);
-        this.table = table;
-        this.assignments = new Assignments(this);
-        this.where = new Where(this);
-        this.usings = new Options(this);
-        this.conditions = new Conditions(this);
-        this.ifExists = false;
+        this(keyspace, table, null, null);
     }
 
     Update(TableMetadata table) {
-        super(table);
-        this.table = escapeId(table.getName());
+        this(escapeId(table.getKeyspace().getName()),
+                escapeId(table.getName()),
+                new ByteBuffer[table.getPartitionKey().size()],
+                table.getPartitionKey());
+    }
+
+    Update(String keyspace,
+           String table,
+           ByteBuffer[] routingKey,
+           List<ColumnMetadata> partitionKey) {
+        super(keyspace, partitionKey, routingKey);
+        this.table = table;
         this.assignments = new Assignments(this);
         this.where = new Where(this);
         this.usings = new Options(this);
@@ -135,6 +141,9 @@ public class Update extends BuiltStatement {
      * Adds a conditions clause (IF) to this statement.
      * <p/>
      * This is a shorter/more readable version for {@code onlyIf().and(condition)}.
+     * <p/>
+     * This will configure the statement as non-idempotent, see {@link com.datastax.driver.core.Statement#isIdempotent()}
+     * for more information.
      *
      * @param condition the condition to add.
      * @return the conditions of this query to which more conditions can be added.
@@ -210,6 +219,9 @@ public class Update extends BuiltStatement {
 
         /**
          * Adds a condition to the UPDATE statement those assignments are part of.
+         * <p/>
+         * This will configure the statement as non-idempotent, see {@link com.datastax.driver.core.Statement#isIdempotent()}
+         * for more information.
          *
          * @param condition the condition to add.
          * @return the conditions for the UPDATE statement those assignments are part of.
@@ -240,6 +252,9 @@ public class Update extends BuiltStatement {
         public Where and(Clause clause) {
             clauses.add(clause);
             statement.maybeAddRoutingKey(clause.name(), clause.firstValue());
+            if (!hasNonIdempotentOps() && !Utils.isIdempotent(clause)) {
+                statement.setNonIdempotentOps();
+            }
             checkForBindMarkers(clause);
             return this;
         }
@@ -266,6 +281,9 @@ public class Update extends BuiltStatement {
 
         /**
          * Adds a condition to the UPDATE statement this WHERE clause is part of.
+         * <p/>
+         * This will configure the statement as non-idempotent, see {@link com.datastax.driver.core.Statement#isIdempotent()}
+         * for more information.
          *
          * @param condition the condition to add.
          * @return the conditions for the UPDATE statement this WHERE clause is part of.
@@ -278,21 +296,22 @@ public class Update extends BuiltStatement {
          * Sets the 'IF EXISTS' option for the UPDATE statement this WHERE clause
          * is part of.
          * <p/>
-         * <p>
          * An update with that option will report whether the statement actually
          * resulted in data being updated. The existence check and update are
          * done transactionally in the sense that if multiple clients attempt to
          * update a given row with this option, then at most one may succeed.
          * </p>
-         * <p>
          * Please keep in mind that using this option has a non negligible
          * performance impact and should be avoided when possible.
          * </p>
+         * This will configure the statement as non-idempotent, see {@link com.datastax.driver.core.Statement#isIdempotent()}
+         * for more information.
          *
          * @return the UPDATE statement this WHERE clause is part of.
          */
         public IfExists ifExists() {
             statement.ifExists = true;
+            statement.setNonIdempotentOps();
             return new IfExists(statement);
         }
     }
@@ -378,6 +397,7 @@ public class Update extends BuiltStatement {
          * @return this {@code Conditions} clause.
          */
         public Conditions and(Clause condition) {
+            statement.setNonIdempotentOps();
             conditions.add(condition);
             checkForBindMarkers(condition);
             return this;
