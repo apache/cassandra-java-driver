@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core.querybuilder;
 
+import com.datastax.driver.core.Metadata;
 import com.datastax.driver.core.RegularStatement;
 import com.datastax.driver.core.TableMetadata;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
@@ -226,9 +227,10 @@ public final class QueryBuilder {
      *
      * @param columnName the column name to quote.
      * @return the quoted column name.
+     * @see Metadata#quote(String)
      */
     public static String quote(String columnName) {
-        return '"' + columnName + '"';
+        return Metadata.quote(columnName);
     }
 
     /**
