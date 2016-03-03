@@ -16,13 +16,12 @@
 package com.datastax.driver.core.schemabuilder;
 
 import com.datastax.driver.core.CodecRegistry;
+import com.datastax.driver.core.Metadata;
 import com.datastax.driver.core.ProtocolVersion;
 import com.datastax.driver.core.RegularStatement;
 import com.google.common.base.Strings;
 
 import java.nio.ByteBuffer;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -32,12 +31,6 @@ public abstract class SchemaStatement extends RegularStatement {
 
     static final String STATEMENT_START = "\n\t";
     static final String COLUMN_FORMATTING = "\n\t\t";
-
-    static final List<String> RESERVED_KEYWORDS = Arrays.asList(
-            ("add,allow,alter,and,any,apply,asc,authorize,batch,begin,by,columnfamily,create,delete,desc,drop,each_quorum,from,grant,in,index,inet,infinity," +
-                    "insert,into,keyspace,keyspaces,limit,local_one,local_quorum,modify,nan,norecursive,of,on,order,password,primary,quorum,rename,revoke,schema," +
-                    "select,set,table,three,to,token,truncate,two,unlogged,update,use,using,where,with")
-                    .split(","));
 
     private volatile String cache;
 
@@ -104,7 +97,7 @@ public abstract class SchemaStatement extends RegularStatement {
     }
 
     static void validateNotKeyWord(String label, String message) {
-        if (RESERVED_KEYWORDS.contains(label)) {
+        if (Metadata.isReservedCqlKeyword(label)) {
             throw new IllegalArgumentException(message);
         }
     }

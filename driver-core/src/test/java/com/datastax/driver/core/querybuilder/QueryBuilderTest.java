@@ -850,7 +850,7 @@ public class QueryBuilderTest {
     public void should_quote_column_names_with_escaped_quotes() {
         // A column name can include quotes as long as it is escaped with another set of quotes, so "foo""bar" is a valid name.
         String query = "SELECT * FROM foo WHERE \"foo \"\" bar\"=1;";
-        Statement statement = select().from("foo").where(eq(quote("foo \"\" bar"), 1));
+        Statement statement = select().from("foo").where(eq(quote("foo \" bar"), 1));
 
         assertThat(statement.toString()).isEqualTo(query);
     }

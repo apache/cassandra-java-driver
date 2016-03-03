@@ -12,6 +12,7 @@ Merged from 2.1 branch:
 - [improvement] JAVA-1021: Improve error message when connect() is called with an invalid keyspace name.
 - [improvement] JAVA-879: Mapper.map() accepts mapper-generated and user queries.
 - [bug] JAVA-1100: Exception when connecting with shaded java driver in OSGI
+- [bug] JAVA-1064: getTable create statement doesn't properly handle quotes in primary key.
 
 
 ### 3.0.0
