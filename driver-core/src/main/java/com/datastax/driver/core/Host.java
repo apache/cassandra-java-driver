@@ -330,4 +330,29 @@ public class Host {
          */
         public void onRemove(Host host);
     }
+
+    /**
+     * A {@code StateListener} that tracks when it gets registered or unregistered with a cluster.
+     * <p/>
+     * This interface exists only for backward-compatibility reasons: starting with the 3.0 branch of the driver, its
+     * methods are on the parent interface directly.
+     */
+    public interface LifecycleAwareStateListener extends StateListener {
+        /**
+         * Gets invoked when the listener is registered with a cluster, or at cluster startup if the
+         * listener was registered at initialization with
+         * {@link com.datastax.driver.core.Cluster.Initializer#register(StateListener)}.
+         *
+         * @param cluster the cluster that this listener is registered with.
+         */
+        void onRegister(Cluster cluster);
+
+        /**
+         * Gets invoked when the listener is unregistered from a cluster, or at cluster shutdown if
+         * the listener was not unregistered.
+         *
+         * @param cluster the cluster that this listener was registered with.
+         */
+        void onUnregister(Cluster cluster);
+    }
 }

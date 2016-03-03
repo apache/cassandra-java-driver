@@ -16,21 +16,29 @@
 package com.datastax.driver.core;
 
 /**
- * A {@code PercentileTracker} that maintains a separate histogram for each host.
+ * A {@code PercentileTracker} that aggregates all measurements into a single histogram.
  * <p/>
- * This gives you per-host latency percentiles, meaning that each host will only be compared to itself.
+ * This gives you global latency percentiles for the whole cluster, meaning that latencies of slower hosts will tend to
+ * appear in higher percentiles.
  */
-public class PerHostPercentileTracker extends PercentileTracker {
-    private PerHostPercentileTracker(long highestTrackableLatencyMillis,
-                                     int numberOfSignificantValueDigits,
-                                     int minRecordedValues,
-                                     long intervalMs) {
+public class ClusterWidePercentileTracker extends PercentileTracker {
+    private volatile Cluster cluster;
+
+    private ClusterWidePercentileTracker(long highestTrackableLatencyMillis,
+                                         int numberOfSignificantValueDigits,
+                                         int minRecordedValues,
+                                         long intervalMs) {
         super(highestTrackableLatencyMillis, numberOfSignificantValueDigits, minRecordedValues, intervalMs);
     }
 
     @Override
-    protected Host computeKey(Host host, Statement statement, Exception exception) {
-        return host;
+    public void onRegister(Cluster cluster) {
+        this.cluster = cluster;
+    }
+
+    @Override
+    protected Cluster computeKey(Host host, Statement statement, Exception exception) {
+        return cluster;
     }
 
     /**
@@ -48,7 +56,7 @@ public class PerHostPercentileTracker extends PercentileTracker {
     /**
      * Helper class to build {@code PerHostPercentileTracker} instances with a fluent interface.
      */
-    public static class Builder extends PercentileTracker.Builder<Builder, PerHostPercentileTracker> {
+    public static class Builder extends PercentileTracker.Builder<Builder, ClusterWidePercentileTracker> {
 
         Builder(long highestTrackableLatencyMillis) {
             super(highestTrackableLatencyMillis);
@@ -60,8 +68,8 @@ public class PerHostPercentileTracker extends PercentileTracker {
         }
 
         @Override
-        public PerHostPercentileTracker build() {
-            return new PerHostPercentileTracker(highestTrackableLatencyMillis, numberOfSignificantValueDigits,
+        public ClusterWidePercentileTracker build() {
+            return new ClusterWidePercentileTracker(highestTrackableLatencyMillis, numberOfSignificantValueDigits,
                     minRecordedValues, intervalMs);
         }
     }

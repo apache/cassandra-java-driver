@@ -7,50 +7,126 @@
   * run `mvn clirr:clirr` at the root directory
   * check the reports in `<module>/target/site/clirr-report.html`
   * add new differences if needed. Difference types are explained at http://www.mojohaus.org/clirr-maven-plugin/examples/ignored-differences.html
+
+  The formatter introduces line breaks that make Clirr unhappy:
+  @formatter:off
 -->
 <differences>
 
-  <difference>
-    <differenceType>6006</differenceType> <!-- field now final -->
-    <className>com/datastax/driver/core/ProtocolVersion</className>
-    <field>NEWEST_SUPPORTED</field>
-    <justification>This was an oversight, this field was never intended to be non final</justification>
-  </difference>
+    <difference>
+        <differenceType>6006</differenceType> <!-- field now final -->
+        <className>com/datastax/driver/core/ProtocolVersion</className>
+        <field>NEWEST_SUPPORTED</field>
+        <justification>This was an oversight, this field was never intended to be non final</justification>
+    </difference>
 
-  <difference>
-    <differenceType>8001</differenceType> <!-- class removed -->
-    <className>com/datastax/driver/core/schemabuilder/ColumnType$NativeColumnType</className>
-    <justification>This class was accidentally exposed, it was meant to be package-private</justification>
-  </difference>
+    <difference>
+        <differenceType>8001</differenceType> <!-- class removed -->
+        <className>com/datastax/driver/core/schemabuilder/ColumnType$NativeColumnType</className>
+        <justification>This class was accidentally exposed, it was meant to be package-private</justification>
+    </difference>
 
-  <difference>
-    <differenceType>1001</differenceType> <!-- decreased visibility -->
-    <className>com/datastax/driver/core/HostConnectionPool$Phase</className>
-    <justification>False positive: HostConnectionPool is not exposed to clients</justification>
-  </difference>
+    <difference>
+        <differenceType>1001</differenceType> <!-- decreased visibility -->
+        <className>com/datastax/driver/core/HostConnectionPool$Phase</className>
+        <justification>False positive: HostConnectionPool is not exposed to clients</justification>
+    </difference>
 
-  <difference>
-    <differenceType>1001</differenceType> <!-- decreased visibility -->
-    <className>com/datastax/driver/core/ConvictionPolicy$Factory</className>
-    <justification>False positive, the enclosing class is package-private so this was never exposed</justification>
-  </difference>
-  
-  <difference>
-    <differenceType>8001</differenceType> <!-- class removed -->
-    <className>com/datastax/driver/core/ConvictionPolicy$Simple</className>
-    <justification>False positive, the enclosing class is package-private so this was never exposed</justification>
-  </difference>
-  
-  <difference>
-    <differenceType>8001</differenceType> <!-- class removed -->
-    <className>com/datastax/driver/core/ConvictionPolicy$Simple$Factory</className>
-    <justification>False positive, the enclosing class is package-private so this was never exposed</justification>
-  </difference>
+    <difference>
+        <differenceType>1001</differenceType> <!-- decreased visibility -->
+        <className>com/datastax/driver/core/ConvictionPolicy$Factory</className>
+        <justification>False positive, the enclosing class is package-private so this was never exposed</justification>
+    </difference>
 
-  <difference>
-    <differenceType>1001</differenceType> <!-- decreased visibility -->
-    <className>com/datastax/driver/mapping/ColumnMapper$Kind</className>
-    <justification>False positive, the enclosing class is package-private so this was never exposed</justification>
-  </difference>
+    <difference>
+        <differenceType>8001</differenceType> <!-- class removed -->
+        <className>com/datastax/driver/core/ConvictionPolicy$Simple</className>
+        <justification>False positive, the enclosing class is package-private so this was never exposed</justification>
+    </difference>
+
+    <difference>
+        <differenceType>8001</differenceType> <!-- class removed -->
+        <className>com/datastax/driver/core/ConvictionPolicy$Simple$Factory</className>
+        <justification>False positive, the enclosing class is package-private so this was never exposed</justification>
+    </difference>
+
+    <difference>
+        <differenceType>1001</differenceType> <!-- decreased visibility -->
+        <className>com/datastax/driver/mapping/ColumnMapper$Kind</className>
+        <justification>False positive, the enclosing class is package-private so this was never exposed</justification>
+    </difference>
+
+    <difference>
+        <differenceType>7002</differenceType> <!-- method removed -->
+        <className>com/datastax/driver/core/PerHostPercentileTracker</className>
+        <method>com.datastax.driver.core.PerHostPercentileTracker$Builder builderWithHighestTrackableLatencyMillis(long)
+        </method>
+        <justification>Renamed (API was marked as beta and still subject to change)</justification>
+    </difference>
+
+    <difference>
+        <differenceType>7002</differenceType> <!-- method removed -->
+        <className>com/datastax/driver/core/PerHostPercentileTracker</className>
+        <method>long getLatencyAtPercentile(com.datastax.driver.core.Host, double)</method>
+        <justification>Moved to new parent class with more parameters (API was marked as beta and still subject to change)</justification>
+    </difference>
+
+    <difference>
+        <differenceType>7002</differenceType> <!-- method removed -->
+        <className>com/datastax/driver/core/PerHostPercentileTracker$Builder</className>
+        <method>com.datastax.driver.core.PerHostPercentileTracker$Builder withInterval(long, java.util.concurrent.TimeUnit)</method>
+        <justification>False positive, method now inherited from generic parent class</justification>
+    </difference>
+
+    <difference>
+        <differenceType>7002</differenceType> <!-- method removed -->
+        <className>com/datastax/driver/core/PerHostPercentileTracker$Builder</className>
+        <method>com.datastax.driver.core.PerHostPercentileTracker$Builder withMinRecordedValues(int)</method>
+        <justification>False positive, method now inherited from generic parent class</justification>
+    </difference>
+
+    <difference>
+        <differenceType>7002</differenceType> <!-- method removed -->
+        <className>com/datastax/driver/core/PerHostPercentileTracker$Builder</className>
+        <method>com.datastax.driver.core.PerHostPercentileTracker$Builder withNumberOfSignificantValueDigits(int)</method>
+        <justification>False positive, method now inherited from generic parent class</justification>
+    </difference>
+
+    <difference>
+        <differenceType>7002</differenceType> <!-- method removed -->
+        <className>com/datastax/driver/core/PerHostPercentileTracker$Builder</className>
+        <method>com.datastax.driver.core.PerHostPercentileTracker$Builder withNumberOfHosts(int)</method>
+        <justification>Removed (API was marked as beta and still subject to change)</justification>
+    </difference>
+
+    <difference>
+        <differenceType>7005</differenceType> <!-- method argument type changed -->
+        <className>com/datastax/driver/core/QueryLogger$Builder</className>
+        <method>com.datastax.driver.core.QueryLogger$Builder withDynamicThreshold(com.datastax.driver.core.PerHostPercentileTracker, double)</method>
+        <to>com.datastax.driver.core.QueryLogger$Builder withDynamicThreshold(com.datastax.driver.core.PercentileTracker, double)</to>
+        <justification>Introduced more generic parent type PercentileTracker (API was marked as beta and still subject to change)</justification>
+    </difference>
+
+    <difference>
+        <differenceType>7002</differenceType> <!-- method removed -->
+        <className>com/datastax/driver/core/QueryLogger$DynamicThresholdQueryLogger</className>
+        <method>com.datastax.driver.core.PerHostPercentileTracker getPerHostPercentileLatencyTracker()</method>
+        <justification>Introduced more generic parent type PercentileTracker (API was marked as beta and still subject to change)</justification>
+    </difference>
+
+    <difference>
+        <differenceType>7002</differenceType> <!-- method removed -->
+        <className>com/datastax/driver/core/QueryLogger$DynamicThresholdQueryLogger</className>
+        <method>void setPerHostPercentileLatencyTracker(com.datastax.driver.core.PerHostPercentileTracker)</method>
+        <justification>Introduced more generic parent type PercentileTracker (API was marked as beta and still subject to change)</justification>
+    </difference>
+
+    <difference>
+        <differenceType>7005</differenceType> <!-- method argument type changed -->
+        <className>com/datastax/driver/core/policies/PercentileSpeculativeExecutionPolicy</className>
+        <method>PercentileSpeculativeExecutionPolicy(com.datastax.driver.core.PerHostPercentileTracker, double, int)</method>
+        <to>*</to> <!-- didn't find a way to write the new signature -->
+        <justification>Introduced more generic parent type PercentileTracker (API was marked as beta and still subject to change)</justification>
+    </difference>
 
 </differences>
