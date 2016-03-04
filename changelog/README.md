@@ -29,6 +29,7 @@
 - [improvement] JAVA-888: Add cluster-wide percentile tracker.
 - [improvement] JAVA-963: Automatically register PercentileTracker from components that use it.
 - [bug] JAVA-1089: Set LWT made from BuiltStatements to non-idempotent.
+- [improvement] JAVA-923: Position idempotent flag on object mapper queries.
 
 Merged from 2.0 branch:
 

@@ -129,4 +129,11 @@
         <justification>Introduced more generic parent type PercentileTracker (API was marked as beta and still subject to change)</justification>
     </difference>
 
+    <difference>
+        <differenceType>7012</differenceType> <!-- method added to interface -->
+        <className>com/datastax/driver/mapping/annotations/QueryParameters</className>
+        <method>boolean[] idempotent()</method>
+        <justification>False positive, it's an annotation and the new method has a default value</justification>
+    </difference>
+
 </differences>
