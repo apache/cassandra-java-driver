@@ -7,6 +7,9 @@
   * run `mvn clirr:clirr` at the root directory
   * check the reports in `<module>/target/site/clirr-report.html`
   * add new differences if needed. Difference types are explained at http://www.mojohaus.org/clirr-maven-plugin/examples/ignored-differences.html
+
+  The formatter introduces line breaks that make Clirr unhappy:
+  @formatter:off
 -->
 <differences>
 
@@ -15,5 +18,12 @@
     <className>com/datastax/driver/mapping/ColumnMapper$Kind</className>
     <justification>False positive, the enclosing class is package-private so this was never exposed</justification>
   </difference>
-  
+
+  <difference>
+    <differenceType>7012</differenceType> <!-- method added to interface -->
+    <className>com/datastax/driver/mapping/annotations/QueryParameters</className>
+    <method>boolean[] idempotent()</method>
+    <justification>False positive, it's an annotation and the new method has a default value</justification>
+  </difference>
+
 </differences>

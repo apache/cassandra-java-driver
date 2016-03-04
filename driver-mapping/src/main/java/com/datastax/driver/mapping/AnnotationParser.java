@@ -320,15 +320,20 @@ class AnnotationParser {
             ConsistencyLevel cl = null;
             int fetchSize = -1;
             boolean tracing = false;
+            Boolean idempotent = null;
 
             QueryParameters options = m.getAnnotation(QueryParameters.class);
             if (options != null) {
                 cl = options.consistency().isEmpty() ? null : ConsistencyLevel.valueOf(options.consistency().toUpperCase());
                 fetchSize = options.fetchSize();
                 tracing = options.tracing();
+                if (options.idempotent().length > 1) {
+                    throw new IllegalStateException("idemtpotence() attribute can only accept one value");
+                }
+                idempotent = options.idempotent().length == 0 ? null : options.idempotent()[0];
             }
 
-            methods.add(new MethodMapper(m, queryString, paramMappers, cl, fetchSize, tracing));
+            methods.add(new MethodMapper(m, queryString, paramMappers, cl, fetchSize, tracing, idempotent));
         }
 
         return factory.create(accClass, methods);

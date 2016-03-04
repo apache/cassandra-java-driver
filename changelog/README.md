@@ -14,6 +14,7 @@ Merged from 2.1 branch:
 - [bug] JAVA-1100: Exception when connecting with shaded java driver in OSGI
 - [bug] JAVA-1064: getTable create statement doesn't properly handle quotes in primary key.
 - [bug] JAVA-1089: Set LWT made from BuiltStatements to non-idempotent.
+- [improvement] JAVA-923: Position idempotent flag on object mapper queries.
 
 
 ### 3.0.0
