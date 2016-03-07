@@ -30,6 +30,7 @@
 - [improvement] JAVA-963: Automatically register PercentileTracker from components that use it.
 - [bug] JAVA-1089: Set LWT made from BuiltStatements to non-idempotent.
 - [improvement] JAVA-923: Position idempotent flag on object mapper queries.
+- [new feature] JAVA-1019: SchemaBuilder support for CREATE/ALTER/DROP KEYSPACE.
 
 Merged from 2.0 branch:
 

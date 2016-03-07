@@ -32,6 +32,16 @@ public final class SchemaBuilder {
     }
 
     /**
+     * Start building a new CREATE KEYSPACE statement.
+     *
+     * @param keyspaceName the name of the keyspace to create.
+     * @return an in-construction CREATE KEYSPACE statement.
+     */
+    public static CreateKeyspace createKeyspace(String keyspaceName) {
+        return new CreateKeyspace(keyspaceName);
+    }
+
+    /**
      * Start building a new CREATE TABLE statement.
      *
      * @param tableName the name of the table to create.
@@ -50,6 +60,16 @@ public final class SchemaBuilder {
      */
     public static Create createTable(String keyspaceName, String tableName) {
         return new Create(keyspaceName, tableName);
+    }
+
+    /**
+     * Start building a new ALTER KEYSPACE statement.
+     *
+     * @param keyspaceName the name of the keyspace to be altered.
+     * @return an in-construction ALTER KEYSPACE statement.
+     */
+    public static AlterKeyspace alterKeyspace(String keyspaceName) {
+        return new AlterKeyspace(keyspaceName);
     }
 
     /**
@@ -81,6 +101,16 @@ public final class SchemaBuilder {
      */
     public static Drop dropTable(String tableName) {
         return new Drop(tableName, DroppedItem.TABLE);
+    }
+
+    /**
+     * Start building a new DROP KEYSPACE statement.
+     *
+     * @param keyspaceName the name of the keyspace to be dropped.
+     * @return an in-construction DROP KEYSPACE statement.
+     */
+    public static DropKeyspace dropKeyspace(String keyspaceName) {
+        return new DropKeyspace(keyspaceName);
     }
 
     /**
