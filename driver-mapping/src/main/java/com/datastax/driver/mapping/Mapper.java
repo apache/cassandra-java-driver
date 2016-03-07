@@ -45,7 +45,7 @@ import static com.google.common.base.Preconditions.checkArgument;
  */
 public class Mapper<T> {
 
-    private static final Logger logger = LoggerFactory.getLogger(EntityMapper.class);
+    private static final Logger logger = LoggerFactory.getLogger(Mapper.class);
     private static final Function<Object, Void> TO_NULL = Functions.constant(null);
 
     final MappingManager manager;
