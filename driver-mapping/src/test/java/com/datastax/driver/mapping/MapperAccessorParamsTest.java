@@ -265,9 +265,9 @@ public class MapperAccessorParamsTest extends CCMTestsSupport {
 
     @Accessor
     public interface UserPhoneAccessor_WrongParameterTypes {
-        @Query("select * from user where key IN (:keys)")
-            // WRONG, should be "where key IN :keys"
-        void findUsersBykeys(@Param("keys") List<Integer> keys);
+        @Query("select * from user where key IN (?)")
+        // WRONG, should be "where key IN ?"
+        void findUsersBykeys(List<Integer> keys);
     }
 
 }
