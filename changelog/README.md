@@ -52,6 +52,7 @@ Merged from 2.1 branch:
 - [improvement] JAVA-1038: Fetch node info by rpc_address if its broadcast_address is not in system.peers.
 - [improvement] JAVA-888: Add cluster-wide percentile tracker.
 - [improvement] JAVA-963: Automatically register PercentileTracker from components that use it.
+- [new feature] JAVA-1019: SchemaBuilder support for CREATE/ALTER/DROP KEYSPACE.
 
 
 ### 3.0.2
