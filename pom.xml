@@ -62,6 +62,8 @@
     <mockito.version>1.10.8</mockito.version>
     <scassandra.version>0.11.0</scassandra.version>
     <main.basedir>${project.basedir}</main.basedir>
+    <ipprefix>127.0.1.</ipprefix>
+    <test.groups>unit</test.groups>
   </properties>
 
   <dependencies>
@@ -82,6 +84,16 @@
 
   <profiles>
     <profile>
+      <id>default</id>
+      <properties>
+        <env>default</env>
+        <test.groups>unit</test.groups>
+      </properties>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+    </profile>
+    <profile>
       <id>doclint-java8-disable</id>
       <activation>
         <jdk>[1.8,)</jdk>
@@ -91,10 +103,39 @@
       </properties>
     </profile>
     <profile>
+      <id>short</id>
+      <properties>
+        <env>default</env>
+        <test.groups>unit,short</test.groups>
+      </properties>
+    </profile>
+    <profile>
+      <id>long</id>
+      <properties>
+        <env>default</env>
+        <test.groups>unit,short,long</test.groups>
+      </properties>
+    </profile>
+    <profile>
+      <id>duration</id>
+      <properties>
+        <env>default</env>
+        <test.groups>unit,short,long,duration</test.groups>
+      </properties>
+    </profile>
+    <profile>
+      <id>doc</id>
+      <properties>
+        <env>default</env>
+        <test.groups>unit,doc</test.groups>
+      </properties>
+    </profile>
+    <profile>
       <!-- default profile settings for 'isolated' test group, will skip tests unless overriden in child module. -->
       <id>isolated</id>
       <properties>
         <env>default</env>
+        <test.groups>isolated</test.groups>
       </properties>
       <build>
         <plugins>
@@ -106,16 +147,7 @@
               <skip>true</skip>
               <forkCount>1</forkCount>
               <reuseForks>false</reuseForks>
-              <groups>isolated</groups>
               <reportNameSuffix>isolated</reportNameSuffix>
-              <useFile>false</useFile>
-              <systemPropertyVariables>
-                <cassandra.version>${cassandra.version}</cassandra.version>
-                <ipprefix>${ipprefix}</ipprefix>
-              </systemPropertyVariables>
-              <classpathDependencyExcludes>
-                <classpathDependencyExcludes>io.netty:netty-transport-native-epoll</classpathDependencyExcludes>
-              </classpathDependencyExcludes>
               <!-- This requires includes to be explicitly specified by implementing classes.
                    This is needed to prevent creating a JVM fork for each test, even those that don't
                    have the isolated group. -->
@@ -240,7 +272,32 @@
           </execution>
         </executions>
       </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>2.16</version>
+        <configuration>
+          <groups>${test.groups}</groups>
+          <useFile>false</useFile>
+          <systemPropertyVariables>
+            <cassandra.version>${cassandra.version}</cassandra.version>
+            <ipprefix>${ipprefix}</ipprefix>
+            <com.datastax.driver.NEW_NODE_DELAY_SECONDS>60</com.datastax.driver.NEW_NODE_DELAY_SECONDS>
+          </systemPropertyVariables>
+          <classpathDependencyExcludes>
+            <classpathDependencyExcludes>io.netty:netty-transport-native-epoll</classpathDependencyExcludes>
+          </classpathDependencyExcludes>
+          <properties>
+            <property>
+              <!-- Don't skip tests after a @Before method throws a SkipException -->
+              <name>configfailurepolicy</name>
+              <value>continue</value>
+            </property>
+          </properties>
+        </configuration>
+      </plugin>
     </plugins>
+
   </build>
 
   <licenses>
