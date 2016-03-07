@@ -26,9 +26,9 @@ import java.util.concurrent.CountDownLatch;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
-import static org.scassandra.http.client.PrimingRequest.Result.read_request_timeout;
-import static org.scassandra.http.client.PrimingRequest.Result.unavailable;
 import static org.scassandra.http.client.PrimingRequest.queryBuilder;
+import static org.scassandra.http.client.Result.read_request_timeout;
+import static org.scassandra.http.client.Result.unavailable;
 
 public class LatencyAwarePolicyTest extends ScassandraTestBase {
 

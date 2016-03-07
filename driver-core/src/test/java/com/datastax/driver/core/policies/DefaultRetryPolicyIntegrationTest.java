@@ -15,10 +15,7 @@
  */
 package com.datastax.driver.core.policies;
 
-import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.Metrics;
-import com.datastax.driver.core.Session;
-import com.datastax.driver.core.SocketOptions;
+import com.datastax.driver.core.*;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.datastax.driver.core.exceptions.ReadTimeoutException;
 import com.datastax.driver.core.exceptions.UnavailableException;
@@ -29,6 +26,9 @@ import org.assertj.core.api.Fail;
 import org.scassandra.Scassandra;
 import org.scassandra.http.client.ClosedConnectionConfig;
 import org.scassandra.http.client.PrimingRequest;
+import org.scassandra.http.client.Result;
+import org.scassandra.http.client.UnavailableConfig;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.util.Collection;
@@ -36,8 +36,9 @@ import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
-import static org.scassandra.http.client.PrimingRequest.Result.*;
+import static org.scassandra.http.client.Consistency.LOCAL_SERIAL;
 import static org.scassandra.http.client.PrimingRequest.then;
+import static org.scassandra.http.client.Result.*;
 
 public class DefaultRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegrationTest {
     public DefaultRetryPolicyIntegrationTest() {
@@ -212,7 +213,7 @@ public class DefaultRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegr
 
 
     @Test(groups = "short", dataProvider = "serverSideErrors")
-    public void should_try_next_host_on_server_side_error(PrimingRequest.Result error, Class<?> exception) {
+    public void should_try_next_host_on_server_side_error(Result error, Class<?> exception) {
         simulateError(1, error);
         simulateError(2, error);
         simulateError(3, error);
@@ -238,9 +239,9 @@ public class DefaultRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegr
 
     @Test(groups = "short", dataProvider = "connectionErrors")
     public void should_try_next_host_on_connection_error(ClosedConnectionConfig.CloseType closeType) {
-        simulateError(1, PrimingRequest.Result.closed_connection, new ClosedConnectionConfig(closeType));
-        simulateError(2, PrimingRequest.Result.closed_connection, new ClosedConnectionConfig(closeType));
-        simulateError(3, PrimingRequest.Result.closed_connection, new ClosedConnectionConfig(closeType));
+        simulateError(1, closed_connection, new ClosedConnectionConfig(closeType));
+        simulateError(2, closed_connection, new ClosedConnectionConfig(closeType));
+        simulateError(3, closed_connection, new ClosedConnectionConfig(closeType));
         try {
             query();
             Fail.fail("expected a NoHostAvailableException");
@@ -258,5 +259,26 @@ public class DefaultRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegr
         assertQueried(1, 1);
         assertQueried(2, 1);
         assertQueried(3, 1);
+    }
+
+    @Test(groups = "short")
+    public void should_rethrow_on_unavailable_if_CAS() {
+        simulateError(1, unavailable, new UnavailableConfig(1, 0, LOCAL_SERIAL));
+        simulateError(2, unavailable, new UnavailableConfig(1, 0, LOCAL_SERIAL));
+
+        try {
+            query();
+            Assert.fail("expected an UnavailableException");
+        } catch (UnavailableException e) {
+            assertThat(e.getConsistencyLevel()).isEqualTo(ConsistencyLevel.LOCAL_SERIAL);
+        }
+
+        assertOnUnavailableWasCalled(2);
+        assertThat(errors.getRetries().getCount()).isEqualTo(1);
+        assertThat(errors.getUnavailables().getCount()).isEqualTo(2);
+        assertThat(errors.getRetriesOnUnavailable().getCount()).isEqualTo(1);
+        assertQueried(1, 1);
+        assertQueried(2, 1);
+        assertQueried(3, 0);
     }
 }

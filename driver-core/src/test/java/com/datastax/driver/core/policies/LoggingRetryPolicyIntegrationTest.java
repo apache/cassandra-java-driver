@@ -35,7 +35,7 @@ import static com.datastax.driver.core.policies.LoggingRetryPolicy.*;
 import static com.datastax.driver.core.policies.RetryPolicy.RetryDecision.ignore;
 import static com.datastax.driver.core.policies.RetryPolicy.RetryDecision.tryNextHost;
 import static org.apache.log4j.Level.INFO;
-import static org.scassandra.http.client.PrimingRequest.Result.*;
+import static org.scassandra.http.client.Result.*;
 
 /**
  * Integration tests with LoggingRetryPolicy.
