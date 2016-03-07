@@ -841,7 +841,7 @@ public class QueryLoggerTest extends CCMTestsSupport {
                 .contains("Query completed normally")
                 .contains(ipOfNode(1))
                 .contains("123456")
-                .doesNotContain("42")
+                .doesNotContain("123456, 42")
                 .contains(FURTHER_PARAMS_OMITTED);
     }
 
@@ -899,9 +899,7 @@ public class QueryLoggerTest extends CCMTestsSupport {
                 .contains(query1)
                 .contains(query2)
                 .contains("'foo'")
-                .doesNotContain("42")
-                .doesNotContain("12345")
-                .doesNotContain("43")
+                .doesNotContain("42, 12345, 43")
                 .contains(FURTHER_PARAMS_OMITTED);
     }
 
