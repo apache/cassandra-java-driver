@@ -36,6 +36,8 @@ import java.util.concurrent.ExecutionException;
 
 import static com.datastax.driver.mapping.Mapper.Option.Type.SAVE_NULL_FIELDS;
 import static com.google.common.base.Preconditions.checkArgument;
+import static java.util.concurrent.TimeUnit.MINUTES;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 /**
  * An object handling the mapping of a particular class.
@@ -52,6 +54,7 @@ public class Mapper<T> {
     final ProtocolVersion protocolVersion;
     final Class<T> klass;
     final EntityMapper<T> mapper;
+    private final MapperMetrics mapperMetrics;
     final TableMetadata tableMetadata;
 
     // Cache prepared statements for each type of query we use.
@@ -67,10 +70,16 @@ public class Mapper<T> {
     final Function<ResultSet, T> mapOneFunctionWithoutAliases;
     final Function<ResultSet, Result<T>> mapAllFunctionWithoutAliases;
 
-    Mapper(MappingManager manager, Class<T> klass, EntityMapper<T> mapper) {
+    // null fields counting mechanism
+    private static final int NULL_FIELDS_COUNT_WARNING_THRESHOLD = 1000;
+    private static final long NULL_FIELDS_COUNT_WARNING_INTERVAL_NS = NANOSECONDS.convert(5, MINUTES);
+    private volatile long lastNullFieldsCountWarning = Long.MIN_VALUE;
+
+    Mapper(MappingManager manager, Class<T> klass, EntityMapper<T> mapper, MapperMetrics mapperMetrics) {
         this.manager = manager;
         this.klass = klass;
         this.mapper = mapper;
+        this.mapperMetrics = mapperMetrics;
 
         KeyspaceMetadata keyspace = session().getCluster().getMetadata().getKeyspace(mapper.getKeyspace());
         this.tableMetadata = keyspace == null ? null : keyspace.getTable(mapper.getTable());
@@ -215,6 +224,23 @@ public class Mapper<T> {
             Object value = cm.getValue(entity);
             if (cm.kind != ColumnMapper.Kind.COMPUTED && (saveNullFields || value != null)) {
                 values.put(cm, value);
+            }
+            if (saveNullFields && value == null) {
+                MapperMetrics.EntityMetrics metrics = mapperMetrics.getEntityMetrics(entity.getClass());
+                metrics.nullFieldsHistogram.update(1);
+                long count = metrics.nullFieldsHistogram.getCount();
+                if (count > NULL_FIELDS_COUNT_WARNING_THRESHOLD) {
+                    long now = System.nanoTime();
+                    if (now > lastNullFieldsCountWarning + NULL_FIELDS_COUNT_WARNING_INTERVAL_NS) {
+                        lastNullFieldsCountWarning = now;
+                        logger.warn("More than {} null fields saved over the past 5 minutes for entity {}; " +
+                                        "consider setting SAVE_NULL_FIELDS option to false. " +
+                                        "This warning will only be logged once every 5 minutes.",
+                                NULL_FIELDS_COUNT_WARNING_THRESHOLD,
+                                entity.getClass().getName());
+                    }
+
+                }
             }
         }
 

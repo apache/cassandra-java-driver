@@ -17,9 +17,12 @@ package com.datastax.driver.mapping;
 
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.CCMTestsSupport;
+import com.datastax.driver.core.MemoryAppender;
 import com.datastax.driver.mapping.Mapper.Option;
 import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -59,6 +62,26 @@ public class MapperSaveNullFieldsTest extends CCMTestsSupport {
 
         mapper.setDefaultSaveOptions(Option.saveNullFields(false));
         should_save_null_fields(false);
+    }
+
+    @Test(groups = "short")
+    void should_log_warning_if_too_many_null_fields_saved() throws InterruptedException {
+        MemoryAppender logs = new MemoryAppender();
+        Logger logger = Logger.getLogger(EntityMapper.class);
+        Level originalLoggerLevel = logger.getLevel();
+        logger.setLevel(Level.WARN);
+        logger.addAppender(logs);
+        try {
+            mapper.setDefaultSaveOptions(Option.saveNullFields(true));
+            for (int i = 0; i < 501; i++) {
+                mapper.save(new User("test_login_" + i, null, null));
+            }
+            assertThat(logs.waitAndGet(60000))
+                    .containsOnlyOnce("More than 1000 null fields saved over the past 5 minutes for entity " + User.class.getName());
+        } finally {
+            logger.removeAppender(logs);
+            logger.setLevel(originalLoggerLevel);
+        }
     }
 
     private void should_save_null_fields(boolean saveExpected, Option... options) {

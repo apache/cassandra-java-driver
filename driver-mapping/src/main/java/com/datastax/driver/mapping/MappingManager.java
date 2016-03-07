@@ -32,6 +32,8 @@ public class MappingManager {
     private final Session session;
     final boolean isCassandraV1;
 
+    private final MapperMetrics mapperMetrics;
+
     private volatile Map<Class<?>, Mapper<?>> mappers = Collections.<Class<?>, Mapper<?>>emptyMap();
     private volatile Map<Class<?>, UDTMapper<?>> udtMappers = Collections.<Class<?>, UDTMapper<?>>emptyMap();
     private volatile Map<Class<?>, Object> accessors = Collections.<Class<?>, Object>emptyMap();
@@ -72,6 +74,7 @@ public class MappingManager {
         // which nodes might join the cluster later.
         // At least if protocol >=2 we know there won't be any 1.2 nodes ever.
         this.isCassandraV1 = (protocolVersion == ProtocolVersion.V1);
+        this.mapperMetrics = new MapperMetrics(session.getCluster());
     }
 
     /**
@@ -145,7 +148,7 @@ public class MappingManager {
                 mapper = (Mapper<T>) mappers.get(klass);
                 if (mapper == null) {
                     EntityMapper<T> entityMapper = AnnotationParser.parseEntity(klass, ReflectionMapper.factory(), this);
-                    mapper = new Mapper<T>(this, klass, entityMapper);
+                    mapper = new Mapper<T>(this, klass, entityMapper, mapperMetrics);
                     Map<Class<?>, Mapper<?>> newMappers = new HashMap<Class<?>, Mapper<?>>(mappers);
                     newMappers.put(klass, mapper);
                     mappers = newMappers;
