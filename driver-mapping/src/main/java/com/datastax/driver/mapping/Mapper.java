@@ -225,10 +225,9 @@ public class Mapper<T> {
             if (cm.kind != ColumnMapper.Kind.COMPUTED && (saveNullFields || value != null)) {
                 values.put(cm, value);
             }
-            if (saveNullFields && value == null) {
+            if (saveNullFields && value == null && mapperMetrics != null) {
                 MapperMetrics.EntityMetrics metrics = mapperMetrics.getEntityMetrics(entity.getClass());
-                metrics.nullFieldsHistogram.update(1);
-                long count = metrics.nullFieldsHistogram.getCount();
+                long count = metrics.getNullFieldsCounter().incrementAndGetCount();
                 if (count > NULL_FIELDS_COUNT_WARNING_THRESHOLD) {
                     long now = System.nanoTime();
                     if (now > lastNullFieldsCountWarning + NULL_FIELDS_COUNT_WARNING_INTERVAL_NS) {
@@ -939,7 +938,7 @@ public class Mapper<T> {
 
         static class Ttl extends Option {
 
-            private int ttlValue;
+            private final int ttlValue;
 
             Ttl(int value) {
                 super(Type.TTL);
@@ -975,7 +974,7 @@ public class Mapper<T> {
 
         static class Timestamp extends Option {
 
-            private long tsValue;
+            private final long tsValue;
 
             Timestamp(long value) {
                 super(Type.TIMESTAMP);
@@ -1011,7 +1010,7 @@ public class Mapper<T> {
 
         static class ConsistencyLevelOption extends Option {
 
-            private ConsistencyLevel cl;
+            private final ConsistencyLevel cl;
 
             ConsistencyLevelOption(ConsistencyLevel cl) {
                 super(Type.CL);
@@ -1047,7 +1046,7 @@ public class Mapper<T> {
 
         static class Tracing extends Option {
 
-            private boolean tracing;
+            private final boolean tracing;
 
             Tracing(boolean tracing) {
                 super(Type.TRACING);
@@ -1084,7 +1083,7 @@ public class Mapper<T> {
 
         static class SaveNullFields extends Option {
 
-            private boolean saveNullFields;
+            private final boolean saveNullFields;
 
             SaveNullFields(boolean saveNullFields) {
                 super(SAVE_NULL_FIELDS);
