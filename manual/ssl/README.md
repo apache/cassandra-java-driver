@@ -125,7 +125,7 @@ configuration on the `SSLEngine` (for example hostname verification).
 #### Netty
 
 [NettySSLOptions] allows you to use Netty's `SslContext` instead of
-the JDK directly. The advantage is that Netty can use OpenSSL directly,
+the JDK's. The advantage is that Netty can use OpenSSL directly,
 which provides better performance and generates less garbage.  A disadvantage of
 using the OpenSSL provider is that it requires platform-specific dependencies,
 unlike the JDK provider.
@@ -153,7 +153,9 @@ Netty-tcnative provides the native integration with OpenSSL. Follow
 add it to your dependencies.
 
 Note that using netty-tcnative requires JDK 1.7 or above and requires the
-presence of OpenSSL on the system.  It will not fall back to the JDK implementation.
+presence of OpenSSL on the system.  It **will not** fall back to the
+JDK implementation, therefore you should only use it if you are sure that
+OpenSSL is installed on your system.
 
 ##### Configuring the context
 
