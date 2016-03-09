@@ -159,4 +159,72 @@ abstract class ParseUtils {
     public static boolean isBlank(int c) {
         return c == ' ' || c == '\t' || c == '\n';
     }
+
+    /**
+     * Return {@code true} if the given string is surrounded
+     * by single quotes, and {@code false} otherwise.
+     *
+     * @param value The string to inspect.
+     * @return {@code true} if the given string is surrounded
+     * by single quotes, and {@code false} otherwise.
+     */
+    public static boolean isQuoted(String value) {
+        return value != null && value.length() > 1 && value.charAt(0) == '\'' && value.charAt(value.length() - 1) == '\'';
+    }
+
+    /**
+     * Quote the given string; single quotes are escaped.
+     * If the given string is null, this method returns a quoted empty string ({@code ''}).
+     *
+     * @param value The value to quote.
+     * @return The quoted string.
+     */
+    public static String quote(String value) {
+        return '\'' + replaceChar(value, '\'', "''") + '\'';
+    }
+
+    /**
+     * Unquote the given string if it is quoted; single quotes are unescaped.
+     * If the given string is not quoted, it is returned without any modification.
+     *
+     * @param value The string to unquote.
+     * @return The unquoted string.
+     */
+    public static String unquote(String value) {
+        if (!isQuoted(value))
+            return value;
+        return value.substring(1, value.length() - 1).replace("''", "'");
+    }
+
+    // Simple method to replace a single character. String.replace is a bit too
+    // inefficient (see JAVA-67)
+    static String replaceChar(String text, char search, String replacement) {
+        if (text == null || text.isEmpty())
+            return text;
+
+        int nbMatch = 0;
+        int start = -1;
+        do {
+            start = text.indexOf(search, start + 1);
+            if (start != -1)
+                ++nbMatch;
+        } while (start != -1);
+
+        if (nbMatch == 0)
+            return text;
+
+        int newLength = text.length() + nbMatch * (replacement.length() - 1);
+        char[] result = new char[newLength];
+        int newIdx = 0;
+        for (int i = 0; i < text.length(); i++) {
+            char c = text.charAt(i);
+            if (c == search) {
+                for (int r = 0; r < replacement.length(); r++)
+                    result[newIdx++] = replacement.charAt(r);
+            } else {
+                result[newIdx++] = c;
+            }
+        }
+        return new String(result);
+    }
 }

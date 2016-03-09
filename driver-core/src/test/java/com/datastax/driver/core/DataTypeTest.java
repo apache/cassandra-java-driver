@@ -24,6 +24,8 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 import static com.datastax.driver.core.Assertions.assertThat;
@@ -283,5 +285,18 @@ public class DataTypeTest {
                 })
                 .cannotBeDeserializedAs(new TypeToken<Map<Integer, Collection<Integer>>>() {
                 });
+    }
+
+    @Test(groups = "unit")
+    public void should_handle_quotes_in_map_elements() throws ParseException {
+        DataType type = DataType.map(DataType.timestamp(), DataType.text());
+        String text = "{ '2013-9-22 12:01'  : 'birthday wishes to Bilbo', '2013-10-1 18:00' : 'Check into Inn of Prancing Pony' }";
+        @SuppressWarnings("unchecked")
+        Map<Date, String> map = (Map<Date, String>) type.parse(text);
+
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+        assertThat(map)
+                .containsEntry(format.parse("2013-9-22 12:01"), "birthday wishes to Bilbo")
+                .containsEntry(format.parse("2013-10-1 18:00"), "Check into Inn of Prancing Pony");
     }
 }
