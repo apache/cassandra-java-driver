@@ -35,6 +35,7 @@
 - [new feature] JAVA-982: Introduce new method ConsistencyLevel.isSerial().
 - [bug] JAVA-764: Retry with the normal consistency level (not the serial one) when a write times out on the Paxos phase.
 - [bug] JAVA-727: Allow monotonic timestamp generators to drift in the future + use microsecond precision when possible.
+- [improvement] JAVA-444: Add Java process information to UUIDs.makeNode() hash.
 
 Merged from 2.0 branch:
 
