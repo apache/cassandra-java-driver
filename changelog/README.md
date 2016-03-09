@@ -54,6 +54,7 @@ Merged from 2.1 branch:
 - [improvement] JAVA-963: Automatically register PercentileTracker from components that use it.
 - [new feature] JAVA-1019: SchemaBuilder support for CREATE/ALTER/DROP KEYSPACE.
 - [bug] JAVA-727: Allow monotonic timestamp generators to drift in the future + use microsecond precision when possible.
+- [improvement] JAVA-444: Add Java process information to UUIDs.makeNode() hash.
 
 
 ### 3.0.2
