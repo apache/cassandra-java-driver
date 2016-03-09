@@ -326,7 +326,7 @@ public abstract class Statement {
      * Overrides the default per-host read timeout ({@link SocketOptions#getReadTimeoutMillis()})
      * for this statement.
      * <p/>
-     * You should only override this only for statements for which the coordinator may allow a longer server-side
+     * You should override this only for statements for which the coordinator may allow a longer server-side
      * timeout (for example aggregation queries).
      *
      * @param readTimeoutMillis the timeout to set. Must be greater than 0 (or the default will be used).
