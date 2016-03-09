@@ -133,7 +133,7 @@
       </properties>
     </profile>
     <profile>
-      <!-- default profile settings for 'isolated' test group, will skip tests unless overriden in child module. -->
+      <!-- default profile settings for 'isolated' test group, will skip tests unless overridden in child module. -->
       <id>isolated</id>
       <properties>
         <env>default</env>
@@ -277,6 +277,30 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
+        <version>2.16</version>
+        <configuration>
+          <groups>${test.groups}</groups>
+          <useFile>false</useFile>
+          <systemPropertyVariables>
+            <cassandra.version>${cassandra.version}</cassandra.version>
+            <ipprefix>${ipprefix}</ipprefix>
+            <com.datastax.driver.NEW_NODE_DELAY_SECONDS>60</com.datastax.driver.NEW_NODE_DELAY_SECONDS>
+          </systemPropertyVariables>
+          <classpathDependencyExcludes>
+            <classpathDependencyExcludes>io.netty:netty-transport-native-epoll</classpathDependencyExcludes>
+          </classpathDependencyExcludes>
+          <properties>
+            <property>
+              <!-- Don't skip tests after a @Before method throws a SkipException -->
+              <name>configfailurepolicy</name>
+              <value>continue</value>
+            </property>
+          </properties>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-failsafe-plugin</artifactId>
         <version>2.16</version>
         <configuration>
           <groups>${test.groups}</groups>
