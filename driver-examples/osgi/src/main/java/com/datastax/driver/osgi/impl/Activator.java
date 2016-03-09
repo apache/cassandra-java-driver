@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.osgi.impl;
 
+import com.datastax.driver.core.AtomicMonotonicTimestampGenerator;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.osgi.api.MailboxService;
@@ -40,7 +41,9 @@ public class Activator implements BundleActivator {
             keyspace = "mailbox";
         }
 
-        cluster = Cluster.builder().addContactPoints(contactPoints).build();
+        cluster = Cluster.builder().addContactPoints(contactPoints)
+                .withTimestampGenerator(new AtomicMonotonicTimestampGenerator())
+                .build();
         Session session = cluster.connect();
 
         MailboxImpl mailbox = new MailboxImpl(session, keyspace);

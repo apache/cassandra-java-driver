@@ -24,7 +24,6 @@ import com.datastax.driver.osgi.api.MailboxService;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
 import java.util.UUID;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
@@ -94,11 +93,10 @@ public class MailboxImpl implements MailboxService {
 
             Collection<MailboxMessage> messages = new ArrayList<MailboxMessage>();
             for (Row input : result) {
-                Date date = new Date(UUIDs.unixTimestamp(input.getUUID("time")));
                 messages.add(new MailboxMessage(input.getString("recipient"),
-                        date,
                         input.getString("sender"),
-                        input.getString("body")));
+                        input.getString("body"),
+                        input.getUUID("time")));
             }
             return messages;
         } catch (Exception e) {
@@ -109,8 +107,7 @@ public class MailboxImpl implements MailboxService {
     @Override
     public UUID sendMessage(MailboxMessage message) throws MailboxException {
         try {
-            UUID time = UUIDs.startOf(message.getDate().getTime());
-
+            UUID time = UUIDs.timeBased();
             BoundStatement statement = new BoundStatement(insertStatement);
             statement.setString(0, message.getRecipient());
             statement.setUUID(1, time);

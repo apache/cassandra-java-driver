@@ -21,7 +21,7 @@ class MockClocks {
         int calls;
 
         @Override
-        public long currentTime() {
+        public long currentTimeMicros() {
             return arbitraryTimeStamp - calls++;
         }
     }
@@ -34,7 +34,7 @@ class MockClocks {
         }
 
         @Override
-        public long currentTime() {
+        public long currentTimeMicros() {
             return fixedTime;
         }
     }
