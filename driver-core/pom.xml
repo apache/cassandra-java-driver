@@ -15,7 +15,8 @@
       limitations under the License.
 
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>com.datastax.cassandra</groupId>
@@ -25,7 +26,9 @@
   <artifactId>cassandra-driver-core</artifactId>
   <packaging>bundle</packaging>
   <name>DataStax Java Driver for Apache Cassandra - Core</name>
-  <description>A driver for Apache Cassandra 1.2+ that works exclusively with the Cassandra Query Language version 3 (CQL3) and Cassandra's binary protocol.</description>
+  <description>A driver for Apache Cassandra 1.2+ that works exclusively with the Cassandra Query Language version 3
+    (CQL3) and Cassandra's binary protocol.
+  </description>
   <url>https://github.com/datastax/java-driver</url>
 
   <properties>
@@ -67,17 +70,17 @@
     <!-- Each of them is only a mandatory runtime dependency if you want to use the compression it offers -->
 
     <dependency>
-        <groupId>org.xerial.snappy</groupId>
-        <artifactId>snappy-java</artifactId>
-        <version>${snappy.version}</version>
-        <optional>true</optional>
+      <groupId>org.xerial.snappy</groupId>
+      <artifactId>snappy-java</artifactId>
+      <version>${snappy.version}</version>
+      <optional>true</optional>
     </dependency>
 
     <dependency>
-        <groupId>net.jpountz.lz4</groupId>
-        <artifactId>lz4</artifactId>
-        <version>${lz4.version}</version>
-        <optional>true</optional>
+      <groupId>net.jpountz.lz4</groupId>
+      <artifactId>lz4</artifactId>
+      <version>${lz4.version}</version>
+      <optional>true</optional>
     </dependency>
 
     <!-- End of compression libraries -->
@@ -221,7 +224,9 @@
         <executions>
           <execution>
             <phase>package</phase>
-            <goals><goal>shade</goal></goals>
+            <goals>
+              <goal>shade</goal>
+            </goals>
             <configuration>
               <shadedArtifactAttached>true</shadedArtifactAttached>
               <artifactSet>
@@ -287,7 +292,7 @@
                     </goals>
                   </pluginExecutionFilter>
                   <action>
-                    <ignore />
+                    <ignore/>
                   </action>
                 </pluginExecution>
               </pluginExecutions>
@@ -375,6 +380,7 @@
               <includes>
                 <include>**/SSL*Test.java</include>
                 <include>**/UUIDsPID*.java</include>
+                <include>**/ControlConnectionTest.java</include>
               </includes>
             </configuration>
           </plugin>

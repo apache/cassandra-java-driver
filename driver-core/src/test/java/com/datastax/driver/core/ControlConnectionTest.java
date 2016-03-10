@@ -25,9 +25,11 @@ import com.google.common.collect.HashMultiset;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
+import org.apache.log4j.Level;
 import org.scassandra.http.client.PrimingRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.net.InetAddress;
@@ -36,6 +38,7 @@ import java.net.UnknownHostException;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -219,7 +222,17 @@ public class ControlConnectionTest extends CCMTestsSupport {
         } finally {
             scassandras.stop();
         }
+    }
 
+    @DataProvider
+    public Object[][] disallowedNullColumnsInPeerData() {
+        return new Object[][]{
+                {"host_id"},
+                {"data_center"},
+                {"rack"},
+                {"tokens"},
+                {"host_id,data_center,rack,tokens"}
+        };
     }
 
     /**
@@ -270,6 +283,7 @@ public class ControlConnectionTest extends CCMTestsSupport {
                     .put("data_center", datacenter(1))
                     .put("rack", "rack1")
                     .put("release_version", "2.1.8")
+                    .put("host_id", UUID.randomUUID())
                     .put("tokens", ImmutableSet.of(Long.toString(scassandras.getTokensForDC(1).get(1))))
                     .build();
 
@@ -309,7 +323,117 @@ public class ControlConnectionTest extends CCMTestsSupport {
             cluster.close();
             scassandras.stop();
         }
+    }
 
+    /**
+     * Validates that if the com.datastax.driver.EXTENDED_PEER_CHECK system property is set to false that a peer
+     * with null values for host_id, data_center, rack, tokens is not ignored.
+     *
+     * @test_category host:metadata
+     * @jira_ticket JAVA-852
+     * @since 2.1.10
+     */
+    @Test(groups = "isolated", dataProvider = "disallowedNullColumnsInPeerData")
+    @CCMConfig(createCcm = false)
+    public void should_use_peer_if_extended_peer_check_is_disabled(String columns) {
+        System.setProperty("com.datastax.driver.EXTENDED_PEER_CHECK", "false");
+        run_with_null_peer_info(columns, true);
+    }
+
+    /**
+     * Validates that if the com.datastax.driver.EXTENDED_PEER_CHECK system property is set to true that a peer
+     * with null values for host_id, data_center, rack, or tokens is ignored.
+     *
+     * @test_category host:metadata
+     * @jira_ticket JAVA-852
+     * @since 2.1.10
+     */
+    @Test(groups = "isolated", dataProvider = "disallowedNullColumnsInPeerData")
+    @CCMConfig(createCcm = false)
+    public void should_ignore_peer_if_extended_peer_check_is_enabled(String columns) {
+        System.setProperty("com.datastax.driver.EXTENDED_PEER_CHECK", "true");
+        run_with_null_peer_info(columns, false);
+    }
+
+    /**
+     * Validates that a peer with null values for host_id, data_center, rack, or tokens is ignored.
+     *
+     * @test_category host:metadata
+     * @jira_ticket JAVA-852
+     * @since 2.1.10
+     */
+    @Test(groups = "short", dataProvider = "disallowedNullColumnsInPeerData")
+    @CCMConfig(createCcm = false)
+    public void should_ignore_and_warn_peers_with_null_entries_by_default(String columns) {
+        run_with_null_peer_info(columns, false);
+    }
+
+    private void run_with_null_peer_info(String columns, boolean expectPeer2) {
+        // given: A cluster with peer 2 having a null rack.
+        ScassandraCluster.ScassandraClusterBuilder builder = ScassandraCluster.builder()
+                .withNodes(3);
+
+        StringBuilder columnDataBuilder = new StringBuilder();
+        for (String column : columns.split(",")) {
+            builder = builder.forcePeerInfo(1, 2, column, null);
+            columnDataBuilder.append(String.format("%s=null, ", column));
+        }
+
+        String columnData = columnDataBuilder.toString();
+        if (columnData.endsWith(", ")) {
+            columnData = columnData.substring(0, columnData.length() - 2);
+        }
+
+        ScassandraCluster scassandraCluster = builder.build();
+
+        Cluster cluster = Cluster.builder()
+                .addContactPoints(scassandraCluster.address(1).getAddress())
+                .withPort(scassandraCluster.getBinaryPort())
+                .withNettyOptions(nonQuietClusterCloseOptions)
+                .build();
+
+        // Capture logs to ensure appropriate warnings are logged.
+        org.apache.log4j.Logger cLogger = org.apache.log4j.Logger.getLogger("com.datastax.driver.core");
+        Level originalLevel = cLogger.getLevel();
+        if (originalLevel != null && !originalLevel.isGreaterOrEqual(Level.WARN)) {
+            cLogger.setLevel(Level.WARN);
+        }
+        MemoryAppender logs = new MemoryAppender();
+        cLogger.addAppender(logs);
+
+        try {
+            scassandraCluster.init();
+
+            // when: Initializing a cluster instance and grabbing metadata.
+            cluster.init();
+
+            InetAddress node2Address = scassandraCluster.address(2).getAddress();
+            String expectedError = String.format("Found invalid row in system.peers: [peer=%s, %s]. " +
+                    "This is likely a gossip or snitch issue, this host will be ignored.", node2Address, columnData);
+            String log = logs.get();
+            // then: A peer with a null rack should not show up in host metadata, unless allowed via system property.
+            if (expectPeer2) {
+                assertThat(cluster.getMetadata().getAllHosts())
+                        .hasSize(3)
+                        .extractingResultOf("getAddress")
+                        .contains(node2Address);
+
+                assertThat(log).doesNotContain(expectedError);
+            } else {
+                assertThat(cluster.getMetadata().getAllHosts())
+                        .hasSize(2)
+                        .extractingResultOf("getAddress")
+                        .doesNotContain(node2Address);
+
+                assertThat(log)
+                        .containsOnlyOnce(expectedError);
+            }
+        } finally {
+            cLogger.removeAppender(logs);
+            cLogger.setLevel(originalLevel);
+            cluster.close();
+            scassandraCluster.stop();
+        }
     }
 
     static class QueryPlanCountingPolicy extends DelegatingLoadBalancingPolicy {
