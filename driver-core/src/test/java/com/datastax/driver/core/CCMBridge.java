@@ -167,7 +167,7 @@ public class CCMBridge implements CCMAccess {
         }
 
         if (isWindows()) {
-            CCM_COMMAND = "cmd /c ccm.py";
+            CCM_COMMAND = "powershell.exe -ExecutionPolicy Unrestricted ccm.py";
         } else {
             CCM_COMMAND = "ccm";
         }
@@ -386,7 +386,11 @@ public class CCMBridge implements CCMAccess {
         if (logger.isDebugEnabled())
             logger.debug("Starting: {} - free memory: {} MB", this, TestUtils.getFreeMemoryMB());
         try {
-            execute(CCM_COMMAND + " start --wait-other-notice --wait-for-binary-proto" + jvmArgs);
+            String cmd = CCM_COMMAND + " start --wait-other-notice --wait-for-binary-proto" + jvmArgs;
+            if (isWindows() && this.version.compareTo(VersionNumber.parse("2.2.4")) >= 0) {
+                cmd += " --quiet-windows";
+            }
+            execute(cmd);
         } catch (CCMException e) {
             logger.error("Could not start " + this, e);
             logger.error("CCM output:\n{}", e.getOut());
@@ -444,7 +448,11 @@ public class CCMBridge implements CCMAccess {
     public void start(int n) {
         logger.debug(String.format("Starting: node %s (%s%s:%s) in %s", n, TestUtils.IP_PREFIX, n, binaryPort, this));
         try {
-            execute(CCM_COMMAND + " node%d start --wait-other-notice --wait-for-binary-proto" + jvmArgs, n);
+            String cmd = CCM_COMMAND + " node%d start --wait-other-notice --wait-for-binary-proto" + jvmArgs;
+            if (isWindows() && this.version.compareTo(VersionNumber.parse("2.2.4")) >= 0) {
+                cmd += " --quiet-windows";
+            }
+            execute(cmd, n);
         } catch (CCMException e) {
             logger.error(String.format("Could not start node %s in %s", n, this), e);
             logger.error("CCM output:\n{}", e.getOut());
@@ -875,9 +883,14 @@ public class CCMBridge implements CCMAccess {
 
         private String joinJvmArgs() {
             StringBuilder allJvmArgs = new StringBuilder("");
+            String quote = isWindows() ? "\"" : "";
             for (String jvmArg : jvmArgs) {
-                allJvmArgs.append(" --jvm_arg=");
+                // Windows requires jvm arguments to be quoted, while *nix requires unquoted.
+                allJvmArgs.append(" ");
+                allJvmArgs.append(quote);
+                allJvmArgs.append("--jvm_arg=");
                 allJvmArgs.append(randomizePorts(jvmArg));
+                allJvmArgs.append(quote);
             }
             return allJvmArgs.toString();
         }
