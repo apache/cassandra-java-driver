@@ -15,12 +15,8 @@
  */
 package com.datastax.driver.core;
 
-import com.beust.jcommander.internal.Lists;
-import com.beust.jcommander.internal.Maps;
 import com.datastax.driver.core.utils.UUIDs;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.*;
 import org.scassandra.Scassandra;
 import org.scassandra.ScassandraFactory;
 import org.scassandra.http.client.PrimingClient;
@@ -264,7 +260,7 @@ public class ScassandraCluster {
         // Offset DCs by dc * 100 to ensure unique tokens.
         int offset = (dc - 1) * 100;
         int dcNodeCount = nodes(dc).size();
-        List<Long> tokens = Lists.newArrayList(dcNodeCount);
+        List<Long> tokens = Lists.newArrayListWithExpectedSize(dcNodeCount);
         for (int i = 0; i < dcNodeCount; i++) {
             tokens.add((i * ((long) Math.pow(2, 64) / dcNodeCount) + offset));
         }
@@ -288,31 +284,30 @@ public class ScassandraCluster {
                 if (node == peer) { // prime system.local.
                     metadata = SELECT_LOCAL;
                     query = "SELECT * FROM system.local WHERE key='local'";
-                    row = ImmutableMap.<String, Object>builder()
-                            .put("key", "local")
-                            .put("bootstrapped", "COMPLETED")
-                            .put("broadcast_address", address)
-                            .put("cluster_name", "scassandra")
-                            .put("cql_version", "3.2.0")
-                            .put("data_center", datacenter(dc))
-                            .put("listen_address", address)
-                            .put("partitioner", "org.apache.cassandra.dht.Murmur3Partitioner")
-                            .put("rack", "rack1")
-                            .put("release_version", getPeerInfo(dc, n + 1, "release_version", "2.1.8"))
-                            .put("tokens", ImmutableSet.of(tokens.get(n)))
-                            .build();
+
+                    row = Maps.newHashMap();
+                    addPeerInfo(row, dc, n + 1, "key", "local");
+                    addPeerInfo(row, dc, n + 1, "bootstrapped", "COMPLETED");
+                    addPeerInfo(row, dc, n + 1, "broadcast_address", address);
+                    addPeerInfo(row, dc, n + 1, "cluster_name", "scassandra");
+                    addPeerInfo(row, dc, n + 1, "cql_version", "3.2.0");
+                    addPeerInfo(row, dc, n + 1, "data_center", datacenter(dc));
+                    addPeerInfo(row, dc, n + 1, "listen_address", address);
+                    addPeerInfo(row, dc, n + 1, "partitioner", "org.apache.cassandra.dht.Murmur3Partitioner");
+                    addPeerInfo(row, dc, n + 1, "rack", getPeerInfo(dc, n + 1, "rack", "rack1"));
+                    addPeerInfo(row, dc, n + 1, "release_version", getPeerInfo(dc, n + 1, "release_version", "2.1.8"));
+                    addPeerInfo(row, dc, n + 1, "tokens", ImmutableSet.of(tokens.get(n)));
                 } else { // prime system.peers.
                     query = "SELECT * FROM system.peers WHERE peer='" + address + "'";
                     metadata = SELECT_PEERS;
-                    row = ImmutableMap.<String, Object>builder()
-                            .put("peer", address)
-                            .put("rpc_address", address)
-                            .put("data_center", datacenter(dc))
-                            .put("rack", "rack1")
-                            .put("release_version", getPeerInfo(dc, n + 1, "release_version", "2.1.8"))
-                            .put("tokens", ImmutableSet.of(Long.toString(tokens.get(n))))
-                            .put("host_id", UUIDs.random())
-                            .build();
+                    row = Maps.newHashMap();
+                    addPeerInfo(row, dc, n + 1, "peer", address);
+                    addPeerInfo(row, dc, n + 1, "rpc_address", address);
+                    addPeerInfo(row, dc, n + 1, "data_center", datacenter(dc));
+                    addPeerInfo(row, dc, n + 1, "rack", getPeerInfo(dc, n + 1, "rack", "rack1"));
+                    addPeerInfo(row, dc, n + 1, "release_version", getPeerInfo(dc, n + 1, "release_version", "2.1.8"));
+                    addPeerInfo(row, dc, n + 1, "tokens", ImmutableSet.of(Long.toString(tokens.get(n))));
+                    addPeerInfo(row, dc, n + 1, "host_id", UUIDs.random());
                     rows.add(row);
                 }
                 client.prime(PrimingRequest.queryBuilder()
@@ -353,6 +348,14 @@ public class ScassandraCluster {
                         .withRows(keyspaceRows)
                         .build())
                 .build());
+    }
+
+    private Map<String, Object> addPeerInfo(Map<String, Object> input, int dc, int node, String property, Object defaultValue) {
+        Object peerInfo = getPeerInfo(dc, node, property, defaultValue);
+        if(peerInfo != null) {
+            input.put(property, peerInfo);
+        }
+        return input;
     }
 
     private Object getPeerInfo(int dc, int node, String property, Object defaultValue) {
