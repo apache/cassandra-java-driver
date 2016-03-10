@@ -427,10 +427,9 @@ class ControlConnection implements Host.StateListener, Connection.Owner {
         InetAddress peer = peersRow.getInet("peer");
         InetAddress addr = peersRow.getInet("rpc_address");
 
-        // We've already called isValid on the row, which checks this
-        assert addr != null;
-
-        if (peer.equals(connectedHost.getAddress()) || addr.equals(connectedHost.getAddress())) {
+        if (addr == null) {
+            return null;
+        } else if (peer.equals(connectedHost.getAddress()) || addr.equals(connectedHost.getAddress())) {
             // Some DSE versions were inserting a line for the local node in peers (with mostly null values). This has been fixed, but if we
             // detect that's the case, ignore it as it's not really a big deal.
             logger.debug("System.peers on node {} has a line for itself. This is not normal but is a known problem of some DSE version. Ignoring the entry.", connectedHost);
@@ -732,9 +731,6 @@ class ControlConnection implements Host.StateListener, Connection.Owner {
             versions.add(localRow.getUUID("schema_version"));
 
         for (Row row : peersFuture.get()) {
-
-            if (!isValidPeer(row, false))
-                continue;
 
             InetSocketAddress addr = addressToUseForPeerHost(row, connection.address, cluster);
             if (addr == null || row.isNull("schema_version"))
