@@ -30,9 +30,9 @@
 <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-os ${target.os} -ws ${target.ws} -arch ${target.arch} -nl ${target.nl} -consoleLog"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="com.datastax.driver.examples.rcp.mailbox.tests"/>
 <stringAttribute key="org.eclipse.jdt.launching.SOURCE_PATH_PROVIDER" value="org.eclipse.pde.ui.workbenchClasspathProvider"/>
-<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Dosgi.requiredJavaVersion=1.8 -Dosgi.requiredJavaVersion=1.7 -XX:MaxPermSize=256m -XstartOnFirstThread -Dorg.eclipse.swt.internal.carbon.smallFonts -Xms40m -Xmx512m -Xdock:icon=../Resources/Eclipse.icns -XstartOnFirstThread -Dorg.eclipse.swt.internal.carbon.smallFonts -Dlogback.configurationFile=${workspace_loc:com.datastax.driver.examples.rcp.ui}/logback.xml"/>
+<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Dosgi.requiredJavaVersion=1.8 -Dosgi.requiredJavaVersion=1.7 -XX:MaxPermSize=256m -XstartOnFirstThread -Dorg.eclipse.swt.internal.carbon.smallFonts -Xms40m -Xmx512m -Xdock:icon=../Resources/Eclipse.icns -XstartOnFirstThread -Dorg.eclipse.swt.internal.carbon.smallFonts -Dlogback.configurationFile=${resource_loc:/com.datastax.driver.examples.rcp.mailbox.tests/src/main/resources/logback.xml}"/>
 <stringAttribute key="pde.version" value="3.3"/>
-<stringAttribute key="product" value="com.datastax.devcenter.rcp.product"/>
+<stringAttribute key="product" value="org.eclipse.platform.ide"/>
 <booleanAttribute key="run_in_ui_thread" value="true"/>
 <booleanAttribute key="show_selected_only" value="false"/>
 <booleanAttribute key="tracing" value="false"/>

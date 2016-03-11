@@ -15,5 +15,3 @@ Import-Package: com.datastax.driver.core,
  org.osgi.framework
 Export-Package: com.datastax.driver.examples.rcp.mailbox
 Bundle-ActivationPolicy: lazy
-Bundle-ClassPath: .,
- conf/

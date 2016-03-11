@@ -39,8 +39,6 @@
     <modules>
         <module>com.datastax.driver.examples.rcp.mailbox</module>
         <module>com.datastax.driver.examples.rcp.mailbox.tests</module>
-        <module>com.datastax.driver.examples.rcp.ui</module>
-        <module>com.datastax.driver.examples.rcp.product</module>
     </modules>
 
     <repositories>
@@ -84,6 +82,15 @@
                 <artifactId>tycho-maven-plugin</artifactId>
                 <version>${tycho.version}</version>
                 <extensions>true</extensions>
+            </plugin>
+
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.3</version>
+                <configuration>
+                    <source>1.7</source>
+                    <target>1.7</target>
+                </configuration>
             </plugin>
 
             <plugin>
