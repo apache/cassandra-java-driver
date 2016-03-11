@@ -5,27 +5,11 @@ java:
 os:
   - ubuntu/trusty64
 cassandra:
-  - 1.2
-  - 2.0
-  - 2.1
-  - 2.2
   - 3.0
 build:
   - type: maven
     version: 3.2.5
     goals: verify --fail-never -Plong
-    properties: |
-      com.datastax.driver.TEST_BASE_NODE_WAIT=120
-      com.datastax.driver.NEW_NODE_DELAY_SECONDS=100
-      cassandra.version=$CCM_CASSANDRA_VERSION
-      ccm.java.home=$CCM_JAVA_HOME
-      ccm.path=$CCM_JAVA_HOME/bin
-      failIfNoTests=false
-      maven.test.failure.ignore=true
-      maven.javadoc.skip=true
-  - type: maven
-    version: 3.2.5
-    goals: verify --fail-never -Pisolated
     properties: |
       com.datastax.driver.TEST_BASE_NODE_WAIT=120
       com.datastax.driver.NEW_NODE_DELAY_SECONDS=100

@@ -23,7 +23,6 @@ import org.testng.annotations.Test;
 
 import java.nio.ByteBuffer;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
@@ -44,6 +43,13 @@ public class DataTypeIntegrationTest extends CCMTestsSupport {
     VersionNumber cassandraVersion;
 
     enum StatementType {RAW_STRING, SIMPLE_WITH_PARAM, PREPARED}
+
+    @Override
+    public Cluster.Builder createClusterBuilderNoDebouncing() {
+        // use a high read timeout because this test issues TRUNCATE statements,
+        // which have a timeout of 60000 milliseconds by default server-side (truncate_request_timeout_in_ms)
+        return super.createClusterBuilderNoDebouncing().withSocketOptions(new SocketOptions().setReadTimeoutMillis(120000));
+    }
 
     @Override
     public void onTestContextInitialized() {
@@ -155,8 +161,7 @@ public class DataTypeIntegrationTest extends CCMTestsSupport {
      * Abstracts information about a table (corresponding to a given column type).
      */
     static class TestTable {
-        private static final AtomicInteger counter = new AtomicInteger();
-        private String tableName = "date_type_test" + counter.incrementAndGet();
+        private String tableName = TestUtils.generateIdentifier("date_type_test_");
 
         final DataType testColumnType;
         final Object sampleValue;
