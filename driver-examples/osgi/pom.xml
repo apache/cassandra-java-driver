@@ -138,7 +138,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-failsafe-plugin</artifactId>
-        <version>2.18.1</version>
+        <version>2.16</version>
         <executions>
           <execution>
             <goals>
@@ -196,14 +196,15 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
-            <version>2.14</version>
+            <version>2.16</version>
             <configuration>
+              <skip>true</skip>
             </configuration>
           </plugin>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-failsafe-plugin</artifactId>
-            <version>2.18.1</version>
+            <version>2.16</version>
             <configuration>
               <skip>true</skip>
             </configuration>
@@ -214,80 +215,6 @@
               <compilerArgument>-Xlint:all</compilerArgument>
               <showWarnings>true</showWarnings>
               <showDeprecation>true</showDeprecation>
-            </configuration>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-
-    <profile>
-      <id>short</id>
-      <properties>
-        <env>default</env>
-      </properties>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-surefire-plugin</artifactId>
-            <version>2.14</version>
-            <configuration>
-              <groups>unit,short</groups>
-              <useFile>false</useFile>
-              <systemPropertyVariables>
-                <cassandra.version>${cassandra.version}</cassandra.version>
-                <ipprefix>${ipprefix}</ipprefix>
-              </systemPropertyVariables>
-            </configuration>
-          </plugin>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-failsafe-plugin</artifactId>
-            <version>2.18.1</version>
-            <configuration>
-              <groups>unit,short</groups>
-              <useFile>false</useFile>
-              <systemPropertyVariables>
-                <cassandra.version>${cassandra.version}</cassandra.version>
-                <ipprefix>${ipprefix}</ipprefix>
-              </systemPropertyVariables>
-            </configuration>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-
-    <profile>
-      <id>long</id>
-      <properties>
-        <env>default</env>
-      </properties>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-surefire-plugin</artifactId>
-            <version>2.16</version>
-            <configuration>
-              <groups>unit,short,long</groups>
-              <useFile>false</useFile>
-              <systemPropertyVariables>
-                <cassandra.version>${cassandra.version}</cassandra.version>
-                <ipprefix>${ipprefix}</ipprefix>
-              </systemPropertyVariables>
-            </configuration>
-          </plugin>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-failsafe-plugin</artifactId>
-            <version>2.18.1</version>
-            <configuration>
-              <groups>unit,short,long</groups>
-              <useFile>false</useFile>
-              <systemPropertyVariables>
-                <cassandra.version>${cassandra.version}</cassandra.version>
-                <ipprefix>${ipprefix}</ipprefix>
-              </systemPropertyVariables>
             </configuration>
           </plugin>
         </plugins>
