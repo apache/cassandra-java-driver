@@ -52,6 +52,8 @@ public class ScassandraCluster {
 
     private final List<Map<String, ?>> keyspaceRows;
 
+    private static final java.util.UUID schemaVersion = UUIDs.random();
+
 
     private final Map<Integer, Map<Integer, Map<String, Object>>> forcedPeerInfos;
 
@@ -297,6 +299,7 @@ public class ScassandraCluster {
                     addPeerInfo(row, dc, n + 1, "rack", getPeerInfo(dc, n + 1, "rack", "rack1"));
                     addPeerInfo(row, dc, n + 1, "release_version", getPeerInfo(dc, n + 1, "release_version", "2.1.8"));
                     addPeerInfo(row, dc, n + 1, "tokens", ImmutableSet.of(tokens.get(n)));
+                    addPeerInfo(row, dc, n + 1, "schema_version", schemaVersion);
                 } else { // prime system.peers.
                     query = "SELECT * FROM system.peers WHERE peer='" + address + "'";
                     metadata = SELECT_PEERS;
@@ -308,6 +311,7 @@ public class ScassandraCluster {
                     addPeerInfo(row, dc, n + 1, "release_version", getPeerInfo(dc, n + 1, "release_version", "2.1.8"));
                     addPeerInfo(row, dc, n + 1, "tokens", ImmutableSet.of(Long.toString(tokens.get(n))));
                     addPeerInfo(row, dc, n + 1, "host_id", UUIDs.random());
+                    addPeerInfo(row, dc, n + 1, "schema_version", schemaVersion);
                     rows.add(row);
                 }
                 client.prime(PrimingRequest.queryBuilder()
@@ -379,7 +383,8 @@ public class ScassandraCluster {
             column("rack", TEXT),
             column("release_version", TEXT),
             column("tokens", set(TEXT)),
-            column("host_id", UUID)
+            column("host_id", UUID),
+            column("schema_version", UUID)
     };
 
     public static final org.scassandra.http.client.types.ColumnMetadata[] SELECT_LOCAL = {
@@ -394,6 +399,7 @@ public class ScassandraCluster {
             column("rack", TEXT),
             column("release_version", TEXT),
             column("tokens", set(TEXT)),
+            column("schema_version", UUID)
     };
 
     static final org.scassandra.http.client.types.ColumnMetadata[] SELECT_CLUSTER_NAME = {
