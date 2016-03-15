@@ -225,7 +225,7 @@ public class ControlConnectionTest extends CCMTestsSupport {
     }
 
     @DataProvider
-    public Object[][] disallowedNullColumnsInPeerData() {
+    public static Object[][] disallowedNullColumnsInPeerData() {
         return new Object[][]{
                 {"host_id"},
                 {"data_center"},
@@ -325,20 +325,6 @@ public class ControlConnectionTest extends CCMTestsSupport {
         }
     }
 
-    /**
-     * Validates that if the com.datastax.driver.EXTENDED_PEER_CHECK system property is set to false that a peer
-     * with null values for host_id, data_center, rack, tokens is not ignored.
-     *
-     * @test_category host:metadata
-     * @jira_ticket JAVA-852
-     * @since 2.1.10
-     */
-    @Test(groups = "isolated", dataProvider = "disallowedNullColumnsInPeerData")
-    @CCMConfig(createCcm = false)
-    public void should_use_peer_if_extended_peer_check_is_disabled(String columns) {
-        System.setProperty("com.datastax.driver.EXTENDED_PEER_CHECK", "false");
-        run_with_null_peer_info(columns, true);
-    }
 
     /**
      * Validates that if the com.datastax.driver.EXTENDED_PEER_CHECK system property is set to true that a peer
@@ -368,7 +354,7 @@ public class ControlConnectionTest extends CCMTestsSupport {
         run_with_null_peer_info(columns, false);
     }
 
-    private void run_with_null_peer_info(String columns, boolean expectPeer2) {
+    static void run_with_null_peer_info(String columns, boolean expectPeer2) {
         // given: A cluster with peer 2 having a null rack.
         ScassandraCluster.ScassandraClusterBuilder builder = ScassandraCluster.builder()
                 .withNodes(3);
