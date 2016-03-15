@@ -18,6 +18,7 @@ package com.datastax.driver.core;
 import com.datastax.driver.core.policies.RoundRobinPolicy;
 import com.datastax.driver.core.policies.WhiteListPolicy;
 import com.google.common.base.Predicate;
+import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.sun.management.OperatingSystemMXBean;
@@ -39,7 +40,6 @@ import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.locks.ReentrantLock;
 
 import static com.datastax.driver.core.ConditionChecker.check;
 import static java.util.concurrent.TimeUnit.MINUTES;
@@ -489,47 +489,29 @@ public abstract class TestUtils {
         return prefix + seq.incrementAndGet();
     }
 
-    // use ports in the ephemeral range
-    private static int nextPort = 50000;
-
-    private static final ReentrantLock PORT_LOCK = new ReentrantLock();
-
     /**
-     * Find an available port in the ephemeral range.
+     * Finds an available port in the ephemeral range.
+     * This is loosely inspired by Apache MINA's AvailablePortFinder.
      *
      * @return A local port that is currently unused.
      */
-    public static int findAvailablePort() {
-        PORT_LOCK.lock();
+    public synchronized static int findAvailablePort() throws RuntimeException {
+        ServerSocket ss = null;
         try {
-            for (int i = 0; i < 3; i++) {
-                int port = nextPort;
-                ServerSocket s = null;
-                for (int j = 0; j < 100; j++) {
-                    try {
-                        s = new ServerSocket(port);
-                        s.close();
-                        nextPort = port + 1;
-                        return port;
-                    } catch (IOException e) {
-                        // ok
-                    } finally {
-                        port++;
-                        if (s != null) {
-                            try {
-                                s.close();
-                            } catch (IOException e) {
-                                // ok
-                            }
-                        }
-                    }
-                }
-                logger.warn("Could not acquire an available port after 100 attempts, sleeping for 1 minute");
-                Uninterruptibles.sleepUninterruptibly(1, TimeUnit.MINUTES);
-            }
-            throw new RuntimeException(String.format("Could not acquire an available port within range: %s-%s", nextPort, nextPort + 100));
+            // let the system pick an ephemeral port
+            ss = new ServerSocket(0);
+            ss.setReuseAddress(true);
+            return ss.getLocalPort();
+        } catch (IOException e) {
+            throw Throwables.propagate(e);
         } finally {
-            PORT_LOCK.unlock();
+            if (ss != null) {
+                try {
+                    ss.close();
+                } catch (IOException e) {
+                    Throwables.propagate(e);
+                }
+            }
         }
     }
 
