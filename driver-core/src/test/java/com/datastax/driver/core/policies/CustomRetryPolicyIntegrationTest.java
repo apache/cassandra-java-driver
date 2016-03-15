@@ -22,13 +22,13 @@ import com.datastax.driver.core.exceptions.UnavailableException;
 import org.scassandra.http.client.ClosedConnectionConfig;
 import org.scassandra.http.client.ClosedConnectionConfig.CloseType;
 import org.scassandra.http.client.PrimingRequest;
+import org.scassandra.http.client.Result;
 import org.testng.annotations.Test;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 import static org.assertj.core.api.Fail.fail;
-import static org.scassandra.http.client.PrimingRequest.Result.read_request_timeout;
-import static org.scassandra.http.client.PrimingRequest.Result.unavailable;
 import static org.scassandra.http.client.PrimingRequest.then;
+import static org.scassandra.http.client.Result.*;
 
 /**
  * Integration test with a custom implementation, to test retry and ignore decisions.
@@ -104,7 +104,7 @@ public class CustomRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegra
 
 
     @Test(groups = "short", dataProvider = "serverSideErrors")
-    public void should_rethrow_on_server_side_error(PrimingRequest.Result error, Class<? extends DriverException> exception) {
+    public void should_rethrow_on_server_side_error(Result error, Class<? extends DriverException> exception) {
         simulateError(1, error);
         try {
             query();
@@ -124,7 +124,7 @@ public class CustomRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegra
 
     @Test(groups = "short", dataProvider = "connectionErrors")
     public void should_rethrow_on_connection_error(CloseType closeType) {
-        simulateError(1, PrimingRequest.Result.closed_connection, new ClosedConnectionConfig(closeType));
+        simulateError(1, closed_connection, new ClosedConnectionConfig(closeType));
         try {
             query();
             fail("expected an error");

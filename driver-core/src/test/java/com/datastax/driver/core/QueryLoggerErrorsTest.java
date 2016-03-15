@@ -19,7 +19,7 @@ import com.datastax.driver.core.exceptions.*;
 import com.google.common.util.concurrent.Uninterruptibles;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.scassandra.http.client.PrimingRequest;
+import org.scassandra.http.client.Result;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
@@ -32,9 +32,9 @@ import static org.apache.log4j.Level.DEBUG;
 import static org.apache.log4j.Level.INFO;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
-import static org.scassandra.http.client.PrimingRequest.Result.*;
 import static org.scassandra.http.client.PrimingRequest.queryBuilder;
 import static org.scassandra.http.client.PrimingRequest.then;
+import static org.scassandra.http.client.Result.*;
 
 /**
  * Tests for {@link QueryLogger} using Scassandra.
@@ -210,7 +210,7 @@ public class QueryLoggerErrorsTest extends ScassandraTestBase.PerClassCluster {
     }
 
     @Test(groups = "short", dataProvider = "errors")
-    public void should_log_exception_from_the_given_result(PrimingRequest.Result result, Class<? extends Exception> expectedException, Class<? extends Exception> loggedException) throws Exception {
+    public void should_log_exception_from_the_given_result(Result result, Class<? extends Exception> expectedException, Class<? extends Exception> loggedException) throws Exception {
         // given
         error.setLevel(DEBUG);
         queryLogger = builder(cluster).build();
