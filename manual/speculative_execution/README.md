@@ -60,56 +60,8 @@ sections cover the practical details and how to enable them.
 
 ### Query idempotence
 
-One important aspect to consider is whether queries are idempotent, i.e.
-whether they can be applied multiple times without changing the result
-beyond the initial application. **If a query is not idempotent, the
-driver will never schedule speculative executions for it**, because
+If a query is [not idempotent](../idempotence/), the driver will never schedule speculative executions for it, because
 there is no way to guarantee that only one node will apply the mutation.
-
-As of Cassandra 2.1.4, the only queries that are *not* idempotent are:
-
-* counter operations;
-* prepending or appending to a list column;
-* using non-idempotent CQL functions, like `now()` or `uuid()`.
-
-In the driver, this is determined by
-[Statement#isIdempotent()][isIdempotent].  Unfortunately, the driver
-doesn't parse query strings, so in most cases it has no information
-about what the query actually does. Therefore:
-
-* **`Statement#isIdempotent()` is only computed automatically for
-  statements built with [QueryBuilder][QueryBuilder]**.
-  Note that the driver takes a rather conservative approach with uses
-  of `fcall()` or `raw()`: whenever they appear in a value to be
-  inserted in the database (like the values of an `Insert` or the
-  right-hand side of an assignment in an `Update`), the statement
-  will be considered non-idempotent by default. If you know that your
-  CQL functions or expressions are safe, force idempotence to `true`
-  on the statement manually (see below);
-* **for all other types of statements, it defaults to `false`.** You'll
-  need to set it manually, with one of the mechanism described below.
-
-You can override the value on each statement:
-
-```java
-Statement s = new SimpleStatement("SELECT * FROM users WHERE id = 1");
-s.setIdempotent(true);
-```
-
-Note that this will also work for built statements (and override the
-computed value).
-
-Additionally, if you know for a fact that your application does not use
-any of the non-idempotent CQL queries listed above, you can change the
-default cluster-wide:
-
-```java
-// Make all statements idempotent by default:
-cluster.getConfiguration().getQueryOptions().setDefaultIdempotence(true);
-```
-
-[isIdempotent]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Statement.html#isIdempotent--
-[QueryBuilder]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/querybuilder/QueryBuilder.html
 
 ### Enabling speculative executions
 
