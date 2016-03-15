@@ -16,6 +16,7 @@
 package com.datastax.driver.mapping;
 
 import com.datastax.driver.core.CCMTestsSupport;
+import com.datastax.driver.core.utils.CassandraVersion;
 import com.datastax.driver.mapping.annotations.*;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableMap;
@@ -33,6 +34,7 @@ import static org.testng.Assert.assertEquals;
  * Tests mapping of collections of UDTs.
  */
 @SuppressWarnings("unused")
+@CassandraVersion(major = 2.1)
 public class MapperUDTCollectionsTest extends CCMTestsSupport {
 
     @Override

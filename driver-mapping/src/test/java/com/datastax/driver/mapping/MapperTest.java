@@ -440,6 +440,7 @@ public class MapperTest extends CCMTestsSupport {
      * @test_category object_mapper
      */
     @Test(groups = "short")
+    @CassandraVersion(major = 2.0)
     public void should_flag_statement_as_idempotent() {
         MappingManager manager = new MappingManager(session());
         PostAccessor post = manager.createAccessor(PostAccessor.class);
@@ -456,6 +457,7 @@ public class MapperTest extends CCMTestsSupport {
      * @test_category object_mapper
      */
     @Test(groups = "short")
+    @CassandraVersion(major = 2.0)
     public void should_flag_statement_as_non_idempotent() {
         MappingManager manager = new MappingManager(session());
         PostAccessor post = manager.createAccessor(PostAccessor.class);
@@ -472,6 +474,7 @@ public class MapperTest extends CCMTestsSupport {
      * @test_category object_mapper
      */
     @Test(groups = "short")
+    @CassandraVersion(major = 2.0)
     public void should_flag_statement_with_null_idempotence() {
         MappingManager manager = new MappingManager(session());
         PostAccessor post = manager.createAccessor(PostAccessor.class);
@@ -487,6 +490,7 @@ public class MapperTest extends CCMTestsSupport {
      * @test_category object_mapper
      */
     @Test(groups = "short")
+    @CassandraVersion(major = 2.0)
     public void should_flag_all_mapper_generated_statements_as_idempotent() {
         MappingManager manager = new MappingManager(session());
         Mapper<User> mapper = manager.mapper(User.class);

@@ -417,32 +417,32 @@ public class CCMTestsSupport {
                 ccmBuilder = ccmProvider(testInstance);
                 if (ccmBuilder == null) {
                     ccmBuilder = CCMBridge.builder().withNodes(numberOfNodes()).notStarted();
-                    if (version() != null)
-                        ccmBuilder.withVersion(version());
-                    if (dse())
-                        ccmBuilder.withDSE();
-                    if (ssl())
-                        ccmBuilder.withSSL();
-                    if (auth())
-                        ccmBuilder.withAuth();
-                    for (Map.Entry<String, Object> entry : config().entrySet()) {
-                        ccmBuilder.withCassandraConfiguration(entry.getKey(), entry.getValue());
-                    }
-                    for (Map.Entry<String, Object> entry : dseConfig().entrySet()) {
-                        ccmBuilder.withDSEConfiguration(entry.getKey(), entry.getValue());
-                    }
-                    for (String option : startOptions()) {
-                        ccmBuilder.withCreateOptions(option);
-                    }
-                    for (String arg : jvmArgs()) {
-                        ccmBuilder.withJvmArgs(arg);
-                    }
-                    List<Workload> workloads = workloads();
-                    for (int i = 0; i < workloads.size(); i++) {
-                        Workload workload = workloads.get(i);
-                        if (workload != null)
-                            ccmBuilder.withWorkload(i + 1, workload);
-                    }
+                }
+                if (version() != null)
+                    ccmBuilder.withVersion(version());
+                if (dse())
+                    ccmBuilder.withDSE();
+                if (ssl())
+                    ccmBuilder.withSSL();
+                if (auth())
+                    ccmBuilder.withAuth();
+                for (Map.Entry<String, Object> entry : config().entrySet()) {
+                    ccmBuilder.withCassandraConfiguration(entry.getKey(), entry.getValue());
+                }
+                for (Map.Entry<String, Object> entry : dseConfig().entrySet()) {
+                    ccmBuilder.withDSEConfiguration(entry.getKey(), entry.getValue());
+                }
+                for (String option : startOptions()) {
+                    ccmBuilder.withCreateOptions(option);
+                }
+                for (String arg : jvmArgs()) {
+                    ccmBuilder.withJvmArgs(arg);
+                }
+                List<Workload> workloads = workloads();
+                for (int i = 0; i < workloads.size(); i++) {
+                    Workload workload = workloads.get(i);
+                    if (workload != null)
+                        ccmBuilder.withWorkload(i + 1, workload);
                 }
             }
             return ccmBuilder;

@@ -15,7 +15,8 @@
       limitations under the License.
 
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.datastax.cassandra</groupId>
@@ -126,87 +127,6 @@
             </plugin>
         </plugins>
     </build>
-
-    <profiles>
-        <profile>
-            <id>unit</id>
-            <properties>
-                <env>default</env>
-            </properties>
-            <!-- do not use activeByDefault as other profiles might be active -->
-            <activation>
-                <property>
-                    <name>!activateUnitTests</name>
-                </property>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-surefire-plugin</artifactId>
-                        <version>2.14</version>
-                        <configuration>
-                            <groups>unit</groups>
-                            <useFile>false</useFile>
-                            <systemPropertyVariables>
-                                <cassandra.version>${cassandra.version}</cassandra.version>
-                                <ipprefix>${ipprefix}</ipprefix>
-                            </systemPropertyVariables>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
-        <profile>
-            <id>short</id>
-            <properties>
-                <env>default</env>
-            </properties>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-surefire-plugin</artifactId>
-                        <version>2.14</version>
-                        <configuration>
-                            <groups>unit,short</groups>
-                            <useFile>false</useFile>
-                            <systemPropertyVariables>
-                                <cassandra.version>${cassandra.version}</cassandra.version>
-                                <ipprefix>${ipprefix}</ipprefix>
-                            </systemPropertyVariables>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
-        <profile>
-            <id>long</id>
-            <properties>
-                <env>default</env>
-            </properties>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-surefire-plugin</artifactId>
-                        <version>2.14</version>
-                        <configuration>
-                            <groups>unit,short,long</groups>
-                            <useFile>false</useFile>
-                            <systemPropertyVariables>
-                                <cassandra.version>${cassandra.version}</cassandra.version>
-                                <ipprefix>${ipprefix}</ipprefix>
-                            </systemPropertyVariables>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
-    </profiles>
 
     <licenses>
         <license>

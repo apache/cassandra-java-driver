@@ -49,10 +49,9 @@ import static org.testng.Assert.fail;
         createKeyspace = false,
         config = {
                 // tests fail often with write or read timeouts
-                "hinted_handoff_enabled:true",
                 "phi_convict_threshold:5",
-                "read_request_timeout_in_ms:100000",
-                "write_request_timeout_in_ms:100000"
+                "read_request_timeout_in_ms:200000",
+                "write_request_timeout_in_ms:200000"
         }
 )
 public class ConsistencyTest extends AbstractPoliciesTest {
@@ -61,40 +60,40 @@ public class ConsistencyTest extends AbstractPoliciesTest {
 
     private Cluster.Builder tokenAwareRoundRobin() {
         return Cluster.builder()
-                .withSocketOptions(new SocketOptions().setReadTimeoutMillis(120000))
+                .withSocketOptions(new SocketOptions().setReadTimeoutMillis(300000))
                 .withLoadBalancingPolicy(new TokenAwarePolicy(new RoundRobinPolicy()));
     }
 
     private Cluster.Builder tokenAwareRoundRobinNoShuffle() {
         return Cluster.builder()
-                .withSocketOptions(new SocketOptions().setReadTimeoutMillis(120000))
+                .withSocketOptions(new SocketOptions().setReadTimeoutMillis(300000))
                 .withLoadBalancingPolicy(new TokenAwarePolicy(new RoundRobinPolicy(), false));
     }
 
     private Cluster.Builder tokenAwareRoundRobinDowngrading() {
         return Cluster.builder()
-                .withSocketOptions(new SocketOptions().setReadTimeoutMillis(120000))
+                .withSocketOptions(new SocketOptions().setReadTimeoutMillis(300000))
                 .withLoadBalancingPolicy(new TokenAwarePolicy(new RoundRobinPolicy()))
                 .withRetryPolicy(DowngradingConsistencyRetryPolicy.INSTANCE);
     }
 
     private Cluster.Builder tokenAwareRoundRobinNoShuffleDowngrading() {
         return Cluster.builder()
-                .withSocketOptions(new SocketOptions().setReadTimeoutMillis(120000))
+                .withSocketOptions(new SocketOptions().setReadTimeoutMillis(300000))
                 .withLoadBalancingPolicy(new TokenAwarePolicy(new RoundRobinPolicy(), false))
                 .withRetryPolicy(DowngradingConsistencyRetryPolicy.INSTANCE);
     }
 
     private Cluster.Builder roundRobinDowngrading() {
         return Cluster.builder()
-                .withSocketOptions(new SocketOptions().setReadTimeoutMillis(120000))
+                .withSocketOptions(new SocketOptions().setReadTimeoutMillis(300000))
                 .withLoadBalancingPolicy(new RoundRobinPolicy())
                 .withRetryPolicy(DowngradingConsistencyRetryPolicy.INSTANCE);
     }
 
     private Cluster.Builder tokenAwareDCAwareRoundRobinNoShuffleDowngrading() {
         return Cluster.builder()
-                .withSocketOptions(new SocketOptions().setReadTimeoutMillis(120000))
+                .withSocketOptions(new SocketOptions().setReadTimeoutMillis(300000))
                 .withLoadBalancingPolicy(new TokenAwarePolicy(DCAwareRoundRobinPolicy.builder().withLocalDc("dc2").build(), false))
                 .withRetryPolicy(DowngradingConsistencyRetryPolicy.INSTANCE);
     }
