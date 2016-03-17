@@ -93,7 +93,8 @@ multiple nodes in parallel. This way you won't have to wait for the full timeout
 #### Driver read timeout vs. server read timeout
 
 Unfortunately, the term "read timeout" clashes with another concept that is not directly related: a Cassandra node may
-reply with a `Read_timeout` error when it didn't hear back from enough replicas during a read query.
+reply with a [READ_TIMEOUT](../retries/#on-read-timeout) error when it didn't hear back from enough replicas during a
+read query.
 
 To clarify:
 
