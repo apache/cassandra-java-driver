@@ -170,15 +170,7 @@ As with all policies, you are free to provide your own by implementing
 
 ### How speculative executions affect retries
 
-Regardless of speculative executions, the driver has a retry mechanism:
-
-* on an internal error, it will try the next host;
-* when the consistency level could not be reached (`unavailable` error
-  or read or write timeout), it will delegate the decision to
-  [RetryPolicy][retry_policy], which might trigger a retry on the same
-  host.
-
-Turning speculative executions on doesn't change this behavior. Each
+Turning speculative executions on doesn't change the driver's [retry](../retries/) behavior. Each
 parallel execution will trigger retries independently:
 
 ```ditaa
