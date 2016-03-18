@@ -98,6 +98,10 @@ To check what's available on your system:
     INFO  com.datastax.driver.core.ClockFactory - Using native clock to generate timestamps
     ```
 
+Note: currently, native calls won't work from an OSGI container. This is because JNR artifacts don't include proper OSGI
+descriptors. This will be fixed in an upcoming version (see
+[JAVA-1127](https://datastax-oss.atlassian.net/browse/JAVA-1127)).
+
 [gettimeofday]: http://man7.org/linux/man-pages/man2/settimeofday.2.html
 [JNR]: https://github.com/jnr/jnr-ffi
 

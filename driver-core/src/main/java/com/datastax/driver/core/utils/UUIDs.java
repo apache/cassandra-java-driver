@@ -52,8 +52,10 @@ import java.util.concurrent.atomic.AtomicLong;
  * </ol>
  * </li>
  * </ol>
+ * Note: currently, native calls won't work from an OSGI container. This is because JNR artifacts don't include proper
+ * OSGI descriptors. This will be fixed in an upcoming version (see
+ * <a href="https://datastax-oss.atlassian.net/browse/JAVA-1127">JAVA-1127</a>).
  *
- * @jira_ticket JAVA-444
  * @see <a href="http://www.ietf.org/rfc/rfc4122.txt">A Universally Unique IDentifier (UUID) URN Namespace (RFC 4122)</a>
  */
 public final class UUIDs {
