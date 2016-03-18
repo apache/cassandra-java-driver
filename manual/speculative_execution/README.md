@@ -100,13 +100,10 @@ way:
 
 [csep]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/policies/ConstantSpeculativeExecutionPolicy.html
 
-#### [PercentileSpeculativeExecutionPolicy][psep]
+#### [PercentileSpeculativeExecutionPolicy]
 
 This policy sets the threshold at a given latency percentile for the
 current host, based on recent statistics.
-
-**As of 2.1.6, this class is provided as a beta preview: it hasn't been
-extensively tested yet, and the API is still subject to change.**
 
 First and foremost, make sure that the [HdrHistogram][hdr] library (used
 under the hood to collect latencies) is in your classpath. It's defined
@@ -121,19 +118,26 @@ explicitly depend on it:
 </dependency>
 ```
 
-Then create an instance of [PerHostPercentileTracker][phpt] that will collect
-latency statistics for your `Cluster`:
+Then create a [PercentileTracker] that will collect latency statistics for your `Cluster`. Two implementations are
+provided with the driver:
+
+* [PerHostPercentileTracker]: maintains one histogram per host. A given host is only compared to itself, so its
+  latencies will rank in the higher percentiles only if it's slower than its usual performance;
+* [ClusterWidePercentileTracker]: maintains a single histogram for the whole cluster. Hosts are compared against each
+  other, so a host that is consistently slower than the rest of the cluster will get bad rankings.
+
+We recommend trying `ClusterWidePercentileTracker` first, as it has produced the best results in our tests. You may also
+extend `PercentileTracker` with your own implementation.
 
 ```java
 // There are more options than shown here, please refer to the API docs
 // for more information
-PerHostPercentileTracker tracker = PerHostPercentileTracker
-    .builderWithHighestTrackableLatencyMillis(15000)
+PercentileTracker tracker = ClusterWidePercentileTracker
+    .builder(15000)
     .build();
 ```
 
-Create an instance of the policy with the tracker, and pass it to your
-cluster:
+Next, create an instance of the policy with the tracker, and pass it to your cluster:
 
 ```java
 PercentileSpeculativeExecutionPolicy policy =
@@ -148,20 +152,16 @@ Cluster cluster = Cluster.builder()
     .build();
 ```
 
-Finally, don't forget to register your tracker with the cluster (the
-policy does not do this itself):
-
-```java
-cluster.register(tracker);
-```
-
-Note that `PerHostPercentileTracker` may also be used with a slow query
-logger (see the [Logging](../logging/) section). In that case, you would
+Note that `PercentileTracker` may also be used with a slow query
+logger (see the [Logging](../logging/#constant-vs-dynamic-thresholds) section). In that case, you would
 create a single tracker object and share it with both components.
 
-[psep]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/policies/PercentileSpeculativeExecutionPolicy.html
+[PercentileSpeculativeExecutionPolicy]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/policies/PercentileSpeculativeExecutionPolicy.html
+[PercentileTracker]:                    http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/PercentileTracker.html
+[PerHostPercentileTracker]:             http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/PerHostPercentileTracker.html
+[ClusterWidePercentileTracker]:         http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/ClusterWidePercentileTracker.html
+
 [hdr]: http://hdrhistogram.github.io/HdrHistogram/
-[phpt]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/PerHostPercentileTracker.html
 
 #### Using your own
 
