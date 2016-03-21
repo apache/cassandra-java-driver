@@ -213,7 +213,7 @@ public class CCMTestsSupport {
         }
 
         @Override
-        public void setWorkload(int node, Workload workload) {
+        public void setWorkload(int node, Workload... workload) {
             throw new UnsupportedOperationException("This CCM cluster is read-only");
         }
 

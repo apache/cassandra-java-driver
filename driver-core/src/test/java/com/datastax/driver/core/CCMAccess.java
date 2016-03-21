@@ -203,11 +203,11 @@ public interface CCMAccess extends Closeable {
     void updateNodeConfig(int n, Map<String, Object> configs);
 
     /**
-     * Sets the workload for the {@code nth} host in the CCM cluster.
+     * Sets the workload(s) for the {@code nth} host in the CCM cluster.
      *
      * @param n the node number (starting from 1).
      */
-    void setWorkload(int n, Workload workload);
+    void setWorkload(int n, Workload... workload);
 
 
     // Methods blocking until nodes are up or down
