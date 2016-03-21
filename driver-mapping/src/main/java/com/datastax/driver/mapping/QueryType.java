@@ -19,6 +19,7 @@ import com.datastax.driver.core.TableMetadata;
 import com.datastax.driver.core.querybuilder.Delete;
 import com.datastax.driver.core.querybuilder.Insert;
 import com.datastax.driver.core.querybuilder.Select;
+import com.datastax.driver.mapping.Mapper.Option.IfNotExists;
 import com.google.common.base.Objects;
 
 import java.util.ArrayList;
@@ -69,6 +70,11 @@ class QueryType {
                 Insert.Options usings = insert.using();
                 for (Mapper.Option opt : options) {
                     opt.checkValidFor(QueryType.SAVE, manager);
+
+                    if (shouldIfNotExists(opt)) {
+                        insert.ifNotExists();
+                    }
+
                     if (opt.isIncludedInQuery())
                         opt.appendTo(usings);
                 }
@@ -164,6 +170,14 @@ class QueryType {
             }
         }
         throw new AssertionError();
+    }
+    
+    private static boolean shouldIfNotExists(Mapper.Option option) {
+        if (option instanceof IfNotExists) {
+            return ((IfNotExists) option).ifNotExists;
+        }
+
+        return false;
     }
 
     @Override
