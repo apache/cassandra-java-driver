@@ -856,7 +856,7 @@ public class Mapper<T> {
      */
     public static abstract class Option {
 
-        enum Type {TTL, TIMESTAMP, CL, TRACING, SAVE_NULL_FIELDS}
+        enum Type {TTL, TIMESTAMP, CL, TRACING, SAVE_NULL_FIELDS, IF_NOT_EXISTS}
 
         /**
          * Creates a new Option object to add time-to-live to a mapper operation. This is
@@ -922,6 +922,19 @@ public class Mapper<T> {
          */
         public static Option saveNullFields(boolean enabled) {
             return new SaveNullFields(enabled);
+        }
+
+        /**
+         * Creates a new Option object to specify whether an IF NOT EXISTS clause should be included in
+         * insert queries. This option is valid only for save operations.
+         * <p/>
+         * If this option is not specified, it defaults to {@code false} (IF NOT EXISTS statements are not used).
+         *
+         * @param enabled whether to include an IF NOT EXISTS clause in queries.
+         * @return the option.
+         */
+        public static Option ifNotExists(boolean enabled) {
+            return new IfNotExists(enabled);
         }
 
         final Type type;
@@ -1227,6 +1240,53 @@ public class Mapper<T> {
             }
         }
 
+        static class IfNotExists extends Option {
+            boolean ifNotExists;
+
+            IfNotExists(boolean ifNotExists) {
+                super(Type.IF_NOT_EXISTS);
+                this.ifNotExists = ifNotExists;
+            }
+
+            @Override
+            void validate(QueryType qt, MappingManager manager) {
+                checkArgument(qt == QueryType.SAVE, "IfNotExists option is only allowed in save queries");
+            }
+
+            @Override
+            boolean modifiesQueryString() {
+                return true;
+            }
+
+            @Override
+            void modifyQueryString(BuiltStatement query) {
+                if (ifNotExists) {
+                    ((Insert) query).ifNotExists();
+                }
+            }
+
+            @Override
+            int apply(BoundStatement bs, int currentIndex) {
+                return currentIndex;
+            }
+
+            @Override
+            Object asCacheKey() {
+                // Different values do change the query string ("IF NOT EXIST" clause present or not)
+                return this;
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return other == this ||
+                        (other instanceof IfNotExists && this.ifNotExists == ((IfNotExists) other).ifNotExists);
+            }
+
+            @Override
+            public int hashCode() {
+                return (ifNotExists) ? 1231 : 1237;
+            }
+        }
     }
 
     private static class MapperQueryKey {

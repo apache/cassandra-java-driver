@@ -90,6 +90,9 @@ underlying query:
   in the query. If set to false, fields with null value won't be included
   in the write query (thus avoiding tombstones).  If not specified, the 
   default behavior is to persist `null` fields.
+- `ifNotExists`: if set to true, adds an `IF NOT EXISTS` clause to the
+  save operation (use `ifNotExists(false)` if you enabled the option by
+  default and need to disable it for a specific operation).
 
 To use options, add them to the mapper call after regular parameters:
 
@@ -109,6 +112,7 @@ Some options don't apply to all operations:
     <tr> <td>ConsistencyLevel</td> <td>yes</td>                   <td>yes</td>                 <td>yes</td> </tr>
     <tr> <td>Tracing</td>          <td>yes</td>                   <td>yes</td>                 <td>yes</td> </tr>
     <tr> <td>SaveNullFields</td>   <td>yes</td>                   <td>no</td>                  <td>no</td> </tr>
+    <tr> <td>IfNotExists</td>      <td>yes</td>                   <td>no</td>                  <td>no</td> </tr>
 </table>
 
 Note that `Option.consistencyLevel` is redundant with the consistency
