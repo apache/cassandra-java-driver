@@ -191,6 +191,16 @@ public class CCMCache {
         }
 
         @Override
+        public void updateDSENodeConfig(int n, String key, Object value) {
+            ccm.updateDSENodeConfig(n, key, value);
+        }
+
+        @Override
+        public void updateDSENodeConfig(int n, Map<String, Object> configs) {
+            ccm.updateDSENodeConfig(n, configs);
+        }
+
+        @Override
         public void setWorkload(int n, Workload... workload) {
             ccm.setWorkload(n, workload);
         }

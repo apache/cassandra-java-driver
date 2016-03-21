@@ -203,6 +203,20 @@ public interface CCMAccess extends Closeable {
     void updateNodeConfig(int n, Map<String, Object> configs);
 
     /**
+     * Updates the {@code nth} host's dse config file in the CCM cluster.
+     *
+     * @param n the node number (starting from 1).
+     */
+    void updateDSENodeConfig(int n, String key, Object value);
+
+    /**
+     * Updates the {@code nth} host's dse config file in the CCM cluster.
+     *
+     * @param n the node number (starting from 1).
+     */
+    void updateDSENodeConfig(int n, Map<String, Object> configs);
+
+    /**
      * Sets the workload(s) for the {@code nth} host in the CCM cluster.
      *
      * @param n the node number (starting from 1).

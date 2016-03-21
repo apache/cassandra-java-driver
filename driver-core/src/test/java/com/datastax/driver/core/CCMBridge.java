@@ -537,6 +537,24 @@ public class CCMBridge implements CCMAccess {
     }
 
     @Override
+    public void updateDSENodeConfig(int n, String key, Object value) {
+        updateDSENodeConfig(n, ImmutableMap.<String, Object>builder().put(key, value).build());
+    }
+
+    @Override
+    public void updateDSENodeConfig(int n, Map<String, Object> configs) {
+        StringBuilder confStr = new StringBuilder();
+        for (Map.Entry<String, Object> entry : configs.entrySet()) {
+            confStr
+                    .append(entry.getKey())
+                    .append(":")
+                    .append(entry.getValue())
+                    .append(" ");
+        }
+        execute(CCM_COMMAND + " node%s updatedseconf %s", n, confStr);
+    }
+
+    @Override
     public void setWorkload(int node, Workload... workload) {
         String workloadStr = Joiner.on(",").join(workload);
         execute(CCM_COMMAND + " node%d setworkload %s", node, workloadStr);

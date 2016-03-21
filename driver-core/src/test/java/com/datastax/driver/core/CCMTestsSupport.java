@@ -213,6 +213,16 @@ public class CCMTestsSupport {
         }
 
         @Override
+        public void updateDSENodeConfig(int n, String key, Object value) {
+            throw new UnsupportedOperationException("This CCM cluster is read-only");
+        }
+
+        @Override
+        public void updateDSENodeConfig(int n, Map<String, Object> configs) {
+            throw new UnsupportedOperationException("This CCM cluster is read-only");
+        }
+
+        @Override
         public void setWorkload(int node, Workload... workload) {
             throw new UnsupportedOperationException("This CCM cluster is read-only");
         }
@@ -758,6 +768,7 @@ public class CCMTestsSupport {
             }
         }
     }
+
     /**
      * Signals that the test has encountered an unexpected error.
      * <p/>
