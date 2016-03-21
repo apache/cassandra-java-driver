@@ -39,6 +39,7 @@
 - [improvement] JAVA-977: Preserve original cause when BuiltStatement value can't be serialized.
 - [bug] JAVA-1094: Backport TypeCodec parse and format fixes from 3.0.
 - [improvement] JAVA-852: Ignore peers with null entries during discovery.
+- [improvement] JAVA-905: Detect if many null fields are being written from Mapped objects.
 
 Merged from 2.0 branch:
 

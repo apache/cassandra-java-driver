@@ -24,6 +24,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.datastax.driver.mapping.MapperMetrics.DISABLE_METRICS_KEY;
+
 /**
  * Mapping manager from which to obtain entity mappers.
  */
@@ -31,6 +33,8 @@ public class MappingManager {
 
     private final Session session;
     final boolean isCassandraV1;
+
+    private final MapperMetrics mapperMetrics;
 
     private volatile Map<Class<?>, Mapper<?>> mappers = Collections.<Class<?>, Mapper<?>>emptyMap();
     private volatile Map<Class<?>, UDTMapper<?>> udtMappers = Collections.<Class<?>, UDTMapper<?>>emptyMap();
@@ -72,6 +76,7 @@ public class MappingManager {
         // which nodes might join the cluster later.
         // At least if protocol >=2 we know there won't be any 1.2 nodes ever.
         this.isCassandraV1 = (protocolVersion == ProtocolVersion.V1);
+        this.mapperMetrics = SystemProperties.getBoolean(DISABLE_METRICS_KEY, false) ? null : new MapperMetrics(session.getCluster());
     }
 
     /**
@@ -137,7 +142,18 @@ public class MappingManager {
         return getAccessor(klass);
     }
 
-    @SuppressWarnings("unchecked")
+    /**
+     * Returns the {@link MapperMetrics mapper metrics} object associated with this
+     * manager, or {@code null} if metrics have been disabled for the mapper module.
+     *
+     * @return the {@link MapperMetrics mapper metrics} object associated with this
+     * manager, or {@code null} if metrics have been disabled for the mapper module.
+     * @see MapperMetrics
+     */
+    public MapperMetrics getMapperMetrics() {
+        return mapperMetrics;
+    }
+
     private <T> Mapper<T> getMapper(Class<T> klass) {
         Mapper<T> mapper = (Mapper<T>) mappers.get(klass);
         if (mapper == null) {
@@ -145,7 +161,7 @@ public class MappingManager {
                 mapper = (Mapper<T>) mappers.get(klass);
                 if (mapper == null) {
                     EntityMapper<T> entityMapper = AnnotationParser.parseEntity(klass, ReflectionMapper.factory(), this);
-                    mapper = new Mapper<T>(this, klass, entityMapper);
+                    mapper = new Mapper<T>(this, klass, entityMapper, mapperMetrics);
                     Map<Class<?>, Mapper<?>> newMappers = new HashMap<Class<?>, Mapper<?>>(mappers);
                     newMappers.put(klass, mapper);
                     mappers = newMappers;
@@ -155,7 +171,6 @@ public class MappingManager {
         return mapper;
     }
 
-    @SuppressWarnings("unchecked")
     <T> UDTMapper<T> getUDTMapper(Class<T> klass) {
         UDTMapper<T> mapper = (UDTMapper<T>) udtMappers.get(klass);
         if (mapper == null) {
@@ -173,7 +188,6 @@ public class MappingManager {
         return mapper;
     }
 
-    @SuppressWarnings("unchecked")
     private <T> T getAccessor(Class<T> klass) {
         T accessor = (T) accessors.get(klass);
         if (accessor == null) {

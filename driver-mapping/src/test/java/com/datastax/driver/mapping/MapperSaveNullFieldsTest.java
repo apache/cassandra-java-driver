@@ -17,15 +17,17 @@ package com.datastax.driver.mapping;
 
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.CCMTestsSupport;
+import com.datastax.driver.core.MemoryAppender;
 import com.datastax.driver.mapping.Mapper.Option;
 import com.datastax.driver.mapping.annotations.PartitionKey;
 import com.datastax.driver.mapping.annotations.Table;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SuppressWarnings("unused")
 public class MapperSaveNullFieldsTest extends CCMTestsSupport {
 
     Mapper<User> mapper;
@@ -59,6 +61,51 @@ public class MapperSaveNullFieldsTest extends CCMTestsSupport {
 
         mapper.setDefaultSaveOptions(Option.saveNullFields(false));
         should_save_null_fields(false);
+    }
+
+    @Test(groups = "short")
+    void should_log_warning_if_too_many_null_fields_saved_and_metrics_enabled() throws InterruptedException {
+        MemoryAppender logs = new MemoryAppender();
+        Logger logger = Logger.getLogger(EntityMapper.class);
+        Level originalLoggerLevel = logger.getLevel();
+        logger.setLevel(Level.WARN);
+        logger.addAppender(logs);
+        try {
+            mapper.setDefaultSaveOptions(Option.saveNullFields(true));
+            for (int i = 0; i < 501; i++) {
+                mapper.save(new User("test_login_" + i, null, null));
+            }
+            assertThat(logs.get())
+                    .containsOnlyOnce("More than 1000 null fields saved over the past 5 minutes for entity " + User.class.getName());
+        } finally {
+            logger.removeAppender(logs);
+            logger.setLevel(originalLoggerLevel);
+        }
+    }
+
+    @Test(groups = "short")
+    void should_not_log_warning_if_too_many_null_fields_saved_but_metrics_disabled() throws InterruptedException {
+        try {
+            System.setProperty(MapperMetrics.DISABLE_METRICS_KEY, "true");
+            MemoryAppender logs = new MemoryAppender();
+            Logger logger = Logger.getLogger(EntityMapper.class);
+            Level originalLoggerLevel = logger.getLevel();
+            logger.setLevel(Level.WARN);
+            logger.addAppender(logs);
+            try {
+                Mapper<User> mapperWithoutMetrics = new MappingManager(session()).mapper(User.class);
+                mapperWithoutMetrics.setDefaultSaveOptions(Option.saveNullFields(true));
+                for (int i = 0; i < 501; i++) {
+                    mapperWithoutMetrics.save(new User("test_login_" + i, null, null));
+                }
+                assertThat(logs.get()).isEmpty();
+            } finally {
+                logger.removeAppender(logs);
+                logger.setLevel(originalLoggerLevel);
+            }
+        } finally {
+            System.clearProperty(MapperMetrics.DISABLE_METRICS_KEY);
+        }
     }
 
     private void should_save_null_fields(boolean saveExpected, Option... options) {
