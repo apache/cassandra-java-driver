@@ -18,7 +18,9 @@ package com.datastax.driver.core;
 import org.testng.annotations.Test;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -45,6 +47,54 @@ public class SimpleStatementTest {
         Object expected = new Object();
         Object actual = new SimpleStatement("doesn't matter", expected).getObject(0);
         assertThat(actual).isSameAs(expected);
+    }
+
+    @Test(groups = "unit", expectedExceptions = {IllegalStateException.class})
+    public void should_throw_ISE_if_getObject_called_on_statement_without_named_values() {
+        new SimpleStatement("doesn't matter").getObject("name");
+    }
+
+    @Test(groups = "unit")
+    public void should_return_null_if_getObject_called_on_statement_with_wrong_name() {
+        Map<String, Object> namedVales = new HashMap<String, Object>();
+        namedVales.put("name", new Object());
+        Object actual = new SimpleStatement("doesn't matter", namedVales).getObject("wrong name");
+        assertThat(actual).isNull();
+    }
+
+    @Test(groups = "unit")
+    public void should_return_object_with_name() {
+        Object expected = new Object();
+        String valueName = "name";
+        Map<String, Object> namedVales = new HashMap<String, Object>();
+        namedVales.put(valueName, expected);
+        Object actual = new SimpleStatement("doesn't matter", namedVales).getObject(valueName);
+        assertThat(actual).isSameAs(expected);
+    }
+
+    @Test(groups = "unit", expectedExceptions = {IllegalStateException.class})
+    public void should_throw_ISE_if_getValues_called_on_statement_without_values() {
+        new SimpleStatement("doesn't matter").getValues();
+    }
+
+    @Test(groups = "unit")
+    public void should_return_values() {
+        Object[] expected = {new Object()};
+        Object[] actual = new SimpleStatement("doesn't matter", expected[0]).getValues();
+        assertThat(actual).isEqualTo(expected);
+    }
+
+    @Test(groups = "unit", expectedExceptions = {IllegalStateException.class})
+    public void should_throw_ISE_if_getNamedValues_called_on_statement_without_named_values() {
+        new SimpleStatement("doesn't matter").getNamedValues();
+    }
+
+    @Test(groups = "unit")
+    public void should_return_named_values() {
+        Map<String, Object> expected = new HashMap<String, Object>();
+        expected.put("name", new Object());
+        Map<String, Object> actual = new SimpleStatement("doesn't matter", expected).getNamedValues();
+        assertThat(actual).isEqualTo(expected);
     }
 
     @Test(groups = "unit")

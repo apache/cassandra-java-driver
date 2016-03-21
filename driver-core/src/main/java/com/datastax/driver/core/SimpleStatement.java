@@ -194,15 +194,40 @@ public class SimpleStatement extends RegularStatement {
     }
 
     /**
+     * Returns a named value as the Java type matching its CQL type.
+     *
+     * @param name the name of the value to retrieve.
+     * @return the value of the value that matches the name of this statement, null if there are no value matching the name.
+     * @throws IllegalStateException     if this statement does not have values.
+     * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
+     */
+    public Object getObject(String name) {
+        if (namedValues == null)
+            throw new IllegalStateException("This statement does not have named values");
+        return namedValues.get(name);
+    }
+
+    /**
+     * Returns the values as an array.
+     *
+     * @return the values of this statement.
+     * @throws IllegalStateException     if this statement does not have values.
+     */
+    public Object[] getValues() {
+        if (values == null)
+            throw new IllegalStateException("This statement does not have values");
+        return values;
+    }
+
+    /**
      * Returns the named values as a {@code Map<String, Object>}.
      *
      * @return the named values of this statement.
      * @throws IllegalStateException     if this statement does not have named values.
      */
-    public Map<String, Object> getObjectMap() {
+    public Map<String, Object> getNamedValues() {
         if (namedValues == null)
             throw new IllegalStateException("This statement does not have named values");
-
         return Collections.unmodifiableMap(namedValues);
     }
 

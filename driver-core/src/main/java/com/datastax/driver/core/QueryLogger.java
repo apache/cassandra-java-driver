@@ -788,7 +788,7 @@ public abstract class QueryLogger implements LatencyTracker {
             }
             Iterator<Entry<String, Object>> namedValues = null;
             if (statement.usesNamedValues()) {
-                namedValues = statement.getObjectMap().entrySet().iterator();
+                namedValues = statement.getNamedValues().entrySet().iterator();
             }
             for (int i = 0; i < numberOfLoggedParameters; i++) {
                 if (buffer.length() == 0)
