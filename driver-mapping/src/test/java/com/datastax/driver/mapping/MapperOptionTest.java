@@ -158,7 +158,7 @@ public class MapperOptionTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     @CassandraVersion(major = 2.0)
-    void should_prioritize_option_over_model_consistency2() {
+    void should_use_if_not_exists_option() {
         Pattern ifNotExistsPattern = Pattern.compile(".*\\sIF\\s+NOT\\s+EXISTS(\\s+)?;?(\\s+)?$", Pattern.CASE_INSENSITIVE);
 
         User user = new User(42, "Cin Ali");
