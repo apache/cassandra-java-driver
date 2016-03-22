@@ -17,6 +17,8 @@ package com.datastax.driver.core;
 
 import org.testng.annotations.Test;
 
+import static com.datastax.driver.core.CCMAccess.Workload.*;
+
 /**
  * A simple test to validate DSE setups.
  * <p/>
@@ -68,11 +70,21 @@ import org.testng.annotations.Test;
  * A correct example is as follows: {@code /usr/bin:/usr/local/bin:/bin:/usr/sbin:$JAVA_HOME/bin:$PATH}.
  */
 @Test(enabled = false)
-@CCMConfig(dse = true, version = "4.8.3")
+@CCMConfig(
+        dse = true,
+        numberOfNodes = 3,
+        version = "4.8.3",
+        workloads = {
+                @CCMWorkload(solr),
+                @CCMWorkload({spark, solr}),
+                @CCMWorkload({cassandra, spark})
+        }
+)
 public class DseCCMClusterTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void should_conenct_to_dse() throws InterruptedException {
+
     }
 
 }

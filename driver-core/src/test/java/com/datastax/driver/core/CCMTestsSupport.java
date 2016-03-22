@@ -361,17 +361,17 @@ public class CCMTestsSupport {
             return args;
         }
 
-        private List<Workload> workloads() {
+        private List<Workload[]> workloads() {
             int total = 0;
             for (int perDc : numberOfNodes())
                 total += perDc;
-            List<Workload> workloads = new ArrayList<Workload>(Collections.<Workload>nCopies(total, null));
+            List<Workload[]> workloads = new ArrayList<Workload[]>(Collections.<Workload[]>nCopies(total, null));
             for (int i = annotations.size() - 1; i >= 0; i--) {
                 CCMConfig ann = annotations.get(i);
-                Workload[] annWorkloads = ann.workloads();
+                CCMWorkload[] annWorkloads = ann.workloads();
                 for (int j = 0; j < annWorkloads.length; j++) {
-                    Workload workload = annWorkloads[j];
-                    workloads.set(j, workload);
+                    CCMWorkload nodeWorkloads = annWorkloads[j];
+                    workloads.set(j, nodeWorkloads.value());
                 }
             }
             return workloads;
@@ -448,9 +448,9 @@ public class CCMTestsSupport {
                 for (String arg : jvmArgs()) {
                     ccmBuilder.withJvmArgs(arg);
                 }
-                List<Workload> workloads = workloads();
+                List<Workload[]> workloads = workloads();
                 for (int i = 0; i < workloads.size(); i++) {
-                    Workload workload = workloads.get(i);
+                    Workload[] workload = workloads.get(i);
                     if (workload != null)
                         ccmBuilder.withWorkload(i + 1, workload);
                 }

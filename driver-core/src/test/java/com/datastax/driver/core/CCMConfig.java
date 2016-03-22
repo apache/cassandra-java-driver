@@ -135,7 +135,7 @@ public @interface CCMConfig {
      *
      * @return The workloads to assign to each node.
      */
-    CCMAccess.Workload[] workloads() default {};
+    CCMWorkload[] workloads() default {};
 
     /**
      * Returns {@code true} if a {@link CCMBridge} instance should be automatically created, {@code false} otherwise.
