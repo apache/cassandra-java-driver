@@ -17,7 +17,11 @@ package com.datastax.driver.core;
 
 import java.net.InetSocketAddress;
 
-class ConnectionException extends Exception {
+/**
+ * Indicates that a connection to a host has encountered a problem
+ * and that it should be closed.
+ */
+public class ConnectionException extends Exception {
 
     private static final long serialVersionUID = 0;
 

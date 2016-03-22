@@ -21,7 +21,7 @@ import java.net.InetSocketAddress;
  * A connection exception that has to do with the transport itself, i.e. that
  * suggests the node is down.
  */
-class TransportException extends ConnectionException {
+public class TransportException extends ConnectionException {
     private static final long serialVersionUID = 0;
 
     public TransportException(InetSocketAddress address, String msg, Throwable cause) {
