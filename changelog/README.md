@@ -39,6 +39,7 @@
 - [improvement] JAVA-977: Preserve original cause when BuiltStatement value can't be serialized.
 - [bug] JAVA-1094: Backport TypeCodec parse and format fixes from 3.0.
 - [improvement] JAVA-852: Ignore peers with null entries during discovery.
+- [bug] JAVA-1132: Executing bound statement with no variables results in exception with protocol v1.
 
 Merged from 2.0 branch:
 
