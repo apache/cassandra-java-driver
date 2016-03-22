@@ -35,7 +35,11 @@ import com.google.common.annotations.VisibleForTesting;
  * Beware that to guarantee monotonicity, if more than one call to {@link #next()}
  * is made within the same microsecond, or in the event of a system clock skew, this generator might
  * return timestamps that drift out in the future.
- *  Whe this happens, {@link #onDrift(long, long)} is invoked.
+ * When this happens, {@link #onDrift(long, long)} is invoked.
+ * <p/>
+ * Note: currently, native calls won't work from an OSGI container. This is because JNR artifacts don't include proper
+ * OSGI descriptors. This will be fixed in an upcoming version (see
+ * <a href="https://datastax-oss.atlassian.net/browse/JAVA-1127">JAVA-1127</a>).
  */
 public abstract class AbstractMonotonicTimestampGenerator implements TimestampGenerator {
 
