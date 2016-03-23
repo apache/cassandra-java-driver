@@ -89,7 +89,6 @@ class SessionManager extends AbstractSession {
         ListenableFuture<?> allPoolsUpdatedFuture = Futures.transform(allPoolsCreatedFuture,
                 new AsyncFunction<Object, Object>() {
                     @Override
-                    @SuppressWarnings("unchecked")
                     public ListenableFuture<Object> apply(Object input) throws Exception {
                         isInit = true;
                         return (ListenableFuture<Object>) updateCreatedPools();
@@ -546,7 +545,7 @@ class SessionManager extends AbstractSession {
 
             List<ByteBuffer> values = rawValues == null ? Collections.<ByteBuffer>emptyList() : Arrays.asList(rawValues);
             String qString = rs.getQueryString();
-            Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(consistency, values, false,
+            Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(Message.Request.Type.QUERY, consistency, values, false,
                     fetchSize, usedPagingState, serialConsistency, defaultTimestamp);
             return new Requests.Query(qString, options, statement.isTracing());
         } else if (statement instanceof BoundStatement) {
@@ -557,7 +556,7 @@ class SessionManager extends AbstractSession {
             }
             bs.ensureAllSet();
             boolean skipMetadata = version != ProtocolVersion.V1 && bs.statement.getPreparedId().resultSetMetadata != null;
-            Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(consistency, Arrays.asList(bs.wrapper.values), skipMetadata,
+            Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(Message.Request.Type.EXECUTE, consistency, Arrays.asList(bs.wrapper.values), skipMetadata,
                     fetchSize, usedPagingState, serialConsistency, defaultTimestamp);
             return new Requests.Execute(bs.statement.getPreparedId().id, options, statement.isTracing());
         } else {
