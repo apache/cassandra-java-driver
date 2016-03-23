@@ -16,12 +16,35 @@
 
 -->
 <configuration>
+
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
-        <layout class="ch.qos.logback.classic.PatternLayout">
-            <Pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</Pattern>
-        </layout>
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
     </appender>
+
     <root level="INFO">
         <appender-ref ref="STDOUT"/>
     </root>
+
+    <!-- debug Pax Exam -->
+    <!--<logger name="org.ops4j.pax" level="DEBUG" additivity="false">-->
+    <!--<appender-ref ref="STDOUT"/>-->
+    <!--</logger>-->
+
+    <!-- print loaded bundles -->
+    <!--<logger name="com.datastax.driver.osgi.MailboxServiceTests" level="DEBUG" additivity="false">-->
+    <!--<appender-ref ref="STDOUT"/>-->
+    <!--</logger>-->
+
+    <!-- this guy is a bit too verbose -->
+    <logger name="org.ops4j.pax.exam.nat.internal.NativeTestContainer" level="WARN" additivity="false">
+        <appender-ref ref="STDOUT"/>
+    </logger>
+
+    <!-- this one too -->
+    <logger name="com.jcabi.manifests.Manifests" level="WARN" additivity="false">
+        <appender-ref ref="STDOUT"/>
+    </logger>
+
 </configuration>

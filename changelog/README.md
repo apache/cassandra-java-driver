@@ -15,6 +15,7 @@
 - [improvement] JAVA-1113: Support Cassandra 3.4 LIKE operator in QueryBuilder.
 - [improvement] JAVA-1086: Support Cassandra 3.2 CAST function in QueryBuilder.
 - [bug] JAVA-1095: Check protocol version for custom payload before sending the query.
+- [improvement] JAVA-1133: Add OSGi headers to cassandra-driver-extras.
 
 Merged from 2.1 branch:
 
