@@ -135,6 +135,11 @@ public class AbstractRetryPolicyIntegrationTest {
         return query(session);
     }
 
+    protected ResultSet queryWithCL(ConsistencyLevel cl) {
+        Statement statement = new SimpleStatement("mock query").setConsistencyLevel(cl);
+        return session.execute(statement);
+    }
+
     protected ResultSet query(Session session) {
         return session.execute("mock query");
     }
