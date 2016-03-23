@@ -77,6 +77,32 @@ public class DowngradingConsistencyRetryPolicyIntegrationTest extends AbstractRe
         };
     }
 
+    /**
+     * Ensures that when handling a read timeout with {@link DowngradingConsistencyRetryPolicy} that a retry is
+     * reattempted with {@link ConsistencyLevel#ONE} if the consistency level on the statement executed is
+     * {@link ConsistencyLevel#EACH_QUORUM}, even if the number of known alive replicas was 0.
+     *
+     * @jira_ticket JAVA-1005
+     * @test_category retry_policy
+     */
+    @Test(groups = "short")
+    public void should_retry_once_on_same_host_from_each_quorum_to_one() {
+        simulateError(1, read_request_timeout, new ReadTimeoutConfig(0, 3, false));
+
+        try {
+            queryWithCL(ConsistencyLevel.EACH_QUORUM);
+        } catch (ReadTimeoutException e) {
+            assertThat(e.getConsistencyLevel()).isEqualTo(ConsistencyLevel.ONE);
+        }
+
+        assertOnReadTimeoutWasCalled(2);
+        assertThat(errors.getRetries().getCount()).isEqualTo(1);
+        assertThat(errors.getReadTimeouts().getCount()).isEqualTo(2);
+        assertThat(errors.getRetriesOnReadTimeout().getCount()).isEqualTo(1);
+        assertQueried(1, 2);
+        assertQueried(2, 0);
+        assertQueried(3, 0);
+    }
 
     /**
      * Ensures that when handling a read timeout with {@link DowngradingConsistencyRetryPolicy} that a retry is

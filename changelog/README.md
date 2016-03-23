@@ -19,6 +19,7 @@ Merged from 2.1 branch:
 - [new feature] JAVA-982: Introduce new method ConsistencyLevel.isSerial().
 - [bug] JAVA-764: Retry with the normal consistency level (not the serial one) when a write times out on the Paxos phase.
 - [improvement] JAVA-852: Ignore peers with null entries during discovery.
+- [bug] JAVA-1005: DowngradingConsistencyRetryPolicy does not work with EACH_QUORUM when 1 DC is down.
 
 
 ### 3.0.0
