@@ -52,10 +52,10 @@ public class MapperMetrics {
 
     /**
      * A simple sliding time window that keeps a global counter of events
-     * happened in the last N minutes (or whichever time unit is used.
+     * happened in the last N minutes (or whichever time unit is used).
      * <p>
      * The window is backed by an {@link AtomicReferenceArray} that acts
-     * like a circular buffer and stores individual counter for each buffer slot.
+     * like a circular buffer and stores individual counters for each buffer slot.
      * <p>
      * The accuracy depends on the buffer size, and hence on the window parameters.
      * The more time slots, the more accurate it is.
@@ -88,7 +88,7 @@ public class MapperMetrics {
          * Creates a new counter with the specified {@code windowSize}
          * and the specified {@code slotSize}; the ratio {@code windowSize / slotSize}
          * determines the accuracy of the counter: the higher the ratio is, the more
-         * accurate the counter will be.
+         * accurate the counter will be, at the cost of more memory.
          *
          * @param windowSize the window size in time units.
          * @param slotSize   the slot size in time units.
@@ -141,9 +141,10 @@ public class MapperMetrics {
                     if (i == slotToUpdate) {
                         if (current == null || now >= current.expiresAt)
                             // slot expired, reset counter
-                            update = new TimeSlot(now + windowSizeMillis, 1);
+                            update = new TimeSlot(now + windowSizeMillis, increment);
                         else
-                            update = new TimeSlot(current.expiresAt, current.count + 1);
+                            // update counter
+                            update = new TimeSlot(current.expiresAt, current.count + increment);
                     } else {
                         if (current != null && now < current.expiresAt)
                             update = current;
