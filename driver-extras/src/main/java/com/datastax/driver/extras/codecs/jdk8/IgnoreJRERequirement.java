@@ -13,16 +13,13 @@
  *   See the License for the specific language governing permissions and
  *   limitations under the License.
  */
+package com.datastax.driver.extras.codecs.jdk8;
 
 /**
- * This package contains a collection of convenience
- * {@link com.datastax.driver.core.TypeCodec TypeCodec} instances useful for
- * serializing between CQL types and Java 8 types, such as the ones from the
- * {@code java.time} API and {@code java.util.Optional}.
- * <p/>
- * <p/>
- * Note that, while the driver remains globally compatible with older JDKs,
- * classes in this package require the presence of a Java 8 or higher
- * at runtime.
+ * Annotation used to mark classes in this package as
+ * excluded from JDK signature check performed
+ * by <a href="http://www.mojohaus.org/animal-sniffer/animal-sniffer-maven-plugin/check-mojo.html">animal-sniffer</a>
+ * Maven plugin as they require JDK 8 and not the usual JDK 6.
  */
-package com.datastax.driver.extras.codecs.jdk8;
+@interface IgnoreJRERequirement {
+}

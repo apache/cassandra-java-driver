@@ -21,39 +21,38 @@ import com.datastax.driver.core.TypeCodec;
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 
 import java.nio.ByteBuffer;
-import java.time.LocalDate;
-import java.time.temporal.ChronoUnit;
 
 import static com.datastax.driver.core.CodecUtils.*;
 import static com.datastax.driver.core.ParseUtils.*;
 import static java.lang.Long.parseLong;
-import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE;
 
 /**
  * {@link TypeCodec} that maps
  * {@link java.time.LocalDate} to CQL {@code date}.
  */
-public class LocalDateCodec extends TypeCodec<LocalDate> {
+@IgnoreJRERequirement
+@SuppressWarnings("Since15")
+public class LocalDateCodec extends TypeCodec<java.time.LocalDate> {
 
     public static final LocalDateCodec instance = new LocalDateCodec();
 
-    private static final LocalDate EPOCH = LocalDate.of(1970, 1, 1);
+    private static final java.time.LocalDate EPOCH = java.time.LocalDate.of(1970, 1, 1);
 
     private LocalDateCodec() {
-        super(DataType.date(), LocalDate.class);
+        super(DataType.date(), java.time.LocalDate.class);
     }
 
     @Override
-    public ByteBuffer serialize(LocalDate value, ProtocolVersion protocolVersion) {
+    public ByteBuffer serialize(java.time.LocalDate value, ProtocolVersion protocolVersion) {
         if (value == null)
             return null;
-        long days = ChronoUnit.DAYS.between(EPOCH, value);
+        long days = java.time.temporal.ChronoUnit.DAYS.between(EPOCH, value);
         int unsigned = fromSignedToUnsignedInt((int) days);
         return cint().serializeNoBoxing(unsigned, protocolVersion);
     }
 
     @Override
-    public LocalDate deserialize(ByteBuffer bytes, ProtocolVersion protocolVersion) {
+    public java.time.LocalDate deserialize(ByteBuffer bytes, ProtocolVersion protocolVersion) {
         if (bytes == null || bytes.remaining() == 0)
             return null;
         int unsigned = cint().deserializeNoBoxing(bytes, protocolVersion);
@@ -62,14 +61,14 @@ public class LocalDateCodec extends TypeCodec<LocalDate> {
     }
 
     @Override
-    public String format(LocalDate value) {
+    public String format(java.time.LocalDate value) {
         if (value == null)
             return "NULL";
-        return quote(ISO_LOCAL_DATE.format(value));
+        return quote(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE.format(value));
     }
 
     @Override
-    public LocalDate parse(String value) {
+    public java.time.LocalDate parse(String value) {
         if (value == null || value.isEmpty() || value.equalsIgnoreCase("NULL"))
             return null;
 
@@ -95,7 +94,7 @@ public class LocalDateCodec extends TypeCodec<LocalDate> {
         }
 
         try {
-            return LocalDate.parse(value, ISO_LOCAL_DATE);
+            return java.time.LocalDate.parse(value, java.time.format.DateTimeFormatter.ISO_LOCAL_DATE);
         } catch (RuntimeException e) {
             throw new InvalidTypeException(String.format("Cannot parse date value from \"%s\"", value));
         }
