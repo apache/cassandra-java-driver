@@ -47,7 +47,8 @@ import static java.time.temporal.ChronoField.*;
  * @see ZonedDateTimeCodec
  * @see <a href="https://cassandra.apache.org/doc/cql3/CQL-2.2.html#usingtimestamps">'Working with timestamps' section of CQL specification</a>
  */
-public class InstantCodec extends TypeCodec<Instant> {
+@IgnoreJDK6Requirement
+public class InstantCodec extends TypeCodec<java.time.Instant> {
 
     public static final InstantCodec instance = new InstantCodec();
 

@@ -30,6 +30,7 @@ import java.util.function.Predicate;
  *
  * @param <T> The wrapped Java type
  */
+@IgnoreJDK6Requirement
 public class OptionalCodec<T> extends MappingCodec<Optional<T>, T> {
 
     private final Predicate<T> isAbsent;

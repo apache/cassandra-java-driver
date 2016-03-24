@@ -30,6 +30,7 @@ import static com.datastax.driver.core.ParseUtils.quote;
 /**
  * {@link TypeCodec} that maps {@link LocalTime} to CQL {@code time} (long representing nanoseconds since midnight).
  */
+@IgnoreJDK6Requirement
 public class LocalTimeCodec extends TypeCodec<LocalTime> {
 
     public static final LocalTimeCodec instance = new LocalTimeCodec();
