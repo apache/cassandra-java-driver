@@ -1,5 +1,8 @@
 ## Changelog
 
+### 3.0.1 (in progress)
+
+
 ### 3.0.0
 
 - [bug] JAVA-1034: fix metadata parser for collections of custom types.
