@@ -41,6 +41,7 @@
 - [improvement] JAVA-852: Ignore peers with null entries during discovery.
 - [bug] JAVA-1132: Executing bound statement with no variables results in exception with protocol v1.
 - [bug] JAVA-1005: DowngradingConsistencyRetryPolicy does not work with EACH_QUORUM when 1 DC is down.
+- [bug] JAVA-1002: Avoid deadlock when re-preparing a statement on other hosts.
 
 Merged from 2.0 branch:
 
