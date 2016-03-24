@@ -22,6 +22,7 @@
         <artifactId>cassandra-driver-examples-parent</artifactId>
         <version>3.0.1-SNAPSHOT</version>
     </parent>
+
     <artifactId>cassandra-driver-examples-osgi</artifactId>
     <packaging>bundle</packaging>
     <name>DataStax Java Driver for Apache Cassandra Examples - OSGi</name>
@@ -29,16 +30,37 @@
     <url>https://github.com/datastax/java-driver</url>
 
     <properties>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <felix.version>4.6.0</felix.version>
-        <pax-exam.version>3.6.0</pax-exam.version>
+        <pax-exam.version>4.8.0</pax-exam.version>
         <logback.version>1.1.3</logback.version>
+        <test.groups>none</test.groups>
+        <!--
+        Skip tests by default, short or long profile is required to run tests in this module
+        since pax-exam will throw exception if it encounters a
+        test with no matching methods.
+        -->
+        <test.skip>true</test.skip>
         <main.basedir>${project.parent.parent.basedir}</main.basedir>
     </properties>
 
     <dependencies>
+
         <dependency>
             <groupId>com.datastax.cassandra</groupId>
             <artifactId>cassandra-driver-core</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.datastax.cassandra</groupId>
+            <artifactId>cassandra-driver-mapping</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.datastax.cassandra</groupId>
+            <artifactId>cassandra-driver-extras</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
 
@@ -130,16 +152,46 @@
             <artifactId>logback-core</artifactId>
             <version>${logback.version}</version>
         </dependency>
+
     </dependencies>
 
     <build>
+
         <plugins>
+
+            <!--
+            this project has no unit tests;
+            this plugin is declared just so that Maven properties
+            get automatically passed to tests run with IntelliJ
+            -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.18.1</version>
+                <configuration>
+                    <skip>true</skip>
+                    <systemPropertyVariables>
+                        <cassandra.version>${cassandra.version}</cassandra.version>
+                        <ipprefix>${ipprefix}</ipprefix>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
                 <version>2.18.1</version>
+                <configuration>
+                    <skip>${test.skip}</skip>
+                    <groups>${test.groups}</groups>
+                    <systemPropertyVariables>
+                        <cassandra.version>${cassandra.version}</cassandra.version>
+                        <ipprefix>${ipprefix}</ipprefix>
+                    </systemPropertyVariables>
+                </configuration>
                 <executions>
                     <execution>
+                        <id>default</id>
                         <goals>
                             <goal>integration-test</goal>
                             <goal>verify</goal>
@@ -147,6 +199,7 @@
                     </execution>
                 </executions>
             </plugin>
+
             <plugin>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-bundle-plugin</artifactId>
@@ -159,6 +212,7 @@
                         <Export-Package>com.datastax.driver.osgi.api,!com.datastax.driver.osgi.impl</Export-Package>
                         <Bundle-Activator>com.datastax.driver.osgi.impl.Activator</Bundle-Activator>
                         <_include>-osgi.bnd</_include>
+                        <Import-Package><![CDATA[com.google.common*;version="[16.0.1,20)",*]]></Import-Package>
                     </instructions>
                     <supportedProjectTypes>
                         <supportedProjectType>jar</supportedProjectType>
@@ -176,114 +230,29 @@
                     </execution>
                 </executions>
             </plugin>
+
         </plugins>
+
     </build>
 
     <profiles>
-        <profile>
-            <!-- Skip test by default, short or long is required to run unit tests since pax-exam will throw exception if it encounters a
-                 test with no matching methods. -->
-            <id>default</id>
-            <properties>
-                <env>default</env>
-            </properties>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-surefire-plugin</artifactId>
-                        <version>2.14</version>
-                        <configuration>
-                        </configuration>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-failsafe-plugin</artifactId>
-                        <version>2.18.1</version>
-                        <configuration>
-                            <skip>true</skip>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
 
         <profile>
             <id>short</id>
             <properties>
-                <env>default</env>
+                <test.groups>unit,short</test.groups>
+                <test.skip>false</test.skip>
             </properties>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-surefire-plugin</artifactId>
-                        <version>2.14</version>
-                        <configuration>
-                            <groups>unit,short</groups>
-                            <useFile>false</useFile>
-                            <systemPropertyVariables>
-                                <cassandra.version>${cassandra.version}</cassandra.version>
-                                <ipprefix>${ipprefix}</ipprefix>
-                            </systemPropertyVariables>
-                        </configuration>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-failsafe-plugin</artifactId>
-                        <version>2.18.1</version>
-                        <configuration>
-                            <groups>unit,short</groups>
-                            <useFile>false</useFile>
-                            <systemPropertyVariables>
-                                <cassandra.version>${cassandra.version}</cassandra.version>
-                                <ipprefix>${ipprefix}</ipprefix>
-                            </systemPropertyVariables>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
         </profile>
 
         <profile>
             <id>long</id>
             <properties>
-                <env>default</env>
+                <test.groups>unit,short,long</test.groups>
+                <test.skip>false</test.skip>
             </properties>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-surefire-plugin</artifactId>
-                        <version>2.16</version>
-                        <configuration>
-                            <groups>unit,short,long</groups>
-                            <useFile>false</useFile>
-                            <systemPropertyVariables>
-                                <cassandra.version>${cassandra.version}</cassandra.version>
-                                <ipprefix>${ipprefix}</ipprefix>
-                            </systemPropertyVariables>
-                        </configuration>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-failsafe-plugin</artifactId>
-                        <version>2.18.1</version>
-                        <configuration>
-                            <groups>unit,short,long</groups>
-                            <useFile>false</useFile>
-                            <systemPropertyVariables>
-                                <cassandra.version>${cassandra.version}</cassandra.version>
-                                <ipprefix>${ipprefix}</ipprefix>
-                            </systemPropertyVariables>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
         </profile>
+
     </profiles>
 
     <licenses>

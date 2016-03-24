@@ -16,12 +16,18 @@
 package com.datastax.driver.osgi.impl;
 
 import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.CodecRegistry;
+import com.datastax.driver.core.Metadata;
 import com.datastax.driver.core.Session;
+import com.datastax.driver.core.exceptions.InvalidQueryException;
+import com.datastax.driver.extras.codecs.date.SimpleTimestampCodec;
 import com.datastax.driver.osgi.api.MailboxService;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 
 import java.util.Hashtable;
+
+import static com.datastax.driver.osgi.api.MailboxMessage.TABLE;
 
 public class Activator implements BundleActivator {
 
@@ -39,9 +45,29 @@ public class Activator implements BundleActivator {
         if (keyspace == null) {
             keyspace = "mailbox";
         }
+        keyspace = Metadata.quote(keyspace);
 
-        cluster = Cluster.builder().addContactPoints(contactPoints).build();
-        Session session = cluster.connect();
+        cluster = Cluster.builder()
+                .addContactPoints(contactPoints)
+                .withCodecRegistry(new CodecRegistry().register(SimpleTimestampCodec.instance))
+                .build();
+
+        Session session;
+        try {
+            session = cluster.connect(keyspace);
+        } catch (InvalidQueryException e) {
+            // Create the schema if it does not exist.
+            session = cluster.connect();
+            session.execute("CREATE KEYSPACE " + keyspace +
+                    " with replication = {'class': 'SimpleStrategy', 'replication_factor' : 1}");
+            session.execute("CREATE TABLE " + keyspace + "." + TABLE + " (" +
+                    "recipient text," +
+                    "time timestamp," +
+                    "sender text," +
+                    "body text," +
+                    "PRIMARY KEY (recipient, time))");
+            session.execute("USE " + keyspace);
+        }
 
         MailboxImpl mailbox = new MailboxImpl(session, keyspace);
         mailbox.init();
@@ -53,6 +79,17 @@ public class Activator implements BundleActivator {
     public void stop(BundleContext context) throws Exception {
         if (cluster != null) {
             cluster.close();
+            /*
+            Allow Netty ThreadDeathWatcher to terminate;
+            unfortunately we can't explicitly call ThreadDeathWatcher.awaitInactivity()
+            because Netty could be shaded.
+            If this thread isn't terminated when this bundle is closed,
+            we could get exceptions such as this one:
+            Exception in thread "threadDeathWatcher-2-1" java.lang.NoClassDefFoundError: xxx
+            Caused by: java.lang.ClassNotFoundException: Unable to load class 'xxx' because the bundle wiring for xxx is no longer valid.
+            Although ugly, they are harmless and can be safely ignored.
+            */
+            Thread.sleep(10000);
         }
     }
 }
