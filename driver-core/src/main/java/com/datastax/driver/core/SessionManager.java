@@ -502,6 +502,9 @@ class SessionManager extends AbstractSession {
         } else if (serialConsistency == null)
             serialConsistency = configuration().getQueryOptions().getSerialConsistencyLevel();
 
+        if (statement.getOutgoingPayload() != null && protocolVersion.compareTo(ProtocolVersion.V4) < 0)
+            throw new UnsupportedFeatureException(protocolVersion, "Custom payloads are only supported since native protocol V4");
+
         long defaultTimestamp = Long.MIN_VALUE;
         if (protocolVersion.compareTo(ProtocolVersion.V3) >= 0) {
             defaultTimestamp = statement.getDefaultTimestamp();
