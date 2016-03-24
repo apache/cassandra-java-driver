@@ -20,6 +20,7 @@ Merged from 2.1 branch:
 - [bug] JAVA-764: Retry with the normal consistency level (not the serial one) when a write times out on the Paxos phase.
 - [improvement] JAVA-852: Ignore peers with null entries during discovery.
 - [bug] JAVA-1005: DowngradingConsistencyRetryPolicy does not work with EACH_QUORUM when 1 DC is down.
+- [bug] JAVA-1002: Avoid deadlock when re-preparing a statement on other hosts.
 
 
 ### 3.0.0
