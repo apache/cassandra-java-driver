@@ -18,7 +18,7 @@
  * This package contains a collection of convenience
  * {@link com.datastax.driver.core.TypeCodec TypeCodec} instances useful for
  * serializing between CQL types and Java 8 types, such as the ones from the
- * {@link java.time} API and {@link java.util.Optional}.
+ * {@code java.time} API and {@code java.util.Optional}.
  * <p/>
  * <p/>
  * Note that, while the driver remains globally compatible with older JDKs,
