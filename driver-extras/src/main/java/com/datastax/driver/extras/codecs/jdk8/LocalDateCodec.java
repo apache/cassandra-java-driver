@@ -33,6 +33,7 @@ import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE;
  * {@link TypeCodec} that maps
  * {@link java.time.LocalDate} to CQL {@code date}.
  */
+@IgnoreJRERequirement
 public class LocalDateCodec extends TypeCodec<LocalDate> {
 
     public static final LocalDateCodec instance = new LocalDateCodec();
