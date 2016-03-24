@@ -1,5 +1,10 @@
 ## Changelog
 
+### 3.0.1 (in progress)
+
+- [bug] JAVA-1037: Incorrect string returned by DataType.asFunctionParameterString() for collections and tuples.
+
+
 ### 3.0.0
 
 - [bug] JAVA-1034: fix metadata parser for collections of custom types.
