@@ -47,6 +47,7 @@ Merged from 2.0 branch:
 
 - [bug] JAVA-994: Don't call on(Up|Down|Add|Remove) methods if Cluster is closed/closing.
 - [improvement] JAVA-805: Document that metrics are null until Cluster is initialized.
+- [bug] JAVA-1072: Ensure defunct connections are properly evicted from the pool.
 
 
 ### 2.1.9
@@ -388,6 +389,7 @@ Merged from 2.0 branch: everything up to 2.0.3 (included), and the following.
 
 - [bug] JAVA-994: Don't call on(Up|Down|Add|Remove) methods if Cluster is closed/closing.
 - [improvement] JAVA-805: Document that metrics are null until Cluster is initialized.
+- [bug] JAVA-1072: Ensure defunct connections are properly evicted from the pool.
 
 ### 2.0.12
 

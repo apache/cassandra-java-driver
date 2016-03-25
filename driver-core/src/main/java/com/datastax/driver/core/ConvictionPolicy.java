@@ -49,7 +49,7 @@ abstract class ConvictionPolicy {
      *
      * @return whether the host should be considered down.
      */
-    abstract boolean signalConnectionFailure(Connection connection);
+    abstract boolean signalConnectionFailure(Connection connection, boolean decrement);
 
     abstract boolean canReconnectNow();
 
@@ -97,13 +97,18 @@ abstract class ConvictionPolicy {
         }
 
         @Override
-        boolean signalConnectionFailure(Connection connection) {
-            if (host.state != Host.State.DOWN)
-                updateReconnectionTime();
+        boolean signalConnectionFailure(Connection connection, boolean decrement) {
+            int remaining;
+            if (decrement) {
+                if (host.state != Host.State.DOWN)
+                    updateReconnectionTime();
 
-            int remaining = openConnections.decrementAndGet();
-            assert remaining >= 0;
-            Host.statesLogger.debug("[{}] {} failed, remaining = {}", host, connection, remaining);
+                remaining = openConnections.decrementAndGet();
+                assert remaining >= 0;
+                Host.statesLogger.debug("[{}] {} failed, remaining = {}", host, connection, remaining);
+            } else {
+                remaining = openConnections.get();
+            }
             return remaining == 0;
         }
 
