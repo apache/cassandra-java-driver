@@ -21,6 +21,7 @@ Merged from 2.1 branch:
 - [improvement] JAVA-852: Ignore peers with null entries during discovery.
 - [bug] JAVA-1005: DowngradingConsistencyRetryPolicy does not work with EACH_QUORUM when 1 DC is down.
 - [bug] JAVA-1002: Avoid deadlock when re-preparing a statement on other hosts.
+- [bug] JAVA-1072: Ensure defunct connections are properly evicted from the pool.
 
 
 ### 3.0.0
@@ -659,6 +660,7 @@ Merged from 2.0 branch: everything up to 2.0.3 (included), and the following.
 
 - [bug] JAVA-994: Don't call on(Up|Down|Add|Remove) methods if Cluster is closed/closing.
 - [improvement] JAVA-805: Document that metrics are null until Cluster is initialized.
+- [bug] JAVA-1072: Ensure defunct connections are properly evicted from the pool.
 
 ### 2.0.12
 

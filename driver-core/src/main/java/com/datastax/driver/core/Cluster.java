@@ -2092,18 +2092,13 @@ public class Cluster implements Closeable {
             }
         }
 
-        public boolean signalConnectionFailure(Host host, Connection connection,
-                                               boolean isHostAddition) {
-            boolean isDown = host.convictionPolicy.signalConnectionFailure(connection);
-
+        public void signalHostDown(Host host, boolean isHostAddition) {
             // Don't mark the node down until we've fully initialized the controlConnection as this might mess up with
             // the protocol detection
             if (!isFullyInit || isClosed())
-                return true;
+                return;
 
-            if (isDown)
-                triggerOnDown(host, isHostAddition, true);
-            return isDown;
+            triggerOnDown(host, isHostAddition, true);
         }
 
         public void removeHost(Host host, boolean isInitialConnection) {
