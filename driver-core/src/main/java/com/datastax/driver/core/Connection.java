@@ -92,6 +92,7 @@ class Connection {
 
     private volatile boolean isInitialized;
     private final AtomicBoolean isDefunct = new AtomicBoolean();
+    private final AtomicBoolean signaled = new AtomicBoolean();
 
     private final AtomicReference<ConnectionCloseFuture> closeFuture = new AtomicReference<ConnectionCloseFuture>();
 
@@ -396,6 +397,21 @@ class Connection {
             else if (Host.statesLogger.isDebugEnabled())
                 Host.statesLogger.debug("Defuncting {} because: {}", this, e.getMessage());
 
+
+            Host host = factory.manager.metadata.getHost(address);
+            if (host != null) {
+                // Sometimes close() can be called before defunct(); avoid decrementing the connection count twice, but
+                // we still want to signal the error to the conviction policy.
+                boolean decrement = signaled.compareAndSet(false, true);
+
+                boolean hostDown = host.convictionPolicy.signalConnectionFailure(this, decrement);
+                if (hostDown) {
+                    factory.manager.signalHostDown(host, host.wasJustAdded());
+                } else {
+                    notifyOwnerWhenDefunct();
+                }
+            }
+
             // Force the connection to close to make sure the future completes. Otherwise force() might never get called and
             // threads will wait on the future forever.
             // (this also errors out pending handlers)
@@ -457,12 +473,10 @@ class Connection {
                     Connection.this.keyspace = ((SetKeyspace) response).keyspace;
                     return MoreFutures.VOID_SUCCESS;
                 } else if (response.type == ERROR) {
-                    closeAsync().force();
                     Responses.Error error = (Responses.Error) response;
-                    throw error.asException(address);
+                    throw defunct(error.asException(address));
                 } else {
-                    closeAsync().force();
-                    throw new DriverInternalError("Unexpected response while setting keyspace: " + response);
+                    throw defunct(new DriverInternalError("Unexpected response while setting keyspace: " + response));
                 }
             }
         }, factory.manager.configuration.getPoolingOptions().getInitializationExecutor());
@@ -609,16 +623,10 @@ class Connection {
 
         logger.debug("{} closing connection", this);
 
-        Host host = factory.manager.metadata.getHost(address);
-        if (host != null) {
-            if (isDefunct.get()) {
-                boolean isDown = factory.manager.signalConnectionFailure(host, this, host.wasJustAdded());
-
-                if (!isDown)
-                    notifyOwnerWhenDefunct();
-                // else the driver will destroy all pools and notify the control connection as part of marking the host down,
-                // so no need to notify
-            } else {
+        // Only signal if defunct hasn't done it already
+        if (signaled.compareAndSet(false, true)) {
+            Host host = factory.manager.metadata.getHost(address);
+            if (host != null) {
                 host.convictionPolicy.signalConnectionClosed(this);
             }
         }
