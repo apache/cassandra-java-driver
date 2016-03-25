@@ -143,6 +143,10 @@ public class QueryBuilderTest {
         select = select().from("foo").where(containsKey("e", "key1"));
         assertEquals(select.toString(), query);
 
+        query = "SELECT * FROM foo WHERE e LIKE 'a%';";
+        select = select().from("foo").where(like("e", "a%"));
+        assertEquals(select.toString(), query);
+
         try {
             select().countAll().from("foo").orderBy(asc("a"), desc("b")).orderBy(asc("a"), desc("b"));
             fail("Expected an IllegalStateException");

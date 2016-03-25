@@ -16,6 +16,8 @@
 package com.datastax.driver.core.querybuilder;
 
 import com.datastax.driver.core.*;
+import com.datastax.driver.core.utils.CassandraVersion;
+import org.assertj.core.api.iterable.Extractor;
 import org.testng.annotations.Test;
 
 import java.util.Date;
@@ -24,6 +26,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
+import static com.datastax.driver.core.schemabuilder.SchemaBuilder.createTable;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.data.MapEntry.entry;
 import static org.testng.Assert.*;
@@ -182,4 +185,43 @@ public class QueryBuilderExecutionTest extends CCMTestsSupport {
         assertThat(actual).containsExactly(entry(2, "bar"));
     }
 
+    /**
+     * Validates that {@link QueryBuilder} can construct a query using the 'LIKE' operator to retrieve data from a
+     * table on a column that has a SASI index, i.e.:
+     * <p/>
+     * <code>select n from s_table where n like 'Hello%'</code>
+     * <p/>
+     *
+     * @test_category queries:builder
+     * @jira_ticket JAVA-1113
+     * @since 3.0.1
+     */
+    @Test(groups = "short")
+    @CassandraVersion(major = 3.6)
+    public void should_retrieve_using_like_operator_on_table_with_sasi_index() {
+        //given
+        String table = "s_table";
+        session().execute(createTable(table).addPartitionKey("k", DataType.text())
+                .addClusteringColumn("cc", DataType.cint())
+                .addColumn("n", DataType.text())
+        );
+        session().execute(String.format(
+                "CREATE CUSTOM INDEX on %s (n) USING 'org.apache.cassandra.index.sasi.SASIIndex';", table));
+        session().execute(insertInto(table).value("k", "a").value("cc", 0).value("n", "Hello World"));
+        session().execute(insertInto(table).value("k", "a").value("cc", 1).value("n", "Goodbye World"));
+        session().execute(insertInto(table).value("k", "b").value("cc", 2).value("n", "Hello Moon"));
+
+        //when
+        BuiltStatement query = select("n").from(table).where(like("n", "Hello%"));
+        ResultSet r = session().execute(query);
+
+        //then
+        assertThat(r.getAvailableWithoutFetching()).isEqualTo(2);
+        assertThat(r.all()).extracting(new Extractor<Row, String>() {
+            @Override
+            public String extract(Row input) {
+                return input.getString("n");
+            }
+        }).containsOnly("Hello World", "Hello Moon");
+    }
 }
