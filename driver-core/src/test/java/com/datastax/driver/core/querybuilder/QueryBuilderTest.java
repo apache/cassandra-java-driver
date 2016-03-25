@@ -143,6 +143,18 @@ public class QueryBuilderTest {
         select = select().from("foo").where(containsKey("e", "key1"));
         assertEquals(select.toString(), query);
 
+        query = "SELECT CAST(writetime(country) AS text) FROM artists LIMIT 2;";
+        select = select().cast(fcall("writetime", column("country")), DataType.text()).from("artists").limit(2);
+        assertEquals(select.toString(), query);
+
+        query = "SELECT avg(CAST(v AS float)) FROM e;";
+        select = select().fcall("avg", cast(column("v"), DataType.cfloat())).from("e");
+        assertEquals(select.toString(), query);
+
+        query = "SELECT CAST(writetime(country) AS text) FROM artists LIMIT 2;";
+        select = select().raw("CAST(writetime(country) AS text)").from("artists").limit(2);
+        assertEquals(select.toString(), query);
+
         query = "SELECT * FROM foo WHERE e LIKE 'a%';";
         select = select().from("foo").where(like("e", "a%"));
         assertEquals(select.toString(), query);

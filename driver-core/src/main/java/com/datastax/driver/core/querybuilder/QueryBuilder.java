@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core.querybuilder;
 
+import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.Metadata;
 import com.datastax.driver.core.RegularStatement;
 import com.datastax.driver.core.TableMetadata;
@@ -1006,6 +1007,17 @@ public final class QueryBuilder {
      */
     public static Object fcall(String name, Object... parameters) {
         return new Utils.FCall(name, parameters);
+    }
+
+    /**
+     * Creates a Cast of a column using the given dataType.
+     *
+     * @param column     the column to cast.
+     * @param dataType   the data type to cast to.
+     * @return the casted column.
+     */
+    public static Object cast(Object column, DataType dataType) {
+        return new Utils.Cast(column, dataType);
     }
 
     /**
