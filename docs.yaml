@@ -48,6 +48,8 @@ links:
 versions:
   - name: 3.0.0
     ref: '3.0.0'
+  - name: 2.1.10
+    ref: '2.1.10'
   - name: 2.1.9
     ref: '2.1.9'
   - name: 2.1.8
