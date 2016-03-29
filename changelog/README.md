@@ -1,6 +1,6 @@
 ## Changelog
 
-### 2.1.10 (in progress)
+### 2.1.10
 
 - [bug] JAVA-988: Metadata.handleId should handle escaped double quotes.
 - [bug] JAVA-983: QueryBuilder cannot handle collections containing function calls.
