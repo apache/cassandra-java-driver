@@ -88,7 +88,7 @@ class ControlConnection implements Connection.Owner {
             r.cancel(false);
 
         Connection connection = connectionRef.get();
-        return connection == null ? CloseFuture.immediateFuture() : connection.closeAsync();
+        return connection == null ? CloseFuture.immediateFuture() : connection.closeAsync().force();
     }
 
     Host connectedHost() {
@@ -136,7 +136,7 @@ class ControlConnection implements Connection.Owner {
             @Override
             protected void onReconnection(Connection connection) {
                 if (isShutdown) {
-                    connection.closeAsync();
+                    connection.closeAsync().force();
                     return;
                 }
 
@@ -170,7 +170,7 @@ class ControlConnection implements Connection.Owner {
     private void signalError() {
         Connection connection = connectionRef.get();
         if (connection != null)
-            connection.closeAsync();
+            connection.closeAsync().force();
 
         // If the error caused the host to go down, onDown might have already triggered a reconnect.
         // But backgroundReconnect knows how to deal with that.
@@ -182,7 +182,7 @@ class ControlConnection implements Connection.Owner {
         newConnection.setOwner(this);
         Connection old = connectionRef.getAndSet(newConnection);
         if (old != null && !old.isClosed())
-            old.closeAsync();
+            old.closeAsync().force();
     }
 
     private Connection reconnectInternal(Iterator<Host> iter, boolean isInitialConnection) throws UnsupportedProtocolVersionException {
@@ -717,7 +717,7 @@ class ControlConnection implements Connection.Owner {
             logger.debug("[Control connection] {} is down/removed and it was the control host, triggering reconnect",
                     current.address);
             if (!current.isClosed())
-                current.closeAsync();
+                current.closeAsync().force();
             backgroundReconnect(0);
         }
     }
