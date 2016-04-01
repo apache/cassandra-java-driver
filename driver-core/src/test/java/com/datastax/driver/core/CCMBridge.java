@@ -537,8 +537,27 @@ public class CCMBridge implements CCMAccess {
     }
 
     @Override
-    public void setWorkload(int node, Workload workload) {
-        execute(CCM_COMMAND + " node%d setworkload %s", node, workload);
+    public void updateDSENodeConfig(int n, String key, Object value) {
+        updateDSENodeConfig(n, ImmutableMap.<String, Object>builder().put(key, value).build());
+    }
+
+    @Override
+    public void updateDSENodeConfig(int n, Map<String, Object> configs) {
+        StringBuilder confStr = new StringBuilder();
+        for (Map.Entry<String, Object> entry : configs.entrySet()) {
+            confStr
+                    .append(entry.getKey())
+                    .append(":")
+                    .append(entry.getValue())
+                    .append(" ");
+        }
+        execute(CCM_COMMAND + " node%s updatedseconf %s", n, confStr);
+    }
+
+    @Override
+    public void setWorkload(int node, Workload... workload) {
+        String workloadStr = Joiner.on(",").join(workload);
+        execute(CCM_COMMAND + " node%d setworkload %s", node, workloadStr);
     }
 
     private String execute(String command, Object... args) {
@@ -673,7 +692,7 @@ public class CCMBridge implements CCMAccess {
         private Set<String> jvmArgs = new LinkedHashSet<String>();
         private final Map<String, Object> cassandraConfiguration = Maps.newLinkedHashMap();
         private final Map<String, Object> dseConfiguration = Maps.newLinkedHashMap();
-        private Map<Integer, Workload> workloads = new HashMap<Integer, Workload>();
+        private Map<Integer, Workload[]> workloads = new HashMap<Integer, Workload[]>();
 
         private Builder() {
             cassandraConfiguration.put("start_rpc", false);
@@ -804,10 +823,10 @@ public class CCMBridge implements CCMAccess {
          * Sets the DSE workload for a given node.
          *
          * @param node     The node to set the workload for (starting with 1).
-         * @param workload The workload (e.g. solr, spark, hadoop)
+         * @param workload The workload(s) (e.g. solr, spark, hadoop)
          * @return This builder
          */
-        public Builder withWorkload(int node, Workload workload) {
+        public Builder withWorkload(int node, Workload... workload) {
             this.workloads.put(node, workload);
             return this;
         }
@@ -833,7 +852,7 @@ public class CCMBridge implements CCMAccess {
             ccm.updateConfig(cassandraConfiguration);
             if (!dseConfiguration.isEmpty())
                 ccm.updateDSEConfig(dseConfiguration);
-            for (Map.Entry<Integer, Workload> entry : workloads.entrySet()) {
+            for (Map.Entry<Integer, Workload[]> entry : workloads.entrySet()) {
                 ccm.setWorkload(entry.getKey(), entry.getValue());
             }
             if (start)
