@@ -231,16 +231,18 @@ class Requests {
 
     static class QueryProtocolOptions {
 
-        static final QueryProtocolOptions DEFAULT = new QueryProtocolOptions(ConsistencyLevel.ONE,
+        static final QueryProtocolOptions DEFAULT = new QueryProtocolOptions(
+                Message.Request.Type.QUERY,
+                ConsistencyLevel.ONE,
                 Collections.<ByteBuffer>emptyList(),
                 Collections.<String, ByteBuffer>emptyMap(),
                 false,
                 -1,
                 null,
-                ConsistencyLevel.SERIAL,
-                Long.MIN_VALUE);
+                ConsistencyLevel.SERIAL, Long.MIN_VALUE);
 
         private final EnumSet<QueryFlag> flags = EnumSet.noneOf(QueryFlag.class);
+        private final Message.Request.Type requestType;
         final ConsistencyLevel consistency;
         final List<ByteBuffer> positionalValues;
         final Map<String, ByteBuffer> namedValues;
@@ -250,7 +252,8 @@ class Requests {
         final ConsistencyLevel serialConsistency;
         final long defaultTimestamp;
 
-        QueryProtocolOptions(ConsistencyLevel consistency,
+        QueryProtocolOptions(Message.Request.Type requestType,
+                             ConsistencyLevel consistency,
                              List<ByteBuffer> positionalValues,
                              Map<String, ByteBuffer> namedValues,
                              boolean skipMetadata,
@@ -261,6 +264,7 @@ class Requests {
 
             Preconditions.checkArgument(positionalValues.isEmpty() || namedValues.isEmpty());
 
+            this.requestType = requestType;
             this.consistency = consistency;
             this.positionalValues = positionalValues;
             this.namedValues = namedValues;
@@ -290,14 +294,15 @@ class Requests {
         }
 
         QueryProtocolOptions copy(ConsistencyLevel newConsistencyLevel) {
-            return new QueryProtocolOptions(newConsistencyLevel, positionalValues, namedValues, skipMetadata, pageSize, pagingState, serialConsistency, defaultTimestamp);
+            return new QueryProtocolOptions(requestType, newConsistencyLevel, positionalValues, namedValues, skipMetadata, pageSize, pagingState, serialConsistency, defaultTimestamp);
         }
 
         void encode(ByteBuf dest, ProtocolVersion version) {
             switch (version) {
                 case V1:
-                    // Values in protocol v1 are only for bound statements, and these are never named
-                    if (flags.contains(QueryFlag.VALUES))
+                    // only EXECUTE messages have variables in V1, and their list must be written
+                    // even if it is empty; and they are never named
+                    if (requestType == Message.Request.Type.EXECUTE)
                         CBUtil.writeValueList(positionalValues, dest);
                     CBUtil.writeConsistencyLevel(consistency, dest);
                     break;
@@ -331,7 +336,9 @@ class Requests {
         int encodedSize(ProtocolVersion version) {
             switch (version) {
                 case V1:
-                    return CBUtil.sizeOfValueList(positionalValues)
+                    // only EXECUTE messages have variables in V1, and their list must be written
+                    // even if it is empty; and they are never named
+                    return (requestType == Message.Request.Type.EXECUTE ? CBUtil.sizeOfValueList(positionalValues) : 0)
                             + CBUtil.sizeOfConsistencyLevel(consistency);
                 case V2:
                 case V3:
