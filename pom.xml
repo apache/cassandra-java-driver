@@ -15,358 +15,363 @@
       limitations under the License.
 
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <parent>
-    <groupId>org.sonatype.oss</groupId>
-    <artifactId>oss-parent</artifactId>
-    <version>7</version>
-    <relativePath />
-  </parent>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.sonatype.oss</groupId>
+        <artifactId>oss-parent</artifactId>
+        <version>7</version>
+        <relativePath/>
+    </parent>
 
-  <groupId>com.datastax.cassandra</groupId>
-  <artifactId>cassandra-driver-parent</artifactId>
-  <version>2.1.11-SNAPSHOT</version>
-  <packaging>pom</packaging>
-  <name>DataStax Java Driver for Apache Cassandra</name>
-  <description>A driver for Apache Cassandra 1.2+ that works exclusively with the Cassandra Query Language version 3 (CQL3) and Cassandra's binary protocol.</description>
-  <url>https://github.com/datastax/java-driver</url>
-  <inceptionYear>2012</inceptionYear>
-
-  <modules>
-    <module>driver-core</module>
-    <module>driver-mapping</module>
-    <module>driver-examples</module>
-    <module>driver-dist</module>
-  </modules>
-
-  <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <cassandra.version>2.1.9</cassandra.version>
-    <java.version>1.6</java.version>
-    <log4j.version>1.2.17</log4j.version>
-    <slf4j-log4j12.version>1.7.6</slf4j-log4j12.version>
-    <!--
-      We use an old version of Guava to be compatible with Spark 1.1.
-      Check with the spark-cassandra-connector team before upgrading this.
-    -->
-    <guava.version>14.0.1</guava.version>
-    <netty.version>4.0.33.Final</netty.version>
-    <metrics.version>3.0.2</metrics.version>
-    <snappy.version>1.0.5</snappy.version>
-    <lz4.version>1.2.0</lz4.version>
-    <hdr.version>2.1.4</hdr.version>
-    <jnr-ffi.version>2.0.7</jnr-ffi.version>
-    <jnr-posix.version>3.0.27</jnr-posix.version>
-    <!-- test dependency versions -->
-    <testng.version>6.8.8</testng.version>
-    <assertj.version>1.7.0</assertj.version>
-    <mockito.version>1.10.8</mockito.version>
-    <scassandra.version>1.0.3</scassandra.version>
-    <main.basedir>${project.basedir}</main.basedir>
-    <ipprefix>127.0.1.</ipprefix>
-    <test.groups>unit</test.groups>
-  </properties>
-
-  <dependencies>
-    <dependency>
-      <groupId>log4j</groupId>
-      <artifactId>log4j</artifactId>
-      <version>${log4j.version}</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-log4j12</artifactId>
-      <version>${slf4j-log4j12.version}</version>
-      <scope>test</scope>
-    </dependency>
-  </dependencies>
-
-  <profiles>
-    <profile>
-      <id>default</id>
-      <properties>
-        <env>default</env>
-        <test.groups>unit</test.groups>
-      </properties>
-      <activation>
-        <activeByDefault>true</activeByDefault>
-      </activation>
-    </profile>
-    <profile>
-      <id>doclint-java8-disable</id>
-      <activation>
-        <jdk>[1.8,)</jdk>
-      </activation>
-      <properties>
-        <javadoc.opts>-Xdoclint:none</javadoc.opts>
-      </properties>
-    </profile>
-    <profile>
-      <id>short</id>
-      <properties>
-        <env>default</env>
-        <test.groups>unit,short</test.groups>
-      </properties>
-    </profile>
-    <profile>
-      <id>long</id>
-      <properties>
-        <env>default</env>
-        <test.groups>unit,short,long</test.groups>
-      </properties>
-    </profile>
-    <profile>
-      <id>duration</id>
-      <properties>
-        <env>default</env>
-        <test.groups>unit,short,long,duration</test.groups>
-      </properties>
-    </profile>
-    <profile>
-      <id>doc</id>
-      <properties>
-        <env>default</env>
-        <test.groups>unit,doc</test.groups>
-      </properties>
-    </profile>
-    <profile>
-      <!-- default profile settings for 'isolated' test group, will skip tests unless overridden in child module. -->
-      <id>isolated</id>
-      <properties>
-        <env>default</env>
-        <test.groups>isolated</test.groups>
-      </properties>
-      <build>
-        <plugins>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-surefire-plugin</artifactId>
-            <version>2.16</version>
-            <configuration>
-              <skip>true</skip>
-              <forkCount>1</forkCount>
-              <reuseForks>false</reuseForks>
-              <reportNameSuffix>isolated</reportNameSuffix>
-              <!-- This requires includes to be explicitly specified by implementing classes.
-                   This is needed to prevent creating a JVM fork for each test, even those that don't
-                   have the isolated group. -->
-              <includes />
-            </configuration>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-  </profiles>
-
-  <build>
-    <plugins>
-      <plugin>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.1</version>
-        <configuration>
-          <source>${java.version}</source>
-          <target>${java.version}</target>
-          <optimize>true</optimize>
-          <showDeprecation>true</showDeprecation>
-          <showWarnings>true</showWarnings>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-source-plugin</artifactId>
-        <version>2.2.1</version>
-        <executions>
-          <execution>
-            <id>attach-sources</id>
-            <goals>
-              <goal>jar-no-fork</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-javadoc-plugin</artifactId>
-        <version>2.9.1</version>
-        <configuration>
-          <verbose>false</verbose>
-          <additionalparam>${javadoc.opts}</additionalparam>
-          <!-- I can haz math in my javadoc (see http://zverovich.net/2012/01/14/beautiful-math-in-javadoc.html) -->
-          <header>
-            &lt;script type="text/javascript"
-            src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"&gt;&lt;/script&gt;
-          </header>
-          <!-- open external links in a separate window -->
-          <bottom>
-            &lt;script type="text/javascript"&gt;
-            for(var i in document.links) {
-            var link = document.links[i];
-            if (link.href.indexOf('is-external=true') != -1) link.target = '_blank';
-            }
-            &lt;/script&gt;
-          </bottom>
-          <links>
-            <link>https://docs.oracle.com/javase/8/docs/api/</link>
-            <link>http://docs.guava-libraries.googlecode.com/git-history/v16.0.1/javadoc/</link>
-            <link>http://netty.io/4.0/api/</link>
-            <!-- dependencies from driver-extras -->
-            <link>http://www.joda.org/joda-time/apidocs/</link>
-            <link>http://fasterxml.github.io/jackson-core/javadoc/2.6/</link>
-            <link>http://fasterxml.github.io/jackson-databind/javadoc/2.6/</link>
-            <link>https://javaee-spec.java.net/nonav/javadocs/</link>
-          </links>
-        </configuration>
-        <executions>
-          <execution>
-            <id>attach-javadocs</id>
-            <goals>
-              <goal>jar</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-release-plugin</artifactId>
-        <version>2.5</version>
-        <configuration>
-          <tagNameFormat>@{project.version}</tagNameFormat>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>clirr-maven-plugin</artifactId>
-        <version>2.6.1</version>
-        <executions>
-          <execution>
-            <phase>compile</phase>
-            <goals><goal>check</goal></goals>
-          </execution>
-        </executions>
-        <configuration>
-          <comparisonVersion>2.1.9</comparisonVersion>
-          <ignoredDifferencesFile>../clirr-ignores.xml</ignoredDifferencesFile>
-          <excludes>
-            <!-- Package-private, internal classes -->
-            <exclude>com/datastax/driver/core/Frame$*</exclude>
-            <exclude>com/datastax/driver/core/ProtocolEvent$*</exclude>
-            <exclude>com/datastax/driver/core/Message$*</exclude>
-            <exclude>com/datastax/driver/core/Requests$*</exclude>
-            <exclude>com/datastax/driver/core/Responses$*</exclude>
-            <exclude>com/datastax/driver/core/Connection$*</exclude>
-          </excludes>
-        </configuration>
-      </plugin>
-      <!--
-      To update license headers run:
-      mvn license:format
-      -->
-      <plugin>
-        <groupId>com.mycila</groupId>
-        <artifactId>license-maven-plugin</artifactId>
-        <version>2.8</version>
-        <configuration>
-          <header>${main.basedir}/src/license/header.txt</header>
-          <includes>
-            <include>src/**/*.java</include>
-            <include>src/**/*.xml</include>
-            <include>src/**/*.properties</include>
-            <include>**/pom.xml</include>
-          </includes>
-          <excludes>
-            <exclude>**/src/main/config/ide/**</exclude>
-          </excludes>
-          <mapping>
-            <java>SLASHSTAR_STYLE</java>
-            <properties>SCRIPT_STYLE</properties>
-          </mapping>
-          <strictCheck>true</strictCheck>
-        </configuration>
-        <executions>
-          <execution>
-            <id>check-license</id>
-            <phase>initialize</phase>
-            <goals>
-              <goal>check</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-surefire-plugin</artifactId>
-        <version>2.16</version>
-        <configuration>
-          <groups>${test.groups}</groups>
-          <useFile>false</useFile>
-          <systemPropertyVariables>
-            <cassandra.version>${cassandra.version}</cassandra.version>
-            <ipprefix>${ipprefix}</ipprefix>
-            <com.datastax.driver.NEW_NODE_DELAY_SECONDS>60</com.datastax.driver.NEW_NODE_DELAY_SECONDS>
-          </systemPropertyVariables>
-          <classpathDependencyExcludes>
-            <classpathDependencyExcludes>io.netty:netty-transport-native-epoll</classpathDependencyExcludes>
-          </classpathDependencyExcludes>
-          <properties>
-            <property>
-              <!-- Don't skip tests after a @Before method throws a SkipException -->
-              <name>configfailurepolicy</name>
-              <value>continue</value>
-            </property>
-          </properties>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-failsafe-plugin</artifactId>
-        <version>2.16</version>
-        <configuration>
-          <groups>${test.groups}</groups>
-          <useFile>false</useFile>
-          <systemPropertyVariables>
-            <cassandra.version>${cassandra.version}</cassandra.version>
-            <ipprefix>${ipprefix}</ipprefix>
-            <com.datastax.driver.NEW_NODE_DELAY_SECONDS>60</com.datastax.driver.NEW_NODE_DELAY_SECONDS>
-          </systemPropertyVariables>
-          <classpathDependencyExcludes>
-            <classpathDependencyExcludes>io.netty:netty-transport-native-epoll</classpathDependencyExcludes>
-          </classpathDependencyExcludes>
-          <properties>
-            <property>
-              <!-- Don't skip tests after a @Before method throws a SkipException -->
-              <name>configfailurepolicy</name>
-              <value>continue</value>
-            </property>
-          </properties>
-        </configuration>
-      </plugin>
-    </plugins>
-
-  </build>
-
-  <licenses>
-    <license>
-      <name>Apache 2</name>
-      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-      <distribution>repo</distribution>
-      <comments>Apache License Version 2.0</comments>
-    </license>
-  </licenses>
-
-  <scm>
-    <connection>scm:git:git@github.com:datastax/java-driver.git</connection>
-    <developerConnection>scm:git:git@github.com:datastax/java-driver.git</developerConnection>
+    <groupId>com.datastax.cassandra</groupId>
+    <artifactId>cassandra-driver-parent</artifactId>
+    <version>2.1.11-SNAPSHOT</version>
+    <packaging>pom</packaging>
+    <name>DataStax Java Driver for Apache Cassandra</name>
+    <description>A driver for Apache Cassandra 1.2+ that works exclusively with the Cassandra Query Language version 3
+        (CQL3) and Cassandra's binary protocol.
+    </description>
     <url>https://github.com/datastax/java-driver</url>
-    <tag>HEAD</tag>
-  </scm>
+    <inceptionYear>2012</inceptionYear>
 
-  <developers>
-    <developer>
-      <name>Various</name>
-      <organization>DataStax</organization>
-    </developer>
-  </developers>
+    <modules>
+        <module>driver-core</module>
+        <module>driver-mapping</module>
+        <module>driver-examples</module>
+        <module>driver-dist</module>
+    </modules>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <cassandra.version>2.1.9</cassandra.version>
+        <java.version>1.6</java.version>
+        <log4j.version>1.2.17</log4j.version>
+        <slf4j-log4j12.version>1.7.6</slf4j-log4j12.version>
+        <!--
+          We use an old version of Guava to be compatible with Spark 1.1.
+          Check with the spark-cassandra-connector team before upgrading this.
+        -->
+        <guava.version>14.0.1</guava.version>
+        <netty.version>4.0.33.Final</netty.version>
+        <metrics.version>3.0.2</metrics.version>
+        <snappy.version>1.0.5</snappy.version>
+        <lz4.version>1.2.0</lz4.version>
+        <hdr.version>2.1.4</hdr.version>
+        <jnr-ffi.version>2.0.7</jnr-ffi.version>
+        <jnr-posix.version>3.0.27</jnr-posix.version>
+        <!-- test dependency versions -->
+        <testng.version>6.8.8</testng.version>
+        <assertj.version>1.7.0</assertj.version>
+        <mockito.version>1.10.8</mockito.version>
+        <scassandra.version>1.0.3</scassandra.version>
+        <main.basedir>${project.basedir}</main.basedir>
+        <ipprefix>127.0.1.</ipprefix>
+        <test.groups>unit</test.groups>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <version>${log4j.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <version>${slf4j-log4j12.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <profiles>
+        <profile>
+            <id>default</id>
+            <properties>
+                <env>default</env>
+                <test.groups>unit</test.groups>
+            </properties>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+        </profile>
+        <profile>
+            <id>doclint-java8-disable</id>
+            <activation>
+                <jdk>[1.8,)</jdk>
+            </activation>
+            <properties>
+                <javadoc.opts>-Xdoclint:none</javadoc.opts>
+            </properties>
+        </profile>
+        <profile>
+            <id>short</id>
+            <properties>
+                <env>default</env>
+                <test.groups>unit,short</test.groups>
+            </properties>
+        </profile>
+        <profile>
+            <id>long</id>
+            <properties>
+                <env>default</env>
+                <test.groups>unit,short,long</test.groups>
+            </properties>
+        </profile>
+        <profile>
+            <id>duration</id>
+            <properties>
+                <env>default</env>
+                <test.groups>unit,short,long,duration</test.groups>
+            </properties>
+        </profile>
+        <profile>
+            <id>doc</id>
+            <properties>
+                <env>default</env>
+                <test.groups>unit,doc</test.groups>
+            </properties>
+        </profile>
+        <profile>
+            <!-- default profile settings for 'isolated' test group, will skip tests unless overridden in child module. -->
+            <id>isolated</id>
+            <properties>
+                <env>default</env>
+                <test.groups>isolated</test.groups>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <version>2.16</version>
+                        <configuration>
+                            <skip>true</skip>
+                            <forkCount>1</forkCount>
+                            <reuseForks>false</reuseForks>
+                            <reportNameSuffix>isolated</reportNameSuffix>
+                            <!-- This requires includes to be explicitly specified by implementing classes.
+                                 This is needed to prevent creating a JVM fork for each test, even those that don't
+                                 have the isolated group. -->
+                            <includes/>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.1</version>
+                <configuration>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                    <optimize>true</optimize>
+                    <showDeprecation>true</showDeprecation>
+                    <showWarnings>true</showWarnings>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>2.2.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar-no-fork</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.9.1</version>
+                <configuration>
+                    <verbose>false</verbose>
+                    <additionalparam>${javadoc.opts}</additionalparam>
+                    <!-- I can haz math in my javadoc (see http://zverovich.net/2012/01/14/beautiful-math-in-javadoc.html) -->
+                    <header>
+                        &lt;script type="text/javascript"
+                        src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"&gt;&lt;/script&gt;
+                    </header>
+                    <!-- open external links in a separate window -->
+                    <bottom>
+                        &lt;script type="text/javascript"&gt;
+                        for(var i in document.links) {
+                        var link = document.links[i];
+                        if (link.href.indexOf('is-external=true') != -1) link.target = '_blank';
+                        }
+                        &lt;/script&gt;
+                    </bottom>
+                    <links>
+                        <link>https://docs.oracle.com/javase/8/docs/api/</link>
+                        <link>http://docs.guava-libraries.googlecode.com/git-history/v16.0.1/javadoc/</link>
+                        <link>http://netty.io/4.0/api/</link>
+                        <!-- dependencies from driver-extras -->
+                        <link>http://www.joda.org/joda-time/apidocs/</link>
+                        <link>http://fasterxml.github.io/jackson-core/javadoc/2.6/</link>
+                        <link>http://fasterxml.github.io/jackson-databind/javadoc/2.6/</link>
+                        <link>https://javaee-spec.java.net/nonav/javadocs/</link>
+                    </links>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <version>2.5</version>
+                <configuration>
+                    <tagNameFormat>@{project.version}</tagNameFormat>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>clirr-maven-plugin</artifactId>
+                <version>2.6.1</version>
+                <executions>
+                    <execution>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <comparisonVersion>2.1.9</comparisonVersion>
+                    <ignoredDifferencesFile>../clirr-ignores.xml</ignoredDifferencesFile>
+                    <excludes>
+                        <!-- Package-private, internal classes -->
+                        <exclude>com/datastax/driver/core/Frame$*</exclude>
+                        <exclude>com/datastax/driver/core/ProtocolEvent$*</exclude>
+                        <exclude>com/datastax/driver/core/Message$*</exclude>
+                        <exclude>com/datastax/driver/core/Requests$*</exclude>
+                        <exclude>com/datastax/driver/core/Responses$*</exclude>
+                        <exclude>com/datastax/driver/core/Connection$*</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+            <!--
+            To update license headers run:
+            mvn license:format
+            -->
+            <plugin>
+                <groupId>com.mycila</groupId>
+                <artifactId>license-maven-plugin</artifactId>
+                <version>2.8</version>
+                <configuration>
+                    <header>${main.basedir}/src/license/header.txt</header>
+                    <includes>
+                        <include>src/**/*.java</include>
+                        <include>src/**/*.xml</include>
+                        <include>src/**/*.properties</include>
+                        <include>**/pom.xml</include>
+                    </includes>
+                    <excludes>
+                        <exclude>**/src/main/config/ide/**</exclude>
+                    </excludes>
+                    <mapping>
+                        <java>SLASHSTAR_STYLE</java>
+                        <properties>SCRIPT_STYLE</properties>
+                    </mapping>
+                    <strictCheck>true</strictCheck>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>check-license</id>
+                        <phase>initialize</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.16</version>
+                <configuration>
+                    <groups>${test.groups}</groups>
+                    <useFile>false</useFile>
+                    <systemPropertyVariables>
+                        <cassandra.version>${cassandra.version}</cassandra.version>
+                        <ipprefix>${ipprefix}</ipprefix>
+                        <com.datastax.driver.NEW_NODE_DELAY_SECONDS>60</com.datastax.driver.NEW_NODE_DELAY_SECONDS>
+                    </systemPropertyVariables>
+                    <classpathDependencyExcludes>
+                        <classpathDependencyExcludes>io.netty:netty-transport-native-epoll</classpathDependencyExcludes>
+                    </classpathDependencyExcludes>
+                    <properties>
+                        <property>
+                            <!-- Don't skip tests after a @Before method throws a SkipException -->
+                            <name>configfailurepolicy</name>
+                            <value>continue</value>
+                        </property>
+                    </properties>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>2.16</version>
+                <configuration>
+                    <groups>${test.groups}</groups>
+                    <useFile>false</useFile>
+                    <systemPropertyVariables>
+                        <cassandra.version>${cassandra.version}</cassandra.version>
+                        <ipprefix>${ipprefix}</ipprefix>
+                        <com.datastax.driver.NEW_NODE_DELAY_SECONDS>60</com.datastax.driver.NEW_NODE_DELAY_SECONDS>
+                    </systemPropertyVariables>
+                    <classpathDependencyExcludes>
+                        <classpathDependencyExcludes>io.netty:netty-transport-native-epoll</classpathDependencyExcludes>
+                    </classpathDependencyExcludes>
+                    <properties>
+                        <property>
+                            <!-- Don't skip tests after a @Before method throws a SkipException -->
+                            <name>configfailurepolicy</name>
+                            <value>continue</value>
+                        </property>
+                    </properties>
+                </configuration>
+            </plugin>
+        </plugins>
+
+    </build>
+
+    <licenses>
+        <license>
+            <name>Apache 2</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+            <comments>Apache License Version 2.0</comments>
+        </license>
+    </licenses>
+
+    <scm>
+        <connection>scm:git:git@github.com:datastax/java-driver.git</connection>
+        <developerConnection>scm:git:git@github.com:datastax/java-driver.git</developerConnection>
+        <url>https://github.com/datastax/java-driver</url>
+        <tag>HEAD</tag>
+    </scm>
+
+    <developers>
+        <developer>
+            <name>Various</name>
+            <organization>DataStax</organization>
+        </developer>
+    </developers>
 </project>

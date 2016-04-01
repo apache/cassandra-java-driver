@@ -15,95 +15,96 @@
       limitations under the License.
 
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <parent>
-    <groupId>com.datastax.cassandra</groupId>
-    <artifactId>cassandra-driver-examples-parent</artifactId>
-    <version>2.1.11-SNAPSHOT</version>
-  </parent>
-  <artifactId>cassandra-driver-examples-stress</artifactId>
-  <packaging>jar</packaging>
-  <name>DataStax Java Driver for Apache Cassandra Examples - Stress</name>
-  <description>A stress test example for DataStax Java Driver for Apache Cassandra.</description>
-  <url>https://github.com/datastax/java-driver</url>
-
-  <properties>
-    <main.basedir>${project.parent.parent.basedir}</main.basedir>
-  </properties>
-
-  <dependencies>
-    <dependency>
-      <groupId>com.datastax.cassandra</groupId>
-      <artifactId>cassandra-driver-core</artifactId>
-      <version>2.1.11-SNAPSHOT</version>
-    </dependency>
-
-    <dependency>
-        <groupId>com.yammer.metrics</groupId>
-        <artifactId>metrics-core</artifactId>
-        <version>2.2.0</version>
-    </dependency>
-
-    <dependency>
-      <groupId>net.sf.jopt-simple</groupId>
-      <artifactId>jopt-simple</artifactId>
-      <version>4.5</version>
-    </dependency>
-
-    <dependency>
-      <groupId>log4j</groupId>
-      <artifactId>log4j</artifactId>
-      <version>1.2.17</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.slf4j</groupId>
-      <artifactId>slf4j-log4j12</artifactId>
-      <version>1.7.5</version>
-    </dependency>
-  </dependencies>
-
-  <build>
-      <plugins>
-          <plugin>
-              <artifactId>maven-assembly-plugin</artifactId>
-              <version>2.4</version>
-              <configuration>
-                  <archive>
-                      <manifest>
-                          <mainClass>com.datastax.driver.stress.Stress</mainClass>
-                      </manifest>
-                  </archive>
-                  <descriptorRefs>
-                      <descriptorRef>jar-with-dependencies</descriptorRef>
-                  </descriptorRefs>
-              </configuration>
-          </plugin>
-      </plugins>
-  </build>
-
-  <licenses>
-    <license>
-      <name>Apache 2</name>
-      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-      <distribution>repo</distribution>
-      <comments>Apache License Version 2.0</comments>
-    </license>
-  </licenses>
-
-  <scm>
-    <connection>scm:git:git@github.com:datastax/java-driver.git</connection>
-    <developerConnection>scm:git:git@github.com:datastax/java-driver.git</developerConnection>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.datastax.cassandra</groupId>
+        <artifactId>cassandra-driver-examples-parent</artifactId>
+        <version>2.1.11-SNAPSHOT</version>
+    </parent>
+    <artifactId>cassandra-driver-examples-stress</artifactId>
+    <packaging>jar</packaging>
+    <name>DataStax Java Driver for Apache Cassandra Examples - Stress</name>
+    <description>A stress test example for DataStax Java Driver for Apache Cassandra.</description>
     <url>https://github.com/datastax/java-driver</url>
-    <tag>HEAD</tag>
-  </scm>
 
-  <developers>
-    <developer>
-      <name>Various</name>
-      <organization>DataStax</organization>
-    </developer>
-  </developers>
+    <properties>
+        <main.basedir>${project.parent.parent.basedir}</main.basedir>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.datastax.cassandra</groupId>
+            <artifactId>cassandra-driver-core</artifactId>
+            <version>2.1.11-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.yammer.metrics</groupId>
+            <artifactId>metrics-core</artifactId>
+            <version>2.2.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>net.sf.jopt-simple</groupId>
+            <artifactId>jopt-simple</artifactId>
+            <version>4.5</version>
+        </dependency>
+
+        <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <version>1.2.17</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <version>1.7.5</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>2.4</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>com.datastax.driver.stress.Stress</mainClass>
+                        </manifest>
+                    </archive>
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <licenses>
+        <license>
+            <name>Apache 2</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+            <comments>Apache License Version 2.0</comments>
+        </license>
+    </licenses>
+
+    <scm>
+        <connection>scm:git:git@github.com:datastax/java-driver.git</connection>
+        <developerConnection>scm:git:git@github.com:datastax/java-driver.git</developerConnection>
+        <url>https://github.com/datastax/java-driver</url>
+        <tag>HEAD</tag>
+    </scm>
+
+    <developers>
+        <developer>
+            <name>Various</name>
+            <organization>DataStax</organization>
+        </developer>
+    </developers>
 </project>
 
