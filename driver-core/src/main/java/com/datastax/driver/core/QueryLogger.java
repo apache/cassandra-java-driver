@@ -17,6 +17,7 @@ package com.datastax.driver.core;
 
 import com.google.common.annotations.Beta;
 import com.google.common.annotations.VisibleForTesting;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -786,18 +787,18 @@ public abstract class QueryLogger implements LatencyTracker {
                 numberOfLoggedParameters = remaining > numberOfParameters ? numberOfParameters : remaining;
                 remaining -= numberOfLoggedParameters;
             }
-            Iterator<Entry<String, Object>> namedValues = null;
+            Iterator<String> valueNames = null;
             if (statement.usesNamedValues()) {
-                namedValues = statement.getNamedValues().entrySet().iterator();
+                valueNames = statement.getValueNames().iterator();
             }
             for (int i = 0; i < numberOfLoggedParameters; i++) {
                 if (buffer.length() == 0)
                     buffer.append(" [");
                 else
                     buffer.append(", ");
-                if (namedValues != null && namedValues.hasNext()) {
-                    Entry<String, Object> namedValue = namedValues.next();
-                    buffer.append(String.format("%s:%s", namedValue.getKey(), parameterValueAsString(namedValue.getValue())));
+                if (valueNames != null && valueNames.hasNext()) {
+                    String valueName = valueNames.next();
+                    buffer.append(String.format("%s:%s", valueName, parameterValueAsString(statement.getObject(valueName))));
                 } else {
                     buffer.append(parameterValueAsString(statement.getObject(i)));
                 }

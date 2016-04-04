@@ -21,6 +21,7 @@ import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * A simple {@code RegularStatement} implementation built directly from a query
@@ -208,27 +209,15 @@ public class SimpleStatement extends RegularStatement {
     }
 
     /**
-     * Returns the values as an array.
-     *
-     * @return the values of this statement.
-     * @throws IllegalStateException     if this statement does not have values.
-     */
-    public Object[] getValues() {
-        if (values == null)
-            throw new IllegalStateException("This statement does not have values");
-        return values;
-    }
-
-    /**
-     * Returns the named values as a {@code Map<String, Object>}.
+     * Returns the named value names as a {@code Set<String>}.
      *
      * @return the named values of this statement.
      * @throws IllegalStateException     if this statement does not have named values.
      */
-    public Map<String, Object> getNamedValues() {
+    public Set<String> getValueNames() {
         if (namedValues == null)
             throw new IllegalStateException("This statement does not have named values");
-        return Collections.unmodifiableMap(namedValues);
+        return Collections.unmodifiableSet(namedValues.keySet());
     }
 
     /**

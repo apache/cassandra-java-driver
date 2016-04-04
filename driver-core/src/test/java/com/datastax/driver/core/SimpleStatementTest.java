@@ -21,6 +21,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -73,27 +74,16 @@ public class SimpleStatementTest {
     }
 
     @Test(groups = "unit", expectedExceptions = {IllegalStateException.class})
-    public void should_throw_ISE_if_getValues_called_on_statement_without_values() {
-        new SimpleStatement("doesn't matter").getValues();
+    public void should_throw_ISE_if_getValueNames_called_on_statement_without_named_values() {
+        new SimpleStatement("doesn't matter").getValueNames();
     }
 
     @Test(groups = "unit")
-    public void should_return_values() {
-        Object[] expected = {new Object()};
-        Object[] actual = new SimpleStatement("doesn't matter", expected[0]).getValues();
-        assertThat(actual).isEqualTo(expected);
-    }
-
-    @Test(groups = "unit", expectedExceptions = {IllegalStateException.class})
-    public void should_throw_ISE_if_getNamedValues_called_on_statement_without_named_values() {
-        new SimpleStatement("doesn't matter").getNamedValues();
-    }
-
-    @Test(groups = "unit")
-    public void should_return_named_values() {
-        Map<String, Object> expected = new HashMap<String, Object>();
-        expected.put("name", new Object());
-        Map<String, Object> actual = new SimpleStatement("doesn't matter", expected).getNamedValues();
+    public void should_return_named_value() {
+        Object expected = new Object();
+        Map<String, Object> namedValues = new HashMap<String, Object>();
+		namedValues.put("name", expected);
+		Object actual = new SimpleStatement("doesn't matter", namedValues).getObject("name");
         assertThat(actual).isEqualTo(expected);
     }
 
