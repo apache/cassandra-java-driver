@@ -2156,7 +2156,7 @@ public class Cluster implements Closeable {
                         : reusedConnection;
 
                 try {
-                    controlConnection.waitForSchemaAgreement();
+                    ControlConnection.waitForSchemaAgreement(connection, this);
                 } catch (ExecutionException e) {
                     // As below, just move on
                 }
@@ -2261,7 +2261,7 @@ public class Cluster implements Closeable {
                     try {
                         // Before refreshing the schema, wait for schema agreement so
                         // that querying a table just after having created it don't fail.
-                        schemaInAgreement = controlConnection.waitForSchemaAgreement();
+                        schemaInAgreement = ControlConnection.waitForSchemaAgreement(connection, Cluster.Manager.this);
                         if (!schemaInAgreement)
                             logger.warn("No schema agreement from live replicas after {} s. The schema may not be up to date on some nodes.", configuration.getProtocolOptions().getMaxSchemaAgreementWaitSeconds());
 
