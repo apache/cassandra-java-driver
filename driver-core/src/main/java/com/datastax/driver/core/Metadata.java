@@ -48,6 +48,7 @@ public class Metadata {
     private static final Pattern alphanumeric = Pattern.compile("\\w+"); // this includes _
     private static final Pattern lowercaseAlphanumeric = Pattern.compile("[a-z][a-z0-9_]*");
 
+    // See https://github.com/apache/cassandra/blob/trunk/doc/cql3/CQL.textile#appendixA
     private static final Set<String> RESERVED_KEYWORDS = ImmutableSet.of(
             "add", "allow", "alter", "and", "any", "apply", "asc", "authorize", "batch", "begin", "by",
             "columnfamily", "create", "delete", "desc", "drop", "each_quorum", "from", "grant", "in",
