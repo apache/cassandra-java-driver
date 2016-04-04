@@ -8,6 +8,7 @@
 - [improvement] JAVA-1154: Allow individual Statement to cancel the read timeout.
 - [bug] JAVA-1074: Fix documentation around default timestamp generator.
 - [improvement] JAVA-1109: Document SSLOptions changes in upgrade guide.
+- [improvement] JAVA-1065: Add method to create token from partition key values.
 
 Merged from 2.1 branch:
 

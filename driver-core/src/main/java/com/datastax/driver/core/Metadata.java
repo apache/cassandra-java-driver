@@ -461,6 +461,24 @@ public class Metadata {
     }
 
     /**
+     * Builds a new {@link Token} from a partition key.
+     *
+     * @param components the components of the partition key, in their serialized form (obtained with
+     *                   {@link TypeCodec#serialize(Object, ProtocolVersion)}).
+     * @return the token.
+     * @throws IllegalStateException if the token factory was not initialized. This would typically
+     *                               happen if metadata was explicitly disabled with {@link QueryOptions#setMetadataEnabled(boolean)}
+     *                               before startup.
+     */
+    public Token newToken(ByteBuffer... components) {
+        TokenMap current = tokenMap;
+        if (current == null)
+            throw new IllegalStateException("Token factory not set. This should only happen if metadata was explicitly disabled");
+        return current.factory.hash(
+                SimpleStatement.compose(components));
+    }
+
+    /**
      * Builds a new {@link TokenRange}.
      *
      * @param start the start token.
