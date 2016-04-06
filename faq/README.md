@@ -11,6 +11,7 @@ Native protocol v1 does not support paging, but you can emulate it in
 CQL with `LIMIT` and the `token()` function. See
 [this conversation](https://groups.google.com/a/lists.datastax.com/d/msg/java-driver-user/U2KzAHruWO4/6vDmUVDDkOwJ) on the mailing list.
 
+
 ### Can I check if a conditional statement (lightweight transaction) was successful?
 
 When executing a conditional statement, the `ResultSet` will contain a single `Row` with a
@@ -36,6 +37,7 @@ Note that, unlike manual inspection, `wasApplied` does not consume the first row
 
 [wasApplied]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/ResultSet.html#wasApplied--
 
+
 ### What is a parameterized statement and how can I use it?
 
 Starting with Cassandra 2.0, normal statements (that is non-prepared statements) do
@@ -49,11 +51,13 @@ session.execute( "INSERT INTO contacts (email, firstname, lastname)
 
 See [Simple statements](../manual/statements/simple/) for more information.
 
+
 ### Does a parameterized statement escape parameters?
 
 A parameterized statement sends the values of parameters separate from the query
 (similar to the way a prepared statement does) as bytes so there is no need to escape
 parameters.
+
 
 ### What's the difference between a parameterized statement and a Prepared statement?
 
@@ -66,6 +70,7 @@ the way that the parameters are sent. The difference is that a prepared statemen
   to the cluster)
 
 See [Prepared statements](../manual/statements/prepared/) for more information.
+
 
 ### Can I combine `PreparedStatements` and normal statements in a batch?
 
@@ -82,6 +87,7 @@ batch.add(new SimpleStatement( "INSERT INTO contacts (email, firstname, lastname
 session.execute(batch);
 ```
 
+
 ### Can I get the raw bytes of a text column?
 
 If you need to access the raw bytes of a text column, call the
@@ -89,6 +95,7 @@ If you need to access the raw bytes of a text column, call the
 
 Trying to use `Row.getBytes("columnName")` for the same purpose results in an
 exception, as the `getBytes` method can only be used if the column has the CQL type `BLOB`.
+
 
 ### How do I increment counters with `QueryBuilder`?
 
@@ -106,6 +113,7 @@ Statement query = QueryBuilder.update("clickstream")
                               .where(eq("userid", id));
 ```
 
+
 ### Is there a way to control the batch size of the results returned from a query?
 
 Use the `setFetchSize()` method on your `Statement` object. The fetch size controls
@@ -118,6 +126,7 @@ only affects what is retrieved at a time, not the overall number of rows.
 
 See [Paging](../manual/paging/) for more information.
 
+
 ### What's the difference between using `setFetchSize()` and `LIMIT`?
 
 Basically, `LIMIT` controls the maximum number of results returned by the query,
@@ -128,3 +137,13 @@ For example, if you limit is 30 and your fetch size is 10, the `ResultSet` will 
 rows each.
 
 See [Paging](../manual/paging/) for more information.
+
+
+### I'm reading a BLOB column and the driver returns incorrect data.
+
+Check your code to ensure that you read the returned `ByteBuffer` correctly. `ByteBuffer` is a very error-prone API,
+and we've had many reports where the problem turned out to be in user code.
+
+See [Blobs.java] in the `driver-examples` module for some examples and explanations.
+
+[Blobs.java]: https://github.com/datastax/java-driver/tree/3.0.x/driver-examples/src/main/java/com/datastax/driver/examples/datatypes/Blobs.java

@@ -21,6 +21,7 @@
 - [improvement] JAVA-1164: Clarify documentation on Host.listenAddress and broadcastAddress.
 - [improvement] JAVA-1171: Add Host method to determine if DSE Graph is enabled.
 - [improvement]: JAVA-1069: Bootstrap driver-examples module.
+- [documentation] JAVA-1150: Add example and FAQ entry about ByteBuffer/BLOB.
 
 Merged from 2.1 branch:
 
