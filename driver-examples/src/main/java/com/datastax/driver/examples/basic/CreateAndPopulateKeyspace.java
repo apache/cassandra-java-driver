@@ -1,26 +1,35 @@
 package com.datastax.driver.examples.basic;
 
-import com.datastax.driver.core.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.Row;
+import com.datastax.driver.core.Session;
 
 /**
- * This example shows how to create schema objects,
- * load data into Cassandra then retrieve and display them.
+ * Creates a keyspace and tables, and loads some data into them.
+ * <p/>
+ * Preconditions:
+ * - a Cassandra cluster is running and accessible through the contacts points identified by CONTACT_POINTS and PORT.
+ * <p/>
+ * Side effects:
+ * - creates a new keyspace "simplex" in the cluster. It a keyspace with this name already exists, it will be reused;
+ * - creates two tables "simplex.songs" and "simplex.playlists". If they exist already, they will be reused;
+ * - inserts a row in each table.
  *
  * @see <a href="http://datastax.github.io/java-driver/manual/">Java driver online manual</a>
  */
-public class Example0003 {
+public class CreateAndPopulateKeyspace {
 
-    private static final Logger logger = LoggerFactory.getLogger("com.datastax.driver.examples");
+    static String[] CONTACT_POINTS = {"127.0.0.1"};
+    static int PORT = 9042;
 
     public static void main(String[] args) {
 
-        Example0003 client = new Example0003();
+        CreateAndPopulateKeyspace client = new CreateAndPopulateKeyspace();
 
         try {
 
-            client.connect("127.0.0.1");
+            client.connect(CONTACT_POINTS, PORT);
             client.createSchema();
             client.loadData();
             client.querySchema();
@@ -38,17 +47,16 @@ public class Example0003 {
      * Initiates a connection to the cluster
      * specified by the given contact point.
      *
-     * @param node The contact point to use
+     * @param contactPoints the contact points to use.
+     * @param port          the port to use.
      */
-    public void connect(String node) {
+    public void connect(String[] contactPoints, int port) {
 
         cluster = Cluster.builder()
-                .addContactPoint(node)
+                .addContactPoints(contactPoints).withPort(port)
                 .build();
 
-        Metadata metadata = cluster.getMetadata();
-
-        logger.info("Connected to cluster: {}", metadata.getClusterName());
+        System.out.printf("Connected to cluster: %s%n", cluster.getMetadata().getClusterName());
 
         session = cluster.connect();
     }
@@ -60,7 +68,7 @@ public class Example0003 {
     public void createSchema() {
 
         session.execute("CREATE KEYSPACE IF NOT EXISTS simplex WITH replication " +
-                "= {'class':'SimpleStrategy', 'replication_factor':3};");
+                "= {'class':'SimpleStrategy', 'replication_factor':1};");
 
         session.execute(
                 "CREATE TABLE IF NOT EXISTS simplex.songs (" +
@@ -118,15 +126,15 @@ public class Example0003 {
                 "SELECT * FROM simplex.playlists " +
                         "WHERE id = 2cc9ccb7-6221-4ccb-8387-f22b6a1b354d;");
 
-        logger.info(String.format("%-30s\t%-20s\t%-20s", "title", "album", "artist"));
-        logger.info("-------------------------------+-----------------------+--------------------");
+        System.out.printf("%-30s\t%-20s\t%-20s%n", "title", "album", "artist");
+        System.out.println("-------------------------------+-----------------------+--------------------");
 
         for (Row row : results) {
 
-            logger.info(String.format("%-30s\t%-20s\t%-20s",
+            System.out.printf("%-30s\t%-20s\t%-20s%n",
                     row.getString("title"),
                     row.getString("album"),
-                    row.getString("artist")));
+                    row.getString("artist"));
 
         }
 

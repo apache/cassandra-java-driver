@@ -16,60 +16,49 @@
 package com.datastax.driver.examples.basic;
 
 import com.datastax.driver.core.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
- * This example shows how to inspect the Cluster's metadata
- * to gather information about the cluster topology (which nodes
- * belong to the cluster) and schema (what keyspaces, tables, etc.
- * exist in this cluster).
+ * Gathers information about a Cassandra cluster's topology (which nodes belong to the cluster) and schema (what
+ * keyspaces, tables, etc. exist in this cluster).
+ * <p/>
+ * Preconditions:
+ * - a Cassandra cluster is running and accessible through the contacts points identified by CONTACT_POINTS and PORT.
+ * <p/>
+ * Side effects: none.
  *
  * @see <a href="http://datastax.github.io/java-driver/manual/">Java driver online manual</a>
  */
-public class Example0002 {
+public class ReadTopologyAndSchemaMetadata {
 
-    private static final Logger logger = LoggerFactory.getLogger("com.datastax.driver.examples");
+    static String[] CONTACT_POINTS = {"127.0.0.1"};
+    static int PORT = 9042;
 
     public static void main(String[] args) {
 
         Cluster cluster = null;
-
         try {
-
             cluster = Cluster.builder()
-                    .addContactPoint("127.0.0.1")
+                    .addContactPoints(CONTACT_POINTS).withPort(PORT)
                     .build();
 
             Metadata metadata = cluster.getMetadata();
-            logger.info("Connected to cluster: {}", metadata.getClusterName());
+            System.out.printf("Connected to cluster: %s%n", metadata.getClusterName());
 
             for (Host host : metadata.getAllHosts()) {
-
-                logger.info("Datatacenter: {}; Host: {}; Rack: {}",
+                System.out.printf("Datatacenter: %s; Host: %s; Rack: %s%n",
                         host.getDatacenter(), host.getAddress(), host.getRack());
-
             }
 
             for (KeyspaceMetadata keyspace : metadata.getKeyspaces()) {
-
                 for (TableMetadata table : keyspace.getTables()) {
-
-                    logger.info("Keyspace: {}; Table: {}",
+                    System.out.printf("Keyspace: %s; Table: %s%n",
                             keyspace.getName(), table.getName());
-
                 }
-
             }
 
-
         } finally {
-
             if (cluster != null)
                 cluster.close();
-
         }
     }
-
-
 }

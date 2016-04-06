@@ -13,7 +13,7 @@
     <!-- adjust the driver's log verbosity; see
     http://datastax.github.io/java-driver/manual/logging/
     for more information -->
-    <logger name="com.datastax.driver.core" level="INFO"/>
+    <logger name="com.datastax.driver.core" level="WARN"/>
 
     <root level="INFO">
         <appender-ref ref="STDOUT"/>
