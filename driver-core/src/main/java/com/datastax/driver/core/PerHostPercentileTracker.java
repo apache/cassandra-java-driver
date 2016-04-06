@@ -76,6 +76,12 @@ public class PerHostPercentileTracker implements LatencyTracker {
                                      int numberOfHosts,
                                      int minRecordedValues,
                                      long intervalMs) {
+        try {
+            Histogram.class.getName();
+        } catch (NoClassDefFoundError e) {
+            throw new IllegalStateException("HdrHistogram seems to be missing from the classpath. " +
+                    "Make sure you depend on it explicitly (the driver declares it as optional).", e);
+        }
         this.highestTrackableLatencyMillis = highestTrackableLatencyMillis;
         this.numberOfSignificantValueDigits = numberOfSignificantValueDigits;
         this.minRecordedValues = minRecordedValues;
