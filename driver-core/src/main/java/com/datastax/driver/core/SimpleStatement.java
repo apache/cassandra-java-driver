@@ -18,8 +18,10 @@ package com.datastax.driver.core;
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 
 import java.nio.ByteBuffer;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * A simple {@code RegularStatement} implementation built directly from a query
@@ -177,19 +179,48 @@ public class SimpleStatement extends RegularStatement {
     }
 
     /**
-     * Returns the {@code i}th value as the Java type matching its CQL type.
+     * Returns the {@code i}th positional value as the Java type matching its CQL type.
+     * <p/>
+     * Note that, unlike with other driver types like {@link Row}, you can't retrieve named values by position. This
+     * getter will throw an exception if the statement was created with named values (or no values at all). Call
+     * {@link #usesNamedValues()} to check the type of values, and {@link #getObject(String)} if they are positional.
      *
      * @param i the index to retrieve.
-     * @return the value of the {@code i}th value of this statement.
-     * @throws IllegalStateException     if this statement does not have values.
+     * @return the {@code i}th value of this statement.
+     * @throws IllegalStateException     if this statement does not have positional values.
      * @throws IndexOutOfBoundsException if {@code i} is not a valid index for this object.
      */
     public Object getObject(int i) {
         if (values == null)
-            throw new IllegalStateException("This statement does not have values");
+            throw new IllegalStateException("This statement does not have positional values");
         if (i < 0 || i >= values.length)
             throw new ArrayIndexOutOfBoundsException(i);
         return values[i];
+    }
+
+    /**
+     * Returns a named value as the Java type matching its CQL type.
+     *
+     * @param name the name of the value to retrieve.
+     * @return the value that matches the name, or {@code null} if there is no such name.
+     * @throws IllegalStateException if this statement does not have named values.
+     */
+    public Object getObject(String name) {
+        if (namedValues == null)
+            throw new IllegalStateException("This statement does not have named values");
+        return namedValues.get(name);
+    }
+
+    /**
+     * Returns the names of the named values of this statement.
+     *
+     * @return the names of the named values of this statement.
+     * @throws IllegalStateException if this statement does not have named values.
+     */
+    public Set<String> getValueNames() {
+        if (namedValues == null)
+            throw new IllegalStateException("This statement does not have named values");
+        return Collections.unmodifiableSet(namedValues.keySet());
     }
 
     /**

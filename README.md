@@ -16,28 +16,17 @@ exclusively Cassandra's binary protocol and Cassandra Query Language v3.
 
 **Features:**
 
-* [Sync][sync] and [Async][async] API
-* [Simple][simple_st], [Prepared][prepared_st], and [Batch][batch_st] statements
+* [Sync](manual/) and [Async](manual/async/) API
+* [Simple](manual/statements/simple/), [Prepared](manual/statements/prepared/), and [Batch](manual/statements/batch/)
+  statements
 * Asynchronous IO, parallel execution, request pipelining
-* [Connection pooling][pool]
+* [Connection pooling](manual/pooling/)
 * Auto node discovery
 * Automatic reconnection
-* Configurable [load balancing][lbp] and [retry policies][retry_policy]
+* Configurable [load balancing](manual/load_balancing/) and [retry policies](manual/retries/)
 * Works with any cluster size
-* [Query builder][query_builder]
-* [Object mapper][mapper]
-
-
-[sync]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Session.html#execute-com.datastax.driver.core.Statement-
-[async]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Session.html#executeAsync-com.datastax.driver.core.Statement-
-[simple_st]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/SimpleStatement.html
-[prepared_st]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Session.html#prepare-com.datastax.driver.core.RegularStatement-
-[batch_st]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/BatchStatement.html
-[pool]: manual/pooling/
-[lbp]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/policies/LoadBalancingPolicy.html
-[retry_policy]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/policies/RetryPolicy.html
-[query_builder]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/querybuilder/QueryBuilder.html
-[mapper]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/MappingManager.html
+* [Query builder](manual/statements/built/)
+* [Object mapper](manual/object_mapper/)
 
 The driver architecture is based on layers. At the bottom lies the driver core.
 This core handles everything related to the connections to a Cassandra
@@ -48,8 +37,10 @@ The driver contains the following modules:
 
 - driver-core: the core layer.
 - driver-mapping: the object mapper.
+- driver-extras: optional features for the Java driver.
 - driver-examples: example applications using the other modules which are
   only meant for demonstration purposes.
+- driver-tests: tests for the java-driver.
 
 **Useful links:**
 
@@ -119,7 +110,7 @@ the most up-to-date compatibility information).
 UDT and tuple support is available only when using Apache Cassandra 2.1 or higher (see [CQL improvements in Cassandra 2.1](http://www.datastax.com/dev/blog/cql-in-2-1)).
 
 Other features are available only when using Apache Cassandra 2.0 or higher (e.g. result set paging,
-[BatchStatement](https://github.com/datastax/java-driver/blob/3.0/driver-core/src/main/java/com/datastax/driver/core/BatchStatement.java), 
+[BatchStatement](https://github.com/datastax/java-driver/blob/3.0/driver-core/src/main/java/com/datastax/driver/core/BatchStatement.java),
 [lightweight transactions](http://www.datastax.com/documentation/cql/3.1/cql/cql_using/use_ltweight_transaction_t.html) 
 -- see [What's new in Cassandra 2.0](http://www.datastax.com/documentation/cassandra/2.0/cassandra/features/features_key_c.html)). 
 Trying to use these with a cluster running Cassandra 1.2 will result in 

@@ -41,6 +41,23 @@ public abstract class RegularStatement extends Statement {
 
     /**
      * Returns the query string for this statement.
+     * <p/>
+     * It is important to note that the query string is merely
+     * a CQL representation of this statement, but it does
+     * <em>not</em> convey all the information stored in {@link Statement}
+     * objects.
+     * <p/>
+     * For example, {@link Statement} objects carry numerous protocol-level
+     * settings, such as the {@link Statement#getConsistencyLevel() consistency level} to use,
+     * or the {@link Statement#isIdempotent() idempotence flag}, among others.
+     * <em>None of these settings will be included in the resulting query string.</em>
+     * <p/>
+     * Similarly, if values have been set on this statement because
+     * it has bind markers, these values will not appear in the resulting query string.
+     * <p/>
+     * Note: the consistency level was conveyed at CQL level in older versions
+     * of the CQL grammar, but since <a href="https://issues.apache.org/jira/browse/CASSANDRA-4734">CASSANDRA-4734</a>
+     * it is now a protocol-level setting and consequently does not appear in the query string.
      *
      * @param codecRegistry the codec registry that will be used if the actual
      *                      implementation needs to serialize Java objects in the
@@ -172,6 +189,19 @@ public abstract class RegularStatement extends Statement {
         return hasValues(CodecRegistry.DEFAULT_INSTANCE);
     }
 
+    /**
+     * Returns this statement as a CQL query string.
+     * <p/>
+     * It is important to note that the query string is merely
+     * a CQL representation of this statement, but it does
+     * <em>not</em> convey all the information stored in {@link Statement}
+     * objects.
+     * <p/>
+     * See the javadocs of {@link #getQueryString()} for more information.
+     *
+     * @return this statement as a CQL query string.
+     * @see #getQueryString()
+     */
     @Override
     public String toString() {
         return getQueryString();

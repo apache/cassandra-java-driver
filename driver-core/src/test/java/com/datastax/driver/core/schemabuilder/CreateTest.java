@@ -545,54 +545,54 @@ public class CreateTest {
     }
 
     @Test(groups = "unit", expectedExceptions = IllegalArgumentException.class,
-            expectedExceptionsMessageRegExp = "The keyspace name 'add' is not allowed because it is a reserved keyword")
+            expectedExceptionsMessageRegExp = "The keyspace name 'ADD' is not allowed because it is a reserved keyword")
     public void should_fail_if_keyspace_name_is_a_reserved_keyword() throws Exception {
-        createTable("add", "test")
+        createTable("ADD", "test")
                 .addPartitionKey("pk", DataType.bigint())
                 .addColumn("col", DataType.text()).getQueryString();
     }
 
     @Test(groups = "unit", expectedExceptions = IllegalArgumentException.class,
-            expectedExceptionsMessageRegExp = "The table name 'add' is not allowed because it is a reserved keyword")
+            expectedExceptionsMessageRegExp = "The table name 'ADD' is not allowed because it is a reserved keyword")
     public void should_fail_if_table_name_is_a_reserved_keyword() throws Exception {
-        createTable("add")
+        createTable("ADD")
                 .addPartitionKey("pk", DataType.bigint())
                 .addColumn("col", DataType.text()).getQueryString();
     }
 
     @Test(groups = "unit", expectedExceptions = IllegalArgumentException.class,
-            expectedExceptionsMessageRegExp = "The partition key name 'add' is not allowed because it is a reserved keyword")
+            expectedExceptionsMessageRegExp = "The partition key name 'ADD' is not allowed because it is a reserved keyword")
     public void should_fail_if_partition_key_is_a_reserved_keyword() throws Exception {
         createTable("test")
-                .addPartitionKey("add", DataType.bigint())
+                .addPartitionKey("ADD", DataType.bigint())
                 .addColumn("col", DataType.text()).getQueryString();
     }
 
     @Test(groups = "unit", expectedExceptions = IllegalArgumentException.class,
-            expectedExceptionsMessageRegExp = "The clustering column name 'add' is not allowed because it is a reserved keyword")
+            expectedExceptionsMessageRegExp = "The clustering column name 'ADD' is not allowed because it is a reserved keyword")
     public void should_fail_if_clustering_key_is_a_reserved_keyword() throws Exception {
         createTable("test")
                 .addPartitionKey("pk", DataType.bigint())
-                .addClusteringColumn("add", DataType.uuid())
+                .addClusteringColumn("ADD", DataType.uuid())
                 .addColumn("col", DataType.text()).getQueryString();
     }
 
     @Test(groups = "unit", expectedExceptions = IllegalArgumentException.class,
-            expectedExceptionsMessageRegExp = "The column name 'add' is not allowed because it is a reserved keyword")
+            expectedExceptionsMessageRegExp = "The column name 'ADD' is not allowed because it is a reserved keyword")
     public void should_fail_if_simple_column_is_a_reserved_keyword() throws Exception {
         createTable("test")
                 .addPartitionKey("pk", DataType.bigint())
                 .addClusteringColumn("cluster", DataType.uuid())
-                .addColumn("add", DataType.text()).getQueryString();
+                .addColumn("ADD", DataType.text()).getQueryString();
     }
 
     @Test(groups = "unit", expectedExceptions = IllegalArgumentException.class,
-            expectedExceptionsMessageRegExp = "The static column name 'add' is not allowed because it is a reserved keyword")
+            expectedExceptionsMessageRegExp = "The static column name 'ADD' is not allowed because it is a reserved keyword")
     public void should_fail_if_static_column_is_a_reserved_keyword() throws Exception {
         createTable("test")
                 .addPartitionKey("pk", DataType.bigint())
                 .addClusteringColumn("cluster", DataType.uuid())
-                .addStaticColumn("add", DataType.text())
+                .addStaticColumn("ADD", DataType.text())
                 .addColumn("col", DataType.text()).getQueryString();
     }
 

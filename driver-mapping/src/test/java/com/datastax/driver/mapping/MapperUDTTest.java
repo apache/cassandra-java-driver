@@ -17,6 +17,7 @@ package com.datastax.driver.mapping;
 
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.exceptions.CodecNotFoundException;
+import com.datastax.driver.core.utils.CassandraVersion;
 import com.datastax.driver.core.utils.UUIDs;
 import com.datastax.driver.mapping.annotations.*;
 import com.google.common.base.Objects;
@@ -32,6 +33,7 @@ import static org.assertj.core.api.Assertions.fail;
 import static org.testng.Assert.*;
 
 @SuppressWarnings("unused")
+@CassandraVersion(major = 2.1)
 public class MapperUDTTest extends CCMTestsSupport {
 
     @Override

@@ -19,12 +19,12 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.datastax.cassandra</groupId>
-        <artifactId>cassandra-driver-examples-parent</artifactId>
+        <artifactId>cassandra-driver-tests-parent</artifactId>
         <version>3.0.1-SNAPSHOT</version>
     </parent>
-    <artifactId>cassandra-driver-examples-stress</artifactId>
+    <artifactId>cassandra-driver-tests-stress</artifactId>
     <packaging>jar</packaging>
-    <name>DataStax Java Driver for Apache Cassandra Examples - Stress</name>
+    <name>DataStax Java Driver for Apache Cassandra Tests - Stress</name>
     <description>A stress test example for DataStax Java Driver for Apache Cassandra.</description>
     <url>https://github.com/datastax/java-driver</url>
 

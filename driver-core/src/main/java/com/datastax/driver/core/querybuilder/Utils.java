@@ -229,6 +229,9 @@ abstract class Utils {
                 if (!isIdempotent(entry.getKey()) || !isIdempotent(entry.getValue()))
                     return false;
             }
+        } else if (value instanceof Clause) {
+            Object clauseValue = ((Clause) value).firstValue();
+            return isIdempotent(clauseValue);
         }
         return true;
     }

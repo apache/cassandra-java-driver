@@ -22,6 +22,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Functions;
 import com.google.common.base.Predicates;
 import com.google.common.base.Strings;
+import com.google.common.base.Throwables;
 import com.google.common.collect.*;
 import com.google.common.util.concurrent.*;
 import org.slf4j.Logger;
@@ -336,19 +337,28 @@ public class Cluster implements Closeable {
         if (keyspace == null) {
             return sessionInitialized;
         } else {
+            final String useQuery = "USE " + keyspace;
             ListenableFuture<ResultSet> keyspaceSet = Futures.transform(sessionInitialized, new AsyncFunction<Session, ResultSet>() {
                 @Override
                 public ListenableFuture<ResultSet> apply(Session session) throws Exception {
-                    return session.executeAsync("USE " + keyspace);
+                    return session.executeAsync(useQuery);
                 }
             });
-            Futures.addCallback(keyspaceSet, new MoreFutures.FailureCallback<ResultSet>() {
+            ListenableFuture<ResultSet> withErrorHandling = Futures.withFallback(keyspaceSet, new FutureFallback<ResultSet>() {
                 @Override
-                public void onFailure(Throwable t) {
+                public ListenableFuture<ResultSet> create(Throwable t) throws Exception {
                     session.closeAsync();
+                    if (t instanceof SyntaxError) {
+                        // Give a more explicit message, because it's probably caused by a bad keyspace name
+                        SyntaxError e = (SyntaxError) t;
+                        t = new SyntaxError(e.getAddress(),
+                                String.format("Error executing \"%s\" (%s). Check that your keyspace name is valid",
+                                        useQuery, e.getMessage()));
+                    }
+                    throw Throwables.propagate(t);
                 }
             });
-            return Futures.transform(keyspaceSet, Functions.constant(session));
+            return Futures.transform(withErrorHandling, Functions.constant(session));
         }
     }
 
@@ -2082,18 +2092,13 @@ public class Cluster implements Closeable {
             }
         }
 
-        public boolean signalConnectionFailure(Host host, Connection connection,
-                                               boolean isHostAddition) {
-            boolean isDown = host.convictionPolicy.signalConnectionFailure(connection);
-
+        public void signalHostDown(Host host, boolean isHostAddition) {
             // Don't mark the node down until we've fully initialized the controlConnection as this might mess up with
             // the protocol detection
             if (!isFullyInit || isClosed())
-                return true;
+                return;
 
-            if (isDown)
-                triggerOnDown(host, isHostAddition, true);
-            return isDown;
+            triggerOnDown(host, isHostAddition, true);
         }
 
         public void removeHost(Host host, boolean isInitialConnection) {
@@ -2638,8 +2643,16 @@ public class Cluster implements Closeable {
                             // But it is unlikely, and don't have too much consequence since we'll try reconnecting
                             // right away, so we favor the detection to make the Host.isUp method more reliable.
                             Host downHost = metadata.getHost(address);
-                            if (downHost != null)
-                                futures.add(execute(hostDown(downHost)));
+                            if (downHost != null) {
+                                // Only process DOWN events if we have no active connections to the host . Otherwise, we
+                                // wait for the connections to fail. This is to prevent against a bad control host
+                                // aggressively marking DOWN all of its peers.
+                                if (downHost.convictionPolicy.hasActiveConnections()) {
+                                    logger.debug("Ignoring down event on {} because it still has active connections", downHost);
+                                } else {
+                                    futures.add(execute(hostDown(downHost)));
+                                }
+                            }
                             break;
                         case REMOVED:
                             Host removedHost = metadata.getHost(address);
@@ -2720,11 +2733,7 @@ public class Cluster implements Closeable {
                 return new ExceptionCatchingRunnable() {
                     @Override
                     public void runMayThrow() throws Exception {
-                        if (controlConnection.refreshNodeInfo(host)) {
-                            onDown(host, false, true);
-                        } else {
-                            logger.debug("Not enough info for {}, ignoring host", host);
-                        }
+                        onDown(host, false, true);
                     }
                 };
             }

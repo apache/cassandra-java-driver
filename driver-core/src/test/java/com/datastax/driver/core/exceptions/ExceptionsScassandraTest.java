@@ -21,6 +21,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import org.scassandra.Scassandra;
 import org.scassandra.http.client.PrimingRequest;
+import org.scassandra.http.client.Result;
 import org.testng.annotations.*;
 
 import java.util.List;
@@ -29,7 +30,7 @@ import java.util.Map;
 import static com.datastax.driver.core.ConsistencyLevel.LOCAL_ONE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
-import static org.scassandra.http.client.PrimingRequest.Result.*;
+import static org.scassandra.http.client.Result.*;
 
 public class ExceptionsScassandraTest {
 
@@ -111,7 +112,7 @@ public class ExceptionsScassandraTest {
         }
     }
 
-    protected void simulateError(int hostNumber, PrimingRequest.Result result) {
+    protected void simulateError(int hostNumber, Result result) {
         scassandras.node(hostNumber).primingClient().prime(PrimingRequest.queryBuilder()
                 .withQuery("mock query")
                 .withResult(result)

@@ -26,8 +26,9 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.scassandra.http.client.PrimingRequest.Result.*;
+import static org.scassandra.http.client.Consistency.SERIAL;
 import static org.scassandra.http.client.PrimingRequest.then;
+import static org.scassandra.http.client.Result.*;
 import static org.scassandra.http.client.WriteTypePrime.UNLOGGED_BATCH;
 import static org.testng.Assert.fail;
 
@@ -76,6 +77,32 @@ public class DowngradingConsistencyRetryPolicyIntegrationTest extends AbstractRe
         };
     }
 
+    /**
+     * Ensures that when handling a read timeout with {@link DowngradingConsistencyRetryPolicy} that a retry is
+     * reattempted with {@link ConsistencyLevel#ONE} if the consistency level on the statement executed is
+     * {@link ConsistencyLevel#EACH_QUORUM}, even if the number of known alive replicas was 0.
+     *
+     * @jira_ticket JAVA-1005
+     * @test_category retry_policy
+     */
+    @Test(groups = "short")
+    public void should_retry_once_on_same_host_from_each_quorum_to_one() {
+        simulateError(1, read_request_timeout, new ReadTimeoutConfig(0, 3, false));
+
+        try {
+            queryWithCL(ConsistencyLevel.EACH_QUORUM);
+        } catch (ReadTimeoutException e) {
+            assertThat(e.getConsistencyLevel()).isEqualTo(ConsistencyLevel.ONE);
+        }
+
+        assertOnReadTimeoutWasCalled(2);
+        assertThat(errors.getRetries().getCount()).isEqualTo(1);
+        assertThat(errors.getReadTimeouts().getCount()).isEqualTo(2);
+        assertThat(errors.getRetriesOnReadTimeout().getCount()).isEqualTo(1);
+        assertQueried(1, 2);
+        assertQueried(2, 0);
+        assertQueried(3, 0);
+    }
 
     /**
      * Ensures that when handling a read timeout with {@link DowngradingConsistencyRetryPolicy} that a retry is
@@ -384,7 +411,7 @@ public class DowngradingConsistencyRetryPolicyIntegrationTest extends AbstractRe
      * @test_category retry_policy
      */
     @Test(groups = "short", dataProvider = "serverSideErrors")
-    public void should_try_next_host_on_server_side_error(PrimingRequest.Result error, Class<? extends DriverException> exception) {
+    public void should_try_next_host_on_server_side_error(Result error, Class<? extends DriverException> exception) {
         simulateError(1, error);
         simulateError(2, error);
         simulateError(3, error);
@@ -416,9 +443,9 @@ public class DowngradingConsistencyRetryPolicyIntegrationTest extends AbstractRe
      */
     @Test(groups = "short", dataProvider = "connectionErrors")
     public void should_try_next_host_on_connection_error(ClosedConnectionConfig.CloseType closeType) {
-        simulateError(1, PrimingRequest.Result.closed_connection, new ClosedConnectionConfig(closeType));
-        simulateError(2, PrimingRequest.Result.closed_connection, new ClosedConnectionConfig(closeType));
-        simulateError(3, PrimingRequest.Result.closed_connection, new ClosedConnectionConfig(closeType));
+        simulateError(1, closed_connection, new ClosedConnectionConfig(closeType));
+        simulateError(2, closed_connection, new ClosedConnectionConfig(closeType));
+        simulateError(3, closed_connection, new ClosedConnectionConfig(closeType));
         try {
             query();
             Fail.fail("expected a TransportException");
@@ -437,5 +464,26 @@ public class DowngradingConsistencyRetryPolicyIntegrationTest extends AbstractRe
         assertQueried(1, 1);
         assertQueried(2, 1);
         assertQueried(3, 1);
+    }
+
+    @Test(groups = "short")
+    public void should_rethrow_on_unavailable_if_CAS() {
+        simulateError(1, unavailable, new UnavailableConfig(1, 0, SERIAL));
+        simulateError(2, unavailable, new UnavailableConfig(1, 0, SERIAL));
+
+        try {
+            query();
+            fail("expected an UnavailableException");
+        } catch (UnavailableException e) {
+            assertThat(e.getConsistencyLevel()).isEqualTo(ConsistencyLevel.SERIAL);
+        }
+
+        assertOnUnavailableWasCalled(2);
+        assertThat(errors.getRetries().getCount()).isEqualTo(1);
+        assertThat(errors.getUnavailables().getCount()).isEqualTo(2);
+        assertThat(errors.getRetriesOnUnavailable().getCount()).isEqualTo(1);
+        assertQueried(1, 1);
+        assertQueried(2, 1);
+        assertQueried(3, 0);
     }
 }
