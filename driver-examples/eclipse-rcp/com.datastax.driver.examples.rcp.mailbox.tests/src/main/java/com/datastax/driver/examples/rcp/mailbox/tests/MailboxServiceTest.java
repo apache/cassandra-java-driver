@@ -15,19 +15,18 @@
  */
 package com.datastax.driver.examples.rcp.mailbox.tests;
 
-import static org.junit.Assert.assertEquals;
+import com.datastax.driver.examples.rcp.mailbox.MailboxActivator;
+import com.datastax.driver.examples.rcp.mailbox.MailboxMessage;
+import com.datastax.driver.examples.rcp.mailbox.MailboxService;
+import org.junit.Before;
+import org.junit.Test;
+import org.osgi.framework.ServiceReference;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.GregorianCalendar;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.osgi.framework.ServiceReference;
-
-import com.datastax.driver.examples.rcp.mailbox.MailboxActivator;
-import com.datastax.driver.examples.rcp.mailbox.MailboxMessage;
-import com.datastax.driver.examples.rcp.mailbox.MailboxService;
+import static org.junit.Assert.assertEquals;
 
 /**
  * This test requires an OSGi container.
@@ -48,6 +47,7 @@ public class MailboxServiceTest {
      * Global integration test for the 'mailbox' service. Ensures that queries can be made through the service with the current given configuration.
      */
     @Test
+    @SuppressWarnings("ThrowFromFinallyBlock")
     public void service_api_functional() throws Exception {
         // Insert some data into mailbox for a particular user.
         String recipient = "user@datastax.com";
