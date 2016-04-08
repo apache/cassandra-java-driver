@@ -609,6 +609,9 @@ class ControlConnection implements Host.StateListener, Connection.Owner {
                 continue;
 
             InetSocketAddress addr = addressToUseForPeerHost(row, connection.address, cluster);
+            if (addr == null)
+                continue;
+
             foundHosts.add(addr);
             dcs.add(row.getString("data_center"));
             racks.add(row.getString("rack"));
