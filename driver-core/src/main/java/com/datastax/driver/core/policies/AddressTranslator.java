@@ -59,7 +59,7 @@ public interface AddressTranslator {
      *                will always be the one set at Cluster construction time (9042 by default).
      * @return the address the driver should actually use to connect to the node
      * designated by {@code address}. If the return is {@code null}, then {@code
-     * address} will be used by the driver (it is thus equivalent to returing
+     * address} will be used by the driver (it is thus equivalent to returning
      * {@code address} directly)
      */
     InetSocketAddress translate(InetSocketAddress address);
