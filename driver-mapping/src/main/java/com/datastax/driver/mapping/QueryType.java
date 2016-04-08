@@ -23,6 +23,7 @@ import com.google.common.base.Objects;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -76,7 +77,10 @@ class QueryType {
             }
             case GET: {
                 Select.Selection selection = select();
-                for (ColumnMapper cm : mapper.allColumns()) {
+                if (columns.isEmpty()) {
+                    columns = new HashSet<ColumnMapper<?>>(mapper.allColumns());
+                }
+                for (ColumnMapper cm : columns) {
                     Select.SelectionOrAlias column = (cm.kind == ColumnMapper.Kind.COMPUTED)
                             ? ((Select.SelectionOrAlias) selection).raw(cm.getColumnName())
                             : selection.column(cm.getColumnName());

@@ -313,24 +313,35 @@ public class Mapper<T> {
         // Order and duplicates matter for primary keys
         List<Object> pks = new ArrayList<Object>();
         EnumMap<Option.Type, Option> options = new EnumMap<Option.Type, Option>(defaultGetOptions);
+        Set<ColumnMapper<?>> columns = new HashSet<ColumnMapper<?>>(); 
 
         for (Object o : objects) {
             if (o instanceof Option) {
                 Option option = (Option) o;
                 options.put(option.type, option);
+            } else if (o instanceof Set) {
+                final Set<String> requiredColumns = (Set<String>) o;
+                for (ColumnMapper cm : mapper.allColumns()) {
+                    if (requiredColumns.contains(cm.getColumnName(false))) {
+                        columns.add(cm);
+                        if (columns.size() >= requiredColumns.size()) {
+                            break;
+                        }
+                    }
+                }
             } else {
                 pks.add(o);
             }
         }
-        return getQuery(pks, options);
+        return getQuery(pks, columns, options);
     }
 
-    private Statement getQuery(List<Object> primaryKeys, EnumMap<Option.Type, Option> options) {
+    private Statement getQuery(List<Object> primaryKeys, Set<ColumnMapper<?>> columns, EnumMap<Option.Type, Option> options) {
 
         if (primaryKeys.size() != mapper.primaryKeySize())
             throw new IllegalArgumentException(String.format("Invalid number of PRIMARY KEY columns provided, %d expected but got %d", mapper.primaryKeySize(), primaryKeys.size()));
 
-        BoundStatement bs = getPreparedQuery(QueryType.GET, options).bind();
+        BoundStatement bs = getPreparedQuery(QueryType.GET, columns, options).bind();
         int i = 0;
         for (Object value : primaryKeys) {
             ColumnMapper<T> column = mapper.getPrimaryKeyColumn(i);
