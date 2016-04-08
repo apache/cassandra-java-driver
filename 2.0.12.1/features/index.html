@@ -9,13 +9,13 @@
     <meta name="description" content="High performance Java client for Apache Cassandra">
     <meta name="author" content="DataStax">
 
-    <title>Java Driver for Apache Cassandra - Using the shaded JAR</title>
+    <title>Java Driver for Apache Cassandra - Features</title>
 
-    <link rel="icon" href="../../../favicon.ico">
-    <link rel="apple-touch-icon" href="../../../favicon.png">
-    <link href="../../../css/style.css" rel="stylesheet">
-    <link href="../../../css/pygments.css" rel="stylesheet">
-    <link href="../../../css/hotkeys.css" rel="stylesheet">
+    <link rel="icon" href="../../favicon.ico">
+    <link rel="apple-touch-icon" href="../../favicon.png">
+    <link href="../../css/style.css" rel="stylesheet">
+    <link href="../../css/pygments.css" rel="stylesheet">
+    <link href="../../css/hotkeys.css" rel="stylesheet">
 
     <!--[if lt IE 9]>
       <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
@@ -26,7 +26,7 @@
     <header class="container-fluid navbar">
       <div class="row">
         <div class="col-sm-4">
-          <a class="navbar-brand" href="../../"><img alt="Brand" src="../../../img/logo.png">Java Driver for Apache Cassandra</a>
+          <a class="navbar-brand" href="../"><img alt="Brand" src="../../img/logo.png">Java Driver for Apache Cassandra</a>
         </div>
         <div class="col-md-4 col-md-offset-4">
           <div class="row">
@@ -42,7 +42,7 @@
             <div class="col-md-8">
               <form id="search" class="form-search dropdown visible-lg-block" ng-controller="search" ng-class="{open: hasResults}" role="search" ng-submit="submit()" data-spy="affix" data-offset-top="130">
                 <div class="form-group has-feedback">
-                  <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.0.10.1')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+                  <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.0.12.1')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
                 </div>
                 <ul class="dropdown-menu search-results" role="menu">
                   <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
@@ -63,26 +63,26 @@
               <li>
                 <div class="btn-group">
                   <button id="current-version" class="btn btn-default btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    2.0.10.1
+                    2.0.12.1
                     <span class="caret"></span>
                   </button>
                   <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
                   
-                    <li><a href="../../../">3.0.0</a></li>
+                    <li><a href="../../">3.0.0</a></li>
                   
-                    <li><a href="../../../2.1.10/">2.1.10</a></li>
+                    <li><a href="../../2.1.10/">2.1.10</a></li>
                   
-                    <li><a href="../../../2.1.9/features/shaded_jar/">2.1.9</a></li>
+                    <li><a href="../../2.1.9/features/">2.1.9</a></li>
                   
-                    <li><a href="../../../2.1.8/features/shaded_jar/">2.1.8</a></li>
+                    <li><a href="../../2.1.8/features/">2.1.8</a></li>
                   
-                    <li><a href="../../../2.1.7/features/shaded_jar/">2.1.7</a></li>
+                    <li><a href="../../2.1.7/features/">2.1.7</a></li>
                   
-                    <li><a href="../../../2.0.12/features/shaded_jar/">2.0.12</a></li>
+                    <li class="disabled"><a href="./">2.0.12.1</a></li>
                   
-                    <li><a href="../../../2.0.11/features/shaded_jar/">2.0.11</a></li>
+                    <li><a href="../../2.0.12/features/">2.0.12</a></li>
                   
-                    <li class="disabled"><a href="./">2.0.10.1</a></li>
+                    <li><a href="../../2.0.11/features/">2.0.11</a></li>
                   
                   </ul>
                 </div>
@@ -91,26 +91,20 @@
               
               
               
-              <li><a href="../../">Home</a></li>
+              <li><a href="../">Home</a></li>
               
               
               
               
               
-              <li><a href="../">Features</a></li>
-              
-              
-              
-              
-              
-              <li class="active">Using the shaded JAR</li>
+              <li class="active">Features</li>
               <li class="dropdown" id="table-of-contents">
                 <div class="btn-group">
                   <button id="current-section" type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
                     Jump to&#8230; <span class="caret"></span><span class="sr-only">Table of Contents</span>
                   </button>
                   <ul class="dropdown-menu nav nav-pills nav-stacked">
-                    <li><a href="#using-the-shaded-jar">Using the shaded JAR
+                    <li><a href="#features">Features
 </a></li>
                   </ul>
                 </div>
@@ -133,69 +127,117 @@
   
   
   
+  <li>
+    <a href="../changelog/">Changelog <small>page</small></a>
+  </li>
+  
+  
+  
+  
   <li class="active">
-    <a href="../">Features <small>page</small></a>
+    <a href="./" class="current">Features <small>page</small></a>
     <ul class="nav nav-pills nav-stacked">
   
   
   
   <li>
-    <a href="../address_resolution/">Address resolution <small>page</small></a>
+    <a href="address_resolution/">Address resolution <small>page</small></a>
   </li>
   
   
   
   
   <li>
-    <a href="../pooling/">Connection pooling <small>page</small></a>
+    <a href="async/">Asynchronous programming <small>page</small></a>
   </li>
   
   
   
   
   <li>
-    <a href="../logging/">Logging <small>page</small></a>
+    <a href="compression/">Compression <small>page</small></a>
   </li>
   
   
   
   
   <li>
-    <a href="../metadata/">Metadata <small>page</small></a>
+    <a href="pooling/">Connection pooling <small>page</small></a>
   </li>
   
   
   
   
   <li>
-    <a href="../native_protocol/">Native protocol <small>page</small></a>
+    <a href="logging/">Logging <small>page</small></a>
   </li>
   
   
   
   
   <li>
-    <a href="../paging/">Paging <small>page</small></a>
+    <a href="metadata/">Metadata <small>page</small></a>
   </li>
   
   
   
   
   <li>
-    <a href="../speculative_execution/">Speculative query execution <small>page</small></a>
+    <a href="native_protocol/">Native protocol <small>page</small></a>
   </li>
   
   
   
   
-  <li class="active">
-    <a href="./" class="current">Using the shaded JAR <small>page</small></a>
-    
+  <li>
+    <a href="paging/">Paging <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="ssl/">SSL <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="speculative_execution/">Speculative query execution <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="statements/">Statements <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="shaded_jar/">Using the shaded JAR <small>page</small></a>
   </li>
   
   
 </ul>
 
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../faq/">Frequently Asked Questions <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../upgrade_guide/">Upgrade guide <small>page</small></a>
   </li>
   
   
@@ -206,31 +248,24 @@
         <div class="col-md-9 content">
           
 
-<h2 id="using-the-shaded-jar" class="target">Using the shaded JAR<a class="anchor" href="#using-the-shaded-jar" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h2 id="features" class="target">Features<a class="anchor" href="#features" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h2>
 
-<p>The default driver JAR depends on <a href="http://netty.io/">Netty</a>, which is
-used internally for networking.</p>
+<p>This part of the documentation is organized into sub-sections covering
+specific topics.</p>
 
-<p>This explicit dependency can be a problem if your application already
-uses another Netty version. To avoid conflicts, we provide a “shaded”
-version of the JAR, which bundles the Netty classes under a different
-package name:</p>
-<pre class="highlight"><code><span class="nt">&lt;dependency&gt;</span>
-  <span class="nt">&lt;groupId&gt;</span>${project.groupId}<span class="nt">&lt;/groupId&gt;</span>
-  <span class="nt">&lt;artifactId&gt;</span>cassandra-driver-core<span class="nt">&lt;/artifactId&gt;</span>
-  <span class="nt">&lt;version&gt;</span>2.0.10.1<span class="nt">&lt;/version&gt;</span>
-  <span class="nt">&lt;classifier&gt;</span>shaded<span class="nt">&lt;/classifier&gt;</span>
-  <span class="c">&lt;!-- Because the shaded JAR uses the original POM, you still need
-       to exclude this dependency explicitly: --&gt;</span>
-  <span class="nt">&lt;exclusions&gt;</span>
-    <span class="nt">&lt;exclusion&gt;</span>
-      <span class="nt">&lt;groupId&gt;</span>io.netty<span class="nt">&lt;/groupId&gt;</span>
-      <span class="nt">&lt;artifactId&gt;</span>*<span class="nt">&lt;/artifactId&gt;</span>
-    <span class="nt">&lt;/exclusion&gt;</span>
-  <span class="nt">&lt;/exclusions&gt;</span>
-<span class="nt">&lt;/dependency&gt;</span>
-</code></pre>
+<p>If you’re reading this from the <a href="../">generated HTML documentation on
+github.io</a>, use the “Read More”
+menu on the right hand side. If you’re <a href="https://github.com/datastax/java-driver/tree/2.0/features">browsing the source files on
+github.com</a>,
+simply navigate to each sub-directory.</p>
+
+<p>This is a work in progress: new sections will be added to cover existing
+features or document new ones.</p>
+
+<p>You can also find more help in the legacy
+<a href="http://docs.datastax.com/en/developer/java-driver/2.0/java-driver/whatsNew2.html">user documentation</a>
+on the DataStax website.</p>
 
 
         </div>
@@ -275,13 +310,13 @@ package name:</p>
     </footer>
     
 
-    <script src="../../../js/jquery.js"></script>
-    <script src="../../../js/bootstrap.js"></script>
-    <script src="../../../js/angular.js"></script>
-    <script src="../../../js/mousetrap.js"></script>
-    <script src="../../../js/hotkeys.js"></script>
-    <script src="../../../js/ZeroClipboard.js"></script>
-    <script src="../../../js/lunr.js"></script>
-    <script src="../../../js/app.js"></script>
+    <script src="../../js/jquery.js"></script>
+    <script src="../../js/bootstrap.js"></script>
+    <script src="../../js/angular.js"></script>
+    <script src="../../js/mousetrap.js"></script>
+    <script src="../../js/hotkeys.js"></script>
+    <script src="../../js/ZeroClipboard.js"></script>
+    <script src="../../js/lunr.js"></script>
+    <script src="../../js/app.js"></script>
   </body>
 </html>

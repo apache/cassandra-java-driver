@@ -42,7 +42,7 @@
             <div class="col-md-8">
               <form id="search" class="form-search dropdown visible-lg-block" ng-controller="search" ng-class="{open: hasResults}" role="search" ng-submit="submit()" data-spy="affix" data-offset-top="130">
                 <div class="form-group has-feedback">
-                  <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.0.10.1')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+                  <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.0.12.1')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
                 </div>
                 <ul class="dropdown-menu search-results" role="menu">
                   <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
@@ -63,7 +63,7 @@
               <li>
                 <div class="btn-group">
                   <button id="current-version" class="btn btn-default btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    2.0.10.1
+                    2.0.12.1
                     <span class="caret"></span>
                   </button>
                   <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
@@ -78,11 +78,11 @@
                   
                     <li><a href="../../../2.1.7/features/speculative_execution/">2.1.7</a></li>
                   
+                    <li class="disabled"><a href="./">2.0.12.1</a></li>
+                  
                     <li><a href="../../../2.0.12/features/speculative_execution/">2.0.12</a></li>
                   
                     <li><a href="../../../2.0.11/features/speculative_execution/">2.0.11</a></li>
-                  
-                    <li class="disabled"><a href="./">2.0.10.1</a></li>
                   
                   </ul>
                 </div>
@@ -162,6 +162,13 @@ PercentileSpeculativeExecutionPolicy
   
   
   
+  <li>
+    <a href="../../changelog/">Changelog <small>page</small></a>
+  </li>
+  
+  
+  
+  
   <li class="active">
     <a href="../">Features <small>page</small></a>
     <ul class="nav nav-pills nav-stacked">
@@ -170,6 +177,20 @@ PercentileSpeculativeExecutionPolicy
   
   <li>
     <a href="../address_resolution/">Address resolution <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../async/">Asynchronous programming <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../compression/">Compression <small>page</small></a>
   </li>
   
   
@@ -210,9 +231,23 @@ PercentileSpeculativeExecutionPolicy
   
   
   
+  <li>
+    <a href="../ssl/">SSL <small>page</small></a>
+  </li>
+  
+  
+  
+  
   <li class="active">
     <a href="./" class="current">Speculative query execution <small>page</small></a>
     
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../statements/">Statements <small>page</small></a>
   </li>
   
   
@@ -225,6 +260,20 @@ PercentileSpeculativeExecutionPolicy
   
 </ul>
 
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../../faq/">Frequently Asked Questions <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../../upgrade_guide/">Upgrade guide <small>page</small></a>
   </li>
   
   
@@ -279,12 +328,14 @@ about what the query actually does. Therefore:</p>
 <ul>
 <li>
 <strong><code>Statement#isIdempotent()</code> is only computed automatically for
-statements built with <a href="http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/querybuilder/QueryBuilder.html">QueryBuilder</a></strong>. Note that there
-is a known issue in 2.0.10 where calls to <code>now()</code> or <code>uuid()</code> are not
-taken into account (see
-<a href="https://datastax-oss.atlassian.net/browse/JAVA-733">JAVA-733</a>). If
-you’re using these CQL functions with built statements, force
-idempotence to <code>false</code> manually (see below);</li>
+statements built with <a href="http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/querybuilder/QueryBuilder.html">QueryBuilder</a></strong>.
+Note that the driver takes a rather conservative approach with uses
+of <code>fcall()</code> or <code>raw()</code>: whenever they appear in a value to be
+inserted in the database (like the values of an <code>Insert</code> or the
+right-hand side of an assignment in an <code>Update</code>), the statement
+will be considered non-idempotent by default. If you know that your
+CQL functions or expressions are safe, force idempotence to <code>true</code>
+on the statement manually (see below);</li>
 <li>
 <strong>for all other types of statements, it defaults to <code>false</code>.</strong> You’ll
 need to set it manually, with one of the mechanism described below.</li>

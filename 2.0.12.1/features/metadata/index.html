@@ -42,7 +42,7 @@
             <div class="col-md-8">
               <form id="search" class="form-search dropdown visible-lg-block" ng-controller="search" ng-class="{open: hasResults}" role="search" ng-submit="submit()" data-spy="affix" data-offset-top="130">
                 <div class="form-group has-feedback">
-                  <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.0.10.1')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+                  <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.0.12.1')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
                 </div>
                 <ul class="dropdown-menu search-results" role="menu">
                   <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
@@ -63,7 +63,7 @@
               <li>
                 <div class="btn-group">
                   <button id="current-version" class="btn btn-default btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    2.0.10.1
+                    2.0.12.1
                     <span class="caret"></span>
                   </button>
                   <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
@@ -78,11 +78,11 @@
                   
                     <li><a href="../../../2.1.7/features/metadata/">2.1.7</a></li>
                   
+                    <li class="disabled"><a href="./">2.0.12.1</a></li>
+                  
                     <li><a href="../../../2.0.12/features/metadata/">2.0.12</a></li>
                   
                     <li><a href="../../../2.0.11/features/metadata/">2.0.11</a></li>
-                  
-                    <li class="disabled"><a href="./">2.0.10.1</a></li>
                   
                   </ul>
                 </div>
@@ -118,6 +118,8 @@
 </a><ul class="nav nav-pills nav-stacked">
 <li><a href="#refreshes">Refreshes
 </a></li>
+<li><a href="#subscribing-to-schema-changes">Subscribing to schema changes
+</a></li>
 <li><a href="#schema-agreement">Schema agreement
 </a></li>
 </ul>
@@ -147,6 +149,13 @@
   
   
   
+  <li>
+    <a href="../../changelog/">Changelog <small>page</small></a>
+  </li>
+  
+  
+  
+  
   <li class="active">
     <a href="../">Features <small>page</small></a>
     <ul class="nav nav-pills nav-stacked">
@@ -155,6 +164,20 @@
   
   <li>
     <a href="../address_resolution/">Address resolution <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../async/">Asynchronous programming <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../compression/">Compression <small>page</small></a>
   </li>
   
   
@@ -197,7 +220,21 @@
   
   
   <li>
+    <a href="../ssl/">SSL <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
     <a href="../speculative_execution/">Speculative query execution <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../statements/">Statements <small>page</small></a>
   </li>
   
   
@@ -210,6 +247,20 @@
   
 </ul>
 
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../../faq/">Frequently Asked Questions <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../../upgrade_guide/">Upgrade guide <small>page</small></a>
   </li>
   
   
@@ -250,6 +301,24 @@ instance…) changes the schema, the driver gets notified by Cassandra
 via a push notification. It refreshes the schema directly (there is no
 need to wait for schema agreement since Cassandra has already done it).</li>
 </ul>
+
+<h4 id="subscribing-to-schema-changes" class="target">Subscribing to schema changes<a class="anchor" href="#subscribing-to-schema-changes" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h4>
+
+<p>Users interested in being notified of schema changes can implement the 
+<a href="http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/SchemaChangeListener.html">SchemaChangeListener</a> interface.</p>
+
+<p>Every listener must <a href="http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/Cluster.html#register(com.datastax.driver.core.SchemaChangeListener)">be registered</a> against a <code>Cluster</code> instance:</p>
+<pre class="highlight"><code><span class="n">Cluster</span> <span class="n">cluster</span> <span class="o">=</span> <span class="o">...</span>
+<span class="n">SchemaChangeListener</span> <span class="n">myListener</span> <span class="o">=</span> <span class="o">...</span>
+<span class="n">cluster</span><span class="o">.</span><span class="na">register</span><span class="o">(</span><span class="n">myListener</span><span class="o">);</span>
+</code></pre>
+<p>Once registered, the listener will be notified of all schema changes detected by the driver,
+regardless of where they originate from.</p>
+
+<p>Note that it is preferable to register a listener only <em>after</em> the cluster is fully initialized,
+otherwise the listener could be notified with a great deal of “Added” events as
+the driver builds the schema metadata from scratch for the first time.</p>
 
 <h4 id="schema-agreement" class="target">Schema agreement<a class="anchor" href="#schema-agreement" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h4>

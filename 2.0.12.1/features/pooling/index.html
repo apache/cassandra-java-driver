@@ -42,7 +42,7 @@
             <div class="col-md-8">
               <form id="search" class="form-search dropdown visible-lg-block" ng-controller="search" ng-class="{open: hasResults}" role="search" ng-submit="submit()" data-spy="affix" data-offset-top="130">
                 <div class="form-group has-feedback">
-                  <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.0.10.1')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+                  <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('2.0.12.1')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
                 </div>
                 <ul class="dropdown-menu search-results" role="menu">
                   <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
@@ -63,7 +63,7 @@
               <li>
                 <div class="btn-group">
                   <button id="current-version" class="btn btn-default btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    2.0.10.1
+                    2.0.12.1
                     <span class="caret"></span>
                   </button>
                   <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
@@ -78,11 +78,11 @@
                   
                     <li><a href="../../../2.1.7/features/pooling/">2.1.7</a></li>
                   
+                    <li class="disabled"><a href="./">2.0.12.1</a></li>
+                  
                     <li><a href="../../../2.0.12/features/pooling/">2.0.12</a></li>
                   
                     <li><a href="../../../2.0.11/features/pooling/">2.0.11</a></li>
-                  
-                    <li class="disabled"><a href="./">2.0.10.1</a></li>
                   
                   </ul>
                 </div>
@@ -120,6 +120,8 @@
 </a><ul class="nav nav-pills nav-stacked">
 <li><a href="#pool-size">Pool size
 </a></li>
+<li><a href="#dynamic-resizing">Dynamic resizing
+</a></li>
 <li><a href="#heartbeat">Heartbeat
 </a></li>
 <li><a href="#acquisition-timeout">Acquisition timeout
@@ -151,6 +153,13 @@
   
   
   
+  <li>
+    <a href="../../changelog/">Changelog <small>page</small></a>
+  </li>
+  
+  
+  
+  
   <li class="active">
     <a href="../">Features <small>page</small></a>
     <ul class="nav nav-pills nav-stacked">
@@ -159,6 +168,20 @@
   
   <li>
     <a href="../address_resolution/">Address resolution <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../async/">Asynchronous programming <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../compression/">Compression <small>page</small></a>
   </li>
   
   
@@ -201,7 +224,21 @@
   
   
   <li>
+    <a href="../ssl/">SSL <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
     <a href="../speculative_execution/">Speculative query execution <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../statements/">Statements <small>page</small></a>
   </li>
   
   
@@ -214,6 +251,20 @@
   
 </ul>
 
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../../faq/">Frequently Asked Questions <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../../upgrade_guide/">Upgrade guide <small>page</small></a>
   </li>
   
   
@@ -294,16 +345,41 @@ host is in the same datacenter or not).</p>
     <span class="o">.</span><span class="na">setCoreConnectionsPerHost</span><span class="o">(</span><span class="n">HostDistance</span><span class="o">.</span><span class="na">REMOTE</span><span class="o">,</span> <span class="mi">2</span><span class="o">)</span>
     <span class="o">.</span><span class="na">setMaxConnectionsPerHost</span><span class="o">(</span> <span class="n">HostDistance</span><span class="o">.</span><span class="na">REMOTE</span><span class="o">,</span> <span class="mi">4</span><span class="o">);</span>
 </code></pre>
-<p>Note: the setters always enforce core &lt;= max, which can get annoying
-when you try to set both values at once.
-<a href="https://datastax-oss.atlassian.net/browse/JAVA-662">JAVA-662</a> will
-address this issue.</p>
+<p>For convenience, core and max can be set simultaneously:</p>
+<pre class="highlight"><code><span class="n">poolingOptions</span>
+    <span class="o">.</span><span class="na">setConnectionsPerHost</span><span class="o">(</span><span class="n">HostDistance</span><span class="o">.</span><span class="na">LOCAL</span><span class="o">,</span>  <span class="mi">4</span><span class="o">,</span> <span class="mi">10</span><span class="o">)</span>
+    <span class="o">.</span><span class="na">setConnectionsPerHost</span><span class="o">(</span><span class="n">HostDistance</span><span class="o">.</span><span class="na">REMOTE</span><span class="o">,</span> <span class="mi">2</span><span class="o">,</span> <span class="mi">4</span><span class="o">);</span>
+</code></pre>
+<p>The default settings are:</p>
 
-<p><a href="http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/PoolingOptions.html#setMaxSimultaneousRequestsPerConnectionThreshold(com.datastax.driver.core.HostDistance,%20int)">PoolingOptions.setMaxSimultaneousRequestsPerConnectionThreshold</a> 
-has a slightly misleading name: it does not limit the number of requests per
-connection, but only determines the threshold that triggers the creation
-of a new connection when the pool is not at its maximum capacity. In
-general, you shouldn’t have to change its default value.</p>
+<ul>
+<li>
+<code>LOCAL</code> hosts: core = 2, max = 8</li>
+<li>
+<code>REMOTE</code> hosts: core = 1, max = 2</li>
+</ul>
+
+<h4 id="dynamic-resizing" class="target">Dynamic resizing<a class="anchor" href="#dynamic-resizing" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h4>
+
+<p>If core != max, the pool will resize automatically to adjust to the
+current activity on the host.</p>
+
+<p>When activity goes up and there are <em>n</em> connections with n &lt; max, the driver
+will add a connection when the number of concurrent requests is more than
+(n - 1) * 128 + <a href="http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/PoolingOptions.html#setMaxSimultaneousRequestsPerConnectionThreshold(com.datastax.driver.core.HostDistance,%20int)">PoolingOptions.setMaxSimultaneousRequestsPerConnectionThreshold</a>
+(in layman’s terms, when all but the last connection are full and the last
+connection is above the threshold).</p>
+
+<p>When activity goes down, the driver will “trash” connections if the maximum
+number of requests in a 10 second time period can be satisfied by less than
+the number of connections opened. Trashed connections are kept open but do
+not accept new requests. After a given timeout (defined by
+<a href="http://docs.datastax.com/en/drivers/java/2.0/com/datastax/driver/core/PoolingOptions.html#setIdleTimeoutSeconds(int)">PoolingOptions.setIdleTimeoutSeconds</a>), trashed connections are closed
+and removed. If during that idle period activity increases again, those
+connections will be resurrected back into the active pool and reused. The
+main intent of that is to not constantly recreate connections if activity
+changes quickly over an interval.</p>
 
 <h4 id="heartbeat" class="target">Heartbeat<a class="anchor" href="#heartbeat" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h4>
