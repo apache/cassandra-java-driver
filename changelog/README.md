@@ -2,7 +2,8 @@
 
 ### 2.1.10.1 (in progress)
 
-[bug] JAVA-1152: Fix NPE at ControlConnection.refreshNodeListAndTokenMap().
+- [bug] JAVA-1152: Fix NPE at ControlConnection.refreshNodeListAndTokenMap().
+- [bug] JAVA-1156: Fix NPE at TableMetadata.equals().
 
 
 ### 2.1.10

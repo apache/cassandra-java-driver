@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core;
 
+import com.google.common.base.Objects;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
@@ -394,39 +395,21 @@ public class TableMetadata {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o)
-            return true;
-        if (o == null || getClass() != o.getClass())
-            return false;
-
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
         TableMetadata that = (TableMetadata) o;
-
-        if (!name.equals(that.name))
-            return false;
-        if (!partitionKey.equals(that.partitionKey))
-            return false;
-        if (!clusteringColumns.equals(that.clusteringColumns))
-            return false;
-        if (!columns.equals(that.columns))
-            return false;
-        if (!options.equals(that.options))
-            return false;
-        if (!clusteringOrder.equals(that.clusteringOrder))
-            return false;
-        return cassandraVersion.equals(that.cassandraVersion);
-
+        return Objects.equal(name, that.name) &&
+                Objects.equal(partitionKey, that.partitionKey) &&
+                Objects.equal(clusteringColumns, that.clusteringColumns) &&
+                Objects.equal(columns, that.columns) &&
+                Objects.equal(options, that.options) &&
+                Objects.equal(clusteringOrder, that.clusteringOrder) &&
+                Objects.equal(cassandraVersion, that.cassandraVersion);
     }
 
     @Override
     public int hashCode() {
-        int result = name.hashCode();
-        result = 31 * result + partitionKey.hashCode();
-        result = 31 * result + clusteringColumns.hashCode();
-        result = 31 * result + columns.hashCode();
-        result = 31 * result + options.hashCode();
-        result = 31 * result + clusteringOrder.hashCode();
-        result = 31 * result + cassandraVersion.hashCode();
-        return result;
+        return Objects.hashCode(name, partitionKey, clusteringColumns, columns, options, clusteringOrder, cassandraVersion);
     }
 
     private String asCQLQuery(boolean formatted) {
