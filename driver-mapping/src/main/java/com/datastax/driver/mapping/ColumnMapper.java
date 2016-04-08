@@ -54,10 +54,14 @@ abstract class ColumnMapper<T> {
 
     abstract void setValue(T entity, Object value);
 
-    String getColumnName() {
-        return kind == Kind.COMPUTED
+    public String getColumnName(boolean quoted) {
+        return kind == Kind.COMPUTED || !quoted
                 ? columnName
                 : Metadata.quote(columnName);
+    }
+    
+    public String getColumnName() {
+        return getColumnName(true);
     }
 
     String getAlias() {
