@@ -1,5 +1,10 @@
 ## Changelog
 
+### 2.1.10.1 (in progress)
+
+[bug] JAVA-1152: Fix NPE at ControlConnection.refreshNodeListAndTokenMap().
+
+
 ### 2.1.10
 
 - [bug] JAVA-988: Metadata.handleId should handle escaped double quotes.
