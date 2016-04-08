@@ -1,6 +1,6 @@
 ## Changelog
 
-### 2.0.13 (in progress)
+### 2.0.12.1
 
 - [bug] JAVA-994: Don't call on(Up|Down|Add|Remove) methods if Cluster is closed/closing.
 - [improvement] JAVA-805: Document that metrics are null until Cluster is initialized.

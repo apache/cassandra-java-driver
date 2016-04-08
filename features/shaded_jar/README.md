@@ -12,7 +12,7 @@ package name:
 <dependency>
   <groupId>${project.groupId}</groupId>
   <artifactId>cassandra-driver-core</artifactId>
-  <version>2.0.12</version>
+  <version>2.0.12.1</version>
   <classifier>shaded</classifier>
   <!-- Because the shaded JAR uses the original POM, you still need
        to exclude this dependency explicitly: -->
