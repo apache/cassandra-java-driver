@@ -342,7 +342,7 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
          * When used in conjunction with {@link #withUsedHostsPerRemoteDc(int) usedHostsPerRemoteDc} > 0, this overrides the policy of
          * never using remote datacenter nodes for {@code LOCAL_ONE} and {@code LOCAL_QUORUM} queries. It is however inadvisable to do
          * so in almost all cases, as this would potentially break consistency guarantees and if you are fine with that, it's probably
-         * better to use a weaker consitency like {@code ONE}, {@code TWO} or {@code THREE}. As such, this method should generally be
+         * better to use a weaker consistency like {@code ONE}, {@code TWO} or {@code THREE}. As such, this method should generally be
          * avoided; use it only if you know and understand what you do.
          *
          * @return this builder.

@@ -37,6 +37,7 @@ class MethodMapper {
     private final ConsistencyLevel consistency;
     private final int fetchSize;
     private final boolean tracing;
+    private final Boolean idempotent;
 
     private Session session;
     private PreparedStatement statement;
@@ -46,13 +47,14 @@ class MethodMapper {
     private boolean mapOne;
     private boolean async;
 
-    MethodMapper(Method method, String queryString, ParamMapper[] paramMappers, ConsistencyLevel consistency, int fetchSize, boolean enableTracing) {
+    MethodMapper(Method method, String queryString, ParamMapper[] paramMappers, ConsistencyLevel consistency, int fetchSize, boolean enableTracing, Boolean idempotent) {
         this.method = method;
         this.queryString = queryString;
         this.paramMappers = paramMappers;
         this.consistency = consistency;
         this.fetchSize = fetchSize;
         this.tracing = enableTracing;
+        this.idempotent = idempotent;
     }
 
     public void prepare(MappingManager manager, PreparedStatement ps) {
@@ -151,6 +153,8 @@ class MethodMapper {
             bs.setFetchSize(fetchSize);
         if (tracing)
             bs.enableTracing();
+        if (idempotent != null)
+            bs.setIdempotent(idempotent);
 
         if (returnStatement)
             return bs;

@@ -19,9 +19,10 @@ connection to handle multiple simultaneous requests:
   trigger a callback that will complete the corresponding query (this is
   the point where your `ResultSetFuture` will get completed).
 
-To increase the number of concurrent requests, we use a pool of
-connections to each host.  **For each `Session` object, there is one
-connection pool per connected host**.
+You don't need to manage connections yourself. You simply interact with a `Session` object, which takes care of it.
+
+**For each `Session`, there is one connection pool per connected host** (a host is connected when it is up and
+not ignored by the [load balancing policy](../load_balancing)).
 
 The number of connections per pool is configurable (this will be
 described in the next section).  The number of stream ids depends on the

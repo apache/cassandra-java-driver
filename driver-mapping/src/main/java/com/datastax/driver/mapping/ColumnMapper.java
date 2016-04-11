@@ -24,9 +24,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 abstract class ColumnMapper<T> {
 
-    public enum Kind {PARTITION_KEY, CLUSTERING_COLUMN, REGULAR, COMPUTED}
-
-    ;
+    enum Kind {PARTITION_KEY, CLUSTERING_COLUMN, REGULAR, COMPUTED}
 
     private final String columnName;
     private final String alias;
@@ -52,17 +50,17 @@ abstract class ColumnMapper<T> {
         this.customCodec = AnnotationParser.customCodec(field);
     }
 
-    public abstract Object getValue(T entity);
+    abstract Object getValue(T entity);
 
-    public abstract void setValue(T entity, Object value);
+    abstract void setValue(T entity, Object value);
 
-    public String getColumnName() {
+    String getColumnName() {
         return kind == Kind.COMPUTED
                 ? columnName
                 : Metadata.quote(columnName);
     }
 
-    public String getAlias() {
+    String getAlias() {
         return alias;
     }
 

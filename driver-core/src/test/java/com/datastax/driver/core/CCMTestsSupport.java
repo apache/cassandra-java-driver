@@ -213,7 +213,17 @@ public class CCMTestsSupport {
         }
 
         @Override
-        public void setWorkload(int node, Workload workload) {
+        public void updateDSENodeConfig(int n, String key, Object value) {
+            throw new UnsupportedOperationException("This CCM cluster is read-only");
+        }
+
+        @Override
+        public void updateDSENodeConfig(int n, Map<String, Object> configs) {
+            throw new UnsupportedOperationException("This CCM cluster is read-only");
+        }
+
+        @Override
+        public void setWorkload(int node, Workload... workload) {
             throw new UnsupportedOperationException("This CCM cluster is read-only");
         }
 
@@ -351,17 +361,17 @@ public class CCMTestsSupport {
             return args;
         }
 
-        private List<Workload> workloads() {
+        private List<Workload[]> workloads() {
             int total = 0;
             for (int perDc : numberOfNodes())
                 total += perDc;
-            List<Workload> workloads = new ArrayList<Workload>(Collections.<Workload>nCopies(total, null));
+            List<Workload[]> workloads = new ArrayList<Workload[]>(Collections.<Workload[]>nCopies(total, null));
             for (int i = annotations.size() - 1; i >= 0; i--) {
                 CCMConfig ann = annotations.get(i);
-                Workload[] annWorkloads = ann.workloads();
+                CCMWorkload[] annWorkloads = ann.workloads();
                 for (int j = 0; j < annWorkloads.length; j++) {
-                    Workload workload = annWorkloads[j];
-                    workloads.set(j, workload);
+                    CCMWorkload nodeWorkloads = annWorkloads[j];
+                    workloads.set(j, nodeWorkloads.value());
                 }
             }
             return workloads;
@@ -417,32 +427,32 @@ public class CCMTestsSupport {
                 ccmBuilder = ccmProvider(testInstance);
                 if (ccmBuilder == null) {
                     ccmBuilder = CCMBridge.builder().withNodes(numberOfNodes()).notStarted();
-                    if (version() != null)
-                        ccmBuilder.withVersion(version());
-                    if (dse())
-                        ccmBuilder.withDSE();
-                    if (ssl())
-                        ccmBuilder.withSSL();
-                    if (auth())
-                        ccmBuilder.withAuth();
-                    for (Map.Entry<String, Object> entry : config().entrySet()) {
-                        ccmBuilder.withCassandraConfiguration(entry.getKey(), entry.getValue());
-                    }
-                    for (Map.Entry<String, Object> entry : dseConfig().entrySet()) {
-                        ccmBuilder.withDSEConfiguration(entry.getKey(), entry.getValue());
-                    }
-                    for (String option : startOptions()) {
-                        ccmBuilder.withCreateOptions(option);
-                    }
-                    for (String arg : jvmArgs()) {
-                        ccmBuilder.withJvmArgs(arg);
-                    }
-                    List<Workload> workloads = workloads();
-                    for (int i = 0; i < workloads.size(); i++) {
-                        Workload workload = workloads.get(i);
-                        if (workload != null)
-                            ccmBuilder.withWorkload(i + 1, workload);
-                    }
+                }
+                if (version() != null)
+                    ccmBuilder.withVersion(version());
+                if (dse())
+                    ccmBuilder.withDSE();
+                if (ssl())
+                    ccmBuilder.withSSL();
+                if (auth())
+                    ccmBuilder.withAuth();
+                for (Map.Entry<String, Object> entry : config().entrySet()) {
+                    ccmBuilder.withCassandraConfiguration(entry.getKey(), entry.getValue());
+                }
+                for (Map.Entry<String, Object> entry : dseConfig().entrySet()) {
+                    ccmBuilder.withDSEConfiguration(entry.getKey(), entry.getValue());
+                }
+                for (String option : startOptions()) {
+                    ccmBuilder.withCreateOptions(option);
+                }
+                for (String arg : jvmArgs()) {
+                    ccmBuilder.withJvmArgs(arg);
+                }
+                List<Workload[]> workloads = workloads();
+                for (int i = 0; i < workloads.size(); i++) {
+                    Workload[] workload = workloads.get(i);
+                    if (workload != null)
+                        ccmBuilder.withWorkload(i + 1, workload);
                 }
             }
             return ccmBuilder;
@@ -760,6 +770,7 @@ public class CCMTestsSupport {
             }
         }
     }
+
     /**
      * Signals that the test has encountered an unexpected error.
      * <p/>

@@ -1,5 +1,32 @@
 ## Changelog
 
+### 3.0.1 (in progress)
+
+- [bug] JAVA-1132: Executing bound statement with no variables results in exception with protocol v1.
+- [improvement] JAVA-1040: SimpleStatement parameters support in QueryLogger.
+
+Merged from 2.1 branch:
+
+- [improvement] JAVA-1011: Expose PoolingOptions default values.
+- [improvement] JAVA-630: Don't process DOWN events for nodes that have active connections.
+- [improvement] JAVA-851: Improve UUIDs javadoc with regard to user-provided timestamps.
+- [improvement] JAVA-979: Update javadoc for RegularStatement toString() and getQueryString() to indicate that consistency level and other parameters are not maintained in the query string.
+- [bug] JAVA-1068: Unwrap StatementWrappers when hashing the paging state.
+- [improvement] JAVA-1021: Improve error message when connect() is called with an invalid keyspace name.
+- [improvement] JAVA-879: Mapper.map() accepts mapper-generated and user queries.
+- [bug] JAVA-1100: Exception when connecting with shaded java driver in OSGI
+- [bug] JAVA-1064: getTable create statement doesn't properly handle quotes in primary key.
+- [bug] JAVA-1089: Set LWT made from BuiltStatements to non-idempotent.
+- [improvement] JAVA-923: Position idempotent flag on object mapper queries.
+- [bug] JAVA-1070: The Mapper should not prepare queries synchronously.
+- [new feature] JAVA-982: Introduce new method ConsistencyLevel.isSerial().
+- [bug] JAVA-764: Retry with the normal consistency level (not the serial one) when a write times out on the Paxos phase.
+- [improvement] JAVA-852: Ignore peers with null entries during discovery.
+- [bug] JAVA-1005: DowngradingConsistencyRetryPolicy does not work with EACH_QUORUM when 1 DC is down.
+- [bug] JAVA-1002: Avoid deadlock when re-preparing a statement on other hosts.
+- [bug] JAVA-1072: Ensure defunct connections are properly evicted from the pool.
+
+
 ### 3.0.0
 
 - [bug] JAVA-1034: fix metadata parser for collections of custom types.
@@ -263,16 +290,54 @@ Merged from 2.1 branch:
 - [improvement] JAVA-782: Unify "Target" enum for schema elements.
 
 
-### 2.1.10 (in progress)
+### 2.1.10
 
 - [bug] JAVA-988: Metadata.handleId should handle escaped double quotes.
+- [bug] JAVA-983: QueryBuilder cannot handle collections containing function calls.
+- [improvement] JAVA-863: Idempotence propagation in PreparedStatements.
+- [bug] JAVA-937: TypeCodec static initializers not always correctly executed.
+- [improvement] JAVA-989: Include keyspace name when invalid replication found when generating token map.
+- [improvement] JAVA-664: Reduce heap consumption for TokenMap.
 - [improvement] JAVA-1030: Log token to replica map computation times.
 - [bug] JAVA-1039: Minor bugs in Event Debouncer.
+- [improvement] JAVA-843: Disable frozen checks in mapper.
+- [improvement] JAVA-833: Improve message when a nested type can't be serialized.
+- [improvement] JAVA-1011: Expose PoolingOptions default values.
+- [improvement] JAVA-630: Don't process DOWN events for nodes that have active connections.
+- [improvement] JAVA-851: Improve UUIDs javadoc with regard to user-provided timestamps.
+- [improvement] JAVA-979: Update javadoc for RegularStatement toString() and getQueryString() to indicate that consistency level and other parameters are not maintained in the query string.
+- [improvement] JAVA-1038: Fetch node info by rpc_address if its broadcast_address is not in system.peers.
+- [improvement] JAVA-974: Validate accessor parameter types against bound statement.
+- [bug] JAVA-1068: Unwrap StatementWrappers when hashing the paging state.
+- [bug] JAVA-831: Mapper can't load an entity where the PK is a UDT.
+- [improvement] JAVA-1021: Improve error message when connect() is called with an invalid keyspace name.
+- [improvement] JAVA-879: Mapper.map() accepts mapper-generated and user queries.
+- [bug] JAVA-1100: Exception when connecting with shaded java driver in OSGI
+- [bug] JAVA-819: Expose more errors in RetryPolicy + provide idempotent-aware wrapper.
+- [improvement] JAVA-1040: SimpleStatement parameters support in QueryLogger.
+- [bug] JAVA-1064: getTable create statement doesn't properly handle quotes in primary key.
+- [improvement] JAVA-888: Add cluster-wide percentile tracker.
+- [improvement] JAVA-963: Automatically register PercentileTracker from components that use it.
+- [bug] JAVA-1089: Set LWT made from BuiltStatements to non-idempotent.
+- [improvement] JAVA-923: Position idempotent flag on object mapper queries.
+- [new feature] JAVA-1019: SchemaBuilder support for CREATE/ALTER/DROP KEYSPACE.
+- [bug] JAVA-1070: The Mapper should not prepare queries synchronously.
+- [new feature] JAVA-982: Introduce new method ConsistencyLevel.isSerial().
+- [bug] JAVA-764: Retry with the normal consistency level (not the serial one) when a write times out on the Paxos phase.
+- [bug] JAVA-727: Allow monotonic timestamp generators to drift in the future + use microsecond precision when possible.
+- [improvement] JAVA-444: Add Java process information to UUIDs.makeNode() hash.
+- [improvement] JAVA-977: Preserve original cause when BuiltStatement value can't be serialized.
+- [bug] JAVA-1094: Backport TypeCodec parse and format fixes from 3.0.
+- [improvement] JAVA-852: Ignore peers with null entries during discovery.
+- [bug] JAVA-1132: Executing bound statement with no variables results in exception with protocol v1.
+- [bug] JAVA-1005: DowngradingConsistencyRetryPolicy does not work with EACH_QUORUM when 1 DC is down.
+- [bug] JAVA-1002: Avoid deadlock when re-preparing a statement on other hosts.
 
 Merged from 2.0 branch:
 
 - [bug] JAVA-994: Don't call on(Up|Down|Add|Remove) methods if Cluster is closed/closing.
 - [improvement] JAVA-805: Document that metrics are null until Cluster is initialized.
+- [bug] JAVA-1072: Ensure defunct connections are properly evicted from the pool.
 
 
 ### 2.1.9
@@ -598,6 +663,7 @@ Merged from 2.0 branch: everything up to 2.0.3 (included), and the following.
 
 - [bug] JAVA-994: Don't call on(Up|Down|Add|Remove) methods if Cluster is closed/closing.
 - [improvement] JAVA-805: Document that metrics are null until Cluster is initialized.
+- [bug] JAVA-1072: Ensure defunct connections are properly evicted from the pool.
 
 ### 2.0.12
 
