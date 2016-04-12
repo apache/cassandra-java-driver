@@ -506,11 +506,11 @@ class Connection {
         return write(callback, -1, true);
     }
 
-    ResponseHandler write(ResponseCallback callback, long readTimeoutMillis, boolean startTimeout) throws ConnectionException, BusyConnectionException {
+    ResponseHandler write(ResponseCallback callback, long statementReadTimeoutMillis, boolean startTimeout) throws ConnectionException, BusyConnectionException {
 
         Message.Request request = callback.request();
 
-        ResponseHandler handler = new ResponseHandler(this, readTimeoutMillis, callback);
+        ResponseHandler handler = new ResponseHandler(this, statementReadTimeoutMillis, callback);
         dispatcher.add(handler);
         request.setStreamId(handler.streamId);
 
@@ -1228,9 +1228,9 @@ class Connection {
 
         private final AtomicBoolean isCancelled = new AtomicBoolean();
 
-        ResponseHandler(Connection connection, long readTimeoutMillis, ResponseCallback callback) throws BusyConnectionException {
+        ResponseHandler(Connection connection, long statementReadTimeoutMillis, ResponseCallback callback) throws BusyConnectionException {
             this.connection = connection;
-            this.readTimeoutMillis = (readTimeoutMillis > 0) ? readTimeoutMillis : connection.factory.getReadTimeoutMillis();
+            this.readTimeoutMillis = (statementReadTimeoutMillis >= 0) ? statementReadTimeoutMillis : connection.factory.getReadTimeoutMillis();
             this.streamId = connection.dispatcher.streamIdHandler.next();
             if (streamId == -1)
                 throw new BusyConnectionException(connection.address);

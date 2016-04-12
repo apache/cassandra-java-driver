@@ -123,11 +123,9 @@ public class SocketOptions {
      * </li>
      * </ul>
      * <p/>
-     * Setting a value of 0 disables read timeouts.
-     * <p/>
-     * The default value is {@link #DEFAULT_READ_TIMEOUT_MILLIS}.
+     * If you don't call this method, the default value is {@link #DEFAULT_READ_TIMEOUT_MILLIS}.
      *
-     * @param readTimeoutMillis the timeout to set.
+     * @param readTimeoutMillis the timeout to set. If it is less than or equal to 0, read timeouts are disabled.
      * @return this {@code SocketOptions}.
      */
     public SocketOptions setReadTimeoutMillis(int readTimeoutMillis) {

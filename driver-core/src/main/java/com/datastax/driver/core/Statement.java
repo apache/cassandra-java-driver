@@ -19,6 +19,7 @@ import com.datastax.driver.core.exceptions.PagingStateException;
 import com.datastax.driver.core.exceptions.UnsupportedProtocolVersionException;
 import com.datastax.driver.core.policies.RetryPolicy;
 import com.datastax.driver.core.querybuilder.BuiltStatement;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 
 import java.nio.ByteBuffer;
@@ -330,10 +331,12 @@ public abstract class Statement {
      * You should override this only for statements for which the coordinator may allow a longer server-side
      * timeout (for example aggregation queries).
      *
-     * @param readTimeoutMillis the timeout to set. Must be greater than 0 (or the default will be used).
+     * @param readTimeoutMillis the timeout to set. Negative values are not allowed. If it is 0, the read timeout will
+     *                          be disabled for this statement.
      * @return this {@code Statement} object.
      */
     public Statement setReadTimeoutMillis(int readTimeoutMillis) {
+        Preconditions.checkArgument(readTimeoutMillis >= 0, "read timeout must be >= 0");
         this.readTimeoutMillis = readTimeoutMillis;
         return this;
     }
