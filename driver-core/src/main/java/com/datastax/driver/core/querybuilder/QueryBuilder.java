@@ -277,6 +277,26 @@ public final class QueryBuilder {
     }
 
     /**
+     * Creates an "equal" where clause for a group of clustering columns.
+     * <p/>
+     * For instance, {@code eq(Arrays.asList("a", "b"), Arrays.asList(2, "test"))}
+     * will generate the CQL WHERE clause {@code (a, b) = (2, 'test') }.
+     * <p/>
+     * Please note that this variant is only supported starting with Cassandra 2.0.6.
+     *
+     * @param names  the column names
+     * @param values the values
+     * @return the corresponding where clause.
+     * @throws IllegalArgumentException if {@code names.size() != values.size()}.
+     */
+    public static Clause eq(List<String> names, List<?> values) {
+        if (names.size() != values.size())
+            throw new IllegalArgumentException(String.format("The number of names (%d) and values (%d) don't match", names.size(), values.size()));
+
+        return new Clause.CompoundClause(names, "=", values);
+    }
+
+    /**
      * Create an "in" where clause stating the provided column must be equal
      * to one of the provided values.
      *
@@ -298,6 +318,26 @@ public final class QueryBuilder {
      */
     public static Clause in(String name, List<?> values) {
         return new Clause.InClause(name, values);
+    }
+
+    /**
+     * Creates an "in" where clause for a group of clustering columns.
+     * <p/>
+     * For instance, {@code in(Arrays.asList("a", "b"), Arrays.asList(Arrays.asList(1, 2), Arrays.asList("foo", "bar")))}
+     * will generate the CQL WHERE clause {@code (a, b) IN ((1, 2), ('foo', 'bar')) }.
+     * <p/>
+     * Please note that this variant is only supported starting with Cassandra 2.0.9.
+     *
+     * @param names  the column names
+     * @param values the values
+     * @return the corresponding where clause.
+     * @throws IllegalArgumentException if {@code names.size() != values.size()}.
+     */
+    public static Clause in(List<String> names, List<List<?>> values) {
+        if (names.size() != values.size())
+            throw new IllegalArgumentException(String.format("The number of names (%d) and values (%d) don't match", names.size(), values.size()));
+
+        return new Clause.CompoundInClause(names, values);
     }
 
     /**

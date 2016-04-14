@@ -224,4 +224,63 @@ public abstract class Clause extends Utils.Appendeable {
             sb.append(")");
         }
     }
+
+    static class CompoundInClause extends Clause {
+        private final List<String> names;
+        private final List<List<?>> valueLists;
+
+        public CompoundInClause(List<String> names, List<List<?>> valueLists) {
+            this.names = names;
+            this.valueLists = valueLists;
+        }
+
+        @Override
+        String name() {
+            // This is only used for routing key purpose, and so far CompoundClause
+            // are not allowed for the partitionKey anyway
+            return null;
+        }
+
+        @Override
+        Object firstValue() {
+            // This is only used for routing key purpose, and so far CompoundClause
+            // are not allowed for the partitionKey anyway
+            return null;
+        }
+
+        @Override
+        boolean containsBindMarker() {
+            for (List<?> values : valueLists)
+                for (Object value : values)
+                    if (Utils.containsBindMarker(value))
+                        return true;
+            return false;
+        }
+
+        @Override
+        void appendTo(StringBuilder sb, List<Object> variables, CodecRegistry codecRegistry) {
+            sb.append("(");
+            for (int i = 0; i < names.size(); i++) {
+                if (i > 0)
+                    sb.append(",");
+                Utils.appendName(names.get(i), sb);
+            }
+            sb.append(")").append(" IN ").append("(");
+            for (int i = 0; i < valueLists.size(); i++) {
+                if (i > 0)
+                    sb.append(",");
+
+                List<?> values = valueLists.get(i);
+
+                // Special case when there is only one bind marker: "IN ?" instead of "IN (?)"
+                if (values.size() == 1 && values.get(0) instanceof BindMarker) {
+                    sb.append(values.get(0));
+                } else {
+                    sb.append("(");
+                    Utils.joinAndAppendValues(sb, codecRegistry, ",", values, variables).append(')');
+                }
+            }
+            sb.append(")");
+        }
+    }
 }
