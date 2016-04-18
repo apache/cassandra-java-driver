@@ -30,10 +30,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.datastax.driver.core.BatchStatement.Type.COUNTER;
 import static com.datastax.driver.core.BatchStatement.Type.UNLOGGED;
@@ -895,7 +892,7 @@ public class QueryLoggerTest extends CCMTestsSupport {
         cluster().register(queryLogger);
         // when
         String query = "UPDATE test SET c_int = :c_int WHERE pk = :pk";
-        Map<String, Object> namedValues = new HashMap<String, Object>();
+        Map<String, Object> namedValues = new LinkedHashMap<String, Object>();
         namedValues.put("c_int", 123456);
         namedValues.put("pk", 42);
         SimpleStatement ss = new SimpleStatement(query, namedValues);
@@ -905,8 +902,8 @@ public class QueryLoggerTest extends CCMTestsSupport {
         assertThat(line)
                 .contains("Query completed normally")
                 .contains(ipOfNode(1))
-                .contains("pk:42")
-                .doesNotContain("c_int:123456")
+                .contains("c_int:123456")
+                .doesNotContain("pk:42")
                 .contains(FURTHER_PARAMS_OMITTED);
     }
 
