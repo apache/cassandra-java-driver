@@ -1008,8 +1008,8 @@ public class Cluster implements Closeable {
          * generated server-side, and setting a generator through this method will have
          * no effect.
          * <p/>
-         * If no generator is set through this method, the driver will default to the
-         * legacy server-side behavior by using {@link ServerSideTimestampGenerator}.
+         * If no generator is set through this method, the driver will default to
+         * client-side timestamps by using {@link AtomicMonotonicTimestampGenerator}.
          *
          * @param timestampGenerator the generator to use.
          * @return this Builder.
