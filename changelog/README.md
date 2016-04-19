@@ -4,6 +4,7 @@
 
 - [bug] JAVA-1132: Executing bound statement with no variables results in exception with protocol v1.
 - [improvement] JAVA-1040: SimpleStatement parameters support in QueryLogger.
+- [improvement] JAVA-1151: Fail fast if HdrHistogram is not in the classpath.
 
 Merged from 2.1 branch:
 
