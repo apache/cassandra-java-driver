@@ -9,6 +9,7 @@
 - [bug] JAVA-1074: Fix documentation around default timestamp generator.
 - [improvement] JAVA-1109: Document SSLOptions changes in upgrade guide.
 - [improvement] JAVA-1065: Add method to create token from partition key values.
+- [improvement] JAVA-1136: Enable JDK signature check in module driver-extras.
 
 Merged from 2.1 branch:
 
