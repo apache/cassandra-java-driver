@@ -28,8 +28,11 @@ import java.math.BigInteger;
 import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.util.*;
+import java.util.concurrent.Callable;
 
+import static com.datastax.driver.core.ConditionChecker.check;
 import static com.datastax.driver.core.Metadata.quote;
+import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotEquals;
 
@@ -45,12 +48,21 @@ public class UserTypesTest extends CCMTestsSupport {
     private final static List<DataType.Name> DATA_TYPE_NON_PRIMITIVE_NAMES =
             new ArrayList<DataType.Name>(EnumSet.of(DataType.Name.LIST, DataType.Name.SET, DataType.Name.MAP, DataType.Name.TUPLE));
 
+    private final Callable<Boolean> userTableExists = new Callable<Boolean>() {
+        @Override
+        public Boolean call() throws Exception {
+            return cluster().getMetadata().getKeyspace(keyspace).getTable("user") != null;
+        }
+    };
+
     @Override
     public void onTestContextInitialized() {
         String type1 = "CREATE TYPE phone (alias text, number text)";
         String type2 = "CREATE TYPE \"\"\"User Address\"\"\" (street text, \"ZIP\"\"\" int, phones set<frozen<phone>>)";
         String table = "CREATE TABLE user (id int PRIMARY KEY, addr frozen<\"\"\"User Address\"\"\">)";
         execute(type1, type2, table);
+        // Ci tests fail with "unconfigured columnfamily user"
+        check().that(userTableExists).before(5, MINUTES).becomesTrue();
     }
 
     /**

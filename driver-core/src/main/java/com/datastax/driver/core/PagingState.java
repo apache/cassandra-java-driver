@@ -74,6 +74,9 @@ public class PagingState {
         byte[] digest;
         ByteBuffer[] values;
         MessageDigest md;
+        if (statement instanceof StatementWrapper) {
+            statement = ((StatementWrapper) statement).getWrappedStatement();
+        }
         assert !(statement instanceof BatchStatement);
         try {
             md = MessageDigest.getInstance("MD5");

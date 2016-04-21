@@ -113,6 +113,27 @@ public class PagingStateTest extends CCMTestsSupport {
     }
 
     /**
+     * Validates that {@link PagingState} can be reused with a wrapped Statement.
+     *
+     * @test_category paging
+     * @expected_result {@link ResultSet} from the query with the provided {@link PagingState} starts from the
+     * subsequent row from the first query.
+     */
+    @Test(groups = "short")
+    public void should_use_state_with_wrapped_statement() {
+        Statement st = new TestWrapper(new SimpleStatement(String.format("SELECT v FROM test WHERE k='%s'", KEY)));
+        ResultSet result = session().execute(st.setFetchSize(20));
+        int pageSize = result.getAvailableWithoutFetching();
+        String savedPagingStateString = result.getExecutionInfo().getPagingState().toString();
+
+        st = new TestWrapper(new SimpleStatement(String.format("SELECT v FROM test WHERE k='%s'", KEY)));
+        result = session().execute(st.setFetchSize(20).setPagingState(PagingState.fromString(savedPagingStateString)));
+
+        //We have the result starting from the next page we stopped
+        assertThat(result.one().getInt("v")).isEqualTo(pageSize);
+    }
+
+    /**
      * Validates that {@link PagingState} can be reused with the same {@link BoundStatement}.
      *
      * @test_category paging
@@ -224,5 +245,10 @@ public class PagingStateTest extends CCMTestsSupport {
         assertThat(result.one().getInt("v")).isEqualTo(pageSize);
     }
 
+    static class TestWrapper extends StatementWrapper {
+        TestWrapper(Statement wrapped) {
+            super(wrapped);
+        }
+    }
 }
 

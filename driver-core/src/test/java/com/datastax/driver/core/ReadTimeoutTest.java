@@ -58,4 +58,10 @@ public class ReadTimeoutTest extends ScassandraTestBase.PerClassCluster {
         Statement statement = new SimpleStatement(query).setReadTimeoutMillis(200);
         session.execute(statement);
     }
+
+    @Test(groups = "short")
+    public void should_disable_timeout_if_set_to_zero_at_statement_level() {
+        Statement statement = new SimpleStatement(query).setReadTimeoutMillis(0);
+        session.execute(statement);
+    }
 }

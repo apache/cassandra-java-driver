@@ -33,7 +33,7 @@ public class DataProviders {
             @Override
             public boolean apply(ConsistencyLevel input) {
                 // filter out serial CLs.
-                return !input.equals(ConsistencyLevel.SERIAL) && !input.equals(ConsistencyLevel.LOCAL_SERIAL);
+                return !input.isSerial();
             }
         }).iterator();
 

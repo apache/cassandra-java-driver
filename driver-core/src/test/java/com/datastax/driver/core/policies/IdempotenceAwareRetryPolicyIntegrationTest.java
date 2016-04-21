@@ -20,13 +20,15 @@ import com.datastax.driver.core.exceptions.*;
 import org.assertj.core.api.Fail;
 import org.scassandra.http.client.ClosedConnectionConfig;
 import org.scassandra.http.client.PrimingRequest;
+import org.scassandra.http.client.Result;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
-import static org.scassandra.http.client.PrimingRequest.Result.write_request_timeout;
 import static org.scassandra.http.client.PrimingRequest.then;
+import static org.scassandra.http.client.Result.closed_connection;
+import static org.scassandra.http.client.Result.write_request_timeout;
 
 /**
  * Integration test with an IdempotenceAwareRetryPolicy.
@@ -124,7 +126,7 @@ public class IdempotenceAwareRetryPolicyIntegrationTest extends AbstractRetryPol
 
 
     @Test(groups = "short", dataProvider = "serverSideErrors")
-    public void should_not_retry_on_server_error_if_statement_non_idempotent(PrimingRequest.Result error, Class<? extends DriverException> exception) {
+    public void should_not_retry_on_server_error_if_statement_non_idempotent(Result error, Class<? extends DriverException> exception) {
         simulateError(1, error);
         try {
             query();
@@ -143,7 +145,7 @@ public class IdempotenceAwareRetryPolicyIntegrationTest extends AbstractRetryPol
 
     @SuppressWarnings("UnusedParameters")
     @Test(groups = "short", dataProvider = "serverSideErrors")
-    public void should_retry_on_server_error_if_statement_idempotent(PrimingRequest.Result error, Class<? extends DriverException> exception) {
+    public void should_retry_on_server_error_if_statement_idempotent(Result error, Class<? extends DriverException> exception) {
         simulateError(1, error);
         simulateError(2, error);
         simulateError(3, error);
@@ -169,9 +171,9 @@ public class IdempotenceAwareRetryPolicyIntegrationTest extends AbstractRetryPol
 
     @Test(groups = "short", dataProvider = "connectionErrors")
     public void should_not_retry_on_connection_error_if_statement_non_idempotent(ClosedConnectionConfig.CloseType closeType) {
-        simulateError(1, PrimingRequest.Result.closed_connection, new ClosedConnectionConfig(closeType));
-        simulateError(2, PrimingRequest.Result.closed_connection, new ClosedConnectionConfig(closeType));
-        simulateError(3, PrimingRequest.Result.closed_connection, new ClosedConnectionConfig(closeType));
+        simulateError(1, closed_connection, new ClosedConnectionConfig(closeType));
+        simulateError(2, closed_connection, new ClosedConnectionConfig(closeType));
+        simulateError(3, closed_connection, new ClosedConnectionConfig(closeType));
         try {
             query();
             Fail.fail("expected a TransportException");
@@ -193,9 +195,9 @@ public class IdempotenceAwareRetryPolicyIntegrationTest extends AbstractRetryPol
 
     @Test(groups = "short", dataProvider = "connectionErrors")
     public void should_retry_on_connection_error_if_statement_idempotent(ClosedConnectionConfig.CloseType closeType) {
-        simulateError(1, PrimingRequest.Result.closed_connection, new ClosedConnectionConfig(closeType));
-        simulateError(2, PrimingRequest.Result.closed_connection, new ClosedConnectionConfig(closeType));
-        simulateError(3, PrimingRequest.Result.closed_connection, new ClosedConnectionConfig(closeType));
+        simulateError(1, closed_connection, new ClosedConnectionConfig(closeType));
+        simulateError(2, closed_connection, new ClosedConnectionConfig(closeType));
+        simulateError(3, closed_connection, new ClosedConnectionConfig(closeType));
         try {
             session.execute(new SimpleStatement("mock query").setIdempotent(true));
             Fail.fail("expected a TransportException");

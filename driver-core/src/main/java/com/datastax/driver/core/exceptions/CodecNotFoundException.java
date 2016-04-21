@@ -30,13 +30,15 @@ public class CodecNotFoundException extends DriverException {
     private final TypeToken<?> javaType;
 
     public CodecNotFoundException(String msg, DataType cqlType, TypeToken<?> javaType) {
-        super(msg);
-        this.cqlType = cqlType;
-        this.javaType = javaType;
+        this(msg, null, cqlType, javaType);
     }
 
     public CodecNotFoundException(Throwable cause, DataType cqlType, TypeToken<?> javaType) {
-        super(cause);
+        this(null, cause, cqlType, javaType);
+    }
+
+    private CodecNotFoundException(String msg, Throwable cause, DataType cqlType, TypeToken<?>javaType) {
+        super(msg, cause);
         this.cqlType = cqlType;
         this.javaType = javaType;
     }
@@ -47,5 +49,10 @@ public class CodecNotFoundException extends DriverException {
 
     public TypeToken<?> getJavaType() {
         return javaType;
+    }
+
+    @Override
+    public CodecNotFoundException copy() {
+        return new CodecNotFoundException(getMessage(), getCause(), getCqlType(), getJavaType());
     }
 }

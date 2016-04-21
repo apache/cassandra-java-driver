@@ -16,9 +16,11 @@
 package com.datastax.driver.core.querybuilder;
 
 import com.datastax.driver.core.CodecRegistry;
+import com.datastax.driver.core.ColumnMetadata;
 import com.datastax.driver.core.TableMetadata;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -34,21 +36,33 @@ public class Delete extends BuiltStatement {
     private boolean ifExists;
 
     Delete(String keyspace, String table, List<Selector> columns) {
-        super(keyspace);
+        this(keyspace, table, null, null, columns);
+    }
+
+    Delete(TableMetadata table, List<Selector> columns) {
+        this(escapeId(table.getKeyspace().getName()),
+                escapeId(table.getName()),
+                Arrays.asList(new Object[table.getPartitionKey().size()]),
+                table.getPartitionKey(),
+                columns);
+    }
+
+    Delete(String keyspace,
+           String table,
+           List<Object> routingKeyValues,
+           List<ColumnMetadata> partitionKey,
+           List<Selector> columns) {
+        super(keyspace, partitionKey, routingKeyValues);
         this.table = table;
         this.columns = columns;
         this.where = new Where(this);
         this.usings = new Options(this);
         this.conditions = new Conditions(this);
-    }
 
-    Delete(TableMetadata table, List<Selector> columns) {
-        super(table);
-        this.table = escapeId(table.getName());
-        this.columns = columns;
-        this.where = new Where(this);
-        this.usings = new Options(this);
-        this.conditions = new Conditions(this);
+        // This is for JAVA-1089, if the query deletes an element in a list, the statement should be non-idempotent.
+        if (!areIdempotent(columns)) {
+            setNonIdempotentOps();
+        }
     }
 
     @Override
@@ -110,6 +124,9 @@ public class Delete extends BuiltStatement {
      * Adds a conditions clause (IF) to this statement.
      * <p/>
      * This is a shorter/more readable version for {@code onlyIf().and(condition)}.
+     * <p/>
+     * This will configure the statement as non-idempotent, see {@link com.datastax.driver.core.Statement#isIdempotent()}
+     * for more information.
      *
      * @param condition the condition to add.
      * @return the conditions of this query to which more conditions can be added.
@@ -120,6 +137,9 @@ public class Delete extends BuiltStatement {
 
     /**
      * Adds a conditions clause (IF) to this statement.
+     * <p/>
+     * This will configure the statement as non-idempotent, see {@link com.datastax.driver.core.Statement#isIdempotent()}
+     * for more information.
      *
      * @return the conditions of this query to which more conditions can be added.
      */
@@ -161,11 +181,14 @@ public class Delete extends BuiltStatement {
      * Please keep in mind that using this option has a non negligible
      * performance impact and should be avoided when possible.
      * </p>
+     * This will configure the statement as non-idempotent, see {@link com.datastax.driver.core.Statement#isIdempotent()}
+     * for more information.
      *
      * @return this DELETE statement.
      */
     public Delete ifExists() {
         this.ifExists = true;
+        setNonIdempotentOps();
         return this;
     }
 
@@ -189,6 +212,9 @@ public class Delete extends BuiltStatement {
         public Where and(Clause clause) {
             clauses.add(clause);
             statement.maybeAddRoutingKey(clause.name(), clause.firstValue());
+            if (!hasNonIdempotentOps() && !Utils.isIdempotent(clause)) {
+                statement.setNonIdempotentOps();
+            }
             checkForBindMarkers(clause);
             return this;
         }
@@ -354,7 +380,7 @@ public class Delete extends BuiltStatement {
          * @return this in-build DELETE Selection
          */
         public Selection listElt(String columnName, int idx) {
-            columns.add(new CollectionElementSelector(columnName, idx));
+            columns.add(new ListElementSelector(columnName, idx));
             return this;
         }
 
@@ -367,7 +393,7 @@ public class Delete extends BuiltStatement {
          * @return this in-build DELETE Selection
          */
         public Selection listElt(String columnName, BindMarker idx) {
-            columns.add(new CollectionElementSelector(columnName, idx));
+            columns.add(new ListElementSelector(columnName, idx));
             return this;
         }
 
@@ -379,7 +405,7 @@ public class Delete extends BuiltStatement {
          * @return this in-build DELETE Selection
          */
         public Selection setElt(String columnName, Object element) {
-            columns.add(new CollectionElementSelector(columnName, element));
+            columns.add(new SetElementSelector(columnName, element));
             return this;
         }
 
@@ -392,7 +418,7 @@ public class Delete extends BuiltStatement {
          * @return this in-build DELETE Selection
          */
         public Selection setElt(String columnName, BindMarker element) {
-            columns.add(new CollectionElementSelector(columnName, element));
+            columns.add(new SetElementSelector(columnName, element));
             return this;
         }
 
@@ -404,7 +430,7 @@ public class Delete extends BuiltStatement {
          * @return this in-build DELETE Selection
          */
         public Selection mapElt(String columnName, Object key) {
-            columns.add(new CollectionElementSelector(columnName, key));
+            columns.add(new MapElementSelector(columnName, key));
             return this;
         }
     }
@@ -414,7 +440,7 @@ public class Delete extends BuiltStatement {
      * A selector can be either a column name,
      * a list element, a set element or a map entry.
      */
-    static class Selector extends Utils.Appendeable {
+    private static class Selector extends Utils.Appendeable {
 
         private final String columnName;
 
@@ -441,9 +467,9 @@ public class Delete extends BuiltStatement {
     /**
      * A selector representing a list index, a set element or a map key in a DELETE selection clause.
      */
-    static class CollectionElementSelector extends Selector {
+    private static class CollectionElementSelector extends Selector {
 
-        private final Object key;
+        protected final Object key;
 
         CollectionElementSelector(String columnName, Object key) {
             super(columnName);
@@ -463,6 +489,36 @@ public class Delete extends BuiltStatement {
             return Utils.containsBindMarker(key);
         }
 
+    }
+
+    private static class ListElementSelector extends CollectionElementSelector {
+
+        ListElementSelector(String columnName, Object key) {
+            super(columnName, key);
+        }
+    }
+
+    private static class SetElementSelector extends CollectionElementSelector {
+
+        SetElementSelector(String columnName, Object key) {
+            super(columnName, key);
+        }
+    }
+
+    private static class MapElementSelector extends CollectionElementSelector {
+
+        MapElementSelector(String columnName, Object key) {
+            super(columnName, key);
+        }
+    }
+
+    private boolean areIdempotent(List<Selector> selectors) {
+        for (Selector sel : selectors) {
+            if (sel instanceof ListElementSelector) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -494,6 +550,7 @@ public class Delete extends BuiltStatement {
          * @return this {@code Conditions} clause.
          */
         public Conditions and(Clause condition) {
+            statement.setNonIdempotentOps();
             conditions.add(condition);
             checkForBindMarkers(condition);
             return this;
