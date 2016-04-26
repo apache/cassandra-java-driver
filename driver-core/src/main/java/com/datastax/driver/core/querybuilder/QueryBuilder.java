@@ -297,6 +297,17 @@ public final class QueryBuilder {
     }
 
     /**
+     * Creates a "like" where clause stating that the provided column must be equal to the provided value.
+     *
+     * @param name  the column name.
+     * @param value the value.
+     * @return the corresponding where clause.
+     */
+    public static Clause like(String name, Object value) {
+        return new Clause.SimpleClause(name, " LIKE ", value);
+    }
+
+    /**
      * Create an "in" where clause stating the provided column must be equal
      * to one of the provided values.
      *

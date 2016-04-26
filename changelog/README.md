@@ -12,6 +12,7 @@
 - [improvement] JAVA-1136: Enable JDK signature check in module driver-extras.
 - [improvement] JAVA-866: Support tuple notation in QueryBuilder.eq/in.
 - [bug] JAVA-1140: Use same connection to check for schema agreement after a DDL query.
+- [improvement] JAVA-1113: Support Cassandra 3.4 LIKE operator in QueryBuilder.
 
 Merged from 2.1 branch:
 
