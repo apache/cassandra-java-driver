@@ -755,6 +755,10 @@ public class QueryBuilderTest {
         String query;
         Statement select;
 
+        query = "SELECT * FROM foo WHERE k=4 AND (c1,c2)=('a',2);";
+        select = select().all().from("foo").where(eq("k", 4)).and(eq(Arrays.asList("c1", "c2"), Arrays.<Object>asList("a", 2)));
+        assertEquals(select.toString(), query);
+
         query = "SELECT * FROM foo WHERE k=4 AND (c1,c2)>('a',2);";
         select = select().all().from("foo").where(eq("k", 4)).and(gt(Arrays.asList("c1", "c2"), Arrays.<Object>asList("a", 2)));
         assertEquals(select.toString(), query);
@@ -766,6 +770,22 @@ public class QueryBuilderTest {
 
         query = "SELECT * FROM foo WHERE k=4 AND (c1,c2)<=('a',2);";
         select = select().all().from("foo").where(eq("k", 4)).and(lte(Arrays.asList("c1", "c2"), Arrays.<Object>asList("a", 2)));
+        assertEquals(select.toString(), query);
+
+        query = "SELECT * FROM foo WHERE k=4 AND (c1,c2) IN ((1,2),('foo','bar'));";
+        List<String> names = ImmutableList.of("c1", "c2");
+        List<List<?>> values = ImmutableList.<List<?>>of(
+                ImmutableList.of(1, 2),
+                ImmutableList.of("foo", "bar"));
+        select = select().all().from("foo").where(eq("k", 4)).and(in(names, values));
+        assertEquals(select.toString(), query);
+
+        query = "SELECT * FROM foo WHERE k=4 AND (c1,c2) IN ((1,2),?);";
+        names = ImmutableList.of("c1", "c2");
+        values = ImmutableList.<List<?>>of(
+                ImmutableList.of(1, 2),
+                ImmutableList.of(bindMarker()));
+        select = select().all().from("foo").where(eq("k", 4)).and(in(names, values));
         assertEquals(select.toString(), query);
     }
 
