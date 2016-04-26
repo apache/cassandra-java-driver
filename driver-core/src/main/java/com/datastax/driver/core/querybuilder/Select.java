@@ -17,6 +17,7 @@ package com.datastax.driver.core.querybuilder;
 
 import com.datastax.driver.core.CodecRegistry;
 import com.datastax.driver.core.ColumnMetadata;
+import com.datastax.driver.core.DataType;
 import com.datastax.driver.core.TableMetadata;
 
 import java.util.ArrayList;
@@ -388,6 +389,34 @@ public class Select extends BuiltStatement {
          * @return this in-build SELECT statement
          */
         public abstract SelectionOrAlias fcall(String name, Object... parameters);
+
+        /**
+         * Creates a cast of an expression to a given CQL type.
+         *
+         * @param column     the expression to cast. It can be a complex expression like a
+         *                   {@link QueryBuilder#fcall(String, Object...) function call}.
+         * @param targetType the target CQL type to cast to. Use static methods such as {@link DataType#text()}.
+         * @return this in-build SELECT statement.
+         */
+        public SelectionOrAlias cast(Object column, DataType targetType) {
+            // This method should be abstract like others here. But adding an abstract method is not binary-compatible,
+            // so we add this dummy implementation to make Clirr happy.
+            throw new UnsupportedOperationException("Not implemented. This should only happen if you've written your own implementation of Selection");
+        }
+
+        /**
+         * Selects the provided raw expression.
+         * <p/>
+         * The provided string will be appended to the query as-is, without any form of escaping or quoting.
+         *
+         * @param rawString the raw expression to add.
+         * @return this in-build SELECT statement
+         */
+        public SelectionOrAlias raw(String rawString) {
+            // This method should be abstract like others here. But adding an abstract method is not binary-compatible,
+            // so we add this dummy implementation to make Clirr happy.
+            throw new UnsupportedOperationException("Not implemented. This should only happen if you've written your own implementation of Selection");
+        }
     }
 
     /**
@@ -430,12 +459,6 @@ public class Select extends BuiltStatement {
             return this;
         }
 
-        /**
-         * Selects all columns (i.e. "SELECT *  ...")
-         *
-         * @return an in-build SELECT statement.
-         * @throws IllegalStateException if some columns had already been selected for this builder.
-         */
         @Override
         public Builder all() {
             if (columnNames != null)
@@ -446,12 +469,6 @@ public class Select extends BuiltStatement {
             return (Builder) this;
         }
 
-        /**
-         * Selects the count of all returned rows (i.e. "SELECT count(*) ...").
-         *
-         * @return an in-build SELECT statement.
-         * @throws IllegalStateException if some columns had already been selected for this builder.
-         */
         @Override
         public Builder countAll() {
             if (columnNames != null)
@@ -463,81 +480,35 @@ public class Select extends BuiltStatement {
             return (Builder) this;
         }
 
-        /**
-         * Selects the provided column.
-         *
-         * @param name the new column name to add.
-         * @return this in-build SELECT statement
-         */
         @Override
         public SelectionOrAlias column(String name) {
             return queueName(name);
         }
 
-        /**
-         * Selects the provided raw expression.
-         * <p/>
-         * This method is used internally by the mapper module. It is not exposed on the parent class {@link Selection} to
-         * avoid breaking binary compatibility. This means that it is not accessible directly via the fluent API (you need
-         * a cast). This shouldn't be a problem for regular clients because they will use other methods of the DSL
-         * ({@code fcall}, etc.) rather than provide a raw string.
-         *
-         * @param rawString the raw expression to add.
-         * @return this in-build SELECT statement
-         */
-        public SelectionOrAlias raw(String rawString) {
-            return queueName(QueryBuilder.raw(rawString));
-        }
-
-        /**
-         * Selects the write time of provided column.
-         * <p/>
-         * This is a shortcut for {@code fcall("writetime", QueryBuilder.column(name))}.
-         *
-         * @param name the name of the column to select the write time of.
-         * @return this in-build SELECT statement
-         */
         @Override
         public SelectionOrAlias writeTime(String name) {
             return queueName(new Utils.FCall("writetime", new Utils.CName(name)));
         }
 
-        /**
-         * Selects the ttl of provided column.
-         * <p/>
-         * This is a shortcut for {@code fcall("ttl", QueryBuilder.column(name))}.
-         *
-         * @param name the name of the column to select the ttl of.
-         * @return this in-build SELECT statement
-         */
         @Override
         public SelectionOrAlias ttl(String name) {
             return queueName(new Utils.FCall("ttl", new Utils.CName(name)));
         }
 
-        /**
-         * Creates a function call.
-         * <p/>
-         * Please note that the parameters are interpreted as values, and so
-         * {@code fcall("textToBlob", "foo")} will generate the string
-         * {@code "textToBlob('foo')"}. If you want to generate
-         * {@code "textToBlob(foo)"}, i.e. if the argument must be interpreted
-         * as a column name (in a select clause), you will need to use the
-         * {@link QueryBuilder#column} method, and so
-         * {@code fcall("textToBlob", QueryBuilder.column(foo)}.
-         */
         @Override
         public SelectionOrAlias fcall(String name, Object... parameters) {
             return queueName(new Utils.FCall(name, parameters));
         }
 
-        /**
-         * Adds the table to select from.
-         *
-         * @param keyspace the name of the keyspace to select from.
-         * @param table    the name of the table to select from.
-         * @return a newly built SELECT statement that selects from {@code keyspace.table}.
-         */
+        public SelectionOrAlias cast(Object column, DataType targetType) {
+            return queueName(new Utils.Cast(column, targetType));
+        }
+
+        @Override
+        public SelectionOrAlias raw(String rawString) {
+            return queueName(QueryBuilder.raw(rawString));
+        }
+
         @Override
         public Select from(String keyspace, String table) {
             if (previousSelection != null)
@@ -545,12 +516,6 @@ public class Select extends BuiltStatement {
             return super.from(keyspace, table);
         }
 
-        /**
-         * Adds the table to select from.
-         *
-         * @param table the table to select from.
-         * @return a newly built SELECT statement that selects from {@code table}.
-         */
         @Override
         public Select from(TableMetadata table) {
             if (previousSelection != null)
