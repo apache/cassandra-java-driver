@@ -836,4 +836,88 @@ public abstract class TestUtils {
         return (bean.getFreePhysicalMemorySize() + bean.getFreeSwapSpaceSize()) / 1024 / 1024;
     }
 
+    /**
+     * Helper for generating a DynamicCompositeType {@link ByteBuffer} from the given parameters.
+     *
+     * Any of params given as an Integer will be considered with a field name of 'i', any as String will
+     * be considered with a field name of 's'.
+     *
+     * @param params params to serialize.
+     * @return bytes representing a DynamicCompositeType.
+     */
+    public static ByteBuffer serializeForDynamicCompositeType(Object... params) {
+        List<ByteBuffer> l = new ArrayList<ByteBuffer>();
+        int size = 0;
+        for (Object p : params) {
+            if (p instanceof Integer) {
+                ByteBuffer elt = ByteBuffer.allocate(2 + 2 + 4 + 1);
+                elt.putShort((short) (0x8000 | 'i'));
+                elt.putShort((short) 4);
+                elt.putInt((Integer) p);
+                elt.put((byte) 0);
+                elt.flip();
+                size += elt.remaining();
+                l.add(elt);
+            } else if (p instanceof String) {
+                ByteBuffer bytes = ByteBuffer.wrap(((String) p).getBytes());
+                ByteBuffer elt = ByteBuffer.allocate(2 + 2 + bytes.remaining() + 1);
+                elt.putShort((short) (0x8000 | 's'));
+                elt.putShort((short) bytes.remaining());
+                elt.put(bytes);
+                elt.put((byte) 0);
+                elt.flip();
+                size += elt.remaining();
+                l.add(elt);
+            } else {
+                throw new RuntimeException();
+            }
+        }
+        ByteBuffer res = ByteBuffer.allocate(size);
+        for (ByteBuffer bb : l)
+            res.put(bb);
+        res.flip();
+        return res;
+    }
+
+    /**
+     * Helper for generating a Composite {@link ByteBuffer} from the given parameters.
+     *
+     * Expects Integer and String types for parameters.
+     *
+     * @param params params to serialize.
+     * @return bytes representing a CompositeType
+     */
+    public static ByteBuffer serializeForCompositeType(Object... params) {
+
+        List<ByteBuffer> l = new ArrayList<ByteBuffer>();
+        int size = 0;
+        for (Object p : params) {
+            if (p instanceof Integer) {
+                ByteBuffer elt = ByteBuffer.allocate(2 + 4 + 1);
+                elt.putShort((short) 4);
+                elt.putInt((Integer) p);
+                elt.put((byte) 0);
+                elt.flip();
+                size += elt.remaining();
+                l.add(elt);
+            } else if (p instanceof String) {
+                ByteBuffer bytes = ByteBuffer.wrap(((String) p).getBytes());
+                ByteBuffer elt = ByteBuffer.allocate(2 + bytes.remaining() + 1);
+                elt.putShort((short) bytes.remaining());
+                elt.put(bytes);
+                elt.put((byte) 0);
+                elt.flip();
+                size += elt.remaining();
+                l.add(elt);
+            } else {
+                throw new RuntimeException();
+            }
+        }
+        ByteBuffer res = ByteBuffer.allocate(size);
+        for (ByteBuffer bb : l)
+            res.put(bb);
+        res.flip();
+        return res;
+    }
+
 }
