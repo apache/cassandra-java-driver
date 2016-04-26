@@ -684,13 +684,13 @@ class ControlConnection implements Connection.Owner {
             sb.append(", ").append(columnName).append("=null");
     }
 
-    boolean waitForSchemaAgreement() throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
+    static boolean waitForSchemaAgreement(Connection connection, Cluster.Manager cluster) throws ConnectionException, BusyConnectionException, ExecutionException, InterruptedException {
         long start = System.nanoTime();
         long elapsed = 0;
         int maxSchemaAgreementWaitSeconds = cluster.configuration.getProtocolOptions().getMaxSchemaAgreementWaitSeconds();
         while (elapsed < maxSchemaAgreementWaitSeconds * 1000) {
 
-            if (checkSchemaAgreement())
+            if (checkSchemaAgreement(connection, cluster))
                 return true;
 
             // let's not flood the node too much
@@ -702,11 +702,7 @@ class ControlConnection implements Connection.Owner {
         return false;
     }
 
-    boolean checkSchemaAgreement() throws ConnectionException, BusyConnectionException, InterruptedException, ExecutionException {
-        Connection connection = connectionRef.get();
-        if (connection == null || connection.isClosed())
-            return false;
-
+    private static boolean checkSchemaAgreement(Connection connection, Cluster.Manager cluster) throws InterruptedException, ExecutionException {
         DefaultResultSetFuture peersFuture = new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_SCHEMA_PEERS));
         DefaultResultSetFuture localFuture = new DefaultResultSetFuture(null, cluster.protocolVersion(), new Requests.Query(SELECT_SCHEMA_LOCAL));
         connection.write(peersFuture);
@@ -730,6 +726,13 @@ class ControlConnection implements Connection.Owner {
         }
         logger.debug("Checking for schema agreement: versions are {}", versions);
         return versions.size() <= 1;
+    }
+
+    boolean checkSchemaAgreement() throws ConnectionException, BusyConnectionException, InterruptedException, ExecutionException {
+        Connection connection = connectionRef.get();
+        return connection != null &&
+                !connection.isClosed() &&
+                checkSchemaAgreement(connection, cluster);
     }
 
     boolean isOpen() {
