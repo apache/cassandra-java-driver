@@ -16,6 +16,7 @@
 - [improvement] JAVA-1086: Support Cassandra 3.2 CAST function in QueryBuilder.
 - [bug] JAVA-1095: Check protocol version for custom payload before sending the query.
 - [improvement] JAVA-1133: Add OSGi headers to cassandra-driver-extras.
+- [bug] JAVA-1137: Incorrect string returned by DataType.asFunctionParameterString() for collections and tuples.
 
 Merged from 2.1 branch:
 

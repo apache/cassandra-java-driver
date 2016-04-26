@@ -190,7 +190,7 @@ public class TupleType extends DataType {
         StringBuilder sb = new StringBuilder();
         for (DataType type : types) {
             sb.append(sb.length() == 0 ? "tuple<" : ", ");
-            sb.append(type);
+            sb.append(type.asFunctionParameterString());
         }
         return sb.append(">").toString();
     }
