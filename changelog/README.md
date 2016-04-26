@@ -14,6 +14,7 @@
 - [bug] JAVA-1140: Use same connection to check for schema agreement after a DDL query.
 - [improvement] JAVA-1113: Support Cassandra 3.4 LIKE operator in QueryBuilder.
 - [improvement] JAVA-1086: Support Cassandra 3.2 CAST function in QueryBuilder.
+- [bug] JAVA-1095: Check protocol version for custom payload before sending the query.
 
 Merged from 2.1 branch:
 
