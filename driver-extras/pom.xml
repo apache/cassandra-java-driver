@@ -24,7 +24,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>cassandra-driver-extras</artifactId>
-
+    <packaging>bundle</packaging>
     <name>DataStax Java Driver for Apache Cassandra - Extras</name>
     <description>Extended functionality for the Java driver.</description>
     <url>https://github.com/datastax/java-driver</url>
@@ -117,6 +117,20 @@
             <groupId>org.glassfish</groupId>
             <artifactId>javax.json</artifactId>
             <version>${jsr353-ri.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <version>${log4j.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <version>${slf4j-log4j12.version}</version>
             <scope>test</scope>
         </dependency>
 
@@ -216,6 +230,7 @@
                         <Bundle-SymbolicName>com.datastax.driver.extras</Bundle-SymbolicName>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <_include>-osgi.bnd</_include>
+                        <Import-Package><![CDATA[com.google.common*;version="[16.0.1,20)",*]]></Import-Package>
                     </instructions>
                     <supportedProjectTypes>
                         <supportedProjectType>jar</supportedProjectType>

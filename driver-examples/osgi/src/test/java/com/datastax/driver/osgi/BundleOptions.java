@@ -36,6 +36,14 @@ public class BundleOptions {
         return bundle("reference:file:" + PathUtils.getBaseDir() + "/../../driver-core/target/cassandra-driver-core-" + projectVersion() + classifier + ".jar");
     }
 
+    public static UrlProvisionOption mappingBundle() {
+        return bundle("reference:file:" + PathUtils.getBaseDir() + "/../../driver-mapping/target/cassandra-driver-mapping-" + projectVersion() + ".jar");
+    }
+
+    public static UrlProvisionOption extrasBundle() {
+        return bundle("reference:file:" + PathUtils.getBaseDir() + "/../../driver-extras/target/cassandra-driver-extras-" + projectVersion() + ".jar");
+    }
+
     public static MavenArtifactProvisionOption guavaBundle() {
         return mavenBundle("com.google.guava", "guava", "16.0.1");
     }

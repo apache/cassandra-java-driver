@@ -15,9 +15,6 @@
  */
 package com.datastax.driver.osgi.api;
 
-import java.util.Collection;
-import java.util.UUID;
-
 public interface MailboxService {
 
     /**
@@ -26,15 +23,15 @@ public interface MailboxService {
      * @param recipient User whose mailbox is being read.
      * @return All messages in the mailbox.
      */
-    public Collection<MailboxMessage> getMessages(String recipient) throws MailboxException;
+    public Iterable<MailboxMessage> getMessages(String recipient) throws MailboxException;
 
     /**
      * Stores the given message in the appropriate mailbox.
      *
      * @param message Message to send.
-     * @return UUID generated for the message.
+     * @return The timestamp generated for the message (milliseconds since the Epoch).
      */
-    public UUID sendMessage(MailboxMessage message) throws MailboxException;
+    public long sendMessage(MailboxMessage message) throws MailboxException;
 
     /**
      * Deletes all mail for the given recipient.
