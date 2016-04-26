@@ -15,23 +15,19 @@
  */
 package com.datastax.driver.osgi.impl;
 
-import com.datastax.driver.core.*;
-import com.datastax.driver.core.exceptions.InvalidQueryException;
-import com.datastax.driver.core.utils.UUIDs;
+import com.datastax.driver.core.BoundStatement;
+import com.datastax.driver.core.PreparedStatement;
+import com.datastax.driver.core.Session;
+import com.datastax.driver.mapping.Mapper;
+import com.datastax.driver.mapping.MappingManager;
 import com.datastax.driver.osgi.api.MailboxException;
 import com.datastax.driver.osgi.api.MailboxMessage;
 import com.datastax.driver.osgi.api.MailboxService;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.UUID;
-
 import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
+import static com.datastax.driver.osgi.api.MailboxMessage.TABLE;
 
 public class MailboxImpl implements MailboxService {
-
-    private static final String TABLE = "mailbox";
 
     private final Session session;
 
@@ -41,9 +37,9 @@ public class MailboxImpl implements MailboxService {
 
     private PreparedStatement retrieveStatement;
 
-    private PreparedStatement insertStatement;
-
     private PreparedStatement deleteStatement;
+
+    private Mapper<MailboxMessage> mapper;
 
     public MailboxImpl(Session session, String keyspace) {
         this.session = session;
@@ -54,71 +50,36 @@ public class MailboxImpl implements MailboxService {
         if (initialized)
             return;
 
-        // Create the schema if it does not exist.
-        try {
-            session.execute("USE " + keyspace);
-        } catch (InvalidQueryException e) {
-            session.execute("CREATE KEYSPACE " + keyspace +
-                    " with replication = {'class': 'SimpleStrategy', 'replication_factor' : 1}");
-
-            session.execute("CREATE TABLE " + keyspace + "." + TABLE + " (" +
-                    "recipient text," +
-                    "time timeuuid," +
-                    "sender text," +
-                    "body text," +
-                    "PRIMARY KEY (recipient, time))");
-        }
-
         retrieveStatement = session.prepare(select()
                 .from(keyspace, TABLE)
                 .where(eq("recipient", bindMarker())));
 
-        insertStatement = session.prepare(insertInto(keyspace, TABLE)
-                .value("recipient", bindMarker())
-                .value("time", bindMarker())
-                .value("sender", bindMarker())
-                .value("body", bindMarker()));
-
         deleteStatement = session.prepare(delete().from(keyspace, TABLE)
                 .where(eq("recipient", bindMarker())));
+
+        MappingManager mappingManager = new MappingManager(session);
+
+        mapper = mappingManager.mapper(MailboxMessage.class);
 
         initialized = true;
     }
 
     @Override
-    public Collection<MailboxMessage> getMessages(String recipient) throws MailboxException {
+    public Iterable<MailboxMessage> getMessages(String recipient) throws MailboxException {
         try {
             BoundStatement statement = new BoundStatement(retrieveStatement);
             statement.setString(0, recipient);
-            ResultSet result = session.execute(statement);
-
-            Collection<MailboxMessage> messages = new ArrayList<MailboxMessage>();
-            for (Row input : result) {
-                Date date = new Date(UUIDs.unixTimestamp(input.getUUID("time")));
-                messages.add(new MailboxMessage(input.getString("recipient"),
-                        date,
-                        input.getString("sender"),
-                        input.getString("body")));
-            }
-            return messages;
+            return mapper.map(session.execute(statement));
         } catch (Exception e) {
             throw new MailboxException(e);
         }
     }
 
     @Override
-    public UUID sendMessage(MailboxMessage message) throws MailboxException {
+    public long sendMessage(MailboxMessage message) throws MailboxException {
         try {
-            UUID time = UUIDs.startOf(message.getDate().getTime());
-
-            BoundStatement statement = new BoundStatement(insertStatement);
-            statement.setString(0, message.getRecipient());
-            statement.setUUID(1, time);
-            statement.setString(2, message.getSender());
-            statement.setString(3, message.getBody());
-
-            session.execute(statement);
-            return time;
+            mapper.save(message);
+            return message.getDate();
         } catch (Exception e) {
             throw new MailboxException(e);
         }

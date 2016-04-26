@@ -15,10 +15,7 @@
  */
 package com.datastax.driver.core.querybuilder;
 
-import com.datastax.driver.core.CodecRegistry;
-import com.datastax.driver.core.ProtocolVersion;
-import com.datastax.driver.core.Token;
-import com.datastax.driver.core.TypeCodec;
+import com.datastax.driver.core.*;
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 
 import java.math.BigDecimal;
@@ -78,6 +75,11 @@ abstract class Utils {
                 appendValue(fcall.parameters[i], codecRegistry, sb, variables);
             }
             sb.append(')');
+        } else if (value instanceof Cast) {
+            Cast cast = (Cast) value;
+            sb.append("CAST(");
+            appendName(cast.column, codecRegistry, sb);
+            sb.append(" AS ").append(cast.targetType).append(")");
         } else if (value instanceof CName) {
             appendName(((CName) value).name, codecRegistry, sb);
         } else if (value instanceof RawString) {
@@ -229,6 +231,9 @@ abstract class Utils {
                 if (!isIdempotent(entry.getKey()) || !isIdempotent(entry.getValue()))
                     return false;
             }
+        } else if (value instanceof Clause) {
+            Object clauseValue = ((Clause) value).firstValue();
+            return isIdempotent(clauseValue);
         }
         return true;
     }
@@ -261,6 +266,11 @@ abstract class Utils {
             Alias alias = (Alias) name;
             appendName(alias.column, codecRegistry, sb);
             sb.append(" AS ").append(alias.alias);
+        } else if (name instanceof Cast) {
+            Cast cast = (Cast) name;
+            sb.append("CAST(");
+            appendName(cast.column, codecRegistry, sb);
+            sb.append(" AS ").append(cast.targetType).append(")");
         } else if (name instanceof RawString) {
             sb.append(((RawString) name).str);
         } else {
@@ -421,6 +431,21 @@ abstract class Utils {
         @Override
         public String toString() {
             return String.format("%s AS %s", column, alias);
+        }
+    }
+
+    static class Cast {
+        private final Object column;
+        private final DataType targetType;
+
+        Cast(Object column, DataType targetType) {
+            this.column = column;
+            this.targetType = targetType;
+        }
+
+        @Override
+        public String toString() {
+            return String.format("CAST(%s AS %s)", column, targetType);
         }
     }
 }

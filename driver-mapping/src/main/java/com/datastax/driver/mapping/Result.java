@@ -29,10 +29,6 @@ public class Result<T> implements Iterable<T> {
     private final ProtocolVersion protocolVersion;
     private final boolean useAlias;
 
-    Result(ResultSet rs, EntityMapper<T> mapper, ProtocolVersion protocolVersion) {
-        this(rs, mapper, protocolVersion, false);
-    }
-
     Result(ResultSet rs, EntityMapper<T> mapper, ProtocolVersion protocolVersion, boolean useAlias) {
         this.rs = rs;
         this.mapper = mapper;
@@ -120,7 +116,7 @@ public class Result<T> implements Iterable<T> {
      * this mapped result set.
      */
     @Override
-    public Iterator<T> iterator() {        
+    public Iterator<T> iterator() {
         return new Iterator<T>() {
             private final Iterator<Row> rowIterator = rs.iterator();
 

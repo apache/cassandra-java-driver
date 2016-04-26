@@ -16,11 +16,13 @@
 package com.datastax.driver.core;
 
 import com.datastax.driver.core.utils.CassandraVersion;
+import org.testng.SkipException;
 import org.testng.annotations.Test;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.DataType.cint;
 import static com.datastax.driver.core.DataType.text;
+import static com.datastax.driver.core.TestUtils.serializeForDynamicCompositeType;
 
 @CassandraVersion(major = 2.2)
 @CCMConfig(config = "enable_user_defined_functions:true")
@@ -169,6 +171,93 @@ public class AggregateMetadataTest extends CCMTestsSupport {
         assertThat(aggregate.getStateFunc()).isEqualTo(stateFunc);
         assertThat(aggregate.getStateType()).isEqualTo(addressType);
         assertThat(aggregate.toString()).isEqualTo(cqlAggregate);
+    }
+
+    /**
+     * Validates aggregates with DynamicCompositeType state types and an initcond value that is a literal, i.e.:
+     * 's@foo:i@32' can be appropriately parsed and generate a CQL string with the init cond as a hex string, i.e.:
+     * 0x80730003666f6f00806900040000002000.
+     *
+     * @jira_ticket JAVA-1046
+     * @test_category metadata
+     * @since 3.0.1
+     */
+    @Test(groups = "short")
+    @CassandraVersion(major = 2.2)
+    public void should_parse_and_format_aggregate_with_composite_type_literal_initcond() {
+        VersionNumber ver = VersionNumber.parse(CCMBridge.getCassandraVersion());
+        if (ver.getMajor() == 3) {
+            if ((ver.getMinor() >= 1 && ver.getMinor() < 4) || (ver.getMinor() == 0 && ver.getPatch() < 4)) {
+                throw new SkipException("Requires C* 2.2.X, 3.0.4+ or 3.4.X+");
+            }
+        }
+        parse_and_format_aggregate_with_composite_type("ag0", "'s@foo:i@32'");
+    }
+
+    /**
+     * Validates aggregates with DynamicCompositeType state types and an initcond value that is a hex string
+     * representing the bytes for the type, i.e.: 0x80730003666f6f00806900040000002000' can be appropriately parsed
+     * and generates an equivalent CQL string.
+     *
+     * @jira_ticket JAVA-1046
+     * @test_category metadata
+     * @since 3.0.1
+     */
+    @Test(groups = "short")
+    @CassandraVersion(major = 3.0, minor = 4)
+    public void should_parse_and_format_aggregate_with_composite_type_hex_initcond() {
+        VersionNumber ver = VersionNumber.parse(CCMBridge.getCassandraVersion());
+        if ((ver.getMinor() >= 1 && ver.getMinor() < 4)) {
+            throw new SkipException("Requires 3.0.4+ or 3.4.X+");
+        }
+        parse_and_format_aggregate_with_composite_type("ag1", "0x80730003666f6f00806900040000002000");
+    }
+
+    public void parse_and_format_aggregate_with_composite_type(String aggregateName, String initCond) {
+        // given
+        DataType custom = DataType.custom(
+                "org.apache.cassandra.db.marshal.DynamicCompositeType(" +
+                        "s=>org.apache.cassandra.db.marshal.UTF8Type," +
+                        "i=>org.apache.cassandra.db.marshal.Int32Type)");
+        String cqlFunction = String.format(
+                "CREATE FUNCTION %s.%s_id(i %s) " +
+                        "RETURNS NULL ON NULL INPUT " +
+                        "RETURNS %s " +
+                        "LANGUAGE java " +
+                        "AS 'return i;';", keyspace, aggregateName, custom, custom);
+        session().execute(cqlFunction);
+
+        String cqlAggregate = String.format(
+                "CREATE AGGREGATE %s.%s() " +
+                        "SFUNC %s_id " +
+                        "STYPE %s " +
+                        "INITCOND %s;", keyspace, aggregateName, aggregateName, custom, initCond);
+
+        String expectedAggregate = String.format(
+                "CREATE AGGREGATE %s.%s() " +
+                        "SFUNC %s_id " +
+                        "STYPE %s " +
+                        "INITCOND 0x80730003666f6f00806900040000002000;", keyspace, aggregateName, aggregateName, custom);
+
+        int agCount = 0;
+
+        // when
+        session().execute(cqlAggregate);
+        // then
+        KeyspaceMetadata keyspace = cluster().getMetadata().getKeyspace(this.keyspace);
+        FunctionMetadata stateFunc = keyspace.getFunction(aggregateName + "_id", custom);
+        AggregateMetadata aggregate = keyspace.getAggregate(aggregateName);
+        assertThat(aggregate).isNotNull();
+        assertThat(aggregate.getSignature()).isEqualTo(aggregateName + "()");
+        assertThat(aggregate.getSimpleName()).isEqualTo(aggregateName);
+        assertThat(aggregate.getArgumentTypes()).isEmpty();
+        assertThat(aggregate.getFinalFunc()).isNull();
+        assertThat(aggregate.getInitCond()).isEqualTo(serializeForDynamicCompositeType("foo", 32));
+        assertThat(aggregate.getReturnType()).isEqualTo(custom);
+        assertThat(aggregate.getStateFunc()).isEqualTo(stateFunc);
+        assertThat(aggregate.getStateType()).isEqualTo(custom);
+
+        assertThat(aggregate.toString()).isEqualTo(expectedAggregate);
     }
 
     @Override

@@ -19,6 +19,7 @@ import com.datastax.driver.core.exceptions.PagingStateException;
 import com.datastax.driver.core.exceptions.UnsupportedProtocolVersionException;
 import com.datastax.driver.core.policies.RetryPolicy;
 import com.datastax.driver.core.querybuilder.BuiltStatement;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 
 import java.nio.ByteBuffer;
@@ -98,8 +99,9 @@ public abstract class Statement {
     /**
      * Sets the serial consistency level for the query.
      * <p/>
-     * The serial consistency level is only used by conditional updates (so INSERT, UPDATE
-     * and DELETE with an IF condition). For those, the serial consistency level defines
+     * The serial consistency level is only used by conditional updates ({@code INSERT}, {@code UPDATE}
+     * or {@code DELETE} statements with an {@code IF} condition).
+     * For those, the serial consistency level defines
      * the consistency level of the serial phase (or "paxos" phase) while the
      * normal consistency level defines the consistency for the "learn" phase, i.e. what
      * type of reads will be guaranteed to see the update right away. For instance, if
@@ -122,8 +124,8 @@ public abstract class Statement {
      *                                  {@code ConsistencyLevel.SERIAL} or {@code ConsistencyLevel.LOCAL_SERIAL}.
      */
     public Statement setSerialConsistencyLevel(ConsistencyLevel serialConsistency) {
-        if (serialConsistency != ConsistencyLevel.SERIAL && serialConsistency != ConsistencyLevel.LOCAL_SERIAL)
-            throw new IllegalArgumentException();
+        if (!serialConsistency.isSerial())
+            throw new IllegalArgumentException("Supplied consistency level is not serial: " + serialConsistency);
         this.serialConsistency = serialConsistency;
         return this;
     }
@@ -131,10 +133,10 @@ public abstract class Statement {
     /**
      * The serial consistency level for this query.
      * <p/>
-     * See {@link #setSerialConsistencyLevel} for more detail on the serial consistency level.
+     * See {@link #setSerialConsistencyLevel(ConsistencyLevel)} for more detail on the serial consistency level.
      *
-     * @return the consistency level for this query, or {@code null} if no serial
-     * consistency level has been specified (through {@code setSerialConsistencyLevel}).
+     * @return the serial consistency level for this query, or {@code null} if no serial
+     * consistency level has been specified (through {@link #setSerialConsistencyLevel(ConsistencyLevel)}).
      * In the latter case, the default serial consistency level will be used.
      */
     public ConsistencyLevel getSerialConsistencyLevel() {
@@ -329,10 +331,12 @@ public abstract class Statement {
      * You should override this only for statements for which the coordinator may allow a longer server-side
      * timeout (for example aggregation queries).
      *
-     * @param readTimeoutMillis the timeout to set. Must be greater than 0 (or the default will be used).
+     * @param readTimeoutMillis the timeout to set. Negative values are not allowed. If it is 0, the read timeout will
+     *                          be disabled for this statement.
      * @return this {@code Statement} object.
      */
     public Statement setReadTimeoutMillis(int readTimeoutMillis) {
+        Preconditions.checkArgument(readTimeoutMillis >= 0, "read timeout must be >= 0");
         this.readTimeoutMillis = readTimeoutMillis;
         return this;
     }

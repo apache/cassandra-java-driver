@@ -16,8 +16,10 @@
 package com.datastax.driver.core.querybuilder;
 
 import com.datastax.driver.core.CodecRegistry;
+import com.datastax.driver.core.ColumnMetadata;
 import com.datastax.driver.core.TableMetadata;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -28,13 +30,22 @@ public class Truncate extends BuiltStatement {
     private final String table;
 
     Truncate(String keyspace, String table) {
-        super(keyspace);
-        this.table = table;
+        this(keyspace, table, null, null);
     }
 
     Truncate(TableMetadata table) {
-        super(table);
-        this.table = escapeId(table.getName());
+        this(escapeId(table.getKeyspace().getName()),
+                escapeId(table.getName()),
+                Arrays.asList(new Object[table.getPartitionKey().size()]),
+                table.getPartitionKey());
+    }
+
+    Truncate(String keyspace,
+             String table,
+             List<Object> routingKeyValues,
+             List<ColumnMetadata> partitionKey) {
+        super(keyspace, partitionKey, routingKeyValues);
+        this.table = table;
     }
 
     @Override

@@ -78,7 +78,7 @@ class QueryType {
                 Select.Selection selection = select();
                 for (ColumnMapper cm : mapper.allColumns()) {
                     Select.SelectionOrAlias column = (cm.kind == ColumnMapper.Kind.COMPUTED)
-                            ? ((Select.SelectionOrAlias) selection).raw(cm.getColumnName())
+                            ? selection.raw(cm.getColumnName())
                             : selection.column(cm.getColumnName());
 
                     if (cm.getAlias() == null) {

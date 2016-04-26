@@ -223,7 +223,7 @@ class SessionManager extends AbstractSession {
                                 new DriverInternalError(String.format("%s response received when prepared statement was expected", response.type)));
                 }
             }
-        });
+        }, executor());
     }
 
     Connection.Factory connectionFactory() {
@@ -502,6 +502,9 @@ class SessionManager extends AbstractSession {
         } else if (serialConsistency == null)
             serialConsistency = configuration().getQueryOptions().getSerialConsistencyLevel();
 
+        if (statement.getOutgoingPayload() != null && protocolVersion.compareTo(ProtocolVersion.V4) < 0)
+            throw new UnsupportedFeatureException(protocolVersion, "Custom payloads are only supported since native protocol V4");
+
         long defaultTimestamp = Long.MIN_VALUE;
         if (protocolVersion.compareTo(ProtocolVersion.V3) >= 0) {
             defaultTimestamp = statement.getDefaultTimestamp();
@@ -559,8 +562,8 @@ class SessionManager extends AbstractSession {
 
             String qString = rs.getQueryString();
 
-            Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(consistency, positionalValues, namedValues, false,
-                    fetchSize, usedPagingState, serialConsistency, defaultTimestamp);
+            Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(Message.Request.Type.QUERY, consistency, positionalValues, namedValues,
+                    false, fetchSize, usedPagingState, serialConsistency, defaultTimestamp);
             request = new Requests.Query(qString, options, statement.isTracing());
         } else if (statement instanceof BoundStatement) {
             BoundStatement bs = (BoundStatement) statement;
@@ -571,8 +574,8 @@ class SessionManager extends AbstractSession {
             if (protocolVersion.compareTo(ProtocolVersion.V4) < 0)
                 bs.ensureAllSet();
             boolean skipMetadata = protocolVersion != ProtocolVersion.V1 && bs.statement.getPreparedId().resultSetMetadata != null;
-            Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(consistency, Arrays.asList(bs.wrapper.values), Collections.<String, ByteBuffer>emptyMap(), skipMetadata,
-                    fetchSize, usedPagingState, serialConsistency, defaultTimestamp);
+            Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(Message.Request.Type.EXECUTE, consistency, Arrays.asList(bs.wrapper.values), Collections.<String, ByteBuffer>emptyMap(),
+                    skipMetadata, fetchSize, usedPagingState, serialConsistency, defaultTimestamp);
             request = new Requests.Execute(bs.statement.getPreparedId().id, options, statement.isTracing());
         } else {
             assert statement instanceof BatchStatement : statement;

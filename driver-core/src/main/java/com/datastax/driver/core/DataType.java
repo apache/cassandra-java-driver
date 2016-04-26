@@ -691,10 +691,10 @@ public abstract class DataType {
         public String asFunctionParameterString() {
             if (name == Name.MAP) {
                 String template = "%s<%s, %s>";
-                return String.format(template, name, typeArguments.get(0), typeArguments.get(1));
+                return String.format(template, name, typeArguments.get(0).asFunctionParameterString(), typeArguments.get(1).asFunctionParameterString());
             } else {
                 String template = "%s<%s>";
-                return String.format(template, name, typeArguments.get(0));
+                return String.format(template, name, typeArguments.get(0).asFunctionParameterString());
             }
         }
     }

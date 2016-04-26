@@ -27,6 +27,7 @@ import org.scassandra.http.client.ClosedConnectionConfig.CloseType;
 import org.scassandra.http.client.Config;
 import org.scassandra.http.client.PrimingRequest;
 import org.scassandra.http.client.PrimingRequest.PrimingRequestBuilder;
+import org.scassandra.http.client.Result;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
@@ -38,8 +39,8 @@ import static com.datastax.driver.core.TestUtils.nonQuietClusterCloseOptions;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.times;
-import static org.scassandra.http.client.PrimingRequest.Result.overloaded;
-import static org.scassandra.http.client.PrimingRequest.Result.server_error;
+import static org.scassandra.http.client.Result.overloaded;
+import static org.scassandra.http.client.Result.server_error;
 
 /**
  * Base class for retry policy integration tests.
@@ -105,11 +106,11 @@ public class AbstractRetryPolicyIntegrationTest {
         }
     }
 
-    protected void simulateError(int hostNumber, PrimingRequest.Result result) {
+    protected void simulateError(int hostNumber, Result result) {
         simulateError(hostNumber, result, null);
     }
 
-    protected void simulateError(int hostNumber, PrimingRequest.Result result, Config config) {
+    protected void simulateError(int hostNumber, Result result, Config config) {
         PrimingRequestBuilder builder = PrimingRequest.queryBuilder()
                 .withQuery("mock query")
                 .withResult(result);
@@ -133,6 +134,11 @@ public class AbstractRetryPolicyIntegrationTest {
 
     protected ResultSet query() {
         return query(session);
+    }
+
+    protected ResultSet queryWithCL(ConsistencyLevel cl) {
+        Statement statement = new SimpleStatement("mock query").setConsistencyLevel(cl);
+        return session.execute(statement);
     }
 
     protected ResultSet query(Session session) {

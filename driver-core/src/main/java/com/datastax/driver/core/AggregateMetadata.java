@@ -15,9 +15,12 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.utils.Bytes;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.util.Collections;
@@ -27,6 +30,8 @@ import java.util.List;
  * Describes a CQL aggregate function (created with {@code CREATE AGGREGATE...}).
  */
 public class AggregateMetadata {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(AggregateMetadata.class);
 
     private final KeyspaceMetadata keyspace;
     private final String simpleName;
@@ -101,11 +106,29 @@ public class AggregateMetadata {
         if (version.getMajor() >= 3) {
             stateType = DataTypeCqlNameParser.parse(stateTypeName, cluster, ksm.getName(), ksm.userTypes, null, false, false);
             String rawInitCond = row.getString("initcond");
-            initCond = rawInitCond == null ? null : codecRegistry.codecFor(stateType).parse(rawInitCond);
+            if (rawInitCond == null) {
+                initCond = null;
+            } else {
+                try {
+                    initCond = codecRegistry.codecFor(stateType).parse(rawInitCond);
+                } catch (RuntimeException e) {
+                    LOGGER.warn("Failed to parse INITCOND literal: {}; getInitCond() will return the text literal instead.", rawInitCond);
+                    initCond = rawInitCond;
+                }
+            }
         } else {
             stateType = DataTypeClassNameParser.parseOne(stateTypeName, protocolVersion, codecRegistry);
             ByteBuffer rawInitCond = row.getBytes("initcond");
-            initCond = rawInitCond == null ? null : codecRegistry.codecFor(stateType).deserialize(rawInitCond, protocolVersion);
+            if (rawInitCond == null) {
+                initCond = null;
+            } else {
+                try {
+                    initCond = codecRegistry.codecFor(stateType).deserialize(rawInitCond, protocolVersion);
+                } catch (RuntimeException e) {
+                    LOGGER.warn("Failed to deserialize INITCOND value: {}; getInitCond() will return the raw bytes instead.", Bytes.toHexString(rawInitCond));
+                    initCond = rawInitCond;
+                }
+            }
         }
 
         String finalFuncFullName = finalFuncSimpleName == null ? null : Metadata.fullFunctionName(finalFuncSimpleName, Collections.singletonList(stateType));
@@ -191,11 +214,22 @@ public class AggregateMetadata {
         if (initCond != null)
             TableMetadata.spaceOrNewLine(sb, formatted)
                     .append("INITCOND ")
-                    .append(stateTypeCodec.format(initCond));
+                    .append(formatInitCond());
 
         sb.append(';');
 
         return sb.toString();
+    }
+
+    private String formatInitCond() {
+        if (stateTypeCodec.accepts(initCond)) {
+            try {
+                return stateTypeCodec.format(initCond);
+            } catch (RuntimeException e) {
+                LOGGER.info("Failed to format INITCOND literal: {}", initCond);
+            }
+        }
+        return initCond.toString();
     }
 
     private void appendSignature(StringBuilder sb) {
@@ -281,6 +315,14 @@ public class AggregateMetadata {
      * This is the value specified with {@code INITCOND} in the {@code CREATE AGGREGATE...}
      * statement. It's passed to the initial invocation of the state function (if that function
      * does not accept null arguments).
+     * <p/>
+     * The actual type of the returned object depends on the aggregate's
+     * {@link #getStateType() state type} and on the {@link TypeCodec codec} used
+     * to {@link TypeCodec#parse(String) parse} the {@code INITCOND} literal.
+     * <p/>
+     * If, for some reason, the {@code INITCOND} literal cannot be parsed,
+     * a warning will be logged and the returned object will be the original
+     * {@code INITCOND} literal in its textual, non-parsed form.
      *
      * @return the initial state, or {@code null} if there is none.
      */

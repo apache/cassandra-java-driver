@@ -15,13 +15,10 @@
  */
 package com.datastax.driver.core;
 
-import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
 import com.datastax.driver.core.utils.CassandraVersion;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import org.apache.log4j.Logger;
-import org.assertj.core.api.iterable.Extractor;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -246,17 +243,9 @@ public class CustomPayloadTest extends CCMTestsSupport {
             statement.setOutgoingPayload(payload1);
             v3session.execute(statement);
             fail("Should not send custom payloads with protocol V3");
-        } catch (NoHostAvailableException nhae) {
-            assertThat(nhae.getErrors().values())
-                    .extracting(new Extractor<Throwable, Throwable>() {
-                        @Override
-                        public Throwable extract(Throwable input) {
-                            return Throwables.getRootCause(input);
-                        }
-                    })
-                    .hasOnlyElementsOfType(UnsupportedFeatureException.class)
-                    .extracting("message")
-                    .containsOnly("Unsupported feature with the native protocol V3 (which is currently in use): Custom payloads are only supported since native protocol V4");
+        } catch (UnsupportedFeatureException e) {
+            assertThat(e.getMessage()).isEqualTo(
+                    "Unsupported feature with the native protocol V3 (which is currently in use): Custom payloads are only supported since native protocol V4");
         }
     }
 

@@ -15,18 +15,17 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.exceptions.SyntaxError;
 import com.datastax.driver.core.utils.CassandraVersion;
+import com.google.common.util.concurrent.ListenableFuture;
 import org.testng.annotations.Test;
 
 import java.util.List;
 import java.util.Locale;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
+import static com.datastax.driver.core.Assertions.*;
 import static com.datastax.driver.core.TestUtils.nonQuietClusterCloseOptions;
-import static org.testng.Assert.*;
 
 /**
  * Simple test of the Sessions methods against a one node cluster.
@@ -47,11 +46,11 @@ public class SessionTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short")
-    public void executeTest() throws Exception {
+    public void should_execute_simple_statements() throws Exception {
         // Simple calls to all versions of the execute/executeAsync methods
         String key = "execute_test";
         ResultSet rs = session().execute(String.format(Locale.US, "INSERT INTO %s (k, t, i, f) VALUES ('%s', '%s', %d, %f)", TABLE1, key, "foo", 42, 24.03f));
-        assertTrue(rs.isExhausted());
+        assertThat(rs.isExhausted()).isTrue();
 
         // execute
         checkExecuteResultSet(session().execute(String.format(TestUtils.SELECT_ALL_FORMAT, TABLE1)), key);
@@ -63,12 +62,12 @@ public class SessionTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short")
-    public void executePreparedTest() throws Exception {
+    public void should_execute_prepared_statements() throws Exception {
         // Simple calls to all versions of the execute/executeAsync methods for prepared statements
         // Note: the goal is only to exercice the Session methods, PreparedStatementTest have better prepared statement tests.
         String key = "execute_prepared_test";
         ResultSet rs = session().execute(String.format(Locale.US, "INSERT INTO %s (k, t, i, f) VALUES ('%s', '%s', %d, %f)", TABLE2, key, "foo", 42, 24.03f));
-        assertTrue(rs.isExhausted());
+        assertThat(rs.isExhausted()).isTrue();
 
         PreparedStatement p = session().prepare(String.format(TestUtils.SELECT_ALL_FORMAT + " WHERE k = ?", TABLE2));
         BoundStatement bs = p.bind(key);
@@ -83,17 +82,17 @@ public class SessionTest extends CCMTestsSupport {
     }
 
     private static void checkExecuteResultSet(ResultSet rs, String key) {
-        assertTrue(!rs.isExhausted());
+        assertThat(rs.isExhausted()).isFalse();
         Row row = rs.one();
-        assertTrue(rs.isExhausted());
-        assertEquals(row.getString("k"), key);
-        assertEquals(row.getString("t"), "foo");
-        assertEquals(row.getInt("i"), 42);
-        assertEquals(row.getFloat("f"), 24.03f, 0.1f);
+        assertThat(rs.isExhausted()).isTrue();
+        assertThat(row.getString("k")).isEqualTo(key);
+        assertThat(row.getString("t")).isEqualTo("foo");
+        assertThat(row.getInt("i")).isEqualTo(42);
+        assertThat(row.getFloat("f")).isEqualTo(24.03f, offset(0.1f));
     }
 
     @Test(groups = "short")
-    public void executePreparedCounterTest() throws Exception {
+    public void should_execute_prepared_counter_statement() throws Exception {
         PreparedStatement p = session().prepare("UPDATE " + COUNTER_TABLE + " SET c = c + ? WHERE k = ?");
 
         session().execute(p.bind(1L, "row"));
@@ -101,8 +100,8 @@ public class SessionTest extends CCMTestsSupport {
 
         ResultSet rs = session().execute("SELECT * FROM " + COUNTER_TABLE);
         List<Row> rows = rs.all();
-        assertEquals(rows.size(), 1);
-        assertEquals(rows.get(0).getLong("c"), 2L);
+        assertThat(rows).hasSize(1);
+        assertThat(rows.get(0).getLong("c")).isEqualTo(2L);
     }
 
     /**
@@ -113,7 +112,7 @@ public class SessionTest extends CCMTestsSupport {
      * @expected_result session established and queries made successfully using it.
      */
     @Test(groups = "short")
-    public void session_should_function_with_snappy_compression() throws Exception {
+    public void should_function_with_snappy_compression() throws Exception {
         compressionTest(ProtocolOptions.Compression.SNAPPY);
     }
 
@@ -126,7 +125,7 @@ public class SessionTest extends CCMTestsSupport {
      */
     @Test(groups = "short")
     @CassandraVersion(major = 2.0)
-    public void session_should_function_with_lz4_compression() throws Exception {
+    public void should_function_with_lz4_compression() throws Exception {
         compressionTest(ProtocolOptions.Compression.LZ4);
     }
 
@@ -138,7 +137,7 @@ public class SessionTest extends CCMTestsSupport {
             // Simple calls to all versions of the execute/executeAsync methods
             String key = "execute_compressed_test_" + compression;
             ResultSet rs = compressedSession.execute(String.format(Locale.US, "INSERT INTO %s (k, t, i, f) VALUES ('%s', '%s', %d, %f)", TABLE3, key, "foo", 42, 24.03f));
-            assertTrue(rs.isExhausted());
+            assertThat(rs.isExhausted()).isTrue();
 
             String SELECT_ALL = String.format(TestUtils.SELECT_ALL_FORMAT + " WHERE k = '%s'", TABLE3, key);
 
@@ -159,7 +158,7 @@ public class SessionTest extends CCMTestsSupport {
      * Checks for deadlocks when a session shutdown races with the initialization of the cluster (JAVA-418).
      */
     @Test(groups = "short")
-    public void closeDuringClusterInitTest() throws InterruptedException {
+    public void should_close_properly_when_racing_with_cluster_init() throws InterruptedException {
         for (int i = 0; i < 500; i++) {
 
             // Use our own cluster and session (not the ones provided by the parent class) because we want an uninitialized cluster
@@ -206,12 +205,49 @@ public class SessionTest extends CCMTestsSupport {
 
                 executor.shutdown();
                 boolean normalShutdown = executor.awaitTermination(5, TimeUnit.SECONDS);
-                assertTrue(normalShutdown);
+                assertThat(normalShutdown).isTrue();
 
             } finally {
                 // The deadlock occurred here before JAVA-418
                 cluster.close();
             }
+        }
+    }
+
+    /**
+     * Ensures that if an attempt is made to create a {@link Session} via {@link Cluster#connect} with an invalid
+     * keyspace that the returned exception is decorated with an indication to check that your keyspace name is valid
+     * and includes the original {@link SyntaxError}.
+     */
+    @Test(groups = "short")
+    public void should_give_explicit_error_message_when_keyspace_name_invalid() {
+        try {
+            cluster().connect("%!;");
+            fail("Expected a SyntaxError");
+        } catch (SyntaxError e) {
+            assertThat(e.getMessage())
+                    .contains("Error executing \"USE %!;\"")
+                    .contains("Check that your keyspace name is valid");
+        }
+    }
+
+    /**
+     * Ensures that if an attempt is made to create a {@link Session} via {@link Cluster#connectAsync} with an invalid
+     * keyspace that the returned exception is decorated with an indication to check that your keyspace name is valid
+     * and includes the original {@link SyntaxError}.
+     */
+    @Test(groups = "short")
+    public void should_give_explicit_error_message_when_keyspace_name_invalid_async() {
+        ListenableFuture<Session> sessionFuture = cluster().connectAsync("");
+        try {
+            sessionFuture.get();
+        } catch (ExecutionException e) {
+            assertThat(e.getCause()).isInstanceOf(SyntaxError.class);
+            assertThat(e.getCause().getMessage())
+                    .contains("no viable alternative at input '<EOF>'")
+                    .contains("Check that your keyspace name is valid");
+        } catch (Exception e) {
+            fail("Did not expect Exception", e);
         }
     }
 }

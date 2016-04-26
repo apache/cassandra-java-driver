@@ -16,6 +16,8 @@
 package com.datastax.driver.core.querybuilder;
 
 import com.datastax.driver.core.*;
+import com.datastax.driver.core.utils.CassandraVersion;
+import org.assertj.core.api.iterable.Extractor;
 import org.testng.annotations.Test;
 
 import java.util.Date;
@@ -24,6 +26,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
+import static com.datastax.driver.core.schemabuilder.SchemaBuilder.createTable;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.data.MapEntry.entry;
 import static org.testng.Assert.*;
@@ -31,13 +34,20 @@ import static org.testng.Assert.*;
 public class QueryBuilderExecutionTest extends CCMTestsSupport {
 
     private static final String TABLE1 = "test1";
+    private static final String TABLE2 = "test2";
 
     @Override
     public void onTestContextInitialized() {
         execute(
                 String.format("CREATE TABLE %s (k text PRIMARY KEY, t text, i int, f float)", TABLE1),
+                String.format("CREATE TABLE %s (k text, t text, i int, f float, PRIMARY KEY (k, t))", TABLE2),
                 "CREATE TABLE dateTest (t timestamp PRIMARY KEY)",
-                "CREATE TABLE test_coll (k int PRIMARY KEY, a list<int>, b map<int,text>, c set<text>)");
+                "CREATE TABLE test_coll (k int PRIMARY KEY, a list<int>, b map<int,text>, c set<text>)",
+                insertInto(TABLE2).value("k", "cast_t").value("t", "a").value("i", 1).value("f", 1.1).toString(),
+                insertInto(TABLE2).value("k", "cast_t").value("t", "b").value("i", 2).value("f", 2.5).toString(),
+                insertInto(TABLE2).value("k", "cast_t").value("t", "c").value("i", 3).value("f", 3.7).toString(),
+                insertInto(TABLE2).value("k", "cast_t").value("t", "d").value("i", 4).value("f", 5.0).toString()
+        );
     }
 
     @Test(groups = "short")
@@ -182,4 +192,112 @@ public class QueryBuilderExecutionTest extends CCMTestsSupport {
         assertThat(actual).containsExactly(entry(2, "bar"));
     }
 
+    /**
+     * Validates that {@link QueryBuilder} may be used to create a query that casts a column from one type to another,
+     * i.e.:
+     * <p/>
+     * <code>select CAST(f as int) as fint, i from table2 where k='cast_t'</code>
+     * <p/>
+     * and validates that the query executes successfully with the anticipated results.
+     *
+     * @jira_ticket JAVA-1086
+     * @test_category queries:builder
+     * @since 3.0.1
+     */
+    @Test(groups = "short")
+    @CassandraVersion(major = 3.2)
+    public void should_support_cast_function_on_column() {
+        //when
+        ResultSet r = session().execute(select().cast("f", DataType.cint()).as("fint").column("i").from(TABLE2).where(eq("k", "cast_t")));
+        //then
+        assertThat(r.getAvailableWithoutFetching()).isEqualTo(4);
+        for (Row row : r) {
+            Integer i = row.getInt("i");
+            assertThat(row.getColumnDefinitions().getType("fint")).isEqualTo(DataType.cint());
+            Integer f = row.getInt("fint");
+            switch (i) {
+                case 1:
+                    assertThat(f).isEqualTo(1);
+                    break;
+                case 2:
+                    assertThat(f).isEqualTo(2);
+                    break;
+                case 3:
+                    assertThat(f).isEqualTo(3);
+                    break;
+                case 4:
+                    assertThat(f).isEqualTo(5);
+                    break;
+                default:
+                    fail("Unexpected values: " + i + "," + f);
+            }
+        }
+    }
+
+    /**
+     * Validates that {@link QueryBuilder} may be used to create a query that makes an aggregate function call, casting
+     * the column(s) that the function operates on from one type to another.
+     * i.e.:
+     * <p/>
+     * <code>select avg(CAST(i as float)) as iavg from table2 where k='cast_t'</code>
+     * <p/>
+     * and validates that the query executes successfully with the anticipated results.
+     *
+     * @jira_ticket JAVA-1086
+     * @test_category queries:builder
+     * @since 3.0.1
+     */
+    @Test(groups = "short")
+    @CassandraVersion(major = 3.2)
+    public void should_support_fcall_on_cast_column() {
+        //when
+        ResultSet ar = session().execute(select().fcall("avg", cast(column("i"), DataType.cfloat())).as("iavg").from(TABLE2).where(eq("k", "cast_t")));
+        //then
+        assertThat(ar.getAvailableWithoutFetching()).isEqualTo(1);
+        Row row = ar.one();
+        assertThat(row.getColumnDefinitions().getType("iavg")).isEqualTo(DataType.cfloat());
+        Float f = row.getFloat("iavg");
+        // (1.0+2.0+3.0+4.0) / 4 = 2.5
+        assertThat(f).isEqualTo(2.5f);
+    }
+
+    /**
+     * Validates that {@link QueryBuilder} can construct a query using the 'LIKE' operator to retrieve data from a
+     * table on a column that has a SASI index, i.e.:
+     * <p/>
+     * <code>select n from s_table where n like 'Hello%'</code>
+     * <p/>
+     *
+     * @test_category queries:builder
+     * @jira_ticket JAVA-1113
+     * @since 3.0.1
+     */
+    @Test(groups = "short")
+    @CassandraVersion(major = 3.6)
+    public void should_retrieve_using_like_operator_on_table_with_sasi_index() {
+        //given
+        String table = "s_table";
+        session().execute(createTable(table).addPartitionKey("k", DataType.text())
+                .addClusteringColumn("cc", DataType.cint())
+                .addColumn("n", DataType.text())
+        );
+        session().execute(String.format(
+                "CREATE CUSTOM INDEX on %s (n) USING 'org.apache.cassandra.index.sasi.SASIIndex';", table));
+        session().execute(insertInto(table).value("k", "a").value("cc", 0).value("n", "Hello World"));
+        session().execute(insertInto(table).value("k", "a").value("cc", 1).value("n", "Goodbye World"));
+        session().execute(insertInto(table).value("k", "b").value("cc", 2).value("n", "Hello Moon"));
+
+        //when
+        BuiltStatement query = select("n").from(table).where(like("n", "Hello%"));
+        ResultSet r = session().execute(query);
+
+        //then
+        assertThat(r.getAvailableWithoutFetching()).isEqualTo(2);
+        assertThat(r.all()).extracting(new Extractor<Row, String>() {
+            @Override
+            public String extract(Row input) {
+                return input.getString("n");
+            }
+        }).containsOnly("Hello World", "Hello Moon");
+    }
 }

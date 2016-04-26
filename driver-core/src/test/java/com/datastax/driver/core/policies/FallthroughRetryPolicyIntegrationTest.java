@@ -19,13 +19,15 @@ import com.datastax.driver.core.SocketOptions;
 import com.datastax.driver.core.exceptions.*;
 import org.assertj.core.api.Fail;
 import org.scassandra.http.client.ClosedConnectionConfig;
+import org.scassandra.http.client.ClosedConnectionConfig.CloseType;
 import org.scassandra.http.client.PrimingRequest;
+import org.scassandra.http.client.Result;
 import org.testng.annotations.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
-import static org.scassandra.http.client.PrimingRequest.Result.*;
 import static org.scassandra.http.client.PrimingRequest.then;
+import static org.scassandra.http.client.Result.*;
 
 public class FallthroughRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegrationTest {
     public FallthroughRetryPolicyIntegrationTest() {
@@ -111,7 +113,7 @@ public class FallthroughRetryPolicyIntegrationTest extends AbstractRetryPolicyIn
 
 
     @Test(groups = "short", dataProvider = "serverSideErrors")
-    public void should_rethrow_on_server_side_error(PrimingRequest.Result error, Class<? extends DriverException> exception) {
+    public void should_rethrow_on_server_side_error(Result error, Class<? extends DriverException> exception) {
         simulateError(1, error);
         try {
             query();
@@ -130,8 +132,8 @@ public class FallthroughRetryPolicyIntegrationTest extends AbstractRetryPolicyIn
 
 
     @Test(groups = "short", dataProvider = "connectionErrors")
-    public void should_rethrow_on_connection_error(ClosedConnectionConfig.CloseType closeType) {
-        simulateError(1, PrimingRequest.Result.closed_connection, new ClosedConnectionConfig(closeType));
+    public void should_rethrow_on_connection_error(CloseType closeType) {
+        simulateError(1, Result.closed_connection, new ClosedConnectionConfig(closeType));
         try {
             query();
             Fail.fail("expected a TransportException");

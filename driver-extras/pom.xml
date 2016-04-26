@@ -24,7 +24,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>cassandra-driver-extras</artifactId>
-
+    <packaging>bundle</packaging>
     <name>DataStax Java Driver for Apache Cassandra - Extras</name>
     <description>Extended functionality for the Java driver.</description>
     <url>https://github.com/datastax/java-driver</url>
@@ -120,6 +120,20 @@
             <scope>test</scope>
         </dependency>
 
+        <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <version>${log4j.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <version>${slf4j-log4j12.version}</version>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 
     <build>
@@ -142,18 +156,39 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>animal-sniffer-maven-plugin</artifactId>
-                <configuration>
-                    <!--
-                    There is no support for JDK 8 yet, see
-                    https://github.com/mojohaus/animal-sniffer/issues/1
-                    -->
-                    <skip>true</skip>
-                    <signature>
-                        <groupId>org.codehaus.mojo.signature</groupId>
-                        <artifactId>java18</artifactId>
-                        <version>1.0</version>
-                    </signature>
-                </configuration>
+                <executions>
+                    <execution>
+                        <id>check</id>
+                        <phase>process-classes</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                        <configuration>
+                            <signature>
+                                <groupId>org.codehaus.mojo.signature</groupId>
+                                <artifactId>java16</artifactId>
+                                <version>1.0</version>
+                            </signature>
+                            <annotations>
+                                <annotation>com.datastax.driver.extras.codecs.jdk8.IgnoreJDK6Requirement</annotation>
+                            </annotations>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>check-jdk8</id>
+                        <phase>process-classes</phase>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                        <configuration>
+                            <signature>
+                                <groupId>org.codehaus.mojo.signature</groupId>
+                                <artifactId>java18</artifactId>
+                                <version>1.0</version>
+                            </signature>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
 
             <plugin>
@@ -195,6 +230,7 @@
                         <Bundle-SymbolicName>com.datastax.driver.extras</Bundle-SymbolicName>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <_include>-osgi.bnd</_include>
+                        <Import-Package><![CDATA[com.google.common*;version="[16.0.1,20)",*]]></Import-Package>
                     </instructions>
                     <supportedProjectTypes>
                         <supportedProjectType>jar</supportedProjectType>

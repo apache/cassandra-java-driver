@@ -161,7 +161,7 @@ public class DefaultPreparedStatement implements PreparedStatement {
 
     @Override
     public PreparedStatement setSerialConsistencyLevel(ConsistencyLevel serialConsistency) {
-        if (serialConsistency != ConsistencyLevel.SERIAL && serialConsistency != ConsistencyLevel.LOCAL_SERIAL)
+        if (!serialConsistency.isSerial())
             throw new IllegalArgumentException();
         this.serialConsistency = serialConsistency;
         return this;

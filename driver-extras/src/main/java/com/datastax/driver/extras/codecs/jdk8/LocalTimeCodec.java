@@ -22,48 +22,48 @@ import com.datastax.driver.core.TypeCodec;
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 
 import java.nio.ByteBuffer;
-import java.time.LocalTime;
-import java.time.format.DateTimeFormatter;
 
 import static com.datastax.driver.core.ParseUtils.quote;
 
 /**
- * {@link TypeCodec} that maps {@link LocalTime} to CQL {@code time} (long representing nanoseconds since midnight).
+ * {@link TypeCodec} that maps {@link java.time.LocalTime} to CQL {@code time} (long representing nanoseconds since midnight).
  */
-public class LocalTimeCodec extends TypeCodec<LocalTime> {
+@IgnoreJDK6Requirement
+@SuppressWarnings("Since15")
+public class LocalTimeCodec extends TypeCodec<java.time.LocalTime> {
 
     public static final LocalTimeCodec instance = new LocalTimeCodec();
 
-    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss.SSS");
+    private static final java.time.format.DateTimeFormatter FORMATTER = java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss.SSS");
 
     private LocalTimeCodec() {
-        super(DataType.time(), LocalTime.class);
+        super(DataType.time(), java.time.LocalTime.class);
     }
 
     @Override
-    public ByteBuffer serialize(LocalTime value, ProtocolVersion protocolVersion) throws InvalidTypeException {
+    public ByteBuffer serialize(java.time.LocalTime value, ProtocolVersion protocolVersion) throws InvalidTypeException {
         if (value == null)
             return null;
         return bigint().serializeNoBoxing(value.toNanoOfDay(), protocolVersion);
     }
 
     @Override
-    public LocalTime deserialize(ByteBuffer bytes, ProtocolVersion protocolVersion) throws InvalidTypeException {
+    public java.time.LocalTime deserialize(ByteBuffer bytes, ProtocolVersion protocolVersion) throws InvalidTypeException {
         if (bytes == null || bytes.remaining() == 0)
             return null;
         long nanosOfDay = bigint().deserializeNoBoxing(bytes, protocolVersion);
-        return LocalTime.ofNanoOfDay(nanosOfDay);
+        return java.time.LocalTime.ofNanoOfDay(nanosOfDay);
     }
 
     @Override
-    public String format(LocalTime value) {
+    public String format(java.time.LocalTime value) {
         if (value == null)
             return "NULL";
         return quote(FORMATTER.format(value));
     }
 
     @Override
-    public LocalTime parse(String value) {
+    public java.time.LocalTime parse(String value) {
         if (value == null || value.isEmpty() || value.equalsIgnoreCase("NULL"))
             return null;
 
@@ -79,11 +79,11 @@ public class LocalTimeCodec extends TypeCodec<LocalTime> {
             } catch (NumberFormatException e) {
                 throw new InvalidTypeException(String.format("Cannot parse time value from \"%s\"", value), e);
             }
-            return LocalTime.ofNanoOfDay(nanosOfDay);
+            return java.time.LocalTime.ofNanoOfDay(nanosOfDay);
         }
 
         try {
-            return LocalTime.parse(value);
+            return java.time.LocalTime.parse(value);
         } catch (RuntimeException e) {
             throw new InvalidTypeException(String.format("Cannot parse time value from \"%s\"", value), e);
         }

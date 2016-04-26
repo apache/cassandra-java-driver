@@ -18,6 +18,7 @@ package com.datastax.driver.core.querybuilder;
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.exceptions.CodecNotFoundException;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
+import com.datastax.driver.core.exceptions.InvalidTypeException;
 import com.datastax.driver.core.utils.Bytes;
 import com.datastax.driver.core.utils.CassandraVersion;
 import com.google.common.collect.ImmutableList;
@@ -26,14 +27,19 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.testng.annotations.Test;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.InetAddress;
+import java.nio.ByteBuffer;
 import java.util.*;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.testng.Assert.*;
+import static org.assertj.core.api.Assertions.fail;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 public class QueryBuilderTest {
 
@@ -137,37 +143,53 @@ public class QueryBuilderTest {
         select = select().from("foo").where(containsKey("e", "key1"));
         assertEquals(select.toString(), query);
 
+        query = "SELECT CAST(writetime(country) AS text) FROM artists LIMIT 2;";
+        select = select().cast(fcall("writetime", column("country")), DataType.text()).from("artists").limit(2);
+        assertEquals(select.toString(), query);
+
+        query = "SELECT avg(CAST(v AS float)) FROM e;";
+        select = select().fcall("avg", cast(column("v"), DataType.cfloat())).from("e");
+        assertEquals(select.toString(), query);
+
+        query = "SELECT CAST(writetime(country) AS text) FROM artists LIMIT 2;";
+        select = select().raw("CAST(writetime(country) AS text)").from("artists").limit(2);
+        assertEquals(select.toString(), query);
+
+        query = "SELECT * FROM foo WHERE e LIKE 'a%';";
+        select = select().from("foo").where(like("e", "a%"));
+        assertEquals(select.toString(), query);
+
         try {
             select().countAll().from("foo").orderBy(asc("a"), desc("b")).orderBy(asc("a"), desc("b"));
-            fail();
+            fail("Expected an IllegalStateException");
         } catch (IllegalStateException e) {
             assertEquals(e.getMessage(), "An ORDER BY clause has already been provided");
         }
 
         try {
             select().column("a").all().from("foo");
-            fail();
+            fail("Expected an IllegalStateException");
         } catch (IllegalStateException e) {
             assertEquals(e.getMessage(), "Some columns ([a]) have already been selected.");
         }
 
         try {
             select().column("a").countAll().from("foo");
-            fail();
+            fail("Expected an IllegalStateException");
         } catch (IllegalStateException e) {
             assertEquals(e.getMessage(), "Some columns ([a]) have already been selected.");
         }
 
         try {
             select().all().from("foo").limit(-42);
-            fail();
+            fail("Expected an IllegalArgumentException");
         } catch (IllegalArgumentException e) {
             assertEquals(e.getMessage(), "Invalid LIMIT value, must be strictly positive");
         }
 
         try {
             select().all().from("foo").limit(42).limit(42);
-            fail();
+            fail("Expected an IllegalStateException");
         } catch (IllegalStateException e) {
             assertEquals(e.getMessage(), "A LIMIT value has already been provided");
         }
@@ -243,7 +265,7 @@ public class QueryBuilderTest {
 
         try {
             insertInto("foo").values(new String[]{"a", "b"}, new Object[]{1, 2, 3});
-            fail();
+            fail("Expected an IllegalArgumentException");
         } catch (IllegalArgumentException e) {
             assertEquals(e.getMessage(), "Got 2 names but 3 values");
         }
@@ -323,7 +345,7 @@ public class QueryBuilderTest {
 
         try {
             update("foo").using(ttl(-400));
-            fail();
+            fail("Expected an IllegalArgumentException");
         } catch (IllegalArgumentException e) {
             assertEquals(e.getMessage(), "Invalid ttl, must be positive");
         }
@@ -377,14 +399,14 @@ public class QueryBuilderTest {
 
         try {
             delete().column("a").all().from("foo");
-            fail();
+            fail("Expected an IllegalStateException");
         } catch (IllegalStateException e) {
             assertEquals(e.getMessage(), "Some columns ([a]) have already been selected.");
         }
 
         try {
             delete().from("foo").using(timestamp(-1240003134L));
-            fail();
+            fail("Expected an IllegalArgumentException");
         } catch (IllegalArgumentException e) {
             assertEquals(e.getMessage(), "Invalid timestamp, must be positive");
         }
@@ -749,6 +771,10 @@ public class QueryBuilderTest {
         String query;
         Statement select;
 
+        query = "SELECT * FROM foo WHERE k=4 AND (c1,c2)=('a',2);";
+        select = select().all().from("foo").where(eq("k", 4)).and(eq(Arrays.asList("c1", "c2"), Arrays.<Object>asList("a", 2)));
+        assertEquals(select.toString(), query);
+
         query = "SELECT * FROM foo WHERE k=4 AND (c1,c2)>('a',2);";
         select = select().all().from("foo").where(eq("k", 4)).and(gt(Arrays.asList("c1", "c2"), Arrays.<Object>asList("a", 2)));
         assertEquals(select.toString(), query);
@@ -760,6 +786,22 @@ public class QueryBuilderTest {
 
         query = "SELECT * FROM foo WHERE k=4 AND (c1,c2)<=('a',2);";
         select = select().all().from("foo").where(eq("k", 4)).and(lte(Arrays.asList("c1", "c2"), Arrays.<Object>asList("a", 2)));
+        assertEquals(select.toString(), query);
+
+        query = "SELECT * FROM foo WHERE k=4 AND (c1,c2) IN ((1,2),('foo','bar'));";
+        List<String> names = ImmutableList.of("c1", "c2");
+        List<List<?>> values = ImmutableList.<List<?>>of(
+                ImmutableList.of(1, 2),
+                ImmutableList.of("foo", "bar"));
+        select = select().all().from("foo").where(eq("k", 4)).and(in(names, values));
+        assertEquals(select.toString(), query);
+
+        query = "SELECT * FROM foo WHERE k=4 AND (c1,c2) IN ((1,2),?);";
+        names = ImmutableList.of("c1", "c2");
+        values = ImmutableList.<List<?>>of(
+                ImmutableList.of(1, 2),
+                ImmutableList.of(bindMarker()));
+        select = select().all().from("foo").where(eq("k", 4)).and(in(names, values));
         assertEquals(select.toString(), query);
     }
 
@@ -850,7 +892,7 @@ public class QueryBuilderTest {
     public void should_quote_column_names_with_escaped_quotes() {
         // A column name can include quotes as long as it is escaped with another set of quotes, so "foo""bar" is a valid name.
         String query = "SELECT * FROM foo WHERE \"foo \"\" bar\"=1;";
-        Statement statement = select().from("foo").where(eq(quote("foo \"\" bar"), 1));
+        Statement statement = select().from("foo").where(eq(quote("foo \" bar"), 1));
 
         assertThat(statement.toString()).isEqualTo(query);
     }
@@ -880,7 +922,6 @@ public class QueryBuilderTest {
     }
 
     @Test(groups = "unit")
-    @CassandraVersion(major = 2.1)
     public void should_serialize_collections_of_serializable_elements() {
         Set<UUID> set = Sets.newHashSet(UUID.randomUUID());
         List<Date> list = Lists.newArrayList(new Date());
@@ -897,7 +938,6 @@ public class QueryBuilderTest {
     }
 
     @Test(groups = "unit")
-    @CassandraVersion(major = 2.1)
     public void should_not_attempt_to_serialize_function_calls_in_collections() {
         BuiltStatement query = insertInto("foo").value("v", Sets.newHashSet(fcall("func", 1)));
         assertThat(query.getQueryString()).isEqualTo("INSERT INTO foo (v) VALUES ({func(1)});");
@@ -905,7 +945,13 @@ public class QueryBuilderTest {
     }
 
     @Test(groups = "unit")
-    @CassandraVersion(major = 2.1)
+    public void should_not_attempt_to_serialize_bind_markers_in_collections() {
+        BuiltStatement query = insertInto("foo").value("v", Lists.newArrayList(1, 2, bindMarker()));
+        assertThat(query.getQueryString()).isEqualTo("INSERT INTO foo (v) VALUES ([1,2,?]);");
+        assertThat(query.getValues(ProtocolVersion.NEWEST_SUPPORTED, CodecRegistry.DEFAULT_INSTANCE)).isNullOrEmpty();
+    }
+
+    @Test(groups = "unit")
     public void should_not_attempt_to_serialize_raw_values_in_collections() {
         BuiltStatement query = insertInto("foo").value("v", ImmutableMap.of(1, raw("x")));
         assertThat(query.getQueryString()).isEqualTo("INSERT INTO foo (v) VALUES ({1:x});");
@@ -913,7 +959,6 @@ public class QueryBuilderTest {
     }
 
     @Test(groups = "unit")
-    @CassandraVersion(major = 2.1)
     public void should_not_attempt_to_serialize_collections_containing_numbers() {
         BuiltStatement query;
         // lists
@@ -931,6 +976,27 @@ public class QueryBuilderTest {
         query = insertInto("foo").value("v", map);
         assertThat(query.getQueryString()).isEqualTo("INSERT INTO foo (v) VALUES ({1:12.34});");
         assertThat(query.hasValues()).isFalse();
+    }
+
+    @Test(groups = "unit")
+    public void should_include_original_cause_when_arguments_invalid() {
+        // Collection elements in protocol v2 must be at most 65535 bytes
+        ByteBuffer bb = ByteBuffer.allocate(65536); // too big
+        List<ByteBuffer> value = Lists.newArrayList(bb);
+
+        BuiltStatement s = insertInto("foo").value("l", value);
+        try {
+            s.getValues(ProtocolVersion.V2, CodecRegistry.DEFAULT_INSTANCE);
+            fail("Expected an IllegalArgumentException");
+        } catch (InvalidTypeException e) {
+            assertThat(e.getCause()).isInstanceOf(IllegalArgumentException.class);
+            StringWriter writer = new StringWriter();
+            e.getCause().printStackTrace(new PrintWriter(writer));
+            String stackTrace = writer.toString();
+            assertThat(stackTrace).contains(
+                    "Native protocol version 2 supports only elements with size up to 65535 bytes - " +
+                            "but element size is 65536 bytes");
+        }
     }
 
 }

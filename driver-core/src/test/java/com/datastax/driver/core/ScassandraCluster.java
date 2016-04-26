@@ -15,11 +15,8 @@
  */
 package com.datastax.driver.core;
 
-import com.beust.jcommander.internal.Lists;
-import com.beust.jcommander.internal.Maps;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
+import com.datastax.driver.core.utils.UUIDs;
+import com.google.common.collect.*;
 import org.scassandra.Scassandra;
 import org.scassandra.ScassandraFactory;
 import org.scassandra.http.client.PrimingClient;
@@ -54,6 +51,8 @@ public class ScassandraCluster {
     private final Map<Integer, List<Scassandra>> dcNodeMap;
 
     private final List<Map<String, ?>> keyspaceRows;
+
+    private static final java.util.UUID schemaVersion = UUIDs.random();
 
 
     private final Map<Integer, Map<Integer, Map<String, Object>>> forcedPeerInfos;
@@ -263,7 +262,7 @@ public class ScassandraCluster {
         // Offset DCs by dc * 100 to ensure unique tokens.
         int offset = (dc - 1) * 100;
         int dcNodeCount = nodes(dc).size();
-        List<Long> tokens = Lists.newArrayList(dcNodeCount);
+        List<Long> tokens = Lists.newArrayListWithExpectedSize(dcNodeCount);
         for (int i = 0; i < dcNodeCount; i++) {
             tokens.add((i * ((long) Math.pow(2, 64) / dcNodeCount) + offset));
         }
@@ -287,42 +286,43 @@ public class ScassandraCluster {
                 if (node == peer) { // prime system.local.
                     metadata = SELECT_LOCAL;
                     query = "SELECT * FROM system.local WHERE key='local'";
-                    ImmutableMap.Builder<String, Object> rowBuilder = ImmutableMap.<String, Object>builder()
-                            .put("key", "local")
-                            .put("bootstrapped", "COMPLETED")
-                            .put("broadcast_address", address)
-                            .put("cluster_name", "scassandra")
-                            .put("cql_version", "3.2.0")
-                            .put("data_center", datacenter(dc))
-                            .put("listen_address", getPeerInfo(dc, n + 1, "listen_address", address))
-                            .put("partitioner", "org.apache.cassandra.dht.Murmur3Partitioner")
-                            .put("rack", "rack1")
-                            .put("release_version", getPeerInfo(dc, n + 1, "release_version", "2.1.8"))
-                            .put("tokens", ImmutableSet.of(tokens.get(n)));
+
+                    row = Maps.newHashMap();
+                    addPeerInfo(row, dc, n + 1, "key", "local");
+                    addPeerInfo(row, dc, n + 1, "bootstrapped", "COMPLETED");
+                    addPeerInfo(row, dc, n + 1, "broadcast_address", address);
+                    addPeerInfo(row, dc, n + 1, "cluster_name", "scassandra");
+                    addPeerInfo(row, dc, n + 1, "cql_version", "3.2.0");
+                    addPeerInfo(row, dc, n + 1, "data_center", datacenter(dc));
+                    addPeerInfo(row, dc, n + 1, "listen_address", getPeerInfo(dc, n + 1, "listen_address", address));
+                    addPeerInfo(row, dc, n + 1, "partitioner", "org.apache.cassandra.dht.Murmur3Partitioner");
+                    addPeerInfo(row, dc, n + 1, "rack", getPeerInfo(dc, n + 1, "rack", "rack1"));
+                    addPeerInfo(row, dc, n + 1, "release_version", getPeerInfo(dc, n + 1, "release_version", "2.1.8"));
+                    addPeerInfo(row, dc, n + 1, "tokens", ImmutableSet.of(tokens.get(n)));
+                    addPeerInfo(row, dc, n + 1, "schema_version", schemaVersion);
 
                     // These columns might not always be present, we don't have to specify them in the scassandra
                     // column metadata as it will default them to text columns.
-                    rowBuilder = addInfoIfExists(rowBuilder, dc, n + 1, "dse_version");
-                    rowBuilder = addInfoIfExists(rowBuilder, dc, n + 1, "workload");
-
-                    row = rowBuilder.build();
+                    addPeerInfoIfExists(row, dc, n + 1, "dse_version");
+                    addPeerInfoIfExists(row, dc, n + 1, "workload");
                 } else { // prime system.peers.
                     query = "SELECT * FROM system.peers WHERE peer='" + address + "'";
                     metadata = SELECT_PEERS;
-                    ImmutableMap.Builder<String, Object> rowBuilder = ImmutableMap.<String, Object>builder()
-                            .put("peer", address)
-                            .put("rpc_address", address)
-                            .put("data_center", datacenter(dc))
-                            .put("rack", "rack1")
-                            .put("release_version", getPeerInfo(dc, n + 1, "release_version", "2.1.8"))
-                            .put("tokens", ImmutableSet.of(Long.toString(tokens.get(n))));
+                    row = Maps.newHashMap();
+                    addPeerInfo(row, dc, n + 1, "peer", address);
+                    addPeerInfo(row, dc, n + 1, "rpc_address", address);
+                    addPeerInfo(row, dc, n + 1, "data_center", datacenter(dc));
+                    addPeerInfo(row, dc, n + 1, "rack", getPeerInfo(dc, n + 1, "rack", "rack1"));
+                    addPeerInfo(row, dc, n + 1, "release_version", getPeerInfo(dc, n + 1, "release_version", "2.1.8"));
+                    addPeerInfo(row, dc, n + 1, "tokens", ImmutableSet.of(Long.toString(tokens.get(n))));
+                    addPeerInfo(row, dc, n + 1, "host_id", UUIDs.random());
+                    addPeerInfo(row, dc, n + 1, "schema_version", schemaVersion);
 
-                    rowBuilder = addInfoIfExists(rowBuilder, dc, n + 1, "listen_address");
-                    rowBuilder = addInfoIfExists(rowBuilder, dc, n + 1, "dse_version");
-                    rowBuilder = addInfoIfExists(rowBuilder, dc, n + 1, "workload");
+                    addPeerInfoIfExists(row, dc, n + 1, "listen_address");
+                    addPeerInfoIfExists(row, dc, n + 1, "dse_version");
+                    addPeerInfoIfExists(row, dc, n + 1, "workload");
 
-                    row = rowBuilder.build();
-                    rows.add(rowBuilder.build());
+                    rows.add(row);
                 }
                 client.prime(PrimingRequest.queryBuilder()
                         .withQuery(query)
@@ -364,16 +364,24 @@ public class ScassandraCluster {
                 .build());
     }
 
-    private ImmutableMap.Builder<String, Object> addInfoIfExists(ImmutableMap.Builder<String, Object> builder, int dc, int node, String property) {
+    private void addPeerInfo(Map<String, Object> input, int dc, int node, String property, Object defaultValue) {
+        Object peerInfo = getPeerInfo(dc, node, property, defaultValue);
+        if (peerInfo != null) {
+            input.put(property, peerInfo);
+        }
+    }
+
+    private void addPeerInfoIfExists(Map<String, Object> input, int dc, int node, String property) {
         Map<Integer, Map<String, Object>> forDc = forcedPeerInfos.get(dc);
         if (forDc == null)
-            return builder;
+            return;
 
         Map<String, Object> forNode = forDc.get(node);
         if (forNode == null)
-            return builder;
+            return;
 
-        return (forNode.containsKey(property)) ? builder.put(property, forNode.get(property)) : builder;
+        if (forNode.containsKey(property))
+            input.put(property, forNode.get(property));
     }
 
     private Object getPeerInfo(int dc, int node, String property, Object defaultValue) {
@@ -397,7 +405,9 @@ public class ScassandraCluster {
             column("rack", TEXT),
             column("release_version", TEXT),
             column("tokens", set(TEXT)),
-            column("listen_address", INET)
+            column("listen_address", INET),
+            column("host_id", UUID),
+            column("schema_version", UUID)
     };
 
     static final org.scassandra.http.client.types.ColumnMetadata[] SELECT_LOCAL = {
@@ -412,6 +422,7 @@ public class ScassandraCluster {
             column("rack", TEXT),
             column("release_version", TEXT),
             column("tokens", set(TEXT)),
+            column("schema_version", UUID)
     };
 
     static final org.scassandra.http.client.types.ColumnMetadata[] SELECT_CLUSTER_NAME = {
