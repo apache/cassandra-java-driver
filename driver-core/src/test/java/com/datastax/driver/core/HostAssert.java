@@ -150,6 +150,16 @@ public class HostAssert extends AbstractAssert<HostAssert, Host> {
         return this;
     }
 
+    public HostAssert hasDseGraph() {
+        assertThat(actual.isDseGraphEnabled()).isTrue();
+        return this;
+    }
+
+    public HostAssert hasNoDseGraph() {
+        assertThat(actual.isDseGraphEnabled()).isFalse();
+        return this;
+    }
+
     public HostAssert hasListenAddress(InetAddress address) {
         assertThat(actual.getListenAddress()).isNotNull().isEqualTo(address);
         return this;

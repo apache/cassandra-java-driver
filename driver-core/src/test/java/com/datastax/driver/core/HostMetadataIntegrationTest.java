@@ -80,7 +80,7 @@ public class HostMetadataIntegrationTest {
      * @test_category host:metadata
      * @jira_ticket JAVA-1042
      */
-    @Test(groups = "short'")
+    @Test(groups = "short")
     public void should_parse_dse_workload_and_version_if_available() {
         // given: A 5 node cluster with all nodes having a workload and dse_version except node 2.
         ScassandraCluster scassandraCluster = ScassandraCluster.builder()
@@ -201,6 +201,84 @@ public class HostMetadataIntegrationTest {
         } finally {
             logger.removeAppender(logs);
             logger.setLevel(originalLoggerLevel);
+            cluster.close();
+            scassandraCluster.stop();
+        }
+    }
+
+    /**
+     * Validates that {@link Host#isDseGraphEnabled()} returns the value defined in the <code>graph</code> columns if
+     * it is present in <code>system.local</code> or <code>system.peers</code> otherwise it returns false.
+     *
+     * @test_category host:metadata
+     * @jira_ticket JAVA-1171
+     */
+    @Test(groups = "short")
+    public void should_parse_dse_graph_if_available() {
+        // given: A 3 node cluster with all nodes having a graph value except node 2.
+        ScassandraCluster scassandraCluster = ScassandraCluster.builder()
+                .withIpPrefix(TestUtils.IP_PREFIX)
+                .withNodes(3)
+                .forcePeerInfo(1, 1, "graph", true)
+                .forcePeerInfo(1, 3, "graph", false)
+                .build();
+
+        Cluster cluster = Cluster.builder()
+                .addContactPoints(scassandraCluster.address(1).getAddress())
+                .withPort(scassandraCluster.getBinaryPort())
+                .withNettyOptions(nonQuietClusterCloseOptions)
+                .build();
+
+        try {
+            scassandraCluster.init();
+            // when: initializing a cluster instance.
+            cluster.init();
+
+            // then:
+            //  - node 1 should have graph.
+            //  - node 2 and node 3 should not have graph.
+            assertThat(cluster).host(1).hasDseGraph();
+            assertThat(cluster).host(2).hasNoDseGraph();
+            assertThat(cluster).host(3).hasNoDseGraph();
+        } finally {
+            cluster.close();
+            scassandraCluster.stop();
+        }
+    }
+
+    /**
+     * Validates that {@link Host#isDseGraphEnabled()} returns false if the <code>graph</code> column is not present
+     * in <code>system.local</code> for the control host.
+     *
+     * @test_category host:metadata
+     * @jira_ticket JAVA-1171
+     */
+    @Test(groups = "short")
+    public void should_not_parse_dse_graph_if_not_present_in_local_table() {
+        // given: A cluster with node 1 (control host) not having graph set, and node 2 with it set.
+        ScassandraCluster scassandraCluster = ScassandraCluster.builder()
+                .withIpPrefix(TestUtils.IP_PREFIX)
+                .withNodes(2)
+                .forcePeerInfo(1, 2, "graph", true)
+                .build();
+
+        Cluster cluster = Cluster.builder()
+                .addContactPoints(scassandraCluster.address(1).getAddress())
+                .withPort(scassandraCluster.getBinaryPort())
+                .withNettyOptions(nonQuietClusterCloseOptions)
+                .build();
+
+        try {
+            scassandraCluster.init();
+            // when: initializing a cluster instance.
+            cluster.init();
+
+            // then:
+            //  - node 1 should have no graph.
+            //  - node 2 should have graph.
+            assertThat(cluster).host(1).hasNoDseGraph();
+            assertThat(cluster).host(2).hasDseGraph();
+        } finally {
             cluster.close();
             scassandraCluster.stop();
         }

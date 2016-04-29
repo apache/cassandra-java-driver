@@ -300,6 +300,7 @@ public class ScassandraCluster {
                     addPeerInfo(row, dc, n + 1, "release_version", getPeerInfo(dc, n + 1, "release_version", "2.1.8"));
                     addPeerInfo(row, dc, n + 1, "tokens", ImmutableSet.of(tokens.get(n)));
                     addPeerInfo(row, dc, n + 1, "schema_version", schemaVersion);
+                    addPeerInfo(row, dc, n + 1, "graph", false);
 
                     // These columns might not always be present, we don't have to specify them in the scassandra
                     // column metadata as it will default them to text columns.
@@ -317,6 +318,7 @@ public class ScassandraCluster {
                     addPeerInfo(row, dc, n + 1, "tokens", ImmutableSet.of(Long.toString(tokens.get(n))));
                     addPeerInfo(row, dc, n + 1, "host_id", UUIDs.random());
                     addPeerInfo(row, dc, n + 1, "schema_version", schemaVersion);
+                    addPeerInfo(row, dc, n + 1, "graph", false);
 
                     addPeerInfoIfExists(row, dc, n + 1, "listen_address");
                     addPeerInfoIfExists(row, dc, n + 1, "dse_version");
@@ -407,6 +409,7 @@ public class ScassandraCluster {
             column("tokens", set(TEXT)),
             column("listen_address", INET),
             column("host_id", UUID),
+            column("graph", BOOLEAN),
             column("schema_version", UUID)
     };
 
@@ -422,6 +425,7 @@ public class ScassandraCluster {
             column("rack", TEXT),
             column("release_version", TEXT),
             column("tokens", set(TEXT)),
+            column("graph", BOOLEAN),
             column("schema_version", UUID)
     };
 
