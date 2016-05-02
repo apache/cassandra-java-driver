@@ -283,7 +283,7 @@ for (ColumnDefinitions.Definition definition : row.getColumnDefinitions()) {
 If you're reading this from the [generated HTML documentation on
 github.io](http://datastax.github.io/java-driver/), use the "Contents"
 menu on the left hand side to navigate sub-sections. If you're [browsing the source files on
-github.com](https://github.com/datastax/java-driver/tree/3.0/manual),
+github.com](https://github.com/datastax/java-driver/tree/3.0.x/manual),
 simply navigate to each sub-directory.
 
 [Cluster]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Cluster.html

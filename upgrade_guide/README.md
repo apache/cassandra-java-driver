@@ -3,7 +3,7 @@
 The purpose of this guide is to detail changes made by successive
 versions of the Java driver.
 
-### 3.0
+### 3.0.0
 
 This version brings parity with Cassandra 2.2 and 3.0.
 
