@@ -75,6 +75,7 @@ public class Host {
     private volatile Set<Token> tokens;
 
     private volatile String dseWorkload;
+    private volatile boolean dseGraphEnabled;
     private volatile VersionNumber dseVersion;
 
     // ClusterMetadata keeps one Host object per inet address and we rely on this (more precisely,
@@ -130,6 +131,10 @@ public class Host {
 
     void setDseWorkload(String dseWorkload) {
         this.dseWorkload = dseWorkload;
+    }
+
+    void setDseGraphEnabled(boolean dseGraphEnabled) {
+        this.dseGraphEnabled = dseGraphEnabled;
     }
 
     /**
@@ -267,6 +272,15 @@ public class Host {
      */
     public String getDseWorkload() {
         return dseWorkload;
+    }
+
+    /**
+     * Returns whether the host is running DSE Graph.
+     *
+     * @return whether the node is running DSE Graph.
+     */
+    public boolean isDseGraphEnabled() {
+        return dseGraphEnabled;
     }
 
     /**
