@@ -220,6 +220,21 @@
                 </plugins>
             </build>
         </profile>
+        <profile>
+            <id>short</id>
+            <properties>
+                <test.groups>unit,short</test.groups>
+                <test.skip>false</test.skip>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>long</id>
+            <properties>
+                <test.groups>unit,short,long</test.groups>
+                <test.skip>false</test.skip>
+            </properties>
+        </profile>
     </profiles>
 
     <licenses>

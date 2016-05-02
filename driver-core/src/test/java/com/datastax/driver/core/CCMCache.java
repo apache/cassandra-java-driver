@@ -271,10 +271,10 @@ public class CCMCache {
             // CCM nodes are started with -Xms500M -Xmx500M
             // and allocate up to 100MB non-heap memory in the general case,
             // to be conservative we treat 1 "slot" as 800Mb.
-            // We leave 2 slots out to avoid starving system memory,
+            // We leave 3 slots out to avoid starving system memory,
             // and we pick a value with a minimum of 1 slot and a maximum of 8 slots.
-            // For example, an 8GB VM with ~6.5GB currently available heap will yield 6 slots ((6500/800) - 2 = 6).
-            long slotsAvailable = (freeMemoryMB / ONE_CCM_NODE_MB) - 2;
+            // For example, an 8GB VM with ~6.5GB currently available heap will yield 5 slots ((6500/800) - 3 = 5).
+            long slotsAvailable = (freeMemoryMB / ONE_CCM_NODE_MB) - 3;
             maximumWeight = Math.min(8, Math.max(1, slotsAvailable));
         } else {
             maximumWeight = Integer.parseInt(numberOfNodes);
