@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="description" content="High performance Java client for Apache Cassandra">
+    <meta name="author" content="DataStax">
+
+    <title>Java Driver for Apache Cassandra - Batch statements</title>
+
+    <link rel="icon" href="../../../../favicon.ico">
+    <link rel="apple-touch-icon" href="../../../../favicon.png">
+    <link href="../../../../css/style.css" rel="stylesheet">
+    <link href="../../../../css/pygments.css" rel="stylesheet">
+    <link href="../../../../css/hotkeys.css" rel="stylesheet">
+
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body ng-app="docs" data-spy="scroll" data-target="#table-of-contents" data-offset="69">
+    <header class="container-fluid navbar">
+      <div class="row">
+        <div class="col-sm-4">
+          <a class="navbar-brand" href="../../../"><img alt="Brand" src="../../../../img/logo.png">Java Driver for Apache Cassandra</a>
+        </div>
+        <div class="col-md-4 col-md-offset-4">
+          <div class="row">
+            <div class="col-md-12">
+              <ul class="list-inline" role="nav">
+                <li><a href="https://academy.datastax.com/" class="navbar-link">DataStax Academy</a></li>
+                <li><a href="http://www.datastax.com/dev/blog" class="navbar-link">Tech Blog</a></li>
+                <li><a href="http://www.datastax.com/what-we-offer/products-services/support" class="navbar-link">Support</a></li>
+              </ul>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-8">
+              <form id="search" class="form-search dropdown visible-lg-block" ng-controller="search" ng-class="{open: hasResults}" role="search" ng-submit="submit()" data-spy="affix" data-offset-top="130">
+                <div class="form-group has-feedback">
+                  <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('3.0.0')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+                </div>
+                <ul class="dropdown-menu search-results" role="menu">
+                  <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
+                </ul>
+              </form>
+            </div>
+            <div class="col-md-4">
+              <a href="http://www.datastax.com/download" class="btn btn-primary btn-sm">Download</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row crumbs-wrapper">
+        <div class="col-md-12">
+          <nav id="crumbs" data-spy="affix" data-offset-top="130">
+            <ol class="breadcrumb">
+              
+              <li>
+                <div class="btn-group">
+                  <button id="current-version" class="btn btn-default btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    3.0.0
+                    <span class="caret"></span>
+                  </button>
+                  <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
+                  
+                    <li><a href="../../../../manual/statements/batch/">3.0.1</a></li>
+                  
+                    <li class="disabled"><a href="./">3.0.0</a></li>
+                  
+                    <li><a href="../../../../2.1.10.1/manual/statements/batch/">2.1.10.1</a></li>
+                  
+                    <li><a href="../../../../2.1.10/manual/statements/batch/">2.1.10</a></li>
+                  
+                    <li><a href="../../../../2.1.9/">2.1.9</a></li>
+                  
+                    <li><a href="../../../../2.1.8/">2.1.8</a></li>
+                  
+                    <li><a href="../../../../2.1.7/">2.1.7</a></li>
+                  
+                    <li><a href="../../../../2.0.12.1/">2.0.12.1</a></li>
+                  
+                    <li><a href="../../../../2.0.12/">2.0.12</a></li>
+                  
+                    <li><a href="../../../../2.0.11/">2.0.11</a></li>
+                  
+                  </ul>
+                </div>
+              </li>
+              
+              
+              
+              
+              <li><a href="../../../">Home</a></li>
+              
+              
+              
+              
+              
+              <li><a href="../../">Manual</a></li>
+              
+              
+              
+              
+              
+              <li><a href="../">Statements</a></li>
+              
+              
+              
+              
+              
+              <li class="active">Batch statements</li>
+              <li class="dropdown" id="table-of-contents">
+                <div class="btn-group">
+                  <button id="current-section" type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
+                    Jump to&#8230; <span class="caret"></span><span class="sr-only">Table of Contents</span>
+                  </button>
+                  <ul class="dropdown-menu nav nav-pills nav-stacked">
+                    <li><a href="#batch-statements">Batch statements
+</a></li>
+                  </ul>
+                </div>
+              </li>
+              
+              
+              
+            </ol>
+          </nav>
+        </div>
+      </div>
+    </header>
+
+    <div class="container-fluid" id="content">
+      <div class="row">
+        <div class="col-md-3">
+          <div id="navigation" class="side-nav" role="tablist" aria-multiselectable="true">
+            <h3>Contents</h3>
+            <ul class="nav nav-pills nav-stacked">
+  
+  
+  
+  <li>
+    <a href="../../../changelog/">Changelog <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../../../faq/">Frequently Asked Questions <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li class="active">
+    <a href="../../">Manual <small>page</small></a>
+    <ul class="nav nav-pills nav-stacked">
+  
+  
+  
+  <li>
+    <a href="../../address_resolution/">Address resolution <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../../async/">Asynchronous programming <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../../auth/">Authentication <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../../compression/">Compression <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../../pooling/">Connection pooling <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../../control_connection/">Control connection <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../../custom_codecs/">Custom Codecs <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../../custom_payloads/">Custom Payloads <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../../load_balancing/">Load balancing <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../../logging/">Logging <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../../metadata/">Metadata <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../../metrics/">Metrics <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../../native_protocol/">Native protocol <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../../object_mapper/">Object Mapper <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../../paging/">Paging <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../../query_timestamps/">Query timestamps <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../../reconnection/">Reconnection <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../../retries/">Retries <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../../ssl/">SSL <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../../socket_options/">Socket options <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../../speculative_execution/">Speculative query execution <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li class="active">
+    <a href="../">Statements <small>page</small></a>
+    <ul class="nav nav-pills nav-stacked">
+  
+  
+  
+  <li>
+    <a href="../simple/">Simple statements <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../prepared/">Prepared statements <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../built/">Built statements <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li class="active">
+    <a href="./" class="current">Batch statements <small>page</small></a>
+    
+  </li>
+  
+  
+</ul>
+
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../../tuples/">Tuples <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../../udts/">User-defined types <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../../shaded_jar/">Using the shaded JAR <small>page</small></a>
+  </li>
+  
+  
+</ul>
+
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../../../upgrade_guide/">Upgrade guide <small>page</small></a>
+  </li>
+  
+  
+</ul>
+
+          </div>
+        </div>
+        <div class="col-md-9 content">
+          
+
+<h2 id="batch-statements" class="target">Batch statements<a class="anchor" href="#batch-statements" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h2>
+
+<p><em>Coming soon… In the meantime, see the javadoc for <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/BatchStatement.html">BatchStatement</a>.</em></p>
+
+
+        </div>
+      </div>
+    </div>
+
+    
+    <footer class="container text-muted">
+      <ul class="list-inline">
+      
+        
+        <li>
+          <a href="https://github.com/datastax/java-driver/">Code</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="http://datastax.github.io/java-driver/">Docs</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://datastax-oss.atlassian.net/browse/JAVA/">Issues</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://groups.google.com/a/lists.datastax.com/forum/#!forum/java-driver-user">Mailing List</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="irc://irc.freenode.net/datastax-drivers">IRC Channel</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://github.com/datastax/java-driver/releases">Releases</a>
+        </li>
+      
+      </ul>
+    </footer>
+    
+
+    <script src="../../../../js/jquery.js"></script>
+    <script src="../../../../js/bootstrap.js"></script>
+    <script src="../../../../js/angular.js"></script>
+    <script src="../../../../js/mousetrap.js"></script>
+    <script src="../../../../js/hotkeys.js"></script>
+    <script src="../../../../js/ZeroClipboard.js"></script>
+    <script src="../../../../js/lunr.js"></script>
+    <script src="../../../../js/app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="description" content="High performance Java client for Apache Cassandra">
+    <meta name="author" content="DataStax">
+
+    <title>Java Driver for Apache Cassandra - Custom Payloads</title>
+
+    <link rel="icon" href="../../../favicon.ico">
+    <link rel="apple-touch-icon" href="../../../favicon.png">
+    <link href="../../../css/style.css" rel="stylesheet">
+    <link href="../../../css/pygments.css" rel="stylesheet">
+    <link href="../../../css/hotkeys.css" rel="stylesheet">
+
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body ng-app="docs" data-spy="scroll" data-target="#table-of-contents" data-offset="69">
+    <header class="container-fluid navbar">
+      <div class="row">
+        <div class="col-sm-4">
+          <a class="navbar-brand" href="../../"><img alt="Brand" src="../../../img/logo.png">Java Driver for Apache Cassandra</a>
+        </div>
+        <div class="col-md-4 col-md-offset-4">
+          <div class="row">
+            <div class="col-md-12">
+              <ul class="list-inline" role="nav">
+                <li><a href="https://academy.datastax.com/" class="navbar-link">DataStax Academy</a></li>
+                <li><a href="http://www.datastax.com/dev/blog" class="navbar-link">Tech Blog</a></li>
+                <li><a href="http://www.datastax.com/what-we-offer/products-services/support" class="navbar-link">Support</a></li>
+              </ul>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-8">
+              <form id="search" class="form-search dropdown visible-lg-block" ng-controller="search" ng-class="{open: hasResults}" role="search" ng-submit="submit()" data-spy="affix" data-offset-top="130">
+                <div class="form-group has-feedback">
+                  <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('3.0.0')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+                </div>
+                <ul class="dropdown-menu search-results" role="menu">
+                  <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
+                </ul>
+              </form>
+            </div>
+            <div class="col-md-4">
+              <a href="http://www.datastax.com/download" class="btn btn-primary btn-sm">Download</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row crumbs-wrapper">
+        <div class="col-md-12">
+          <nav id="crumbs" data-spy="affix" data-offset-top="130">
+            <ol class="breadcrumb">
+              
+              <li>
+                <div class="btn-group">
+                  <button id="current-version" class="btn btn-default btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    3.0.0
+                    <span class="caret"></span>
+                  </button>
+                  <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
+                  
+                    <li><a href="../../../manual/custom_payloads/">3.0.1</a></li>
+                  
+                    <li class="disabled"><a href="./">3.0.0</a></li>
+                  
+                    <li><a href="../../../2.1.10.1/">2.1.10.1</a></li>
+                  
+                    <li><a href="../../../2.1.10/">2.1.10</a></li>
+                  
+                    <li><a href="../../../2.1.9/">2.1.9</a></li>
+                  
+                    <li><a href="../../../2.1.8/">2.1.8</a></li>
+                  
+                    <li><a href="../../../2.1.7/">2.1.7</a></li>
+                  
+                    <li><a href="../../../2.0.12.1/">2.0.12.1</a></li>
+                  
+                    <li><a href="../../../2.0.12/">2.0.12</a></li>
+                  
+                    <li><a href="../../../2.0.11/">2.0.11</a></li>
+                  
+                  </ul>
+                </div>
+              </li>
+              
+              
+              
+              
+              <li><a href="../../">Home</a></li>
+              
+              
+              
+              
+              
+              <li><a href="../">Manual</a></li>
+              
+              
+              
+              
+              
+              <li class="active">Custom Payloads</li>
+              <li class="dropdown" id="table-of-contents">
+                <div class="btn-group">
+                  <button id="current-section" type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
+                    Jump to&#8230; <span class="caret"></span><span class="sr-only">Table of Contents</span>
+                  </button>
+                  <ul class="dropdown-menu nav nav-pills nav-stacked">
+                    <li>
+<a href="#custom-payloads">Custom Payloads
+</a><ul class="nav nav-pills nav-stacked">
+<li><a href="#enabling-custom-payloads-on-c-nodes">Enabling custom payloads on C* nodes
+</a></li>
+<li>
+<a href="#implementation-notes">Implementation Notes
+</a><ul class="nav nav-pills nav-stacked"><li>
+<a href="#null-values">Null values
+</a><ul class="nav nav-pills nav-stacked"><li><a href="#payload-length-limitations">Payload length limitations
+</a></li></ul>
+</li></ul>
+</li>
+<li><a href="#sending-custom-payloads">Sending custom payloads
+</a></li>
+<li><a href="#receiving-custom-payloads">Receiving custom payloads
+</a></li>
+<li><a href="#custom-payloads-and-prepared-statements">Custom Payloads and Prepared Statements
+</a></li>
+<li><a href="#debugging-custom-payloads">Debugging custom payloads
+</a></li>
+</ul>
+</li>
+                  </ul>
+                </div>
+              </li>
+              
+              
+              
+            </ol>
+          </nav>
+        </div>
+      </div>
+    </header>
+
+    <div class="container-fluid" id="content">
+      <div class="row">
+        <div class="col-md-3">
+          <div id="navigation" class="side-nav" role="tablist" aria-multiselectable="true">
+            <h3>Contents</h3>
+            <ul class="nav nav-pills nav-stacked">
+  
+  
+  
+  <li>
+    <a href="../../changelog/">Changelog <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../../faq/">Frequently Asked Questions <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li class="active">
+    <a href="../">Manual <small>page</small></a>
+    <ul class="nav nav-pills nav-stacked">
+  
+  
+  
+  <li>
+    <a href="../address_resolution/">Address resolution <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../async/">Asynchronous programming <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../auth/">Authentication <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../compression/">Compression <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../pooling/">Connection pooling <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../control_connection/">Control connection <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../custom_codecs/">Custom Codecs <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li class="active">
+    <a href="./" class="current">Custom Payloads <small>page</small></a>
+    
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../load_balancing/">Load balancing <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../logging/">Logging <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../metadata/">Metadata <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../metrics/">Metrics <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../native_protocol/">Native protocol <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../object_mapper/">Object Mapper <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../paging/">Paging <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../query_timestamps/">Query timestamps <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../reconnection/">Reconnection <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../retries/">Retries <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../ssl/">SSL <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../socket_options/">Socket options <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../speculative_execution/">Speculative query execution <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../statements/">Statements <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../tuples/">Tuples <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../udts/">User-defined types <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../shaded_jar/">Using the shaded JAR <small>page</small></a>
+  </li>
+  
+  
+</ul>
+
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../../upgrade_guide/">Upgrade guide <small>page</small></a>
+  </li>
+  
+  
+</ul>
+
+          </div>
+        </div>
+        <div class="col-md-9 content">
+          
+
+<h2 id="custom-payloads" class="target">Custom Payloads<a class="anchor" href="#custom-payloads" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h2>
+
+<p>The <a href="../native_protocol/">native protocol</a> version 4 introduces a new feature called <a href="https://issues.apache.org/jira/browse/CASSANDRA-8553">Custom Payloads</a>.</p>
+
+<p>According to the <a href="https://github.com/apache/cassandra/blob/trunk/doc/native_protocol_v4.spec">protocol V4 specification</a>, custom payloads are generic key-value maps
+where keys are strings and each value is an arbitrary sequence of bytes. Currently payloads 
+can be sent by clients along with all <code>QUERY</code>, <code>PREPARE</code>, <code>EXECUTE</code> and <code>BATCH</code> requests.</p>
+
+<p>Custom payloads can be used to convey user-specific information from clients to servers and vice versa.
+<u>Please note that this is an advanced feature that requires specific server-side configuration (see below).</u></p>
+
+<h3 id="enabling-custom-payloads-on-c-nodes" class="target">Enabling custom payloads on C* nodes<a class="anchor" href="#enabling-custom-payloads-on-c-nodes" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<p>What the server is supposed to do with a payload depends on the <a href="https://issues.apache.org/jira/browse/CASSANDRA-6659">QueryHandler</a> used server-side
+to decode requests. Unsurprisingly, the default <code>QueryHandler</code> implementation used by Cassandra 
+simply ignores all payloads. However, users can replace it with their own implementation,
+thus being able to to process user-specific payloads; the payload format as well as
+the serialization and deserialization logic is entirely left for clients to implement.
+Needless to say, the same encoding and decoding logic should be applied on both client
+and server endpoints.</p>
+
+<p>This section is a small how-to to help driver users getting started with 
+custom payload processing server-side. For more detailed information, 
+please refer to the Cassandra documentation itself.</p>
+
+<p>To enable a custom <code>QueryHandler</code> for a Cassandra node, its JVM should be
+started with the system property <code>cassandra.custom_query_handler_class</code> set
+to a fully qualified name of a class implementing <code>org.apache.cassandra.cql3.QueryHandler</code>.
+This class should be of course available on the node’s classpath.</p>
+
+<p>This can be achieved with the following steps:</p>
+
+<ol>
+<li>Add your implementation jar to the <code>CLASSPATH</code> environment variable;</li>
+<li>Add the following to <code>$CASSANDRA_CONF/cassandra-env.sh</code>:</li>
+</ol>
+<pre><code>JVM_EXTRA_OPTS="-Dcassandra.custom_query_handler_class=fully.qualified.name.of.MyQueryHandler"
+</code></pre>
+<p>Of course, all nodes in the cluster <em>must</em> be started with the same QueryHandler, otherwise
+payloads sent by the driver could get lost.</p>
+
+<h3 id="implementation-notes" class="target">Implementation Notes<a class="anchor" href="#implementation-notes" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<p>Payloads in the Java driver are represented as <code>Map&lt;String,ByteBuffer&gt;</code> instances.
+It is safe to use any <code>Map</code> implementation, including unsynchronized implementations 
+such as <code>java.util.HashMap</code>; the driver will create defensive, thread-safe copies of
+user-supplied maps. However, <code>ByteBuffer</code> instances are inherently mutable,
+so callers should take care not to modify the <code>ByteBuffer</code> values in a payload map <em>after</em> submitting it 
+to the driver as it could lead to unexpected results.</p>
+
+<h4 id="null-values" class="target">Null values<a class="anchor" href="#null-values" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h4>
+
+<p>Note that, for thread safety reasons, the Java driver does not permit <code>null</code> keys nor <code>null</code> values in a payload map; 
+including a <code>null</code> in your payload will result in a <code>NullPointerException</code> being immediately thrown.</p>
+
+<p>However, the protocol specification <em>does</em> allow <code>null</code> values. If you need to include
+a <code>null</code> value in your payload map, this can be achieved with the Java driver
+by using the special value <code>Statement.NULL_PAYLOAD_VALUE</code>.</p>
+
+<h5 id="payload-length-limitations" class="target">Payload length limitations<a class="anchor" href="#payload-length-limitations" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h5>
+
+<ol>
+<li>Payload maps cannot have more than 65,535 entries.</li>
+<li>Payload map values are limited to a maximum length of <code>Integer.MAX_VALUE</code> (2<sup><small>31</small></sup> − 1) bytes each.</li>
+</ol>
+
+<h3 id="sending-custom-payloads" class="target">Sending custom payloads<a class="anchor" href="#sending-custom-payloads" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<p>A custom payload can be attached to any <code>Statement</code> via <code>Statement.setOutgoingPayload()</code>.</p>
+
+<p>Once the payload is set, you can either prepare the statement or execute it; 
+in both cases, the payload will be sent along with the <code>PREPARE</code> or <code>QUERY</code> request respectively:</p>
+<pre class="highlight"><code><span class="n">Statement</span> <span class="n">statement</span> <span class="o">=</span> <span class="k">new</span> <span class="n">SimpleStatement</span><span class="o">(</span><span class="s">"SELECT foo FROM bar WHERE qix = 1"</span><span class="o">);</span>
+<span class="n">statement</span><span class="o">.</span><span class="na">setOutgoingPayload</span><span class="o">(</span><span class="n">myCustomPayload</span><span class="o">);</span>
+<span class="n">session</span><span class="o">.</span><span class="na">execute</span><span class="o">(</span><span class="n">statement</span><span class="o">);</span> <span class="c1">// myCustomPayload will be sent with QUERY request</span>
+<span class="n">session</span><span class="o">.</span><span class="na">prepare</span><span class="o">(</span><span class="n">statement</span><span class="o">);</span> <span class="c1">// myCustomPayload will be sent with PREPARE request</span>
+</code></pre>
+<p>Naturally, you can also set a payload when using the <code>QueryBuilder</code> API:</p>
+<pre class="highlight"><code><span class="n">Statement</span> <span class="n">statement</span> <span class="o">=</span> <span class="n">QueryBuilder</span><span class="o">.</span><span class="na">select</span><span class="o">(</span><span class="s">"c2"</span><span class="o">).</span><span class="na">from</span><span class="o">(</span><span class="s">"t1"</span><span class="o">).</span><span class="na">where</span><span class="o">(</span><span class="n">eq</span><span class="o">(</span><span class="s">"c1"</span><span class="o">,</span> <span class="mi">1</span><span class="o">)).</span><span class="na">setOutgoingPayload</span><span class="o">(</span><span class="n">myCustomPayload</span><span class="o">);</span>
+<span class="n">session</span><span class="o">.</span><span class="na">execute</span><span class="o">(</span><span class="n">statement</span><span class="o">);</span> <span class="c1">// myCustomPayload will be sent with EXECUTE request</span>
+</code></pre>
+<p>When sending payloads with batches, please note that payloads must be attached to the 
+<code>BatchStatement</code> itself, <em>not</em> to internal statements:</p>
+<pre class="highlight"><code><span class="n">Statement</span> <span class="n">statement</span> <span class="o">=</span> <span class="k">new</span> <span class="n">SimpleStatement</span><span class="o">(</span><span class="s">"INSERT INTO t1 (c1, c2) values ('foo', 'bar')"</span><span class="o">)</span>
+<span class="c1">// correct</span>
+<span class="n">Statement</span> <span class="n">batch</span> <span class="o">=</span> <span class="k">new</span> <span class="n">BatchStatement</span><span class="o">().</span><span class="na">add</span><span class="o">(</span><span class="n">statement</span><span class="o">);</span>
+<span class="n">batch</span><span class="o">.</span><span class="na">setOutgoingPayload</span><span class="o">(</span><span class="n">myCustomPayload</span><span class="o">);</span>
+<span class="n">session</span><span class="o">.</span><span class="na">execute</span><span class="o">(</span><span class="n">batch</span><span class="o">);</span>  <span class="c1">// myCustomPayload will be sent with BATCH request</span>
+<span class="c1">// wrong</span>
+<span class="n">statement</span><span class="o">.</span><span class="na">setOutgoingPayload</span><span class="o">(</span><span class="n">myCustomPayload</span><span class="o">);</span>
+<span class="n">Statement</span> <span class="n">batch</span> <span class="o">=</span> <span class="k">new</span> <span class="n">BatchStatement</span><span class="o">().</span><span class="na">add</span><span class="o">(</span><span class="n">statement</span><span class="o">);</span>
+<span class="n">session</span><span class="o">.</span><span class="na">execute</span><span class="o">(</span><span class="n">batch</span><span class="o">);</span> <span class="c1">// myCustomPayload will NOT be sent with BATCH request</span>
+</code></pre>
+<p>One important note about paging requests: if your query needs to paginate,
+any outgoing payload set on the executed statement <em>will be transparently 
+sent over and over for every new page request</em>.</p>
+<pre class="highlight"><code><span class="n">Statement</span> <span class="n">statement</span> <span class="o">=</span> <span class="k">new</span> <span class="n">SimpleStatement</span><span class="o">(</span><span class="s">"..."</span><span class="o">);</span>
+<span class="n">statement</span><span class="o">.</span><span class="na">setOutgoingPayload</span><span class="o">(</span><span class="n">myCustomPayload</span><span class="o">);</span>
+<span class="n">ResultSet</span> <span class="n">rows</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="na">execute</span><span class="o">(...);</span> <span class="c1">// myCustomPayload will be sent with first QUERY request</span>
+<span class="k">for</span> <span class="o">(</span><span class="n">Row</span> <span class="n">row</span> <span class="o">:</span> <span class="n">rows</span><span class="o">)</span> <span class="o">{</span>
+    <span class="c1">// if additional QUERY requests are sent, all of them will send the same payload</span>
+<span class="o">}</span>
+</code></pre>
+<p>And finally, note that custom payloads can only be used with protocol versions &gt;= 4; 
+trying to set a payload under lower protocol versions will result in 
+an <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/exceptions/UnsupportedFeatureException.html">UnsupportedFeatureException</a> (wrapped in a <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/exceptions/NoHostAvailableException.html">NoHostAvailableException</a>)
+when the request is encoded.</p>
+
+<p>If you want to defensively protect your code against these errors, you can either:</p>
+
+<p>1) Force the protocol version when creating your <code>Cluster</code> instance:</p>
+<pre class="highlight"><code><span class="n">Cluster</span> <span class="n">cluster</span> <span class="o">=</span> <span class="n">Cluster</span><span class="o">.</span><span class="na">builder</span><span class="o">()</span>
+    <span class="o">.</span><span class="na">addContactPoint</span><span class="o">(</span><span class="s">"..."</span><span class="o">)</span>
+    <span class="o">.</span><span class="na">withProtocolVersion</span><span class="o">(</span><span class="n">ProtocolVersion</span><span class="o">.</span><span class="na">V4</span><span class="o">)</span>
+    <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+</code></pre>
+<p>2) Inspect the current negotiated protocol version, and only send payloads if version is equal to or
+greater than 4:</p>
+<pre class="highlight"><code><span class="n">ProtocolVersion</span> <span class="n">myCurrentVersion</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="na">getConfiguration</span><span class="o">()</span>
+    <span class="o">.</span><span class="na">getProtocolOptions</span><span class="o">()</span>
+    <span class="o">.</span><span class="na">getProtocolVersion</span><span class="o">();</span>
+<span class="k">if</span> <span class="o">(</span><span class="n">myCurrentVersion</span><span class="o">.</span><span class="na">compareTo</span><span class="o">(</span><span class="n">ProtocolVersion</span><span class="o">.</span><span class="na">V4</span><span class="o">)</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
+    <span class="c1">// only send custom payloads if current protocol version supports it</span>
+    <span class="n">statement</span><span class="o">.</span><span class="na">setOutgoingPayload</span><span class="o">(</span><span class="n">myCustomPayload</span><span class="o">);</span>
+<span class="o">}</span>
+</code></pre>
+<h3 id="receiving-custom-payloads" class="target">Receiving custom payloads<a class="anchor" href="#receiving-custom-payloads" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<p>Custom payloads sent back by the server can be retrieved in the following ways:</p>
+
+<p>1) From a <code>ResultSet</code>: use the <code>ExecutionInfo</code> class to retrieve the payload sent by the server.</p>
+<pre class="highlight"><code><span class="n">Statement</span> <span class="n">statement</span> <span class="o">=</span> <span class="k">new</span> <span class="n">SimpleStatement</span><span class="o">(</span><span class="s">"..."</span><span class="o">);</span>
+<span class="n">ResultSet</span> <span class="n">rows</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="na">execute</span><span class="o">(...);</span>
+<span class="c1">// last payload sent by the server</span>
+<span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span><span class="n">ByteBuffer</span><span class="o">&gt;</span> <span class="n">serverPayload</span> <span class="o">=</span> <span class="n">rows</span><span class="o">.</span><span class="na">getExecutionInfo</span><span class="o">().</span><span class="na">getIncomingPayload</span><span class="o">();</span>
+</code></pre>
+<p>If your query required pagination (multiple <code>QUERY</code> requests),
+the above method would only return the last payload sent by server
+with its last <code>RESULT</code> response. If you need to retrieve all the 
+payloads for all <code>RESULT</code> responses, use the following method instead:</p>
+<pre class="highlight"><code><span class="n">Statement</span> <span class="n">statement</span> <span class="o">=</span> <span class="k">new</span> <span class="n">SimpleStatement</span><span class="o">(</span><span class="s">"..."</span><span class="o">);</span>
+<span class="n">ResultSet</span> <span class="n">rows</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="na">execute</span><span class="o">(...);</span>
+<span class="c1">//all payloads sent by the server</span>
+<span class="k">for</span> <span class="o">(</span><span class="n">ExecutionInfo</span> <span class="n">info</span> <span class="o">:</span> <span class="n">rows</span><span class="o">.</span><span class="na">getAllExecutionInfo</span><span class="o">())</span> <span class="o">{</span>
+    <span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span><span class="n">ByteBuffer</span><span class="o">&gt;</span> <span class="n">serverPayload</span> <span class="o">=</span> <span class="n">info</span><span class="o">.</span><span class="na">getIncomingPayload</span><span class="o">();</span>
+<span class="o">}</span>
+</code></pre>
+<p>2) From a <code>PreparedStatement</code>: to retrieve the payload that the server sent back
+with its <code>PREPARED</code> response, use the following method:</p>
+<pre class="highlight"><code><span class="n">PreparedStatement</span> <span class="n">ps</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="na">prepare</span><span class="o">(...);</span>
+<span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span><span class="n">ByteBuffer</span><span class="o">&gt;</span> <span class="n">serverPayload</span> <span class="o">=</span> <span class="n">ps</span><span class="o">.</span><span class="na">getIncomingPayload</span><span class="o">();</span>
+</code></pre>
+<h3 id="custom-payloads-and-prepared-statements" class="target">Custom Payloads and Prepared Statements<a class="anchor" href="#custom-payloads-and-prepared-statements" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<p>If you use either <code>Session.prepare(RegularStatement)</code> or <code>Session.prepareAsync(RegularStatement)</code>
+to prepare a statement, as with all other properties in the given statement, its outgoing
+payload, if any, will become the default outgoing payload for the prepared statement.</p>
+<pre class="highlight"><code><span class="n">Statement</span> <span class="n">statement</span> <span class="o">=</span> <span class="k">new</span> <span class="n">SimpleStatement</span><span class="o">(</span><span class="s">"..."</span><span class="o">);</span>
+<span class="n">statement</span><span class="o">.</span><span class="na">setOutgoingPayload</span><span class="o">(</span><span class="n">myCustomPayload</span><span class="o">)</span>
+<span class="n">PreparedStatement</span> <span class="n">ps</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="na">prepare</span><span class="o">(...);</span> <span class="c1">// myCustomPayload will be sent with PREPARE request </span>
+                                             <span class="c1">// AND become the default outgoing payload</span>
+</code></pre>
+<p>Naturally, you can also set a default outgoing payload on the <code>PreparedStatement</code> instance itself.
+The code below is roughly equivalent to the one above - except that the payload is not sent
+with the <code>PREPARE</code> request:</p>
+<pre class="highlight"><code><span class="n">Statement</span> <span class="n">statement</span> <span class="o">=</span> <span class="k">new</span> <span class="n">SimpleStatement</span><span class="o">(</span><span class="s">"..."</span><span class="o">);</span>
+<span class="n">PreparedStatement</span> <span class="n">ps</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="na">prepare</span><span class="o">(...);</span> <span class="c1">// no payload sent with PREPARE request</span>
+<span class="n">ps</span><span class="o">.</span><span class="na">setOutgoingPayload</span><span class="o">(</span><span class="n">myCustomPayload</span><span class="o">)</span> <span class="c1">// default outgoing payload is now myCustomPayload</span>
+</code></pre>
+<p>But <code>PreparedStatement</code> has also a <code>getIncomingPayload()</code> method, which, as we already know, 
+can be used to retrieve incoming payloads sent back by the server that prepared the request.</p>
+
+<p>When binding a statement - with either <code>PreparedStatement.bind()</code> or <code>PreparedStatement.bind(Object...)</code>) - 
+<code>BoundStatement</code> instances will also inherit payloads.</p>
+
+<p>To determine which payload is going to be used as outgoing payload for a bound statement,
+the following rules apply:</p>
+
+<ol>
+<li>If the prepared statement has a non-null outgoing payload, all instances of <code>BoundStatement</code>
+created out of it will inherit that payload as their outgoing payload;</li>
+<li>Otherwise, if the prepared statement has a non-null incoming payload, all instances of <code>BoundStatement</code>
+created out of it will inherit that payload as their outgoing payload;</li>
+<li>Otherwise, all instances of <code>BoundStatement</code> created out of it
+won’t have any outgoing payload set by default; users can however set an outgoing payload on 
+individual <code>BoundStatement</code> instances by calling their <code>setOutgoingPayload()</code> method,
+like in the example below:</li>
+</ol>
+<pre class="highlight"><code><span class="n">Statement</span> <span class="n">statement</span> <span class="o">=</span> <span class="k">new</span> <span class="n">SimpleStatement</span><span class="o">(</span><span class="s">"..."</span><span class="o">);</span>
+<span class="n">PreparedStatement</span> <span class="n">ps</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="na">prepare</span><span class="o">(...);</span> <span class="c1">// no payload sent with PREPARE request</span>
+<span class="n">BoundStatement</span> <span class="n">bs</span> <span class="o">=</span> <span class="n">ps</span><span class="o">.</span><span class="na">bind</span><span class="o">(</span><span class="mi">1</span><span class="o">);</span> <span class="c1">// no outgoing payload by default</span>
+<span class="n">bs</span><span class="o">.</span><span class="na">setOutgoingPayload</span><span class="o">(</span><span class="n">myCustomPayload</span><span class="o">);</span> <span class="c1">// outgoing payload for this specific statement</span>
+<span class="n">session</span><span class="o">.</span><span class="na">execute</span><span class="o">(</span><span class="n">statement</span><span class="o">);</span> <span class="c1">// myCustomPayload will be sent with EXECUTE request for this bound statement only</span>
+</code></pre>
+<h3 id="debugging-custom-payloads" class="target">Debugging custom payloads<a class="anchor" href="#debugging-custom-payloads" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<p>When debugging custom payloads, set the <code>com.datastax.driver.core.Message</code> logger to the <code>TRACE</code> level, e.g. with Log4J:</p>
+<pre class="highlight"><code><span class="nt">&lt;logger</span> <span class="na">name=</span><span class="s">"com.datastax.driver.core.Message"</span><span class="nt">&gt;</span>
+  <span class="nt">&lt;level</span> <span class="na">value=</span><span class="s">"TRACE"</span><span class="nt">/&gt;</span>
+<span class="nt">&lt;/logger&gt;</span>
+</code></pre>
+<p>This will log a message for every request and every response that contains a non-null payload. 
+The log message contains a pretty-printed version of the payload itself, and its total length in bytes.</p>
+
+
+        </div>
+      </div>
+    </div>
+
+    
+    <footer class="container text-muted">
+      <ul class="list-inline">
+      
+        
+        <li>
+          <a href="https://github.com/datastax/java-driver/">Code</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="http://datastax.github.io/java-driver/">Docs</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://datastax-oss.atlassian.net/browse/JAVA/">Issues</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://groups.google.com/a/lists.datastax.com/forum/#!forum/java-driver-user">Mailing List</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="irc://irc.freenode.net/datastax-drivers">IRC Channel</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://github.com/datastax/java-driver/releases">Releases</a>
+        </li>
+      
+      </ul>
+    </footer>
+    
+
+    <script src="../../../js/jquery.js"></script>
+    <script src="../../../js/bootstrap.js"></script>
+    <script src="../../../js/angular.js"></script>
+    <script src="../../../js/mousetrap.js"></script>
+    <script src="../../../js/hotkeys.js"></script>
+    <script src="../../../js/ZeroClipboard.js"></script>
+    <script src="../../../js/lunr.js"></script>
+    <script src="../../../js/app.js"></script>
+  </body>
+</html>

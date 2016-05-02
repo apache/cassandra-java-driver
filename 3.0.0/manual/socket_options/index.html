@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="description" content="High performance Java client for Apache Cassandra">
+    <meta name="author" content="DataStax">
+
+    <title>Java Driver for Apache Cassandra - Socket options</title>
+
+    <link rel="icon" href="../../../favicon.ico">
+    <link rel="apple-touch-icon" href="../../../favicon.png">
+    <link href="../../../css/style.css" rel="stylesheet">
+    <link href="../../../css/pygments.css" rel="stylesheet">
+    <link href="../../../css/hotkeys.css" rel="stylesheet">
+
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body ng-app="docs" data-spy="scroll" data-target="#table-of-contents" data-offset="69">
+    <header class="container-fluid navbar">
+      <div class="row">
+        <div class="col-sm-4">
+          <a class="navbar-brand" href="../../"><img alt="Brand" src="../../../img/logo.png">Java Driver for Apache Cassandra</a>
+        </div>
+        <div class="col-md-4 col-md-offset-4">
+          <div class="row">
+            <div class="col-md-12">
+              <ul class="list-inline" role="nav">
+                <li><a href="https://academy.datastax.com/" class="navbar-link">DataStax Academy</a></li>
+                <li><a href="http://www.datastax.com/dev/blog" class="navbar-link">Tech Blog</a></li>
+                <li><a href="http://www.datastax.com/what-we-offer/products-services/support" class="navbar-link">Support</a></li>
+              </ul>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-8">
+              <form id="search" class="form-search dropdown visible-lg-block" ng-controller="search" ng-class="{open: hasResults}" role="search" ng-submit="submit()" data-spy="affix" data-offset-top="130">
+                <div class="form-group has-feedback">
+                  <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('3.0.0')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+                </div>
+                <ul class="dropdown-menu search-results" role="menu">
+                  <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
+                </ul>
+              </form>
+            </div>
+            <div class="col-md-4">
+              <a href="http://www.datastax.com/download" class="btn btn-primary btn-sm">Download</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row crumbs-wrapper">
+        <div class="col-md-12">
+          <nav id="crumbs" data-spy="affix" data-offset-top="130">
+            <ol class="breadcrumb">
+              
+              <li>
+                <div class="btn-group">
+                  <button id="current-version" class="btn btn-default btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    3.0.0
+                    <span class="caret"></span>
+                  </button>
+                  <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
+                  
+                    <li><a href="../../../manual/socket_options/">3.0.1</a></li>
+                  
+                    <li class="disabled"><a href="./">3.0.0</a></li>
+                  
+                    <li><a href="../../../2.1.10.1/manual/socket_options/">2.1.10.1</a></li>
+                  
+                    <li><a href="../../../2.1.10/manual/socket_options/">2.1.10</a></li>
+                  
+                    <li><a href="../../../2.1.9/">2.1.9</a></li>
+                  
+                    <li><a href="../../../2.1.8/">2.1.8</a></li>
+                  
+                    <li><a href="../../../2.1.7/">2.1.7</a></li>
+                  
+                    <li><a href="../../../2.0.12.1/">2.0.12.1</a></li>
+                  
+                    <li><a href="../../../2.0.12/">2.0.12</a></li>
+                  
+                    <li><a href="../../../2.0.11/">2.0.11</a></li>
+                  
+                  </ul>
+                </div>
+              </li>
+              
+              
+              
+              
+              <li><a href="../../">Home</a></li>
+              
+              
+              
+              
+              
+              <li><a href="../">Manual</a></li>
+              
+              
+              
+              
+              
+              <li class="active">Socket options</li>
+              <li class="dropdown" id="table-of-contents">
+                <div class="btn-group">
+                  <button id="current-section" type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
+                    Jump to&#8230; <span class="caret"></span><span class="sr-only">Table of Contents</span>
+                  </button>
+                  <ul class="dropdown-menu nav nav-pills nav-stacked">
+                    <li>
+<a href="#socket-options">Socket options
+</a><ul class="nav nav-pills nav-stacked">
+<li><a href="#tcp-options">TCP options
+</a></li>
+<li>
+<a href="#driver-read-timeout">Driver read timeout
+</a><ul class="nav nav-pills nav-stacked">
+<li><a href="#limiting-overall-query-time">Limiting overall query time
+</a></li>
+<li><a href="#driver-read-timeout-vs-server-read-timeout">Driver read timeout vs. server read timeout
+</a></li>
+</ul>
+</li>
+</ul>
+</li>
+                  </ul>
+                </div>
+              </li>
+              
+              
+              
+            </ol>
+          </nav>
+        </div>
+      </div>
+    </header>
+
+    <div class="container-fluid" id="content">
+      <div class="row">
+        <div class="col-md-3">
+          <div id="navigation" class="side-nav" role="tablist" aria-multiselectable="true">
+            <h3>Contents</h3>
+            <ul class="nav nav-pills nav-stacked">
+  
+  
+  
+  <li>
+    <a href="../../changelog/">Changelog <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../../faq/">Frequently Asked Questions <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li class="active">
+    <a href="../">Manual <small>page</small></a>
+    <ul class="nav nav-pills nav-stacked">
+  
+  
+  
+  <li>
+    <a href="../address_resolution/">Address resolution <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../async/">Asynchronous programming <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../auth/">Authentication <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../compression/">Compression <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../pooling/">Connection pooling <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../control_connection/">Control connection <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../custom_codecs/">Custom Codecs <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../custom_payloads/">Custom Payloads <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../load_balancing/">Load balancing <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../logging/">Logging <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../metadata/">Metadata <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../metrics/">Metrics <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../native_protocol/">Native protocol <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../object_mapper/">Object Mapper <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../paging/">Paging <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../query_timestamps/">Query timestamps <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../reconnection/">Reconnection <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../retries/">Retries <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../ssl/">SSL <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li class="active">
+    <a href="./" class="current">Socket options <small>page</small></a>
+    
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../speculative_execution/">Speculative query execution <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../statements/">Statements <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../tuples/">Tuples <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../udts/">User-defined types <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../shaded_jar/">Using the shaded JAR <small>page</small></a>
+  </li>
+  
+  
+</ul>
+
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../../upgrade_guide/">Upgrade guide <small>page</small></a>
+  </li>
+  
+  
+</ul>
+
+          </div>
+        </div>
+        <div class="col-md-9 content">
+          
+
+<h2 id="socket-options" class="target">Socket options<a class="anchor" href="#socket-options" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h2>
+
+<p><a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/SocketOptions.html">SocketOptions</a> controls various low-level parameters related to TCP connections between the driver and Cassandra.</p>
+
+<p>You can provide these when initializing the cluster:</p>
+<pre class="highlight"><code><span class="n">Cluster</span> <span class="n">cluster</span> <span class="o">=</span> <span class="n">Cluster</span><span class="o">.</span><span class="na">builder</span><span class="o">()</span>
+        <span class="o">.</span><span class="na">addContactPoint</span><span class="o">(</span><span class="s">"127.0.0.1"</span><span class="o">)</span>
+        <span class="o">.</span><span class="na">withSocketOptions</span><span class="o">(</span>
+                <span class="k">new</span> <span class="n">SocketOptions</span><span class="o">()</span>
+                        <span class="o">.</span><span class="na">setConnectTimeoutMillis</span><span class="o">(</span><span class="mi">2000</span><span class="o">))</span>
+        <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+</code></pre>
+<p>If you don’t, the driver uses a default configuration (see the javadocs of the setter methods of <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/SocketOptions.html">SocketOptions</a> for the
+default values).</p>
+
+<p>You can retrieve and change the options at runtime:</p>
+<pre class="highlight"><code><span class="n">SocketOptions</span> <span class="n">socketOptions</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="na">getConfiguration</span><span class="o">().</span><span class="na">getSocketOptions</span><span class="o">();</span>
+<span class="n">socketOptions</span><span class="o">.</span><span class="na">setConnectTimeoutMillis</span><span class="o">(</span><span class="mi">3000</span><span class="o">);</span>
+</code></pre>
+<ul>
+<li>changes to the <a href="#driver-read-timeout">read timeout</a> will be taken into account for future request executions;</li>
+<li>changes to any other option will be taken into account for future connections (connections that were already opened at
+the time of the change are unaffected, they keep the old values).</li>
+</ul>
+
+<h3 id="tcp-options" class="target">TCP options<a class="anchor" href="#tcp-options" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<p><a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/SocketOptions.html#setConnectTimeoutMillis-int-">setConnectTimeoutMillis</a> defines how long the driver waits to establish a new connection to a Cassandra node before
+giving up.</p>
+
+<p>Other options control the usual low-level TCP parameters (refer to their individual javadoc for details):
+<a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/SocketOptions.html#setKeepAlive-boolean-">setKeepAlive</a>, <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/SocketOptions.html#setReceiveBufferSize-int-">setReceiveBufferSize</a>, <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/SocketOptions.html#setReuseAddress-boolean-">setReuseAddress</a>, <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/SocketOptions.html#setSendBufferSize-int-">setSendBufferSize</a>, <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/SocketOptions.html#setSoLinger-int-">setSoLinger</a>, <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/SocketOptions.html#setTcpNoDelay-boolean-">setTcpNoDelay</a>. Most of
+these options are not set explicitly by the driver, so they get the default value from the underlying TCP transport.
+One exception is <code>setTcpNoDelay</code>, which is forced to <code>true</code> (meaning that Nagle’s algorithm is <em>disabled</em> for driver
+connections).</p>
+
+<h3 id="driver-read-timeout" class="target">Driver read timeout<a class="anchor" href="#driver-read-timeout" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<p><a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/SocketOptions.html#setReadTimeoutMillis-int-">setReadTimeoutMillis</a> controls how long the driver waits for a response <em>from a given Cassandra node</em> before
+considering it unresponsive.</p>
+
+<p>Cassandra normally provides a guaranteed response time for each type of query, as shown by these parameters in
+<code>cassandra.yaml</code> (here with their default values):</p>
+<pre class="highlight"><code><span class="s">counter_write_request_timeout_in_ms</span><span class="pi">:</span> <span class="s">5000</span>
+<span class="s">range_request_timeout_in_ms</span><span class="pi">:</span> <span class="s">10000</span>
+<span class="s">read_request_timeout_in_ms</span><span class="pi">:</span> <span class="s">5000</span>
+<span class="s">request_timeout_in_ms</span><span class="pi">:</span> <span class="s">10000</span>
+<span class="s">truncate_request_timeout_in_ms</span><span class="pi">:</span> <span class="s">60000</span>
+<span class="s">write_request_timeout_in_ms</span><span class="pi">:</span> <span class="s">2000</span>
+</code></pre>
+<p>The goal of <code>setReadTimeoutMillis</code> is to give up on a node if it took longer than these thresholds to reply, on the
+assumption that there’s probably something wrong with it. Therefore it should be set <strong>higher than the server-side
+timeouts</strong>.</p>
+
+<p>The default value is <strong>12 seconds</strong>. For truncate queries (where the server timeout is 60 seconds) or aggregate queries
+(where <code>read_request_timeout_in_ms</code> applies per page of processed data, not to the whole query), you can increase the
+timeout on a specific statement:</p>
+<pre class="highlight"><code><span class="n">session</span><span class="o">.</span><span class="na">execute</span><span class="o">(</span>
+        <span class="k">new</span> <span class="n">SimpleStatement</span><span class="o">(</span><span class="s">"TRUNCATE tmp"</span><span class="o">).</span><span class="na">setReadTimeoutMillis</span><span class="o">(</span><span class="mi">65000</span><span class="o">));</span>
+</code></pre>
+<p>Do not set the read timeout too low, or the driver might give up on requests that had a chance of succeeding.</p>
+
+<p>If the timeout is reached, the driver will receive an <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/exceptions/OperationTimedOutException.html">OperationTimedOutException</a>, and invoke <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/policies/RetryPolicy.html#onRequestError-com.datastax.driver.core.Statement-com.datastax.driver.core.ConsistencyLevel-com.datastax.driver.core.exceptions.DriverException-int-">onRequestError</a> on the
+<a href="../retries/">retry policy</a> to decide what to do (the default is to retry on the next node in the
+<a href="../load_balancing/#query-plan">query plan</a>).</p>
+
+<h4 id="limiting-overall-query-time" class="target">Limiting overall query time<a class="anchor" href="#limiting-overall-query-time" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h4>
+
+<p>It should be clear by now that <code>setReadTimeoutMillis</code> is <em>per node</em>, not per query. If the driver retries on 4 different
+nodes, the overall execution time could theoretically be up to 4 times the read timeout. If you want a per query timeout,
+use the following pattern:</p>
+<pre class="highlight"><code><span class="kn">import</span> <span class="nn">com.google.common.base.Throwables</span><span class="o">;</span>
+
+<span class="n">ResultSet</span> <span class="nf">execute</span><span class="p">(</span><span class="n">Statement</span> <span class="n">statement</span><span class="o">,</span> <span class="kt">long</span> <span class="n">timeout</span><span class="o">,</span> <span class="n">TimeUnit</span> <span class="n">unit</span><span class="o">)</span>
+        <span class="kd">throws</span> <span class="n">InterruptedException</span><span class="o">,</span> <span class="n">TimeoutException</span> <span class="o">{</span>
+    <span class="n">ResultSetFuture</span> <span class="n">future</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="na">executeAsync</span><span class="o">(</span><span class="n">statement</span><span class="o">);</span>
+    <span class="k">try</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="n">future</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">timeout</span><span class="o">,</span> <span class="n">unit</span><span class="o">);</span>
+    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">ExecutionException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">throw</span> <span class="n">Throwables</span><span class="o">.</span><span class="na">propagate</span><span class="o">(</span><span class="n">e</span><span class="o">.</span><span class="na">getCause</span><span class="o">());</span>
+    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">TimeoutException</span> <span class="n">e</span><span class="o">)</span> <span class="o">{</span>
+        <span class="n">future</span><span class="o">.</span><span class="na">cancel</span><span class="o">(</span><span class="kc">true</span><span class="o">);</span>
+        <span class="k">throw</span> <span class="n">e</span><span class="o">;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</code></pre>
+<p>A complementary approach is to enable <a href="../speculative_execution/">speculative executions</a>, to have the driver query
+multiple nodes in parallel. This way you won’t have to wait for the full timeout if the first node is unresponsive.</p>
+
+<h4 id="driver-read-timeout-vs-server-read-timeout" class="target">Driver read timeout vs. server read timeout<a class="anchor" href="#driver-read-timeout-vs-server-read-timeout" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h4>
+
+<p>Unfortunately, the term “read timeout” clashes with another concept that is not directly related: a Cassandra node may
+reply with a <code>Read_timeout</code> error when it didn’t hear back from enough replicas during a read query.</p>
+
+<p>To clarify:</p>
+
+<ul>
+<li>
+<strong>driver read timeout:</strong> the driver did not receive any response from the current coordinator within
+<code>SocketOptions.setReadTimeoutMillis</code>. It invokes <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/policies/RetryPolicy.html#onRequestError-com.datastax.driver.core.Statement-com.datastax.driver.core.ConsistencyLevel-com.datastax.driver.core.exceptions.DriverException-int-">onRequestError</a> on the <a href="../retries/">retry policy</a> with an
+<a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/exceptions/OperationTimedOutException.html">OperationTimedOutException</a> to decide what to do.</li>
+<li>
+<strong>server read timeout:</strong> the driver <em>did</em> receive a response, but that response indicates that the coordinator timed
+out while waiting for other replicas. It invokes <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/policies/RetryPolicy.html#onReadTimeout-com.datastax.driver.core.Statement-com.datastax.driver.core.ConsistencyLevel-int-int-boolean-int-">onReadTimeout</a> on the <a href="../retries/">retry policy</a> to decide what to
+do.</li>
+</ul>
+
+<p>We might rename <code>SocketOptions.setReadTimeoutMillis</code> in a future version to clear up any confusion.</p>
+
+
+        </div>
+      </div>
+    </div>
+
+    
+    <footer class="container text-muted">
+      <ul class="list-inline">
+      
+        
+        <li>
+          <a href="https://github.com/datastax/java-driver/">Code</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="http://datastax.github.io/java-driver/">Docs</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://datastax-oss.atlassian.net/browse/JAVA/">Issues</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://groups.google.com/a/lists.datastax.com/forum/#!forum/java-driver-user">Mailing List</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="irc://irc.freenode.net/datastax-drivers">IRC Channel</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://github.com/datastax/java-driver/releases">Releases</a>
+        </li>
+      
+      </ul>
+    </footer>
+    
+
+    <script src="../../../js/jquery.js"></script>
+    <script src="../../../js/bootstrap.js"></script>
+    <script src="../../../js/angular.js"></script>
+    <script src="../../../js/mousetrap.js"></script>
+    <script src="../../../js/hotkeys.js"></script>
+    <script src="../../../js/ZeroClipboard.js"></script>
+    <script src="../../../js/lunr.js"></script>
+    <script src="../../../js/app.js"></script>
+  </body>
+</html>

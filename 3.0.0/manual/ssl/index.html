@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="description" content="High performance Java client for Apache Cassandra">
+    <meta name="author" content="DataStax">
+
+    <title>Java Driver for Apache Cassandra - SSL</title>
+
+    <link rel="icon" href="../../../favicon.ico">
+    <link rel="apple-touch-icon" href="../../../favicon.png">
+    <link href="../../../css/style.css" rel="stylesheet">
+    <link href="../../../css/pygments.css" rel="stylesheet">
+    <link href="../../../css/hotkeys.css" rel="stylesheet">
+
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body ng-app="docs" data-spy="scroll" data-target="#table-of-contents" data-offset="69">
+    <header class="container-fluid navbar">
+      <div class="row">
+        <div class="col-sm-4">
+          <a class="navbar-brand" href="../../"><img alt="Brand" src="../../../img/logo.png">Java Driver for Apache Cassandra</a>
+        </div>
+        <div class="col-md-4 col-md-offset-4">
+          <div class="row">
+            <div class="col-md-12">
+              <ul class="list-inline" role="nav">
+                <li><a href="https://academy.datastax.com/" class="navbar-link">DataStax Academy</a></li>
+                <li><a href="http://www.datastax.com/dev/blog" class="navbar-link">Tech Blog</a></li>
+                <li><a href="http://www.datastax.com/what-we-offer/products-services/support" class="navbar-link">Support</a></li>
+              </ul>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-8">
+              <form id="search" class="form-search dropdown visible-lg-block" ng-controller="search" ng-class="{open: hasResults}" role="search" ng-submit="submit()" data-spy="affix" data-offset-top="130">
+                <div class="form-group has-feedback">
+                  <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('3.0.0')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+                </div>
+                <ul class="dropdown-menu search-results" role="menu">
+                  <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
+                </ul>
+              </form>
+            </div>
+            <div class="col-md-4">
+              <a href="http://www.datastax.com/download" class="btn btn-primary btn-sm">Download</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row crumbs-wrapper">
+        <div class="col-md-12">
+          <nav id="crumbs" data-spy="affix" data-offset-top="130">
+            <ol class="breadcrumb">
+              
+              <li>
+                <div class="btn-group">
+                  <button id="current-version" class="btn btn-default btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    3.0.0
+                    <span class="caret"></span>
+                  </button>
+                  <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
+                  
+                    <li><a href="../../../manual/ssl/">3.0.1</a></li>
+                  
+                    <li class="disabled"><a href="./">3.0.0</a></li>
+                  
+                    <li><a href="../../../2.1.10.1/manual/ssl/">2.1.10.1</a></li>
+                  
+                    <li><a href="../../../2.1.10/manual/ssl/">2.1.10</a></li>
+                  
+                    <li><a href="../../../2.1.9/">2.1.9</a></li>
+                  
+                    <li><a href="../../../2.1.8/">2.1.8</a></li>
+                  
+                    <li><a href="../../../2.1.7/">2.1.7</a></li>
+                  
+                    <li><a href="../../../2.0.12.1/">2.0.12.1</a></li>
+                  
+                    <li><a href="../../../2.0.12/">2.0.12</a></li>
+                  
+                    <li><a href="../../../2.0.11/">2.0.11</a></li>
+                  
+                  </ul>
+                </div>
+              </li>
+              
+              
+              
+              
+              <li><a href="../../">Home</a></li>
+              
+              
+              
+              
+              
+              <li><a href="../">Manual</a></li>
+              
+              
+              
+              
+              
+              <li class="active">SSL</li>
+              <li class="dropdown" id="table-of-contents">
+                <div class="btn-group">
+                  <button id="current-section" type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
+                    Jump to&#8230; <span class="caret"></span><span class="sr-only">Table of Contents</span>
+                  </button>
+                  <ul class="dropdown-menu nav nav-pills nav-stacked">
+                    <li>
+<a href="#ssl">SSL
+</a><ul class="nav nav-pills nav-stacked">
+<li>
+<a href="#preparing-the-certificates">Preparing the certificates
+</a><ul class="nav nav-pills nav-stacked">
+<li><a href="#client-truststore">Client truststore
+</a></li>
+<li><a href="#client-keystore">Client keystore
+</a></li>
+</ul>
+</li>
+<li>
+<a href="#driver-configuration">Driver configuration
+</a><ul class="nav nav-pills nav-stacked">
+<li><a href="#jsse-property-based">JSSE, Property-based
+</a></li>
+<li><a href="#jsse-programmatic">JSSE, programmatic
+</a></li>
+<li>
+<a href="#netty">Netty
+</a><ul class="nav nav-pills nav-stacked">
+<li><a href="#converting-your-client-certificates-for-openssl">Converting your client certificates for OpenSSL
+</a></li>
+<li><a href="#updating-your-dependencies">Updating your dependencies
+</a></li>
+<li><a href="#configuring-the-context">Configuring the context
+</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+                  </ul>
+                </div>
+              </li>
+              
+              
+              
+            </ol>
+          </nav>
+        </div>
+      </div>
+    </header>
+
+    <div class="container-fluid" id="content">
+      <div class="row">
+        <div class="col-md-3">
+          <div id="navigation" class="side-nav" role="tablist" aria-multiselectable="true">
+            <h3>Contents</h3>
+            <ul class="nav nav-pills nav-stacked">
+  
+  
+  
+  <li>
+    <a href="../../changelog/">Changelog <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../../faq/">Frequently Asked Questions <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li class="active">
+    <a href="../">Manual <small>page</small></a>
+    <ul class="nav nav-pills nav-stacked">
+  
+  
+  
+  <li>
+    <a href="../address_resolution/">Address resolution <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../async/">Asynchronous programming <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../auth/">Authentication <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../compression/">Compression <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../pooling/">Connection pooling <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../control_connection/">Control connection <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../custom_codecs/">Custom Codecs <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../custom_payloads/">Custom Payloads <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../load_balancing/">Load balancing <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../logging/">Logging <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../metadata/">Metadata <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../metrics/">Metrics <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../native_protocol/">Native protocol <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../object_mapper/">Object Mapper <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../paging/">Paging <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../query_timestamps/">Query timestamps <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../reconnection/">Reconnection <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../retries/">Retries <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li class="active">
+    <a href="./" class="current">SSL <small>page</small></a>
+    
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../socket_options/">Socket options <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../speculative_execution/">Speculative query execution <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../statements/">Statements <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../tuples/">Tuples <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../udts/">User-defined types <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../shaded_jar/">Using the shaded JAR <small>page</small></a>
+  </li>
+  
+  
+</ul>
+
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../../upgrade_guide/">Upgrade guide <small>page</small></a>
+  </li>
+  
+  
+</ul>
+
+          </div>
+        </div>
+        <div class="col-md-9 content">
+          
+
+<h2 id="ssl" class="target">SSL<a class="anchor" href="#ssl" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h2>
+
+<p>You can secure traffic between the driver and Cassandra with SSL. There
+are two aspects to that:</p>
+
+<ul>
+<li>
+<strong>client-to-node encryption</strong>, where the traffic is encrypted, and the
+client verifies the identity of the Cassandra nodes it connects to;</li>
+<li>optionally, <strong>client certificate authentication</strong>, where Cassandra
+nodes also verify the identity of the client.</li>
+</ul>
+
+<p>This section describes the driver-side configuration; it assumes that
+you’ve already configured SSL in Cassandra:</p>
+
+<ul>
+<li>
+<a href="http://docs.datastax.com/en/cassandra/2.0/cassandra/security/secureSSLClientToNode_t.html">the Cassandra documentation</a>
+covers a basic approach with self-signed certificates, which is fine
+for development and tests.</li>
+<li>
+<a href="http://thelastpickle.com/blog/2015/09/30/hardening-cassandra-step-by-step-part-1-server-to-server.html">this blog post</a>
+details a more advanced solution based on a Certificate Authority
+(CA).</li>
+</ul>
+
+<h3 id="preparing-the-certificates" class="target">Preparing the certificates<a class="anchor" href="#preparing-the-certificates" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<h4 id="client-truststore" class="target">Client truststore<a class="anchor" href="#client-truststore" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h4>
+
+<p>This is required for client-to-node encryption.</p>
+
+<p>If you’re using self-signed certificates, you need to export the public
+part of each node’s certificate from that node’s keystore:</p>
+<pre><code>keytool -export -alias cassandra -file cassandranode0.cer -keystore .keystore
+</code></pre>
+<p>Then add all public certificates to the client truststore:</p>
+<pre><code>keytool -import -v -trustcacerts -alias &lt;cassandra_node0&gt; -file cassandranode0.cer -keystore client.truststore
+keytool -import -v -trustcacerts -alias &lt;cassandra_node1&gt; -file cassandranode1.cer -keystore client.truststore
+...
+</code></pre>
+<p>If you’re using a Certificate Authority, the client truststore only
+needs to contain the CA’s certificate:</p>
+<pre><code>keytool -import -v -trustcacerts -alias CARoot -file ca.cer -keystore client.truststore
+</code></pre>
+<h4 id="client-keystore" class="target">Client keystore<a class="anchor" href="#client-keystore" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h4>
+
+<p>If you also intend to use client certificate authentication, generate
+the public and private key pair for the client:</p>
+<pre><code>keytool -genkey -keyalg RSA -alias client -keystore client.keystore
+</code></pre>
+<p>If you’re using self-signed certificates, extract the public part of the
+client certificate, and import it in the truststore of each Cassandra
+node:</p>
+<pre><code>keytool -export -alias client -file client.cer -keystore client.keystore
+keytool -import -v -trustcacerts -alias client -file client.cer -keystore server.truststore
+</code></pre>
+<p>If you’re using a CA, sign the client certificate with it (see the blog
+post linked at the top of this page). Then the nodes’ truststores only
+need to contain the CA’s certificate (which should already be the case
+if you’ve followed the steps for inter-node encryption).</p>
+
+<h3 id="driver-configuration" class="target">Driver configuration<a class="anchor" href="#driver-configuration" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<p>The base class to configure SSL is <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/SSLOptions.html">SSLOptions</a>. It’s very generic, but
+you don’t necessarily need to deal with it directly: the default
+instance, or the provided subclasses, might be enough for your needs.</p>
+
+<h4 id="jsse-property-based" class="target">JSSE, Property-based<a class="anchor" href="#jsse-property-based" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h4>
+
+<p><code>withSSL()</code> gives you a basic JSSE configuration:</p>
+<pre class="highlight"><code><span class="n">Cluster</span> <span class="n">cluster</span> <span class="o">=</span> <span class="n">Cluster</span><span class="o">.</span><span class="na">builder</span><span class="o">()</span>
+  <span class="o">.</span><span class="na">addContactPoint</span><span class="o">(</span><span class="s">"127.0.0.1"</span><span class="o">)</span>
+  <span class="o">.</span><span class="na">withSSL</span><span class="o">()</span>
+  <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+</code></pre>
+<p>You can then use
+<a href="http://docs.oracle.com/javase/6/docs/technotes/guides/security/jsse/JSSERefGuide.html#Customization">JSSE system properties</a>
+for specific details, like keystore locations and passwords:</p>
+<pre><code>-Djavax.net.ssl.trustStore=/path/to/client.truststore
+-Djavax.net.ssl.trustStorePassword=password123
+# If you're using client authentication:
+-Djavax.net.ssl.keyStore=/path/to/client.keystore
+-Djavax.net.ssl.keyStorePassword=password123
+</code></pre>
+<h4 id="jsse-programmatic" class="target">JSSE, programmatic<a class="anchor" href="#jsse-programmatic" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h4>
+
+<p>If you need more control than what system properties allow, you can
+configure SSL programmatically with <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/JdkSSLOptions.html">JdkSSLOptions</a>:</p>
+<pre class="highlight"><code><span class="n">SSLContext</span> <span class="n">sslContext</span> <span class="o">=</span> <span class="o">...</span> <span class="c1">// create and configure SSL context</span>
+
+<span class="n">JdkSSLOptions</span> <span class="n">sslOptions</span> <span class="o">=</span> <span class="n">JdkSSLOptions</span><span class="o">.</span><span class="na">builder</span><span class="o">()</span>
+  <span class="o">.</span><span class="na">withSSLContext</span><span class="o">(</span><span class="n">context</span><span class="o">)</span>
+  <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+
+<span class="n">Cluster</span> <span class="n">cluster</span> <span class="o">=</span> <span class="n">Cluster</span><span class="o">.</span><span class="na">builder</span><span class="o">()</span>
+  <span class="o">.</span><span class="na">addContactPoint</span><span class="o">(</span><span class="s">"127.0.0.1"</span><span class="o">)</span>
+  <span class="o">.</span><span class="na">withSSL</span><span class="o">(</span><span class="n">sslOptions</span><span class="o">)</span>
+  <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+</code></pre>
+<p>Note that you can also extend the class and override
+<a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/JdkSSLOptions.html#newSSLEngine-io.netty.channel.socket.SocketChannel-">newSSLEngine(SocketChannel)</a> if you need specific
+configuration on the <code>SSLEngine</code> (for example hostname verification).</p>
+
+<h4 id="netty" class="target">Netty<a class="anchor" href="#netty" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h4>
+
+<p><a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/NettySSLOptions.html">NettySSLOptions</a> allows you to use Netty’s <code>SslContext</code> instead of
+the JDK directly. The advantage is that Netty can use OpenSSL if
+available, which provides better performance.</p>
+
+<h5 id="converting-your-client-certificates-for-openssl" class="target">Converting your client certificates for OpenSSL<a class="anchor" href="#converting-your-client-certificates-for-openssl" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h5>
+
+<p>OpenSSL doesn’t use keystores, so if you use client authentication and
+generated your certificates with keytool, you need to convert them.</p>
+
+<ul>
+<li>
+<p>use this command to extract the public certificate chain:</p>
+<pre><code>keytool -export -keystore client.keystore -alias client -rfc -file client.crt
+</code></pre>
+</li>
+<li><p>follow
+<a href="http://www.herongyang.com/crypto/Migrating_Keys_keytool_to_OpenSSL_3.html">this tutorial</a>
+to extract your client’s private key from <code>client.keystore</code> to a text
+file <code>client.key</code> in PEM format.</p></li>
+</ul>
+
+<h5 id="updating-your-dependencies" class="target">Updating your dependencies<a class="anchor" href="#updating-your-dependencies" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h5>
+
+<p>Netty-tcnative provides the native integration with OpenSSL. Follow
+<a href="http://netty.io/wiki/forked-tomcat-native.html">these instructions</a> to
+add it to your dependencies.</p>
+
+<p>Note that using netty-tcnative requires JDK 1.7 or above.</p>
+
+<h5 id="configuring-the-context" class="target">Configuring the context<a class="anchor" href="#configuring-the-context" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h5>
+
+<p>Use the following Java code to configure OpenSSL with your certificates:</p>
+<pre class="highlight"><code><span class="n">KeyStore</span> <span class="n">ks</span> <span class="o">=</span> <span class="n">KeyStore</span><span class="o">.</span><span class="na">getInstance</span><span class="o">(</span><span class="s">"JKS"</span><span class="o">);</span>
+<span class="c1">// make sure you close this stream properly (not shown here for brevity)</span>
+<span class="n">InputStream</span> <span class="n">trustStore</span> <span class="o">=</span> <span class="k">new</span> <span class="n">FileInputStream</span><span class="o">(</span><span class="s">"client.truststore"</span><span class="o">);</span>
+<span class="n">ks</span><span class="o">.</span><span class="na">load</span><span class="o">(</span><span class="n">trustStore</span><span class="o">,</span> <span class="s">"password123"</span><span class="o">.</span><span class="na">toCharArray</span><span class="o">());</span>
+<span class="n">TrustManagerFactory</span> <span class="n">tmf</span> <span class="o">=</span> <span class="n">TrustManagerFactory</span><span class="o">.</span><span class="na">getInstance</span><span class="o">(</span><span class="n">TrustManagerFactory</span><span class="o">.</span><span class="na">getDefaultAlgorithm</span><span class="o">());</span>
+<span class="n">tmf</span><span class="o">.</span><span class="na">init</span><span class="o">(</span><span class="n">ks</span><span class="o">);</span>
+
+<span class="n">SslContextBuilder</span> <span class="n">builder</span> <span class="o">=</span> <span class="n">SslContextBuilder</span>
+  <span class="o">.</span><span class="na">forClient</span><span class="o">()</span>
+  <span class="o">.</span><span class="na">sslProvider</span><span class="o">(</span><span class="n">SslProvider</span><span class="o">.</span><span class="na">OPENSSL</span><span class="o">)</span>
+  <span class="o">.</span><span class="na">trustManager</span><span class="o">(</span><span class="n">tmf</span><span class="o">);</span>
+  <span class="c1">// only if you use client authentication</span>
+  <span class="o">.</span><span class="na">keyManager</span><span class="o">(</span><span class="k">new</span> <span class="n">File</span><span class="o">(</span><span class="s">"client.crt"</span><span class="o">),</span> <span class="k">new</span> <span class="n">File</span><span class="o">(</span><span class="s">"client.key"</span><span class="o">));</span>
+
+<span class="n">SSLOptions</span> <span class="n">sslOptions</span> <span class="o">=</span> <span class="k">new</span> <span class="n">NettySSLOptions</span><span class="o">(</span><span class="n">builder</span><span class="o">.</span><span class="na">build</span><span class="o">());</span>
+
+<span class="n">Cluster</span> <span class="n">cluster</span> <span class="o">=</span> <span class="n">Cluster</span><span class="o">.</span><span class="na">builder</span><span class="o">()</span>
+  <span class="o">.</span><span class="na">addContactPoint</span><span class="o">(</span><span class="s">"127.0.0.1"</span><span class="o">)</span>
+  <span class="o">.</span><span class="na">withSSL</span><span class="o">(</span><span class="n">sslOptions</span><span class="o">)</span>
+  <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+</code></pre>
+
+
+        </div>
+      </div>
+    </div>
+
+    
+    <footer class="container text-muted">
+      <ul class="list-inline">
+      
+        
+        <li>
+          <a href="https://github.com/datastax/java-driver/">Code</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="http://datastax.github.io/java-driver/">Docs</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://datastax-oss.atlassian.net/browse/JAVA/">Issues</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://groups.google.com/a/lists.datastax.com/forum/#!forum/java-driver-user">Mailing List</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="irc://irc.freenode.net/datastax-drivers">IRC Channel</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://github.com/datastax/java-driver/releases">Releases</a>
+        </li>
+      
+      </ul>
+    </footer>
+    
+
+    <script src="../../../js/jquery.js"></script>
+    <script src="../../../js/bootstrap.js"></script>
+    <script src="../../../js/angular.js"></script>
+    <script src="../../../js/mousetrap.js"></script>
+    <script src="../../../js/hotkeys.js"></script>
+    <script src="../../../js/ZeroClipboard.js"></script>
+    <script src="../../../js/lunr.js"></script>
+    <script src="../../../js/app.js"></script>
+  </body>
+</html>

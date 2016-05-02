@@ -42,7 +42,7 @@
             <div class="col-md-8">
               <form id="search" class="form-search dropdown visible-lg-block" ng-controller="search" ng-class="{open: hasResults}" role="search" ng-submit="submit()" data-spy="affix" data-offset-top="130">
                 <div class="form-group has-feedback">
-                  <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('3.0.0')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+                  <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('3.0.1')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
                 </div>
                 <ul class="dropdown-menu search-results" role="menu">
                   <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
@@ -63,12 +63,14 @@
               <li>
                 <div class="btn-group">
                   <button id="current-version" class="btn btn-default btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    3.0.0
+                    3.0.1
                     <span class="caret"></span>
                   </button>
                   <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
                   
-                    <li class="disabled"><a href="./">3.0.0</a></li>
+                    <li class="disabled"><a href="./">3.0.1</a></li>
+                  
+                    <li><a href="../../3.0.0/manual/retries/">3.0.0</a></li>
                   
                     <li><a href="../../2.1.10.1/manual/retries/">2.1.10.1</a></li>
                   
@@ -112,8 +114,34 @@
                     Jump to&#8230; <span class="caret"></span><span class="sr-only">Table of Contents</span>
                   </button>
                   <ul class="dropdown-menu nav nav-pills nav-stacked">
-                    <li><a href="#retries">Retries
+                    <li>
+<a href="#retries">Retries
+</a><ul class="nav nav-pills nav-stacked">
+<li><a href="#concepts">Concepts
 </a></li>
+<li>
+<a href="#retry-policy">Retry policy
+</a><ul class="nav nav-pills nav-stacked">
+<li><a href="#on-unavailable">
+onUnavailable
+</a></li>
+<li><a href="#on-read-timeout">
+onReadTimeout
+</a></li>
+<li><a href="#on-write-timeout">
+onWriteTimeout
+</a></li>
+<li><a href="#on-request-error">
+onRequestError
+</a></li>
+</ul>
+</li>
+<li><a href="#hard-coded-rules">Hard-coded rules
+</a></li>
+<li><a href="#retries-and-idempotence">Retries and idempotence
+</a></li>
+</ul>
+</li>
                   </ul>
                 </div>
               </li>
@@ -261,6 +289,13 @@
   
   
   <li>
+    <a href="../idempotence/">Query idempotence <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
     <a href="../query_timestamps/">Query timestamps <small>page</small></a>
   </li>
   
@@ -351,7 +386,182 @@
 <h2 id="retries" class="target">Retries<a class="anchor" href="#retries" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h2>
 
-<p><em>Coming soon… In the meantime, see the javadoc for <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/policies/RetryPolicy.html">RetryPolicy</a>.</em></p>
+<p>When a query fails, it sometimes makes sense to retry it: the error might be temporary, or the query might work on a
+different host, or with different options.</p>
+
+<p>The driver uses a configurable set of rules to determine when and how to retry.</p>
+
+<h3 id="concepts" class="target">Concepts<a class="anchor" href="#concepts" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<p>When the driver executes a statement, it first obtains a <a href="../load_balancing/#query-plan">query plan</a> (a list of hosts) from the load balancing policy.
+Then it picks the first host and sends it the request; this host acts as the <strong>coordinator</strong> for the query, it will
+communicate with the rest of the cluster and reply to the client.</p>
+
+<p>If the coordinator can’t be reached or replies with an error, there are various things that the driver can do; they are
+expressed as <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/policies/RetryPolicy.RetryDecision.html">RetryDecision</a> objects:</p>
+
+<ul>
+<li>
+<a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/policies/RetryPolicy.RetryDecision.html#retry-com.datastax.driver.core.ConsistencyLevel-">retry()</a>: retry the query on the same host. It’s possible to retry with a different consistency level than the one
+that was originally requested;</li>
+<li>
+<a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/policies/RetryPolicy.RetryDecision.html#tryNextHost-com.datastax.driver.core.ConsistencyLevel-">tryNextHost()</a>: retry on the next host in the query plan. Again, it can be with a different CL;</li>
+<li>
+<a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/policies/RetryPolicy.RetryDecision.html#rethrow--">rethrow()</a>: rethrow the exception to the user code. This means it will be thrown from the <code>session.execute</code> call (or
+returned as a failed future if <code>executeAsync</code> was used);</li>
+<li>
+<a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/policies/RetryPolicy.RetryDecision.html#ignore--">ignore()</a>: mark the request as successful, and return an empty result set.</li>
+</ul>
+
+<p>If the driver retries on every host and reaches the end of the query plan, a <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/exceptions/NoHostAvailableException.html">NoHostAvailableException</a> is thrown to the
+user code. You can use its <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/exceptions/NoHostAvailableException.html#getErrors--">getErrors()</a> method to find out what went wrong on each host.</p>
+
+<h3 id="retry-policy" class="target">Retry policy<a class="anchor" href="#retry-policy" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<p><a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/policies/RetryPolicy.html">RetryPolicy</a> is a pluggable component that determines the retry decisions for various types of errors. It is configured
+when initializing the cluster:</p>
+<pre class="highlight"><code><span class="n">Cluster</span> <span class="n">cluster</span> <span class="o">=</span> <span class="n">Cluster</span><span class="o">.</span><span class="na">builder</span><span class="o">()</span>
+        <span class="o">.</span><span class="na">addContactPoint</span><span class="o">(</span><span class="s">"127.0.0.1"</span><span class="o">)</span>
+        <span class="o">.</span><span class="na">withRetryPolicy</span><span class="o">(</span><span class="k">new</span> <span class="n">MyCustomPolicy</span><span class="o">())</span>
+        <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+</code></pre>
+<p>Once the cluster has been built, you can’t change the policy, but you may inspect it at runtime:</p>
+<pre class="highlight"><code><span class="n">RetryPolicy</span> <span class="n">policy</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="na">getConfiguration</span><span class="o">().</span><span class="na">getPolicies</span><span class="o">().</span><span class="na">getRetryPolicy</span><span class="o">();</span>
+</code></pre>
+<p>If you don’t explicitly configure it, you get a <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/policies/DefaultRetryPolicy.html">DefaultRetryPolicy</a>.</p>
+
+<p>The policy’s methods cover different types of errors:</p>
+
+<h4 id="on-unavailable" class="target">
+<a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/policies/DefaultRetryPolicy.html#onUnavailable-com.datastax.driver.core.Statement-com.datastax.driver.core.ConsistencyLevel-int-int-int-">onUnavailable</a><a class="anchor" href="#on-unavailable" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h4>
+
+<p>A request reached the coordinator, but there weren’t enough live replicas to achieve the requested consistency level.
+The coordinator replied with an <code>UNAVAILABLE</code> error.</p>
+
+<p>If the policy rethrows the error, the user code will get an <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/exceptions/UnavailableException.html">UnavailableException</a>. You can inspect the exception’s
+fields to get the amount of replicas that were <em>known</em> to be alive when the error was triggered, as well as the amount
+of replicas that where <em>required</em> by the requested consistency level.</p>
+
+<h4 id="on-read-timeout" class="target">
+<a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/policies/DefaultRetryPolicy.html#onReadTimeout-com.datastax.driver.core.Statement-com.datastax.driver.core.ConsistencyLevel-int-int-boolean-int-">onReadTimeout</a><a class="anchor" href="#on-read-timeout" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h4>
+
+<p>A read request reached the coordinator, which initially believed that there were enough live replicas to process it.
+But, for some reason, one or several replicas were too slow to answer within the predefined timeout
+(<code>read_request_timeout_in_ms</code> in <code>cassandra.yaml</code>), and the coordinator replied to the client with a <code>READ_TIMEOUT</code>
+error.</p>
+
+<p>This could be due to a temporary overloading of these replicas, or even
+that they just failed or were turned off. During reads, Cassandra doesn’t request data from every replica to minimize
+internal network traffic; instead, some replicas are only asked for a checksum of the data. A read timeout may occur
+even if enough replicas responded to fulfill the consistency level, but only checksum responses were received (the
+method’s <code>dataRetrieved</code> parameter allow you to check if you’re in that situation).</p>
+
+<p>If the policy rethrows the error, the user code will get a <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/exceptions/ReadTimeoutException.html">ReadTimeoutException</a>.</p>
+
+<p>Note: do not confuse this error with a <a href="../socket_options/#driver-read-timeout">driver read timeout</a>, which happens when the coordinator didn’t reply at all to
+the client.</p>
+
+<h4 id="on-write-timeout" class="target">
+<a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/policies/DefaultRetryPolicy.html#onWriteTimeout-com.datastax.driver.core.Statement-com.datastax.driver.core.ConsistencyLevel-com.datastax.driver.core.WriteType-int-int-int-">onWriteTimeout</a><a class="anchor" href="#on-write-timeout" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h4>
+
+<p>This is similar to <code>onReadTimeout</code>, but for write operations. The reason reads and writes are handled separately is
+because a read is obviously a non mutating operation, whereas a write is likely to be. If a write times out at the
+coordinator level, there is no way to know whether the mutation was applied or not on the non-answering replica.
+Policy implementations are usually more conservative in <code>onWriteTimeout</code> in case the write was not idempotent.</p>
+
+<p>If the policy rethrows the error, the user code will get a <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/exceptions/WriteTimeoutException.html">WriteTimeoutException</a>.</p>
+
+<h4 id="on-request-error" class="target">
+<a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/policies/ExtendedRetryPolicy.html#onRequestError-com.datastax.driver.core.Statement-com.datastax.driver.core.ConsistencyLevel-java.lang.Exception-int-">onRequestError</a><a class="anchor" href="#on-request-error" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h4>
+
+<p>This gets called for any other error occurring after the request was sent.</p>
+
+<p>The method receives the exception as a parameter, so that implementations can refine their decision based on what
+happened. The possible exceptions are:</p>
+
+<ul>
+<li>
+<a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/exceptions/ServerError.html">ServerError</a>: thrown by the coordinator when an unexpected error occurs. This is generally a Cassandra bug;</li>
+<li>
+<a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/exceptions/OperationTimedOutException.html">OperationTimedOutException</a>: thrown by the client when it didn’t hear back from the coordinator within the
+<a href="../socket_options/#driver-read-timeout">driver read timeout</a>;</li>
+<li>
+<a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/exceptions/ConnectionException.html">ConnectionException</a>: thrown by the client for any network issue while or after the request was written;</li>
+<li>
+<a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/exceptions/OverloadedException.html">OverloadedException</a>: thrown by the coordinator when replicas are down and the number of hinted handoffs gets too
+high; the coordinator temporarily refuses writes for these replicas (see <a href="https://docs.datastax.com/en/cassandra/2.1/cassandra/dml/dml_about_hh_c.html?scroll=concept_ds_ifg_jqx_zj__performance">hinted handoffs</a> in the Cassandra
+documentation).</li>
+</ul>
+
+<p>In all these cases, there is no absolute certainty that the request was not applied by a host, so implementations must
+consider the risk of retrying non-idempotent statements.</p>
+
+<h3 id="hard-coded-rules" class="target">Hard-coded rules<a class="anchor" href="#hard-coded-rules" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<p>There are a few cases where retrying is always the right thing to do. These are not covered by <code>RetryPolicy</code>, but
+hard-coded in the driver:</p>
+
+<ul>
+<li><p><strong>any error before a network write was attempted</strong>: to send a query, the driver selects a host, borrows a connection
+from the host’s <a href="../pooling/">connection pool</a>, and then writes the message to the connection.
+Errors can occur before the write was even attempted, for example if the connection pool is saturated, or if the
+host went down right after we borrowed. In those cases, it is always safe to retry since the request wasn’t sent, so
+the driver will transparently move to the next host in the query plan.</p></li>
+<li><p><strong>re-preparing a statement</strong>: when the driver executes a prepared statement, it may find out that the coordinator
+doesn’t know about it, and need to re-prepare it on the fly (this is described in detail <a href="../statements/prepared/#preparing-on-multiple-nodes">here</a>). The query
+is then retried on the same host.</p></li>
+<li><p><strong>trying to communicate with a host that is bootstrapping</strong>: this is a rare edge case, as in practice the driver
+should never try to communicate with a bootstrapping host (the only way is if it was specified as a contact point).
+Anyway, it is again safe to assume that the query was not executed at all, so the driver moves to the next host.</p></li>
+</ul>
+
+<p>Similarly, some errors have no chance of being solved by a retry. They will always be rethrown directly to the user.
+These include:</p>
+
+<ul>
+<li>
+<a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/exceptions/QueryValidationException.html">QueryValidationException</a> and any of its subclasses (<a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/exceptions/InvalidQueryException.html">InvalidQueryException</a>, <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/exceptions/InvalidConfigurationInQueryException.html">InvalidConfigurationInQueryException</a>,
+<a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/exceptions/UnauthorizedException.html">UnauthorizedException</a>, <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/exceptions/SyntaxError.html">SyntaxError</a>, <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/exceptions/AlreadyExistsException.html">AlreadyExistsException</a>);</li>
+<li>
+<a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/exceptions/TruncateException.html">TruncateException</a>.</li>
+</ul>
+
+<h3 id="retries-and-idempotence" class="target">Retries and idempotence<a class="anchor" href="#retries-and-idempotence" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<p>Retry policies should avoid retrying <a href="../idempotence/">idempotent queries</a> when it’s not clear whether the query was applied or not.</p>
+
+<p>It’s always safe to retry in <code>onReadTimeout</code>, since by definition we know that the query is a read, which doesn’t mutate
+any data. Similarly, <code>onUnavailable</code> is safe: the coordinator is telling us that it didn’t find enough replicas, so we
+know that it didn’t try to apply the query.</p>
+
+<p><code>onWriteTimeout</code> is not safe. The default retry policy is very conservative (it only retries batch log writes) so it
+will never cause any issue. Custom implementations should check the statements’ idempotent flag.</p>
+
+<p><code>onRequestError</code> isn’t safe either.</p>
+
+<p><strong>For historical reasons, the built-in retry policy implementations do not check the idempotent flag in
+<code>onRequestError</code></strong>. This is based on the fact that:</p>
+
+<ul>
+<li>previous versions of the driver (which did <code>onRequestError</code> internally) didn’t check the flag either;</li>
+<li>the majority of queries in an application should be idempotent;</li>
+<li>statements start out as non-idempotent by default.</li>
+</ul>
+
+<p>If <code>onRequestError</code> enforced idempotence strictly, this would cause a lot of queries that were legitimately retried with
+previous driver versions to not be retried anymore. This would be a big behavioral change, so we decided to prefer
+consistency with previous versions.</p>
+
+<p>If you prefer strict handling of the idempotent flag, you can wrap your retry policy into an
+<a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/policies/IdempotenceAwareRetryPolicy.html">IdempotenceAwareRetryPolicy</a>. Make sure to position the flag properly on all statements.</p>
 
 
         </div>

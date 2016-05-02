@@ -42,7 +42,7 @@
             <div class="col-md-8">
               <form id="search" class="form-search dropdown visible-lg-block" ng-controller="search" ng-class="{open: hasResults}" role="search" ng-submit="submit()" data-spy="affix" data-offset-top="130">
                 <div class="form-group has-feedback">
-                  <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('3.0.0')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+                  <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('3.0.1')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
                 </div>
                 <ul class="dropdown-menu search-results" role="menu">
                   <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
@@ -63,12 +63,14 @@
               <li>
                 <div class="btn-group">
                   <button id="current-version" class="btn btn-default btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    3.0.0
+                    3.0.1
                     <span class="caret"></span>
                   </button>
                   <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
                   
-                    <li class="disabled"><a href="./">3.0.0</a></li>
+                    <li class="disabled"><a href="./">3.0.1</a></li>
+                  
+                    <li><a href="../../../3.0.0/manual/statements/simple/">3.0.0</a></li>
                   
                     <li><a href="../../../2.1.10.1/manual/statements/simple/">2.1.10.1</a></li>
                   
@@ -268,6 +270,13 @@
   
   <li>
     <a href="../../paging/">Paging <small>page</small></a>
+  </li>
+  
+  
+  
+  
+  <li>
+    <a href="../../idempotence/">Query idempotence <small>page</small></a>
   </li>
   
   
