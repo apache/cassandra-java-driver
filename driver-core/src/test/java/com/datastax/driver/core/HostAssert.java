@@ -21,9 +21,11 @@ import com.datastax.driver.core.policies.LoadBalancingPolicy;
 import org.assertj.core.api.AbstractAssert;
 
 import java.net.InetAddress;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import static com.datastax.driver.core.ConditionChecker.check;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
@@ -73,9 +75,18 @@ public class HostAssert extends AbstractAssert<HostAssert, Host> {
     }
 
     public HostAssert isNotReconnectingFromDown() {
-        assertThat(actual.getReconnectionAttemptFuture() != null && !actual.getReconnectionAttemptFuture().isDone())
-                .isFalse();
-        return this;
+        // Ensure that host is not attempting a reconnect.  Because of JAVA-970 we cannot
+        // be sure that there is a race and another pool is created before the host is marked down so we
+        // check to see it stops after 30 seconds.
+        // TODO: Change this to check only once if JAVA-970 is fixed.
+        check().before(30, TimeUnit.SECONDS).that(new Callable<Boolean>() {
+            @Override
+            public Boolean call() throws Exception {
+                // Whether or not host is down and reconnection attempt is in progress.
+                return actual.getReconnectionAttemptFuture() != null && !actual.getReconnectionAttemptFuture().isDone();
+            }
+        }).becomesFalse();
+        return this.isDown();
     }
 
     public HostAssert comesUpWithin(long duration, TimeUnit unit) {

@@ -40,6 +40,7 @@ Merged from 2.1 branch:
 - [bug] JAVA-1005: DowngradingConsistencyRetryPolicy does not work with EACH_QUORUM when 1 DC is down.
 - [bug] JAVA-1002: Avoid deadlock when re-preparing a statement on other hosts.
 - [bug] JAVA-1072: Ensure defunct connections are properly evicted from the pool.
+- [bug] JAVA-1152: Fix NPE at ControlConnection.refreshNodeListAndTokenMap().
 
 
 ### 3.0.0

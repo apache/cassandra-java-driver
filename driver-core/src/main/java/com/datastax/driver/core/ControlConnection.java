@@ -582,6 +582,8 @@ class ControlConnection implements Connection.Owner {
                 continue;
 
             InetSocketAddress rpcAddress = rpcAddressForPeerHost(row, connection.address, cluster);
+            if (rpcAddress == null)
+                continue;
             foundHosts.add(rpcAddress);
             dcs.add(row.getString("data_center"));
             racks.add(row.getString("rack"));
