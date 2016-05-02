@@ -37,8 +37,10 @@ The driver contains the following modules:
 
 - driver-core: the core layer.
 - driver-mapping: the object mapper.
+- driver-extras: optional features for the Java driver.
 - driver-examples: example applications using the other modules which are
   only meant for demonstration purposes.
+- driver-tests: tests for the java-driver.
 
 **Useful links:**
 
