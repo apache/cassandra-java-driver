@@ -502,11 +502,10 @@ class Connection {
 
     public ResponseHandler write(ResponseCallback callback, boolean startTimeout) throws ConnectionException, BusyConnectionException {
 
-        Message.Request request = callback.request();
-
         ResponseHandler handler = new ResponseHandler(this, callback);
         dispatcher.add(handler);
-        request.setStreamId(handler.streamId);
+
+        Message.Request request = callback.request().setStreamId(handler.streamId);
 
         /*
          * We check for close/defunct *after* having set the handler because closing/defuncting
