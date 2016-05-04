@@ -118,6 +118,9 @@ public class BatchStatement extends Statement {
      *                               of statements for a BatchStatement allowed by the underlying protocol).
      */
     public BatchStatement add(Statement statement) {
+        if (statement instanceof StatementWrapper) {
+            statement = ((StatementWrapper) statement).getWrappedStatement();
+        }
 
         // We handle BatchStatement here (rather than in getIdAndValues) as it make it slightly
         // easier to avoid endless loop if the use mistakenly pass a batch that depends on this
