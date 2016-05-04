@@ -1,5 +1,7 @@
 ## Changelog
 
+- [bug] JAVA-1184: Unwrap StatementWrappers when extracting column definitions.
+
 ### 2.1.10.1
 
 - [bug] JAVA-1152: Fix NPE at ControlConnection.refreshNodeListAndTokenMap().

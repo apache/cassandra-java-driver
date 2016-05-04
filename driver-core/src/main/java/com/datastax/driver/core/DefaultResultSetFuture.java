@@ -156,7 +156,7 @@ class DefaultResultSetFuture extends AbstractFuture<ResultSet> implements Result
                     setException(new DriverInternalError(String.format("Got unexpected %s response from %s", response.type, connection.address)));
                     break;
             }
-        } catch (RuntimeException e) {
+        } catch (Throwable e) {
             // If we get a bug here, the client will not get it, so better forwarding the error
             setException(new DriverInternalError("Unexpected error while processing response from " + connection.address, e));
         }
