@@ -25,9 +25,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class StatementWrapperTest extends CCMTestsSupport {
 
+    private static final String INSERT_QUERY = "insert into test (k, v) values (?, ?)";
+    private static final String SELECT_QUERY = "select * from test where k = ?";
+
     CustomLoadBalancingPolicy loadBalancingPolicy = new CustomLoadBalancingPolicy();
     CustomSpeculativeExecutionPolicy speculativeExecutionPolicy = new CustomSpeculativeExecutionPolicy();
     CustomRetryPolicy retryPolicy = new CustomRetryPolicy();
+
+    @Override
+    public void onTestContextInitialized() {
+        execute("create table test (k text primary key, v int)");
+    }
 
     @Override
     public Cluster.Builder createClusterBuilder() {
@@ -75,6 +83,53 @@ public class StatementWrapperTest extends CCMTestsSupport {
 
         session().execute(new CustomStatement(s));
         assertThat(retryPolicy.customStatementsHandled.get()).isEqualTo(1);
+    }
+
+    @Test(groups = "short")
+    public void should_be_possible_to_wrap_simple_statement() {
+        session().execute(new CustomStatement(new SimpleStatement(INSERT_QUERY,  "key_simple", 1)));
+
+        ResultSet rs = session().execute(new CustomStatement(new SimpleStatement(SELECT_QUERY,  "key_simple")));
+        assertThat(rs.one().getInt("v")).isEqualTo(1);
+    }
+
+    @Test(groups = "short")
+    public void should_be_possible_to_wrap_bound_statement() {
+        PreparedStatement preparedStatement = session().prepare(new SimpleStatement(INSERT_QUERY));
+        session().execute(new CustomStatement(preparedStatement.bind("key_bound", 1)));
+
+        preparedStatement = session().prepare(new SimpleStatement(SELECT_QUERY));
+        ResultSet rs = session().execute(new CustomStatement(preparedStatement.bind("key_bound")));
+        assertThat(rs.one().getInt("v")).isEqualTo(1);
+    }
+
+    @Test(groups = "short")
+    public void should_be_possible_to_wrap_batch_statement() {
+        BatchStatement batchStatement = new BatchStatement();
+        batchStatement.add(new SimpleStatement(INSERT_QUERY, "key_batch", 1));
+
+        session().execute(new CustomStatement(batchStatement));
+
+        ResultSet rs = session().execute(SELECT_QUERY, "key_batch");
+        assertThat(rs.one().getInt("v")).isEqualTo(1);
+    }
+
+    @Test(groups = "short")
+    public void should_unwrap_statements_within_batch() {
+        BatchStatement batchStatementForWrapping = new BatchStatement();
+        batchStatementForWrapping.add(new SimpleStatement(INSERT_QUERY, "key1", 1));
+
+        BatchStatement batchStatement = new BatchStatement();
+        batchStatement.add(new CustomStatement(new SimpleStatement(INSERT_QUERY, "key2", 2)));
+        batchStatement.add(new CustomStatement(batchStatementForWrapping));
+
+        session().execute(batchStatement);
+
+        ResultSet rs = session().execute(SELECT_QUERY, "key1");
+        assertThat(rs.one().getInt("v")).isEqualTo(1);
+
+        rs = session().execute(SELECT_QUERY, "key2");
+        assertThat(rs.one().getInt("v")).isEqualTo(2);
     }
 
     /**
