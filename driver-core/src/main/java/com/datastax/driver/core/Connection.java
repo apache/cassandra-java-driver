@@ -530,7 +530,7 @@ class Connection {
         if (DISABLE_COALESCING) {
             channel.writeAndFlush(request).addListener(writeHandler(request, handler));
         } else {
-            flush(new FlushItem(channel, request, writeHandler(request, handler)));
+            flush(new FlushItem(channel, request, handler, writeHandler(request, handler)));
         }
         if (startTimeout)
             handler.startTimeout();
@@ -866,11 +866,18 @@ class Connection {
             boolean doneWork = false;
             FlushItem flush;
             while (null != (flush = queued.poll())) {
-                Channel channel = flush.channel;
-                if (channel.isActive()) {
-                    channels.add(channel);
-                    channel.write(flush.request).addListener(flush.listener);
-                    doneWork = true;
+                ResponseHandler handler = flush.handler.get();
+                // JAVA-1180: when the item gets flushed, check
+                // if its handler has been canceled by a timeout
+                if (handler != null && !handler.isCancelled.get()) {
+                    Channel channel = flush.channel;
+                    if (channel.isActive()) {
+                        channels.add(channel);
+                        channel.write(flush.request).addListener(flush.listener);
+                        doneWork = true;
+                    }
+                } else {
+                    logger.debug("Not flushing request {} because its handler has been canceled", flush.request);
                 }
             }
 
@@ -905,11 +912,13 @@ class Connection {
     private static class FlushItem {
         final Channel channel;
         final Object request;
+        final WeakReference<ResponseHandler> handler;
         final ChannelFutureListener listener;
 
-        private FlushItem(Channel channel, Object request, ChannelFutureListener listener) {
+        private FlushItem(Channel channel, Object request, ResponseHandler handler, ChannelFutureListener listener) {
             this.channel = channel;
             this.request = request;
+            this.handler = new WeakReference<ResponseHandler>(handler);
             this.listener = listener;
         }
     }
