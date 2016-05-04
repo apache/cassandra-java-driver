@@ -1,5 +1,10 @@
 ## Changelog
 
+### 2.0.12.2 (in progress)
+
+- [bug] JAVA-1180: Flusher should check if requests are canceled before flushing them.
+
+
 ### 2.0.12.1
 
 - [bug] JAVA-994: Don't call on(Up|Down|Add|Remove) methods if Cluster is closed/closing.
