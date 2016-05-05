@@ -3,6 +3,7 @@
 ### 2.0.12.2 (in progress)
 
 - [bug] JAVA-1179: Request objects should be copied when executed.
+- [improvement] JAVA-1182: Throw error when synchronous call made on I/O thread.
 
 
 ### 2.0.12.1
@@ -10,6 +11,7 @@
 - [bug] JAVA-994: Don't call on(Up|Down|Add|Remove) methods if Cluster is closed/closing.
 - [improvement] JAVA-805: Document that metrics are null until Cluster is initialized.
 - [bug] JAVA-1072: Ensure defunct connections are properly evicted from the pool.
+
 
 ### 2.0.12
 
