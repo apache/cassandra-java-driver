@@ -679,7 +679,7 @@ class Connection {
 
         public final Timer timer;
 
-        private final EventLoopGroup eventLoopGroup;
+        final EventLoopGroup eventLoopGroup;
         private final Class<? extends Channel> channelClass;
 
         private final ChannelGroup allChannels = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);

@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Allows overriding internal settings via system properties.
  * <p/>
- * Warning: this is meant for integration tests only, NOT FOR PRODUCTION USE.
+ * This is generally reserved for tests or "expert" usage.
  */
 class SystemProperties {
     private static final Logger logger = LoggerFactory.getLogger(SystemProperties.class);
@@ -34,7 +34,7 @@ class SystemProperties {
         }
         try {
             int value = Integer.parseInt(stringValue);
-            logger.warn("{} is defined, using value {}", key, value);
+            logger.info("{} is defined, using value {}", key, value);
             return value;
         } catch (NumberFormatException e) {
             logger.warn("{} is defined but could not parse value {}, using default value {}", key, stringValue, defaultValue);
@@ -50,7 +50,7 @@ class SystemProperties {
         }
         try {
             boolean value = Boolean.parseBoolean(stringValue);
-            logger.warn("{} is defined, using value {}", key, value);
+            logger.info("{} is defined, using value {}", key, value);
             return value;
         } catch (NumberFormatException e) {
             logger.warn("{} is defined but could not parse value {}, using default value {}", key, stringValue, defaultValue);
