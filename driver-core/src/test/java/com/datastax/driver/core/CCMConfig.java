@@ -24,6 +24,9 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
  * The configuration to use when running tests with {@link CCMTestsSupport}.
+ * <p/>
+ * This annotation can be used at the class level, or at the method level if you annotate the class with
+ * {@code @CreateCCM(PER_METHOD)}.
  */
 @Retention(RUNTIME)
 @Target({TYPE, METHOD})

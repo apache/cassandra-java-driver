@@ -17,6 +17,7 @@ package com.datastax.driver.core;
 
 import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.google.common.base.Function;
+import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.*;
 import org.testng.annotations.DataProvider;
@@ -26,6 +27,7 @@ import java.util.Collection;
 import java.util.concurrent.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
@@ -122,6 +124,26 @@ public class AsyncQueryTest extends CCMTestsSupport {
             assertThat(e.getCause())
                     .isInstanceOf(InvalidQueryException.class)
                     .hasMessage("Keyspace 'wrong_keyspace' does not exist");
+        }
+    }
+
+    @Test(groups = "short")
+    public void should_fail_when_synchronous_call_on_io_thread() throws Exception {
+        ResultSetFuture f = session().executeAsync("select release_version from system.local");
+        ListenableFuture<Void> f2 = Futures.transform(f, new Function<ResultSet, Void>() {
+            @Override
+            public Void apply(ResultSet input) {
+                session().execute("select release_version from system.local");
+                return null;
+            }
+        });
+        try {
+            f2.get();
+            fail("Expected a failed future");
+        } catch (Exception e) {
+            assertThat(Throwables.getRootCause(e))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("Detected a synchronous Session call");
         }
     }
 

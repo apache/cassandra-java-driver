@@ -1,5 +1,13 @@
 ## Changelog
 
+### 2.1.10.2 (in progress)
+
+Merged from 2.0 branch:
+
+- [bug] JAVA-1179: Request objects should be copied when executed.
+- [improvement] JAVA-1182: Throw error when synchronous call made on I/O thread.
+
+
 ### 2.1.10.1
 
 - [bug] JAVA-1152: Fix NPE at ControlConnection.refreshNodeListAndTokenMap().
@@ -391,11 +399,18 @@ Merged from 2.0 branch: everything up to 2.0.3 (included), and the following.
 - [bug] Make metadata parsing more lenient (JAVA-377, JAVA-391)
 
 
-### 2.0.13 (in progress)
+### 2.0.12.2
+
+- [bug] JAVA-1179: Request objects should be copied when executed.
+- [improvement] JAVA-1182: Throw error when synchronous call made on I/O thread.
+
+
+### 2.0.12.1
 
 - [bug] JAVA-994: Don't call on(Up|Down|Add|Remove) methods if Cluster is closed/closing.
 - [improvement] JAVA-805: Document that metrics are null until Cluster is initialized.
 - [bug] JAVA-1072: Ensure defunct connections are properly evicted from the pool.
+
 
 ### 2.0.12
 

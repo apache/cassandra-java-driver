@@ -51,6 +51,7 @@ public abstract class AbstractSession implements Session, AsyncInitSession {
      */
     @Override
     public ResultSet execute(Statement statement) {
+        checkNotInEventLoop();
         return executeAsync(statement).getUninterruptibly();
     }
 
@@ -75,6 +76,7 @@ public abstract class AbstractSession implements Session, AsyncInitSession {
      */
     @Override
     public PreparedStatement prepare(String query) {
+        checkNotInEventLoop();
         try {
             return Uninterruptibles.getUninterruptibly(prepareAsync(query));
         } catch (ExecutionException e) {
@@ -87,6 +89,7 @@ public abstract class AbstractSession implements Session, AsyncInitSession {
      */
     @Override
     public PreparedStatement prepare(RegularStatement statement) {
+        checkNotInEventLoop();
         try {
             return Uninterruptibles.getUninterruptibly(prepareAsync(statement));
         } catch (ExecutionException e) {
@@ -134,5 +137,14 @@ public abstract class AbstractSession implements Session, AsyncInitSession {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
+    }
+
+    /**
+     * Checks that the current thread is not one of the Netty I/O threads used by the driver.
+     * <p/>
+     * This is called from the synchronous methods of this class to prevent deadlock issues.
+     */
+    protected void checkNotInEventLoop() {
+        // This method is concrete only to avoid a breaking change. See subclass for the actual implementation.
     }
 }

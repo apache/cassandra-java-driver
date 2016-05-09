@@ -48,15 +48,22 @@ class Requests {
         };
 
         private final Map<String, String> options;
+        private final ProtocolOptions.Compression compression;
 
         public Startup(ProtocolOptions.Compression compression) {
             super(Message.Request.Type.STARTUP);
+            this.compression = compression;
 
             ImmutableMap.Builder<String, String> map = new ImmutableMap.Builder<String, String>();
             map.put(CQL_VERSION_OPTION, CQL_VERSION);
             if (compression != ProtocolOptions.Compression.NONE)
                 map.put(COMPRESSION_OPTION, compression.toString());
             this.options = map.build();
+        }
+
+        @Override
+        Request copy() {
+            return new Startup(compression);
         }
 
         @Override
@@ -89,6 +96,11 @@ class Requests {
             super(Message.Request.Type.CREDENTIALS);
             this.credentials = credentials;
         }
+
+        @Override
+        Request copy() {
+            return new Credentials(credentials);
+        }
     }
 
     public static class Options extends Message.Request {
@@ -106,6 +118,11 @@ class Requests {
 
         public Options() {
             super(Message.Request.Type.OPTIONS);
+        }
+
+        @Override
+        Request copy() {
+            return new Options();
         }
 
         @Override
@@ -526,6 +543,11 @@ class Requests {
         }
 
         @Override
+        Request copy() {
+            return new Prepare(query);
+        }
+
+        @Override
         public String toString() {
             return "PREPARE " + query;
         }
@@ -558,6 +580,11 @@ class Requests {
         }
 
         @Override
+        Request copy() {
+            return new Register(eventTypes);
+        }
+
+        @Override
         public String toString() {
             return "REGISTER " + eventTypes;
         }
@@ -583,6 +610,11 @@ class Requests {
         public AuthResponse(byte[] token) {
             super(Message.Request.Type.AUTH_RESPONSE);
             this.token = token;
+        }
+
+        @Override
+        Request copy() {
+            return new AuthResponse(token);
         }
     }
 }
