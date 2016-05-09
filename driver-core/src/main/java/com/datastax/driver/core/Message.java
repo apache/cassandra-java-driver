@@ -46,7 +46,7 @@ abstract class Message {
         public R decode(ByteBuf body);
     }
 
-    private volatile int streamId;
+    private volatile int streamId = -1;
 
     protected Message() {
     }
@@ -101,6 +101,19 @@ abstract class Message {
             this.tracingRequested = tracingRequested;
         }
 
+        @Override
+        public Request setStreamId(int streamId) {
+            // JAVA-1179: defensively guard against reusing the same Request object twice.
+            // If no streamId was ever set we can use this object directly, otherwise make a copy.
+            if (getStreamId() < 0)
+                return (Request) super.setStreamId(streamId);
+            else {
+                Request copy = this.copy();
+                copy.setStreamId(streamId);
+                return copy;
+            }
+        }
+
         public boolean isTracingRequested() {
             return tracingRequested;
         }
@@ -140,9 +153,7 @@ abstract class Message {
             }
         }
 
-        Request copy() {
-            throw new UnsupportedOperationException();
-        }
+        abstract Request copy();
 
         Request copy(ConsistencyLevel newConsistencyLevel) {
             throw new UnsupportedOperationException();
