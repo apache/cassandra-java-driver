@@ -508,11 +508,10 @@ class Connection {
 
     ResponseHandler write(ResponseCallback callback, long statementReadTimeoutMillis, boolean startTimeout) throws ConnectionException, BusyConnectionException {
 
-        Message.Request request = callback.request();
-
         ResponseHandler handler = new ResponseHandler(this, statementReadTimeoutMillis, callback);
         dispatcher.add(handler);
-        request.setStreamId(handler.streamId);
+
+        Message.Request request = callback.request().setStreamId(handler.streamId);
 
         /*
          * We check for close/defunct *after* having set the handler because closing/defuncting
@@ -686,7 +685,7 @@ class Connection {
 
         final Timer timer;
 
-        private final EventLoopGroup eventLoopGroup;
+        final EventLoopGroup eventLoopGroup;
         private final Class<? extends Channel> channelClass;
 
         private final ChannelGroup allChannels = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);

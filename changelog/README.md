@@ -1,5 +1,13 @@
 ## Changelog
 
+### 3.0.2 (in progress)
+
+Merged from 2.1 branch:
+
+- [bug] JAVA-1179: Request objects should be copied when executed.
+- [improvement] JAVA-1182: Throw error when synchronous call made on I/O thread.
+
+
 ### 3.0.1
 
 - [bug] JAVA-1132: Executing bound statement with no variables results in exception with protocol v1.
@@ -307,6 +315,20 @@ Merged from 2.0 branch:
 Merged from 2.1 branch:
 
 - [improvement] JAVA-782: Unify "Target" enum for schema elements.
+
+
+### 2.1.10.2
+
+Merged from 2.0 branch:
+
+- [bug] JAVA-1179: Request objects should be copied when executed.
+- [improvement] JAVA-1182: Throw error when synchronous call made on I/O thread.
+
+
+### 2.1.10.1
+
+- [bug] JAVA-1152: Fix NPE at ControlConnection.refreshNodeListAndTokenMap().
+- [bug] JAVA-1156: Fix NPE at TableMetadata.equals().
 
 
 ### 2.1.10
@@ -678,11 +700,18 @@ Merged from 2.0 branch: everything up to 2.0.3 (included), and the following.
 - [bug] JAVA-377, JAVA-391: Make metadata parsing more lenient.
 
 
-### 2.0.13 (in progress)
+### 2.0.12.2
+
+- [bug] JAVA-1179: Request objects should be copied when executed.
+- [improvement] JAVA-1182: Throw error when synchronous call made on I/O thread.
+
+
+### 2.0.12.1
 
 - [bug] JAVA-994: Don't call on(Up|Down|Add|Remove) methods if Cluster is closed/closing.
 - [improvement] JAVA-805: Document that metrics are null until Cluster is initialized.
 - [bug] JAVA-1072: Ensure defunct connections are properly evicted from the pool.
+
 
 ### 2.0.12
 
