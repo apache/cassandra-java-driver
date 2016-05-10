@@ -614,6 +614,9 @@ public abstract class QueryLogger implements LatencyTracker {
      */
     @Override
     public void update(Host host, Statement statement, Exception exception, long newLatencyNanos) {
+        if (statement instanceof StatementWrapper)
+            statement = ((StatementWrapper) statement).getWrappedStatement();
+
         long latencyMs = NANOSECONDS.toMillis(newLatencyNanos);
         if (exception == null) {
             maybeLogNormalOrSlowQuery(host, statement, latencyMs);
@@ -745,9 +748,6 @@ public abstract class QueryLogger implements LatencyTracker {
     }
 
     protected int append(Statement statement, StringBuilder buffer, int remaining) {
-        if (statement instanceof StatementWrapper)
-            statement = ((StatementWrapper) statement).getWrappedStatement();
-
         if (statement instanceof RegularStatement) {
             remaining = append(((RegularStatement) statement).getQueryString().trim(), buffer, remaining);
         } else if (statement instanceof BoundStatement) {
