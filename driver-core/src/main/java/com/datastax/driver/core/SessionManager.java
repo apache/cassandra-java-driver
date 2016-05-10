@@ -617,9 +617,10 @@ class SessionManager extends AbstractSession {
 
     @Override
     protected void checkNotInEventLoop() {
-        if (!CHECK_IO_DEADLOCKS)
+        Connection.Factory connectionFactory = cluster.manager.connectionFactory;
+        if (!CHECK_IO_DEADLOCKS || connectionFactory == null)
             return;
-        for (EventExecutor executor : cluster.manager.connectionFactory.eventLoopGroup) {
+        for (EventExecutor executor : connectionFactory.eventLoopGroup) {
             if (executor.inEventLoop()) {
                 throw new IllegalStateException(
                         "Detected a synchronous Session call (execute() or prepare()) on an I/O thread, " +
