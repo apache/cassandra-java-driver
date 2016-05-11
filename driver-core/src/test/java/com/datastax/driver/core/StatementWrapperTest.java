@@ -16,6 +16,7 @@
 package com.datastax.driver.core;
 
 import com.datastax.driver.core.policies.*;
+import com.datastax.driver.core.utils.CassandraVersion;
 import com.google.common.collect.Lists;
 import org.testng.annotations.Test;
 
@@ -26,9 +27,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class StatementWrapperTest extends CCMBridge.PerClassSingleNodeCluster {
+
+    private static final String INSERT_QUERY = "insert into test (k, v) values (?, ?)";
+    private static final String SELECT_QUERY = "select * from test where k = ?";
+
     @Override
     protected Collection<String> getTableDefinitions() {
-        return Lists.newArrayList();
+        return Lists.newArrayList(
+                "create table test (k text primary key, v int)"
+        );
     }
 
     CustomLoadBalancingPolicy loadBalancingPolicy = new CustomLoadBalancingPolicy();
@@ -81,6 +88,56 @@ public class StatementWrapperTest extends CCMBridge.PerClassSingleNodeCluster {
 
         session.execute(new CustomStatement(s));
         assertThat(retryPolicy.customStatementsHandled.get()).isEqualTo(1);
+    }
+
+    @CassandraVersion(major=2.0)
+    @Test(groups = "short")
+    public void should_execute_wrapped_simple_statement() {
+        session.execute(new CustomStatement(new SimpleStatement(INSERT_QUERY, "key_simple", 1)));
+
+        ResultSet rs = session.execute(new CustomStatement(new SimpleStatement(SELECT_QUERY, "key_simple")));
+        assertThat(rs.one().getInt("v")).isEqualTo(1);
+    }
+
+    @Test(groups = "short")
+    public void should_execute_wrapped_bound_statement() {
+        PreparedStatement preparedStatement = session.prepare(new SimpleStatement(INSERT_QUERY));
+        session.execute(new CustomStatement(preparedStatement.bind("key_bound", 1)));
+
+        preparedStatement = session.prepare(new SimpleStatement(SELECT_QUERY));
+        ResultSet rs = session.execute(new CustomStatement(preparedStatement.bind("key_bound")));
+        assertThat(rs.one().getInt("v")).isEqualTo(1);
+    }
+
+    @CassandraVersion(major=2.0)
+    @Test(groups = "short")
+    public void should_execute_wrapped_batch_statement() {
+        BatchStatement batchStatement = new BatchStatement();
+        batchStatement.add(new SimpleStatement(INSERT_QUERY, "key_batch", 1));
+
+        session.execute(new CustomStatement(batchStatement));
+
+        ResultSet rs = session.execute(SELECT_QUERY, "key_batch");
+        assertThat(rs.one().getInt("v")).isEqualTo(1);
+    }
+
+    @CassandraVersion(major=2.0)
+    @Test(groups = "short")
+    public void should_add_wrapped_batch_statement_to_batch_statement() {
+        BatchStatement batchStatementForWrapping = new BatchStatement();
+        batchStatementForWrapping.add(new SimpleStatement(INSERT_QUERY, "key1", 1));
+
+        BatchStatement batchStatement = new BatchStatement();
+        batchStatement.add(new CustomStatement(new SimpleStatement(INSERT_QUERY, "key2", 2)));
+        batchStatement.add(new CustomStatement(batchStatementForWrapping));
+
+        session.execute(batchStatement);
+
+        ResultSet rs = session.execute(SELECT_QUERY, "key1");
+        assertThat(rs.one().getInt("v")).isEqualTo(1);
+
+        rs = session.execute(SELECT_QUERY, "key2");
+        assertThat(rs.one().getInt("v")).isEqualTo(2);
     }
 
     /**
