@@ -1037,12 +1037,12 @@ public class QueryLoggerTest extends CCMTestsSupport {
                 .contains("42");
     }
 
-    @CassandraVersion(major=2.0)
+    @CassandraVersion(major = 2.0)
     @Test(groups = "short")
     public void should_log_wrapped_bound_statement() throws Exception {
         // given
         normal.setLevel(TRACE);
-        queryLogger = QueryLogger.builder(cluster())
+        queryLogger = QueryLogger.builder()
                 .withConstantThreshold(Long.MAX_VALUE)
                 .withMaxQueryStringLength(Integer.MAX_VALUE)
                 .build();
