@@ -1851,9 +1851,10 @@ public class Cluster implements Closeable {
                     if (controlConnection.refreshNodeInfo(host)) {
                         logger.debug("Successful reconnection to {}, setting host UP", host);
                         try {
-                            if (isHostAddition)
+                            if (isHostAddition) {
                                 onAdd(host, connection);
-                            else
+                                submitNodeListRefresh();
+                            } else
                                 onUp(host, connection);
                         } catch (InterruptedException e) {
                             Thread.currentThread().interrupt();
@@ -2226,15 +2227,15 @@ public class Cluster implements Closeable {
             return schemaRefreshRequestDebouncer.eventReceived(request);
         }
 
-        void submitNodeListRefresh() {
+        ListenableFuture<Void> submitNodeListRefresh() {
             logger.trace("Submitting node list and token map refresh");
-            nodeListRefreshRequestDebouncer.eventReceived(new NodeListRefreshRequest());
+            return nodeListRefreshRequestDebouncer.eventReceived(new NodeListRefreshRequest());
         }
 
-        void submitNodeRefresh(InetSocketAddress address, HostEvent eventType) {
+        ListenableFuture<Void> submitNodeRefresh(InetSocketAddress address, HostEvent eventType) {
             NodeRefreshRequest request = new NodeRefreshRequest(address, eventType);
             logger.trace("Submitting node refresh: {}", request);
-            nodeRefreshRequestDebouncer.eventReceived(request);
+            return nodeRefreshRequestDebouncer.eventReceived(request);
         }
 
         // refresh the schema using the provided connection, and notice the future with the provided resultset once done
@@ -2709,6 +2710,7 @@ public class Cluster implements Closeable {
                     public void runMayThrow() throws Exception {
                         if (controlConnection.refreshNodeInfo(host)) {
                             onAdd(host, null);
+                            submitNodeListRefresh();
                         } else {
                             logger.debug("Not enough info for {}, ignoring host", host);
                         }
@@ -2745,6 +2747,7 @@ public class Cluster implements Closeable {
                         if (metadata.remove(host)) {
                             logger.info("Cassandra host {} removed", host);
                             onRemove(host);
+                            submitNodeListRefresh();
                         }
                     }
                 };

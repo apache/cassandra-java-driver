@@ -16,6 +16,8 @@
 package com.datastax.driver.core;
 
 import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
+import com.datastax.driver.core.utils.MoreFutures;
+import com.google.common.util.concurrent.Futures;
 
 /**
  * Options related to defaults for individual queries.
@@ -299,7 +301,19 @@ public class QueryOptions {
         boolean wasEnabled = this.metadataEnabled;
         this.metadataEnabled = enabled;
         if (!wasEnabled && enabled && manager != null) {
-            manager.submitSchemaRefresh(null, null, null, null); // will also refresh token map
+            // This is roughly the same as what we do in ControlConnection.tryConnect():
+            // 1. call submitNodeListRefresh() first to
+            // be able to compute the token map for the first time,
+            // which will be incomplete due to the lack of keyspace metadata
+            Futures.addCallback(manager.submitNodeListRefresh(), new MoreFutures.SuccessCallback<Void>() {
+                @Override
+                public void onSuccess(Void result) {
+                    // 2. then call submitSchemaRefresh() to
+                    // refresh schema metadata and re-compute the token map
+                    // this time with information about keyspaces
+                    manager.submitSchemaRefresh(null, null, null, null);
+                }
+            });
         }
         return this;
     }

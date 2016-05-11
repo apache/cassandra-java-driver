@@ -18,6 +18,7 @@
 - [improvement] JAVA-1227: Document "SELECT *" issue with prepared statement.
 - [bug] JAVA-1160: Fix NPE in VersionNumber.getPreReleaseLabels().
 - [improvement] JAVA-1126: Handle schema changes in Mapper.
+- [bug] JAVA-1193: Refresh token and replica metadata synchronously when schema is altered.
 
 
 ### 3.0.2
