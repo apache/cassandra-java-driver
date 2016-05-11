@@ -20,6 +20,8 @@ import com.google.common.base.Function;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
@@ -33,6 +35,8 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
 public class AsyncQueryTest extends CCMBridge.PerClassSingleNodeCluster {
+
+    Logger logger = LoggerFactory.getLogger(AsyncQueryTest.class);
 
     @DataProvider(name = "keyspace")
     public static Object[][] keyspace() {
@@ -133,22 +137,34 @@ public class AsyncQueryTest extends CCMBridge.PerClassSingleNodeCluster {
 
     @Test(groups = "short")
     public void should_fail_when_synchronous_call_on_io_thread() throws Exception {
-        ResultSetFuture f = session.executeAsync("select release_version from system.local");
-        ListenableFuture<Void> f2 = Futures.transform(f, new Function<ResultSet, Void>() {
-            @Override
-            public Void apply(ResultSet input) {
-                session.execute("select release_version from system.local");
-                return null;
+        final Thread sameThread = Thread.currentThread();
+        for (int i = 0; i < 1000; i++) {
+            ResultSetFuture f = session.executeAsync("select release_version from system.local");
+            ListenableFuture<Thread> f2 = Futures.transform(f, new Function<ResultSet, Thread>() {
+                @Override
+                public Thread apply(ResultSet input) {
+                    session.execute("select release_version from system.local");
+                    return Thread.currentThread();
+                }
+            });
+            try {
+                Thread executedThread = f2.get();
+                if(executedThread != sameThread) {
+                    fail("Expected a failed future, callback was executed on " + executedThread);
+                } else {
+                    // Callback was invoked on the same thread, which indicates that the future completed
+                    // before the transform callback was registered.  Try again to produce case where callback
+                    // is called on io thread.
+                    logger.warn("Future completed before transform callback registered, will try again.");
+                }
+            } catch (Exception e) {
+                assertThat(Throwables.getRootCause(e))
+                        .isInstanceOf(IllegalStateException.class)
+                        .hasMessageContaining("Detected a synchronous Session call");
+                return;
             }
-        });
-        try {
-            f2.get();
-            fail("Expected a failed future");
-        } catch (Exception e) {
-            assertThat(Throwables.getRootCause(e))
-                    .isInstanceOf(IllegalStateException.class)
-                    .hasMessageContaining("Detected a synchronous Session call");
         }
+        fail("callback was not executed on io thread in 1000 attempts, something may be wrong.");
     }
 
     private ListenableFuture<Integer> connectAndQuery(String keyspace, Executor executor) {
