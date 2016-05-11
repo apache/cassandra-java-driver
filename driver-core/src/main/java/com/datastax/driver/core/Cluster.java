@@ -836,7 +836,7 @@ public class Cluster implements Closeable {
                 addContactPoints(InetAddress.getAllByName(address));
                 return this;
             } catch (UnknownHostException e) {
-                throw new IllegalArgumentException(e.getMessage());
+                throw new IllegalArgumentException(e.getMessage(), e);
             }
         }
 
