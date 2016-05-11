@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.StatementWrapperTest.CustomStatement;
 import com.datastax.driver.core.exceptions.DriverException;
 import com.datastax.driver.core.utils.CassandraVersion;
 import com.google.common.base.Function;
@@ -947,6 +948,33 @@ public class QueryLoggerTest extends CCMTestsSupport {
                 .contains(ipOfNode(1))
                 .contains("123456")
                 .contains("42");
+    }
+
+    @CassandraVersion(major=2.0)
+    @Test(groups = "short")
+    public void should_log_wrapped_bound_statement() throws Exception {
+        // given
+        normal.setLevel(TRACE);
+        queryLogger = QueryLogger.builder(cluster())
+                .withConstantThreshold(Long.MAX_VALUE)
+                .withMaxQueryStringLength(Integer.MAX_VALUE)
+                .build();
+        cluster().register(queryLogger);
+        // when
+        String query = "UPDATE test SET c_text = :param1 WHERE pk = :param2";
+        PreparedStatement ps = session().prepare(query);
+        BoundStatement bs = ps.bind();
+        bs.setString("param1", "foo");
+        bs.setInt("param2", 42);
+        session().execute(new CustomStatement(bs));
+        // then
+        String line = normalAppender.waitAndGet(10000);
+        assertThat(line)
+                .contains("Query completed normally")
+                .contains(ipOfNode(1))
+                .contains(query)
+                .contains("param2:42")
+                .contains("param1:'foo'");
     }
 
     @Override
