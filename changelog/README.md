@@ -704,6 +704,7 @@ Merged from 2.0 branch: everything up to 2.0.3 (included), and the following.
 
 - [bug] JAVA-1179: Request objects should be copied when executed.
 - [improvement] JAVA-1182: Throw error when synchronous call made on I/O thread.
+- [bug] JAVA-1184: Unwrap StatementWrappers when extracting column definitions.
 
 
 ### 2.0.12.1

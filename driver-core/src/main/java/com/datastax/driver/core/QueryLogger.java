@@ -627,6 +627,9 @@ public abstract class QueryLogger implements LatencyTracker {
         if (cluster == null)
             throw new IllegalStateException("This method should only be called after the logger has been registered with a cluster");
 
+        if (statement instanceof StatementWrapper)
+            statement = ((StatementWrapper) statement).getWrappedStatement();
+
         long latencyMs = NANOSECONDS.toMillis(newLatencyNanos);
         if (exception == null) {
             maybeLogNormalOrSlowQuery(host, statement, latencyMs);
@@ -849,9 +852,6 @@ public abstract class QueryLogger implements LatencyTracker {
     }
 
     protected int append(Statement statement, StringBuilder buffer, int remaining) {
-        if (statement instanceof StatementWrapper)
-            statement = ((StatementWrapper) statement).getWrappedStatement();
-
         if (statement instanceof RegularStatement) {
             RegularStatement rs = (RegularStatement) statement;
             String query = rs.getQueryString();

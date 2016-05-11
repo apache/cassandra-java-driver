@@ -134,6 +134,9 @@ public class BatchStatement extends Statement {
      * @throws IllegalArgumentException if adding a regular statement that uses named values.
      */
     public BatchStatement add(Statement statement) {
+        if (statement instanceof StatementWrapper) {
+            statement = ((StatementWrapper) statement).getWrappedStatement();
+        }
         if ((statement instanceof RegularStatement) && ((RegularStatement) statement).usesNamedValues()) {
             throw new IllegalArgumentException("Batch statement cannot contain regular statements with named values ("
                     + ((RegularStatement) statement).getQueryString() + ")");
