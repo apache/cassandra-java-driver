@@ -34,7 +34,6 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static com.datastax.driver.core.EventDebouncer.DEFAULT_MAX_QUEUED_EVENTS;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -59,7 +58,17 @@ public class EventDebouncerTest {
 
     @Test(groups = "unit")
     public void should_deliver_single_event() throws InterruptedException {
-        EventDebouncer<MockEvent> debouncer = new EventDebouncer<MockEvent>("test", executor, callback, 10, 50, DEFAULT_MAX_QUEUED_EVENTS);
+        EventDebouncer<MockEvent> debouncer = new EventDebouncer<MockEvent>("test", executor, callback) {
+            @Override
+            int maxPendingEvents() {
+                return 10;
+            }
+
+            @Override
+            long delayMs() {
+                return 50;
+            }
+        };
         debouncer.start();
         MockEvent event = new MockEvent(0);
         debouncer.eventReceived(event);
@@ -75,7 +84,17 @@ public class EventDebouncerTest {
         logger.setLevel(Level.WARN);
         logger.addAppender(logs);
         try {
-            EventDebouncer<MockEvent> debouncer = new EventDebouncer<MockEvent>("test", executor, callback, 100, 15, 10);
+            EventDebouncer<MockEvent> debouncer = new EventDebouncer<MockEvent>("test", executor, callback, 10) {
+                @Override
+                int maxPendingEvents() {
+                    return 100;
+                }
+
+                @Override
+                long delayMs() {
+                    return 15;
+                }
+            };
             debouncer.start();
             List<MockEvent> events = new ArrayList<MockEvent>();
             for (int i = 0; i < 14; i++) {
@@ -96,7 +115,17 @@ public class EventDebouncerTest {
 
     @Test(groups = "unit")
     public void should_deliver_n_events_in_order() throws InterruptedException {
-        EventDebouncer<MockEvent> debouncer = new EventDebouncer<MockEvent>("test", executor, callback, 10, 50, DEFAULT_MAX_QUEUED_EVENTS);
+        EventDebouncer<MockEvent> debouncer = new EventDebouncer<MockEvent>("test", executor, callback) {
+            @Override
+            int maxPendingEvents() {
+                return 10;
+            }
+
+            @Override
+            long delayMs() {
+                return 50;
+            }
+        };
         debouncer.start();
         List<MockEvent> events = new ArrayList<MockEvent>();
         for (int i = 0; i < 50; i++) {
@@ -110,7 +139,17 @@ public class EventDebouncerTest {
 
     @Test(groups = "unit")
     public void should_deliver_n_events_in_order_even_if_queue_full() throws InterruptedException {
-        EventDebouncer<MockEvent> debouncer = new EventDebouncer<MockEvent>("test", executor, callback, 10, 1, DEFAULT_MAX_QUEUED_EVENTS);
+        EventDebouncer<MockEvent> debouncer = new EventDebouncer<MockEvent>("test", executor, callback) {
+            @Override
+            int maxPendingEvents() {
+                return 10;
+            }
+
+            @Override
+            long delayMs() {
+                return 1;
+            }
+        };
         debouncer.start();
         List<MockEvent> events = new ArrayList<MockEvent>();
         for (int i = 0; i < 50; i++) {
@@ -124,7 +163,17 @@ public class EventDebouncerTest {
 
     @Test(groups = "unit")
     public void should_accumulate_events_if_not_ready() throws InterruptedException {
-        EventDebouncer<MockEvent> debouncer = new EventDebouncer<MockEvent>("test", executor, callback, 10, 50, DEFAULT_MAX_QUEUED_EVENTS);
+        EventDebouncer<MockEvent> debouncer = new EventDebouncer<MockEvent>("test", executor, callback) {
+            @Override
+            int maxPendingEvents() {
+                return 10;
+            }
+
+            @Override
+            long delayMs() {
+                return 50;
+            }
+        };
         List<MockEvent> events = new ArrayList<MockEvent>();
         for (int i = 0; i < 50; i++) {
             MockEvent event = new MockEvent(i);
@@ -140,7 +189,17 @@ public class EventDebouncerTest {
 
     @Test(groups = "unit")
     public void should_accumulate_all_events_until_start() throws InterruptedException {
-        final EventDebouncer<MockEvent> debouncer = new EventDebouncer<MockEvent>("test", executor, callback, 10, 25, DEFAULT_MAX_QUEUED_EVENTS);
+        final EventDebouncer<MockEvent> debouncer = new EventDebouncer<MockEvent>("test", executor, callback) {
+            @Override
+            int maxPendingEvents() {
+                return 10;
+            }
+
+            @Override
+            long delayMs() {
+                return 25;
+            }
+        };
         final List<MockEvent> events = new ArrayList<MockEvent>();
 
         for (int i = 0; i < 50; i++) {
@@ -157,7 +216,17 @@ public class EventDebouncerTest {
 
     @Test(groups = "unit")
     public void should_reset_timer_if_n_events_received_within_same_window() throws InterruptedException {
-        final EventDebouncer<MockEvent> debouncer = new EventDebouncer<MockEvent>("test", executor, callback, 50, 50, DEFAULT_MAX_QUEUED_EVENTS);
+        final EventDebouncer<MockEvent> debouncer = new EventDebouncer<MockEvent>("test", executor, callback) {
+            @Override
+            int maxPendingEvents() {
+                return 50;
+            }
+
+            @Override
+            long delayMs() {
+                return 50;
+            }
+        };
         debouncer.start();
         final CountDownLatch latch = new CountDownLatch(50);
         ScheduledExecutorService pool = Executors.newScheduledThreadPool(1);
@@ -179,7 +248,17 @@ public class EventDebouncerTest {
 
     @Test(groups = "unit")
     public void should_stop_receiving_events() throws InterruptedException {
-        final EventDebouncer<MockEvent> debouncer = new EventDebouncer<MockEvent>("test", executor, callback, 10, 50, DEFAULT_MAX_QUEUED_EVENTS);
+        final EventDebouncer<MockEvent> debouncer = new EventDebouncer<MockEvent>("test", executor, callback) {
+            @Override
+            int maxPendingEvents() {
+                return 10;
+            }
+
+            @Override
+            long delayMs() {
+                return 50;
+            }
+        };
         debouncer.start();
         for (int i = 0; i < 50; i++) {
             MockEvent event = new MockEvent(i);

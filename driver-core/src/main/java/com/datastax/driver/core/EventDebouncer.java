@@ -44,11 +44,11 @@ import static java.util.concurrent.TimeUnit.SECONDS;
  * - no events have been received for delayMs
  * - maxPendingEvents have been received
  */
-class EventDebouncer<T> {
+abstract class EventDebouncer<T> {
 
     private static final Logger logger = LoggerFactory.getLogger(EventDebouncer.class);
 
-    static final int DEFAULT_MAX_QUEUED_EVENTS = 10000;
+    private static final int DEFAULT_MAX_QUEUED_EVENTS = 10000;
 
     private final String name;
 
@@ -59,8 +59,6 @@ class EventDebouncer<T> {
 
     private final DeliveryCallback<T> callback;
 
-    private final long delayMs;
-    private final int maxPendingEvents;
     private final int maxQueuedEvents;
 
     private final Queue<Entry<T>> events;
@@ -73,17 +71,23 @@ class EventDebouncer<T> {
     private static final long OVERFLOW_WARNING_INTERVAL = NANOSECONDS.convert(5, SECONDS);
     private volatile long lastOverflowWarning = Long.MIN_VALUE;
 
-    EventDebouncer(String name, ScheduledExecutorService executor, DeliveryCallback<T> callback, long delayMs, int maxPendingEvents, int maxQueuedEvents) {
+    EventDebouncer(String name, ScheduledExecutorService executor, DeliveryCallback<T> callback) {
+        this(name, executor, callback, DEFAULT_MAX_QUEUED_EVENTS);
+    }
+
+    EventDebouncer(String name, ScheduledExecutorService executor, DeliveryCallback<T> callback, int maxQueuedEvents) {
         this.name = name;
         this.executor = executor;
         this.callback = callback;
-        this.delayMs = delayMs;
-        this.maxPendingEvents = maxPendingEvents;
         this.maxQueuedEvents = maxQueuedEvents;
         this.events = new ConcurrentLinkedQueue<Entry<T>>();
         this.eventCount = new AtomicInteger();
         this.state = State.NEW;
     }
+
+    abstract int maxPendingEvents();
+
+    abstract long delayMs();
 
     void start() {
         logger.trace("Starting {} debouncer...", name);
@@ -151,6 +155,7 @@ class EventDebouncer<T> {
 
         if (state == State.RUNNING) {
             int count = eventCount.get();
+            int maxPendingEvents = maxPendingEvents();
             if (count < maxPendingEvents) {
                 scheduleDelayedDelivery();
             } else if (count == maxPendingEvents) {
@@ -262,7 +267,7 @@ class EventDebouncer<T> {
 
         void scheduleAfterDelay() {
             if (state != State.STOPPED)
-                deliveryFuture = executor.schedule(this, delayMs, TimeUnit.MILLISECONDS);
+                deliveryFuture = executor.schedule(this, delayMs(), TimeUnit.MILLISECONDS);
         }
 
         @Override

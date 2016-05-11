@@ -26,6 +26,7 @@ import static com.datastax.driver.core.CreateCCM.TestMode.PER_METHOD;
 import static com.datastax.driver.core.TestUtils.ipOfNode;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Fail.fail;
+import static org.mockito.Mockito.*;
 
 @CreateCCM(PER_METHOD)
 public class EventDebouncerIntegrationTest extends CCMTestsSupport {
@@ -66,6 +67,37 @@ public class EventDebouncerIntegrationTest extends CCMTestsSupport {
         assertThat(policy.onDownCalledBeforeInit).isFalse();
         assertThat(policy.onDownCalled()).isTrue();
         assertThat(policy.hosts).doesNotContain(TestUtils.findHost(cluster, 3));
+    }
+
+    /**
+     * Tests that settings for a debouncer can be modified dynamically
+     * without requiring the cluster to be restarted.
+     *
+     * @throws InterruptedException
+     * @jira_ticket JAVA-1192
+     */
+    @CCMConfig(numberOfNodes = 1)
+    @Test(groups = "short")
+    public void should_change_debouncer_settings_dynamically() throws InterruptedException {
+        // Create a spy of the Cluster's control connection and replace it with the spy.
+        ControlConnection controlConnection = spy(cluster().manager.controlConnection);
+        cluster().manager.controlConnection = controlConnection;
+        for (int i = 0; i < 10; i++) {
+            cluster().manager.submitNodeListRefresh();
+            Thread.sleep(100);
+        }
+        // all requests should be coalesced into a single one
+        verify(controlConnection, timeout(10000)).refreshNodeListAndTokenMap();
+        reset(controlConnection);
+        // disable debouncing
+        cluster().getConfiguration().getQueryOptions()
+                .setRefreshNodeListIntervalMillis(0);
+        for (int i = 0; i < 10; i++) {
+            cluster().manager.submitNodeListRefresh();
+            Thread.sleep(100);
+        }
+        // each request should have been handled separately
+        verify(controlConnection, timeout(10000).times(10)).refreshNodeListAndTokenMap();
     }
 
     private class TestLoadBalancingPolicy extends SortingLoadBalancingPolicy {
