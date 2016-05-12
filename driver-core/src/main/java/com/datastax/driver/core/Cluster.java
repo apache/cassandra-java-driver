@@ -2266,7 +2266,15 @@ public class Cluster implements Closeable {
                         if (!schemaInAgreement)
                             logger.warn("No schema agreement from live replicas after {} s. The schema may not be up to date on some nodes.", configuration.getProtocolOptions().getMaxSchemaAgreementWaitSeconds());
 
-                        ListenableFuture<Void> schemaReady = refreshSchema ? submitSchemaRefresh(targetType, targetKeyspace, targetName, targetSignature) : MoreFutures.VOID_SUCCESS;
+                        ListenableFuture<Void> schemaReady;
+                        if (refreshSchema) {
+                            schemaReady = submitSchemaRefresh(targetType, targetKeyspace, targetName, targetSignature);
+                            // JAVA-1120: skip debouncing delay and force immediate delivery
+                            if (!schemaReady.isDone())
+                                schemaRefreshRequestDebouncer.scheduleImmediateDelivery();
+                        } else {
+                            schemaReady = MoreFutures.VOID_SUCCESS;
+                        }
                         final boolean finalSchemaInAgreement = schemaInAgreement;
                         schemaReady.addListener(new Runnable() {
                             @Override

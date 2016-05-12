@@ -17,7 +17,6 @@ package com.datastax.driver.core;
 
 import org.mockito.ArgumentCaptor;
 import org.testng.SkipException;
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -249,6 +248,8 @@ public class SchemaRefreshDebouncerTest extends CCMTestsSupport {
         String prefix = TestUtils.generateIdentifier("ks_");
         for (int i = 0; i < 3; i++) {
             session().execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, prefix + i, 1));
+            // check that the metadata is immediately up-to-date for the client that issued the DDL statement
+            assertThat(cluster().getMetadata().getKeyspace(prefix + i)).isNotNull();
         }
 
         verify(listener, timeout(DEBOUNCE_TIME * 3).times(3)).onKeyspaceAdded(any(KeyspaceMetadata.class));
@@ -275,6 +276,8 @@ public class SchemaRefreshDebouncerTest extends CCMTestsSupport {
         String prefix = TestUtils.generateIdentifier("ks_");
         for (int i = 0; i < 5; i++) {
             session().execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, prefix + i, 1));
+            // check that the metadata is immediately up-to-date for the client that issued the DDL statement
+            assertThat(cluster().getMetadata().getKeyspace(prefix + i)).isNotNull();
         }
 
         // Event should be processed immediately as we hit our threshold.

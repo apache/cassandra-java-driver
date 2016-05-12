@@ -61,8 +61,7 @@ public abstract class TokenIntegrationTest extends CCMTestsSupport {
         return Cluster.builder()
                 .addContactPoints(getContactPoints().get(0))
                 .withPort(ccm().getBinaryPort())
-                .withLoadBalancingPolicy(lbp)
-                .withQueryOptions(TestUtils.nonDebouncingQueryOptions());
+                .withLoadBalancingPolicy(lbp);
     }
 
     @Override
