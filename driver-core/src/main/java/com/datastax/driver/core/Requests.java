@@ -207,6 +207,10 @@ class Requests {
             return new Execute(statementId, options, isTracingRequested());
         }
 
+        Execute copy(MD5Digest digest) {
+            return new Execute(digest, options, isTracingRequested());
+        }
+
         @Override
         protected Request copyInternal(ConsistencyLevel newConsistencyLevel) {
             return new Execute(statementId, options.copy(newConsistencyLevel), isTracingRequested());

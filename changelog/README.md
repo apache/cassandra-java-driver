@@ -5,6 +5,7 @@
 - [new feature] JAVA-1347: Add support for duration type.
 - [new feature] JAVA-1248: Implement "beta" flag for native protocol v5.
 - [new feature] JAVA-1362: Send query options flags as [int] for Protocol V5+.
+- [bug] JAVA-1196: Include hash of result set metadata in prepared statement id.
 
 
 ### 3.1.3

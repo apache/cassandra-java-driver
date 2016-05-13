@@ -15,25 +15,137 @@
  */
 package com.datastax.driver.core;
 
+import java.util.List;
+
+import static com.datastax.driver.core.ProtocolVersion.V4;
+
 /**
  * Identifies a PreparedStatement.
  */
+// This class is mostly here to group PreparedStatement data that are need for
+// execution but that we don't want to expose publicly (see JAVA-195)
 public class PreparedId {
-    // This class is mostly here to group PreparedStatement data that are need for
-    // execution but that we don't want to expose publicly (see JAVA-195)
-    final MD5Digest id;
 
-    final ColumnDefinitions metadata;
-    final ColumnDefinitions resultSetMetadata;
+    // Internal class that holds the actual values of a PreparedId
+    // Used to allow for atomically swapping values in a PreparedId instance.
+    static class Values {
 
-    final int[] routingKeyIndexes;
-    final ProtocolVersion protocolVersion;
+        private final MD5Digest id;
+        private final ColumnDefinitions variables;
+        private final ColumnDefinitions resultSetMetadata;
+        private final int[] routingKeyIndexes;
+        private final ProtocolVersion protocolVersion;
 
-    PreparedId(MD5Digest id, ColumnDefinitions metadata, ColumnDefinitions resultSetMetadata, int[] routingKeyIndexes, ProtocolVersion protocolVersion) {
-        this.id = id;
-        this.metadata = metadata;
-        this.resultSetMetadata = resultSetMetadata;
-        this.routingKeyIndexes = routingKeyIndexes;
-        this.protocolVersion = protocolVersion;
+        private Values(MD5Digest id, ColumnDefinitions variables, ColumnDefinitions resultSetMetadata, int[] routingKeyIndexes, ProtocolVersion protocolVersion) {
+            this.id = id;
+            this.variables = variables;
+            this.resultSetMetadata = resultSetMetadata;
+            this.routingKeyIndexes = routingKeyIndexes;
+            this.protocolVersion = protocolVersion;
+        }
+
+        MD5Digest getId() {
+            return id;
+        }
+
+        /**
+         * Returns the metadata about bound variables in the statement.
+         *
+         * @return the metadata about bound variables in the statement.
+         */
+        ColumnDefinitions getVariables() {
+            return variables;
+        }
+
+        /**
+         * Returns the metadata about columns returned by the statement.
+         *
+         * @return the metadata about columns returned by the statement.
+         */
+        ColumnDefinitions getResultSetMetadata() {
+            return resultSetMetadata;
+        }
+
+        int[] getRoutingKeyIndexes() {
+            return routingKeyIndexes;
+        }
+
+        ProtocolVersion getProtocolVersion() {
+            return protocolVersion;
+        }
+
     }
+
+    private volatile Values values;
+
+    private PreparedId(MD5Digest id, ColumnDefinitions variables, ColumnDefinitions resultSetMetadata, int[] routingKeyIndexes, ProtocolVersion protocolVersion) {
+        this.values = new Values(id, variables, resultSetMetadata, routingKeyIndexes, protocolVersion);
+    }
+
+    Values getValues() {
+        return values;
+    }
+
+    void swap(PreparedId updated) {
+        this.values = updated.values;
+    }
+
+    static PreparedId fromMessage(Responses.Result.Prepared msg, Cluster cluster) {
+        ColumnDefinitions defs = msg.metadata.columns;
+        ProtocolVersion protocolVersion = cluster.getConfiguration().getProtocolOptions().getProtocolVersion();
+        if (defs.size() == 0) {
+            return new PreparedId(msg.statementId, defs, msg.resultMetadata.columns, null, protocolVersion);
+        } else {
+            int[] pkIndices = (protocolVersion.compareTo(V4) >= 0)
+                    ? msg.metadata.pkIndices
+                    : computePkIndices(cluster.getMetadata(), defs);
+            return new PreparedId(msg.statementId, defs, msg.resultMetadata.columns, pkIndices, protocolVersion);
+        }
+    }
+
+    private static int[] computePkIndices(Metadata clusterMetadata, ColumnDefinitions boundColumns) {
+        List<ColumnMetadata> partitionKeyColumns = null;
+        int[] pkIndexes = null;
+        KeyspaceMetadata km = clusterMetadata.getKeyspace(Metadata.quote(boundColumns.getKeyspace(0)));
+        if (km != null) {
+            TableMetadata tm = km.getTable(Metadata.quote(boundColumns.getTable(0)));
+            if (tm != null) {
+                partitionKeyColumns = tm.getPartitionKey();
+                pkIndexes = new int[partitionKeyColumns.size()];
+                for (int i = 0; i < pkIndexes.length; ++i)
+                    pkIndexes[i] = -1;
+            }
+        }
+
+        // Note: we rely on the fact CQL queries cannot span multiple tables. If that change, we'll have to get smarter.
+        for (int i = 0; i < boundColumns.size(); i++)
+            maybeGetIndex(boundColumns.getName(i), i, partitionKeyColumns, pkIndexes);
+
+        return allSet(pkIndexes) ? pkIndexes : null;
+    }
+
+    private static void maybeGetIndex(String name, int j, List<ColumnMetadata> pkColumns, int[] pkIndexes) {
+        if (pkColumns == null)
+            return;
+
+        for (int i = 0; i < pkColumns.size(); ++i) {
+            if (name.equals(pkColumns.get(i).getName())) {
+                // We may have the same column prepared multiple times, but only pick the first value
+                pkIndexes[i] = j;
+                return;
+            }
+        }
+    }
+
+    private static boolean allSet(int[] pkColumns) {
+        if (pkColumns == null)
+            return false;
+
+        for (int pkColumn : pkColumns)
+            if (pkColumn < 0)
+                return false;
+
+        return true;
+    }
+
 }
