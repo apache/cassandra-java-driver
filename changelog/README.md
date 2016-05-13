@@ -1,5 +1,10 @@
 ## Changelog
 
+### 3.1.0 (in progress)
+
+- [bug] JAVA-1196: Include hash of result set metadata in prepared statement id.
+ 
+ 
 ### 3.0.0
 
 - [bug] JAVA-1034: fix metadata parser for collections of custom types.
