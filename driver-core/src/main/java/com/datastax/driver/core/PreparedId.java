@@ -21,10 +21,10 @@ package com.datastax.driver.core;
 public class PreparedId {
     // This class is mostly here to group PreparedStatement data that are need for
     // execution but that we don't want to expose publicly (see JAVA-195)
-    final MD5Digest id;
+    MD5Digest id;
 
-    final ColumnDefinitions metadata;
-    final ColumnDefinitions resultSetMetadata;
+    ColumnDefinitions metadata;
+    ColumnDefinitions resultSetMetadata;
 
     final int[] routingKeyIndexes;
     final ProtocolVersion protocolVersion;
@@ -35,5 +35,11 @@ public class PreparedId {
         this.resultSetMetadata = resultSetMetadata;
         this.routingKeyIndexes = routingKeyIndexes;
         this.protocolVersion = protocolVersion;
+    }
+
+    public void swap(Responses.Result.Prepared msg) {
+        this.id = msg.statementId;
+        this.metadata = msg.metadata.columns;
+        this.resultSetMetadata = msg.resultMetadata.columns;
     }
 }
