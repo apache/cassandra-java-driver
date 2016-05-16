@@ -1,6 +1,6 @@
 ## Changelog
 
-### 2.1.10.2 (in progress)
+### 2.1.10.2
 
 Merged from 2.0 branch:
 

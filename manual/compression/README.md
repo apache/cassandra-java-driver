@@ -85,4 +85,4 @@ cluster = Cluster.builder()
     .build();
 ```
 
-[pom]: https://repo1.maven.org/maven2/com/datastax/cassandra/cassandra-driver-parent/2.1.10.1/cassandra-driver-parent-2.1.10.1.pom
+[pom]: https://repo1.maven.org/maven2/com/datastax/cassandra/cassandra-driver-parent/2.1.10.2/cassandra-driver-parent-2.1.10.2.pom
