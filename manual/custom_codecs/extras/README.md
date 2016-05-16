@@ -10,7 +10,7 @@ The module is published as a separate Maven artifact:
 <dependency>
   <groupId>com.datastax.cassandra</groupId>
   <artifactId>cassandra-driver-extras</artifactId>
-  <version>3.0.1</version>
+  <version>3.0.2</version>
 </dependency>
 ```
 
