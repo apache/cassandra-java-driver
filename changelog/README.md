@@ -1,6 +1,6 @@
 ## Changelog
 
-### 2.0.12.2 (in progress)
+### 2.0.12.2
 
 - [bug] JAVA-1179: Request objects should be copied when executed.
 - [improvement] JAVA-1182: Throw error when synchronous call made on I/O thread.
