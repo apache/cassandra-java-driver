@@ -97,8 +97,6 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
             } else if (!dc.equals(localDc))
                 notInLocalDC.add(String.format("%s (%s)", host.toString(), dc));
 
-            if (!dc.equals(localDc)) notInLocalDC.add(String.format("%s (%s)", host.toString(), host.getDatacenter()));
-
             CopyOnWriteArrayList<Host> prev = perDcLiveHosts.get(dc);
             if (prev == null)
                 perDcLiveHosts.put(dc, new CopyOnWriteArrayList<Host>(Collections.singletonList(host)));
