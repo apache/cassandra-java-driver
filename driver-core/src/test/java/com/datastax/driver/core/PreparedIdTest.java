@@ -36,7 +36,7 @@ public class PreparedIdTest extends CCMTestsSupport {
     @Test(groups = "short")
     public void should_have_routing_key_indexes_when_all_bound() {
         PreparedStatement pst = session().prepare("INSERT INTO foo (k3, k1, k2, v) VALUES (?, ?, ?, ?)");
-        assertThat(pst.getPreparedId().routingKeyIndexes).containsExactly(1, 2, 0);
+        assertThat(pst.getPreparedId().getRoutingKeyIndexes()).containsExactly(1, 2, 0);
     }
 
     /**
@@ -47,7 +47,7 @@ public class PreparedIdTest extends CCMTestsSupport {
     @Test(groups = "short")
     public void should_not_have_routing_key_indexes_when_some_not_bound() {
         PreparedStatement pst = session().prepare("INSERT INTO foo (k3, k1, k2, v) VALUES (1, ?, ?, ?)");
-        assertThat(pst.getPreparedId().routingKeyIndexes).isNull();
+        assertThat(pst.getPreparedId().getRoutingKeyIndexes()).isNull();
     }
 
     /**
@@ -58,6 +58,6 @@ public class PreparedIdTest extends CCMTestsSupport {
     @Test(groups = "short")
     public void should_not_have_routing_key_indexes_when_none_bound() {
         PreparedStatement pst = session().prepare("INSERT INTO foo (k3, k1, k2, v) VALUES (1, 1, 1, 1)");
-        assertThat(pst.getPreparedId().routingKeyIndexes).isNull();
+        assertThat(pst.getPreparedId().getRoutingKeyIndexes()).isNull();
     }
 }

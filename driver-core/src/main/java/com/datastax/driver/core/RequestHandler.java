@@ -63,7 +63,7 @@ class RequestHandler {
     private final long startTime;
 
     private final AtomicBoolean isDone = new AtomicBoolean();
-    private AtomicInteger executionCount = new AtomicInteger();
+    private final AtomicInteger executionCount = new AtomicInteger();
 
     public RequestHandler(SessionManager manager, Callback callback, Statement statement) {
         this.id = Long.toString(System.identityHashCode(this));
@@ -626,7 +626,7 @@ class RequestHandler {
             }
         }
 
-        private Connection.ResponseCallback prepareAndRetry(final PreparedStatement toPrepare) {
+        private Connection.ResponseCallback prepareAndRetry(final PreparedStatement unprepared) {
             // do not bother inspecting retry policy at this step, no other decision
             // makes sense than retry on the same host if the query was prepared,
             // or on another host, if an error/timeout occurred.
@@ -636,7 +636,7 @@ class RequestHandler {
 
                 @Override
                 public Message.Request request() {
-                    Requests.Prepare request = new Requests.Prepare(toPrepare.getQueryString());
+                    Requests.Prepare request = new Requests.Prepare(unprepared.getQueryString());
                     // propagate the original custom payload in the prepare request
                     request.setCustomPayload(statement.getOutgoingPayload());
                     return request;
@@ -664,16 +664,18 @@ class RequestHandler {
                             Responses.Result result = (Responses.Result) response;
                             if (result.kind == Responses.Result.Kind.PREPARED) {
                                 logger.info("Scheduling retry now that query is prepared");
-
+                                // JAVA-1196: Include hash of result set metadata in prepared statement id
+                                // (see CASSANDRA-10786)
                                 Responses.Result.Prepared prepared = (Responses.Result.Prepared) result;
-                                if (!prepared.statementId.equals(toPrepare.getPreparedId().id)) {
-                                    PreparedStatement stmt = DefaultPreparedStatement.fromMessage(prepared, manager.cluster, toPrepare.getQueryString(), toPrepare.getQueryKeyspace());
-                                    manager.cluster.manager.preparedQueries.remove(toPrepare.getPreparedId().id);
-                                    request = ((Requests.Execute) request).copy(stmt.getPreparedId().id);
-                                    toPrepare.getPreparedId().swap(prepared);
-                                    manager.cluster.manager.addPrepared(toPrepare);
+                                MD5Digest newId = prepared.statementId;
+                                MD5Digest oldId = unprepared.getPreparedId().getId();
+                                if (!newId.equals(oldId)) {
+                                    logger.info("Statement ID has changed from {} to {}, table has probably been ALTERed ({})", oldId, newId, unprepared.getQueryString());
+                                    manager.cluster.manager.removePrepared(unprepared);
+                                    unprepared.getPreparedId().swap(PreparedId.fromMessage(prepared, manager.cluster));
+                                    manager.cluster.manager.addPrepared(unprepared);
+                                    request = ((Requests.Execute) request).copy(newId);
                                 }
-
                                 retry(true, null);
                             } else {
                                 logError(connection.address, new DriverException("Got unexpected response to prepare message: " + response));

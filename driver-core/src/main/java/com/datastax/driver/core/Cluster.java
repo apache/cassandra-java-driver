@@ -2121,7 +2121,7 @@ public class Cluster implements Closeable {
         }
 
         public PreparedStatement addPrepared(PreparedStatement stmt) {
-            PreparedStatement previous = preparedQueries.putIfAbsent(stmt.getPreparedId().id, stmt);
+            PreparedStatement previous = preparedQueries.putIfAbsent(stmt.getPreparedId().getId(), stmt);
             if (previous != null) {
                 logger.warn("Re-preparing already prepared query {}. Please note that preparing the same query more than once is "
                         + "generally an anti-pattern and will likely affect performance. Consider preparing the statement only once.", stmt.getQueryString());
@@ -2131,6 +2131,13 @@ public class Cluster implements Closeable {
                 return previous;
             }
             return stmt;
+        }
+
+        void removePrepared(PreparedStatement stmt) {
+            if (!preparedQueries.remove(stmt.getPreparedId().getId(), stmt)) {
+                // we probably raced
+                logger.trace("Failed to remove statement {}", stmt.getPreparedId().getId());
+            }
         }
 
         /**

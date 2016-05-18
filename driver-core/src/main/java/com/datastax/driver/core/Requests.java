@@ -190,7 +190,7 @@ class Requests {
             return new Execute(statementId, options, isTracingRequested());
         }
 
-        Request copy(MD5Digest digest) {
+        Execute copy(MD5Digest digest) {
             return new Execute(digest, options, isTracingRequested());
         }
 

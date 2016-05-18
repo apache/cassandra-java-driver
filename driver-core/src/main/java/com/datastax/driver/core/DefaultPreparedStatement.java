@@ -19,10 +19,7 @@ import com.datastax.driver.core.policies.RetryPolicy;
 import com.google.common.collect.ImmutableMap;
 
 import java.nio.ByteBuffer;
-import java.util.List;
 import java.util.Map;
-
-import static com.datastax.driver.core.ProtocolVersion.V4;
 
 public class DefaultPreparedStatement implements PreparedStatement {
 
@@ -52,72 +49,13 @@ public class DefaultPreparedStatement implements PreparedStatement {
 
     static DefaultPreparedStatement fromMessage(Responses.Result.Prepared msg, Cluster cluster, String query, String queryKeyspace) {
         assert msg.metadata.columns != null;
-
-        ColumnDefinitions defs = msg.metadata.columns;
-
-        ProtocolVersion protocolVersion = cluster.getConfiguration().getProtocolOptions().getProtocolVersion();
-
-        if (defs.size() == 0) {
-            return new DefaultPreparedStatement(new PreparedId(msg.statementId, defs, msg.resultMetadata.columns, null, protocolVersion), query, queryKeyspace, msg.getCustomPayload(), cluster);
-        }
-
-        int[] pkIndices = (protocolVersion.compareTo(V4) >= 0)
-                ? msg.metadata.pkIndices
-                : computePkIndices(cluster.getMetadata(), defs);
-
-        PreparedId prepId = new PreparedId(msg.statementId, defs, msg.resultMetadata.columns, pkIndices, protocolVersion);
-
-        return new DefaultPreparedStatement(prepId, query, queryKeyspace, msg.getCustomPayload(), cluster);
-    }
-
-    private static int[] computePkIndices(Metadata clusterMetadata, ColumnDefinitions boundColumns) {
-        List<ColumnMetadata> partitionKeyColumns = null;
-        int[] pkIndexes = null;
-        KeyspaceMetadata km = clusterMetadata.getKeyspace(Metadata.quote(boundColumns.getKeyspace(0)));
-        if (km != null) {
-            TableMetadata tm = km.getTable(Metadata.quote(boundColumns.getTable(0)));
-            if (tm != null) {
-                partitionKeyColumns = tm.getPartitionKey();
-                pkIndexes = new int[partitionKeyColumns.size()];
-                for (int i = 0; i < pkIndexes.length; ++i)
-                    pkIndexes[i] = -1;
-            }
-        }
-
-        // Note: we rely on the fact CQL queries cannot span multiple tables. If that change, we'll have to get smarter.
-        for (int i = 0; i < boundColumns.size(); i++)
-            maybeGetIndex(boundColumns.getName(i), i, partitionKeyColumns, pkIndexes);
-
-        return allSet(pkIndexes) ? pkIndexes : null;
-    }
-
-    private static void maybeGetIndex(String name, int j, List<ColumnMetadata> pkColumns, int[] pkIndexes) {
-        if (pkColumns == null)
-            return;
-
-        for (int i = 0; i < pkColumns.size(); ++i) {
-            if (name.equals(pkColumns.get(i).getName())) {
-                // We may have the same column prepared multiple times, but only pick the first value
-                pkIndexes[i] = j;
-                return;
-            }
-        }
-    }
-
-    private static boolean allSet(int[] pkColumns) {
-        if (pkColumns == null)
-            return false;
-
-        for (int i = 0; i < pkColumns.length; ++i)
-            if (pkColumns[i] < 0)
-                return false;
-
-        return true;
+        PreparedId id = PreparedId.fromMessage(msg, cluster);
+        return new DefaultPreparedStatement(id, query, queryKeyspace, msg.getCustomPayload(), cluster);
     }
 
     @Override
     public ColumnDefinitions getVariables() {
-        return preparedId.metadata;
+        return preparedId.getVariables();
     }
 
     @Override
