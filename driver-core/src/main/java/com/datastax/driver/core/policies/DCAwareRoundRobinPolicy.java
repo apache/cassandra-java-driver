@@ -356,6 +356,10 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
          * @return the policy.
          */
         public DCAwareRoundRobinPolicy build() {
+            if (usedHostsPerRemoteDc == 0 && allowRemoteDCsForLocalConsistencyLevel) {
+                logger.warn("Setting allowRemoteDCsForLocalConsistencyLevel has no effect if usedHostsPerRemoteDc = 0. "
+                        + "This setting will be ignored");
+            }
             return new DCAwareRoundRobinPolicy(localDc, usedHostsPerRemoteDc, allowRemoteDCsForLocalConsistencyLevel, true);
         }
     }

@@ -9,6 +9,7 @@
 - [improvement] JAVA-1204: Update documentation to indicate tcnative version requirement.
 - [bug] JAVA-1186: Fix duplicated hosts in DCAwarePolicy warn message.
 - [bug] JAVA-1187: Fix warning message when local CL used with RoundRobinPolicy.
+- [improvement] JAVA-1175: Warn if DCAwarePolicy configuration is inconsistent.
 
 
 ### 3.0.2
