@@ -736,7 +736,7 @@ public class Mapper<T> {
      */
     public static abstract class Option {
 
-        enum Type {TTL, TIMESTAMP, CL, TRACING, SAVE_NULL_FIELDS}
+        enum Type {TTL, TIMESTAMP, CL, TRACING, SAVE_NULL_FIELDS, IF_NOT_EXISTS}
 
         final Type type;
 
@@ -810,11 +810,26 @@ public class Mapper<T> {
             return new SaveNullFields(enabled);
         }
 
+        /**
+         * Creates a new Option object to specify whether "IF NOT EXISTS" should be applied to
+         * insert queries. This option is valid only for save operations.
+         * <p/>
+         * If this option is not specified, it defaults to {@code false} (no "IF NOT EXISTS" in query).
+         *
+         * @param enabled whether to apply "IF NOT EXISTS" to query
+         * @return the option.
+         */
+        public static Option ifNotExists(boolean enabled) {
+            return new IfNotExists(enabled);
+        }
+
         public Type getType() {
             return this.type;
         }
 
         abstract void appendTo(Insert.Options usings);
+
+        abstract void applyTo(Insert insert);
 
         abstract void appendTo(Delete.Options usings);
 
@@ -836,6 +851,11 @@ public class Mapper<T> {
             @Override
             void appendTo(Insert.Options usings) {
                 usings.and(QueryBuilder.ttl(QueryBuilder.bindMarker()));
+            }
+
+            @Override
+            void applyTo(Insert insert) {
+                // nothing to do
             }
 
             @Override
@@ -875,6 +895,11 @@ public class Mapper<T> {
             }
 
             @Override
+            void applyTo(Insert insert) {
+                // nothing to do
+            }
+
+            @Override
             void appendTo(Delete.Options usings) {
                 usings.and(QueryBuilder.timestamp(QueryBuilder.bindMarker()));
             }
@@ -911,6 +936,11 @@ public class Mapper<T> {
             }
 
             @Override
+            void applyTo(Insert insert) {
+                throw new UnsupportedOperationException("shouldn't be called");
+            }
+
+            @Override
             void appendTo(Delete.Options usings) {
                 throw new UnsupportedOperationException("shouldn't be called");
             }
@@ -943,6 +973,11 @@ public class Mapper<T> {
 
             @Override
             void appendTo(Insert.Options usings) {
+                throw new UnsupportedOperationException("shouldn't be called");
+            }
+
+            @Override
+            void applyTo(Insert insert) {
                 throw new UnsupportedOperationException("shouldn't be called");
             }
 
@@ -984,6 +1019,11 @@ public class Mapper<T> {
             }
 
             @Override
+            void applyTo(Insert insert) {
+                throw new UnsupportedOperationException("shouldn't be called");
+            }
+
+            @Override
             void appendTo(Delete.Options usings) {
                 throw new UnsupportedOperationException("shouldn't be called");
             }
@@ -1004,6 +1044,46 @@ public class Mapper<T> {
             }
         }
 
+        static class IfNotExists extends Option {
+            private boolean enabled;
+
+            private IfNotExists(boolean enabled) {
+                super(Type.IF_NOT_EXISTS);
+                this.enabled = enabled;
+            }
+
+            @Override
+            void appendTo(Insert.Options usings) {
+                // nothing to do
+            }
+
+            @Override
+            void applyTo(Insert insert) {
+                if (enabled) {
+                    insert.ifNotExists();
+                }
+            }
+
+            @Override
+            void appendTo(Delete.Options usings) {
+                throw new UnsupportedOperationException("shouldn't be called");
+            }
+
+            @Override
+            void addToPreparedStatement(BoundStatement bs, int i) {
+                // nothing to do
+            }
+
+            @Override
+            void checkValidFor(QueryType qt, MappingManager manager) throws IllegalArgumentException {
+                checkArgument(qt == QueryType.SAVE, "IfNotExists is only allowerd in save queries");
+            }
+
+            @Override
+            boolean isIncludedInQuery() {
+                return true;
+            }
+        }
     }
 
     private static class MapperQueryKey {
