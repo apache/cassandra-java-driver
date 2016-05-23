@@ -32,7 +32,7 @@ public class MapperCompositeKeyTest extends CCMTestsSupport {
     }
 
     @SuppressWarnings("unused")
-    @Table(keyspace = "ks", name = "test_table")
+    @Table(name = "test_table")
     public static class TestTable {
         @PartitionKey(0)
         private int pk1;
