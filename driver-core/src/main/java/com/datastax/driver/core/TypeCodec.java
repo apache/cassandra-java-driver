@@ -649,6 +649,8 @@ public abstract class TypeCodec<T> {
         public abstract ByteBuffer serializeNoBoxing(boolean v, ProtocolVersion protocolVersion);
 
         public abstract boolean deserializeNoBoxing(ByteBuffer v, ProtocolVersion protocolVersion);
+       
+        public abstract boolean deserializeNoBoxing(ByteBuffer v, ProtocolVersion protocolVersion, boolean defaultValue);
 
         @Override
         public ByteBuffer serialize(Boolean value, ProtocolVersion protocolVersion) {
@@ -674,6 +676,8 @@ public abstract class TypeCodec<T> {
         public abstract ByteBuffer serializeNoBoxing(byte v, ProtocolVersion protocolVersion);
 
         public abstract byte deserializeNoBoxing(ByteBuffer v, ProtocolVersion protocolVersion);
+        
+        public abstract byte deserializeNoBoxing(ByteBuffer v, ProtocolVersion protocolVersion, byte defaultValue);
 
         @Override
         public ByteBuffer serialize(Byte value, ProtocolVersion protocolVersion) {
@@ -699,6 +703,8 @@ public abstract class TypeCodec<T> {
         public abstract ByteBuffer serializeNoBoxing(short v, ProtocolVersion protocolVersion);
 
         public abstract short deserializeNoBoxing(ByteBuffer v, ProtocolVersion protocolVersion);
+        
+        public abstract short deserializeNoBoxing(ByteBuffer v, ProtocolVersion protocolVersion, short defaultValue);
 
         @Override
         public ByteBuffer serialize(Short value, ProtocolVersion protocolVersion) {
@@ -724,6 +730,8 @@ public abstract class TypeCodec<T> {
         public abstract ByteBuffer serializeNoBoxing(int v, ProtocolVersion protocolVersion);
 
         public abstract int deserializeNoBoxing(ByteBuffer v, ProtocolVersion protocolVersion);
+        
+        public abstract int deserializeNoBoxing(ByteBuffer v, ProtocolVersion protocolVersion, int defaultValue);
 
         @Override
         public ByteBuffer serialize(Integer value, ProtocolVersion protocolVersion) {
@@ -750,6 +758,8 @@ public abstract class TypeCodec<T> {
 
         public abstract long deserializeNoBoxing(ByteBuffer v, ProtocolVersion protocolVersion);
 
+        public abstract long deserializeNoBoxing(ByteBuffer v, ProtocolVersion protocolVersion, long defaultValue);
+        
         @Override
         public ByteBuffer serialize(Long value, ProtocolVersion protocolVersion) {
             return value == null ? null : serializeNoBoxing(value, protocolVersion);
@@ -774,6 +784,8 @@ public abstract class TypeCodec<T> {
         public abstract ByteBuffer serializeNoBoxing(float v, ProtocolVersion protocolVersion);
 
         public abstract float deserializeNoBoxing(ByteBuffer v, ProtocolVersion protocolVersion);
+        
+        public abstract float deserializeNoBoxing(ByteBuffer v, ProtocolVersion protocolVersion, float defaultValue);
 
         @Override
         public ByteBuffer serialize(Float value, ProtocolVersion protocolVersion) {
@@ -799,6 +811,8 @@ public abstract class TypeCodec<T> {
         public abstract ByteBuffer serializeNoBoxing(double v, ProtocolVersion protocolVersion);
 
         public abstract double deserializeNoBoxing(ByteBuffer v, ProtocolVersion protocolVersion);
+        
+        public abstract double deserializeNoBoxing(ByteBuffer v, ProtocolVersion protocolVersion, double defaultValue);
 
         @Override
         public ByteBuffer serialize(Double value, ProtocolVersion protocolVersion) {
@@ -941,13 +955,18 @@ public abstract class TypeCodec<T> {
         }
 
         @Override
-        public long deserializeNoBoxing(ByteBuffer bytes, ProtocolVersion protocolVersion) {
+        public long deserializeNoBoxing(ByteBuffer bytes, ProtocolVersion protocolVersion, long defaultValue) {
             if (bytes == null || bytes.remaining() == 0)
-                return 0;
+                return defaultValue;
             if (bytes.remaining() != 8)
                 throw new InvalidTypeException("Invalid 64-bits long value, expecting 8 bytes but got " + bytes.remaining());
 
             return bytes.getLong(bytes.position());
+        }
+
+        @Override
+        public long deserializeNoBoxing(ByteBuffer bytes, ProtocolVersion protocolVersion) {
+            return deserializeNoBoxing(bytes,protocolVersion,0);
         }
     }
 
@@ -1086,8 +1105,13 @@ public abstract class TypeCodec<T> {
 
         @Override
         public boolean deserializeNoBoxing(ByteBuffer bytes, ProtocolVersion protocolVersion) {
+            return deserializeNoBoxing(bytes, protocolVersion, false);
+        }
+        
+        @Override
+        public boolean deserializeNoBoxing(ByteBuffer bytes, ProtocolVersion protocolVersion, boolean defaultValue) {
             if (bytes == null || bytes.remaining() == 0)
-                return false;
+                return defaultValue;
             if (bytes.remaining() != 1)
                 throw new InvalidTypeException("Invalid boolean value, expecting 1 byte but got " + bytes.remaining());
 
@@ -1190,8 +1214,13 @@ public abstract class TypeCodec<T> {
 
         @Override
         public double deserializeNoBoxing(ByteBuffer bytes, ProtocolVersion protocolVersion) {
+            return deserializeNoBoxing(bytes, protocolVersion, 0);
+        }
+        
+        @Override
+        public double deserializeNoBoxing(ByteBuffer bytes, ProtocolVersion protocolVersion, double defaultValue) {
             if (bytes == null || bytes.remaining() == 0)
-                return 0;
+                return defaultValue;
             if (bytes.remaining() != 8)
                 throw new InvalidTypeException("Invalid 64-bits double value, expecting 8 bytes but got " + bytes.remaining());
 
@@ -1235,8 +1264,13 @@ public abstract class TypeCodec<T> {
 
         @Override
         public float deserializeNoBoxing(ByteBuffer bytes, ProtocolVersion protocolVersion) {
+            return deserializeNoBoxing(bytes, protocolVersion, 0f);
+        }
+        
+        @Override
+        public float deserializeNoBoxing(ByteBuffer bytes, ProtocolVersion protocolVersion, float defaultValue) {
             if (bytes == null || bytes.remaining() == 0)
-                return 0;
+                return defaultValue;
             if (bytes.remaining() != 4)
                 throw new InvalidTypeException("Invalid 32-bits float value, expecting 4 bytes but got " + bytes.remaining());
 
@@ -1330,8 +1364,13 @@ public abstract class TypeCodec<T> {
 
         @Override
         public byte deserializeNoBoxing(ByteBuffer bytes, ProtocolVersion protocolVersion) {
+            return deserializeNoBoxing(bytes, protocolVersion, (byte)0);
+        }
+        
+        @Override
+        public byte deserializeNoBoxing(ByteBuffer bytes, ProtocolVersion protocolVersion, byte defaultValue) {
             if (bytes == null || bytes.remaining() == 0)
-                return 0;
+                return defaultValue;
             if (bytes.remaining() != 1)
                 throw new InvalidTypeException("Invalid 8-bits integer value, expecting 1 byte but got " + bytes.remaining());
 
@@ -1375,8 +1414,13 @@ public abstract class TypeCodec<T> {
 
         @Override
         public short deserializeNoBoxing(ByteBuffer bytes, ProtocolVersion protocolVersion) {
+            return deserializeNoBoxing(bytes, protocolVersion, (short)0);
+        }
+        
+        @Override
+        public short deserializeNoBoxing(ByteBuffer bytes, ProtocolVersion protocolVersion, short defaultValue) {
             if (bytes == null || bytes.remaining() == 0)
-                return 0;
+                return defaultValue;
             if (bytes.remaining() != 2)
                 throw new InvalidTypeException("Invalid 16-bits integer value, expecting 2 bytes but got " + bytes.remaining());
 
@@ -1420,8 +1464,13 @@ public abstract class TypeCodec<T> {
 
         @Override
         public int deserializeNoBoxing(ByteBuffer bytes, ProtocolVersion protocolVersion) {
+        	return deserializeNoBoxing(bytes, protocolVersion, 0);
+        }
+        
+        @Override
+        public int deserializeNoBoxing(ByteBuffer bytes, ProtocolVersion protocolVersion, int defaultValue) {
             if (bytes == null || bytes.remaining() == 0)
-                return 0;
+                return defaultValue;
             if (bytes.remaining() != 4)
                 throw new InvalidTypeException("Invalid 32-bits integer value, expecting 4 bytes but got " + bytes.remaining());
 

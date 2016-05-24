@@ -886,6 +886,14 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     public boolean getBool(int i) {
         return wrapper.getBool(i);
     }
+    
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean getBool(int i, boolean defaultValue) {
+        return wrapper.getBool(i, defaultValue);
+    }
 
     /**
      * {@inheritDoc}
@@ -893,6 +901,14 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     @Override
     public boolean getBool(String name) {
         return wrapper.getBool(name);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean getBool(String name, boolean defaultValue) {
+        return wrapper.getBool(name, defaultValue);
     }
 
     /**
@@ -907,8 +923,25 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * {@inheritDoc}
      */
     @Override
+    public byte getByte(int i, byte defaultValue) {
+        return wrapper.getByte(i, defaultValue);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public byte getByte(String name) {
         return wrapper.getByte(name);
+    }
+    
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public byte getByte(String name, byte defaultValue) {
+        return wrapper.getByte(name, defaultValue);
     }
 
     /**
@@ -917,6 +950,14 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     @Override
     public short getShort(int i) {
         return wrapper.getShort(i);
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public short getShort(int i, short defaultValue) {
+        return wrapper.getShort(i, defaultValue);
     }
 
     /**
@@ -931,8 +972,24 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * {@inheritDoc}
      */
     @Override
+    public short getShort(String name, short defaultValue) {
+        return wrapper.getShort(name, defaultValue);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public int getInt(int i) {
         return wrapper.getInt(i);
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int getInt(int i, int defaultValue) {
+        return wrapper.getInt(i, defaultValue);
     }
 
     /**
@@ -942,6 +999,14 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     public int getInt(String name) {
         return wrapper.getInt(name);
     }
+    
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int getInt(String name, int defaultValue) {
+        return wrapper.getInt(name, defaultValue);
+    }
 
     /**
      * {@inheritDoc}
@@ -950,6 +1015,14 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     public long getLong(int i) {
         return wrapper.getLong(i);
     }
+    
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public long getLong(int i, long defaultValue) {
+        return wrapper.getLong(i, defaultValue);
+    }
 
     /**
      * {@inheritDoc}
@@ -957,6 +1030,14 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     @Override
     public long getLong(String name) {
         return wrapper.getLong(name);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public long getLong(String name, long defaultValue) {
+        return wrapper.getLong(name, defaultValue);
     }
 
     /**
@@ -1014,6 +1095,14 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     public float getFloat(int i) {
         return wrapper.getFloat(i);
     }
+    
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public float getFloat(int i, float defaultValue) {
+        return wrapper.getFloat(i, defaultValue);
+    }
 
     /**
      * {@inheritDoc}
@@ -1027,8 +1116,24 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      * {@inheritDoc}
      */
     @Override
+    public float getFloat(String name, float defaultValue) {
+        return wrapper.getFloat(name, defaultValue);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public double getDouble(int i) {
         return wrapper.getDouble(i);
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public double getDouble(int i, double defaultValue) {
+        return wrapper.getDouble(i, defaultValue);
     }
 
     /**
@@ -1037,6 +1142,14 @@ public class BoundStatement extends Statement implements SettableData<BoundState
     @Override
     public double getDouble(String name) {
         return wrapper.getDouble(name);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public double getDouble(String name, double defaultValue) {
+        return wrapper.getDouble(name, defaultValue);
     }
 
     /**
