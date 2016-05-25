@@ -7,6 +7,7 @@
 - [bug] JAVA-1209: ProtocolOptions.getProtocolVersion() should return null instead of throwing NPE if Cluster has not
         been init'd.
 - [improvement] JAVA-1204: Update documentation to indicate tcnative version requirement.
+- [improvement] JAVA-1200: Upgrade LZ4 to 1.3.0.
 
 
 ### 3.0.2
