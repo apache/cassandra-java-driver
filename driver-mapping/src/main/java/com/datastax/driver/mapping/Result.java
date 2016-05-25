@@ -16,23 +16,28 @@
 package com.datastax.driver.mapping;
 
 import com.datastax.driver.core.*;
+import com.google.common.base.Function;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 
 import java.util.*;
 
 /**
- * A {@code ResultSet} mapped to an entity class.
+ * A result set whose rows are mapped to an entity class.
  */
-public class Result<T> implements Iterable<T> {
+public class Result<T> implements PagingIterable<Result<T>, T> {
 
     private final ResultSet rs;
     private final EntityMapper<T> mapper;
-    private final ProtocolVersion protocolVersion;
     private final boolean useAlias;
 
-    Result(ResultSet rs, EntityMapper<T> mapper, ProtocolVersion protocolVersion, boolean useAlias) {
+    Result(ResultSet rs, EntityMapper<T> mapper) {
+        this(rs, mapper, false);
+    }
+
+    Result(ResultSet rs, EntityMapper<T> mapper, boolean useAlias) {
         this.rs = rs;
         this.mapper = mapper;
-        this.protocolVersion = protocolVersion;
         this.useAlias = useAlias;
     }
 
@@ -67,33 +72,18 @@ public class Result<T> implements Iterable<T> {
         return true;
     }
 
-    /**
-     * Test whether this mapped result set has more results.
-     *
-     * @return whether this mapped result set has more results.
-     */
+    @Override
     public boolean isExhausted() {
         return rs.isExhausted();
     }
 
-    /**
-     * Returns the next result (i.e. the entity corresponding to the next row
-     * in the result set).
-     *
-     * @return the next result in this mapped result set or null if it is exhausted.
-     */
+    @Override
     public T one() {
         Row row = rs.one();
         return row == null ? null : map(row);
     }
 
-    /**
-     * Returns all the remaining results (entities) in this mapped result set
-     * as a list.
-     *
-     * @return a list containing the remaining results of this mapped result
-     * set. The returned list is empty if and only the result set is exhausted.
-     */
+    @Override
     public List<T> all() {
         List<Row> rows = rs.all();
         List<T> entities = new ArrayList<T>(rows.size());
@@ -103,18 +93,6 @@ public class Result<T> implements Iterable<T> {
         return entities;
     }
 
-    /**
-     * An iterator over the entities of this mapped result set.
-     * <p/>
-     * The {@link Iterator#next} method is equivalent to calling {@link #one}.
-     * So this iterator will consume results and after a full iteration, the
-     * mapped result set (and underlying {@code ResultSet}) will be empty.
-     * <p/>
-     * The returned iterator does not support the {@link Iterator#remove} method.
-     *
-     * @return an iterator that will consume and return the remaining rows of
-     * this mapped result set.
-     */
     @Override
     public Iterator<T> iterator() {
         return new Iterator<T>() {
@@ -137,15 +115,34 @@ public class Result<T> implements Iterable<T> {
         };
     }
 
-    /**
-     * Returns information on the execution of this query.
-     * <p/>
-     * The returned object includes basic information such as the queried hosts,
-     * but also the Cassandra query trace if tracing was enabled for the query.
-     *
-     * @return the execution info for this query.
-     */
+    @Override
     public ExecutionInfo getExecutionInfo() {
         return rs.getExecutionInfo();
     }
+
+    @Override
+    public List<ExecutionInfo> getAllExecutionInfo() {
+        return rs.getAllExecutionInfo();
+    }
+
+    @Override
+    public ListenableFuture<Result<T>> fetchMoreResults() {
+        return Futures.transform(rs.fetchMoreResults(), new Function<ResultSet, Result<T>>() {
+            @Override
+            public Result<T> apply(ResultSet rs) {
+                return Result.this;
+            }
+        });
+    }
+
+    @Override
+    public boolean isFullyFetched() {
+        return rs.isFullyFetched();
+    }
+
+    @Override
+    public int getAvailableWithoutFetching() {
+        return rs.getAvailableWithoutFetching();
+    }
+
 }
