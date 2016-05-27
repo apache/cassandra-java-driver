@@ -12,6 +12,7 @@
 - [improvement] JAVA-1175: Warn if DCAwarePolicy configuration is inconsistent.
 - [bug] JAVA-1139: ConnectionException.getMessage() throws NPE if address is null.
 - [bug] JAVA-1202: Handle null rpc_address when checking schema agreement.
+- [improvement] JAVA-1198: Document that BoundStatement is not thread-safe.
 
 
 ### 3.0.2
