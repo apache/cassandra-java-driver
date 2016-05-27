@@ -15,11 +15,12 @@
  */
 package com.datastax.driver.mapping;
 
+import com.datastax.driver.mapping.annotations.Column;
 import com.datastax.driver.mapping.annotations.Computed;
 import com.datastax.driver.mapping.annotations.Table;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Field;
+import java.util.*;
 
 /**
  * Various checks on mapping annotations.
@@ -45,9 +46,12 @@ class AnnotationChecks {
         return instance;
     }
 
+    @SuppressWarnings("unchecked")
     private static void validateAnnotations(Class<?> clazz, Class<? extends Annotation> allowed) {
         @SuppressWarnings("unchecked")
-        Class<? extends Annotation> invalid = validateAnnotations(clazz.getAnnotations(), allowed);
+        Set<Annotation> classAnnotations = new HashSet<Annotation>();
+        Collections.addAll(classAnnotations, clazz.getAnnotations());
+        Class<? extends Annotation> invalid = validateAnnotations(classAnnotations, allowed);
         if (invalid != null)
             throw new IllegalArgumentException(String.format("Cannot have both @%s and @%s on type %s",
                     allowed.getSimpleName(), invalid.getSimpleName(),
@@ -57,19 +61,18 @@ class AnnotationChecks {
     /**
      * Checks that a field is only annotated with the given mapping annotations, and that its "frozen" annotations are valid.
      */
-    static void validateAnnotations(Field field, String classDescription, Class<? extends Annotation>... allowed) {
-        Class<? extends Annotation> invalid = validateAnnotations(field.getAnnotations(), allowed);
+    static void validateAnnotations(MappedProperty<?> property, Class<? extends Annotation>... allowed) {
+        Class<? extends Annotation> invalid = validateAnnotations(property.annotations(), allowed);
         if (invalid != null)
-            throw new IllegalArgumentException(String.format("Annotation @%s is not allowed on field %s of %s %s",
+            throw new IllegalArgumentException(String.format("Annotation @%s is not allowed on property %s",
                     invalid.getSimpleName(),
-                    field.getName(), classDescription,
-                    field.getDeclaringClass().getName()));
-
-        checkValidComputed(field);
+                    property));
+        checkValidPrimaryKey(property);
+        checkValidComputed(property);
     }
 
     // Returns the offending annotation if there is one
-    private static Class<? extends Annotation> validateAnnotations(Annotation[] annotations, Class<? extends Annotation>... allowed) {
+    private static Class<? extends Annotation> validateAnnotations(Collection<Annotation> annotations, Class<? extends Annotation>... allowed) {
         for (Annotation annotation : annotations) {
             Class<? extends Annotation> actual = annotation.annotationType();
             if (actual.getPackage().equals(MAPPING_PACKAGE) && !contains(allowed, actual))
@@ -85,10 +88,41 @@ class AnnotationChecks {
         return false;
     }
 
-    static void checkValidComputed(Field field) {
-        Computed computed = field.getAnnotation(Computed.class);
-        if (computed != null && computed.value().isEmpty()) {
-            throw new IllegalArgumentException(String.format("Field %s: attribute 'value' of annotation @Computed is mandatory for computed fields", field.getName()));
+    private static void checkValidPrimaryKey(MappedProperty<?> property) {
+        if (property.isPartitionKey() && property.isClusteringColumn())
+            throw new IllegalArgumentException("Property " + property.name() + " cannot have both the @PartitionKey and @ClusteringColumn annotations");
+    }
+
+    private static void checkValidComputed(MappedProperty<?> property) {
+        if (property.isComputed()) {
+            Computed computed = property.annotation(Computed.class);
+            if (computed.value().isEmpty()) {
+                throw new IllegalArgumentException(String.format("Property %s: attribute 'value' of annotation @Computed is mandatory for computed properties", property.name()));
+            }
+            if (property.hasAnnotation(Column.class)) {
+                throw new IllegalArgumentException("Cannot use @Column and @Computed on the same property");
+            }
+        }
+    }
+
+    static <T> void validatePrimaryKeyOnUDT(MappedProperty<T> property) {
+        switch (property.kind()) {
+            case PARTITION_KEY:
+                throw new IllegalArgumentException("Annotation @PartitionKey is not allowed in a class annotated by @UDT");
+            case CLUSTERING_COLUMN:
+                throw new IllegalArgumentException("Annotation @ClusteringColumn is not allowed in a class annotated by @UDT");
+            default:
+                break;
+        }
+    }
+
+    static <T> void validateOrder(List<MappedProperty<T>> properties, String annotation) {
+        for (int i = 0; i < properties.size(); i++) {
+            MappedProperty<?> property = properties.get(i);
+            int pos = property.position();
+            if (pos != i)
+                throw new IllegalArgumentException(String.format("Invalid ordering value %d for annotation %s of column %s, was expecting %d",
+                        pos, annotation, property.name(), i));
         }
     }
 }

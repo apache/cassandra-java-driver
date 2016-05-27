@@ -10,6 +10,7 @@
 - [new feature] JAVA-1157: Allow asynchronous paging of Mapper Result.
 - [improvement] JAVA-1212: Don't retry non-idempotent statements by default.
 - [improvement] JAVA-1192: Make EventDebouncer settings updatable at runtime.
+- [new feature] JAVA-541: Add polymorphism support to object mapper.
 
 Merged from 3.0.x branch:
 

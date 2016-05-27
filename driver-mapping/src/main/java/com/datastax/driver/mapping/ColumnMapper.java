@@ -15,39 +15,24 @@
  */
 package com.datastax.driver.mapping;
 
-import com.datastax.driver.core.Metadata;
 import com.datastax.driver.core.TypeCodec;
 import com.google.common.reflect.TypeToken;
 
-import java.lang.reflect.Field;
 import java.util.concurrent.atomic.AtomicInteger;
 
 abstract class ColumnMapper<T> {
 
-    enum Kind {PARTITION_KEY, CLUSTERING_COLUMN, REGULAR, COMPUTED}
-
-    private final String columnName;
-    private final String alias;
-    protected final String fieldName;
-    /**
-     * The type of the Java field in the mapped class
-     */
-    protected final TypeToken<Object> fieldType;
-    protected final Kind kind;
-    protected final int position;
-    protected final TypeCodec<Object> customCodec;
+    final MappedProperty<T> property;
+    final String alias;
+    final int position;
 
     @SuppressWarnings("unchecked")
-    protected ColumnMapper(Field field, int position, AtomicInteger columnCounter) {
-        this.columnName = AnnotationParser.columnName(field);
-        this.alias = (columnCounter != null)
-                ? AnnotationParser.newAlias(field, columnCounter.incrementAndGet())
-                : null;
-        this.fieldName = field.getName();
-        this.fieldType = (TypeToken<Object>) TypeToken.of(field.getGenericType());
-        this.kind = AnnotationParser.kind(field);
+    protected ColumnMapper(MappedProperty<T> property, int position, AtomicInteger columnCounter) {
+        this.property = property;
         this.position = position;
-        this.customCodec = AnnotationParser.customCodec(field);
+        this.alias = (columnCounter != null)
+                ? AnnotationParser.newAlias(columnCounter.incrementAndGet())
+                : null;
     }
 
     abstract Object getValue(T entity);
@@ -55,9 +40,7 @@ abstract class ColumnMapper<T> {
     abstract void setValue(T entity, Object value);
 
     String getColumnName() {
-        return kind == Kind.COMPUTED
-                ? columnName
-                : Metadata.quote(columnName);
+        return property.columnName();
     }
 
     String getAlias() {
@@ -65,13 +48,15 @@ abstract class ColumnMapper<T> {
     }
 
     public TypeCodec<Object> getCustomCodec() {
-        return customCodec;
+        return property.customCodec();
     }
 
     /**
      * The Java type of this column.
      */
+    @SuppressWarnings("unchecked")
     public TypeToken<Object> getJavaType() {
-        return fieldType;
+        return (TypeToken<Object>) property.type();
     }
+
 }

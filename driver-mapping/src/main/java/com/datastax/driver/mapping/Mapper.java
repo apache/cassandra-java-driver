@@ -218,7 +218,7 @@ public class Mapper<T> {
 
         for (ColumnMapper<T> cm : mapper.allColumns()) {
             Object value = cm.getValue(entity);
-            if (cm.kind != ColumnMapper.Kind.COMPUTED && (saveNullFields || value != null)) {
+            if (!cm.property.isComputed() && (saveNullFields || value != null)) {
                 values.put(cm, value);
             }
         }

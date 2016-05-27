@@ -17,7 +17,6 @@ package com.datastax.driver.mapping;
 
 import com.datastax.driver.core.ConsistencyLevel;
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -87,6 +86,6 @@ abstract class EntityMapper<T> {
     interface Factory {
         public <T> EntityMapper<T> create(Class<T> entityClass, String keyspace, String table, ConsistencyLevel writeConsistency, ConsistencyLevel readConsistency);
 
-        public <T> ColumnMapper<T> createColumnMapper(Class<T> componentClass, Field field, int position, MappingManager mappingManager, AtomicInteger columnCounter);
+        public <T> ColumnMapper<T> createColumnMapper(MappedProperty<T> property, int position, MappingManager mappingManager, AtomicInteger columnCounter);
     }
 }

@@ -63,7 +63,7 @@ class QueryType {
                         ? insertInto(mapper.getKeyspace(), mapper.getTable())
                         : insertInto(table);
                 for (ColumnMapper<?> cm : columns)
-                    if (cm.kind != ColumnMapper.Kind.COMPUTED)
+                    if (!cm.property.isComputed())
                         insert.value(cm.getColumnName(), bindMarker());
 
                 Insert.Options usings = insert.using();
@@ -77,7 +77,7 @@ class QueryType {
             case GET: {
                 Select.Selection selection = select();
                 for (ColumnMapper cm : mapper.allColumns()) {
-                    Select.SelectionOrAlias column = (cm.kind == ColumnMapper.Kind.COMPUTED)
+                    Select.SelectionOrAlias column = cm.property.isComputed()
                             ? selection.raw(cm.getColumnName())
                             : selection.column(cm.getColumnName());
 

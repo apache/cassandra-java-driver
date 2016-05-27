@@ -17,10 +17,6 @@ package com.datastax.driver.mapping;
 
 import com.datastax.driver.core.ConsistencyLevel;
 
-import java.beans.IntrospectionException;
-import java.beans.PropertyDescriptor;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -29,7 +25,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 class ReflectionMapper<T> extends EntityMapper<T> {
 
-    private static ReflectionFactory factory = new ReflectionFactory();
+    private static final ReflectionFactory factory = new ReflectionFactory();
 
     private ReflectionMapper(Class<T> entityClass, String keyspace, String table, ConsistencyLevel writeConsistency, ConsistencyLevel readConsistency) {
         super(entityClass, keyspace, table, writeConsistency, readConsistency);
@@ -50,34 +46,29 @@ class ReflectionMapper<T> extends EntityMapper<T> {
 
     private static class LiteralMapper<T> extends ColumnMapper<T> {
 
-        private final Method readMethod;
-        private final Method writeMethod;
-
-        private LiteralMapper(Field field, int position, PropertyDescriptor pd, AtomicInteger columnCounter) {
-            super(field, position, columnCounter);
-            this.readMethod = pd.getReadMethod();
-            this.writeMethod = pd.getWriteMethod();
+        private LiteralMapper(MappedProperty<T> property, int position, AtomicInteger columnCounter) {
+            super(property, position, columnCounter);
         }
 
         @Override
         Object getValue(T entity) {
             try {
-                return readMethod.invoke(entity);
+                return property.getter().invoke(entity);
             } catch (IllegalArgumentException e) {
-                throw new IllegalArgumentException("Could not get field '" + fieldName + "'");
+                throw new IllegalArgumentException("Could not get field '" + property.name() + "'");
             } catch (Exception e) {
-                throw new IllegalStateException("Unable to access getter for '" + fieldName + "' in " + entity.getClass().getName(), e);
+                throw new IllegalStateException("Unable to access getter for '" + property.name() + "' in " + entity.getClass().getName(), e);
             }
         }
 
         @Override
         void setValue(Object entity, Object value) {
             try {
-                writeMethod.invoke(entity, value);
+                property.setter().invoke(entity, value);
             } catch (IllegalArgumentException e) {
-                throw new IllegalArgumentException("Could not set field '" + fieldName + "' to value '" + value + "'");
+                throw new IllegalArgumentException("Could not set field '" + property.name() + "' to value '" + value + "'");
             } catch (Exception e) {
-                throw new IllegalStateException("Unable to access setter for '" + fieldName + "' in " + entity.getClass().getName(), e);
+                throw new IllegalStateException("Unable to access setter for '" + property.name() + "' in " + entity.getClass().getName(), e);
             }
         }
     }
@@ -89,21 +80,11 @@ class ReflectionMapper<T> extends EntityMapper<T> {
             return new ReflectionMapper<T>(entityClass, keyspace, table, writeConsistency, readConsistency);
         }
 
-        @SuppressWarnings({"unchecked", "rawtypes"})
         @Override
-        public <T> ColumnMapper<T> createColumnMapper(Class<T> entityClass, Field field, int position, MappingManager mappingManager, AtomicInteger columnCounter) {
-            String fieldName = field.getName();
-            try {
-                PropertyDescriptor pd = new PropertyDescriptor(fieldName, field.getDeclaringClass());
-
-                for (Class<?> udt : TypeMappings.findUDTs(field.getGenericType()))
-                    mappingManager.getUDTCodec(udt);
-
-                return new LiteralMapper<T>(field, position, pd, columnCounter);
-
-            } catch (IntrospectionException e) {
-                throw new IllegalArgumentException("Cannot find matching getter and setter for field '" + fieldName + "'");
-            }
+        public <T> ColumnMapper<T> createColumnMapper(MappedProperty<T> property, int position, MappingManager mappingManager, AtomicInteger columnCounter) {
+            for (Class<?> udt : TypeMappings.findUDTs(property.type().getType()))
+                mappingManager.getUDTCodec(udt);
+            return new LiteralMapper<T>(property, position, columnCounter);
         }
     }
 }

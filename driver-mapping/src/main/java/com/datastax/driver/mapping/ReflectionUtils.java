@@ -15,26 +15,82 @@
  */
 package com.datastax.driver.mapping;
 
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
+import com.google.common.base.Throwables;
+
+import java.beans.BeanInfo;
+import java.beans.IntrospectionException;
+import java.beans.Introspector;
+import java.beans.PropertyDescriptor;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Utility methods related to reflection.
  */
 class ReflectionUtils {
 
-    /**
-     * Gets a type argument from a parameterized type.
-     *
-     * @param pt   the parameterized type.
-     * @param arg  the index of the argument to retrieve.
-     * @param name the name of the element (field or method argument).
-     * @return the type argument.
-     */
-    static Class<?> getParam(ParameterizedType pt, int arg, String name) {
-        Type ft = pt.getActualTypeArguments()[arg];
-        if (!(ft instanceof Class))
-            throw new IllegalArgumentException(String.format("Cannot map parameter of class %s for %s", pt, name));
-        return (Class<?>) ft;
+    static <T> BeanInfo getBeanInfo(Class<T> udtClass) {
+        BeanInfo beanInfo;
+        try {
+            beanInfo = Introspector.getBeanInfo(udtClass);
+        } catch (IntrospectionException e) {
+            throw Throwables.propagate(e);
+        }
+        return beanInfo;
     }
+
+    static Map<Class<? extends Annotation>, Annotation> findAnnotations(PropertyDescriptor property, Class<?> baseClass) {
+        // try field
+        Map<Class<? extends Annotation>, Annotation> annotations = new HashMap<Class<? extends Annotation>, Annotation>();
+        Field field = findField(property.getName(), baseClass);
+        if (field != null) {
+            for (Annotation annotation : field.getAnnotations()) {
+                annotations.put(annotation.annotationType(), annotation);
+            }
+        }
+        // try getter
+        Method getter = findGetter(property);
+        if (getter != null) {
+            for (Annotation annotation : getter.getAnnotations()) {
+                annotations.put(annotation.annotationType(), annotation);
+            }
+        }
+        return annotations;
+    }
+
+    static Method findGetter(PropertyDescriptor property) {
+        Method getter = property.getReadMethod();
+        if (getter == null)
+            return null;
+        getter.setAccessible(true);
+        return getter;
+    }
+
+    static Method findSetter(PropertyDescriptor property) {
+        Method setter = property.getWriteMethod();
+        if (setter == null)
+            return null;
+        setter.setAccessible(true);
+        return setter;
+    }
+
+    static Field findField(String name, Class<?> baseClass) {
+        for (Class<?> clazz = baseClass; !clazz.equals(Object.class); clazz = clazz.getSuperclass()) {
+            try {
+                Field field = clazz.getDeclaredField(name);
+                if (field.isSynthetic() || (field.getModifiers() & Modifier.STATIC) == Modifier.STATIC)
+                    continue;
+                field.setAccessible(true);
+                return field;
+            } catch (NoSuchFieldException e) {
+                //ok
+            }
+        }
+        return null;
+    }
+
 }
