@@ -24,21 +24,21 @@ import java.lang.annotation.Target;
 
 /**
  * Annotation that allows to specify the name of the CQL column to which the
- * field should be mapped.
+ * property should be mapped.
  * <p/>
  * Note that this annotation is generally optional in the sense that any field
- * of a class annotated by {@link Table} will be mapped by default to a column
- * having the same name than this field unless that field has the
+ * or any getter method of a Java bean property of a class annotated by {@link Table}
+ * will be mapped by default to a column
+ * having the same name than this field / property, unless that field or method has the
  * {@link Transient} annotation. As such, this annotation is mainly useful when
- * the name to map the field to is not the same one that the field itself (but
- * can be added without it's name parameter for documentation sake).
+ * the CQL column name does not correspond to the field or property name itself.
  */
-@Target(ElementType.FIELD)
+@Target({ElementType.FIELD, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Column {
     /**
      * Name of the column being mapped in Cassandra. By default, the name of the
-     * field will be used.
+     * field or Java bean property will be used.
      *
      * @return the name of the mapped column in Cassandra, or {@code ""} to use
      * the field name.

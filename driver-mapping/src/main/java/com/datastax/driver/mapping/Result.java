@@ -43,20 +43,20 @@ public class Result<T> implements PagingIterable<Result<T>, T> {
 
     private T map(Row row) {
         T entity = mapper.newEntity();
-        for (ColumnMapper<T> cm : mapper.allColumns()) {
-            String name = cm.getAlias() != null && this.useAlias ? cm.getAlias() : cm.getColumnName();
+        for (PropertyMapper col : mapper.allColumns) {
+            String name = col.alias != null && this.useAlias ? col.alias : col.columnName;
             if (!row.getColumnDefinitions().contains(name))
                 continue;
 
             Object value;
-            TypeCodec<Object> customCodec = cm.getCustomCodec();
+            TypeCodec<Object> customCodec = col.customCodec;
             if (customCodec != null)
                 value = row.get(name, customCodec);
             else
-                value = row.get(name, cm.getJavaType());
+                value = row.get(name, col.javaType);
 
             if (shouldSetValue(value)) {
-                cm.setValue(entity, value);
+                col.setValue(entity, value);
             }
         }
         return entity;

@@ -18,7 +18,6 @@ package com.datastax.driver.mapping;
 import com.datastax.driver.core.Metadata;
 import com.datastax.driver.core.TypeCodec;
 import com.datastax.driver.mapping.annotations.*;
-import com.google.common.collect.ComparisonChain;
 import com.google.common.reflect.TypeToken;
 
 import java.beans.PropertyDescriptor;
@@ -30,42 +29,68 @@ import java.util.Collection;
 import java.util.Map;
 
 /**
- * A bean property mapped to a table column or a UDT field.
- *
- * @param <T> The component classe where this property belongs (either
- *            a {@link com.datastax.driver.mapping.annotations.Table @Table}
- *            or {@link com.datastax.driver.mapping.annotations.UDT @UDT}
- *            annotated class).
+ * Maps a Java bean property to a table column or a UDT field.
+ * <p>
+ * Properties can be either accessed through getter and setter pairs,
+ * or by direct field access, depending on what is available in the
+ * entity/UDT class.
  */
-class MappedProperty<T> implements Comparable<MappedProperty<T>> {
+class PropertyMapper {
 
-    enum Kind {PARTITION_KEY, CLUSTERING_COLUMN, REGULAR, COMPUTED}
+    private final String propertyName;
+    final String alias;
+    final String columnName;
+    final TypeToken<Object> javaType;
+    final TypeCodec<Object> customCodec;
 
-    private final PropertyDescriptor property;
     private final Field field;
     private final Method getter;
     private final Method setter;
+    private final int position;
     private final Map<Class<? extends Annotation>, Annotation> annotations;
-    private final String columnName;
-    private final TypeToken<Object> type;
-    private final TypeCodec<Object> customCodec;
 
-    MappedProperty(PropertyDescriptor property, Class<T> componentClass) {
-        this.property = property;
-        field = ReflectionUtils.findField(property.getName(), componentClass);
+    PropertyMapper(String propertyName, String alias, Field field, PropertyDescriptor property) {
+        this.propertyName = propertyName;
+        this.alias = alias;
+        this.field = field;
         getter = ReflectionUtils.findGetter(property);
         setter = ReflectionUtils.findSetter(property);
-        annotations = ReflectionUtils.findAnnotations(property, componentClass);
-        columnName = createColumnName();
-        type = inferGenericType();
+        annotations = ReflectionUtils.scanPropertyAnnotations(field, property);
+        columnName = inferColumnName();
+        position = inferPosition();
+        javaType = inferJavaType(property);
         customCodec = createCustomCodec();
+    }
+
+    Object getValue(Object entity) {
+        try {
+            // try getter first, if available, otherwise direct field access
+            if (getter != null)
+                return getter.invoke(entity);
+            else
+                return field.get(entity);
+        } catch (Exception e) {
+            throw new IllegalStateException("Unable to read property '" + propertyName + "' in " + entity.getClass().getName(), e);
+        }
+    }
+
+    void setValue(Object entity, Object value) {
+        try {
+            // try setter first, if available, otherwise direct field access
+            if (setter != null)
+                setter.invoke(entity, value);
+            else
+                field.set(entity, value);
+        } catch (Exception e) {
+            throw new IllegalStateException("Unable to write property '" + propertyName + "' in " + entity.getClass().getName(), e);
+        }
     }
 
     boolean hasAnnotation(Class<? extends Annotation> annotationClass) {
         return annotations.containsKey(annotationClass);
     }
 
-    Collection<Annotation> annotations() {
+    Collection<Annotation> getAnnotations() {
         return annotations.values();
     }
 
@@ -90,54 +115,11 @@ class MappedProperty<T> implements Comparable<MappedProperty<T>> {
         return hasAnnotation(ClusteringColumn.class);
     }
 
-    Method getter() {
-        return getter;
+    int getPosition() {
+        return position;
     }
 
-    Method setter() {
-        return setter;
-    }
-
-    String name() {
-        return property.getName();
-    }
-
-    TypeToken<?> type() {
-        return type;
-    }
-
-    String columnName() {
-        return columnName;
-    }
-
-    TypeCodec<Object> customCodec() {
-        return customCodec;
-    }
-
-    int position() {
-        if (isPartitionKey()) {
-            return annotation(PartitionKey.class).value();
-        }
-        if (isClusteringColumn()) {
-            return annotation(ClusteringColumn.class).value();
-        }
-        return -1;
-    }
-
-    Kind kind() {
-        if (isPartitionKey()) {
-            return Kind.PARTITION_KEY;
-        }
-        if (isClusteringColumn()) {
-            return Kind.CLUSTERING_COLUMN;
-        }
-        if (isComputed()) {
-            return Kind.COMPUTED;
-        }
-        return Kind.REGULAR;
-    }
-
-    private String createColumnName() {
+    private String inferColumnName() {
         Column column = annotation(Column.class);
         if (column != null && !column.name().isEmpty()) {
             return Metadata.quote(column.caseSensitive() ? column.name() : column.name().toLowerCase());
@@ -149,36 +131,39 @@ class MappedProperty<T> implements Comparable<MappedProperty<T>> {
         if (isComputed()) {
             return annotation(Computed.class).value();
         }
-        return Metadata.quote(name().toLowerCase());
+        return Metadata.quote(propertyName.toLowerCase());
     }
 
     @SuppressWarnings("unchecked")
-    private TypeToken<Object> inferGenericType() {
+    private TypeToken<Object> inferJavaType(PropertyDescriptor property) {
         Type type;
-        if (field != null)
-            type = field.getGenericType();
-        else if (getter != null)
+        if (getter != null)
             type = getter.getGenericReturnType();
+        else if (field != null)
+            type = field.getGenericType();
         else
             // this will not work for generic types
             type = property.getPropertyType();
         return (TypeToken<Object>) TypeToken.of(type);
     }
 
+    private int inferPosition() {
+        if (isPartitionKey()) {
+            return annotation(PartitionKey.class).value();
+        }
+        if (isClusteringColumn()) {
+            return annotation(ClusteringColumn.class).value();
+        }
+        return -1;
+    }
+
     private TypeCodec<Object> createCustomCodec() {
         Class<? extends TypeCodec<?>> codecClass = getCustomCodecClass();
         if (codecClass.equals(Defaults.NoCodec.class))
             return null;
-        try {
-            @SuppressWarnings("unchecked")
-            TypeCodec<Object> instance = (TypeCodec<Object>) codecClass.newInstance();
-            return instance;
-        } catch (Exception e) {
-            throw new IllegalArgumentException(String.format(
-                    "Cannot create an instance of custom codec %s for property %s",
-                    codecClass, property
-            ), e);
-        }
+        @SuppressWarnings("unchecked")
+        TypeCodec<Object> instance = (TypeCodec<Object>) ReflectionUtils.newInstance(codecClass);
+        return instance;
     }
 
     private Class<? extends TypeCodec<?>> getCustomCodecClass() {
@@ -192,12 +177,8 @@ class MappedProperty<T> implements Comparable<MappedProperty<T>> {
     }
 
     @Override
-    public int compareTo(MappedProperty<T> that) {
-        return ComparisonChain.start()
-                .compare(this.kind(), that.kind())
-                .compare(this.position(), that.position())
-                .compare(this.name(), that.name())
-                .result();
+    public String toString() {
+        return propertyName;
     }
 
 }

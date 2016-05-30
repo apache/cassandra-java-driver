@@ -19,26 +19,24 @@ import com.datastax.driver.core.ConsistencyLevel;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.quote;
 
-abstract class EntityMapper<T> {
+class EntityMapper<T> {
 
-    final Class<T> entityClass;
+    private final Class<T> entityClass;
     private final String keyspace;
     private final String table;
 
     final ConsistencyLevel writeConsistency;
     final ConsistencyLevel readConsistency;
 
-    final List<ColumnMapper<T>> partitionKeys = new ArrayList<ColumnMapper<T>>();
-    final List<ColumnMapper<T>> clusteringColumns = new ArrayList<ColumnMapper<T>>();
-    final List<ColumnMapper<T>> regularColumns = new ArrayList<ColumnMapper<T>>();
+    final List<PropertyMapper> partitionKeys = new ArrayList<PropertyMapper>();
+    final List<PropertyMapper> clusteringColumns = new ArrayList<PropertyMapper>();
 
-    private final List<ColumnMapper<T>> allColumns = new ArrayList<ColumnMapper<T>>();
+    final List<PropertyMapper> allColumns = new ArrayList<PropertyMapper>();
 
-    protected EntityMapper(Class<T> entityClass, String keyspace, String table, ConsistencyLevel writeConsistency, ConsistencyLevel readConsistency) {
+    EntityMapper(Class<T> entityClass, String keyspace, String table, ConsistencyLevel writeConsistency, ConsistencyLevel readConsistency) {
         this.entityClass = entityClass;
         this.keyspace = keyspace;
         this.table = table;
@@ -58,34 +56,20 @@ abstract class EntityMapper<T> {
         return partitionKeys.size() + clusteringColumns.size();
     }
 
-    ColumnMapper<T> getPrimaryKeyColumn(int i) {
+    PropertyMapper getPrimaryKeyColumn(int i) {
         return i < partitionKeys.size() ? partitionKeys.get(i) : clusteringColumns.get(i - partitionKeys.size());
     }
 
-    void addColumns(List<ColumnMapper<T>> pks, List<ColumnMapper<T>> ccs, List<ColumnMapper<T>> rgs) {
+    void addColumns(List<PropertyMapper> pks, List<PropertyMapper> ccs, List<PropertyMapper> rgs) {
         partitionKeys.addAll(pks);
-        allColumns.addAll(pks);
-
         clusteringColumns.addAll(ccs);
+        allColumns.addAll(pks);
         allColumns.addAll(ccs);
-
-        addColumns(rgs);
-    }
-
-    void addColumns(List<ColumnMapper<T>> rgs) {
-        regularColumns.addAll(rgs);
         allColumns.addAll(rgs);
     }
 
-    abstract T newEntity();
-
-    List<ColumnMapper<T>> allColumns() {
-        return allColumns;
+    T newEntity() {
+        return ReflectionUtils.newInstance(entityClass);
     }
 
-    interface Factory {
-        public <T> EntityMapper<T> create(Class<T> entityClass, String keyspace, String table, ConsistencyLevel writeConsistency, ConsistencyLevel readConsistency);
-
-        public <T> ColumnMapper<T> createColumnMapper(MappedProperty<T> property, int position, MappingManager mappingManager, AtomicInteger columnCounter);
-    }
 }

@@ -16,51 +16,72 @@
 package com.datastax.driver.mapping;
 
 import com.datastax.driver.core.CCMTestsSupport;
-import com.datastax.driver.mapping.annotations.Column;
-import com.datastax.driver.mapping.annotations.PartitionKey;
-import com.datastax.driver.mapping.annotations.Table;
-import com.datastax.driver.mapping.annotations.UDT;
+import com.datastax.driver.mapping.annotations.*;
 import com.google.common.base.Objects;
-import org.testng.annotations.BeforeMethod;
+import com.google.common.collect.Sets;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SuppressWarnings("unused")
+/**
+ * Tests for
+ * JAVA-541 Add polymorphism support to object mapper
+ * JAVA-636 Allow @Column annotations on getters/setters as well as fields
+ */
+@SuppressWarnings({"unused", "WeakerAccess"})
 public class MapperPolymorphismTest extends CCMTestsSupport {
 
-    private final Circle circle = new Circle(new Point2D(11, 22), 12.34);
-    private final Rectangle rectangle = new Rectangle(new Point2D(20, 30), new Point2D(50, 60));
-    private final Sphere sphere = new Sphere(new Point3D(11, 22, 33), 34.56);
-    private Mapper<Circle> circleMapper;
-    private Mapper<Rectangle> rectangleMapper;
-    private Mapper<Sphere> sphereMapper;
+    Circle circle = new Circle(new Point2D(11, 22), 12.34);
+    Rectangle rectangle = new Rectangle(new Point2D(20, 30), new Point2D(50, 60));
+    Square square = new Square(new Point2D(20, 30), new Point2D(50, 60));
+    Sphere sphere = new Sphere(new Point3D(11, 22, 33), 34.56);
+
+    Mapper<Circle> circleMapper;
+    Mapper<Rectangle> rectangleMapper;
+    Mapper<Square> squareMapper;
+    Mapper<Sphere> sphereMapper;
 
     @Override
     public void onTestContextInitialized() {
         execute(
-                "CREATE TYPE point2d (x int, y int)",
-                "CREATE TYPE point3d (x int, y int, z int)",
-                "CREATE TABLE circles (id uuid PRIMARY KEY, center frozen<point2d>, radius double)",
-                "CREATE TABLE rectangles (id uuid PRIMARY KEY, bottom_left frozen<point2d>, top_right frozen<point2d>)",
-                "CREATE TABLE spheres (id uuid PRIMARY KEY, center frozen<point3d>, radius double)");
+                "CREATE TYPE point2d (\"X\" int, \"Y\" int)",
+                "CREATE TYPE point3d (\"X\" int, \"Y\" int, \"Z\" int)",
+                "CREATE TABLE circles (circle_id uuid PRIMARY KEY, center2d frozen<point2d>, radius double, tags set<text>)",
+                "CREATE TABLE rectangles (rect_id uuid PRIMARY KEY, bottom_left frozen<point2d>, top_right frozen<point2d>, tags set<text>)",
+                "CREATE TABLE squares (square_id uuid PRIMARY KEY, bottom_left frozen<point2d>, top_right frozen<point2d>, tags set<text>)",
+                "CREATE TABLE spheres (sphere_id uuid PRIMARY KEY, center3d frozen<point3d>, radius double, tags set<text>)");
     }
 
-    @BeforeMethod(groups = "short")
+    @BeforeClass(groups = "short")
+    public void createMappers() throws Exception {
+        MappingManager mappingManager = new MappingManager(session());
+        circleMapper = mappingManager.mapper(Circle.class);
+        rectangleMapper = mappingManager.mapper(Rectangle.class);
+        squareMapper = mappingManager.mapper(Square.class);
+        sphereMapper = mappingManager.mapper(Sphere.class);
+    }
+
+    @AfterMethod(groups = "short")
     public void clean() {
-        execute("TRUNCATE circles", "TRUNCATE rectangles", "TRUNCATE spheres");
+        execute("TRUNCATE circles", "TRUNCATE rectangles", "TRUNCATE squares", "TRUNCATE spheres");
     }
 
     @UDT(name = "point2d")
     static class Point2D {
 
+        // test mix of field and getter - getter should win
+        @Field(name = "wrong")
         private int x;
 
         private int y;
 
-        public Point2D() {
+        // test private constructor + "immutability"
+        private Point2D() {
         }
 
         public Point2D(int x, int y) {
@@ -68,20 +89,14 @@ public class MapperPolymorphismTest extends CCMTestsSupport {
             this.y = y;
         }
 
+        @Field(name = "X", caseSensitive = true)
         public int getX() {
             return x;
         }
 
-        public void setX(int x) {
-            this.x = x;
-        }
-
+        @Field(name = "Y", caseSensitive = true)
         public int getY() {
             return y;
-        }
-
-        public void setY(int y) {
-            this.y = y;
         }
 
         @Override
@@ -104,7 +119,8 @@ public class MapperPolymorphismTest extends CCMTestsSupport {
 
         private int z;
 
-        public Point3D() {
+        // test private constructor + "immutability"
+        private Point3D() {
         }
 
         public Point3D(int x, int y, int z) {
@@ -112,12 +128,9 @@ public class MapperPolymorphismTest extends CCMTestsSupport {
             this.z = z;
         }
 
+        @Field(name = "Z", caseSensitive = true)
         public int getZ() {
             return z;
-        }
-
-        public void setZ(int z) {
-            this.z = z;
         }
 
         @Override
@@ -135,21 +148,44 @@ public class MapperPolymorphismTest extends CCMTestsSupport {
         }
     }
 
-    static class Shape {
+    interface Shape2D {
 
-        @PartitionKey
-        private UUID id;
+        Set<String> getTags();
+
+        // test annotation on interface method, should get inherited everywhere
+        @Transient
+        double getArea();
+
+    }
+
+    interface Shape3D {
+
+        double getVolume();
+
+    }
+
+    static abstract class Shape implements Shape2D {
+
+        @PartitionKey // annotated field on superclass; annotation will get inherited in all subclasses
+        protected UUID id;
+
+        protected Set<String> tags;
 
         public Shape() {
             this.id = UUID.randomUUID();
+            this.tags = Sets.newHashSet("cool", "awesome");
         }
 
-        public UUID getId() {
-            return id;
-        }
+        @Column(name = "wrong") // gets overridden in all subclasses
+        public abstract UUID getId();
 
         public void setId(UUID id) {
             this.id = id;
+        }
+
+        @Override
+        public Set<String> getTags() {
+            return tags;
         }
 
         @Override
@@ -169,16 +205,30 @@ public class MapperPolymorphismTest extends CCMTestsSupport {
     @Table(name = "circles")
     static class Circle extends Shape {
 
+        @Column(name = "center2d") // overridden by a getter in Sphere
+        @Frozen
         private Point2D center;
 
-        private double radius;
+        // tests unusual field name (i.e. does not correspond to getter/setter)
+        // will be considered as a separate "property" with no getter nor setter;
+        // thus needs to be annotated with @Transient
+        @Transient
+        private double _radius;
+
+        private long writeTime;
 
         public Circle() {
         }
 
         public Circle(Point2D center, double radius) {
             this.center = center;
-            this.radius = radius;
+            this._radius = radius;
+        }
+
+        @Column(name = "circle_id")
+        @Override
+        public UUID getId() {
+            return id;
         }
 
         public Point2D getCenter() {
@@ -190,11 +240,28 @@ public class MapperPolymorphismTest extends CCMTestsSupport {
         }
 
         public double getRadius() {
-            return radius;
+            return _radius;
         }
 
         public void setRadius(double radius) {
-            this.radius = radius;
+            this._radius = radius;
+        }
+
+        @Override
+        // inherits @Transient
+        public double getArea() {
+            return Math.PI * (Math.pow(getRadius(), 2));
+        }
+
+        // tests computed columns - no setter
+        @Computed(value = "writetime(\"radius\")")
+        public long getWriteTime() {
+            return writeTime;
+        }
+
+        // mismatched setter - getter is declared in Shape
+        public void setTags(Set<String> tags) {
+            this.tags = tags;
         }
 
         @Override
@@ -216,10 +283,8 @@ public class MapperPolymorphismTest extends CCMTestsSupport {
     @Table(name = "rectangles")
     static class Rectangle extends Shape {
 
-        @Column(name = "bottom_left")
         private Point2D bottomLeft;
 
-        @Column(name = "top_right")
         private Point2D topRight;
 
         public Rectangle() {
@@ -230,6 +295,14 @@ public class MapperPolymorphismTest extends CCMTestsSupport {
             this.topRight = topRight;
         }
 
+        @Column(name = "rect_id")
+        @Override
+        public UUID getId() {
+            return id;
+        }
+
+        @Column(name = "bottom_left")
+        @Frozen
         public Point2D getBottomLeft() {
             return bottomLeft;
         }
@@ -238,12 +311,31 @@ public class MapperPolymorphismTest extends CCMTestsSupport {
             this.bottomLeft = bottomLeft;
         }
 
+        @Column(name = "top_right")
+        @Frozen
         public Point2D getTopRight() {
             return topRight;
         }
 
         public void setTopRight(Point2D topRight) {
             this.topRight = topRight;
+        }
+
+        // test annotation in class method
+        @Transient
+        public double getWidth() {
+            return Math.abs(topRight.getX() - bottomLeft.getX());
+        }
+
+        @Transient
+        public double getHeight() {
+            return Math.abs(topRight.getY() - bottomLeft.getY());
+        }
+
+        @Override
+        // inherits @Transient
+        public double getArea() {
+            return getWidth() * getHeight();
         }
 
         @Override
@@ -262,10 +354,55 @@ public class MapperPolymorphismTest extends CCMTestsSupport {
         }
     }
 
-    @Table(name = "spheres")
-    static class Sphere extends Circle {
+    @Table(name = "squares")
+    static class Square extends Rectangle {
 
+        public Square() {
+        }
+
+        public Square(Point2D bottomLeft, Point2D topRight) {
+            super(bottomLeft, topRight);
+            assert getHeight() == getWidth();
+        }
+
+        @Column(name = "square_id")
+        @Override
+        public UUID getId() {
+            return id;
+        }
+
+        @Override
+        // inherits @Column and @Frozen
+        public Point2D getBottomLeft() {
+            return super.getBottomLeft();
+        }
+
+        @Override
+        // inherits @Transient
+        public double getHeight() {
+            return getWidth();
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            if (!super.equals(o)) return false;
+            Square square = (Square) o;
+            return Objects.equal(getBottomLeft(), square.getBottomLeft()) &&
+                    Objects.equal(getTopRight(), square.getTopRight());
+        }
+
+    }
+
+    @Table(name = "spheres")
+    static class Sphere extends Circle implements Shape3D {
+
+        // masks field Circle.center
+        @Frozen
         private Point3D center;
+
+        private long writeTime;
 
         public Sphere() {
         }
@@ -274,6 +411,16 @@ public class MapperPolymorphismTest extends CCMTestsSupport {
             this.center = center;
         }
 
+        @Column(name = "sphere_id")
+        @Override
+        public UUID getId() {
+            return id;
+        }
+
+        // overrides field annotation in Circle,
+        // note that the property type is narrowed down to Point3D
+        @Column(name = "center3d")
+        @Frozen
         @Override
         public Point3D getCenter() {
             return center;
@@ -296,14 +443,14 @@ public class MapperPolymorphismTest extends CCMTestsSupport {
         public int hashCode() {
             return Objects.hashCode(super.hashCode(), getCenter());
         }
-    }
 
-    @BeforeMethod(groups = "short")
-    public void createMappers() throws Exception {
-        MappingManager mappingManager = new MappingManager(session());
-        circleMapper = mappingManager.mapper(Circle.class);
-        rectangleMapper = mappingManager.mapper(Rectangle.class);
-        sphereMapper = mappingManager.mapper(Sphere.class);
+        // test annotation on implementation
+        @Override
+        @Transient
+        public double getVolume() {
+            return 4d / 3d * Math.PI * Math.pow(getRadius(), 3);
+        }
+
     }
 
     @Test(groups = "short")
@@ -316,6 +463,12 @@ public class MapperPolymorphismTest extends CCMTestsSupport {
     public void should_save_and_retrieve_rectangle() throws Exception {
         rectangleMapper.save(rectangle);
         assertThat(rectangleMapper.get(rectangle.getId())).isEqualTo(rectangle);
+    }
+
+    @Test(groups = "short")
+    public void should_save_and_retrieve_square() throws Exception {
+        squareMapper.save(square);
+        assertThat(squareMapper.get(square.getId())).isEqualTo(square);
     }
 
     @Test(groups = "short")

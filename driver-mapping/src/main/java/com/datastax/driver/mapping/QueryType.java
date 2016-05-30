@@ -40,9 +40,9 @@ class QueryType {
     private final int endBoundSize;
     private final boolean endInclusive;
 
-    public static final QueryType SAVE = new QueryType(Kind.SAVE);
-    public static final QueryType DEL = new QueryType(Kind.DEL);
-    public static final QueryType GET = new QueryType(Kind.GET);
+    static final QueryType SAVE = new QueryType(Kind.SAVE);
+    static final QueryType DEL = new QueryType(Kind.DEL);
+    static final QueryType GET = new QueryType(Kind.GET);
 
     private QueryType(Kind kind) {
         this(kind, 0, false, 0, false);
@@ -56,15 +56,15 @@ class QueryType {
         this.endInclusive = endInclusive;
     }
 
-    String makePreparedQueryString(TableMetadata table, EntityMapper<?> mapper, MappingManager manager, Set<ColumnMapper<?>> columns, Collection<Mapper.Option> options) {
+    String makePreparedQueryString(TableMetadata table, EntityMapper<?> mapper, MappingManager manager, Set<PropertyMapper> columns, Collection<Mapper.Option> options) {
         switch (kind) {
             case SAVE: {
                 Insert insert = table == null
                         ? insertInto(mapper.getKeyspace(), mapper.getTable())
                         : insertInto(table);
-                for (ColumnMapper<?> cm : columns)
-                    if (!cm.property.isComputed())
-                        insert.value(cm.getColumnName(), bindMarker());
+                for (PropertyMapper col : columns)
+                    if (!col.isComputed())
+                        insert.value(col.columnName, bindMarker());
 
                 Insert.Options usings = insert.using();
                 for (Mapper.Option opt : options) {
@@ -76,15 +76,15 @@ class QueryType {
             }
             case GET: {
                 Select.Selection selection = select();
-                for (ColumnMapper cm : mapper.allColumns()) {
-                    Select.SelectionOrAlias column = cm.property.isComputed()
-                            ? selection.raw(cm.getColumnName())
-                            : selection.column(cm.getColumnName());
+                for (PropertyMapper col : mapper.allColumns) {
+                    Select.SelectionOrAlias column = col.isComputed()
+                            ? selection.raw(col.columnName)
+                            : selection.column(col.columnName);
 
-                    if (cm.getAlias() == null) {
+                    if (col.alias == null) {
                         selection = column;
                     } else {
-                        selection = column.as(cm.getAlias());
+                        selection = column.as(col.alias);
                     }
                 }
                 Select select;
@@ -95,7 +95,7 @@ class QueryType {
                 }
                 Select.Where where = select.where();
                 for (int i = 0; i < mapper.primaryKeySize(); i++)
-                    where.and(eq(mapper.getPrimaryKeyColumn(i).getColumnName(), bindMarker()));
+                    where.and(eq(mapper.getPrimaryKeyColumn(i).columnName, bindMarker()));
 
                 for (Mapper.Option opt : options)
                     opt.checkValidFor(QueryType.GET, manager);
@@ -107,7 +107,7 @@ class QueryType {
                         : delete().all().from(table);
                 Delete.Where where = delete.where();
                 for (int i = 0; i < mapper.primaryKeySize(); i++)
-                    where.and(eq(mapper.getPrimaryKeyColumn(i).getColumnName(), bindMarker()));
+                    where.and(eq(mapper.getPrimaryKeyColumn(i).columnName, bindMarker()));
                 Delete.Options usings = delete.using();
                 for (Mapper.Option opt : options) {
                     opt.checkValidFor(QueryType.DEL, manager);
@@ -123,17 +123,17 @@ class QueryType {
                         : select().all().from(table);
                 Select.Where where = select.where();
                 for (int i = 0; i < mapper.partitionKeys.size(); i++)
-                    where.and(eq(mapper.partitionKeys.get(i).getColumnName(), bindMarker()));
+                    where.and(eq(mapper.partitionKeys.get(i).columnName, bindMarker()));
 
                 if (startBoundSize > 0) {
                     if (startBoundSize == 1) {
-                        String name = mapper.clusteringColumns.get(0).getColumnName();
+                        String name = mapper.clusteringColumns.get(0).columnName;
                         where.and(startInclusive ? gte(name, bindMarker()) : gt(name, bindMarker()));
                     } else {
                         List<String> names = new ArrayList<String>(startBoundSize);
                         List<Object> values = new ArrayList<Object>(startBoundSize);
                         for (int i = 0; i < startBoundSize; i++) {
-                            names.add(mapper.clusteringColumns.get(i).getColumnName());
+                            names.add(mapper.clusteringColumns.get(i).columnName);
                             values.add(bindMarker());
                         }
                         where.and(startInclusive ? gte(names, values) : gt(names, values));
@@ -142,13 +142,13 @@ class QueryType {
 
                 if (endBoundSize > 0) {
                     if (endBoundSize == 1) {
-                        String name = mapper.clusteringColumns.get(0).getColumnName();
+                        String name = mapper.clusteringColumns.get(0).columnName;
                         where.and(endInclusive ? gte(name, bindMarker()) : gt(name, bindMarker()));
                     } else {
                         List<String> names = new ArrayList<String>(endBoundSize);
                         List<Object> values = new ArrayList<Object>(endBoundSize);
                         for (int i = 0; i < endBoundSize; i++) {
-                            names.add(mapper.clusteringColumns.get(i).getColumnName());
+                            names.add(mapper.clusteringColumns.get(i).columnName);
                             values.add(bindMarker());
                         }
                         where.and(endInclusive ? lte(names, values) : lt(names, values));
@@ -158,7 +158,7 @@ class QueryType {
                 select = select.limit(bindMarker());
 
                 if (kind == Kind.REVERSED_SLICE)
-                    select = select.orderBy(desc(mapper.clusteringColumns.get(0).getColumnName()));
+                    select = select.orderBy(desc(mapper.clusteringColumns.get(0).columnName));
 
                 return select.toString();
             }

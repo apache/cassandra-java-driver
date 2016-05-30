@@ -22,33 +22,38 @@ import com.datastax.driver.core.UserType;
 import com.datastax.driver.mapping.MethodMapper.ParamMapper;
 import com.datastax.driver.mapping.annotations.*;
 import com.google.common.base.Strings;
-import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 
-import java.beans.BeanInfo;
 import java.beans.PropertyDescriptor;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.datastax.driver.core.Metadata.quote;
 
 /**
- * Static methods that facilitates parsing class annotations into the corresponding {@link EntityMapper}.
+ * Static methods that facilitates parsing:
+ * - {@link #parseEntity(Class, MappingManager)}: entity classes into {@link EntityMapper} instances
+ * - {@link #parseUDT(Class, MappingManager)}: UDT classes into {@link MappedUDTCodec} instances.
+ * - {@link #parseAccessor(Class, MappingManager)}: Accessor interfaces into {@link AccessorMapper} instances.
  */
 @SuppressWarnings("unchecked")
 class AnnotationParser {
 
+    private static final Comparator<PropertyMapper> POSITION_COMPARATOR = new Comparator<PropertyMapper>() {
+        @Override
+        public int compare(PropertyMapper o1, PropertyMapper o2) {
+            return o1.getPosition() - o2.getPosition();
+        }
+    };
+
     private AnnotationParser() {
     }
 
-    static <T> EntityMapper<T> parseEntity(final Class<T> entityClass, EntityMapper.Factory factory, MappingManager mappingManager) {
+    static <T> EntityMapper<T> parseEntity(final Class<T> entityClass, MappingManager mappingManager) {
         Table table = AnnotationChecks.getTypeAnnotation(Table.class, entityClass);
 
         String ksName = table.caseSensitiveKeyspace() ? table.keyspace() : table.keyspace().toLowerCase();
@@ -67,79 +72,67 @@ class AnnotationParser {
                 ));
         }
 
-        EntityMapper<T> mapper = factory.create(entityClass, ksName, tableName, writeConsistency, readConsistency);
+        EntityMapper<T> mapper = new EntityMapper<T>(entityClass, ksName, tableName, writeConsistency, readConsistency);
         TableMetadata tableMetadata = mappingManager.getSession().getCluster().getMetadata().getKeyspace(ksName).getTable(tableName);
 
         if (tableMetadata == null)
             throw new IllegalArgumentException(String.format("Table %s does not exist in keyspace %s", tableName, ksName));
 
-        List<MappedProperty<T>> pks = new ArrayList<MappedProperty<T>>();
-        List<MappedProperty<T>> ccs = new ArrayList<MappedProperty<T>>();
-        List<MappedProperty<T>> rgs = new ArrayList<MappedProperty<T>>();
+        List<PropertyMapper> pks = new ArrayList<PropertyMapper>();
+        List<PropertyMapper> ccs = new ArrayList<PropertyMapper>();
+        List<PropertyMapper> rgs = new ArrayList<PropertyMapper>();
 
-        BeanInfo beanInfo = ReflectionUtils.getBeanInfo(entityClass);
+        Map<String, Object[]> fieldsAndProperties = ReflectionUtils.scanFieldsAndProperties(entityClass);
+        AtomicInteger columnCounter = mappingManager.isCassandraV1 ? null : new AtomicInteger(0);
 
-        for (PropertyDescriptor descriptor : beanInfo.getPropertyDescriptors()) {
+        for (Map.Entry<String, Object[]> entry : fieldsAndProperties.entrySet()) {
 
-            if (descriptor.getName().equals("class"))
-                continue;
+            String propertyName = entry.getKey();
+            java.lang.reflect.Field field = (java.lang.reflect.Field) entry.getValue()[0];
+            PropertyDescriptor property = (PropertyDescriptor) entry.getValue()[1];
+            String alias = (columnCounter != null)
+                    ? newAlias(columnCounter.incrementAndGet())
+                    : null;
 
-            MappedProperty<T> property = new MappedProperty<T>(descriptor, entityClass);
+            PropertyMapper propertyMapper = new PropertyMapper(propertyName, alias, field, property);
 
-            if (mappingManager.isCassandraV1 && property.isComputed())
+            if (mappingManager.isCassandraV1 && propertyMapper.isComputed())
                 throw new UnsupportedOperationException("Computed properties are not supported with native protocol v1");
 
-            AnnotationChecks.validateAnnotations(property,
+            AnnotationChecks.validateAnnotations(propertyMapper,
                     Column.class, ClusteringColumn.class, Frozen.class, FrozenKey.class,
                     FrozenValue.class, PartitionKey.class, Transient.class, Computed.class);
 
-            if (property.isTransient())
+            if (propertyMapper.isTransient())
                 continue;
 
-            switch (property.kind()) {
-                case PARTITION_KEY:
-                    pks.add(property);
-                    break;
-                case CLUSTERING_COLUMN:
-                    ccs.add(property);
-                    break;
-                default:
-                    rgs.add(property);
-                    break;
-            }
+            if (!propertyMapper.isComputed() && tableMetadata.getColumn(propertyMapper.columnName) == null)
+                throw new IllegalArgumentException(String.format("Column %s does not exist in table %s.%s",
+                        propertyMapper.columnName, ksName, tableName));
+
+            if (propertyMapper.isPartitionKey())
+                pks.add(propertyMapper);
+            else if (propertyMapper.isClusteringColumn())
+                ccs.add(propertyMapper);
+            else
+                rgs.add(propertyMapper);
+
+            // if the property is of a UDT type, parse it now
+            for (Class<?> udt : TypeMappings.findUDTs(propertyMapper.javaType.getType()))
+                mappingManager.getUDTCodec(udt);
         }
 
-        AtomicInteger columnCounter = mappingManager.isCassandraV1 ? null : new AtomicInteger(0);
-
-        Collections.sort(pks);
-        Collections.sort(ccs);
+        Collections.sort(pks, POSITION_COMPARATOR);
+        Collections.sort(ccs, POSITION_COMPARATOR);
 
         AnnotationChecks.validateOrder(pks, "@PartitionKey");
         AnnotationChecks.validateOrder(ccs, "@ClusteringColumn");
 
-        mapper.addColumns(
-                createColumnMappers(pks, factory, mappingManager, columnCounter, tableMetadata, ksName, tableName),
-                createColumnMappers(ccs, factory, mappingManager, columnCounter, tableMetadata, ksName, tableName),
-                createColumnMappers(rgs, factory, mappingManager, columnCounter, tableMetadata, ksName, tableName));
+        mapper.addColumns(pks, ccs, rgs);
         return mapper;
     }
 
-    private static <T> List<ColumnMapper<T>> createColumnMappers(List<MappedProperty<T>> properties, EntityMapper.Factory factory, MappingManager mappingManager, AtomicInteger columnCounter, TableMetadata tableMetadata, String ksName, String tableName) {
-        List<ColumnMapper<T>> mappers = new ArrayList<ColumnMapper<T>>(properties.size());
-        for (int i = 0; i < properties.size(); i++) {
-            MappedProperty<T> property = properties.get(i);
-            int pos = property.position();
-            ColumnMapper<T> columnMapper = factory.createColumnMapper(property, pos < 0 ? i : pos, mappingManager, columnCounter);
-            if (property.isComputed() || tableMetadata.getColumn(columnMapper.getColumnName()) != null)
-                mappers.add(columnMapper);
-            else
-                throw new IllegalArgumentException(String.format("Column %s does not exist in table %s.%s",
-                        columnMapper.getColumnName(), ksName, tableName));
-        }
-        return mappers;
-    }
-
-    static <T> MappedUDTCodec<T> parseUDT(Class<T> udtClass, EntityMapper.Factory factory, MappingManager mappingManager) {
+    static <T> MappedUDTCodec<T> parseUDT(Class<T> udtClass, MappingManager mappingManager) {
         UDT udt = AnnotationChecks.getTypeAnnotation(UDT.class, udtClass);
 
         String ksName = udt.caseSensitiveKeyspace() ? udt.keyspace() : udt.keyspace().toLowerCase();
@@ -159,54 +152,36 @@ class AnnotationParser {
         if (userType == null)
             throw new IllegalArgumentException(String.format("User type %s does not exist in keyspace %s", udtName, ksName));
 
-        List<MappedProperty<T>> columns = new ArrayList<MappedProperty<T>>();
+        Map<String, PropertyMapper> propertyMappers = new HashMap<String, PropertyMapper>();
 
-        BeanInfo beanInfo = ReflectionUtils.getBeanInfo(udtClass);
+        Map<String, Object[]> fieldsAndProperties = ReflectionUtils.scanFieldsAndProperties(udtClass);
 
-        for (PropertyDescriptor descriptor : beanInfo.getPropertyDescriptors()) {
+        for (Map.Entry<String, Object[]> entry : fieldsAndProperties.entrySet()) {
 
-            if (descriptor.getName().equals("class"))
-                continue;
+            String propertyName = entry.getKey();
+            java.lang.reflect.Field field = (java.lang.reflect.Field) entry.getValue()[0];
+            PropertyDescriptor property = (PropertyDescriptor) entry.getValue()[1];
 
-            MappedProperty<T> property = new MappedProperty<T>(descriptor, udtClass);
+            PropertyMapper propertyMapper = new PropertyMapper(propertyName, null, field, property);
 
-            AnnotationChecks.validateAnnotations(property,
+            AnnotationChecks.validateAnnotations(propertyMapper,
                     Field.class, Frozen.class, FrozenKey.class,
                     FrozenValue.class, Transient.class);
 
-            if (property.isTransient())
+            if (propertyMapper.isTransient())
                 continue;
 
-            AnnotationChecks.validatePrimaryKeyOnUDT(property);
-            columns.add(property);
-        }
-        Map<String, ColumnMapper<T>> columnMappers = createFieldMappers(columns, factory, udtClass, mappingManager, userType, ksName);
-        return new MappedUDTCodec<T>(userType, udtClass, columnMappers, mappingManager);
-    }
-
-    private static <T> Map<String, ColumnMapper<T>> createFieldMappers(List<MappedProperty<T>> properties, EntityMapper.Factory factory, Class<T> udtClass, MappingManager mappingManager, UserType userType, String ksName) {
-        Map<String, ColumnMapper<T>> mappers = Maps.newHashMapWithExpectedSize(properties.size());
-        for (int i = 0; i < properties.size(); i++) {
-            MappedProperty<T> property = properties.get(i);
-            int pos = property.position();
-            ColumnMapper<T> mapper = factory.createColumnMapper(property, pos < 0 ? i : pos, mappingManager, null);
-            if (userType.contains(mapper.getColumnName()))
-                mappers.put(mapper.getColumnName(), mapper);
-            else
+            if (!userType.contains(propertyMapper.columnName))
                 throw new IllegalArgumentException(String.format("Field %s does not exist in type %s.%s",
-                        mapper.getColumnName(), ksName, userType.getTypeName()));
+                        propertyMapper.columnName, ksName, userType.getTypeName()));
+
+            AnnotationChecks.validatePrimaryKeyOnUDT(propertyMapper);
+            propertyMappers.put(propertyMapper.columnName, propertyMapper);
         }
-        return mappers;
+        return new MappedUDTCodec<T>(userType, udtClass, propertyMappers, mappingManager);
     }
 
-
-    static String newAlias(int columnNumber) {
-        return "col" + columnNumber;
-
-    }
-
-
-    static <T> AccessorMapper<T> parseAccessor(Class<T> accClass, AccessorMapper.Factory factory, MappingManager mappingManager) {
+    static <T> AccessorMapper<T> parseAccessor(Class<T> accClass, MappingManager mappingManager) {
         if (!accClass.isInterface())
             throw new IllegalArgumentException("@Accessor annotation is only allowed on interfaces");
 
@@ -267,7 +242,11 @@ class AnnotationParser {
             methods.add(new MethodMapper(m, queryString, paramMappers, cl, fetchSize, tracing, idempotent));
         }
 
-        return factory.create(accClass, methods);
+        return new AccessorMapper<T>(accClass, methods);
+    }
+
+    private static String newAlias(int columnNumber) {
+        return "col" + columnNumber;
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})

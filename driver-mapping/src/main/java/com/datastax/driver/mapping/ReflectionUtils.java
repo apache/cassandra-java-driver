@@ -22,6 +22,7 @@ import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -33,36 +34,125 @@ import java.util.Map;
  */
 class ReflectionUtils {
 
-    static <T> BeanInfo getBeanInfo(Class<T> udtClass) {
+    static <T> T newInstance(Class<T> clazz) {
+        try {
+            return clazz.newInstance();
+        } catch (Exception e) {
+            try {
+                // try private constructor
+                Constructor<T> constructor = clazz.getDeclaredConstructor();
+                constructor.setAccessible(true);
+                return constructor.newInstance();
+            } catch (Exception e1) {
+                throw new IllegalArgumentException("Can't create an instance of " + clazz.getName());
+            }
+        }
+    }
+
+    static <T> Map<String, Object[]> scanFieldsAndProperties(Class<T> baseClass) {
+        Map<String, Object[]> fieldsAndProperties = new HashMap<String, Object[]>();
+        Map<String, Field> fields = scanFields(baseClass);
+        for (Map.Entry<String, Field> entry : fields.entrySet()) {
+            fieldsAndProperties.put(entry.getKey(), new Object[]{entry.getValue(), null});
+        }
+        Map<String, PropertyDescriptor> properties = scanProperties(baseClass);
+        for (Map.Entry<String, PropertyDescriptor> entry : properties.entrySet()) {
+            Object[] value = fieldsAndProperties.get(entry.getKey());
+            if (value == null)
+                fieldsAndProperties.put(entry.getKey(), new Object[]{null, entry.getValue()});
+            else value[1] = entry.getValue();
+        }
+        return fieldsAndProperties;
+    }
+
+    private static <T> Map<String, Field> scanFields(Class<T> baseClass) {
+        HashMap<String, Field> fields = new HashMap<String, Field>();
+        for (Class<?> clazz = baseClass; !clazz.equals(Object.class); clazz = clazz.getSuperclass()) {
+            for (Field field : clazz.getDeclaredFields()) {
+                if (field.getName().equals("class") || field.isSynthetic() || (field.getModifiers() & Modifier.STATIC) == Modifier.STATIC)
+                    continue;
+                field.setAccessible(true);
+                // never override a more specific field masking another one declared in a superclass
+                if (!fields.containsKey(field.getName()))
+                    fields.put(field.getName(), field);
+            }
+        }
+        return fields;
+    }
+
+    private static <T> Map<String, PropertyDescriptor> scanProperties(Class<T> baseClass) {
         BeanInfo beanInfo;
         try {
-            beanInfo = Introspector.getBeanInfo(udtClass);
+            beanInfo = Introspector.getBeanInfo(baseClass);
         } catch (IntrospectionException e) {
             throw Throwables.propagate(e);
         }
-        return beanInfo;
+        Map<String, PropertyDescriptor> properties = new HashMap<String, PropertyDescriptor>();
+        for (PropertyDescriptor property : beanInfo.getPropertyDescriptors()) {
+            if (property.getName().equals("class"))
+                continue;
+            properties.put(property.getName(), property);
+        }
+        return properties;
     }
 
-    static Map<Class<? extends Annotation>, Annotation> findAnnotations(PropertyDescriptor property, Class<?> baseClass) {
-        // try field
+    static Map<Class<? extends Annotation>, Annotation> scanPropertyAnnotations(Field field, PropertyDescriptor property) {
         Map<Class<? extends Annotation>, Annotation> annotations = new HashMap<Class<? extends Annotation>, Annotation>();
-        Field field = findField(property.getName(), baseClass);
+        // annotations on getters should have precedence over annotations on fields
+        scanFieldAnnotations(field, annotations);
+        if (property != null) {
+            Method getter = property.getReadMethod();
+            scanMethodAnnotations(getter, annotations);
+        }
+        return annotations;
+    }
+
+    private static Map<Class<? extends Annotation>, Annotation> scanFieldAnnotations(Field field, Map<Class<? extends Annotation>, Annotation> annotations) {
         if (field != null) {
             for (Annotation annotation : field.getAnnotations()) {
-                annotations.put(annotation.annotationType(), annotation);
-            }
-        }
-        // try getter
-        Method getter = findGetter(property);
-        if (getter != null) {
-            for (Annotation annotation : getter.getAnnotations()) {
                 annotations.put(annotation.annotationType(), annotation);
             }
         }
         return annotations;
     }
 
+    private static Map<Class<? extends Annotation>, Annotation> scanMethodAnnotations(Method method, Map<Class<? extends Annotation>, Annotation> annotations) {
+        if (method != null) {
+            // 1. direct method annotations
+            for (Annotation annotation : method.getAnnotations()) {
+                annotations.put(annotation.annotationType(), annotation);
+            }
+            // 2. Class hierarchy: check for annotations in overridden methods in superclasses
+            Class<?> getterClass = method.getDeclaringClass();
+            for (Class<?> clazz = getterClass.getSuperclass(); !clazz.equals(Object.class); clazz = clazz.getSuperclass()) {
+                maybeAddOverriddenMethodAnnotations(annotations, method, clazz);
+            }
+            // 3. Interfaces: check for annotations in implemented interfaces
+            for (Class<?> clazz = getterClass; !clazz.equals(Object.class); clazz = clazz.getSuperclass()) {
+                for (Class<?> itf : clazz.getInterfaces()) {
+                    maybeAddOverriddenMethodAnnotations(annotations, method, itf);
+                }
+            }
+        }
+        return annotations;
+    }
+
+    private static void maybeAddOverriddenMethodAnnotations(Map<Class<? extends Annotation>, Annotation> annotations, Method getter, Class<?> clazz) {
+        try {
+            Method overriddenGetter = clazz.getDeclaredMethod(getter.getName(), getter.getParameterTypes());
+            for (Annotation annotation : overriddenGetter.getAnnotations()) {
+                // do not override a more specific version of the annotation type being scanned
+                if (!annotations.containsKey(annotation.annotationType()))
+                    annotations.put(annotation.annotationType(), annotation);
+            }
+        } catch (NoSuchMethodException e) {
+            //ok
+        }
+    }
+
     static Method findGetter(PropertyDescriptor property) {
+        if (property == null)
+            return null;
         Method getter = property.getReadMethod();
         if (getter == null)
             return null;
@@ -71,26 +161,13 @@ class ReflectionUtils {
     }
 
     static Method findSetter(PropertyDescriptor property) {
+        if (property == null)
+            return null;
         Method setter = property.getWriteMethod();
         if (setter == null)
             return null;
         setter.setAccessible(true);
         return setter;
-    }
-
-    static Field findField(String name, Class<?> baseClass) {
-        for (Class<?> clazz = baseClass; !clazz.equals(Object.class); clazz = clazz.getSuperclass()) {
-            try {
-                Field field = clazz.getDeclaredField(name);
-                if (field.isSynthetic() || (field.getModifiers() & Modifier.STATIC) == Modifier.STATIC)
-                    continue;
-                field.setAccessible(true);
-                return field;
-            } catch (NoSuchFieldException e) {
-                //ok
-            }
-        }
-        return null;
     }
 
 }

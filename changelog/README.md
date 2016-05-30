@@ -11,6 +11,7 @@
 - [improvement] JAVA-1212: Don't retry non-idempotent statements by default.
 - [improvement] JAVA-1192: Make EventDebouncer settings updatable at runtime.
 - [new feature] JAVA-541: Add polymorphism support to object mapper.
+- [new feature] JAVA-636: Allow @Column annotations on getters/setters as well as fields.
 
 Merged from 3.0.x branch:
 

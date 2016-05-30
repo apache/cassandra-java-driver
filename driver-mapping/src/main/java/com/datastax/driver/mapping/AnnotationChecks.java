@@ -61,8 +61,8 @@ class AnnotationChecks {
     /**
      * Checks that a field is only annotated with the given mapping annotations, and that its "frozen" annotations are valid.
      */
-    static void validateAnnotations(MappedProperty<?> property, Class<? extends Annotation>... allowed) {
-        Class<? extends Annotation> invalid = validateAnnotations(property.annotations(), allowed);
+    static void validateAnnotations(PropertyMapper property, Class<? extends Annotation>... allowed) {
+        Class<? extends Annotation> invalid = validateAnnotations(property.getAnnotations(), allowed);
         if (invalid != null)
             throw new IllegalArgumentException(String.format("Annotation @%s is not allowed on property %s",
                     invalid.getSimpleName(),
@@ -88,16 +88,16 @@ class AnnotationChecks {
         return false;
     }
 
-    private static void checkValidPrimaryKey(MappedProperty<?> property) {
+    private static void checkValidPrimaryKey(PropertyMapper property) {
         if (property.isPartitionKey() && property.isClusteringColumn())
-            throw new IllegalArgumentException("Property " + property.name() + " cannot have both the @PartitionKey and @ClusteringColumn annotations");
+            throw new IllegalArgumentException("Property " + property + " cannot have both the @PartitionKey and @ClusteringColumn annotations");
     }
 
-    private static void checkValidComputed(MappedProperty<?> property) {
+    private static void checkValidComputed(PropertyMapper property) {
         if (property.isComputed()) {
             Computed computed = property.annotation(Computed.class);
             if (computed.value().isEmpty()) {
-                throw new IllegalArgumentException(String.format("Property %s: attribute 'value' of annotation @Computed is mandatory for computed properties", property.name()));
+                throw new IllegalArgumentException(String.format("Property %s: attribute 'value' of annotation @Computed is mandatory for computed properties", property));
             }
             if (property.hasAnnotation(Column.class)) {
                 throw new IllegalArgumentException("Cannot use @Column and @Computed on the same property");
@@ -105,24 +105,20 @@ class AnnotationChecks {
         }
     }
 
-    static <T> void validatePrimaryKeyOnUDT(MappedProperty<T> property) {
-        switch (property.kind()) {
-            case PARTITION_KEY:
-                throw new IllegalArgumentException("Annotation @PartitionKey is not allowed in a class annotated by @UDT");
-            case CLUSTERING_COLUMN:
-                throw new IllegalArgumentException("Annotation @ClusteringColumn is not allowed in a class annotated by @UDT");
-            default:
-                break;
-        }
+    static void validatePrimaryKeyOnUDT(PropertyMapper property) {
+        if (property.isPartitionKey())
+            throw new IllegalArgumentException("Annotation @PartitionKey is not allowed in a class annotated by @UDT");
+        else if (property.isClusteringColumn())
+            throw new IllegalArgumentException("Annotation @ClusteringColumn is not allowed in a class annotated by @UDT");
     }
 
-    static <T> void validateOrder(List<MappedProperty<T>> properties, String annotation) {
+    static void validateOrder(List<PropertyMapper> properties, String annotation) {
         for (int i = 0; i < properties.size(); i++) {
-            MappedProperty<?> property = properties.get(i);
-            int pos = property.position();
+            PropertyMapper property = properties.get(i);
+            int pos = property.getPosition();
             if (pos != i)
-                throw new IllegalArgumentException(String.format("Invalid ordering value %d for annotation %s of column %s, was expecting %d",
-                        pos, annotation, property.name(), i));
+                throw new IllegalArgumentException(String.format("Invalid ordering value %d for annotation %s of property %s, was expecting %d",
+                        pos, annotation, property, i));
         }
     }
 }
