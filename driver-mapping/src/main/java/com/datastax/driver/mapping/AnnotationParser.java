@@ -21,7 +21,9 @@ import com.datastax.driver.core.TypeCodec;
 import com.datastax.driver.core.UserType;
 import com.datastax.driver.mapping.MethodMapper.ParamMapper;
 import com.datastax.driver.mapping.annotations.*;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.TypeToken;
 
 import java.beans.PropertyDescriptor;
@@ -42,6 +44,25 @@ import static com.datastax.driver.core.Metadata.quote;
  */
 @SuppressWarnings("unchecked")
 class AnnotationParser {
+
+    @VisibleForTesting
+    static final Set<Class<? extends Annotation>> VALID_PROPERTY_ANNOTATIONS = ImmutableSet.of(
+            Column.class,
+            ClusteringColumn.class,
+            Frozen.class,
+            FrozenKey.class,
+            FrozenValue.class,
+            PartitionKey.class,
+            Transient.class,
+            Computed.class);
+
+    @VisibleForTesting
+    static final Set<Class<? extends Annotation>> VALID_FIELD_ANNOTATIONS = ImmutableSet.of(
+            Field.class,
+            Frozen.class,
+            FrozenKey.class,
+            FrozenValue.class,
+            Transient.class);
 
     private static final Comparator<PropertyMapper> POSITION_COMPARATOR = new Comparator<PropertyMapper>() {
         @Override
@@ -99,9 +120,7 @@ class AnnotationParser {
             if (mappingManager.isCassandraV1 && propertyMapper.isComputed())
                 throw new UnsupportedOperationException("Computed properties are not supported with native protocol v1");
 
-            AnnotationChecks.validateAnnotations(propertyMapper,
-                    Column.class, ClusteringColumn.class, Frozen.class, FrozenKey.class,
-                    FrozenValue.class, PartitionKey.class, Transient.class, Computed.class);
+            AnnotationChecks.validateAnnotations(propertyMapper, VALID_PROPERTY_ANNOTATIONS);
 
             if (propertyMapper.isTransient())
                 continue;
@@ -164,9 +183,7 @@ class AnnotationParser {
 
             PropertyMapper propertyMapper = new PropertyMapper(propertyName, null, field, property);
 
-            AnnotationChecks.validateAnnotations(propertyMapper,
-                    Field.class, Frozen.class, FrozenKey.class,
-                    FrozenValue.class, Transient.class);
+            AnnotationChecks.validateAnnotations(propertyMapper, VALID_FIELD_ANNOTATIONS);
 
             if (propertyMapper.isTransient())
                 continue;
@@ -175,15 +192,15 @@ class AnnotationParser {
                 throw new IllegalArgumentException(String.format("Field %s does not exist in type %s.%s",
                         propertyMapper.columnName, ksName, userType.getTypeName()));
 
-            AnnotationChecks.validatePrimaryKeyOnUDT(propertyMapper);
             propertyMappers.put(propertyMapper.columnName, propertyMapper);
         }
+
         return new MappedUDTCodec<T>(userType, udtClass, propertyMappers, mappingManager);
     }
 
     static <T> AccessorMapper<T> parseAccessor(Class<T> accClass, MappingManager mappingManager) {
         if (!accClass.isInterface())
-            throw new IllegalArgumentException("@Accessor annotation is only allowed on interfaces");
+            throw new IllegalArgumentException("@Accessor annotation is only allowed on interfaces, got " + accClass);
 
         AnnotationChecks.getTypeAnnotation(Accessor.class, accClass);
 

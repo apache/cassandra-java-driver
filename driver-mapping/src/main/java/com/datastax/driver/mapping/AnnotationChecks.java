@@ -20,7 +20,10 @@ import com.datastax.driver.mapping.annotations.Computed;
 import com.datastax.driver.mapping.annotations.Table;
 
 import java.lang.annotation.Annotation;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 
 /**
  * Various checks on mapping annotations.
@@ -37,8 +40,8 @@ class AnnotationChecks {
     static <T extends Annotation> T getTypeAnnotation(Class<T> annotation, Class<?> annotatedClass) {
         T instance = annotatedClass.getAnnotation(annotation);
         if (instance == null)
-            throw new IllegalArgumentException(String.format("@%s annotation was not found on type %s",
-                    annotation.getSimpleName(), annotatedClass.getName()));
+            throw new IllegalArgumentException(String.format("@%s annotation was not found on %s",
+                    annotation.getSimpleName(), annotatedClass));
 
         // Check that no other mapping annotations are present
         validateAnnotations(annotatedClass, annotation);
@@ -49,67 +52,54 @@ class AnnotationChecks {
     @SuppressWarnings("unchecked")
     private static void validateAnnotations(Class<?> clazz, Class<? extends Annotation> allowed) {
         @SuppressWarnings("unchecked")
-        Set<Annotation> classAnnotations = new HashSet<Annotation>();
+        Collection<Annotation> classAnnotations = new HashSet<Annotation>();
         Collections.addAll(classAnnotations, clazz.getAnnotations());
-        Class<? extends Annotation> invalid = validateAnnotations(classAnnotations, allowed);
+        Class<? extends Annotation> invalid = validateAnnotations(classAnnotations, Collections.singleton(allowed));
         if (invalid != null)
-            throw new IllegalArgumentException(String.format("Cannot have both @%s and @%s on type %s",
+            throw new IllegalArgumentException(String.format("Cannot have both @%s and @%s on %s",
                     allowed.getSimpleName(), invalid.getSimpleName(),
-                    clazz.getName()));
+                    clazz));
     }
 
     /**
      * Checks that a field is only annotated with the given mapping annotations, and that its "frozen" annotations are valid.
      */
-    static void validateAnnotations(PropertyMapper property, Class<? extends Annotation>... allowed) {
+    static void validateAnnotations(PropertyMapper property, Collection<? extends Class<? extends Annotation>> allowed) {
         Class<? extends Annotation> invalid = validateAnnotations(property.getAnnotations(), allowed);
-        if (invalid != null)
-            throw new IllegalArgumentException(String.format("Annotation @%s is not allowed on property %s",
+        if (invalid != null) {
+            throw new IllegalArgumentException(String.format("Annotation @%s is not allowed on property '%s'",
                     invalid.getSimpleName(),
                     property));
+        }
         checkValidPrimaryKey(property);
         checkValidComputed(property);
     }
 
     // Returns the offending annotation if there is one
-    private static Class<? extends Annotation> validateAnnotations(Collection<Annotation> annotations, Class<? extends Annotation>... allowed) {
+    private static Class<? extends Annotation> validateAnnotations(Collection<Annotation> annotations, Collection<? extends Class<? extends Annotation>> allowed) {
         for (Annotation annotation : annotations) {
             Class<? extends Annotation> actual = annotation.annotationType();
-            if (actual.getPackage().equals(MAPPING_PACKAGE) && !contains(allowed, actual))
+            if (actual.getPackage().equals(MAPPING_PACKAGE) && !allowed.contains(actual))
                 return actual;
         }
         return null;
     }
 
-    private static boolean contains(Object[] array, Object target) {
-        for (Object element : array)
-            if (element.equals(target))
-                return true;
-        return false;
-    }
-
     private static void checkValidPrimaryKey(PropertyMapper property) {
         if (property.isPartitionKey() && property.isClusteringColumn())
-            throw new IllegalArgumentException("Property " + property + " cannot have both the @PartitionKey and @ClusteringColumn annotations");
+            throw new IllegalArgumentException(String.format("Property '%s' cannot be annotated with both @PartitionKey and @ClusteringColumn", property));
     }
 
     private static void checkValidComputed(PropertyMapper property) {
         if (property.isComputed()) {
             Computed computed = property.annotation(Computed.class);
             if (computed.value().isEmpty()) {
-                throw new IllegalArgumentException(String.format("Property %s: attribute 'value' of annotation @Computed is mandatory for computed properties", property));
+                throw new IllegalArgumentException(String.format("Property '%s': attribute 'value' of annotation @Computed is mandatory for computed properties", property));
             }
             if (property.hasAnnotation(Column.class)) {
-                throw new IllegalArgumentException("Cannot use @Column and @Computed on the same property");
+                throw new IllegalArgumentException(String.format("Property '%s' cannot be annotated with both @Column and @Computed", property));
             }
         }
-    }
-
-    static void validatePrimaryKeyOnUDT(PropertyMapper property) {
-        if (property.isPartitionKey())
-            throw new IllegalArgumentException("Annotation @PartitionKey is not allowed in a class annotated by @UDT");
-        else if (property.isClusteringColumn())
-            throw new IllegalArgumentException("Annotation @ClusteringColumn is not allowed in a class annotated by @UDT");
     }
 
     static void validateOrder(List<PropertyMapper> properties, String annotation) {
@@ -117,7 +107,7 @@ class AnnotationChecks {
             PropertyMapper property = properties.get(i);
             int pos = property.getPosition();
             if (pos != i)
-                throw new IllegalArgumentException(String.format("Invalid ordering value %d for annotation %s of property %s, was expecting %d",
+                throw new IllegalArgumentException(String.format("Invalid ordering value %d for annotation %s of property '%s', was expecting %d",
                         pos, annotation, property, i));
         }
     }
