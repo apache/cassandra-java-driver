@@ -42,7 +42,7 @@ import static com.datastax.driver.core.Metadata.quote;
  * - {@link #parseUDT(Class, MappingManager)}: UDT classes into {@link MappedUDTCodec} instances.
  * - {@link #parseAccessor(Class, MappingManager)}: Accessor interfaces into {@link AccessorMapper} instances.
  */
-@SuppressWarnings("unchecked")
+@SuppressWarnings({"unchecked", "WeakerAccess"})
 class AnnotationParser {
 
     @VisibleForTesting
@@ -67,7 +67,7 @@ class AnnotationParser {
     private static final Comparator<PropertyMapper> POSITION_COMPARATOR = new Comparator<PropertyMapper>() {
         @Override
         public int compare(PropertyMapper o1, PropertyMapper o2) {
-            return o1.getPosition() - o2.getPosition();
+            return o1.position - o2.position;
         }
     };
 
@@ -112,7 +112,7 @@ class AnnotationParser {
             java.lang.reflect.Field field = (java.lang.reflect.Field) entry.getValue()[0];
             PropertyDescriptor property = (PropertyDescriptor) entry.getValue()[1];
             String alias = (columnCounter != null)
-                    ? newAlias(columnCounter.incrementAndGet())
+                    ? "col" + columnCounter.incrementAndGet()
                     : null;
 
             PropertyMapper propertyMapper = new PropertyMapper(propertyName, alias, field, property);
@@ -262,11 +262,6 @@ class AnnotationParser {
         return new AccessorMapper<T>(accClass, methods);
     }
 
-    private static String newAlias(int columnNumber) {
-        return "col" + columnNumber;
-    }
-
-    @SuppressWarnings({"unchecked", "rawtypes"})
     private static ParamMapper newParamMapper(String className, String methodName, int idx, String paramName, Class<? extends TypeCodec<?>> codecClass, Type paramType, MappingManager mappingManager) {
         if (paramType instanceof Class) {
             Class<?> paramClass = (Class<?>) paramType;

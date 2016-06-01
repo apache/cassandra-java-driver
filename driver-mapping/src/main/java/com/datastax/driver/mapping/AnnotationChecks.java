@@ -105,7 +105,7 @@ class AnnotationChecks {
     static void validateOrder(List<PropertyMapper> properties, String annotation) {
         for (int i = 0; i < properties.size(); i++) {
             PropertyMapper property = properties.get(i);
-            int pos = property.getPosition();
+            int pos = property.position;
             if (pos != i)
                 throw new IllegalArgumentException(String.format("Invalid ordering value %d for annotation %s of property '%s', was expecting %d",
                         pos, annotation, property, i));

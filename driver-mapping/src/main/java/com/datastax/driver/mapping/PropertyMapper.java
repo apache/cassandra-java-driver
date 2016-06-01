@@ -44,11 +44,11 @@ class PropertyMapper {
     final String columnName;
     final TypeToken<Object> javaType;
     final TypeCodec<Object> customCodec;
+    final int position;
 
     private final Field field;
     private final Method getter;
     private final Method setter;
-    private final int position;
     private final Map<Class<? extends Annotation>, Annotation> annotations;
 
     PropertyMapper(String propertyName, String alias, Field field, PropertyDescriptor property) {
@@ -119,10 +119,6 @@ class PropertyMapper {
 
     boolean isClusteringColumn() {
         return hasAnnotation(ClusteringColumn.class);
-    }
-
-    int getPosition() {
-        return position;
     }
 
     private String inferColumnName() {

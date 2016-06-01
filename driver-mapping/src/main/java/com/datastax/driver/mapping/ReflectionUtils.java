@@ -35,20 +35,29 @@ import java.util.Map;
 class ReflectionUtils {
 
     static <T> T newInstance(Class<T> clazz) {
+        Constructor<T> publicConstructor;
         try {
-            return clazz.newInstance();
-        } catch (Exception e) {
+            publicConstructor = clazz.getConstructor();
+        } catch (NoSuchMethodException e) {
             try {
                 // try private constructor
-                Constructor<T> constructor = clazz.getDeclaredConstructor();
-                constructor.setAccessible(true);
-                return constructor.newInstance();
+                Constructor<T> privateConstructor = clazz.getDeclaredConstructor();
+                privateConstructor.setAccessible(true);
+                return privateConstructor.newInstance();
             } catch (Exception e1) {
-                throw new IllegalArgumentException("Can't create an instance of " + clazz.getName());
+                throw new IllegalArgumentException("Can't create an instance of " + clazz, e);
             }
+        }
+        try {
+            return publicConstructor.newInstance();
+        } catch (Exception e) {
+            throw new IllegalStateException("Can't create an instance of " + clazz, e);
         }
     }
 
+    // for each key representing a property name,
+    // value[0] contains a Field object, value[1] contains a PropertyDescriptor object;
+    // they cannot be both null at the same time
     static <T> Map<String, Object[]> scanFieldsAndProperties(Class<T> baseClass) {
         Map<String, Object[]> fieldsAndProperties = new HashMap<String, Object[]>();
         Map<String, Field> fields = scanFields(baseClass);
@@ -99,39 +108,35 @@ class ReflectionUtils {
     static Map<Class<? extends Annotation>, Annotation> scanPropertyAnnotations(Field field, PropertyDescriptor property) {
         Map<Class<? extends Annotation>, Annotation> annotations = new HashMap<Class<? extends Annotation>, Annotation>();
         // annotations on getters should have precedence over annotations on fields
-        scanFieldAnnotations(field, annotations);
-        if (property != null) {
-            Method getter = property.getReadMethod();
+        if (field != null)
+            scanFieldAnnotations(field, annotations);
+        Method getter = findGetter(property);
+        if (getter != null)
             scanMethodAnnotations(getter, annotations);
-        }
         return annotations;
     }
 
     private static Map<Class<? extends Annotation>, Annotation> scanFieldAnnotations(Field field, Map<Class<? extends Annotation>, Annotation> annotations) {
-        if (field != null) {
-            for (Annotation annotation : field.getAnnotations()) {
-                annotations.put(annotation.annotationType(), annotation);
-            }
+        for (Annotation annotation : field.getAnnotations()) {
+            annotations.put(annotation.annotationType(), annotation);
         }
         return annotations;
     }
 
     private static Map<Class<? extends Annotation>, Annotation> scanMethodAnnotations(Method method, Map<Class<? extends Annotation>, Annotation> annotations) {
-        if (method != null) {
-            // 1. direct method annotations
-            for (Annotation annotation : method.getAnnotations()) {
-                annotations.put(annotation.annotationType(), annotation);
-            }
-            // 2. Class hierarchy: check for annotations in overridden methods in superclasses
-            Class<?> getterClass = method.getDeclaringClass();
-            for (Class<?> clazz = getterClass.getSuperclass(); !clazz.equals(Object.class); clazz = clazz.getSuperclass()) {
-                maybeAddOverriddenMethodAnnotations(annotations, method, clazz);
-            }
-            // 3. Interfaces: check for annotations in implemented interfaces
-            for (Class<?> clazz = getterClass; !clazz.equals(Object.class); clazz = clazz.getSuperclass()) {
-                for (Class<?> itf : clazz.getInterfaces()) {
-                    maybeAddOverriddenMethodAnnotations(annotations, method, itf);
-                }
+        // 1. direct method annotations
+        for (Annotation annotation : method.getAnnotations()) {
+            annotations.put(annotation.annotationType(), annotation);
+        }
+        // 2. Class hierarchy: check for annotations in overridden methods in superclasses
+        Class<?> getterClass = method.getDeclaringClass();
+        for (Class<?> clazz = getterClass.getSuperclass(); !clazz.equals(Object.class); clazz = clazz.getSuperclass()) {
+            maybeAddOverriddenMethodAnnotations(annotations, method, clazz);
+        }
+        // 3. Interfaces: check for annotations in implemented interfaces
+        for (Class<?> clazz = getterClass; !clazz.equals(Object.class); clazz = clazz.getSuperclass()) {
+            for (Class<?> itf : clazz.getInterfaces()) {
+                maybeAddOverriddenMethodAnnotations(annotations, method, itf);
             }
         }
         return annotations;

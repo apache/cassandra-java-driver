@@ -256,7 +256,7 @@ However it is a good idea to keep using these annotations and make sure
 they match the schema, in anticipation for the schema generation features
 that will be added in a future version.
 The default annotation is [@Frozen][frozen], [@FrozenKey][frozenkey] and
-[@FrozenValue][frozenvalue]` are also provided for convenience:
+[@FrozenValue][frozenvalue] are also provided for convenience:
 
 ```java
 // Will be mapped as a 'list<text>'
