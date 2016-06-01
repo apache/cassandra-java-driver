@@ -22,10 +22,7 @@ import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
+import java.lang.reflect.*;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -80,7 +77,6 @@ class ReflectionUtils {
             for (Field field : clazz.getDeclaredFields()) {
                 if (field.getName().equals("class") || field.isSynthetic() || (field.getModifiers() & Modifier.STATIC) == Modifier.STATIC)
                     continue;
-                field.setAccessible(true);
                 // never override a more specific field masking another one declared in a superclass
                 if (!fields.containsKey(field.getName()))
                     fields.put(field.getName(), field);
@@ -161,7 +157,6 @@ class ReflectionUtils {
         Method getter = property.getReadMethod();
         if (getter == null)
             return null;
-        getter.setAccessible(true);
         return getter;
     }
 
@@ -171,8 +166,17 @@ class ReflectionUtils {
         Method setter = property.getWriteMethod();
         if (setter == null)
             return null;
-        setter.setAccessible(true);
         return setter;
+    }
+
+    static void tryMakeAccessible(AccessibleObject object) {
+        if (!object.isAccessible()) {
+            try {
+                object.setAccessible(true);
+            } catch (SecurityException e) {
+                // ok
+            }
+        }
     }
 
 }

@@ -58,9 +58,17 @@ class PropertyMapper {
         getter = ReflectionUtils.findGetter(property);
         setter = ReflectionUtils.findSetter(property);
         annotations = ReflectionUtils.scanPropertyAnnotations(field, property);
+        if (field != null)
+            ReflectionUtils.tryMakeAccessible(field);
+        if (getter != null)
+            ReflectionUtils.tryMakeAccessible(getter);
+        if (setter != null)
+            ReflectionUtils.tryMakeAccessible(setter);
         if (!isTransient()) {
-            checkState(field != null || getter != null, "Property '%s' is not readable", propertyName);
-            checkState(field != null || setter != null, "Property '%s' is not writable", propertyName);
+            checkState((field != null && field.isAccessible()) || (getter != null && getter.isAccessible()),
+                    "Property '%s' is not readable", propertyName);
+            checkState((field != null && field.isAccessible()) || (setter != null && setter.isAccessible()),
+                    "Property '%s' is not writable", propertyName);
         }
         columnName = inferColumnName();
         position = inferPosition();
@@ -71,7 +79,7 @@ class PropertyMapper {
     Object getValue(Object entity) {
         try {
             // try getter first, if available, otherwise direct field access
-            if (getter != null)
+            if (getter != null && getter.isAccessible())
                 return getter.invoke(entity);
             else
                 return field.get(entity);
@@ -83,7 +91,7 @@ class PropertyMapper {
     void setValue(Object entity, Object value) {
         try {
             // try setter first, if available, otherwise direct field access
-            if (setter != null)
+            if (setter != null && setter.isAccessible())
                 setter.invoke(entity, value);
             else
                 field.set(entity, value);
