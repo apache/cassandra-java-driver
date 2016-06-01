@@ -20,13 +20,11 @@ import com.datastax.driver.core.ConsistencyLevel;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.datastax.driver.core.querybuilder.QueryBuilder.quote;
-
 class EntityMapper<T> {
 
     private final Class<T> entityClass;
-    private final String keyspace;
-    private final String table;
+    final String keyspace;
+    final String table;
 
     final ConsistencyLevel writeConsistency;
     final ConsistencyLevel readConsistency;
@@ -42,14 +40,6 @@ class EntityMapper<T> {
         this.table = table;
         this.writeConsistency = writeConsistency;
         this.readConsistency = readConsistency;
-    }
-
-    String getKeyspace() {
-        return quote(keyspace);
-    }
-
-    String getTable() {
-        return quote(table);
     }
 
     int primaryKeySize() {

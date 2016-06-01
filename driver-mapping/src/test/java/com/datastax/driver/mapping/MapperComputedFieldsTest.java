@@ -91,7 +91,7 @@ public class MapperComputedFieldsTest extends CCMTestsSupport {
     void should_add_aliases_for_fields_in_select_queries() {
         BoundStatement bs = (BoundStatement) userMapper.getQuery("test");
         assertThat(bs.preparedStatement().getQueryString())
-                .contains("SELECT", "\"login\" AS col", "\"name\" AS col", "writetime(\"name\") AS col");
+                .contains("SELECT", "login AS col", "name AS col", "writetime(\"name\") AS col");
     }
 
     @Test(groups = "short")

@@ -130,18 +130,23 @@ class PropertyMapper {
     }
 
     private String inferColumnName() {
-        Column column = annotation(Column.class);
-        if (column != null && !column.name().isEmpty()) {
-            return Metadata.quote(column.caseSensitive() ? column.name() : column.name().toLowerCase());
-        }
-        com.datastax.driver.mapping.annotations.Field udtField = annotation(com.datastax.driver.mapping.annotations.Field.class);
-        if (udtField != null && !udtField.name().isEmpty()) {
-            return Metadata.quote(udtField.caseSensitive() ? udtField.name() : udtField.name().toLowerCase());
-        }
         if (isComputed()) {
             return annotation(Computed.class).value();
         }
-        return Metadata.quote(propertyName.toLowerCase());
+        boolean caseSensitive = false;
+        String columnName = propertyName;
+        if (hasAnnotation(Column.class)) {
+            Column column = annotation(Column.class);
+            caseSensitive = column.caseSensitive();
+            if (!column.name().isEmpty())
+                columnName = column.name();
+        } else if (hasAnnotation(com.datastax.driver.mapping.annotations.Field.class)) {
+            com.datastax.driver.mapping.annotations.Field udtField = annotation(com.datastax.driver.mapping.annotations.Field.class);
+            caseSensitive = udtField.caseSensitive();
+            if (!udtField.name().isEmpty())
+                columnName = udtField.name();
+        }
+        return caseSensitive ? Metadata.quote(columnName) : columnName.toLowerCase();
     }
 
     @SuppressWarnings("unchecked")

@@ -16,6 +16,7 @@
 package com.datastax.driver.mapping;
 
 import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.core.Metadata;
 import com.datastax.driver.core.TableMetadata;
 import com.datastax.driver.core.TypeCodec;
 import com.datastax.driver.core.UserType;
@@ -34,8 +35,6 @@ import java.lang.reflect.Type;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.datastax.driver.core.Metadata.quote;
-
 /**
  * Static methods that facilitates parsing:
  * - {@link #parseEntity(Class, MappingManager)}: entity classes into {@link EntityMapper} instances
@@ -48,13 +47,13 @@ class AnnotationParser {
     @VisibleForTesting
     static final Set<Class<? extends Annotation>> VALID_PROPERTY_ANNOTATIONS = ImmutableSet.of(
             Column.class,
+            Computed.class,
             ClusteringColumn.class,
             Frozen.class,
             FrozenKey.class,
             FrozenValue.class,
             PartitionKey.class,
-            Transient.class,
-            Computed.class);
+            Transient.class);
 
     @VisibleForTesting
     static final Set<Class<? extends Annotation>> VALID_FIELD_ANNOTATIONS = ImmutableSet.of(
@@ -77,20 +76,20 @@ class AnnotationParser {
     static <T> EntityMapper<T> parseEntity(final Class<T> entityClass, MappingManager mappingManager) {
         Table table = AnnotationChecks.getTypeAnnotation(Table.class, entityClass);
 
-        String ksName = table.caseSensitiveKeyspace() ? table.keyspace() : table.keyspace().toLowerCase();
-        String tableName = table.caseSensitiveTable() ? table.name() : table.name().toLowerCase();
+        String ksName = table.caseSensitiveKeyspace() ? Metadata.quote(table.keyspace()) : table.keyspace().toLowerCase();
+        String tableName = table.caseSensitiveTable() ? Metadata.quote(table.name()) : table.name().toLowerCase();
 
         ConsistencyLevel writeConsistency = table.writeConsistency().isEmpty() ? null : ConsistencyLevel.valueOf(table.writeConsistency().toUpperCase());
         ConsistencyLevel readConsistency = table.readConsistency().isEmpty() ? null : ConsistencyLevel.valueOf(table.readConsistency().toUpperCase());
 
         if (Strings.isNullOrEmpty(table.keyspace())) {
-            ksName = mappingManager.getSession().getLoggedKeyspace();
-            if (Strings.isNullOrEmpty(ksName))
+            String loggedKeyspace = mappingManager.getSession().getLoggedKeyspace();
+            if (Strings.isNullOrEmpty(loggedKeyspace))
                 throw new IllegalArgumentException(String.format(
-                        "Error creating mapper for class %s, the @%s annotation declares no default keyspace, and the session is not currently logged to any keyspace",
-                        entityClass.getSimpleName(),
-                        Table.class.getSimpleName()
+                        "Error creating mapper for %s, the @Table annotation declares no default keyspace, and the session is not currently logged to any keyspace",
+                        entityClass
                 ));
+            ksName = Metadata.quote(loggedKeyspace);
         }
 
         EntityMapper<T> mapper = new EntityMapper<T>(entityClass, ksName, tableName, writeConsistency, readConsistency);
@@ -154,17 +153,17 @@ class AnnotationParser {
     static <T> MappedUDTCodec<T> parseUDT(Class<T> udtClass, MappingManager mappingManager) {
         UDT udt = AnnotationChecks.getTypeAnnotation(UDT.class, udtClass);
 
-        String ksName = udt.caseSensitiveKeyspace() ? udt.keyspace() : udt.keyspace().toLowerCase();
-        String udtName = udt.caseSensitiveType() ? quote(udt.name()) : udt.name().toLowerCase();
+        String ksName = udt.caseSensitiveKeyspace() ? Metadata.quote(udt.keyspace()) : udt.keyspace().toLowerCase();
+        String udtName = udt.caseSensitiveType() ? Metadata.quote(udt.name()) : udt.name().toLowerCase();
 
         if (Strings.isNullOrEmpty(udt.keyspace())) {
-            ksName = mappingManager.getSession().getLoggedKeyspace();
-            if (Strings.isNullOrEmpty(ksName))
+            String loggedKeyspace = mappingManager.getSession().getLoggedKeyspace();
+            if (Strings.isNullOrEmpty(loggedKeyspace))
                 throw new IllegalArgumentException(String.format(
-                        "Error creating UDT codec for class %s, the @%s annotation declares no default keyspace, and the session is not currently logged to any keyspace",
-                        udtClass.getSimpleName(),
-                        UDT.class.getSimpleName()
+                        "Error creating UDT codec for %s, the @UDT annotation declares no default keyspace, and the session is not currently logged to any keyspace",
+                        udtClass
                 ));
+            ksName = Metadata.quote(loggedKeyspace);
         }
 
         UserType userType = mappingManager.getSession().getCluster().getMetadata().getKeyspace(ksName).getUserType(udtName);

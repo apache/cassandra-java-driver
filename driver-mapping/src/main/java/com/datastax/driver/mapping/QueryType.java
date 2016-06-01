@@ -31,7 +31,7 @@ enum QueryType {
         @Override
         String makePreparedQueryString(TableMetadata table, EntityMapper<?> mapper, MappingManager manager, Set<PropertyMapper> columns, Collection<Mapper.Option> options) {
             Insert insert = table == null
-                    ? insertInto(mapper.getKeyspace(), mapper.getTable())
+                    ? insertInto(mapper.keyspace, mapper.table)
                     : insertInto(table);
             for (PropertyMapper col : columns)
                 if (!col.isComputed())
@@ -65,7 +65,7 @@ enum QueryType {
             }
             Select select;
             if (table == null) {
-                select = selection.from(mapper.getKeyspace(), mapper.getTable());
+                select = selection.from(mapper.keyspace, mapper.table);
             } else {
                 select = selection.from(table);
             }
@@ -83,7 +83,7 @@ enum QueryType {
         @Override
         String makePreparedQueryString(TableMetadata table, EntityMapper<?> mapper, MappingManager manager, Set<PropertyMapper> columns, Collection<Mapper.Option> options) {
             Delete delete = table == null
-                    ? delete().all().from(mapper.getKeyspace(), mapper.getTable())
+                    ? delete().all().from(mapper.keyspace, mapper.table)
                     : delete().all().from(table);
             Delete.Where where = delete.where();
             for (int i = 0; i < mapper.primaryKeySize(); i++)

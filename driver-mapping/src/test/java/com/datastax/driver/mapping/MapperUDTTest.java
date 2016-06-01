@@ -380,7 +380,7 @@ public class MapperUDTTest extends CCMTestsSupport {
     /**
      * Ensures that if a table is altered after a {@link Mapper} is created that it continues to work as long as
      * the change is compatible.  A new column is added to the table in this case, which is a compatible change.
-     * <p>
+     * <p/>
      * It also ensures that after the change is made that requesting a new {@link Mapper} returns a different instance
      * instead of the existing one.
      *
@@ -407,7 +407,7 @@ public class MapperUDTTest extends CCMTestsSupport {
     /**
      * Ensures that if a UDT is altered after a {@link Mapper} is created that has a UDT that it continues to work as
      * long as the change is compatible.  A new field is added to the table in this case, which is a compatible change.
-     * <p>
+     * <p/>
      * It also ensures that after the change is made that requesting a new {@link TypeCodec} for that UDT and a new
      * {@link Mapper} for a table using that UDT returns different instances instead of the existing ones.
      *
@@ -440,7 +440,7 @@ public class MapperUDTTest extends CCMTestsSupport {
      * Ensures that if a table is dropped after a {@link Mapper} is created that the {@link Mapper} can no longer
      * successfully make queries and that attempting to create a new {@link Mapper} throws an
      * {@link IllegalArgumentException}.
-     * <p>
+     * <p/>
      * It also ensures that requesting a {@link Mapper} fails as the previous {@link Mapper} was evicted and a new
      * one cannot be created as the table has been dropped.
      *
@@ -471,14 +471,14 @@ public class MapperUDTTest extends CCMTestsSupport {
             manager.mapper(User.class);
             fail("Expected IllegalArgumentException");
         } catch (IllegalArgumentException e) {
-            assertThat(e.getMessage()).isEqualTo("Table users does not exist in keyspace " + keyspace);
+            assertThat(e.getMessage()).isEqualTo("Table users does not exist in keyspace \"" + keyspace + "\"");
         }
     }
 
     /**
      * Ensures that if a table is altered after a {@link Mapper} is created that it no longer continues to work if
      * the change is not compatible.  A column is dropped from the table in this case, which is an incompatible change.
-     * <p>
+     * <p/>
      * It also ensures that requesting a {@link Mapper} fails as the previous {@link Mapper} was evicted and a new
      * one cannot be created as a declared column is missing from the schema but is present in the class definition.
      *
@@ -509,7 +509,7 @@ public class MapperUDTTest extends CCMTestsSupport {
             manager.mapper(User.class);
             fail("Expected IllegalArgumentException");
         } catch (IllegalArgumentException e) {
-            assertThat(e.getMessage()).isEqualTo(String.format("Column \"mainaddress\" does not exist in table %s.users", keyspace));
+            assertThat(e.getMessage()).isEqualTo(String.format("Column mainaddress does not exist in table \"%s\".users", keyspace));
         }
     }
 
@@ -517,10 +517,10 @@ public class MapperUDTTest extends CCMTestsSupport {
      * Ensures that if a UDT is altered after a {@link Mapper} is created that it no longer continues to work if
      * the change made to the UDT is not compatible.  A field is renamed in the UDT in this case, which is not a
      * compatible change.
-     * <p>
+     * <p/>
      * It also ensures that requesting a {@link Mapper} fails as the previous {@link Mapper} was evicted and a new
      * one cannot be created as a declared field is missing from the schema but is present in the class definition.
-     * <p>
+     * <p/>
      * Also verifies that a {@link TypeCodec} cannot be requested for the UDT as well.
      *
      * @jira_ticket JAVA-1126
@@ -552,13 +552,13 @@ public class MapperUDTTest extends CCMTestsSupport {
             manager.mapper(User.class);
             fail("Expected IllegalArgumentException");
         } catch (IllegalArgumentException e) {
-            assertThat(e.getMessage()).isEqualTo(String.format("Field \"ZIP_code\" does not exist in type %s.address", keyspace));
+            assertThat(e.getMessage()).isEqualTo(String.format("Field \"ZIP_code\" does not exist in type \"%s\".address", keyspace));
         }
         try {
             manager.udtCodec(Address.class);
             fail("Expected IllegalArgumentException");
         } catch (IllegalArgumentException e) {
-            assertThat(e.getMessage()).isEqualTo(String.format("Field \"ZIP_code\" does not exist in type %s.address", keyspace));
+            assertThat(e.getMessage()).isEqualTo(String.format("Field \"ZIP_code\" does not exist in type \"%s\".address", keyspace));
         }
     }
 

@@ -15,7 +15,10 @@
  */
 package com.datastax.driver.mapping;
 
-import com.datastax.driver.core.*;
+import com.datastax.driver.core.CodecRegistry;
+import com.datastax.driver.core.ProtocolVersion;
+import com.datastax.driver.core.TypeCodec;
+import com.datastax.driver.core.UserType;
 
 import java.nio.ByteBuffer;
 import java.util.Map;
@@ -48,10 +51,6 @@ class MappedUDTCodec<T> extends TypeCodec.AbstractUDTCodec<T> {
 
     @Override
     protected ByteBuffer serializeField(T source, String fieldName, ProtocolVersion protocolVersion) {
-        // The parent class passes lowercase names unquoted, but in our internal map of mappers they are always quoted
-        if (!fieldName.startsWith("\""))
-            fieldName = Metadata.quote(fieldName);
-
         PropertyMapper propertyMapper = columnMappers.get(fieldName);
 
         if (propertyMapper == null)
@@ -68,9 +67,6 @@ class MappedUDTCodec<T> extends TypeCodec.AbstractUDTCodec<T> {
 
     @Override
     protected T deserializeAndSetField(ByteBuffer input, T target, String fieldName, ProtocolVersion protocolVersion) {
-        if (!fieldName.startsWith("\""))
-            fieldName = Metadata.quote(fieldName);
-
         PropertyMapper propertyMapper = columnMappers.get(fieldName);
         if (propertyMapper != null) {
             TypeCodec<Object> codec = propertyMapper.customCodec;
