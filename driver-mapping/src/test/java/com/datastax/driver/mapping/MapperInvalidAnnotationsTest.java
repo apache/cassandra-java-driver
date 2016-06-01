@@ -253,4 +253,36 @@ public class MapperInvalidAnnotationsTest {
         AnnotationParser.parseEntity(Invalid13.class, mappingManager);
     }
 
+    @Table(name = "foo", keyspace = "ks")
+    static class Invalid14 {
+
+        public void setNotReadable(int i) {
+        }
+
+    }
+
+    @Test(groups = "unit", expectedExceptions = IllegalStateException.class,
+            expectedExceptionsMessageRegExp =
+                    "Property 'notReadable' is not readable")
+    public void should_not_allow_unreadable_property() throws Exception {
+        AnnotationParser.parseEntity(Invalid14.class, mappingManager);
+    }
+
+    @Table(name = "foo", keyspace = "ks")
+    static class Invalid15 {
+
+        public int getNotWritable() {
+            return 0;
+        }
+
+    }
+
+    @Test(groups = "unit", expectedExceptions = IllegalStateException.class,
+            expectedExceptionsMessageRegExp =
+                    "Property 'notWritable' is not writable")
+    public void should_not_allow_unwritable_property() throws Exception {
+        AnnotationParser.parseEntity(Invalid15.class, mappingManager);
+    }
+
+
 }

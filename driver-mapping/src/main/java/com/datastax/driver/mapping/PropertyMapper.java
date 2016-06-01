@@ -28,6 +28,8 @@ import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.Map;
 
+import static com.google.common.base.Preconditions.checkState;
+
 /**
  * Maps a Java bean property to a table column or a UDT field.
  * <p>
@@ -56,9 +58,13 @@ class PropertyMapper {
         getter = ReflectionUtils.findGetter(property);
         setter = ReflectionUtils.findSetter(property);
         annotations = ReflectionUtils.scanPropertyAnnotations(field, property);
+        if (!isTransient()) {
+            checkState(field != null || getter != null, "Property '%s' is not readable", propertyName);
+            checkState(field != null || setter != null, "Property '%s' is not writable", propertyName);
+        }
         columnName = inferColumnName();
         position = inferPosition();
-        javaType = inferJavaType(property);
+        javaType = inferJavaType();
         customCodec = createCustomCodec();
     }
 
@@ -135,15 +141,12 @@ class PropertyMapper {
     }
 
     @SuppressWarnings("unchecked")
-    private TypeToken<Object> inferJavaType(PropertyDescriptor property) {
+    private TypeToken<Object> inferJavaType() {
         Type type;
         if (getter != null)
             type = getter.getGenericReturnType();
-        else if (field != null)
-            type = field.getGenericType();
         else
-            // this will not work for generic types
-            type = property.getPropertyType();
+            type = field.getGenericType();
         return (TypeToken<Object>) TypeToken.of(type);
     }
 
