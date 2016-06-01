@@ -39,11 +39,25 @@ public static class User {
   save, or delete operation in the mapper. (if unspecified, it defaults
   to the cluster-wide setting)
 
-The class must provide a default constructor (it can however be private).
+The class must provide a default constructor. The default constructor
+is allowed to be non-public, provided that the security manager, if any, grants
+the mapper access to it via [reflection][set-accessible].
 
-The mapping of each table column can be customized through annotations placed on either a field declaration,
-or on a Java bean property getter method. _Annotations on setters are not supported and will be
-silently ignored by the mapper_.
+#### Mapping table columns
+
+The mapping of each table column can be customized through annotations 
+placed on either a field declaration, or on a getter method of a 
+[Java bean property][java-beans]. _Annotations on setters are not 
+supported and will be silently ignored by the mapper_. 
+
+Users are strongly encouraged to follow the Java bean property 
+conventions when designing mapped classes: if this is the case, the mapper will
+transparently "bind" together fields and accessor methods (getters and setters)
+into a single logical abstraction; e.g. a field named `myCol` and a Java
+bean property named `myCol` offering a public getter named `getMyCol()`
+will be assumed to represent the very same table column,
+and annotations for this column are thus allowed to be placed indifferently
+on the field declaration, or on the getter method declaration.
 
 The following mappings are thus equivalent:
 
@@ -53,62 +67,97 @@ public static class User {
 
     // annotation on a field
     @PartitionKey
-    @Column(name = "user_id")
-    private UUID userId;
+    private UUID id;
 
-    public UUID getUserId() {
-        return userId;
+    public UUID getId() {
+        return id;
     }
 
-    public void setUserId(UUID userId) {
-        this.userId = userId;
+    public void setId(UUID id) {
+        this.id = id;
     }
 
 }
+```
 
+```java
 @Table(name = "users")
 public static class User {
 
-    private UUID userId;
+    private UUID id;
 
     // annotation on a getter method
     @PartitionKey
-    @Column(name = "user_id")
-    public UUID getUserId() {
-        return userId;
+    public UUID getId() {
+        return id;
     }
 
-    public void setUserId(UUID userId) {
-        this.userId = userId;
+    public void setId(UUID id) {
+        this.id = id;
     }
 
 }
 
 ```
 
-To explicitly exclude a Java bean property or a field from being mapped,
-annotate either the field or the property getter method with `@Transient`.
+It is recommended to adopt one strategy or the other for
+placing annotations on class members (i.e., either always on fields, or always on getters), 
+but not both at the same time, unless strictly required.
+Annotating fields is usually less verbose, but with polymorphic
+data models (see below), annotating getters generally proves to be more flexible.
 
-The mapper tries to "bind" fields and accessor methods (getters and setters) together
-into a single logical abstraction;
-it is therefore advised that users follow the [Java bean property conventions]
-(java-beans) when designing mapped classes. 
+If duplicated annotations for a given column are found on the field declaration
+and on the getter method declaration, the one declared in the getter method
+declaration wins. No warnings are generated in such situations.
 
-In particular, when reading or writing mapped property values, the mapper will first
-try the property getter and setter methods, if they are available;
+When reading or writing mapped property values, the mapper will first
+try to invoke the property getter and setter methods, if they are available;
 and if they are not, the mapper will try a direct access to the property's corresponding field.
+
+A mapped field is thus allowed to be non-public if:
+
+1. Reads and writes are done through its public getters and setters; or
+2. The security manager, if any, grants the mapper access to it via [reflection][set-accessible].
 
 [table]:http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/annotations/Table.html
 [case-sensitive]:http://docs.datastax.com/en/cql/3.3/cql/cql_reference/ucase-lcase_r.html
 [consistency level]:http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/ConsistencyLevel.html
 [java-beans]:https://docs.oracle.com/javase/tutorial/javabeans/writing/properties.html
+[set-accessible]:https://docs.oracle.com/javase/8/docs/api/java/lang/reflect/AccessibleObject.html#setAccessible-boolean-
 
 #### Column names
 
-By default, the mapper tries to map each Java property to a
-case insensitive column of the same name. If you want to use a different
-name, or [case-sensitive] names, use the [@Column][column] annotation on
-the property.
+By default, the mapper tries to map each Java bean property to a
+column of the same name. _The mapping is case-insensitive by default_,
+i.e., the property `userId` would map to a column named `userid`.
+
+If you want to use a different name, or [case-sensitive] names, 
+use the [@Column][column] annotation.
+
+To specify a different column name, use the `name` attribute:
+
+```
+CREATE TABLE users(id uuid PRIMARY KEY, user_name text);
+```
+
+```java
+// column name does not match field name
+@Column(name = "user_name")
+private String userName;
+```
+
+When case-sensitive identifiers are required, use the
+`caseSensitive` attribute:
+
+```
+CREATE TABLE users(id uuid PRIMARY KEY, "userName" text);
+```
+
+```java
+// column name is case-sensitive
+@Column(caseSensitive = true)
+private String userName;
+```
 
 [column]:http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/annotations/Column.html
 
@@ -175,8 +224,10 @@ version (see
 
 #### Transient properties
 
-[@Transient][transient] can be used to prevent a field or a Java bean property from being mapped.
-It should be placed on either the field declaration or the property getter method.
+By default, the mapper will try to map all fields and Java bean properties
+to table columns. [@Transient][transient] can be used to prevent a field or 
+a Java bean property from being mapped. Like other column-level annotations, 
+it should be placed on either the field declaration or the property getter method.
 
 [transient]:http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/annotations/Transient.html
 
@@ -205,7 +256,9 @@ class Address {
 - `caseSensitiveKeyspace`: whether the keyspace name is case-sensitive.
 - `caseSensitiveType`: whether the UDT name is case-sensitive.
 
-The class must provide a default constructor (it can however be private).
+The class must provide a default constructor. The default constructor
+is allowed to be non-public, provided that the security manager, if any, grants
+the mapper access to it via [reflection][set-accessible].
 
 As for table entities, properties in UDT classes are mapped to an UDT field of the same
 name by default.
@@ -283,17 +336,15 @@ private Map<String, List<Address>> frozenValueMap;
 
 ### Polymorphism support
 
-By default, the mapper will consider all Java bean properties and all fields
-(including private ones) found in an entity class or in a UDT class,
-as well as in their superclasses and superinterfaces. 
-
-This allows for a (basic) polymorphic mapping of a given class hierarchy
+When mapping an entity class or a UDT class, the mapper will transparently
+scan superclasses and superinterfaces for annotations on fields and getter methods,
+thus enabling the polymorphic mapping of one class hierarchy
 into different CQL tables or UDTs.
 
-Currently, each concrete class must correspond to a table or a UDT,
-and should be annotated accordingly. This corresponds to the so called
-"Table per concrete class" mapping strategy provided by
-some popular SQL mapping frameworks such as Hibernate.
+Each concrete class must correspond to a table or a UDT,
+and should be annotated accordingly with `@Table` or `@UDT`. 
+This is analogous to the so-called "table per concrete class" 
+mapping strategy usually found in popular SQL mapping frameworks, such as Hibernate.
 
 Here is an example of a polymorphic mapping:
 
@@ -419,14 +470,8 @@ public class Sphere extends Shape implements Shape3D {
 }
 ```
 
-It is usually recommended to adopt one strategy or the other for
-placing annotations on class members (i.e., either always on fields, or always on getters), 
-but not both at the same time, unless strictly required.
-Usually, annotating getters is more flexible than annotating fields.
-
-If the mapper needs to disambiguate a specific property mapping,
-note that annotations on getters will always take precedence over annotations on fields.
-Likewise, if a getter method is overridden in a subclass, annotations in both
-methods will get merged together, and in case of conflict, the overriding method's annotations 
-will take precedence over the overridden's.
-
+One powerful advantage of annotating getter methods is that
+annotations are inherited from overridden methods in superclasses and superinterfaces;
+in other words, if a getter method is overridden in a subclass, annotations in both
+method declarations will get merged together. If duplicated annotations are found during this merge
+process, the overriding method's annotations will take precedence over the overridden's.
