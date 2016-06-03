@@ -56,18 +56,18 @@ public class DefaultPreparedStatement implements PreparedStatement {
         ColumnDefinitions defs = msg.metadata.columns;
 
         ProtocolVersion protocolVersion = cluster.getConfiguration().getProtocolOptions().getProtocolVersion();
+        PreparedId.PreparedMetadata boundValuesMetadata = new PreparedId.PreparedMetadata(msg.statementId, defs);
+        PreparedId.PreparedMetadata resultSetMetadata = new PreparedId.PreparedMetadata(msg.resultMetadataId, msg.resultMetadata.columns);
 
-        if (defs.size() == 0) {
-            return new DefaultPreparedStatement(new PreparedId(msg.statementId, defs, msg.resultMetadata.columns, null, protocolVersion), query, queryKeyspace, msg.getCustomPayload(), cluster);
+        int[] pkIndices = null;
+        if (defs.size() > 0) {
+            pkIndices = (protocolVersion.compareTo(V4) >= 0)
+                    ? msg.metadata.pkIndices
+                    : computePkIndices(cluster.getMetadata(), defs);
         }
 
-        int[] pkIndices = (protocolVersion.compareTo(V4) >= 0)
-                ? msg.metadata.pkIndices
-                : computePkIndices(cluster.getMetadata(), defs);
-
-        PreparedId prepId = new PreparedId(msg.statementId, defs, msg.resultMetadata.columns, pkIndices, protocolVersion);
-
-        return new DefaultPreparedStatement(prepId, query, queryKeyspace, msg.getCustomPayload(), cluster);
+        PreparedId preparedId = new PreparedId(boundValuesMetadata, resultSetMetadata, pkIndices, protocolVersion);
+        return new DefaultPreparedStatement(preparedId, query, queryKeyspace, msg.getCustomPayload(), cluster);
     }
 
     private static int[] computePkIndices(Metadata clusterMetadata, ColumnDefinitions boundColumns) {
@@ -117,7 +117,7 @@ public class DefaultPreparedStatement implements PreparedStatement {
 
     @Override
     public ColumnDefinitions getVariables() {
-        return preparedId.metadata;
+        return preparedId.boundValuesMetadata.variables;
     }
 
     @Override

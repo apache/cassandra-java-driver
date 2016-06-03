@@ -1015,6 +1015,21 @@ public class CCMTestsSupport {
         keyspace = null;
     }
 
+    protected void resetTestSession() throws Exception {
+        session.close();
+        Cluster.Builder builder = ccmTestConfig.clusterProvider(this);
+        // add contact points only if the provided builder didn't do so
+        if (builder.getContactPoints().isEmpty())
+            builder.addContactPoints(getContactPoints());
+        builder.withPort(ccm.getBinaryPort());
+        cluster = register(builder.build());
+        cluster.init();
+
+        session.close();
+        session = register(cluster.connect());
+        useKeyspace(session, keyspace);
+    }
+
     protected void closeCloseables() {
         if (closer != null)
             executeNoFail(new Callable<Void>() {

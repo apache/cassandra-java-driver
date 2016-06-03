@@ -293,7 +293,10 @@ public class BoundStatement extends Statement implements SettableData<BoundState
      */
     @Override
     public String getKeyspace() {
-        return statement.getPreparedId().metadata.size() == 0 ? null : statement.getPreparedId().metadata.getKeyspace(0);
+        ColumnDefinitions defs = statement.getPreparedId().boundValuesMetadata.variables;
+        return defs.size() == 0
+                ? null
+                : defs.getKeyspace(0);
     }
 
     /**
