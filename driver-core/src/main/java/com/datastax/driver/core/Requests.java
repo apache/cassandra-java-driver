@@ -183,38 +183,48 @@ class Requests {
             @Override
             public void encode(Execute msg, ByteBuf dest, ProtocolVersion version) {
                 CBUtil.writeBytes(msg.statementId.bytes, dest);
+                if (ProtocolFeature.PREPARED_METADATA_CHANGES.isSupportedBy(version))
+                    CBUtil.writeBytes(msg.resultMetadataId.bytes, dest);
                 msg.options.encode(dest, version);
             }
 
             @Override
             public int encodedSize(Execute msg, ProtocolVersion version) {
-                return CBUtil.sizeOfBytes(msg.statementId.bytes)
-                        + msg.options.encodedSize(version);
+                int size = CBUtil.sizeOfBytes(msg.statementId.bytes);
+                if (ProtocolFeature.PREPARED_METADATA_CHANGES.isSupportedBy(version))
+                    size += CBUtil.sizeOfBytes(msg.resultMetadataId.bytes);
+                size += msg.options.encodedSize(version);
+                return size;
             }
         };
 
         final MD5Digest statementId;
+        final MD5Digest resultMetadataId;
         final QueryProtocolOptions options;
 
-        Execute(MD5Digest statementId, QueryProtocolOptions options, boolean tracingRequested) {
+        Execute(MD5Digest statementId, MD5Digest resultMetadataId, QueryProtocolOptions options, boolean tracingRequested) {
             super(Message.Request.Type.EXECUTE, tracingRequested);
             this.statementId = statementId;
+            this.resultMetadataId = resultMetadataId;
             this.options = options;
         }
 
         @Override
         protected Request copyInternal() {
-            return new Execute(statementId, options, isTracingRequested());
+            return new Execute(statementId, resultMetadataId, options, isTracingRequested());
         }
 
         @Override
         protected Request copyInternal(ConsistencyLevel newConsistencyLevel) {
-            return new Execute(statementId, options.copy(newConsistencyLevel), isTracingRequested());
+            return new Execute(statementId, resultMetadataId, options.copy(newConsistencyLevel), isTracingRequested());
         }
 
         @Override
         public String toString() {
-            return "EXECUTE " + statementId + " (" + options + ')';
+            if (resultMetadataId != null)
+                return "EXECUTE preparedId: " + statementId + " resultMetadataId: " + resultMetadataId + " (" + options + ')';
+            else
+                return "EXECUTE preparedId: " + statementId + " (" + options + ')';
         }
     }
 

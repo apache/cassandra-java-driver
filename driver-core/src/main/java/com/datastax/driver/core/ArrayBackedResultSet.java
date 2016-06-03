@@ -39,7 +39,7 @@ abstract class ArrayBackedResultSet implements ResultSet {
 
     private static final Queue<List<ByteBuffer>> EMPTY_QUEUE = new ArrayDeque<List<ByteBuffer>>(0);
 
-    protected final ColumnDefinitions metadata;
+    protected volatile ColumnDefinitions metadata;
     protected final Token.Factory tokenFactory;
     private final boolean wasApplied;
 
@@ -60,18 +60,42 @@ abstract class ArrayBackedResultSet implements ResultSet {
             case ROWS:
                 Responses.Result.Rows r = (Responses.Result.Rows) msg;
 
-                ColumnDefinitions columnDefs;
-                if (r.metadata.columns == null) {
-                    Statement actualStatement = statement;
-                    if (statement instanceof StatementWrapper) {
-                        actualStatement = ((StatementWrapper) statement).getWrappedStatement();
-                    }
-                    assert actualStatement instanceof BoundStatement;
-                    columnDefs = ((BoundStatement) actualStatement).statement.getPreparedId().resultSetMetadata;
-                    assert columnDefs != null;
-                } else {
-                    columnDefs = r.metadata.columns;
+                Statement actualStatement = statement;
+                if (statement instanceof StatementWrapper) {
+                    actualStatement = ((StatementWrapper) statement).getWrappedStatement();
                 }
+
+                ColumnDefinitions columnDefs = r.metadata.columns;
+                if (columnDefs == null) {
+                    // If result set metadata is not present, it means the request had SKIP_METADATA set, the driver
+                    // only ever does that for bound statements.
+                    BoundStatement bs = (BoundStatement) actualStatement;
+                    columnDefs = bs.preparedStatement().getPreparedId().resultSetMetadata.variables;
+                } else {
+                    // Otherwise, always use the response's metadata.
+                    // In addition, if a new id is present it means we're executing a bound statement with protocol v5,
+                    // the schema changed server-side, and we need to update the prepared statement (see
+                    // CASSANDRA-10786).
+                    MD5Digest newMetadataId = r.metadata.metadataId;
+                    assert !(actualStatement instanceof BoundStatement) ||
+                            ProtocolFeature.PREPARED_METADATA_CHANGES.isSupportedBy(protocolVersion) ||
+                            newMetadataId == null;
+                    if (newMetadataId != null) {
+                        BoundStatement bs = ((BoundStatement) actualStatement);
+                        PreparedId preparedId = bs.preparedStatement().getPreparedId();
+                        // Extra test for CASSANDRA-13992: conditional updates yield a different result set depending on
+                        // whether the update was applied or not, so the prepared statement must never have result
+                        // metadata, and we should always execute with skip_metadata = false.
+                        // However the server sends a new_metadata_id in the response, so make sure we ignore it if the
+                        // prepared statement did not have metadata in the first place.
+                        // TODO remove the "if" (i.e. always assign resultSetMetadata) if CASSANDRA-13992 gets fixed before 4.0.0 GA
+                        if (preparedId.resultSetMetadata.variables != null) {
+                            preparedId.resultSetMetadata =
+                                    new PreparedId.PreparedMetadata(newMetadataId, columnDefs);
+                        }
+                    }
+                }
+                assert columnDefs != null;
 
                 Token.Factory tokenFactory = (session == null) ? null
                         : session.getCluster().manager.metadata.tokenFactory();
@@ -224,7 +248,7 @@ abstract class ArrayBackedResultSet implements ResultSet {
     private static class MultiPage extends ArrayBackedResultSet {
 
         private Queue<List<ByteBuffer>> currentPage;
-        private final Queue<Queue<List<ByteBuffer>>> nextPages = new ConcurrentLinkedQueue<Queue<List<ByteBuffer>>>();
+        private final Queue<NextPage> nextPages = new ConcurrentLinkedQueue<NextPage>();
 
         private final Deque<ExecutionInfo> infos = new LinkedBlockingDeque<ExecutionInfo>();
 
@@ -280,8 +304,8 @@ abstract class ArrayBackedResultSet implements ResultSet {
         @Override
         public int getAvailableWithoutFetching() {
             int available = currentPage.size();
-            for (Queue<List<ByteBuffer>> page : nextPages)
-                available += page.size();
+            for (NextPage page : nextPages)
+                available += page.data.size();
             return available;
         }
 
@@ -297,9 +321,12 @@ abstract class ArrayBackedResultSet implements ResultSet {
                 // Grab the current state now to get a consistent view in this iteration.
                 FetchingState fetchingState = this.fetchState;
 
-                Queue<List<ByteBuffer>> nextPage = nextPages.poll();
+                NextPage nextPage = nextPages.poll();
                 if (nextPage != null) {
-                    currentPage = nextPage;
+                    if (nextPage.metadata != null) {
+                        this.metadata = nextPage.metadata;
+                    }
+                    currentPage = nextPage.data;
                     continue;
                 }
                 if (fetchingState == null)
@@ -363,7 +390,16 @@ abstract class ArrayBackedResultSet implements ResultSet {
                                 if (rm.kind == Responses.Result.Kind.ROWS) {
                                     Responses.Result.Rows rows = (Responses.Result.Rows) rm;
                                     info = update(info, rm, MultiPage.this.session, rows.metadata.pagingState, protocolVersion, codecRegistry, statement);
-                                    MultiPage.this.nextPages.offer(rows.data);
+                                    // If the query is a prepared 'SELECT *', the metadata can change between pages
+                                    ColumnDefinitions newMetadata = null;
+                                    if (rows.metadata.metadataId != null) {
+                                        newMetadata = rows.metadata.columns;
+                                        assert statement instanceof BoundStatement;
+                                        BoundStatement bs = (BoundStatement) statement;
+                                        bs.preparedStatement().getPreparedId().resultSetMetadata =
+                                                new PreparedId.PreparedMetadata(rows.metadata.metadataId, rows.metadata.columns);
+                                    }
+                                    MultiPage.this.nextPages.offer(new NextPage(newMetadata, rows.data));
                                     MultiPage.this.fetchState = rows.metadata.pagingState == null ? null : new FetchingState(rows.metadata.pagingState, null);
                                 } else if (rm.kind == Responses.Result.Kind.VOID) {
                                     // We shouldn't really get a VOID message here but well, no harm in handling it I suppose
@@ -441,6 +477,16 @@ abstract class ArrayBackedResultSet implements ResultSet {
                 assert (nextStart == null) != (inProgress == null);
                 this.nextStart = nextStart;
                 this.inProgress = inProgress;
+            }
+        }
+
+        private static class NextPage {
+            final ColumnDefinitions metadata;
+            final Queue<List<ByteBuffer>> data;
+
+            NextPage(ColumnDefinitions metadata, Queue<List<ByteBuffer>> data) {
+                this.metadata = metadata;
+                this.data = data;
             }
         }
     }

@@ -19,21 +19,37 @@ package com.datastax.driver.core;
  * Identifies a PreparedStatement.
  */
 public class PreparedId {
-    // This class is mostly here to group PreparedStatement data that are need for
-    // execution but that we don't want to expose publicly (see JAVA-195)
-    final MD5Digest id;
 
-    final ColumnDefinitions metadata;
-    final ColumnDefinitions resultSetMetadata;
+    // This class is mostly here to group PreparedStatement data that are needed for
+    // execution but that we don't want to expose publicly (see JAVA-195)
 
     final int[] routingKeyIndexes;
+
     final ProtocolVersion protocolVersion;
 
-    PreparedId(MD5Digest id, ColumnDefinitions metadata, ColumnDefinitions resultSetMetadata, int[] routingKeyIndexes, ProtocolVersion protocolVersion) {
-        this.id = id;
-        this.metadata = metadata;
+    final PreparedMetadata boundValuesMetadata;
+
+    // can change over time, see JAVA-1196, JAVA-420
+    volatile PreparedMetadata resultSetMetadata;
+
+    PreparedId(PreparedMetadata boundValuesMetadata, PreparedMetadata resultSetMetadata, int[] routingKeyIndexes, ProtocolVersion protocolVersion) {
+        assert boundValuesMetadata != null;
+        assert resultSetMetadata != null;
+        this.boundValuesMetadata = boundValuesMetadata;
         this.resultSetMetadata = resultSetMetadata;
         this.routingKeyIndexes = routingKeyIndexes;
         this.protocolVersion = protocolVersion;
+    }
+
+
+    static class PreparedMetadata {
+
+        final MD5Digest id;
+        final ColumnDefinitions variables;
+
+        PreparedMetadata(MD5Digest id, ColumnDefinitions variables) {
+            this.id = id;
+            this.variables = variables;
+        }
     }
 }

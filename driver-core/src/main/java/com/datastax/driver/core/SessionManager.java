@@ -574,16 +574,23 @@ class SessionManager extends AbstractSession {
             request = new Requests.Query(qString, options, statement.isTracing());
         } else if (statement instanceof BoundStatement) {
             BoundStatement bs = (BoundStatement) statement;
-            if (!cluster.manager.preparedQueries.containsKey(bs.statement.getPreparedId().id)) {
+            if (!cluster.manager.preparedQueries.containsKey(bs.statement.getPreparedId().boundValuesMetadata.id)) {
                 throw new InvalidQueryException(String.format("Tried to execute unknown prepared query : %s. "
-                        + "You may have used a PreparedStatement that was created with another Cluster instance.", bs.statement.getPreparedId().id));
+                        + "You may have used a PreparedStatement that was created with another Cluster instance.", bs.statement.getPreparedId().boundValuesMetadata.id));
             }
             if (protocolVersion.compareTo(ProtocolVersion.V4) < 0)
                 bs.ensureAllSet();
-            boolean skipMetadata = protocolVersion != ProtocolVersion.V1 && bs.statement.getPreparedId().resultSetMetadata != null;
-            Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(Message.Request.Type.EXECUTE, consistency, Arrays.asList(bs.wrapper.values), Collections.<String, ByteBuffer>emptyMap(),
-                    skipMetadata, fetchSize, usedPagingState, serialConsistency, defaultTimestamp);
-            request = new Requests.Execute(bs.statement.getPreparedId().id, options, statement.isTracing());
+
+            // skip resultset metadata if version > 1 (otherwise this feature is not supported)
+            // and if we already have metadata for the prepared statement being executed.
+            boolean skipMetadata = protocolVersion != ProtocolVersion.V1 && bs.statement.getPreparedId().resultSetMetadata.variables != null;
+            Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(Message.Request.Type.EXECUTE,
+                    consistency, Arrays.asList(bs.wrapper.values), Collections.<String, ByteBuffer>emptyMap(), skipMetadata,
+                    fetchSize, usedPagingState, serialConsistency, defaultTimestamp);
+            request = new Requests.Execute(
+                    bs.statement.getPreparedId().boundValuesMetadata.id,
+                    bs.statement.getPreparedId().resultSetMetadata.id,
+                    options, statement.isTracing());
         } else {
             assert statement instanceof BatchStatement : statement;
             assert pagingState == null;
