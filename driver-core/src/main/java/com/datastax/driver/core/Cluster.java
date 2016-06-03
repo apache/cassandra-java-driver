@@ -686,6 +686,7 @@ public class Cluster implements Closeable {
         private SSLOptions sslOptions = null;
         private boolean metricsEnabled = true;
         private boolean jmxEnabled = true;
+        private boolean allowBetaProtocolVersion = false;
 
         private Collection<Host.StateListener> listeners;
 
@@ -740,6 +741,27 @@ public class Cluster implements Closeable {
         }
 
         /**
+         * Create cluster connection using latest development protocol version,
+         * which is currently in beta. Calling this method will result into setting
+         * USE_BETA flag in all outgoing messages, which allows server to negotiate
+         * the supported protocol version even if it is currently in beta.
+         * <p/>
+         * This feature is only available starting with version {@link ProtocolVersion#V5 V5}.
+         * <p/>
+         * Use with caution, refer to the server and protocol documentation for the details
+         * on latest protocol version.
+         * @return this Builder.
+         */
+        public Builder allowBetaProtocolVersion() {
+            if (protocolVersion != null)
+                throw new IllegalArgumentException("Can't use beta flag with initial protocol version of " + protocolVersion);
+
+            this.allowBetaProtocolVersion = true;
+            this.protocolVersion = ProtocolVersion.NEWEST_BETA;
+            return this;
+        }
+
+        /**
          * Sets the maximum time to wait for schema agreement before returning from a DDL query.
          * <p/>
          * If not set through this method, the default value (10 seconds) will be used.
@@ -759,7 +781,7 @@ public class Cluster implements Closeable {
         /**
          * The native protocol version to use.
          * <p/>
-         * The driver supports versions 1 to 3 of the native protocol. Higher versions
+         * The driver supports versions 1 to 5 of the native protocol. Higher versions
          * of the protocol have more features and should be preferred, but this also depends
          * on the Cassandra version:
          * <p/>
@@ -769,6 +791,8 @@ public class Cluster implements Closeable {
          * <tr><td>1</td><td>1.2</td></tr>
          * <tr><td>2</td><td>2.0</td></tr>
          * <tr><td>3</td><td>2.1</td></tr>
+         * <tr><td>4</td><td>2.2</td></tr>
+         * <tr><td>5</td><td>3.10</td></tr>
          * </table>
          * <p/>
          * By default, the driver will "auto-detect" which protocol version it can use
@@ -779,6 +803,11 @@ public class Cluster implements Closeable {
          * the driver connects to is a Cassandra 1.2 node and auto-detection is used
          * (the default), then the native protocol version 1 will be use for the lifetime
          * of the Cluster instance.
+         * <p/>
+         * By using {@link Builder#allowBetaProtocolVersion()}, it is
+         * possible to force driver to connect to Cassandra node that supports the latest
+         * protocol beta version. Leaving this flag out will let client to connect with
+         * latest released version.
          * <p/>
          * This method allows to force the use of a particular protocol version. Forcing
          * version 1 is always fine since all Cassandra version (at least all those
@@ -804,6 +833,12 @@ public class Cluster implements Closeable {
          * @return this Builder.
          */
         public Builder withProtocolVersion(ProtocolVersion version) {
+            if (allowBetaProtocolVersion)
+                throw new IllegalStateException("Can not set the version explicitly if `allowBetaProtocolVersion` was used.");
+            if (version.compareTo(ProtocolVersion.NEWEST_SUPPORTED) > 0)
+                throw new IllegalArgumentException("Can not use " + version + " protocol version. " +
+                        "Newest supported protocol version is: " + ProtocolVersion.NEWEST_SUPPORTED + ". " +
+                        "For beta versions, use `allowBetaProtocolVersion` instead");
             this.protocolVersion = version;
             return this;
         }
