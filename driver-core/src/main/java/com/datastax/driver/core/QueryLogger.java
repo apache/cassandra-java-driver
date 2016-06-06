@@ -22,6 +22,8 @@ import org.slf4j.LoggerFactory;
 import java.nio.ByteBuffer;
 import java.util.List;
 
+import static com.datastax.driver.core.DataType.Name.BLOB;
+import static com.datastax.driver.core.DataType.Name.CUSTOM;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 /**
@@ -653,15 +655,13 @@ public abstract class QueryLogger implements LifecycleAwareLatencyTracker {
                 appendParameters((BoundStatement) statement, params, maxLoggedParameters);
             } else if (statement instanceof SimpleStatement) {
                 appendParameters((SimpleStatement) statement, params, maxLoggedParameters);
-            }
-            else if (statement instanceof BatchStatement) {
+            } else if (statement instanceof BatchStatement) {
                 BatchStatement batchStatement = (BatchStatement) statement;
                 int remaining = maxLoggedParameters;
                 for (Statement inner : batchStatement.getStatements()) {
                     if (inner instanceof BoundStatement) {
                         remaining = appendParameters((BoundStatement) inner, params, remaining);
-                    }
-                    else if (inner instanceof SimpleStatement) {
+                    } else if (inner instanceof SimpleStatement) {
                         remaining = appendParameters((SimpleStatement) inner, params, remaining);
                     }
                 }
@@ -739,7 +739,7 @@ public abstract class QueryLogger implements LifecycleAwareLatencyTracker {
         } else {
             DataType type = definition.getType();
             int maxParameterValueLength = this.maxParameterValueLength;
-            if (type.equals(DataType.blob()) && maxParameterValueLength != -1) {
+            if ((type.getName() == BLOB || type.getName() == CUSTOM) && maxParameterValueLength != -1) {
                 // prevent large blobs from being converted to strings
                 int maxBufferLength = Math.max(2, (maxParameterValueLength - 2) / 2);
                 boolean bufferTooLarge = raw.remaining() > maxBufferLength;
