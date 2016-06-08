@@ -2,6 +2,7 @@
 
 ### 3.0.3 (in progress)
 
+- [bug] JAVA-1209: ProtocolOptions.getProtocolVersion() should return null instead of throwing NPE if Cluster has not been init'd
 
 ### 3.0.2
 
