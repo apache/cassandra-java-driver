@@ -2,6 +2,7 @@
 
 ### 3.0.3 (in progress)
 
+- [bug] JAVA-1139: ConnectionException.getMessage() throws NPE if address is null
 
 ### 3.0.2
 
