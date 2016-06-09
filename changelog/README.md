@@ -2,6 +2,7 @@
 
 ### 3.0.3 (in progress)
 
+- [bug] JAVA-1101: Batch and BatchStatement should consider inner statements to determine query idempotence
 
 ### 3.0.2
 

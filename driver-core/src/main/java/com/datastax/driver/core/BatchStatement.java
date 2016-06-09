@@ -243,6 +243,14 @@ public class BatchStatement extends Statement {
         return null;
     }
 
+    @Override
+    public Boolean isIdempotent() {
+        if (idempotent != null) {
+            return idempotent;
+        }
+        return isBatchIdempotent(statements);
+    }
+
     void ensureAllSet() {
         for (Statement statement : statements)
             if (statement instanceof BoundStatement)
