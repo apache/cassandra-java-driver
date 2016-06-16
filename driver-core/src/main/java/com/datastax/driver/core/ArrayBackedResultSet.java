@@ -55,16 +55,16 @@ abstract class ArrayBackedResultSet implements ResultSet {
     }
 
     static ArrayBackedResultSet fromMessage(Responses.Result msg, SessionManager session, ProtocolVersion protocolVersion, ExecutionInfo info, Statement statement) {
-        info = update(info, msg, session);
 
         switch (msg.kind) {
-            case VOID:
-                return empty(info);
             case ROWS:
                 Responses.Result.Rows r = (Responses.Result.Rows) msg;
 
                 ColumnDefinitions columnDefs;
                 if (r.metadata.columns == null) {
+                    if (statement instanceof StatementWrapper) {
+                        statement = ((StatementWrapper) statement).getWrappedStatement();
+                    }
                     assert statement instanceof BoundStatement;
                     columnDefs = ((BoundStatement) statement).statement.getPreparedId().resultSetMetadata;
                     assert columnDefs != null;
@@ -75,33 +75,40 @@ abstract class ArrayBackedResultSet implements ResultSet {
                 Token.Factory tokenFactory = (session == null) ? null
                         : session.getCluster().manager.metadata.tokenFactory();
 
+                info = update(info, r, session, r.metadata.pagingState, protocolVersion, columnDefs.codecRegistry, statement);
+
                 // info can be null only for internal calls, but we don't page those. We assert
-                // this explicitly because MultiPage implementation don't support info == null.
+                // this explicitly because MultiPage implementation doesn't support info == null.
                 assert r.metadata.pagingState == null || info != null;
 
                 return r.metadata.pagingState == null
                         ? new SinglePage(columnDefs, tokenFactory, protocolVersion, columnDefs.codecRegistry, r.data, info)
-                        : new MultiPage(columnDefs, tokenFactory, protocolVersion, columnDefs.codecRegistry, r.data, info, r.metadata.pagingState, session, statement);
+                        : new MultiPage(columnDefs, tokenFactory, protocolVersion, columnDefs.codecRegistry, r.data, info, r.metadata.pagingState, session);
 
+            case VOID:
             case SET_KEYSPACE:
             case SCHEMA_CHANGE:
+                info = update(info, msg, session, null, protocolVersion, null, statement);
                 return empty(info);
             case PREPARED:
                 throw new RuntimeException("Prepared statement received when a ResultSet was expected");
             default:
                 logger.error("Received unknown result type '{}'; returning empty result set", msg.kind);
+                info = update(info, msg, session, null, protocolVersion, null, statement);
                 return empty(info);
         }
     }
 
-    private static ExecutionInfo update(ExecutionInfo info, Responses.Result msg, SessionManager session) {
+    private static ExecutionInfo update(ExecutionInfo info, Responses.Result msg, SessionManager session,
+                                        ByteBuffer pagingState, ProtocolVersion protocolVersion, CodecRegistry codecRegistry,
+                                        Statement statement) {
         if (info == null)
             return null;
 
         UUID tracingId = msg.getTracingId();
         QueryTrace trace = (tracingId == null) ? null : new QueryTrace(tracingId, session);
 
-        return info.withTraceAndWarnings(trace, msg.warnings);
+        return info.with(trace, msg.warnings, pagingState, statement, protocolVersion, codecRegistry);
     }
 
     private static ArrayBackedResultSet empty(ExecutionInfo info) {
@@ -236,7 +243,6 @@ abstract class ArrayBackedResultSet implements ResultSet {
         private volatile FetchingState fetchState;
 
         private final SessionManager session;
-        private final Statement statement;
 
         private MultiPage(ColumnDefinitions metadata,
                           Token.Factory tokenFactory,
@@ -245,19 +251,17 @@ abstract class ArrayBackedResultSet implements ResultSet {
                           Queue<List<ByteBuffer>> rows,
                           ExecutionInfo info,
                           ByteBuffer pagingState,
-                          SessionManager session,
-                          Statement statement) {
+                          SessionManager session) {
 
             // Note: as of Cassandra 2.1.0, it turns out that the result of a CAS update is never paged, so
             // we could hard-code the result of wasApplied in this class to "true". However, we can not be sure
             // that this will never change, so apply the generic check by peeking at the first row.
             super(metadata, tokenFactory, rows.peek(), protocolVersion, codecRegistry);
             this.currentPage = rows;
-            this.infos.offer(info.withPagingState(pagingState, protocolVersion, codecRegistry).withStatement(statement));
+            this.infos.offer(info);
 
             this.fetchState = new FetchingState(pagingState, null);
             this.session = session;
-            this.statement = statement;
         }
 
         @Override
@@ -331,6 +335,9 @@ abstract class ArrayBackedResultSet implements ResultSet {
 
         private ListenableFuture<ResultSet> queryNextPage(ByteBuffer nextStart, final SettableFuture<ResultSet> future) {
 
+            Statement statement = this.infos.peek().getStatement();
+
+
             assert !(statement instanceof BatchStatement);
 
             final Message.Request request = session.makeRequestMessage(statement, nextStart);
@@ -351,15 +358,14 @@ abstract class ArrayBackedResultSet implements ResultSet {
                         switch (response.type) {
                             case RESULT:
                                 Responses.Result rm = (Responses.Result) response;
-                                info = update(info, rm, MultiPage.this.session);
                                 if (rm.kind == Responses.Result.Kind.ROWS) {
                                     Responses.Result.Rows rows = (Responses.Result.Rows) rm;
-                                    if (rows.metadata.pagingState != null)
-                                        info = info.withPagingState(rows.metadata.pagingState, protocolVersion, codecRegistry).withStatement(statement);
+                                    info = update(info, rm, MultiPage.this.session, rows.metadata.pagingState, protocolVersion, codecRegistry, statement);
                                     MultiPage.this.nextPages.offer(rows.data);
                                     MultiPage.this.fetchState = rows.metadata.pagingState == null ? null : new FetchingState(rows.metadata.pagingState, null);
                                 } else if (rm.kind == Responses.Result.Kind.VOID) {
                                     // We shouldn't really get a VOID message here but well, no harm in handling it I suppose
+                                    info = update(info, rm, MultiPage.this.session, null, protocolVersion, codecRegistry, statement);
                                     MultiPage.this.fetchState = null;
                                 } else {
                                     logger.error("Received unknown result type '{}' during paging: ignoring message", rm.kind);

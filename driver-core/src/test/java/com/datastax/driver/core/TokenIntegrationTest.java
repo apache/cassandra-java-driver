@@ -379,5 +379,18 @@ public abstract class TokenIntegrationTest extends CCMTestsSupport {
                 .isEqualTo(range);
     }
 
+    @Test(groups = "short")
+    public void should_create_token_from_partition_key() {
+        Metadata metadata = cluster().getMetadata();
+
+        Row row = session().execute("SELECT token(i) FROM foo WHERE i = 1").one();
+        Token expected = row.getToken(0);
+
+        ProtocolVersion protocolVersion = cluster().getConfiguration().getProtocolOptions().getProtocolVersion();
+        assertThat(
+                metadata.newToken(TypeCodec.cint().serialize(1, protocolVersion))
+        ).isEqualTo(expected);
+    }
+
     protected abstract Token.Factory tokenFactory();
 }

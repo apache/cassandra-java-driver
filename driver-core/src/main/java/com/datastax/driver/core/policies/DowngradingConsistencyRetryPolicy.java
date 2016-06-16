@@ -22,39 +22,47 @@ import com.datastax.driver.core.WriteType;
 import com.datastax.driver.core.exceptions.DriverException;
 
 /**
- * A retry policy that sometimes retry with a lower consistency level than
+ * A retry policy that sometimes retries with a lower consistency level than
  * the one initially requested.
  * <p/>
- * <b>BEWARE</b>: This policy may retry queries using a lower consistency
+ * <b>BEWARE</b>: this policy may retry queries using a lower consistency
  * level than the one initially requested. By doing so, it may break
  * consistency guarantees. In other words, if you use this retry policy,
- * there is cases (documented below) where a read at {@code QUORUM}
+ * there are cases (documented below) where a read at {@code QUORUM}
  * <b>may not</b> see a preceding write at {@code QUORUM}. Do not use this
  * policy unless you have understood the cases where this can happen and
  * are ok with that. It is also highly recommended to always wrap this
  * policy into {@link LoggingRetryPolicy} to log the occurrences of
- * such consistency break.
+ * such consistency breaks.
  * <p/>
  * This policy implements the same retries than the {@link DefaultRetryPolicy}
  * policy. But on top of that, it also retries in the following cases:
  * <ul>
- * <li>On a read timeout: if the number of replica that responded is
- * greater than one but lower than is required by the requested
+ * <li>On a read timeout: if the number of replicas that responded is
+ * greater than one, but lower than is required by the requested
  * consistency level, the operation is retried at a lower consistency
  * level.</li>
- * <li>On a write timeout: if the operation is an {@code
+ * <li>On a write timeout: if the operation is a {@code
  * WriteType.UNLOGGED_BATCH} and at least one replica acknowledged the
  * write, the operation is retried at a lower consistency level.
- * Furthermore, for other operation, if at least one replica acknowledged
+ * Furthermore, for other operations, if at least one replica acknowledged
  * the write, the timeout is ignored.</li>
  * <li>On an unavailable exception: if at least one replica is alive, the
  * operation is retried at a lower consistency level.</li>
  * </ul>
+ * The lower consistency level to use for retries is determined by the following rules:
+ * <ul>
+ * <li>if more than 3 replicas responded, use {@code THREE}.</li>
+ * <li>if 1, 2 or 3 replicas responded, use the corresponding level {@code ONE}, {@code TWO} or {@code THREE}.</li>
+ * </ul>
+ * Note that if the initial consistency level was {@code EACH_QUORUM}, Cassandra returns the number of live replicas
+ * <em>in the datacenter that failed to reach consistency</em>, not the overall number in the cluster. Therefore if this
+ * number is 0, we still retry at {@code ONE}, on the assumption that a host may still be up in another datacenter.
  * <p/>
  * The reasoning being this retry policy is the following one. If, based
  * on the information the Cassandra coordinator node returns, retrying the
- * operation with the initially requested consistency has a change to
- * succeed, do it. Otherwise, if based on these information we know <b>the
+ * operation with the initially requested consistency has a chance to
+ * succeed, do it. Otherwise, if based on this information we know <b>the
  * initially requested consistency level cannot be achieve currently</b>, then:
  * <ul>
  * <li>For writes, ignore the exception (thus silently failing the
@@ -75,37 +83,31 @@ public class DowngradingConsistencyRetryPolicy implements RetryPolicy {
     private DowngradingConsistencyRetryPolicy() {
     }
 
-    private RetryDecision maxLikelyToWorkCL(int knownOk) {
+    private RetryDecision maxLikelyToWorkCL(int knownOk, ConsistencyLevel currentCL) {
         if (knownOk >= 3)
             return RetryDecision.retry(ConsistencyLevel.THREE);
-        else if (knownOk == 2)
+
+        if (knownOk == 2)
             return RetryDecision.retry(ConsistencyLevel.TWO);
-        else if (knownOk == 1)
+
+        // JAVA-1005: EACH_QUORUM does not report a global number of alive replicas
+        // so even if we get 0 alive replicas, there might be
+        // a node up in some other datacenter
+        if (knownOk == 1 || currentCL == ConsistencyLevel.EACH_QUORUM)
             return RetryDecision.retry(ConsistencyLevel.ONE);
-        else
-            return RetryDecision.rethrow();
+        
+        return RetryDecision.rethrow();
     }
 
     /**
-     * Defines whether to retry and at which consistency level on a read timeout.
+     * {@inheritDoc}
      * <p/>
-     * This method triggers a maximum of one retry. If less replica
+     * This implementation triggers a maximum of one retry. If less replica
      * responded than required by the consistency level (but at least one
      * replica did respond), the operation is retried at a lower
      * consistency level. If enough replica responded but data was not
      * retrieve, the operation is retried with the initial consistency
      * level. Otherwise, an exception is thrown.
-     *
-     * @param statement         the original query that timed out.
-     * @param cl                the original consistency level of the read that timed out.
-     * @param requiredResponses the number of responses that were required to
-     *                          achieve the requested consistency level.
-     * @param receivedResponses the number of responses that had been received
-     *                          by the time the timeout exception was raised.
-     * @param dataRetrieved     whether actual data (by opposition to data checksum)
-     *                          was present in the received responses.
-     * @param nbRetry           the number of retry already performed for this operation.
-     * @return a RetryDecision as defined above.
      */
     @Override
     public RetryDecision onReadTimeout(Statement statement, ConsistencyLevel cl, int requiredResponses, int receivedResponses, boolean dataRetrieved, int nbRetry) {
@@ -116,21 +118,21 @@ public class DowngradingConsistencyRetryPolicy implements RetryPolicy {
         // normal consistency levels on the committing phase. So the main use case for CAS reads is probably for
         // when you've timed out on a CAS write and want to make sure what happened. Downgrading in that case
         // would be always wrong so we just special case to rethrow.
-        if (cl == ConsistencyLevel.SERIAL || cl == ConsistencyLevel.LOCAL_SERIAL)
+        if (cl.isSerial())
             return RetryDecision.rethrow();
 
         if (receivedResponses < requiredResponses) {
             // Tries the biggest CL that is expected to work
-            return maxLikelyToWorkCL(receivedResponses);
+            return maxLikelyToWorkCL(receivedResponses, cl);
         }
 
         return !dataRetrieved ? RetryDecision.retry(cl) : RetryDecision.rethrow();
     }
 
     /**
-     * Defines whether to retry and at which consistency level on a write timeout.
+     * {@inheritDoc}
      * <p/>
-     * This method triggers a maximum of one retry. If {@code writeType ==
+     * This implementation triggers a maximum of one retry. If {@code writeType ==
      * WriteType.BATCH_LOG}, the write is retried with the initial
      * consistency level. If {@code writeType == WriteType.UNLOGGED_BATCH}
      * and at least one replica acknowledged, the write is retried with a
@@ -139,16 +141,6 @@ public class DowngradingConsistencyRetryPolicy implements RetryPolicy {
      * all, even if {@code receivedAcks > 0}). For other write types ({@code WriteType.SIMPLE}
      * and {@code WriteType.BATCH}), if we know the write has been persisted on at
      * least one replica, we ignore the exception. Otherwise, an exception is thrown.
-     *
-     * @param statement    the original query that timed out.
-     * @param cl           the original consistency level of the write that timed out.
-     * @param writeType    the type of the write that timed out.
-     * @param requiredAcks the number of acknowledgments that were required to
-     *                     achieve the requested consistency level.
-     * @param receivedAcks the number of acknowledgments that had been received
-     *                     by the time the timeout exception was raised.
-     * @param nbRetry      the number of retry already performed for this operation.
-     * @return a RetryDecision as defined above.
      */
     @Override
     public RetryDecision onWriteTimeout(Statement statement, ConsistencyLevel cl, WriteType writeType, int requiredAcks, int receivedAcks, int nbRetry) {
@@ -163,7 +155,7 @@ public class DowngradingConsistencyRetryPolicy implements RetryPolicy {
             case UNLOGGED_BATCH:
                 // Since only part of the batch could have been persisted,
                 // retry with whatever consistency should allow to persist all
-                return maxLikelyToWorkCL(receivedAcks);
+                return maxLikelyToWorkCL(receivedAcks, cl);
             case BATCH_LOG:
                 return RetryDecision.retry(cl);
         }
@@ -172,30 +164,24 @@ public class DowngradingConsistencyRetryPolicy implements RetryPolicy {
     }
 
     /**
-     * Defines whether to retry and at which consistency level on an
-     * unavailable exception.
+     * {@inheritDoc}
      * <p/>
-     * This method triggers a maximum of one retry. If at least one replica
+     * This implementation triggers a maximum of one retry. If at least one replica
      * is know to be alive, the operation is retried at a lower consistency
      * level.
-     *
-     * @param statement       the original query for which the consistency level cannot
-     *                        be achieved.
-     * @param cl              the original consistency level for the operation.
-     * @param requiredReplica the number of replica that should have been
-     *                        (known) alive for the operation to be attempted.
-     * @param aliveReplica    the number of replica that were know to be alive by
-     *                        the coordinator of the operation.
-     * @param nbRetry         the number of retry already performed for this operation.
-     * @return a RetryDecision as defined above.
      */
     @Override
     public RetryDecision onUnavailable(Statement statement, ConsistencyLevel cl, int requiredReplica, int aliveReplica, int nbRetry) {
         if (nbRetry != 0)
             return RetryDecision.rethrow();
 
+        // JAVA-764: if the requested consistency level is serial, it means that the operation failed at the paxos phase of a LWT.
+        // Retry on the next host, on the assumption that the initial coordinator could be network-isolated.
+        if (cl.isSerial())
+            return RetryDecision.tryNextHost(null);
+
         // Tries the biggest CL that is expected to work
-        return maxLikelyToWorkCL(aliveReplica);
+        return maxLikelyToWorkCL(aliveReplica, cl);
     }
 
     /**

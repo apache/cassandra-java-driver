@@ -28,6 +28,7 @@ import com.google.common.base.Functions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.*;
+import io.netty.util.concurrent.EventExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,6 +47,9 @@ import java.util.concurrent.atomic.AtomicReference;
 class SessionManager extends AbstractSession {
 
     private static final Logger logger = LoggerFactory.getLogger(Session.class);
+
+    private static final boolean CHECK_IO_DEADLOCKS = SystemProperties.getBoolean(
+            "com.datastax.driver.CHECK_IO_DEADLOCKS", true);
 
     final Cluster cluster;
     final ConcurrentMap<Host, HostConnectionPool> pools;
@@ -223,7 +227,7 @@ class SessionManager extends AbstractSession {
                                 new DriverInternalError(String.format("%s response received when prepared statement was expected", response.type)));
                 }
             }
-        });
+        }, executor());
     }
 
     Connection.Factory connectionFactory() {
@@ -502,6 +506,9 @@ class SessionManager extends AbstractSession {
         } else if (serialConsistency == null)
             serialConsistency = configuration().getQueryOptions().getSerialConsistencyLevel();
 
+        if (statement.getOutgoingPayload() != null && protocolVersion.compareTo(ProtocolVersion.V4) < 0)
+            throw new UnsupportedFeatureException(protocolVersion, "Custom payloads are only supported since native protocol V4");
+
         long defaultTimestamp = Long.MIN_VALUE;
         if (protocolVersion.compareTo(ProtocolVersion.V3) >= 0) {
             defaultTimestamp = statement.getDefaultTimestamp();
@@ -559,8 +566,8 @@ class SessionManager extends AbstractSession {
 
             String qString = rs.getQueryString();
 
-            Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(consistency, positionalValues, namedValues, false,
-                    fetchSize, usedPagingState, serialConsistency, defaultTimestamp);
+            Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(Message.Request.Type.QUERY, consistency, positionalValues, namedValues,
+                    false, fetchSize, usedPagingState, serialConsistency, defaultTimestamp);
             request = new Requests.Query(qString, options, statement.isTracing());
         } else if (statement instanceof BoundStatement) {
             BoundStatement bs = (BoundStatement) statement;
@@ -571,8 +578,8 @@ class SessionManager extends AbstractSession {
             if (protocolVersion.compareTo(ProtocolVersion.V4) < 0)
                 bs.ensureAllSet();
             boolean skipMetadata = protocolVersion != ProtocolVersion.V1 && bs.statement.getPreparedId().resultSetMetadata != null;
-            Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(consistency, Arrays.asList(bs.wrapper.values), Collections.<String, ByteBuffer>emptyMap(), skipMetadata,
-                    fetchSize, usedPagingState, serialConsistency, defaultTimestamp);
+            Requests.QueryProtocolOptions options = new Requests.QueryProtocolOptions(Message.Request.Type.EXECUTE, consistency, Arrays.asList(bs.wrapper.values), Collections.<String, ByteBuffer>emptyMap(),
+                    skipMetadata, fetchSize, usedPagingState, serialConsistency, defaultTimestamp);
             request = new Requests.Execute(bs.statement.getPreparedId().id, options, statement.isTracing());
         } else {
             assert statement instanceof BatchStatement : statement;
@@ -655,6 +662,22 @@ class SessionManager extends AbstractSession {
     void cleanupIdleConnections(long now) {
         for (HostConnectionPool pool : pools.values()) {
             pool.cleanupIdleConnections(now);
+        }
+    }
+
+    @Override
+    protected void checkNotInEventLoop() {
+        Connection.Factory connectionFactory = cluster.manager.connectionFactory;
+        if (!CHECK_IO_DEADLOCKS || connectionFactory == null)
+            return;
+        for (EventExecutor executor : connectionFactory.eventLoopGroup) {
+            if (executor.inEventLoop()) {
+                throw new IllegalStateException(
+                        "Detected a synchronous Session call (execute() or prepare()) on an I/O thread, " +
+                                "this can cause deadlocks or unpredictable behavior. " +
+                                "Make sure your Future callbacks only use async calls, or schedule them on a " +
+                                "different executor.");
+            }
         }
     }
 

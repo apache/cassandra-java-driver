@@ -48,6 +48,16 @@ public class Metadata {
     private static final Pattern alphanumeric = Pattern.compile("\\w+"); // this includes _
     private static final Pattern lowercaseAlphanumeric = Pattern.compile("[a-z][a-z0-9_]*");
 
+    // See https://github.com/apache/cassandra/blob/trunk/doc/cql3/CQL.textile#appendixA
+    private static final Set<String> RESERVED_KEYWORDS = ImmutableSet.of(
+            "add", "allow", "alter", "and", "any", "apply", "asc", "authorize", "batch", "begin", "by",
+            "columnfamily", "create", "delete", "desc", "drop", "each_quorum", "from", "grant", "in",
+            "index", "inet", "infinity", "insert", "into", "keyspace", "keyspaces", "limit", "local_one",
+            "local_quorum", "modify", "nan", "norecursive", "of", "on", "one", "order", "password",
+            "primary", "quorum", "rename", "revoke", "schema", "select", "set", "table", "to",
+            "token", "three", "truncate", "two", "unlogged", "update", "use", "using", "where", "with"
+    );
+
     Metadata(Cluster.Manager cluster) {
         this.cluster = cluster;
     }
@@ -129,8 +139,11 @@ public class Metadata {
     // tables. Because it comes from Cassandra, we could just always quote it,
     // but to get a nicer output we don't do it if it's not necessary.
     static String escapeId(String ident) {
-        // we don't need to escape if it's lowercase and match non-quoted CQL3 ids.
-        return lowercaseAlphanumeric.matcher(ident).matches() ? ident : quote(ident);
+        // we don't need to escape if it's lowercase and match non-quoted CQL3 ids,
+        // and if it's not a CQL reserved keyword
+        return lowercaseAlphanumeric.matcher(ident).matches()
+                && !isReservedCqlKeyword(ident) ?
+                ident : quote(ident);
     }
 
     /**
@@ -180,8 +193,13 @@ public class Metadata {
      * the identifier in double quotes (see the
      * <a href="http://cassandra.apache.org/doc/cql3/CQL.html#identifiers">CQL documentation</a>
      * for details). If you are using case sensitive identifiers, this method
-     * can be used to enclose such identifier in double quotes, making it case
+     * can be used to enclose such identifiers in double quotes, making them case
      * sensitive.
+     * <p/>
+     * Note that
+     * <a href="https://docs.datastax.com/en/cql/3.0/cql/cql_reference/keywords_r.html">reserved CQL keywords</a>
+     * should also be quoted. You can check if a given identifier is a reserved keyword
+     * by calling {@link #isReservedCqlKeyword(String)}.
      *
      * @param id the keyspace or table identifier.
      * @return {@code id} enclosed in double-quotes, for use in methods like
@@ -190,6 +208,25 @@ public class Metadata {
      */
     public static String quote(String id) {
         return '"' + id.replace("\"", "\"\"") + '"';
+    }
+
+    /**
+     * Checks whether an identifier is a known reserved CQL keyword or not.
+     * <p/>
+     * The check is case-insensitive, i.e., the word "{@code KeYsPaCe}"
+     * would be considered as a reserved CQL keyword just as "{@code keyspace}".
+     * <p/>
+     * Note: The list of reserved CQL keywords is subject to change in future
+     * versions of Cassandra. As a consequence, this method is provided solely as a
+     * convenience utility and should not be considered as an authoritative
+     * source of truth for checking reserved CQL keywords.
+     *
+     * @param id the identifier to check; should not be {@code null}.
+     * @return {@code true} if the given identifier is a known reserved
+     * CQL keyword, {@code false} otherwise.
+     */
+    public static boolean isReservedCqlKeyword(String id) {
+        return id != null && RESERVED_KEYWORDS.contains(id.toLowerCase());
     }
 
     /**
@@ -421,6 +458,24 @@ public class Metadata {
         if (current == null)
             throw new IllegalStateException("Token factory not set. This should only happen if metadata was explicitly disabled");
         return current.factory.fromString(tokenStr);
+    }
+
+    /**
+     * Builds a new {@link Token} from a partition key.
+     *
+     * @param components the components of the partition key, in their serialized form (obtained with
+     *                   {@link TypeCodec#serialize(Object, ProtocolVersion)}).
+     * @return the token.
+     * @throws IllegalStateException if the token factory was not initialized. This would typically
+     *                               happen if metadata was explicitly disabled with {@link QueryOptions#setMetadataEnabled(boolean)}
+     *                               before startup.
+     */
+    public Token newToken(ByteBuffer... components) {
+        TokenMap current = tokenMap;
+        if (current == null)
+            throw new IllegalStateException("Token factory not set. This should only happen if metadata was explicitly disabled");
+        return current.factory.hash(
+                SimpleStatement.compose(components));
     }
 
     /**

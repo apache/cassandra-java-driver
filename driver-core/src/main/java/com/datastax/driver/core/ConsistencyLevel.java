@@ -58,11 +58,30 @@ public enum ConsistencyLevel {
     }
 
     /**
-     * Whether or not the the consistency level applies to the local data-center only.
+     * Whether or not this consistency level applies to the local data-center only.
      *
      * @return whether this consistency level is {@code LOCAL_ONE} or {@code LOCAL_QUORUM}.
      */
     public boolean isDCLocal() {
         return this == LOCAL_ONE || this == LOCAL_QUORUM;
     }
+
+    /**
+     * Whether or not this consistency level is serial, that is,
+     * applies only to the "paxos" phase of a
+     * <a href="https://docs.datastax.com/en/cassandra/2.1/cassandra/dml/dml_ltwt_transaction_c.html">Lightweight transaction</a>.
+     * <p/>
+     * Serial consistency levels are only meaningful when executing conditional updates ({@code INSERT}, {@code UPDATE}
+     * or {@code DELETE} statements with an {@code IF} condition).
+     * <p/>
+     * Two consistency levels belong to this category: {@link #SERIAL} and {@link #LOCAL_SERIAL}.
+     *
+     * @return whether this consistency level is {@link #SERIAL} or {@link #LOCAL_SERIAL}.
+     * @see Statement#setSerialConsistencyLevel(ConsistencyLevel)
+     * @see <a href="https://docs.datastax.com/en/cassandra/2.1/cassandra/dml/dml_ltwt_transaction_c.html">Lightweight transactions</a>
+     */
+    public boolean isSerial() {
+        return this == SERIAL || this == LOCAL_SERIAL;
+    }
+
 }

@@ -63,7 +63,7 @@ class RequestHandler {
     private final long startTime;
 
     private final AtomicBoolean isDone = new AtomicBoolean();
-    private AtomicInteger executionCount = new AtomicInteger();
+    private final AtomicInteger executionCount = new AtomicInteger();
 
     public RequestHandler(SessionManager manager, Callback callback, Statement statement) {
         this.id = Long.toString(System.identityHashCode(this));
@@ -105,10 +105,6 @@ class RequestHandler {
 
         Message.Request request = callback.request();
         int position = executionCount.incrementAndGet();
-        // Clone the request after the first execution, since we set the streamId on it later and we
-        // don't want to share that across executions.
-        if (position > 1)
-            request = request.copy();
 
         SpeculativeExecution execution = new SpeculativeExecution(request, position);
         runningExecutions.add(execution);
@@ -383,7 +379,8 @@ class RequestHandler {
 
         private void retry(final boolean retryCurrent, ConsistencyLevel newConsistencyLevel) {
             final Host h = current;
-            this.retryConsistencyLevel = newConsistencyLevel;
+            if (newConsistencyLevel != null)
+                this.retryConsistencyLevel = newConsistencyLevel;
 
             // We should not retry on the current thread as this will be an IO thread.
             manager.executor().execute(new Runnable() {

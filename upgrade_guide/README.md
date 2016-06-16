@@ -3,7 +3,7 @@
 The purpose of this guide is to detail changes made by successive
 versions of the Java driver.
 
-### 3.0
+### 3.0.0
 
 This version brings parity with Cassandra 2.2 and 3.0.
 
@@ -268,6 +268,10 @@ We've also seized the opportunity to remove code that was deprecated in 2.1.
 28. `IndexMetadata` is now a top-level class and its structure has been deeply modified. 
     Again, this is due to the fact that secondary indexes have been completely redesigned 
     in Cassandra 3.0.
+
+29. `SSLOptions` has been refactored to allow the option to choose between JDK and Netty-based
+    SSL implementations.  See [JAVA-841](https://datastax-oss.atlassian.net/browse/JAVA-841) and
+    the [SSL documentation](../manual/ssl) for more details.
 
 
 ### 2.1.8

@@ -49,9 +49,11 @@ abstract class ConvictionPolicy {
      *
      * @return whether the host should be considered down.
      */
-    abstract boolean signalConnectionFailure(Connection connection);
+    abstract boolean signalConnectionFailure(Connection connection, boolean decrement);
 
     abstract boolean canReconnectNow();
+
+    abstract boolean hasActiveConnections();
 
     /**
      * Simple factory interface to allow creating {@link ConvictionPolicy} instances.
@@ -95,13 +97,18 @@ abstract class ConvictionPolicy {
         }
 
         @Override
-        boolean signalConnectionFailure(Connection connection) {
-            if (host.state != Host.State.DOWN)
-                updateReconnectionTime();
+        boolean signalConnectionFailure(Connection connection, boolean decrement) {
+            int remaining;
+            if (decrement) {
+                if (host.state != Host.State.DOWN)
+                    updateReconnectionTime();
 
-            int remaining = openConnections.decrementAndGet();
-            assert remaining >= 0;
-            Host.statesLogger.debug("[{}] {} failed, remaining = {}", host, connection, remaining);
+                remaining = openConnections.decrementAndGet();
+                assert remaining >= 0;
+                Host.statesLogger.debug("[{}] {} failed, remaining = {}", host, connection, remaining);
+            } else {
+                remaining = openConnections.get();
+            }
             return remaining == 0;
         }
 
@@ -130,6 +137,11 @@ abstract class ConvictionPolicy {
                     System.nanoTime() >= nextReconnectionTime;
             Host.statesLogger.trace("canReconnectNow={}", canReconnectNow);
             return canReconnectNow;
+        }
+
+        @Override
+        boolean hasActiveConnections() {
+            return openConnections.get() > 0;
         }
 
         static class Factory implements ConvictionPolicy.Factory {

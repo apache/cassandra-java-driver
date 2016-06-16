@@ -19,7 +19,7 @@ import com.datastax.driver.core.utils.CassandraVersion;
 import org.testng.annotations.Test;
 
 import static com.datastax.driver.core.Assertions.assertThat;
-import static com.datastax.driver.core.DataType.cint;
+import static com.datastax.driver.core.DataType.*;
 import static org.assertj.core.api.Assertions.entry;
 
 @CassandraVersion(major = 2.2)
@@ -121,6 +121,44 @@ public class FunctionMetadataTest extends CCMTestsSupport {
         assertThat(function.getBody()).isEqualTo(body);
         assertThat(function.isCalledOnNullInput()).isTrue();
         assertThat(function.toString()).isEqualTo(cqlFunction);
+    }
+
+    /**
+     * Ensures that functions whose arguments contain complex types such as
+     * tuples and collections, and nested combinations thereof, are
+     * correctly parsed.
+     *
+     * @jira_ticket JAVA-1137
+     */
+    @Test(groups = "short")
+    public void should_parse_and_format_functions_with_complex_arguments() {
+        // given
+        String cql = String.format("CREATE FUNCTION %s.complex(x tuple<tuple<int>, map<int, int>>) RETURNS NULL ON NULL INPUT RETURNS int LANGUAGE java AS 'return 42;';", keyspace);
+        // when
+        session().execute(cql);
+        // then
+        KeyspaceMetadata keyspace = cluster().getMetadata().getKeyspace(this.keyspace);
+        DataType argumentType = cluster().getMetadata().newTupleType(cluster().getMetadata().newTupleType(cint()), map(cint(), cint()));
+        FunctionMetadata function = keyspace.getFunction("complex", argumentType);
+        assertThat(function).isNotNull();
+        assertThat(function.getKeyspace()).isEqualTo(keyspace);
+        assertThat(function.getSignature()).isEqualTo("complex(tuple<tuple<int>, map<int, int>>)");
+        assertThat(function.getSimpleName()).isEqualTo("complex");
+        assertThat(function.getReturnType()).isEqualTo(cint());
+        assertThat(function.getArguments())
+                .containsEntry("x", argumentType);
+        assertThat(function.getLanguage()).isEqualTo("java");
+        assertThat(function.getBody()).isEqualTo("return 42;");
+        assertThat(function.isCalledOnNullInput()).isFalse();
+        assertThat(function.toString())
+                .isEqualTo(cql);
+        assertThat(function.exportAsString())
+                .isEqualTo(String.format("CREATE FUNCTION %s.complex(\n"
+                        + "    x tuple<tuple<int>, map<int, int>>)\n"
+                        + "RETURNS NULL ON NULL INPUT\n"
+                        + "RETURNS int\n"
+                        + "LANGUAGE java\n"
+                        + "AS 'return 42;';", this.keyspace));
     }
 
     @Override

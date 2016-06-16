@@ -49,15 +49,22 @@ class Requests {
         };
 
         private final Map<String, String> options;
+        private final ProtocolOptions.Compression compression;
 
         Startup(ProtocolOptions.Compression compression) {
             super(Message.Request.Type.STARTUP);
+            this.compression = compression;
 
             ImmutableMap.Builder<String, String> map = new ImmutableMap.Builder<String, String>();
             map.put(CQL_VERSION_OPTION, CQL_VERSION);
             if (compression != ProtocolOptions.Compression.NONE)
                 map.put(COMPRESSION_OPTION, compression.toString());
             this.options = map.build();
+        }
+
+        @Override
+        Request copy() {
+            return new Startup(compression);
         }
 
         @Override
@@ -90,6 +97,11 @@ class Requests {
             super(Message.Request.Type.CREDENTIALS);
             this.credentials = credentials;
         }
+
+        @Override
+        Request copy() {
+            return new Credentials(credentials);
+        }
     }
 
     static class Options extends Message.Request {
@@ -107,6 +119,11 @@ class Requests {
 
         Options() {
             super(Message.Request.Type.OPTIONS);
+        }
+
+        @Override
+        Request copy() {
+            return new Options();
         }
 
         @Override
@@ -231,16 +248,18 @@ class Requests {
 
     static class QueryProtocolOptions {
 
-        static final QueryProtocolOptions DEFAULT = new QueryProtocolOptions(ConsistencyLevel.ONE,
+        static final QueryProtocolOptions DEFAULT = new QueryProtocolOptions(
+                Message.Request.Type.QUERY,
+                ConsistencyLevel.ONE,
                 Collections.<ByteBuffer>emptyList(),
                 Collections.<String, ByteBuffer>emptyMap(),
                 false,
                 -1,
                 null,
-                ConsistencyLevel.SERIAL,
-                Long.MIN_VALUE);
+                ConsistencyLevel.SERIAL, Long.MIN_VALUE);
 
         private final EnumSet<QueryFlag> flags = EnumSet.noneOf(QueryFlag.class);
+        private final Message.Request.Type requestType;
         final ConsistencyLevel consistency;
         final List<ByteBuffer> positionalValues;
         final Map<String, ByteBuffer> namedValues;
@@ -250,7 +269,8 @@ class Requests {
         final ConsistencyLevel serialConsistency;
         final long defaultTimestamp;
 
-        QueryProtocolOptions(ConsistencyLevel consistency,
+        QueryProtocolOptions(Message.Request.Type requestType,
+                             ConsistencyLevel consistency,
                              List<ByteBuffer> positionalValues,
                              Map<String, ByteBuffer> namedValues,
                              boolean skipMetadata,
@@ -261,6 +281,7 @@ class Requests {
 
             Preconditions.checkArgument(positionalValues.isEmpty() || namedValues.isEmpty());
 
+            this.requestType = requestType;
             this.consistency = consistency;
             this.positionalValues = positionalValues;
             this.namedValues = namedValues;
@@ -290,14 +311,15 @@ class Requests {
         }
 
         QueryProtocolOptions copy(ConsistencyLevel newConsistencyLevel) {
-            return new QueryProtocolOptions(newConsistencyLevel, positionalValues, namedValues, skipMetadata, pageSize, pagingState, serialConsistency, defaultTimestamp);
+            return new QueryProtocolOptions(requestType, newConsistencyLevel, positionalValues, namedValues, skipMetadata, pageSize, pagingState, serialConsistency, defaultTimestamp);
         }
 
         void encode(ByteBuf dest, ProtocolVersion version) {
             switch (version) {
                 case V1:
-                    // Values in protocol v1 are only for bound statements, and these are never named
-                    if (flags.contains(QueryFlag.VALUES))
+                    // only EXECUTE messages have variables in V1, and their list must be written
+                    // even if it is empty; and they are never named
+                    if (requestType == Message.Request.Type.EXECUTE)
                         CBUtil.writeValueList(positionalValues, dest);
                     CBUtil.writeConsistencyLevel(consistency, dest);
                     break;
@@ -331,7 +353,9 @@ class Requests {
         int encodedSize(ProtocolVersion version) {
             switch (version) {
                 case V1:
-                    return CBUtil.sizeOfValueList(positionalValues)
+                    // only EXECUTE messages have variables in V1, and their list must be written
+                    // even if it is empty; and they are never named
+                    return (requestType == Message.Request.Type.EXECUTE ? CBUtil.sizeOfValueList(positionalValues) : 0)
                             + CBUtil.sizeOfConsistencyLevel(consistency);
                 case V2:
                 case V3:
@@ -547,6 +571,11 @@ class Requests {
         }
 
         @Override
+        Request copy() {
+            return new Prepare(query);
+        }
+
+        @Override
         public String toString() {
             return "PREPARE " + query;
         }
@@ -579,6 +608,11 @@ class Requests {
         }
 
         @Override
+        Request copy() {
+            return new Register(eventTypes);
+        }
+
+        @Override
         public String toString() {
             return "REGISTER " + eventTypes;
         }
@@ -604,6 +638,11 @@ class Requests {
         AuthResponse(byte[] token) {
             super(Message.Request.Type.AUTH_RESPONSE);
             this.token = token;
+        }
+
+        @Override
+        Request copy() {
+            return new AuthResponse(token);
         }
     }
 }

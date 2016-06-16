@@ -16,7 +16,7 @@ session.execute("INSERT INTO my_table(c1, c2) values (1, 1) " +
 
 ### Client-side generation
 
-This is enabled by default if you're using the driver 3.0 and a version
+This is enabled by default if you're using the driver 3.0+ and a version
 of Cassandra that supports [native protocol](../native_protocol) v3 or
 above.
 

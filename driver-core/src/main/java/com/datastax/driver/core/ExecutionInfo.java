@@ -56,20 +56,19 @@ public class ExecutionInfo {
         this(triedHosts, null, null, null, null, null, null, true, Collections.<String>emptyList(), null);
     }
 
-    ExecutionInfo withTraceAndWarnings(QueryTrace newTrace, List<String> warnings) {
-        return new ExecutionInfo(triedHosts, achievedConsistency, newTrace, pagingState, protocolVersion, codecRegistry, statement, schemaInAgreement, warnings, incomingPayload);
-    }
-
     ExecutionInfo withAchievedConsistency(ConsistencyLevel newConsistency) {
         return new ExecutionInfo(triedHosts, newConsistency, trace, pagingState, protocolVersion, codecRegistry, statement, schemaInAgreement, warnings, incomingPayload);
     }
 
-    ExecutionInfo withPagingState(ByteBuffer pagingState, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
-        return new ExecutionInfo(triedHosts, achievedConsistency, trace, pagingState, protocolVersion, codecRegistry, statement, schemaInAgreement, warnings, incomingPayload);
-    }
-
-    ExecutionInfo withStatement(Statement statement) {
-        return new ExecutionInfo(triedHosts, achievedConsistency, trace, pagingState, protocolVersion, codecRegistry, statement, schemaInAgreement, warnings, incomingPayload);
+    ExecutionInfo with(QueryTrace newTrace, List<String> newWarnings, ByteBuffer newPagingState, Statement newStatement, ProtocolVersion protocolVersion, CodecRegistry codecRegistry) {
+        return new ExecutionInfo(this.triedHosts, this.achievedConsistency,
+                newTrace,
+                newPagingState, protocolVersion, codecRegistry,
+                newStatement,
+                schemaInAgreement,
+                newWarnings,
+                incomingPayload
+        );
     }
 
     ExecutionInfo withIncomingPayload(Map<String, ByteBuffer> incomingPayload) {
@@ -251,4 +250,12 @@ public class ExecutionInfo {
         return incomingPayload;
     }
 
+    /**
+     * Get the statement that has been executed.
+     *
+     * @return the statement executed.
+     */
+    public Statement getStatement() {
+        return this.statement;
+    }
 }

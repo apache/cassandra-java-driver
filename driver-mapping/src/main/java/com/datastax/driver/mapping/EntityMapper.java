@@ -26,16 +26,16 @@ import static com.datastax.driver.core.querybuilder.QueryBuilder.quote;
 
 abstract class EntityMapper<T> {
 
-    public final Class<T> entityClass;
+    final Class<T> entityClass;
     private final String keyspace;
     private final String table;
 
-    public final ConsistencyLevel writeConsistency;
-    public final ConsistencyLevel readConsistency;
+    final ConsistencyLevel writeConsistency;
+    final ConsistencyLevel readConsistency;
 
-    public final List<ColumnMapper<T>> partitionKeys = new ArrayList<ColumnMapper<T>>();
-    public final List<ColumnMapper<T>> clusteringColumns = new ArrayList<ColumnMapper<T>>();
-    public final List<ColumnMapper<T>> regularColumns = new ArrayList<ColumnMapper<T>>();
+    final List<ColumnMapper<T>> partitionKeys = new ArrayList<ColumnMapper<T>>();
+    final List<ColumnMapper<T>> clusteringColumns = new ArrayList<ColumnMapper<T>>();
+    final List<ColumnMapper<T>> regularColumns = new ArrayList<ColumnMapper<T>>();
 
     private final List<ColumnMapper<T>> allColumns = new ArrayList<ColumnMapper<T>>();
 
@@ -47,23 +47,23 @@ abstract class EntityMapper<T> {
         this.readConsistency = readConsistency;
     }
 
-    public String getKeyspace() {
+    String getKeyspace() {
         return quote(keyspace);
     }
 
-    public String getTable() {
+    String getTable() {
         return quote(table);
     }
 
-    public int primaryKeySize() {
+    int primaryKeySize() {
         return partitionKeys.size() + clusteringColumns.size();
     }
 
-    public ColumnMapper<T> getPrimaryKeyColumn(int i) {
+    ColumnMapper<T> getPrimaryKeyColumn(int i) {
         return i < partitionKeys.size() ? partitionKeys.get(i) : clusteringColumns.get(i - partitionKeys.size());
     }
 
-    public void addColumns(List<ColumnMapper<T>> pks, List<ColumnMapper<T>> ccs, List<ColumnMapper<T>> rgs) {
+    void addColumns(List<ColumnMapper<T>> pks, List<ColumnMapper<T>> ccs, List<ColumnMapper<T>> rgs) {
         partitionKeys.addAll(pks);
         allColumns.addAll(pks);
 
@@ -73,14 +73,14 @@ abstract class EntityMapper<T> {
         addColumns(rgs);
     }
 
-    public void addColumns(List<ColumnMapper<T>> rgs) {
+    void addColumns(List<ColumnMapper<T>> rgs) {
         regularColumns.addAll(rgs);
         allColumns.addAll(rgs);
     }
 
-    public abstract T newEntity();
+    abstract T newEntity();
 
-    public List<ColumnMapper<T>> allColumns() {
+    List<ColumnMapper<T>> allColumns() {
         return allColumns;
     }
 

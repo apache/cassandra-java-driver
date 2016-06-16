@@ -16,6 +16,7 @@
 package com.datastax.driver.core.querybuilder;
 
 import com.datastax.driver.core.CodecRegistry;
+import com.datastax.driver.core.ColumnMetadata;
 import com.datastax.driver.core.TableMetadata;
 
 import java.util.ArrayList;
@@ -34,14 +35,22 @@ public class Insert extends BuiltStatement {
     private boolean ifNotExists;
 
     Insert(String keyspace, String table) {
-        super(keyspace);
-        this.table = table;
-        this.usings = new Options(this);
+        this(keyspace, table, null, null);
     }
 
     Insert(TableMetadata table) {
-        super(table);
-        this.table = escapeId(table.getName());
+        this(escapeId(table.getKeyspace().getName()),
+                escapeId(table.getName()),
+                Arrays.asList(new Object[table.getPartitionKey().size()]),
+                table.getPartitionKey());
+    }
+
+    Insert(String keyspace,
+           String table,
+           List<Object> routingKeyValues,
+           List<ColumnMetadata> partitionKey) {
+        super(keyspace, partitionKey, routingKeyValues);
+        this.table = table;
         this.usings = new Options(this);
     }
 
@@ -157,10 +166,14 @@ public class Insert extends BuiltStatement {
      * <p/>
      * Please keep in mind that using this option has a non negligible
      * performance impact and should be avoided when possible.
+     * <p/>
+     * This will configure the statement as non-idempotent, see {@link com.datastax.driver.core.Statement#isIdempotent()}
+     * for more information.
      *
      * @return this INSERT statement.
      */
     public Insert ifNotExists() {
+        this.setNonIdempotentOps();
         this.ifNotExists = true;
         return this;
     }

@@ -75,6 +75,7 @@ public class Host {
     private volatile Set<Token> tokens;
 
     private volatile String dseWorkload;
+    private volatile boolean dseGraphEnabled;
     private volatile VersionNumber dseVersion;
 
     // ClusterMetadata keeps one Host object per inet address and we rely on this (more precisely,
@@ -132,6 +133,10 @@ public class Host {
         this.dseWorkload = dseWorkload;
     }
 
+    void setDseGraphEnabled(boolean dseGraphEnabled) {
+        this.dseGraphEnabled = dseGraphEnabled;
+    }
+
     /**
      * Returns the address that the driver will use to connect to the node.
      * <p/>
@@ -164,18 +169,20 @@ public class Host {
     }
 
     /**
-     * Returns the node broadcast address, that is, the IP by which it should be contacted by other peers in the cluster.
+     * Returns the node broadcast address (that is, the IP by which it should be contacted by other peers in the
+     * cluster), if known.
      * <p/>
      * This corresponds to the {@code broadcast_address} cassandra.yaml file setting and
      * is by default the same as {@link #getListenAddress()}, unless specified
      * otherwise in cassandra.yaml.
      * <em>This is NOT the address clients should use to contact this node</em>.
      * <p/>
-     * Note that, depending on the Cassandra version the node is currently in,
-     * it might not be possible to determine the node's broadcast address, in which
-     * case this method will return {@code null}.
+     * This information is always available for peer hosts. For the control host, it's only available if CASSANDRA-9436
+     * is fixed on the server side (Cassandra versions >= 2.0.16, 2.1.6, 2.2.0 rc1). For older versions, note that if
+     * the driver loses the control connection and reconnects to a different control host, the old control host becomes
+     * a peer, and therefore its broadcast address is updated.
      *
-     * @return the node broadcast address.
+     * @return the node broadcast address, if known. Otherwise {@code null}.
      * @see <a href="https://docs.datastax.com/en/cassandra/2.1/cassandra/configuration/configCassandra_yaml_r.html">The cassandra.yaml configuration file</a>
      */
     public InetAddress getBroadcastAddress() {
@@ -183,16 +190,17 @@ public class Host {
     }
 
     /**
-     * Returns the node listen address, that is, the IP the node uses to contact other peers in the cluster.
+     * Returns the node listen address (that is, the IP the node uses to contact other peers in the cluster), if known.
      * <p/>
      * This corresponds to the {@code listen_address} cassandra.yaml file setting.
      * <em>This is NOT the address clients should use to contact this node</em>.
      * <p/>
-     * Note that, depending on the Cassandra version the node is currently in,
-     * it might not be possible to determine the node's listen address, in which
-     * case this method will return {@code null}.
+     * This information is available for the control host if CASSANDRA-9603 is fixed on the server side (Cassandra
+     * versions >= 2.0.17, 2.1.8, 2.2.0 rc2). It's currently not available for peer hosts. Note that the current driver
+     * code already tries to read a {@code listen_address} column in {@code system.peers}; when a future Cassandra
+     * version adds it, it will be picked by the driver without any further change needed.
      *
-     * @return the node listen address.
+     * @return the node listen address, if known. Otherwise {@code null}.
      * @see <a href="https://docs.datastax.com/en/cassandra/2.1/cassandra/configuration/configCassandra_yaml_r.html">The cassandra.yaml configuration file</a>
      */
     public InetAddress getListenAddress() {
@@ -264,6 +272,15 @@ public class Host {
      */
     public String getDseWorkload() {
         return dseWorkload;
+    }
+
+    /**
+     * Returns whether the host is running DSE Graph.
+     *
+     * @return whether the node is running DSE Graph.
+     */
+    public boolean isDseGraphEnabled() {
+        return dseGraphEnabled;
     }
 
     /**

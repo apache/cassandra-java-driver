@@ -1,19 +1,61 @@
 ## Address resolution
 
-The driver auto-detects new Cassandra nodes added to the cluster through server
-side push notifications and through checking the system tables.
+Each node in the Cassandra cluster is uniquely identified by an IP address that the driver will use to establish
+connections.
 
-For each node, the address the driver will receive will correspond to the address set as
-`rpc_address` in the node's `cassandra.yaml` file. In most cases, this is the correct value.
-However, sometimes the addresses received through this mechanism will either not be
-reachable directly by the driver, or should not be the preferred address to use
-(for instance, it might be a private IP, but some clients  may have to use a public IP, or
-go through a router).
+* for contact points, these are provided as part of configuring the `Cluster` object;
+* for other nodes, addresses will be discovered dynamically, either by inspecting `system.peers` on already connected
+  nodes, or via push notifications received from the [control host](../control_connection) when new nodes are discovered
+  by gossip.
 
-### The [AddressTranslator][at] interface
 
-This interface allows you to deal with such cases, by transforming the address sent by a
-Cassandra node to another address to be used by the driver for connection.
+### Cassandra-side configuration
+
+The address that each Cassandra node shares with clients is the **broadcast RPC address**; it is controlled by various
+properties in [cassandra.yaml]:
+
+* [rpc_address] or [rpc_interface] is the address that the Cassandra process *binds to*. You must set one or the other,
+  not both (for more details, see the inline comments in the default `cassandra.yaml` that came with your installation);
+* [broadcast_rpc_address] \(introduced in Cassandra 2.1) is the address to share with clients, if it is different than
+  the previous one (the reason for having a separate property is if the bind address is not public to clients, because
+  there is a router in between).
+
+If `broadcast_rpc_address` is not set, it defaults to `rpc_address`/`rpc_interface`. If `rpc_address`/`rpc_interface`
+is 0.0.0.0 (all interfaces), then `broadcast_rpc_address` *must* be set.
+
+If you're not sure which address a Cassandra node is broadcasting, launch cqlsh locally on the node, execute the
+following query and take node of the result:
+
+```
+cqlsh> select broadcast_address from system.local;
+
+ broadcast_address
+-------------------
+         172.1.2.3
+```
+
+Then connect to *another* node in the cluster and run the following query, injecting the previous result:
+
+```
+cqlsh> select rpc_address from system.peers where peer = '172.1.2.3';
+
+ rpc_address
+-------------
+     1.2.3.4
+```
+
+That last result is the broadcast RPC address. Ensure that it is accessible from the client machine where the driver
+will run.
+
+
+### Driver-side address translation
+
+Sometimes it's not possible for Cassandra nodes to broadcast addresses that will work for each and every client; for
+instance, they might broadcast private IPs because most clients are in the same network, but a particular client could
+be on another network and go through a router.
+
+For such cases, you can register a driver-side component that will perform additional address translation. Write a class
+that implements [AddressTranslator] and register an instance with your `Cluster`:
 
 ```java
 public class MyAddressTranslator implements AddressTranslator {
@@ -31,19 +73,15 @@ Cluster cluster = Cluster.builder()
 Note: the contact points provided while creating the `Cluster` are not translated, only
 addresses retrieved from or sent by Cassandra nodes are.
 
-[at]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/policies/AddressTranslator.html
-
 ### EC2 multi-region
 
-[EC2MultiRegionAddressTranslator][ec2] is provided out of the box. It
-helps optimize network costs when your infrastructure (both Cassandra
-nodes *and* clients) is distributed across multiple Amazon EC2 regions:
+If you deploy both Cassandra and client applications on Amazon EC2, and your cluster spans multiple regions, you'll have
+to configure your Cassandra nodes to broadcast public RPC addresses.
 
-* a client communicating with a Cassandra node *in the same EC2 region* should use the node's
-  private IP (which is less expensive);
-* a client communicating with a node in a different region should use the public IP.
+However, this is not always the most cost-effective: if a client and a node are in the same region, it would be cheaper
+to connect over the private IP. Ideally, you'd want to pick the best address in each case.
 
-To use this implementation, provide an instance when initializing the `Cluster`:
+The driver provides an address translator that does just that: [EC2MultiRegionAddressTranslator].
 
 ```java
 Cluster cluster = Cluster.builder()
@@ -52,8 +90,22 @@ Cluster cluster = Cluster.builder()
     .build();
 ```
 
-This class performs a reverse DNS lookup of the origin address, to find the domain name of the
-target instance. Then it performs a forward DNS lookup of the domain name; the EC2 DNS does the
-private/public switch automatically based on location.
+With this configuration, you keep broadcasting public RPC addresses. But each time the driver connects to a new
+Cassandra node:
 
-[ec2]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/policies/EC2MultiRegionAddressTranslator.html
+* if the node is *in the same EC2 region*, the public IP will be translated to the intra-region private IP;
+* otherwise, it will not be translated.
+
+(To achieve this, `EC2MultiRegionAddressTranslator` performs a reverse DNS lookup of the origin address, to find the
+domain name of the target instance. Then it performs a forward DNS lookup of the domain name; the EC2 DNS does the
+private/public switch automatically based on location).
+
+
+
+[AddressTranslator]:               http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/policies/AddressTranslator.html
+[EC2MultiRegionAddressTranslator]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/policies/EC2MultiRegionAddressTranslator.html
+
+[cassandra.yaml]:        https://docs.datastax.com/en/cassandra/3.x/cassandra/configuration/configCassandra_yaml.html
+[rpc_address]:           https://docs.datastax.com/en/cassandra/3.x/cassandra/configuration/configCassandra_yaml.html?scroll=configCassandra_yaml__rpc_address
+[rpc_interface]:         https://docs.datastax.com/en/cassandra/3.x/cassandra/configuration/configCassandra_yaml.html?scroll=configCassandra_yaml__rpc_interface
+[broadcast_rpc_address]: https://docs.datastax.com/en/cassandra/3.x/cassandra/configuration/configCassandra_yaml.html?scroll=configCassandra_yaml__broadcast_rpc_address

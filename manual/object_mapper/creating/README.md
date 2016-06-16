@@ -65,7 +65,7 @@ value indicates the position of the column in the key:
 
 ```
 CREATE TABLE sales(countryCode text, areaCode text, sales int,
-                   PRIMARY KEY((countryCode, area Code)));
+                   PRIMARY KEY((countryCode, areaCode)));
 ```
 
 ```java

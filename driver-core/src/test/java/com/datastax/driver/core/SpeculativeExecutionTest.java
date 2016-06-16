@@ -21,7 +21,9 @@ import com.datastax.driver.core.policies.RetryPolicy;
 import com.datastax.driver.core.policies.SpeculativeExecutionPolicy;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import org.scassandra.http.client.Consistency;
 import org.scassandra.http.client.PrimingRequest;
+import org.scassandra.http.client.Result;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -101,14 +103,14 @@ public class SpeculativeExecutionTest {
         // will retry once on this node:
         scassandras.node(1).primingClient().prime(PrimingRequest.queryBuilder()
                 .withQuery("mock query")
-                .withConsistency(PrimingRequest.Consistency.TWO)
-                .withResult(PrimingRequest.Result.read_request_timeout)
+                .withConsistency(Consistency.TWO)
+                .withResult(Result.read_request_timeout)
                 .build()
         );
 
         scassandras.node(1).primingClient().prime(PrimingRequest.queryBuilder()
                 .withQuery("mock query")
-                .withConsistency(PrimingRequest.Consistency.ONE)
+                .withConsistency(Consistency.ONE)
                 .withRows(row("result", "result1"))
                 .build()
         );

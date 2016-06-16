@@ -1,0 +1,30 @@
+#!/bin/sh
+
+SCRIPT_DIR=$( cd "$( dirname "$0" )" && pwd )
+CURRENT_DIR=$( pwd )
+
+# Use $JAVA_HOME if set
+if [ -n "$JAVA_HOME" ]; then
+    JAVA="$JAVA_HOME/bin/java"
+else
+    JAVA=java
+fi
+
+if [ "x$STRESS_JAR" = "x" ]; then
+
+    STRESS_JAR="$SCRIPT_DIR/../target/cassandra-driver-tests-stress-*-jar-with-dependencies.jar"
+
+    if [ ! -f $STRESS_JAR ]; then
+        # Trash the version file in case there was some crap in it
+        RELATIVE_SCRIPT_DIR=`dirname $0`
+        echo "Stress application does not seem to be build, try $RELATIVE_SCRIPT_DIR/build first" 1>&2
+        exit 1
+    fi
+else
+    if [ ! -f $STRESS_JAR ]; then
+        echo "Cannot find file $STRESS_JAR" 1>&2
+        exit 1
+    fi
+fi
+
+"$JAVA" -Dlog4j.configuration="$SCRIPT_DIR/../conf/log4j.properties" -jar $STRESS_JAR $@

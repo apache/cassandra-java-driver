@@ -93,6 +93,21 @@
           <version>4.1</version>
         </dependency>
       -->
+
+        <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <version>${log4j.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+            <version>${slf4j-log4j12.version}</version>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 
     <build>
@@ -116,6 +131,7 @@
                         <Bundle-SymbolicName>com.datastax.driver.mapping</Bundle-SymbolicName>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <_include>-osgi.bnd</_include>
+                        <Import-Package><![CDATA[com.google.common*;version="[16.0.1,20)",*]]></Import-Package>
                     </instructions>
                     <supportedProjectTypes>
                         <supportedProjectType>jar</supportedProjectType>
@@ -126,87 +142,6 @@
             </plugin>
         </plugins>
     </build>
-
-    <profiles>
-        <profile>
-            <id>unit</id>
-            <properties>
-                <env>default</env>
-            </properties>
-            <!-- do not use activeByDefault as other profiles might be active -->
-            <activation>
-                <property>
-                    <name>!activateUnitTests</name>
-                </property>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-surefire-plugin</artifactId>
-                        <version>2.14</version>
-                        <configuration>
-                            <groups>unit</groups>
-                            <useFile>false</useFile>
-                            <systemPropertyVariables>
-                                <cassandra.version>${cassandra.version}</cassandra.version>
-                                <ipprefix>${ipprefix}</ipprefix>
-                            </systemPropertyVariables>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
-        <profile>
-            <id>short</id>
-            <properties>
-                <env>default</env>
-            </properties>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-surefire-plugin</artifactId>
-                        <version>2.14</version>
-                        <configuration>
-                            <groups>unit,short</groups>
-                            <useFile>false</useFile>
-                            <systemPropertyVariables>
-                                <cassandra.version>${cassandra.version}</cassandra.version>
-                                <ipprefix>${ipprefix}</ipprefix>
-                            </systemPropertyVariables>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
-        <profile>
-            <id>long</id>
-            <properties>
-                <env>default</env>
-            </properties>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-surefire-plugin</artifactId>
-                        <version>2.14</version>
-                        <configuration>
-                            <groups>unit,short,long</groups>
-                            <useFile>false</useFile>
-                            <systemPropertyVariables>
-                                <cassandra.version>${cassandra.version}</cassandra.version>
-                                <ipprefix>${ipprefix}</ipprefix>
-                            </systemPropertyVariables>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
-    </profiles>
 
     <licenses>
         <license>

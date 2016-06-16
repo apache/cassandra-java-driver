@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
+import java.util.Iterator;
 import java.util.List;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
@@ -148,8 +149,10 @@ public abstract class QueryLogger implements LatencyTracker {
      * within a configurable threshold in milliseconds.
      * <p/>
      * This logger is activated by setting its level to {@code DEBUG} or {@code TRACE}.
-     * Additionally, if the level is set to {@code TRACE} and the statement being logged is a {@link BoundStatement},
-     * then the query parameters (if any) will be logged as well (names and actual values).
+     * Additionally, if the level is set to {@code TRACE} and the statement being logged is a {@link BoundStatement}
+     * or a {@link SimpleStatement}, then the query parameters (if any) will be logged. For a {@link BoundStatement}
+     * names and actual values are logged and for a {@link SimpleStatement} values are logged in positional order
+     * and named values are logged with names and value.
      * <p/>
      * The name of this logger is {@code com.datastax.driver.core.QueryLogger.NORMAL}.
      */
@@ -160,8 +163,10 @@ public abstract class QueryLogger implements LatencyTracker {
      * but whose execution time exceeded a configurable threshold in milliseconds.
      * <p/>
      * This logger is activated by setting its level to {@code DEBUG} or {@code TRACE}.
-     * Additionally, if the level is set to {@code TRACE} and the statement being logged is a {@link BoundStatement},
-     * then the query parameters (if any) will be logged as well (names and actual values).
+     * Additionally, if the level is set to {@code TRACE} and the statement being logged is a {@link BoundStatement}
+     * or a {@link SimpleStatement}, then the query parameters (if any) will be logged. For a {@link BoundStatement}
+     * names and actual values are logged and for a {@link SimpleStatement} values are logged in positional order
+     * and named values are logged with names and value.
      * <p/>
      * The name of this logger is {@code com.datastax.driver.core.QueryLogger.SLOW}.
      */
@@ -171,8 +176,10 @@ public abstract class QueryLogger implements LatencyTracker {
      * The logger used to log unsuccessful queries, i.e., queries that did not complete normally and threw an exception.
      * <p/>
      * This logger is activated by setting its level to {@code DEBUG} or {@code TRACE}.
-     * Additionally, if the level is set to {@code TRACE} and the statement being logged is a {@link BoundStatement},
-     * then the query parameters (if any) will be logged as well (names and actual values).
+     * Additionally, if the level is set to {@code TRACE} and the statement being logged is a {@link BoundStatement}
+     * or a {@link SimpleStatement}, then the query parameters (if any) will be logged. For a {@link BoundStatement}
+     * names and actual values are logged and for a {@link SimpleStatement} values are logged in positional order
+     * and named values are logged with names and value.
      * Note this this logger will also print the full stack trace of the reported exception.
      * <p/>
      * The name of this logger is {@code com.datastax.driver.core.QueryLogger.ERROR}.
@@ -620,6 +627,9 @@ public abstract class QueryLogger implements LatencyTracker {
         if (cluster == null)
             throw new IllegalStateException("This method should only be called after the logger has been registered with a cluster");
 
+        if (statement instanceof StatementWrapper)
+            statement = ((StatementWrapper) statement).getWrappedStatement();
+
         long latencyMs = NANOSECONDS.toMillis(newLatencyNanos);
         if (exception == null) {
             maybeLogNormalOrSlowQuery(host, statement, latencyMs);
@@ -650,12 +660,16 @@ public abstract class QueryLogger implements LatencyTracker {
             StringBuilder params = new StringBuilder();
             if (statement instanceof BoundStatement) {
                 appendParameters((BoundStatement) statement, params, maxLoggedParameters);
+            } else if (statement instanceof SimpleStatement) {
+                appendParameters((SimpleStatement) statement, params, maxLoggedParameters);
             } else if (statement instanceof BatchStatement) {
                 BatchStatement batchStatement = (BatchStatement) statement;
                 int remaining = maxLoggedParameters;
                 for (Statement inner : batchStatement.getStatements()) {
                     if (inner instanceof BoundStatement) {
                         remaining = appendParameters((BoundStatement) inner, params, remaining);
+                    } else if (inner instanceof SimpleStatement) {
+                        remaining = appendParameters((SimpleStatement) inner, params, remaining);
                     }
                 }
             }
@@ -677,6 +691,9 @@ public abstract class QueryLogger implements LatencyTracker {
         } else if (statement instanceof BoundStatement) {
             int boundValues = ((BoundStatement) statement).wrapper.values.length;
             sb.append("[" + boundValues + " bound values] ");
+        } else if (statement instanceof SimpleStatement) {
+            int boundValues = ((SimpleStatement) statement).valuesCount();
+            sb.append("[" + boundValues + " bound values] ");
         }
 
         append(statement, sb, maxQueryStringLength);
@@ -688,6 +705,8 @@ public abstract class QueryLogger implements LatencyTracker {
         for (Statement s : bs.getStatements()) {
             if (s instanceof BoundStatement)
                 count += ((BoundStatement) s).wrapper.values.length;
+            else if (s instanceof SimpleStatement)
+                count += ((SimpleStatement) s).valuesCount();
         }
         return count;
     }
@@ -755,6 +774,71 @@ public abstract class QueryLogger implements LatencyTracker {
         return valueStr;
     }
 
+    protected int appendParameters(SimpleStatement statement, StringBuilder buffer, int remaining) {
+        if (remaining == 0)
+            return 0;
+        int numberOfParameters = statement.valuesCount();
+        if (numberOfParameters > 0) {
+            int numberOfLoggedParameters;
+            if (remaining == -1) {
+                numberOfLoggedParameters = numberOfParameters;
+            } else {
+                numberOfLoggedParameters = remaining > numberOfParameters ? numberOfParameters : remaining;
+                remaining -= numberOfLoggedParameters;
+            }
+            Iterator<String> valueNames = null;
+            if (statement.usesNamedValues()) {
+                valueNames = statement.getValueNames().iterator();
+            }
+            for (int i = 0; i < numberOfLoggedParameters; i++) {
+                if (buffer.length() == 0)
+                    buffer.append(" [");
+                else
+                    buffer.append(", ");
+                if (valueNames != null && valueNames.hasNext()) {
+                    String valueName = valueNames.next();
+                    buffer.append(String.format("%s:%s", valueName, parameterValueAsString(statement.getObject(valueName))));
+                } else {
+                    buffer.append(parameterValueAsString(statement.getObject(i)));
+                }
+            }
+            if (numberOfLoggedParameters < numberOfParameters) {
+                buffer.append(FURTHER_PARAMS_OMITTED);
+            }
+        }
+        return remaining;
+    }
+
+    protected String parameterValueAsString(Object value) {
+        String valueStr;
+        if (value == null) {
+            valueStr = "NULL";
+        } else {
+            CodecRegistry codecRegistry = cluster.getConfiguration().getCodecRegistry();
+            TypeCodec<Object> codec = codecRegistry.codecFor(value);
+            int maxParameterValueLength = this.maxParameterValueLength;
+            if (codec.cqlType.equals(DataType.blob()) && maxParameterValueLength != -1) {
+                // prevent large blobs from being converted to strings
+                ByteBuffer buf = (ByteBuffer) value;
+                int maxBufferLength = Math.max(2, (maxParameterValueLength - 2) / 2);
+                boolean bufferTooLarge = buf.remaining() > maxBufferLength;
+                if (bufferTooLarge) {
+                    value = (ByteBuffer) buf.duplicate().limit(maxBufferLength);
+                }
+                valueStr = codec.format(value);
+                if (bufferTooLarge) {
+                    valueStr = valueStr + TRUNCATED_OUTPUT;
+                }
+            } else {
+                valueStr = codec.format(value);
+                if (maxParameterValueLength != -1 && valueStr.length() > maxParameterValueLength) {
+                    valueStr = valueStr.substring(0, maxParameterValueLength) + TRUNCATED_OUTPUT;
+                }
+            }
+        }
+        return valueStr;
+    }
+
     private ProtocolVersion protocolVersion() {
         // Since the QueryLogger can be registered before the Cluster was initialized, we can't retrieve
         // it at construction time. Cache it field at first use (a volatile field is good enough since we
@@ -768,9 +852,6 @@ public abstract class QueryLogger implements LatencyTracker {
     }
 
     protected int append(Statement statement, StringBuilder buffer, int remaining) {
-        if (statement instanceof StatementWrapper)
-            statement = ((StatementWrapper) statement).getWrappedStatement();
-
         if (statement instanceof RegularStatement) {
             RegularStatement rs = (RegularStatement) statement;
             String query = rs.getQueryString();
