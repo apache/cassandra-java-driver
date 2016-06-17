@@ -6,6 +6,7 @@
 - [bug] JAVA-1213: Allow updates and inserts to BLOB column using read-only ByteBuffer.
 - [bug] JAVA-1209: ProtocolOptions.getProtocolVersion() should return null instead of throwing NPE if Cluster has not
         been init'd.
+- [improvement] JAVA-1204: Update documentation to indicate tcnative version requirement.
 
 
 ### 3.0.2

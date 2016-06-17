@@ -152,8 +152,12 @@ Netty-tcnative provides the native integration with OpenSSL. Follow
 [these instructions](http://netty.io/wiki/forked-tomcat-native.html) to
 add it to your dependencies.
 
-Note that using netty-tcnative requires JDK 1.7 or above and requires the
-presence of OpenSSL on the system.  It will not fall back to the JDK implementation.
+There are known runtime incompatibilities between newer versions of
+netty-tcnative and the version of netty that the driver uses.  For best
+results, use version 1.1.33.Fork17.
+
+Using netty-tcnative requires JDK 1.7 or above and requires the presence of
+OpenSSL on the system.  It will not fall back to the JDK implementation.
 
 ##### Configuring the context
 
