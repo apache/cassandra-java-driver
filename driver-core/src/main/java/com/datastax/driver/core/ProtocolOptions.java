@@ -165,7 +165,7 @@ public class ProtocolOptions {
      * nodes that do not support this protocol version will be ignored.
      */
     public ProtocolVersion getProtocolVersion() {
-        return manager.connectionFactory.protocolVersion;
+        return manager == null || manager.connectionFactory == null ? null : manager.connectionFactory.protocolVersion;
     }
 
     /**

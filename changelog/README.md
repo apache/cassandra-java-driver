@@ -4,6 +4,8 @@
 
 - [improvement] JAVA-1147: Upgrade Netty to 4.0.37.
 - [bug] JAVA-1213: Allow updates and inserts to BLOB column using read-only ByteBuffer.
+- [bug] JAVA-1209: ProtocolOptions.getProtocolVersion() should return null instead of throwing NPE if Cluster has not
+        been init'd.
 
 
 ### 3.0.2
