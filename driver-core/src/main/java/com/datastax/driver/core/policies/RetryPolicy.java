@@ -194,6 +194,9 @@ public interface RetryPolicy {
 
     /**
      * Defines whether to retry and at which consistency level on a write timeout.
+     * <p/>
+     * Note that if a statement is {@link Statement#isIdempotent() not idempotent}, the driver will never retry it on a
+     * write timeout (this method won't even be called).
      *
      * @param statement    the original query that timed out.
      * @param cl           the requested consistency level of the write that timed out.
@@ -247,13 +250,12 @@ public interface RetryPolicy {
      * <li>On a client timeout, while waiting for the server response
      * (see {@link SocketOptions#getReadTimeoutMillis()});</li>
      * <li>On a connection error (socket closed, etc.);</li>
-     * <li>When the contacted host replies with an error, such as
-     * {@code OVERLOADED}, {@code IS_BOOTSTRAPPING}, {@code SERVER_ERROR}, etc.</li>
+     * <li>When the contacted host replies with an {@code OVERLOADED} error or a {@code SERVER_ERROR}.</li>
      * </ol>
      * <p/>
-     * Note that when this method is invoked, <em>the driver cannot guarantee that the mutation has
-     * been effectively applied server-side</em>; a retry should only be attempted if the request
-     * is known to be idempotent.
+     * Note that when such an error occurs, there is no guarantee that the mutation has been applied server-side or not.
+     * Therefore, if a statement is {@link Statement#isIdempotent() not idempotent}, the driver will never retry it
+     * (this method won't even be called).
      *
      * @param statement the original query that failed.
      * @param cl        the requested consistency level for the operation.

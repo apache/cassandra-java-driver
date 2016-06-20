@@ -8,8 +8,9 @@ example:
 * `update my_table set list_col = [1] + list_col where pk = 1` is not idempotent: if `list_col` was initially empty,
   it will contain `[1]` after the first execution, `[1, 1]` after the second, etc.
 
-Idempotence matters for [retries](../retries/) and [speculative query executions](../speculative_execution/). The
-corresponding policies inspect the [Statement#isIdempotent()][isIdempotent] flag.
+Idempotence matters for [retries](../retries/) and [speculative query executions](../speculative_execution/). The driver
+will bypass those features if the [Statement#isIdempotent()][isIdempotent] flag is set to `false`, to ensure that the
+statement does not get executed more than once.
 
 In most cases, you must set that flag manually. The driver does not parse query strings, so it can't infer it
 automatically (except for statements coming from the query builder, see below).
@@ -121,9 +122,8 @@ clients' point of view, there were two operations:
 But overall the column changed from 1 to 2. There is no ordering of the two operations that can explain that change. We
 broke linearizability by doing a transparent retry at step 6.
 
-To avoid this, the driver considers lightweight transactions as non-idempotent, and provides a
-[retry policy](../retries/) that doesn't retry non-idempotent statements. If linearizability is important for you, you
-should use that policy, and ensure that lightweight transactions are appropriately flagged.
+If linearizability is important for you, you should ensure that lightweight transactions are appropriately flagged as
+not idempotent.
 
 [isIdempotent]:          http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Statement.html#isIdempotent--
 [setDefaultIdempotence]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/QueryOptions.html#setDefaultIdempotence-boolean-

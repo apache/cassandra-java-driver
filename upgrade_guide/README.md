@@ -3,6 +3,38 @@
 The purpose of this guide is to detail changes made by successive
 versions of the Java driver.
 
+### 3.1.0
+
+This version introduces an important change in the default retry behavior: statements that are not idempotent are not
+always retried automatically anymore.
+
+Prior to 2.1.10, idempotence was not considered for retries. This exposed applications to the risk of applying a
+non-idempotent statement twice (counter increment, list append...), or to more subtle bugs with lightweight transactions
+(see [JAVA-819](https://datastax-oss.atlassian.net/browse/JAVA-819)).
+
+In 2.1.10 / 3.0.x, we introduced `IdempotenceAwareRetryPolicy`, which considers the `Statement#isIdempotent()` in the
+retry decision process. However, for consistency with previous versions, this policy was not enabled by default (in
+particular because statements are non-idempotent by default, and we didn't want applications to suddenly stop retrying
+queries that were retried before).
+
+In 3.1.0, the default is now to **not retry** after a write timeout or request error if the statement is not idempotent.
+This is handled internally, the retry policy methods are not even invoked in those cases (and therefore
+`IdempotenceAwareRetryPolicy` has been deprecated). See the manual section about [retries](../manual/retries/) for more
+information.
+
+In practice, here's what upgrading to 3.1.0 means for you:
+
+* if you were already handling idempotence in your application, there won't be any change, but you can stop wrapping
+  your retry policy with `IdempotenceAwareRetryPolicy`;
+* otherwise, you might want to review how your code positions the `setIdempotent` flag on statements. In most cases the
+  driver can't compute in automatically (because it doesn't parse query strings), so it takes a conservative approach
+  and sets it to `false` by default. If you know the query is idempotent, you should set it to `true` manually. See the
+  [query idempotence](../manual/idempotence/) section of the manual.
+
+The driver logs a warning the first time it ignores a non-idempotent request; this warning will be removed in version
+3.2.0.
+
+
 ### 3.0.0
 
 This version brings parity with Cassandra 2.2 and 3.0.

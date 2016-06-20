@@ -79,7 +79,6 @@ the client.
 This is similar to `onReadTimeout`, but for write operations. The reason reads and writes are handled separately is
 because a read is obviously a non mutating operation, whereas a write is likely to be. If a write times out at the
 coordinator level, there is no way to know whether the mutation was applied or not on the non-answering replica.
-Policy implementations are usually more conservative in `onWriteTimeout` in case the write was not idempotent.
 
 If the policy rethrows the error, the user code will get a [WriteTimeoutException].
 
@@ -97,9 +96,6 @@ happened. The possible exceptions are:
 * [OverloadedException]: thrown by the coordinator when replicas are down and the number of hinted handoffs gets too
   high; the coordinator temporarily refuses writes for these replicas (see [hinted handoffs] in the Cassandra
   documentation).
-
-In all these cases, there is no absolute certainty that the request was not applied by a host, so implementations must
-consider the risk of retrying non-idempotent statements.
 
 ### Hard-coded rules
 
@@ -130,30 +126,24 @@ These include:
 
 ### Retries and idempotence
 
-Retry policies should avoid retrying [idempotent queries] when it's not clear whether the query was applied or not.
+If a query is [not idempotent][idempotence], the driver will not retry it if that could produce inconsistent results:
 
-It's always safe to retry in `onReadTimeout`, since by definition we know that the query is a read, which doesn't mutate
-any data. Similarly, `onUnavailable` is safe: the coordinator is telling us that it didn't find enough replicas, so we
-know that it didn't try to apply the query.
+* retrying in `onReadTimeout` is always safe, since by definition this error indicates that the query was a read, which
+  didn't mutate any data;
+* similarly, `onUnavailable` is safe: the coordinator is telling us that it didn't find enough replicas, so we know that
+  it didn't try to apply the query.
+* `onWriteTimeout` is **not safe**: some replicas failed to reply to the coordinator in time, but they might still have
+  applied the mutation;
+* `onRequestError` is **not safe** either: the query might have been applied before the error occurred. In particular,
+  an `OperationTimedOutException` could be caused by a network issue that prevented a successful response to come back
+  to the client.
 
-`onWriteTimeout` is not safe. The default retry policy is very conservative (it only retries batch log writes) so it
-will never cause any issue. Custom implementations should check the statements' idempotent flag.
+Therefore, the driver does not retry after a write timeout or request error if the statement is not idempotent. This is
+handled internally, the retry policy methods are not even invoked in those cases.
 
-`onRequestError` isn't safe either.
-
-**For historical reasons, the built-in retry policy implementations do not check the idempotent flag in
-`onRequestError`**. This is based on the fact that:
-
-* previous versions of the driver (which did `onRequestError` internally) didn't check the flag either;
-* the majority of queries in an application should be idempotent;
-* statements start out as non-idempotent by default.
-
-If `onRequestError` enforced idempotence strictly, this would cause a lot of queries that were legitimately retried with
-previous driver versions to not be retried anymore. This would be a big behavioral change, so we decided to prefer
-consistency with previous versions.
-
-If you prefer strict handling of the idempotent flag, you can wrap your retry policy into an
-[IdempotenceAwareRetryPolicy]. Make sure to position the flag properly on all statements.
+Note that this behavior was introduced in version 3.1.0 of the driver. In previous versions, it was up to retry policy
+implementations to handle idempotence (the new behavior is equivalent to what you achieved with
+`IdempotenceAwareRetryPolicy` before).
 
 
 [RetryDecision]:                        http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/policies/RetryPolicy.RetryDecision.html
@@ -183,11 +173,10 @@ If you prefer strict handling of the idempotent flag, you can wrap your retry po
 [SyntaxError]:                          http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/exceptions/SyntaxError.html
 [AlreadyExistsException]:               http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/exceptions/AlreadyExistsException.html
 [TruncateException]:                    http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/exceptions/TruncateException.html
-[IdempotenceAwareRetryPolicy]:          http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/policies/IdempotenceAwareRetryPolicy.html
 
 [query plan]: ../load_balancing/#query-plan
 [connection pool]: ../pooling/
 [prepared]: ../statements/prepared/#preparing-on-multiple-nodes
 [driver read timeout]: ../socket_options/#driver-read-timeout
 [hinted handoffs]: https://docs.datastax.com/en/cassandra/2.1/cassandra/dml/dml_about_hh_c.html?scroll=concept_ds_ifg_jqx_zj__performance
-[idempotent queries]: ../idempotence/
+[idempotence]: ../idempotence/

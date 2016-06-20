@@ -8,6 +8,7 @@
 - [improvement] JAVA-1233: Update Snappy to 1.1.2.6.
 - [bug] JAVA-1161: Preserve full time zone info in ZonedDateTimeCodec and DateTimeCodec.
 - [new feature] JAVA-1157: Allow asynchronous paging of Mapper Result.
+- [improvement] JAVA-1212: Don't retry non-idempotent statements by default.
 
 Merged from 3.0.x branch:
 

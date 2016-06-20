@@ -42,6 +42,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 class RequestHandler {
     private static final Logger logger = LoggerFactory.getLogger(RequestHandler.class);
+    private static final AtomicBoolean WARNED_IDEMPOTENT = new AtomicBoolean();
 
     final String id;
 
@@ -353,6 +354,38 @@ class RequestHandler {
                 connection.release();
         }
 
+        private RetryPolicy.RetryDecision computeRetryDecisionOnRequestError(DriverException exception) {
+            RetryPolicy.RetryDecision decision;
+            if (statement.isIdempotentWithDefault(manager.cluster.getConfiguration().getQueryOptions())) {
+                decision = retryPolicy().onRequestError(statement, request().consistency(), exception, retriesByPolicy);
+            } else {
+                logIdempotenceWarning();
+                decision = RetryPolicy.RetryDecision.rethrow();
+            }
+            if (metricsEnabled()) {
+                if (exception instanceof OperationTimedOutException) {
+                    metrics().getErrorMetrics().getClientTimeouts().inc();
+                    if (decision.getType() == Type.RETRY)
+                        metrics().getErrorMetrics().getRetriesOnClientTimeout().inc();
+                    if (decision.getType() == Type.IGNORE)
+                        metrics().getErrorMetrics().getIgnoresOnClientTimeout().inc();
+                } else if (exception instanceof ConnectionException) {
+                    metrics().getErrorMetrics().getConnectionErrors().inc();
+                    if (decision.getType() == Type.RETRY)
+                        metrics().getErrorMetrics().getRetriesOnConnectionError().inc();
+                    if (decision.getType() == Type.IGNORE)
+                        metrics().getErrorMetrics().getIgnoresOnConnectionError().inc();
+                } else {
+                    metrics().getErrorMetrics().getOthers().inc();
+                    if (decision.getType() == Type.RETRY)
+                        metrics().getErrorMetrics().getRetriesOnOtherErrors().inc();
+                    if (decision.getType() == Type.IGNORE)
+                        metrics().getErrorMetrics().getIgnoresOnOtherErrors().inc();
+                }
+            }
+            return decision;
+        }
+
         private void processRetryDecision(RetryPolicy.RetryDecision retryDecision, Connection connection, Exception exceptionToReport) {
             switch (retryDecision.getType()) {
                 case RETRY:
@@ -490,12 +523,17 @@ class RequestHandler {
                                 connection.release();
                                 assert err.infos instanceof WriteTimeoutException;
                                 WriteTimeoutException wte = (WriteTimeoutException) err.infos;
-                                retry = retryPolicy.onWriteTimeout(statement,
-                                        wte.getConsistencyLevel(),
-                                        wte.getWriteType(),
-                                        wte.getRequiredAcknowledgements(),
-                                        wte.getReceivedAcknowledgements(),
-                                        retriesByPolicy);
+                                if (statement.isIdempotentWithDefault(manager.cluster.getConfiguration().getQueryOptions()))
+                                    retry = retryPolicy.onWriteTimeout(statement,
+                                            wte.getConsistencyLevel(),
+                                            wte.getWriteType(),
+                                            wte.getRequiredAcknowledgements(),
+                                            wte.getReceivedAcknowledgements(),
+                                            retriesByPolicy);
+                                else {
+                                    logIdempotenceWarning();
+                                    retry = RetryPolicy.RetryDecision.rethrow();
+                                }
                                 if (metricsEnabled()) {
                                     metrics().getErrorMetrics().getWriteTimeouts().inc();
                                     if (retry.getType() == Type.RETRY)
@@ -525,16 +563,7 @@ class RequestHandler {
                                 connection.release();
                                 assert exceptionToReport instanceof OverloadedException;
                                 logger.warn("Host {} is overloaded.", connection.address);
-                                retry = retryPolicy.onRequestError(statement,
-                                        request().consistency(),
-                                        (OverloadedException) exceptionToReport, retriesByPolicy);
-                                if (metricsEnabled()) {
-                                    metrics().getErrorMetrics().getOthers().inc();
-                                    if (retry.getType() == Type.RETRY)
-                                        metrics().getErrorMetrics().getRetriesOnOtherErrors().inc();
-                                    if (retry.getType() == Type.IGNORE)
-                                        metrics().getErrorMetrics().getIgnoresOnOtherErrors().inc();
-                                }
+                                retry = computeRetryDecisionOnRequestError((OverloadedException) exceptionToReport);
                                 break;
                             case SERVER_ERROR:
                                 connection.release();
@@ -542,16 +571,7 @@ class RequestHandler {
                                 logger.warn("{} replied with server error ({}), defuncting connection.", connection.address, err.message);
                                 // Defunct connection
                                 connection.defunct(exceptionToReport);
-                                retry = retryPolicy.onRequestError(statement,
-                                        request().consistency(),
-                                        (ServerError) exceptionToReport, retriesByPolicy);
-                                if (metricsEnabled()) {
-                                    metrics().getErrorMetrics().getOthers().inc();
-                                    if (retry.getType() == Type.RETRY)
-                                        metrics().getErrorMetrics().getRetriesOnOtherErrors().inc();
-                                    if (retry.getType() == Type.IGNORE)
-                                        metrics().getErrorMetrics().getIgnoresOnOtherErrors().inc();
-                                }
+                                retry = computeRetryDecisionOnRequestError((ServerError) exceptionToReport);
                                 break;
                             case IS_BOOTSTRAPPING:
                                 connection.release();
@@ -716,15 +736,7 @@ class RequestHandler {
                 connection.release();
 
                 if (exception instanceof ConnectionException) {
-                    RetryPolicy retryPolicy = retryPolicy();
-                    RetryPolicy.RetryDecision decision = retryPolicy.onRequestError(statement, request().consistency(), (ConnectionException) exception, retriesByPolicy);
-                    if (metricsEnabled()) {
-                        metrics().getErrorMetrics().getConnectionErrors().inc();
-                        if (decision.getType() == Type.RETRY)
-                            metrics().getErrorMetrics().getRetriesOnConnectionError().inc();
-                        if (decision.getType() == Type.IGNORE)
-                            metrics().getErrorMetrics().getIgnoresOnConnectionError().inc();
-                    }
+                    RetryPolicy.RetryDecision decision = computeRetryDecisionOnRequestError((ConnectionException) exception);
                     processRetryDecision(decision, connection, exception);
                     return;
                 }
@@ -755,15 +767,7 @@ class RequestHandler {
             try {
                 connection.release();
 
-                RetryPolicy retryPolicy = retryPolicy();
-                RetryPolicy.RetryDecision decision = retryPolicy.onRequestError(statement, request().consistency(), timeoutException, retriesByPolicy);
-                if (metricsEnabled()) {
-                    metrics().getErrorMetrics().getClientTimeouts().inc();
-                    if (decision.getType() == Type.RETRY)
-                        metrics().getErrorMetrics().getRetriesOnClientTimeout().inc();
-                    if (decision.getType() == Type.IGNORE)
-                        metrics().getErrorMetrics().getIgnoresOnClientTimeout().inc();
-                }
+                RetryPolicy.RetryDecision decision = computeRetryDecisionOnRequestError(timeoutException);
                 processRetryDecision(decision, connection, timeoutException);
             } catch (Exception e) {
                 // This shouldn't happen, but if it does, we want to signal the callback, not let it hang indefinitely
@@ -787,6 +791,15 @@ class RequestHandler {
         private void setFinalResult(Connection connection, Message.Response response) {
             RequestHandler.this.setFinalResult(this, connection, response);
         }
+    }
+
+    private void logIdempotenceWarning() {
+        if (WARNED_IDEMPOTENT.compareAndSet(false, true))
+            logger.warn("Not retrying statement because it is not idempotent (this message will be logged only once). " +
+                    "Note that this version of the driver changes the default retry behavior for non-idempotent " +
+                    "statements: they won't be automatically retried anymore. The driver marks statements " +
+                    "non-idempotent by default, so you should explicitly call setIdempotent(true) if your statements " +
+                    "are safe to retry. See http://goo.gl/4HrSby for more details.");
     }
 
     /**
