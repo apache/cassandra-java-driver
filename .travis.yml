@@ -1,9 +1,12 @@
 language: java
 jdk:
-  - openjdk6
-  - oraclejdk7
-  - oraclejdk8
+- openjdk6
+- oraclejdk7
+- oraclejdk8
 sudo: false
 cache:
   directories:
-    - $HOME/.m2
+  - $HOME/.m2
+notifications:
+  slack:
+    secure: PxE3bfSyGGRkvHqlR5HciuqAWO7qxJk/8/j0odRJ4FxoT8QYzlGjt8dxN54f+QmKEjFv9W3Gn8ufZmk5lOZlS3L5vWd3MofAfSUzuDpDY9v95UEwltdmedDLjwkdIGnhpYAI7VvLRrhny8sQfx3uSncCpGiLpDqubZRF4D7IDxQ=

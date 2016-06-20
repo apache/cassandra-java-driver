@@ -56,4 +56,77 @@
         <justification>This class is only present if the project was compiled with JDK 8+</justification>
     </difference>
 
+    <difference>
+        <differenceType>7002</differenceType> <!-- method removed -->
+        <className>com/datastax/driver/core/PerHostPercentileTracker</className>
+        <method>com.datastax.driver.core.PerHostPercentileTracker$Builder builderWithHighestTrackableLatencyMillis(long)
+        </method>
+        <justification>Renamed (API was marked as beta and still subject to change)</justification>
+    </difference>
+
+    <difference>
+        <differenceType>7002</differenceType> <!-- method removed -->
+        <className>com/datastax/driver/core/PerHostPercentileTracker</className>
+        <method>long getLatencyAtPercentile(com.datastax.driver.core.Host, double)</method>
+        <justification>Moved to new parent class with more parameters (API was marked as beta and still subject to change)</justification>
+    </difference>
+
+    <difference>
+        <differenceType>7002</differenceType> <!-- method removed -->
+        <className>com/datastax/driver/core/PerHostPercentileTracker$Builder</className>
+        <method>com.datastax.driver.core.PerHostPercentileTracker$Builder withInterval(long, java.util.concurrent.TimeUnit)</method>
+        <justification>False positive, method now inherited from generic parent class</justification>
+    </difference>
+
+    <difference>
+        <differenceType>7002</differenceType> <!-- method removed -->
+        <className>com/datastax/driver/core/PerHostPercentileTracker$Builder</className>
+        <method>com.datastax.driver.core.PerHostPercentileTracker$Builder withMinRecordedValues(int)</method>
+        <justification>False positive, method now inherited from generic parent class</justification>
+    </difference>
+
+    <difference>
+        <differenceType>7002</differenceType> <!-- method removed -->
+        <className>com/datastax/driver/core/PerHostPercentileTracker$Builder</className>
+        <method>com.datastax.driver.core.PerHostPercentileTracker$Builder withNumberOfSignificantValueDigits(int)</method>
+        <justification>False positive, method now inherited from generic parent class</justification>
+    </difference>
+
+    <difference>
+        <differenceType>7002</differenceType> <!-- method removed -->
+        <className>com/datastax/driver/core/PerHostPercentileTracker$Builder</className>
+        <method>com.datastax.driver.core.PerHostPercentileTracker$Builder withNumberOfHosts(int)</method>
+        <justification>Removed (API was marked as beta and still subject to change)</justification>
+    </difference>
+
+    <difference>
+        <differenceType>7005</differenceType> <!-- method argument type changed -->
+        <className>com/datastax/driver/core/QueryLogger$Builder</className>
+        <method>com.datastax.driver.core.QueryLogger$Builder withDynamicThreshold(com.datastax.driver.core.PerHostPercentileTracker, double)</method>
+        <to>com.datastax.driver.core.QueryLogger$Builder withDynamicThreshold(com.datastax.driver.core.PercentileTracker, double)</to>
+        <justification>Introduced more generic parent type PercentileTracker (API was marked as beta and still subject to change)</justification>
+    </difference>
+
+    <difference>
+        <differenceType>7002</differenceType> <!-- method removed -->
+        <className>com/datastax/driver/core/QueryLogger$DynamicThresholdQueryLogger</className>
+        <method>com.datastax.driver.core.PerHostPercentileTracker getPerHostPercentileLatencyTracker()</method>
+        <justification>Introduced more generic parent type PercentileTracker (API was marked as beta and still subject to change)</justification>
+    </difference>
+
+    <difference>
+        <differenceType>7002</differenceType> <!-- method removed -->
+        <className>com/datastax/driver/core/QueryLogger$DynamicThresholdQueryLogger</className>
+        <method>void setPerHostPercentileLatencyTracker(com.datastax.driver.core.PerHostPercentileTracker)</method>
+        <justification>Introduced more generic parent type PercentileTracker (API was marked as beta and still subject to change)</justification>
+    </difference>
+
+    <difference>
+        <differenceType>7005</differenceType> <!-- method argument type changed -->
+        <className>com/datastax/driver/core/policies/PercentileSpeculativeExecutionPolicy</className>
+        <method>PercentileSpeculativeExecutionPolicy(com.datastax.driver.core.PerHostPercentileTracker, double, int)</method>
+        <to>*</to> <!-- didn't find a way to write the new signature -->
+        <justification>Introduced more generic parent type PercentileTracker (API was marked as beta and still subject to change)</justification>
+    </difference>
+
 </differences>

@@ -15,18 +15,19 @@
       limitations under the License.
 
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.sonatype.oss</groupId>
         <artifactId>oss-parent</artifactId>
         <version>7</version>
-        <relativePath />
+        <relativePath/>
     </parent>
 
     <groupId>com.datastax.cassandra</groupId>
     <artifactId>cassandra-driver-parent</artifactId>
-    <version>3.0.3-SNAPSHOT</version>
+    <version>3.1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>DataStax Java Driver for Apache Cassandra</name>
     <description>A driver for Apache Cassandra 1.2+ that works exclusively with the Cassandra Query Language version 3
@@ -61,6 +62,8 @@
         <joda.version>2.9.1</joda.version>
         <jsr353-api.version>1.0</jsr353-api.version>
         <jsr353-ri.version>1.0.4</jsr353-ri.version>
+        <jnr-ffi.version>2.0.7</jnr-ffi.version>
+        <jnr-posix.version>3.0.27</jnr-posix.version>
         <!-- test dependency versions -->
         <testng.version>6.8.8</testng.version>
         <assertj.version>1.7.0</assertj.version>
@@ -71,7 +74,7 @@
         <ipprefix>127.0.1.</ipprefix>
         <test.groups>unit</test.groups>
         <!-- Set default javadoc.opts, overriden by profiles -->
-        <javadoc.opts />
+        <javadoc.opts/>
     </properties>
 
     <profiles>

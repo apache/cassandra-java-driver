@@ -16,10 +16,9 @@
 package com.datastax.driver.core;
 
 import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.*;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 import org.testng.annotations.Test;
 
 import java.util.List;
@@ -27,7 +26,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import static org.testng.Assert.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.fail;
 
 public class ThreadLocalMonotonicTimestampGeneratorTest {
 
@@ -51,7 +52,7 @@ public class ThreadLocalMonotonicTimestampGeneratorTest {
                             // Ensure that each thread gets the 1000 microseconds for the mocked millisecond value,
                             // in order
                             for (int i = 0; i < 1000; i++)
-                                assertEquals(generator.next(), fixedTime * 1000 + i);
+                                assertEquals(generator.next(), fixedTime + i);
                         }
                     }));
         }
@@ -71,12 +72,48 @@ public class ThreadLocalMonotonicTimestampGeneratorTest {
 
     @Test(groups = "unit")
     public void should_generate_incrementing_timestamps_on_clock_resync() {
-        ThreadLocalMonotonicTimestampGenerator generator = new ThreadLocalMonotonicTimestampGenerator();
+        ThreadLocalMonotonicTimestampGenerator generator = new ThreadLocalMonotonicTimestampGenerator(0, TimeUnit.SECONDS, 1, TimeUnit.SECONDS);
         generator.clock = new MockClocks.BackInTimeClock();
 
-        long beforeClockResync = generator.next();
-        long afterClockResync = generator.next();
+        MemoryAppender appender = new MemoryAppender();
+        Logger logger = Logger.getLogger(TimestampGenerator.class);
+        Level originalLevel = logger.getLevel();
+        logger.setLevel(Level.WARN);
+        logger.addAppender(appender);
+        String logFormat = "Clock skew detected: current tick (%d) was %d microseconds " +
+                "behind the last generated timestamp (%d), returned timestamps will be artificially incremented " +
+                "to guarantee monotonicity.";
 
-        assertTrue(beforeClockResync < afterClockResync, "The generated timestamps are not increasing on block resync");
+        try {
+            long start = generator.next();
+            long previous = start;
+            long next = 0;
+            for (int i = 0; i < 1001; i++) {
+                next = generator.next();
+                assertEquals(next, previous + 1);
+                previous = next;
+            }
+
+            // Ensure log statement generated indicating clock skew, but only once.
+            assertEquals(next, start + 1001);
+            assertThat(appender.getNext())
+                    .containsOnlyOnce("Clock skew detected:")
+                    .containsOnlyOnce(String.format(logFormat, start - 1, 1, start));
+
+            // Wait for a second to see if we get an additional clock skew message.
+            Uninterruptibles.sleepUninterruptibly(1, TimeUnit.SECONDS);
+
+            next = generator.next();
+            assertThat(next).isEqualTo(previous + 1);
+            // Clock has gone backwards 1002 us since we've had that many iterations.
+            // The difference should be 2003 (clock backwards 1002 + 1001 prior compute next calls).
+            // Current timestamp should match the previous one.
+            assertThat(appender.getNext())
+                    .containsOnlyOnce("Clock skew detected:")
+                    .containsOnlyOnce(String.format(logFormat, start - 1002, 2003, previous));
+        } finally {
+            logger.removeAppender(appender);
+            logger.setLevel(originalLevel);
+        }
     }
 }

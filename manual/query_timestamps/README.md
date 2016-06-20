@@ -60,6 +60,62 @@ not an option, the only workaround is to add `USING TIMESTAMP` in your
 queries.
 
 
+The driver ships with two implementations of `TimestampGenerator`:
+
+1. [AtomicMonotonicTimestampGenerator][amtsg], which guarantess monotonicity of timestamps for all threads;
+2. [ThreadLocalMonotonicTimestampGenerator][tlmtsg], which guarantees per-thread monotonicity of timestamps.
+
+There is less contention using `ThreadLocalMonotonicTimestampGenerator`, but beware
+that there is a risk of timestamp collision with this generator when accessed by more than one
+thread; only use it when threads are not in direct competition for timestamp ties (i.e., they are executing
+independent statements).
+
+[amtsg]:  http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/AtomicMonotonicTimestampGenerator.html
+[tlmtsg]: http://docs.datastax.com/en/drivers/java/2.1/com/datastax/driver/core/ThreadLocalMonotonicTimestampGenerator.html
+
+#### Accuracy
+
+Both implementations strive to achieve microsecond resolution on a best-effort basis.
+But in practice, the real accuracy of generated timestamps is largely dependent on the
+granularity of the underlying operating system's clock.
+
+For most systems, this minimum granularity is millisecond, and
+the sub-millisecond part of generated timestamps is simply a counter that gets incremented
+until the next clock tick, as provided by `System.currentTimeMillis()`.
+
+On some systems, however, it is possible to have a better granularity by using a [JNR]
+call to [gettimeofday]. This native call will be used when available, unless the system
+property `com.datastax.driver.USE_NATIVE_CLOCK` is explicitly set to `false`.
+
+To check what's available on your system:
+
+* make sure your `Cluster` uses a `TimestampGenerator`;
+* [configure your logging framework](../logging/) to use level `INFO` for the category
+  `com.datastax.driver.core.ClockFactory`;
+* look for one of the following messages at startup:
+
+    ```
+    INFO  com.datastax.driver.core.ClockFactory - Using java.lang.System clock to generate timestamps
+    INFO  com.datastax.driver.core.ClockFactory - Using native clock to generate timestamps
+    ```
+
+[gettimeofday]: http://man7.org/linux/man-pages/man2/settimeofday.2.html
+[JNR]: https://github.com/jnr/jnr-ffi
+
+#### Monotonicity
+
+The aforementioned implementations also guarantee
+that returned timestamps will always be monotonically increasing, even if multiple updates
+happen under the same millisecond.
+
+Note that to guarantee such monotonicity, if more than one timestamp is generated
+within the same microsecond, or in the event of a system clock skew, _both implementations might
+return timestamps that drift out in the future_.
+
+When this happens, the built-in generators log a periodic warning message in the category
+`com.datastax.driver.core.TimestampGenerator`. See their non-default constructors for ways to control the warning
+interval.
+
 ### Summary
 
 As shown in the previous sections, there are multiple ways to provide a
