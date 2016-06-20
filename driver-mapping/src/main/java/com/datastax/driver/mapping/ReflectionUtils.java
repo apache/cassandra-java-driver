@@ -140,7 +140,7 @@ class ReflectionUtils {
 
     private static void maybeAddOverriddenMethodAnnotations(Map<Class<? extends Annotation>, Annotation> annotations, Method getter, Class<?> clazz) {
         try {
-            Method overriddenGetter = clazz.getDeclaredMethod(getter.getName(), getter.getParameterTypes());
+            Method overriddenGetter = clazz.getDeclaredMethod(getter.getName(), (Class[]) getter.getParameterTypes());
             for (Annotation annotation : overriddenGetter.getAnnotations()) {
                 // do not override a more specific version of the annotation type being scanned
                 if (!annotations.containsKey(annotation.annotationType()))
