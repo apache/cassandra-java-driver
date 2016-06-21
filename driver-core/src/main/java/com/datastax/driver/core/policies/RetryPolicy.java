@@ -41,6 +41,10 @@ public interface RetryPolicy {
      * </ul>
      */
     class RetryDecision {
+        
+        private static final RetryDecision RETHROW_DECISION = new RetryDecision(Type.RETHROW, null, true);
+        private static final RetryDecision IGNORE_DECISION = new RetryDecision(Type.IGNORE, null, true);
+
         /**
          * The types of retry decisions.
          */
@@ -99,7 +103,7 @@ public interface RetryPolicy {
          * @return a {@link RetryDecision.Type#RETHROW} retry decision.
          */
         public static RetryDecision rethrow() {
-            return new RetryDecision(Type.RETHROW, null, true);
+            return RETHROW_DECISION;
         }
 
         /**
@@ -128,7 +132,7 @@ public interface RetryPolicy {
          * @return an {@link RetryDecision.Type#IGNORE} retry decision.
          */
         public static RetryDecision ignore() {
-            return new RetryDecision(Type.IGNORE, null, true);
+            return IGNORE_DECISION;
         }
 
         /**
