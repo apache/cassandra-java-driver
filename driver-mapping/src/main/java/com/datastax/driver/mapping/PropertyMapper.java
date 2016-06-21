@@ -51,12 +51,12 @@ class PropertyMapper {
     private final Method setter;
     private final Map<Class<? extends Annotation>, Annotation> annotations;
 
-    PropertyMapper(String propertyName, String alias, Field field, PropertyDescriptor property) {
+    PropertyMapper(Class<?> baseClass, String propertyName, String alias, Field field, PropertyDescriptor property) {
         this.propertyName = propertyName;
         this.alias = alias;
         this.field = field;
         getter = ReflectionUtils.findGetter(property);
-        setter = ReflectionUtils.findSetter(property);
+        setter = ReflectionUtils.findSetter(baseClass, property);
         annotations = ReflectionUtils.scanPropertyAnnotations(field, property);
         if (field != null)
             ReflectionUtils.tryMakeAccessible(field);

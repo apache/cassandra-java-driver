@@ -119,6 +119,36 @@ A mapped field is thus allowed to be non-public if:
 1. Reads and writes are done through its public getters and setters; or
 2. The security manager, if any, grants the mapper access to it via [reflection][set-accessible].
 
+Note that, according to the [Java Beans specification][java-beans], a setter
+must have a `void` return type; the driver, however, will consider as a setter any public method
+having a matching signature (i.e., name and parameter types match those expected),
+but having a different return type. This allows the usage of "fluent" setters that can
+be chained together in a builder-pattern style:
+
+```java
+@Table(name = "users")
+public static class User {
+
+    // fluent setters
+    
+    public User setId(UUID id) {
+        this.id = id;
+        return this;
+    }
+
+    public User setName(String name) {
+        this.name = name;
+        return this;
+    }
+
+}
+
+// chained calls
+User user = new User()
+    .setId(UUIDs.random())
+    .setName("John Doe");
+```
+
 [table]:http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/annotations/Table.html
 [case-sensitive]:http://docs.datastax.com/en/cql/3.3/cql/cql_reference/ucase-lcase_r.html
 [consistency level]:http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/ConsistencyLevel.html

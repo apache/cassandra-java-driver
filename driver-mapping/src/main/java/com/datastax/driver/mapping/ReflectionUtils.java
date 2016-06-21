@@ -75,7 +75,7 @@ class ReflectionUtils {
         HashMap<String, Field> fields = new HashMap<String, Field>();
         for (Class<?> clazz = baseClass; !clazz.equals(Object.class); clazz = clazz.getSuperclass()) {
             for (Field field : clazz.getDeclaredFields()) {
-                if (field.getName().equals("class") || field.isSynthetic() || (field.getModifiers() & Modifier.STATIC) == Modifier.STATIC)
+                if (field.getName().equals("class") || field.isSynthetic() || Modifier.isStatic(field.getModifiers()))
                     continue;
                 // never override a more specific field masking another one declared in a superclass
                 if (!fields.containsKey(field.getName()))
@@ -160,13 +160,24 @@ class ReflectionUtils {
         return getter;
     }
 
-    static Method findSetter(PropertyDescriptor property) {
+    static Method findSetter(Class<?> baseClass, PropertyDescriptor property) {
         if (property == null)
             return null;
         Method setter = property.getWriteMethod();
-        if (setter == null)
-            return null;
-        return setter;
+        if (setter != null)
+            return setter;
+        String propertyName = property.getName();
+        String setterName = "set" + propertyName.substring(0, 1).toUpperCase() + propertyName.substring(1);
+        // JAVA-984: look for a "relaxed" setter, ie. a setter whose return type may be anything
+        try {
+            setter = baseClass.getMethod(setterName, property.getPropertyType());
+            if (!Modifier.isStatic(setter.getModifiers())) {
+                return setter;
+            }
+        } catch (NoSuchMethodException e) {
+            // ok
+        }
+        return null;
     }
 
     static void tryMakeAccessible(AccessibleObject object) {

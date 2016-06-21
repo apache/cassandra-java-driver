@@ -243,8 +243,11 @@ public class MapperPolymorphismTest extends CCMTestsSupport {
             return _radius;
         }
 
-        public void setRadius(double radius) {
+        // builder-style setter; because the field isn't named in a standard way,
+        // if this setter is not detected the test would fail
+        public Circle setRadius(double radius) {
             this._radius = radius;
+            return this;
         }
 
         @Override
@@ -428,6 +431,13 @@ public class MapperPolymorphismTest extends CCMTestsSupport {
 
         public void setCenter(Point3D center) {
             this.center = center;
+        }
+
+        // overridden builder-style setter
+        @Override
+        public Sphere setRadius(double radius) {
+            super.setRadius(radius);
+            return this;
         }
 
         @Override

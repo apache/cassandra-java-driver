@@ -114,7 +114,7 @@ class AnnotationParser {
                     ? "col" + columnCounter.incrementAndGet()
                     : null;
 
-            PropertyMapper propertyMapper = new PropertyMapper(propertyName, alias, field, property);
+            PropertyMapper propertyMapper = new PropertyMapper(entityClass, propertyName, alias, field, property);
 
             if (mappingManager.isCassandraV1 && propertyMapper.isComputed())
                 throw new UnsupportedOperationException("Computed properties are not supported with native protocol v1");
@@ -180,7 +180,7 @@ class AnnotationParser {
             java.lang.reflect.Field field = (java.lang.reflect.Field) entry.getValue()[0];
             PropertyDescriptor property = (PropertyDescriptor) entry.getValue()[1];
 
-            PropertyMapper propertyMapper = new PropertyMapper(propertyName, null, field, property);
+            PropertyMapper propertyMapper = new PropertyMapper(udtClass, propertyName, null, field, property);
 
             AnnotationChecks.validateAnnotations(propertyMapper, VALID_FIELD_ANNOTATIONS);
 
