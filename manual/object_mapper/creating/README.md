@@ -17,7 +17,7 @@ CREATE TABLE user (user_id uuid PRIMARY KEY, name text);
        writeConsistency = "QUORUM",
        caseSensitiveKeyspace = false,
        caseSensitiveTable = false)
-public static class User {
+public class User {
     @PartitionKey
     @Column(name = "user_id")
     private UUID userId;
@@ -63,7 +63,7 @@ The following mappings are thus equivalent:
 
 ```java
 @Table(name = "users")
-public static class User {
+public class User {
 
     // annotation on a field
     @PartitionKey
@@ -82,7 +82,7 @@ public static class User {
 
 ```java
 @Table(name = "users")
-public static class User {
+public class User {
 
     private UUID id;
 
@@ -127,7 +127,7 @@ be chained together in a builder-pattern style:
 
 ```java
 @Table(name = "users")
-public static class User {
+public class User {
 
     // fluent setters
     
@@ -309,7 +309,7 @@ CREATE TABLE company (company_id uuid PRIMARY KEY, name text, address address);
 ```
 
 ```java
-public static class Company {
+public class Company {
     @PartitionKey
     @Column(name = "company_id")
     private UUID companyId;
