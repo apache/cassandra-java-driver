@@ -53,11 +53,15 @@ public class MapperOptionTest extends CCMTestsSupport {
     @Test(groups = "short")
     @CassandraVersion(major = 2.0)
     void should_use_save_options() throws Exception {
+        User user = new User(42, "helloworld");
         Long tsValue = futureTimestamp();
-        mapper.save(new User(42, "helloworld"), Option.timestamp(tsValue), Option.tracing(true));
+        mapper.save(user, Option.timestamp(tsValue), Option.tracing(true), Option.keyspace("custom_keyspace"));
         assertThat(mapper.get(42).getV()).isEqualTo("helloworld");
         Long tsReturned = session().execute("SELECT writetime(v) FROM user WHERE key=" + 42).one().getLong(0);
         assertThat(tsReturned).isEqualTo(tsValue);
+
+        BoundStatement bs = (BoundStatement) mapper.saveQuery(user, Option.keyspace("custom_keyspace"));
+        assertThat(bs.getKeyspace()).isEqualTo("custom_keyspace");
     }
 
     @Test(groups = "short")
@@ -66,9 +70,10 @@ public class MapperOptionTest extends CCMTestsSupport {
         User todelete = new User(45, "todelete");
         mapper.save(todelete);
         Option opt = Option.timestamp(35);
-        BoundStatement bs = (BoundStatement) mapper.deleteQuery(45, opt, Option.consistencyLevel(QUORUM));
+        BoundStatement bs = (BoundStatement) mapper.deleteQuery(45, opt, Option.consistencyLevel(QUORUM), Option.keyspace("custom_keyspace"));
         assertThat(bs.preparedStatement().getQueryString()).contains("USING TIMESTAMP");
         assertThat(bs.getConsistencyLevel()).isEqualTo(QUORUM);
+        assertThat(bs.getKeyspace()).isEqualTo("custom_keyspace");
     }
 
     @Test(groups = "short", expectedExceptions = {IllegalArgumentException.class})
@@ -77,9 +82,10 @@ public class MapperOptionTest extends CCMTestsSupport {
         User user = new User(45, "toget");
         mapper.save(user);
 
-        BoundStatement bs = (BoundStatement) mapper.getQuery(45, Option.tracing(true), Option.consistencyLevel(ALL));
+        BoundStatement bs = (BoundStatement) mapper.getQuery(45, Option.tracing(true), Option.consistencyLevel(ALL), Option.keyspace("custom_keyspace"));
         assertThat(bs.isTracing()).isTrue();
         assertThat(bs.getConsistencyLevel()).isEqualTo(ALL);
+        assertThat(bs.getKeyspace()).isEqualTo("custom_keyspace");
 
         ResultSet rs = session().execute(bs);
         assertThat(rs.getExecutionInfo().getQueryTrace()).isNotNull();
