@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.osgi;
 
+import com.datastax.driver.core.ProtocolOptions;
 import com.datastax.driver.core.TestUtils;
 import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.options.CompositeOption;
@@ -46,6 +47,19 @@ public class BundleOptions {
 
     public static MavenArtifactProvisionOption guavaBundle() {
         return mavenBundle("com.google.guava", "guava", "16.0.1");
+    }
+
+    public static CompositeOption lz4Bundle() {
+        return new CompositeOption() {
+
+            @Override
+            public Option[] getOptions() {
+                return options(
+                        systemProperty("cassandra.compression").value(ProtocolOptions.Compression.LZ4.name()),
+                        mavenBundle("net.jpountz.lz4", "lz4", "1.3.0")
+                );
+            }
+        };
     }
 
     public static CompositeOption nettyBundles() {
@@ -84,6 +98,7 @@ public class BundleOptions {
                         mavenBundle("ch.qos.logback", "logback-classic", "1.1.3"),
                         mavenBundle("ch.qos.logback", "logback-core", "1.1.3"),
                         mavenBundle("io.dropwizard.metrics", "metrics-core", "3.1.2"),
+                        mavenBundle("org.testng", "testng", "6.8.8"),
                         systemPackages("org.testng", "org.junit", "org.junit.runner", "org.junit.runner.manipulation",
                                 "org.junit.runner.notification", "com.jcabi.manifests")
                 );

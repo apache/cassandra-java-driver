@@ -27,7 +27,7 @@ Maven dependency:
 <dependency>
     <groupId>net.jpountz.lz4</groupId>
     <artifactId>lz4</artifactId>
-    <version>1.2.0</version>
+    <version>1.3.0</version>
 </dependency>
 ```
 
@@ -68,7 +68,7 @@ Maven dependency:
 <dependency>
     <groupId>org.xerial.snappy</groupId>
     <artifactId>snappy-java</artifactId>
-    <version>1.0.5</version>
+    <version>1.1.2.6</version>
 </dependency>
 ```
 

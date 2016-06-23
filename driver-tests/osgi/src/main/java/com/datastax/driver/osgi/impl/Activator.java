@@ -15,10 +15,7 @@
  */
 package com.datastax.driver.osgi.impl;
 
-import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.CodecRegistry;
-import com.datastax.driver.core.Metadata;
-import com.datastax.driver.core.Session;
+import com.datastax.driver.core.*;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.extras.codecs.date.SimpleTimestampCodec;
 import com.datastax.driver.osgi.api.MailboxService;
@@ -47,10 +44,16 @@ public class Activator implements BundleActivator {
         }
         keyspace = Metadata.quote(keyspace);
 
-        cluster = Cluster.builder()
+        Cluster.Builder builder = Cluster.builder()
                 .addContactPoints(contactPoints)
-                .withCodecRegistry(new CodecRegistry().register(SimpleTimestampCodec.instance))
-                .build();
+                .withCodecRegistry(new CodecRegistry().register(SimpleTimestampCodec.instance));
+
+        String compression = context.getProperty("cassandra.compression");
+        if (compression != null) {
+            builder.withCompression(ProtocolOptions.Compression.valueOf(compression));
+        }
+
+        cluster = builder.build();
 
         Session session;
         try {

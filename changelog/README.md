@@ -56,6 +56,13 @@ Merged from 2.1 branch:
 - [bug] JAVA-727: Allow monotonic timestamp generators to drift in the future + use microsecond precision when possible.
 - [improvement] JAVA-444: Add Java process information to UUIDs.makeNode() hash.
 
+- [improvement] JAVA-1147: Upgrade Netty to 4.0.37.
+- [bug] JAVA-1213: Allow updates and inserts to BLOB column using read-only ByteBuffer.
+- [bug] JAVA-1209: ProtocolOptions.getProtocolVersion() should return null instead of throwing NPE if Cluster has not
+        been init'd.
+- [improvement] JAVA-1204: Update documentation to indicate tcnative version requirement.
+- [improvement] JAVA-1200: Upgrade LZ4 to 1.3.0.
+
 
 ### 3.0.2
 
