@@ -69,6 +69,7 @@ public class IdempotenceAwareRetryPolicy implements RetryPolicy {
 
     @Override
     public void init(Cluster cluster) {
+        childPolicy.init(cluster);
         queryOptions = cluster.getConfiguration().getQueryOptions();
     }
 
