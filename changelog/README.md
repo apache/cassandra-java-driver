@@ -10,6 +10,7 @@
 - [bug] JAVA-1186: Fix duplicated hosts in DCAwarePolicy warn message.
 - [bug] JAVA-1187: Fix warning message when local CL used with RoundRobinPolicy.
 - [improvement] JAVA-1175: Warn if DCAwarePolicy configuration is inconsistent.
+- [bug] JAVA-1139: ConnectionException.getMessage() throws NPE if address is null.
 
 
 ### 3.0.2

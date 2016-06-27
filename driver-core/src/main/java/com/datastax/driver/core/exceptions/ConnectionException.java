@@ -40,7 +40,7 @@ public class ConnectionException extends DriverException implements CoordinatorE
 
     @Override
     public InetAddress getHost() {
-        return address.getAddress();
+        return address == null ? null : address.getAddress();
     }
 
     @Override
@@ -50,7 +50,7 @@ public class ConnectionException extends DriverException implements CoordinatorE
 
     @Override
     public String getMessage() {
-        return String.format("[%s] %s", getHost(), getRawMessage());
+        return address == null ? getRawMessage() : String.format("[%s] %s", address, getRawMessage());
     }
 
     @Override
