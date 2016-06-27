@@ -118,7 +118,7 @@ that were previously set:
 ```java
 BoundStatement bound = ps1.bind()
   .setString("sku", "324378")
-  .setString("description", "LCD screen")
+  .setString("description", "LCD screen");
 
 // Using the unset method to unset previously set value.
 // Positional setter:
@@ -133,8 +133,27 @@ this has a small performance overhead since values are stored in their
 serialized form.
 
 `BoundStatement` is **not thread-safe**. You can reuse an instance multiple times with different parameters, but only
-from a single thread, and only if you use the synchronous API ([Session#execute][execute] is fine,
-[Session#executeAsync][executeAsync] is not).
+from a single thread and only if you use synchronous calls:
+
+```java
+BoundStatement bound = ps1.bind();
+
+// This is safe:
+bound.setString("sku", "324378");
+session.execute(bound);
+
+bound.setString("sku", "324379");
+session.execute(bound);
+
+// This is NOT SAFE. executeAsync runs concurrently with your code, so the first execution might actually read the
+// values after the second setString call, and you would insert 324381 twice:
+bound.setString("sku", "324380");
+session.executeAsync(bound);
+
+bound.setString("sku", "324381");
+session.executeAsync(bound);
+```
+
 Also, make sure you don't accidentally reuse parameters from previous executions.
 
 ### Preparing on multiple nodes
