@@ -11,6 +11,7 @@
 - [bug] JAVA-1187: Fix warning message when local CL used with RoundRobinPolicy.
 - [improvement] JAVA-1175: Warn if DCAwarePolicy configuration is inconsistent.
 - [bug] JAVA-1139: ConnectionException.getMessage() throws NPE if address is null.
+- [bug] JAVA-1202: Handle null rpc_address when checking schema agreement.
 
 
 ### 3.0.2

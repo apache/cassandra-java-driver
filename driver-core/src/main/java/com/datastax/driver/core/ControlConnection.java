@@ -383,10 +383,12 @@ class ControlConnection implements Connection.Owner {
 
         if (broadcastAddress == null) {
             return null;
-        } else if (broadcastAddress.equals(connectedHost.getAddress()) || rpcAddress.equals(connectedHost.getAddress())) {
+        } else if (broadcastAddress.equals(connectedHost.getAddress()) || (rpcAddress != null && rpcAddress.equals(connectedHost.getAddress()))) {
             // Some DSE versions were inserting a line for the local node in peers (with mostly null values). This has been fixed, but if we
             // detect that's the case, ignore it as it's not really a big deal.
             logger.debug("System.peers on node {} has a line for itself. This is not normal but is a known problem of some DSE version. Ignoring the entry.", connectedHost);
+            return null;
+        } else if (rpcAddress == null) {
             return null;
         } else if (rpcAddress.equals(bindAllAddress)) {
             logger.warn("Found host with 0.0.0.0 as rpc_address, using broadcast_address ({}) to contact it instead. If this is incorrect you should avoid the use of 0.0.0.0 server side.", broadcastAddress);
