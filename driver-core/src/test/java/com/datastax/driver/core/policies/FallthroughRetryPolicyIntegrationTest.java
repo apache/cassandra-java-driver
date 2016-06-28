@@ -96,7 +96,7 @@ public class FallthroughRetryPolicyIntegrationTest extends AbstractRetryPolicyIn
                 Fail.fail("expected an OperationTimedOutException");
             } catch (OperationTimedOutException e) {
                 assertThat(e.getMessage()).isEqualTo(
-                        String.format("[%s] Timed out waiting for server response", host1.getAddress())
+                        String.format("[%s] Timed out waiting for server response", host1.getSocketAddress())
                 );
             }
             assertOnRequestErrorWasCalled(1, OperationTimedOutException.class);
@@ -139,7 +139,7 @@ public class FallthroughRetryPolicyIntegrationTest extends AbstractRetryPolicyIn
             Fail.fail("expected a TransportException");
         } catch (TransportException e) {
             assertThat(e.getMessage()).isEqualTo(
-                    String.format("[%s] Connection has been closed", host1.getAddress())
+                    String.format("[%s] Connection has been closed", host1.getSocketAddress())
             );
         }
         assertOnRequestErrorWasCalled(1, TransportException.class);
