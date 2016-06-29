@@ -20,7 +20,7 @@ import com.datastax.driver.core.utils.CassandraVersion;
 import org.mockito.Mockito;
 import org.testng.annotations.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.Mockito.times;
 
 /**
@@ -41,8 +41,7 @@ public class SpeculativeExecutionIntegrationTest extends CCMTestsSupport {
         timestampGenerator = Mockito.spy(ServerSideTimestampGenerator.INSTANCE);
         return Cluster.builder()
                 .withTimestampGenerator(timestampGenerator)
-                .withQueryOptions(new QueryOptions().setDefaultIdempotence(true))
-                        // Set an artificially low timeout to force speculative execution
+                // Set an artificially low timeout to force speculative execution
                 .withSpeculativeExecutionPolicy(new ConstantSpeculativeExecutionPolicy(1, 2));
     }
 
@@ -58,16 +57,30 @@ public class SpeculativeExecutionIntegrationTest extends CCMTestsSupport {
     public void should_use_same_default_timestamp_for_all_executions() {
         Metrics.Errors errors = cluster().getMetrics().getErrorMetrics();
 
-        Mockito.reset(timestampGenerator);
-        long execStartCount = errors.getSpeculativeExecutions().getCount();
+        // The check is attempted up to 10 times to account for the small possibility that a
+        // scheduled execution is not needed/exercised.  Even though the policy is set up
+        // to schedule an execution after 1ms, the timeout might not fire before the response is received.
+        int tryCount = 0;
+        int maxTries = 10;
+        while (tryCount++ < maxTries) {
+            Mockito.reset(timestampGenerator);
+            long execStartCount = errors.getSpeculativeExecutions().getCount();
 
-        BatchStatement batch = new BatchStatement();
-        for (int k = 0; k < 1000; k++) {
-            batch.add(new SimpleStatement("insert into foo(k,v) values (?,1)", k));
+            BatchStatement batch = new BatchStatement();
+            for (int k = 0; k < 1000; k++) {
+                batch.add(new SimpleStatement("insert into foo(k,v) values (?,1)", k).setIdempotent(true));
+            }
+            batch.setIdempotent(true);
+            session().execute(batch);
+
+            if (errors.getSpeculativeExecutions().getCount() == execStartCount + 1) {
+                Mockito.verify(timestampGenerator, times(1)).next();
+                break;
+            }
         }
-        session().execute(batch);
 
-        assertThat(errors.getSpeculativeExecutions().getCount()).isEqualTo(execStartCount + 1);
-        Mockito.verify(timestampGenerator, times(1)).next();
+        if (tryCount == maxTries) {
+            fail("Observed no speculative executions in 10 attempts");
+        }
     }
 }
