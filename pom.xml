@@ -56,7 +56,7 @@
         <metrics.version>3.1.2</metrics.version>
         <snappy.version>1.0.5</snappy.version>
         <lz4.version>1.3.0</lz4.version>
-        <hdr.version>2.1.4</hdr.version>
+        <hdr.version>2.1.9</hdr.version>
         <!-- driver-extras module -->
         <jackson.version>2.6.3</jackson.version>
         <joda.version>2.9.1</joda.version>

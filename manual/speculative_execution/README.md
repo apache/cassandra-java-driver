@@ -117,7 +117,7 @@ explicitly depend on it:
 <dependency>
   <groupId>org.hdrhistogram</groupId>
   <artifactId>HdrHistogram</artifactId>
-  <version>2.1.4</version>
+  <version>2.1.9</version>
 </dependency>
 ```
 

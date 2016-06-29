@@ -63,6 +63,19 @@ public class BundleOptions {
         };
     }
 
+    public static CompositeOption hdrHistogramBundle() {
+        return new CompositeOption() {
+
+            @Override
+            public Option[] getOptions() {
+                return options(
+                        systemProperty("cassandra.usePercentileSpeculativeExecutionPolicy").value("true"),
+                        mavenBundle("org.hdrhistogram", "HdrHistogram", "2.1.9")
+                );
+            }
+        };
+    }
+
     public static CompositeOption nettyBundles() {
         final String nettyVersion = "4.0.33.Final";
         return new CompositeOption() {
