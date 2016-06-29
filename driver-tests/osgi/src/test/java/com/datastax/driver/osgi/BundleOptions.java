@@ -63,6 +63,19 @@ public class BundleOptions {
         };
     }
 
+    public static CompositeOption snappyBundle() {
+        return new CompositeOption() {
+
+            @Override
+            public Option[] getOptions() {
+                return options(
+                        systemProperty("cassandra.compression").value(ProtocolOptions.Compression.SNAPPY.name()),
+                        mavenBundle("org.xerial.snappy", "snappy-java", "1.1.2.6")
+                );
+            }
+        };
+    }
+
     public static CompositeOption hdrHistogramBundle() {
         return new CompositeOption() {
 
