@@ -150,7 +150,7 @@ public class LoggingRetryPolicy implements RetryPolicy {
 
     @Override
     public void init(Cluster cluster) {
-        // nothing to do
+        policy.init(cluster);
     }
 
     @Override
