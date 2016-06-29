@@ -15,6 +15,8 @@
  */
 package com.datastax.driver.osgi;
 
+import com.datastax.driver.core.CCMBridge;
+import com.datastax.driver.core.ProtocolOptions;
 import com.datastax.driver.core.TestUtils;
 import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.options.CompositeOption;
@@ -48,6 +50,19 @@ public class BundleOptions {
         return mavenBundle("com.google.guava", "guava", "16.0.1");
     }
 
+    public static CompositeOption lz4Bundle() {
+        return new CompositeOption() {
+
+            @Override
+            public Option[] getOptions() {
+                return options(
+                        systemProperty("cassandra.compression").value(ProtocolOptions.Compression.LZ4.name()),
+                        mavenBundle("net.jpountz.lz4", "lz4", "1.3.0")
+                );
+            }
+        };
+    }
+
     public static CompositeOption nettyBundles() {
         final String nettyVersion = "4.0.33.Final";
         return new CompositeOption() {
@@ -78,12 +93,14 @@ public class BundleOptions {
                         // Delegate javax.security.cert to the parent classloader.  javax.security.cert.X509Certificate is used in
                         // io.netty.util.internal.EmptyArrays, but not directly by the driver.
                         bootDelegationPackage("javax.security.cert"),
+                        systemProperty("cassandra.version").value(CCMBridge.getCassandraVersion()),
                         systemProperty("cassandra.contactpoints").value(TestUtils.IP_PREFIX + 1),
                         systemProperty("logback.configurationFile").value("file:" + PathUtils.getBaseDir() + "/src/test/resources/logback.xml"),
                         mavenBundle("org.slf4j", "slf4j-api", "1.7.5"),
                         mavenBundle("ch.qos.logback", "logback-classic", "1.1.3"),
                         mavenBundle("ch.qos.logback", "logback-core", "1.1.3"),
                         mavenBundle("io.dropwizard.metrics", "metrics-core", "3.1.2"),
+                        mavenBundle("org.testng", "testng", "6.8.8"),
                         systemPackages("org.testng", "org.junit", "org.junit.runner", "org.junit.runner.manipulation",
                                 "org.junit.runner.notification", "com.jcabi.manifests")
                 );

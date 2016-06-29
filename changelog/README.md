@@ -13,6 +13,7 @@
 - [bug] JAVA-1139: ConnectionException.getMessage() throws NPE if address is null.
 - [bug] JAVA-1202: Handle null rpc_address when checking schema agreement.
 - [improvement] JAVA-1198: Document that BoundStatement is not thread-safe.
+- [improvement] JAVA-1200: Upgrade LZ4 to 1.3.0.
 
 
 ### 3.0.2
