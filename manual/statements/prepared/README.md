@@ -241,9 +241,27 @@ Changing the driver's defaults should be done with care and only in
 specific situations; read each method's Javadoc for detailed
 explanations.
 
+### Avoid preparing 'SELECT *' queries
+
+Both the driver and Cassandra maintain a mapping of `PreparedStatement` queries to their
+metadata.  When a change is made to a table, such as a column being added or dropped, there
+is currently no mechanism for Cassandra to invalidate the existing metadata.  Because of this,
+the driver is not able to properly react to these changes and will improperly read rows after
+a schema change is made.
+
+Therefore it is currently recommended to not create prepared statements
+for 'SELECT *' queries if you plan on making schema changes involving
+adding or dropping columns. Alternatively you should list all columns of interest
+in your statement, i.e.: `SELECT a, b, c FROM tbl`.
+
+This will be addressed in a future release of both Cassandra and the driver.  Follow
+[CASSANDRA-10786] and [JAVA-1196] for more information.
+
 [PreparedStatement]:    http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/PreparedStatement.html
 [BoundStatement]:       http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/BoundStatement.html
 [setPrepareOnAllHosts]: http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/QueryOptions.html#setPrepareOnAllHosts-boolean-
 [setReprepareOnUp]:     http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/QueryOptions.html#setReprepareOnUp-boolean-
 [execute]:              http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Session.html#execute-com.datastax.driver.core.Statement-
 [executeAsync]:         http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Session.html#executeAsync-com.datastax.driver.core.Statement-
+[CASSANDRA-10786]:      https://issues.apache.org/jira/browse/CASSANDRA-10786
+[JAVA-1196]:            https://datastax-oss.atlassian.net/browse/JAVA-1196
