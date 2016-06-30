@@ -15,9 +15,13 @@
  */
 package com.datastax.driver.core;
 
+import java.util.Arrays;
+import java.util.List;
+
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNull;
 
 public class VersionNumberTest {
 
@@ -51,5 +55,9 @@ public class VersionNumberTest {
 
         VersionNumber shorter = VersionNumber.parse("2.0");
         assertEquals(shorter, numbers[1]);
+
+        List<String> preReleaseLabels = Arrays.asList("beta1", "SNAPSHOT");
+        assertEquals(numbers[3].getPreReleaseLabels(), preReleaseLabels);
+        assertNull(numbers[0].getPreReleaseLabels());
     }
 }
