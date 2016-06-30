@@ -145,7 +145,7 @@ public class VersionNumber implements Comparable<VersionNumber> {
      * doesn't have one.
      */
     public List<String> getPreReleaseLabels() {
-        return Collections.unmodifiableList(Arrays.asList(preReleases));
+        return preReleases == null ? null : Collections.unmodifiableList(Arrays.asList(preReleases));
     }
 
     /**

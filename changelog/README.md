@@ -1,5 +1,10 @@
 ## Changelog
 
+### 2.1.11
+
+- [bug] JAVA-1160: Fix NPE in VersionNumber.getPreReleaseLabels().
+
+
 ### 2.1.10.2
 
 Merged from 2.0 branch:
