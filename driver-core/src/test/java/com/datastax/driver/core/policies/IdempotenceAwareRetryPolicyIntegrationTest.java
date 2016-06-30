@@ -52,7 +52,8 @@ public class IdempotenceAwareRetryPolicyIntegrationTest extends AbstractRetryPol
             query();
             fail("expected an WriteTimeoutException");
         } catch (WriteTimeoutException e) {/* expected */}
-        assertOnWriteTimeoutWasCalled(1);
+        // Should not have even been called as statement was not idempotent.
+        assertOnWriteTimeoutWasCalled(0);
         assertThat(errors.getWriteTimeouts().getCount()).isEqualTo(1);
         assertThat(errors.getRetries().getCount()).isEqualTo(0);
         assertThat(errors.getRetriesOnWriteTimeout().getCount()).isEqualTo(0);
@@ -91,7 +92,8 @@ public class IdempotenceAwareRetryPolicyIntegrationTest extends AbstractRetryPol
                         String.format("[%s] Timed out waiting for server response", host1.getSocketAddress())
                 );
             }
-            assertOnRequestErrorWasCalled(1, OperationTimedOutException.class);
+            // Should not have even been called as statement was not idempotent.
+            assertOnRequestErrorWasCalled(0, OperationTimedOutException.class);
             assertThat(errors.getClientTimeouts().getCount()).isEqualTo(1);
             assertThat(errors.getRetries().getCount()).isEqualTo(0);
             assertThat(errors.getRetriesOnClientTimeout().getCount()).isEqualTo(0);
@@ -135,7 +137,8 @@ public class IdempotenceAwareRetryPolicyIntegrationTest extends AbstractRetryPol
         } catch (DriverException e) {
             assertThat(e).isInstanceOf(exception);
         }
-        assertOnRequestErrorWasCalled(1, ServerError.class);
+        // Should not have even been called as statement was not idempotent.
+        assertOnRequestErrorWasCalled(0, ServerError.class);
         assertThat(errors.getOthers().getCount()).isEqualTo(1);
         assertThat(errors.getRetries().getCount()).isEqualTo(0);
         assertThat(errors.getRetriesOnOtherErrors().getCount()).isEqualTo(0);
@@ -183,7 +186,8 @@ public class IdempotenceAwareRetryPolicyIntegrationTest extends AbstractRetryPol
                     String.format("[%s] Connection has been closed", host1.getSocketAddress())
             );
         }
-        assertOnRequestErrorWasCalled(1, TransportException.class);
+        // Should not have even been called as statement was not idempotent.
+        assertOnRequestErrorWasCalled(0, TransportException.class);
         assertThat(errors.getRetries().getCount()).isEqualTo(0);
         assertThat(errors.getConnectionErrors().getCount()).isEqualTo(1);
         assertThat(errors.getIgnoresOnConnectionError().getCount()).isEqualTo(0);
