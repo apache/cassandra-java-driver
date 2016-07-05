@@ -15,49 +15,90 @@
  */
 package com.datastax.driver.core;
 
-import java.util.Arrays;
-import java.util.List;
-
 import org.testng.annotations.Test;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNull;
+import static com.datastax.driver.core.Assertions.assertThat;
 
 public class VersionNumberTest {
 
     @Test(groups = "unit")
-    public void versionNumberTest() {
+    public void should_parse_release_version() {
+        assertThat(VersionNumber.parse("1.2.19"))
+                .hasMajorMinorPatch(1, 2, 19)
+                .hasDsePatch(-1)
+                .hasNoPreReleaseLabels()
+                .hasBuildLabel(null)
+                .hasNextStable("1.2.19")
+                .hasToString("1.2.19");
+    }
 
-        String[] versions = new String[]{
-                "1.2.0",
-                "2.0.0",
-                "2.0.0-beta1",
-                "2.0.0-beta1-SNAPSHOT",
-                "2.0.0-beta1-SNAPSHOT+abc01",
-                "2.0.0.22" // DSE
-        };
+    @Test(groups = "unit")
+    public void should_parse_release_without_patch() {
+        assertThat(VersionNumber.parse("1.2"))
+                .hasMajorMinorPatch(1, 2, 0);
+    }
 
-        VersionNumber[] numbers = new VersionNumber[versions.length];
-        for (int i = 0; i < versions.length; i++)
-            numbers[i] = VersionNumber.parse(versions[i]);
+    @Test(groups = "unit")
+    public void should_parse_pre_release_version() {
+        assertThat(VersionNumber.parse("1.2.0-beta1-SNAPSHOT"))
+                .hasMajorMinorPatch(1, 2, 0)
+                .hasDsePatch(-1)
+                .hasPreReleaseLabels("beta1", "SNAPSHOT")
+                .hasBuildLabel(null)
+                .hasToString("1.2.0-beta1-SNAPSHOT")
+                .hasNextStable("1.2.0");
+    }
 
-        for (int i = 0; i < versions.length; i++)
-            assertEquals(numbers[i].toString(), versions[i]);
+    @Test(groups = "unit")
+    public void should_allow_tilde_as_first_pre_release_delimiter() {
+        assertThat(VersionNumber.parse("1.2.0~beta1-SNAPSHOT"))
+                .hasMajorMinorPatch(1, 2, 0)
+                .hasDsePatch(-1)
+                .hasPreReleaseLabels("beta1", "SNAPSHOT")
+                .hasBuildLabel(null)
+                .hasToString("1.2.0-beta1-SNAPSHOT")
+                .hasNextStable("1.2.0");
+    }
 
-        assertEquals(numbers[0].compareTo(numbers[1]), -1);
-        assertEquals(numbers[1].compareTo(numbers[2]), 1);
-        assertEquals(numbers[2].compareTo(numbers[3]), -1);
-        assertEquals(numbers[3].compareTo(numbers[4]), 0);
-        assertEquals(numbers[1].compareTo(numbers[5]), -1);
+    @Test(groups = "unit")
+    public void should_parse_dse_patch() {
+        assertThat(VersionNumber.parse("1.2.19.2-SNAPSHOT"))
+                .hasMajorMinorPatch(1, 2, 19)
+                .hasDsePatch(2)
+                .hasToString("1.2.19.2-SNAPSHOT")
+                .hasNextStable("1.2.19.2");
+    }
 
-        VersionNumber deb = VersionNumber.parse("2.0.0~beta1");
-        assertEquals(deb, numbers[2]);
+    @Test(groups = "unit")
+    public void should_order_versions() {
+        // by component
+        assertOrder("1.2.0", "2.0.0", -1);
+        assertOrder("2.0.0", "2.1.0", -1);
+        assertOrder("2.0.1", "2.0.2", -1);
+        assertOrder("2.0.1.1", "2.0.1.2", -1);
 
-        VersionNumber shorter = VersionNumber.parse("2.0");
-        assertEquals(shorter, numbers[1]);
+        // shortened vs. longer version
+        assertOrder("2.0", "2.0.0", 0);
+        assertOrder("2.0", "2.0.1", -1);
 
-        List<String> preReleaseLabels = Arrays.asList("beta1", "SNAPSHOT");
-        assertEquals(numbers[3].getPreReleaseLabels(), preReleaseLabels);
-        assertNull(numbers[0].getPreReleaseLabels());
+        // any DSE version is higher than no DSE version
+        assertOrder("2.0.0", "2.0.0.0", -1);
+        assertOrder("2.0.0", "2.0.0.1", -1);
+
+        // pre-release vs. release
+        assertOrder("2.0.0-beta1", "2.0.0", -1);
+        assertOrder("2.0.0-SNAPSHOT", "2.0.0", -1);
+        assertOrder("2.0.0-beta1-SNAPSHOT", "2.0.0", -1);
+
+        // pre-release vs. pre-release
+        assertOrder("2.0.0-a-b-c", "2.0.0-a-b-d", -1);
+        assertOrder("2.0.0-a-b-c", "2.0.0-a-b-c-d", -1);
+
+        // build number ignored
+        assertOrder("2.0.0+build01", "2.0.0+build02", 0);
+    }
+
+    private void assertOrder(String version1, String version2, int expected) {
+        assertThat(VersionNumber.parse(version1).compareTo(VersionNumber.parse(version2))).isEqualTo(expected);
     }
 }
