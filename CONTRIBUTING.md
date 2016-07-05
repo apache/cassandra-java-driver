@@ -6,7 +6,8 @@ Before starting to work on something, please comment in JIRA or ask on the maili
 to make sure nobody else is working on it.
 
 If your fix applies to multiple branches, base your work on the lowest active branch
-(2.1 at the time of writing, but ask for confirmation). We regularly merge changes downstream.
+(currently 3.0.x for bug fixes and 3.0 for new features, but ask for confirmation).
+We regularly merge changes to higher branches.
 
 Before you send your pull request, make sure that:
 
