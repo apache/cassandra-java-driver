@@ -88,6 +88,17 @@ session.execute(batch);
 ```
 
 
+### Why do my 'SELECT *' `PreparedStatement`-based queries stop working after a schema change?
+
+Both the driver and Cassandra maintain a mapping of `PreparedStatement` queries to their
+metadata.  When a change is made to a table, such as a column being added or dropped, there
+is currently no mechanism for Cassandra to invalidate the existing metadata.  Because of this,
+the driver is not able to properly react to these changes and will improperly read rows after
+a schema change is made.
+
+See [Prepared statements](../manual/statements/prepared) for more information.
+
+
 ### Can I get the raw bytes of a text column?
 
 If you need to access the raw bytes of a text column, call the
