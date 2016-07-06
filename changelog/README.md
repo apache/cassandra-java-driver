@@ -2,6 +2,7 @@
 
 ### 3.0.3 (in progress)
 
+- [improvement] JAVA-1235: Move the query to the end of "re-preparing .." log message as a key value.
 - [improvement] JAVA-1147: Upgrade Netty to 4.0.37.
 - [bug] JAVA-1213: Allow updates and inserts to BLOB column using read-only ByteBuffer.
 - [bug] JAVA-1209: ProtocolOptions.getProtocolVersion() should return null instead of throwing NPE if Cluster has not
