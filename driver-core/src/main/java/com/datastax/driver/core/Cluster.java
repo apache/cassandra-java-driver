@@ -471,7 +471,7 @@ public class Cluster implements Closeable {
      * Registers the provided tracker to be updated with hosts read
      * latencies.
      * <p/>
-     * Registering the same listener multiple times is a no-op.
+     * Registering the same tracker multiple times is a no-op.
      * <p/>
      * Beware that the registered tracker's
      * {@link LatencyTracker#update(Host, Statement, Exception, long) update}
@@ -490,7 +490,7 @@ public class Cluster implements Closeable {
      */
     public Cluster register(LatencyTracker tracker) {
         checkNotClosed(manager);
-        boolean added = manager.trackers.add(tracker);
+        boolean added = manager.latencyTrackers.add(tracker);
         if (added)
             tracker.onRegister(this);
         return this;
@@ -508,7 +508,7 @@ public class Cluster implements Closeable {
      */
     public Cluster unregister(LatencyTracker tracker) {
         checkNotClosed(manager);
-        boolean removed = manager.trackers.remove(tracker);
+        boolean removed = manager.latencyTrackers.remove(tracker);
         if (removed)
             tracker.onUnregister(this);
         return this;
@@ -1341,7 +1341,7 @@ public class Cluster implements Closeable {
         ConcurrentMap<MD5Digest, PreparedStatement> preparedQueries;
 
         final Set<Host.StateListener> listeners;
-        final Set<LatencyTracker> trackers = new CopyOnWriteArraySet<LatencyTracker>();
+        final Set<LatencyTracker> latencyTrackers = new CopyOnWriteArraySet<LatencyTracker>();
         final Set<SchemaChangeListener> schemaChangeListeners = new CopyOnWriteArraySet<SchemaChangeListener>();
 
         EventDebouncer<NodeListRefreshRequest> nodeListRefreshRequestDebouncer;
@@ -1484,11 +1484,10 @@ public class Cluster implements Closeable {
                 configuration.getPolicies().getRetryPolicy().init(Cluster.this);
                 reconnectionPolicy().init(Cluster.this);
                 configuration.getPolicies().getAddressTranslator().init(Cluster.this);
-                for (LatencyTracker tracker : trackers)
+                for (LatencyTracker tracker : latencyTrackers)
                     tracker.onRegister(Cluster.this);
                 for (Host.StateListener listener : listeners)
                     listener.onRegister(Cluster.this);
-
                 for (Host host : removedContactPointHosts) {
                     loadBalancingPolicy().onRemove(host);
                     for (Host.StateListener listener : listeners)
@@ -1592,8 +1591,8 @@ public class Cluster implements Closeable {
             return sessions.remove(session);
         }
 
-        void reportLatency(Host host, Statement statement, Exception exception, long latencyNanos) {
-            for (LatencyTracker tracker : trackers) {
+        void reportQuery(Host host, Statement statement, Exception exception, long latencyNanos) {
+            for (LatencyTracker tracker : latencyTrackers) {
                 tracker.update(host, statement, exception, latencyNanos);
             }
         }
@@ -1634,7 +1633,7 @@ public class Cluster implements Closeable {
                 configuration.getPolicies().getRetryPolicy().close();
                 reconnectionPolicy().close();
                 configuration.getPolicies().getAddressTranslator().close();
-                for (LatencyTracker tracker : trackers)
+                for (LatencyTracker tracker : latencyTrackers)
                     tracker.onUnregister(Cluster.this);
                 for (Host.StateListener listener : listeners)
                     listener.onUnregister(Cluster.this);

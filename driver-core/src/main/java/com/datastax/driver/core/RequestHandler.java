@@ -638,8 +638,9 @@ class RequestHandler {
                 exceptionToReport = e;
                 setFinalException(connection, e);
             } finally {
-                if (queriedHost != null && statement != Statement.DEFAULT)
-                    manager.cluster.manager.reportLatency(queriedHost, statement, exceptionToReport, latency);
+                if (queriedHost != null && statement != Statement.DEFAULT) {
+                    manager.cluster.manager.reportQuery(queriedHost, statement, exceptionToReport, latency);
+                }
             }
         }
 
@@ -746,7 +747,7 @@ class RequestHandler {
                 setFinalException(null, new DriverInternalError("An unexpected error happened while handling exception " + exception, e));
             } finally {
                 if (queriedHost != null && statement != Statement.DEFAULT)
-                    manager.cluster.manager.reportLatency(queriedHost, statement, exception, latency);
+                    manager.cluster.manager.reportQuery(queriedHost, statement, exception, latency);
             }
         }
 
@@ -774,7 +775,7 @@ class RequestHandler {
                 setFinalException(null, new DriverInternalError("An unexpected error happened while handling timeout", e));
             } finally {
                 if (queriedHost != null && statement != Statement.DEFAULT)
-                    manager.cluster.manager.reportLatency(queriedHost, statement, timeoutException, latency);
+                    manager.cluster.manager.reportQuery(queriedHost, statement, timeoutException, latency);
             }
             return true;
         }
