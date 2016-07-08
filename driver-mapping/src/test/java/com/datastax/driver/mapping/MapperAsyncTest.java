@@ -71,7 +71,7 @@ public class MapperAsyncTest extends CCMTestsSupport {
         // create a second cluster to perform everything asynchronously,
         // including session initialization
         Cluster cluster2 = register(
-                createClusterBuilderNoDebouncing()
+                createClusterBuilder()
                         .addContactPoints(getContactPoints())
                         .withPort(ccm().getBinaryPort())
                         .build());

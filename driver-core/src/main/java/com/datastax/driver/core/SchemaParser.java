@@ -63,6 +63,9 @@ abstract class SchemaParser {
                 assert rows.keyspaces != null;
                 Map<String, KeyspaceMetadata> keyspaces = buildKeyspaces(rows, cassandraVersion, cluster);
                 updateKeyspaces(metadata, metadata.keyspaces, keyspaces, targetKeyspace);
+                // If we rebuild all from scratch or have an updated keyspace, rebuild the token map
+                // since some replication on some keyspace may have changed
+                metadata.rebuildTokenMap();
             } else {
                 assert targetKeyspace != null;
                 KeyspaceMetadata keyspace = metadata.keyspaces.get(targetKeyspace);

@@ -18,11 +18,7 @@ package com.datastax.driver.core;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.util.Collection;
-
 import static com.datastax.driver.core.CreateCCM.TestMode.PER_METHOD;
-import static com.datastax.driver.core.TestUtils.CREATE_KEYSPACE_SIMPLE_FORMAT;
-import static com.google.common.collect.Lists.newArrayList;
 import static org.mockito.Mockito.*;
 
 @CreateCCM(PER_METHOD)
@@ -31,21 +27,14 @@ public class NodeListRefreshDebouncerTest extends CCMTestsSupport {
 
     private static final int DEBOUNCE_TIME = 2000;
 
-    QueryOptions queryOptions;
-
-    Cluster cluster2;
-
-    Session session2;
+    private Cluster cluster2;
 
     // Control Connection to be spied.
     private ControlConnection controlConnection;
 
-    // Keyspaces to drop after test completes.
-    private Collection<String> keyspaces = newArrayList();
-
     @BeforeMethod(groups = "short")
     public void setup() {
-        queryOptions = new QueryOptions();
+        QueryOptions queryOptions = new QueryOptions();
         queryOptions.setRefreshNodeListIntervalMillis(DEBOUNCE_TIME);
         queryOptions.setMaxPendingRefreshNodeListRequests(5);
         queryOptions.setRefreshSchemaIntervalMillis(0);
@@ -55,29 +44,13 @@ public class NodeListRefreshDebouncerTest extends CCMTestsSupport {
                 .withPort(ccm().getBinaryPort())
                 .withQueryOptions(queryOptions)
                 .build());
-        session2 = cluster2.connect();
+
+        cluster2.init();
 
         // Create a spy of the Cluster's control connection and replace it with the spy.
         controlConnection = spy(cluster2.manager.controlConnection);
         cluster2.manager.controlConnection = controlConnection;
         reset(controlConnection);
-    }
-
-    /**
-     * Ensures that when a keyspace is created that refresh node list request
-     * is debounced and processed within {@link QueryOptions#getRefreshSchemaIntervalMillis()}
-     * + {@link QueryOptions#getRefreshNodeListIntervalMillis()}.
-     *
-     * @jira_ticket JAVA-657
-     * @since 2.0.11
-     */
-    @Test(groups = "short")
-    public void should_debounce_refresh_when_keyspace_created() {
-        String keyspace = "sdrwkc";
-        session().execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, keyspace, 1));
-        keyspaces.add(keyspace);
-
-        verify(controlConnection, timeout(DEBOUNCE_TIME + queryOptions.getRefreshSchemaIntervalMillis())).refreshNodeListAndTokenMap();
     }
 
     /**
@@ -90,16 +63,11 @@ public class NodeListRefreshDebouncerTest extends CCMTestsSupport {
      */
     @Test(groups = "short")
     public void should_refresh_when_max_pending_requests_reached() {
-        // Create keyspaces 5 times to cause
-        // refreshNodeListAndTokenMap to be called.
-        String prefix = "srwmprr";
         for (int i = 0; i < 5; i++) {
-            String keyspace = prefix + i;
-            session().execute(String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, keyspace, 1));
-            keyspaces.add(keyspace);
+            cluster2.manager.submitNodeListRefresh();
         }
 
-        // add a 1 second delay to account for executor submit.
-        verify(controlConnection, timeout(1000)).refreshNodeListAndTokenMap();
+        // add delay to account for executor submit.
+        verify(controlConnection, timeout(DEBOUNCE_TIME)).refreshNodeListAndTokenMap();
     }
 }
