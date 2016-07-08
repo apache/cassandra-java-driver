@@ -17,6 +17,7 @@
 - [bug] JAVA-1232: Fix NPE in IdempotenceAwareRetryPolicy.isIdempotent.
 - [improvement] JAVA-1227: Document "SELECT *" issue with prepared statement.
 - [bug] JAVA-1160: Fix NPE in VersionNumber.getPreReleaseLabels().
+- [improvement] JAVA-1126: Handle schema changes in Mapper.
 
 
 ### 3.0.2

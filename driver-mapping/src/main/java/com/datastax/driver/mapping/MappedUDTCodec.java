@@ -46,6 +46,10 @@ class MappedUDTCodec<T> extends TypeCodec.AbstractUDTCodec<T> {
         }
     }
 
+    Class<T> getUdtClass() {
+        return udtClass;
+    }
+
     @Override
     protected ByteBuffer serializeField(T source, String fieldName, ProtocolVersion protocolVersion) {
         // The parent class passes lowercase names unquoted, but in our internal map of mappers they are always quoted
