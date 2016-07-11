@@ -16,6 +16,7 @@
 package com.datastax.driver.core;
 
 import com.datastax.driver.core.exceptions.UnsupportedFeatureException;
+import org.testng.SkipException;
 import org.testng.annotations.Test;
 
 import static com.datastax.driver.core.ProtocolVersion.V1;
@@ -31,6 +32,13 @@ public class ProtocolV1Test extends CCMTestsSupport {
     public Cluster.Builder createClusterBuilder() {
         return super.createClusterBuilder()
                 .withProtocolVersion(V1);
+    }
+
+    @Override
+    public void beforeTestClass(Object testInstance) throws Exception {
+        if (CCMBridge.isWindows())
+            throw new SkipException("C* 1.2 is not supported on Windows.");
+        super.beforeTestClass(testInstance);
     }
 
     /**

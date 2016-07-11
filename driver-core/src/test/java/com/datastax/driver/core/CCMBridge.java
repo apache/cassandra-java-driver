@@ -193,7 +193,7 @@ public class CCMBridge implements CCMAccess {
      *
      * @return <code>true</code> if the operating system is a Windows one, <code>false</code> otherwise.
      */
-    private static boolean isWindows() {
+    public static boolean isWindows() {
 
         String osName = System.getProperty("os.name");
         return osName != null && osName.startsWith("Windows");
