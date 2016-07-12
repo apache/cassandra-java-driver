@@ -20,7 +20,6 @@ import com.datastax.driver.mapping.annotations.*;
 import com.google.common.base.Objects;
 import com.google.common.collect.Sets;
 import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.util.Set;
@@ -41,11 +40,6 @@ public class MapperPolymorphismTest extends CCMTestsSupport {
     Square square = new Square(new Point2D(20, 30), new Point2D(50, 60));
     Sphere sphere = new Sphere(new Point3D(11, 22, 33), 34.56);
 
-    Mapper<Circle> circleMapper;
-    Mapper<Rectangle> rectangleMapper;
-    Mapper<Square> squareMapper;
-    Mapper<Sphere> sphereMapper;
-
     @Override
     public void onTestContextInitialized() {
         execute(
@@ -55,15 +49,6 @@ public class MapperPolymorphismTest extends CCMTestsSupport {
                 "CREATE TABLE rectangles (rect_id uuid PRIMARY KEY, bottom_left frozen<point2d>, top_right frozen<point2d>, tags set<text>)",
                 "CREATE TABLE squares (square_id uuid PRIMARY KEY, bottom_left frozen<point2d>, top_right frozen<point2d>, tags set<text>)",
                 "CREATE TABLE spheres (sphere_id uuid PRIMARY KEY, center3d frozen<point3d>, radius double, tags set<text>)");
-    }
-
-    @BeforeClass(groups = "short")
-    public void createMappers() throws Exception {
-        MappingManager mappingManager = new MappingManager(session());
-        circleMapper = mappingManager.mapper(Circle.class);
-        rectangleMapper = mappingManager.mapper(Rectangle.class);
-        squareMapper = mappingManager.mapper(Square.class);
-        sphereMapper = mappingManager.mapper(Sphere.class);
     }
 
     @AfterMethod(groups = "short")
@@ -463,24 +448,32 @@ public class MapperPolymorphismTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void should_save_and_retrieve_circle() throws Exception {
+        MappingManager mappingManager = new MappingManager(session());
+        Mapper<Circle> circleMapper = mappingManager.mapper(Circle.class);
         circleMapper.save(circle);
         assertThat(circleMapper.get(circle.getId())).isEqualTo(circle);
     }
 
     @Test(groups = "short")
     public void should_save_and_retrieve_rectangle() throws Exception {
+        MappingManager mappingManager = new MappingManager(session());
+        Mapper<Rectangle> rectangleMapper = mappingManager.mapper(Rectangle.class);
         rectangleMapper.save(rectangle);
         assertThat(rectangleMapper.get(rectangle.getId())).isEqualTo(rectangle);
     }
 
     @Test(groups = "short")
     public void should_save_and_retrieve_square() throws Exception {
+        MappingManager mappingManager = new MappingManager(session());
+        Mapper<Square> squareMapper = mappingManager.mapper(Square.class);
         squareMapper.save(square);
         assertThat(squareMapper.get(square.getId())).isEqualTo(square);
     }
 
     @Test(groups = "short")
     public void should_save_and_retrieve_sphere() throws Exception {
+        MappingManager mappingManager = new MappingManager(session());
+        Mapper<Sphere> sphereMapper = mappingManager.mapper(Sphere.class);
         sphereMapper.save(sphere);
         assertThat(sphereMapper.get(sphere.getId())).isEqualTo(sphere);
     }
