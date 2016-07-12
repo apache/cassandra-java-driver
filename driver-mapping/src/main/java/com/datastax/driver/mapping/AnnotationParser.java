@@ -22,7 +22,6 @@ import com.datastax.driver.core.TypeCodec;
 import com.datastax.driver.core.UserType;
 import com.datastax.driver.mapping.MethodMapper.ParamMapper;
 import com.datastax.driver.mapping.annotations.*;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.reflect.TypeToken;
@@ -44,8 +43,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 @SuppressWarnings({"unchecked", "WeakerAccess"})
 class AnnotationParser {
 
-    @VisibleForTesting
-    static final Set<Class<? extends Annotation>> VALID_PROPERTY_ANNOTATIONS = ImmutableSet.of(
+    /**
+     * Annotations allowed on a property that maps to a table column.
+     */
+    private static final Set<Class<? extends Annotation>> VALID_COLUMN_ANNOTATIONS = ImmutableSet.of(
             Column.class,
             Computed.class,
             ClusteringColumn.class,
@@ -55,8 +56,10 @@ class AnnotationParser {
             PartitionKey.class,
             Transient.class);
 
-    @VisibleForTesting
-    static final Set<Class<? extends Annotation>> VALID_FIELD_ANNOTATIONS = ImmutableSet.of(
+    /**
+     * Annotations allowed on a property that maps to a UDT field.
+     */
+    private static final Set<Class<? extends Annotation>> VALID_FIELD_ANNOTATIONS = ImmutableSet.of(
             Field.class,
             Frozen.class,
             FrozenKey.class,
@@ -119,7 +122,7 @@ class AnnotationParser {
             if (mappingManager.isCassandraV1 && propertyMapper.isComputed())
                 throw new UnsupportedOperationException("Computed properties are not supported with native protocol v1");
 
-            AnnotationChecks.validateAnnotations(propertyMapper, VALID_PROPERTY_ANNOTATIONS);
+            AnnotationChecks.validateAnnotations(propertyMapper, VALID_COLUMN_ANNOTATIONS);
 
             if (propertyMapper.isTransient())
                 continue;
