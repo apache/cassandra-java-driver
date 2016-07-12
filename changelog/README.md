@@ -20,6 +20,7 @@
 - [improvement] JAVA-1126: Handle schema changes in Mapper.
 - [bug] JAVA-1193: Refresh token and replica metadata synchronously when schema is altered.
 - [bug] JAVA-1120: Skip schema refresh debouncer when checking for agreement as a result of schema change made by client.
+- [improvement] JAVA-1242: Fix driver-core dependency in driver-stress
 
 
 ### 3.0.2
