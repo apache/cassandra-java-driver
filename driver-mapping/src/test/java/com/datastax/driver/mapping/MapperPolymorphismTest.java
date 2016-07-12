@@ -207,7 +207,7 @@ public class MapperPolymorphismTest extends CCMTestsSupport {
 
         @Column(name = "center2d") // overridden by a getter in Sphere
         @Frozen
-        private Point2D center;
+        protected Point2D center;
 
         // tests unusual field name (i.e. does not correspond to getter/setter)
         // will be considered as a separate "property" with no getter nor setter;
@@ -401,10 +401,6 @@ public class MapperPolymorphismTest extends CCMTestsSupport {
     @Table(name = "spheres")
     static class Sphere extends Circle implements Shape3D {
 
-        // masks field Circle.center
-        @Frozen
-        private Point3D center;
-
         private long writeTime;
 
         public Sphere() {
@@ -426,10 +422,12 @@ public class MapperPolymorphismTest extends CCMTestsSupport {
         @Frozen
         @Override
         public Point3D getCenter() {
-            return center;
+            return (Point3D) center;
         }
 
-        public void setCenter(Point3D center) {
+        @Override
+        public void setCenter(Point2D center) {
+            assert center instanceof Point3D;
             this.center = center;
         }
 
