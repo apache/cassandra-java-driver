@@ -16,6 +16,7 @@
 package com.datastax.driver.mapping;
 
 import com.datastax.driver.core.CCMTestsSupport;
+import com.datastax.driver.core.utils.CassandraVersion;
 import com.datastax.driver.mapping.annotations.*;
 import com.google.common.base.Objects;
 import com.google.common.collect.Sets;
@@ -33,6 +34,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * JAVA-636 Allow @Column annotations on getters/setters as well as fields
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
+@CassandraVersion(major = 2.1)
 public class MapperPolymorphismTest extends CCMTestsSupport {
 
     Circle circle = new Circle(new Point2D(11, 22), 12.34);
@@ -446,6 +448,21 @@ public class MapperPolymorphismTest extends CCMTestsSupport {
 
     }
 
+    /**
+     * Validates that fields and methods from a parent class {@link Shape} are inherited for a mapped entity
+     * class {@link Circle}.
+     * <p/>
+     * It also ensures that methods overridden in {@link Circle} are given precedence and that their annotations are
+     * used.   In the case of circle, the {@link Circle#getId()} method overrides the parent and specifies a
+     * {@link Column} annotation that will be used instead of the parents annotation ('wrong').
+     * <p/>
+     * Lastly, it defines another column 'radius' that is defined by having {@link Circle#getRadius} and
+     * {@link Circle#setRadius} properties, while it has a {@link Transient} field '_radius' that should not be pulled
+     * in by the mapper.
+     *
+     * @test_category object_mapper
+     * @jira_ticket JAVA-541, JAVA-636
+     */
     @Test(groups = "short")
     public void should_save_and_retrieve_circle() throws Exception {
         MappingManager mappingManager = new MappingManager(session());
@@ -454,6 +471,14 @@ public class MapperPolymorphismTest extends CCMTestsSupport {
         assertThat(circleMapper.get(circle.getId())).isEqualTo(circle);
     }
 
+    /**
+     * Validates that property methods such as {@link Rectangle#getWidth} and {@link Rectangle#getHeight} are not
+     * considered as they are marked as {@link Transient}.  It also ensures that overridden method
+     * {@link Rectangle#getArea} inherits its parent's {@link Transient} annotation.
+     *
+     * @test_category object_mapper
+     * @jira_ticket JAVA-541, JAVA-636
+     */
     @Test(groups = "short")
     public void should_save_and_retrieve_rectangle() throws Exception {
         MappingManager mappingManager = new MappingManager(session());
@@ -462,6 +487,14 @@ public class MapperPolymorphismTest extends CCMTestsSupport {
         assertThat(rectangleMapper.get(rectangle.getId())).isEqualTo(rectangle);
     }
 
+    /**
+     * Validates that {@link Square} inherits its properties from its parent class {@link Rectangle} and its parent's
+     * class {@link Shape} and that its methods {@link Square#getBottomLeft} and {@link Square#getHeight} inherit
+     * annotations from its parent.
+     *
+     * @test_category object_mapper
+     * @jira_ticket JAVA-541, JAVA-636
+     */
     @Test(groups = "short")
     public void should_save_and_retrieve_square() throws Exception {
         MappingManager mappingManager = new MappingManager(session());
@@ -470,6 +503,13 @@ public class MapperPolymorphismTest extends CCMTestsSupport {
         assertThat(squareMapper.get(square.getId())).isEqualTo(square);
     }
 
+    /**
+     * Validates that {@link Sphere} inherits its properties from its parent class {@link Circle} and most importantly
+     * can specialize the type of {@link Sphere#center} to a {@link Point3D} instead of a {@link Point2D}.
+     *
+     * @test_category object_mapper
+     * @jira_ticket JAVA-541, JAVA-636
+     */
     @Test(groups = "short")
     public void should_save_and_retrieve_sphere() throws Exception {
         MappingManager mappingManager = new MappingManager(session());

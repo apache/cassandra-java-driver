@@ -18,6 +18,7 @@ package com.datastax.driver.mapping;
 import com.datastax.driver.core.CCMConfig;
 import com.datastax.driver.core.CCMTestsSupport;
 import com.datastax.driver.core.TestUtils;
+import com.datastax.driver.core.utils.CassandraVersion;
 import com.datastax.driver.mapping.annotations.*;
 import com.google.common.base.Objects;
 import org.testng.annotations.Test;
@@ -25,16 +26,13 @@ import org.testng.annotations.Test;
 import static com.datastax.driver.core.Metadata.quote;
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- *
- */
 @CCMConfig(createKeyspace = false)
-@SuppressWarnings({"unused", "WeakerAccess"})
-public class MapperCaseSensitivenessTest extends CCMTestsSupport {
+@CassandraVersion(major = 2.1)
+public class MapperCaseSensitivityTest extends CCMTestsSupport {
 
-    static final String KS = "ks_MapperCaseSensitivenessTest";
-    static final String TABLE = "table_MapperCaseSensitivenessTest";
-    static final String TYPE = "udt_MapperCaseSensitivenessTest";
+    static final String KS = "ks_MapperCaseSensitivityTest";
+    static final String TABLE = "table_MapperCaseSensitivityTest";
+    static final String TYPE = "udt_MapperCaseSensitivityTest";
 
     UserNoKeyspace user = new UserNoKeyspace("id", new Address("street", "zip"));
 
@@ -161,6 +159,13 @@ public class MapperCaseSensitivenessTest extends CCMTestsSupport {
                 "CREATE TABLE " + quote(TABLE) + " (\"userId\" text PRIMARY KEY, \"Address\" frozen<" + quote(TYPE) + ">)");
     }
 
+    /**
+     * Validates that case sensitive identifiers for fields, types, columns, tables and keyspaces work with the mapper
+     * when the keyspace name is specified on the mapped class.
+     *
+     * @jira_ticket JAVA-564
+     * @test_category object_mapper
+     */
     @Test(groups = "short")
     public void should_handle_case_sensitive_identifiers_when_keyspace_specified() throws Exception {
         MappingManager mappingManager = new MappingManager(session());
@@ -169,8 +174,15 @@ public class MapperCaseSensitivenessTest extends CCMTestsSupport {
         assertThat(mapper.get(user.getUserId())).isEqualTo(user);
     }
 
+    /**
+     * Validates that case sensitive identifiers for fields, types, columns, tables and keyspaces work with the mapper
+     * when the keyspace name is *not* specified on the mapped class.
+     *
+     * @jira_ticket JAVA-564
+     * @test_category object_mapper
+     */
     @Test(groups = "short")
-    public void should_handle_case_sensitive_identifiers_whitout_keyspace_specified() throws Exception {
+    public void should_handle_case_sensitive_identifiers_without_keyspace_specified() throws Exception {
         MappingManager mappingManager = new MappingManager(session());
         Mapper<UserNoKeyspace> mapper = mappingManager.mapper(UserNoKeyspace.class);
         mapper.save(user);
