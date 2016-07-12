@@ -253,7 +253,7 @@ class AnnotationParser {
                 fetchSize = options.fetchSize();
                 tracing = options.tracing();
                 if (options.idempotent().length > 1) {
-                    throw new IllegalStateException("idemtpotence() attribute can only accept one value");
+                    throw new IllegalArgumentException("idemtpotence() attribute can only accept one value");
                 }
                 idempotent = options.idempotent().length == 0 ? null : options.idempotent()[0];
             }

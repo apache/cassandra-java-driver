@@ -261,7 +261,7 @@ public class MapperInvalidAnnotationsTest {
 
     }
 
-    @Test(groups = "unit", expectedExceptions = IllegalStateException.class,
+    @Test(groups = "unit", expectedExceptions = IllegalArgumentException.class,
             expectedExceptionsMessageRegExp =
                     "Property 'notReadable' is not readable")
     public void should_not_allow_unreadable_property() throws Exception {
@@ -277,7 +277,7 @@ public class MapperInvalidAnnotationsTest {
 
     }
 
-    @Test(groups = "unit", expectedExceptions = IllegalStateException.class,
+    @Test(groups = "unit", expectedExceptions = IllegalArgumentException.class,
             expectedExceptionsMessageRegExp =
                     "Property 'notWritable' is not writable")
     public void should_not_allow_unwritable_property() throws Exception {

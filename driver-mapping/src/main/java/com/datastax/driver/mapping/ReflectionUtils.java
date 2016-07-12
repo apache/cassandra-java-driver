@@ -48,7 +48,7 @@ class ReflectionUtils {
         try {
             return publicConstructor.newInstance();
         } catch (Exception e) {
-            throw new IllegalStateException("Can't create an instance of " + clazz, e);
+            throw new IllegalArgumentException("Can't create an instance of " + clazz, e);
         }
     }
 

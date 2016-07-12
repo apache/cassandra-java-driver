@@ -28,7 +28,7 @@ import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.Map;
 
-import static com.google.common.base.Preconditions.checkState;
+import static com.google.common.base.Preconditions.checkArgument;
 
 /**
  * Maps a Java bean property to a table column or a UDT field.
@@ -65,9 +65,9 @@ class PropertyMapper {
         if (setter != null)
             ReflectionUtils.tryMakeAccessible(setter);
         if (!isTransient()) {
-            checkState((field != null && field.isAccessible()) || (getter != null && getter.isAccessible()),
+            checkArgument((field != null && field.isAccessible()) || (getter != null && getter.isAccessible()),
                     "Property '%s' is not readable", propertyName);
-            checkState((field != null && field.isAccessible()) || (setter != null && setter.isAccessible()),
+            checkArgument((field != null && field.isAccessible()) || (setter != null && setter.isAccessible()),
                     "Property '%s' is not writable", propertyName);
         }
         columnName = inferColumnName();
@@ -84,7 +84,7 @@ class PropertyMapper {
             else
                 return field.get(entity);
         } catch (Exception e) {
-            throw new IllegalStateException("Unable to read property '" + propertyName + "' in " + entity.getClass().getName(), e);
+            throw new IllegalArgumentException("Unable to read property '" + propertyName + "' in " + entity.getClass(), e);
         }
     }
 
@@ -96,7 +96,7 @@ class PropertyMapper {
             else
                 field.set(entity, value);
         } catch (Exception e) {
-            throw new IllegalStateException("Unable to write property '" + propertyName + "' in " + entity.getClass().getName(), e);
+            throw new IllegalArgumentException("Unable to write property '" + propertyName + "' in " + entity.getClass(), e);
         }
     }
 
