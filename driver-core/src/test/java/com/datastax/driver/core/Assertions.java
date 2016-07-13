@@ -84,4 +84,7 @@ public class Assertions extends org.assertj.core.api.Assertions {
         return new MaterializedViewMetadataAssert(view);
     }
 
+    public static VersionNumberAssert assertThat(VersionNumber actual) {
+        return new VersionNumberAssert(actual);
+    }
 }

@@ -267,15 +267,14 @@ class ControlConnection implements Connection.Owner {
 
             // We need to refresh the node list first so we know about the cassandra version of
             // the node we're connecting to.
+            // This will create the token map for the first time, but it will be incomplete
+            // due to the lack of keyspace information
             refreshNodeListAndTokenMap(connection, cluster, isInitialConnection, true);
 
+            // refresh schema will also update the token map again,
+            // this time with information about keyspaces
             logger.debug("[Control connection] Refreshing schema");
             refreshSchema(connection, null, null, null, null, cluster);
-
-            // We need to refresh the node list again;
-            // We want that because the token map was not properly initialized by the first call above,
-            // since it requires the list of keyspaces to be loaded.
-            refreshNodeListAndTokenMap(connection, cluster, false, false);
 
             return connection;
         } catch (BusyConnectionException e) {
@@ -306,11 +305,6 @@ class ControlConnection implements Connection.Owner {
             if (c == null || c.isClosed())
                 return;
             refreshSchema(c, targetType, targetKeyspace, targetName, signature, cluster);
-            // If we rebuild all from scratch or have an updated keyspace, rebuild the token map
-            // since some replication on some keyspace may have changed
-            if ((targetType == null || targetType == KEYSPACE)) {
-                cluster.submitNodeListRefresh();
-            }
         } catch (ConnectionException e) {
             logger.debug("[Control connection] Connection error while refreshing schema ({})", e.getMessage());
             signalError();
@@ -383,10 +377,12 @@ class ControlConnection implements Connection.Owner {
 
         if (broadcastAddress == null) {
             return null;
-        } else if (broadcastAddress.equals(connectedHost.getAddress()) || rpcAddress.equals(connectedHost.getAddress())) {
+        } else if (broadcastAddress.equals(connectedHost.getAddress()) || (rpcAddress != null && rpcAddress.equals(connectedHost.getAddress()))) {
             // Some DSE versions were inserting a line for the local node in peers (with mostly null values). This has been fixed, but if we
             // detect that's the case, ignore it as it's not really a big deal.
             logger.debug("System.peers on node {} has a line for itself. This is not normal but is a known problem of some DSE version. Ignoring the entry.", connectedHost);
+            return null;
+        } else if (rpcAddress == null) {
             return null;
         } else if (rpcAddress.equals(bindAllAddress)) {
             logger.warn("Found host with 0.0.0.0 as rpc_address, using broadcast_address ({}) to contact it instead. If this is incorrect you should avoid the use of 0.0.0.0 server side.", broadcastAddress);
@@ -550,7 +546,8 @@ class ControlConnection implements Connection.Owner {
         connection.write(peersFuture);
 
         String partitioner = null;
-        Map<Host, Collection<String>> tokenMap = new HashMap<Host, Collection<String>>();
+        Token.Factory factory = null;
+        Map<Host, Set<Token>> tokenMap = new HashMap<Host, Set<Token>>();
 
         // Update cluster name, DC and rack for the one node we are connected to
         Row localRow = localFuture.get().one();
@@ -560,8 +557,10 @@ class ControlConnection implements Connection.Owner {
                 cluster.metadata.clusterName = clusterName;
 
             partitioner = localRow.getString("partitioner");
-            if (partitioner != null)
+            if (partitioner != null) {
                 cluster.metadata.partitioner = partitioner;
+                factory = Token.getFactory(partitioner);
+            }
 
             Host host = cluster.metadata.getHost(connection.address);
             // In theory host can't be null. However there is no point in risking a NPE in case we
@@ -570,10 +569,12 @@ class ControlConnection implements Connection.Owner {
                 logger.debug("Host in local system table ({}) unknown to us (ok if said host just got removed)", connection.address);
             } else {
                 updateInfo(host, localRow, cluster, isInitialConnection);
-                if (metadataEnabled) {
-                    Set<String> tokens = localRow.getSet("tokens", String.class);
-                    if (partitioner != null && !tokens.isEmpty())
+                if (metadataEnabled && factory != null) {
+                    Set<String> tokensStr = localRow.getSet("tokens", String.class);
+                    if (!tokensStr.isEmpty()) {
+                        Set<Token> tokens = toTokens(factory, tokensStr);
                         tokenMap.put(host, tokens);
+                    }
                 }
             }
         }
@@ -584,7 +585,7 @@ class ControlConnection implements Connection.Owner {
         List<String> cassandraVersions = new ArrayList<String>();
         List<InetAddress> broadcastAddresses = new ArrayList<InetAddress>();
         List<InetAddress> listenAddresses = new ArrayList<InetAddress>();
-        List<Set<String>> allTokens = new ArrayList<Set<String>>();
+        List<Set<Token>> allTokens = new ArrayList<Set<Token>>();
         List<String> dseVersions = new ArrayList<String>();
         List<Boolean> dseGraphEnabled = new ArrayList<Boolean>();
         List<String> dseWorkloads = new ArrayList<String>();
@@ -601,8 +602,14 @@ class ControlConnection implements Connection.Owner {
             racks.add(row.getString("rack"));
             cassandraVersions.add(row.getString("release_version"));
             broadcastAddresses.add(row.getInet("peer"));
-            if (metadataEnabled)
-                allTokens.add(row.getSet("tokens", String.class));
+            if (metadataEnabled && factory != null) {
+                Set<String> tokensStr = row.getSet("tokens", String.class);
+                Set<Token> tokens = null;
+                if (!tokensStr.isEmpty()) {
+                    tokens = toTokens(factory, tokensStr);
+                }
+                allTokens.add(tokens);
+            }
             InetAddress listenAddress = row.getColumnDefinitions().contains("listen_address") ? row.getInet("listen_address") : null;
             listenAddresses.add(listenAddress);
             String dseWorkload = row.getColumnDefinitions().contains("workload") ? row.getString("workload") : null;
@@ -645,7 +652,7 @@ class ControlConnection implements Connection.Owner {
             if (dseGraphEnabled.get(i) != null)
                 host.setDseGraphEnabled(dseGraphEnabled.get(i));
 
-            if (metadataEnabled && partitioner != null && !allTokens.get(i).isEmpty())
+            if (metadataEnabled && factory != null && allTokens.get(i) != null)
                 tokenMap.put(host, allTokens.get(i));
 
             if (isNew && !isInitialConnection)
@@ -658,8 +665,16 @@ class ControlConnection implements Connection.Owner {
             if (!host.getSocketAddress().equals(connection.address) && !foundHostsSet.contains(host.getSocketAddress()))
                 cluster.removeHost(host, isInitialConnection);
 
-        if (metadataEnabled)
-            cluster.metadata.rebuildTokenMap(partitioner, tokenMap);
+        if (metadataEnabled && factory != null && !tokenMap.isEmpty())
+            cluster.metadata.rebuildTokenMap(factory, tokenMap);
+    }
+
+    private static Set<Token> toTokens(Token.Factory factory, Set<String> tokensStr) {
+        Set<Token> tokens = new LinkedHashSet<Token>(tokensStr.size());
+        for (String tokenStr : tokensStr) {
+            tokens.add(factory.fromString(tokenStr));
+        }
+        return tokens;
     }
 
     private static boolean isValidPeer(Row peerRow, boolean logIfInvalid) {
@@ -761,13 +776,15 @@ class ControlConnection implements Connection.Owner {
     public void onUp(Host host) {
     }
 
+    public void onAdd(Host host) {
+    }
+
     public void onDown(Host host) {
         onHostGone(host);
     }
 
     public void onRemove(Host host) {
         onHostGone(host);
-        cluster.submitNodeListRefresh();
     }
 
     private void onHostGone(Host host) {
@@ -788,11 +805,4 @@ class ControlConnection implements Connection.Owner {
             backgroundReconnect(0);
     }
 
-    public void onAdd(Host host) {
-        // Refresh infos and token map if we didn't knew about that host, i.e. if we either don't have basic infos on it,
-        // or it's not part of our computed token map
-        Metadata.TokenMap tkmap = cluster.metadata.tokenMap;
-        if (host.getCassandraVersion() == null || tkmap == null || !tkmap.hosts.contains(host))
-            cluster.submitNodeListRefresh();
-    }
 }

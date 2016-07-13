@@ -46,6 +46,11 @@ import java.util.*;
  * will be ignored server side (no tombstones will be generated). If you're reusing
  * a bound statement, you can {@link #unset(int) unset} variables that were previously
  * set.
+ * <p/>
+ * This class is <b>not thread-safe</b>. Do not share instances among requests that will
+ * execute concurrently (e.g. requests run from separate application threads, but also
+ * separate {@link Session#executeAsync(Statement) executeAsync} calls, even if they're
+ * triggered from the same thread).
  */
 public class BoundStatement extends Statement implements SettableData<BoundStatement>, GettableData {
     static final ByteBuffer UNSET = ByteBuffer.allocate(0);

@@ -18,6 +18,7 @@ package com.datastax.driver.core.policies;
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.exceptions.*;
 import org.assertj.core.api.Fail;
+import org.mockito.Mockito;
 import org.scassandra.http.client.ClosedConnectionConfig;
 import org.scassandra.http.client.PrimingRequest;
 import org.scassandra.http.client.Result;
@@ -87,7 +88,7 @@ public class IdempotenceAwareRetryPolicyIntegrationTest extends AbstractRetryPol
                 fail("expected an OperationTimedOutException");
             } catch (OperationTimedOutException e) {
                 assertThat(e.getMessage()).isEqualTo(
-                        String.format("[%s] Timed out waiting for server response", host1.getAddress())
+                        String.format("[%s] Timed out waiting for server response", host1.getSocketAddress())
                 );
             }
             assertOnRequestErrorWasCalled(1, OperationTimedOutException.class);
@@ -179,7 +180,7 @@ public class IdempotenceAwareRetryPolicyIntegrationTest extends AbstractRetryPol
             Fail.fail("expected a TransportException");
         } catch (TransportException e) {
             assertThat(e.getMessage()).isEqualTo(
-                    String.format("[%s] Connection has been closed", host1.getAddress())
+                    String.format("[%s] Connection has been closed", host1.getSocketAddress())
             );
         }
         assertOnRequestErrorWasCalled(1, TransportException.class);
@@ -216,6 +217,24 @@ public class IdempotenceAwareRetryPolicyIntegrationTest extends AbstractRetryPol
         assertQueried(1, 1);
         assertQueried(2, 1);
         assertQueried(3, 1);
+    }
+
+    @Test(groups = "short")
+    public void should_call_init_method_on_inner_policy() {
+        RetryPolicy innerPolicyMock = Mockito.mock(RetryPolicy.class);
+
+        new IdempotenceAwareRetryPolicy(innerPolicyMock).init(cluster);
+
+        Mockito.verify(innerPolicyMock).init(cluster);
+    }
+
+    @Test(groups = "unit")
+    public void should_call_close_method_on_inner_policy() {
+        RetryPolicy innerPolicyMock = Mockito.mock(RetryPolicy.class);
+
+        new IdempotenceAwareRetryPolicy(innerPolicyMock).close();
+
+        Mockito.verify(innerPolicyMock).close();
     }
 
 

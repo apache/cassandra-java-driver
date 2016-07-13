@@ -503,4 +503,73 @@ public class MapperTest extends CCMTestsSupport {
         assertThat(saveQuery.isIdempotent()).isTrue();
     }
 
+
+    @Table(name = "users")
+    public static class UserUnknownColumn {
+
+        @PartitionKey
+        @Column(name = "user_id")
+        private UUID userId;
+
+        @Column(name = "middle_name")
+        private String middleName;
+
+        public UserUnknownColumn() {
+        }
+
+        public UUID getUserId() {
+            return userId;
+        }
+
+        public void setUserId(UUID userId) {
+            this.userId = userId;
+        }
+
+        public String getMiddleName() {
+            return middleName;
+        }
+
+        public void setMiddleName(String middleName) {
+            this.middleName = middleName;
+        }
+    }
+
+    /**
+     * Ensures that when attempting to create a {@link Mapper} from a class that has a field for a
+     * column that doesn't exist that an {@link IllegalArgumentException} is thrown.
+     *
+     * @jira_ticket JAVA-1126
+     * @test_category object_mapper
+     */
+    @Test(groups = "short", expectedExceptions = {IllegalArgumentException.class})
+    public void should_fail_to_create_mapper_if_class_has_column_not_in_table() {
+        MappingManager manager = new MappingManager(session());
+        manager.mapper(UserUnknownColumn.class);
+    }
+
+    @Table(name = "nonexistent")
+    public static class NonExistentTable {
+        public String name;
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public String getName() {
+            return this.name;
+        }
+    }
+
+    /**
+     * Ensures that when attempting to create a {@link Mapper} from a class that has a {@link Table} annotation with
+     * a name that doesn't exist in the current keyspace that an {@link IllegalArgumentException} is thrown.
+     *
+     * @jira_ticket JAVA-1126
+     * @test_category object_mapper
+     */
+    @Test(groups = "short", expectedExceptions = {IllegalArgumentException.class})
+    public void should_fail_to_create_mapper_if_table_does_not_exist() {
+        MappingManager manager = new MappingManager(session());
+        manager.mapper(NonExistentTable.class);
+    }
 }

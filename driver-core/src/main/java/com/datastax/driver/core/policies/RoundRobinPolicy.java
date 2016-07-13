@@ -102,7 +102,7 @@ public class RoundRobinPolicy implements LoadBalancingPolicy {
                 hasLoggedLocalCLUse = true;
                 logger.warn("Detected request at Consistency Level {} but the non-DC aware RoundRobinPolicy is in use. "
                         + "It is strongly advised to use DCAwareRoundRobinPolicy if you have multiple DCs/use DC-aware consistency levels "
-                        + "(note: this message will only be logged once)", statement.getConsistencyLevel());
+                        + "(note: this message will only be logged once)", cl);
             }
         }
 

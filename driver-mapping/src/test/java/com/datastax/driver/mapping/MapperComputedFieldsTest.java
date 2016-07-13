@@ -17,7 +17,6 @@ package com.datastax.driver.mapping;
 
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.exceptions.CodecNotFoundException;
-import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.utils.CassandraVersion;
 import com.datastax.driver.mapping.annotations.*;
 import org.testng.SkipException;
@@ -26,7 +25,6 @@ import org.testng.annotations.Test;
 
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.ProtocolVersion.V1;
-import static org.assertj.core.api.Assertions.fail;
 
 /**
  * Tests to ensure validity of {@link com.datastax.driver.mapping.annotations.Computed}
@@ -54,7 +52,7 @@ public class MapperComputedFieldsTest extends CCMTestsSupport {
             userMapper = mappingManager.mapper(User.class);
     }
 
-    @Test(groups = "short", expectedExceptions = {UnsupportedOperationException.class})
+    @Test(groups = "short", expectedExceptions = UnsupportedOperationException.class)
     void should_get_unsupported_operation_exception_on_v1() {
         if (protocolVersion.compareTo(V1) > 0)
             throw new SkipException("Skipped when protocol version > V1");
@@ -129,19 +127,10 @@ public class MapperComputedFieldsTest extends CCMTestsSupport {
         User_WrongComputedType user = mapper.get("testlogin");
     }
 
-    @Test(groups = "short")
+    @Test(groups = "short", expectedExceptions = IllegalArgumentException.class)
     @CassandraVersion(major = 2.0)
     void should_fail_if_computed_field_marked_with_column_annotation() {
-        Mapper<User_WrongAnnotationForComputed> mapper = mappingManager.mapper(User_WrongAnnotationForComputed.class);
-        try {
-            mapper.save(new User_WrongAnnotationForComputed("test", "foo"));
-            fail("Expected an InvalidQueryException");
-        } catch (InvalidQueryException e) {/*expected*/}
-
-        try {
-            User_WrongAnnotationForComputed saved = mapper.get(42);
-            fail("Expected an InvalidQueryException");
-        } catch (InvalidQueryException e) {/*expected*/}
+        mappingManager.mapper(User_WrongAnnotationForComputed.class);
     }
 
     @Table(name = "user")

@@ -17,34 +17,39 @@ package com.datastax.driver.mapping;
 
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.exceptions.CodecNotFoundException;
+import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.utils.CassandraVersion;
 import com.datastax.driver.core.utils.UUIDs;
 import com.datastax.driver.mapping.annotations.*;
 import com.google.common.base.Objects;
 import com.google.common.collect.Maps;
 import org.assertj.core.data.MapEntry;
+import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.*;
 
+import static com.datastax.driver.core.CreateCCM.TestMode.PER_METHOD;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.testng.Assert.*;
 
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "WeakerAccess"})
 @CassandraVersion(major = 2.1)
+@CreateCCM(PER_METHOD)
 public class MapperUDTTest extends CCMTestsSupport {
 
-    @Override
-    public void onTestContextInitialized() {
+    @BeforeMethod(groups = "short")
+    public void createObjects() {
         execute("CREATE TYPE address (street text, city text, \"ZIP_code\" int, phones set<text>)",
                 "CREATE TABLE users (user_id uuid PRIMARY KEY, name text, mainaddress frozen<address>, other_addresses map<text,frozen<address>>)");
     }
 
-    @BeforeMethod(groups = "short")
-    public void clean() {
-        session().execute("TRUNCATE users");
+    @AfterMethod(groups = "short")
+    public void deleteObjects() {
+        execute("DROP TABLE IF EXISTS users",
+                "DROP TYPE  IF EXISTS address");
     }
 
     @Table(name = "users",
@@ -371,4 +376,356 @@ public class MapperUDTTest extends CCMTestsSupport {
         Map<String, Address> otherAddresses = row.getMap("other_addresses", String.class, Address.class);
         assertThat(otherAddresses).containsOnly(MapEntry.entry("condo", expectedOtherAddress));
     }
+
+    /**
+     * Ensures that if a table is altered after a {@link Mapper} is created that it continues to work as long as
+     * the change is compatible.  A new column is added to the table in this case, which is a compatible change.
+     * <p>
+     * It also ensures that after the change is made that requesting a new {@link Mapper} returns a different instance
+     * instead of the existing one.
+     *
+     * @jira_ticket JAVA-1126
+     * @test_category object_mapper
+     */
+    @Test(groups = "short")
+    public void should_work_normally_when_when_table_is_altered_but_remains_compatible() {
+        MappingManager manager = new MappingManager(session());
+        User expected = new User("Paul", new Address("12 4th Street", "Springfield", 12345, "12341343", "435423245"));
+        Mapper<User> m = manager.mapper(User.class);
+        Mapper<User> m1 = manager.mapper(User.class);
+        assertThat(m1).isSameAs(m);
+        session().execute("ALTER TABLE users ADD foo text");
+        m.save(expected);
+        User retrieved = m.get(expected.getUserId());
+        assertThat(retrieved).isEqualTo(expected);
+
+        // Mapper should be recreated since table changed.
+        Mapper<User> m2 = manager.mapper(User.class);
+        assertThat(m2).isNotSameAs(m);
+    }
+
+    /**
+     * Ensures that if a UDT is altered after a {@link Mapper} is created that has a UDT that it continues to work as
+     * long as the change is compatible.  A new field is added to the table in this case, which is a compatible change.
+     * <p>
+     * It also ensures that after the change is made that requesting a new {@link TypeCodec} for that UDT and a new
+     * {@link Mapper} for a table using that UDT returns different instances instead of the existing ones.
+     *
+     * @jira_ticket JAVA-1126
+     * @test_category object_mapper
+     */
+    @Test(groups = "short")
+    public void should_work_normally_when_udt_is_altered_but_remains_compatible() {
+        MappingManager manager = new MappingManager(session());
+        User expected = new User("Paul", new Address("12 4th Street", "Springfield", 12345, "12341343", "435423245"));
+        Mapper<User> m = manager.mapper(User.class);
+        TypeCodec c = manager.udtCodec(Address.class);
+        TypeCodec c1 = manager.udtCodec(Address.class);
+        assertThat(c1).isSameAs(c);
+        session().execute("ALTER TYPE address ADD foo text");
+        m.save(expected);
+        User retrieved = m.get(expected.getUserId());
+        assertThat(retrieved).isEqualTo(expected);
+
+        // Codec should be recreated when requested since UDT and thus the table changed.
+        Mapper m2 = manager.mapper(User.class);
+        assertThat(m2).isNotSameAs(m);
+
+        // Codec should be recreated when requested since UDT changed.
+        TypeCodec c2 = manager.udtCodec(Address.class);
+        assertThat(c2).isNotSameAs(c);
+    }
+
+    /**
+     * Ensures that if a table is dropped after a {@link Mapper} is created that the {@link Mapper} can no longer
+     * successfully make queries and that attempting to create a new {@link Mapper} throws an
+     * {@link IllegalArgumentException}.
+     * <p>
+     * It also ensures that requesting a {@link Mapper} fails as the previous {@link Mapper} was evicted and a new
+     * one cannot be created as the table has been dropped.
+     *
+     * @jira_ticket JAVA-1126
+     * @test_category object_mapper
+     */
+    @Test(groups = "short")
+    public void should_throw_error_when_table_is_dropped() {
+        User user = new User("Paul", new Address("12 4th Street", "Springfield", 12345, "12341343", "435423245"));
+        MappingManager manager = new MappingManager(session());
+        Mapper<User> mapper = manager.mapper(User.class);
+        session().execute("DROP TABLE users");
+        // usage of stale mapper
+        try {
+            mapper.save(user);
+            fail("Expected InvalidQueryException");
+        } catch (InvalidQueryException e) {
+            assertThat(e.getMessage()).contains("unconfigured", "users");
+        }
+        try {
+            mapper.get(user.getUserId());
+            fail("Expected InvalidQueryException");
+        } catch (InvalidQueryException e) {
+            assertThat(e.getMessage()).contains("unconfigured", "users");
+        }
+        // trying to use a new mapper
+        try {
+            manager.mapper(User.class);
+            fail("Expected IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+            assertThat(e.getMessage()).isEqualTo("Table users does not exist in keyspace " + keyspace);
+        }
+    }
+
+    /**
+     * Ensures that if a table is altered after a {@link Mapper} is created that it no longer continues to work if
+     * the change is not compatible.  A column is dropped from the table in this case, which is an incompatible change.
+     * <p>
+     * It also ensures that requesting a {@link Mapper} fails as the previous {@link Mapper} was evicted and a new
+     * one cannot be created as a declared column is missing from the schema but is present in the class definition.
+     *
+     * @jira_ticket JAVA-1126
+     * @test_category object_mapper
+     */
+    @Test(groups = "short")
+    public void should_throw_error_when_table_is_altered_and_is_not_compatible_anymore() {
+        User user = new User("Paul", new Address("12 4th Street", "Springfield", 12345, "12341343", "435423245"));
+        MappingManager manager = new MappingManager(session());
+        Mapper<User> mapper = manager.mapper(User.class);
+        session().execute("ALTER TABLE users DROP mainaddress");
+        // usage of stale mapper
+        try {
+            mapper.save(user);
+            fail("Expected InvalidQueryException");
+        } catch (InvalidQueryException e) {
+            assertThat(e.getMessage()).isEqualTo("Unknown identifier mainaddress");
+        }
+        try {
+            mapper.get(user.getUserId());
+            fail("Expected InvalidQueryException");
+        } catch (InvalidQueryException e) {
+            assertThat(e.getMessage()).isEqualTo("Undefined name mainaddress in selection clause");
+        }
+        // trying to use a new mapper
+        try {
+            manager.mapper(User.class);
+            fail("Expected IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+            assertThat(e.getMessage()).isEqualTo(String.format("Column \"mainaddress\" does not exist in table %s.users", keyspace));
+        }
+    }
+
+    /**
+     * Ensures that if a UDT is altered after a {@link Mapper} is created that it no longer continues to work if
+     * the change made to the UDT is not compatible.  A field is renamed in the UDT in this case, which is not a
+     * compatible change.
+     * <p>
+     * It also ensures that requesting a {@link Mapper} fails as the previous {@link Mapper} was evicted and a new
+     * one cannot be created as a declared field is missing from the schema but is present in the class definition.
+     * <p>
+     * Also verifies that a {@link TypeCodec} cannot be requested for the UDT as well.
+     *
+     * @jira_ticket JAVA-1126
+     * @test_category object_mapper
+     */
+    @Test(groups = "short")
+    public void should_throw_error_when_udt_is_altered_and_is_not_compatible_anymore() {
+        User user = new User("Paul", new Address("12 4th Street", "Springfield", 12345, "12341343", "435423245"));
+        MappingManager manager = new MappingManager(session());
+        Mapper<User> mapper = manager.mapper(User.class);
+        session().execute("ALTER TYPE address RENAME \"ZIP_code\" to zip_code");
+        // usage of stale mapper
+        try {
+            mapper.save(user);
+            fail("Expected CodecNotFoundException");
+        } catch (CodecNotFoundException e) {
+            // ok, codec could not be created
+        }
+        // insert manually to be able to test retrieval
+        session().execute("INSERT INTO users (user_id, name, mainaddress) VALUES (?, 'Paul', { street : '12 4th Street', zip_code : 12345 })", user.getUserId());
+        try {
+            mapper.get(user.getUserId());
+            fail("Expected CodecNotFoundException");
+        } catch (CodecNotFoundException e) {
+            // ok, codec could not be created
+        }
+        // trying to use a new mapper
+        try {
+            manager.mapper(User.class);
+            fail("Expected IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+            assertThat(e.getMessage()).isEqualTo(String.format("Field \"ZIP_code\" does not exist in type %s.address", keyspace));
+        }
+        try {
+            manager.udtCodec(Address.class);
+            fail("Expected IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+            assertThat(e.getMessage()).isEqualTo(String.format("Field \"ZIP_code\" does not exist in type %s.address", keyspace));
+        }
+    }
+
+    @UDT(name = "address")
+    public static class AddressUnknownField {
+
+        private String city;
+
+        private String street;
+
+        @Field(name = "ZIP_code", caseSensitive = true)
+        private int zipCode;
+
+        private Set<String> phones;
+
+        public String province;
+
+        public AddressUnknownField() {
+        }
+
+        public String getStreet() {
+            return street;
+        }
+
+        public void setStreet(String street) {
+            this.street = street;
+        }
+
+        public String getCity() {
+            return city;
+        }
+
+        public void setCity(String city) {
+            this.city = city;
+        }
+
+        public int getZipCode() {
+            return zipCode;
+        }
+
+        public void setZipCode(int zipCode) {
+            this.zipCode = zipCode;
+        }
+
+        public Set<String> getPhones() {
+            return phones;
+        }
+
+        public void setPhones(Set<String> phones) {
+            this.phones = phones;
+        }
+
+        public String getProvince() {
+            return province;
+        }
+
+        public void setProvince(String province) {
+            this.province = province;
+        }
+    }
+
+
+    /**
+     * Ensures that when attempting to create a {@link TypeCodec} from a class that has a field that does not exist in
+     * the UDT that an {@link IllegalArgumentException} is thrown.
+     *
+     * @jira_ticket JAVA-1126
+     * @test_category object_mapper
+     */
+    @Test(groups = "short", expectedExceptions = IllegalArgumentException.class)
+    public void should_fail_to_create_codec_if_class_has_field_not_in_udt() {
+        MappingManager manager = new MappingManager(session());
+        manager.getUDTCodec(AddressUnknownField.class);
+    }
+
+    @UDT(name = "nonexistent")
+    public static class NonExistentUDT {
+        public String name;
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public String getName() {
+            return this.name;
+        }
+    }
+
+    /**
+     * Ensures that when attempting to create a {@link TypeCodec} from a class that has a {@link UDT} annotation with
+     * a name that doesn't exist in the current keyspace that an {@link IllegalArgumentException} is thrown.
+     *
+     * @jira_ticket JAVA-1126
+     * @test_category object_mapper
+     */
+    @Test(groups = "short", expectedExceptions = IllegalArgumentException.class)
+    public void should_fail_to_create_codec_if_udt_does_not_exist() {
+        MappingManager manager = new MappingManager(session());
+        manager.getUDTCodec(NonExistentUDT.class);
+    }
+
+    @Table(name = "users")
+    public static class UserWithAddressUnknownField {
+        @PartitionKey
+        @Column(name = "user_id")
+        private UUID userId;
+
+        private String name;
+
+        @Frozen
+        private AddressUnknownField mainAddress;
+
+        @Column(name = "other_addresses")
+        @FrozenValue
+        private Map<String, Address> otherAddresses = Maps.newHashMap();
+
+        public UserWithAddressUnknownField() {
+        }
+
+        public UUID getUserId() {
+            return userId;
+        }
+
+        public void setUserId(UUID userId) {
+            this.userId = userId;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public AddressUnknownField getMainAddress() {
+            return mainAddress;
+        }
+
+        public void setMainAddress(AddressUnknownField address) {
+            this.mainAddress = address;
+        }
+
+        public Map<String, Address> getOtherAddresses() {
+            return otherAddresses;
+        }
+
+        public void setOtherAddresses(Map<String, Address> otherAddresses) {
+            this.otherAddresses = otherAddresses;
+        }
+
+        public void addOtherAddress(String name, Address address) {
+            this.otherAddresses.put(name, address);
+        }
+    }
+
+    /**
+     * Ensures that when attempting to create a {@link Mapper} from a class that has a field that is a class mapping to
+     * a user type that has a field that does not exist in that UDT that an {@link IllegalArgumentException} is thrown.
+     *
+     * @jira_ticket JAVA-1126
+     * @test_category object_mapper
+     */
+    @Test(groups = "short", expectedExceptions = IllegalArgumentException.class)
+    public void should_fail_to_create_mapper_if_class_has_udt_field_class_that_has_field_not_in_udt() {
+        MappingManager manager = new MappingManager(session());
+        manager.mapper(UserWithAddressUnknownField.class);
+    }
+
 }

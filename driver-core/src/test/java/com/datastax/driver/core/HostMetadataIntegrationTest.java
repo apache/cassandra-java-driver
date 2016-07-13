@@ -24,7 +24,6 @@ import java.net.InetAddress;
 import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.CCMAccess.Workload.solr;
 import static com.datastax.driver.core.CCMAccess.Workload.spark;
-import static com.datastax.driver.core.TestUtils.nonDebouncingQueryOptions;
 import static com.datastax.driver.core.TestUtils.nonQuietClusterCloseOptions;
 
 public class HostMetadataIntegrationTest {
@@ -58,7 +57,6 @@ public class HostMetadataIntegrationTest {
         Cluster cluster = Cluster.builder()
                 .addContactPoints(ccm.addressOfNode(1).getAddress())
                 .withPort(ccm.getBinaryPort())
-                .withQueryOptions(nonDebouncingQueryOptions())
                 .build();
         try {
             cluster.connect();

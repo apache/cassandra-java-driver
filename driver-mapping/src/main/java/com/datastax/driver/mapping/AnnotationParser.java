@@ -16,7 +16,7 @@
 package com.datastax.driver.mapping;
 
 import com.datastax.driver.core.ConsistencyLevel;
-import com.datastax.driver.core.Metadata;
+import com.datastax.driver.core.TableMetadata;
 import com.datastax.driver.core.TypeCodec;
 import com.datastax.driver.core.UserType;
 import com.datastax.driver.mapping.MethodMapper.ParamMapper;
@@ -30,6 +30,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static com.datastax.driver.core.Metadata.quote;
 
 /**
  * Static metods that facilitates parsing class annotations into the corresponding {@link EntityMapper}.
@@ -66,6 +68,10 @@ class AnnotationParser {
         }
 
         EntityMapper<T> mapper = factory.create(entityClass, ksName, tableName, writeConsistency, readConsistency);
+        TableMetadata tableMetadata = mappingManager.getSession().getCluster().getMetadata().getKeyspace(ksName).getTable(tableName);
+
+        if (tableMetadata == null)
+            throw new IllegalArgumentException(String.format("Table %s does not exist in keyspace %s", tableName, ksName));
 
         List<Field> pks = new ArrayList<Field>();
         List<Field> ccs = new ArrayList<Field>();
@@ -106,18 +112,24 @@ class AnnotationParser {
         validateOrder(pks, "@PartitionKey");
         validateOrder(ccs, "@ClusteringColumn");
 
-        mapper.addColumns(createColumnMappers(pks, factory, mapper.entityClass, mappingManager, columnCounter),
-                createColumnMappers(ccs, factory, mapper.entityClass, mappingManager, columnCounter),
-                createColumnMappers(rgs, factory, mapper.entityClass, mappingManager, columnCounter));
+        mapper.addColumns(
+                createColumnMappers(pks, factory, mapper.entityClass, mappingManager, columnCounter, tableMetadata, ksName, tableName),
+                createColumnMappers(ccs, factory, mapper.entityClass, mappingManager, columnCounter, tableMetadata, ksName, tableName),
+                createColumnMappers(rgs, factory, mapper.entityClass, mappingManager, columnCounter, tableMetadata, ksName, tableName));
         return mapper;
     }
 
-    private static <T> List<ColumnMapper<T>> createColumnMappers(List<Field> fields, EntityMapper.Factory factory, Class<T> klass, MappingManager mappingManager, AtomicInteger columnCounter) {
+    private static <T> List<ColumnMapper<T>> createColumnMappers(List<Field> fields, EntityMapper.Factory factory, Class<T> klass, MappingManager mappingManager, AtomicInteger columnCounter, TableMetadata tableMetadata, String ksName, String tableName) {
         List<ColumnMapper<T>> mappers = new ArrayList<ColumnMapper<T>>(fields.size());
         for (int i = 0; i < fields.size(); i++) {
             Field field = fields.get(i);
             int pos = position(field);
-            mappers.add(factory.createColumnMapper(klass, field, pos < 0 ? i : pos, mappingManager, columnCounter));
+            ColumnMapper<T> columnMapper = factory.createColumnMapper(klass, field, pos < 0 ? i : pos, mappingManager, columnCounter);
+            if (columnMapper.kind == ColumnMapper.Kind.COMPUTED || tableMetadata.getColumn(columnMapper.getColumnName()) != null)
+                mappers.add(columnMapper);
+            else
+                throw new IllegalArgumentException(String.format("Column %s does not exist in table %s.%s",
+                        columnMapper.getColumnName(), ksName, tableName));
         }
         return mappers;
     }
@@ -126,7 +138,7 @@ class AnnotationParser {
         UDT udt = AnnotationChecks.getTypeAnnotation(UDT.class, udtClass);
 
         String ksName = udt.caseSensitiveKeyspace() ? udt.keyspace() : udt.keyspace().toLowerCase();
-        String udtName = udt.caseSensitiveType() ? Metadata.quote(udt.name()) : udt.name().toLowerCase();
+        String udtName = udt.caseSensitiveType() ? quote(udt.name()) : udt.name().toLowerCase();
 
         if (Strings.isNullOrEmpty(udt.keyspace())) {
             ksName = mappingManager.getSession().getLoggedKeyspace();
@@ -139,6 +151,8 @@ class AnnotationParser {
         }
 
         UserType userType = mappingManager.getSession().getCluster().getMetadata().getKeyspace(ksName).getUserType(udtName);
+        if (userType == null)
+            throw new IllegalArgumentException(String.format("User type %s does not exist in keyspace %s", udtName, ksName));
 
         List<Field> columns = new ArrayList<Field>();
 
@@ -163,17 +177,21 @@ class AnnotationParser {
                     break;
             }
         }
-        Map<String, ColumnMapper<T>> columnMappers = createFieldMappers(columns, factory, udtClass, mappingManager, null);
+        Map<String, ColumnMapper<T>> columnMappers = createFieldMappers(columns, factory, udtClass, mappingManager, userType, ksName);
         return new MappedUDTCodec<T>(userType, udtClass, columnMappers, mappingManager);
     }
 
-    private static <T> Map<String, ColumnMapper<T>> createFieldMappers(List<Field> fields, EntityMapper.Factory factory, Class<T> klass, MappingManager mappingManager, AtomicInteger columnCounter) {
+    private static <T> Map<String, ColumnMapper<T>> createFieldMappers(List<Field> fields, EntityMapper.Factory factory, Class<T> klass, MappingManager mappingManager, UserType userType, String ksName) {
         Map<String, ColumnMapper<T>> mappers = Maps.newHashMapWithExpectedSize(fields.size());
         for (int i = 0; i < fields.size(); i++) {
             Field field = fields.get(i);
             int pos = position(field);
-            ColumnMapper<T> mapper = factory.createColumnMapper(klass, field, pos < 0 ? i : pos, mappingManager, columnCounter);
-            mappers.put(mapper.getColumnName(), mapper);
+            ColumnMapper<T> mapper = factory.createColumnMapper(klass, field, pos < 0 ? i : pos, mappingManager, null);
+            if (userType.contains(mapper.getColumnName()))
+                mappers.put(mapper.getColumnName(), mapper);
+            else
+                throw new IllegalArgumentException(String.format("Field %s does not exist in type %s.%s",
+                        mapper.getColumnName(), ksName, userType.getTypeName()));
         }
         return mappers;
     }

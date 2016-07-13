@@ -20,6 +20,7 @@ import com.datastax.driver.core.exceptions.DriverException;
 import com.datastax.driver.core.exceptions.ServerError;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.mockito.Mockito;
 import org.slf4j.helpers.MessageFormatter;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -54,7 +55,7 @@ public class LoggingRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegr
         setRetryPolicy(new LoggingRetryPolicy(new CustomRetryPolicy()));
     }
 
-    @BeforeMethod(groups = {"short", "unit"})
+    @BeforeMethod(groups = {"short"})
     public void storeDefaultCL() {
         defaultCL = cluster.getConfiguration().getQueryOptions().getConsistencyLevel();
     }
@@ -142,6 +143,24 @@ public class LoggingRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegr
         query();
         String line = appender.waitAndGet(5000);
         assertThat(line.trim()).isEqualTo(expectedMessage(RETRYING_ON_REQUEST_ERROR, "next host", LOCAL_ONE, defaultCL, 0, new ServerError(host1.getSocketAddress(), "Server Error")));
+    }
+
+    @Test(groups = "short")
+    public void should_call_init_method_on_inner_policy() {
+        RetryPolicy innerPolicyMock = Mockito.mock(RetryPolicy.class);
+
+        new LoggingRetryPolicy(innerPolicyMock).init(cluster);
+
+        Mockito.verify(innerPolicyMock).init(cluster);
+    }
+
+    @Test(groups = "unit")
+    public void should_call_close_method_on_inner_policy() {
+        RetryPolicy innerPolicyMock = Mockito.mock(RetryPolicy.class);
+
+        new LoggingRetryPolicy(innerPolicyMock).close();
+
+        Mockito.verify(innerPolicyMock).close();
     }
 
     private String expectedMessage(String template, Object... args) {

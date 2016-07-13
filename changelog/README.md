@@ -57,6 +57,30 @@ Merged from 2.1 branch:
 - [improvement] JAVA-444: Add Java process information to UUIDs.makeNode() hash.
 
 
+### 3.0.3
+
+- [improvement] JAVA-1147: Upgrade Netty to 4.0.37.
+- [bug] JAVA-1213: Allow updates and inserts to BLOB column using read-only ByteBuffer.
+- [bug] JAVA-1209: ProtocolOptions.getProtocolVersion() should return null instead of throwing NPE if Cluster has not
+        been init'd.
+- [improvement] JAVA-1204: Update documentation to indicate tcnative version requirement.
+- [bug] JAVA-1186: Fix duplicated hosts in DCAwarePolicy warn message.
+- [bug] JAVA-1187: Fix warning message when local CL used with RoundRobinPolicy.
+- [improvement] JAVA-1175: Warn if DCAwarePolicy configuration is inconsistent.
+- [bug] JAVA-1139: ConnectionException.getMessage() throws NPE if address is null.
+- [bug] JAVA-1202: Handle null rpc_address when checking schema agreement.
+- [improvement] JAVA-1198: Document that BoundStatement is not thread-safe.
+- [improvement] JAVA-1200: Upgrade LZ4 to 1.3.0.
+- [bug] JAVA-1232: Fix NPE in IdempotenceAwareRetryPolicy.isIdempotent.
+- [improvement] JAVA-1227: Document "SELECT *" issue with prepared statement.
+- [bug] JAVA-1160: Fix NPE in VersionNumber.getPreReleaseLabels().
+- [improvement] JAVA-1126: Handle schema changes in Mapper.
+- [bug] JAVA-1193: Refresh token and replica metadata synchronously when schema is altered.
+- [bug] JAVA-1120: Skip schema refresh debouncer when checking for agreement as a result of schema change made by client.
+- [improvement] JAVA-1242: Fix driver-core dependency in driver-stress
+- [improvement] JAVA-1235: Move the query to the end of "re-preparing .." log message as a key value.
+
+
 ### 3.0.2
 
 Merged from 2.1 branch:

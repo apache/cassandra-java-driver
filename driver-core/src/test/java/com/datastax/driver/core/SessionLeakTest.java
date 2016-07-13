@@ -34,7 +34,7 @@ public class SessionLeakTest extends CCMTestsSupport {
 
     SocketChannelMonitor channelMonitor;
 
-    @Test(groups = "short")
+    @Test(groups = "long")
     public void connectionLeakTest() throws Exception {
         // Checking for JAVA-342
         channelMonitor = new SocketChannelMonitor();

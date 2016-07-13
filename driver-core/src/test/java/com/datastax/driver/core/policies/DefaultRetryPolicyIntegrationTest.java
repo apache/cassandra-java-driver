@@ -187,9 +187,9 @@ public class DefaultRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegr
                         .hasOnlyElementsOfType(OperationTimedOutException.class)
                         .extractingResultOf("getMessage")
                         .containsOnlyOnce(
-                                String.format("[%s] Timed out waiting for server response", host1.getAddress()),
-                                String.format("[%s] Timed out waiting for server response", host2.getAddress()),
-                                String.format("[%s] Timed out waiting for server response", host3.getAddress())
+                                String.format("[%s] Timed out waiting for server response", host1.getSocketAddress()),
+                                String.format("[%s] Timed out waiting for server response", host2.getSocketAddress()),
+                                String.format("[%s] Timed out waiting for server response", host3.getSocketAddress())
                         );
             }
             assertOnRequestErrorWasCalled(3, OperationTimedOutException.class);

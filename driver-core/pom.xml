@@ -143,7 +143,7 @@
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-tcnative</artifactId>
-            <version>1.1.33.Fork10</version>
+            <version>1.1.33.Fork18</version>
             <classifier>${os.detected.classifier}</classifier>
             <scope>test</scope>
         </dependency>

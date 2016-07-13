@@ -60,7 +60,7 @@ public class VersionNumber implements Comparable<VersionNumber> {
      * The version string should have primarily the form X.Y.Z to which can be appended
      * one or more pre-release label after dashes (2.0.1-beta1, 2.1.4-rc1-SNAPSHOT)
      * and an optional build label (2.1.0-beta1+a20ba.sha). Out of convenience, the
-     * "patch" version number, Z, can be ommitted, in which case it is assumed to be 0.
+     * "patch" version number, Z, can be omitted, in which case it is assumed to be 0.
      *
      * @param version the string to parse
      * @return the parsed version number.
@@ -139,13 +139,13 @@ public class VersionNumber implements Comparable<VersionNumber> {
     }
 
     /**
-     * The pre-release labels if relevants, i.e. label1 and label2 in X.Y.Z-label1-lable2.
+     * The pre-release labels if relevant, i.e. label1 and label2 in X.Y.Z-label1-lable2.
      *
      * @return the pre-releases labels. The return list will be {@code null} if the version number
      * doesn't have one.
      */
     public List<String> getPreReleaseLabels() {
-        return Collections.unmodifiableList(Arrays.asList(preReleases));
+        return preReleases == null ? null : Collections.unmodifiableList(Arrays.asList(preReleases));
     }
 
     /**
@@ -217,19 +217,18 @@ public class VersionNumber implements Comparable<VersionNumber> {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (!(o instanceof VersionNumber))
+    public boolean equals(Object other) {
+        if (other == this)
+            return true;
+        if (!(other instanceof VersionNumber))
             return false;
-        VersionNumber that = (VersionNumber) o;
-        if (major != that.major || minor != that.minor || patch != that.patch)
-            return false;
-
-        return major == that.major
-                && minor == that.minor
-                && patch == that.patch
-                && dsePatch == that.dsePatch
-                && (preReleases == null ? that.preReleases == null : Arrays.equals(preReleases, that.preReleases))
-                && Objects.equal(build, that.build);
+        VersionNumber that = (VersionNumber) other;
+        return this.major == that.major
+                && this.minor == that.minor
+                && this.patch == that.patch
+                && this.dsePatch == that.dsePatch
+                && (this.preReleases == null ? that.preReleases == null : Arrays.equals(this.preReleases, that.preReleases))
+                && Objects.equal(this.build, that.build);
     }
 
     @Override

@@ -42,7 +42,8 @@ import static com.datastax.driver.core.Assertions.assertThat;
 import static com.datastax.driver.core.Assertions.fail;
 import static com.datastax.driver.core.FakeHost.Behavior.THROWING_CONNECT_TIMEOUTS;
 import static com.datastax.driver.core.HostDistance.LOCAL;
-import static com.datastax.driver.core.TestUtils.*;
+import static com.datastax.driver.core.TestUtils.ipOfNode;
+import static com.datastax.driver.core.TestUtils.nonQuietClusterCloseOptions;
 import static org.mockito.Mockito.*;
 
 public class ClusterInitTest {
@@ -107,7 +108,6 @@ public class ClusterInitTest {
                     .withReconnectionPolicy(reconnectionPolicy)
                     .withPoolingOptions(poolingOptions)
                     .withProtocolVersion(TestUtils.getDesiredProtocolVersion())
-                    .withQueryOptions(nonDebouncingQueryOptions())
                     .build();
             cluster.connect();
 
@@ -228,7 +228,7 @@ public class ClusterInitTest {
         ScassandraCluster scassandraCluster = ScassandraCluster.builder()
                 .withIpPrefix(TestUtils.IP_PREFIX)
                 .withNodes(5)
-                        // For node 2, report an older version which uses protocol v1.
+                // For node 2, report an older version which uses protocol v1.
                 .forcePeerInfo(1, 2, "release_version", "1.2.19")
                 .build();
         Cluster cluster = Cluster.builder()
@@ -262,7 +262,7 @@ public class ClusterInitTest {
                 PrimingClient.builder()
                         .withHost(ipOfNode(1))
                         .withPort(scassandra.getAdminPort())
-                .build();
+                        .build();
 
         List<Map<String, ?>> rows = Lists.newArrayListWithCapacity(5);
 

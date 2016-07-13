@@ -97,8 +97,6 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
             } else if (!dc.equals(localDc))
                 notInLocalDC.add(String.format("%s (%s)", host.toString(), dc));
 
-            if (!dc.equals(localDc)) notInLocalDC.add(String.format("%s (%s)", host.toString(), host.getDatacenter()));
-
             CopyOnWriteArrayList<Host> prev = perDcLiveHosts.get(dc);
             if (prev == null)
                 perDcLiveHosts.put(dc, new CopyOnWriteArrayList<Host>(Collections.singletonList(host)));
@@ -358,6 +356,10 @@ public class DCAwareRoundRobinPolicy implements LoadBalancingPolicy {
          * @return the policy.
          */
         public DCAwareRoundRobinPolicy build() {
+            if (usedHostsPerRemoteDc == 0 && allowRemoteDCsForLocalConsistencyLevel) {
+                logger.warn("Setting allowRemoteDCsForLocalConsistencyLevel has no effect if usedHostsPerRemoteDc = 0. "
+                        + "This setting will be ignored");
+            }
             return new DCAwareRoundRobinPolicy(localDc, usedHostsPerRemoteDc, allowRemoteDCsForLocalConsistencyLevel, true);
         }
     }

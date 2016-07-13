@@ -164,7 +164,7 @@ class EventDebouncer<T> {
         return entry.future;
     }
 
-    private void scheduleImmediateDelivery() {
+    void scheduleImmediateDelivery() {
         cancelDelayedDelivery();
 
         while (state == State.RUNNING) {

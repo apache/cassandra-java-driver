@@ -15,21 +15,21 @@
  */
 package com.datastax.driver.mapping;
 
-import com.datastax.driver.core.ProtocolVersion;
-import com.datastax.driver.core.Session;
-import com.datastax.driver.core.TypeCodec;
+import com.datastax.driver.core.*;
 import com.datastax.driver.mapping.annotations.Accessor;
 import com.datastax.driver.mapping.annotations.Table;
 import com.datastax.driver.mapping.annotations.UDT;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Mapping manager from which to obtain entity mappers.
  */
 public class MappingManager {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(MappingManager.class);
 
     private final Session session;
     final boolean isCassandraV1;
@@ -74,6 +74,78 @@ public class MappingManager {
         // which nodes might join the cluster later.
         // At least if protocol >=2 we know there won't be any 1.2 nodes ever.
         this.isCassandraV1 = (protocolVersion == ProtocolVersion.V1);
+        session.getCluster().register(new SchemaChangeListenerBase() {
+
+            @Override
+            public void onTableRemoved(TableMetadata table) {
+                synchronized (mappers) {
+                    Iterator<Mapper<?>> it = mappers.values().iterator();
+                    while (it.hasNext()) {
+                        Mapper<?> mapper = it.next();
+                        if (mapper.getTableMetadata().equals(table)) {
+                            LOGGER.error("Table {} has been removed; existing mappers for @Entity annotated {} will not work anymore", table.getName(), mapper.getMappedClass());
+                            it.remove();
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void onTableChanged(TableMetadata current, TableMetadata previous) {
+                synchronized (mappers) {
+                    Iterator<Mapper<?>> it = mappers.values().iterator();
+                    while (it.hasNext()) {
+                        Mapper<?> mapper = it.next();
+                        if (mapper.getTableMetadata().equals(previous)) {
+                            LOGGER.warn("Table {} has been altered; existing mappers for @Entity annotated {} might not work properly anymore",
+                                    previous.getName(), mapper.getMappedClass());
+                            it.remove();
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void onUserTypeRemoved(UserType type) {
+                synchronized (udtCodecs) {
+                    Iterator<MappedUDTCodec<?>> it = udtCodecs.values().iterator();
+                    while (it.hasNext()) {
+                        MappedUDTCodec<?> codec = it.next();
+                        if (type.equals(codec.getCqlType())) {
+                            LOGGER.error("User type {} has been removed; existing mappers for @UDT annotated {} will not work anymore",
+                                    type, codec.getUdtClass());
+                            it.remove();
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void onUserTypeChanged(UserType current, UserType previous) {
+                synchronized (udtCodecs) {
+                    Set<Class<?>> udtClasses = new HashSet<Class<?>>();
+                    Iterator<MappedUDTCodec<?>> it = udtCodecs.values().iterator();
+                    while (it.hasNext()) {
+                        MappedUDTCodec<?> codec = it.next();
+                        if (previous.equals(codec.getCqlType())) {
+                            LOGGER.warn("User type {} has been altered; existing mappers for @UDT annotated {} might not work properly anymore",
+                                    previous, codec.getUdtClass());
+                            udtClasses.add(codec.getUdtClass());
+                            it.remove();
+                        }
+                    }
+                    for (Class<?> udtClass : udtClasses) {
+                        // try to register an updated version of the previous codec
+                        try {
+                            getUDTCodec(udtClass);
+                        } catch (Exception e) {
+                            LOGGER.error("Could not update mapping for @UDT annotated " + udtClass, e);
+                        }
+                    }
+                }
+            }
+
+        });
     }
 
     /**

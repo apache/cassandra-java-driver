@@ -52,10 +52,10 @@
         <log4j.version>1.2.17</log4j.version>
         <slf4j-log4j12.version>1.7.6</slf4j-log4j12.version>
         <guava.version>16.0.1</guava.version>
-        <netty.version>4.0.33.Final</netty.version>
+        <netty.version>4.0.37.Final</netty.version>
         <metrics.version>3.1.2</metrics.version>
         <snappy.version>1.0.5</snappy.version>
-        <lz4.version>1.2.0</lz4.version>
+        <lz4.version>1.3.0</lz4.version>
         <hdr.version>2.1.4</hdr.version>
         <!-- driver-extras module -->
         <jackson.version>2.6.3</jackson.version>
@@ -69,7 +69,7 @@
         <assertj.version>1.7.0</assertj.version>
         <mockito.version>1.10.8</mockito.version>
         <commons-exec.version>1.3</commons-exec.version>
-        <scassandra.version>1.0.3</scassandra.version>
+        <scassandra.version>1.0.9</scassandra.version>
         <main.basedir>${project.basedir}</main.basedir>
         <ipprefix>127.0.1.</ipprefix>
         <test.groups>unit</test.groups>
@@ -284,7 +284,7 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <comparisonVersion>3.0.0</comparisonVersion>
+                    <comparisonVersion>3.0.2</comparisonVersion>
                     <ignoredDifferencesFile>../clirr-ignores.xml</ignoredDifferencesFile>
                 </configuration>
                 <!--
