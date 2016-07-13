@@ -1,6 +1,6 @@
 ## Changelog
 
-### 3.0.3 (in progress)
+### 3.0.3
 
 - [improvement] JAVA-1147: Upgrade Netty to 4.0.37.
 - [bug] JAVA-1213: Allow updates and inserts to BLOB column using read-only ByteBuffer.

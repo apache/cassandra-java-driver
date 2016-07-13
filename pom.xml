@@ -15,13 +15,14 @@
       limitations under the License.
 
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.sonatype.oss</groupId>
         <artifactId>oss-parent</artifactId>
         <version>7</version>
-        <relativePath />
+        <relativePath/>
     </parent>
 
     <groupId>com.datastax.cassandra</groupId>
@@ -71,7 +72,7 @@
         <ipprefix>127.0.1.</ipprefix>
         <test.groups>unit</test.groups>
         <!-- Set default javadoc.opts, overriden by profiles -->
-        <javadoc.opts />
+        <javadoc.opts/>
     </properties>
 
     <profiles>
@@ -145,7 +146,7 @@
                             <!-- This requires includes to be explicitly specified by implementing classes.
                                  This is needed to prevent creating a JVM fork for each test, even those that don't
                                  have the isolated group. -->
-                            <includes />
+                            <includes/>
                         </configuration>
                     </plugin>
                 </plugins>
@@ -281,7 +282,7 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <comparisonVersion>3.0.0</comparisonVersion>
+                    <comparisonVersion>3.0.2</comparisonVersion>
                     <ignoredDifferencesFile>../clirr-ignores.xml</ignoredDifferencesFile>
                 </configuration>
                 <!--
