@@ -15,19 +15,18 @@
       limitations under the License.
 
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.sonatype.oss</groupId>
         <artifactId>oss-parent</artifactId>
         <version>7</version>
-        <relativePath/>
+        <relativePath />
     </parent>
 
     <groupId>com.datastax.cassandra</groupId>
     <artifactId>cassandra-driver-parent</artifactId>
-    <version>3.0.3-SNAPSHOT</version>
+    <version>3.0.3</version>
     <packaging>pom</packaging>
     <name>DataStax Java Driver for Apache Cassandra</name>
     <description>A driver for Apache Cassandra 1.2+ that works exclusively with the Cassandra Query Language version 3
@@ -72,7 +71,7 @@
         <ipprefix>127.0.1.</ipprefix>
         <test.groups>unit</test.groups>
         <!-- Set default javadoc.opts, overriden by profiles -->
-        <javadoc.opts/>
+        <javadoc.opts />
     </properties>
 
     <profiles>
@@ -146,7 +145,7 @@
                             <!-- This requires includes to be explicitly specified by implementing classes.
                                  This is needed to prevent creating a JVM fork for each test, even those that don't
                                  have the isolated group. -->
-                            <includes/>
+                            <includes />
                         </configuration>
                     </plugin>
                 </plugins>
@@ -424,7 +423,7 @@
         <connection>scm:git:git@github.com:datastax/java-driver.git</connection>
         <developerConnection>scm:git:git@github.com:datastax/java-driver.git</developerConnection>
         <url>https://github.com/datastax/java-driver</url>
-        <tag>HEAD</tag>
+        <tag>3.0.3</tag>
     </scm>
 
     <developers>
