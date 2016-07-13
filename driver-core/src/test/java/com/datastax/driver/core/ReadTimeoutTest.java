@@ -55,7 +55,7 @@ public class ReadTimeoutTest extends ScassandraTestBase.PerClassCluster {
 
     @Test(groups = "short")
     public void should_use_statement_timeout_if_overridden() {
-        Statement statement = new SimpleStatement(query).setReadTimeoutMillis(200);
+        Statement statement = new SimpleStatement(query).setReadTimeoutMillis(10000);
         session.execute(statement);
     }
 

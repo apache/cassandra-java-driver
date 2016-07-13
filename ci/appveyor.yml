@@ -1,0 +1,21 @@
+environment:
+  test_profile: default
+  cassandra_version: 3.5
+  matrix:
+    - java_version: 1.6.0
+    - java_version: 1.7.0
+    - java_version: 1.8.0
+      test_profile: short
+platform: x64
+install:
+  - ps: .\ci\appveyor.ps1
+build_script:
+  - mvn -B install -DskipTests=true
+test_script:
+  - "mvn -B -Dccm.java.home=\"%JAVA_8_HOME%\" -Dccm.maxNumberOfNodes=1 -Dcassandra.version=%cassandra_version% verify -P%test_profile%"
+on_finish:
+  - ps: .\ci\uploadtests.ps1
+cache:
+  - C:\Users\appveyor\.m2
+  - C:\Users\appveyor\.ccm\repository
+  - C:\Users\appveyor\deps -> .\ci\appveyor.ps1

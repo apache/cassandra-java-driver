@@ -1,6 +1,6 @@
 # Datastax Java Driver for Apache Cassandra
 
-[![Build Status](https://travis-ci.org/datastax/java-driver.svg?branch=3.0.x)](https://travis-ci.org/datastax/java-driver)
+[![Build Status](https://travis-ci.org/datastax/java-driver.svg?branch=3.0.x)](https://travis-ci.org/datastax/java-driver) [![Build status](https://ci.appveyor.com/api/projects/status/717ysg5l1si1h3pi/branch/3.0.x?svg=true)](https://ci.appveyor.com/project/DataStax/java-driver/branch/3.0.x)
 
 *If you're reading this on github.com, please note that this is the readme
 for the development version and that some features described here might

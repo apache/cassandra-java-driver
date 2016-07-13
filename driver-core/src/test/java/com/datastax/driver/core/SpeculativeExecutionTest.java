@@ -123,6 +123,7 @@ public class SpeculativeExecutionTest {
         ResultSet rs = session.execute(statement);
         Row row = rs.one();
 
+        assertThat(row).isNotNull();
         assertThat(row.getString("result")).isEqualTo("result1");
         assertThat(errors.getSpeculativeExecutions().getCount()).isEqualTo(execStartCount);
         assertThat(errors.getRetriesOnReadTimeout().getCount()).isEqualTo(retriesStartCount + 1);
