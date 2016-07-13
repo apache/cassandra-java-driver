@@ -21,6 +21,7 @@
 - [bug] JAVA-1193: Refresh token and replica metadata synchronously when schema is altered.
 - [bug] JAVA-1120: Skip schema refresh debouncer when checking for agreement as a result of schema change made by client.
 - [improvement] JAVA-1242: Fix driver-core dependency in driver-stress
+- [improvement] JAVA-1235: Move the query to the end of "re-preparing .." log message as a key value.
 
 
 ### 3.0.2

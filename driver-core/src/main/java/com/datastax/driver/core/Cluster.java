@@ -2129,8 +2129,8 @@ public class Cluster implements Closeable {
         public PreparedStatement addPrepared(PreparedStatement stmt) {
             PreparedStatement previous = preparedQueries.putIfAbsent(stmt.getPreparedId().id, stmt);
             if (previous != null) {
-                logger.warn("Re-preparing already prepared query {}. Please note that preparing the same query more than once is "
-                        + "generally an anti-pattern and will likely affect performance. Consider preparing the statement only once.", stmt.getQueryString());
+                logger.warn("Re-preparing already prepared query is generally an anti-pattern and will likely affect performance. "
+                        + "Consider preparing the statement only once. Query='{}'", stmt.getQueryString());
 
                 // The one object in the cache will get GCed once it's not referenced by the client anymore since we use a weak reference.
                 // So we need to make sure that the instance we do return to the user is the one that is in the cache.
