@@ -110,7 +110,7 @@ public class Batch extends BuiltStatement {
             this.nonBuiltStatementValues += ((SimpleStatement) statement).valuesCount();
         }
 
-        checkForBindMarkers(null);
+        setDirty();
 
         return this;
     }

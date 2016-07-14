@@ -38,6 +38,7 @@ public class Select extends BuiltStatement {
     private final Where where;
     private List<Ordering> orderings;
     private Object limit;
+    private Object perPartitionLimit;
     private boolean allowFiltering;
 
     Select(String keyspace, String table, List<Object> columnNames, boolean isDistinct) {
@@ -93,6 +94,10 @@ public class Select extends BuiltStatement {
             Utils.joinAndAppend(builder, codecRegistry, ",", orderings, variables);
         }
 
+        if (perPartitionLimit != null) {
+            builder.append(" PER PARTITION LIMIT ").append(perPartitionLimit);
+        }
+
         if (limit != null) {
             builder.append(" LIMIT ").append(limit);
         }
@@ -144,12 +149,12 @@ public class Select extends BuiltStatement {
     }
 
     /**
-     * Adds a LIMIT clause to this statement.
+     * Adds a {@code LIMIT} clause to this statement.
      *
      * @param limit the limit to set.
      * @return this statement.
-     * @throws IllegalArgumentException if {@code limit &gte; 0}.
-     * @throws IllegalStateException    if a LIMIT clause has already been
+     * @throws IllegalArgumentException if {@code limit <= 0}.
+     * @throws IllegalStateException    if a {@code LIMIT} clause has already been
      *                                  provided.
      */
     public Select limit(int limit) {
@@ -160,16 +165,16 @@ public class Select extends BuiltStatement {
             throw new IllegalStateException("A LIMIT value has already been provided");
 
         this.limit = limit;
-        checkForBindMarkers(null);
+        setDirty();
         return this;
     }
 
     /**
-     * Adds a prepared LIMIT clause to this statement.
+     * Adds a prepared {@code LIMIT} clause to this statement.
      *
      * @param marker the marker to use for the limit.
      * @return this statement.
-     * @throws IllegalStateException if a LIMIT clause has already been
+     * @throws IllegalStateException if a {@code LIMIT} clause has already been
      *                               provided.
      */
     public Select limit(BindMarker marker) {
@@ -177,6 +182,56 @@ public class Select extends BuiltStatement {
             throw new IllegalStateException("A LIMIT value has already been provided");
 
         this.limit = marker;
+        checkForBindMarkers(marker);
+        return this;
+    }
+
+    /**
+     * Adds a {@code PER PARTITION LIMIT} clause to this statement.
+     * <p>
+     * Note: support for {@code PER PARTITION LIMIT} clause is only available from
+     * Cassandra 3.6 onwards.
+     *
+     * @param perPartitionLimit the limit to set per partition.
+     * @return this statement.
+     * @throws IllegalArgumentException if {@code perPartitionLimit <= 0}.
+     * @throws IllegalStateException    if a {@code PER PARTITION LIMIT} clause has already been
+     *                                  provided.
+     * @throws IllegalStateException    if this statement is a {@code SELECT DISTINCT} statement.
+     */
+    public Select perPartitionLimit(int perPartitionLimit) {
+        if (perPartitionLimit <= 0)
+            throw new IllegalArgumentException("Invalid PER PARTITION LIMIT value, must be strictly positive");
+
+        if (this.perPartitionLimit != null)
+            throw new IllegalStateException("A PER PARTITION LIMIT value has already been provided");
+        if (isDistinct)
+            throw new IllegalStateException("PER PARTITION LIMIT is not allowed with SELECT DISTINCT queries");
+
+        this.perPartitionLimit = perPartitionLimit;
+        setDirty();
+        return this;
+    }
+
+    /**
+     * Adds a prepared {@code PER PARTITION LIMIT} clause to this statement.
+     * <p>
+     * Note: support for {@code PER PARTITION LIMIT} clause is only available from
+     * Cassandra 3.6 onwards.
+     *
+     * @param marker the marker to use for the limit per partition.
+     * @return this statement.
+     * @throws IllegalStateException if a {@code PER PARTITION LIMIT} clause has already been
+     *                               provided.
+     * @throws IllegalStateException if this statement is a {@code SELECT DISTINCT} statement.
+     */
+    public Select perPartitionLimit(BindMarker marker) {
+        if (this.perPartitionLimit != null)
+            throw new IllegalStateException("A PER PARTITION LIMIT value has already been provided");
+        if (isDistinct)
+            throw new IllegalStateException("PER PARTITION LIMIT is not allowed with SELECT DISTINCT queries");
+
+        this.perPartitionLimit = marker;
         checkForBindMarkers(marker);
         return this;
     }
@@ -229,13 +284,13 @@ public class Select extends BuiltStatement {
         }
 
         /**
-         * Adds a LIMIT clause to the SELECT statement this Where clause if
-         * part of.
+         * Adds a {@code LIMIT} clause to the {@code SELECT} statement this
+         * {@code WHERE} clause if part of.
          *
          * @param limit the limit to set.
-         * @return the select statement this Where clause if part of.
-         * @throws IllegalArgumentException if {@code limit &gte; 0}.
-         * @throws IllegalStateException    if a LIMIT clause has already been
+         * @return the {@code SELECT} statement this {@code WHERE} clause if part of.
+         * @throws IllegalArgumentException if {@code limit <= 0}.
+         * @throws IllegalStateException    if a {@code LIMIT} clause has already been
          *                                  provided.
          */
         public Select limit(int limit) {
@@ -243,17 +298,53 @@ public class Select extends BuiltStatement {
         }
 
         /**
-         * Adds a bind marker for the LIMIT clause to the SELECT statement this
-         * Where clause if part of.
+         * Adds a bind marker for the {@code LIMIT} clause to the {@code SELECT} statement this
+         * {@code WHERE} clause if part of.
          *
          * @param limit the bind marker to use as limit.
-         * @return the select statement this Where clause if part of.
-         * @throws IllegalStateException if a LIMIT clause has already been
+         * @return the {@code SELECT} statement this {@code WHERE} clause if part of.
+         * @throws IllegalStateException if a {@code LIMIT} clause has already been
          *                               provided.
          */
         public Select limit(BindMarker limit) {
             return statement.limit(limit);
         }
+
+        /**
+         * Adds a {@code PER PARTITION LIMIT} clause to the {@code SELECT} statement this
+         * {@code WHERE} clause if part of.
+         * <p>
+         * Note: support for {@code PER PARTITION LIMIT} clause is only available from
+         * Cassandra 3.6 onwards.
+         *
+         * @param perPartitionLimit the limit to set per partition.
+         * @return the {@code SELECT} statement this {@code WHERE} clause if part of.
+         * @throws IllegalArgumentException if {@code perPartitionLimit <= 0}.
+         * @throws IllegalStateException    if a {@code PER PARTITION LIMIT} clause has already been
+         *                                  provided.
+         * @throws IllegalStateException    if this statement is a {@code SELECT DISTINCT} statement.
+         */
+        public Select perPartitionLimit(int perPartitionLimit) {
+            return statement.perPartitionLimit(perPartitionLimit);
+        }
+
+        /**
+         * Adds a bind marker for the {@code PER PARTITION LIMIT} clause to the {@code SELECT} statement this
+         * {@code WHERE} clause if part of.
+         * <p>
+         * Note: support for {@code PER PARTITION LIMIT} clause is only available from
+         * Cassandra 3.6 onwards.
+         *
+         * @param limit the bind marker to use as limit per partition.
+         * @return the {@code SELECT} statement this {@code WHERE} clause if part of.
+         * @throws IllegalStateException if a {@code PER PARTITION LIMIT} clause has already been
+         *                               provided.
+         * @throws IllegalStateException if this statement is a {@code SELECT DISTINCT} statement.
+         */
+        public Select perPartitionLimit(BindMarker limit) {
+            return statement.perPartitionLimit(limit);
+        }
+
     }
 
     /**

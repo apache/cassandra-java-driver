@@ -999,4 +999,50 @@ public class QueryBuilderTest {
         }
     }
 
+    @Test(groups = "unit")
+    public void should_handle_per_partition_limit_clause() {
+        assertThat(
+                select().all().from("foo").perPartitionLimit(2).toString())
+                .isEqualTo("SELECT * FROM foo PER PARTITION LIMIT 2;");
+        assertThat(
+                select().all().from("foo").perPartitionLimit(bindMarker()).toString())
+                .isEqualTo("SELECT * FROM foo PER PARTITION LIMIT ?;");
+        assertThat(
+                select().all().from("foo").perPartitionLimit(bindMarker("limit")).toString())
+                .isEqualTo("SELECT * FROM foo PER PARTITION LIMIT :limit;");
+        assertThat(
+                select().all().from("foo").perPartitionLimit(2).limit(bindMarker()).toString())
+                .isEqualTo("SELECT * FROM foo PER PARTITION LIMIT 2 LIMIT ?;");
+        assertThat(
+                select().all().from("foo").where(in("a", 2, 4)).perPartitionLimit(2).limit(3).toString())
+                .isEqualTo("SELECT * FROM foo WHERE a IN (2,4) PER PARTITION LIMIT 2 LIMIT 3;");
+        assertThat(
+                select().all().from("foo").where(eq("a", bindMarker())).perPartitionLimit(bindMarker()).limit(3).toString())
+                .isEqualTo("SELECT * FROM foo WHERE a=? PER PARTITION LIMIT ? LIMIT 3;");
+        assertThat(
+                select().all().from("foo").where(eq("a", bindMarker())).orderBy(desc("b")).perPartitionLimit(2).limit(3).toString())
+                .isEqualTo("SELECT * FROM foo WHERE a=? ORDER BY b DESC PER PARTITION LIMIT 2 LIMIT 3;");
+        assertThat(
+                select().all().from("foo").where(eq("a", bindMarker())).and(gt("b", bindMarker()))
+                        .orderBy(desc("b")).perPartitionLimit(bindMarker()).limit(3).allowFiltering().toString())
+                .isEqualTo("SELECT * FROM foo WHERE a=? AND b>? ORDER BY b DESC PER PARTITION LIMIT ? LIMIT 3 ALLOW FILTERING;");
+        try {
+            select().distinct().all().from("foo").perPartitionLimit(3);
+            fail("Should not allow DISTINCT + PER PARTITION LIMIT");
+        } catch (Exception e) {
+            assertThat(e).hasMessage("PER PARTITION LIMIT is not allowed with SELECT DISTINCT queries");
+        }
+        try {
+            select().all().from("foo").perPartitionLimit(-1);
+            fail("Should not allow negative limit");
+        } catch (IllegalArgumentException e) {
+            assertThat(e).hasMessage("Invalid PER PARTITION LIMIT value, must be strictly positive");
+        }
+        try {
+            select().all().from("foo").perPartitionLimit(1).perPartitionLimit(bindMarker());
+            fail("Should not allow to set limit twice");
+        } catch (IllegalStateException e) {
+            assertThat(e).hasMessage("A PER PARTITION LIMIT value has already been provided");
+        }
+    }
 }
