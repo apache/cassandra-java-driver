@@ -4,7 +4,8 @@
 
 - [new feature] JAVA-1153: Add PER PARTITION LIMIT to Select QueryBuilder.
 - [improvement] JAVA-743: Add JSON support to QueryBuilder.
-
+- [improvement] JAVA-1233: Update HdrHistogram to 2.1.9.
+- [improvement] JAVA-1233: Update Snappy to 1.1.2.6.
 
 Merged from 3.0.x branch:
 

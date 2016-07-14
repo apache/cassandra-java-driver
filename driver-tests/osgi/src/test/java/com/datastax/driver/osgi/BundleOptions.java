@@ -63,6 +63,32 @@ public class BundleOptions {
         };
     }
 
+    public static CompositeOption snappyBundle() {
+        return new CompositeOption() {
+
+            @Override
+            public Option[] getOptions() {
+                return options(
+                        systemProperty("cassandra.compression").value(ProtocolOptions.Compression.SNAPPY.name()),
+                        mavenBundle("org.xerial.snappy", "snappy-java", "1.1.2.6")
+                );
+            }
+        };
+    }
+
+    public static CompositeOption hdrHistogramBundle() {
+        return new CompositeOption() {
+
+            @Override
+            public Option[] getOptions() {
+                return options(
+                        systemProperty("cassandra.usePercentileSpeculativeExecutionPolicy").value("true"),
+                        mavenBundle("org.hdrhistogram", "HdrHistogram", "2.1.9")
+                );
+            }
+        };
+    }
+
     public static CompositeOption nettyBundles() {
         final String nettyVersion = "4.0.33.Final";
         return new CompositeOption() {
