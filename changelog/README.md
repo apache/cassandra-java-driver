@@ -1,5 +1,10 @@
 ## Changelog
 
+### 3.0.4 (in progress)
+
+- [improvement] JAVA-1246: Driver swallows the real exception in a few cases
+
+
 ### 3.0.3
 
 - [improvement] JAVA-1147: Upgrade Netty to 4.0.37.
