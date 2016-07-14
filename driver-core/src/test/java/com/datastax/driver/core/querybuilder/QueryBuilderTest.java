@@ -20,7 +20,6 @@ import com.datastax.driver.core.exceptions.CodecNotFoundException;
 import com.datastax.driver.core.exceptions.InvalidQueryException;
 import com.datastax.driver.core.exceptions.InvalidTypeException;
 import com.datastax.driver.core.utils.Bytes;
-import com.datastax.driver.core.utils.CassandraVersion;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -826,7 +825,6 @@ public class QueryBuilderTest {
     }
 
     @Test(groups = "unit")
-    @CassandraVersion(major = 2.1, minor = 3)
     public void should_handle_nested_collections() {
         String query;
         Statement statement;
@@ -1045,4 +1043,51 @@ public class QueryBuilderTest {
             assertThat(e).hasMessage("A PER PARTITION LIMIT value has already been provided");
         }
     }
+    @Test(groups = "unit")
+    public void should_handle_select_json() throws Exception {
+        assertThat(
+                select().json().from("users").toString())
+                .isEqualTo("SELECT JSON * FROM users;");
+        assertThat(
+                select("id", "age").json().from("users").toString())
+                .isEqualTo("SELECT JSON id,age FROM users;");
+        assertThat(
+                select().json().column("id").writeTime("age").ttl("state").as("ttl").from("users").toString())
+                .isEqualTo("SELECT JSON id,writetime(age),ttl(state) AS ttl FROM users;");
+        assertThat(
+                select().distinct().json().column("id").from("users").toString())
+                .isEqualTo("SELECT JSON DISTINCT id FROM users;"); // note that the correct syntax is JSON DISTINCT
+    }
+
+    @Test(groups = "unit")
+    public void should_handle_insert_json() throws Exception {
+        assertThat(
+                insertInto("example").json("{\"id\": 0, \"tupleval\": [1, \"abc\"], \"numbers\": [1, 2, 3], \"letters\": [\"a\", \"b\", \"c\"]}").toString())
+                .isEqualTo("INSERT INTO example JSON '{\"id\": 0, \"tupleval\": [1, \"abc\"], \"numbers\": [1, 2, 3], \"letters\": [\"a\", \"b\", \"c\"]}';");
+        assertThat(
+                insertInto("users").json("{\"id\": \"user123\", \"\\\"Age\\\"\": 42, \"\\\"State\\\"\": \"TX\"}").toString())
+                .isEqualTo("INSERT INTO users JSON '{\"id\": \"user123\", \"\\\"Age\\\"\": 42, \"\\\"State\\\"\": \"TX\"}';");
+    }
+
+    @Test(groups = "unit")
+    public void should_handle_to_json() throws Exception {
+        assertThat(
+                select().toJson("id").as("id").toJson("age").as("age").from("users").toString())
+                .isEqualTo("SELECT toJson(id) AS id,toJson(age) AS age FROM users;");
+        assertThat(
+                select().distinct().toJson("id").as("id").from("users").toString())
+                .isEqualTo("SELECT DISTINCT toJson(id) AS id FROM users;");
+    }
+
+    @Test(groups = "unit")
+    public void should_handle_from_json() throws Exception {
+        assertThat(
+                update("users").with(set("age", fromJson("42"))).where(eq("id", fromJson("\"user123\""))).toString())
+                .isEqualTo("UPDATE users SET age=fromJson('42') WHERE id=fromJson('\"user123\"');");
+        assertThat(
+                insertInto("users").value("id", fromJson("\"user123\"")).value("age", fromJson("42")).toString())
+                .isEqualTo("INSERT INTO users (id,age) VALUES (fromJson('\"user123\"'),fromJson('42'));");
+    }
+
+
 }
