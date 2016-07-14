@@ -729,7 +729,7 @@ public abstract class TestUtils {
                 try {
                     socket.close();
                 } catch (IOException e) {
-                    logger.warn("Error closing socket to " + address);
+                    logger.warn("Error closing socket to " + address, e);
                 }
         }
         return connectionSuccessful;
