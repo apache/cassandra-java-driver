@@ -88,7 +88,7 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
  *
  * @since 2.0.10
  */
-public abstract class QueryLogger implements LifecycleAwareLatencyTracker {
+public abstract class QueryLogger implements LatencyTracker {
 
     /**
      * The default latency threshold in milliseconds beyond which queries are considered 'slow'

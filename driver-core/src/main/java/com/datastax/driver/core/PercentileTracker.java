@@ -48,7 +48,7 @@ import static java.util.concurrent.TimeUnit.*;
  * time the cached histogram becomes older than the interval, the two histograms are switched. Statistics will not be
  * available during the first interval at cluster startup, since we don't have a cached histogram yet.
  */
-public abstract class PercentileTracker implements LifecycleAwareLatencyTracker {
+public abstract class PercentileTracker implements LatencyTracker {
     private static final Logger logger = LoggerFactory.getLogger(PercentileTracker.class);
 
     private final long highestTrackableLatencyMillis;
