@@ -74,7 +74,7 @@ public class Activator implements BundleActivator {
 
         String usePercentileSpeculativeExecutionPolicy = context.getProperty("cassandra.usePercentileSpeculativeExecutionPolicy");
         if ("true".equals(usePercentileSpeculativeExecutionPolicy)) {
-            PerHostPercentileTracker perHostPercentileTracker = PerHostPercentileTracker.builderWithHighestTrackableLatencyMillis(15000).build();
+            PerHostPercentileTracker perHostPercentileTracker = PerHostPercentileTracker.builder(15000).build();
             builder.withSpeculativeExecutionPolicy(new PercentileSpeculativeExecutionPolicy(perHostPercentileTracker, 99, 1));
             LOGGER.info("Use PercentileSpeculativeExecutionPolicy: YES");
         } else {
