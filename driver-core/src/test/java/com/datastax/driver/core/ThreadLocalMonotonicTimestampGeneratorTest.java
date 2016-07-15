@@ -100,8 +100,9 @@ public class ThreadLocalMonotonicTimestampGeneratorTest {
                     .containsOnlyOnce("Clock skew detected:")
                     .containsOnlyOnce(String.format(logFormat, start - 1, 1, start));
 
-            // Wait for a second to see if we get an additional clock skew message.
-            Uninterruptibles.sleepUninterruptibly(1, TimeUnit.SECONDS);
+            // Wait for 1.1 seconds to see if we get an additional clock skew message.  We wait slightly longer
+            // than 1 second to deal with system clock precision on platforms like windows.
+            Uninterruptibles.sleepUninterruptibly(1100, TimeUnit.MILLISECONDS);
 
             next = generator.next();
             assertThat(next).isEqualTo(previous + 1);
