@@ -1,6 +1,6 @@
 environment:
   test_profile: default
-  cassandra_version: 3.5
+  cassandra_version: 3.7
   matrix:
     - java_version: 1.6.0
     - java_version: 1.7.0
