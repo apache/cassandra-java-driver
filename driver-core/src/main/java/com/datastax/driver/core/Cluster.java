@@ -1384,31 +1384,55 @@ public class Cluster implements Closeable {
             this.preparedQueries = new MapMaker().weakValues().makeMap();
 
             // create debouncers - at this stage, they are not running yet
-            QueryOptions queryOptions = configuration.getQueryOptions();
+            final QueryOptions queryOptions = configuration.getQueryOptions();
             this.nodeListRefreshRequestDebouncer = new EventDebouncer<NodeListRefreshRequest>(
                     "Node list refresh",
                     scheduledTasksExecutor,
-                    new NodeListRefreshRequestDeliveryCallback(),
-                    queryOptions.getRefreshNodeListIntervalMillis(),
-                    queryOptions.getMaxPendingRefreshNodeListRequests(),
-                    EventDebouncer.DEFAULT_MAX_QUEUED_EVENTS
-            );
+                    new NodeListRefreshRequestDeliveryCallback()
+            ) {
+
+                @Override
+                int maxPendingEvents() {
+                    return configuration.getQueryOptions().getMaxPendingRefreshNodeListRequests();
+                }
+
+                @Override
+                long delayMs() {
+                    return configuration.getQueryOptions().getRefreshNodeListIntervalMillis();
+                }
+            };
             this.nodeRefreshRequestDebouncer = new EventDebouncer<NodeRefreshRequest>(
                     "Node refresh",
                     scheduledTasksExecutor,
-                    new NodeRefreshRequestDeliveryCallback(),
-                    queryOptions.getRefreshNodeIntervalMillis(),
-                    queryOptions.getMaxPendingRefreshNodeRequests(),
-                    EventDebouncer.DEFAULT_MAX_QUEUED_EVENTS
-            );
+                    new NodeRefreshRequestDeliveryCallback()
+            ) {
+
+                @Override
+                int maxPendingEvents() {
+                    return configuration.getQueryOptions().getMaxPendingRefreshNodeRequests();
+                }
+
+                @Override
+                long delayMs() {
+                    return configuration.getQueryOptions().getRefreshNodeIntervalMillis();
+                }
+            };
             this.schemaRefreshRequestDebouncer = new EventDebouncer<SchemaRefreshRequest>(
                     "Schema refresh",
                     scheduledTasksExecutor,
-                    new SchemaRefreshRequestDeliveryCallback(),
-                    queryOptions.getRefreshSchemaIntervalMillis(),
-                    queryOptions.getMaxPendingRefreshSchemaRequests(),
-                    EventDebouncer.DEFAULT_MAX_QUEUED_EVENTS
-            );
+                    new SchemaRefreshRequestDeliveryCallback()
+            ) {
+
+                @Override
+                int maxPendingEvents() {
+                    return configuration.getQueryOptions().getMaxPendingRefreshSchemaRequests();
+                }
+
+                @Override
+                long delayMs() {
+                    return configuration.getQueryOptions().getRefreshSchemaIntervalMillis();
+                }
+            };
 
             this.scheduledTasksExecutor.scheduleWithFixedDelay(new CleanupIdleConnectionsTask(), 10, 10, TimeUnit.SECONDS);
 
