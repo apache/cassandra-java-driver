@@ -25,11 +25,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class WarningsTest extends CCMTestsSupport {
 
-    /**
-     * This is Cassandra's default value, found in o.a.c.config.Config
-     */
-    private static final int BATCH_SIZE_WARN_THRESHOLD_IN_BYTES = 5 * 1024;
-
     @Override
     public void onTestContextInitialized() {
         execute("CREATE TABLE foo(k int primary key, v text)");
@@ -38,8 +33,14 @@ public class WarningsTest extends CCMTestsSupport {
     @CassandraVersion(major = 2.2)
     @Test(groups = "short")
     public void should_expose_warnings_on_execution_info() {
-        ResultSet rs = session().execute(String.format("BEGIN UNLOGGED BATCH INSERT INTO foo (k, v) VALUES (1, '%s') APPLY BATCH",
-                Strings.repeat("1", BATCH_SIZE_WARN_THRESHOLD_IN_BYTES)));
+        // the default batch size warn threshold is 5 * 1024 bytes, but after CASSANDRA-10876 there must be
+        // multiple mutations in a batch to trigger this warning so the batch includes 2 different inserts.
+        ResultSet rs = session().execute(String.format("BEGIN UNLOGGED BATCH\n" +
+                        "INSERT INTO foo (k, v) VALUES (1, '%s')\n" +
+                        "INSERT INTO foo (k, v) VALUES (2, '%s')\n" +
+                        "APPLY BATCH",
+                Strings.repeat("1", 2 * 1024),
+                Strings.repeat("1", 3 * 1024)));
 
         List<String> warnings = rs.getExecutionInfo().getWarnings();
         assertThat(warnings).hasSize(1);
