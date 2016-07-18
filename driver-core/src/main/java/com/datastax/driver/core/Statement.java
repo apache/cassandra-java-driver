@@ -490,9 +490,14 @@ public abstract class Statement {
      * Whether this statement is idempotent, i.e. whether it can be applied multiple times
      * without changing the result beyond the initial application.
      * <p/>
-     * Idempotence plays a role in {@link com.datastax.driver.core.policies.SpeculativeExecutionPolicy speculative executions}.
-     * If a statement is <em>not idempotent</em>, the driver will not schedule speculative
-     * executions for it.
+     * If a statement is <em>not idempotent</em>, the driver will ensure that it never gets executed more than once,
+     * which means:
+     * <ul>
+     * <li>avoiding {@link RetryPolicy retries} on write timeouts or request errors;</li>
+     * <li>never scheduling {@link com.datastax.driver.core.policies.SpeculativeExecutionPolicy speculative executions}.
+     * </li>
+     * </ul>
+     * (this behavior is implemented in the driver internals, the corresponding policies will not even be invoked).
      * <p/>
      * Note that this method can return {@code null}, in which case the driver will default to
      * {@link QueryOptions#getDefaultIdempotence()}.

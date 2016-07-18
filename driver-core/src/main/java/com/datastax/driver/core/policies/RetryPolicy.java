@@ -41,6 +41,10 @@ public interface RetryPolicy {
      * </ul>
      */
     class RetryDecision {
+        
+        private static final RetryDecision RETHROW_DECISION = new RetryDecision(Type.RETHROW, null, true);
+        private static final RetryDecision IGNORE_DECISION = new RetryDecision(Type.IGNORE, null, true);
+
         /**
          * The types of retry decisions.
          */
@@ -99,7 +103,7 @@ public interface RetryPolicy {
          * @return a {@link RetryDecision.Type#RETHROW} retry decision.
          */
         public static RetryDecision rethrow() {
-            return new RetryDecision(Type.RETHROW, null, true);
+            return RETHROW_DECISION;
         }
 
         /**
@@ -128,7 +132,7 @@ public interface RetryPolicy {
          * @return an {@link RetryDecision.Type#IGNORE} retry decision.
          */
         public static RetryDecision ignore() {
-            return new RetryDecision(Type.IGNORE, null, true);
+            return IGNORE_DECISION;
         }
 
         /**
@@ -194,6 +198,9 @@ public interface RetryPolicy {
 
     /**
      * Defines whether to retry and at which consistency level on a write timeout.
+     * <p/>
+     * Note that if a statement is {@link Statement#isIdempotent() not idempotent}, the driver will never retry it on a
+     * write timeout (this method won't even be called).
      *
      * @param statement    the original query that timed out.
      * @param cl           the requested consistency level of the write that timed out.
@@ -247,13 +254,12 @@ public interface RetryPolicy {
      * <li>On a client timeout, while waiting for the server response
      * (see {@link SocketOptions#getReadTimeoutMillis()});</li>
      * <li>On a connection error (socket closed, etc.);</li>
-     * <li>When the contacted host replies with an error, such as
-     * {@code OVERLOADED}, {@code IS_BOOTSTRAPPING}, {@code SERVER_ERROR}, etc.</li>
+     * <li>When the contacted host replies with an {@code OVERLOADED} error or a {@code SERVER_ERROR}.</li>
      * </ol>
      * <p/>
-     * Note that when this method is invoked, <em>the driver cannot guarantee that the mutation has
-     * been effectively applied server-side</em>; a retry should only be attempted if the request
-     * is known to be idempotent.
+     * Note that when such an error occurs, there is no guarantee that the mutation has been applied server-side or not.
+     * Therefore, if a statement is {@link Statement#isIdempotent() not idempotent}, the driver will never retry it
+     * (this method won't even be called).
      *
      * @param statement the original query that failed.
      * @param cl        the requested consistency level for the operation.

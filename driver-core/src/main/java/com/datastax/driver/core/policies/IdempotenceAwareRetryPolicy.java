@@ -25,7 +25,11 @@ import com.datastax.driver.core.exceptions.DriverException;
  * if the statement is deemed non-idempotent (see {@link #isIdempotent(Statement)}).
  * <p/>
  * For all other cases, this policy delegates the decision to the child policy.
+ *
+ * @deprecated As of version 3.1.0, the driver doesn't retry non-idempotent statements for write timeouts or unexpected
+ * errors anymore. It is no longer necessary to wrap your retry policies in this policy.
  */
+@Deprecated
 public class IdempotenceAwareRetryPolicy implements RetryPolicy {
 
     private final RetryPolicy childPolicy;
