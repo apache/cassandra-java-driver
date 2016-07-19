@@ -15,7 +15,7 @@
  */
 package com.datastax.driver.core;
 
-import com.datastax.driver.core.exceptions.NoHostAvailableException;
+import com.datastax.driver.core.exceptions.OperationTimedOutException;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.Uninterruptibles;
@@ -116,8 +116,8 @@ public class ReusedStreamIdTest extends CCMTestsSupport {
                         @Override
                         public void onFailure(Throwable t) {
                             semaphore.release();
-                            // NHAEs are inevitable because of low query timeouts and blocked threads.
-                            if (!(t instanceof NoHostAvailableException)) {
+                            // Timeouts are inevitable because of low query timeouts and blocked threads.
+                            if (!(t instanceof OperationTimedOutException)) {
                                 logger.error("Unexpected error encountered.", t);
                                 errorTrigger.countDown();
                             }

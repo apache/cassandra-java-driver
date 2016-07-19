@@ -89,6 +89,8 @@ public class AbstractRetryPolicyIntegrationTest {
                         .setMaxConnectionsPerHost(HostDistance.LOCAL, 1)
                         .setHeartbeatIntervalSeconds(0))
                 .withNettyOptions(nonQuietClusterCloseOptions)
+                // Mark everything as idempotent by default so RetryPolicy is exercised.
+                .withQueryOptions(new QueryOptions().setDefaultIdempotence(true))
                 .build();
 
         session = cluster.connect();

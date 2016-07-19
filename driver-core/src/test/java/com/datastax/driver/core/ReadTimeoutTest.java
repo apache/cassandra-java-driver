@@ -15,13 +15,10 @@
  */
 package com.datastax.driver.core;
 
-import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.datastax.driver.core.exceptions.OperationTimedOutException;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
 import static org.scassandra.http.client.PrimingRequest.queryBuilder;
 import static org.scassandra.http.client.PrimingRequest.then;
 
@@ -42,15 +39,9 @@ public class ReadTimeoutTest extends ScassandraTestBase.PerClassCluster {
         cluster.getConfiguration().getSocketOptions().setReadTimeoutMillis(10);
     }
 
-    @Test(groups = "short")
+    @Test(groups = "short", expectedExceptions = OperationTimedOutException.class)
     public void should_use_default_timeout_if_not_overridden_by_statement() {
-        try {
-            session.execute(query);
-            fail("expected a timeout");
-        } catch (NoHostAvailableException e) {
-            Throwable t = e.getErrors().values().iterator().next();
-            assertThat(t).isInstanceOf(OperationTimedOutException.class);
-        }
+        session.execute(query);
     }
 
     @Test(groups = "short")

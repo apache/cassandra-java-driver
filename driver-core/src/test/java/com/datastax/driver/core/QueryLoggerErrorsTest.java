@@ -16,6 +16,7 @@
 package com.datastax.driver.core;
 
 import com.datastax.driver.core.exceptions.*;
+import com.datastax.driver.core.policies.FallthroughRetryPolicy;
 import com.google.common.util.concurrent.Uninterruptibles;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -66,7 +67,7 @@ public class QueryLoggerErrorsTest extends ScassandraTestBase.PerClassCluster {
 
         queryLogger = null;
 
-        cluster = createClusterBuilder().build();
+        cluster = createClusterBuilder().withRetryPolicy(FallthroughRetryPolicy.INSTANCE).build();
         session = cluster.connect();
     }
 
@@ -175,8 +176,8 @@ public class QueryLoggerErrorsTest extends ScassandraTestBase.PerClassCluster {
         // when
         try {
             session.execute(query);
-            fail("Should have thrown NoHostAvailableException");
-        } catch (NoHostAvailableException e) {
+            fail("Should have thrown OperationTimedOutException");
+        } catch (OperationTimedOutException e) {
             // ok
         }
         // then
@@ -192,25 +193,25 @@ public class QueryLoggerErrorsTest extends ScassandraTestBase.PerClassCluster {
     @DataProvider(name = "errors")
     public static Object[][] createErrors() {
         return new Object[][]{
-                {unavailable, NoHostAvailableException.class, UnavailableException.class},
-                {write_request_timeout, WriteTimeoutException.class, WriteTimeoutException.class},
-                {read_request_timeout, ReadTimeoutException.class, ReadTimeoutException.class},
-                {server_error, NoHostAvailableException.class, ServerError.class},
-                {protocol_error, ProtocolError.class, ProtocolError.class},
-                {bad_credentials, AuthenticationException.class, AuthenticationException.class},
-                {overloaded, NoHostAvailableException.class, OverloadedException.class},
-                {is_bootstrapping, NoHostAvailableException.class, BootstrappingException.class},
-                {truncate_error, TruncateException.class, TruncateException.class},
-                {syntax_error, SyntaxError.class, SyntaxError.class},
-                {invalid, InvalidQueryException.class, InvalidQueryException.class},
-                {config_error, InvalidConfigurationInQueryException.class, InvalidConfigurationInQueryException.class},
-                {already_exists, AlreadyExistsException.class, AlreadyExistsException.class},
-                {unprepared, DriverInternalError.class, UnpreparedException.class}
+                {unavailable, UnavailableException.class},
+                {write_request_timeout, WriteTimeoutException.class},
+                {read_request_timeout, ReadTimeoutException.class},
+                {server_error, ServerError.class},
+                {protocol_error, ProtocolError.class},
+                {bad_credentials, AuthenticationException.class},
+                {overloaded, OverloadedException.class},
+                {is_bootstrapping, BootstrappingException.class},
+                {truncate_error, TruncateException.class},
+                {syntax_error, SyntaxError.class},
+                {invalid, InvalidQueryException.class},
+                {config_error, InvalidConfigurationInQueryException.class},
+                {already_exists, AlreadyExistsException.class},
+                {unprepared, UnpreparedException.class}
         };
     }
 
     @Test(groups = "short", dataProvider = "errors")
-    public void should_log_exception_from_the_given_result(Result result, Class<? extends Exception> expectedException, Class<? extends Exception> loggedException) throws Exception {
+    public void should_log_exception_from_the_given_result(Result result, Class<? extends Exception> expectedException) throws Exception {
         // given
         error.setLevel(DEBUG);
         queryLogger = builder().build();
@@ -225,12 +226,15 @@ public class QueryLoggerErrorsTest extends ScassandraTestBase.PerClassCluster {
         // when
         try {
             session.execute(query);
-            fail("Should have thrown NoHostAvailableException");
+            fail("Should have thrown Exception");
         } catch (Exception e) {
-            if (e instanceof NoHostAvailableException) {
-                assertThat(expectedException).isEqualTo(NoHostAvailableException.class);
-                Throwable error = ((NoHostAvailableException) e).getErrors().get(hostAddress);
-                assertThat(error).isNotNull().isOfAnyClassIn(loggedException);
+            if (expectedException == UnpreparedException.class) {
+                // Special case UnpreparedException, it raises DriverInternalError instead.
+                assertThat(e).isInstanceOf(DriverInternalError.class);
+            } else if (expectedException == BootstrappingException.class) {
+                // Special case BootstrappingException, it's wrapped in NHAE since it's always retried.
+                assertThat(e).isInstanceOf(NoHostAvailableException.class);
+                assertThat(((NoHostAvailableException) e).getErrors().get(hostAddress)).isInstanceOf(expectedException);
             } else {
                 assertThat(e).isInstanceOf(expectedException);
             }
@@ -242,7 +246,7 @@ public class QueryLoggerErrorsTest extends ScassandraTestBase.PerClassCluster {
                 .contains(ip)
                 .contains(Integer.toString(scassandra.getBinaryPort()))
                 .contains(query)
-                .contains(loggedException.getName());
+                .contains(expectedException.getName());
     }
 
 }
