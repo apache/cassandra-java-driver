@@ -15,7 +15,7 @@
  */
 package com.datastax.driver.core;
 
-import com.google.common.util.concurrent.Futures;
+import com.datastax.driver.core.exceptions.CoordinatorException;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Uninterruptibles;
 import org.assertj.core.util.Maps;
@@ -36,7 +36,7 @@ import static org.testng.Assert.fail;
  * which hosts were queried.
  */
 public class QueryTracker {
-    static final String QUERY = "select * from test.foo";
+    public static final String QUERY = "select * from test.foo";
 
     Map<InetAddress, Integer> coordinators = Maps.newConcurrentHashMap();
 
@@ -48,20 +48,28 @@ public class QueryTracker {
         query(session, times, cl, null);
     }
 
+    public void query(Session session, int times, InetSocketAddress expectedHost) {
+        query(session, times, new SimpleStatement(QUERY), null, expectedHost);
+    }
+
+    public void query(Session session, int times, Class<? extends Exception> expectedException, InetSocketAddress expectedHost) {
+        query(session, times, new SimpleStatement(QUERY), expectedException, expectedHost);
+    }
+
     public void query(Session session, int times, ConsistencyLevel cl, Class<? extends Exception> expectedException) {
         Statement statement = new SimpleStatement(QUERY);
         if (cl != null) {
             statement.setConsistencyLevel(cl);
         }
 
-        query(session, times, statement, expectedException);
+        query(session, times, statement, expectedException, null);
     }
 
     public void query(Session session, int times, Statement statement) {
-        query(session, times, statement, null);
+        query(session, times, statement, null, null);
     }
 
-    public void query(Session session, int times, Statement statement, Class<? extends Exception> expectedException) {
+    public void query(Session session, int times, Statement statement, Class<? extends Exception> expectedException, InetSocketAddress expectedHost) {
         List<ListenableFuture<ResultSet>> futures = newArrayList();
 
         for (int i = 0; i < times; i++) {
@@ -69,18 +77,28 @@ public class QueryTracker {
         }
 
         try {
-            List<ResultSet> results = Uninterruptibles.getUninterruptibly(Futures.allAsList(futures), 1, TimeUnit.MINUTES);
-            for (ResultSet result : results) {
-                InetAddress coordinator = result.getExecutionInfo().getQueriedHost().getAddress();
-                Integer n = coordinators.get(coordinator);
-                coordinators.put(coordinator, n == null ? 1 : n + 1);
-            }
-        } catch (ExecutionException ex) {
-            Throwable cause = ex.getCause();
-            if (expectedException == null) {
-                fail("Queries failed", ex);
-            } else {
-                assertThat(cause).isInstanceOf(expectedException);
+            for (ListenableFuture<ResultSet> future : futures) {
+                try {
+                    ResultSet result = Uninterruptibles.getUninterruptibly(future, 1, TimeUnit.SECONDS);
+                    InetSocketAddress address = result.getExecutionInfo().getQueriedHost().getSocketAddress();
+                    InetAddress coordinator = address.getAddress();
+                    Integer n = coordinators.get(coordinator);
+                    coordinators.put(coordinator, n == null ? 1 : n + 1);
+                    if (expectedHost != null) {
+                        assertThat(address).isEqualTo(expectedHost);
+                    }
+                } catch (ExecutionException ex) {
+                    Throwable cause = ex.getCause();
+                    if (expectedException == null) {
+                        fail("Query fail", ex);
+                    } else {
+                        assertThat(cause).isInstanceOf(expectedException);
+                    }
+
+                    if (cause instanceof CoordinatorException) {
+                        assertThat(((CoordinatorException) cause).getAddress()).isEqualTo(expectedHost);
+                    }
+                }
             }
         } catch (Exception e) {
             fail("Queries failed", e);
