@@ -18,11 +18,14 @@ package com.datastax.driver.osgi;
 import com.datastax.driver.core.CCMBridge;
 import com.datastax.driver.core.ProtocolOptions;
 import com.datastax.driver.core.TestUtils;
+import com.google.common.collect.Lists;
 import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.options.CompositeOption;
 import org.ops4j.pax.exam.options.MavenArtifactProvisionOption;
 import org.ops4j.pax.exam.options.UrlProvisionOption;
 import org.ops4j.pax.exam.util.PathUtils;
+
+import java.util.List;
 
 import static com.datastax.driver.osgi.VersionProvider.projectVersion;
 import static org.ops4j.pax.exam.CoreOptions.*;
@@ -115,7 +118,7 @@ public class BundleOptions {
 
             @Override
             public Option[] getOptions() {
-                return options(
+                List<Option> options = Lists.newArrayList(
                         // Delegate javax.security.cert to the parent classloader.  javax.security.cert.X509Certificate is used in
                         // io.netty.util.internal.EmptyArrays, but not directly by the driver.
                         bootDelegationPackage("javax.security.cert"),
@@ -130,6 +133,15 @@ public class BundleOptions {
                         systemPackages("org.testng", "org.junit", "org.junit.runner", "org.junit.runner.manipulation",
                                 "org.junit.runner.notification", "com.jcabi.manifests")
                 );
+                if (CCMBridge.isWindows()) {
+                    // Workaround for Felix + Windows Server 2012.   Felix does not properly alias 'windowsserver2012'
+                    // to 'win32', because of this some native libraries may fail to load.  To work around this, force
+                    // the os.name property to win32 if on a windows platform.
+                    // See: https://issues.apache.org/jira/browse/FELIX-5184
+                    options.add(systemProperty("os.name").value("win32"));
+                }
+
+                return options.toArray(new Option[options.size()]);
             }
         };
     }

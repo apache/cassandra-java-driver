@@ -31,7 +31,7 @@
 
     <properties>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <felix.version>4.6.0</felix.version>
+        <felix.version>4.4.1</felix.version>
         <!-- more recent version require JDK7+ -->
         <pax-exam.version>3.6.0</pax-exam.version>
         <url.version>2.4.0</url.version>
