@@ -248,6 +248,28 @@
                 </executions>
             </plugin>
 
+            <!--
+            To launch Pax Runner and check that all driver bundles are correctly provisioned,
+            do the following:
+            mvn pax:run
+            Note: you MUST run 'mvn install' on the entire project before!
+             -->
+            <plugin>
+                <groupId>org.ops4j</groupId>
+                <artifactId>maven-pax-plugin</artifactId>
+                <version>1.6.0</version>
+                <configuration>
+                    <framework>felix</framework>
+                    <showWarnings>true</showWarnings>
+                    <provision>
+                        <param>--platform=felix</param>
+                        <param>--version=${felix.version}</param>
+                        <param>--log=debug</param>
+                        <param>--systemPackages=sun.misc</param>
+                    </provision>
+                </configuration>
+            </plugin>
+
         </plugins>
 
     </build>
