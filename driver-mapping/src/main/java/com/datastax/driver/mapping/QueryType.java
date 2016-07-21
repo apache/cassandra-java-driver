@@ -69,8 +69,10 @@ class QueryType {
                 Insert.Options usings = insert.using();
                 for (Mapper.Option opt : options) {
                     opt.checkValidFor(QueryType.SAVE, manager);
-                    if (opt.isIncludedInQuery())
+                    if (opt.isIncludedInQuery()) {
+                        opt.applyTo(insert);
                         opt.appendTo(usings);
+                    }
                 }
                 return insert.toString();
             }
