@@ -26,6 +26,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.concurrent.ExecutionException;
+import java.util.regex.Pattern;
 
 import static com.datastax.driver.core.ConsistencyLevel.*;
 import static com.datastax.driver.core.ProtocolVersion.V1;
@@ -152,6 +153,42 @@ public class MapperOptionTest extends CCMTestsSupport {
         // Generate Ready Query and ensure provided Option for consistencyLevel is used.
         Statement readProvidedCL = mapper.getQuery(1859, Option.consistencyLevel(LOCAL_QUORUM));
         assertThat(readProvidedCL.getConsistencyLevel()).isEqualTo(LOCAL_QUORUM);
+    }
+    
+
+    @Test(groups = "short")
+    @CassandraVersion(major = 2.0)
+    void should_use_if_not_exists_option() {
+        Pattern ifNotExistsPattern = Pattern.compile(".*\\sIF\\s+NOT\\s+EXISTS(\\s+)?;?(\\s+)?$", Pattern.CASE_INSENSITIVE);
+
+        User user = new User(42, "Cin Ali");
+
+        // test default
+        BoundStatement saveDefault = (BoundStatement) mapper.saveQuery(user);
+        DefaultPreparedStatement stmt = (DefaultPreparedStatement) saveDefault.preparedStatement();
+        assertThat(stmt.getQueryString()).doesNotMatch(ifNotExistsPattern);
+
+        // test disabled
+        saveDefault = (BoundStatement) mapper.saveQuery(user, Option.ifNotExists(false));
+        stmt = (DefaultPreparedStatement) saveDefault.preparedStatement();
+        assertThat(stmt.getQueryString()).doesNotMatch(ifNotExistsPattern);
+
+        // test enabled
+        saveDefault = (BoundStatement) mapper.saveQuery(user, Option.ifNotExists(true));
+        stmt = (DefaultPreparedStatement) saveDefault.preparedStatement();
+        assertThat(stmt.getQueryString()).matches(ifNotExistsPattern);
+        
+        // test default enabled
+        mapper.setDefaultSaveOptions(Option.ifNotExists(true));
+        saveDefault = (BoundStatement) mapper.saveQuery(user);
+        stmt = (DefaultPreparedStatement) saveDefault.preparedStatement();
+        assertThat(stmt.getQueryString()).matches(ifNotExistsPattern);
+
+        // test default disabled
+        mapper.setDefaultSaveOptions(Option.ifNotExists(false));
+        saveDefault = (BoundStatement) mapper.saveQuery(user);
+        stmt = (DefaultPreparedStatement) saveDefault.preparedStatement();
+        assertThat(stmt.getQueryString()).doesNotMatch(ifNotExistsPattern);
     }
 
     @Test(groups = "short")

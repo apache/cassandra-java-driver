@@ -857,7 +857,7 @@ public class Mapper<T> {
      */
     public static abstract class Option {
 
-        enum Type {TTL, TIMESTAMP, CL, TRACING, SAVE_NULL_FIELDS}
+        enum Type {TTL, TIMESTAMP, CL, TRACING, SAVE_NULL_FIELDS, IF_NOT_EXISTS}
 
         final Type type;
 
@@ -931,6 +931,19 @@ public class Mapper<T> {
             return new SaveNullFields(enabled);
         }
 
+        /**
+         * Creates a new Option object to specify whether IF NOT EXISTS statement should be included in
+         * insert queries. This option is valid only for save operations.
+         * <p/>
+         * If this option is not specified, it defaults to {@code false} (IF NOT EXISTS statement are not used).
+         *
+         * @param enabled whether to include IF NOT EXISTS statement in queries.
+         * @return the option.
+         */
+        public static Option ifNotExists(boolean enabled) {
+            return new IfNotExists(enabled);
+        }
+
         public Type getType() {
             return this.type;
         }
@@ -944,6 +957,16 @@ public class Mapper<T> {
         abstract void checkValidFor(QueryType qt, MappingManager manager) throws IllegalArgumentException;
 
         abstract boolean isIncludedInQuery();
+
+        @Override
+        public int hashCode() {
+            return type.hashCode();
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            return obj != null && obj.getClass() == getClass() && type.equals(((Option) obj).type);
+        }
 
         static class Ttl extends Option {
 
@@ -1125,11 +1148,54 @@ public class Mapper<T> {
             }
         }
 
+        static class IfNotExists extends Option {
+            boolean ifNotExists;
+            
+            IfNotExists(boolean ifNotExists) {
+                super(Type.IF_NOT_EXISTS);
+                this.ifNotExists = ifNotExists;
+            }
+
+            @Override
+            void appendTo(Insert.Options usings) {
+                // nothing to do
+            }
+
+            @Override
+            void appendTo(Delete.Options usings) {
+                throw new UnsupportedOperationException("shouldn't be called");
+            }
+
+            @Override
+            void addToPreparedStatement(BoundStatement bs, int i) {
+                // nothing to do
+            }
+
+            @Override
+            void checkValidFor(QueryType qt, MappingManager manager) {
+                checkArgument(qt == QueryType.SAVE, "IfNotExists option is only allowed in save queries");
+            }
+
+            @Override
+            boolean isIncludedInQuery() {
+                return true;
+            }
+
+            @Override
+            public int hashCode() {
+                return super.hashCode() + (ifNotExists ? 1231 : 1237);
+            }
+
+            @Override
+            public boolean equals(Object obj) {
+                return super.equals(obj) && ((IfNotExists) obj).ifNotExists == ifNotExists;
+            }
+        }
     }
 
     private static class MapperQueryKey {
         private final QueryType queryType;
-        private final EnumSet<Option.Type> optionTypes;
+        private final Collection<Option> options;
         private final Set<ColumnMapper<?>> columns;
 
         MapperQueryKey(QueryType queryType, Set<ColumnMapper<?>> columnMappers, EnumMap<Option.Type, Option> options) {
@@ -1138,11 +1204,7 @@ public class Mapper<T> {
             Preconditions.checkNotNull(columnMappers);
             this.queryType = queryType;
             this.columns = columnMappers;
-            this.optionTypes = EnumSet.noneOf(Option.Type.class);
-            for (Option opt : options.values()) {
-                if (opt.isIncludedInQuery())
-                    this.optionTypes.add(opt.type);
-            }
+            this.options = options.values();
         }
 
         @Override
@@ -1152,7 +1214,7 @@ public class Mapper<T> {
             if (other instanceof MapperQueryKey) {
                 MapperQueryKey that = (MapperQueryKey) other;
                 return this.queryType.equals(that.queryType)
-                        && this.optionTypes.equals(that.optionTypes)
+                        && this.options.equals(that.options)
                         && this.columns.equals(that.columns);
             }
             return false;
@@ -1160,7 +1222,7 @@ public class Mapper<T> {
 
         @Override
         public int hashCode() {
-            return Objects.hashCode(queryType, optionTypes, columns);
+            return Objects.hashCode(queryType, options, columns);
         }
     }
 }
