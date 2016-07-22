@@ -15,11 +15,15 @@
  */
 package com.datastax.driver.mapping;
 
+import com.datastax.driver.mapping.annotations.Column;
 import com.datastax.driver.mapping.annotations.Computed;
 import com.datastax.driver.mapping.annotations.Table;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Field;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 
 /**
  * Various checks on mapping annotations.
@@ -36,8 +40,8 @@ class AnnotationChecks {
     static <T extends Annotation> T getTypeAnnotation(Class<T> annotation, Class<?> annotatedClass) {
         T instance = annotatedClass.getAnnotation(annotation);
         if (instance == null)
-            throw new IllegalArgumentException(String.format("@%s annotation was not found on type %s",
-                    annotation.getSimpleName(), annotatedClass.getName()));
+            throw new IllegalArgumentException(String.format("@%s annotation was not found on %s",
+                    annotation.getSimpleName(), annotatedClass));
 
         // Check that no other mapping annotations are present
         validateAnnotations(annotatedClass, annotation);
@@ -45,50 +49,66 @@ class AnnotationChecks {
         return instance;
     }
 
+    @SuppressWarnings("unchecked")
     private static void validateAnnotations(Class<?> clazz, Class<? extends Annotation> allowed) {
         @SuppressWarnings("unchecked")
-        Class<? extends Annotation> invalid = validateAnnotations(clazz.getAnnotations(), allowed);
+        Collection<Annotation> classAnnotations = new HashSet<Annotation>();
+        Collections.addAll(classAnnotations, clazz.getAnnotations());
+        Class<? extends Annotation> invalid = validateAnnotations(classAnnotations, Collections.singleton(allowed));
         if (invalid != null)
-            throw new IllegalArgumentException(String.format("Cannot have both @%s and @%s on type %s",
+            throw new IllegalArgumentException(String.format("Cannot have both @%s and @%s on %s",
                     allowed.getSimpleName(), invalid.getSimpleName(),
-                    clazz.getName()));
+                    clazz));
     }
 
     /**
      * Checks that a field is only annotated with the given mapping annotations, and that its "frozen" annotations are valid.
      */
-    static void validateAnnotations(Field field, String classDescription, Class<? extends Annotation>... allowed) {
-        Class<? extends Annotation> invalid = validateAnnotations(field.getAnnotations(), allowed);
-        if (invalid != null)
-            throw new IllegalArgumentException(String.format("Annotation @%s is not allowed on field %s of %s %s",
+    static void validateAnnotations(PropertyMapper property, Collection<? extends Class<? extends Annotation>> allowed) {
+        Class<? extends Annotation> invalid = validateAnnotations(property.getAnnotations(), allowed);
+        if (invalid != null) {
+            throw new IllegalArgumentException(String.format("Annotation @%s is not allowed on property '%s'",
                     invalid.getSimpleName(),
-                    field.getName(), classDescription,
-                    field.getDeclaringClass().getName()));
-
-        checkValidComputed(field);
+                    property));
+        }
+        checkValidPrimaryKey(property);
+        checkValidComputed(property);
     }
 
     // Returns the offending annotation if there is one
-    private static Class<? extends Annotation> validateAnnotations(Annotation[] annotations, Class<? extends Annotation>... allowed) {
+    private static Class<? extends Annotation> validateAnnotations(Collection<Annotation> annotations, Collection<? extends Class<? extends Annotation>> allowed) {
         for (Annotation annotation : annotations) {
             Class<? extends Annotation> actual = annotation.annotationType();
-            if (actual.getPackage().equals(MAPPING_PACKAGE) && !contains(allowed, actual))
+            if (actual.getPackage().equals(MAPPING_PACKAGE) && !allowed.contains(actual))
                 return actual;
         }
         return null;
     }
 
-    private static boolean contains(Object[] array, Object target) {
-        for (Object element : array)
-            if (element.equals(target))
-                return true;
-        return false;
+    private static void checkValidPrimaryKey(PropertyMapper property) {
+        if (property.isPartitionKey() && property.isClusteringColumn())
+            throw new IllegalArgumentException(String.format("Property '%s' cannot be annotated with both @PartitionKey and @ClusteringColumn", property));
     }
 
-    static void checkValidComputed(Field field) {
-        Computed computed = field.getAnnotation(Computed.class);
-        if (computed != null && computed.value().isEmpty()) {
-            throw new IllegalArgumentException(String.format("Field %s: attribute 'value' of annotation @Computed is mandatory for computed fields", field.getName()));
+    private static void checkValidComputed(PropertyMapper property) {
+        if (property.isComputed()) {
+            Computed computed = property.annotation(Computed.class);
+            if (computed.value().isEmpty()) {
+                throw new IllegalArgumentException(String.format("Property '%s': attribute 'value' of annotation @Computed is mandatory for computed properties", property));
+            }
+            if (property.hasAnnotation(Column.class)) {
+                throw new IllegalArgumentException(String.format("Property '%s' cannot be annotated with both @Column and @Computed", property));
+            }
+        }
+    }
+
+    static void validateOrder(List<PropertyMapper> properties, String annotation) {
+        for (int i = 0; i < properties.size(); i++) {
+            PropertyMapper property = properties.get(i);
+            int pos = property.position;
+            if (pos != i)
+                throw new IllegalArgumentException(String.format("Invalid ordering value %d for annotation %s of property '%s', was expecting %d",
+                        pos, annotation, property, i));
         }
     }
 }
