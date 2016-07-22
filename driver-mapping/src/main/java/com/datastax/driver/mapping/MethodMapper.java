@@ -26,11 +26,13 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Set;
 
+// TODO: we probably should make that an abstract class and move some bit in a "ReflexionMethodMapper"
+// subclass for consistency with the rest, but we can see to that later
 class MethodMapper {
 
-    final Method method;
-    final String queryString;
-    private final ParamMapper[] paramMappers;
+    public final Method method;
+    public final String queryString;
+    public final ParamMapper[] paramMappers;
 
     private final ConsistencyLevel consistency;
     private final int fetchSize;
@@ -130,16 +132,17 @@ class MethodMapper {
             throw new RuntimeException(String.format("Cannot map return of method %s to unsupported type %s", method, type));
 
         try {
-            this.returnMapper = manager.mapper((Class<?>) type);
+            this.returnMapper = (Mapper<?>) manager.mapper((Class<?>) type);
         } catch (Exception e) {
             throw new RuntimeException("Cannot map return to class " + fullReturnType, e);
         }
     }
 
-    Object invoke(Object[] args) {
+    public Object invoke(Object[] args) {
 
         BoundStatement bs = statement.bind();
 
+        ProtocolVersion protocolVersion = session.getCluster().getConfiguration().getProtocolOptions().getProtocolVersion();
         for (int i = 0; i < args.length; i++) {
             paramMappers[i].setValue(bs, args[i]);
         }
@@ -182,7 +185,7 @@ class MethodMapper {
         private final TypeCodec<Object> codec;
 
         @SuppressWarnings("unchecked")
-        ParamMapper(String paramName, int paramIdx, TypeToken<?> paramType, Class<? extends TypeCodec<?>> codecClass) {
+        public ParamMapper(String paramName, int paramIdx, TypeToken<?> paramType, Class<? extends TypeCodec<?>> codecClass) {
             this.paramName = paramName;
             this.paramIdx = paramIdx;
             this.paramType = (TypeToken<Object>) paramType;

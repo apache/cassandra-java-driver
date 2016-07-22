@@ -21,13 +21,13 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Shorthand to specify that the key type of a MAP property is frozen.
+ * Shorthand to specify that the key type of a MAP field is frozen.
  * <p/>
  * This is equivalent to {@code @Frozen("map<frozen<foo>, bar>")}.
  *
  * @see Frozen
  */
-@Target({ElementType.FIELD, ElementType.METHOD})
+@Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface FrozenKey {
 }

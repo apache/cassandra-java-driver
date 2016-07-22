@@ -36,7 +36,7 @@ import static org.testng.Assert.assertTrue;
 /**
  * Basic tests for the mapping module.
  */
-@SuppressWarnings({"unused", "WeakerAccess"})
+@SuppressWarnings("unused")
 public class MapperTest extends CCMTestsSupport {
 
     @Override
@@ -58,6 +58,7 @@ public class MapperTest extends CCMTestsSupport {
      *
      * And the next step will be to support UDT (which should be relatively simple).
      */
+    @SuppressWarnings("unused")
     @Table(name = "users",
             readConsistency = "QUORUM",
             writeConsistency = "QUORUM")

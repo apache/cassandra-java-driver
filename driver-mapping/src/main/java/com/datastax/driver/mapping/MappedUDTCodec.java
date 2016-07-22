@@ -15,10 +15,7 @@
  */
 package com.datastax.driver.mapping;
 
-import com.datastax.driver.core.CodecRegistry;
-import com.datastax.driver.core.ProtocolVersion;
-import com.datastax.driver.core.TypeCodec;
-import com.datastax.driver.core.UserType;
+import com.datastax.driver.core.*;
 
 import java.nio.ByteBuffer;
 import java.util.Map;
@@ -29,10 +26,10 @@ import java.util.Map;
 class MappedUDTCodec<T> extends TypeCodec.AbstractUDTCodec<T> {
     private final UserType cqlUserType;
     private final Class<T> udtClass;
-    private final Map<String, PropertyMapper> columnMappers;
+    private final Map<String, ColumnMapper<T>> columnMappers;
     private final CodecRegistry codecRegistry;
 
-    MappedUDTCodec(UserType cqlUserType, Class<T> udtClass, Map<String, PropertyMapper> columnMappers, MappingManager mappingManager) {
+    public MappedUDTCodec(UserType cqlUserType, Class<T> udtClass, Map<String, ColumnMapper<T>> columnMappers, MappingManager mappingManager) {
         super(cqlUserType, udtClass);
         this.cqlUserType = cqlUserType;
         this.udtClass = udtClass;
@@ -42,7 +39,11 @@ class MappedUDTCodec<T> extends TypeCodec.AbstractUDTCodec<T> {
 
     @Override
     protected T newInstance() {
-        return ReflectionUtils.newInstance(udtClass);
+        try {
+            return udtClass.newInstance();
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Error creating instance of @UDT-annotated class " + udtClass, e);
+        }
     }
 
     Class<T> getUdtClass() {
@@ -51,28 +52,35 @@ class MappedUDTCodec<T> extends TypeCodec.AbstractUDTCodec<T> {
 
     @Override
     protected ByteBuffer serializeField(T source, String fieldName, ProtocolVersion protocolVersion) {
-        PropertyMapper propertyMapper = columnMappers.get(fieldName);
+        // The parent class passes lowercase names unquoted, but in our internal map of mappers they are always quoted
+        if (!fieldName.startsWith("\""))
+            fieldName = Metadata.quote(fieldName);
 
-        if (propertyMapper == null)
+        ColumnMapper<T> columnMapper = columnMappers.get(fieldName);
+
+        if (columnMapper == null)
             return null;
 
-        Object value = propertyMapper.getValue(source);
+        Object value = columnMapper.getValue(source);
 
-        TypeCodec<Object> codec = propertyMapper.customCodec;
+        TypeCodec<Object> codec = columnMapper.getCustomCodec();
         if (codec == null)
-            codec = codecRegistry.codecFor(cqlUserType.getFieldType(propertyMapper.columnName), propertyMapper.javaType);
+            codec = codecRegistry.codecFor(cqlUserType.getFieldType(columnMapper.getColumnName()), columnMapper.getJavaType());
 
         return codec.serialize(value, protocolVersion);
     }
 
     @Override
     protected T deserializeAndSetField(ByteBuffer input, T target, String fieldName, ProtocolVersion protocolVersion) {
-        PropertyMapper propertyMapper = columnMappers.get(fieldName);
-        if (propertyMapper != null) {
-            TypeCodec<Object> codec = propertyMapper.customCodec;
+        if (!fieldName.startsWith("\""))
+            fieldName = Metadata.quote(fieldName);
+
+        ColumnMapper<T> columnMapper = columnMappers.get(fieldName);
+        if (columnMapper != null) {
+            TypeCodec<Object> codec = columnMapper.getCustomCodec();
             if (codec == null)
-                codec = codecRegistry.codecFor(cqlUserType.getFieldType(propertyMapper.columnName), propertyMapper.javaType);
-            propertyMapper.setValue(target, codec.deserialize(input, protocolVersion));
+                codec = codecRegistry.codecFor(cqlUserType.getFieldType(columnMapper.getColumnName()), columnMapper.getJavaType());
+            columnMapper.setValue(target, codec.deserialize(input, protocolVersion));
         }
         return target;
     }

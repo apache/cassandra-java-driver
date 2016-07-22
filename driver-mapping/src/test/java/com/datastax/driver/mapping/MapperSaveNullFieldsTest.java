@@ -83,14 +83,14 @@ public class MapperSaveNullFieldsTest extends CCMTestsSupport {
         BoundStatement bs = (BoundStatement) mapper.saveQuery(newUser, options);
         String queryString = bs.preparedStatement().getQueryString();
         if (nullName && !saveExpected)
-            assertThat(queryString).as(description).doesNotContain("name");
+            assertThat(queryString).as(description).doesNotContain("\"name\"");
         else
-            assertThat(queryString).as(description).contains("name");
+            assertThat(queryString).as(description).contains("\"name\"");
 
         if (nullPhone && !saveExpected)
-            assertThat(queryString).as(description).doesNotContain("phone");
+            assertThat(queryString).as(description).doesNotContain("\"phone\"");
         else
-            assertThat(queryString).as(description).contains("phone");
+            assertThat(queryString).as(description).contains("\"phone\"");
 
         // Save entity and check the data
         mapper.save(newUser, options);

@@ -19,35 +19,22 @@ import com.datastax.driver.core.PreparedStatement;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 
-import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.List;
 
-class AccessorMapper<T> {
+abstract class AccessorMapper<T> {
 
-    final Class<T> daoClass;
-    final List<MethodMapper> methods;
-    private final Class<T>[] proxyClasses;
-    private final AccessorInvocationHandler<T> handler;
+    public final Class<T> daoClass;
+    protected final List<MethodMapper> methods;
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    AccessorMapper(Class<T> daoClass, List<MethodMapper> methods) {
+    protected AccessorMapper(Class<T> daoClass, List<MethodMapper> methods) {
         this.daoClass = daoClass;
         this.methods = methods;
-        this.proxyClasses = (Class<T>[]) new Class[]{daoClass};
-        this.handler = new AccessorInvocationHandler<T>(this);
     }
 
-    @SuppressWarnings("unchecked")
-    T createProxy() {
-        try {
-            return (T) Proxy.newProxyInstance(daoClass.getClassLoader(), proxyClasses, handler);
-        } catch (Exception e) {
-            throw new RuntimeException("Cannot create instance for Accessor interface " + daoClass.getName());
-        }
-    }
+    abstract T createProxy();
 
-    void prepare(MappingManager manager) {
+    public void prepare(MappingManager manager) {
         List<ListenableFuture<PreparedStatement>> statements = new ArrayList<ListenableFuture<PreparedStatement>>(methods.size());
 
         for (MethodMapper method : methods)
@@ -62,4 +49,7 @@ class AccessorMapper<T> {
         }
     }
 
+    interface Factory {
+        public <T> AccessorMapper<T> create(Class<T> daoClass, List<MethodMapper> methods);
+    }
 }

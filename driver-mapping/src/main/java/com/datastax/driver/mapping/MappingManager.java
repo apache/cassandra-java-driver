@@ -223,7 +223,7 @@ public class MappingManager {
             synchronized (mappers) {
                 mapper = (Mapper<T>) mappers.get(klass);
                 if (mapper == null) {
-                    EntityMapper<T> entityMapper = AnnotationParser.parseEntity(klass, this);
+                    EntityMapper<T> entityMapper = AnnotationParser.parseEntity(klass, ReflectionMapper.factory(), this);
                     mapper = new Mapper<T>(this, klass, entityMapper);
                     Map<Class<?>, Mapper<?>> newMappers = new HashMap<Class<?>, Mapper<?>>(mappers);
                     newMappers.put(klass, mapper);
@@ -241,7 +241,7 @@ public class MappingManager {
             synchronized (udtCodecs) {
                 codec = (MappedUDTCodec<T>) udtCodecs.get(mappedClass);
                 if (codec == null) {
-                    codec = AnnotationParser.parseUDT(mappedClass, this);
+                    codec = AnnotationParser.parseUDT(mappedClass, ReflectionMapper.factory(), this);
                     session.getCluster().getConfiguration().getCodecRegistry().register(codec);
 
                     HashMap<Class<?>, MappedUDTCodec<?>> newCodecs = new HashMap<Class<?>, MappedUDTCodec<?>>(udtCodecs);
@@ -260,7 +260,7 @@ public class MappingManager {
             synchronized (accessors) {
                 accessor = (T) accessors.get(klass);
                 if (accessor == null) {
-                    AccessorMapper<T> mapper = AnnotationParser.parseAccessor(klass, this);
+                    AccessorMapper<T> mapper = AnnotationParser.parseAccessor(klass, AccessorReflectionMapper.factory(), this);
                     mapper.prepare(this);
                     accessor = mapper.createProxy();
                     Map<Class<?>, Object> newAccessors = new HashMap<Class<?>, Object>(accessors);

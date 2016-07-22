@@ -16,193 +16,286 @@
 package com.datastax.driver.mapping;
 
 import com.datastax.driver.core.ConsistencyLevel;
-import com.datastax.driver.core.Metadata;
 import com.datastax.driver.core.TableMetadata;
 import com.datastax.driver.core.TypeCodec;
 import com.datastax.driver.core.UserType;
 import com.datastax.driver.mapping.MethodMapper.ParamMapper;
 import com.datastax.driver.mapping.annotations.*;
 import com.google.common.base.Strings;
-import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
 import com.google.common.reflect.TypeToken;
 
-import java.beans.PropertyDescriptor;
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
+import java.lang.reflect.Field;
+import java.lang.reflect.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static com.datastax.driver.core.Metadata.quote;
+
 /**
- * Static methods that facilitates parsing:
- * - {@link #parseEntity(Class, MappingManager)}: entity classes into {@link EntityMapper} instances
- * - {@link #parseUDT(Class, MappingManager)}: UDT classes into {@link MappedUDTCodec} instances.
- * - {@link #parseAccessor(Class, MappingManager)}: Accessor interfaces into {@link AccessorMapper} instances.
+ * Static metods that facilitates parsing class annotations into the corresponding {@link EntityMapper}.
  */
-@SuppressWarnings({"unchecked", "WeakerAccess"})
 class AnnotationParser {
 
-    /**
-     * Annotations allowed on a property that maps to a table column.
-     */
-    private static final Set<Class<? extends Annotation>> VALID_COLUMN_ANNOTATIONS = ImmutableSet.of(
-            Column.class,
-            Computed.class,
-            ClusteringColumn.class,
-            Frozen.class,
-            FrozenKey.class,
-            FrozenValue.class,
-            PartitionKey.class,
-            Transient.class);
-
-    /**
-     * Annotations allowed on a property that maps to a UDT field.
-     */
-    private static final Set<Class<? extends Annotation>> VALID_FIELD_ANNOTATIONS = ImmutableSet.of(
-            Field.class,
-            Frozen.class,
-            FrozenKey.class,
-            FrozenValue.class,
-            Transient.class);
-
-    private static final Comparator<PropertyMapper> POSITION_COMPARATOR = new Comparator<PropertyMapper>() {
+    private static final Comparator<Field> fieldComparator = new Comparator<Field>() {
         @Override
-        public int compare(PropertyMapper o1, PropertyMapper o2) {
-            return o1.position - o2.position;
+        public int compare(Field f1, Field f2) {
+            return position(f1) - position(f2);
         }
     };
 
     private AnnotationParser() {
     }
 
-    static <T> EntityMapper<T> parseEntity(final Class<T> entityClass, MappingManager mappingManager) {
+    public static <T> EntityMapper<T> parseEntity(Class<T> entityClass, EntityMapper.Factory factory, MappingManager mappingManager) {
         Table table = AnnotationChecks.getTypeAnnotation(Table.class, entityClass);
 
-        String ksName = table.caseSensitiveKeyspace() ? Metadata.quote(table.keyspace()) : table.keyspace().toLowerCase();
-        String tableName = table.caseSensitiveTable() ? Metadata.quote(table.name()) : table.name().toLowerCase();
+        String ksName = table.caseSensitiveKeyspace() ? table.keyspace() : table.keyspace().toLowerCase();
+        String tableName = table.caseSensitiveTable() ? table.name() : table.name().toLowerCase();
 
         ConsistencyLevel writeConsistency = table.writeConsistency().isEmpty() ? null : ConsistencyLevel.valueOf(table.writeConsistency().toUpperCase());
         ConsistencyLevel readConsistency = table.readConsistency().isEmpty() ? null : ConsistencyLevel.valueOf(table.readConsistency().toUpperCase());
 
         if (Strings.isNullOrEmpty(table.keyspace())) {
-            String loggedKeyspace = mappingManager.getSession().getLoggedKeyspace();
-            if (Strings.isNullOrEmpty(loggedKeyspace))
+            ksName = mappingManager.getSession().getLoggedKeyspace();
+            if (Strings.isNullOrEmpty(ksName))
                 throw new IllegalArgumentException(String.format(
-                        "Error creating mapper for %s, the @Table annotation declares no default keyspace, and the session is not currently logged to any keyspace",
-                        entityClass
+                        "Error creating mapper for class %s, the @%s annotation declares no default keyspace, and the session is not currently logged to any keyspace",
+                        entityClass.getSimpleName(),
+                        Table.class.getSimpleName()
                 ));
-            ksName = Metadata.quote(loggedKeyspace);
         }
 
-        EntityMapper<T> mapper = new EntityMapper<T>(entityClass, ksName, tableName, writeConsistency, readConsistency);
+        EntityMapper<T> mapper = factory.create(entityClass, ksName, tableName, writeConsistency, readConsistency);
         TableMetadata tableMetadata = mappingManager.getSession().getCluster().getMetadata().getKeyspace(ksName).getTable(tableName);
 
         if (tableMetadata == null)
             throw new IllegalArgumentException(String.format("Table %s does not exist in keyspace %s", tableName, ksName));
 
-        List<PropertyMapper> pks = new ArrayList<PropertyMapper>();
-        List<PropertyMapper> ccs = new ArrayList<PropertyMapper>();
-        List<PropertyMapper> rgs = new ArrayList<PropertyMapper>();
+        List<Field> pks = new ArrayList<Field>();
+        List<Field> ccs = new ArrayList<Field>();
+        List<Field> rgs = new ArrayList<Field>();
 
-        Map<String, Object[]> fieldsAndProperties = ReflectionUtils.scanFieldsAndProperties(entityClass);
-        AtomicInteger columnCounter = mappingManager.isCassandraV1 ? null : new AtomicInteger(0);
-
-        for (Map.Entry<String, Object[]> entry : fieldsAndProperties.entrySet()) {
-
-            String propertyName = entry.getKey();
-            java.lang.reflect.Field field = (java.lang.reflect.Field) entry.getValue()[0];
-            PropertyDescriptor property = (PropertyDescriptor) entry.getValue()[1];
-            String alias = (columnCounter != null)
-                    ? "col" + columnCounter.incrementAndGet()
-                    : null;
-
-            PropertyMapper propertyMapper = new PropertyMapper(entityClass, propertyName, alias, field, property);
-
-            if (mappingManager.isCassandraV1 && propertyMapper.isComputed())
-                throw new UnsupportedOperationException("Computed properties are not supported with native protocol v1");
-
-            AnnotationChecks.validateAnnotations(propertyMapper, VALID_COLUMN_ANNOTATIONS);
-
-            if (propertyMapper.isTransient())
+        for (Field field : entityClass.getDeclaredFields()) {
+            if (field.isSynthetic() || (field.getModifiers() & Modifier.STATIC) == Modifier.STATIC)
                 continue;
 
-            if (!propertyMapper.isComputed() && tableMetadata.getColumn(propertyMapper.columnName) == null)
-                throw new IllegalArgumentException(String.format("Column %s does not exist in table %s.%s",
-                        propertyMapper.columnName, ksName, tableName));
+            if (mappingManager.isCassandraV1 && field.getAnnotation(Computed.class) != null)
+                throw new UnsupportedOperationException("Computed fields are not supported with native protocol v1");
 
-            if (propertyMapper.isPartitionKey())
-                pks.add(propertyMapper);
-            else if (propertyMapper.isClusteringColumn())
-                ccs.add(propertyMapper);
-            else
-                rgs.add(propertyMapper);
+            AnnotationChecks.validateAnnotations(field, "entity",
+                    Column.class, ClusteringColumn.class, Frozen.class, FrozenKey.class,
+                    FrozenValue.class, PartitionKey.class, Transient.class, Computed.class);
 
-            // if the property is of a UDT type, parse it now
-            for (Class<?> udt : TypeMappings.findUDTs(propertyMapper.javaType.getType()))
-                mappingManager.getUDTCodec(udt);
+            if (field.getAnnotation(Transient.class) != null)
+                continue;
+
+            switch (kind(field)) {
+                case PARTITION_KEY:
+                    pks.add(field);
+                    break;
+                case CLUSTERING_COLUMN:
+                    ccs.add(field);
+                    break;
+                default:
+                    rgs.add(field);
+                    break;
+            }
         }
 
-        Collections.sort(pks, POSITION_COMPARATOR);
-        Collections.sort(ccs, POSITION_COMPARATOR);
+        AtomicInteger columnCounter = mappingManager.isCassandraV1 ? null : new AtomicInteger(0);
 
-        AnnotationChecks.validateOrder(pks, "@PartitionKey");
-        AnnotationChecks.validateOrder(ccs, "@ClusteringColumn");
+        Collections.sort(pks, fieldComparator);
+        Collections.sort(ccs, fieldComparator);
 
-        mapper.addColumns(pks, ccs, rgs);
+        validateOrder(pks, "@PartitionKey");
+        validateOrder(ccs, "@ClusteringColumn");
+
+        mapper.addColumns(
+                createColumnMappers(pks, factory, mapper.entityClass, mappingManager, columnCounter, tableMetadata, ksName, tableName),
+                createColumnMappers(ccs, factory, mapper.entityClass, mappingManager, columnCounter, tableMetadata, ksName, tableName),
+                createColumnMappers(rgs, factory, mapper.entityClass, mappingManager, columnCounter, tableMetadata, ksName, tableName));
         return mapper;
     }
 
-    static <T> MappedUDTCodec<T> parseUDT(Class<T> udtClass, MappingManager mappingManager) {
+    private static <T> List<ColumnMapper<T>> createColumnMappers(List<Field> fields, EntityMapper.Factory factory, Class<T> klass, MappingManager mappingManager, AtomicInteger columnCounter, TableMetadata tableMetadata, String ksName, String tableName) {
+        List<ColumnMapper<T>> mappers = new ArrayList<ColumnMapper<T>>(fields.size());
+        for (int i = 0; i < fields.size(); i++) {
+            Field field = fields.get(i);
+            int pos = position(field);
+            ColumnMapper<T> columnMapper = factory.createColumnMapper(klass, field, pos < 0 ? i : pos, mappingManager, columnCounter);
+            if (columnMapper.kind == ColumnMapper.Kind.COMPUTED || tableMetadata.getColumn(columnMapper.getColumnName()) != null)
+                mappers.add(columnMapper);
+            else
+                throw new IllegalArgumentException(String.format("Column %s does not exist in table %s.%s",
+                        columnMapper.getColumnName(), ksName, tableName));
+        }
+        return mappers;
+    }
+
+    public static <T> MappedUDTCodec<T> parseUDT(Class<T> udtClass, EntityMapper.Factory factory, MappingManager mappingManager) {
         UDT udt = AnnotationChecks.getTypeAnnotation(UDT.class, udtClass);
 
-        String ksName = udt.caseSensitiveKeyspace() ? Metadata.quote(udt.keyspace()) : udt.keyspace().toLowerCase();
-        String udtName = udt.caseSensitiveType() ? Metadata.quote(udt.name()) : udt.name().toLowerCase();
+        String ksName = udt.caseSensitiveKeyspace() ? udt.keyspace() : udt.keyspace().toLowerCase();
+        String udtName = udt.caseSensitiveType() ? quote(udt.name()) : udt.name().toLowerCase();
 
         if (Strings.isNullOrEmpty(udt.keyspace())) {
-            String loggedKeyspace = mappingManager.getSession().getLoggedKeyspace();
-            if (Strings.isNullOrEmpty(loggedKeyspace))
+            ksName = mappingManager.getSession().getLoggedKeyspace();
+            if (Strings.isNullOrEmpty(ksName))
                 throw new IllegalArgumentException(String.format(
-                        "Error creating UDT codec for %s, the @UDT annotation declares no default keyspace, and the session is not currently logged to any keyspace",
-                        udtClass
+                        "Error creating UDT codec for class %s, the @%s annotation declares no default keyspace, and the session is not currently logged to any keyspace",
+                        udtClass.getSimpleName(),
+                        UDT.class.getSimpleName()
                 ));
-            ksName = Metadata.quote(loggedKeyspace);
         }
 
         UserType userType = mappingManager.getSession().getCluster().getMetadata().getKeyspace(ksName).getUserType(udtName);
         if (userType == null)
             throw new IllegalArgumentException(String.format("User type %s does not exist in keyspace %s", udtName, ksName));
 
-        Map<String, PropertyMapper> propertyMappers = new HashMap<String, PropertyMapper>();
+        List<Field> columns = new ArrayList<Field>();
 
-        Map<String, Object[]> fieldsAndProperties = ReflectionUtils.scanFieldsAndProperties(udtClass);
-
-        for (Map.Entry<String, Object[]> entry : fieldsAndProperties.entrySet()) {
-
-            String propertyName = entry.getKey();
-            java.lang.reflect.Field field = (java.lang.reflect.Field) entry.getValue()[0];
-            PropertyDescriptor property = (PropertyDescriptor) entry.getValue()[1];
-
-            PropertyMapper propertyMapper = new PropertyMapper(udtClass, propertyName, null, field, property);
-
-            AnnotationChecks.validateAnnotations(propertyMapper, VALID_FIELD_ANNOTATIONS);
-
-            if (propertyMapper.isTransient())
+        for (Field field : udtClass.getDeclaredFields()) {
+            if (field.isSynthetic() || (field.getModifiers() & Modifier.STATIC) == Modifier.STATIC)
                 continue;
 
-            if (!userType.contains(propertyMapper.columnName))
-                throw new IllegalArgumentException(String.format("Field %s does not exist in type %s.%s",
-                        propertyMapper.columnName, ksName, userType.getTypeName()));
+            AnnotationChecks.validateAnnotations(field, "UDT",
+                    com.datastax.driver.mapping.annotations.Field.class, Frozen.class, FrozenKey.class,
+                    FrozenValue.class, Transient.class);
 
-            propertyMappers.put(propertyMapper.columnName, propertyMapper);
+            if (field.getAnnotation(Transient.class) != null)
+                continue;
+
+            switch (kind(field)) {
+                case PARTITION_KEY:
+                    throw new IllegalArgumentException("Annotation @PartitionKey is not allowed in a class annotated by @UDT");
+                case CLUSTERING_COLUMN:
+                    throw new IllegalArgumentException("Annotation @ClusteringColumn is not allowed in a class annotated by @UDT");
+                default:
+                    columns.add(field);
+                    break;
+            }
         }
-
-        return new MappedUDTCodec<T>(userType, udtClass, propertyMappers, mappingManager);
+        Map<String, ColumnMapper<T>> columnMappers = createFieldMappers(columns, factory, udtClass, mappingManager, userType, ksName);
+        return new MappedUDTCodec<T>(userType, udtClass, columnMappers, mappingManager);
     }
 
-    static <T> AccessorMapper<T> parseAccessor(Class<T> accClass, MappingManager mappingManager) {
+    private static <T> Map<String, ColumnMapper<T>> createFieldMappers(List<Field> fields, EntityMapper.Factory factory, Class<T> klass, MappingManager mappingManager, UserType userType, String ksName) {
+        Map<String, ColumnMapper<T>> mappers = Maps.newHashMapWithExpectedSize(fields.size());
+        for (int i = 0; i < fields.size(); i++) {
+            Field field = fields.get(i);
+            int pos = position(field);
+            ColumnMapper<T> mapper = factory.createColumnMapper(klass, field, pos < 0 ? i : pos, mappingManager, null);
+            if (userType.contains(mapper.getColumnName()))
+                mappers.put(mapper.getColumnName(), mapper);
+            else
+                throw new IllegalArgumentException(String.format("Field %s does not exist in type %s.%s",
+                        mapper.getColumnName(), ksName, userType.getTypeName()));
+        }
+        return mappers;
+    }
+
+    private static void validateOrder(List<Field> fields, String annotation) {
+        for (int i = 0; i < fields.size(); i++) {
+            Field field = fields.get(i);
+            int pos = position(field);
+            if (pos != i)
+                throw new IllegalArgumentException(String.format("Invalid ordering value %d for annotation %s of column %s, was expecting %d",
+                        pos, annotation, field.getName(), i));
+        }
+    }
+
+    private static int position(Field field) {
+        switch (kind(field)) {
+            case PARTITION_KEY:
+                return field.getAnnotation(PartitionKey.class).value();
+            case CLUSTERING_COLUMN:
+                return field.getAnnotation(ClusteringColumn.class).value();
+            default:
+                return -1;
+        }
+    }
+
+    public static ColumnMapper.Kind kind(Field field) {
+        PartitionKey pk = field.getAnnotation(PartitionKey.class);
+        ClusteringColumn cc = field.getAnnotation(ClusteringColumn.class);
+        Computed comp = field.getAnnotation(Computed.class);
+        if (pk != null && cc != null)
+            throw new IllegalArgumentException("Field " + field.getName() + " cannot have both the @PartitionKey and @ClusteringColumn annotations");
+
+        if (pk != null) {
+            return ColumnMapper.Kind.PARTITION_KEY;
+        }
+        if (cc != null) {
+            return ColumnMapper.Kind.CLUSTERING_COLUMN;
+        }
+        if (comp != null) {
+            return ColumnMapper.Kind.COMPUTED;
+        }
+        return ColumnMapper.Kind.REGULAR;
+    }
+
+    public static String columnName(Field field) {
+        Column column = field.getAnnotation(Column.class);
+        Computed computedField = field.getAnnotation(Computed.class);
+        if (column != null && !column.name().isEmpty()) {
+            if (computedField != null) {
+                throw new IllegalArgumentException("Cannot use @Column and @Computed on the same field");
+            }
+            return column.caseSensitive() ? column.name() : column.name().toLowerCase();
+        }
+
+        com.datastax.driver.mapping.annotations.Field udtField = field.getAnnotation(com.datastax.driver.mapping.annotations.Field.class);
+        if (udtField != null && !udtField.name().isEmpty()) {
+            return udtField.caseSensitive() ? udtField.name() : udtField.name().toLowerCase();
+        }
+
+        if (computedField != null) {
+            return computedField.value();
+        }
+
+        return field.getName().toLowerCase();
+    }
+
+    public static String newAlias(Field field, int columnNumber) {
+        return "col" + columnNumber;
+
+    }
+
+    public static TypeCodec<Object> customCodec(Field field) {
+        Class<? extends TypeCodec<?>> codecClass = getCodecClass(field);
+
+        if (codecClass.equals(Defaults.NoCodec.class))
+            return null;
+
+        try {
+            @SuppressWarnings("unchecked")
+            TypeCodec<Object> instance = (TypeCodec<Object>) codecClass.newInstance();
+            return instance;
+        } catch (Exception e) {
+            throw new IllegalArgumentException(String.format(
+                    "Cannot create an instance of custom codec %s for field %s",
+                    codecClass, field
+            ), e);
+        }
+    }
+
+    private static Class<? extends TypeCodec<?>> getCodecClass(Field field) {
+        Column column = field.getAnnotation(Column.class);
+        if (column != null)
+            return column.codec();
+
+        com.datastax.driver.mapping.annotations.Field udtField = field.getAnnotation(com.datastax.driver.mapping.annotations.Field.class);
+        if (udtField != null)
+            return udtField.codec();
+
+        return Defaults.NoCodec.class;
+    }
+
+    public static <T> AccessorMapper<T> parseAccessor(Class<T> accClass, AccessorMapper.Factory factory, MappingManager mappingManager) {
         if (!accClass.isInterface())
-            throw new IllegalArgumentException("@Accessor annotation is only allowed on interfaces, got " + accClass);
+            throw new IllegalArgumentException("@Accessor annotation is only allowed on interfaces");
 
         AnnotationChecks.getTypeAnnotation(Accessor.class, accClass);
 
@@ -239,7 +332,7 @@ class AnnotationParser {
                 else if (allParamsNamed != thisParamNamed)
                     throw new IllegalArgumentException(String.format("For method '%s', either all or none of the parameters must be named", m.getName()));
 
-                paramMappers[i] = newParamMapper(accClass.getName(), m.getName(), i, paramName, codecClass, paramTypes[i], mappingManager);
+                paramMappers[i] = newParamMapper(accClass.getName(), m.getName(), i, paramName, codecClass, paramTypes[i], paramAnnotations[i], mappingManager);
             }
 
             ConsistencyLevel cl = null;
@@ -253,7 +346,7 @@ class AnnotationParser {
                 fetchSize = options.fetchSize();
                 tracing = options.tracing();
                 if (options.idempotent().length > 1) {
-                    throw new IllegalArgumentException("idemtpotence() attribute can only accept one value");
+                    throw new IllegalStateException("idemtpotence() attribute can only accept one value");
                 }
                 idempotent = options.idempotent().length == 0 ? null : options.idempotent()[0];
             }
@@ -261,10 +354,11 @@ class AnnotationParser {
             methods.add(new MethodMapper(m, queryString, paramMappers, cl, fetchSize, tracing, idempotent));
         }
 
-        return new AccessorMapper<T>(accClass, methods);
+        return factory.create(accClass, methods);
     }
 
-    private static ParamMapper newParamMapper(String className, String methodName, int idx, String paramName, Class<? extends TypeCodec<?>> codecClass, Type paramType, MappingManager mappingManager) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static ParamMapper newParamMapper(String className, String methodName, int idx, String paramName, Class<? extends TypeCodec<?>> codecClass, Type paramType, Annotation[] paramAnnotations, MappingManager mappingManager) {
         if (paramType instanceof Class) {
             Class<?> paramClass = (Class<?>) paramType;
             if (TypeMappings.isMappedUDT(paramClass))

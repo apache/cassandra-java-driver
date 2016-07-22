@@ -23,7 +23,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Specifies that the property decorated with this annotation maps to a CQL type that is {@link DataType#isFrozen() frozen},
+ * Specifies that the field decorated with this annotation maps to a CQL type that is {@link DataType#isFrozen() frozen},
  * or contains frozen subtypes.
  * <p/>
  * This annotation is purely informational at this stage, the validity of the declaration is not checked.
@@ -33,7 +33,7 @@ import java.lang.annotation.Target;
  * @see FrozenKey
  * @see FrozenValue
  */
-@Target({ElementType.FIELD, ElementType.METHOD})
+@Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Frozen {
 

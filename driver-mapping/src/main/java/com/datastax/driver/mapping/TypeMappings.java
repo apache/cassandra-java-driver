@@ -30,7 +30,7 @@ import java.util.Set;
  */
 class TypeMappings {
 
-    private static boolean mapsToCollection(Class<?> klass) {
+    static boolean mapsToCollection(Class<?> klass) {
         return mapsToList(klass) || mapsToSet(klass) || mapsToMap(klass);
     }
 

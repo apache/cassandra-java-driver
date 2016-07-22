@@ -21,7 +21,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Shorthand to specify that the value type of a collection property is frozen.
+ * Shorthand to specify that the value type of a collection field is frozen.
  * <p/>
  * This is equivalent to any of the following:
  * <ul>
@@ -32,7 +32,7 @@ import java.lang.annotation.Target;
  *
  * @see Frozen
  */
-@Target({ElementType.FIELD, ElementType.METHOD})
+@Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface FrozenValue {
 }

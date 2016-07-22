@@ -17,7 +17,7 @@ CREATE TABLE user (user_id uuid PRIMARY KEY, name text);
        writeConsistency = "QUORUM",
        caseSensitiveKeyspace = false,
        caseSensitiveTable = false)
-public class User {
+public static class User {
     @PartitionKey
     @Column(name = "user_id")
     private UUID userId;
@@ -39,155 +39,20 @@ public class User {
   save, or delete operation in the mapper. (if unspecified, it defaults
   to the cluster-wide setting)
 
-The class must provide a default constructor. The default constructor
-is allowed to be non-public, provided that the security manager, if any, grants
-the mapper access to it via [reflection][set-accessible].
-
-#### Mapping table columns
-
-The mapping of each table column can be customized through annotations 
-placed on either a field declaration, or on a getter method of a 
-[Java bean property][java-beans]. _Annotations on setters are not 
-supported and will be silently ignored by the mapper_. 
-
-Users are strongly encouraged to follow the Java bean property 
-conventions when designing mapped classes: if this is the case, the mapper will
-transparently "bind" together fields and accessor methods (getters and setters)
-into a single logical abstraction; e.g. a field named `myCol` and a Java
-bean property named `myCol` offering a public getter named `getMyCol()`
-will be assumed to represent the very same table column,
-and annotations for this column are thus allowed to be placed indifferently
-on the field declaration, or on the getter method declaration.
-
-The following mappings are thus equivalent:
-
-```java
-@Table(name = "users")
-public class User {
-
-    // annotation on a field
-    @PartitionKey
-    private UUID id;
-
-    public UUID getId() {
-        return id;
-    }
-
-    public void setId(UUID id) {
-        this.id = id;
-    }
-
-}
-```
-
-```java
-@Table(name = "users")
-public class User {
-
-    private UUID id;
-
-    // annotation on a getter method
-    @PartitionKey
-    public UUID getId() {
-        return id;
-    }
-
-    public void setId(UUID id) {
-        this.id = id;
-    }
-
-}
-
-```
-
-It is recommended to adopt one strategy or the other for
-placing annotations on class members (i.e., either always on fields, or always on getters), 
-but not both at the same time, unless strictly required.
-Annotating fields is usually less verbose, but with polymorphic
-data models (see below), annotating getters generally proves to be more flexible.
-
-If duplicated annotations for a given column are found on the field declaration
-and on the getter method declaration, the one declared in the getter method
-declaration wins. No warnings are generated in such situations.
-
-When reading or writing mapped property values, the mapper will first
-try to invoke the property getter and setter methods, if they are available;
-and if they are not, the mapper will try a direct access to the property's corresponding field.
-
-A mapped field is thus allowed to be non-public if:
-
-1. Reads and writes are done through its public getters and setters; or
-2. The security manager, if any, grants the mapper access to it via [reflection][set-accessible].
-
-Note that, according to the [Java Beans specification][java-beans], a setter
-must have a `void` return type; the driver, however, will consider as a setter any public method
-having a matching signature (i.e., name and parameter types match those expected),
-but having a different return type. This allows the usage of "fluent" setters that can
-be chained together in a builder-pattern style:
-
-```java
-@Table(name = "users")
-public class User {
-
-    // fluent setters
-    
-    public User setId(UUID id) {
-        this.id = id;
-        return this;
-    }
-
-    public User setName(String name) {
-        this.name = name;
-        return this;
-    }
-
-}
-
-// chained calls
-User user = new User()
-    .setId(UUIDs.random())
-    .setName("John Doe");
-```
+The class must provide a default constructor, and all fields (except the
+ones annotated `@Transient`) must have corresponding setters and
+getters.
 
 [table]:http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/annotations/Table.html
 [case-sensitive]:http://docs.datastax.com/en/cql/3.3/cql/cql_reference/ucase-lcase_r.html
 [consistency level]:http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/ConsistencyLevel.html
-[java-beans]:https://docs.oracle.com/javase/tutorial/javabeans/writing/properties.html
-[set-accessible]:https://docs.oracle.com/javase/8/docs/api/java/lang/reflect/AccessibleObject.html#setAccessible-boolean-
 
 #### Column names
 
-By default, the mapper tries to map each Java bean property to a
-column of the same name. _The mapping is case-insensitive by default_,
-i.e., the property `userId` would map to a column named `userid`.
-
-If you want to use a different name, or [case-sensitive] names, 
-use the [@Column][column] annotation.
-
-To specify a different column name, use the `name` attribute:
-
-```
-CREATE TABLE users(id uuid PRIMARY KEY, user_name text);
-```
-
-```java
-// column name does not match field name
-@Column(name = "user_name")
-private String userName;
-```
-
-When case-sensitive identifiers are required, use the
-`caseSensitive` attribute:
-
-```
-CREATE TABLE users(id uuid PRIMARY KEY, "userName" text);
-```
-
-```java
-// column name is case-sensitive
-@Column(caseSensitive = true)
-private String userName;
-```
+By default, the mapper tries to map each Java property to a
+case insensitive column of the same name. If you want to use a different
+name, or [case-sensitive] names, use the [@Column][column] annotation on
+the field.
 
 [column]:http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/annotations/Column.html
 
@@ -219,8 +84,8 @@ declaration.
 
 #### Computed fields
 
-[@Computed][computed] can be used on properties that are the result of a
-computation on the Cassandra side, typically a function call. Native
+[@Computed][computed] can be used on fields that are the result of a
+computation on the Cassandra side. Typically a function call. Native
 functions in Cassandra like `writetime()` or [User Defined Functions] are
 supported.
 
@@ -229,7 +94,7 @@ supported.
 Integer ttl;
 ```
 
-The CQL return type of function must match the type of the property,
+The CQL return type of function must match the type of the field,
 otherwise an exception will be thrown.
 
 Computed fields are ignored when saving an entity.
@@ -243,21 +108,18 @@ them:
 int f;
 ```
 
-Finally, computed properties are only supported with [basic read
+Finally, computed fields are only supported with [basic read
 operations](../using/#basic-crud-operations) at this time.
-Support in [accessors](../using/#accessors) is planned for a future
+Support in [accessors](../using/#accessors) in planned for a future
 version (see
 [JAVA-832](https://datastax-oss.atlassian.net/browse/JAVA-832)).
 
 [User Defined Functions]:http://www.planetcassandra.org/blog/user-defined-functions-in-cassandra-3-0/
 [computed]:http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/annotations/Computed.html
 
-#### Transient properties
+#### Transient fields
 
-By default, the mapper will try to map all fields and Java bean properties
-to table columns. [@Transient][transient] can be used to prevent a field or 
-a Java bean property from being mapped. Like other column-level annotations, 
-it should be placed on either the field declaration or the property getter method.
+[@Transient][transient] can be used to prevent a field from being mapped.
 
 [transient]:http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/annotations/Transient.html
 
@@ -286,14 +148,12 @@ class Address {
 - `caseSensitiveKeyspace`: whether the keyspace name is case-sensitive.
 - `caseSensitiveType`: whether the UDT name is case-sensitive.
 
-The class must provide a default constructor. The default constructor
-is allowed to be non-public, provided that the security manager, if any, grants
-the mapper access to it via [reflection][set-accessible].
+The class must provide a default constructor, and all fields (except the
+ones annotated `@Transient`) must have corresponding setters and
+getters.
 
-As for table entities, properties in UDT classes are mapped to an UDT field of the same
-name by default.
-
-To declare a different name or use case-sensitivity,
+As in table entities, fields are mapped to an UDT field of the same
+name by default. To declare a different name or use case-sensitivity,
 use the [@Field][field] annotation:
 
 ```java
@@ -309,7 +169,7 @@ CREATE TABLE company (company_id uuid PRIMARY KEY, name text, address address);
 ```
 
 ```java
-public class Company {
+public static class Company {
     @PartitionKey
     @Column(name = "company_id")
     private UUID companyId;
@@ -318,8 +178,8 @@ public class Company {
 }
 ```
 
-This also works with UDTs inside collections or other UDTs, with any arbitrary
-nesting level.
+(this also works with UDTs inside collections or other UDTs, with
+arbitrary level of nesting)
 
 [User Defined Types]: ../../udts/
 [udt]:http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/annotations/UDT.html
@@ -339,7 +199,7 @@ However it is a good idea to keep using these annotations and make sure
 they match the schema, in anticipation for the schema generation features
 that will be added in a future version.
 The default annotation is [@Frozen][frozen], [@FrozenKey][frozenkey] and
-[@FrozenValue][frozenvalue] are also provided for convenience:
+[@FrozenValue][frozenvalue]` are also provided for convenience:
 
 ```java
 // Will be mapped as a 'list<text>'
@@ -362,146 +222,3 @@ private Map<String, List<Address>> frozenValueMap;
 [frozen]:http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/annotations/Frozen.html
 [frozenkey]:http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/annotations/FrozenKey.html
 [frozenvalue]:http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/annotations/FrozenValue.html
-
-
-### Polymorphism support
-
-When mapping an entity class or a UDT class, the mapper will transparently
-scan superclasses and superinterfaces for annotations on fields and getter methods,
-thus enabling the polymorphic mapping of one class hierarchy
-into different CQL tables or UDTs.
-
-Each concrete class must correspond to a table or a UDT,
-and should be annotated accordingly with `@Table` or `@UDT`. 
-This is analogous to the so-called "table per concrete class" 
-mapping strategy usually found in popular SQL mapping frameworks, such as Hibernate.
-
-Here is an example of a polymorphic mapping:
-
-```sql
-CREATE TYPE point2d (x int, y int);
-CREATE TYPE point3d (x int, y int, z int);
-CREATE TABLE rectangles (id uuid PRIMARY KEY, bottom_left frozen<point2d>, top_right frozen<point2d>);
-CREATE TABLE spheres (id uuid PRIMARY KEY, center frozen<point3d>, radius double);
-```
-
-```java
-@UDT(name = "point2d")
-public class Point2D {
-    public int x;
-    public int y;
-}
-
-@UDT(name = "point3d")
-public class Point3D extends Point2D {
-    public int z;
-}
-
-public interface Shape2D {
-
-    @Transient
-    double getArea();
-
-}
-
-public interface Shape3D {
-
-    @Transient
-    double getVolume();
-
-}
-
-public abstract class Shape {
-
-    private UUID id;
-
-    @PartitionKey
-    public UUID getId() {
-        return id;
-    }
-
-    public void setId(UUID id) {
-        this.id = id;
-    }
-    
-}
-
-@Table(name = "rectangles")
-public class Rectangle extends Shape implements Shape2D {
-
-    private Point2D bottomLeft;
-    private Point2D topRight;
-
-    @Column(name = "bottom_left")
-    @Frozen
-    public Point2D getBottomLeft() {
-        return bottomLeft;
-    }
-
-    public void setBottomLeft(Point2D bottomLeft) {
-        this.bottomLeft = bottomLeft;
-    }
-
-    @Column(name = "top_right")
-    @Frozen
-    public Point2D getTopRight() {
-        return topRight;
-    }
-
-    public void setTopRight(Point2D topRight) {
-        this.topRight = topRight;
-    }
-
-    @Transient
-    public double getWidth() {
-        return Math.abs(topRight.x - bottomLeft.x);
-    }
-
-    @Transient
-    public double getHeight() {
-        return Math.abs(topRight.y - bottomLeft.y);
-    }
-
-    @Override
-    public double getArea() {
-        return getWidth() * getHeight();
-    }
-    
-}
-
-@Table(name = "spheres")
-public class Sphere extends Shape implements Shape3D {
-
-    private Point3D center;
-    private double radius;
-
-    @Frozen
-    public Point3D getCenter() {
-        return center;
-    }
-
-    public void setCenter(Point3D center) {
-        this.center = center;
-    }
-
-    public double getRadius() {
-        return radius;
-    }
-
-    public void setRadius(double radius) {
-        this.radius = radius;
-    }
-    
-    @Override
-    public double getVolume() {
-        return 4d / 3d * Math.PI * Math.pow(getRadius(), 3);
-    }
-
-}
-```
-
-One powerful advantage of annotating getter methods is that
-annotations are inherited from overridden methods in superclasses and superinterfaces;
-in other words, if a getter method is overridden in a subclass, annotations in both
-method declarations will get merged together. If duplicated annotations are found during this merge
-process, the overriding method's annotations will take precedence over the overridden's.

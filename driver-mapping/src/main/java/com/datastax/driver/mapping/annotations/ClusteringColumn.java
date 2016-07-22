@@ -21,12 +21,12 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotation for properties that map to a CQL clustering column.
+ * Annotation for fields that map to a CQL clustering column.
  * <p/>
  * If the mapped table has multiple clustering columns, it is mandatory
  * to specify the ordinal parameter to avoid ordering ambiguity.
  */
-@Target({ElementType.FIELD, ElementType.METHOD})
+@Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ClusteringColumn {
     /**
