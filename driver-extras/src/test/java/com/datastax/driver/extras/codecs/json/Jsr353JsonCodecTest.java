@@ -243,7 +243,7 @@ public class Jsr353JsonCodecTest extends CCMTestsSupport {
                 .add("f", 8.6)
                 .add("i", 4)
                 .build();
-        session().execute(insertInto(TABLE1).json(input.toString()));
+        session().execute(insertInto(TABLE1).json(input));
         // then
         ResultSet r = session().execute(select().json().from(TABLE1).where(eq("k", key)));
         assertThat(r.getAvailableWithoutFetching()).isEqualTo(1);
@@ -272,7 +272,7 @@ public class Jsr353JsonCodecTest extends CCMTestsSupport {
                 .build();
 
         // insert using fromJson on address column, which is a UDT.
-        session().execute(insertInto(TABLE2).value("k", key).value("v", fromJson(inputAddr.toString())));
+        session().execute(insertInto(TABLE2).value("k", key).value("v", fromJson(inputAddr)));
 
         // retrieve using toJson on address column.
         ResultSet r = session().execute(select().toJson("v").as("v").column("k").from(TABLE2).where(eq("k", key)));

@@ -1012,8 +1012,8 @@ public final class QueryBuilder {
     /**
      * Creates a Cast of a column using the given dataType.
      *
-     * @param column     the column to cast.
-     * @param dataType   the data type to cast to.
+     * @param column   the column to cast.
+     * @param dataType the data type to cast to.
      * @return the casted column.
      */
     public static Object cast(Object column, DataType dataType) {
@@ -1053,33 +1053,33 @@ public final class QueryBuilder {
 
     /**
      * Creates a {@code fromJson()} function call.
-     * <p>
+     * <p/>
      * Support for JSON functions has been added in Cassandra 2.2.
      * The {@code fromJson()} function is similar to {@code INSERT JSON} statements,
      * but applies to a single column value instead of the entire row, and
      * converts a JSON-encoded string into the normal Cassandra column value.
-     * <p>
+     * <p/>
      * It may be used in {@code INSERT} and {@code UPDATE} statements,
      * but NOT in the selection clause of a {@code SELECT} statement.
-     * <p>
+     * <p/>
      * <strong>The provided JSON string will be appended to the query string as is.
      * It should NOT be surrounded by single quotes.</strong>
-     * <p>
+     * <p/>
      * String values should be enclosed in double quotes.
      * Double quotes appearing inside strings should be escaped with a backslash,
      * but single quotes should be escaped in
      * the CQL manner, i.e. by another single quote. For example, the column value
      * {@code foo"'bar} should be inserted in the JSON string
      * as {@code "foo\"''bar"}.
-     * <p>
+     * <p/>
      * Note that it is not possible to insert function calls nor bind markers in the JSON string.
      *
      * @return the function call.
      * @see <a href="http://cassandra.apache.org/doc/cql3/CQL-2.2.html#json">JSON Support for CQL</a>
      * @see <a href="http://www.datastax.com/dev/blog/whats-new-in-cassandra-2-2-json-support">JSON Support in Cassandra 2.2</a>
      */
-    public static Object fromJson(String json) {
-        return fcall("fromJson", raw("'" + json + "'"));
+    public static Object fromJson(Object json) {
+        return fcall("fromJson", json);
     }
 
 }
