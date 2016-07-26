@@ -1043,6 +1043,7 @@ public class QueryBuilderTest {
             assertThat(e).hasMessage("A PER PARTITION LIMIT value has already been provided");
         }
     }
+
     @Test(groups = "unit")
     public void should_handle_select_json() throws Exception {
         assertThat(
@@ -1067,6 +1068,12 @@ public class QueryBuilderTest {
         assertThat(
                 insertInto("users").json("{\"id\": \"user123\", \"\\\"Age\\\"\": 42, \"\\\"State\\\"\": \"TX\"}").toString())
                 .isEqualTo("INSERT INTO users JSON '{\"id\": \"user123\", \"\\\"Age\\\"\": 42, \"\\\"State\\\"\": \"TX\"}';");
+        assertThat(
+                insertInto("users").json(bindMarker()).toString())
+                .isEqualTo("INSERT INTO users JSON ?;");
+        assertThat(
+                insertInto("users").json(bindMarker("json")).toString())
+                .isEqualTo("INSERT INTO users JSON :json;");
     }
 
     @Test(groups = "unit")
@@ -1087,6 +1094,12 @@ public class QueryBuilderTest {
         assertThat(
                 insertInto("users").value("id", fromJson("\"user123\"")).value("age", fromJson("42")).toString())
                 .isEqualTo("INSERT INTO users (id,age) VALUES (fromJson('\"user123\"'),fromJson('42'));");
+        assertThat(
+                insertInto("users").value("id", fromJson(bindMarker())).toString())
+                .isEqualTo("INSERT INTO users (id) VALUES (fromJson(?));");
+        assertThat(
+                insertInto("users").value("id", fromJson(bindMarker("id"))).toString())
+                .isEqualTo("INSERT INTO users (id) VALUES (fromJson(:id));");
     }
 
 
