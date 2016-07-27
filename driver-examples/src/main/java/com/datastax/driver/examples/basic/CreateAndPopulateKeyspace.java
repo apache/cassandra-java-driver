@@ -27,7 +27,7 @@ import com.datastax.driver.core.Session;
  * - a Cassandra cluster is running and accessible through the contacts points identified by CONTACT_POINTS and PORT.
  * <p/>
  * Side effects:
- * - creates a new keyspace "simplex" in the cluster. It a keyspace with this name already exists, it will be reused;
+ * - creates a new keyspace "simplex" in the cluster. If a keyspace with this name already exists, it will be reused;
  * - creates two tables "simplex.songs" and "simplex.playlists". If they exist already, they will be reused;
  * - inserts a row in each table.
  *

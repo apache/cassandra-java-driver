@@ -28,7 +28,7 @@ import static com.datastax.driver.core.querybuilder.QueryBuilder.*;
  * PORT;
  * <p/>
  * Side effects:
- * - creates a new keyspace "examples" in the cluster. It a keyspace with this name already exists, it will be reused;
+ * - creates a new keyspace "examples" in the cluster. If a keyspace with this name already exists, it will be reused;
  * - creates a table "examples.querybuilder_json". If it already exists, it will be reused;
  * - inserts data in the table.
  *
