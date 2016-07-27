@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="description" content="High performance Java client for Apache Cassandra">
+    <meta name="author" content="DataStax">
+
+    <title>Java Driver for Apache Cassandra - Manual</title>
+
+    <link rel="icon" href="../../favicon.ico">
+    <link rel="apple-touch-icon" href="../../favicon.png">
+    <link href="../../css/style.css" rel="stylesheet">
+    <link href="../../css/pygments.css" rel="stylesheet">
+    <link href="../../css/hotkeys.css" rel="stylesheet">
+
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body ng-app="docs">
+    <div class="navbar">
+      <div class="container-fluid">
+        <div class="row row-offcanvas row-offcanvas-left">
+          <div class="col-sm-3 text-center">
+            <a class="ds-home" href="../"><img alt="Brand" src="../../img/logo.png"></a>
+            <ul class="list-inline ds-sites" role="nav">
+              <li><a href="https://academy.datastax.com/" class="navbar-link">DataStax Academy</a></li>
+              <li><a href="http://www.datastax.com/dev/blog" class="navbar-link">Tech Blog</a></li>
+              <li><a href="http://www.datastax.com/what-we-offer/products-services/support" class="navbar-link">Support</a></li>
+            </ul>
+          </div>
+          <div class="col-md-5">
+            <p class="lead pubtitle">Java Driver for Apache Cassandra</p>
+            
+            <div class="text-info">
+              <span class="text-warning">Attention:</span> Viewing documentation for version
+              <div class="btn-group">
+                <button id="current-version" class="btn btn-default btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  3.0.3
+                  <span class="caret"></span>
+                </button>
+                <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
+                
+                  <li><a href="../../manual/">3.1.0</a></li>
+                
+                  <li class="disabled"><a href="./">3.0.3</a></li>
+                
+                  <li><a href="../../3.0.1/manual/">3.0.1</a></li>
+                
+                  <li><a href="../../3.0.0/manual/">3.0.0</a></li>
+                
+                  <li><a href="../../2.1.10.1/manual/">2.1.10.1</a></li>
+                
+                  <li><a href="../../2.1.10/manual/">2.1.10</a></li>
+                
+                  <li><a href="../../2.1.9/">2.1.9</a></li>
+                
+                  <li><a href="../../2.1.8/">2.1.8</a></li>
+                
+                  <li><a href="../../2.1.7/">2.1.7</a></li>
+                
+                  <li><a href="../../2.0.12.1/">2.0.12.1</a></li>
+                
+                  <li><a href="../../2.0.12/">2.0.12</a></li>
+                
+                  <li><a href="../../2.0.11/">2.0.11</a></li>
+                
+                </ul>
+              </div>
+            </div>
+            
+          </div>
+          <div class="col-md-4">
+            <form id="search" class="form-search dropdown visible-lg-inline-block" ng-controller="search" ng-class="{open: hasResults}" role="search" ng-submit="submit()" data-spy="affix" data-offset-top="130">
+              <div class="form-group has-feedback">
+                <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('3.0.3')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+              </div>
+              <ul class="dropdown-menu search-results" role="menu">
+                <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
+              </ul>
+            </form>
+            <a href="http://www.datastax.com/download" class="btn btn-primary btn-sm">Download</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container-fluid" id="content">
+      <div class="row">
+        <div class="col-md-3">
+          <div id="navigation" class="side-nav" role="tablist" aria-multiselectable="true">
+            <h3><a href="../">Contents</a></h3>
+            <ul class="nav nav-pills nav-stacked">
+  
+  
+  <li>
+    <a href="../changelog/">
+      Changelog <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="../faq/">
+      Frequently Asked Questions <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li class="active">
+    <a href="./" class="current">
+      Manual <small>page</small>
+      
+      
+      <span class="glyphicon glyphicon-minus-sign pull-right" aria-hidden="true"></span>
+      
+      
+    </a>
+    <ul class="nav nav-pills nav-stacked">
+  
+  
+  <li>
+    <a href="address_resolution/">
+      Address resolution <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="async/">
+      Asynchronous programming <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="auth/">
+      Authentication <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="compression/">
+      Compression <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="pooling/">
+      Connection pooling <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="control_connection/">
+      Control connection <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="custom_codecs/">
+      Custom Codecs <small>page</small>
+      
+      
+      <span class="glyphicon glyphicon-plus-sign pull-right" aria-hidden="true"></span>
+      
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="custom_payloads/">
+      Custom Payloads <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="load_balancing/">
+      Load balancing <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="logging/">
+      Logging <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="metadata/">
+      Metadata <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="metrics/">
+      Metrics <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="native_protocol/">
+      Native protocol <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="object_mapper/">
+      Object Mapper <small>page</small>
+      
+      
+      <span class="glyphicon glyphicon-plus-sign pull-right" aria-hidden="true"></span>
+      
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="paging/">
+      Paging <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="idempotence/">
+      Query idempotence <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="query_timestamps/">
+      Query timestamps <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="reconnection/">
+      Reconnection <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="retries/">
+      Retries <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="ssl/">
+      SSL <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="socket_options/">
+      Socket options <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="speculative_execution/">
+      Speculative query execution <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="statements/">
+      Statements <small>page</small>
+      
+      
+      <span class="glyphicon glyphicon-plus-sign pull-right" aria-hidden="true"></span>
+      
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="tuples/">
+      Tuples <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="udts/">
+      User-defined types <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="shaded_jar/">
+      Using the shaded JAR <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+</ul>
+
+  </li>
+  
+  
+  <li>
+    <a href="../upgrade_guide/">
+      Upgrade guide <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+</ul>
+
+          </div>
+        </div>
+        <div class="col-md-9 content">
+          <div class="crumbs-wrapper">
+            <nav id="crumbs" data-spy="affix" data-offset-top="130">
+              <ol class="breadcrumb">
+                
+                
+                
+                <li><a href="../">Home</a></li>
+                
+                
+                
+                
+                
+                <li class="active">Manual</li>
+                
+                
+                
+              </ol>
+            </nav>
+          </div>
+          
+
+<h2 id="manual" class="target">Manual<a class="anchor" href="#manual" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h2>
+
+<h3 id="quick-start" class="target">Quick start<a class="anchor" href="#quick-start" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<p>Here’s a short program that connects to Cassandra and executes a query:</p>
+<pre class="highlight"><code><span class="n">Cluster</span> <span class="n">cluster</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+<span class="k">try</span> <span class="o">{</span>
+    <span class="n">cluster</span> <span class="o">=</span> <span class="n">Cluster</span><span class="o">.</span><span class="na">builder</span><span class="o">()</span>                                                    <span class="c1">// (1)</span>
+            <span class="o">.</span><span class="na">addContactPoint</span><span class="o">(</span><span class="s">"127.0.0.1"</span><span class="o">)</span>
+            <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+    <span class="n">Session</span> <span class="n">session</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="na">connect</span><span class="o">();</span>                                           <span class="c1">// (2)</span>
+
+    <span class="n">ResultSet</span> <span class="n">rs</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="na">execute</span><span class="o">(</span><span class="s">"select release_version from system.local"</span><span class="o">);</span>    <span class="c1">// (3)</span>
+    <span class="n">Row</span> <span class="n">row</span> <span class="o">=</span> <span class="n">rs</span><span class="o">.</span><span class="na">one</span><span class="o">();</span>
+    <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="n">row</span><span class="o">.</span><span class="na">getString</span><span class="o">(</span><span class="s">"release_version"</span><span class="o">));</span>                          <span class="c1">// (4)</span>
+<span class="o">}</span> <span class="k">finally</span> <span class="o">{</span>
+    <span class="k">if</span> <span class="o">(</span><span class="n">cluster</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">)</span> <span class="n">cluster</span><span class="o">.</span><span class="na">close</span><span class="o">();</span>                                          <span class="c1">// (5)</span>
+<span class="o">}</span>
+</code></pre>
+<ol>
+<li>the <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Cluster.html">Cluster</a> object is the main entry point of the driver. It holds the known state of the actual Cassandra cluster
+(notably the <a href="metadata/">Metadata</a>). This class is thread-safe, you should create a single instance (per target
+Cassandra cluster), and share it throughout your application;</li>
+<li>the <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Session.html">Session</a> is what you use to execute queries. Likewise, it is thread-safe and should be reused;</li>
+<li>we use <code>execute</code> to send a query to Cassandra. This returns a <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/ResultSet.html">ResultSet</a>, which is essentially a collection of <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Row.html">Row</a>
+objects. On the next line, we extract the first row (which is the only one in this case);</li>
+<li>we extract the value of the first (and only) column from the row;</li>
+<li>finally, we close the cluster after we’re done with it. This will also close any session that was created from this
+cluster. This step is important because it frees underlying resources (TCP connections, thread pools…). In a real
+application, you would typically do this at shutdown (for example, when undeploying your webapp).</li>
+</ol>
+
+<p>Note: this example uses the synchronous API. Most methods have <a href="async/">asynchronous</a> equivalents.</p>
+
+<h3 id="setting-up-the-driver" class="target">Setting up the driver<a class="anchor" href="#setting-up-the-driver" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<h4 id="cluster" class="target">
+<a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Cluster.html">Cluster</a><a class="anchor" href="#cluster" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h4>
+
+<h5 id="creating-an-instance" class="target">Creating an instance<a class="anchor" href="#creating-an-instance" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h5>
+
+<p>The simplest approach is to do it programmatically with <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Cluster.Builder.html">Cluster.Builder</a>, which provides a fluent API:</p>
+<pre class="highlight"><code><span class="n">Cluster</span> <span class="n">cluster</span> <span class="o">=</span> <span class="n">Cluster</span><span class="o">.</span><span class="na">builder</span><span class="o">()</span>
+        <span class="o">.</span><span class="na">withClusterName</span><span class="o">(</span><span class="s">"myCluster"</span><span class="o">)</span>
+        <span class="o">.</span><span class="na">addContactPoint</span><span class="o">(</span><span class="s">"127.0.0.1"</span><span class="o">)</span>
+        <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+</code></pre>
+<p>Alternatively, you might want to retrieve the settings from an external source (like a properties file or a web
+service). You’ll need to provide an implementation of <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Cluster.Initializer.html">Initializer</a> that loads these settings:</p>
+<pre class="highlight"><code><span class="n">Initializer</span> <span class="n">myInitializer</span> <span class="o">=</span> <span class="o">...</span> <span class="c1">// your implementation</span>
+<span class="n">Cluster</span> <span class="n">cluster</span> <span class="o">=</span> <span class="n">Cluster</span><span class="o">.</span><span class="na">buildFrom</span><span class="o">(</span><span class="n">myInitializer</span><span class="o">);</span>
+</code></pre>
+<h5 id="creation-options" class="target">Creation options<a class="anchor" href="#creation-options" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h5>
+
+<p>The only required option is the list of contact points, i.e. the hosts that the driver will initially contact to
+discover the cluster topology. You can provide a single contact point, but it is usually a good idea to provide more, so
+that the driver can fallback if the first one is down.</p>
+
+<p>The other aspects that you can configure on the <code>Cluster</code> are:</p>
+
+<ul>
+<li>
+<a href="address_resolution/">address translation</a>;</li>
+<li>
+<a href="auth/">authentication</a>;</li>
+<li>
+<a href="compression/">compression</a>;</li>
+<li>
+<a href="load_balancing/">load balancing</a>;</li>
+<li>
+<a href="metrics/">metrics</a>;</li>
+<li>low-level <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/NettyOptions.html">Netty configuration</a>;</li>
+<li>
+<a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/QueryOptions.html">query options</a>;</li>
+<li>
+<a href="reconnection/">reconnections</a>;</li>
+<li>
+<a href="retries/">retries</a>;</li>
+<li>
+<a href="socket_options/">socket options</a>;</li>
+<li>
+<a href="ssl/">SSL</a>;</li>
+<li>
+<a href="speculative_execution/">speculative executions</a>;</li>
+<li>
+<a href="query_timestamps/">query timestamps</a>.</li>
+</ul>
+
+<p>In addition, you can register various types of listeners to be notified of cluster events; see <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Host.StateListener.html">Host.StateListener</a>,
+<a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/LatencyTracker.html">LatencyTracker</a>, and <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/SchemaChangeListener.html">SchemaChangeListener</a>.</p>
+
+<h5 id="cluster-initialization" class="target">Cluster initialization<a class="anchor" href="#cluster-initialization" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h5>
+
+<p>A freshly-built <code>Cluster</code> instance does not initialize automatically; that will be triggered by one of the following
+actions:</p>
+
+<ul>
+<li>an explicit call to <code>cluster.init()</code>;</li>
+<li>a call to <code>cluster.getMetadata()</code>;</li>
+<li>creating a session with <code>cluster.connect()</code> or one of its variants;</li>
+<li>calling <code>session.init()</code> on a session that was created with <code>cluster.newSession()</code>.</li>
+</ul>
+
+<p>The initialization sequence is the following:</p>
+
+<ul>
+<li>initialize internal state (thread pools, utility components, etc.);</li>
+<li>try to connect to each of the contact points in sequence. The order is not deterministic (in fact, the driver shuffles
+the list to avoid hotspots if a large number of clients share the same contact points). If no contact point replies,
+a <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/exceptions/NoHostAvailableException.html">NoHostAvailableException</a> is thrown and the process stops here;</li>
+<li>otherwise, the successful contact point is elected as the <a href="control_connection/">control host</a>. The driver negotiates
+the <a href="native_protocol/">native protocol version</a> with it, and queries its system tables to discover the addresses of
+the other hosts.</li>
+</ul>
+
+<p>Note that, at this stage, only the control connection has been established. Connections to other hosts will only be
+opened when a session gets created.</p>
+
+<h4 id="session" class="target">
+<a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Session.html">Session</a><a class="anchor" href="#session" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h4>
+
+<p>By default, a session isn’t tied to any specific keyspace. You’ll need to prefix table names in your queries:</p>
+<pre class="highlight"><code><span class="n">Session</span> <span class="n">session</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="na">connect</span><span class="o">();</span>
+<span class="n">session</span><span class="o">.</span><span class="na">execute</span><span class="o">(</span><span class="s">"select * from myKeyspace.myTable where id = 1"</span><span class="o">);</span>
+</code></pre>
+<p>You can also specify a keyspace name at construction time, it will be used as the default when table names are not
+qualified:</p>
+<pre class="highlight"><code><span class="n">Session</span> <span class="n">session</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="na">connect</span><span class="o">(</span><span class="s">"myKeyspace"</span><span class="o">);</span>
+<span class="n">session</span><span class="o">.</span><span class="na">execute</span><span class="o">(</span><span class="s">"select * from myTable where id = 1"</span><span class="o">);</span>
+<span class="n">session</span><span class="o">.</span><span class="na">execute</span><span class="o">(</span><span class="s">"select * from otherKeyspace.otherTable where id = 1"</span><span class="o">);</span>
+</code></pre>
+<p>You might be tempted to open a separate session for each keyspace used in your application; however, note that
+<a href="pooling/">connection pools</a> are created at the session level, so each new session will consume additional system
+resources:</p>
+<pre class="highlight"><code><span class="c1">// Warning: creating two sessions doubles the number of TCP connections opened by the driver</span>
+<span class="n">Session</span> <span class="n">session1</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="na">connect</span><span class="o">(</span><span class="s">"ks1"</span><span class="o">);</span>
+<span class="n">Session</span> <span class="n">session2</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="na">connect</span><span class="o">(</span><span class="s">"ks2"</span><span class="o">);</span>
+</code></pre>
+<p>Also, there is currently a <a href="async/#known-limitations">known limitation</a> with named sessions, that causes the driver to
+unexpectedly block the calling thread in certain circumstances; if you use a fully asynchronous model, you should use a
+session with no keyspace.</p>
+
+<p>Finally, if you issue a <code>USE</code> statement, it will change the default keyspace on that session:</p>
+<pre class="highlight"><code><span class="n">Session</span> <span class="n">session</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="na">connect</span><span class="o">();</span>
+<span class="c1">// No default keyspace set, need to prefix:</span>
+<span class="n">session</span><span class="o">.</span><span class="na">execute</span><span class="o">(</span><span class="s">"select * from myKeyspace.myTable where id = 1"</span><span class="o">);</span>
+
+<span class="n">session</span><span class="o">.</span><span class="na">execute</span><span class="o">(</span><span class="s">"USE myKeyspace"</span><span class="o">);</span>
+<span class="c1">// Now the keyspace is set, unqualified query works:</span>
+<span class="n">session</span><span class="o">.</span><span class="na">execute</span><span class="o">(</span><span class="s">"select * from myTable where id = 1"</span><span class="o">);</span>
+</code></pre>
+<p>Be very careful though: if the session is shared by multiple threads, switching the keyspace at runtime could easily
+cause unexpected query failures.</p>
+
+<p>Generally, the recommended approach is to use a single session with no keyspace, and prefix all your queries.</p>
+
+<h3 id="running-queries" class="target">Running queries<a class="anchor" href="#running-queries" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<p>You run queries with the session’s <code>execute</code> method:</p>
+<pre class="highlight"><code><span class="n">ResultSet</span> <span class="n">rs</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="na">execute</span><span class="o">(</span><span class="s">"select release_version from system.local"</span><span class="o">);</span>
+</code></pre>
+<p>As shown here, the simplest form is to pass a query string directly. You can also pass an instance of
+<a href="statements/">Statement</a>.</p>
+
+<h4 id="processing-rows" class="target">Processing rows<a class="anchor" href="#processing-rows" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h4>
+
+<p>Executing a query produces a <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/ResultSet.html">ResultSet</a>, which is an iterable of <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Row.html">Row</a>. The basic way to process all rows is to use
+Java’s for-each loop:</p>
+<pre class="highlight"><code><span class="k">for</span> <span class="o">(</span><span class="n">Row</span> <span class="n">row</span> <span class="o">:</span> <span class="n">rs</span><span class="o">)</span> <span class="o">{</span>
+    <span class="c1">// process the row</span>
+<span class="o">}</span>
+</code></pre>
+<p>Note that this will return <strong>all results</strong> without limit (even though the driver might use multiple queries in the
+background). To handle large result sets, you might want to use a <code>LIMIT</code> clause in your CQL query, or use one of the
+techniques described in the <a href="paging/">paging</a> documentation.</p>
+
+<p>When you know that there is only one row (or are only interested in the first one), the driver provides a convenience
+method:</p>
+<pre class="highlight"><code><span class="n">Row</span> <span class="n">row</span> <span class="o">=</span> <span class="n">rs</span><span class="o">.</span><span class="na">one</span><span class="o">();</span>
+</code></pre>
+<h4 id="reading-columns" class="target">Reading columns<a class="anchor" href="#reading-columns" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h4>
+
+<p><a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Row.html">Row</a> provides getters to extract column values; they can be either positional or named:</p>
+<pre class="highlight"><code><span class="n">Row</span> <span class="n">row</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="na">execute</span><span class="o">(</span><span class="s">"select first_name, last_name from users where id = 1"</span><span class="o">).</span><span class="na">one</span><span class="o">();</span>
+
+<span class="c1">// The two are equivalent:</span>
+<span class="n">String</span> <span class="n">firstName</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="na">getString</span><span class="o">(</span><span class="mi">0</span><span class="o">);</span>
+<span class="n">String</span> <span class="n">firstName</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="na">getString</span><span class="o">(</span><span class="s">"first_name"</span><span class="o">);</span>
+</code></pre>
+<h5 id="cql-to-java-type-mapping" class="target">CQL to Java type mapping<a class="anchor" href="#cql-to-java-type-mapping" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h5>
+
+<table border="1" style="text-align:center; width:100%;margin-bottom:1em;">
+    <tr> <td><b>CQL3 data type</b></td> <td><b>Getter name</b></td> <td><b>Java type</b></td> </tr>
+    <tr> <td>ascii</td> <td>getString</td> <td>java.lang.String</td> </tr>
+    <tr> <td>bigint</td> <td>getLong</td> <td>long</td> </tr>
+    <tr> <td>blob</td> <td>getBytes</td> <td>java.nio.ByteBuffer</td> </tr>
+    <tr> <td>boolean</td> <td>getBool</td> <td>boolean</td> </tr>
+    <tr> <td>counter</td> <td>getLong</td> <td>long</td> </tr>
+    <tr> <td>date</td> <td>getDate</td> <td><a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/LocalDate.html">LocalDate</a></td> </tr>
+    <tr> <td>decimal</td> <td>getDecimal</td> <td>java.math.BigDecimal</td> </tr>
+    <tr> <td>double</td> <td>getDouble</td> <td>double</td> </tr>
+    <tr> <td>float</td> <td>getFloat</td> <td>float</td> </tr>
+    <tr> <td>inet</td> <td>getInet</td> <td>java.net.InetAddress</td> </tr>
+    <tr> <td>int</td> <td>getInt</td> <td>int</td> </tr>
+    <tr> <td>list</td> <td>getList</td> <td>java.util.List<t></t>
+</td> </tr>
+    <tr> <td>map</td> <td>getMap</td> <td>java.util.Map<k v></k>
+</td> </tr>
+    <tr> <td>set</td> <td>getSet</td> <td>java.util.Set<t></t>
+</td> </tr>
+    <tr> <td>smallint</td> <td>getShort</td> <td>short</td> </tr>
+    <tr> <td>text</td> <td>getString</td> <td>java.lang.String</td> </tr>
+    <tr> <td>time</td> <td>getTime</td> <td>long</td> </tr>
+    <tr> <td>timestamp</td> <td>getTimestamp</td> <td>java.util.Date</td> </tr>
+    <tr> <td>timeuuid</td> <td>getUUID</td> <td>java.util.UUID</td> </tr>
+    <tr> <td>tinyint</td> <td>getByte</td> <td>byte</td> </tr>
+    <tr> <td>tuple</td> <td>getTupleValue</td> <td><a href="tuples/">TupleValue</a></td> </tr>
+    <tr> <td>user-defined types</td> <td>getUDTValue</td> <td><a href="udts/">UDTValue</a></td> </tr>
+    <tr> <td>uuid</td> <td>getUUID</td> <td>java.util.UUID</td> </tr>
+    <tr> <td>varchar</td> <td>getString</td> <td>java.lang.String</td> </tr>
+    <tr> <td>varint</td> <td>getVarint</td> <td>java.math.BigInteger</td> </tr>
+</table>
+
+<p>In addition to these default mappings, you can register your own types with <a href="custom_codecs/">custom codecs</a>.</p>
+
+<h5 id="primitive-types" class="target">Primitive types<a class="anchor" href="#primitive-types" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h5>
+
+<p>For performance reasons, the driver uses primitive Java types wherever possible (<code>boolean</code>, <code>int</code>…); the CQL value
+<code>NULL</code> is encoded as the type’s default value (<code>false</code>, <code>0</code>…), which can be ambiguous. To distinguish <code>NULL</code> from
+actual values, use <code>isNull</code>:</p>
+<pre class="highlight"><code><span class="n">Integer</span> <span class="n">age</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="na">isNull</span><span class="o">(</span><span class="s">"age"</span><span class="o">)</span> <span class="o">?</span> <span class="kc">null</span> <span class="o">:</span> <span class="n">row</span><span class="o">.</span><span class="na">getInt</span><span class="o">(</span><span class="s">"age"</span><span class="o">);</span>
+</code></pre>
+<h5 id="collection-types" class="target">Collection types<a class="anchor" href="#collection-types" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h5>
+
+<p>To ensure type safety, collection getters are generic. You need to provide type parameters matching your CQL type when
+calling the methods:</p>
+<pre class="highlight"><code><span class="c1">// Assuming given_names is a list&lt;text&gt;:</span>
+<span class="n">List</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="n">givenNames</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="na">getList</span><span class="o">(</span><span class="s">"given_names"</span><span class="o">,</span> <span class="n">String</span><span class="o">.</span><span class="na">class</span><span class="o">);</span>
+</code></pre>
+<p>For nested collections, element types are generic and cannot be expressed as Java <code>Class</code> instances. We use Guava’s
+<a href="https://github.com/google/guava/wiki/ReflectionExplained">TypeToken</a> instead:</p>
+<pre class="highlight"><code><span class="c1">// Assuming teams is a set&lt;list&lt;text&gt;&gt;:</span>
+<span class="n">TypeToken</span><span class="o">&lt;</span><span class="n">List</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;&gt;</span> <span class="n">listOfStrings</span> <span class="o">=</span> <span class="k">new</span> <span class="n">TypeToken</span><span class="o">&lt;</span><span class="n">List</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;&gt;()</span> <span class="o">{};</span>
+<span class="n">Set</span><span class="o">&lt;</span><span class="n">List</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;&gt;</span> <span class="n">teams</span> <span class="o">=</span> <span class="n">row</span><span class="o">.</span><span class="na">getSet</span><span class="o">(</span><span class="s">"teams"</span><span class="o">,</span> <span class="n">listOfStrings</span><span class="o">);</span>
+</code></pre>
+<p>Since type tokens are anonymous inner classes, it’s recommended to store them as constants in a utility class instead of
+re-creating them each time.</p>
+
+<h5 id="row-metadata" class="target">Row metadata<a class="anchor" href="#row-metadata" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h5>
+
+<p><code>Row</code> exposes an API to explore the column metadata at runtime:</p>
+<pre class="highlight"><code><span class="k">for</span> <span class="o">(</span><span class="n">ColumnDefinitions</span><span class="o">.</span><span class="na">Definition</span> <span class="n">definition</span> <span class="o">:</span> <span class="n">row</span><span class="o">.</span><span class="na">getColumnDefinitions</span><span class="o">())</span> <span class="o">{</span>
+    <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">printf</span><span class="o">(</span><span class="s">"Column %s has type %s%n"</span><span class="o">,</span>
+            <span class="n">definition</span><span class="o">.</span><span class="na">getName</span><span class="o">(),</span>
+            <span class="n">definition</span><span class="o">.</span><span class="na">getType</span><span class="o">());</span>
+<span class="o">}</span>
+</code></pre>
+<h3 id="more-information" class="target">More information<a class="anchor" href="#more-information" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<p>If you’re reading this from the <a href="../">generated HTML documentation on
+github.io</a>, use the “Contents”
+menu on the left hand side to navigate sub-sections. If you’re <a href="https://github.com/datastax/java-driver/tree/3.0.x/manual">browsing the source files on
+github.com</a>,
+simply navigate to each sub-directory.</p>
+
+
+        </div>
+      </div>
+    </div>
+
+    
+    <footer class="container text-muted">
+      <ul class="list-inline">
+      
+        
+        <li>
+          <a href="https://github.com/datastax/java-driver/">Code</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="http://datastax.github.io/java-driver/">Docs</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://datastax-oss.atlassian.net/browse/JAVA/">Issues</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://groups.google.com/a/lists.datastax.com/forum/#!forum/java-driver-user">Mailing List</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="irc://irc.freenode.net/datastax-drivers">IRC Channel</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://github.com/datastax/java-driver/releases">Releases</a>
+        </li>
+      
+      </ul>
+    </footer>
+    
+
+    <script src="../../js/jquery.js"></script>
+    <script src="../../js/bootstrap.js"></script>
+    <script src="../../js/angular.js"></script>
+    <script src="../../js/mousetrap.js"></script>
+    <script src="../../js/hotkeys.js"></script>
+    <script src="../../js/ZeroClipboard.js"></script>
+    <script src="../../js/lunr.js"></script>
+    <script src="../../js/app.js"></script>
+  </body>
+</html>

@@ -41,12 +41,14 @@
               <span class="text-warning">Attention:</span> Viewing documentation for version
               <div class="btn-group">
                 <button id="current-version" class="btn btn-default btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                  3.0.3
+                  3.1.0
                   <span class="caret"></span>
                 </button>
                 <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
                 
-                  <li class="disabled"><a href="./">3.0.3</a></li>
+                  <li class="disabled"><a href="./">3.1.0</a></li>
+                
+                  <li><a href="../../3.0.3/manual/retries/">3.0.3</a></li>
                 
                   <li><a href="../../3.0.1/manual/retries/">3.0.1</a></li>
                 
@@ -76,7 +78,7 @@
           <div class="col-md-4">
             <form id="search" class="form-search dropdown visible-lg-inline-block" ng-controller="search" ng-class="{open: hasResults}" role="search" ng-submit="submit()" data-spy="affix" data-offset-top="130">
               <div class="form-group has-feedback">
-                <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('3.0.3')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+                <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('3.1.0')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
               </div>
               <ul class="dropdown-menu search-results" role="menu">
                 <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
@@ -108,6 +110,10 @@
   <li>
     <a href="../../faq/">
       Frequently Asked Questions <small>page</small>
+      
+      
+      <span class="glyphicon glyphicon-plus-sign pull-right" aria-hidden="true"></span>
+      
       
     </a>
     
@@ -241,6 +247,15 @@
   <li>
     <a href="../native_protocol/">
       Native protocol <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="../osgi/">
+      OSGi <small>page</small>
       
     </a>
     
@@ -507,8 +522,7 @@ the client.</p>
 
 <p>This is similar to <code>onReadTimeout</code>, but for write operations. The reason reads and writes are handled separately is
 because a read is obviously a non mutating operation, whereas a write is likely to be. If a write times out at the
-coordinator level, there is no way to know whether the mutation was applied or not on the non-answering replica.
-Policy implementations are usually more conservative in <code>onWriteTimeout</code> in case the write was not idempotent.</p>
+coordinator level, there is no way to know whether the mutation was applied or not on the non-answering replica.</p>
 
 <p>If the policy rethrows the error, the user code will get a <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/exceptions/WriteTimeoutException.html">WriteTimeoutException</a>.</p>
 
@@ -534,9 +548,6 @@ happened. The possible exceptions are:</p>
 high; the coordinator temporarily refuses writes for these replicas (see <a href="https://docs.datastax.com/en/cassandra/2.1/cassandra/dml/dml_about_hh_c.html?scroll=concept_ds_ifg_jqx_zj__performance">hinted handoffs</a> in the Cassandra
 documentation).</li>
 </ul>
-
-<p>In all these cases, there is no absolute certainty that the request was not applied by a host, so implementations must
-consider the risk of retrying non-idempotent statements.</p>
 
 <h3 id="hard-coded-rules" class="target">Hard-coded rules<a class="anchor" href="#hard-coded-rules" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h3>
@@ -572,32 +583,28 @@ These include:</p>
 <h3 id="retries-and-idempotence" class="target">Retries and idempotence<a class="anchor" href="#retries-and-idempotence" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h3>
 
-<p>Retry policies should avoid retrying <a href="../idempotence/">idempotent queries</a> when it’s not clear whether the query was applied or not.</p>
-
-<p>It’s always safe to retry in <code>onReadTimeout</code>, since by definition we know that the query is a read, which doesn’t mutate
-any data. Similarly, <code>onUnavailable</code> is safe: the coordinator is telling us that it didn’t find enough replicas, so we
-know that it didn’t try to apply the query.</p>
-
-<p><code>onWriteTimeout</code> is not safe. The default retry policy is very conservative (it only retries batch log writes) so it
-will never cause any issue. Custom implementations should check the statements’ idempotent flag.</p>
-
-<p><code>onRequestError</code> isn’t safe either.</p>
-
-<p><strong>For historical reasons, the built-in retry policy implementations do not check the idempotent flag in
-<code>onRequestError</code></strong>. This is based on the fact that:</p>
+<p>If a query is <a href="../idempotence/">not idempotent</a>, the driver will not retry it if that could produce inconsistent results:</p>
 
 <ul>
-<li>previous versions of the driver (which did <code>onRequestError</code> internally) didn’t check the flag either;</li>
-<li>the majority of queries in an application should be idempotent;</li>
-<li>statements start out as non-idempotent by default.</li>
+<li>retrying in <code>onReadTimeout</code> is always safe, since by definition this error indicates that the query was a read, which
+didn’t mutate any data;</li>
+<li>similarly, <code>onUnavailable</code> is safe: the coordinator is telling us that it didn’t find enough replicas, so we know that
+it didn’t try to apply the query.</li>
+<li>
+<code>onWriteTimeout</code> is <strong>not safe</strong>: some replicas failed to reply to the coordinator in time, but they might still have
+applied the mutation;</li>
+<li>
+<code>onRequestError</code> is <strong>not safe</strong> either: the query might have been applied before the error occurred. In particular,
+an <code>OperationTimedOutException</code> could be caused by a network issue that prevented a successful response to come back
+to the client.</li>
 </ul>
 
-<p>If <code>onRequestError</code> enforced idempotence strictly, this would cause a lot of queries that were legitimately retried with
-previous driver versions to not be retried anymore. This would be a big behavioral change, so we decided to prefer
-consistency with previous versions.</p>
+<p>Therefore, the driver does not retry after a write timeout or request error if the statement is not idempotent. This is
+handled internally, the retry policy methods are not even invoked in those cases.</p>
 
-<p>If you prefer strict handling of the idempotent flag, you can wrap your retry policy into an
-<a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/policies/IdempotenceAwareRetryPolicy.html">IdempotenceAwareRetryPolicy</a>. Make sure to position the flag properly on all statements.</p>
+<p>Note that this behavior was introduced in version 3.1.0 of the driver. In previous versions, it was up to retry policy
+implementations to handle idempotence (the new behavior is equivalent to what you achieved with
+<code>IdempotenceAwareRetryPolicy</code> before).</p>
 
 
         </div>

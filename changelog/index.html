@@ -41,12 +41,14 @@
               <span class="text-warning">Attention:</span> Viewing documentation for version
               <div class="btn-group">
                 <button id="current-version" class="btn btn-default btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                  3.0.3
+                  3.1.0
                   <span class="caret"></span>
                 </button>
                 <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
                 
-                  <li class="disabled"><a href="./">3.0.3</a></li>
+                  <li class="disabled"><a href="./">3.1.0</a></li>
+                
+                  <li><a href="../3.0.3/changelog/">3.0.3</a></li>
                 
                   <li><a href="../3.0.1/changelog/">3.0.1</a></li>
                 
@@ -76,7 +78,7 @@
           <div class="col-md-4">
             <form id="search" class="form-search dropdown visible-lg-inline-block" ng-controller="search" ng-class="{open: hasResults}" role="search" ng-submit="submit()" data-spy="affix" data-offset-top="130">
               <div class="form-group has-feedback">
-                <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('3.0.3')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+                <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('3.1.0')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
               </div>
               <ul class="dropdown-menu search-results" role="menu">
                 <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
@@ -111,6 +113,10 @@
   <li>
     <a href="../faq/">
       Frequently Asked Questions <small>page</small>
+      
+      
+      <span class="glyphicon glyphicon-plus-sign pull-right" aria-hidden="true"></span>
+      
       
     </a>
     
@@ -166,6 +172,82 @@
 
 <h2 id="changelog" class="target">Changelog<a class="anchor" href="#changelog" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h2>
+
+<h3 id="3-1-0" class="target">3.1.0<a class="anchor" href="#3-1-0" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<ul>
+<li>[new feature] JAVA-1153: Add PER PARTITION LIMIT to Select QueryBuilder.</li>
+<li>[improvement] JAVA-743: Add JSON support to QueryBuilder.</li>
+<li>[improvement] JAVA-1233: Update HdrHistogram to 2.1.9.</li>
+<li>[improvement] JAVA-1233: Update Snappy to 1.1.2.6.</li>
+<li>[bug] JAVA-1161: Preserve full time zone info in ZonedDateTimeCodec and DateTimeCodec.</li>
+<li>[new feature] JAVA-1157: Allow asynchronous paging of Mapper Result.</li>
+<li>[improvement] JAVA-1212: Don’t retry non-idempotent statements by default.</li>
+<li>[improvement] JAVA-1192: Make EventDebouncer settings updatable at runtime.</li>
+<li>[new feature] JAVA-541: Add polymorphism support to object mapper.</li>
+<li>[new feature] JAVA-636: Allow @Column annotations on getters/setters as well as fields.</li>
+<li>[new feature] JAVA-984: Allow non-void setters in object mapping.</li>
+<li>[new feature] JAVA-1055: Add ErrorAware load balancing policy.</li>
+</ul>
+
+<p>Merged from 3.0.x branch:</p>
+
+<ul>
+<li>[bug] JAVA-1179: Request objects should be copied when executed.</li>
+<li>[improvement] JAVA-1182: Throw error when synchronous call made on I/O thread.</li>
+<li>[bug] JAVA-1184: Unwrap StatementWrappers when extracting column definitions.</li>
+<li>[bug] JAVA-1132: Executing bound statement with no variables results in exception with protocol v1.</li>
+<li>[improvement] JAVA-1040: SimpleStatement parameters support in QueryLogger.</li>
+<li>[improvement] JAVA-1151: Fail fast if HdrHistogram is not in the classpath.</li>
+<li>[improvement] JAVA-1154: Allow individual Statement to cancel the read timeout.</li>
+<li>[bug] JAVA-1074: Fix documentation around default timestamp generator.</li>
+<li>[improvement] JAVA-1109: Document SSLOptions changes in upgrade guide.</li>
+<li>[improvement] JAVA-1065: Add method to create token from partition key values.</li>
+<li>[improvement] JAVA-1136: Enable JDK signature check in module driver-extras.</li>
+<li>[improvement] JAVA-866: Support tuple notation in QueryBuilder.eq/in.</li>
+<li>[bug] JAVA-1140: Use same connection to check for schema agreement after a DDL query.</li>
+<li>[improvement] JAVA-1113: Support Cassandra 3.4 LIKE operator in QueryBuilder.</li>
+<li>[improvement] JAVA-1086: Support Cassandra 3.2 CAST function in QueryBuilder.</li>
+<li>[bug] JAVA-1095: Check protocol version for custom payload before sending the query.</li>
+<li>[improvement] JAVA-1133: Add OSGi headers to cassandra-driver-extras.</li>
+<li>[bug] JAVA-1137: Incorrect string returned by DataType.asFunctionParameterString() for collections and tuples.</li>
+<li>[bug] JAVA-1046: (Dynamic)CompositeTypes need to be parsed as string literal, not blob.</li>
+<li>[improvement] JAVA-1164: Clarify documentation on Host.listenAddress and broadcastAddress.</li>
+<li>[improvement] JAVA-1171: Add Host method to determine if DSE Graph is enabled.</li>
+<li>[improvement] JAVA-1069: Bootstrap driver-examples module.</li>
+<li>[documentation] JAVA-1150: Add example and FAQ entry about ByteBuffer/BLOB.</li>
+<li>[improvement] JAVA-1011: Expose PoolingOptions default values.</li>
+<li>[improvement] JAVA-630: Don’t process DOWN events for nodes that have active connections.</li>
+<li>[improvement] JAVA-851: Improve UUIDs javadoc with regard to user-provided timestamps.</li>
+<li>[improvement] JAVA-979: Update javadoc for RegularStatement toString() and getQueryString() to indicate that consistency level and other parameters are not maintained in the query string.</li>
+<li>[bug] JAVA-1068: Unwrap StatementWrappers when hashing the paging state.</li>
+<li>[improvement] JAVA-1021: Improve error message when connect() is called with an invalid keyspace name.</li>
+<li>[improvement] JAVA-879: Mapper.map() accepts mapper-generated and user queries.</li>
+<li>[bug] JAVA-1100: Exception when connecting with shaded java driver in OSGI</li>
+<li>[bug] JAVA-1064: getTable create statement doesn’t properly handle quotes in primary key.</li>
+<li>[bug] JAVA-1089: Set LWT made from BuiltStatements to non-idempotent.</li>
+<li>[improvement] JAVA-923: Position idempotent flag on object mapper queries.</li>
+<li>[bug] JAVA-1070: The Mapper should not prepare queries synchronously.</li>
+<li>[new feature] JAVA-982: Introduce new method ConsistencyLevel.isSerial().</li>
+<li>[bug] JAVA-764: Retry with the normal consistency level (not the serial one) when a write times out on the Paxos phase.</li>
+<li>[improvement] JAVA-852: Ignore peers with null entries during discovery.</li>
+<li>[bug] JAVA-1005: DowngradingConsistencyRetryPolicy does not work with EACH_QUORUM when 1 DC is down.</li>
+<li>[bug] JAVA-1002: Avoid deadlock when re-preparing a statement on other hosts.</li>
+<li>[bug] JAVA-1072: Ensure defunct connections are properly evicted from the pool.</li>
+<li>[bug] JAVA-1152: Fix NPE at ControlConnection.refreshNodeListAndTokenMap().</li>
+</ul>
+
+<p>Merged from 2.1 branch:</p>
+
+<ul>
+<li>[improvement] JAVA-1038: Fetch node info by rpc_address if its broadcast_address is not in system.peers.</li>
+<li>[improvement] JAVA-888: Add cluster-wide percentile tracker.</li>
+<li>[improvement] JAVA-963: Automatically register PercentileTracker from components that use it.</li>
+<li>[new feature] JAVA-1019: SchemaBuilder support for CREATE/ALTER/DROP KEYSPACE.</li>
+<li>[bug] JAVA-727: Allow monotonic timestamp generators to drift in the future + use microsecond precision when possible.</li>
+<li>[improvement] JAVA-444: Add Java process information to UUIDs.makeNode() hash.</li>
+</ul>
 
 <h3 id="3-0-3" class="target">3.0.3<a class="anchor" href="#3-0-3" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h3>

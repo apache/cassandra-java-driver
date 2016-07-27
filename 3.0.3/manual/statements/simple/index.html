@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="description" content="High performance Java client for Apache Cassandra">
+    <meta name="author" content="DataStax">
+
+    <title>Java Driver for Apache Cassandra - Simple statements</title>
+
+    <link rel="icon" href="../../../../favicon.ico">
+    <link rel="apple-touch-icon" href="../../../../favicon.png">
+    <link href="../../../../css/style.css" rel="stylesheet">
+    <link href="../../../../css/pygments.css" rel="stylesheet">
+    <link href="../../../../css/hotkeys.css" rel="stylesheet">
+
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body ng-app="docs">
+    <div class="navbar">
+      <div class="container-fluid">
+        <div class="row row-offcanvas row-offcanvas-left">
+          <div class="col-sm-3 text-center">
+            <a class="ds-home" href="../../../"><img alt="Brand" src="../../../../img/logo.png"></a>
+            <ul class="list-inline ds-sites" role="nav">
+              <li><a href="https://academy.datastax.com/" class="navbar-link">DataStax Academy</a></li>
+              <li><a href="http://www.datastax.com/dev/blog" class="navbar-link">Tech Blog</a></li>
+              <li><a href="http://www.datastax.com/what-we-offer/products-services/support" class="navbar-link">Support</a></li>
+            </ul>
+          </div>
+          <div class="col-md-5">
+            <p class="lead pubtitle">Java Driver for Apache Cassandra</p>
+            
+            <div class="text-info">
+              <span class="text-warning">Attention:</span> Viewing documentation for version
+              <div class="btn-group">
+                <button id="current-version" class="btn btn-default btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  3.0.3
+                  <span class="caret"></span>
+                </button>
+                <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
+                
+                  <li><a href="../../../../manual/statements/simple/">3.1.0</a></li>
+                
+                  <li class="disabled"><a href="./">3.0.3</a></li>
+                
+                  <li><a href="../../../../3.0.1/manual/statements/simple/">3.0.1</a></li>
+                
+                  <li><a href="../../../../3.0.0/manual/statements/simple/">3.0.0</a></li>
+                
+                  <li><a href="../../../../2.1.10.1/manual/statements/simple/">2.1.10.1</a></li>
+                
+                  <li><a href="../../../../2.1.10/manual/statements/simple/">2.1.10</a></li>
+                
+                  <li><a href="../../../../2.1.9/">2.1.9</a></li>
+                
+                  <li><a href="../../../../2.1.8/">2.1.8</a></li>
+                
+                  <li><a href="../../../../2.1.7/">2.1.7</a></li>
+                
+                  <li><a href="../../../../2.0.12.1/">2.0.12.1</a></li>
+                
+                  <li><a href="../../../../2.0.12/">2.0.12</a></li>
+                
+                  <li><a href="../../../../2.0.11/">2.0.11</a></li>
+                
+                </ul>
+              </div>
+            </div>
+            
+          </div>
+          <div class="col-md-4">
+            <form id="search" class="form-search dropdown visible-lg-inline-block" ng-controller="search" ng-class="{open: hasResults}" role="search" ng-submit="submit()" data-spy="affix" data-offset-top="130">
+              <div class="form-group has-feedback">
+                <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('3.0.3')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+              </div>
+              <ul class="dropdown-menu search-results" role="menu">
+                <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
+              </ul>
+            </form>
+            <a href="http://www.datastax.com/download" class="btn btn-primary btn-sm">Download</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container-fluid" id="content">
+      <div class="row">
+        <div class="col-md-3">
+          <div id="navigation" class="side-nav" role="tablist" aria-multiselectable="true">
+            <h3><a href="../../../">Contents</a></h3>
+            <ul class="nav nav-pills nav-stacked">
+  
+  
+  <li>
+    <a href="../../../changelog/">
+      Changelog <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="../../../faq/">
+      Frequently Asked Questions <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li class="active">
+    <a href="../../">
+      Manual <small>page</small>
+      
+      
+      <span class="glyphicon glyphicon-minus-sign pull-right" aria-hidden="true"></span>
+      
+      
+    </a>
+    <ul class="nav nav-pills nav-stacked">
+  
+  
+  <li>
+    <a href="../../address_resolution/">
+      Address resolution <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="../../async/">
+      Asynchronous programming <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="../../auth/">
+      Authentication <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="../../compression/">
+      Compression <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="../../pooling/">
+      Connection pooling <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="../../control_connection/">
+      Control connection <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="../../custom_codecs/">
+      Custom Codecs <small>page</small>
+      
+      
+      <span class="glyphicon glyphicon-plus-sign pull-right" aria-hidden="true"></span>
+      
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="../../custom_payloads/">
+      Custom Payloads <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="../../load_balancing/">
+      Load balancing <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="../../logging/">
+      Logging <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="../../metadata/">
+      Metadata <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="../../metrics/">
+      Metrics <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="../../native_protocol/">
+      Native protocol <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="../../object_mapper/">
+      Object Mapper <small>page</small>
+      
+      
+      <span class="glyphicon glyphicon-plus-sign pull-right" aria-hidden="true"></span>
+      
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="../../paging/">
+      Paging <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="../../idempotence/">
+      Query idempotence <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="../../query_timestamps/">
+      Query timestamps <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="../../reconnection/">
+      Reconnection <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="../../retries/">
+      Retries <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="../../ssl/">
+      SSL <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="../../socket_options/">
+      Socket options <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="../../speculative_execution/">
+      Speculative query execution <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li class="active">
+    <a href="../">
+      Statements <small>page</small>
+      
+      
+      <span class="glyphicon glyphicon-minus-sign pull-right" aria-hidden="true"></span>
+      
+      
+    </a>
+    <ul class="nav nav-pills nav-stacked">
+  
+  
+  <li class="active">
+    <a href="./" class="current">
+      Simple statements <small>page</small>
+      
+    </a>
+    <ul class="nav nav-pills nav-stacked">
+  
+</ul>
+
+  </li>
+  
+  
+  <li>
+    <a href="../prepared/">
+      Prepared statements <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="../built/">
+      Built statements <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="../batch/">
+      Batch statements <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+</ul>
+
+  </li>
+  
+  
+  <li>
+    <a href="../../tuples/">
+      Tuples <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="../../udts/">
+      User-defined types <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="../../shaded_jar/">
+      Using the shaded JAR <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+</ul>
+
+  </li>
+  
+  
+  <li>
+    <a href="../../../upgrade_guide/">
+      Upgrade guide <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+</ul>
+
+          </div>
+        </div>
+        <div class="col-md-9 content">
+          <div class="crumbs-wrapper">
+            <nav id="crumbs" data-spy="affix" data-offset-top="130">
+              <ol class="breadcrumb">
+                
+                
+                
+                <li><a href="../../../">Home</a></li>
+                
+                
+                
+                
+                
+                <li><a href="../../">Manual</a></li>
+                
+                
+                
+                
+                
+                <li><a href="../">Statements</a></li>
+                
+                
+                
+                
+                
+                <li class="active">Simple statements</li>
+                
+                
+                
+              </ol>
+            </nav>
+          </div>
+          
+
+<h2 id="simple-statements" class="target">Simple statements<a class="anchor" href="#simple-statements" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h2>
+
+<p>Use <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/SimpleStatement.html">SimpleStatement</a> for queries that will be executed only once (or a few times) in your application:</p>
+<pre class="highlight"><code><span class="n">SimpleStatement</span> <span class="n">statement</span> <span class="o">=</span> <span class="k">new</span> <span class="n">SimpleStatement</span><span class="o">(</span>
+    <span class="s">"SELECT value FROM application_params WHERE name = 'greeting_message'"</span><span class="o">);</span>
+<span class="n">session</span><span class="o">.</span><span class="na">execute</span><span class="o">(</span><span class="n">statement</span><span class="o">);</span>
+</code></pre>
+<p>When you don’t need to customize anything on the <code>SimpleStatement</code> object, there is a convenient shortcut:</p>
+<pre class="highlight"><code><span class="n">session</span><span class="o">.</span><span class="na">execute</span><span class="o">(</span><span class="s">"SELECT value FROM application_params WHERE name = 'greeting_message'"</span><span class="o">);</span>
+</code></pre>
+<p>Each time you execute a simple statement, Cassandra will parse the query string again; nothing is cached (neither on the
+client nor on the server):</p>
+<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA1IAAAEYCAIAAADZGFBzAAAwSklEQVR42u3d%0Ae3RNZx7/cbnIRe4hIktQkWQijaJJDHGdCjqrMS7VYjrpZTRoJy5dMYk25fAr%0Ampoyi3EZ2glqdKqpIDUYRjRKBiOqrWZMSkMIikyIkEgkv9935Vn27/RcttNU%0AXI736w9r72ff93n283zsffZJs/8LAACAh0AzTgEAAACxDwAAAHYX++oBAABg%0Ad4h9AAAAxD4AAAAQ+wAAAEDsAwAAALEPAAAAxD4AAAAQ+wAAAEDsAwAAALEP%0AAACA2EfsAwAAIPYBAACA2AcAAABiHwAAAIh9AAAAIPYBAACA2AcAAABiHwAA%0AAIh9AAAAxD5iHwAAALEPAAAAxD4AAAAQ+wAAAEDsAwAAALEPAAAA9hP7iouL%0Av/zyy0uXLvExAA+zoqIiaQouX77MqQC4XmC3sW/YsGHNmjVbvny5Gk1OTo6M%0AjPzoo4/4VICHSnR0tDQFmzZt0pmH9gFN6quvvpozZ87zzz+fkJAwceLEefPm%0A5eXlPbjXC/AAxD653gICAlatWvVT1llWVnbgwIFjx47x0QL2FPvuSPsAmKur%0Aq0tJSXF2dpZK2KlTpwEDBrRq1UqGn3vuOWIfiH1NGPvuCPlfmqxz5syZfLSA%0APcU+oIlIHyTVz9vbOycnRys8ceJEQUEB1wuIfY20bt26/v37BwUFhYWFJSQk%0AWIx9aWlpvXr1ys7O1v4HtnDhwpiYGFlq4MCB2hWozfbee+/J1Li4OG2RtWvX%0ABgYGyjqDg4NlHrlu+YCB+1BtbW16evrPGmRkZHTr1s24G9Ou8blz53bu3Dk3%0AN9ekfZg/f74Mv/XWW9oKd+zYoV3yt206jFeLh1xNTY2vr69UP6kVFmeQbmXs%0A2LERERFSZyZNmvT1119rky5fvixLxcfHS78jdXjRokX65Tqr0unXGne96GwL%0AxL4mj31vvvmm1FEnJ6cxY8ZMnjy5X79+FmOfyeiUKVNktE+fPjNmzJD/h3l5%0AeZWXl2uzSS339PR89NFHZVgu2urqapm0e/dudT3INZOamnru3Dk+YOA+JO2A%0AXKdyCUuPJb1jswZaN6au8ejoaEdHx9DQ0F27dpm0D9KxybCfn9/169fVIsOH%0AD4+KirKl6TBZLR5y//3vf1X1O378uMUZhjdYvHjxuHHjZLYhQ4Zok1566SVV%0AsnTpUqnS8p8N/XKdVen0a427XnS2BWJf08a+06dPq+9MrF+/3mSSTuw7efKk%0AU4OLFy/KaFJSkkxasWKFNlunTp3Onz8vo61bt5ZRrQXnIS9wn5OL2tXVVa7T%0ArVu31jfcnIuMjDTvxsLDw6X1sNhcyCIhISEy+te//lVG5T940sgsWLDAlqbD%0AZLV4yG3ZskVqhYODw40bN/TnvHnzpr+/v8ypuh4RFxcny77zzjsmc1or11mV%0ATr/WuOtFZ1sg9jVt7FMXlZubW2Vlpe2xb/PmzTIs/00f20Ddw0tNTdVmk/9F%0AqaXUtxy072QQ+4D73J49e9Tt/ytXrhhfxSbd2LJly3Sai9mzZ8voE088Ud/w%0AzNfFxeXChQu2NB0mq8VDbu/everm2ffff29xhoqKiiVLliQmJg4aNEjFL+3r%0AQytXrlTLdu/ePTMzs7a2Vr9cZ1U6/VrjrhedbYHY17SxLysrSyqcj4+P+f+l%0AdGLfhg0bZNjd3T0tLW36LbIq86WIfcCDRboruUg9PDy07tBiN2byspdJ4alT%0ApxwdHR0cHI4fPx4REfH000+rctubDkBcunRJRTTj9zk0krS6dOkiUxMSEgwG%0Ag/oWoHF+ysvLi42NVWsYOXKkTrn+qnT6tUZcL7fdbRD7mjD2FRYWqqq/fft2%0A22NfUVGRWkr+o6O/lEnsU1/rmTp1Kh8tcH8qKChQV/eRI0dktLS0VD3S+lGx%0ATwwePFhK1Fed/v73v6tC25sOQHnyySelYkhO0m6nadT/IgYMGKBG27dvbzE/%0AffLJJ+pJcUlJibVy/VXp9GuNuF5s3G0Q+5rqlQ75v47UuTZt2syZM0fq8cyZ%0AM6uqqupv90pHYmKijIaEhMyePTs7O1v+y6Leh9KPfdu2bZNRqeVS73mlA7gP%0A1dbWhoeHqzZB/p8WGhrq5+fXiNj34Ycfqu4wODhYuxFie9MBKMePH/fy8pK6%0A0bFjxwULFkhvkpGR8ctf/lIqzKFDh6Q8KCho7dq1zzzzjKOjo/Gj2KSkJJl/%0A//79a9askfIWLVpUVFRYK9dflU6/1ojrRX9bIPY1eewrLy+Xy8DFxUW10YGB%0AgdeuXbtt7KusrExJSXF3d1dLBQQEqEe3+rFPrpDRo0d7enpK4caNG/mAgfvQ%0AwYMH27Vrp15XzMzMbMRDXiH/e1T9X3p6uvGcNjYdgObUqVNSPdTbh6J58+Zd%0Au3ZVvxD08ssvu7q6SnKaMGHCtGnT1AzqO0vx8fEeHh4yKjMMHjx4x44dam3W%0AynVWpd+vNeJ60dkWiH136eeaa2pq5D9V5nfR9dXV1RUXF5eVlf2opaQ/OHPm%0ADJ8ucN+SS1v6WuO7dHd8/Y1oOvAwk1R09OjRL774QvvlFO3OhdZznT9/3vjv%0AyEs1KykpuXr1qnn1s1ius6o7fr00elsg9gEAAIDYBwAAAGIfAAAAiH0AAAAg%0A9gEAAIDYBwAAAGIfAAAAiH0AAADEvjsY+9QffgYAAPcP6Z3JPcS+++tun9RL%0APhUAtAygTgLEPgB0sQB1EiD2AaCLBaiTALEPAF0sQJ0EsY/YB4AuFqBOgtjH%0AhQSALhagToLYx4UEgJYB1EmA2MeFBICWAdRJgNjHhQSAlgHUSYDYBwC0DKBO%0AAsQ+AHSxAHUSIPYBoIsFqJMAsQ8AXSxAnQSxj9gHgC4WoE6C2MeFBICWAaBO%0AgtjHhQSAlgHUSYDYx4UEgJYB1EmA2MeFBICWAdRJgNgHALQMoE4CxD4AdLEA%0AdRIg9uGBdfXq1bu/0eLi4i+//PLSpUucebpYgDoJYh8XUpNLTk6OjIz86KOP%0AHua6mJmZmZiYKAN1dXX5+fnTp0//1a9+NWnSpIULFzbpWRo2bJjUuuXLl+vP%0AZm2v7ENOTs6zzz575coVuliAOgliHxdS03r++ecDAgJWrVplTwdVVlZ24MCB%0AY8eO2TKzhDn56JcsWSLpSnKVDHt7e/ft29fX19fBwaFJz5ItsU9nr37UYf6o%0Ame/mp1NaWiqH9tRTT8mR0sUC1EkQ+7iQ8ONMnDhRPs2ZM2feds4zZ85I5oiN%0Ajb158+bXX38tS7m5uZ07d04mScmRI0eadD9tiX06e2X7Yf7Yme/yp7No0SIp%0AWbx4MV0sQJ0Ese+hvpAuX748d+7c+Pj4wMDAbt26SQepyuvq6hYuXBgTExMU%0AFDRw4MCCggL9+a2Vp6Wl9erVKzs7W9viX/7yl969e8ts3bt3f/31169du2Yy%0A53vvvSfbjYuLM17KmMV9Ky4ultXKGg4fPiyjFRUVgwcPnjZtmv7hiHXr1vXv%0A31/Kw8LCEhISVOH48eNlVbt371ajI0aMkNGjR4/K8Nq1a2Xn5dMMDg6WwhMn%0ATuis32AwyJzbt2+XYVlchh0dHQ8dOmRyRCZnSY3K1ufMmfPoo4/+/Oc/z8nJ%0AqaqqmjRpUqdOnZ599lntVpa24Ntvvx0VFdW5c2fjR7Qmsc/iTlrbK4uHKYVj%0Ax46NiIiQDcnOSGTUmdnaObH96PTXYLGqWNyT2tpaGe3YseP9ecOPLhbUSYDY%0Ad5e89NJLsmNDhgxZunTp5MmTtdAwZcoUKe/Tp8+MGTO8vb29vLzKy8t15rdW%0AbpI8pk+fLqMtW7aU1UZGRsqw9M03b97U5pRRT09PSQMy7OvrW11dbb7P1vZN%0AlT/22GOyVHJysouLyzfffKO/yJtvvinlTk5OY8aMkd3u16+fml92Q8o/+eQT%0ANdq+fXsZ3b9/vwxLXpFcK6OSNlJTU9VNMmvrlxwj5efPn1frkX2TUVdXV0k8%0AEnSs5TM1KnkoICBAwooMt27d+sknnwwNDfXx8ZFRSUjGc0ZHR0vWkanNGnzw%0AwQcWV2ttJy3ulcXDHN5g8eLF48aNUx+3zszWNmf70emvwWJVsbgnQtYvhZ9/%0A/jldLECdBLHv4b2QpHeUHXvnnXeMC0+ePOnU4OLFizKalJQk86xYscLa/Drl%0Axsnj9OnTzs7OMrp3714ZvXHjhnTbMvrhhx9qc0pOUiFJooCM7tq1y2SFOvtW%0AWVmpYpasysHBwWAw6C+i7c/69etNtqIT++rNHiNaW78coKOjoyQSbbUnTpzo%0A0qWLCmfh4eH5+fk6sa9nz57Xrl0rKyuTY5HR3/3ud/UNLyioaGs8Z//+/WVO%0ASc+jRo1SOcl8tTrnzdpe6Ty3lW35+/vLjmmJ1sZzYvvR3XYN1qqKxd2eOnWq%0AFL7//vt0sQB1EsS+h/dCWrlypervu3fvnpmZWVtbK4WbN2+WEi8vr7EN1O2T%0A1NRUa/PrlBsnj08//VSG3d3dJQ+pqYMGDZKSlJQUbc6lS5eqSdHR0TIqOcBk%0Ah3X2TeTm5qoYERkZqd0ptLbIli1b1NfaJC/+lNhnbf1nz56VgaioKOM1y7G/%0A/fbbLVq0UKeisLDQWuzTtu7n5yejFy5cqL/1TDYiIsJiXpRUJKNt2rQxn6p/%0A3izulXl+qqioWLJkSWJionxwrq6uMlU9RbX9nNh+dLddg7WqYjH2zZ8/Xwrn%0AzZtHFwtQJ0Hse6gvpLy8vNjYWBXaRo4cKSUbNmxQ3X9aWtr0W7KysqzNr1Nu%0AnDxkDTLs7++vfcXq6aef1u70mCQYa7FPf98kr6g48vjjj9fU1OgvovbHx8dH%0Ai6GNi33W1i/Z19nZWYKL+Tn/z3/+I+FMlpoxY8YdjH2rVq2S0Q4dOphP1T9v%0AFvfK5DCvXLmibgomJCQYDAZfX1+d2KezORuP7rZrsFZVLMa+5ORkKVy9ejVd%0ALECdBLGPC6leumHZQwcHh5KSkqKiIpXe9uzZY8v8OuXGPbRkMrVa9W6ECA4O%0A1m7b6PTl586d+8c//qGe4unsm+Q8yZ3BDWSGOXPmqHJri2j7o165MNa3b18p%0AX7lyZX3D18WaN29uHPvUd86mTp2qv36hvr945swZ8xM4YsQImfTrX//6DsY+%0A9SR00KBB5lNt+UxN9srkMFUOGzBggHEU1mKf7efExqO77RqsxT6TPTG+r3zg%0AwAG6WIA6CWLfw3shSVBYsGCBBJo1a9bIHrZo0aKiokLKExMTZTQkJGT27NnZ%0A2dkGg0G9nGttfmvlJj30yJEj1fe6tm3bpu7KtGvXzuKcxn353/72NxmWfKAm%0AWdu3WbNmSdzcuXOnrFy9o6DlS2uLqP1p06aNZETZ1syZM9U7DepVj7CwsAkT%0AJrRt21Z9B1GLfWr9knskCamXBqytPyMjQ8o3b94swxJfEhIS5s+fLznyj3/8%0Ao4uLi0xat27dT499HTp0yMrK0p7Sbtq0yWI8sriTOntlcpiHDh2S0aCgoLVr%0A1z7zzDOOjo7GT1ptPye2H53+GqzFPvM9qa6uDgwMlAhOFwtQJ0Hse6gvpPj4%0AeA8PDxWSBg8evGPHDlVeWVmZkpLi7u6u7rgEBASop2bW5rdWbtJDl5eXjxs3%0ATt08k9zwi1/84j//+c9tb+GYxD6L+yahRFY7ZcoUNY/ENfW6qPqWobXDkf2R%0AwKqyjpBwoH5QpqioqEePHup3QPLy8kwe8so6R48erbLgxo0bddZ/8eJFGZbA%0AcePGjV27djk5OTW7RQ5HwpbFY/+xsW/MmDHqBqebm5uEP2t3xSzupM5emR/m%0Ayy+/LJ+vfHByeqdNm6YWUY/IbT8nth+d/hqsxT7zPXnrrbfu2ye8dLGgTgLE%0Avruqrq6upKTE4p8ulUnFxcVlZWW2zK+zHhM1NTXHjx/XfrGv0bttvm+NW0Tt%0Aj/nf79J+/sOiqqoqk6e3Fte/bds2BweHjIwMtSGZYe/evYWFhcY/4NJoWgBS%0Amzb/kqItJ0F/r0wOU4KydqLOnz9v8gd/bTwnTf1BG++JLCvBUT22posFqJMg%0A9nEhoWlt3LgxKSmpKdZs41/dfZjl5OS8+uqrdyRk0zKA2AcQ+7iQcHu23Idr%0AhJSUlJiYGO2BKe7amdf34osv/u9//6NlALEPIPYBsP9e85FHHsnNzaVlALEP%0AIPYBsPNeU5k+ffr169dpGUDsA4h9AOw89olu3bqpv3pCywBiH0DsA2DPsU/9%0AsM7ixYtpGUDsA4h9AOw89inx8fEmf9KGlgHEPoDYB8AOY5/w9PT8+OOPaRlA%0A7AMe9tin/rA9ADsmsW/ZsmV0sSD2AdztA2DPd/t69uxp8d0OWgYQ+wBiHwA7%0AiX3Ozs4Gg8HaL7nQMoDYBxD7ANhD7IuIiMjPz6dlALEPIPYBsOfYN3HixNv+%0AlTZaBhD7AGIfgAe412zVqlVOTg4tA4h9ALEPgD1LSEi4cOECLQOIfQCxDwBo%0AGX7g6tWrnIT75xRRJ0Hs40IC8AC3DF988cXs2bNHjx49duzYt9566+jRo8ZT%0AV69ePWfOnIKCAq1k//79UvKvf/1LjX788cdzfmjp0qXmk/785z8fP35cW8n2%0A7dulcMWKFcbbKikpkcK8vDytJDMzMzEx0V4/3+Tk5MjIyI8++ugnricnJ+fZ%0AZ5+9cuUKvRVA7ANA7LMqPT3d2dnZycnp8ccf79q1q6Ojo4uLy9y5c7UZevXq%0AJbuxfPlyreTdd9+Vkj/84Q9qdNiwYTLavHnzFrd06dLFeJKsUFarXmT55S9/%0AqSZJuJTtSsmuXbu0NT/99NNeXl5nzpxRo5KHZIYlS5Y8cB9cWVnZgQMHjh07%0Apj/b888/HxAQsGrVqp+4udLSUm9v76eeeqquro7eCiD2ASD2WbB69WrZhJ+f%0An/Y7MhLCPD09pXDjxo0/KvbNnj3bfP1q0gcffHDlyhWV4cRXX32lpk6aNElG%0AH3vssdraWhndtm2b8Wol/EmUiY2NvXnz5gP3wU2cOFGOZebMmXdti4sWLZIt%0ALl68mN4KIPYBIPaZkrAVEBAgm3jnnXeMy998800p7Nix4x2MfWq0Q4cOMrp5%0A82Y1WlZW1rJlSylZunRpVVVVWFjYo48+WlNTo6YaDAaZtH37dm1v09PTf9Yg%0AIyPj9ddflx3bs2ePmjp+/HgZ3b17txodMWKEjGpPq+vq6hYuXBgTExMUFDRw%0A4EDtgXVaWprMlp2dPXfu3M6dO+fm5s6aNUtKjG92ZmZm9u7d+/vvv7d4Di9f%0Aviwzx8fHBwYGduvWTbKXFK5du1ZGZeeDg4NlbSdOnLC4LeNCk/157733ZG/j%0A4uK0SULOjBx1eHi4OgPTpk0zPgNyfmRz8qk19Q0/eisQ+7iQADx4LUNRUZG6%0A/aZyieaLL75Q5Srr2Bj7UlJSTt6i3Z8zjn05OTky7OHhUVlZqa1qyZIl6hdt%0AZHEZ0HKb6NSpk5ScP39ejU6ePFn95WLJRhKz1B5u2rTJOJt+8sknarR9+/Yy%0Aun//fjU6ZcoUGe3Tp8+MGTO8vb29vLzKy8u13YuOjnZ0dAwNDd21a5esUO3P%0AjRs3ZAY5kJCQkKFDh1o7hy+99JLMP2TIEEmusocSLqVQjkIioJRLbktNTT13%0A7pzFbWmF2rlVo3IscpiSgGXY19e3urpaTX3llVekxMfHR47iqaeeMjkD4skn%0An5SSzz//nN4KIPYBIPb9wJYtW2T9Dg4O2g02paysTEUKFSBsjH3GLl26ZDyp%0AS5cubdu2lYHAwMC9e/cab6u2tjYqKkot9dxzz2nlkrokHknoUaMXL150dXWV%0AebZu3VrfcPcuMjLSxtgnMdSpgaxERpOSkmSSepVE7V54ePjp06e17ao7oOo2%0A24YNG2T4s88+s3YOJdiZ3y6tt/SQ13xb1mKf5F0Vdlu3bq1991Gyo/oq5I4d%0AO9TMKhcax76pU6dKyfvvv09vBRD7ABD7fmDfvn0qb5n8sZDi4mJVLoHJ9tiX%0AmJi49RZ1q0yb9Nhjj3Xt2lUGRo4cab4b6gabpM+zZ89qhTIshZII1eiePXtk%0AVKKb9rJqdHS0jbFv8+bNMuzl5TW2gboPl5qaqu3esmXLjPdH3VYcPny4DPfr%0A1y82NlbnHK5cuVKdq+7du2dmZqovKerEPpNtWYx92nvQ6hjVL3vn5uaq92a0%0Ae6UmZ0DMnz9fSubNm0dvBRD7ABD7fkDSnoosxo9WtZwUHBysRocOHWpyQ0sy%0Ak/FdJVu+23f58uWgoCAZXr16tck8hw4dknJnZ2fjQslPUiJZzTgaenh4aLnK%0A9tin7ti5u7unpaVNvyUrK8s8dRnvjwSs7du3y8D69ev1T2NeXp5EQ3UmtVxr%0ALfaZbMti7NNGjWPfp59+KsNubm5apDaPfcnJyRbPML0VQOwD8LDHPjF8+HD1%0AoyraewCSq/r162f8yPW1116T0V//+tfaUr1795aSf/7zn7bHPhlet26dDHt7%0Ae3/33Xe3jX1CPcZVP+ZSUFCgctWRI0fqG36vRD0A1UJP3759ZXTlypX1DV+t%0Ak9CmxT7tK4za2w/6UUyo587+/v4dO3bUgqY+SZzqnmVJSUn9rW8TTp069U7F%0AvsLCQnUU6l2Qffv2tWjRwiT2DRo0SEoOHDhAbwUQ+wAQ+0ydOnXKz89PPdPc%0AunWrZIghQ4aotwrKysrUPIcPH3Z3d5dYNm7cuL///e+vvPKKDHfq1El73qrC%0AyhNPPPF/jBi/x6C9yfuLX/xCRiWiGf8mi7XYl5GRob32K9krPDxcRtu0aSOJ%0AKjQ0VO22FnrU28dhYWETJkxo27at+g0a7ZWOxMREGQ0JCZFsmp2dbTAY1Cu3%0A1mKfeloq1Gw6kpKSFixYIBtas2aNzC9RrKKiov7Wj9G0b99+w4YNxqei0bFP%0Ai7ZyouTTkfMQHBwso1u2bFFTq6urAwMDJSvTWwHEPgDEPsvOnDkzdOhQJycn%0A7YUMCVgmfzVYslfHjh3VVC8vrxEjRnz55Zcm2cWE+pEUk9j3zTffqPtwxt8/%0Asxb7Ll68GBAQIDlGPdY8ePBgu3bt1MutmZmZJo84i4qKevTooZ5N5+XlmbzJ%0AW1lZmZKSIuFV7ZusVj1+tRb7SktL5YT4+/vf9o+excfHe3h4yEpcXV0HDx6s%0AvW8hOXX06NHGv4D402Pf2bNnExISfHx84uLidu/eLdlXu/kn3nrrrbvwhJfe%0ACsQ+LiQAD3zLUFVVdfjw4Z07d44dO9bR0VHCWWxs7OTJkyVsaTnm22+/PXDg%0AgPbdsrtg27ZtDg4OGRkZarSuru7UqVPqqav5N9vqG1531VmbLF5cXKzdxdSR%0An58vJyE9Pd2WnZTVlpSUWAyIcla1vzjy02m/5FJ/65mv9kxZjktCrfGDeHor%0AgNgHgNh3exIp3njjjfDw8B49epi85Hv3bdy4MSkpybzcYuy7IyTXRkVFubq6%0AGr9Z/LIlt/3ba3dWWlpahw4dEhMTR48e7evrK4c/fvx4NSknJ+fVV1+VlElv%0ABRD7ABD7GsPk9/zuFYv3FyX9xMTE6PyiXqNlZWXJmiX4mkQuc8ePH7+b52HL%0Ali0vvPBC165dW7Zs2b1794yMjOvXr+ucItu9+OKLtud7eisQ+4h9AGgZ8ABX%0As0ceeUT7miB1EsQ+GncAtAyw22qmTJ8+XbuDSJ0EsY/GHQAtA+w29olu3boV%0A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%0AbZrKSepBpMWgEx8f7+HhIeWy1ODBg7UXFCorK1NSUtzd3dUaAgICLP7o3cGD%0AB9u1a6e+lZiZmWnyoLOoqKhHjx7ql1Py8vJM3uS1tglrsa+0tNTJycnf3//q%0A1avWTo61w5GEOnr0aJU7N27ceEdi39mzZxMSEnx8fOLi4nbv3q3eqlY3/4h9%0ANO4AaBlAnbxjsU+ySF1dXXFxsfbdMk15ebn2jsX58+cvXbqkv0JZT0lJicUs%0ApTZRVlamv/ipU6fUU1eL329Td9d0Fr/tJpT8/HyJs+np6Y0+nKqqqjNnztyp%0AD0L7JZf6W898tWfKxD4adwC0DKBO3snYdx+eh6Z7rUHSbVRUlKur69mzZ++T%0Ag01LS+vQoUNiYuLo0aPV2zPjx49/sOotsQ8AXSxwX9fJlJSUmJgY7fXY+4pk%0AINk3i7+o9xNlZWXJmt94443752C3bNnywgsvdO3atWXLlt27d8/IyLh+/Tqx%0Aj8YdAC0DqJMAsY8LCQAtA6iTD5SysrIDBw4cO3aMz53Yx4UEgJYB1El7Zv7T%0AxyD2cSEBoGUAdfLOq6urW7hwYUxMTFBQ0MCBAwsKCqSwuLi4d+/evXr1Onz4%0AcH3Dn2gbPHjwtGnTdBZR1q1b179/fykPCwtLSEhQhePHj5dV7d69W42OGDFC%0ARo8ePSrDa9euDQwMVL/JIoXqt6B11m+strY2PT39Zw0yMjJef/11WYP2c806%0AG9XZRFpamsyWnZ09d+7czp075+bmzpo1S0pkVNtuZmamnJzvv/+eikrsA0AX%0ACzxIdVL9wYk+ffrMmDHD29vby8urvLxcK3/ssceqq6uTk5NdXFy++eYb/UXU%0Azyk7OTmNGTNm8uTJ/fr1U/Pr/FE1iWXq7+fGxcWlpqaqH2extn4T6u/qenp6%0ASlaLj49XP9dny19y09mEeq85Ojra0dExNDR0165d6k/GtWrVSv20zc2bN0NC%0AQoYOHUotJfYBoIsFHqQ6efLkSacGFy9erL/1l9lWrFhR3/Drx506dZJRSUIO%0ADg4Gg0F/kdOnTzs7O1v8+7b6CczkIa/OLhmTqa6urjJp69at9Q137yIjI22M%0AfTqbULEvPDxcDkctKGkvICBACrOzs+tv/cG6pni5mNhH4w6AlgHUydtQv/Fm%0AkUzSX3bz5s0ym5eX19gG6sZbamqqmpqbmyuBT0okUWk/JmxtkS1btqg/8iF5%0A8afEPv1d0uzZs0fdWdR+StrkR/50NqqzCRX7li1bZrwtdVtx+PDhMtyvX7/Y%0A2FiqKLEPALEPeMDqpLp35e7unpaWNv2WrKwsNbWwsFDdUXv88cdramr0FxFS%0A7uPjY/53Pn5U7NPfJY169urh4aH+nsePin06m7D449XqbxM3b958+/btFm9n%0AgtgHgC4WuN/rZFFRkbovqL0JoZGcFxsbG9xAZpgzZ47+IurviQnJRiar6tu3%0Ar5SvXLmyvuHLfJKfzL9mN3Xq1NvukrGCggI125EjR+ob/sBu69atjWOfzkZ1%0ANmHtb5ZERUVJub+/f8eOHbWgCWIfALpY4EGqk4mJibK5kJCQ2bNnZ2dnGwyG%0ARYsWSfmsWbMcHBx27ty5bds2mcHV1VV7DdbaIiNHjpTyNm3aSEbMycmZOXNm%0AVVVV/a1XPcLCwiZMmNC2bVtPT0/j2KfW3759+w0bNqhXOqyt35hkr/DwcLU5%0ACY6hoaF+fn7GsU9/o9Y2YS32zZ8/XyVF8z0BsQ8AXSzwYNTJysrKlJQUd3d3%0AFWsCAgIkrh06dKh58+YSp9Q8kpxk0s9//nN1o8viIlJeXl6elJTk4uKiygMD%0AA69du1bfcHetR48e6lda8vLyTB7yyjpHjx6tYtnGjRt11m/i4MGD7dq1U19h%0AzMzMNHnIq79Ra5uwFvtKS0udnJz8/f2vXr1K/ST2AaCLBR7gOllXV1dcXFxW%0AVvbTF6mpqTl+/Lj2poVG3cmzpqqq6syZMz92l2SeU6dOqTBqEvts2ajtR52f%0An+/o6Jienk7lJPYBoIsFqJP3mMXYd0fcuHEjKirK1dX17NmznGdiHwC6WIA6%0AeY8lJibGxMQ0xS/qZWVlyZrfeOMNTjKxDwBdLECdBIh9AOhiAeokiH1cSADo%0AYgHqJIh9XEgAaBlAnQSIfVxIAGgZQJ0EiH1cSABoGUCdBIh9XEgAaBlAnQSI%0AfQDoYgHqJEDsA0AXC1AnAWIfALpYgDoJYh+xDwBdLECdBLGPCwkAXSxAnQSx%0AjwsJAC0DqJMAsY8LCQAtA6iTALGPCwkALQOokwCxjwsJAC2DVSUlJQcPHvzf%0A//7X6DUUFhYeO3asurqak0mdBLGP2AeALvbeiIqKatbA0dGxe/fuv//97+vq%0A6rSpq1evbt26dbNbYmNjDx06pCYNHDhQSiQRqtFu3bo5ODiUlZWp0dDQUIPB%0AIAMLFiwICwvTNpGbm0vVok6C2MeFBIAu9p7Fvn//+9/r168PDw+X4U8//VRN%0Aevfdd2W0f//+R48evXbt2tatW9u0aePi4nLkyBGZOnfuXJm6atUqGZa0J5FO%0ARnNycmT0+PHjMryvgQqLpaWl58+flzVoMRHUSRD7uJAA0MXeg9hXW1srw7//%0A/e9leMmSJTJ84cIFNzc3lQi1mWfNmiUlffv2leF//etfMvyb3/xGhjdt2iRx%0AUEZTU1NldOnSpb6+vrLO/Px8KQwLCzt9+jQ1ijoJYh+xDwBd7L2PfefOncvO%0Azm7Tpo2fn9+ZM2ekfOfOnVLeunVr42e+Bw8elEJ3d/ebN29KqvP29g4KCpLy%0A1157bdSoUTLaq1cvGR02bNjIkSPVInFxcbKIpMCFCxeqcAnqJIh9XEgA6GLv%0AWexTWrVq9e2336ryNWvWSMkTTzxhPHNlZaWDg4OUX7x4UUaHDh0qw998883j%0Ajz/+pz/9afDgwS4uLpcvX/by8lq+fLlapLq6evLkyWqpmJiY0tJSqhZ1EsQ+%0ALiQAdLH3LPbt2bNHEp4MbNy4UZXv3btXRj08PIxfv92+fbu6dadG//jHP8ro%0A7NmzHR0djxw5oh4Bq39PnDhhvJX8/Hz1YseECROoWtRJEPu4kADQxd6z2Fdb%0AW/vf//7X1dW1ZcuW6oZcRUWFDMuknTt3ajO/9tprUjJ8+HA1+tVXX8moX4Ob%0AN2/u2LFDRn18fEJDQ8039Nlnn8lUi5NAnQSxjwsJAC3D3Yt9MmwwGGR40KBB%0A6vt8q1atktFOnTrt2rWrpKTkz3/+s5ubm4eHh/GdPPXzLgkJCSopOjk5yeir%0Ar76qpu7bt2/evHl79+799ttvx40bJ5OeeeYZqhZ1EsQ+LiQAdLH3OPZVVVWp%0AR7Hvvvuumrphw4bg4GD1zT8HB4f+/fsXFhYaLz5mzBiZlJGRoUa7detm/KT4%0A448/Vt/qE23btv3tb3974cIFqhZ1EsQ+LiQAdLH3qbNnz37xxRdXr15txLLV%0A1dVFRUUmYRHUSRD7uJAA0MUC1EkQ+7iQANyXLUNFRcXEiRM5XaC3Aoh9AOy5%0Ai83Pz4+IiKANAb0VQOwDYLddbE1NjcFgUH++jDYE9FYAsQ+AfXaxhYWFPXv2%0AbGaE0wV6K4DYB8Deuthly5b5+vo2+yFOF+itAGIfAPvpYi9cuJCQkNDMEk4X%0A6K0AYh8AO+lic3JyWrVq1cwKThforQBiHwA76WIzMzPNn+0Cd5bUMXorEPuI%0AfQDufcvw3XffDRgwgLt9oLcCiH0AHooudt68edrvthD7QG8FEPsA2HMXe/jw%0AYfUrzcQ+0FsBxD4Adt7FXr9+PTk5mdgHeiuA2Afgoehid+zYERwcTBsCeiuA%0A2AfA/rvYioqKUaNGcbpAbwUQ+wDQxQLUSRD7iH0A6GIB6iSIfVxIAGgZAOok%0AiH1cSABoGUCdBIh9XEgAaBlAnQSIfVxIAGgZQJ0EiH0AQMsA6iRA7ANAFwtQ%0AJwFiHwC6WIA6CRD7ANDFAtRJEPuIfQDoYgHqJIh9XEgAaBkA6iSIfVxIAGgZ%0AQJ0EiH1cSABoGUCdBIh9jb6QKioqJk6cyOcH0MUC1EnAnmNffn5+REQElxxA%0AFwtQJwG7jX01NTUGg8HNza1ZAz4/gC4WoE4Cdhj7CgsLe/bs2cwInx9AFwtQ%0AJwF7i33Lli3z9fVt9kN8fgBdLECdBOwn9l24cCEhIaGZJXx+AF0sQJ0E7CT2%0A5eTktGrVqpkVfH4AXSxAnQQe1Njn6+trPJqZmWn+bBeA/TG59vVbBuCeo06C%0A2NckvvvuuwEDBnC3DwAAwM5jnzJv3jztd1uIfQAAAHYb+8Thw4fVrzQT+wAA%0AAOw59onr168nJycT+wAAAOw89ik7duwIDg4m9gEAANh57BMVFRWjRo3i8wMA%0AALDz2AcAAABiHwAAAIh9AAAAxD5iHwAAALEPAAAAxD4AAAAQ+wAAAEDsAwAA%0AALEPAAAAxD4AAAAQ+wAAAEDsAwAAIPYR+wAAAIh9AAAAIPYBAACA2AcAAABi%0AHwAAAIh9AAAAIPYBAACA2AcAAABiHwAAALGPkwIAAEDsAwAAALEPAAAAxD4A%0AAADcX7EPAAAAdozYBwAAQOwDAACAvfh/VQtvO/iB3gkAAAAASUVORK5CYII=%0A" alt="Text Diagram" class="img-rounded img-thumbnail center-block ditaa">
+<p>If you execute the same query often (or a similar query with different column values), consider a
+<a href="../prepared/">prepared statement</a> instead.</p>
+
+<h3 id="using-values" class="target">Using values<a class="anchor" href="#using-values" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<p>Instead of sending a raw query string, you can use bind markers and provide values separately:</p>
+
+<ul>
+<li>
+<p>by position:</p>
+<pre class="highlight"><code><span class="n">String</span> <span class="n">paramName</span> <span class="o">=</span> <span class="o">...</span>
+<span class="n">session</span><span class="o">.</span><span class="na">execute</span><span class="o">(</span>
+    <span class="s">"SELECT value FROM application_params WHERE name = ?"</span><span class="o">,</span>
+    <span class="n">paramName</span><span class="o">);</span>
+</code></pre>
+</li>
+<li>
+<p>by name:</p>
+<pre class="highlight"><code><span class="c1">// Just a convenience to build a java.util.Map with a one-liner</span>
+<span class="kn">import</span> <span class="nn">com.google.common.collect.ImmutableMap</span><span class="o">;</span>
+
+<span class="n">String</span> <span class="n">paramName</span> <span class="o">=</span> <span class="o">...</span>
+<span class="n">session</span><span class="o">.</span><span class="na">execute</span><span class="o">(</span>
+    <span class="s">"SELECT value FROM application_params WHERE name = :n"</span><span class="o">,</span>
+    <span class="n">ImmutableMap</span><span class="o">.&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">Object</span><span class="o">&gt;</span><span class="n">of</span><span class="o">(</span><span class="s">"n"</span><span class="o">,</span> <span class="n">paramName</span><span class="o">));</span>
+</code></pre>
+</li>
+</ul>
+
+<p>This syntax has a few advantages:</p>
+
+<ul>
+<li>if the values already come from some other part of your code, it looks cleaner than doing the concatenation yourself;</li>
+<li>you don’t need to translate the values to their string representation. The driver will sent them alongside the query,
+in their serialized binary form.</li>
+</ul>
+
+<p>The number of values must match the query string, and their types must match the database schema. Note that the driver
+does not parse query strings, so it cannot perform those checks on the client side; if you make a mistake, the query
+will be sent anyway, and the error will be caught by Cassandra (<code>InvalidQueryException</code> is a server-side error):</p>
+<pre class="highlight"><code><span class="n">session</span><span class="o">.</span><span class="na">execute</span><span class="o">(</span>
+        <span class="s">"SELECT value FROM application_params WHERE name = ?"</span><span class="o">,</span>
+        <span class="s">"foo"</span><span class="o">,</span> <span class="s">"bar"</span><span class="o">);</span>
+<span class="c1">// Exception in thread "main" com.datastax.driver.core.exceptions.InvalidQueryException:</span>
+<span class="c1">// Invalid amount of bind variables</span>
+</code></pre>
+<h3 id="value-type-inference" class="target">Value type inference<a class="anchor" href="#value-type-inference" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<p>Another consequence of not parsing query strings is that the driver has to make a guess on how to serialize values,
+based on their Java type (see the <a href="../../#cql-to-java-type-mapping">default type mappings</a>). This can be tricky, in
+particular for numeric types:</p>
+<pre class="highlight"><code><span class="c1">// schema: create table bigints(b bigint primary key)</span>
+<span class="n">session</span><span class="o">.</span><span class="na">execute</span><span class="o">(</span>
+        <span class="s">"INSERT INTO bigints (b) VALUES (?)"</span><span class="o">,</span>
+        <span class="mi">1</span><span class="o">);</span>
+<span class="c1">// Exception in thread "main" com.datastax.driver.core.exceptions.InvalidQueryException:</span>
+<span class="c1">// Expected 8 or 0 byte long (4)</span>
+</code></pre>
+<p>The problem here is that the literal <code>1</code> has the Java type <code>int</code>. So the driver serializes it as a CQL <code>int</code> (4 bytes),
+but the server expects a CQL <code>bigint</code> (8 bytes). The fix is to specify the correct Java type:</p>
+<pre class="highlight"><code><span class="n">session</span><span class="o">.</span><span class="na">execute</span><span class="o">(</span>
+        <span class="s">"INSERT INTO bigints (b) VALUES (?)"</span><span class="o">,</span>
+        <span class="mi">1L</span><span class="o">);</span>
+</code></pre>
+<p>In the same vein, strings are always serialized to <code>varchar</code>, so you could have a problem if you target an <code>ascii</code>
+column:</p>
+<pre class="highlight"><code><span class="c1">// schema: create table ascii_quotes(id int primary key, t ascii)</span>
+<span class="n">session</span><span class="o">.</span><span class="na">execute</span><span class="o">(</span>
+        <span class="s">"INSERT INTO ascii_quotes (id, t) VALUES (?, ?)"</span><span class="o">,</span>
+        <span class="mi">1</span><span class="o">,</span> <span class="s">"Touché sir, touché..."</span><span class="o">);</span>
+<span class="c1">// Exception in thread "main" com.datastax.driver.core.exceptions.InvalidQueryException:</span>
+<span class="c1">// Invalid byte for ascii: -61</span>
+</code></pre>
+<p>In that situation, there is no way to hint at the correct type. Your only option is to serialize the value manually:</p>
+<pre class="highlight"><code><span class="n">ProtocolVersion</span> <span class="n">protocolVersion</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="na">getConfiguration</span><span class="o">().</span><span class="na">getProtocolOptions</span><span class="o">().</span><span class="na">getProtocolVersionEnum</span><span class="o">();</span>
+<span class="n">ByteBuffer</span> <span class="n">bytes</span> <span class="o">=</span> <span class="n">DataType</span><span class="o">.</span><span class="na">ascii</span><span class="o">().</span><span class="na">serialize</span><span class="o">(</span><span class="s">"Touché sir, touché..."</span><span class="o">,</span> <span class="n">protocolVersion</span><span class="o">);</span>
+<span class="n">session</span><span class="o">.</span><span class="na">execute</span><span class="o">(</span>
+        <span class="s">"INSERT INTO ascii_quotes (id, t) VALUES (?, ?)"</span><span class="o">,</span>
+        <span class="mi">1</span><span class="o">,</span> <span class="n">bytes</span><span class="o">);</span>
+</code></pre>
+
+
+        </div>
+      </div>
+    </div>
+
+    
+    <footer class="container text-muted">
+      <ul class="list-inline">
+      
+        
+        <li>
+          <a href="https://github.com/datastax/java-driver/">Code</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="http://datastax.github.io/java-driver/">Docs</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://datastax-oss.atlassian.net/browse/JAVA/">Issues</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://groups.google.com/a/lists.datastax.com/forum/#!forum/java-driver-user">Mailing List</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="irc://irc.freenode.net/datastax-drivers">IRC Channel</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://github.com/datastax/java-driver/releases">Releases</a>
+        </li>
+      
+      </ul>
+    </footer>
+    
+
+    <script src="../../../../js/jquery.js"></script>
+    <script src="../../../../js/bootstrap.js"></script>
+    <script src="../../../../js/angular.js"></script>
+    <script src="../../../../js/mousetrap.js"></script>
+    <script src="../../../../js/hotkeys.js"></script>
+    <script src="../../../../js/ZeroClipboard.js"></script>
+    <script src="../../../../js/lunr.js"></script>
+    <script src="../../../../js/app.js"></script>
+  </body>
+</html>

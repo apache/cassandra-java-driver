@@ -41,12 +41,14 @@
               <span class="text-warning">Attention:</span> Viewing documentation for version
               <div class="btn-group">
                 <button id="current-version" class="btn btn-default btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                  3.0.3
+                  3.1.0
                   <span class="caret"></span>
                 </button>
                 <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
                 
-                  <li class="disabled"><a href="./">3.0.3</a></li>
+                  <li class="disabled"><a href="./">3.1.0</a></li>
+                
+                  <li><a href="../../../3.0.3/manual/object_mapper/creating/">3.0.3</a></li>
                 
                   <li><a href="../../../3.0.1/manual/object_mapper/creating/">3.0.1</a></li>
                 
@@ -76,7 +78,7 @@
           <div class="col-md-4">
             <form id="search" class="form-search dropdown visible-lg-inline-block" ng-controller="search" ng-class="{open: hasResults}" role="search" ng-submit="submit()" data-spy="affix" data-offset-top="130">
               <div class="form-group has-feedback">
-                <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('3.0.3')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+                <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('3.1.0')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
               </div>
               <ul class="dropdown-menu search-results" role="menu">
                 <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
@@ -108,6 +110,10 @@
   <li>
     <a href="../../../faq/">
       Frequently Asked Questions <small>page</small>
+      
+      
+      <span class="glyphicon glyphicon-plus-sign pull-right" aria-hidden="true"></span>
+      
       
     </a>
     
@@ -241,6 +247,15 @@
   <li>
     <a href="../../native_protocol/">
       Native protocol <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="../../osgi/">
+      OSGi <small>page</small>
       
     </a>
     
@@ -472,7 +487,7 @@ It is annotated with <a href="http://docs.datastax.com/en/drivers/java/3.0/com/d
        <span class="n">writeConsistency</span> <span class="o">=</span> <span class="s">"QUORUM"</span><span class="o">,</span>
        <span class="n">caseSensitiveKeyspace</span> <span class="o">=</span> <span class="kc">false</span><span class="o">,</span>
        <span class="n">caseSensitiveTable</span> <span class="o">=</span> <span class="kc">false</span><span class="o">)</span>
-<span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">User</span> <span class="o">{</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">User</span> <span class="o">{</span>
     <span class="nd">@PartitionKey</span>
     <span class="nd">@Column</span><span class="o">(</span><span class="n">name</span> <span class="o">=</span> <span class="s">"user_id"</span><span class="o">)</span>
     <span class="kd">private</span> <span class="n">UUID</span> <span class="n">userId</span><span class="o">;</span>
@@ -501,18 +516,136 @@ save, or delete operation in the mapper. (if unspecified, it defaults
 to the cluster-wide setting)</li>
 </ul>
 
-<p>The class must provide a default constructor, and all fields (except the
-ones annotated <code>@Transient</code>) must have corresponding setters and
-getters.</p>
+<p>The class must provide a default constructor. The default constructor
+is allowed to be non-public, provided that the security manager, if any, grants
+the mapper access to it via <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/reflect/AccessibleObject.html#setAccessible-boolean-">reflection</a>.</p>
 
+<h4 id="mapping-table-columns" class="target">Mapping table columns<a class="anchor" href="#mapping-table-columns" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h4>
+
+<p>The mapping of each table column can be customized through annotations 
+placed on either a field declaration, or on a getter method of a 
+<a href="https://docs.oracle.com/javase/tutorial/javabeans/writing/properties.html">Java bean property</a>. <u>Annotations on setters are not 
+supported and will be silently ignored by the mapper</u>. </p>
+
+<p>Users are strongly encouraged to follow the Java bean property 
+conventions when designing mapped classes: if this is the case, the mapper will
+transparently “bind” together fields and accessor methods (getters and setters)
+into a single logical abstraction; e.g. a field named <code>myCol</code> and a Java
+bean property named <code>myCol</code> offering a public getter named <code>getMyCol()</code>
+will be assumed to represent the very same table column,
+and annotations for this column are thus allowed to be placed indifferently
+on the field declaration, or on the getter method declaration.</p>
+
+<p>The following mappings are thus equivalent:</p>
+<pre class="highlight"><code><span class="nd">@Table</span><span class="o">(</span><span class="n">name</span> <span class="o">=</span> <span class="s">"users"</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">User</span> <span class="o">{</span>
+
+    <span class="c1">// annotation on a field</span>
+    <span class="nd">@PartitionKey</span>
+    <span class="kd">private</span> <span class="n">UUID</span> <span class="n">id</span><span class="o">;</span>
+
+    <span class="kd">public</span> <span class="n">UUID</span> <span class="n">getId</span><span class="o">()</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="n">id</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kt">void</span> <span class="n">setId</span><span class="o">(</span><span class="n">UUID</span> <span class="n">id</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">id</span> <span class="o">=</span> <span class="n">id</span><span class="o">;</span>
+    <span class="o">}</span>
+
+<span class="o">}</span>
+</code></pre>
+<pre class="highlight"><code><span class="nd">@Table</span><span class="o">(</span><span class="n">name</span> <span class="o">=</span> <span class="s">"users"</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">User</span> <span class="o">{</span>
+
+    <span class="kd">private</span> <span class="n">UUID</span> <span class="n">id</span><span class="o">;</span>
+
+    <span class="c1">// annotation on a getter method</span>
+    <span class="nd">@PartitionKey</span>
+    <span class="kd">public</span> <span class="n">UUID</span> <span class="n">getId</span><span class="o">()</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="n">id</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kt">void</span> <span class="n">setId</span><span class="o">(</span><span class="n">UUID</span> <span class="n">id</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">id</span> <span class="o">=</span> <span class="n">id</span><span class="o">;</span>
+    <span class="o">}</span>
+
+<span class="o">}</span>
+
+</code></pre>
+<p>It is recommended to adopt one strategy or the other for
+placing annotations on class members (i.e., either always on fields, or always on getters), 
+but not both at the same time, unless strictly required.
+Annotating fields is usually less verbose, but with polymorphic
+data models (see below), annotating getters generally proves to be more flexible.</p>
+
+<p>If duplicated annotations for a given column are found on the field declaration
+and on the getter method declaration, the one declared in the getter method
+declaration wins. No warnings are generated in such situations.</p>
+
+<p>When reading or writing mapped property values, the mapper will first
+try to invoke the property getter and setter methods, if they are available;
+and if they are not, the mapper will try a direct access to the property’s corresponding field.</p>
+
+<p>A mapped field is thus allowed to be non-public if:</p>
+
+<ol>
+<li>Reads and writes are done through its public getters and setters; or</li>
+<li>The security manager, if any, grants the mapper access to it via <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/reflect/AccessibleObject.html#setAccessible-boolean-">reflection</a>.</li>
+</ol>
+
+<p>Note that, according to the <a href="https://docs.oracle.com/javase/tutorial/javabeans/writing/properties.html">Java Beans specification</a>, a setter
+must have a <code>void</code> return type; the driver, however, will consider as a setter any public method
+having a matching signature (i.e., name and parameter types match those expected),
+but having a different return type. This allows the usage of “fluent” setters that can
+be chained together in a builder-pattern style:</p>
+<pre class="highlight"><code><span class="nd">@Table</span><span class="o">(</span><span class="n">name</span> <span class="o">=</span> <span class="s">"users"</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">User</span> <span class="o">{</span>
+
+    <span class="c1">// fluent setters</span>
+
+    <span class="kd">public</span> <span class="n">User</span> <span class="n">setId</span><span class="o">(</span><span class="n">UUID</span> <span class="n">id</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">id</span> <span class="o">=</span> <span class="n">id</span><span class="o">;</span>
+        <span class="k">return</span> <span class="k">this</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="n">User</span> <span class="n">setName</span><span class="o">(</span><span class="n">String</span> <span class="n">name</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">name</span> <span class="o">=</span> <span class="n">name</span><span class="o">;</span>
+        <span class="k">return</span> <span class="k">this</span><span class="o">;</span>
+    <span class="o">}</span>
+
+<span class="o">}</span>
+
+<span class="c1">// chained calls</span>
+<span class="n">User</span> <span class="n">user</span> <span class="o">=</span> <span class="k">new</span> <span class="n">User</span><span class="o">()</span>
+    <span class="o">.</span><span class="na">setId</span><span class="o">(</span><span class="n">UUIDs</span><span class="o">.</span><span class="na">random</span><span class="o">())</span>
+    <span class="o">.</span><span class="na">setName</span><span class="o">(</span><span class="s">"John Doe"</span><span class="o">);</span>
+</code></pre>
 <h4 id="column-names" class="target">Column names<a class="anchor" href="#column-names" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h4>
 
-<p>By default, the mapper tries to map each Java property to a
-case insensitive column of the same name. If you want to use a different
-name, or <a href="http://docs.datastax.com/en/cql/3.3/cql/cql_reference/ucase-lcase_r.html">case-sensitive</a> names, use the <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/annotations/Column.html">@Column</a> annotation on
-the field.</p>
+<p>By default, the mapper tries to map each Java bean property to a
+column of the same name. <u>The mapping is case-insensitive by default</u>,
+i.e., the property <code>userId</code> would map to a column named <code>userid</code>.</p>
 
+<p>If you want to use a different name, or <a href="http://docs.datastax.com/en/cql/3.3/cql/cql_reference/ucase-lcase_r.html">case-sensitive</a> names, 
+use the <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/annotations/Column.html">@Column</a> annotation.</p>
+
+<p>To specify a different column name, use the <code>name</code> attribute:</p>
+<pre><code>CREATE TABLE users(id uuid PRIMARY KEY, user_name text);
+</code></pre>
+<pre class="highlight"><code><span class="c1">// column name does not match field name</span>
+<span class="nd">@Column</span><span class="o">(</span><span class="n">name</span> <span class="o">=</span> <span class="s">"user_name"</span><span class="o">)</span>
+<span class="kd">private</span> <span class="n">String</span> <span class="n">userName</span><span class="o">;</span>
+</code></pre>
+<p>When case-sensitive identifiers are required, use the
+<code>caseSensitive</code> attribute:</p>
+<pre><code>CREATE TABLE users(id uuid PRIMARY KEY, "userName" text);
+</code></pre>
+<pre class="highlight"><code><span class="c1">// column name is case-sensitive</span>
+<span class="nd">@Column</span><span class="o">(</span><span class="n">caseSensitive</span> <span class="o">=</span> <span class="kc">true</span><span class="o">)</span>
+<span class="kd">private</span> <span class="n">String</span> <span class="n">userName</span><span class="o">;</span>
+</code></pre>
 <h4 id="primary-key-fields" class="target">Primary key fields<a class="anchor" href="#primary-key-fields" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h4>
 
@@ -534,14 +667,14 @@ declaration.</p>
 <h4 id="computed-fields" class="target">Computed fields<a class="anchor" href="#computed-fields" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h4>
 
-<p><a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/annotations/Computed.html">@Computed</a> can be used on fields that are the result of a
-computation on the Cassandra side. Typically a function call. Native
+<p><a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/annotations/Computed.html">@Computed</a> can be used on properties that are the result of a
+computation on the Cassandra side, typically a function call. Native
 functions in Cassandra like <code>writetime()</code> or <a href="http://www.planetcassandra.org/blog/user-defined-functions-in-cassandra-3-0/">User Defined Functions</a> are
 supported.</p>
 <pre class="highlight"><code><span class="nd">@Computed</span><span class="o">(</span><span class="s">"ttl(name)"</span><span class="o">)</span>
 <span class="n">Integer</span> <span class="n">ttl</span><span class="o">;</span>
 </code></pre>
-<p>The CQL return type of function must match the type of the field,
+<p>The CQL return type of function must match the type of the property,
 otherwise an exception will be thrown.</p>
 
 <p>Computed fields are ignored when saving an entity.</p>
@@ -552,16 +685,19 @@ them:</p>
 <pre class="highlight"><code><span class="nd">@Computed</span><span class="o">(</span><span class="s">"\"myFunction\"(\"myColumn\")"</span><span class="o">)</span>
 <span class="kt">int</span> <span class="n">f</span><span class="o">;</span>
 </code></pre>
-<p>Finally, computed fields are only supported with <a href="../using/#basic-crud-operations">basic read
+<p>Finally, computed properties are only supported with <a href="../using/#basic-crud-operations">basic read
 operations</a> at this time.
-Support in <a href="../using/#accessors">accessors</a> in planned for a future
+Support in <a href="../using/#accessors">accessors</a> is planned for a future
 version (see
 <a href="https://datastax-oss.atlassian.net/browse/JAVA-832">JAVA-832</a>).</p>
 
-<h4 id="transient-fields" class="target">Transient fields<a class="anchor" href="#transient-fields" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+<h4 id="transient-properties" class="target">Transient properties<a class="anchor" href="#transient-properties" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h4>
 
-<p><a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/annotations/Transient.html">@Transient</a> can be used to prevent a field from being mapped.</p>
+<p>By default, the mapper will try to map all fields and Java bean properties
+to table columns. <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/annotations/Transient.html">@Transient</a> can be used to prevent a field or 
+a Java bean property from being mapped. Like other column-level annotations, 
+it should be placed on either the field declaration or the property getter method.</p>
 
 <h3 id="mapping-user-types" class="target">Mapping User Types<a class="anchor" href="#mapping-user-types" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h3>
@@ -590,12 +726,14 @@ version (see
 <code>caseSensitiveType</code>: whether the UDT name is case-sensitive.</li>
 </ul>
 
-<p>The class must provide a default constructor, and all fields (except the
-ones annotated <code>@Transient</code>) must have corresponding setters and
-getters.</p>
+<p>The class must provide a default constructor. The default constructor
+is allowed to be non-public, provided that the security manager, if any, grants
+the mapper access to it via <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/reflect/AccessibleObject.html#setAccessible-boolean-">reflection</a>.</p>
 
-<p>As in table entities, fields are mapped to an UDT field of the same
-name by default. To declare a different name or use case-sensitivity,
+<p>As for table entities, properties in UDT classes are mapped to an UDT field of the same
+name by default.</p>
+
+<p>To declare a different name or use case-sensitivity,
 use the <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/annotations/Field.html">@Field</a> annotation:</p>
 <pre class="highlight"><code><span class="nd">@Field</span><span class="o">(</span><span class="n">name</span> <span class="o">=</span> <span class="s">"zip_code"</span><span class="o">)</span>
 <span class="kd">private</span> <span class="kt">int</span> <span class="n">zipCode</span><span class="o">;</span>
@@ -604,7 +742,7 @@ use the <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/drive
 the corresponding class:</p>
 <pre><code>CREATE TABLE company (company_id uuid PRIMARY KEY, name text, address address);
 </code></pre>
-<pre class="highlight"><code><span class="kd">public</span> <span class="kd">static</span> <span class="kd">class</span> <span class="nc">Company</span> <span class="o">{</span>
+<pre class="highlight"><code><span class="kd">public</span> <span class="kd">class</span> <span class="nc">Company</span> <span class="o">{</span>
     <span class="nd">@PartitionKey</span>
     <span class="nd">@Column</span><span class="o">(</span><span class="n">name</span> <span class="o">=</span> <span class="s">"company_id"</span><span class="o">)</span>
     <span class="kd">private</span> <span class="n">UUID</span> <span class="n">companyId</span><span class="o">;</span>
@@ -612,8 +750,8 @@ the corresponding class:</p>
     <span class="kd">private</span> <span class="n">Address</span> <span class="n">address</span><span class="o">;</span>
 <span class="o">}</span>
 </code></pre>
-<p>(this also works with UDTs inside collections or other UDTs, with
-arbitrary level of nesting)</p>
+<p>This also works with UDTs inside collections or other UDTs, with any arbitrary
+nesting level.</p>
 
 <h3 id="mapping-collections" class="target">Mapping collections<a class="anchor" href="#mapping-collections" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
 </h3>
@@ -630,7 +768,7 @@ However it is a good idea to keep using these annotations and make sure
 they match the schema, in anticipation for the schema generation features
 that will be added in a future version.
 The default annotation is <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/annotations/Frozen.html">@Frozen</a>, <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/annotations/FrozenKey.html">@FrozenKey</a> and
-<a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/annotations/FrozenValue.html">@FrozenValue</a>` are also provided for convenience:</p>
+<a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/mapping/annotations/FrozenValue.html">@FrozenValue</a> are also provided for convenience:</p>
 <pre class="highlight"><code><span class="c1">// Will be mapped as a 'list&lt;text&gt;'</span>
 <span class="kd">private</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">String</span><span class="o">&gt;</span> <span class="n">stringList</span><span class="o">;</span>
 
@@ -647,6 +785,143 @@ The default annotation is <a href="http://docs.datastax.com/en/drivers/java/3.0/
 <span class="nd">@FrozenValue</span>
 <span class="kd">private</span> <span class="n">Map</span><span class="o">&lt;</span><span class="n">String</span><span class="o">,</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">Address</span><span class="o">&gt;&gt;</span> <span class="n">frozenValueMap</span><span class="o">;</span>
 </code></pre>
+<h3 id="polymorphism-support" class="target">Polymorphism support<a class="anchor" href="#polymorphism-support" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<p>When mapping an entity class or a UDT class, the mapper will transparently
+scan superclasses and superinterfaces for annotations on fields and getter methods,
+thus enabling the polymorphic mapping of one class hierarchy
+into different CQL tables or UDTs.</p>
+
+<p>Each concrete class must correspond to a table or a UDT,
+and should be annotated accordingly with <code>@Table</code> or <code>@UDT</code>. 
+This is analogous to the so-called “table per concrete class” 
+mapping strategy usually found in popular SQL mapping frameworks, such as Hibernate.</p>
+
+<p>Here is an example of a polymorphic mapping:</p>
+<pre class="highlight"><code><span class="k">CREATE</span> <span class="k">TYPE</span> <span class="n">point2d</span> <span class="p">(</span><span class="n">x</span> <span class="n">int</span><span class="p">,</span> <span class="n">y</span> <span class="n">int</span><span class="p">);</span>
+<span class="k">CREATE</span> <span class="k">TYPE</span> <span class="n">point3d</span> <span class="p">(</span><span class="n">x</span> <span class="n">int</span><span class="p">,</span> <span class="n">y</span> <span class="n">int</span><span class="p">,</span> <span class="n">z</span> <span class="n">int</span><span class="p">);</span>
+<span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">rectangles</span> <span class="p">(</span><span class="n">id</span> <span class="n">uuid</span> <span class="k">PRIMARY</span> <span class="k">KEY</span><span class="p">,</span> <span class="n">bottom_left</span> <span class="n">frozen</span><span class="o">&lt;</span><span class="n">point2d</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">top_right</span> <span class="n">frozen</span><span class="o">&lt;</span><span class="n">point2d</span><span class="o">&gt;</span><span class="p">);</span>
+<span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">spheres</span> <span class="p">(</span><span class="n">id</span> <span class="n">uuid</span> <span class="k">PRIMARY</span> <span class="k">KEY</span><span class="p">,</span> <span class="n">center</span> <span class="n">frozen</span><span class="o">&lt;</span><span class="n">point3d</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">radius</span> <span class="n">double</span><span class="p">);</span>
+</code></pre>
+<pre class="highlight"><code><span class="nd">@UDT</span><span class="o">(</span><span class="n">name</span> <span class="o">=</span> <span class="s">"point2d"</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">Point2D</span> <span class="o">{</span>
+    <span class="kd">public</span> <span class="kt">int</span> <span class="n">x</span><span class="o">;</span>
+    <span class="kd">public</span> <span class="kt">int</span> <span class="n">y</span><span class="o">;</span>
+<span class="o">}</span>
+
+<span class="nd">@UDT</span><span class="o">(</span><span class="n">name</span> <span class="o">=</span> <span class="s">"point3d"</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">Point3D</span> <span class="kd">extends</span> <span class="n">Point2D</span> <span class="o">{</span>
+    <span class="kd">public</span> <span class="kt">int</span> <span class="n">z</span><span class="o">;</span>
+<span class="o">}</span>
+
+<span class="kd">public</span> <span class="kd">interface</span> <span class="nc">Shape2D</span> <span class="o">{</span>
+
+    <span class="nd">@Transient</span>
+    <span class="kt">double</span> <span class="n">getArea</span><span class="o">();</span>
+
+<span class="o">}</span>
+
+<span class="kd">public</span> <span class="kd">interface</span> <span class="nc">Shape3D</span> <span class="o">{</span>
+
+    <span class="nd">@Transient</span>
+    <span class="kt">double</span> <span class="n">getVolume</span><span class="o">();</span>
+
+<span class="o">}</span>
+
+<span class="kd">public</span> <span class="kd">abstract</span> <span class="kd">class</span> <span class="nc">Shape</span> <span class="o">{</span>
+
+    <span class="kd">private</span> <span class="n">UUID</span> <span class="n">id</span><span class="o">;</span>
+
+    <span class="nd">@PartitionKey</span>
+    <span class="kd">public</span> <span class="n">UUID</span> <span class="n">getId</span><span class="o">()</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="n">id</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kt">void</span> <span class="n">setId</span><span class="o">(</span><span class="n">UUID</span> <span class="n">id</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">id</span> <span class="o">=</span> <span class="n">id</span><span class="o">;</span>
+    <span class="o">}</span>
+
+<span class="o">}</span>
+
+<span class="nd">@Table</span><span class="o">(</span><span class="n">name</span> <span class="o">=</span> <span class="s">"rectangles"</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">Rectangle</span> <span class="kd">extends</span> <span class="n">Shape</span> <span class="kd">implements</span> <span class="n">Shape2D</span> <span class="o">{</span>
+
+    <span class="kd">private</span> <span class="n">Point2D</span> <span class="n">bottomLeft</span><span class="o">;</span>
+    <span class="kd">private</span> <span class="n">Point2D</span> <span class="n">topRight</span><span class="o">;</span>
+
+    <span class="nd">@Column</span><span class="o">(</span><span class="n">name</span> <span class="o">=</span> <span class="s">"bottom_left"</span><span class="o">)</span>
+    <span class="nd">@Frozen</span>
+    <span class="kd">public</span> <span class="n">Point2D</span> <span class="n">getBottomLeft</span><span class="o">()</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="n">bottomLeft</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kt">void</span> <span class="n">setBottomLeft</span><span class="o">(</span><span class="n">Point2D</span> <span class="n">bottomLeft</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">bottomLeft</span> <span class="o">=</span> <span class="n">bottomLeft</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="nd">@Column</span><span class="o">(</span><span class="n">name</span> <span class="o">=</span> <span class="s">"top_right"</span><span class="o">)</span>
+    <span class="nd">@Frozen</span>
+    <span class="kd">public</span> <span class="n">Point2D</span> <span class="n">getTopRight</span><span class="o">()</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="n">topRight</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kt">void</span> <span class="n">setTopRight</span><span class="o">(</span><span class="n">Point2D</span> <span class="n">topRight</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">topRight</span> <span class="o">=</span> <span class="n">topRight</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="nd">@Transient</span>
+    <span class="kd">public</span> <span class="kt">double</span> <span class="n">getWidth</span><span class="o">()</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="n">Math</span><span class="o">.</span><span class="na">abs</span><span class="o">(</span><span class="n">topRight</span><span class="o">.</span><span class="na">x</span> <span class="o">-</span> <span class="n">bottomLeft</span><span class="o">.</span><span class="na">x</span><span class="o">);</span>
+    <span class="o">}</span>
+
+    <span class="nd">@Transient</span>
+    <span class="kd">public</span> <span class="kt">double</span> <span class="n">getHeight</span><span class="o">()</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="n">Math</span><span class="o">.</span><span class="na">abs</span><span class="o">(</span><span class="n">topRight</span><span class="o">.</span><span class="na">y</span> <span class="o">-</span> <span class="n">bottomLeft</span><span class="o">.</span><span class="na">y</span><span class="o">);</span>
+    <span class="o">}</span>
+
+    <span class="nd">@Override</span>
+    <span class="kd">public</span> <span class="kt">double</span> <span class="n">getArea</span><span class="o">()</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="n">getWidth</span><span class="o">()</span> <span class="o">*</span> <span class="n">getHeight</span><span class="o">();</span>
+    <span class="o">}</span>
+
+<span class="o">}</span>
+
+<span class="nd">@Table</span><span class="o">(</span><span class="n">name</span> <span class="o">=</span> <span class="s">"spheres"</span><span class="o">)</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">Sphere</span> <span class="kd">extends</span> <span class="n">Shape</span> <span class="kd">implements</span> <span class="n">Shape3D</span> <span class="o">{</span>
+
+    <span class="kd">private</span> <span class="n">Point3D</span> <span class="n">center</span><span class="o">;</span>
+    <span class="kd">private</span> <span class="kt">double</span> <span class="n">radius</span><span class="o">;</span>
+
+    <span class="nd">@Frozen</span>
+    <span class="kd">public</span> <span class="n">Point3D</span> <span class="n">getCenter</span><span class="o">()</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="n">center</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kt">void</span> <span class="n">setCenter</span><span class="o">(</span><span class="n">Point3D</span> <span class="n">center</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">center</span> <span class="o">=</span> <span class="n">center</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kt">double</span> <span class="n">getRadius</span><span class="o">()</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="n">radius</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kt">void</span> <span class="n">setRadius</span><span class="o">(</span><span class="kt">double</span> <span class="n">radius</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">radius</span> <span class="o">=</span> <span class="n">radius</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="nd">@Override</span>
+    <span class="kd">public</span> <span class="kt">double</span> <span class="n">getVolume</span><span class="o">()</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="mi">4</span><span class="n">d</span> <span class="o">/</span> <span class="mi">3</span><span class="n">d</span> <span class="o">*</span> <span class="n">Math</span><span class="o">.</span><span class="na">PI</span> <span class="o">*</span> <span class="n">Math</span><span class="o">.</span><span class="na">pow</span><span class="o">(</span><span class="n">getRadius</span><span class="o">(),</span> <span class="mi">3</span><span class="o">);</span>
+    <span class="o">}</span>
+
+<span class="o">}</span>
+</code></pre>
+<p>One powerful advantage of annotating getter methods is that
+annotations are inherited from overridden methods in superclasses and superinterfaces;
+in other words, if a getter method is overridden in a subclass, annotations in both
+method declarations will get merged together. If duplicated annotations are found during this merge
+process, the overriding method’s annotations will take precedence over the overridden’s.</p>
 
 
         </div>

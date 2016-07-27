@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <meta name="description" content="High performance Java client for Apache Cassandra">
+    <meta name="author" content="DataStax">
+
+    <title>Java Driver for Apache Cassandra - Load balancing</title>
+
+    <link rel="icon" href="../../../favicon.ico">
+    <link rel="apple-touch-icon" href="../../../favicon.png">
+    <link href="../../../css/style.css" rel="stylesheet">
+    <link href="../../../css/pygments.css" rel="stylesheet">
+    <link href="../../../css/hotkeys.css" rel="stylesheet">
+
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body ng-app="docs">
+    <div class="navbar">
+      <div class="container-fluid">
+        <div class="row row-offcanvas row-offcanvas-left">
+          <div class="col-sm-3 text-center">
+            <a class="ds-home" href="../../"><img alt="Brand" src="../../../img/logo.png"></a>
+            <ul class="list-inline ds-sites" role="nav">
+              <li><a href="https://academy.datastax.com/" class="navbar-link">DataStax Academy</a></li>
+              <li><a href="http://www.datastax.com/dev/blog" class="navbar-link">Tech Blog</a></li>
+              <li><a href="http://www.datastax.com/what-we-offer/products-services/support" class="navbar-link">Support</a></li>
+            </ul>
+          </div>
+          <div class="col-md-5">
+            <p class="lead pubtitle">Java Driver for Apache Cassandra</p>
+            
+            <div class="text-info">
+              <span class="text-warning">Attention:</span> Viewing documentation for version
+              <div class="btn-group">
+                <button id="current-version" class="btn btn-default btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  3.0.3
+                  <span class="caret"></span>
+                </button>
+                <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
+                
+                  <li><a href="../../../manual/load_balancing/">3.1.0</a></li>
+                
+                  <li class="disabled"><a href="./">3.0.3</a></li>
+                
+                  <li><a href="../../../3.0.1/manual/load_balancing/">3.0.1</a></li>
+                
+                  <li><a href="../../../3.0.0/manual/load_balancing/">3.0.0</a></li>
+                
+                  <li><a href="../../../2.1.10.1/manual/load_balancing/">2.1.10.1</a></li>
+                
+                  <li><a href="../../../2.1.10/manual/load_balancing/">2.1.10</a></li>
+                
+                  <li><a href="../../../2.1.9/">2.1.9</a></li>
+                
+                  <li><a href="../../../2.1.8/">2.1.8</a></li>
+                
+                  <li><a href="../../../2.1.7/">2.1.7</a></li>
+                
+                  <li><a href="../../../2.0.12.1/">2.0.12.1</a></li>
+                
+                  <li><a href="../../../2.0.12/">2.0.12</a></li>
+                
+                  <li><a href="../../../2.0.11/">2.0.11</a></li>
+                
+                </ul>
+              </div>
+            </div>
+            
+          </div>
+          <div class="col-md-4">
+            <form id="search" class="form-search dropdown visible-lg-inline-block" ng-controller="search" ng-class="{open: hasResults}" role="search" ng-submit="submit()" data-spy="affix" data-offset-top="130">
+              <div class="form-group has-feedback">
+                <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('3.0.3')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+              </div>
+              <ul class="dropdown-menu search-results" role="menu">
+                <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
+              </ul>
+            </form>
+            <a href="http://www.datastax.com/download" class="btn btn-primary btn-sm">Download</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container-fluid" id="content">
+      <div class="row">
+        <div class="col-md-3">
+          <div id="navigation" class="side-nav" role="tablist" aria-multiselectable="true">
+            <h3><a href="../../">Contents</a></h3>
+            <ul class="nav nav-pills nav-stacked">
+  
+  
+  <li>
+    <a href="../../changelog/">
+      Changelog <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="../../faq/">
+      Frequently Asked Questions <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li class="active">
+    <a href="../">
+      Manual <small>page</small>
+      
+      
+      <span class="glyphicon glyphicon-minus-sign pull-right" aria-hidden="true"></span>
+      
+      
+    </a>
+    <ul class="nav nav-pills nav-stacked">
+  
+  
+  <li>
+    <a href="../address_resolution/">
+      Address resolution <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="../async/">
+      Asynchronous programming <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="../auth/">
+      Authentication <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="../compression/">
+      Compression <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="../pooling/">
+      Connection pooling <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="../control_connection/">
+      Control connection <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="../custom_codecs/">
+      Custom Codecs <small>page</small>
+      
+      
+      <span class="glyphicon glyphicon-plus-sign pull-right" aria-hidden="true"></span>
+      
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="../custom_payloads/">
+      Custom Payloads <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li class="active">
+    <a href="./" class="current">
+      Load balancing <small>page</small>
+      
+    </a>
+    <ul class="nav nav-pills nav-stacked">
+  
+</ul>
+
+  </li>
+  
+  
+  <li>
+    <a href="../logging/">
+      Logging <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="../metadata/">
+      Metadata <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="../metrics/">
+      Metrics <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="../native_protocol/">
+      Native protocol <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="../object_mapper/">
+      Object Mapper <small>page</small>
+      
+      
+      <span class="glyphicon glyphicon-plus-sign pull-right" aria-hidden="true"></span>
+      
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="../paging/">
+      Paging <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="../idempotence/">
+      Query idempotence <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="../query_timestamps/">
+      Query timestamps <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="../reconnection/">
+      Reconnection <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="../retries/">
+      Retries <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="../ssl/">
+      SSL <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="../socket_options/">
+      Socket options <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="../speculative_execution/">
+      Speculative query execution <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="../statements/">
+      Statements <small>page</small>
+      
+      
+      <span class="glyphicon glyphicon-plus-sign pull-right" aria-hidden="true"></span>
+      
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="../tuples/">
+      Tuples <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="../udts/">
+      User-defined types <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="../shaded_jar/">
+      Using the shaded JAR <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+</ul>
+
+  </li>
+  
+  
+  <li>
+    <a href="../../upgrade_guide/">
+      Upgrade guide <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+</ul>
+
+          </div>
+        </div>
+        <div class="col-md-9 content">
+          <div class="crumbs-wrapper">
+            <nav id="crumbs" data-spy="affix" data-offset-top="130">
+              <ol class="breadcrumb">
+                
+                
+                
+                <li><a href="../../">Home</a></li>
+                
+                
+                
+                
+                
+                <li><a href="../">Manual</a></li>
+                
+                
+                
+                
+                
+                <li class="active">Load balancing</li>
+                
+                
+                
+              </ol>
+            </nav>
+          </div>
+          
+
+<h2 id="load-balancing" class="target">Load balancing<a class="anchor" href="#load-balancing" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h2>
+
+<p>A Cassandra cluster is typically composed of multiple hosts; the <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/policies/LoadBalancingPolicy.html">LoadBalancingPolicy</a> (sometimes abbreviated LBP) is a
+central component that determines:</p>
+
+<ul>
+<li>which hosts the driver will communicate with;</li>
+<li>for each new query, which coordinator to pick, and which hosts to use as failover.</li>
+</ul>
+
+<p>The policy is configured when initializing the cluster:</p>
+<pre class="highlight"><code><span class="n">Cluster</span> <span class="n">cluster</span> <span class="o">=</span> <span class="n">Cluster</span><span class="o">.</span><span class="na">builder</span><span class="o">()</span>
+        <span class="o">.</span><span class="na">addContactPoint</span><span class="o">(</span><span class="s">"127.0.0.1"</span><span class="o">)</span>
+        <span class="o">.</span><span class="na">withLoadBalancingPolicy</span><span class="o">(</span><span class="k">new</span> <span class="n">RoundRobinPolicy</span><span class="o">())</span>
+        <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+</code></pre>
+<p>Once the cluster has been built, you can’t change the policy, but you may inspect it at runtime:</p>
+<pre class="highlight"><code><span class="n">LoadBalancingPolicy</span> <span class="n">lbp</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="na">getConfiguration</span><span class="o">().</span><span class="na">getPolicies</span><span class="o">().</span><span class="na">getLoadBalancingPolicy</span><span class="o">();</span>
+</code></pre>
+<p>If you don’t explicitly configure the policy, you get the default, which is a
+<a href="#dc-aware-round-robin-policy">datacenter-aware</a>, <a href="#token-aware-policy">token-aware</a> policy:</p>
+<pre class="highlight"><code><span class="k">new</span> <span class="nf">TokenAwarePolicy</span><span class="p">(</span><span class="n">DCAwareRoundRobinPolicy</span><span class="o">.</span><span class="na">builder</span><span class="o">().</span><span class="na">build</span><span class="o">());</span>
+</code></pre>
+<h3 id="common-concepts" class="target">Common concepts<a class="anchor" href="#common-concepts" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<p>Before we review the available implementations, we need to introduce two concepts:</p>
+
+<h4 id="host-distance" class="target">Host distance<a class="anchor" href="#host-distance" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h4>
+
+<p>For each host, the policy computes a <strong><a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/HostDistance.html">distance</a></strong> that determines how the driver will establish connections
+to it:</p>
+
+<ul>
+<li>
+<code>LOCAL</code> and <code>REMOTE</code> are “active” distances, meaning that the driver will keep open connections to the host. They
+differ in the number of connections opened, depending on your <a href="../pooling/">pooling options</a>. Also, the
+<a href="../control_connection/">control connection</a> will  favor local nodes if possible.</li>
+<li>
+<code>IGNORED</code>, as the name suggests, means that the driver will not attempt to connect.</li>
+</ul>
+
+<p>Typically, the distance will reflect network topology (e.g. local vs. remote datacenter), although that is entirely up
+to your policy. The distance can be dynamic: the driver re-checks it whenever connection pools are created (e.g. at
+startup or if a node was down and just came back up); you can also trigger it with <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/PoolingOptions.html#refreshConnectedHosts--">refreshConnectedHosts</a>:</p>
+<pre class="highlight"><code><span class="c1">// Re-evaluate all host distances:</span>
+<span class="n">cluster</span><span class="o">.</span><span class="na">getConfiguration</span><span class="o">().</span><span class="na">getPoolingOptions</span><span class="o">().</span><span class="na">refreshConnectedHosts</span><span class="o">();</span>
+
+<span class="c1">// Re-evaluate the distance for a given host:</span>
+<span class="n">cluster</span><span class="o">.</span><span class="na">getConfiguration</span><span class="o">().</span><span class="na">getPoolingOptions</span><span class="o">().</span><span class="na">refreshConnectedHost</span><span class="o">(</span><span class="n">host</span><span class="o">);</span>
+</code></pre>
+<h4 id="query-plan" class="target">Query plan<a class="anchor" href="#query-plan" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h4>
+
+<p>Each time the driver executes a query, it asks the policy to compute a <strong>query plan</strong>, which is a list of hosts. The
+driver will then try each host in sequence, according to the <a href="../retries/">retry policy</a> and
+<a href="../speculative_execution">speculative execution policy</a>.</p>
+
+<p>The contents and order of query plans are entirely up to your policy, but implementations typically return plans that:</p>
+
+<ul>
+<li>are different for each query, in order to balance the load across the cluster;</li>
+<li>only contain hosts that are known to be able to process queries, i.e. neither ignored nor down;</li>
+<li>favor local hosts over remote ones.</li>
+</ul>
+
+<p>The next sections describe the implementations that are provided with the driver.</p>
+
+<h3 id="round-robin-policy" class="target">
+<a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/policies/RoundRobinPolicy.html">RoundRobinPolicy</a><a class="anchor" href="#round-robin-policy" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+<pre class="highlight"><code><span class="n">Cluster</span> <span class="n">cluster</span> <span class="o">=</span> <span class="n">Cluster</span><span class="o">.</span><span class="na">builder</span><span class="o">()</span>
+        <span class="o">.</span><span class="na">addContactPoint</span><span class="o">(</span><span class="s">"127.0.0.1"</span><span class="o">)</span>
+        <span class="o">.</span><span class="na">withLoadBalancingPolicy</span><span class="o">(</span><span class="k">new</span> <span class="n">RoundRobinPolicy</span><span class="o">())</span>
+        <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+</code></pre>
+<p>This is the most straightforward implementation. It returns query plans that include all hosts, and shift for each
+query in a round-robin fashion. For example:</p>
+
+<ul>
+<li>query 1: host1, host2, host3</li>
+<li>query 2: host2, host3, host1</li>
+<li>query 3: host3, host1, host2</li>
+<li>query 4: host1, host2, host3</li>
+<li>etc.</li>
+</ul>
+
+<p>All hosts are at distance <code>LOCAL</code>.</p>
+
+<p>This works well for simple deployments. If you have multiple datacenters, it will be inefficient and you probably want
+to switch to a DC-aware policy.</p>
+
+<h3 id="dc-aware-round-robin-policy" class="target">
+<a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/policies/DCAwareRoundRobinPolicy.html">DCAwareRoundRobinPolicy</a><a class="anchor" href="#dc-aware-round-robin-policy" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+<pre class="highlight"><code><span class="n">Cluster</span> <span class="n">cluster</span> <span class="o">=</span> <span class="n">Cluster</span><span class="o">.</span><span class="na">builder</span><span class="o">()</span>
+        <span class="o">.</span><span class="na">addContactPoint</span><span class="o">(</span><span class="s">"127.0.0.1"</span><span class="o">)</span>
+        <span class="o">.</span><span class="na">withLoadBalancingPolicy</span><span class="o">(</span>
+                <span class="n">DCAwareRoundRobinPolicy</span><span class="o">.</span><span class="na">builder</span><span class="o">()</span>
+                        <span class="o">.</span><span class="na">withLocalDc</span><span class="o">(</span><span class="s">"myLocalDC"</span><span class="o">)</span>
+                        <span class="o">.</span><span class="na">withUsedHostsPerRemoteDc</span><span class="o">(</span><span class="mi">2</span><span class="o">)</span>
+                        <span class="o">.</span><span class="na">allowRemoteDCsForLocalConsistencyLevel</span><span class="o">()</span>
+                        <span class="o">.</span><span class="na">build</span><span class="o">()</span>
+        <span class="o">).</span><span class="na">build</span><span class="o">();</span>
+</code></pre>
+<p>This policy queries nodes of the local data-center in a round-robin fashion; optionally, it can also try a configurable
+number of hosts in remote data centers if all local hosts failed.</p>
+
+<p>Call <code>withLocalDc</code> to specify the name of your local datacenter. You can also leave it out, and the driver will use the
+datacenter of the first contact point that was reached <a href="../#cluster-initialization">at initialization</a>. However,
+remember that the driver shuffles the initial list of contact points, so this assumes that all contact points are in the
+local datacenter. In general, providing the datacenter name explicitly is a safer option.</p>
+
+<p>Hosts belonging to the local datacenter are at distance <code>LOCAL</code>, and appear first in query plans (in a round-robin
+fashion).</p>
+
+<p>If you call <code>withUsedHostsPerRemoteDc</code>, the policy will pick that number of hosts for each remote DC, and add them at
+the end of query plans. To illustrate this, let’s assume that the value is 2, there are 3 datacenters and 3 hosts in the
+local datacenter. Query plans would look like this:</p>
+
+<ul>
+<li>query 1: localHost1, localHost2, localHost3, host1InRemoteDc1, host2InRemoteDc1, host1InRemoteDc2, host2InRemoteDc2</li>
+<li>query 2: localHost2, localHost3, localHost1, host1InRemoteDc1, host2InRemoteDc1, host1InRemoteDc2, host2InRemoteDc2</li>
+<li>query 3: localHost3, localHost1, localHost2, host1InRemoteDc1, host2InRemoteDc1, host1InRemoteDc2, host2InRemoteDc2</li>
+</ul>
+
+<p>Hosts selected by this option are at distance <code>REMOTE</code>. Note that they always appear in the same order.</p>
+
+<p>Finally, <code>allowRemoteDCsForLocalConsistencyLevel</code> controls whether remote hosts included by the previous option are
+included when the consistency level of the query is <code>LOCAL_ONE</code> or <code>LOCAL_QUORUM</code>. By default, it is off (remote hosts
+are not included for local CLs).</p>
+
+<h3 id="token-aware-policy" class="target">
+<a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/policies/TokenAwarePolicy.html">TokenAwarePolicy</a><a class="anchor" href="#token-aware-policy" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+<pre class="highlight"><code><span class="n">Cluster</span> <span class="n">cluster</span> <span class="o">=</span> <span class="n">Cluster</span><span class="o">.</span><span class="na">builder</span><span class="o">()</span>
+        <span class="o">.</span><span class="na">addContactPoint</span><span class="o">(</span><span class="s">"127.0.0.1"</span><span class="o">)</span>
+        <span class="o">.</span><span class="na">withLoadBalancingPolicy</span><span class="o">(</span><span class="k">new</span> <span class="n">TokenAwarePolicy</span><span class="o">(</span><span class="n">anotherPolicy</span><span class="o">))</span>
+        <span class="o">.</span><span class="na">build</span><span class="o">();</span>
+</code></pre>
+<p>This policy adds <strong>token awareness</strong> on top of another policy: requests will be routed in priority to the local replicas
+that own the data that is being queried.</p>
+
+<h4 id="requirements" class="target">Requirements<a class="anchor" href="#requirements" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h4>
+
+<p>In order for token awareness to work, you should first ensure that metadata is enabled in the driver. That is the case
+by default, unless it’s been explicitly disabled by <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/QueryOptions.html#setMetadataEnabled-boolean-">QueryOptions#setMetadataEnabled</a>.</p>
+
+<p>Then you need to consider whether routing information (provided by <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Statement.html#getKeyspace--">Statement#getKeyspace</a> and
+<a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Statement.html#getRoutingKey--">Statement#getRoutingKey</a>) can be computed automatically for your statements; if not, you may provide it yourself (if a
+statement has no routing information, the query will still be executed, but token awareness will not work, so the driver
+might not pick the best coordinator).</p>
+
+<p>The examples assume the following CQL schema:</p>
+<pre><code>CREATE TABLE testKs.sensor_data(id int, year int, ts timestamp, data double,
+                                PRIMARY KEY ((id, year), ts));
+</code></pre>
+<p>For <a href="../statements/simple/">simple statements</a>, routing information can never be computed automatically:</p>
+<pre class="highlight"><code><span class="n">SimpleStatement</span> <span class="n">statement</span> <span class="o">=</span> <span class="k">new</span> <span class="n">SimpleStatement</span><span class="o">(</span>
+        <span class="s">"SELECT * FROM testKs.sensor_data WHERE id = 1 and year = 2016"</span><span class="o">);</span>
+
+<span class="c1">// No routing info available:</span>
+<span class="k">assert</span> <span class="n">statement</span><span class="o">.</span><span class="na">getKeyspace</span><span class="o">()</span> <span class="o">==</span> <span class="kc">null</span><span class="o">;</span>
+<span class="k">assert</span> <span class="n">statement</span><span class="o">.</span><span class="na">getRoutingKey</span><span class="o">()</span> <span class="o">==</span> <span class="kc">null</span><span class="o">;</span>
+
+<span class="c1">// Set the keyspace manually:</span>
+<span class="n">statement</span><span class="o">.</span><span class="na">setKeyspace</span><span class="o">(</span><span class="s">"testKs"</span><span class="o">);</span>
+
+<span class="c1">// Set the routing key manually: serialize each partition key component to its target CQL type</span>
+<span class="n">ProtocolVersion</span> <span class="n">protocolVersion</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="na">getConfiguration</span><span class="o">().</span><span class="na">getProtocolOptions</span><span class="o">().</span><span class="na">getProtocolVersionEnum</span><span class="o">();</span>
+<span class="n">statement</span><span class="o">.</span><span class="na">setRoutingKey</span><span class="o">(</span>
+        <span class="n">DataType</span><span class="o">.</span><span class="na">cint</span><span class="o">().</span><span class="na">serialize</span><span class="o">(</span><span class="mi">1</span><span class="o">,</span> <span class="n">protocolVersion</span><span class="o">),</span>
+        <span class="n">DataType</span><span class="o">.</span><span class="na">cint</span><span class="o">().</span><span class="na">serialize</span><span class="o">(</span><span class="mi">2016</span><span class="o">,</span> <span class="n">protocolVersion</span><span class="o">));</span>
+
+<span class="n">session</span><span class="o">.</span><span class="na">execute</span><span class="o">(</span><span class="n">statement</span><span class="o">);</span>
+</code></pre>
+<p>For <a href="../statements/built/">built statements</a>, the keyspace is available if it was provided while building the query; the
+routing key is available only if the statement was built using the table metadata, and all components of the partition
+key appear in the query:</p>
+<pre class="highlight"><code><span class="n">TableMetadata</span> <span class="n">tableMetadata</span> <span class="o">=</span> <span class="n">cluster</span><span class="o">.</span><span class="na">getMetadata</span><span class="o">()</span>
+        <span class="o">.</span><span class="na">getKeyspace</span><span class="o">(</span><span class="s">"testKs"</span><span class="o">)</span>
+        <span class="o">.</span><span class="na">getTable</span><span class="o">(</span><span class="s">"sensor_data"</span><span class="o">);</span>
+
+<span class="c1">// Built from metadata: all info available</span>
+<span class="n">BuiltStatement</span> <span class="n">statement1</span> <span class="o">=</span> <span class="n">select</span><span class="o">().</span><span class="na">from</span><span class="o">(</span><span class="n">tableMetadata</span><span class="o">)</span>
+        <span class="o">.</span><span class="na">where</span><span class="o">(</span><span class="n">eq</span><span class="o">(</span><span class="s">"id"</span><span class="o">,</span> <span class="mi">1</span><span class="o">))</span>
+        <span class="o">.</span><span class="na">and</span><span class="o">(</span><span class="n">eq</span><span class="o">(</span><span class="s">"year"</span><span class="o">,</span> <span class="mi">2016</span><span class="o">));</span>
+
+<span class="k">assert</span> <span class="n">statement1</span><span class="o">.</span><span class="na">getKeyspace</span><span class="o">()</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">;</span>
+<span class="k">assert</span> <span class="n">statement1</span><span class="o">.</span><span class="na">getRoutingKey</span><span class="o">()</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">;</span>
+
+<span class="c1">// Built from keyspace and table name: only keyspace available</span>
+<span class="n">BuiltStatement</span> <span class="n">statement2</span> <span class="o">=</span> <span class="n">select</span><span class="o">().</span><span class="na">from</span><span class="o">(</span><span class="s">"testKs"</span><span class="o">,</span> <span class="s">"sensor"</span><span class="o">)</span>
+        <span class="o">.</span><span class="na">where</span><span class="o">(</span><span class="n">eq</span><span class="o">(</span><span class="s">"id"</span><span class="o">,</span> <span class="mi">1</span><span class="o">))</span>
+        <span class="o">.</span><span class="na">and</span><span class="o">(</span><span class="n">eq</span><span class="o">(</span><span class="s">"year"</span><span class="o">,</span> <span class="mi">2016</span><span class="o">));</span>
+
+<span class="k">assert</span> <span class="n">statement2</span><span class="o">.</span><span class="na">getKeyspace</span><span class="o">()</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">;</span>
+<span class="k">assert</span> <span class="n">statement2</span><span class="o">.</span><span class="na">getRoutingKey</span><span class="o">()</span> <span class="o">==</span> <span class="kc">null</span><span class="o">;</span>
+</code></pre>
+<p>For <a href="../statements/prepared/">bound statements</a>, the keyspace is always available; the routing key is only available if
+all components of the partition key are bound as variables:</p>
+<pre class="highlight"><code><span class="c1">// All components bound: all info available</span>
+<span class="n">PreparedStatement</span> <span class="n">pst1</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="na">prepare</span><span class="o">(</span><span class="s">"SELECT * FROM testKs.sensor_data WHERE id = :id and year = :year"</span><span class="o">);</span>
+<span class="n">BoundStatement</span> <span class="n">statement1</span> <span class="o">=</span> <span class="n">pst1</span><span class="o">.</span><span class="na">bind</span><span class="o">(</span><span class="mi">1</span><span class="o">,</span> <span class="mi">2016</span><span class="o">);</span>
+
+<span class="k">assert</span> <span class="n">statement1</span><span class="o">.</span><span class="na">getKeyspace</span><span class="o">()</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">;</span>
+<span class="k">assert</span> <span class="n">statement1</span><span class="o">.</span><span class="na">getRoutingKey</span><span class="o">()</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">;</span>
+
+<span class="c1">// 'id' hard-coded, only 'year' is bound: only keyspace available</span>
+<span class="n">PreparedStatement</span> <span class="n">pst2</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="na">prepare</span><span class="o">(</span><span class="s">"SELECT * FROM testKs.sensor_data WHERE id = 1 and year = :year"</span><span class="o">);</span>
+<span class="n">BoundStatement</span> <span class="n">statement2</span> <span class="o">=</span> <span class="n">pst2</span><span class="o">.</span><span class="na">bind</span><span class="o">(</span><span class="mi">2016</span><span class="o">);</span>
+
+<span class="k">assert</span> <span class="n">statement2</span><span class="o">.</span><span class="na">getKeyspace</span><span class="o">()</span> <span class="o">!=</span> <span class="kc">null</span><span class="o">;</span>
+<span class="k">assert</span> <span class="n">statement2</span><span class="o">.</span><span class="na">getRoutingKey</span><span class="o">()</span> <span class="o">==</span> <span class="kc">null</span><span class="o">;</span>
+</code></pre>
+<p>For <a href="../statements/batch/">batch statements</a>, the routing information of each child statement is inspected; the first
+non-null keyspace is used as the keyspace of the batch, and the first non-null routing key as its routing key (the idea
+is that all childs should have the same routing information, since batches are supposed to operate on a single
+partition). All children might have null information, in which case you need to provide the information manually as
+shown previously.</p>
+
+<h4 id="behavior" class="target">Behavior<a class="anchor" href="#behavior" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h4>
+
+<p>For any host, the distance returned by <code>TokenAwarePolicy</code> is always the same as its child policy.</p>
+
+<p>When the policy computes a query plan, it will first inspect the statement’s routing information. If there is none, the
+policy simply acts as a pass-through, and returns the query plan computed by its child policy.</p>
+
+<p>If the statement has routing information, the policy uses it to determine the replicas that hold the corresponding data.
+Then it returns a query plan containing:</p>
+
+<ol>
+<li>the replicas for which the child policy returns distance <code>LOCAL</code>, shuffled in a random order;</li>
+<li>followed by the query plan of the child policy, skipping any host that were already returned by the previous step.</li>
+</ol>
+
+<p>Finally, the <code>shuffleReplicas</code> constructor parameter allows you to control whether the policy shuffles the replicas in
+step 1:</p>
+<pre class="highlight"><code><span class="k">new</span> <span class="nf">TokenAwarePolicy</span><span class="p">(</span><span class="n">anotherPolicy</span><span class="o">,</span> <span class="kc">false</span><span class="o">);</span> <span class="c1">// no shuffling</span>
+</code></pre>
+<p>Shuffling will distribute writes better, and can alleviate hotspots caused by “fat” partitions. On the other hand,
+setting it to <code>false</code> might increase the effectiveness of caching, since data will always be retrieved from the
+“primary” replica. Shuffling is enabled by default.</p>
+
+<h3 id="latency-aware-policy" class="target">
+<a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/policies/LatencyAwarePolicy.html">LatencyAwarePolicy</a><a class="anchor" href="#latency-aware-policy" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+<pre class="highlight"><code><span class="n">Cluster</span> <span class="n">cluster</span> <span class="o">=</span> <span class="n">Cluster</span><span class="o">.</span><span class="na">builder</span><span class="o">()</span>
+        <span class="o">.</span><span class="na">addContactPoint</span><span class="o">(</span><span class="s">"127.0.0.1"</span><span class="o">)</span>
+        <span class="o">.</span><span class="na">withLoadBalancingPolicy</span><span class="o">(</span>
+                <span class="n">LatencyAwarePolicy</span><span class="o">.</span><span class="na">builder</span><span class="o">(</span><span class="n">anotherPolicy</span><span class="o">)</span>
+                        <span class="o">.</span><span class="na">withExclusionThreshold</span><span class="o">(</span><span class="mf">2.0</span><span class="o">)</span>
+                        <span class="o">.</span><span class="na">withScale</span><span class="o">(</span><span class="mi">100</span><span class="o">,</span> <span class="n">TimeUnit</span><span class="o">.</span><span class="na">MILLISECONDS</span><span class="o">)</span>
+                        <span class="o">.</span><span class="na">withRetryPeriod</span><span class="o">(</span><span class="mi">10</span><span class="o">,</span> <span class="n">TimeUnit</span><span class="o">.</span><span class="na">SECONDS</span><span class="o">)</span>
+                        <span class="o">.</span><span class="na">withUpdateRate</span><span class="o">(</span><span class="mi">100</span><span class="o">,</span> <span class="n">TimeUnit</span><span class="o">.</span><span class="na">MILLISECONDS</span><span class="o">)</span>
+                        <span class="o">.</span><span class="na">withMininumMeasurements</span><span class="o">(</span><span class="mi">50</span><span class="o">)</span>
+                        <span class="o">.</span><span class="na">build</span><span class="o">()</span>
+        <span class="o">).</span><span class="na">build</span><span class="o">();</span>
+</code></pre>
+<p>This policy adds <strong>latency awareness</strong> on top of another policy: it collects the latencies of queries to each host, and
+will exclude the worst-performing hosts from query plans.</p>
+
+<p>The builder allow you to customize various aspects of the policy:</p>
+
+<ul>
+<li>the <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/policies/LatencyAwarePolicy.Builder.html#withExclusionThreshold-double-">exclusion threshold</a> controls how much worse a host must perform (compared to the fastest
+host) in order to be excluded. For example, 2 means that hosts that are twice slower will be excluded;</li>
+<li>since a host’s performance can vary over time, its score is computed with a time-weighted average; the
+<a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/policies/LatencyAwarePolicy.Builder.html#withScale-long-java.util.concurrent.TimeUnit-">scale</a> controls how fast the weight given to older latencies decreases over time;</li>
+<li>the <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/policies/LatencyAwarePolicy.Builder.html#withRetryPeriod-long-java.util.concurrent.TimeUnit-">retry period</a> is the duration for which a slow host will be penalized;</li>
+<li>the <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/policies/LatencyAwarePolicy.Builder.html#withUpdateRate-long-java.util.concurrent.TimeUnit-">update rate</a> defines how often the minimum average latency (i.e. the fastest host) is recomputed;</li>
+<li>the <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/policies/LatencyAwarePolicy.Builder.html#withMininumMeasurements-int-">minimum measurements</a> threshold guarantees that we have enough measurements before we
+start excluding a host. This prevents skewing the measurements during a node restart, where JVM warm-up will influence
+latencies.</li>
+</ul>
+
+<p>For any host, the distance returned by the policy is always the same as its child policy.</p>
+
+<p>Query plans are based on the child policy’s, except that hosts that are currently excluded for being too slow are moved
+to the end of the plan.</p>
+
+<h3 id="filtering-policies" class="target">Filtering policies<a class="anchor" href="#filtering-policies" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<p><a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/policies/WhiteListPolicy.html">WhiteListPolicy</a> wraps another policy with a white list, to ensure that the driver will only ever connect to a
+pre-defined subset of the cluster. The distance will be that of the child policy for hosts that are in the white list,
+and <code>IGNORED</code> otherwise. Query plans are guaranteed to only contain white-listed hosts.</p>
+
+<p><a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/policies/HostFilterPolicy.html">HostFilterPolicy</a> is a generalization of that concept, where you provide the predicate that will determine if a host is
+included or not.</p>
+
+<h3 id="implementing-your-own" class="target">Implementing your own<a class="anchor" href="#implementing-your-own" aria-hidden="true"><span class="glyphicon glyphicon-link"></span></a>
+</h3>
+
+<p>If none of the provided policies fit your use case, you can write your own. This is an advanced topic, so we recommend
+studying the existing implementations first: <code>RoundRobinPolicy</code> is a good place to start, then you can look at more
+complex ones like <code>DCAwareRoundRobinPolicy</code>.</p>
+
+
+        </div>
+      </div>
+    </div>
+
+    
+    <footer class="container text-muted">
+      <ul class="list-inline">
+      
+        
+        <li>
+          <a href="https://github.com/datastax/java-driver/">Code</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="http://datastax.github.io/java-driver/">Docs</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://datastax-oss.atlassian.net/browse/JAVA/">Issues</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://groups.google.com/a/lists.datastax.com/forum/#!forum/java-driver-user">Mailing List</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="irc://irc.freenode.net/datastax-drivers">IRC Channel</a>
+        </li>
+      
+        <li>·</li>
+        <li>
+          <a href="https://github.com/datastax/java-driver/releases">Releases</a>
+        </li>
+      
+      </ul>
+    </footer>
+    
+
+    <script src="../../../js/jquery.js"></script>
+    <script src="../../../js/bootstrap.js"></script>
+    <script src="../../../js/angular.js"></script>
+    <script src="../../../js/mousetrap.js"></script>
+    <script src="../../../js/hotkeys.js"></script>
+    <script src="../../../js/ZeroClipboard.js"></script>
+    <script src="../../../js/lunr.js"></script>
+    <script src="../../../js/app.js"></script>
+  </body>
+</html>

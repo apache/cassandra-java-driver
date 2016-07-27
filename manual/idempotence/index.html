@@ -41,12 +41,14 @@
               <span class="text-warning">Attention:</span> Viewing documentation for version
               <div class="btn-group">
                 <button id="current-version" class="btn btn-default btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                  3.0.3
+                  3.1.0
                   <span class="caret"></span>
                 </button>
                 <ul class="dropdown-menu" role="menu" aria-labelledby="current-version">
                 
-                  <li class="disabled"><a href="./">3.0.3</a></li>
+                  <li class="disabled"><a href="./">3.1.0</a></li>
+                
+                  <li><a href="../../3.0.3/manual/idempotence/">3.0.3</a></li>
                 
                   <li><a href="../../3.0.1/manual/idempotence/">3.0.1</a></li>
                 
@@ -76,7 +78,7 @@
           <div class="col-md-4">
             <form id="search" class="form-search dropdown visible-lg-inline-block" ng-controller="search" ng-class="{open: hasResults}" role="search" ng-submit="submit()" data-spy="affix" data-offset-top="130">
               <div class="form-group has-feedback">
-                <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('3.0.3')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
+                <input type="search" class="form-control input-sm mousetrap" placeholder="Search..." ng-model="q" ng-change="search('3.1.0')" ng-disabled="!searchReady" disabled data-hotkey="{down: moveDown, up: moveUp, esc: reset}" data-search>
               </div>
               <ul class="dropdown-menu search-results" role="menu">
                 <li ng-repeat="result in results" ng-class="{'bg-warning': $index == current}"><a ng-href="{{basePath}}{{result.path}}"><span ng-bind-html="summary(result)"></span></a></li>
@@ -108,6 +110,10 @@
   <li>
     <a href="../../faq/">
       Frequently Asked Questions <small>page</small>
+      
+      
+      <span class="glyphicon glyphicon-plus-sign pull-right" aria-hidden="true"></span>
+      
       
     </a>
     
@@ -241,6 +247,15 @@
   <li>
     <a href="../native_protocol/">
       Native protocol <small>page</small>
+      
+    </a>
+    
+  </li>
+  
+  
+  <li>
+    <a href="../osgi/">
+      OSGi <small>page</small>
       
     </a>
     
@@ -434,8 +449,9 @@ will always end up with the value <code>[1]</code>;</li>
 it will contain <code>[1]</code> after the first execution, <code>[1, 1]</code> after the second, etc.</li>
 </ul>
 
-<p>Idempotence matters for <a href="../retries/">retries</a> and <a href="../speculative_execution/">speculative query executions</a>. The
-corresponding policies inspect the <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Statement.html#isIdempotent--">Statement#isIdempotent()</a> flag.</p>
+<p>Idempotence matters for <a href="../retries/">retries</a> and <a href="../speculative_execution/">speculative query executions</a>. The driver
+will bypass those features if the <a href="http://docs.datastax.com/en/drivers/java/3.0/com/datastax/driver/core/Statement.html#isIdempotent--">Statement#isIdempotent()</a> flag is set to <code>false</code>, to ensure that the
+statement does not get executed more than once.</p>
 
 <p>In most cases, you must set that flag manually. The driver does not parse query strings, so it can’t infer it
 automatically (except for statements coming from the query builder, see below).</p>
@@ -538,9 +554,8 @@ clients’ point of view, there were two operations:</p>
 <p>But overall the column changed from 1 to 2. There is no ordering of the two operations that can explain that change. We
 broke linearizability by doing a transparent retry at step 6.</p>
 
-<p>To avoid this, the driver considers lightweight transactions as non-idempotent, and provides a
-<a href="../retries/">retry policy</a> that doesn’t retry non-idempotent statements. If linearizability is important for you, you
-should use that policy, and ensure that lightweight transactions are appropriately flagged.</p>
+<p>If linearizability is important for you, you should ensure that lightweight transactions are appropriately flagged as
+not idempotent.</p>
 
 
         </div>
