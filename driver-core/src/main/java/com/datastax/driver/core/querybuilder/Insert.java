@@ -94,7 +94,7 @@ public class Insert extends BuiltStatement {
      * @param name  the name of the column to insert/update.
      * @param value the value to insert/update for {@code name}.
      * @return this INSERT statement.
-     * @throws IllegalStateException if this method is called and the {@link #json(String)}
+     * @throws IllegalStateException if this method is called and the {@link #json(Object)}
      *                               method has been called before, because it's not possible
      *                               to mix {@code INSERT JSON} syntax with regular {@code INSERT} syntax.
      */
@@ -118,7 +118,7 @@ public class Insert extends BuiltStatement {
      *               in {@code names}.
      * @return this INSERT statement.
      * @throws IllegalArgumentException if {@code names.length != values.length}.
-     * @throws IllegalStateException    if this method is called and the {@link #json(String)}
+     * @throws IllegalStateException    if this method is called and the {@link #json(Object)}
      *                                  method has been called before, because it's not possible
      *                                  to mix {@code INSERT JSON} syntax with regular {@code INSERT} syntax.
      */
@@ -135,7 +135,7 @@ public class Insert extends BuiltStatement {
      *               in {@code names}.
      * @return this INSERT statement.
      * @throws IllegalArgumentException if {@code names.size() != values.size()}.
-     * @throws IllegalStateException    if this method is called and the {@link #json(String)}
+     * @throws IllegalStateException    if this method is called and the {@link #json(Object)}
      *                                  method has been called before, because it's not possible
      *                                  to mix {@code INSERT JSON} syntax with regular {@code INSERT} syntax.
      */
@@ -156,20 +156,30 @@ public class Insert extends BuiltStatement {
     }
 
     /**
-     * Inserts the provided JSON string, using the {@code INSERT INTO ... JSON} syntax introduced
+     * Inserts the provided object, using the {@code INSERT INTO ... JSON} syntax introduced
      * in Cassandra 2.2.
      * <p/>
-     * With INSERT statements, the new {@code JSON} keyword can be used to enable inserting a
-     * JSON encoded map as a single row.
+     * With INSERT statements, the new {@code JSON} keyword can be used to enable inserting a JSON
+     * structure as a single row.
      * <p/>
-     * <strong>The provided JSON string will be appended to the query string as is.
-     * It should NOT be surrounded by single quotes.</strong>
+     * The provided object can be of the following types:
+     * <ol>
+     * <li>A raw string. In this case, it will be appended to the query string as is.
+     * <strong>It should NOT be surrounded by single quotes.</strong>
      * Its format should generally match that returned by a
      * {@code SELECT JSON} statement on the same table.
-     * <p/>
-     * Note that it is not possible to insert function calls nor bind markers in the JSON string.
+     * Note that it is not possible to insert function calls nor bind markers in a JSON string.</li>
+     * <li>A {@link QueryBuilder#bindMarker() bind marker}. In this case, the statement is meant to be prepared
+     * and no JSON string will be appended to the query string, only a bind marker for the whole JSON parameter.</li>
+     * <li>Any object that can be serialized to JSON. Such objects can be used provided that
+     * a matching {@link com.datastax.driver.core.TypeCodec codec} is registered with the
+     * {@link CodecRegistry} in use. This allows the usage of JSON libraries, such
+     * as the <a href="https://jcp.org/en/jsr/detail?id=353">Java API for JSON processing</a>,
+     * the popular <a href="http://wiki.fasterxml.com/JacksonHome">Jackson</a> library, or
+     * Google's <a href="https://github.com/google/gson">Gson</a> library, for instance.</li>
+     * </ol>
      * <h3>Case-sensitive column names</h3>
-     * Users are required to handle case-sensitive column names
+     * When passing raw strings to this method, users are required to handle case-sensitive column names
      * by surrounding them with double quotes.
      * <p/>
      * For example, to insert into a table with two columns named “myKey” and “value”,
@@ -182,7 +192,8 @@ public class Insert extends BuiltStatement {
      * INSERT INTO mytable JSON '{"\"myKey\"": 0, "value": 0}';
      * </pre>
      * <h3>Escaping quotes in column values</h3>
-     * Double quotes should be escaped with a backslash, but single quotes should be escaped in
+     * When passing raw strings to this method, double quotes should be escaped with a backslash,
+     * but single quotes should be escaped in
      * the CQL manner, i.e. by another single quote. For example, the column value
      * {@code foo"'bar} should be inserted in the JSON string
      * as {@code "foo\"''bar"}.
@@ -191,7 +202,7 @@ public class Insert extends BuiltStatement {
      * Any columns which are omitted from the JSON string will be defaulted to a {@code NULL} value
      * (which will result in a tombstone being created).
      *
-     * @param json the JSON string, or a bind marker.
+     * @param json the JSON string, or a bind marker, or a JSON object handled by a specific {@link com.datastax.driver.core.TypeCodec codec}.
      * @return this INSERT statement.
      * @throws IllegalStateException if this method is called and any of the {@code value} or {@code values}
      *                               methods have been called before, because it's not possible
