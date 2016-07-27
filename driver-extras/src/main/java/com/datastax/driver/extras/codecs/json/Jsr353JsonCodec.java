@@ -65,7 +65,7 @@ import java.util.Map;
  *   <artifactId>javax.json-api</artifactId>
  *   <version>1.0</version>
  * </dependency>
- * <p/>
+ *
  * <dependency>
  *   <groupId>org.glassfish</groupId>
  *   <artifactId>javax.json</artifactId>
@@ -79,10 +79,18 @@ public class Jsr353JsonCodec extends TypeCodec<JsonStructure> {
 
     private final JsonWriterFactory writerFactory;
 
+    /**
+     * Creates a new instance using a default configuration.
+     */
     public Jsr353JsonCodec() {
         this(null);
     }
 
+    /**
+     * Creates a new instance using the provided configuration.
+     *
+     * @param config A map of provider-specific configuration properties. May be empty or {@code null}.
+     */
     public Jsr353JsonCodec(Map<String, ?> config) {
         super(DataType.varchar(), JsonStructure.class);
         readerFactory = Json.createReaderFactory(config);

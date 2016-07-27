@@ -70,7 +70,7 @@ public class Jsr353JsonCodecTest extends CCMTestsSupport {
     @Override
     public Cluster.Builder createClusterBuilder() {
         return Cluster.builder().withCodecRegistry(
-                new CodecRegistry().register(jsonCodec) // global User <-> varchar codec
+                new CodecRegistry().register(jsonCodec) // global JsonStructure <-> varchar codec
         );
     }
 
