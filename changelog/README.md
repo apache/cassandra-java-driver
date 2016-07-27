@@ -1,6 +1,6 @@
 ## Changelog
 
-### 3.1.0 (in progress)
+### 3.1.0
 
 - [new feature] JAVA-1153: Add PER PARTITION LIMIT to Select QueryBuilder.
 - [improvement] JAVA-743: Add JSON support to QueryBuilder.
