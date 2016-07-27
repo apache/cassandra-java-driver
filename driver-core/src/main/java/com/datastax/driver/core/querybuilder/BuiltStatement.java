@@ -21,7 +21,6 @@ import com.datastax.driver.core.policies.RetryPolicy;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -297,12 +296,16 @@ public abstract class BuiltStatement extends RegularStatement {
     @Override
     public String toString() {
         try {
-            if (forceNoValues) {
-                return getQueryString();
+            try {
+                if (forceNoValues)
+                    return getQueryString();
+                // 1) try first with all values inlined (will not work if some values require custom codecs)
+                return maybeAddSemicolon(buildQueryString(null, CodecRegistry.DEFAULT_INSTANCE)).toString();
+            } catch (CodecNotFoundException e) {
+                // 2) try next with bind markers for all values to avoid usage of custom codecs
+                return maybeAddSemicolon(buildQueryString(new ArrayList<Object>(), CodecRegistry.DEFAULT_INSTANCE)).toString();
             }
-            StringBuilder queryString = buildQueryString(null, CodecRegistry.DEFAULT_INSTANCE);
-            return maybeAddSemicolon(queryString).toString();
-        } catch (CodecNotFoundException e) {
+        } catch (RuntimeException e) {
             // Ugly but we have absolutely no context to get the registry from
             return String.format("built query (could not generate with default codec registry: %s)", e.getMessage());
         }

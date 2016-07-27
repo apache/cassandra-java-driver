@@ -37,7 +37,7 @@ import java.util.Map;
  * - FILE references an existing file.
  * <p/>
  * Side effects:
- * - creates a new keyspace "examples" in the cluster. It a keyspace with this name already exists, it will be reused;
+ * - creates a new keyspace "examples" in the cluster. If a keyspace with this name already exists, it will be reused;
  * - creates a table "examples.blobs". If it already exists, it will be reused;
  * - inserts data in the table.
  */

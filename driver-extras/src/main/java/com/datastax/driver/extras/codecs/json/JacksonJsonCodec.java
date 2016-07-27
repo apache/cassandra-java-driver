@@ -25,6 +25,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.TypeFactory;
+import com.google.common.reflect.TypeToken;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -50,10 +51,47 @@ import java.nio.ByteBuffer;
  */
 public class JacksonJsonCodec<T> extends TypeCodec<T> {
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper;
 
-    public JacksonJsonCodec(Class<T> javaType) {
+    /**
+     * Creates a new instance for the provided {@code javaClass},
+     * using a default, newly-allocated {@link ObjectMapper}.
+     *
+     * @param javaClass the Java class this codec maps to.
+     */
+    public JacksonJsonCodec(Class<T> javaClass) {
+        this(javaClass, new ObjectMapper());
+    }
+
+    /**
+     * Creates a new instance for the provided {@code javaType},
+     * using a default, newly-allocated {@link ObjectMapper}.
+     *
+     * @param javaType the Java type this codec maps to.
+     */
+    public JacksonJsonCodec(TypeToken<T> javaType) {
+        this(javaType, new ObjectMapper());
+    }
+
+    /**
+     * Creates a new instance for the provided {@code javaClass},
+     * and using the provided {@link ObjectMapper}.
+     *
+     * @param javaClass the Java class this codec maps to.
+     */
+    public JacksonJsonCodec(Class<T> javaClass, ObjectMapper objectMapper) {
+        this(TypeToken.of(javaClass), objectMapper);
+    }
+
+    /**
+     * Creates a new instance for the provided {@code javaType},
+     * and using the provided {@link ObjectMapper}.
+     *
+     * @param javaType the Java type this codec maps to.
+     */
+    public JacksonJsonCodec(TypeToken<T> javaType, ObjectMapper objectMapper) {
         super(DataType.varchar(), javaType);
+        this.objectMapper = objectMapper;
     }
 
     @Override

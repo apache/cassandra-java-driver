@@ -1057,23 +1057,39 @@ public final class QueryBuilder {
      * Support for JSON functions has been added in Cassandra 2.2.
      * The {@code fromJson()} function is similar to {@code INSERT JSON} statements,
      * but applies to a single column value instead of the entire row, and
-     * converts a JSON-encoded string into the normal Cassandra column value.
+     * converts a JSON object into the normal Cassandra column value.
      * <p/>
      * It may be used in {@code INSERT} and {@code UPDATE} statements,
      * but NOT in the selection clause of a {@code SELECT} statement.
      * <p/>
-     * <strong>The provided JSON string will be appended to the query string as is.
-     * It should NOT be surrounded by single quotes.</strong>
+     * The provided object can be of the following types:
+     * <ol>
+     * <li>A raw string. In this case, it will be appended to the query string as is.
+     * <strong>It should NOT be surrounded by single quotes.</strong>
+     * Its format should generally match that returned by a
+     * {@code SELECT JSON} statement on the same table.
+     * Note that it is not possible to insert function calls nor bind markers in a JSON string.</li>
+     * <li>A {@link QueryBuilder#bindMarker() bind marker}. In this case, the statement is meant to be prepared
+     * and no JSON string will be appended to the query string, only a bind marker for the whole JSON parameter.</li>
+     * <li>Any object that can be serialized to JSON. Such objects can be used provided that
+     * a matching {@link com.datastax.driver.core.TypeCodec codec} is registered with the
+     * {@link com.datastax.driver.core.CodecRegistry CodecRegistry} in use. This allows the usage of JSON libraries, such
+     * as the <a href="https://jcp.org/en/jsr/detail?id=353">Java API for JSON processing</a>,
+     * the popular <a href="http://wiki.fasterxml.com/JacksonHome">Jackson</a> library, or
+     * Google's <a href="https://github.com/google/gson">Gson</a> library, for instance.</li>
+     * </ol>
      * <p/>
-     * String values should be enclosed in double quotes.
-     * Double quotes appearing inside strings should be escaped with a backslash,
+     * When passing raw strings to this method, the following rules apply:
+     * <ol>
+     * <li>String values should be enclosed in double quotes.</li>
+     * <li>Double quotes appearing inside strings should be escaped with a backslash,
      * but single quotes should be escaped in
      * the CQL manner, i.e. by another single quote. For example, the column value
      * {@code foo"'bar} should be inserted in the JSON string
-     * as {@code "foo\"''bar"}.
-     * <p/>
-     * Note that it is not possible to insert function calls nor bind markers in the JSON string.
+     * as {@code "foo\"''bar"}.</li>
+     * </ol>
      *
+     * @param json the JSON string, or a bind marker, or a JSON object handled by a specific {@link com.datastax.driver.core.TypeCodec codec}.
      * @return the function call.
      * @see <a href="http://cassandra.apache.org/doc/cql3/CQL-2.2.html#json">JSON Support for CQL</a>
      * @see <a href="http://www.datastax.com/dev/blog/whats-new-in-cassandra-2-2-json-support">JSON Support in Cassandra 2.2</a>
