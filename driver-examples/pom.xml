@@ -55,6 +55,21 @@
             <optional>true</optional>
         </dependency>
 
+        <dependency>
+            <groupId>javax.json</groupId>
+            <artifactId>javax.json-api</artifactId>
+            <version>${jsr353-api.version}</version>
+            <optional>true</optional>
+        </dependency>
+
+        <dependency>
+            <groupId>org.glassfish</groupId>
+            <artifactId>javax.json</artifactId>
+            <version>${jsr353-ri.version}</version>
+            <optional>true</optional>
+            <scope>runtime</scope>
+        </dependency>
+
         <!-- driver logs -->
         <dependency>
             <groupId>ch.qos.logback</groupId>
