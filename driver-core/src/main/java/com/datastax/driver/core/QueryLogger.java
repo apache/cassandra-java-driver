@@ -15,6 +15,7 @@
  */
 package com.datastax.driver.core;
 
+import com.datastax.driver.core.querybuilder.BuiltStatement;
 import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -660,6 +661,8 @@ public abstract class QueryLogger implements LatencyTracker {
                         remaining = appendParameters((SimpleStatement) inner, params, remaining);
                     }
                 }
+            } else if (statement instanceof BuiltStatement) {
+                appendParameters((BuiltStatement) statement, params, maxLoggedParameters);
             }
             if (params.length() > 0)
                 params.append("]");
@@ -825,6 +828,35 @@ public abstract class QueryLogger implements LatencyTracker {
             }
         }
         return valueStr;
+    }
+
+    protected int appendParameters(BuiltStatement statement, StringBuilder buffer, int remaining) {
+        if (remaining == 0)
+            return 0;
+        int numberOfParameters = statement.getValues(protocolVersion(), cluster.getConfiguration()
+                                                                               .getCodecRegistry()).length;
+        if (numberOfParameters > 0) {
+            int numberOfLoggedParameters;
+            if (remaining == -1) {
+                numberOfLoggedParameters = numberOfParameters;
+            } else {
+                numberOfLoggedParameters = remaining > numberOfParameters ? numberOfParameters : remaining;
+                remaining -= numberOfLoggedParameters;
+            }
+
+            for (int i = 0; i < numberOfLoggedParameters; i++) {
+                if (buffer.length() == 0)
+                    buffer.append(" [");
+                else
+                    buffer.append(", ");
+
+                    buffer.append(parameterValueAsString(statement.getObject(i)));
+            }
+            if (numberOfLoggedParameters < numberOfParameters) {
+                buffer.append(FURTHER_PARAMS_OMITTED);
+            }
+        }
+        return remaining;
     }
 
     private ProtocolVersion protocolVersion() {
