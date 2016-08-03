@@ -201,6 +201,9 @@ class AnnotationParser {
                 throw new IllegalArgumentException(String.format("Field %s does not exist in type %s.%s",
                         propertyMapper.columnName, ksName, userType.getTypeName()));
 
+            for (Class<?> fieldUdt : TypeMappings.findUDTs(propertyMapper.javaType.getType()))
+                mappingManager.getUDTCodec(fieldUdt);
+
             propertyMappers.put(propertyMapper.columnName, propertyMapper);
         }
 
