@@ -25,6 +25,9 @@ import static com.datastax.driver.core.QueryLogger.SLOW_LOGGER;
 import static com.datastax.driver.core.QueryLogger.TRUNCATED_OUTPUT;
 import static com.datastax.driver.core.TestUtils.getFixedValue;
 import static com.datastax.driver.core.TestUtils.ipOfNode;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.set;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.update;
 import static org.apache.log4j.Level.DEBUG;
 import static org.apache.log4j.Level.INFO;
 import static org.apache.log4j.Level.TRACE;
@@ -33,6 +36,7 @@ import static org.mockito.Mockito.mock;
 
 import com.datastax.driver.core.StatementWrapperTest.CustomStatement;
 import com.datastax.driver.core.exceptions.DriverException;
+import com.datastax.driver.core.querybuilder.BuiltStatement;
 import com.datastax.driver.core.utils.CassandraVersion;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
@@ -63,9 +67,9 @@ public class QueryLoggerTest extends CCMTestsSupport {
   private List<Object> values;
   private String assignments;
 
-  private Logger normal = Logger.getLogger(NORMAL_LOGGER.getName());
-  private Logger slow = Logger.getLogger(SLOW_LOGGER.getName());
-  private Logger error = Logger.getLogger(ERROR_LOGGER.getName());
+  private final Logger normal = Logger.getLogger(NORMAL_LOGGER.getName());
+  private final Logger slow = Logger.getLogger(SLOW_LOGGER.getName());
+  private final Logger error = Logger.getLogger(ERROR_LOGGER.getName());
 
   private MemoryAppender normalAppender;
   private MemoryAppender slowAppender;
@@ -459,6 +463,23 @@ public class QueryLoggerTest extends CCMTestsSupport {
         .contains(query)
         .contains("pk:42")
         .contains("c_text:'foo'");
+  }
+
+  @Test(groups = "short")
+  @CassandraVersion("2.0.0")
+  public void should_log_non_null_parameters_built_statements() throws Exception {
+    // given
+    normal.setLevel(TRACE);
+    queryLogger = QueryLogger.builder().build();
+    cluster().register(queryLogger);
+
+    // when
+    BuiltStatement update = update("test").with(set("c_text", "foo")).where(eq("pk", 42));
+    session().execute(update);
+
+    // then
+    String line = normalAppender.waitAndGet(10000);
+    assertThat(line).contains("['foo']");
   }
 
   @Test(groups = "short")

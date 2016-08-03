@@ -3,6 +3,7 @@
 ### 3.7.0 (In progress)
 
 - [improvement] JAVA-2025: Include exception message in Abstract*Codec.accepts(null).
+- [improvement] JAVA-1256: Log parameters of BuiltStatement in QueryLogger.
 
 
 ### 3.6.0
