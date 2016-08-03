@@ -17,6 +17,10 @@ package com.datastax.driver.core;
 
 import com.datastax.driver.core.StatementWrapperTest.CustomStatement;
 import com.datastax.driver.core.exceptions.DriverException;
+import com.datastax.driver.core.querybuilder.BuiltStatement;
+import com.datastax.driver.core.querybuilder.Clause;
+import com.datastax.driver.core.querybuilder.QueryBuilder;
+import com.datastax.driver.core.querybuilder.Update;
 import com.datastax.driver.core.utils.CassandraVersion;
 import com.google.common.base.Function;
 import com.google.common.base.Joiner;
@@ -38,6 +42,9 @@ import static com.datastax.driver.core.BatchStatement.Type.UNLOGGED;
 import static com.datastax.driver.core.QueryLogger.*;
 import static com.datastax.driver.core.TestUtils.getFixedValue;
 import static com.datastax.driver.core.TestUtils.ipOfNode;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.set;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.update;
 import static org.apache.log4j.Level.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
@@ -423,6 +430,23 @@ public class QueryLoggerTest extends CCMTestsSupport {
                 .contains(query)
                 .contains("pk:42")
                 .contains("c_text:'foo'");
+    }
+
+    @Test(groups = "short")
+    @CassandraVersion(major = 2.0)
+    public void should_log_non_null_parameters_built_statements() throws Exception {
+        // given
+        normal.setLevel(TRACE);
+        queryLogger = QueryLogger.builder().build();
+        cluster().register(queryLogger);
+
+        //when
+        BuiltStatement update = update("test").with(set("c_text", "foo")).where(eq("pk", 42));
+        session().execute(update);
+
+        //then
+        String line = normalAppender.waitAndGet(10000);
+        assertThat(line).contains("['foo']");
     }
 
     @Test(groups = "short")
