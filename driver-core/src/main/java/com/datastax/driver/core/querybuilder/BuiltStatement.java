@@ -112,6 +112,24 @@ public abstract class BuiltStatement extends RegularStatement {
     }
 
     /**
+     * The number of values for this statement, or zero, if this
+     * statement does not have values.
+     * @param codecRegistry the codec registry that will be used if the statement must be
+     *                      rebuilt in order to determine if it has values, and Java objects
+     *                      must be inlined in the process (see {@link BuiltStatement} for
+     *                      more explanations on why this is so).
+     *
+     * @return the number of values.
+     */
+    public int valuesCount(CodecRegistry codecRegistry) {
+        maybeRebuildCache(codecRegistry);
+        if (values != null)
+            return values.size();
+        else
+            return 0;
+    }
+
+    /**
      * Returns the {@code i}th value as the Java type matching its CQL type.
      *
      * @param i             the index to retrieve.
@@ -291,25 +309,6 @@ public abstract class BuiltStatement extends RegularStatement {
 
         // Otherwise return the computed value
         return !hasNonIdempotentOps();
-    }
-
-    @Override
-    public String toString() {
-        try {
-            if (forceNoValues)
-                return getQueryString();
-            // 1) try first with all values inlined (will not work if some values require custom codecs,
-            // or if the required codecs are registered in a different CodecRegistry instance than the default one)
-            return maybeAddSemicolon(buildQueryString(null, CodecRegistry.DEFAULT_INSTANCE)).toString();
-        } catch (RuntimeException e1) {
-            // 2) try next with bind markers for all values to avoid usage of custom codecs
-            try {
-                return maybeAddSemicolon(buildQueryString(new ArrayList<Object>(), CodecRegistry.DEFAULT_INSTANCE)).toString();
-            } catch (RuntimeException e2) {
-                // Ugly but we have absolutely no context to get the registry from
-                return String.format("built query (could not generate with default codec registry: %s)", e2.getMessage());
-            }
-        }
     }
 
     /**

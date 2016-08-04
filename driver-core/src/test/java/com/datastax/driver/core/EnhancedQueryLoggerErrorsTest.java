@@ -28,7 +28,6 @@ import org.testng.annotations.Test;
 
 import java.util.concurrent.TimeUnit;
 
-import static com.datastax.driver.core.QueryLogger.builder;
 import static org.apache.log4j.Level.DEBUG;
 import static org.apache.log4j.Level.INFO;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -38,22 +37,21 @@ import static org.scassandra.http.client.PrimingRequest.then;
 import static org.scassandra.http.client.Result.*;
 
 /**
- * Tests for {@link QueryLogger} using Scassandra.
+ * Tests for {@link EnhancedQueryLogger} using Scassandra.
  * Contains only tests for exceptions (client timeout, read timeout, unavailable...);
- * other tests can be found in {@link QueryLoggerTest}.
+ * other tests can be found in {@link EnhancedQueryLoggerTest}.
  */
-@SuppressWarnings("deprecation")
-public class QueryLoggerErrorsTest extends ScassandraTestBase.PerClassCluster {
+public class EnhancedQueryLoggerErrorsTest extends ScassandraTestBase.PerClassCluster {
 
-    private Logger slow = Logger.getLogger(QueryLogger.SLOW_LOGGER.getName());
-    private Logger error = Logger.getLogger(QueryLogger.ERROR_LOGGER.getName());
+    private Logger slow = Logger.getLogger(EnhancedQueryLogger.SLOW_LOGGER.getName());
+    private Logger error = Logger.getLogger(EnhancedQueryLogger.ERROR_LOGGER.getName());
 
     private MemoryAppender slowAppender;
     private MemoryAppender errorAppender;
 
     private Cluster cluster = null;
     private Session session = null;
-    private QueryLogger queryLogger = null;
+    private EnhancedQueryLogger queryLogger = null;
     private Level originalError;
     private Level originalSlow;
 
@@ -90,7 +88,7 @@ public class QueryLoggerErrorsTest extends ScassandraTestBase.PerClassCluster {
     public void should_log_queries_beyond_constant_threshold() throws Exception {
         // given
         slow.setLevel(DEBUG);
-        queryLogger = builder()
+        queryLogger = EnhancedQueryLogger.builder()
                 .withConstantThreshold(10)
                 .build();
         cluster.register(queryLogger);
@@ -115,7 +113,7 @@ public class QueryLoggerErrorsTest extends ScassandraTestBase.PerClassCluster {
     public void should_log_queries_beyond_dynamic_threshold() throws Exception {
         // given
         slow.setLevel(DEBUG);
-        queryLogger = builder()
+        queryLogger = EnhancedQueryLogger.builder()
                 .withDynamicThreshold(ClusterWidePercentileTracker.builder(1000)
                         .withMinRecordedValues(100)
                         .withInterval(1, TimeUnit.SECONDS).build(), 99)
@@ -164,7 +162,7 @@ public class QueryLoggerErrorsTest extends ScassandraTestBase.PerClassCluster {
     public void should_log_timed_out_queries() throws Exception {
         // given
         error.setLevel(DEBUG);
-        queryLogger = builder().build();
+        queryLogger = EnhancedQueryLogger.builder().build();
         cluster.register(queryLogger);
         cluster.getConfiguration().getSocketOptions().setReadTimeoutMillis(1);
         String query = "SELECT foo FROM bar";
@@ -215,7 +213,7 @@ public class QueryLoggerErrorsTest extends ScassandraTestBase.PerClassCluster {
     public void should_log_exception_from_the_given_result(Result result, Class<? extends Exception> expectedException) throws Exception {
         // given
         error.setLevel(DEBUG);
-        queryLogger = builder().build();
+        queryLogger = EnhancedQueryLogger.builder().build();
         cluster.register(queryLogger);
         String query = "SELECT foo FROM bar";
         primingClient.prime(

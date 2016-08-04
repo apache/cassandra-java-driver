@@ -43,7 +43,7 @@ enum QueryType {
                 if (opt.isIncludedInQuery())
                     opt.appendTo(usings);
             }
-            return insert.toString();
+            return insert.getQueryString(manager.getSession().getCluster().getConfiguration().getCodecRegistry());
         }
 
     },
@@ -75,7 +75,7 @@ enum QueryType {
 
             for (Mapper.Option opt : options)
                 opt.checkValidFor(QueryType.GET, manager);
-            return select.toString();
+            return select.getQueryString(manager.getSession().getCluster().getConfiguration().getCodecRegistry());
         }
     },
 
@@ -94,7 +94,7 @@ enum QueryType {
                 if (opt.isIncludedInQuery())
                     opt.appendTo(usings);
                     }
-            return delete.toString();
+            return delete.getQueryString(manager.getSession().getCluster().getConfiguration().getCodecRegistry());
         }
     };
 

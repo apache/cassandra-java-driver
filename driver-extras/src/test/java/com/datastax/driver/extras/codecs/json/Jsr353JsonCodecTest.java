@@ -53,10 +53,10 @@ public class Jsr353JsonCodecTest extends CCMTestsSupport {
         execute(
                 "CREATE TABLE t1 (c1 text, c2 text, PRIMARY KEY (c1, c2))",
                 String.format("CREATE TABLE %s (k text, \"miXeD\" text, i int, f float, PRIMARY KEY (k, \"miXeD\"))", TABLE1),
-                insertInto(TABLE1).value("k", "key0").value(quote("miXeD"), "a").value("i", 1).value("f", 1.1).toString(),
-                insertInto(TABLE1).value("k", "key0").value(quote("miXeD"), "b").value("i", 2).value("f", 2.5).toString(),
-                insertInto(TABLE1).value("k", "key0").value(quote("miXeD"), "c").value("i", 3).value("f", 3.7).toString(),
-                insertInto(TABLE1).value("k", "key0").value(quote("miXeD"), "d").value("i", 4).value("f", 5.0).toString()
+                String.format("INSERT INTO %s (k, \"miXeD\", i, f) VALUES ('key0', 'a', 1, 1.1)", TABLE1),
+                String.format("INSERT INTO %s (k, \"miXeD\", i, f) VALUES ('key0', 'b', 2, 2.5)", TABLE1),
+                String.format("INSERT INTO %s (k, \"miXeD\", i, f) VALUES ('key0', 'c', 3, 3.7)", TABLE1),
+                String.format("INSERT INTO %s (k, \"miXeD\", i, f) VALUES ('key0', 'd', 4, 5.0)", TABLE1)
         );
 
         if (ccm().getProtocolVersion().compareTo(ProtocolVersion.V3) >= 0) {

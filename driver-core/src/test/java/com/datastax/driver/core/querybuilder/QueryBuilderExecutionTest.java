@@ -45,10 +45,10 @@ public class QueryBuilderExecutionTest extends CCMTestsSupport {
                 "CREATE TABLE dateTest (t timestamp PRIMARY KEY)",
                 "CREATE TABLE test_coll (k int PRIMARY KEY, a list<int>, b map<int,text>, c set<text>)",
                 "CREATE TABLE test_ppl (a int, b int, c int, PRIMARY KEY (a, b))",
-                insertInto(TABLE2).value("k", "cast_t").value("t", "a").value("i", 1).value("f", 1.1).toString(),
-                insertInto(TABLE2).value("k", "cast_t").value("t", "b").value("i", 2).value("f", 2.5).toString(),
-                insertInto(TABLE2).value("k", "cast_t").value("t", "c").value("i", 3).value("f", 3.7).toString(),
-                insertInto(TABLE2).value("k", "cast_t").value("t", "d").value("i", 4).value("f", 5.0).toString()
+                String.format("INSERT INTO %s (k, t, i, f) VALUES ('cast_t', 'a', 1, 1.1)", TABLE2),
+                String.format("INSERT INTO %s (k, t, i, f) VALUES ('cast_t', 'b', 2, 2.5)", TABLE2),
+                String.format("INSERT INTO %s (k, t, i, f) VALUES ('cast_t', 'c', 3, 3.7)", TABLE2),
+                String.format("INSERT INTO %s (k, t, i, f) VALUES ('cast_t', 'd', 4, 5.0)", TABLE2)
         );
         // for per partition limit tests
         for (int i = 0; i < 5; i++) {
@@ -86,8 +86,8 @@ public class QueryBuilderExecutionTest extends CCMTestsSupport {
 
         Date d = new Date();
         session().execute(insertInto("dateTest").value("t", d));
-        String query = select().from("dateTest").where(eq(token("t"), fcall("token", d))).toString();
-        List<Row> rows = session().execute(query).all();
+        Statement stmt = select().from("dateTest").where(eq(token("t"), fcall("token", d)));
+        List<Row> rows = session().execute(stmt).all();
 
         assertEquals(1, rows.size());
 

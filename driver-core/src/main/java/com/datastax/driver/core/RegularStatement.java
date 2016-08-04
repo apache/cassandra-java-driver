@@ -189,21 +189,4 @@ public abstract class RegularStatement extends Statement {
         return hasValues(CodecRegistry.DEFAULT_INSTANCE);
     }
 
-    /**
-     * Returns this statement as a CQL query string.
-     * <p/>
-     * It is important to note that the query string is merely
-     * a CQL representation of this statement, but it does
-     * <em>not</em> convey all the information stored in {@link Statement}
-     * objects.
-     * <p/>
-     * See the javadocs of {@link #getQueryString()} for more information.
-     *
-     * @return this statement as a CQL query string.
-     * @see #getQueryString()
-     */
-    @Override
-    public String toString() {
-        return getQueryString();
-    }
 }

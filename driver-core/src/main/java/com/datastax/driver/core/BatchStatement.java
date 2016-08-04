@@ -61,8 +61,6 @@ public class BatchStatement extends Statement {
         COUNTER
     }
 
-    ;
-
     final Type batchType;
     private final List<Statement> statements = new ArrayList<Statement>();
 
