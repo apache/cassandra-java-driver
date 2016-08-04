@@ -4,6 +4,7 @@
 
 - [improvement] JAVA-1246: Driver swallows the real exception in a few cases
 - [improvement] JAVA-1261: Throw error when attempting to page in I/O thread.
+- [bug] JAVA-1258: Regression: Mapper cannot map a materialized view after JAVA-1126.
 
 
 ### 3.0.3

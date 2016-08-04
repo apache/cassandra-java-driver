@@ -471,7 +471,7 @@ public class MapperUDTTest extends CCMTestsSupport {
             manager.mapper(User.class);
             fail("Expected IllegalArgumentException");
         } catch (IllegalArgumentException e) {
-            assertThat(e.getMessage()).isEqualTo("Table users does not exist in keyspace " + keyspace);
+            assertThat(e.getMessage()).isEqualTo("Table or materialized view users does not exist in keyspace " + keyspace);
         }
     }
 
