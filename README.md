@@ -8,7 +8,7 @@ not yet have been released. You can find the documentation for latest
 version through [Java driver
 docs](http://datastax.github.io/java-driver/) or via the release tags,
 [e.g.
-2.0.12.2](https://github.com/datastax/java-driver/tree/2.0.12.2).*
+2.0.12.3](https://github.com/datastax/java-driver/tree/2.0.12.3).*
 
 A modern, [feature-rich](features/) and highly tunable Java client
 library for Apache Cassandra (1.2+) and DataStax Enterprise (3.1+) using
@@ -73,7 +73,7 @@ it in your application using the following Maven dependency:
 <dependency>
   <groupId>com.datastax.cassandra</groupId>
   <artifactId>cassandra-driver-core</artifactId>
-  <version>2.0.12.2</version>
+  <version>2.0.12.3</version>
 </dependency>
 ```
 
@@ -81,7 +81,7 @@ We also provide a [shaded JAR](http://datastax.github.io/java-driver/features/sh
 to avoid the explicit dependency to Netty.
 
 If you can't use a dependency management tool, a
-[binary tarball](http://downloads.datastax.com/java-driver/cassandra-java-driver-2.0.12.2.tar.gz)
+[binary tarball](http://downloads.datastax.com/java-driver/cassandra-java-driver-2.0.12.3.tar.gz)
 is available for download.
 
 ## Compatibility
