@@ -1,5 +1,10 @@
 ## Changelog
 
+### 2.0.12.3
+
+- [bug] JAVA-1002: Avoid deadlock when re-preparing a statement on other hosts.
+
+
 ### 2.0.12.2
 
 - [bug] JAVA-1179: Request objects should be copied when executed.

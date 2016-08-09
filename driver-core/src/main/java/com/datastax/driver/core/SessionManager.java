@@ -214,7 +214,7 @@ class SessionManager extends AbstractSession {
                                 new DriverInternalError(String.format("%s response received when prepared statement was expected", response.type)));
                 }
             }
-        });
+        }, executor());
     }
 
     Connection.Factory connectionFactory() {
