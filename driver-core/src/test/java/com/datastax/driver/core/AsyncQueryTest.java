@@ -48,9 +48,9 @@ public class AsyncQueryTest extends CCMTestsSupport {
             String keyspace = (String) objects[0];
             execute(
                     String.format("create keyspace %s WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1}", keyspace),
-                    String.format("create table %s.foo(k int primary key, v int)", keyspace),
-                    String.format("insert into %s.foo (k, v) values (1, 1)", keyspace)
-            );
+                    String.format("create table %s.foo(k int, v int, primary key (k, v))", keyspace));
+            for (int v = 0; v < 100; v++)
+                execute(String.format("insert into %s.foo (k, v) values (1, %d)", keyspace, v));
         }
     }
 
@@ -127,7 +127,6 @@ public class AsyncQueryTest extends CCMTestsSupport {
 
     @Test(groups = "short")
     public void should_fail_when_synchronous_call_on_io_thread() throws Exception {
-        final Thread sameThread = Thread.currentThread();
         for (int i = 0; i < 1000; i++) {
             ResultSetFuture f = session().executeAsync("select release_version from system.local");
             ListenableFuture<Thread> f2 = Futures.transform(f, new Function<ResultSet, Thread>() {
@@ -137,24 +136,52 @@ public class AsyncQueryTest extends CCMTestsSupport {
                     return Thread.currentThread();
                 }
             });
-            try {
-                Thread executedThread = f2.get();
-                if(executedThread != sameThread) {
-                    fail("Expected a failed future, callback was executed on " + executedThread);
-                } else {
-                    // Callback was invoked on the same thread, which indicates that the future completed
-                    // before the transform callback was registered.  Try again to produce case where callback
-                    // is called on io thread.
-                    logger.warn("Future completed before transform callback registered, will try again.");
-                }
-            } catch (Exception e) {
-                assertThat(Throwables.getRootCause(e))
-                        .isInstanceOf(IllegalStateException.class)
-                        .hasMessageContaining("Detected a synchronous Session call");
+            if (isFailed(f2, IllegalStateException.class, "Detected a synchronous call on an I/O thread")) {
                 return;
             }
         }
         fail("callback was not executed on io thread in 1000 attempts, something may be wrong.");
+    }
+
+    @Test(groups = "short")
+    public void should_fail_when_auto_paging_on_io_thread() throws Exception {
+        for (int i = 0; i < 1000; i++) {
+            Statement statement = new SimpleStatement("select v from asyncquerytest.foo where k = 1");
+            // Ensure results will be paged (there are 100 rows in the test table)
+            statement.setFetchSize(10);
+            ResultSetFuture f = session().executeAsync(statement);
+            ListenableFuture<Thread> f2 = Futures.transform(f, new Function<ResultSet, Thread>() {
+                @Override
+                public Thread apply(ResultSet rs) {
+                    rs.all(); // Consume the whole result set
+                    return Thread.currentThread();
+                }
+            });
+            if (isFailed(f2, IllegalStateException.class, "Detected a synchronous call on an I/O thread")) {
+                return;
+            }
+        }
+        fail("callback was not executed on io thread in 1000 attempts, something may be wrong.");
+    }
+
+    private boolean isFailed(ListenableFuture<Thread> future, Class<?> expectedException, String expectedMessage) {
+        try {
+            Thread executedThread = future.get();
+            if (executedThread != Thread.currentThread()) {
+                fail("Expected a failed future, callback was executed on " + executedThread);
+            } else {
+                // Callback was invoked on the same thread, which indicates that the future completed
+                // before the transform callback was registered. Try again to produce case where callback
+                // is called on io thread.
+                logger.warn("Future completed before transform callback registered, will try again.");
+            }
+        } catch (Exception e) {
+            assertThat(Throwables.getRootCause(e))
+                    .isInstanceOf(expectedException)
+                    .hasMessageContaining(expectedMessage);
+            return true;
+        }
+        return false;
     }
 
     private ListenableFuture<Integer> connectAndQuery(String keyspace, Executor executor) {
