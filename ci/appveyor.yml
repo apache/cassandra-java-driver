@@ -6,6 +6,7 @@ environment:
     - java_version: 1.7.0
     - java_version: 1.8.0
       test_profile: short
+os: Previous Visual Studio 2015
 platform: x64
 install:
   - ps: .\ci\appveyor.ps1
