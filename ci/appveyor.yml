@@ -10,12 +10,14 @@ os: Previous Visual Studio 2015
 platform: x64
 install:
   - ps: .\ci\appveyor.ps1
+  - ps: .\ci\hardwareinfo.ps1
 build_script:
   - mvn -B install -DskipTests=true
 test_script:
   - "mvn -B -Dccm.java.home=\"%JAVA_8_HOME%\" -Dccm.maxNumberOfNodes=1 -Dcassandra.version=%cassandra_version% verify -P%test_profile%"
 on_finish:
   - ps: .\ci\uploadtests.ps1
+  - ps: .\ci\hardwareinfo.ps1
 cache:
   - C:\Users\appveyor\.m2
   - C:\Users\appveyor\.ccm\repository
