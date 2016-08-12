@@ -1,6 +1,6 @@
 ## Changelog
 
-### 2.1.10.3 (in progress)
+### 2.1.10.3
 
 - [bug] JAVA-1206: handle custom column types in query logger.
 
