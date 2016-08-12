@@ -15,13 +15,14 @@
  */
 package com.datastax.driver.core;
 
-import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.util.List;
 
+import static com.datastax.driver.core.DataType.Name.BLOB;
+import static com.datastax.driver.core.DataType.Name.CUSTOM;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 /**
@@ -163,21 +164,36 @@ public abstract class QueryLogger implements LifecycleAwareLatencyTracker {
      */
     public static final Logger ERROR_LOGGER = LoggerFactory.getLogger("com.datastax.driver.core.QueryLogger.ERROR");
 
-    // Message templates
+    /**
+     * The message template for a query that completed normally.
+     */
+    protected static final String NORMAL_TEMPLATE = "[%s] [%s] Query completed normally, took %s ms: %s";
 
-    private static final String NORMAL_TEMPLATE = "[%s] [%s] Query completed normally, took %s ms: %s";
+    /**
+     * The message template for a slow query with the constant logger.
+     */
+    protected static final String SLOW_TEMPLATE_MILLIS = "[%s] [%s] Query too slow, took %s ms: %s";
 
-    private static final String SLOW_TEMPLATE_MILLIS = "[%s] [%s] Query too slow, took %s ms: %s";
+    /**
+     * The message template for a slow query with the percentile-based logger.
+     */
+    protected static final String SLOW_TEMPLATE_PERCENTILE = "[%s] [%s] Query too slow, took %s ms (%s percentile = %s ms): %s";
 
-    private static final String SLOW_TEMPLATE_PERCENTILE = "[%s] [%s] Query too slow, took %s ms (%s percentile = %s ms): %s";
+    /**
+     * The message template for a failed query.
+     */
+    protected static final String ERROR_TEMPLATE = "[%s] [%s] Query error after %s ms: %s";
 
-    private static final String ERROR_TEMPLATE = "[%s] [%s] Query error after %s ms: %s";
+    /**
+     * The text displayed when a text that is over a given size threshold (query string or parameter representation)
+     * gets truncated.
+     */
+    protected static final String TRUNCATED_OUTPUT = "... [truncated output]";
 
-    @VisibleForTesting
-    static final String TRUNCATED_OUTPUT = "... [truncated output]";
-
-    @VisibleForTesting
-    static final String FURTHER_PARAMS_OMITTED = " [further parameters omitted]";
+    /**
+     * The text displayed when the list of parameters gets truncated.
+     */
+    protected static final String FURTHER_PARAMS_OMITTED = " [further parameters omitted]";
 
     protected final Cluster cluster;
 
@@ -189,10 +205,7 @@ public abstract class QueryLogger implements LifecycleAwareLatencyTracker {
 
     protected volatile int maxLoggedParameters;
 
-    /**
-     * Private constructor. Instances of QueryLogger should be obtained via the {@link #builder(Cluster)} method.
-     */
-    private QueryLogger(Cluster cluster, int maxQueryStringLength, int maxParameterValueLength, int maxLoggedParameters) {
+    protected QueryLogger(Cluster cluster, int maxQueryStringLength, int maxParameterValueLength, int maxLoggedParameters) {
         this.cluster = cluster;
         this.maxQueryStringLength = maxQueryStringLength;
         this.maxParameterValueLength = maxParameterValueLength;
@@ -223,7 +236,7 @@ public abstract class QueryLogger implements LifecycleAwareLatencyTracker {
 
         private volatile long slowQueryLatencyThresholdMillis;
 
-        private ConstantThresholdQueryLogger(Cluster cluster, int maxQueryStringLength, int maxParameterValueLength, int maxLoggedParameters, long slowQueryLatencyThresholdMillis) {
+        protected ConstantThresholdQueryLogger(Cluster cluster, int maxQueryStringLength, int maxParameterValueLength, int maxLoggedParameters, long slowQueryLatencyThresholdMillis) {
             super(cluster, maxQueryStringLength, maxParameterValueLength, maxLoggedParameters);
             this.setSlowQueryLatencyThresholdMillis(slowQueryLatencyThresholdMillis);
         }
@@ -294,9 +307,9 @@ public abstract class QueryLogger implements LifecycleAwareLatencyTracker {
 
         private volatile PercentileTracker percentileLatencyTracker;
 
-        private DynamicThresholdQueryLogger(Cluster cluster, int maxQueryStringLength, int maxParameterValueLength,
-                                            int maxLoggedParameters, double slowQueryLatencyThresholdPercentile,
-                                            PercentileTracker percentileLatencyTracker) {
+        protected DynamicThresholdQueryLogger(Cluster cluster, int maxQueryStringLength, int maxParameterValueLength,
+                                              int maxLoggedParameters, double slowQueryLatencyThresholdPercentile,
+                                              PercentileTracker percentileLatencyTracker) {
             super(cluster, maxQueryStringLength, maxParameterValueLength, maxLoggedParameters);
             this.setSlowQueryLatencyThresholdPercentile(slowQueryLatencyThresholdPercentile);
             this.setPercentileLatencyTracker(percentileLatencyTracker);
@@ -653,15 +666,13 @@ public abstract class QueryLogger implements LifecycleAwareLatencyTracker {
                 appendParameters((BoundStatement) statement, params, maxLoggedParameters);
             } else if (statement instanceof SimpleStatement) {
                 appendParameters((SimpleStatement) statement, params, maxLoggedParameters);
-            }
-            else if (statement instanceof BatchStatement) {
+            } else if (statement instanceof BatchStatement) {
                 BatchStatement batchStatement = (BatchStatement) statement;
                 int remaining = maxLoggedParameters;
                 for (Statement inner : batchStatement.getStatements()) {
                     if (inner instanceof BoundStatement) {
                         remaining = appendParameters((BoundStatement) inner, params, remaining);
-                    }
-                    else if (inner instanceof SimpleStatement) {
+                    } else if (inner instanceof SimpleStatement) {
                         remaining = appendParameters((SimpleStatement) inner, params, remaining);
                     }
                 }
@@ -739,7 +750,7 @@ public abstract class QueryLogger implements LifecycleAwareLatencyTracker {
         } else {
             DataType type = definition.getType();
             int maxParameterValueLength = this.maxParameterValueLength;
-            if (type.equals(DataType.blob()) && maxParameterValueLength != -1) {
+            if ((type.getName() == BLOB || type.getName() == CUSTOM) && maxParameterValueLength != -1) {
                 // prevent large blobs from being converted to strings
                 int maxBufferLength = Math.max(2, (maxParameterValueLength - 2) / 2);
                 boolean bufferTooLarge = raw.remaining() > maxBufferLength;
@@ -817,7 +828,7 @@ public abstract class QueryLogger implements LifecycleAwareLatencyTracker {
         return valueStr;
     }
 
-    private ProtocolVersion protocolVersion() {
+    protected ProtocolVersion protocolVersion() {
         // Since the QueryLogger can be registered before the Cluster was initialized, we can't retrieve
         // it at construction time. Cache it field at first use (a volatile field is good enough since we
         // don't need mutual exclusion).

@@ -33,6 +33,7 @@ import org.testng.annotations.Test;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import static com.datastax.driver.core.BatchStatement.Type.COUNTER;
 import static com.datastax.driver.core.BatchStatement.Type.UNLOGGED;
@@ -950,7 +951,7 @@ public class QueryLoggerTest extends CCMTestsSupport {
                 .contains("42");
     }
 
-    @CassandraVersion(major=2.0)
+    @CassandraVersion(major = 2.0)
     @Test(groups = "short")
     public void should_log_wrapped_bound_statement() throws Exception {
         // given
@@ -977,9 +978,67 @@ public class QueryLoggerTest extends CCMTestsSupport {
                 .contains("param1:'foo'");
     }
 
+    @CassandraVersion(major = 2.0)
+    @Test(groups = "short")
+    public void should_log_custom_type_values() throws Exception {
+        // given
+        normal.setLevel(TRACE);
+        queryLogger = QueryLogger.builder(cluster())
+                .withConstantThreshold(Long.MAX_VALUE)
+                .withMaxQueryStringLength(Integer.MAX_VALUE)
+                .build();
+        cluster().register(queryLogger);
+        UUID uuid = new UUID(-1, -1);
+        // when
+        String query = "INSERT INTO test_custom (pk, u) VALUES (?, ?)";
+        PreparedStatement ps = session().prepare(query);
+        BoundStatement bs = ps.bind();
+        bs.setInt("pk", 1);
+        bs.setBytesUnsafe("u", DataType.uuid().serialize(uuid, ProtocolVersion.V3));
+        session().execute(bs);
+        // then
+        String line = normalAppender.waitAndGet(10000);
+        assertThat(line)
+                .contains("Query completed normally")
+                .contains(ipOfNode(1))
+                .contains(query)
+                .contains("pk:1")
+                .contains("u:0xffffffffffffffff");
+    }
+
+    @CassandraVersion(major = 2.0)
+    @Test(groups = "short")
+    public void should_truncate_custom_type_values() throws Exception {
+        // given
+        normal.setLevel(TRACE);
+        queryLogger = QueryLogger.builder(cluster())
+                .withConstantThreshold(Long.MAX_VALUE)
+                .withMaxQueryStringLength(Integer.MAX_VALUE)
+                .withMaxParameterValueLength(8)
+                .build();
+        cluster().register(queryLogger);
+        UUID uuid = new UUID(-1, -1);
+        // when
+        String query = "INSERT INTO test_custom (pk, u) VALUES (?, ?)";
+        PreparedStatement ps = session().prepare(query);
+        BoundStatement bs = ps.bind();
+        bs.setInt("pk", 1);
+        bs.setBytesUnsafe("u", DataType.uuid().serialize(uuid, ProtocolVersion.V3));
+        session().execute(bs);
+        // then
+        String line = normalAppender.waitAndGet(10000);
+        assertThat(line)
+                .contains("Query completed normally")
+                .contains(ipOfNode(1))
+                .contains(query)
+                .contains("pk:1")
+                .contains("u:0xffffff... [truncated output]");
+    }
+
     @Override
     public void onTestContextInitialized() {
         execute("CREATE TABLE test (pk int PRIMARY KEY, " + definitions + ")");
+        execute("CREATE TABLE test_custom(pk int PRIMARY KEY, u 'LexicalUUIDType')");
     }
 
 }
