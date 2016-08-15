@@ -16,6 +16,7 @@
 package com.datastax.driver.core;
 
 import com.datastax.driver.core.exceptions.InvalidQueryException;
+import com.datastax.driver.core.utils.CassandraVersion;
 import com.google.common.base.Function;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
@@ -144,6 +145,7 @@ public class AsyncQueryTest extends CCMTestsSupport {
     }
 
     @Test(groups = "short")
+    @CassandraVersion(major = 2.0, description = "Paging is not supported until 2.0")
     public void should_fail_when_auto_paging_on_io_thread() throws Exception {
         for (int i = 0; i < 1000; i++) {
             Statement statement = new SimpleStatement("select v from asyncquerytest.foo where k = 1");
