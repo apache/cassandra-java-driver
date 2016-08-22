@@ -57,8 +57,7 @@ public class BundleOptions {
             public Option[] getOptions() {
                 return options(
                         systemProperty("cassandra.compression").value(ProtocolOptions.Compression.LZ4.name()),
-                        mavenBundle("net.jpountz.lz4", "lz4", "1.3.0")
-                );
+                        mavenBundle("net.jpountz.lz4", "lz4", "1.3.0"));
             }
         };
     }
@@ -74,8 +73,7 @@ public class BundleOptions {
                         mavenBundle("io.netty", "netty-codec", nettyVersion),
                         mavenBundle("io.netty", "netty-common", nettyVersion),
                         mavenBundle("io.netty", "netty-handler", nettyVersion),
-                        mavenBundle("io.netty", "netty-transport", nettyVersion)
-                );
+                        mavenBundle("io.netty", "netty-transport", nettyVersion));
             }
         };
     }
@@ -102,8 +100,7 @@ public class BundleOptions {
                         mavenBundle("io.dropwizard.metrics", "metrics-core", "3.1.2"),
                         mavenBundle("org.testng", "testng", "6.8.8"),
                         systemPackages("org.testng", "org.junit", "org.junit.runner", "org.junit.runner.manipulation",
-                                "org.junit.runner.notification", "com.jcabi.manifests")
-                );
+                                "org.junit.runner.notification", "com.jcabi.manifests"));
             }
         };
     }

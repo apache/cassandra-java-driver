@@ -49,25 +49,26 @@ public class TypeCodecNestedCollectionsIntegrationTest extends CCMTestsSupport {
     private List<Set<Map<MyInt, String>>> v;
 
     // @formatter:off
-    private TypeToken<List<Set<Map<MyInt, String>>>> listType = new TypeToken<List<Set<Map<MyInt, String>>>>() {};
-    private TypeToken<Set<Map<MyInt, String>>> elementsType = new TypeToken<Set<Map<MyInt, String>>>() {};
-    // @formatter:on
+    private TypeToken<List<Set<Map<MyInt, String>>>> listType = new TypeToken<List<Set<Map<MyInt, String>>>>() {
+    };
+    private TypeToken<Set<Map<MyInt, String>>> elementsType = new TypeToken<Set<Map<MyInt, String>>>() {
+    };
 
+    // @formatter:on
 
     @Override
     public void onTestContextInitialized() {
         execute(
-                "CREATE TABLE IF NOT EXISTS \"myTable\" ("
-                        + "pk int PRIMARY KEY, "
-                        + "v frozen<list<frozen<set<frozen<map<int,text>>>>>>"
-                        + ")"
-        );
+        "CREATE TABLE IF NOT EXISTS \"myTable\" ("
+                + "pk int PRIMARY KEY, "
+                + "v frozen<list<frozen<set<frozen<map<int,text>>>>>>"
+                + ")");
     }
 
     public Cluster.Builder createClusterBuilder() {
         return Cluster.builder().withCodecRegistry(
                 new CodecRegistry().register(new MyIntCodec()) // global User <-> varchar codec
-        );
+                );
     }
 
     @BeforeClass(groups = "short")
@@ -111,11 +112,11 @@ public class TypeCodecNestedCollectionsIntegrationTest extends CCMTestsSupport {
         session().execute(session().prepare(insertQuery).bind()
                 .setInt(0, pk)
                 .setList(1, v, elementsType) // variant with element type explicitly set
-        );
+                );
         PreparedStatement ps = session().prepare(selectQuery);
         ResultSet rows = session().execute(ps.bind()
-                        .setInt(0, pk)
-        );
+                .setInt(0, pk)
+                );
         Row row = rows.one();
         assertRow(row);
     }
@@ -123,13 +124,13 @@ public class TypeCodecNestedCollectionsIntegrationTest extends CCMTestsSupport {
     @Test(groups = "short")
     public void should_work_with_prepared_statements_3() {
         session().execute(session().prepare(insertQuery).bind()
-                        .setInt(0, pk)
-                        .set(1, v, listType)
-        );
+                .setInt(0, pk)
+                .set(1, v, listType)
+                );
         PreparedStatement ps = session().prepare(selectQuery);
         ResultSet rows = session().execute(ps.bind()
-                        .setInt(0, pk)
-        );
+                .setInt(0, pk)
+                );
         Row row = rows.one();
         assertRow(row);
     }
@@ -137,13 +138,13 @@ public class TypeCodecNestedCollectionsIntegrationTest extends CCMTestsSupport {
     @Test(groups = "short")
     public void should_work_with_built_statements() {
         session().execute(session().prepare(insertStmt).bind()
-                        .setInt(0, pk)
-                        .set(1, v, listType)
-        );
+                .setInt(0, pk)
+                .set(1, v, listType)
+                );
         PreparedStatement ps = session().prepare(selectStmt);
         ResultSet rows = session().execute(ps.bind()
-                        .setInt(0, pk)
-        );
+                .setInt(0, pk)
+                );
         Row row = rows.one();
         assertRow(row);
     }

@@ -22,7 +22,14 @@ import java.util.Map;
 
 public interface CCMAccess extends Closeable {
 
-    enum Workload {cassandra, solr, hadoop, spark, cfs, graph}
+    enum Workload {
+        cassandra,
+        solr,
+        hadoop,
+        spark,
+        cfs,
+        graph
+    }
 
     // Inspection methods
 
@@ -92,7 +99,6 @@ public interface CCMAccess extends Closeable {
      * @return the address of the {@code nth} host in the cluster.
      */
     InetSocketAddress addressOfNode(int n);
-
 
     // Methods altering the whole cluster
 
@@ -222,7 +228,6 @@ public interface CCMAccess extends Closeable {
      * @param n the node number (starting from 1).
      */
     void setWorkload(int n, Workload... workload);
-
 
     // Methods blocking until nodes are up or down
 

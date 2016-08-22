@@ -82,7 +82,6 @@ public class SchemaChangesCCTest extends CCMTestsSupport {
         verify(listener, timeout(NOTIF_TIMEOUT_MS).times(2)).onKeyspaceAdded(any(KeyspaceMetadata.class));
         verify(listener, timeout(NOTIF_TIMEOUT_MS).times(2)).onTableAdded(any(TableMetadata.class));
 
-
         KeyspaceMetadata prealteredKeyspace = cluster.getMetadata().getKeyspace("ks1");
         KeyspaceMetadata predroppedKeyspace = cluster.getMetadata().getKeyspace("ks2");
         TableMetadata prealteredTable = cluster.getMetadata().getKeyspace("ks1").getTable("tbl1");

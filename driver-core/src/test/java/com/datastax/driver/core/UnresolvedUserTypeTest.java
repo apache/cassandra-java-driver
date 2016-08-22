@@ -29,22 +29,22 @@ public class UnresolvedUserTypeTest extends CCMTestsSupport {
     @Override
     public void onTestContextInitialized() {
         execute(
-            /*
-            Creates the following acyclic graph (edges directed upwards
-            meaning "depends on"):
+                /*
+                Creates the following acyclic graph (edges directed upwards
+                meaning "depends on"):
 
-                H   G
-               / \ /\
-              F   |  E
-               \ /  /
-                D  /
-               / \/
-              B  C
-                 |
-                 A
+                    H   G
+                   / \ /\
+                  F   |  E
+                   \ /  /
+                    D  /
+                   / \/
+                  B  C
+                     |
+                     A
 
-             Topological sort order should be : GH,FE,D,CB,A
-             */
+                 Topological sort order should be : GH,FE,D,CB,A
+                 */
                 String.format("CREATE TYPE %s.h (f1 int)", keyspace),
                 String.format("CREATE TYPE %s.g (f1 int)", keyspace),
                 String.format("CREATE TYPE %s.\"F\" (f1 frozen<h>)", keyspace),
@@ -52,8 +52,7 @@ public class UnresolvedUserTypeTest extends CCMTestsSupport {
                 String.format("CREATE TYPE %s.\"D\" (f1 frozen<tuple<\"F\",g,h>>)", keyspace),
                 String.format("CREATE TYPE %s.\"C\" (f1 frozen<map<\"E\",\"D\">>)", keyspace),
                 String.format("CREATE TYPE %s.\"B\" (f1 frozen<set<\"D\">>)", keyspace),
-                String.format("CREATE TYPE %s.\"A\" (f1 frozen<\"C\">)", keyspace)
-        );
+                String.format("CREATE TYPE %s.\"A\" (f1 frozen<\"C\">)", keyspace));
     }
 
     @Test(groups = "short")

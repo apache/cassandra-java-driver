@@ -56,7 +56,13 @@ public class StateListenerTest extends CCMTestsSupport {
     }
 
     static class TestListener implements Host.StateListener {
-        enum Event {ADD, UP, SUSPECTED, DOWN, REMOVE}
+        enum Event {
+            ADD,
+            UP,
+            SUSPECTED,
+            DOWN,
+            REMOVE
+        }
 
         volatile CountDownLatch latch;
         volatile Event expectedEvent;

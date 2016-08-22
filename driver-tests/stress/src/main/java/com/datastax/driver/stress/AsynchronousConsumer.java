@@ -38,8 +38,8 @@ public class AsynchronousConsumer implements Consumer {
     private final Reporter reporter;
 
     public AsynchronousConsumer(Session session,
-                                QueryGenerator requests,
-                                Reporter reporter) {
+            QueryGenerator requests,
+            Reporter reporter) {
         this.session = session;
         this.requests = requests;
         this.reporter = reporter;

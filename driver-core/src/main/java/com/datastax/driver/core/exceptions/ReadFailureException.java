@@ -40,8 +40,8 @@ public class ReadFailureException extends QueryConsistencyException {
 
     public ReadFailureException(InetSocketAddress address, ConsistencyLevel consistency, int received, int required, int failed, boolean dataPresent) {
         super(address, String.format("Cassandra failure during read query at consistency %s "
-                                + "(%d responses were required but only %d replica responded, %d failed)",
-                        consistency, required, received, failed),
+                + "(%d responses were required but only %d replica responded, %d failed)",
+                consistency, required, received, failed),
                 consistency,
                 received,
                 required);

@@ -66,7 +66,11 @@ class EventDebouncer<T> {
     private final Queue<Entry<T>> events;
     private final AtomicInteger eventCount;
 
-    private enum State {NEW, RUNNING, STOPPED}
+    private enum State {
+        NEW,
+        RUNNING,
+        STOPPED
+    }
 
     private volatile State state;
 
@@ -134,7 +138,7 @@ class EventDebouncer<T> {
             if (now > lastOverflowWarning + OVERFLOW_WARNING_INTERVAL) {
                 lastOverflowWarning = now;
                 logger.warn("{} debouncer enqueued more than {} events, rejecting new events. "
-                            + "This should not happen and is likely a sign that something is wrong.",
+                        + "This should not happen and is likely a sign that something is wrong.",
                         name, maxQueuedEvents);
             }
             eventCount.decrementAndGet();

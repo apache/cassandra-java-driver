@@ -15,7 +15,6 @@
  */
 package com.datastax.driver.core;
 
-
 import com.google.common.util.concurrent.ListenableFuture;
 
 import java.util.Iterator;

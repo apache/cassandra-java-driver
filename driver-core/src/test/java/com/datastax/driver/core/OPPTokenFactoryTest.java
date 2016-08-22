@@ -34,7 +34,7 @@ public class OPPTokenFactoryTest {
         assertThat(splits).containsExactly(
                 token('b'),
                 token('c')
-        );
+                );
     }
 
     @Test(groups = "unit")
@@ -48,7 +48,7 @@ public class OPPTokenFactoryTest {
         assertThat(splits).containsExactly(
                 zero,
                 zero
-        );
+                );
     }
 
     @Test(groups = "unit")

@@ -28,8 +28,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 @CCMConfig(
         dirtiesContext = true,
         numberOfNodes = 2,
-        createCluster = false
-)
+        createCluster = false)
 public class RefreshConnectedHostTest extends CCMTestsSupport {
 
     /**

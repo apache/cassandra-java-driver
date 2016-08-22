@@ -46,7 +46,8 @@ public class DefaultRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegr
         try {
             query();
             fail("expected a ReadTimeoutException");
-        } catch (ReadTimeoutException e) {/*expected*/ }
+        } catch (ReadTimeoutException e) {/*expected*/
+        }
 
         assertOnReadTimeoutWasCalled(1);
         assertThat(errors.getReadTimeouts().getCount()).isEqualTo(1);
@@ -64,7 +65,8 @@ public class DefaultRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegr
         try {
             query();
             fail("expected a WriteTimeoutException");
-        } catch (WriteTimeoutException e) {/*expected*/}
+        } catch (WriteTimeoutException e) {/*expected*/
+        }
 
         assertOnWriteTimeoutWasCalled(1);
         assertThat(errors.getWriteTimeouts().getCount()).isEqualTo(1);
@@ -99,7 +101,8 @@ public class DefaultRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegr
         try {
             query();
             fail("expected an UnavailableException");
-        } catch (UnavailableException e) {/*expected*/}
+        } catch (UnavailableException e) {/*expected*/
+        }
 
         assertOnUnavailableWasCalled(2);
         assertThat(errors.getUnavailables().getCount()).isEqualTo(2);
@@ -162,19 +165,19 @@ public class DefaultRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegr
         try {
             scassandras
                     .node(1).primingClient().prime(PrimingRequest.queryBuilder()
-                    .withQuery("mock query")
-                    .withThen(then().withFixedDelay(1000L).withRows(row("result", "result1")))
-                    .build());
+                            .withQuery("mock query")
+                            .withThen(then().withFixedDelay(1000L).withRows(row("result", "result1")))
+                            .build());
             scassandras
                     .node(2).primingClient().prime(PrimingRequest.queryBuilder()
-                    .withQuery("mock query")
-                    .withThen(then().withFixedDelay(1000L).withRows(row("result", "result2")))
-                    .build());
+                            .withQuery("mock query")
+                            .withThen(then().withFixedDelay(1000L).withRows(row("result", "result2")))
+                            .build());
             scassandras
                     .node(3).primingClient().prime(PrimingRequest.queryBuilder()
-                    .withQuery("mock query")
-                    .withThen(then().withFixedDelay(1000L).withRows(row("result", "result3")))
-                    .build());
+                            .withQuery("mock query")
+                            .withThen(then().withFixedDelay(1000L).withRows(row("result", "result3")))
+                            .build());
             try {
                 query();
                 fail("expected a NoHostAvailableException");
@@ -204,7 +207,6 @@ public class DefaultRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegr
         }
     }
 
-
     @Test(groups = "short", dataProvider = "serverSideErrors")
     public void should_try_next_host_on_server_side_error(Result error, Class<? extends DriverException> exception) {
         simulateError(1, error);
@@ -228,7 +230,6 @@ public class DefaultRetryPolicyIntegrationTest extends AbstractRetryPolicyIntegr
         assertQueried(2, 1);
         assertQueried(3, 1);
     }
-
 
     @Test(groups = "short", dataProvider = "connectionErrors")
     public void should_try_next_host_on_connection_error(ClosedConnectionConfig.CloseType closeType) {

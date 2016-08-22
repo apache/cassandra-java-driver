@@ -40,9 +40,7 @@ public class TypeCodecTupleIntegrationTest extends CCMTestsSupport {
 
     @Override
     public void onTestContextInitialized() {
-        execute(
-                "CREATE TABLE IF NOT EXISTS \"users\" (id uuid PRIMARY KEY, name text, location frozen<tuple<float,float>>)"
-        );
+        execute("CREATE TABLE IF NOT EXISTS \"users\" (id uuid PRIMARY KEY, name text, location frozen<tuple<float,float>>)");
     }
 
     @Test(groups = "short")

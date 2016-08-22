@@ -26,8 +26,7 @@ import static com.datastax.driver.core.Assertions.assertThat;
 @CCMConfig(
         // force the initial token to a non-min value to validate that the single range will always be ]minToken, minToken]
         config = "initial_token:1",
-        clusterProvider = "createClusterBuilderNoDebouncing"
-)
+        clusterProvider = "createClusterBuilderNoDebouncing")
 public class SingleTokenIntegrationTest extends CCMTestsSupport {
 
     /**

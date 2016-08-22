@@ -377,17 +377,23 @@ public abstract class TestUtils {
                 case TIMEUUID:
                     return UUID.fromString("FE2B4360-28C6-11E2-81C1-0800200C9A66");
                 case LIST:
-                    return new ArrayList<Object>() {{
-                        add(getFixedValue(type.getTypeArguments().get(0)));
-                    }};
+                    return new ArrayList<Object>() {
+                        {
+                            add(getFixedValue(type.getTypeArguments().get(0)));
+                        }
+                    };
                 case SET:
-                    return new HashSet<Object>() {{
-                        add(getFixedValue(type.getTypeArguments().get(0)));
-                    }};
+                    return new HashSet<Object>() {
+                        {
+                            add(getFixedValue(type.getTypeArguments().get(0)));
+                        }
+                    };
                 case MAP:
-                    return new HashMap<Object, Object>() {{
-                        put(getFixedValue(type.getTypeArguments().get(0)), getFixedValue(type.getTypeArguments().get(1)));
-                    }};
+                    return new HashMap<Object, Object>() {
+                        {
+                            put(getFixedValue(type.getTypeArguments().get(0)), getFixedValue(type.getTypeArguments().get(1)));
+                        }
+                    };
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -445,17 +451,23 @@ public abstract class TestUtils {
                 case TIMEUUID:
                     return UUID.fromString("FE2B4360-28C6-11E2-81C1-0800200C9A66");
                 case LIST:
-                    return new ArrayList<Object>() {{
-                        add(getFixedValue2(type.getTypeArguments().get(0)));
-                    }};
+                    return new ArrayList<Object>() {
+                        {
+                            add(getFixedValue2(type.getTypeArguments().get(0)));
+                        }
+                    };
                 case SET:
-                    return new HashSet<Object>() {{
-                        add(getFixedValue2(type.getTypeArguments().get(0)));
-                    }};
+                    return new HashSet<Object>() {
+                        {
+                            add(getFixedValue2(type.getTypeArguments().get(0)));
+                        }
+                    };
                 case MAP:
-                    return new HashMap<Object, Object>() {{
-                        put(getFixedValue2(type.getTypeArguments().get(0)), getFixedValue2(type.getTypeArguments().get(1)));
-                    }};
+                    return new HashMap<Object, Object>() {
+                        {
+                            put(getFixedValue2(type.getTypeArguments().get(0)), getFixedValue2(type.getTypeArguments().get(1)));
+                        }
+                    };
             }
         } catch (Exception e) {
             throw new RuntimeException(e);

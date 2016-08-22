@@ -39,13 +39,13 @@ public class SimpleDateCodecsTest extends CCMTestsSupport {
     @Override
     public void onTestContextInitialized() {
         execute(
-                "CREATE TABLE IF NOT EXISTS foo ("
-                        + "c1 text PRIMARY KEY, "
-                        + "cdate date, "
-                        + "ctimestamp timestamp, "
-                        + "cdates frozen<list<date>>, "
-                        + "ctimestamps frozen<map<text,timestamp>> "
-                        + ")");
+        "CREATE TABLE IF NOT EXISTS foo ("
+                + "c1 text PRIMARY KEY, "
+                + "cdate date, "
+                + "ctimestamp timestamp, "
+                + "cdates frozen<list<date>>, "
+                + "ctimestamps frozen<map<text,timestamp>> "
+                + ")");
     }
 
     @BeforeClass(groups = "short")
@@ -55,7 +55,6 @@ public class SimpleDateCodecsTest extends CCMTestsSupport {
                 .register(SimpleDateCodec.instance)
                 .register(SimpleTimestampCodec.instance);
     }
-
 
     /**
      * <p>

@@ -47,8 +47,7 @@ public class TypeCodecNestedUDTAndTupleIntegrationTest extends CCMTestsSupport {
                 // we receive a ResultSet
                 "INSERT INTO t1 (pk, c1) VALUES (1, {f1:{f2:{f3:'foo'}}})",
                 "INSERT INTO t1 (pk, c2) VALUES (2, ((('foo'))))",
-                "INSERT INTO t1 (pk, c3) VALUES (3, ((({f1:{f2:{f3:'foo'}}}))))"
-        );
+                "INSERT INTO t1 (pk, c3) VALUES (3, ((({f1:{f2:{f3:'foo'}}}))))");
     }
 
     @Test(groups = "short")
@@ -101,6 +100,5 @@ public class TypeCodecNestedUDTAndTupleIntegrationTest extends CCMTestsSupport {
         String f3 = udt3.getString("f3");
         assertThat(f3).isEqualTo("foo");
     }
-
 
 }

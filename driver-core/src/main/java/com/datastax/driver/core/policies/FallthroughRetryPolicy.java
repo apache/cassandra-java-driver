@@ -74,7 +74,6 @@ public class FallthroughRetryPolicy implements RetryPolicy {
         return RetryDecision.rethrow();
     }
 
-
     @Override
     public void init(Cluster cluster) {
         // nothing to do

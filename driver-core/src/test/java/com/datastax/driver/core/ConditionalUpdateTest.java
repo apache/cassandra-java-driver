@@ -62,11 +62,9 @@ public class ConditionalUpdateTest extends CCMTestsSupport {
         batch.add(ps.bind().setInt("k1", 1).setInt("k2", 1).setInt("old", 2).setInt("new", 3)); // will fail
         batch.add(ps.bind().setInt("k1", 1).setInt("k2", 2).setInt("old", 1).setInt("new", 3));
 
-
         ResultSet rs = session().execute(batch);
         assertFalse(rs.wasApplied());
     }
-
 
     @Test(groups = "short")
     public void multipageResultSetTest() {

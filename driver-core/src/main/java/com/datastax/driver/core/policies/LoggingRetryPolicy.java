@@ -169,5 +169,4 @@ public class LoggingRetryPolicy implements RetryPolicy {
         logger.info(template, parameters);
     }
 
-
 }

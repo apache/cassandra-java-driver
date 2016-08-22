@@ -1300,7 +1300,6 @@ public class BoundStatement extends Statement implements SettableData<BoundState
         return wrapper.getObject(name);
     }
 
-
     /**
      * {@inheritDoc}
      */

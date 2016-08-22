@@ -30,7 +30,7 @@ public class RPTokenFactoryTest {
         assertThat(splits).containsExactly(
                 factory.fromString("42535295865117307932921825928971026432"),
                 factory.fromString("85070591730234615865843651857942052864")
-        );
+                );
     }
 
     @Test(groups = "unit")
@@ -43,7 +43,7 @@ public class RPTokenFactoryTest {
         assertThat(splits).containsExactly(
                 factory.fromString("0"),
                 factory.fromString("42535295865117307932921825928971026432")
-        );
+                );
     }
 
     @Test(groups = "unit")
@@ -56,13 +56,13 @@ public class RPTokenFactoryTest {
         assertThat(splits).containsExactly(
                 maxToken,
                 maxToken
-        );
+                );
 
         splits = factory.split(minToken, factory.fromString("0"), 3);
         assertThat(splits).containsExactly(
                 factory.fromString("0"),
                 factory.fromString("0")
-        );
+                );
     }
 
     @Test(groups = "unit")
@@ -71,6 +71,6 @@ public class RPTokenFactoryTest {
         assertThat(splits).containsExactly(
                 factory.fromString("56713727820156410577229101238628035242"),
                 factory.fromString("113427455640312821154458202477256070485")
-        );
+                );
     }
 }

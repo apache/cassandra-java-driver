@@ -38,8 +38,7 @@ public class MailboxServiceLZ4IT extends MailboxServiceTests {
                 extrasBundle(),
                 mappingBundle(),
                 driverBundle(),
-                mailboxBundle()
-        );
+                mailboxBundle());
     }
 
     /**

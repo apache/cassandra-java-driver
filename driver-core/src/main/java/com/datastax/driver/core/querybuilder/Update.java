@@ -48,9 +48,9 @@ public class Update extends BuiltStatement {
     }
 
     Update(String keyspace,
-           String table,
-           List<Object> routingKeyValues,
-           List<ColumnMetadata> partitionKey) {
+            String table,
+            List<Object> routingKeyValues,
+            List<ColumnMetadata> partitionKey) {
         super(keyspace, partitionKey, routingKeyValues);
         this.table = table;
         this.assignments = new Assignments(this);

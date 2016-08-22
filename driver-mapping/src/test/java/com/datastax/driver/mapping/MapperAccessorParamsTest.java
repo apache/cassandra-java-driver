@@ -36,8 +36,7 @@ public class MapperAccessorParamsTest extends CCMTestsSupport {
                 "CREATE TABLE user ( key int primary key, gender int, home_phone text, work_phone text)",
                 "CREATE INDEX on user(gender)",
                 "CREATE TABLE user_str ( key int primary key, gender text)",
-                "CREATE INDEX on user_str(gender)"
-        );
+                "CREATE INDEX on user_str(gender)");
     }
 
     @Test(groups = "short")
@@ -99,7 +98,8 @@ public class MapperAccessorParamsTest extends CCMTestsSupport {
     }
 
     enum Enum {
-        MALE, FEMALE
+        MALE,
+        FEMALE
     }
 
     /**
@@ -209,7 +209,7 @@ public class MapperAccessorParamsTest extends CCMTestsSupport {
     @Accessor
     public interface UserPhoneAccessor_WrongParameterTypes {
         @Query("select * from user where key IN (?)")
-            // WRONG, should be "where key IN ?"
+        // WRONG, should be "where key IN ?"
         void findUsersBykeys(List<Integer> keys);
     }
 

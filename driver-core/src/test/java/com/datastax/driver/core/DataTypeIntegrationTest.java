@@ -43,7 +43,11 @@ public class DataTypeIntegrationTest extends CCMTestsSupport {
     List<TestTable> tables = allTables();
     VersionNumber cassandraVersion;
 
-    enum StatementType {RAW_STRING, SIMPLE_WITH_PARAM, PREPARED}
+    enum StatementType {
+        RAW_STRING,
+        SIMPLE_WITH_PARAM,
+        PREPARED
+    }
 
     @Override
     public void onTestContextInitialized() {
@@ -111,22 +115,20 @@ public class DataTypeIntegrationTest extends CCMTestsSupport {
             // Since codec.deserialize will get the unboxed version for primitive check against expected unboxed value.
             assertThat(queriedValue)
                     .as("Test failure on %s statement with table:%n%s;%n" +
-                                    "insert statement:%n%s;%n",
+                            "insert statement:%n%s;%n",
                             statementType,
                             table.createStatement,
                             table.insertStatement)
                     .isEqualTo(table.expectedValue);
 
-
             // Since calling row.get* will return boxed version for primitives check against expected primitive value.
             assertThat(getValue(row, table.testColumnType))
                     .as("Test failure on %s statement with table:%n%s;%n" +
-                                    "insert statement:%n%s;%n",
+                            "insert statement:%n%s;%n",
                             statementType,
                             table.createStatement,
                             table.insertStatement)
                     .isEqualTo(table.expectedPrimitiveValue);
-
 
             session().execute(table.truncateStatement);
         }

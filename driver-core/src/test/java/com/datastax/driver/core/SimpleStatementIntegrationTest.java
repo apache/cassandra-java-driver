@@ -30,8 +30,7 @@ public class SimpleStatementIntegrationTest extends CCMTestsSupport {
     public void onTestContextInitialized() {
         execute(
                 "CREATE TABLE users(id int, id2 int, name text, primary key (id, id2))",
-                "INSERT INTO users(id, id2, name) VALUES (1, 2, 'test')"
-        );
+                "INSERT INTO users(id, id2, name) VALUES (1, 2, 'test')");
     }
 
     @Test(groups = "short")

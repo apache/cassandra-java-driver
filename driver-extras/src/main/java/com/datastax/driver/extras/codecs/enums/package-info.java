@@ -20,3 +20,4 @@
  * serializing between CQL types and Java enums.
  */
 package com.datastax.driver.extras.codecs.enums;
+

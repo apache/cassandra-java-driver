@@ -167,7 +167,6 @@ public final class SchemaBuilder {
         return new Drop(keyspaceName, typeName, DroppedItem.TYPE);
     }
 
-
     // Utility methods and types: these are not method starters, but they are exposed here in order to
     // have a single entry point to all schema builder features.
 
@@ -311,14 +310,18 @@ public final class SchemaBuilder {
      * @see Create.Options#clusteringOrder(String, com.datastax.driver.core.schemabuilder.SchemaBuilder.Direction)
      */
     public enum Direction {
-        ASC, DESC
+        ASC,
+        DESC
     }
 
     /**
      * Caching strategies, for use in a CREATE or ALTER TABLE statement.
      */
     public enum Caching {
-        ALL("'all'"), KEYS_ONLY("'keys_only'"), ROWS_ONLY("'rows_only'"), NONE("'none'");
+        ALL("'all'"),
+        KEYS_ONLY("'keys_only'"),
+        ROWS_ONLY("'rows_only'"),
+        NONE("'none'");
 
         private String value;
 
@@ -335,7 +338,8 @@ public final class SchemaBuilder {
      * Key caching strategies for Cassandra 2.1, for use in a CREATE or ALTER TABLE statement.
      */
     public enum KeyCaching {
-        ALL("'all'"), NONE("'none'");
+        ALL("'all'"),
+        NONE("'none'");
         private String value;
 
         KeyCaching(String value) {

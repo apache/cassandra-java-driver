@@ -26,3 +26,4 @@
  * at runtime.
  */
 package com.datastax.driver.extras.codecs.jdk8;
+

@@ -590,7 +590,7 @@ class RequestHandler {
                                 }
 
                                 logger.info("Query {} is not prepared on {}, preparing before retrying executing. "
-                                                + "Seeing this message a few times is fine, but seeing it a lot may be source of performance problems",
+                                        + "Seeing this message a few times is fine, but seeing it a lot may be source of performance problems",
                                         toPrepare.getQueryString(), connection.address);
 
                                 write(connection, prepareAndRetry(toPrepare.getQueryString()));

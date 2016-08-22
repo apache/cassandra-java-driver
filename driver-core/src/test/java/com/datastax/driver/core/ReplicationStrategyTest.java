@@ -52,7 +52,7 @@ public class ReplicationStrategyTest {
         ReplicationStrategy strategy = ReplicationStrategy.create(
                 ImmutableMap.<String, String>builder()
                         .put("class", "SimpleStrategy")
-                                //no replication_factor
+                        //no replication_factor
                         .build());
 
         assertNull(strategy);

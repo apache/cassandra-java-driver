@@ -15,7 +15,6 @@
  */
 package com.datastax.driver.mapping.annotations;
 
-
 import com.datastax.driver.mapping.Mapper;
 
 import java.lang.annotation.ElementType;

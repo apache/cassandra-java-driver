@@ -46,11 +46,11 @@ public class Policies {
     private final SpeculativeExecutionPolicy speculativeExecutionPolicy;
 
     private Policies(LoadBalancingPolicy loadBalancingPolicy,
-                     ReconnectionPolicy reconnectionPolicy,
-                     RetryPolicy retryPolicy,
-                     AddressTranslator addressTranslator,
-                     TimestampGenerator timestampGenerator,
-                     SpeculativeExecutionPolicy speculativeExecutionPolicy) {
+            ReconnectionPolicy reconnectionPolicy,
+            RetryPolicy retryPolicy,
+            AddressTranslator addressTranslator,
+            TimestampGenerator timestampGenerator,
+            SpeculativeExecutionPolicy speculativeExecutionPolicy) {
         this.loadBalancingPolicy = loadBalancingPolicy;
         this.reconnectionPolicy = reconnectionPolicy;
         this.retryPolicy = retryPolicy;

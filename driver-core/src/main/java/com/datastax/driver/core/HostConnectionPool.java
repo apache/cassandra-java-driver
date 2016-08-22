@@ -72,7 +72,12 @@ class HostConnectionPool implements Connection.Owner {
 
     protected final AtomicReference<CloseFuture> closeFuture = new AtomicReference<CloseFuture>();
 
-    private enum Phase {INITIALIZING, READY, INIT_FAILED, CLOSING}
+    private enum Phase {
+        INITIALIZING,
+        READY,
+        INIT_FAILED,
+        CLOSING
+    }
 
     protected final AtomicReference<Phase> phase = new AtomicReference<Phase>(Phase.INITIALIZING);
 
@@ -405,7 +410,7 @@ class HostConnectionPool implements Connection.Owner {
             return true;
 
         // First, make sure we don't go below core connections
-        for (; ; ) {
+        for (;;) {
             int opened = open.get();
             if (opened <= options().getCoreConnectionsPerHost(hostDistance)) {
                 connection.state.set(OPEN);
@@ -429,7 +434,7 @@ class HostConnectionPool implements Connection.Owner {
     private boolean addConnectionIfUnderMaximum() {
 
         // First, make sure we don't cross the allowed limit of open connections
-        for (; ; ) {
+        for (;;) {
             int opened = open.get();
             if (opened >= options().getMaxConnectionsPerHost(hostDistance))
                 return false;

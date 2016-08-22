@@ -270,8 +270,7 @@ public class AggregateMetadataTest extends CCMTestsSupport {
                         + "    zip int,"
                         + "    phones frozen<set<frozen<phone>>>,"
                         + "    location frozen<tuple<float, float>>"
-                        + ")", keyspace)
-        );
+                        + ")", keyspace));
     }
 
 }

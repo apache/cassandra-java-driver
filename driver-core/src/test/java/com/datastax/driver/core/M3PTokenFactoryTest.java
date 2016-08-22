@@ -30,7 +30,7 @@ public class M3PTokenFactoryTest {
         assertThat(splits).containsExactly(
                 factory.fromString("-4611686018427387904"),
                 factory.fromString("0")
-        );
+                );
     }
 
     @Test(groups = "unit")
@@ -39,7 +39,7 @@ public class M3PTokenFactoryTest {
         assertThat(splits).containsExactly(
                 factory.fromString("-9223372036854775807"),
                 factory.fromString("-4611686018427387903")
-        );
+                );
     }
 
     @Test(groups = "unit")
@@ -48,7 +48,7 @@ public class M3PTokenFactoryTest {
         assertThat(splits).containsExactly(
                 factory.fromString("4"),
                 factory.fromString("8")
-        );
+                );
     }
 
     @Test(groups = "unit")
@@ -59,7 +59,7 @@ public class M3PTokenFactoryTest {
                 factory.fromString("2"),
                 factory.fromString("2"),
                 factory.fromString("2")
-        );
+                );
     }
 
     @Test(groups = "unit")
@@ -72,13 +72,13 @@ public class M3PTokenFactoryTest {
         assertThat(splits).containsExactly(
                 maxToken,
                 maxToken
-        );
+                );
 
         splits = factory.split(minToken, factory.fromString("-9223372036854775807"), 3);
         assertThat(splits).containsExactly(
                 factory.fromString("-9223372036854775807"),
                 factory.fromString("-9223372036854775807")
-        );
+                );
     }
 
     @Test(groups = "unit")
@@ -87,7 +87,7 @@ public class M3PTokenFactoryTest {
         assertThat(splits).containsExactly(
                 factory.fromString("-3074457345618258603"),
                 factory.fromString("3074457345618258602")
-        );
+                );
     }
 
 }

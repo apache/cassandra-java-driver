@@ -68,4 +68,3 @@ class AccessorInvocationHandler<T> implements InvocationHandler {
         return method.invoke(args == null ? NO_ARGS : args);
     }
 }
-

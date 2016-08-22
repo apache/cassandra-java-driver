@@ -338,6 +338,31 @@
                     </execution>
                 </executions>
             </plugin>
+            <!--
+            To update source formatting run:
+            mvn formatter:format
+            -->
+            <plugin>
+                <groupId>com.marvinformatics.formatter</groupId>
+                <artifactId>formatter-maven-plugin</artifactId>
+                <version>1.4.0</version>
+                <configuration>
+                    <configFile>${main.basedir}/src/formatter/java.xml</configFile>
+                    <configJsFile>${main.basedir}/src/formatter/java.xml</configJsFile>
+                    <lineEnding>LF</lineEnding> <!-- linux style line endings -->
+                    <compilerCompliance>${java.version}</compilerCompliance> 
+                    <compilerTargetPlatform>${java.version}</compilerTargetPlatform>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>check-format</id>
+                        <phase>initialize</phase>
+                        <goals>
+                            <goal>validate</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>animal-sniffer-maven-plugin</artifactId>

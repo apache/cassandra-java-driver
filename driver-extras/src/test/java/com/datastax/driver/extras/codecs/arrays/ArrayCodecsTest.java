@@ -53,8 +53,7 @@ public class ArrayCodecsTest extends CCMTestsSupport {
                         + "[1.0, 2.0, 3.0], "
                         + "[4.0, 5.0, 6.0], "
                         + "['a', 'b', 'c'] "
-                        + ")"
-        );
+                        + ")");
     }
 
     @Override
@@ -66,7 +65,7 @@ public class ArrayCodecsTest extends CCMTestsSupport {
                         .register(FloatArrayCodec.instance)
                         .register(DoubleArrayCodec.instance)
                         .register(stringArrayCodec)
-        );
+                );
     }
 
     @DataProvider(name = "ArrayCodecsTest-serializing")

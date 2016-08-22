@@ -72,4 +72,3 @@ class ChainedResultSetFuture extends AbstractFuture<ResultSet> implements Result
         }
     }
 }
-

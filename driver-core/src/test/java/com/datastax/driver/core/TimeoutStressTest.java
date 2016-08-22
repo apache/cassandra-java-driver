@@ -72,12 +72,12 @@ public class TimeoutStressTest extends CCMTestsSupport {
     @Override
     public void onTestContextInitialized() {
         execute(
-                "create table record (\n"
-                        + "  name text,\n"
-                        + "  phone text,\n"
-                        + "  value text,\n"
-                        + "  PRIMARY KEY (name, phone)\n"
-                        + ")"
+        "create table record (\n"
+                + "  name text,\n"
+                + "  phone text,\n"
+                + "  value text,\n"
+                + "  PRIMARY KEY (name, phone)\n"
+                + ")"
 
         );
     }
@@ -143,7 +143,7 @@ public class TimeoutStressTest extends CCMTestsSupport {
                 // factor between retrieving open connections and checking the reaper.
                 if (openChannels.size() > maxConnections) {
                     logger.warn("{} of open channels: {} exceeds maximum expected: {}.  " +
-                                    "This could be because there are connections to be cleaned up in the reaper.",
+                            "This could be because there are connections to be cleaned up in the reaper.",
                             openChannels.size(), maxConnections, openChannels);
                 }
             }
@@ -206,7 +206,6 @@ public class TimeoutStressTest extends CCMTestsSupport {
             this.concurrentQueries = concurrentQueries;
             this.stopped = stopped;
         }
-
 
         @Override
         public void run() {

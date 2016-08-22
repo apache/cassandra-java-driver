@@ -48,7 +48,9 @@ public class OptionalCodec<T> extends MappingCodec<java.util.Optional<T>, T> {
 
     public OptionalCodec(TypeCodec<T> codec, java.util.function.Predicate<T> isAbsent) {
         // @formatter:off
-        super(codec, new TypeToken<java.util.Optional<T>>() {}.where(new TypeParameter<T>() {}, codec.getJavaType()));
+        super(codec, new TypeToken<java.util.Optional<T>>() {
+        }.where(new TypeParameter<T>() {
+        }, codec.getJavaType()));
         // @formatter:on
         this.isAbsent = isAbsent;
     }

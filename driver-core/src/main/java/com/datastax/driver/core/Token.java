@@ -85,8 +85,8 @@ public abstract class Token implements Comparable<Token> {
 
         // Base implementation for split
         protected List<BigInteger> split(BigInteger start, BigInteger range,
-                                         BigInteger ringEnd, BigInteger ringLength,
-                                         int numberOfSplits) {
+                BigInteger ringEnd, BigInteger ringLength,
+                int numberOfSplits) {
             BigInteger[] tmp = range.divideAndRemainder(BigInteger.valueOf(numberOfSplits));
             BigInteger divider = tmp[0];
             int remainder = tmp[1].intValue();

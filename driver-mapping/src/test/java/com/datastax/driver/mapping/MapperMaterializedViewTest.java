@@ -32,7 +32,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CassandraVersion(major = 3.0)
 public class MapperMaterializedViewTest extends CCMTestsSupport {
 
-
     @Override
     public void onTestContextInitialized() {
         // Example schema taken from: http://www.datastax.com/dev/blog/new-in-cassandra-3-0-materialized-views
@@ -69,8 +68,7 @@ public class MapperMaterializedViewTest extends CCMTestsSupport {
                 "INSERT INTO scores (user, game, year, month, day, score) VALUES ('jbellis', 'Coup', 2015, 6, 20, 3500)",
                 "INSERT INTO scores (user, game, year, month, day, score) VALUES ('jbellis', 'Checkers', 2015, 6, 20, 1200)",
                 "INSERT INTO scores (user, game, year, month, day, score) VALUES ('jbellis', 'Chess', 2015, 6, 21, 3500)",
-                "INSERT INTO scores (user, game, year, month, day, score) VALUES ('pcmanus', 'Chess', 2015, 1, 25, 3200)"
-        );
+                "INSERT INTO scores (user, game, year, month, day, score) VALUES ('pcmanus', 'Chess', 2015, 1, 25, 3200)");
     }
 
     private ScoreAccessor accessor;

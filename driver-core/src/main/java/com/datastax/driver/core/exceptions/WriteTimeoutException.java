@@ -70,8 +70,7 @@ public class WriteTimeoutException extends QueryConsistencyException {
                 getConsistencyLevel(),
                 getWriteType(),
                 getReceivedAcknowledgements(),
-                getRequiredAcknowledgements()
-        );
+                getRequiredAcknowledgements());
     }
 
     /**
@@ -97,8 +96,7 @@ public class WriteTimeoutException extends QueryConsistencyException {
                 getConsistencyLevel(),
                 getWriteType(),
                 getReceivedAcknowledgements(),
-                getRequiredAcknowledgements()
-        );
+                getRequiredAcknowledgements());
     }
 
 }

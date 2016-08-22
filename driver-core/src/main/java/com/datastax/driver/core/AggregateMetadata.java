@@ -46,8 +46,8 @@ public class AggregateMetadata {
     private final TypeCodec<Object> stateTypeCodec;
 
     private AggregateMetadata(KeyspaceMetadata keyspace, String simpleName, List<DataType> argumentTypes,
-                              String finalFuncSimpleName, String finalFuncFullName, Object initCond, DataType returnType,
-                              String stateFuncSimpleName, String stateFuncFullName, DataType stateType, TypeCodec<Object> stateTypeCodec) {
+            String finalFuncSimpleName, String finalFuncFullName, Object initCond, DataType returnType,
+            String stateFuncSimpleName, String stateFuncFullName, DataType stateType, TypeCodec<Object> stateTypeCodec) {
         this.keyspace = keyspace;
         this.simpleName = simpleName;
         this.argumentTypes = argumentTypes;

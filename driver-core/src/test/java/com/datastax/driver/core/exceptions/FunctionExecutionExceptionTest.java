@@ -24,14 +24,12 @@ import org.testng.annotations.Test;
 @CCMConfig(config = "enable_user_defined_functions:true")
 public class FunctionExecutionExceptionTest extends CCMTestsSupport {
 
-
     @Override
     public void onTestContextInitialized() {
         execute(
                 "CREATE TABLE foo (k int primary key, i int, l list<int>)",
                 "INSERT INTO foo (k, i, l) VALUES (1, 1, [1])",
-                "CREATE FUNCTION element_at(l list<int>, i int) RETURNS NULL ON NULL INPUT RETURNS int LANGUAGE java AS 'return (Integer) l.get(i);'"
-        );
+                "CREATE FUNCTION element_at(l list<int>, i int) RETURNS NULL ON NULL INPUT RETURNS int LANGUAGE java AS 'return (Integer) l.get(i);'");
     }
 
     @Test(groups = "short", expectedExceptions = FunctionExecutionException.class)

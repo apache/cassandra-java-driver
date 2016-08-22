@@ -40,8 +40,8 @@ public class WriteFailureException extends QueryConsistencyException {
 
     public WriteFailureException(InetSocketAddress address, ConsistencyLevel consistency, WriteType writeType, int received, int required, int failed) {
         super(address, String.format("Cassandra failure during write query at consistency %s "
-                                + "(%d responses were required but only %d replica responded, %d failed)",
-                        consistency, required, received, failed),
+                + "(%d responses were required but only %d replica responded, %d failed)",
+                consistency, required, received, failed),
                 consistency,
                 received,
                 required);
@@ -50,7 +50,7 @@ public class WriteFailureException extends QueryConsistencyException {
     }
 
     private WriteFailureException(InetSocketAddress address, String msg, Throwable cause,
-                                  ConsistencyLevel consistency, WriteType writeType, int received, int required, int failed) {
+            ConsistencyLevel consistency, WriteType writeType, int received, int required, int failed) {
         super(address, msg, cause, consistency, received, required);
         this.writeType = writeType;
         this.failed = failed;

@@ -73,9 +73,9 @@ public class PerHostPercentileTracker implements LatencyTracker {
     private final long intervalMs;
 
     private PerHostPercentileTracker(long highestTrackableLatencyMillis, int numberOfSignificantValueDigits,
-                                     int numberOfHosts,
-                                     int minRecordedValues,
-                                     long intervalMs) {
+            int numberOfHosts,
+            int minRecordedValues,
+            long intervalMs) {
         try {
             Histogram.class.getName();
         } catch (NoClassDefFoundError e) {
@@ -317,7 +317,7 @@ public class PerHostPercentileTracker implements LatencyTracker {
             BootstrappingException.class,
             UnpreparedException.class,
             QueryValidationException.class // query validation also happens at early stages in the coordinator
-    );
+            );
 
     @Override
     public void onRegister(Cluster cluster) {

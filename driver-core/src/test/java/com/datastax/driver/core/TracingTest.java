@@ -93,4 +93,3 @@ public class TracingTest extends CCMTestsSupport {
         assertThat(result.getExecutionInfo().getQueryTrace()).isNotNull();
     }
 }
-

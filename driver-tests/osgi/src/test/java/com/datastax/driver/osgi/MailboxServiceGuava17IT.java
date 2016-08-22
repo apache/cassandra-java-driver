@@ -37,8 +37,7 @@ public class MailboxServiceGuava17IT extends MailboxServiceTests {
                 driverBundle(),
                 mappingBundle(),
                 extrasBundle(),
-                mailboxBundle()
-        );
+                mailboxBundle());
     }
 
     /**

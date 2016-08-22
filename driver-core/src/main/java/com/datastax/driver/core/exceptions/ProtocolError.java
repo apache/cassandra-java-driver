@@ -43,7 +43,6 @@ public class ProtocolError extends DriverInternalError implements CoordinatorExc
         this.address = address;
     }
 
-
     /**
      * {@inheritDoc}
      */

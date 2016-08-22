@@ -75,8 +75,7 @@ public abstract class TokenIntegrationTest extends CCMTestsSupport {
                 "CREATE TABLE foo(i int primary key)",
                 "INSERT INTO foo (i) VALUES (1)",
                 "INSERT INTO foo (i) VALUES (2)",
-                "INSERT INTO foo (i) VALUES (3)"
-        );
+                "INSERT INTO foo (i) VALUES (3)");
     }
 
     /**
@@ -162,8 +161,7 @@ public abstract class TokenIntegrationTest extends CCMTestsSupport {
         assertThat(token.getType()).isEqualTo(expectedTokenType);
 
         assertThat(
-                row.getPartitionKeyToken()
-        ).isEqualTo(token);
+                row.getPartitionKeyToken()).isEqualTo(token);
 
         PreparedStatement pst = session().prepare("SELECT * FROM foo WHERE token(i) = ?");
         row = session().execute(pst.bind(token)).one();
@@ -337,7 +335,7 @@ public abstract class TokenIntegrationTest extends CCMTestsSupport {
                         return input.splitEvenly(10);
                     }
                 })
-        );
+                );
 
         assertOnlyOneWrapped(splitRanges);
     }
@@ -387,8 +385,7 @@ public abstract class TokenIntegrationTest extends CCMTestsSupport {
 
         ProtocolVersion protocolVersion = cluster().getConfiguration().getProtocolOptions().getProtocolVersion();
         assertThat(
-                metadata.newToken(TypeCodec.cint().serialize(1, protocolVersion))
-        ).isEqualTo(expected);
+                metadata.newToken(TypeCodec.cint().serialize(1, protocolVersion))).isEqualTo(expected);
     }
 
     protected abstract Token.Factory tokenFactory();

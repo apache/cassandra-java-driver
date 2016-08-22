@@ -25,7 +25,11 @@ import static com.datastax.driver.core.SchemaElement.*;
 
 class ProtocolEvent {
 
-    enum Type {TOPOLOGY_CHANGE, STATUS_CHANGE, SCHEMA_CHANGE}
+    enum Type {
+        TOPOLOGY_CHANGE,
+        STATUS_CHANGE,
+        SCHEMA_CHANGE
+    }
 
     final Type type;
 
@@ -46,7 +50,11 @@ class ProtocolEvent {
     }
 
     static class TopologyChange extends ProtocolEvent {
-        enum Change {NEW_NODE, REMOVED_NODE, MOVED_NODE}
+        enum Change {
+            NEW_NODE,
+            REMOVED_NODE,
+            MOVED_NODE
+        }
 
         final Change change;
         final InetSocketAddress node;
@@ -72,7 +80,10 @@ class ProtocolEvent {
 
     static class StatusChange extends ProtocolEvent {
 
-        enum Status {UP, DOWN}
+        enum Status {
+            UP,
+            DOWN
+        }
 
         final Status status;
         final InetSocketAddress node;
@@ -98,7 +109,11 @@ class ProtocolEvent {
 
     static class SchemaChange extends ProtocolEvent {
 
-        enum Change {CREATED, UPDATED, DROPPED}
+        enum Change {
+            CREATED,
+            UPDATED,
+            DROPPED
+        }
 
         final Change change;
         final SchemaElement targetType;

@@ -218,7 +218,8 @@ class DataTypeCqlNameParser {
             } else if (str.charAt(startIdx) == '\'') { // custom type name included in single quotes
                 ++idx;
                 // read until closing quote.
-                while (!isEOS() && str.charAt(idx++) != '\'') { /* loop */ }
+                while (!isEOS() && str.charAt(idx++) != '\'') { /* loop */
+                }
             } else {
                 while (!isEOS() && (isIdentifierChar(str.charAt(idx)) || str.charAt(idx) == '"'))
                     ++idx;

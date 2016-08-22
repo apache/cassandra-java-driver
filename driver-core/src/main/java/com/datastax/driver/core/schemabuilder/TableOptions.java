@@ -806,7 +806,10 @@ public abstract class TableOptions<T extends TableOptions> extends SchemaStateme
          */
         public static class DateTieredCompactionStrategyOptions extends CompactionOptions<DateTieredCompactionStrategyOptions> {
 
-            public enum TimeStampResolution {MICROSECONDS, MILLISECONDS}
+            public enum TimeStampResolution {
+                MICROSECONDS,
+                MILLISECONDS
+            }
 
             private Optional<Integer> baseTimeSeconds = Optional.absent();
 
@@ -922,7 +925,9 @@ public abstract class TableOptions<T extends TableOptions> extends SchemaStateme
          * Compaction strategies. Possible values: SIZED_TIERED, LEVELED & DATE_TIERED
          */
         public static enum Strategy {
-            SIZED_TIERED("'SizeTieredCompactionStrategy'"), LEVELED("'LeveledCompactionStrategy'"), DATE_TIERED("'DateTieredCompactionStrategy'");
+            SIZED_TIERED("'SizeTieredCompactionStrategy'"),
+            LEVELED("'LeveledCompactionStrategy'"),
+            DATE_TIERED("'DateTieredCompactionStrategy'");
 
             private String strategyClass;
 
@@ -1014,7 +1019,10 @@ public abstract class TableOptions<T extends TableOptions> extends SchemaStateme
          * Compression algorithms. Possible values: NONE, LZ4, SNAPPY, DEFLATE
          */
         public static enum Algorithm {
-            NONE("''"), LZ4("'LZ4Compressor'"), SNAPPY("'SnappyCompressor'"), DEFLATE("'DeflateCompressor'");
+            NONE("''"),
+            LZ4("'LZ4Compressor'"),
+            SNAPPY("'SnappyCompressor'"),
+            DEFLATE("'DeflateCompressor'");
 
             private String value;
 

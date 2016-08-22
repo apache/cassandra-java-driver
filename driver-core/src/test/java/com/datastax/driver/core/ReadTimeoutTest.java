@@ -36,7 +36,7 @@ public class ReadTimeoutTest extends ScassandraTestBase.PerClassCluster {
                         .withQuery(query)
                         .withThen(then().withFixedDelay(100L))
                         .build()
-        );
+                );
 
         // Set default timeout too low
         cluster.getConfiguration().getSocketOptions().setReadTimeoutMillis(10);

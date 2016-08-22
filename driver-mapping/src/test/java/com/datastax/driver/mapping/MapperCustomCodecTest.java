@@ -52,8 +52,7 @@ public class MapperCustomCodecTest extends CCMTestsSupport {
                 // nested UDT
                 // both UDT fields and non-UDT elements in the collection are mapped to custom types
                 "CREATE TABLE data3(i int primary key, data map<int, frozen<holder>>)",
-                "INSERT INTO data3 (i, data) values (1, {1: {i: 1, l: 11}})"
-        );
+                "INSERT INTO data3 (i, data) values (1, {1: {i: 1, l: 11}})");
     }
 
     @Override
@@ -339,7 +338,7 @@ public class MapperCustomCodecTest extends CCMTestsSupport {
 
         @Query("update data1 set l = :l where i = :i")
         void setL(@Param("i") int i,
-                  @Param(value = "l", codec = CustomLong.Codec.class) CustomLong l);
+                @Param(value = "l", codec = CustomLong.Codec.class) CustomLong l);
     }
 
     @Accessor
@@ -347,7 +346,7 @@ public class MapperCustomCodecTest extends CCMTestsSupport {
 
         @Query("update data1 set l = :l where i = :i")
         void setL(@Param("i") int i,
-                  @Param(value = "l", codec = NoDefaultConstructorCodec.class) long l);
+                @Param(value = "l", codec = NoDefaultConstructorCodec.class) long l);
     }
 
     @Accessor
@@ -358,7 +357,7 @@ public class MapperCustomCodecTest extends CCMTestsSupport {
 
         @Query("update data1 set l = :l where i = :i")
         void setL(@Param("i") int i,
-                  @Param(value = "l", codec = OptionalOfString.class) Optional<Long> l);
+                @Param(value = "l", codec = OptionalOfString.class) Optional<Long> l);
     }
 
     @UDT(name = "holder")
@@ -569,7 +568,9 @@ public class MapperCustomCodecTest extends CCMTestsSupport {
         public OptionalCodec(TypeCodec<T> codec) {
             // @formatter:off
             super(codec,
-                    new TypeToken<Optional<T>>() {}.where(new TypeParameter<T>() {}, codec.getJavaType()));
+                    new TypeToken<Optional<T>>() {
+                    }.where(new TypeParameter<T>() {
+                    }, codec.getJavaType()));
             // @formatter:on
             this.isAbsent = new Predicate<T>() {
                 @Override

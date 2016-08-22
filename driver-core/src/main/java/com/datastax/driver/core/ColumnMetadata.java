@@ -193,7 +193,8 @@ public class ColumnMetadata {
             int position;
             if (version.getMajor() >= 3) {
                 position = row.getInt(POSITION); // cannot be null, -1 is used as a special value instead of null to avoid tombstones
-                if (position == -1) position = 0;
+                if (position == -1)
+                    position = 0;
             } else {
                 position = row.isNull(COMPONENT_INDEX) ? 0 : row.getInt(COMPONENT_INDEX);
             }

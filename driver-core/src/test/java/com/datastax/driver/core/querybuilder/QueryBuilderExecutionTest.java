@@ -46,8 +46,7 @@ public class QueryBuilderExecutionTest extends CCMTestsSupport {
                 insertInto(TABLE2).value("k", "cast_t").value("t", "a").value("i", 1).value("f", 1.1).toString(),
                 insertInto(TABLE2).value("k", "cast_t").value("t", "b").value("i", 2).value("f", 2.5).toString(),
                 insertInto(TABLE2).value("k", "cast_t").value("t", "c").value("i", 3).value("f", 3.7).toString(),
-                insertInto(TABLE2).value("k", "cast_t").value("t", "d").value("i", 4).value("f", 5.0).toString()
-        );
+                insertInto(TABLE2).value("k", "cast_t").value("t", "d").value("i", 4).value("f", 5.0).toString());
     }
 
     @Test(groups = "short")
@@ -280,7 +279,7 @@ public class QueryBuilderExecutionTest extends CCMTestsSupport {
         session().execute(createTable(table).addPartitionKey("k", DataType.text())
                 .addClusteringColumn("cc", DataType.cint())
                 .addColumn("n", DataType.text())
-        );
+                );
         session().execute(String.format(
                 "CREATE CUSTOM INDEX on %s (n) USING 'org.apache.cassandra.index.sasi.SASIIndex';", table));
         session().execute(insertInto(table).value("k", "a").value("cc", 0).value("n", "Hello World"));

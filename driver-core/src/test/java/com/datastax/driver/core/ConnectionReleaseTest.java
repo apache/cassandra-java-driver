@@ -69,19 +69,19 @@ public class ConnectionReleaseTest extends ScassandraTestBase {
                             .withRows(ImmutableMap.of("key", 1))
                             .withFixedDelay(10000)
                             .build()
-            );
+                    );
             primingClient.prime(
                     PrimingRequest.queryBuilder()
                             .withQuery("select c from test1 where k=1")
                             .withRows(ImmutableMap.of("c", "hello"))
                             .build()
-            );
+                    );
             primingClient.prime(
                     PrimingRequest.queryBuilder()
                             .withQuery("select n from test2 where c='hello'")
                             .withRows(ImmutableMap.of("n", "world"))
                             .build()
-            );
+                    );
 
             cluster = Cluster.builder()
                     .addContactPoints(hostAddress.getAddress())
@@ -96,7 +96,6 @@ public class ConnectionReleaseTest extends ScassandraTestBase {
             // Consume all stream ids except one.
             for (int i = 0; i < StreamIdGenerator.MAX_STREAM_PER_CONNECTION_V2 - 1; i++)
                 mockFutures.add(session.executeAsync("mock query"));
-
 
             ListenableFuture<ResultSet> future = Futures.transform(session.executeAsync("select c from test1 where k=1"),
                     new AsyncFunction<ResultSet, ResultSet>() {

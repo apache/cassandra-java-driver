@@ -24,8 +24,35 @@ in-depth knowledge of the codebase.
 
 ## Editor configuration
 
-We use IntelliJ IDEA with the default formatting options, with one exception: check
-"Enable formatter markers in comments" in Preferences > Editor > Code Style.
+We use Eclipse formatting conventions with a few exceptions:
+
+* Spaces instead of Tabs with 4 space indentation
+* No joining of wrapped lines (for leniency)
+* Disable auto-line wrapping (for leniency)
+* Disable formatting of comments (for leniency)
+* No spaces inserted before and after braces in array initializer
+* Indent statements within switch body
+* Add new lines after each enum constant
+
+A formatting configuration is provided in [src/formatter/java.xml](src/formatter/java.xml)
+that can be importted into both Eclipse and IntelliJ.
+
+Additionally, you may opt to use the formatting-maven-plugin to do the formatting for you
+by executing:
+
+```
+mvn formatter:format
+```
+
+In the module that you wish to do formatting for.  This is required because the formatting
+plugin doesn''t currently recurse child modules.
+
+Source format validation is done as part of the maven build and may be validated
+individually by executing:
+
+```
+mvn formatter:validate
+```
 
 Please format your code and organize imports before submitting your changes.
 

@@ -15,7 +15,6 @@
  */
 package com.datastax.driver.core;
 
-
 /**
  * A timestamp generator based on {@code System.currentTimeMillis()}, with an incrementing thread-local counter
  * to generate the sub-millisecond part.

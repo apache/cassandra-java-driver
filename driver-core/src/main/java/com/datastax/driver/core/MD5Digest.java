@@ -58,4 +58,3 @@ class MD5Digest {
         return Bytes.toHexString(bytes);
     }
 }
-

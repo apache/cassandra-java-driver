@@ -48,10 +48,10 @@ public class Delete extends BuiltStatement {
     }
 
     Delete(String keyspace,
-           String table,
-           List<Object> routingKeyValues,
-           List<ColumnMetadata> partitionKey,
-           List<Selector> columns) {
+            String table,
+            List<Object> routingKeyValues,
+            List<ColumnMetadata> partitionKey,
+            List<Selector> columns) {
         super(keyspace, partitionKey, routingKeyValues);
         this.table = table;
         this.columns = columns;

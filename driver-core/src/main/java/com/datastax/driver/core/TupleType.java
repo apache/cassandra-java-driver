@@ -139,7 +139,6 @@ public class TupleType extends DataType {
         this.codecRegistry = codecRegistry;
     }
 
-
     @Override
     public int hashCode() {
         return Arrays.hashCode(new Object[]{name, types});

@@ -39,8 +39,10 @@ public class TypeCodecTest {
     public static final DataType CUSTOM_FOO = DataType.custom("com.example.FooBar");
 
     // @formatter:off
-    public static final TypeToken<List<A>> LIST_OF_A_TOKEN = new TypeToken<List<A>>() {};
-    public static final TypeToken<List<B>> LIST_OF_B_TOKEN = new TypeToken<List<B>>() {};
+    public static final TypeToken<List<A>> LIST_OF_A_TOKEN = new TypeToken<List<A>>() {
+    };
+    public static final TypeToken<List<B>> LIST_OF_B_TOKEN = new TypeToken<List<B>>() {
+    };
     // @formatter:on
 
     private CodecRegistry codecRegistry = new CodecRegistry();
@@ -204,7 +206,6 @@ public class TypeCodecTest {
         assertThat(actualB.getJavaType()).isEqualTo(expectedB.getJavaType());
     }
 
-
     @Test(groups = "unit")
     public void should_deserialize_empty_buffer_as_tuple_with_null_values() {
         CodecRegistry codecRegistry = new CodecRegistry();
@@ -223,7 +224,7 @@ public class TypeCodecTest {
                 new UserType.Field("t", DataType.text()),
                 new UserType.Field("i", DataType.cint()),
                 new UserType.Field("l", DataType.list(DataType.text()))
-        ), ProtocolVersion.NEWEST_SUPPORTED, codecRegistry);
+                ), ProtocolVersion.NEWEST_SUPPORTED, codecRegistry);
         UDTValue expected = udt.newValue();
         expected.setString("t", null);
         expected.setToNull("i");
@@ -251,7 +252,6 @@ public class TypeCodecTest {
                 .cannotSerialize(type4UUID)
                 .cannotFormat(type4UUID);
     }
-
 
     /**
      * Ensures that primitive types are correctly handled and wrapped when necessary.
@@ -361,7 +361,6 @@ public class TypeCodecTest {
             return null; // not tested
         }
     }
-
 
     class BCodec extends TypeCodec<B> {
 

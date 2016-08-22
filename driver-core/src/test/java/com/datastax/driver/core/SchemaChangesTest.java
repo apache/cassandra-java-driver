@@ -79,7 +79,7 @@ public class SchemaChangesTest extends CCMTestsSupport {
                 .withPort(ccm().getBinaryPort())
                 .withClusterName("schema-disabled")
                 .withQueryOptions(nonDebouncingQueryOptions()
-                                .setMetadataEnabled(false)
+                        .setMetadataEnabled(false)
                 ).build());
 
         schemaDisabledSession = schemaDisabledCluster.connect();
@@ -110,7 +110,6 @@ public class SchemaChangesTest extends CCMTestsSupport {
         if (schemaDisabledCluster != null)
             schemaDisabledCluster.close();
     }
-
 
     @DataProvider(name = "existingKeyspaceName")
     public static Object[][] existingKeyspaceName() {
@@ -521,7 +520,7 @@ public class SchemaChangesTest extends CCMTestsSupport {
                 .addContactPoints(getContactPoints())
                 .withPort(ccm().getBinaryPort())
                 .withQueryOptions(nonDebouncingQueryOptions()
-                                .setMetadataEnabled(false)
+                        .setMetadataEnabled(false)
                 ).build();
 
         try {
@@ -531,7 +530,6 @@ public class SchemaChangesTest extends CCMTestsSupport {
             cluster.close();
         }
     }
-
 
     /**
      * Ensures that calling {@link Metadata#newTokenRange(Token, Token)} on a Cluster that has schema
@@ -546,7 +544,7 @@ public class SchemaChangesTest extends CCMTestsSupport {
                 .addContactPoints(getContactPoints())
                 .withPort(ccm().getBinaryPort())
                 .withQueryOptions(nonDebouncingQueryOptions()
-                                .setMetadataEnabled(false)
+                        .setMetadataEnabled(false)
                 ).build();
 
         try {
@@ -631,7 +629,7 @@ public class SchemaChangesTest extends CCMTestsSupport {
                     session1.executeAsync("DROP MATERIALIZED VIEW \"CaseSensitive\".mv1"),
                     session1.executeAsync("DROP KEYSPACE lowercase2"),
                     session1.executeAsync("DROP KEYSPACE \"CaseSensitive2\"")
-            ));
+                    ));
             Futures.getUnchecked(f);
         }
     }

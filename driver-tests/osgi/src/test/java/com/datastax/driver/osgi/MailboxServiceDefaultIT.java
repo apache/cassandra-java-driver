@@ -37,8 +37,7 @@ public class MailboxServiceDefaultIT extends MailboxServiceTests {
                 driverBundle(),
                 extrasBundle(),
                 mappingBundle(),
-                mailboxBundle()
-        );
+                mailboxBundle());
     }
 
     /**

@@ -58,32 +58,32 @@ public class QueryLoggerTest extends CCMTestsSupport {
             }));
 
     private static final List<Object> values = Lists.transform(dataTypes, new Function<DataType, Object>() {
-                @Override
-                public Object apply(DataType type) {
-                    return getFixedValue(type);
-                }
-            }
-    );
+        @Override
+        public Object apply(DataType type) {
+            return getFixedValue(type);
+        }
+    }
+            );
 
     private static final String definitions = Joiner.on(", ").join(
             Lists.transform(dataTypes, new Function<DataType, String>() {
-                        @Override
-                        public String apply(DataType type) {
-                            return "c_" + type + " " + type;
-                        }
-                    }
-            )
-    );
+                @Override
+                public String apply(DataType type) {
+                    return "c_" + type + " " + type;
+                }
+            }
+                    )
+            );
 
     private static final String assignments = Joiner.on(", ").join(
             Lists.transform(dataTypes, new Function<DataType, String>() {
-                        @Override
-                        public String apply(DataType type) {
-                            return "c_" + type + " = ?";
-                        }
-                    }
-            )
-    );
+                @Override
+                public String apply(DataType type) {
+                    return "c_" + type + " = ?";
+                }
+            }
+                    )
+            );
 
     private Logger normal = Logger.getLogger(NORMAL_LOGGER.getName());
     private Logger slow = Logger.getLogger(SLOW_LOGGER.getName());

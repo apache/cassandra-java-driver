@@ -55,15 +55,15 @@ public class TableMetadata extends AbstractTableMetadata {
     private final Map<String, MaterializedViewMetadata> views;
 
     private TableMetadata(KeyspaceMetadata keyspace,
-                          String name,
-                          UUID id,
-                          List<ColumnMetadata> partitionKey,
-                          List<ColumnMetadata> clusteringColumns,
-                          Map<String, ColumnMetadata> columns,
-                          Map<String, IndexMetadata> indexes,
-                          TableOptionsMetadata options,
-                          List<ClusteringOrder> clusteringOrder,
-                          VersionNumber cassandraVersion) {
+            String name,
+            UUID id,
+            List<ColumnMetadata> partitionKey,
+            List<ColumnMetadata> clusteringColumns,
+            Map<String, ColumnMetadata> columns,
+            Map<String, IndexMetadata> indexes,
+            TableOptionsMetadata options,
+            List<ClusteringOrder> clusteringOrder,
+            VersionNumber cassandraVersion) {
         super(keyspace, name, id, partitionKey, clusteringColumns, columns, options, clusteringOrder, cassandraVersion);
         this.indexes = indexes;
         this.views = new HashMap<String, MaterializedViewMetadata>();
@@ -139,7 +139,7 @@ public class TableMetadata extends AbstractTableMetadata {
             // See ControlConnection#refreshSchema for why we'd rather not probably this further. Since table options is one thing
             // that tends to change often in Cassandra, it's worth special casing this.
             logger.error(String.format("Error parsing schema options for table %s.%s: "
-                            + "Cluster.getMetadata().getKeyspace(\"%s\").getTable(\"%s\").getOptions() will return null",
+                    + "Cluster.getMetadata().getKeyspace(\"%s\").getTable(\"%s\").getOptions() will return null",
                     ksm.getName(), name, ksm.getName(), name), e);
         }
 
@@ -294,9 +294,9 @@ public class TableMetadata extends AbstractTableMetadata {
     }
 
     private static int findClusteringSize(DataTypeClassNameParser.ParseResult comparator,
-                                          Collection<ColumnMetadata.Raw> cols,
-                                          List<String> columnAliases,
-                                          VersionNumber cassandraVersion) {
+            Collection<ColumnMetadata.Raw> cols,
+            List<String> columnAliases,
+            VersionNumber cassandraVersion) {
         // In 2.0 onwards, this is relatively easy, we just find the biggest 'position' amongst the clustering columns.
         // For 1.2 however, this is slightly more subtle: we need to infer it based on whether the comparator is composite or not, and whether we have
         // regular columns or not.

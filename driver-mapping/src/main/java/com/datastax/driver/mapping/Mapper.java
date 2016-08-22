@@ -835,7 +835,13 @@ public class Mapper<T> {
      */
     public static abstract class Option {
 
-        enum Type {TTL, TIMESTAMP, CL, TRACING, SAVE_NULL_FIELDS}
+        enum Type {
+            TTL,
+            TIMESTAMP,
+            CL,
+            TRACING,
+            SAVE_NULL_FIELDS
+        }
 
         final Type type;
 

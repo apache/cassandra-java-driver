@@ -75,7 +75,6 @@ public class MapperPrimitiveTypes22Test extends CCMTestsSupport {
         assertEquals(primitiveTypes2.getShortWrapperCol(), shortWrapperCol);
     }
 
-
     @Table(name = "primitiveTypes22")
     public static class PrimitiveTypes22 {
         @PartitionKey

@@ -90,8 +90,10 @@ public class MailboxMessage {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o)
+            return true;
+        if (o == null || getClass() != o.getClass())
+            return false;
         MailboxMessage that = (MailboxMessage) o;
         return date == that.date &&
                 Objects.equal(recipient, that.recipient) &&

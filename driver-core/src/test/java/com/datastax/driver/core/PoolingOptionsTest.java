@@ -68,7 +68,8 @@ public class PoolingOptionsTest {
         try {
             options.setProtocolVersion(ProtocolVersion.V3);
             fail("Expected an IllegalArgumentException");
-        } catch (IllegalArgumentException e) {/*expected*/}
+        } catch (IllegalArgumentException e) {/*expected*/
+        }
 
         // OK for v3 (up to 32K stream ids)
         options = new PoolingOptions().setMaxRequestsPerConnection(LOCAL, 5000);
@@ -80,7 +81,8 @@ public class PoolingOptionsTest {
         try {
             options.setProtocolVersion(ProtocolVersion.V2);
             fail("Expected an IllegalArgumentException");
-        } catch (IllegalArgumentException e) {/*expected*/}
+        } catch (IllegalArgumentException e) {/*expected*/
+        }
     }
 
     @Test(groups = "unit")
@@ -115,27 +117,32 @@ public class PoolingOptionsTest {
         try {
             options.setCoreConnectionsPerHost(LOCAL, -1);
             fail("expected an IllegalArgumentException");
-        } catch (IllegalArgumentException e) { /*expected*/ }
+        } catch (IllegalArgumentException e) { /*expected*/
+        }
         try {
             options.setMaxConnectionsPerHost(LOCAL, -1);
             fail("expected an IllegalArgumentException");
-        } catch (IllegalArgumentException e) { /*expected*/ }
+        } catch (IllegalArgumentException e) { /*expected*/
+        }
         try {
             options.setConnectionsPerHost(LOCAL, -1, 1);
             fail("expected an IllegalArgumentException");
-        } catch (IllegalArgumentException e) { /*expected*/ }
+        } catch (IllegalArgumentException e) { /*expected*/
+        }
         try {
             options.setConnectionsPerHost(LOCAL, -2, -1);
             fail("expected an IllegalArgumentException");
-        } catch (IllegalArgumentException e) { /*expected*/ }
+        } catch (IllegalArgumentException e) { /*expected*/
+        }
         try {
             options.setNewConnectionThreshold(LOCAL, -1);
             fail("expected an IllegalArgumentException");
-        } catch (IllegalArgumentException e) { /*expected*/ }
+        } catch (IllegalArgumentException e) { /*expected*/
+        }
         try {
             options.setMaxRequestsPerConnection(LOCAL, -1);
             fail("expected an IllegalArgumentException");
-        } catch (IllegalArgumentException e) { /*expected*/ }
+        } catch (IllegalArgumentException e) { /*expected*/
+        }
     }
 }
-

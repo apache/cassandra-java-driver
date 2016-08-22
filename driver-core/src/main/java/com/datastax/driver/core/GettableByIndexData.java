@@ -425,7 +425,6 @@ public interface GettableByIndexData {
      */
     public <K, V> Map<K, V> getMap(int i, Class<K> keysClass, Class<V> valuesClass);
 
-
     /**
      * Returns the {@code i}th value as a map.
      * <p/>

@@ -41,9 +41,9 @@ public class Truncate extends BuiltStatement {
     }
 
     Truncate(String keyspace,
-             String table,
-             List<Object> routingKeyValues,
-             List<ColumnMetadata> partitionKey) {
+            String table,
+            List<Object> routingKeyValues,
+            List<ColumnMetadata> partitionKey) {
         super(keyspace, partitionKey, routingKeyValues);
         this.table = table;
     }

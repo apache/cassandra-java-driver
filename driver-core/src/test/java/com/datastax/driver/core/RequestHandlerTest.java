@@ -41,7 +41,7 @@ public class RequestHandlerTest {
                             .withRows(ImmutableMap.of("key", 1))
                             .withFixedDelay(10)
                             .build()
-            );
+                    );
 
             cluster = Cluster.builder()
                     .addContactPoint(TestUtils.ipOfNode(1))

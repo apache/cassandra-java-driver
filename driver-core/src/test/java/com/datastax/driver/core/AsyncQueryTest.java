@@ -49,8 +49,7 @@ public class AsyncQueryTest extends CCMTestsSupport {
             execute(
                     String.format("create keyspace %s WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1}", keyspace),
                     String.format("create table %s.foo(k int primary key, v int)", keyspace),
-                    String.format("insert into %s.foo (k, v) values (1, 1)", keyspace)
-            );
+                    String.format("insert into %s.foo (k, v) values (1, 1)", keyspace));
         }
     }
 
@@ -139,7 +138,7 @@ public class AsyncQueryTest extends CCMTestsSupport {
             });
             try {
                 Thread executedThread = f2.get();
-                if(executedThread != sameThread) {
+                if (executedThread != sameThread) {
                     fail("Expected a failed future, callback was executed on " + executedThread);
                 } else {
                     // Callback was invoked on the same thread, which indicates that the future completed

@@ -212,7 +212,7 @@ class Frame {
             private final int opcodeOffset;
 
             DecoderForStreamIdSize(int streamIdSize) {
-                super(MAX_FRAME_LENGTH, /*lengthOffset=*/ 3 + streamIdSize, 4, 0, 0, true);
+                super(MAX_FRAME_LENGTH, /*lengthOffset=*/3 + streamIdSize, 4, 0, 0, true);
                 this.opcodeOffset = 2 + streamIdSize;
             }
 

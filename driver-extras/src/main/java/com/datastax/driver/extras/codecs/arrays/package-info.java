@@ -20,3 +20,4 @@
  * serializing between CQL lists and Java arrays.
  */
 package com.datastax.driver.extras.codecs.arrays;
+

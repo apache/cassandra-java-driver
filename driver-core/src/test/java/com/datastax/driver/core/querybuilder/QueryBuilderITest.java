@@ -136,11 +136,13 @@ public class QueryBuilderITest extends CCMTestsSupport {
         assertEquals(insert.toString(), query);
 
         query = "INSERT INTO foo (a,b) VALUES ({'2''} space','3','4'},3.4) USING TTL 24 AND TIMESTAMP 42;";
-        insert = insertInto("foo").values(new String[]{"a", "b"}, new Object[]{new TreeSet<String>() {{
-            add("2'} space");
-            add("3");
-            add("4");
-        }}, 3.4}).using(ttl(24)).and(timestamp(42));
+        insert = insertInto("foo").values(new String[]{"a", "b"}, new Object[]{new TreeSet<String>() {
+            {
+                add("2'} space");
+                add("3");
+                add("4");
+            }
+        }, 3.4}).using(ttl(24)).and(timestamp(42));
         assertEquals(insert.toString(), query);
     }
 

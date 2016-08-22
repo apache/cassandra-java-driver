@@ -45,7 +45,9 @@ public interface RetryPolicy {
          * The types of retry decisions.
          */
         public enum Type {
-            RETRY, RETHROW, IGNORE
+            RETRY,
+            RETHROW,
+            IGNORE
         }
 
         private final Type type;

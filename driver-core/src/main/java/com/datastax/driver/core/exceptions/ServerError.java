@@ -41,7 +41,6 @@ public class ServerError extends DriverInternalError implements CoordinatorExcep
         this.address = address;
     }
 
-
     /**
      * {@inheritDoc}
      */

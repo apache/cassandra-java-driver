@@ -20,3 +20,4 @@
  * serializing between CQL temporal types and Java primitive types.
  */
 package com.datastax.driver.extras.codecs.date;
+

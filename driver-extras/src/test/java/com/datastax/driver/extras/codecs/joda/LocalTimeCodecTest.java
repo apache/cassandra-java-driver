@@ -69,5 +69,4 @@ public class LocalTimeCodecTest {
         assertThat(actual).isEqualTo(expected);
     }
 
-
 }

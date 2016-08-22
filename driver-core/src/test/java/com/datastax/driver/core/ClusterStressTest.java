@@ -82,7 +82,7 @@ public class ClusterStressTest extends CCMTestsSupport {
     }
 
     private List<Future<CreateClusterAndCheckConnections>> createClustersConcurrently(int numberOfClusters,
-                                                                                      CountDownLatch countDownLatch) {
+            CountDownLatch countDownLatch) {
         List<Future<CreateClusterAndCheckConnections>> clusterFutures =
                 Lists.newArrayListWithCapacity(numberOfClusters);
         for (int i = 0; i < numberOfClusters; i++) {
@@ -98,7 +98,7 @@ public class ClusterStressTest extends CCMTestsSupport {
     }
 
     private List<Future<Void>> closeClustersConcurrently(List<CreateClusterAndCheckConnections> actions,
-                                                         CountDownLatch startSignal) {
+            CountDownLatch startSignal) {
         List<Future<Void>> closeFutures = Lists.newArrayListWithCapacity(actions.size());
         for (CreateClusterAndCheckConnections action : actions) {
             closeFutures.add(executorService.submit(new CloseCluster(action.cluster, action.channelMonitor,

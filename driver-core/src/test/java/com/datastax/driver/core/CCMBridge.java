@@ -997,16 +997,25 @@ public class CCMBridge implements CCMAccess {
         public boolean equals(Object o) {
             // do not include cluster name and start, only
             // properties relevant to the settings of the cluster
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o)
+                return true;
+            if (o == null || getClass() != o.getClass())
+                return false;
             Builder builder = (Builder) o;
-            if (isDSE != builder.isDSE) return false;
-            if (!Arrays.equals(nodes, builder.nodes)) return false;
-            if (!createOptions.equals(builder.createOptions)) return false;
-            if (!jvmArgs.equals(builder.jvmArgs)) return false;
-            if (!cassandraConfiguration.equals(builder.cassandraConfiguration)) return false;
-            if (!dseConfiguration.equals(builder.dseConfiguration)) return false;
-            if (!workloads.equals(builder.workloads)) return false;
+            if (isDSE != builder.isDSE)
+                return false;
+            if (!Arrays.equals(nodes, builder.nodes))
+                return false;
+            if (!createOptions.equals(builder.createOptions))
+                return false;
+            if (!jvmArgs.equals(builder.jvmArgs))
+                return false;
+            if (!cassandraConfiguration.equals(builder.cassandraConfiguration))
+                return false;
+            if (!dseConfiguration.equals(builder.dseConfiguration))
+                return false;
+            if (!workloads.equals(builder.workloads))
+                return false;
             return version.equals(builder.version);
         }
 

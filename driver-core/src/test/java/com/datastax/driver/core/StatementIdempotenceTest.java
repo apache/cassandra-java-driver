@@ -116,7 +116,7 @@ public class StatementIdempotenceTest {
                 select().writeTime("v").from("foo").where(eq("k", 1)),
                 select().fcall("token", "k").from("foo").where(eq("k", 1))
 
-        );
+                );
     }
 
     private ImmutableList<BuiltStatement> nonIdempotentBuiltStatements() {
@@ -184,6 +184,6 @@ public class StatementIdempotenceTest {
                 update("foo").with(set("v", raw("foo()"))).where(eq("k", 1)),
                 update("foo").with(set("v", Lists.newArrayList(raw("foo()")))).where(eq("k", 1))
 
-        );
+                );
     }
 }

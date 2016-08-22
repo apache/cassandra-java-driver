@@ -58,7 +58,7 @@ public class LoadBalancingPolicyBootstrapTest extends CCMTestsSupport {
         assertThat(policy.history).containsOnly(
                 entry(INIT, TestUtils.findHost(cluster, 1)),
                 entry(INIT, TestUtils.findHost(cluster, 2))
-        );
+                );
     }
 
     /**
@@ -102,13 +102,13 @@ public class LoadBalancingPolicyBootstrapTest extends CCMTestsSupport {
                 assertThat(policy.history).containsExactly(
                         entry(INIT, TestUtils.findHost(cluster, activeNode)),
                         entry(DOWN, TestUtils.findHost(cluster, nodeToStop))
-                );
+                        );
                 break;
             } else {
                 assertThat(policy.history).containsOnly(
                         entry(INIT, TestUtils.findHost(cluster, 1)),
                         entry(INIT, TestUtils.findHost(cluster, 2))
-                );
+                        );
 
                 logger.info("Could not get first contact point to fail, retrying");
 
@@ -124,7 +124,13 @@ public class LoadBalancingPolicyBootstrapTest extends CCMTestsSupport {
     }
 
     static class HistoryPolicy extends DelegatingLoadBalancingPolicy {
-        enum Action {INIT, UP, DOWN, ADD, REMOVE}
+        enum Action {
+            INIT,
+            UP,
+            DOWN,
+            ADD,
+            REMOVE
+        }
 
         static class Entry {
             final Action action;

@@ -51,7 +51,6 @@ public class DowngradingConsistencyRetryPolicyIntegrationTest extends AbstractRe
         };
     }
 
-
     /**
      * @return Write Types for which we expect a rethrow if used and there are no received acks.
      */
@@ -64,7 +63,6 @@ public class DowngradingConsistencyRetryPolicyIntegrationTest extends AbstractRe
                 {WriteTypePrime.CAS}
         };
     }
-
 
     /**
      * @return Write Types for which we expect an ignore if used and there are received acks.
@@ -133,7 +131,6 @@ public class DowngradingConsistencyRetryPolicyIntegrationTest extends AbstractRe
         assertQueried(3, 0);
     }
 
-
     /**
      * Ensures that when handling a read timeout with {@link DowngradingConsistencyRetryPolicy} that a retry is
      * reattempted if data was not retrieved, but enough replicas were alive to handle the request.
@@ -147,7 +144,8 @@ public class DowngradingConsistencyRetryPolicyIntegrationTest extends AbstractRe
         try {
             query();
             fail("expected an ReadTimeoutException");
-        } catch (ReadTimeoutException e) {/*expected*/}
+        } catch (ReadTimeoutException e) {/*expected*/
+        }
 
         assertOnReadTimeoutWasCalled(2);
         assertThat(errors.getRetries().getCount()).isEqualTo(1);
@@ -157,7 +155,6 @@ public class DowngradingConsistencyRetryPolicyIntegrationTest extends AbstractRe
         assertQueried(2, 0);
         assertQueried(3, 0);
     }
-
 
     /**
      * Ensures that when handling a read timeout with {@link DowngradingConsistencyRetryPolicy} that a retry is not
@@ -173,7 +170,8 @@ public class DowngradingConsistencyRetryPolicyIntegrationTest extends AbstractRe
         try {
             query();
             fail("expected a ReadTimeoutException");
-        } catch (ReadTimeoutException e) {/*expected*/ }
+        } catch (ReadTimeoutException e) {/*expected*/
+        }
 
         assertOnReadTimeoutWasCalled(1);
         assertThat(errors.getReadTimeouts().getCount()).isEqualTo(1);
@@ -183,7 +181,6 @@ public class DowngradingConsistencyRetryPolicyIntegrationTest extends AbstractRe
         assertQueried(2, 0);
         assertQueried(3, 0);
     }
-
 
     /**
      * Ensures that when handling a write timeout with {@link DowngradingConsistencyRetryPolicy} that it rethrows
@@ -199,7 +196,8 @@ public class DowngradingConsistencyRetryPolicyIntegrationTest extends AbstractRe
         try {
             query();
             fail("expected a WriteTimeoutException");
-        } catch (WriteTimeoutException e) {/*expected*/}
+        } catch (WriteTimeoutException e) {/*expected*/
+        }
 
         assertOnWriteTimeoutWasCalled(1);
         assertThat(errors.getWriteTimeouts().getCount()).isEqualTo(1);
@@ -209,7 +207,6 @@ public class DowngradingConsistencyRetryPolicyIntegrationTest extends AbstractRe
         assertQueried(2, 0);
         assertQueried(3, 0);
     }
-
 
     /**
      * Ensures that when handling a write timeout with {@link DowngradingConsistencyRetryPolicy} that it ignores
@@ -235,7 +232,6 @@ public class DowngradingConsistencyRetryPolicyIntegrationTest extends AbstractRe
         assertQueried(3, 0);
     }
 
-
     /**
      * Ensures that when handling a write timeout with {@link DowngradingConsistencyRetryPolicy} that a retry is
      * attempted on the same host if the {@link WriteType} is {@link WriteType#BATCH_LOG}.
@@ -249,7 +245,8 @@ public class DowngradingConsistencyRetryPolicyIntegrationTest extends AbstractRe
         try {
             query();
             fail("expected a WriteTimeoutException");
-        } catch (WriteTimeoutException e) {/*expected*/}
+        } catch (WriteTimeoutException e) {/*expected*/
+        }
 
         assertOnWriteTimeoutWasCalled(2);
         assertThat(errors.getRetries().getCount()).isEqualTo(1);
@@ -259,7 +256,6 @@ public class DowngradingConsistencyRetryPolicyIntegrationTest extends AbstractRe
         assertQueried(2, 0);
         assertQueried(3, 0);
     }
-
 
     /**
      * Ensures that when handling a write timeout with {@link DowngradingConsistencyRetryPolicy} that a retry is
@@ -290,7 +286,6 @@ public class DowngradingConsistencyRetryPolicyIntegrationTest extends AbstractRe
         assertQueried(3, 0);
     }
 
-
     /**
      * Ensures that when handling an unavailable with {@link DowngradingConsistencyRetryPolicy} that a retry is
      * reattempted with a {@link ConsistencyLevel} that matches min(received acknowledgements, THREE) and is only
@@ -320,7 +315,6 @@ public class DowngradingConsistencyRetryPolicyIntegrationTest extends AbstractRe
         assertQueried(3, 0);
     }
 
-
     /**
      * Ensures that when handling an unavailable with {@link DowngradingConsistencyRetryPolicy} that a retry is
      * is not reattempted if no replicas are alive.
@@ -334,7 +328,8 @@ public class DowngradingConsistencyRetryPolicyIntegrationTest extends AbstractRe
         try {
             query();
             fail("expected an UnavailableException");
-        } catch (UnavailableException e) {/*expected*/}
+        } catch (UnavailableException e) {/*expected*/
+        }
 
         assertOnUnavailableWasCalled(1);
         assertThat(errors.getRetries().getCount()).isEqualTo(0);
@@ -358,19 +353,19 @@ public class DowngradingConsistencyRetryPolicyIntegrationTest extends AbstractRe
         try {
             scassandras
                     .node(1).primingClient().prime(PrimingRequest.queryBuilder()
-                    .withQuery("mock query")
-                    .withThen(then().withFixedDelay(1000L).withRows(row("result", "result1")))
-                    .build());
+                            .withQuery("mock query")
+                            .withThen(then().withFixedDelay(1000L).withRows(row("result", "result1")))
+                            .build());
             scassandras
                     .node(2).primingClient().prime(PrimingRequest.queryBuilder()
-                    .withQuery("mock query")
-                    .withThen(then().withFixedDelay(1000L).withRows(row("result", "result2")))
-                    .build());
+                            .withQuery("mock query")
+                            .withThen(then().withFixedDelay(1000L).withRows(row("result", "result2")))
+                            .build());
             scassandras
                     .node(3).primingClient().prime(PrimingRequest.queryBuilder()
-                    .withQuery("mock query")
-                    .withThen(then().withFixedDelay(1000L).withRows(row("result", "result3")))
-                    .build());
+                            .withQuery("mock query")
+                            .withThen(then().withFixedDelay(1000L).withRows(row("result", "result3")))
+                            .build());
             try {
                 query();
                 Assertions.fail("expected a NoHostAvailableException");
@@ -399,7 +394,6 @@ public class DowngradingConsistencyRetryPolicyIntegrationTest extends AbstractRe
             cluster.getConfiguration().getSocketOptions().setReadTimeoutMillis(SocketOptions.DEFAULT_READ_TIMEOUT_MILLIS);
         }
     }
-
 
     /**
      * Ensures that when handling a server error defined in {@link #serverSideErrors} with
@@ -433,7 +427,6 @@ public class DowngradingConsistencyRetryPolicyIntegrationTest extends AbstractRe
         assertQueried(2, 1);
         assertQueried(3, 1);
     }
-
 
     /**
      * Ensures that when handling a connection error caused by the connection closing during a request in a way

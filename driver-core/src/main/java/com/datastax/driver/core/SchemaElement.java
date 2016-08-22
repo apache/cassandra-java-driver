@@ -21,5 +21,10 @@ package com.datastax.driver.core;
  * Note that {@code VIEW} is not a valid string under protocol v4 or lower, but is included for internal use only.
  */
 enum SchemaElement {
-    KEYSPACE, TABLE, TYPE, FUNCTION, AGGREGATE, VIEW
+    KEYSPACE,
+    TABLE,
+    TYPE,
+    FUNCTION,
+    AGGREGATE,
+    VIEW
 }

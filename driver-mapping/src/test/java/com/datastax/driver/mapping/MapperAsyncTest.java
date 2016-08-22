@@ -51,8 +51,7 @@ public class MapperAsyncTest extends CCMTestsSupport {
     public void onTestContextInitialized() {
         execute(
                 String.format(CREATE_KEYSPACE_SIMPLE_FORMAT, KEYSPACE, 1),
-                String.format("CREATE TABLE %s.users (user_id uuid PRIMARY KEY, name text, email text)", KEYSPACE)
-        );
+                String.format("CREATE TABLE %s.users (user_id uuid PRIMARY KEY, name text, email text)", KEYSPACE));
     }
 
     /**

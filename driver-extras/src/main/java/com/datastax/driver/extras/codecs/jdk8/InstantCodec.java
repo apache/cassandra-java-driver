@@ -76,7 +76,6 @@ public class InstantCodec extends TypeCodec<java.time.Instant> {
     private static final java.time.format.DateTimeFormatter FORMATTER = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSxxx")
             .withZone(java.time.ZoneOffset.UTC);
 
-
     private InstantCodec() {
         super(DataType.timestamp(), java.time.Instant.class);
     }

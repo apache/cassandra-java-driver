@@ -15,7 +15,6 @@
  */
 package com.datastax.driver.core;
 
-
 import com.google.common.base.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,7 +61,7 @@ public class MaterializedViewMetadata extends AbstractTableMetadata {
         TableMetadata baseTable = keyspace.tables.get(tableName);
         if (baseTable == null) {
             logger.trace(String.format("Cannot find base table %s for materialized view %s.%s: "
-                            + "Cluster.getMetadata().getKeyspace(\"%s\").getView(\"%s\") will return null",
+                    + "Cluster.getMetadata().getKeyspace(\"%s\").getView(\"%s\") will return null",
                     tableName, keyspace.getName(), name, keyspace.getName(), name));
             return null;
         }
@@ -88,7 +87,7 @@ public class MaterializedViewMetadata extends AbstractTableMetadata {
             // See ControlConnection#refreshSchema for why we'd rather not probably this further. Since table options is one thing
             // that tends to change often in Cassandra, it's worth special casing this.
             logger.error(String.format("Error parsing schema options for view %s.%s: "
-                            + "Cluster.getMetadata().getKeyspace(\"%s\").getView(\"%s\").getOptions() will return null",
+                    + "Cluster.getMetadata().getKeyspace(\"%s\").getView(\"%s\").getOptions() will return null",
                     keyspace.getName(), name, keyspace.getName(), name), e);
         }
 
@@ -174,7 +173,8 @@ public class MaterializedViewMetadata extends AbstractTableMetadata {
             while (it.hasNext()) {
                 ColumnMetadata column = it.next();
                 sb.append(spaces(4, formatted)).append(Metadata.escapeId(column.getName()));
-                if (it.hasNext()) sb.append(",");
+                if (it.hasNext())
+                    sb.append(",");
                 sb.append(" ");
                 newLine(sb, formatted);
             }

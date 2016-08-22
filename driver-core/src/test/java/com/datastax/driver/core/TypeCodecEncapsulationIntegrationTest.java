@@ -34,12 +34,18 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class TypeCodecEncapsulationIntegrationTest extends CCMTestsSupport {
 
     // @formatter:off
-    private static final TypeToken<NumberBox<Integer>> NUMBERBOX_OF_INTEGER_TOKEN = new TypeToken<NumberBox<Integer>>() {};
-    private static final TypeToken<NumberBox<Long>> NUMBERBOX_OF_LONG_TOKEN = new TypeToken<NumberBox<Long>>() {};
-    private static final TypeToken<NumberBox<Float>> NUMBERBOX_OF_FLOAT_TOKEN = new TypeToken<NumberBox<Float>>() {};
-    private static final TypeToken<NumberBox<Double>> NUMBERBOX_OF_DOUBLE_TOKEN = new TypeToken<NumberBox<Double>>() {};
-    private static final TypeToken<NumberBox<BigInteger>> NUMBERBOX_OF_BIGINTEGER_TOKEN = new TypeToken<NumberBox<BigInteger>>() {};
-    private static final TypeToken<NumberBox<BigDecimal>> NUMBERBOX_OF_BIGDECIMAL_TOKEN = new TypeToken<NumberBox<BigDecimal>>() {};
+    private static final TypeToken<NumberBox<Integer>> NUMBERBOX_OF_INTEGER_TOKEN = new TypeToken<NumberBox<Integer>>() {
+    };
+    private static final TypeToken<NumberBox<Long>> NUMBERBOX_OF_LONG_TOKEN = new TypeToken<NumberBox<Long>>() {
+    };
+    private static final TypeToken<NumberBox<Float>> NUMBERBOX_OF_FLOAT_TOKEN = new TypeToken<NumberBox<Float>>() {
+    };
+    private static final TypeToken<NumberBox<Double>> NUMBERBOX_OF_DOUBLE_TOKEN = new TypeToken<NumberBox<Double>>() {
+    };
+    private static final TypeToken<NumberBox<BigInteger>> NUMBERBOX_OF_BIGINTEGER_TOKEN = new TypeToken<NumberBox<BigInteger>>() {
+    };
+    private static final TypeToken<NumberBox<BigDecimal>> NUMBERBOX_OF_BIGDECIMAL_TOKEN = new TypeToken<NumberBox<BigDecimal>>() {
+    };
     // @formatter:on
 
     private final String insertQuery = "INSERT INTO \"myTable\" (c_int, c_bigint, c_float, c_double, c_varint, c_decimal) VALUES (?, ?, ?, ?, ?, ?)";
@@ -59,16 +65,15 @@ public class TypeCodecEncapsulationIntegrationTest extends CCMTestsSupport {
     @Override
     public void onTestContextInitialized() {
         execute(
-                "CREATE TABLE \"myTable\" ("
-                        + "c_int int, "
-                        + "c_bigint bigint, "
-                        + "c_float float, "
-                        + "c_double double, "
-                        + "c_varint varint, "
-                        + "c_decimal decimal, "
-                        + "PRIMARY KEY (c_int, c_bigint)"
-                        + ")"
-        );
+        "CREATE TABLE \"myTable\" ("
+                + "c_int int, "
+                + "c_bigint bigint, "
+                + "c_float float, "
+                + "c_double double, "
+                + "c_varint varint, "
+                + "c_decimal decimal, "
+                + "PRIMARY KEY (c_int, c_bigint)"
+                + ")");
     }
 
     @Override
@@ -83,7 +88,7 @@ public class TypeCodecEncapsulationIntegrationTest extends CCMTestsSupport {
                                 new NumberBoxCodec<BigInteger>(TypeCodec.varint()),
                                 new NumberBoxCodec<BigDecimal>(TypeCodec.decimal())
                         )
-        );
+                );
     }
 
     @BeforeMethod(groups = "short")
@@ -134,18 +139,18 @@ public class TypeCodecEncapsulationIntegrationTest extends CCMTestsSupport {
     @Test(groups = "short")
     public void should_use_custom_codecs_with_prepared_statements_2() {
         session().execute(session().prepare(insertQuery).bind()
-                        .set(0, new NumberBox<Integer>(n_int), NUMBERBOX_OF_INTEGER_TOKEN)
-                        .set(1, new NumberBox<Long>(n_bigint), NUMBERBOX_OF_LONG_TOKEN)
-                        .set(2, new NumberBox<Float>(n_float), NUMBERBOX_OF_FLOAT_TOKEN)
-                        .set(3, new NumberBox<Double>(n_double), NUMBERBOX_OF_DOUBLE_TOKEN)
-                        .set(4, new NumberBox<BigInteger>(n_varint), NUMBERBOX_OF_BIGINTEGER_TOKEN)
-                        .set(5, new NumberBox<BigDecimal>(n_decimal), NUMBERBOX_OF_BIGDECIMAL_TOKEN)
-        );
+                .set(0, new NumberBox<Integer>(n_int), NUMBERBOX_OF_INTEGER_TOKEN)
+                .set(1, new NumberBox<Long>(n_bigint), NUMBERBOX_OF_LONG_TOKEN)
+                .set(2, new NumberBox<Float>(n_float), NUMBERBOX_OF_FLOAT_TOKEN)
+                .set(3, new NumberBox<Double>(n_double), NUMBERBOX_OF_DOUBLE_TOKEN)
+                .set(4, new NumberBox<BigInteger>(n_varint), NUMBERBOX_OF_BIGINTEGER_TOKEN)
+                .set(5, new NumberBox<BigDecimal>(n_decimal), NUMBERBOX_OF_BIGDECIMAL_TOKEN)
+                );
         PreparedStatement ps = session().prepare(selectQuery);
         ResultSet rows = session().execute(ps.bind()
-                        .set(0, new NumberBox<Integer>(n_int), NUMBERBOX_OF_INTEGER_TOKEN)
-                        .set(1, new NumberBox<Long>(n_bigint), NUMBERBOX_OF_LONG_TOKEN)
-        );
+                .set(0, new NumberBox<Integer>(n_int), NUMBERBOX_OF_INTEGER_TOKEN)
+                .set(1, new NumberBox<Long>(n_bigint), NUMBERBOX_OF_LONG_TOKEN)
+                );
         Row row = rows.one();
         assertRow(row);
     }
@@ -224,7 +229,9 @@ public class TypeCodecEncapsulationIntegrationTest extends CCMTestsSupport {
         protected NumberBoxCodec(TypeCodec<T> numberCodec) {
             // @formatter:off
             super(numberCodec.getCqlType(),
-                    new TypeToken<NumberBox<T>>() {}.where(new TypeParameter<T>() {}, numberCodec.getJavaType()));
+                    new TypeToken<NumberBox<T>>() {
+                    }.where(new TypeParameter<T>() {
+                    }, numberCodec.getJavaType()));
             // @formatter:on
             this.numberCodec = numberCodec;
         }
